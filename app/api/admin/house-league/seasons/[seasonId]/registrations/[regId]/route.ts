@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, forbidden } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import { canMarkLeagueFeePaid, setLeagueFeePaid, voidLeagueRegistrationFee } from '@/lib/league-fee-paid';
+import { canMarkLeagueFeePaid, endLeagueRegistration, writeLeagueMoney, type EndMoney, type LeagueMoneyMove, type LeagueMoneyRefusal } from '@/lib/league-fee-paid';
+import { MONEY_REFUSAL } from '@/lib/house-league-money-words';
 import { moveRefused } from '@/lib/club-money-route';
 import { getLeagueSeasonById } from '@/lib/db';
 import { changeLeagueDivision, moveLeagueRegistration } from '@/lib/league-registration-place';
-import { registrationOwes } from '@/lib/league-price';
+import { leaguePrice, priceFromBody, registrationOwes } from '@/lib/league-price';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { divisionInSeason, teamsInSeason } from '@/lib/league-season-scope';
 import {
@@ -13,10 +14,16 @@ import {
   leagueAdminWaitlistedHtml,
   leagueWaitlistPromotedHtml,
   leagueRegistrationDeclinedHtml,
+  leagueSpotReleasedHtml,
+  type EndedMoneyLine,
 } from '@/lib/email';
+import { loadRegistrationMoneyLines } from '@/lib/league-money-read';
+import { formatLeagueMoney, receivedOf } from '@/lib/league-money';
+import { possessive } from '@/lib/utils';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { systemMailFace } from '@/lib/club-email-context';
 import type { LeagueRegistrationStatus } from '@/lib/types';
+import { orgDayKey, tournamentToday } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
 
 function mapRow(row: any) {
@@ -45,6 +52,11 @@ function mapRow(row: any) {
     signupRef:           row.signup_ref ?? null,
     signupPosition:      row.signup_position ?? null,
     feeAmount:           row.fee_amount != null ? Number(row.fee_amount) : null,
+    acceptedAt:          row.accepted_at ?? null,
+    endedAt:             row.ended_at ?? null,
+    spotReleased:        row.spot_released ?? false,
+    endMoney:            row.end_money ?? null,
+    endMoneyReason:      row.end_money_reason ?? null,
     registeredAt:        row.registered_at,
     updatedAt:           row.updated_at,
   };
@@ -109,6 +121,79 @@ function emailPromoted(
   })();
 }
 
+/** A division's price for a child who signed up on `registeredAt` (the club's day): the early bird still applies. */
+async function divisionPriceFor(
+  divisionId: string,
+  season: { registrationFee: number | null; earlyBirdUntil: string | null },
+  registeredAt: string,
+): Promise<number | null> {
+  const { data: div, error } = await supabaseAdmin.from('league_divisions').select('price, early_price').eq('id', divisionId).maybeSingle();
+  if (error) throw error;
+  if (!div) return null;
+  const price = leaguePrice(
+    { price: div.price != null ? Number(div.price) : null, earlyPrice: div.early_price != null ? Number(div.early_price) : null },
+    season, orgDayKey(registeredAt),
+  );
+  return price?.amount ?? null;
+}
+
+const text = (v: unknown, max: number): string | null =>
+  typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null;
+
+/** A money press as the screens send it. Null when it is not one of the shapes (nothing is guessed). */
+function readMoneyMove(raw: unknown): LeagueMoneyMove | null {
+  const m = (raw ?? {}) as Record<string, unknown>;
+  const method = m.method == null || m.method === '' ? null : String(m.method);
+  if (m.kind === 'receive' && typeof m.day === 'string') return { kind: 'receive', day: m.day, method };
+  if (m.kind === 'undo') return { kind: 'undo' };
+  if (m.kind === 'price') {
+    const price = priceFromBody(m.price);
+    if (!price || 'error' in price || price.value == null) return null;
+    return { kind: 'price', price: price.value, reason: text(m.reason, 200) ?? '', day: typeof m.day === 'string' ? m.day : null, method };
+  }
+  return null;
+}
+
+/** What happened to the money on an ending, as the window sends it. Undefined when not sent; null when malformed. */
+function readEndMoney(raw: unknown): EndMoney | null | undefined {
+  if (raw == null) return undefined;
+  const m = raw as Record<string, unknown>;
+  if (m.answer === 'refunded' && typeof m.day === 'string') {
+    return { answer: 'refunded', day: m.day, method: m.method == null || m.method === '' ? null : String(m.method), reason: text(m.reason, 200) };
+  }
+  if (m.answer === 'kept') return { answer: 'kept', reason: text(m.reason, 200) ?? '' };
+  return null;
+}
+
+/** A refusal from the money writer or the ending, in the copy's words (§16). */
+function moneyRefusal(
+  refusal: LeagueMoneyRefusal,
+  reg: { playerFirstName: string; playerLastName: string; feeAmount: number | null },
+  season: { registrationFee: number | null },
+  ending = false,
+): Response {
+  const name = `${reg.playerFirstName} ${reg.playerLastName}`;
+  const amount = formatLeagueMoney(registrationOwes(reg, season) ?? 0);
+  const words: Record<LeagueMoneyRefusal, [number, string]> = {
+    ended: [409, MONEY_REFUSAL.ended(name)],
+    not_accepted: [409, MONEY_REFUSAL.notAccepted(name)],
+    already_received: [409, (registrationOwes(reg, season) ?? 0) > 0 ? MONEY_REFUSAL.alreadyReceived(name) : MONEY_REFUSAL.free(name)],
+    amount: [400, MONEY_REFUSAL.amount],
+    over: [409, MONEY_REFUSAL.changed],
+    nothing_received: [409, MONEY_REFUSAL.nothingToUndo(name)],
+    refunded: [409, MONEY_REFUSAL.refundedUndo],
+    same: [400, MONEY_REFUSAL.priceSame],
+    reason: [400, ending ? MONEY_REFUSAL.keptReason(amount) : MONEY_REFUSAL.priceReason],
+    money: [409, MONEY_REFUSAL.money(amount)],
+    date: [400, MONEY_REFUSAL.date],
+    future: [400, ending ? MONEY_REFUSAL.futureRefund : MONEY_REFUSAL.futurePayment],
+    method: [400, MONEY_REFUSAL.method],
+    before_payment: [400, MONEY_REFUSAL.beforePayment],
+  };
+  const [status, error] = words[refusal];
+  return NextResponse.json({ error, code: refusal }, { status });
+}
+
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ seasonId: string; regId: string }> },) => {
   const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
@@ -142,13 +227,19 @@ export const PATCH = withObservability(async (req: Request,
 
   const body = await req.json();
 
-  // ── feePaid ──────────────────────────────────────────────────────────────────
-  // ONE write, shared with the family record's Record a payment (Club Tier Stage 5c, Part A — lib/league-fee-paid.ts):
-  // who may, the fiscal year's lock, the flip and the fee line all live there. It stays open on a finished season (Q16).
-  if ('feePaid' in body) {
+  // ── money ────────────────────────────────────────────────────────────────────
+  // ONE write, shared with the family record's Record a payment (Club Tier Stage 5c Part A; rebuilt 9b-2 — lib/league-fee-paid.ts):
+  // received (a day and how), undo, a corrected price. The fiscal year's lock and the line live there. It stays open on a
+  // finished season (Q16). `feePaid` is the old tick's shape (true = the whole balance received today; false = undo).
+  if ('money' in body || 'feePaid' in body) {
     if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
-    const refused = await setLeagueFeePaid(ctx!, { season, reg }, Boolean(body.feePaid));
-    if (refused) return moveRefused(refused);
+    const move: LeagueMoneyMove | null = 'money' in body
+      ? readMoneyMove(body.money)
+      : body.feePaid ? { kind: 'receive', day: tournamentToday(), method: null } : { kind: 'undo' };
+    if (!move) return NextResponse.json({ error: MONEY_REFUSAL.changed, code: 'bad_money' }, { status: 400 });
+    const wrote = await writeLeagueMoney(ctx!, { seasonId, regId }, move);
+    if ('refused' in wrote) return moveRefused(wrote.refused);
+    if ('refusal' in wrote) return moneyRefusal(wrote.refusal, reg, season);
     const updated = await fetchReg(regId, seasonId);
     return NextResponse.json({ registration: updated });
   }
@@ -180,8 +271,12 @@ export const PATCH = withObservability(async (req: Request,
     // A new division is a placement (Part 3, mig 362): a child holding a spot needs one there, a waitlisted child joins
     // the end of the new line, and a spot freed in the old division goes to its first waiting child.
     let promotedId: string | null = null;
+    let keptPrice = false;
     if ('divisionId' in body) {
-      const moved = await changeLeagueDivision(ctx!.org.id, seasonId, regId, body.divisionId ?? null, season.autoPromoteWaitlist);
+      // "Use {division}'s price" (9b-2): the new division's price for the day this child signed up, worked out here, never
+      // taken from the request. A child who has paid keeps theirs (the database refuses the change and says so).
+      const price = body.reprice === true && body.divisionId ? await divisionPriceFor(body.divisionId, season, reg.registeredAt) : null;
+      const moved = await changeLeagueDivision(ctx!.org.id, seasonId, regId, body.divisionId ?? null, season.autoPromoteWaitlist, price, ctx!.user.id);
       if ('refusal' in moved) {
         if (moved.refusal === 'full') {
           const { data: div } = await supabaseAdmin.from('league_divisions').select('name').eq('id', body.divisionId).single();
@@ -193,6 +288,7 @@ export const PATCH = withObservability(async (req: Request,
         return NextResponse.json({ error: 'Division not found' }, { status: 404 });
       }
       promotedId = moved.promotedId;
+      keptPrice = moved.keptPrice;
     }
     if ('teamId' in body) {
       await supabaseAdmin.from('league_registrations')
@@ -201,7 +297,7 @@ export const PATCH = withObservability(async (req: Request,
     if (promotedId) emailPromoted(ctx!.org, season, seasonId, promotedId);
     const updated = await fetchReg(regId, seasonId);
     const promoted = promotedId ? await fetchReg(promotedId, seasonId) : null;
-    return NextResponse.json(promoted ? { registration: updated, promoted } : { registration: updated });
+    return NextResponse.json({ registration: updated, ...(promoted ? { promoted } : {}), ...(keptPrice ? { keptPrice } : {}) });
   }
 
   // ── status change ────────────────────────────────────────────────────────────
@@ -326,43 +422,73 @@ export const PATCH = withObservability(async (req: Request,
     return NextResponse.json(promoted ? { registration: updated, promoted } : { registration: updated });
   }
 
-  // ── → declined ────────────────────────────────────────────────────────────
-  if (newStatus === 'declined') {
-    // One locked step: the fee line voided, the registration ended, its waitlist gap closed and — when it held a spot and
-    // the season auto-promotes — that spot given to the first child waiting (mig 362).
-    const ended = await voidLeagueRegistrationFee(ctx!, seasonId, regId, 'declined', adminNotes, season.autoPromoteWaitlist);
+  // ── → declined / withdrawn / the spot released ──────────────────────────────────
+  // One locked step (mig 368): when money was received the window's answer is required — refunded (its own line out,
+  // beside the payment) or kept with a reason — then the registration ends, its waitlist gap closes and, when it held a spot
+  // and the season auto-promotes, that spot goes to the first child waiting. Nothing is voided (Q6). A refund is money,
+  // so it needs the fee right as well as the desk's.
+  if (newStatus === 'declined' || newStatus === 'withdrawn') {
+    const released = newStatus === 'withdrawn' && body.released === true;
+    const money = readEndMoney(body.money);
+    if (money === null) return NextResponse.json({ error: MONEY_REFUSAL.changed, code: 'bad_money' }, { status: 400 });
+    if (money?.answer === 'refunded' && !canMarkLeagueFeePaid(ctx!)) return forbidden();
+    const familyNote = newStatus === 'withdrawn' && !released ? null : text(body.familyNote, 2000);
+    const ended = await endLeagueRegistration(ctx!, { seasonId, regId }, {
+      status: newStatus, notes: adminNotes ?? null, promote: season.autoPromoteWaitlist, released, money: money ?? null,
+    });
     if ('refused' in ended) return moveRefused(ended.refused);
+    if ('refusal' in ended) return moneyRefusal(ended.refusal, reg, season, true);
 
-    void (async () => {
-      try {
-        const face = await faceOnce();
-        await sendTransactionalEmail({
-          key: 'league_registration_declined',
-          to: reg.guardianEmail,
-          vars: {
-            guardianFirstName: reg.guardianFirstName,
-            playerFirstName:   reg.playerFirstName,
-            playerLastName:    reg.playerLastName,
-            seasonName:        season.name,
-            divisionName,
-          },
-          defaultSubject: `Registration update — ${season.name}`,
-          defaultHtml: leagueRegistrationDeclinedHtml({ ...emailBase, divisionName, face }),
-          family: familyOf(face, reg.playerFirstName),
-        });
-      } catch (e) { console.error('[email] leagueRegistrationDeclinedHtml failed', e); }
-    })();
+    // What the family is told about their money: the refund line just written, or the fee the club keeps.
+    let mailMoney: EndedMoneyLine | null = null;
+    if (money) {
+      const lines = (await loadRegistrationMoneyLines([regId])).get(regId) ?? [];
+      const refund = ended.refundEntryId ? lines.find(l => l.id === ended.refundEntryId) : null;
+      if (refund) mailMoney = { answer: 'refunded', amount: refund.amount, day: refund.day, method: refund.method };
+      else if (money.answer === 'kept' && receivedOf(lines) > 0) mailMoney = { answer: 'kept', amount: receivedOf(lines), reason: money.reason };
+    }
 
-    const updated = await fetchReg(regId, seasonId);
-    if (ended.promotedId) emailPromoted(ctx!.org, season, seasonId, ended.promotedId);
-    const promoted = ended.promotedId ? await fetchReg(ended.promotedId, seasonId) : null;
-    return NextResponse.json(promoted ? { registration: updated, promoted } : { registration: updated });
-  }
+    if (newStatus === 'declined' || released) {
+      void (async () => {
+        try {
+          const face = await faceOnce();
+          if (released) {
+            await sendTransactionalEmail({
+              key: 'league_spot_released',
+              to: reg.guardianEmail,
+              vars: {
+                guardianFirstName: reg.guardianFirstName,
+                playerFirstName:   reg.playerFirstName,
+                playerLastName:    reg.playerLastName,
+                seasonName:        season.name,
+                divisionName,
+              },
+              defaultSubject: `${possessive(reg.playerFirstName)} spot was released — ${season.name}`,
+              defaultHtml: leagueSpotReleasedHtml({
+                ...emailBase, divisionName, face, fee: registrationOwes(reg, season), note: familyNote, money: mailMoney,
+              }),
+              family: familyOf(face, reg.playerFirstName),
+            });
+            return;
+          }
+          await sendTransactionalEmail({
+            key: 'league_registration_declined',
+            to: reg.guardianEmail,
+            vars: {
+              guardianFirstName: reg.guardianFirstName,
+              playerFirstName:   reg.playerFirstName,
+              playerLastName:    reg.playerLastName,
+              seasonName:        season.name,
+              divisionName,
+            },
+            defaultSubject: `Registration update — ${season.name}`,
+            defaultHtml: leagueRegistrationDeclinedHtml({ ...emailBase, divisionName, face, note: familyNote, money: mailMoney }),
+            family: familyOf(face, reg.playerFirstName),
+          });
+        } catch (e) { console.error('[email] house-league ending email failed', e); }
+      })();
+    }
 
-  // ── → withdrawn (no outbound email for a withdrawal) ──────────────────────
-  if (newStatus === 'withdrawn') {
-    const ended = await voidLeagueRegistrationFee(ctx!, seasonId, regId, 'withdrawn', adminNotes, season.autoPromoteWaitlist);
-    if ('refused' in ended) return moveRefused(ended.refused);
     const updated = await fetchReg(regId, seasonId);
     if (ended.promotedId) emailPromoted(ctx!.org, season, seasonId, ended.promotedId);
     const promoted = ended.promotedId ? await fetchReg(ended.promotedId, seasonId) : null;

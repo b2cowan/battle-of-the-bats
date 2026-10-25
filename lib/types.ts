@@ -982,6 +982,8 @@ export interface LeagueSeason {
   howToPay: string | null;
   /** The form asks the unticked "may email me about future seasons" line (mig 361). */
   askEmailConsent: boolean;
+  /** "Owing" turns amber on Registrations after this many days from acceptance (mig 368, 9b·8; starts at 14). */
+  owingAmberDays: number;
   draftState: LeagueDraftState | null;
   createdAt: string;
   updatedAt: string;
@@ -1045,6 +1047,14 @@ export interface LeagueRegistration {
   signupPosition: number | null;
   /** What this child pays, RECORDED at sign-up (mig 361); null = the season's price. Read through registrationOwes. */
   feeAmount: number | null;
+  /** When the child was last accepted (mig 368, a trigger on every door); null = accepted before the fact existed, or not
+   *  accepted. "Owing N days" counts from it (lib/league-money.ts). */
+  acceptedAt: string | null;
+  /** How a registration ended (mig 368): when, whether it was a released spot, and what happened to money it had. */
+  endedAt: string | null;
+  spotReleased: boolean;
+  endMoney: 'refunded' | 'kept' | null;
+  endMoneyReason: string | null;
   registeredAt: string;
   updatedAt: string;
 }

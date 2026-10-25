@@ -418,6 +418,15 @@ const seasonPast = await ensureSeason(`Summer ${YEAR - 1}`, `summer-${YEAR - 1}`
 const divNow = await ensureDivision(seasonNow.id, 'U11');
 const divPast = await ensureDivision(seasonPast.id, 'U11');
 
+/** A house-league fee received, through the one money write (mig 368 `club_league_money`): a line in, the flag in step. */
+async function receiveLeagueFee(seasonId, regId, day) {
+  const r = await db.rpc('club_league_money', {
+    p_org: org.id, p_season: seasonId, p_registration: regId, p_action: 'receive',
+    p_amount: null, p_day: day, p_method: 'etransfer', p_reason: null, p_actor: owner.id,
+  });
+  if (r.error) die('league fee received', r.error);
+}
+
 async function ensureLeagueReg(seasonId, divisionId, first, last, gFirst, gLast, gEmail, gPhone, opts = {}) {
   const { data: r } = await db.from('league_registrations')
     .select('id').eq('season_id', seasonId).eq('player_first_name', first).eq('player_last_name', last).maybeSingle();
@@ -429,10 +438,11 @@ async function ensureLeagueReg(seasonId, divisionId, first, last, gFirst, gLast,
     guardian_first_name: gFirst, guardian_last_name: gLast,
     guardian_email: gEmail, guardian_phone: gPhone ?? null,
     status: 'active', source: 'public_form',
-    registration_fee_paid: opts.paid ?? false,
     waiver_accepted_at: opts.waiverAccepted ? new Date().toISOString() : null,
-  });
+  }).select('id').single();
   if (ins.error) die(`league reg ${first} ${last}`, ins.error);
+  // Paid goes through the product's one money write (Club Tier 9b-2, mig 368), never a flag set by hand.
+  if (opts.paid) await receiveLeagueFee(seasonId, ins.data.id, dueDay(1));
 }
 // THE cross-programme households (0 occurrences in real data — the whole premise):
 await ensureLeagueReg(seasonNow.id, divNow.id, 'Milan', 'Reyes', 'Alex', 'Reyes', 'alex.reyes@example.com', '555-0100',
@@ -554,39 +564,16 @@ ok('Brandt: Emi (Falcons, owes $450.00) + Kit (Hawks, owes $300.00) under taylor
 {
   const milan = await leagueRegRow(seasonNow.id, 'Milan', 'Reyes');
   if (milan?.registration_fee_paid) {
-    const up = await db.from('league_registrations').update({ registration_fee_paid: false, updated_at: new Date().toISOString() }).eq('id', milan.id);
+    // What the product does on "marked received by mistake": the one write voids the payment (mig 368, the old tick's shape).
+    const up = await db.rpc('club_league_fee_set', {
+      p_org: org.id, p_season: seasonNow.id, p_registration: milan.id, p_paid: false, p_actor: owner.id, p_day: dueDay(1),
+    });
     if (up.error) die('Milan unpaid', up.error);
-    // What the product does on "unpaid": the line stays linked, back to pending.
-    if (milan.fee_entry_id) {
-      const e = await db.from('accounting_entries').update({ status: 'pending', updated_at: new Date().toISOString() }).eq('id', milan.fee_entry_id);
-      if (e.error) die('Milan fee line pending', e.error);
-    }
   }
   await ensureLeagueReg(seasonNow.id, divNow.id, 'Priya', 'Nair', 'Anil', 'Nair', 'anil.nair@example.com', '555-0123',
     { paid: true, waiverAccepted: true, dob: '2015-11-02' });
   const priya = await leagueRegRow(seasonNow.id, 'Priya', 'Nair');
-  if (!priya.fee_entry_id) {
-    // createLeagueRegistrationFeeEntry (lib/db.ts), by hand: the season's ledger, a posted income line, the link back.
-    let { data: ledger } = await db.from('accounting_ledgers').select('id').eq('org_id', org.id).eq('entity_type', 'league_season').eq('entity_id', seasonNow.id).maybeSingle();
-    if (!ledger) {
-      const l = await db.from('accounting_ledgers').insert({ org_id: org.id, entity_type: 'league_season', entity_id: seasonNow.id, name: seasonNow.name }).select('id').single();
-      if (l.error) die('league season ledger', l.error);
-      ledger = l.data;
-    }
-    let { data: line } = await db.from('accounting_entries').select('id').eq('ledger_id', ledger.id)
-      .eq('source_module', 'league_registration').eq('source_entity_id', priya.id).maybeSingle();
-    if (!line) {
-      const e = await db.from('accounting_entries').insert({
-        ledger_id: ledger.id, entry_date: dueDay(1), description: 'Priya Nair — registration fee', amount: 150,
-        entry_type: 'income', status: 'posted', category: 'registration_fee',
-        source_module: 'league_registration', source_entity_id: priya.id, created_by: owner.id,
-      }).select('id').single();
-      if (e.error) die('Priya fee line', e.error);
-      line = e.data;
-    }
-    const link = await db.from('league_registrations').update({ fee_entry_id: line.id, updated_at: new Date().toISOString() }).eq('id', priya.id);
-    if (link.error) die('Priya fee link', link.error);
-  }
+  if (!priya.registration_fee_paid) await receiveLeagueFee(seasonNow.id, priya.id, dueDay(1));
 }
 ok('house league: Milan Reyes fee UNPAID (no ledger line) · Nair fee PAID with its posted ledger line');
 

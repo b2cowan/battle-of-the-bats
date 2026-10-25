@@ -6648,6 +6648,9 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_seasons.ask_email_consent -->
 **`ask_email_consent`** (bool, NOT NULL, default true; mig 361) — the public form shows the unticked "may email me about future seasons and club news" line beside the waiver. A tick writes a `family_consents` row (basis `league_registration`, scope `marketing`).
 
+<!-- dict:col:league_seasons.owing_amber_days -->
+**`owing_amber_days`** (smallint, NOT NULL, default 14, CHECK 1–365; mig 368, owner 9b·8) — an accepted registration that still owes turns amber on Registrations after this many days from `league_registrations.accepted_at`. Set on the season's Registration block.
+
 <!-- dict:col:league_seasons.draft_state -->
 **`draft_state`** (jsonb, nullable; added mig 079) — **transient live player-draft snapshot** (a **rotating** draft assigning registered players to teams — a plain repeating rotation `(pickNumber-1) % len`, **not** serpentine/snake); null = no active draft, cleared on finalize ([draft/route.ts:172](../../../app/api/admin/house-league/seasons/[seasonId]/draft/route.ts#L172)) or when placement runs ([placement/route.ts:114](../../../app/api/admin/house-league/seasons/[seasonId]/placement/route.ts#L114)). Typed `LeagueDraftState` ([lib/types.ts:708-716](../../../lib/types.ts#L708-L716)). Mig 079 self-labels "DEV ONLY / already in prod" but the column is **identical in both envs** — decide from the snapshot, not the migration.
 
@@ -6792,9 +6795,9 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **Gotchas (read first):**
 1. **Account-less, keyed by `guardian_email`** (text, NOT an `auth.users` FK; indexed `guardian_idx`). The public status page looks up by email with **no login** ([status/page.tsx](../../../app/[orgSlug]/league/[seasonSlug]/status/page.tsx)). `guardian_email` is **non-unique**; **the same child is refused twice in a season** (same first + last name, case and spacing ignored, and the same date of birth — or, with no date of birth, the same guardian email; declined/withdrawn ignored; `league_is_duplicate`) by the placement functions (mig 362) — a rule in the function, not a unique index (prod data was never checked for old duplicates).
 2. **NO `created_at` — `registered_at` is the create stamp** (NN, default `now()`). Never written explicitly; admin-manual rows get `now()`, not a back-dated date.
-3. **Every placement is ONE locked database step** (mig 362, Club Tier 9b-1 Part 3), each taking the season row `FOR NO KEY UPDATE` first: `league_registration_place` (public form: a free spot AND an empty waitlist → `active` with `auto_approve_under_capacity`, else `pending_review`; otherwise `waitlisted` — **nobody jumps the line**; staff hand-add: their chosen status, refused when full), `league_registration_move` (staff Accept / Received / Waitlist; returns whether anything changed; a spot-holder sent to the waitlist frees its spot for the first child waiting when the season auto-promotes), `league_registration_change_division` (a spot-holder needs room in the new division; a waitlisted child joins the end of the new line; the old line closes up and a freed spot is promoted into), `league_registration_end` (decline/withdraw: void the fee line, end, close the gap, promote — one transaction; `club_league_fee_end` now runs it without promoting). Routes reach them only through [lib/league-registration-place.ts](../../../lib/league-registration-place.ts) and `voidLeagueRegistrationFee`; `tests/unit/house-league-place-guard.test.ts` fails a route that writes status, division or waitlist place around them; `scripts/house-league-signup-race.mjs` races them on dev.
+3. **Every placement is ONE locked database step** (mig 362, Club Tier 9b-1 Part 3), each taking the season row `FOR NO KEY UPDATE` first: `league_registration_place` (public form: a free spot AND an empty waitlist → `active` with `auto_approve_under_capacity`, else `pending_review`; otherwise `waitlisted` — **nobody jumps the line**; staff hand-add: their chosen status, refused when full), `league_registration_move` (staff Accept / Received / Waitlist; returns whether anything changed; a spot-holder sent to the waitlist frees its spot for the first child waiting when the season auto-promotes), `league_registration_change_division` (a spot-holder needs room in the new division; a waitlisted child joins the end of the new line; the old line closes up and a freed spot is promoted into), `league_registration_end` (decline/withdraw, 9b-1). ⚖ **Mig 368 (Club Tier 9b-2) replaced the ending and the move:** `league_registration_close` ends a registration (decline / withdraw / release the spot) and, **when it has received money, requires the answer** — `refunded` (a refund line out through the money writer, beside the payment) or `kept` (with a reason) — then closes the gap and promotes, one transaction; **nothing is voided**. `league_registration_end` (same signature, for code before the release) runs it with no answer and RAISES `money_unsettled` on a paid registration instead of voiding; `club_league_fee_end` still runs that. `league_registration_move_division` is the move with an optional new price (a child who has received money keeps theirs). Routes reach them only through [lib/league-registration-place.ts](../../../lib/league-registration-place.ts) and [lib/league-fee-paid.ts](../../../lib/league-fee-paid.ts) (`endLeagueRegistration`); `tests/unit/house-league-place-guard.test.ts` fails a route that writes status, division or waitlist place around them; `scripts/house-league-signup-race.mjs` races them on dev.
 4. **`waitlist_position` is per-DIVISION, maintained by the database under the season lock** (mig 362): a new place is the division's highest + 1; a child leaving the waitlist (accepted, promoted, declined, withdrawn) closes the gap behind it (`league_waitlist_close_gap`). **No unique index, deliberately** — closing a gap shifts several rows in one statement; the lock is the guarantee. Leaving `waitlisted` NULLs it.
-5. **`fee_entry_id` is a LOOSE uuid (no FK)** → the current posted `accounting_entries.id`; Stage 7a sets it on paid, clears it on undo or decline/withdrawal, and writes a new row on re-payment. Approval and waitlist promotion leave it NULL. Internal ledger, never Stripe.
+5. **The BOOK is the money, not the flag (mig 368, Club Tier 9b-2).** A registration's money is its `accounting_entries` lines (`source_module='league_registration'`, `source_entity_id` = this id): a payment is an `income` line (`category 'registration_fee'`, `payment_method`, the day it was received), a refund its own `expense` line (`category 'registration_refund'`, `notes` = why) — **received = posted in − posted out** (`league_reg_received`), one registration may carry several lines (a top-up after a price rise, a refund of a difference). **ONE money writer**, `club_league_money` (received · refund · undo · price), reached only through [lib/league-fee-paid.ts](../../../lib/league-fee-paid.ts) `writeLeagueMoney` (`tests/unit/house-league-money-guard.test.ts`). `registration_fee_paid` and `fee_entry_id` are kept in step by the writer (`league_reg_money_sync`) for every reader that still reads them. Read the money through [lib/league-money.ts](../../../lib/league-money.ts) (`feeState`, `seasonMoney`). Internal ledger, never Stripe (Stage 12b lands a card payment through the same writer with method `online_card`).
 6. **`division_id` is nullable** but several flows require it (public submit forces a resolvable division; admin create requires `divisionId`; you can't waitlist a division-less reg). `ON DELETE SET NULL`.
 7. **Role split:** `league_registrar` can change status/feePaid/adminNotes; only `owner`/`league_admin` can reassign division/team, create manual regs, or run placement/draft.
 
@@ -6848,10 +6851,19 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`team_id`** (FK → `league_teams.id` ON DELETE SET NULL, nullable) — the placed team (set by placement/draft, [placement/route.ts](../../../app/api/admin/house-league/seasons/[seasonId]/placement/route.ts) → `assignRegistrationToTeam` [lib/db.ts:3313](../../../lib/db.ts#L3313) / draft finalize → `bulkAssignTeams` [lib/db.ts:3320](../../../lib/db.ts#L3320)); NULL until placement. The **randomize/clear** flows only touch `active` regs, but the manual **assign/bulk_assign** actions place any reg by id with **no status guard** — a waitlisted/pending reg can be given a `team_id`.
 
 <!-- dict:col:league_registrations.registration_fee_paid -->
-**`registration_fee_paid`** (bool, NOT NULL, default false) — admin-toggled payment flag. Stage 7a changes it and the current posted fee line in one database function; no line is created before payment. Manual flag, not a payment processor.
+**`registration_fee_paid`** (bool, NOT NULL, default false) — **derived since mig 368**: true when the price is above $0 and the posted lines cover it (`league_reg_money_sync`, run by the money writer). Never written by app code (`house-league-money-guard`). A fee the club KEPT on an ended registration stays true. Mig 368's one-time catch-up gave every paid tick with no posted line its line (the frozen price, dated the row's last change, method not recorded); no club was on production.
 
 <!-- dict:col:league_registrations.fee_entry_id -->
-**`fee_entry_id`** (uuid, nullable, **NO FK**) → the current posted `accounting_entries.id` for this registration's fee. Set by `club_league_fee_set`; cleared by undo or `club_league_fee_end`. The source module and entity id preserve the audit trail of voided and replacement lines. Often NULL (gotcha 5).
+**`fee_entry_id`** (uuid, nullable, **NO FK**) → the LATEST posted income line for this registration (mig 368, kept in step by the writer). A registration can have several lines now: read the money by source, never through this column alone (gotcha 5).
+
+<!-- dict:col:league_registrations.accepted_at -->
+**`accepted_at`** (timestamptz, nullable; mig 368) — when the child was last accepted: set by the trigger `league_registrations_accepted_at` on every move INTO `active` (auto-accept at sign-up, Approve, a waitlist promotion, a hand-add), cleared on a move back to `pending_review` / `waitlisted`, kept on an ended row. "Owing N days" counts from it in the club's day. **NULL on a row accepted before mig 368 — deliberately never backfilled** (owner §0e): it reads "owing" with no day count and never turns amber.
+
+<!-- dict:col:league_registrations.ended_at -->
+<!-- dict:col:league_registrations.spot_released -->
+<!-- dict:col:league_registrations.end_money -->
+<!-- dict:col:league_registrations.end_money_reason -->
+**`ended_at` / `spot_released` / `end_money` / `end_money_reason`** (timestamptz / bool NOT NULL default false / text / text; mig 368, written only by `league_registration_close`) — how a registration ended: when; whether it was **Release the spot** (stored as `withdrawn` with this mark — the family reads Withdrawn); and, when it had received money, the answer: `end_money` CHECK `refunded|kept` (NULL = nothing was received), `end_money_reason` ≤ 500 chars, **required for `kept`** (CHECK) — the family reads it in their email. NULL on every ending before mig 368.
 
 <!-- dict:col:league_registrations.admin_notes -->
 **`admin_notes`** (text, nullable) — internal admin-only notes, **never** shown publicly; distinct from guardian `player_notes`. `canManageRegs`-gated.
@@ -6867,10 +6879,45 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`signup_ref` / `signup_position`** (text / smallint, nullable; mig 361, Club Tier 9b-1, owner Q5) — one reference shared by every child a family signed up together, and each child's place in that sign-up (1, 2, …). The family's status page finds the whole sign-up by reference + guardian email. Indexed `(org_id, signup_ref)` where set. NULL on rows from before mig 361 (each is its own sign-up, found by its registration id's first eight characters as before).
 
 <!-- dict:col:league_registrations.fee_amount -->
-**`fee_amount`** (numeric(10,2), nullable, ≥ 0 CHECK; mig 361, owner ruling 2026-10-25 "record the price at sign-up") — **what this child pays, RECORDED when they sign up** (the division's price or its early amount on that day, [lib/league-price.ts](../../../lib/league-price.ts)) and **never moved by a later price edit**. NULL = owes the season's `registration_fee` (mig 361 backfilled every existing row from it; a row prod's old code writes before the promote has none). `club_league_fee_set` posts `coalesce(fee_amount, season.registration_fee)`; every TS reader goes through `registrationOwes`. Correcting one registration's price is 9b-2.
+**`fee_amount`** (numeric(10,2), nullable, ≥ 0 CHECK; mig 361, owner ruling 2026-10-25 "record the price at sign-up") — **what this child pays, RECORDED when they sign up** (the division's price or its early amount on that day, [lib/league-price.ts](../../../lib/league-price.ts)) and **never moved by a later price edit**. NULL = owes the season's `registration_fee` (mig 361 backfilled every existing row from it; a row prod's old code writes before the promote has none). `club_league_fee_set` posts `coalesce(fee_amount, season.registration_fee)`; every TS reader goes through `registrationOwes`. **Changed only by the money writer (mig 368):** a correction with a reason (`club_league_money` 'price') or a re-price on a move of a child who has received nothing (`league_registration_move_division`) — each recorded in `league_registration_price_changes`.
 
 <!-- dict:col:league_registrations.registered_at -->
 **`registered_at`** (timestamptz, NOT NULL, default `now()`) — **the effective create stamp** (no `created_at` column exists); drives default list ordering (newest first). Never written by code; admin-manual rows are not back-dated (gotcha 2).
+
+---
+
+## `league_registration_price_changes`
+<!-- dict:table:league_registration_price_changes -->
+
+**Purpose (mig 368, Club Tier 9b-2):** the history of a registration's price — every **correction** (Correct the price, with a reason) and every **re-price on a move** (Move division, "Use {division}'s price"). Read on the season's Money page as history lines ("Price corrected $150 → $120 · {reason}") and on the row. Moves no money by itself: when a correction lowers a PAID price, the refund of the difference is an `accounting_entries` line, linked here by `refund_entry_id`. Server-only (RLS on, no policies; service_role grants). Written only inside `club_league_money` / `league_registration_move_division`.
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:league_registration_price_changes.org_id -->
+**`org_id`** (uuid, NOT NULL, FK → `organizations` ON DELETE CASCADE, indexed) — tenancy.
+
+<!-- dict:col:league_registration_price_changes.season_id -->
+**`season_id`** (uuid, NOT NULL, FK → `league_seasons` ON DELETE CASCADE; indexed `(season_id, changed_at DESC)`) — the season whose Money page shows it.
+
+<!-- dict:col:league_registration_price_changes.registration_id -->
+**`registration_id`** (uuid, NOT NULL, FK → `league_registrations` ON DELETE CASCADE, indexed).
+
+<!-- dict:col:league_registration_price_changes.kind -->
+**`kind`** (text, NOT NULL; CHECK `corrected|moved`) — a correction (reason required) or a move's re-price (no reason).
+
+<!-- dict:col:league_registration_price_changes.old_amount -->
+<!-- dict:col:league_registration_price_changes.new_amount -->
+**`old_amount` / `new_amount`** (numeric(10,2); old nullable, new NOT NULL; both ≥ 0 CHECK) — the price before (the registration's `coalesce(fee_amount, season fee)`) and after.
+
+<!-- dict:col:league_registration_price_changes.reason -->
+**`reason`** (text, nullable, ≤ 500; **required when `kind = 'corrected'`**, CHECK) — the registrar's reason, staff-facing.
+
+<!-- dict:col:league_registration_price_changes.refund_entry_id -->
+**`refund_entry_id`** (uuid, nullable, FK → `accounting_entries` ON DELETE SET NULL; partial index) — the refund of the difference when a correction lowered a price the family had already paid.
+
+<!-- dict:col:league_registration_price_changes.changed_by -->
+<!-- dict:col:league_registration_price_changes.changed_at -->
+**`changed_by` / `changed_at`** (uuid FK → `auth.users` ON DELETE SET NULL, nullable / timestamptz NOT NULL default now()) — who and when.
 
 ---
 
@@ -7442,7 +7489,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`status`** (text, NOT NULL, default `'posted'`; CHECK `pending|posted|void`) — `pending`=receivable/payable unsettled, `posted`=settled, `void`=soft-cancelled (row kept). Manual create/edit allow only `posted|pending`.
 
 <!-- dict:col:accounting_entries.category -->
-**`category`** (text, nullable) — free-text label, ≤100 chars; NOT an FK (gotcha 4). League fee writes `'registration_fee'`; pre-315 rep transfers wrote the keys `'rep_allocation'` / `'team_payment_to_org'` / `'team_charge_to_org'`, which are READ as "Team allocations" / "Team support" (`categoryWord`, never rewritten); from mig 315 the loop writes the same keys (gotcha 7). The club's category list reads its own books only, never a team's. The dues mirror (a family's payment into a team book, and a credit paid back out) writes **`'Player dues'`** — sentence case since 2026-10-18 (`527079d1`); mig 337 re-spelled the earlier `'Player Dues'` lines in team books that carry no budget word (a club's own word named "Player Dues" keeps its spelling).
+**`category`** (text, nullable) — free-text label, ≤100 chars; NOT an FK (gotcha 4). League fee writes `'registration_fee'` (money in) and, from mig 368, `'registration_refund'` on an `expense` line (a house-league refund: its own line out beside the payment, `notes` = why, never a void — `league_registrations` gotcha 5); pre-315 rep transfers wrote the keys `'rep_allocation'` / `'team_payment_to_org'` / `'team_charge_to_org'`, which are READ as "Team allocations" / "Team support" (`categoryWord`, never rewritten); from mig 315 the loop writes the same keys (gotcha 7). The club's category list reads its own books only, never a team's. The dues mirror (a family's payment into a team book, and a credit paid back out) writes **`'Player dues'`** — sentence case since 2026-10-18 (`527079d1`); mig 337 re-spelled the earlier `'Player Dues'` lines in team books that carry no budget word (a club's own word named "Player Dues" keeps its spelling).
 
 <!-- dict:col:accounting_entries.linked_entry_id -->
 **`linked_entry_id`** (self-FK → `accounting_entries.id` ON DELETE SET NULL, nullable) — pairs the two transfer legs (each points at the other); populated only for `transfer_*` rows (set by the RPC).

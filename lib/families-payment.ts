@@ -11,7 +11,7 @@ import { sendEmail } from './email';
 import { notify } from './notify';
 import { fetchAll, inParallel } from './supabase-paging';
 import { clearSettled } from './needs-attention';
-import { canMarkLeagueFeePaid, setLeagueFeePaid } from './league-fee-paid';
+import { canMarkLeagueFeePaid, writeLeagueMoney } from './league-fee-paid';
 import { futureReceivedDateRefusal } from './money-date-guards';
 import { methodWord } from './club-money-words';
 import { fmt } from './coach-money-summary';
@@ -243,20 +243,21 @@ export async function recordFamilyPayment(ctx: AuthContextWithRole, page: Family
     if (line.kind !== 'league') continue;
     const [season, regRead] = await Promise.all([
       getLeagueSeasonById(line.seasonId, ctx.org.id),
-      supabaseAdmin.from('league_registrations').select('id, fee_entry_id, fee_amount, registration_fee_paid, player_first_name, player_last_name')
+      supabaseAdmin.from('league_registrations').select('id, registration_fee_paid')
         .eq('id', line.regId).eq('org_id', ctx.org.id).eq('season_id', line.seasonId).maybeSingle(),
     ]);
     if (regRead.error) throw regRead.error;
     const reg = regRead.data;
     const sofar = fees.length ? W.done(fees, []) : undefined;
     if (!season || !reg || reg.registration_fee_paid) return refuse(409, 'changed', sofar ? W.partly(sofar) : W.changed, sofar);
-    const refused = await setLeagueFeePaid(ctx, {
-      season: { id: season.id, name: season.name, registrationFee: season.registrationFee ?? null },
-      reg: { id: reg.id, feeEntryId: reg.fee_entry_id ?? null, feeAmount: reg.fee_amount != null ? Number(reg.fee_amount) : null, playerFirstName: reg.player_first_name, playerLastName: reg.player_last_name },
-    }, true);
-    if (refused) {
-      const words = (refused.body as { error?: string }).error ?? W.failed;
-      return refuse(refused.status, 'fee_refused', sofar ? `${W.partly(sofar)} ${words}` : words, sofar);
+    // The window's own date and how reach the book (9b-2: they were dropped before), for exactly the balance it showed.
+    const wrote = await writeLeagueMoney(ctx, { seasonId: season.id, regId: reg.id }, {
+      kind: 'receive', day: receivedDate, method: method as string | null, amount: line.feeCents / 100, note,
+    });
+    if ('refused' in wrote || 'refusal' in wrote) {
+      const refusedBody = 'refused' in wrote ? wrote.refused : null;
+      const words = refusedBody ? (refusedBody.body as { error?: string }).error ?? W.failed : W.changed;
+      return refuse(refusedBody ? refusedBody.status : 409, 'fee_refused', sofar ? `${W.partly(sofar)} ${words}` : words, sofar);
     }
     fees.push(line.childName);
   }

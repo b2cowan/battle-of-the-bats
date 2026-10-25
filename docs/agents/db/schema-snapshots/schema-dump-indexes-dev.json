@@ -16,6 +16,11 @@
   },
   {
     "tablename": "accounting_entries",
+    "indexname": "accounting_entries_league_registration_idx",
+    "indexdef": "CREATE INDEX accounting_entries_league_registration_idx ON public.accounting_entries USING btree (source_entity_id) WHERE (source_module = 'league_registration'::text)"
+  },
+  {
+    "tablename": "accounting_entries",
     "indexname": "accounting_entries_ledger_id_idx",
     "indexdef": "CREATE INDEX accounting_entries_ledger_id_idx ON public.accounting_entries USING btree (ledger_id)"
   },
@@ -1318,6 +1323,31 @@
     "tablename": "league_practices",
     "indexname": "league_practices_team_idx",
     "indexdef": "CREATE INDEX league_practices_team_idx ON public.league_practices USING btree (team_id)"
+  },
+  {
+    "tablename": "league_registration_price_changes",
+    "indexname": "league_registration_price_changes_org_idx",
+    "indexdef": "CREATE INDEX league_registration_price_changes_org_idx ON public.league_registration_price_changes USING btree (org_id)"
+  },
+  {
+    "tablename": "league_registration_price_changes",
+    "indexname": "league_registration_price_changes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_registration_price_changes_pkey ON public.league_registration_price_changes USING btree (id)"
+  },
+  {
+    "tablename": "league_registration_price_changes",
+    "indexname": "league_registration_price_changes_refund_idx",
+    "indexdef": "CREATE INDEX league_registration_price_changes_refund_idx ON public.league_registration_price_changes USING btree (refund_entry_id) WHERE (refund_entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_registration_price_changes",
+    "indexname": "league_registration_price_changes_reg_idx",
+    "indexdef": "CREATE INDEX league_registration_price_changes_reg_idx ON public.league_registration_price_changes USING btree (registration_id)"
+  },
+  {
+    "tablename": "league_registration_price_changes",
+    "indexname": "league_registration_price_changes_season_idx",
+    "indexdef": "CREATE INDEX league_registration_price_changes_season_idx ON public.league_registration_price_changes USING btree (season_id, changed_at DESC)"
   },
   {
     "tablename": "league_registrations",

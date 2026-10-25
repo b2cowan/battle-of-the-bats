@@ -96,6 +96,30 @@ All 15 round-2 asks ruled as recommended (§6a). 9a and 9b are fully ruled.
 - **On a review-first season a received child holds a spot**: once accepted and received children fill the size, the next
   child goes to the waitlist and is told so before signing up.
 
+## 0e · Owner rulings 2026-10-25, the 9b-2 build session (all seven as recommended)
+
+- **The book: a payment is a line in; a refund is its own line out, beside the payment it returns.** A price correction is
+  recorded on the registration (old price, new price, reason, who, when) and shown in Money's history; it moves no money
+  itself. On a PAID registration, raising the price leaves the difference owing; lowering it records a refund of the
+  difference (a date and how). The Correct-a-price window **tells** which, it does not offer both: with no family credit
+  (Stage 12) there is nothing else a lower price can mean.
+- **"Undo: marked received by mistake" stays** on a paid row: it voids a payment that never happened (not a refund), and is
+  refused once that payment's fiscal year is closed. Q6's "never a silent void" is about ending a registration.
+- **Mark received records the full balance still owed.** The screens never offer a partial amount (Stage 12); the writer
+  itself takes an amount, a date and a method, so a price rise is settled by a second line in.
+- **"Owing N days" counts from a new accepted-at fact.** A registration accepted before the fact existed reads "owing" with
+  no day count and never turns amber; no date is invented.
+- **Old paid ticks with no book line get a one-time catch-up line** (the frozen price, dated the registration's last change,
+  method "not recorded"). No club is on production (owner), so this is fixture hygiene, not a historical-data rule; the
+  dev seeds go through the one writer from now on.
+- **Bulk Move division asks once for the batch:** "Keep each child's price" or "Use {division}'s price". A child who has
+  paid always keeps their price and is listed ("kept their price: paid; correct one at a time").
+- **"Approve respects room" is tested where it can bite:** approving from To review never meets a full division (a child in
+  review already holds a spot); the refusal shows on promoting from the waitlist, reviving an ended registration, and moving.
+- **The Statement half is walked on `uat-rep-club`** (Club plan). The dev league is League Plus: no Accounting, so its
+  treasurer reads no Money, and its Money page is the book (Q15).
+- **9b·11's split is built as a per-season split** (today a budget line belongs to one fiscal year); it is the last part.
+
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
 - The trust list re-verified (§3); the coupling check for a standalone League Plus club; the ledger seam under D1 (C18);

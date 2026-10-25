@@ -105,12 +105,16 @@ id (uuid), season_id (uuid) → league_seasons.id NOT NULL, sent_by (uuid), audi
 id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, team_id (uuid) → league_teams.id NOT NULL, scheduled_at, ends_at, location, notes, status, recurrence_group_id (uuid), created_at, updated_at, org_id (uuid) → organizations.id NOT NULL, org_venue_id (uuid) → org_venues.id, org_venue_facility_id (uuid) → org_venue_facilities.id
 - Indexes: idx_league_practices_org_venue, idx_league_practices_org_venue_facility, league_practices_division_id_idx, league_practices_org_idx, league_practices_recurrence_idx, league_practices_schedule_idx, league_practices_season_idx, league_practices_team_idx
 
+### league_registration_price_changes
+id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, registration_id (uuid) → league_registrations.id NOT NULL, kind NOT NULL, old_amount (numeric), new_amount (numeric) NOT NULL, reason, refund_entry_id (uuid) → accounting_entries.id, changed_by (uuid), changed_at
+- Indexes: league_registration_price_changes_org_idx, league_registration_price_changes_refund_idx, league_registration_price_changes_reg_idx, league_registration_price_changes_season_idx
+
 ### league_registrations
-id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_jersey_pref, player_position_pref, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, waitlist_position (integer), team_id (uuid) → league_teams.id, registration_fee_paid (boolean), fee_entry_id (uuid), admin_notes, source, registered_at, updated_at, org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id, waiver_accepted_at, signup_ref, signup_position, fee_amount (numeric)
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_jersey_pref, player_position_pref, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, waitlist_position (integer), team_id (uuid) → league_teams.id, registration_fee_paid (boolean), fee_entry_id (uuid), admin_notes, source, registered_at, updated_at, org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id, waiver_accepted_at, signup_ref, signup_position, fee_amount (numeric), accepted_at, ended_at, spot_released (boolean), end_money, end_money_reason
 - Indexes: league_registrations_division_idx, league_registrations_guardian_idx, league_registrations_org_id_idx, league_registrations_person_id_idx, league_registrations_season_idx, league_registrations_signup_ref_idx, league_registrations_status_idx, league_registrations_team_id_idx
 
 ### league_seasons
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at, owing_amber_days
 - Indexes: league_seasons_org_id_slug_key
 
 ### league_teams
@@ -453,7 +457,7 @@ id (uuid), workspace_org_id (uuid) → organizations.id NOT NULL, rep_team_id (u
 
 ### accounting_entries
 id (uuid), ledger_id (uuid) → accounting_ledgers.id NOT NULL, entry_date NOT NULL, description NOT NULL, amount (numeric) NOT NULL, entry_type NOT NULL, status, category, linked_entry_id (uuid) → accounting_entries.id, source_module, source_entity_id (uuid), created_by (uuid), created_at, updated_at, payment_method, payee_id (uuid) → org_payees.id, payee_payer, notes, void_reason, voided_by (uuid), voided_at, budget_category_id (uuid) → budget_categories.id, budget_item_id (uuid) → budget_items.id, written_on
-- Indexes: accounting_entries_budget_category_id_idx, accounting_entries_budget_item_id_idx, accounting_entries_entry_date_idx, accounting_entries_ledger_id_idx, accounting_entries_linked_entry_id_idx, accounting_entries_payee_id_idx
+- Indexes: accounting_entries_budget_category_id_idx, accounting_entries_budget_item_id_idx, accounting_entries_entry_date_idx, accounting_entries_league_registration_idx, accounting_entries_ledger_id_idx, accounting_entries_linked_entry_id_idx, accounting_entries_payee_id_idx
 
 ### accounting_ledgers
 id (uuid), org_id (uuid) → organizations.id NOT NULL, entity_type NOT NULL, entity_id (uuid), name NOT NULL, currency, is_archived (boolean), created_at
@@ -908,10 +912,10 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **220 tables** across 10 modules.
+Total: **221 tables** across 10 modules.
 
 - Tournament: 17 tables
-- League: 8 tables
+- League: 9 tables
 - Rep Teams: 76 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables

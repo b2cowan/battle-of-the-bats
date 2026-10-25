@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
+import { tournamentToday } from '@/lib/timezone';
 
 // Fallback chain — first match wins; ordered by most-featured plan first
 const DEV_ORG_SLUGS = ['dev-club-org', 'dev-league-org', 'dev-tplus-org', 'dev-tournament-org', 'dev-test-org'];
@@ -138,31 +139,42 @@ export async function POST(request: Request) {
   // Registrations
   const firstDivId = divisions?.[0]?.id;
   if (firstDivId) {
-    await supabaseAdmin.from('league_registrations').insert([
+    // The table's own words (status / source CHECKs, mig 020); the old 'accepted' / 'admin' rows were refused silently.
+    const { data: regs, error: regError } = await supabaseAdmin.from('league_registrations').insert([
       {
         season_id: season.id,
+        org_id: org.id,
         division_id: firstDivId,
         player_first_name: 'Alex', player_last_name: 'Dev',
         guardian_first_name: 'Pat', guardian_last_name: 'Dev',
         guardian_email: 'parent1@dev.local',
-        status: 'accepted',
-        registration_fee_paid: true,
-        source: 'admin',
+        status: 'active',
+        source: 'admin_manual',
         registered_at: new Date().toISOString(),
       },
       {
         season_id: season.id,
+        org_id: org.id,
         division_id: firstDivId,
         player_first_name: 'Sam', player_last_name: 'Test',
         guardian_first_name: 'Lee', guardian_last_name: 'Test',
         guardian_email: 'parent2@dev.local',
-        status: 'waitlist',
+        status: 'waitlisted',
         waitlist_position: 1,
-        registration_fee_paid: false,
-        source: 'public',
+        source: 'public_form',
         registered_at: new Date().toISOString(),
       },
-    ]);
+    ]).select('id, player_first_name');
+    if (regError) return NextResponse.json({ error: regError.message, log }, { status: 500 });
+    // Alex's fee received through the product's one money write (Club Tier 9b-2, mig 368), never a flag set by hand.
+    const alex = regs?.find(r => r.player_first_name === 'Alex');
+    if (alex) {
+      const { error: feeError } = await supabaseAdmin.rpc('club_league_money', {
+        p_org: org.id, p_season: season.id, p_registration: alex.id, p_action: 'receive',
+        p_amount: null, p_day: tournamentToday(), p_method: 'etransfer', p_reason: null, p_actor: null,
+      });
+      if (feeError) return NextResponse.json({ error: feeError.message, log }, { status: 500 });
+    }
     log.push('Created 2 sample registrations');
   }
 

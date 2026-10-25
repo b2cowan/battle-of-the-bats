@@ -342,6 +342,10 @@
     "367_find_names_the_owner_you_searched.sql": {
       "prod": "pending",
       "note": "Support console Stage 2 review fix. Function only (invisible to check:migrations): platform_find_clubs replaced with the same signature and grants — the matched owner is the exact email when there is one, so a searched owner address ranks its club first. Requires 365; apply with 365 at the promote that ships the Stage 2 console. Verify on prod with the anon key: platform_find_clubs returns 42501. Applied to DEV 2026-10-25."
+    },
+    "368_house_league_money_honest.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 9b-2 Part 1 (HOUSE_LEAGUE_STAGE9_PLAN.md §0e). Visible: league_registrations.accepted_at / ended_at / spot_released / end_money / end_money_reason (+ CHECK), league_seasons.owing_amber_days (+ CHECK), table league_registration_price_changes, index accounting_entries_league_registration_idx. INVISIBLE to check:migrations: the trigger league_registrations_accepted_at and its function; new functions league_reg_received, league_reg_money_sync, club_league_money (the one money writer), league_registration_close, league_registration_move_division; REPLACED with the same signatures club_league_fee_set (now routes through the writer) and league_registration_end (now refuses a paid registration with money_unsettled instead of voiding); and a one-time catch-up DO block (a posted line for every paid tick with none — prod has no house-league clubs, so it should touch nothing). Requires 361 + 362 first. Apply with them at the promote that ships 9b-2 — the 9b-2 code calls club_league_money / league_registration_close / league_registration_move_division, so prod without it 500s every house-league money press. Verify on prod: the five functions exist, execute is revoked from anon/authenticated, the trigger is on league_registrations, and scripts/house-league-money-check.sql is NOT run there (DEV only). Applied to DEV 2026-10-25; scripts/house-league-money-check.sql passed 12/12 and check:club-money-atomicity passed."
     }
   }
 }

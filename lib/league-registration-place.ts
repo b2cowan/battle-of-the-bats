@@ -118,17 +118,21 @@ export async function moveLeagueRegistration(
 
 /** Staff move a child to another division of the season (or clear it): a child holding a spot needs one there, a
  *  waitlisted child joins the end of the new line, and (with `promote`) a spot freed in the old division goes to its
- *  first waiting child. The recorded price does not move (re-pricing is 9b-2's). */
+ *  first waiting child. Re-pricing (Club Tier 9b-2, mig 368): `price` null keeps the price; a number is the new division's
+ *  price for this child's sign-up day (lib/league-price.ts), taken only when nothing has been received — a child who has
+ *  paid keeps theirs (`keptPrice`), and Correct the price is where a paid difference is settled (§0e). */
 export async function changeLeagueDivision(
   orgId: string, seasonId: string, regId: string, divisionId: string | null, promote: boolean,
-): Promise<{ promotedId: string | null } | { refusal: PlaceRefusal }> {
-  const { data, error } = await supabaseAdmin.rpc('league_registration_change_division', {
+  price: number | null = null, actorId: string | null = null,
+): Promise<{ promotedId: string | null; keptPrice: boolean } | { refusal: PlaceRefusal }> {
+  const { data, error } = await supabaseAdmin.rpc('league_registration_move_division', {
     p_org: orgId, p_season: seasonId, p_registration: regId, p_division: divisionId, p_promote: promote,
+    p_price: price, p_actor: actorId,
   });
   if (error) throw error;
-  const row = (Array.isArray(data) ? data[0] : data) as { refusal: string | null; promoted: string | null };
+  const row = (Array.isArray(data) ? data[0] : data) as { refusal: string | null; promoted: string | null; kept_price: boolean };
   if (row.refusal) return { refusal: row.refusal as PlaceRefusal };
-  return { promotedId: row.promoted };
+  return { promotedId: row.promoted, keptPrice: !!row.kept_price };
 }
 
 /** The first waitlisted child into a FREE spot, or null. Ending, moving and re-dividing a child promote inside their own

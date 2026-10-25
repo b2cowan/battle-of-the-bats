@@ -22,24 +22,23 @@ describe('Stage 7a · the existing house league fee defects, red before the shar
   });
 
   it('3 · a self registration or waitlist promotion can be paid through the same write', () => {
-    const write = functionBody(FEE, 'setLeagueFeePaid');
-    assert.match(write, /\.rpc\('club_league_fee_set'/);
+    const write = functionBody(FEE, 'writeLeagueMoney');
+    assert.match(write, /\.rpc\('club_league_money'/);
     assert.doesNotMatch(write, /reg\.status|autoGenerateFees/);
-    assert.match(write, /p_registration: reg\.id/);
+    assert.match(write, /p_registration: target\.regId/);
   });
 
-  it('4 · declining or withdrawing settles any live fee line before returning success', () => {
-    const terminal = REGISTRATION.slice(REGISTRATION.indexOf("if (newStatus === 'declined')"));
-    const decline = terminal.slice(0, terminal.indexOf("if (newStatus === 'withdrawn')"));
-    const withdraw = terminal.slice(terminal.indexOf("if (newStatus === 'withdrawn')"));
-    assert.match(decline, /await voidLeagueRegistrationFee\(/);
-    assert.match(withdraw, /await voidLeagueRegistrationFee\(/);
+  it('4 · declining or withdrawing settles any money before returning success (9b-2: asked, never voided)', () => {
+    const terminal = REGISTRATION.slice(REGISTRATION.indexOf("if (newStatus === 'declined' || newStatus === 'withdrawn')"));
+    assert.match(terminal, /await endLeagueRegistration\(/);
+    assert.match(terminal, /if \('refusal' in ended\) return moneyRefusal\(/);
+    assert.doesNotMatch(REGISTRATION, /voidLeagueRegistrationFee/);
   });
 
-  it('5 · a void fee is never changed back to posted or pending', () => {
-    const write = functionBody(FEE, 'setLeagueFeePaid');
-    assert.match(write, /line\.status !== 'void'/);
-    assert.doesNotMatch(write, /line\.status !== \(paid \? 'posted' : 'pending'\)/);
+  it('5 · a void fee is never changed back to posted or pending (the write only adds lines)', () => {
+    const write = functionBody(FEE, 'writeLeagueMoney');
+    assert.doesNotMatch(write, /\.update\(|\.insert\(/);
+    assert.doesNotMatch(FEE, /status: 'posted'|status: 'pending'/);
   });
 
   it('6 · the first house league book is created with a race safe database step', () => {

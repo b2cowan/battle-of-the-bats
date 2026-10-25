@@ -229,12 +229,24 @@ BEGIN
     RAISE EXCEPTION 'FAIL T39: house fee double press wrote twice'; END IF;
   PERFORM club_league_fee_set(v_org,v_season,v_reg,false,NULL,current_date);
   PERFORM club_league_fee_set(v_org,v_season,v_reg,true,NULL,current_date);
-  PERFORM club_league_fee_end(v_org,v_season,v_reg,'withdrawn',NULL,NULL);
-  IF EXISTS(SELECT 1 FROM accounting_entries WHERE source_module='league_registration'
-      AND source_entity_id=v_reg AND status='posted')
+  -- Stage 9b-2 (mig 368): ending a paid registration never voids its payment. The old ending refuses; the new one asks
+  -- what happened to the money and records a refund as its own line out, beside the payment.
+  BEGIN
+    PERFORM club_league_fee_end(v_org,v_season,v_reg,'withdrawn',NULL,NULL);
+    RAISE EXCEPTION 'FAIL T39: the old ending voided a paid registration';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM NOT LIKE 'money_unsettled%' THEN RAISE; END IF;
+  END;
+  PERFORM 1 FROM league_registration_close(v_org,v_season,v_reg,'withdrawn',NULL,NULL,false,false,
+    'refunded','Moved away',current_date,'cash');
+  IF (SELECT count(*) FROM accounting_entries WHERE source_module='league_registration'
+      AND source_entity_id=v_reg AND status='posted' AND entry_type='income')<>1
+     OR (SELECT count(*) FROM accounting_entries WHERE source_module='league_registration'
+      AND source_entity_id=v_reg AND status='posted' AND entry_type='expense')<>1
+     OR league_reg_received(v_reg)<>0
      OR (SELECT registration_fee_paid FROM league_registrations WHERE id=v_reg)
      OR (SELECT status FROM league_registrations WHERE id=v_reg)<>'withdrawn' THEN
-    RAISE EXCEPTION 'FAIL T39: house undo/withdrawal left a live fee'; END IF;
+    RAISE EXCEPTION 'FAIL T39: house withdrawal did not record its refund beside the payment'; END IF;
   BEGIN
     PERFORM club_league_fee_set(v_org,v_season,v_reg,true,NULL,current_date);
     RAISE EXCEPTION 'FAIL T39: withdrawn registration could be marked paid';

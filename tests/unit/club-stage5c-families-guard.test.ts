@@ -25,16 +25,23 @@ import { NEEDS_ATTENTION_KINDS, NOTIFICATION_CATEGORY } from '../../lib/notifica
 
 const PAY = readCode('lib/families-payment.ts');
 
+// Stage 9b-2 (mig 368) rebuilt the one write to take an amount, a day and a method, and to record refunds as money out:
+// `writeLeagueMoney` → `club_league_money` (received · refund · undo · price) and `endLeagueRegistration` →
+// `league_registration_close` (an ending's money answer). The pins below hold the same line as before — two doors, one
+// write — on the new names; tests/unit/house-league-money-guard.test.ts holds every other house-league money path to it.
 describe('1 · one house-league-fee write, two doors', () => {
   it('the Registrations route calls the one write and flips no fee itself', () => {
     const route = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
-    assert.match(route, /await setLeagueFeePaid\(ctx!, \{ season, reg \}, Boolean\(body\.feePaid\)\)/);
+    assert.match(route, /await writeLeagueMoney\(ctx!, \{ seasonId, regId \}, move\)/);
     assert.match(route, /if \(!canMarkLeagueFeePaid\(ctx!\)\) return forbidden\(\);/);
     assert.doesNotMatch(route, /registration_fee_paid:/, 'the route writes the fee itself again — a second copy of the one write');
   });
   it('the family payment route reaches the same write, and writes no fee itself', () => {
     assert.match(readCode('app/api/admin/families/[personId]/payment/route.ts'), /await recordFamilyPayment\(ctx, page, body\)/);
-    assert.match(functionBody(PAY, 'recordFamilyPayment'), /await setLeagueFeePaid\(ctx, \{/);
+    const pay = functionBody(PAY, 'recordFamilyPayment');
+    assert.match(pay, /await writeLeagueMoney\(ctx, \{/);
+    // The window's date and how reach the book (they were dropped before 9b-2).
+    assert.match(pay, /kind: 'receive', day: receivedDate, method:/);
     assert.doesNotMatch(PAY, /registration_fee_paid:/);
   });
   it('the one write holds the role, the module and the closed fiscal year', () => {
@@ -42,8 +49,11 @@ describe('1 · one house-league-fee write, two doors', () => {
     // Who may: the one house-league gate (Club Tier Stage 9a Part 1, Q17), never a role list of its own.
     assert.match(lib, /canHouseLeague\(ctx, ctx\.org, 'takeFees'\)/);
     assert.doesNotMatch(lib, /'league_admin'|'league_registrar'/, 'the fee write names a role again; ask lib/house-league-access.ts');
-    assert.match(lib, /refuseIfClosed\(setting, \[line\.entry_date\]/);
-    assert.match(lib, /\.rpc\('club_league_fee_set'/);
+    const write = functionBody(lib, 'writeLeagueMoney');
+    assert.match(write, /refuseIfClosed\(setting, \[recorded\], \{ canMove: true, kind: 'recorded' \}\)/, 'Undo checks the year of the payment it voids');
+    assert.match(write, /refuseIfClosed\(setting, \[day\]/, 'a new line checks the year of its own day');
+    assert.match(write, /\.rpc\('club_league_money'/);
+    assert.match(functionBody(lib, 'endLeagueRegistration'), /\.rpc\('league_registration_close'/);
   });
 });
 
@@ -104,10 +114,13 @@ describe('3 · the coach’s save resolves a hand-off, and refuses the wrong one
   });
   it('two presses on one fee make one fee line (the registration is locked in SQL)', () => {
     const lib = readCode('lib/league-fee-paid.ts');
-    const sql = readCode('supabase/migrations/342_club_tournament_fee_book.sql');
-    assert.match(lib, /\.rpc\('club_league_fee_set'/);
-    assert.match(sql, /WHERE id=p_registration AND org_id=p_org AND season_id=p_season FOR UPDATE/);
-    assert.match(sql, /IF v_reg\.registration_fee_paid IS NOT DISTINCT FROM p_paid THEN[\s\S]*IF p_paid AND v_old\.status='posted' THEN RETURN v_reg\.fee_entry_id/);
+    const sql = readCode('supabase/migrations/368_house_league_money_honest.sql');
+    const money = sql.slice(sql.indexOf('FUNCTION public.club_league_money('));
+    assert.match(lib, /\.rpc\('club_league_money'/);
+    // The registration row is held, and a second press finds nothing left owing (proved on the database by
+    // scripts/house-league-money-check.sql T3 and the Stage 7a check).
+    assert.match(money, /WHERE r\.id = p_registration AND r\.org_id = p_org AND r\.season_id = p_season FOR UPDATE/);
+    assert.match(money, /IF v_fee - v_got <= 0 THEN RETURN QUERY SELECT NULL::uuid, 'already_received'::text/);
   });
   it('Record money carries the id only from a door that names it, and clears it with the form', () => {
     const panel = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx');
@@ -185,7 +198,7 @@ describe('5 · the window places an amount, in the record’s order', () => {
   });
   it('the server validates every line before it writes: a fee only whole, every cent placed, no date after today', () => {
     const r = functionBody(PAY, 'recordFamilyPayment');
-    assert.ok(r.indexOf("refuse(400, 'left_to_place'") < r.indexOf('await setLeagueFeePaid('), 'validate before the first write');
+    assert.ok(r.indexOf("refuse(400, 'left_to_place'") < r.indexOf('await writeLeagueMoney('), 'validate before the first write');
     assert.match(r, /line\.kind === 'league' && c !== line\.feeCents\) return refuse\(409/);
     assert.match(r, /if \(line\.reason\) return refuse\(409, 'line_refused', line\.reason\)/);
     assert.match(r, /futureReceivedDateRefusal\(receivedDate, 'payment'\)/);

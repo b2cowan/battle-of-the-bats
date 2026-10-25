@@ -2,6 +2,8 @@
 import { possessive, registrationReference } from '@/lib/utils';
 import { nameList, ordinal, signupHeadline, signupToPay, type PlacedChild } from './league-signup';
 import { dollarsLine } from './house-league-season';
+import { methodInBrackets } from './house-league-money-words';
+import { formatStoredDate } from './timezone';
 import { STAFF_KIND_COPY, staffKindCopyFor, type StaffKind } from '@/lib/coach-capabilities';
 import {
   FOUNDING_SEASON_END_LABEL,
@@ -1011,6 +1013,10 @@ export function leagueRegistrationDeclinedHtml(input: {
   contactEmail?: string;
   /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
   face?: FamilyMailFace | null;
+  /** The registrar's note to the family (9b-2 copy `mail.declined.note`), verbatim in its own paragraph. */
+  note?: string | null;
+  /** What happened to money the family paid (9b-2 copy §15.1): a refund, or the club keeping it with its reason. */
+  money?: EndedMoneyLine | null;
 }) {
   const p = escapeEmailFields(input);
   // The club's own address when it has a public contact (or the caller passed one); otherwise the club by name. The platform's
@@ -1024,8 +1030,62 @@ export function leagueRegistrationDeclinedHtml(input: {
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration update</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We’re sorry: <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not accepted.</p>
+    ${noteAndMoney(input.note ?? null, input.money ?? null)}
     <p>${contactLine}</p>
   `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
+}
+
+/** What happened to money on an ended house-league registration, for the family's email (9b-2 copy §15). */
+export type EndedMoneyLine =
+  | { answer: 'refunded'; amount: number; day: string; method: string | null }
+  | { answer: 'kept'; amount: number; reason: string };
+
+/** The released email's last line (copy `mail.released.contact`): the club's own address when it has a public contact,
+ *  otherwise the club by name — never the platform's inbox (S3b, copy item 9); with no club at all the old line. */
+function releasedContactLine(face: FamilyMailFace | null | undefined, contactEmail: string | undefined): string {
+  const club = face ? escapeEmailHtml(face.club.name) : null;
+  const contact = contactEmail ?? (face?.contact ? escapeEmailHtml(face.contact) : club ? null : ADMIN_EMAIL);
+  return contact
+    ? `If you think this is a mistake, contact ${club ? `${club} at ` : ''}<a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a>.`
+    : `If you think this is a mistake, contact ${club}.`;
+}
+
+/** The registrar's note, then the money sentence — each only when it applies, both escaped (copy §15.1). */
+function noteAndMoney(note: string | null, money: EndedMoneyLine | null): string {
+  const out: string[] = [];
+  if (note && note.trim()) out.push(`<p>${escapeEmailHtml(note.trim()).replace(/\n/g, '<br>')}</p>`);
+  if (money?.answer === 'refunded') {
+    out.push(`<p>We refunded the ${dollarsLine(money.amount)} you paid on ${formatStoredDate(money.day)}${methodInBrackets(money.method)}.</p>`);
+  } else if (money?.answer === 'kept') {
+    out.push(`<p>The club is keeping the ${dollarsLine(money.amount)} you paid. The reason: ${escapeEmailHtml(money.reason)}.</p>`);
+  }
+  return out.join('\n    ');
+}
+
+/** The club released an unpaid (or part-paid) spot (Club Tier 9b-2, copy §15.2). */
+export function leagueSpotReleasedHtml(input: {
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string;
+  seasonName: string;
+  divisionName: string;
+  /** The price fixed on the registration; with nothing received, the email says it was not received. */
+  fee: number | null;
+  note?: string | null;
+  money?: EndedMoneyLine | null;
+  contactEmail?: string;
+  face?: FamilyMailFace | null;
+}) {
+  const p = escapeEmailFields(input);
+  const unpaid = !input.money && (input.fee ?? 0) > 0 ? `<p>The ${dollarsLine(input.fee!)} fee was not received.</p>` : '';
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Spot released</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>The club has released <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> spot in <strong>${p.divisionName}</strong> for <strong>${p.seasonName}</strong>. ${p.playerFirstName} is no longer registered.</p>
+    ${unpaid}
+    ${noteAndMoney(input.note ?? null, input.money ?? null)}
+    <p>${releasedContactLine(input.face, p.contactEmail)}</p>
+  `, input.face, `${input.playerFirstName} was signed up for ${input.seasonName}`);
 }
 
 /* `leagueBroadcastHtml` lived here until 2026-08-18. The season broadcast now goes through

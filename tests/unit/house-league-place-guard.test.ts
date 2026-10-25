@@ -61,18 +61,19 @@ describe('every door uses the locked functions', () => {
 
   it('ending, moving and re-dividing a child promote inside their own locked step, never as a second call', () => {
     const code = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
-    assert.match(code, /voidLeagueRegistrationFee\([^)]*'declined'[^)]*season\.autoPromoteWaitlist\)/);
-    assert.match(code, /voidLeagueRegistrationFee\([^)]*'withdrawn'[^)]*season\.autoPromoteWaitlist\)/);
+    // 9b-2: decline, withdraw and release the spot are one ending (mig 368), asked about money, promoting in the same step.
+    assert.match(code, /endLeagueRegistration\(ctx!, \{ seasonId, regId \}, \{\s*status: newStatus, notes: adminNotes \?\? null, promote: season\.autoPromoteWaitlist,/);
     assert.match(code, /moveLeagueRegistration\([^)]*season\.autoPromoteWaitlist\)/);
-    assert.match(code, /changeLeagueDivision\([^)]*season\.autoPromoteWaitlist\)/);
+    assert.match(code, /changeLeagueDivision\([^)]*season\.autoPromoteWaitlist/);
     assert.doesNotMatch(code, /promoteLeagueWaitlist\(/, 'a separate promote call could leave a freed spot unfilled');
-    assert.match(readCode('lib/league-fee-paid.ts'), /\.rpc\('league_registration_end'/);
+    assert.match(readCode('lib/league-fee-paid.ts'), /\.rpc\('league_registration_close'/);
   });
 
   it('a new division is a placement: the reassignment never writes division_id itself', () => {
     const code = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
     assert.doesNotMatch(code, /division_id\s*[:=]/);
-    assert.match(functionBody(PLACE, 'changeLeagueDivision'), /\.rpc\('league_registration_change_division'/);
+    // 9b-2: the move carries an optional price; the database keeps a paid child's (mig 368).
+    assert.match(functionBody(PLACE, 'changeLeagueDivision'), /\.rpc\('league_registration_move_division'/);
   });
 
   it('emails follow a real change, decided under the lock', () => {
@@ -95,6 +96,17 @@ describe('the database functions hold the season lock and count received childre
       const end = body.indexOf('END $$;');
       const lockAt = body.search(/FROM league_seasons[^;]*FOR NO KEY UPDATE/);
       const firstWrite = body.search(/\b(INSERT INTO|UPDATE) league_registrations|league_waitlist_promote_locked\(/);
+      assert.ok(lockAt > 0 && lockAt < end && (firstWrite < 0 || lockAt < firstWrite), `${fn} locks the season before it writes`);
+    });
+  }
+  // 9b-2 (mig 368): the ending with its money answer, the old ending's new body and the priced move, the same way.
+  const MIG368 = readSource('supabase/migrations/368_house_league_money_honest.sql').replace(/--.*$/gm, '');
+  for (const fn of ['league_registration_close', 'league_registration_end', 'league_registration_move_division']) {
+    it(`${fn} (mig 368) takes the season row lock first`, () => {
+      const body = MIG368.slice(MIG368.indexOf(`FUNCTION public.${fn}(`));
+      const end = body.indexOf('END $$;');
+      const lockAt = body.search(/FROM league_seasons[^;]*FOR NO KEY UPDATE/);
+      const firstWrite = body.search(/\b(INSERT INTO|UPDATE) league_registrations|league_waitlist_promote_locked\(|club_league_money\(|league_registration_change_division\(/);
       assert.ok(lockAt > 0 && lockAt < end && (firstWrite < 0 || lockAt < firstWrite), `${fn} locks the season before it writes`);
     });
   }

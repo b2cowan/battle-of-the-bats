@@ -6725,6 +6725,105 @@
         "column_default": null
       },
       {
+        "table_name": "league_registration_price_changes",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "pos": 4,
+        "column_name": "registration_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "pos": 5,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "pos": 6,
+        "column_name": "old_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "pos": 7,
+        "column_name": "new_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "pos": 8,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "pos": 9,
+        "column_name": "refund_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "pos": 10,
+        "column_name": "changed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "pos": 11,
+        "column_name": "changed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "league_registrations",
         "pos": 1,
         "column_name": "id",
@@ -6977,6 +7076,51 @@
         "column_default": null
       },
       {
+        "table_name": "league_registrations",
+        "pos": 29,
+        "column_name": "accepted_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 30,
+        "column_name": "ended_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 31,
+        "column_name": "spot_released",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 32,
+        "column_name": "end_money",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 33,
+        "column_name": "end_money_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_seasons",
         "pos": 1,
         "column_name": "id",
@@ -7182,6 +7326,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 25,
+        "column_name": "owing_amber_days",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "14"
       },
       {
         "table_name": "league_teams",
@@ -25168,6 +25321,41 @@
         "constraint_name": "league_practices_team_id_fkey"
       },
       {
+        "table_name": "league_registration_price_changes",
+        "column_name": "changed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_registration_price_changes_changed_by_fkey"
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_registration_price_changes_org_id_fkey"
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "column_name": "refund_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "league_registration_price_changes_refund_entry_id_fkey"
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "column_name": "registration_id",
+        "foreign_table": "league_registrations",
+        "foreign_column": "id",
+        "constraint_name": "league_registration_price_changes_registration_id_fkey"
+      },
+      {
+        "table_name": "league_registration_price_changes",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_registration_price_changes_season_id_fkey"
+      },
+      {
         "table_name": "league_registrations",
         "column_name": "division_id",
         "foreign_table": "league_divisions",
@@ -28959,6 +29147,11 @@
       },
       {
         "tablename": "accounting_entries",
+        "indexname": "accounting_entries_league_registration_idx",
+        "indexdef": "CREATE INDEX accounting_entries_league_registration_idx ON public.accounting_entries USING btree (source_entity_id) WHERE (source_module = 'league_registration'::text)"
+      },
+      {
+        "tablename": "accounting_entries",
         "indexname": "accounting_entries_ledger_id_idx",
         "indexdef": "CREATE INDEX accounting_entries_ledger_id_idx ON public.accounting_entries USING btree (ledger_id)"
       },
@@ -30261,6 +30454,31 @@
         "tablename": "league_practices",
         "indexname": "league_practices_team_idx",
         "indexdef": "CREATE INDEX league_practices_team_idx ON public.league_practices USING btree (team_id)"
+      },
+      {
+        "tablename": "league_registration_price_changes",
+        "indexname": "league_registration_price_changes_org_idx",
+        "indexdef": "CREATE INDEX league_registration_price_changes_org_idx ON public.league_registration_price_changes USING btree (org_id)"
+      },
+      {
+        "tablename": "league_registration_price_changes",
+        "indexname": "league_registration_price_changes_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_registration_price_changes_pkey ON public.league_registration_price_changes USING btree (id)"
+      },
+      {
+        "tablename": "league_registration_price_changes",
+        "indexname": "league_registration_price_changes_refund_idx",
+        "indexdef": "CREATE INDEX league_registration_price_changes_refund_idx ON public.league_registration_price_changes USING btree (refund_entry_id) WHERE (refund_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_registration_price_changes",
+        "indexname": "league_registration_price_changes_reg_idx",
+        "indexdef": "CREATE INDEX league_registration_price_changes_reg_idx ON public.league_registration_price_changes USING btree (registration_id)"
+      },
+      {
+        "tablename": "league_registration_price_changes",
+        "indexname": "league_registration_price_changes_season_idx",
+        "indexdef": "CREATE INDEX league_registration_price_changes_season_idx ON public.league_registration_price_changes USING btree (season_id, changed_at DESC)"
       },
       {
         "tablename": "league_registrations",
@@ -34837,6 +35055,36 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "league_registration_price_changes",
+        "detail": "league_registration_price_changes_amount_chk",
+        "check_clause": "((new_amount >= (0)::numeric) AND ((old_amount IS NULL) OR (old_amount >= (0)::numeric)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_registration_price_changes",
+        "detail": "league_registration_price_changes_kind_chk",
+        "check_clause": "(kind = ANY (ARRAY['corrected'::text, 'moved'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_registration_price_changes",
+        "detail": "league_registration_price_changes_reason_chk",
+        "check_clause": "(((reason IS NULL) OR (char_length(reason) <= 500)) AND ((kind <> 'corrected'::text) OR (COALESCE(btrim(reason), ''::text) <> ''::text)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_registration_price_changes",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_registrations",
+        "detail": "league_registrations_end_money_check",
+        "check_clause": "(((end_money IS NULL) OR (end_money = ANY (ARRAY['refunded'::text, 'kept'::text]))) AND ((end_money_reason IS NULL) OR (char_length(end_money_reason) <= 500)) AND ((end_money IS DISTINCT FROM 'kept'::text) OR (COALESCE(btrim(end_money_reason), ''::text) <> ''::text)))"
+      },
+      {
+        "kind": "CHECK",
         "table_name": "league_registrations",
         "detail": "league_registrations_fee_amount_check",
         "check_clause": "((fee_amount IS NULL) OR (fee_amount >= (0)::numeric))"
@@ -34864,6 +35112,12 @@
         "table_name": "league_seasons",
         "detail": "league_seasons_how_to_pay_check",
         "check_clause": "((how_to_pay IS NULL) OR (char_length(how_to_pay) <= 1000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_seasons",
+        "detail": "league_seasons_owing_amber_days_check",
+        "check_clause": "((owing_amber_days >= 1) AND (owing_amber_days <= 365))"
       },
       {
         "kind": "CHECK",

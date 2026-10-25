@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-25",
-  "total": 385,
+  "total": 420,
   "counts": {
-    "tables": 13,
-    "columns": 208,
-    "indexes": 54,
-    "constraints": 51,
-    "rls": 59
+    "tables": 14,
+    "columns": 225,
+    "indexes": 60,
+    "constraints": 57,
+    "rls": 64
   },
   "items": [
     {
@@ -58,11 +58,31 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:league_registration_price_changes.league_registration_price_changes_amount_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_registration_price_changes.league_registration_price_changes_kind_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_registration_price_changes.league_registration_price_changes_reason_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_registrations.league_registrations_end_money_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:league_registrations.league_registrations_fee_amount_check",
       "sig": ""
     },
     {
       "key": "check:only-dev:league_seasons.league_seasons_how_to_pay_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_seasons.league_seasons_owing_amber_days_check",
       "sig": ""
     },
     {
@@ -330,6 +350,66 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_registration_price_changes.changed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registration_price_changes.changed_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registration_price_changes.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registration_price_changes.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registration_price_changes.new_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registration_price_changes.old_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registration_price_changes.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registration_price_changes.reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registration_price_changes.refund_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registration_price_changes.registration_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registration_price_changes.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.accepted_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.end_money",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.end_money_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.ended_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_registrations.fee_amount",
       "sig": ""
     },
@@ -342,6 +422,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_registrations.spot_released",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_seasons.ask_email_consent",
       "sig": ""
     },
@@ -351,6 +435,10 @@
     },
     {
       "key": "column:only-dev:league_seasons.how_to_pay",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_seasons.owing_amber_days",
       "sig": ""
     },
     {
@@ -1090,6 +1178,30 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_registration_price_changes.league_registration_price_changes_changed_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_registration_price_changes.league_registration_price_changes_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_registration_price_changes.league_registration_price_changes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_registration_price_changes.league_registration_price_changes_refund_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_registration_price_changes.league_registration_price_changes_registration_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_registration_price_changes.league_registration_price_changes_season_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:online_payment_refunds.online_payment_refunds_cost_entry_fk",
       "sig": ""
     },
@@ -1290,6 +1402,10 @@
       "sig": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
     },
     {
+      "key": "index:only-dev:accounting_entries_league_registration_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:family_email_sends_org_sent_idx",
       "sig": ""
     },
@@ -1303,6 +1419,26 @@
     },
     {
       "key": "index:only-dev:idx_rep_team_tryout_contacts_setter",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_registration_price_changes_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_registration_price_changes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_registration_price_changes_refund_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_registration_price_changes_reg_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_registration_price_changes_season_idx",
       "sig": ""
     },
     {
@@ -1499,6 +1635,10 @@
     },
     {
       "key": "table:only-dev:family_email_sends",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:league_registration_price_changes",
       "sig": ""
     },
     {

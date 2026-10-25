@@ -61,9 +61,10 @@ describe('2. every club money write checks the lock first, and maps the database
     'app/api/admin/accounting/ledgers/[ledgerId]/entries/route.ts': [/refuseIfClosedFor\(/, /isClosedYearError\(/],
     'app/api/admin/accounting/ledgers/[ledgerId]/entries/[entryId]/route.ts': [/refuseIfClosed\(setting, \[existing\.entry_date\]/, /refuseIfClosedFor\(ctx!\.org\.id, \[existing\.entry_date\], 'recorded'\)/, /isClosedYearError\(/],
     'app/api/admin/accounting/transfers/route.ts': [/refuseIfClosedFor\(/, /isClosedYearError\(/],
-    // The fee tick's one write moved out of the route (Club Tier Stage 5c, Part A); the route calls it.
-    'lib/league-fee-paid.ts': [/refuseIfClosed\(setting, \[line\.entry_date\]/, /isClosedYearError\(/],
-    'app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts': [/await setLeagueFeePaid\(/],
+    // The fee's one write moved out of the route (Club Tier Stage 5c, Part A; rebuilt 9b-2); the route calls it. Undo checks
+    // the year of the payment it voids, a new line the year of its own day.
+    'lib/league-fee-paid.ts': [/refuseIfClosed\(setting, \[recorded\], \{ canMove: true, kind: 'recorded' \}\)/, /refuseIfClosed\(setting, \[day\]/, /isClosedYearError\(/],
+    'app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts': [/await writeLeagueMoney\(/, /await endLeagueRegistration\(/],
     'app/api/admin/accounting/budget-plan/lines/[lineId]/route.ts': [/lineYearRefusal\(/],
     'app/api/admin/accounting/budget-plan/lines/[lineId]/periods/route.ts': [/lineYearRefusal\(/],
   };
