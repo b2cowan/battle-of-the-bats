@@ -71,7 +71,7 @@ const familiesHelp: HelpPageContent = {
               <p>Show names the list on screen and its count; open it to pick another. Each list has its count beside it.</p>
               <ul>
                 <li><strong>No family on file</strong> &mdash; children whose roster row or registration names no guardian, or an address that can&rsquo;t be emailed. See the next topic.</li>
-                <li><strong>Owes money</strong> &mdash; families whose rep dues this season aren&rsquo;t paid, and house-league families with a fee not marked paid.</li>
+                <li><strong>Owes money</strong> &mdash; families whose rep dues this season aren&rsquo;t paid, and house-league families with an accepted child whose fee is still owing.</li>
                 <li><strong>Missing forms</strong> &mdash; rep children missing a required team document.</li>
                 <li><strong>No consent on file</strong> &mdash; families the club holds no recorded consent for.</li>
                 <li><strong>Not back this season</strong> &mdash; families with history but nothing this season: your retention list.</li>
@@ -87,9 +87,9 @@ const familiesHelp: HelpPageContent = {
           content: (
             <dl>
               <dt><strong>Balance</strong></dt>
-              <dd>What the family owes this season: each rep child&rsquo;s balance on their team&rsquo;s Player dues where it is above zero, plus any house-league registration fee not marked paid. A credit one child holds on one team never pays down another child&rsquo;s dues on another team.</dd>
+              <dd>What the family owes this season: each rep child&rsquo;s balance on their team&rsquo;s Player dues where it is above zero, plus any house-league registration fee still owing on an accepted child. A credit one child holds on one team never pays down another child&rsquo;s dues on another team.</dd>
               <dt><strong>Fee not paid</strong></dt>
-              <dd>Shown on a house-league child&rsquo;s line when the season&rsquo;s registration fee isn&rsquo;t marked paid. The fee is counted in Balance.</dd>
+              <dd>Shown on a house-league child&rsquo;s line when the registration fee hasn&rsquo;t been marked received. The fee is counted in Balance.</dd>
               <dt><strong>Chased</strong></dt>
               <dd>When a rep dues reminder last reached the family, or <em>Never</em>. It is about dues only: a house-league fee reads <em>Not tracked</em>.</dd>
             </dl>
@@ -166,7 +166,7 @@ const familiesHelp: HelpPageContent = {
       heading: 'A family’s record',
       summary: 'Opens over the list: money, children, notes, contact, forms and history — Record a payment, Message, Export, and Next to the next family.',
       keywords: ['family page', 'family record', 'household', 'balance', 'dues', 'rep dues', 'registration fee', 'opted out', 'club email', 'former address', 'named on', 'history', 'last messaged', 'previous', 'next', 'record a payment', 'payment', 'cheque', 'house-league fee', 'fee paid', 'sent to coach', 'not received', 'hand off', 'notes', 'family notes', 'staff notes', 'family file'],
-      searchText: 'open a family record window over the list previous next step through owes money one of five rep dues paid balance band children dues paid balance fundraising other credits handed back league fee paid not paid contact email former phone club email switch opt out unsubscribe named on where to change details no edit forms and consent history show all record a payment amount received placed left to place whole fee mark a house league fee paid send a rep payment to the head coach to record date received how note cheque number sent to coach not received record it the coach records it money figures move person who sent it is told in their notifications correct a payment where it was written nothing is sent to the family fee permission league registrar league admin owner season is closed no head coach you are the head coach more than a child owes becomes a credit add a note notes staff only signed dated newest first show all edit a note pencil delete a note owner keeps who deleted it never the words a note belongs to the guardian record merged records carry both people notes the family file includes notes',
+      searchText: 'open a family record window over the list previous next step through owes money one of five rep dues paid balance band children dues paid balance fundraising other credits handed back league fee paid not paid mark received price fixed at sign-up pay link greyed online payment not available refunded ended child owes nothing contact email former phone club email switch opt out unsubscribe named on where to change details no edit forms and consent history show all record a payment amount received placed left to place whole fee mark a house league fee paid send a rep payment to the head coach to record date received how note cheque number sent to coach not received record it the coach records it money figures move person who sent it is told in their notifications correct a payment where it was written nothing is sent to the family fee permission league registrar league admin owner season is closed no head coach you are the head coach more than a child owes becomes a credit add a note notes staff only signed dated newest first show all edit a note pencil delete a note owner keeps who deleted it never the words a note belongs to the guardian record merged records carry both people notes the family file includes notes',
       content: (
         <p>
           A family opens over the list it came from. Its heading names that list and the family&rsquo;s place in
@@ -193,9 +193,10 @@ const familiesHelp: HelpPageContent = {
                 they aren&rsquo;t zero. A child who isn&rsquo;t back this season shows the season they were last in.
               </p>
               <p>
-                A house-league child shows the season&rsquo;s registration fee in the same three columns. The club
-                marks a fee paid or not paid, so Paid is the whole fee or nothing &mdash; a part payment can&rsquo;t
-                be shown.
+                A house-league child shows the registration fee in the same three columns, with a line under the season saying <em>Price fixed at sign-up</em> and the day. Dues is the price fixed on that registration, not the season&rsquo;s
+                current price, and Paid is what the season&rsquo;s book has received for it after any refund. A child who
+                has ended owes nothing. A greyed <strong>Pay link</strong> sits beside a balance; online payment isn&rsquo;t
+                available yet, so record the payment by hand.
               </p>
             </>
           ),
@@ -247,9 +248,9 @@ const familiesHelp: HelpPageContent = {
               </p>
               <HelpSteps>
                 <li>Type the <strong>Amount received</strong>. It is placed down the children who owe, in the record&rsquo;s order, and two figures keep count: <strong>Placed</strong> and <strong>Left to place</strong>.</li>
-                <li>A house-league child: tick <strong>Whole fee</strong>. The fee is marked paid in the club&rsquo;s books now, the same as the tick on House league &rsaquo; Registrations.</li>
+                <li>A house-league child: tick <strong>Whole fee</strong>. The fee is marked received in the club&rsquo;s books now, the same as <strong>Mark received</strong> on House league &rsaquo; Registrations.</li>
                 <li>A rep child: the amount goes to the team&rsquo;s head coach to record. The club never records into a team&rsquo;s own book.</li>
-                <li>Set the <strong>Date received</strong> (not after today) and <strong>How</strong>. Add a <strong>Note</strong> if you want one &mdash; a cheque number goes there.</li>
+                <li>Set the <strong>Date received</strong> (not after today) and <strong>How</strong>. A house-league fee keeps both in the season&rsquo;s book. Add a <strong>Note</strong> if you want one &mdash; a cheque number goes there.</li>
                 <li>Read the line at the bottom. It says what pressing will do, child by child. All of the amount must be placed before the button appears.</li>
               </HelpSteps>
               <p>
@@ -265,7 +266,7 @@ const familiesHelp: HelpPageContent = {
             <>
               <p>Anyone given <strong>Families</strong> can open Record a payment. A treasurer without Families sees nothing new, and a member limited to some teams never has Families.</p>
               <ul>
-                <li>A <strong>house-league line</strong> also needs the fee permission: only the owner, a club admin, a league admin or a league registrar marks a house-league fee paid.</li>
+                <li>A <strong>house-league line</strong> also needs the fee permission: only the owner, a club admin, a league admin or a league registrar marks a house-league fee received.</li>
                 <li>A line that can&rsquo;t go stays on the list and says why: the team&rsquo;s season is closed, the team has no head coach to send it to, you are that team&rsquo;s head coach (record it on the team&rsquo;s Player dues), or you lack the fee permission.</li>
                 <li>More than a child owes is allowed. The team&rsquo;s book turns the extra into a credit when the coach records it.</li>
               </ul>
@@ -286,7 +287,7 @@ const familiesHelp: HelpPageContent = {
                 <li><strong>History</strong> lists the send and what came of it.</li>
               </ul>
               <HelpNote variant="info" title="Corrections happen where the payment was written">
-                A mistake is corrected where it was written: the coach corrects the receipt on the team&rsquo;s Player dues, and a house-league tick is changed on Registrations.
+                A mistake is corrected where it was written: the coach corrects the receipt on the team&rsquo;s Player dues, and a house-league payment is undone or corrected on Registrations (<strong>Undo</strong>, <strong>Correct the price</strong>).
               </HelpNote>
             </>
           ),
@@ -318,14 +319,14 @@ const familiesHelp: HelpPageContent = {
           question: 'How is a house-league child’s fee shown?',
           answer: (
             <p>
-              Like any other child: Dues, Paid and Balance. Dues is the season&rsquo;s registration fee. The club
-              marks a registration paid or not paid &mdash; there is no installment ledger behind it &mdash; so Paid
-              is the whole fee or nothing, and a part payment can&rsquo;t be shown. An unpaid fee counts in the
+              Like any other child: Dues, Paid and Balance. Dues is the price fixed on that registration when the family signed up. The club
+              marks a registration received on Registrations &mdash; the whole amount owing, with a date and how &mdash; so Paid is
+              what the season&rsquo;s book has received after any refund. A fee still owing on an accepted child counts in the
               family&rsquo;s Balance and puts the family on <strong>Owes money</strong>.
             </p>
           ),
           answerText:
-            'Like any other child: Dues, Paid and Balance. Dues is the season registration fee. The club marks a registration paid or not paid, so Paid is the whole fee or nothing and a part payment cannot be shown. An unpaid fee counts in the family Balance and puts the family on Owes money.',
+            'Like any other child: Dues, Paid and Balance. Dues is the price fixed on that registration when the family signed up. The club marks a registration received on Registrations, so Paid is what the season book has received after any refund. A fee still owing on an accepted child counts in the family Balance and puts the family on Owes money.',
           keywords: ['house league', 'fee', 'registration fee', 'balance', 'paid', 'not paid', 'dues'],
         },
         {
@@ -333,15 +334,15 @@ const familiesHelp: HelpPageContent = {
           question: 'A family handed the club a cheque for their child’s dues. Where do I record it?',
           answer: (
             <p>
-              On the family&rsquo;s record, with <strong>Record a payment</strong>. A house-league fee is marked paid
-              in the club&rsquo;s books straight away. A rep child&rsquo;s amount is sent to the team&rsquo;s head
+              On the family&rsquo;s record, with <strong>Record a payment</strong>. A house-league fee is marked received
+              in the club&rsquo;s books straight away, with the date and how you set. A rep child&rsquo;s amount is sent to the team&rsquo;s head
               coach to record &mdash; the club never writes into a team&rsquo;s book. Put the cheque number in the
               <strong> Note</strong>; it goes to the coach, and the family never sees it.
             </p>
           ),
           answerText:
-            'On the family record, use Record a payment. A house-league fee is marked paid in the club books straight away. A rep child amount is sent to the team head coach to record; the club never writes into a team book. Put the cheque number in the Note; it goes to the coach and the family never sees it.',
-          keywords: ['cheque', 'record a payment', 'payment', 'sent to coach', 'house-league fee', 'fee paid', 'hand off'],
+            'On the family record, use Record a payment. A house-league fee is marked received in the club books straight away, with the date and how you set. A rep child amount is sent to the team head coach to record; the club never writes into a team book. Put the cheque number in the Note; it goes to the coach and the family never sees it.',
+          keywords: ['cheque', 'record a payment', 'payment', 'sent to coach', 'house-league fee', 'fee paid', 'mark received', 'hand off'],
           popular: true,
         },
         {

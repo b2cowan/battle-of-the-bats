@@ -8,6 +8,7 @@ import {
   downloadXLSX, generateCSV, downloadCSVBlob, buildFilename, serializeRows, serializeHeaders,
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type ExportColumnDef,
 } from '@/lib/export';
+import { orgDayKey } from '@/lib/timezone';
 import { endedKind, guardianName, playerName, type RegTab } from '@/lib/house-league-registrations';
 import { REGS_WORDS } from '@/lib/house-league-money-words';
 import type { LeagueRegistration } from '@/lib/types';
@@ -57,7 +58,7 @@ function source(rows: readonly ExportRow[]) {
     guardianName: guardianName(r),
     guardianEmail: r.guardianEmail,
     guardianPhone: r.guardianPhone ?? '',
-    registeredAt: r.registeredAt.slice(0, 10),
+    registeredAt: orgDayKey(r.registeredAt),
     status: statusWord(r),
     fee,
     jerseyPref: r.playerJerseyPref ?? '',
@@ -101,7 +102,7 @@ export async function exportPdf(p: {
   if (!p.rows.length) return;
   const { orgQuery } = p;
   const settings = { ...DEFAULT_PDF_SETTINGS, ...((await fetchResolvedPdfSettings(`/api/admin/org/pdf-settings${orgQuery ? `${orgQuery}&resolve=1` : '?resolve=1'}`)) ?? {}) };
-  const pdfRow = ({ reg: r, fee }: ExportRow) => [playerName(r), r.registeredAt.slice(0, 10), statusWord(r), fee];
+  const pdfRow = ({ reg: r, fee }: ExportRow) => [playerName(r), orgDayKey(r.registeredAt), statusWord(r), fee];
   const grouped = p.divisionOrder
     .map(d => ({ label: d.name, rows: p.rows.filter(r => r.reg.divisionId === d.id) }))
     .filter(g => g.rows.length > 0);

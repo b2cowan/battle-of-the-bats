@@ -27,7 +27,7 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
-import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
+import { announceSeasonsChanged, useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { type KitStep } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { Callout, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead } from '../../RepKit';
@@ -71,11 +71,13 @@ import css from './Registrations.module.css';
 const PAGE = 50;
 
 type Act =
-  | { kind: 'receive'; ids: string[] }
+  // The windows that can refuse and read again keep what they OPENED on: a reload must never change their targets (a
+  // refusal stays a refusal, and a second press sends what the first did).
+  | { kind: 'receive'; ids: string[]; targets: ReceiveTarget[] }
   | { kind: 'end'; id: string; mode: EndMode }
   | { kind: 'price'; id: string }
-  | { kind: 'move'; ids: string[] }
-  | { kind: 'undo'; id: string }
+  | { kind: 'move'; ids: string[]; targets: MoveTarget[] }
+  | { kind: 'undo'; id: string; payment: LeagueMoneyLine }
   | { kind: 'email'; ids: string[] }
   | { kind: 'seasonEmail' }
   | { kind: 'confirm'; verb: 'approve' | 'promote' | 'waitlist'; ids: string[] }
@@ -100,7 +102,10 @@ export default function RegistrationsScreen() {
   const [failed, setFailed] = useState<'missing' | 'error' | null>(null);
 
   // Who may (the one house-league gate): a finished season locks the registrations and keeps the fee (Q16).
-  const access = useHouseLeagueAccess(season);
+  // Reading comes from the member alone (so the first read can start); every control comes from the SEASON-AWARE answer,
+  // null until the season has loaded, so nothing writable paints before the page knows the season is finished (Q16).
+  const gate = useHouseLeagueAccess();
+  const access = useSeasonAccess(season);
 
   const [scope, setScope] = useState('');
   const [query, setQuery] = useState('');
@@ -143,7 +148,7 @@ export default function RegistrationsScreen() {
     });
     setFailed(null);
   }, [orgSlug, seasonId, orgQuery, beginRead]);
-  useDeferredLoad(!orgLoading && !!orgSlug && !!access?.read, load);
+  useDeferredLoad(!orgLoading && !!orgSlug && !!gate?.read, load);
 
   // ── Derived ────────────────────────────────────────────────────────────────────────────────────
   const regs = useMemo(() => read?.registrations ?? [], [read]);
@@ -191,14 +196,21 @@ export default function RegistrationsScreen() {
     return m;
   }, [regs, season, read, linesOf, changesByReg]);
 
-  const feeFilterOn = charges && picks.size > 0;
+  // A pick belongs to the tab whose menu offers it (Refunded is the Ended tab's): a hidden pick filters nothing.
+  const feeOptions = [
+    { key: 'owing', label: REGS_WORDS.filterOwing },
+    { key: 'received', label: REGS_WORDS.filterReceived },
+    ...(tab === 'ended' ? [{ key: 'refunded', label: REGS_WORDS.filterRefunded }] : []),
+  ];
+  const activePicks = useMemo(() => new Set([...picks].filter(k => (tab === 'ended' || k !== 'refunded'))), [picks, tab]);
+  const feeFilterOn = charges && activePicks.size > 0;
   const tabRegs = useMemo(() => {
     const list = scoped.filter(r => regTab(r.status) === tab && matchesSearch(r, query)
-      && (!feeFilterOn || matchesFee(fees.get(r.id)!.state, picks)));
+      && (!feeFilterOn || matchesFee(fees.get(r.id)!.state, activePicks)));
     if (tab === 'waitlist') return list.sort((a, b) => (a.waitlistPosition ?? 9999) - (b.waitlistPosition ?? 9999));
     if (tab === 'ended') return list.sort((a, b) => Date.parse(b.endedAt ?? b.updatedAt) - Date.parse(a.endedAt ?? a.updatedAt));
     return list;
-  }, [scoped, tab, query, feeFilterOn, fees, picks]);
+  }, [scoped, tab, query, feeFilterOn, fees, activePicks]);
 
   const bulkKeys = useMemo(() => bulkActions(tab, rights, charges), [tab, rights, charges]);
   const selectable = bulkKeys.length > 0;
@@ -333,6 +345,8 @@ export default function RegistrationsScreen() {
     }];
   });
 
+  const openReceive = (ids: string[]) => setAct({ kind: 'receive', ids, targets: receiveTargets(ids) });
+
   /** Why a ticked row was not part of a Mark received batch (copy §2.2). */
   function skipWhy(reg: LeagueRegistration): Why {
     const kind = fees.get(reg.id)?.state.kind;
@@ -373,14 +387,14 @@ export default function RegistrationsScreen() {
       case 'approve': void statusOne(reg, 'approve'); break;
       case 'promote': void statusOne(reg, 'promote'); break;
       case 'waitlist': void statusOne(reg, 'waitlist'); break;
-      case 'markReceived': setAct({ kind: 'receive', ids: [reg.id] }); break;
-      case 'move': setAct({ kind: 'move', ids: [reg.id] }); break;
+      case 'markReceived': openReceive([reg.id]); break;
+      case 'move': setAct({ kind: 'move', ids: [reg.id], targets: moveTargets([reg.id]) }); break;
       case 'correct': setAct({ kind: 'price', id: reg.id }); break;
       case 'release': setAct({ kind: 'end', id: reg.id, mode: 'released' }); break;
       case 'withdraw': setAct({ kind: 'end', id: reg.id, mode: 'withdrawn' }); break;
       case 'decline': setAct({ kind: 'end', id: reg.id, mode: 'declined' }); break;
       case 'email': setAct({ kind: 'email', ids: [reg.id] }); break;
-      case 'undo': setAct({ kind: 'undo', id: reg.id }); break;
+      case 'undo': { const payment = lastPayment(linesOf(reg.id)); if (payment) setAct({ kind: 'undo', id: reg.id, payment }); break; }
     }
   }
 
@@ -389,10 +403,10 @@ export default function RegistrationsScreen() {
     if (ids.length === 0) return;
     if (key === 'approve' || key === 'promote' || key === 'waitlist') { setAct({ kind: 'confirm', verb: key, ids }); return; }
     if (key === 'email') { setAct({ kind: 'email', ids }); return; }
-    if (key === 'move') { setAct({ kind: 'move', ids }); return; }
+    if (key === 'move') { setAct({ kind: 'move', ids, targets: moveTargets(ids) }); return; }
     // Mark received: only the owing ones go to the window; the rest are said in the result.
     if (receiveTargets(ids).length === 0) { finishReceive({ done: [], refused: [] }, ids); return; }
-    setAct({ kind: 'receive', ids });
+    openReceive(ids);
   }
 
   // ── The record's neighbours ────────────────────────────────────────────────────────────────────
@@ -424,8 +438,8 @@ export default function RegistrationsScreen() {
     />
   );
 
-  if (orgLoading || !access) return <PageLoading header={header} label={REGS_WORDS.loading} />;
-  if (!access.read) return <div className={repKit.page}>{header}<EmptyCard title={REGS_WORDS.noAccess} /></div>;
+  if (orgLoading || !gate) return <PageLoading header={header} label={REGS_WORDS.loading} />;
+  if (!gate.read) return <div className={repKit.page}>{header}<EmptyCard title={REGS_WORDS.noAccess} /></div>;
   if (!read && !failed) return <PageLoading header={header} label={REGS_WORDS.loading} />;
   if (failed || !season || !read) {
     return (
@@ -449,14 +463,9 @@ export default function RegistrationsScreen() {
   }));
 
   // ── The Fee filter ─────────────────────────────────────────────────────────────────────────────
-  const feeOptions = [
-    { key: 'owing', label: REGS_WORDS.filterOwing },
-    { key: 'received', label: REGS_WORDS.filterReceived },
-    ...(tab === 'ended' ? [{ key: 'refunded', label: REGS_WORDS.filterRefunded }] : []),
-  ];
   const groups = charges ? [{
     key: 'fee', label: REGS_WORDS.filterFee, options: feeOptions,
-    selected: [...picks].filter(k => feeOptions.some(o => o.key === k)),
+    selected: [...activePicks],
     onToggle: (k: string) => { setPicks(prev => { const next = new Set(prev); if (next.has(k)) next.delete(k); else next.add(k); return next; }); setShown(PAGE); clearSelection(); },
   }] : [];
   const resetFilter = () => { setPicks(new Set()); setShown(PAGE); };
@@ -537,7 +546,7 @@ export default function RegistrationsScreen() {
       {result && (
         <Callout tone="warn" role="status" action={<button type="button" className="btn btn-outline" onClick={() => setResult(null)}>{BULK_WORDS.dismiss}</button>}>
           <b>{result.text}</b>
-          <span className={css.resultSub}>{BULK_WORDS.stayed(result.stayed)}</span>
+          {result.stayed > 0 && <span className={css.resultSub}>{BULK_WORDS.stayed(result.stayed)}</span>}
         </Callout>
       )}
 
@@ -588,6 +597,7 @@ export default function RegistrationsScreen() {
               : REGS_WORDS.tab[regTab(openReg.status)]}
           steps={recordSteps}
           onPick={key => pickRow(openReg, key)}
+          onNote={key => void statusOne(openReg, key)}
           onClose={() => setOpenId(null)}
         />
       )}
@@ -596,7 +606,7 @@ export default function RegistrationsScreen() {
       {act?.kind === 'receive' && (
         <ReceiveWindow
           seasonName={season.name}
-          targets={receiveTargets(act.ids)}
+          targets={act.targets}
           today={today}
           orgQuery={orgQuery}
           seasonId={seasonId}
@@ -653,7 +663,7 @@ export default function RegistrationsScreen() {
         <MoveWindow
           season={season}
           divisions={divisions}
-          targets={moveTargets(act.ids)}
+          targets={act.targets}
           regs={regs}
           today={today}
           orgQuery={orgQuery}
@@ -664,11 +674,12 @@ export default function RegistrationsScreen() {
           onDone={out => finishMove(out, act.ids)}
         />
       )}
-      {act?.kind === 'undo' && actReg(act.id) && lastPayment(linesOf(act.id)) && (
+      {act?.kind === 'undo' && (
         <UndoWindow
           regId={act.id}
           name={nameOf(act.id)}
-          payment={lastPayment(linesOf(act.id))!}
+          payment={act.payment}
+          gone={!linesOf(act.id).some(l => l.id === act.payment.id && l.status === 'posted')}
           today={today}
           orgQuery={orgQuery}
           seasonId={seasonId}

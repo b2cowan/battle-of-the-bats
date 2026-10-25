@@ -213,17 +213,22 @@ const toCents = (n: unknown): number => Math.round(Number(n ?? 0) * 100);
  *  waitlist has no balance yet. Null figures when no price is set (nothing is owed on it). */
 export interface LeagueFeeLine {
   feeCents: number | null; paidCents: number; balanceCents: number;
-  /** The club's day the price was fixed (the sign-up), for "Price fixed at sign-up, Oct 24" (9b-2 copy §13). */
+  /** The club's day the price was fixed (the sign-up), for "Price fixed at sign-up, Oct 24" (9b-2 copy §13); null once the
+   *  price has changed since (a correction or a move's re-price) — the line then says that instead. */
   fixedOn: string | null;
+  /** The latest correction's reason ("Price corrected · {reason}"), when the price was corrected. */
+  corrected: string | null;
 }
 export function leagueFeeLine(r: any): LeagueFeeLine {
   const fee = leagueRegOwes(r);
-  const fixedOn = r.registered_at ? orgDayKey(r.registered_at) : null;
-  if (fee == null) return { feeCents: null, paidCents: 0, balanceCents: 0, fixedOn };
+  const changed = typeof r.__priceChanged === 'boolean' ? r.__priceChanged : false;
+  const corrected = typeof r.__corrected === 'string' ? r.__corrected : null;
+  const fixedOn = !changed && r.registered_at ? orgDayKey(r.registered_at) : null;
+  if (fee == null) return { feeCents: null, paidCents: 0, balanceCents: 0, fixedOn, corrected };
   const feeCents = toCents(fee);
   const paidCents = typeof r.__receivedCents === 'number' ? r.__receivedCents : r.registration_fee_paid === true ? feeCents : 0;
   const owes = r.status === undefined || r.status === 'active';
-  return { feeCents, paidCents, balanceCents: owes ? Math.max(0, feeCents - paidCents) : 0, fixedOn };
+  return { feeCents, paidCents, balanceCents: owes ? Math.max(0, feeCents - paidCents) : 0, fixedOn, corrected };
 }
 
 /** What a raw league_registrations row (with its league_seasons join) owes, in dollars: the one rule. */
@@ -276,6 +281,18 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
   // What the season books have received for each registration (9b-2): the fee line reads it, never the paid flag alone.
   const received = opts.forDuplicates ? new Map<string, number>() : await loadOrgLeagueReceivedCents(orgId);
   for (const r of leagueRegs) r.__receivedCents = received.get(r.id) ?? 0;
+  // A price changed since sign-up (9b-2): the line says "Price corrected · {reason}" or nothing, never "fixed at sign-up".
+  if (!opts.forDuplicates && leagueRegs.length) {
+    const changes = await orgRows<any>('league_registration_price_changes', 'id, registration_id, kind, reason, changed_at', orgId);
+    const latest = new Map<string, any>();
+    for (const c of changes) { const was = latest.get(c.registration_id); if (!was || c.changed_at > was.changed_at) latest.set(c.registration_id, c); }
+    for (const r of leagueRegs) {
+      const c = latest.get(r.id);
+      if (!c) continue;
+      r.__priceChanged = true;
+      if (c.kind === 'corrected') r.__corrected = c.reason ?? '';
+    }
+  }
   const byKey = <T>(rows: T[], key: (r: T) => string | null | undefined) => {
     const m = new Map<string, T[]>();
     for (const r of rows) { const k = key(r); if (!k) continue; const l = m.get(k); if (l) l.push(r); else m.set(k, [r]); }

@@ -258,8 +258,9 @@ export function bulkActions(tab: RegTab, rights: RegRights, charges: boolean): B
   const out: BulkKey[] = [];
   if (tab === 'review' && rights.register) out.push('approve');
   if (tab === 'waitlist' && rights.register) out.push('promote');
-  if ((tab === 'review' || tab === 'active') && rights.register) out.push('waitlist');
+  // On Active the lead — the worded action on a phone's dock, the first button on a desk's bar — is Mark received.
   if (tab === 'active' && rights.takeFees && charges) out.push('markReceived');
+  if ((tab === 'review' || tab === 'active') && rights.register) out.push('waitlist');
   if (tab !== 'ended' && rights.run) out.push('move');
   if (rights.email) out.push('email');
   return out;

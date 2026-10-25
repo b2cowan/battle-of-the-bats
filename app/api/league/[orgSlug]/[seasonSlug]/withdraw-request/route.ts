@@ -51,6 +51,10 @@ export const POST = withObservability(async (req: Request,
   const reg = ((data ?? []) as Row[]).find(r =>
     (r.signup_ref === refCode || registrationReference(String(r.id)) === refCode) && registrationReference(String(r.id)) === child);
   if (!reg) return NextResponse.json({ error: ASK_WORDS.errGeneric }, { status: 404 });
+  // A finished season takes no asks: there is nothing left to withdraw from (the status page offers no door then).
+  if (season.status === 'completed' || season.status === 'archived') {
+    return NextResponse.json({ error: ASK_WORDS.errFinished, code: 'finished' }, { status: 409 });
+  }
   if (reg.status === 'declined' || reg.status === 'withdrawn') {
     return NextResponse.json({ error: ASK_WORDS.errEnded(reg.player_first_name, reg.status), code: 'ended' }, { status: 409 });
   }

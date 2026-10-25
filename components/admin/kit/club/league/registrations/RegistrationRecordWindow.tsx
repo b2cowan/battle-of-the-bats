@@ -14,11 +14,11 @@ import { formatLeagueMoney, receivedOf, type LeagueMoneyLine } from '@/lib/leagu
 import { endedKind, owesNow, regDay, registrationHistory, type PriceChange, type RegsSeason, type RowActionKey } from '@/lib/house-league-registrations';
 import type { LeagueRegistration } from '@/lib/types';
 import FeeCell from './FeeCell';
-import type { RegRowModel } from './RegistrationsList';
+import { Note, type RegRowModel } from './RegistrationsList';
 import css from './Registrations.module.css';
 
 export default function RegistrationRecordWindow({
-  model, season, seasonName, teamName, lines, changes, today, showFee, statusWord, steps, onPick, onClose,
+  model, season, seasonName, teamName, lines, changes, today, showFee, statusWord, steps, onPick, onNote, onClose,
 }: {
   model: RegRowModel;
   season: RegsSeason;
@@ -33,6 +33,8 @@ export default function RegistrationRecordWindow({
   /** The neighbours in the list it was opened from, or null when it was not opened from this list. */
   steps: { prev: KitStep | null; next: KitStep | null; position: string } | null;
   onPick: (key: RowActionKey) => void;
+  /** The offer beside a refusal ("Waitlist {name}"). */
+  onNote: (key: 'waitlist') => void;
   onClose: () => void;
 }) {
   const reg: LeagueRegistration = model.reg;
@@ -78,6 +80,8 @@ export default function RegistrationRecordWindow({
       identity={statusWord}
       onClose={onClose}
     >
+      {/* A refusal from an action started in here (a full division, a duplicate) is said in here, not only on the row behind. */}
+      {model.note && <p className={css.recordNote}><Note row={model} onNote={(_row, key) => onNote(key)} /></p>}
       <section className={css.recordSection}>
         <h3 className={css.recordHead}>{W.details}</h3>
         <Facts rows={details} />

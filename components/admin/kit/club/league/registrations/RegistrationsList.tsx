@@ -57,7 +57,7 @@ type Handlers = {
   onNote: (row: RegRowModel, key: 'waitlist') => void;
 };
 
-function Note({ row, onNote }: { row: RegRowModel; onNote: Handlers['onNote'] }) {
+export function Note({ row, onNote }: { row: RegRowModel; onNote: Handlers['onNote'] }) {
   if (!row.note) return null;
   return (
     <span className={css.rowNote} role="status">

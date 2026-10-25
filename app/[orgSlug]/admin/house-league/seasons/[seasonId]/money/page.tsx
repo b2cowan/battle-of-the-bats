@@ -24,7 +24,7 @@ import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeaso
 import s from '@/components/admin/kit/club/league/SeasonMoney.module.css';
 import { formatLeagueMoney, type SeasonMoney } from '@/lib/league-money';
 import { MONEY_PAGE_WORDS as W, methodWord } from '@/lib/house-league-money-words';
-import { formatStoredDate } from '@/lib/timezone';
+import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import { buildFilename, downloadCSVBlob, downloadXLSX, generateCSV } from '@/lib/export';
 
 interface BookLine {
@@ -40,7 +40,7 @@ interface MoneyRead {
 }
 
 type Tab = 'all' | 'owing' | 'refunds';
-type Row = { key: string; day: string; player: string; what: string; how: string; amount: string; tone: 'in' | 'out' | 'voided' | 'history' };
+type Row = { key: string; day: string; player: string; what: string; how: string; amount: string; value: number | null; tone: 'in' | 'out' | 'voided' | 'history' };
 
 export default function MoneyPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
@@ -96,25 +96,32 @@ export default function MoneyPage() {
       what: l.kind === 'voided' ? W.what.voided : l.kind === 'refund' ? W.what.refund(l.refundWhy) : W.what.fee(l.priceKind),
       how: methodWord(l.method),
       amount: l.kind === 'refund' ? money(-l.amount) : money(l.amount),
+      // The export's number: a refund negative, a voided line counted nowhere (its What says so).
+      value: l.kind === 'voided' ? null : l.kind === 'refund' ? -l.amount : l.amount,
       tone: l.kind === 'voided' ? 'voided' : l.kind === 'refund' ? 'out' : 'in',
     })),
     ...read.history.map((h): Row => ({
-      key: `${h.kind}-${h.regId}-${h.at}`, day: h.at.slice(0, 10), player: h.player ?? '—',
+      key: `${h.kind}-${h.regId}-${h.at}`, day: orgDayKey(h.at), player: h.player ?? '—',
       what: h.kind === 'corrected' ? W.what.corrected(money(h.oldAmount ?? 0), money(h.newAmount), h.reason) : W.what.kept(h.reason),
-      how: '', amount: '—', tone: 'history',
+      how: '', amount: '—', value: null, tone: 'history',
     })),
   ].sort((a, b) => b.day.localeCompare(a.day));
   const refundRows = lineRows.filter(r => r.tone === 'out');
   const shown = tab === 'refunds' ? refundRows : lineRows;
 
-  const exportRows = () => lineRows.map(r => [r.day, r.player, r.what, r.how, r.amount]);
-  const headers = [W.col.date, W.col.player, W.col.what, W.col.how, W.col.amount];
+  // The export is the tab you are on (copy §10), amounts as numbers so a treasurer can sum them.
+  const headers = tab === 'owing'
+    ? [W.col.player, W.col.division, W.col.since, W.col.owing]
+    : [W.col.date, W.col.player, W.col.what, W.col.how, W.col.amount];
+  const exportRows = (): (string | number | null)[][] => tab === 'owing'
+    ? read.owing.map(o => [o.player, o.division ?? '', o.acceptedDay ? W.since(day(o.acceptedDay), o.days) : W.sinceUnknown, o.owing])
+    : (tab === 'refunds' ? refundRows : lineRows).map(r => [r.day, r.player, r.what, r.how, r.value]);
   const file = (ext: 'xlsx' | 'csv') => buildFilename({ org: currentOrg?.slug, dataset: 'house-league-money', scope: read.season.name }, ext);
   const exportButton = !read.free && lineRows.length > 0 ? (
     <ExportMenu
       formats={['xlsx', 'csv']}
       onExportXLSX={() => downloadXLSX(file('xlsx'), headers, exportRows(), W.title)}
-      onExportCSV={() => downloadCSVBlob(generateCSV(headers, exportRows()), file('csv'))}
+      onExportCSV={() => downloadCSVBlob(file('csv'), generateCSV(headers, exportRows()))}
     />
   ) : undefined;
 

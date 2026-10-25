@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
-import { HelpDefs, HelpDef, HelpSteps } from '@/components/help/HelpBlocks';
+import { HelpDefs, HelpDef, HelpSteps, HelpNote } from '@/components/help/HelpBlocks';
 
 const houseLeagueHelp: HelpPageContent = {
   title: 'House league',
@@ -55,13 +55,13 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'Who can do what in house league',
       summary: 'Owners, club admins and league admins run the season; the league registrar works registrations, fees and Email families and reads the rest.',
-      keywords: ['permissions', 'who can', 'club admin', 'league admin', 'league registrar', 'treasurer', 'read only', 'roles', 'access'],
-      searchText: 'who can do what house league permissions owner admin club admin league admin league registrar registrar treasurer read only edit seasons divisions teams schedule approve decline withdraw add registration by hand fees received email families money page read cannot see button absent not greyed',
+      keywords: ['permissions', 'who can', 'club admin', 'league admin', 'league registrar', 'treasurer', 'read only', 'roles', 'access', 'move a child between divisions', 'who can take fees', 'who can end a registration'],
+      searchText: 'who can do what house league permissions owner admin club admin league admin league registrar registrar treasurer read only edit seasons divisions teams schedule approve decline withdraw release the spot add registration by hand fees received mark received undo correct the price refund move to another division email families money page read cannot see button absent not greyed registrar cannot move a child between divisions',
       content: (
         <>
           <ul>
-            <li><strong>Owner, club admin and league admin</strong> — everything: create and edit seasons and divisions, build teams, run the schedule, move a season between states, work registrations and fees, and email families.</li>
-            <li><strong>League registrar</strong> — works the registrations (approve, waitlist, decline, withdraw, add one by hand), marks fees received, and uses Email families. Reads the rest of the season, with no edit controls and no status buttons.</li>
+            <li><strong>Owner, club admin and league admin</strong> — everything: create and edit seasons and divisions, build teams, run the schedule, move a season between states, work registrations and fees, move a child to another division, and email families.</li>
+            <li><strong>League registrar</strong> — works the registrations (approve, waitlist, decline, withdraw, release a spot, add one by hand), takes fees (<strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong>), and uses Email families. <strong>Move to another division</strong> is not theirs: only the owner, a club admin and a league admin see it. Reads the rest of the season, with no edit controls and no status buttons.</li>
             <li><strong>Treasurer</strong> — reads a season&apos;s <strong>Money</strong> page, through the club&apos;s Accounting. Nothing else in house league.</li>
           </ul>
           <p>A control you can&apos;t use is not shown at all, rather than shown greyed. A member whose House league access is switched off, or whose plan doesn&apos;t carry it, can&apos;t open any of it.</p>
@@ -93,8 +93,8 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'Creating and configuring a season',
       summary: 'Creating a season asks three things: name, sport and dates. Age groups, prices, registration dates, the waiver and how families pay are set on the season’s own page.',
-      keywords: ['create season', 'season setup', 'age groups', 'add age groups', 'divisions', 'capacity', 'spots', 'price', 'prices', 'early bird', 'early bird discount', 'save', 'early-bird date', 'how to pay', 'how families pay', 'note for families', 'registration fee', 'waiver', 'email consent', 'new registrations', 'hold for review', 'birth years', 'birth year', 'born', 'age', 'cut-off', 'birthday', 'add division', 'edit division', 'remove division', 'delete division', 'pencil', 'edit season', 'edit registration', 'delete season', 'delete a season', 'remove season', 'made by mistake', 'test season'],
-      searchText: 'create season name sport dates three questions web address made from the name season page add age groups U6 U18 chips type a name each becomes a division born in birth years the club picks size players price free early bird early amount early-bird date one date per season through last day second division U10 A U10 B tap again gap overlap warning partial overlap identical years no warning cut-off birthdays count from settings edit division pencil whole record autosave saves as you go tick note for families fits two divisions changing birth years never moves a registered child no longer fit lowering players never removes anyone remove this division only while nobody is in it accepted received waitlisted price recorded when they sign up never changes price change applies to new sign-ups only families see the early bird before they register save $20 shown on the season page and the club rows registration block registration dates form opens form closes waiver text email consent line asked on the form unticked how families pay required when any price is above $0 shown once a child is accepted and in their email new registrations approve while a division has room hold for review a child waiting for review holds a spot waitlist moves up on its own when a spot frees checklist before you open registration delete season delete the season remove a season made by mistake test season shell not yet open nothing attached archive instead fee received accounting books',
+      keywords: ['create season', 'season setup', 'age groups', 'add age groups', 'divisions', 'capacity', 'spots', 'price', 'prices', 'early bird', 'early bird discount', 'save', 'early-bird date', 'how to pay', 'how families pay', 'note for families', 'registration fee', 'waiver', 'email consent', 'new registrations', 'hold for review', 'birth years', 'birth year', 'born', 'age', 'cut-off', 'birthday', 'add division', 'edit division', 'remove division', 'delete division', 'pencil', 'edit season', 'edit registration', 'delete season', 'delete a season', 'remove season', 'made by mistake', 'test season', 'owing turns amber', 'amber after days', 'owing threshold', 'how many days before owing turns amber'],
+      searchText: 'create season name sport dates three questions web address made from the name season page add age groups U6 U18 chips type a name each becomes a division born in birth years the club picks size players price free early bird early amount early-bird date one date per season through last day second division U10 A U10 B tap again gap overlap warning partial overlap identical years no warning cut-off birthdays count from settings edit division pencil whole record autosave saves as you go tick note for families fits two divisions changing birth years never moves a registered child no longer fit lowering players never removes anyone remove this division only while nobody is in it accepted received waitlisted price recorded when they sign up never changes price change applies to new sign-ups only families see the early bird before they register save $20 shown on the season page and the club rows registration block registration dates form opens form closes waiver text email consent line asked on the form unticked how families pay required when any price is above $0 shown once a child is accepted and in their email new registrations approve while a division has room hold for review a child waiting for review holds a spot waitlist moves up on its own when a spot frees checklist before you open registration delete season delete the season remove a season made by mistake test season shell not yet open nothing attached archive instead fee received accounting books owing turns amber after 14 days counted from the day the child was accepted whole number of days 1 to 365 free season has no owing row correct the price a child keeps the price fixed at sign-up',
       content: (
         <>
           <p>Creating a season asks three things: its <strong>name</strong>, its <strong>sport</strong> and its <strong>season dates</strong>. Everything else is set on the season&apos;s own page, which opens as soon as you create it.</p>
@@ -160,7 +160,8 @@ const houseLeagueHelp: HelpPageContent = {
                 <li>An early amount can&apos;t be more than the price. An early amount with no season early-bird date does nothing, and the division says it needs a date.</li>
                 <li><strong>Families see the early bird before they register.</strong> While it runs, each division on the season&apos;s public page shows the price and what it saves (<em>$145 · Save $20</em>), with the date and the regular price under it, and your club&apos;s pages carry a line such as <em>Save $20 · early bird through Oct 31</em> on the season, counting down in its last week. The day after the early-bird date, families see the regular price only.</li>
                 <li><strong>A child&apos;s price is recorded when they sign up.</strong> Editing prices later changes new sign-ups only; each registration keeps the price it signed up at.</li>
-                <li>Fees reach your accounting books only when a registration&apos;s fee is marked received, not when you approve it (see <em>Money and Email families</em>).</li>
+                <li>To change one child&apos;s price afterward, use <strong>Correct the price</strong> on Registrations (see <em>Managing registrations day to day</em>).</li>
+                <li>Fees reach your accounting books only when a registration&apos;s fee is marked received, not when you approve it (see <em>The season&apos;s Money page</em>).</li>
               </ul>
             </>
           ),
@@ -179,6 +180,7 @@ const houseLeagueHelp: HelpPageContent = {
                 <HelpDef term="How families pay">Your own words, such as an e-Transfer address and a deadline. Families see them once a child is accepted, and in their email. It is required when any division has a price above $0, and can&apos;t be emptied while registration is open and a division charges. A free season doesn&apos;t need it.</HelpDef>
                 <HelpDef term="New registrations">Either approved while a division has room, with a full division starting a waitlist, or held for your review. A child waiting for review holds a spot, so once accepted and waiting children fill a division, the next child goes to the waitlist.</HelpDef>
                 <HelpDef term="Waitlist">Moves up on its own when a spot frees, or you move it up yourself.</HelpDef>
+                <HelpDef term="Owing turns amber">After how many days an accepted player who has not paid turns amber on Registrations. It starts at 14, counted from the day the child was accepted, and takes a whole number of days from 1 to 365. A free season has no such row.</HelpDef>
               </HelpDefs>
             </>
           ),
@@ -356,8 +358,8 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Running the season',
       heading: 'What families see when they sign up',
       summary: 'Families sign up one child or several in one go, see each child’s outcome before they send, get one reference and one email, and check their status with their email and reference.',
-      keywords: ['sign up several children', 'sign up more than one child', 'siblings', 'reference', 'accepted', 'received', 'waitlist', 'status page', 'check your registration', 'date of birth', 'no division fits', 'family email', 'how to pay', 'early bird'],
-      searchText: 'family sign up form sign up several children in one go siblings add another child up to eight children date of birth picks the division born in birth year club cut-off each child outcome before sign up spot and price early bird applied early bird ended waitlist nothing to pay unless a spot opens two divisions for one age group family picks note for families no division fits contact the club child left out others still sign up one reference for the sign-up one email lists every child total to pay how to pay accepted received waitlist 1st status page check your registration email and reference find everything parent or guardian email waiver email consent unticked payable separately the form does not take payment approve means accepted pending review means received',
+      keywords: ['sign up several children', 'sign up more than one child', 'siblings', 'reference', 'accepted', 'received', 'waitlist', 'status page', 'check your registration', 'date of birth', 'no division fits', 'family email', 'how to pay', 'early bird', 'ask to withdraw', 'ask to withdraw a child', 'family wants to withdraw', 'refund on the status page', 'kept by the club', 'withdrawn', 'declined', 'price to pay'],
+      searchText: 'family sign up form sign up several children in one go siblings add another child up to eight children date of birth picks the division born in birth year club cut-off each child outcome before sign up spot and price early bird applied early bird ended waitlist nothing to pay unless a spot opens two divisions for one age group family picks note for families no division fits contact the club child left out others still sign up one reference for the sign-up one email lists every child total to pay how to pay accepted received waitlist 1st status page check your registration email and reference find everything parent or guardian email waiver email consent unticked payable separately the form does not take payment approve means accepted pending review means received status page declined withdrawn spot released reads withdrawn refunded on kept by the club reason the club is keeping to pay part of the price still to pay price rose ask to withdraw a child request sent the child keeps their place until the club acts you asked to withdraw the club will confirm by email note for the club 300 characters asked once too many tries needs attention house league withdrawal request clears itself when the registration ends',
       content: (
         <>
           <p>This is what a family sees on your season&apos;s sign-up form, after it and in their email. Knowing it helps when a parent phones to ask what a screen meant.</p>
@@ -402,6 +404,41 @@ const houseLeagueHelp: HelpPageContent = {
             </>
           ),
         },
+        {
+          id: 'family-signup-status-after',
+          title: 'What the status page says once money or an ending is involved',
+          content: (
+            <>
+              <p>The status page follows the registration after the family signs up, so it also carries the money.</p>
+              <ul>
+                <li><strong>Declined</strong> or <strong>Withdrawn</strong> — an ended child reads one of these two words. A spot the club released reads <strong>Withdrawn</strong> too. An ended child has no amount to pay, no pay card and no way to ask to withdraw.</li>
+                <li><strong>A refund</strong> — an ended child whose fee went back reads <em>$150 refunded on Oct 24 (E-Transfer)</em>. The brackets are left off when the way was <strong>Other</strong> or not recorded.</li>
+                <li><strong>A kept fee</strong> — when the club keeps the fee, the child reads <em>The club is keeping the $150</em> followed by the reason you gave, so write it for the family to read.</li>
+                <li><strong>A price that rose</strong> — a child who has part-paid reads the amount still to pay in amber, with a line saying what the price is now and what was received.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'family-signup-ask-withdraw',
+          title: 'A family asks to withdraw a child',
+          content: (
+            <>
+              <p><strong>Ask to withdraw a child</strong> sits below the children on the status page (<strong>Ask to withdraw</strong> and the child&apos;s name when there is only one). It is there for any child who has not ended.</p>
+              <HelpSteps>
+                <li>The family picks <strong>Which child?</strong> when there is more than one.</li>
+                <li>They can add a <strong>Note for the club</strong>, up to 300 characters, such as why. It is not required.</li>
+                <li>They press <strong>Send request</strong>.</li>
+              </HelpSteps>
+              <ul>
+                <li><strong>Nothing changes until you act.</strong> The child keeps their place and still reads <strong>Accepted</strong>, with a line under it saying the family asked on that day and the club will confirm by email.</li>
+                <li><strong>The desk is told.</strong> The owner, club admins, league admins and league registrars get a <strong>House league withdrawal request</strong> under <strong>Needs attention</strong>. It opens Registrations on that child, and the <strong>Withdraw</strong> window leads with the family&apos;s request and note.</li>
+                <li><strong>It clears itself</strong> once the registration ends, whoever ends it.</li>
+                <li>A family can ask once for each child. Asking again, or for a child who has already ended, says so instead of sending a second request.</li>
+              </ul>
+            </>
+          ),
+        },
       ],
       faqs: [
         {
@@ -419,49 +456,216 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'registrations',
       group: 'Running the season',
       heading: 'Managing registrations day to day',
-      summary: 'Review the queue, approve/waitlist/decline (each emails the family), track fee status, add players by hand, and email families.',
-      keywords: ['registrations', 'approve', 'waitlist', 'decline', 'fee paid', 'fee received', 'email families', 'withdrawn', 'add registration', 'registrar', 'division full', 'add to the waitlist instead', 'needs attention', 'sign-up', 'reference'],
-      searchText: 'division is full add to the waitlist instead approve refused hand-add refused moving a child into a full division nobody jumps the waitlist a child waiting for review holds a spot one needs attention notice per sign-up several children one reference accepted received manage registrations pending review active waitlist declined withdrawn approve decline confirm email guardian fee paid checkbox fee received email families email blast add registration by hand walk-in tabs league registrar finished season locked registrations locked',
+      summary: 'Four tabs (To review, Active, Waitlist, Ended) with the fee on every row, and the actions that approve, take a fee, end a registration, correct a price or move a child.',
+      keywords: ['registrations', 'to review', 'active', 'waitlist', 'ended', 'approve', 'promote', 'decline', 'withdraw', 'release the spot', 'mark received', 'undo', 'correct the price', 'move to another division', 'move division', 'fee column', 'owing', 'refunded', 'kept by the club', 'bulk', 'select several', 'email families', 'add registration', 'registrar', 'division full', 'add to the waitlist instead', 'needs attention', 'sign-up', 'reference', 'finished season'],
+      searchText: 'registrations screen tabs to review active waitlist ended declined withdrawn spot released amber count search players or parents filter fee owing received refunded tools export email families add registration by hand walk-in division full add to the waitlist instead approve refused hand-add refused moving a child into a full division nobody jumps the waitlist a child waiting for review holds a spot one needs attention notice per sign-up several children one reference accepted received no email address guardian fee column owing n days accepted today accepted amber after the club’s number of days 14 received date how e-transfer cash cheque card other not recorded received in part price rose refunded kept by the club price corrected nothing owed yet free mark received amount shown not typed no partial amount date received how undo marked received by mistake not a refund voided line closed fiscal year correct the price reason a lower price records a refund of the difference a higher price leaves the difference owing family not emailed move to another division move division full division joins the waitlist keep price use the new price a child who has paid keeps their price owner club admin league admin only the registrar cannot move a child decline withdraw release the spot one window what happened to the money refunded date how kept by the club reason the family reads note to the family withdraw emails only when money was refunded or kept the waitlist moves up in the same step decline and withdraw one at a time bulk bar approve promote waitlist mark received move division email clear partial result stays until dismissed rows that stayed are still selected finished season locked mark received undo correct the price stay open',
       links: [
         { label: 'Registrations guide', href: '../help/registrations' },
       ],
       content: (
         <>
-          <p>Registrations arrive via the public form while a season is in <strong>Registration open</strong>. Each lands in <strong>Pending review</strong> unless the season approves automatically while a division has room. A child waiting for review holds a spot. Several children signed up together arrive as separate rows sharing one reference, with one <strong>Needs attention</strong> notice for the whole sign-up. On the Registrations page, the tabs (Pending review, Active, Waitlist, Declined / withdrawn) and the search box help you work a large list. The owner, club admin, league admin and league registrar all work this page.</p>
-          <ul>
-            <li><strong>Approve</strong> — moves the player to Active and emails the family, who read it as <strong>Accepted</strong>. They&apos;re eligible for team assignment. A full division refuses Approve with <em>Add to the waitlist instead</em>.</li>
-            <li><strong>Waitlist</strong> — holds the registration in queue and emails the family their position. If the waitlist moves up on its own, the next waitlisted player advances when a spot opens. A new sign-up never jumps the waitlist, which moves up only when a spot frees.</li>
-            <li><strong>Decline</strong> — asks you to confirm, then emails a decline notice to the family.</li>
-          </ul>
-          <p>Each row has a <strong>Fee paid</strong> toggle so you can track payment alongside status. Ticking it marks the fee received and records it as one income line in the season&apos;s accounting book; unticking it voids that line, and declining or withdrawing a registration whose fee was paid voids it too. Approving a registration does not create a fee line. <strong>Add registration</strong> enters a player by hand, outside the public form (walk-ins or carry-overs); a full division refuses it the same way, as it does moving a child in. <strong>Email families</strong> emails a group: everyone active, or filtered by division, team, or status.</p>
-          <p>Once a season is finished, its registrations are locked: Approve, Waitlist, Decline, withdraw and <strong>Add registration</strong> are gone. The <strong>Fee paid</strong> toggle and <strong>Email families</strong> stay.</p>
-          <p>For the full registration workflow, see the <a href="../help/registrations">Registrations guide</a>.</p>
+          <p>Registrations arrive through the public form while a season is in <strong>Registration open</strong>. Each lands under <strong>To review</strong> unless the season approves automatically while a division has room, and a child waiting for review holds a spot. Several children signed up together arrive as separate rows sharing one reference, with one <strong>Needs attention</strong> notice for the whole sign-up. The owner, club admin, league admin and league registrar all work this page.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'registrations-tabs',
+          title: 'The tabs, search and filter',
+          content: (
+            <>
+              <ul>
+                <li><strong>To review</strong> — new sign-ups that need your answer. The count is an amber number on the tab.</li>
+                <li><strong>Active</strong> — accepted players, with the fee on each row.</li>
+                <li><strong>Waitlist</strong> — children waiting for a spot, in order.</li>
+                <li><strong>Ended</strong> — declined, withdrawn and released registrations, with what happened to any money.</li>
+              </ul>
+              <p>The division pill narrows the list to one division, and <strong>Search players or parents</strong> finds a child or a guardian across the tab. <strong>Filter</strong> narrows by <strong>Fee</strong>: <strong>Owing</strong> and <strong>Received</strong>, plus <strong>Refunded</strong> on the Ended tab. A season where no division has a price has no Fee column and no Fee filter. <strong>Tools</strong> holds <strong>Export</strong> (Excel first) and <strong>Email families</strong>; exports are part of League Plus. <strong>Add registration</strong> enters a player by hand, outside the public form, and a full division refuses it the same way it refuses Approve.</p>
+              <p>A division cell shows the team underneath, or <strong>Not placed</strong>. A guardian cell shows the email address, or <strong>No email address</strong> in amber, so you see it before an Email press skips that family.</p>
+            </>
+          ),
+        },
+        {
+          id: 'registrations-actions',
+          title: 'Approve, Waitlist, Promote and the row menu',
+          content: (
+            <>
+              <ul>
+                <li><strong>Approve</strong> — the one button on a To review row. It moves the player to Active and emails the family, who read it as <strong>Accepted</strong>. A full division refuses it with <em>Add to the waitlist instead</em>, and a <strong>Waitlist</strong> link beside the line does that for you.</li>
+                <li><strong>Waitlist</strong> — holds the registration in queue and emails the family their position. If the season moves the waitlist up on its own, the next waitlisted player advances when a spot opens. A new sign-up never jumps the waitlist.</li>
+                <li><strong>Promote</strong> — the one button on a Waitlist row. It accepts the child into the division and emails the family. If the division is still full, the child stays on the waitlist and the line says so.</li>
+                <li><strong>Mark received</strong> — the one button on an Active row that is owing (see <em>Fees on the Registrations screen</em>).</li>
+              </ul>
+              <p>Everything else sits behind the <strong>&hellip;</strong> on the row, each with a line saying what it does: <strong>Move to another division</strong>, <strong>Correct the price</strong>, <strong>Release the spot</strong>, <strong>Withdraw</strong>, <strong>Decline</strong>, <strong>Email this family</strong> and <strong>Undo: marked received by mistake</strong>. An item the row can&apos;t use isn&apos;t drawn at all.</p>
+            </>
+          ),
+        },
+        {
+          id: 'registrations-fee',
+          title: 'Fees on the Registrations screen',
+          content: (
+            <>
+              <p>The <strong>Fee</strong> column shows the price fixed on each registration when the family signed up, and where that stands:</p>
+              <HelpDefs>
+                <HelpDef term="Nothing owed yet">A child under To review or on the waitlist. Nothing is due until they are accepted.</HelpDef>
+                <HelpDef term="$150 owing · 9 days">An accepted child who has not paid. The line under it says <em>Accepted Oct 16</em> or <em>Accepted today</em>, and the days are counted from that day. The pill turns amber after the number of days set on the season&apos;s <strong>Registration</strong> block (<em>Owing turns amber</em>, starting at 14). A child accepted before the day was recorded shows the amount owing with no day count and never turns amber.</HelpDef>
+                <HelpDef term="$150 received">Paid in full, with the date and how: <strong>E-Transfer</strong>, <strong>Cash</strong>, <strong>Cheque</strong>, <strong>Card</strong>, <strong>Other</strong>, or <strong>Not recorded</strong>.</HelpDef>
+                <HelpDef term="$120 received · $30 owing">The price rose after the family paid. The row shows what came in and what is still owing, with no day count.</HelpDef>
+                <HelpDef term="$150 refunded">The fee went back to the family when the registration ended.</HelpDef>
+                <HelpDef term="$150 kept by the club">The club kept the fee when the registration ended. The row shows the reason you gave, shortened; the whole of it is in the child&apos;s record.</HelpDef>
+                <HelpDef term="Price corrected">A third line under the fee, with the reason. Hover or tap it to read what it was and what it is now.</HelpDef>
+              </HelpDefs>
+              <p>A free division reads <strong>Free</strong>. On a phone the same fee words sit in the row&apos;s detail line.</p>
+            </>
+          ),
+        },
+        {
+          id: 'registrations-mark-received',
+          title: 'Mark received, and Undo',
+          content: (
+            <>
+              <HelpSteps>
+                <li>On an owing row, click <strong>Mark received</strong>.</li>
+                <li>Read the <strong>Amount</strong>. It is shown, never typed: it is the whole amount still owing, so there are no partial amounts.</li>
+                <li>Set <strong>Date received</strong> (today unless you change it, never after today) and <strong>How</strong>. <strong>How</strong> can stay <strong>Not recorded</strong>.</li>
+                <li>Click <strong>Mark received</strong>. One income line goes into the season&apos;s book (see <em>The season&apos;s Money page</em>).</li>
+              </HelpSteps>
+              <p><strong>Undo: marked received by mistake</strong>, in the row&apos;s menu, takes a payment back when the money never arrived. The child shows as owing again and the line stays in the season&apos;s history, marked voided. On the Club plan, a payment dated in a closed fiscal year can&apos;t be undone until that year is reopened.</p>
+              <HelpNote variant="warning" title="Undo is not a refund">
+                If the money did arrive and is going back to the family, decline or withdraw the registration instead, and record the refund there.
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'registrations-end',
+          title: 'Decline, Withdraw and Release the spot',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="Decline">The club says no. Available on a To review, Waitlist or Active row.</HelpDef>
+                <HelpDef term="Withdraw">The child leaves. Available on an Active row.</HelpDef>
+                <HelpDef term="Release the spot">An accepted family that hasn&apos;t paid. The spot goes back to the division. The family reads <strong>Withdrawn</strong>.</HelpDef>
+              </HelpDefs>
+              <p>Each opens one window. When money was received, it asks what happened to it, and nothing is picked until you choose; the button isn&apos;t there until you do:</p>
+              <ul>
+                <li><strong>Refunded</strong> — give the date and how. It is recorded as money going back, beside the payment, on the season&apos;s Money page.</li>
+                <li><strong>Kept by the club</strong> — give a reason. The family reads it in their email.</li>
+              </ul>
+              <p><strong>Who is emailed:</strong> Decline and Release the spot always email the family, and carry your note and the money line. Withdraw emails only when money was refunded or kept; a withdrawal with no money moved sends nothing, and the window says so. If the season moves the waitlist up on its own, the next child moves up in the same step and the window names them; otherwise it says the spot stays open for you to fill.</p>
+              <p>Decline and Withdraw are one at a time, because each asks what happened to that family&apos;s money. When the family asked to withdraw, the window leads with their request and note.</p>
+            </>
+          ),
+        },
+        {
+          id: 'registrations-price-move',
+          title: 'Correct a price, and move a child to another division',
+          content: (
+            <>
+              <p><strong>Correct the price</strong> is for an Active child, owing or received. The window shows what they signed up at, takes a <strong>New price</strong> and a required <strong>Reason</strong>, and says what will happen before you save:</p>
+              <ul>
+                <li><strong>Not paid</strong> — the new price is what the family owes.</li>
+                <li><strong>Paid, and the price goes up</strong> — the difference shows as still owing.</li>
+                <li><strong>Paid, and the price goes down</strong> — the difference is recorded as a refund, and the window asks the date and how.</li>
+              </ul>
+              <p>The family is not emailed. The correction is kept with the old price, the new price, your reason, who and when; it moves no money by itself.</p>
+              <p><strong>Move to another division</strong> is for the owner, club admins and league admins only. It checks the room first. A full division is not refused: the child joins its waitlist, and the window says their place in line. When the destination charges a different price and nothing has been received, it asks once whether to keep the child&apos;s price or use the new division&apos;s (an early bird still applies for the day they signed up). A child who has paid keeps their price, and the window says so and points to Correct the price. The family is not emailed.</p>
+            </>
+          ),
+        },
+        {
+          id: 'registrations-bulk',
+          title: 'Working several at once',
+          content: (
+            <>
+              <p>Tick rows and a bar appears with only the actions that tab can use: <strong>Approve</strong> (To review), <strong>Promote</strong> (Waitlist), <strong>Waitlist</strong> (To review and Active), <strong>Mark received</strong> (Active), <strong>Move division</strong> and <strong>Email</strong>, with <strong>Clear</strong> to drop the selection. <strong>Decline</strong> and <strong>Withdraw</strong> are one at a time.</p>
+              <ul>
+                <li><strong>Anything that tells families asks first</strong> and says so in the button, for example <em>Approve 6</em>.</li>
+                <li><strong>Mark received</strong> shows the total and takes one date and one way for all of them.</li>
+                <li><strong>Move division</strong> asks the price question once for the batch. Children who have paid keep their price and are named.</li>
+                <li><strong>Email</strong> says how many families have no email address and are skipped.</li>
+              </ul>
+              <p>The result is said plainly, with what stayed and why: <em>3 promoted; 2 stay on the waitlist: Division A is full.</em> A clean result fades. A partial one stays until you dismiss it, and the rows that stayed are still selected. A batch of fees dated into a closed fiscal year records nothing and says why.</p>
+            </>
+          ),
+        },
+        {
+          id: 'registrations-who-finished',
+          title: 'Who can do what, and a finished season',
+          content: (
+            <>
+              <ul>
+                <li>The owner, club admins, league admins and league registrars take fees (<strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong>) and end registrations.</li>
+                <li>Only the owner, club admins and league admins move a child between divisions.</li>
+                <li>The treasurer reads the season&apos;s <strong>Money</strong> page and nothing else here.</li>
+              </ul>
+              <p>Once a season is finished, its registrations are locked: Approve, Waitlist, Promote, Decline, Withdraw, Release, Move and <strong>Add registration</strong> are gone, and a line at the top says so. <strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong> and <strong>Email families</strong> stay, because fees still arrive after the last game.</p>
+              <p>For the full registration workflow, see the <a href="../help/registrations">Registrations guide</a>.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'ledger-notifications',
       group: 'Running the season',
       heading: 'Money and Email families',
-      summary: 'Money is the season’s book of registration fees (a line appears when you tick Fee paid). Email families sends season-wide email and logs what was sent.',
-      keywords: ['money', 'ledger', 'email families', 'notifications', 'email log', 'fees', 'accounting', 'fee paid', 'fee received', 'void', 'email the season', 'broadcast', 'unsubscribe', 'opted out'],
-      searchText: 'season money page season ledger renamed money season book fee paid fee received tick untick void declined withdrawn posted line statement not counted fees accounting email families notifications renamed email log sent emails approval waitlist decline confirmation history email the whole season broadcast message all registrants message registrants unsubscribe link opted out not sent skipped no email on file delivered count why did fewer families get it auto-generate fee entries removed no setting treasurer reads money finished season stays open',
+      summary: 'Money is the season’s page of registration fees owed, received and refunded. Email families sends season-wide email and logs what was sent.',
+      keywords: ['money', 'ledger', 'email families', 'notifications', 'email log', 'fees', 'accounting', 'owed', 'received', 'still owing', 'refunds', 'every line', 'overview tiles', 'budget vs actual', 'house league registration fees', 'starting budget', 'email the season', 'broadcast', 'unsubscribe', 'opted out'],
+      searchText: 'season money page season ledger renamed money season book owed received after refunds still owing every line still owing refunds tabs nobody types money on the page written only by marking a fee received recording a refund or correcting a price voided line struck through price corrected history line kept by the club history line owing since accepted days not known export finished season overview owed still owing tiles open money league plus the season’s book club plan fees also file on budget vs actual house league registration fees one row with each season under it a fee counts in the fiscal year it was received a refund lowers the row never counts as spending starting budget each division’s size times price planned once when registration opens in the fiscal year sign-ups open treasurer changes it or splits it across years on the budget page a line in the other year under the same word treasurer reads money email families notifications renamed email log sent emails approval waitlist decline confirmation history email the whole season broadcast message all registrants message registrants unsubscribe link opted out not sent skipped no email on file delivered count why did fewer families get it finished season stays open',
       content: (
         <>
-          <p>Two pages sit beside Registrations, Teams &amp; draft, Schedule and Standings in a season&apos;s menu:</p>
-          <ul>
-            <li><strong>Money</strong> (it used to be called Ledger) — the season&apos;s book of registration fees. Ticking <strong>Fee paid</strong> on a registration writes one income line here; unticking it, declining, or withdrawing the registration voids that line, and ticking it again writes a new one. Fees reach the books only this way: there is no setting to create them on approval. The club&apos;s Cash on hand counts this book, but its Statement does not yet. Everyone who opens house league can read Money, and so can the club&apos;s treasurer.</li>
-            <li><strong>Email families</strong> (it used to be called Notifications) — where you email the season, and a log of what it has already sent (approvals, waitlist notices, declines), so you can confirm a family was contacted if they say they didn&apos;t receive something. The owner, club admin, league admin and league registrar can use it.</li>
-          </ul>
-          <p>Both stay open on a finished season: fees still arrive after the last game, and families still need a late word. On the Email families page you can address everyone active, the waitlist, or registrations waiting for review. The <strong>Email families</strong> button on the Registrations page also lets you pick one division, one team, or one status. Every email carries your club&apos;s name and an <strong>unsubscribe link</strong>, and a family who has opted out is left out, including one who unsubscribed under an older email address and has since given you a new one.</p>
-          <p>After sending, the confirmation accounts for everyone you addressed:</p>
-          <ul>
-            <li><strong>Delivered</strong> — the email went out.</li>
-            <li><strong>Not sent (unsubscribed)</strong> — the family has opted out of club email. You see how many, never which ones; reaching them has to be a direct conversation.</li>
-            <li><strong>Skipped (no email on file)</strong> — the registration has no usable address. Add one on the registration to include them next time.</li>
-          </ul>
+          <p>Two pages sit beside Registrations, Teams &amp; draft, Schedule and Standings in a season&apos;s menu: <strong>Money</strong>, the season&apos;s registration fees, and <strong>Email families</strong>. Both stay open on a finished season: fees still arrive after the last game, and families still need a late word.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'money-page',
+          title: 'The season’s Money page',
+          content: (
+            <>
+              <p><strong>Money</strong> (it used to be called Ledger) is the season&apos;s fees: what is owed, what has come in and what is still to collect. Nobody types money onto this page. It is written only when you mark a fee received, record a refund while ending a registration, or correct a price, all on Registrations.</p>
+              <HelpDefs>
+                <HelpDef term="Owed">The price fixed on each accepted registration, added up, with the number of players.</HelpDef>
+                <HelpDef term="Received">What has come in, after any refunds. The line under it says how much was refunded.</HelpDef>
+                <HelpDef term="Still owing">Owed less received, amber while above zero.</HelpDef>
+              </HelpDefs>
+              <p>Three tabs sit under the figures. <strong>Every line</strong> lists fees in, refunds out in red, and the history lines that move no money (a corrected price, a fee the club kept); a payment taken back with Undo stays, struck through and never counted. <strong>Still owing</strong> lists players, with the day each was accepted and how many days since, and <strong>Not known</strong> where the day was never recorded. <strong>Refunds</strong> lists the money that went back. <strong>Export</strong> downloads the page. A free season has no figures and reads <em>This season is free</em>.</p>
+              <p>The season&apos;s Overview shows <strong>Owed</strong> and <strong>Still owing</strong> tiles that open this page. Everyone who opens house league can read Money, and so can the club&apos;s treasurer.</p>
+              <p>On League Plus this page is the season&apos;s book. On the Club plan the fees also file on the club&apos;s Budget vs. Actual (see <em>Budget vs. Actual and house league fees</em>). The club&apos;s Cash on hand counts the book either way.</p>
+            </>
+          ),
+        },
+        {
+          id: 'money-statement',
+          title: 'Budget vs. Actual and house league fees',
+          content: (
+            <>
+              <p>On the Club plan, house league fees appear on <strong>Budget vs. Actual</strong> as one <strong>House league registration fees</strong> row with each season underneath it.</p>
+              <ul>
+                <li><strong>A fee counts in the fiscal year it was received</strong>, by its date, not by the season it belongs to.</li>
+                <li><strong>A refund lowers the row.</strong> It never counts as spending.</li>
+                <li><strong>The starting budget</strong> is each division&apos;s size times its price, planned once when registration opens, in the fiscal year sign-ups open. The treasurer can change it on the Budget page, or plan part of it in another fiscal year as a line in that year under the same word.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'email-families',
+          title: 'Email families',
+          content: (
+            <>
+              <p><strong>Email families</strong> (it used to be called Notifications) is where you email the season, with a log of what it has already sent (approvals, waitlist notices, declines), so you can confirm a family was contacted if they say they didn&apos;t receive something. The owner, club admin, league admin and league registrar can use it.</p>
+              <p>On the Email families page you can address everyone active, the waitlist, or registrations waiting for review. The <strong>Email families</strong> item in the Registrations tools menu also lets you pick one division, one team, or one status. Every email carries your club&apos;s name and an <strong>unsubscribe link</strong>, and a family who has opted out is left out, including one who unsubscribed under an older email address and has since given you a new one.</p>
+              <p>After sending, the confirmation accounts for everyone you addressed:</p>
+              <ul>
+                <li><strong>Delivered</strong> — the email went out.</li>
+                <li><strong>Not sent (unsubscribed)</strong> — the family has opted out of club email. You see how many, never which ones; reaching them has to be a direct conversation.</li>
+                <li><strong>Skipped (no email on file)</strong> — the registration has no usable address. Add one on the registration to include them next time.</li>
+              </ul>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'public-page',
@@ -484,13 +688,13 @@ const houseLeagueHelp: HelpPageContent = {
       heading: 'Closing out a season',
       summary: 'Complete the season when games end, then Archive it if you wish; a finished season reads in place, locked, and can be reopened.',
       keywords: ['close season', 'complete season', 'completed', 'archive season', 'archived', 'finished', 'reopen season', 'season end', 'locked', 'past seasons'],
-      searchText: 'closing season complete the season archive the season reopen the season finished completed archived retire preserve data house league locked read only past seasons shelf money stays open fees received email families stays open no seal step ended pill complete it',
+      searchText: 'closing season complete the season archive the season reopen the season finished completed archived retire preserve data house league locked read only past seasons shelf money stays open fees received mark received undo correct the price email families stays open no seal step ended pill complete it',
       content: (
         <>
           <p>When the games are done, click <strong>Complete the season</strong> at the end of the season&apos;s page. The window says what changes, and warns, but never blocks, if registrations are waiting, families are on the waitlist, players still owe fees, or the season&apos;s last day is still ahead. A season past its last day shows an amber <strong>Ended</strong> pill until you do. Completing moves it to <strong>Past seasons</strong> and does not email anyone.</p>
           <ul>
             <li><strong>Locked</strong> — registrations, teams, the schedule and the season&apos;s settings can no longer be changed, and every edit control is gone. The pages still read, and a line at the top says the page is locked.</li>
-            <li><strong>Still open</strong> — <strong>Money</strong> (you can still mark fees received) and <strong>Email families</strong>.</li>
+            <li><strong>Still open</strong> — fees on Registrations (<strong>Mark received</strong>, <strong>Undo</strong> and <strong>Correct the price</strong>), the season&apos;s <strong>Money</strong> page, and <strong>Email families</strong>.</li>
             <li><strong>Archive the season</strong> — an extra step for a completed season. Its public page says it has been archived. It stays under Past seasons, and its schedule and standings stay up. Nothing else changes.</li>
             <li><strong>Reopen the season</strong> — at the end of a finished season&apos;s page, it brings the season back to <strong>Running now</strong> so you can change things again.</li>
           </ul>

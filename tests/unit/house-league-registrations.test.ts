@@ -77,7 +77,7 @@ describe('who sees which action (copy §1.4, §1.5, §2)', () => {
   });
   it('the bulk bar offers what the tab can use; Decline and Withdraw are never bulk', () => {
     assert.deepEqual(bulkActions('review', RIGHTS, true), ['approve', 'waitlist', 'move', 'email']);
-    assert.deepEqual(bulkActions('active', RIGHTS, true), ['waitlist', 'markReceived', 'move', 'email']);
+    assert.deepEqual(bulkActions('active', RIGHTS, true), ['markReceived', 'waitlist', 'move', 'email']);
     assert.deepEqual(bulkActions('active', RIGHTS, false), ['waitlist', 'move', 'email']);
     assert.deepEqual(bulkActions('waitlist', RIGHTS, true), ['promote', 'move', 'email']);
     assert.deepEqual(bulkActions('ended', RIGHTS, true), ['email']);

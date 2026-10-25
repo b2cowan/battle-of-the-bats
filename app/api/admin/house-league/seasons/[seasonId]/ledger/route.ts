@@ -7,7 +7,7 @@ import { seasonCharges } from '@/lib/league-price';
 import { feeState, seasonMoney } from '@/lib/league-money';
 import { filesToClubStatement, loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { tournamentToday } from '@/lib/timezone';
+import { daysBetweenDateStrings, orgDayKey, tournamentToday } from '@/lib/timezone';
 
 /**
  * THE SEASON'S MONEY — its book (Club Tier Stage 9b-2 Part 4; owner Q15, Q18, 9b·10; copy §10). Read by everyone who opens
@@ -81,14 +81,17 @@ export const GET = withObservability(async (_req: Request,
   // The Still owing tab lists players, not lines (copy §10.2).
   const owing = regs.map(r => ({ r, s: feeState(r, season, lines.get(r.id) ?? [], today) }))
     .filter(x => x.s.kind === 'owing' || x.s.kind === 'part')
-    .map(({ r, s }) => ({
-      regId: r.id, player: `${r.playerFirstName} ${r.playerLastName}`,
-      division: r.divisionId ? divName.get(r.divisionId) ?? null : null,
-      owing: s.kind === 'owing' || s.kind === 'part' ? s.owing : 0,
-      acceptedDay: s.kind === 'owing' ? s.acceptedDay : null,
-      days: s.kind === 'owing' ? s.days : null,
-      late: s.kind === 'owing' ? s.late : false,
-    }))
+    .map(({ r, s }) => {
+      // Owing since acceptance — a part-paid child too (its fee cell shows no count, but this list is how long they've owed).
+      const acceptedDay = r.acceptedAt ? orgDayKey(r.acceptedAt) : null;
+      const days = acceptedDay ? Math.max(0, daysBetweenDateStrings(acceptedDay, today)) : null;
+      return {
+        regId: r.id, player: `${r.playerFirstName} ${r.playerLastName}`,
+        division: r.divisionId ? divName.get(r.divisionId) ?? null : null,
+        owing: s.kind === 'owing' || s.kind === 'part' ? s.owing : 0,
+        acceptedDay, days, late: days != null && days >= season.owingAmberDays,
+      };
+    })
     .sort((a, b) => (b.days ?? -1) - (a.days ?? -1));
 
   return NextResponse.json({

@@ -9,18 +9,20 @@ import { useState } from 'react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { FormError } from '../../money/MoneyKit';
-import { UNDO_WORDS } from '@/lib/house-league-money-words';
+import { MONEY_REFUSAL, UNDO_WORDS } from '@/lib/house-league-money-words';
 import { formatLeagueMoney, type LeagueMoneyLine } from '@/lib/league-money';
 import { regDay } from '@/lib/house-league-registrations';
 import { patchRegistration } from './api';
 
 export default function UndoWindow({
-  regId, name, payment, today, orgQuery, seasonId, onClose, onChanged, onDone,
+  regId, name, payment, gone, today, orgQuery, seasonId, onClose, onChanged, onDone,
 }: {
   regId: string;
   name: string;
   /** The payment line this takes back. */
   payment: LeagueMoneyLine;
+  /** The payment is no longer on the book (read again after a refusal): say so, never quietly re-aim at another payment. */
+  gone: boolean;
   today: string;
   orgQuery: string;
   seasonId: string;
@@ -32,7 +34,7 @@ export default function UndoWindow({
   const [error, setError] = useState('');
 
   async function go() {
-    if (busy) return;
+    if (busy || gone) return;
     setBusy(true); setError('');
     const r = await patchRegistration(orgQuery, seasonId, regId, { money: { kind: 'undo', entryId: payment.id } });
     if (!r.ok) {
@@ -54,15 +56,17 @@ export default function UndoWindow({
       footer={(
         <>
           <DialogCancel>{UNDO_WORDS.cancel}</DialogCancel>
-          <button type="button" className="btn btn-outline" onClick={() => void go()} disabled={busy}>
-            {busy ? UNDO_WORDS.working : UNDO_WORDS.submit}
-          </button>
+          {!gone && (
+            <button type="button" className="btn btn-outline" onClick={() => void go()} disabled={busy}>
+              {busy ? UNDO_WORDS.working : UNDO_WORDS.submit}
+            </button>
+          )}
         </>
       )}
     >
       <p className={ck.hint}>{UNDO_WORDS.body(name, formatLeagueMoney(payment.amount), regDay(payment.day, today))}</p>
       <p className={ck.hint}>{UNDO_WORDS.not}</p>
-      <FormError>{error}</FormError>
+      <FormError>{gone ? MONEY_REFUSAL.nothingToUndo(name) : error}</FormError>
     </KitDialog>
   );
 }

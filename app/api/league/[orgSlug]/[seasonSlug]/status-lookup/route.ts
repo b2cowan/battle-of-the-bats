@@ -124,5 +124,7 @@ export const POST = withObservability(async (req: Request,
     howToPay: owes ? season.howToPay : null,
     clubName: org.name,
     reviewFirst: !season.autoApproveUnderCapacity,
+    // A finished season takes no "Ask to withdraw" (9b-2).
+    finished: season.status === 'completed' || season.status === 'archived',
   });
 }, { route: '/api/league/[orgSlug]/[seasonSlug]/status-lookup' });

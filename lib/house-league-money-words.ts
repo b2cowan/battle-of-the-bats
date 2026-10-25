@@ -45,6 +45,7 @@ export const ASK_WORDS = {
   errEnded: (child: string, status: string) => (status === 'declined' ? 'This registration has already ended.' : `${child} is already withdrawn.`),
   errTwice: (child: string) => `You already asked to withdraw ${child}. The club will reply by email.`,
   errGeneric: 'Something went wrong. Please try again.',
+  errFinished: 'This season has finished, so there is nothing to withdraw from. Contact the club if you have a question.',
   noticeTitle: (player: string) => `Withdrawal request: ${player}`,
   noticeBody: (guardian: string, season: string, note: string | null) =>
     [guardian, season, note ? (note.length > 120 ? `${note.slice(0, 119)}…` : note) : 'No note'].filter(Boolean).join(' · '),
@@ -53,6 +54,7 @@ export const ASK_WORDS = {
 /** A house-league child's line on the family's record in Families (copy §13). */
 export const FAMILY_LINE_WORDS = {
   fixed: (day: string) => `Price fixed at sign-up, ${day}`,
+  corrected: (reason: string) => (reason ? `Price corrected · ${reason}` : 'Price corrected'),
   ghost: 'Pay link',
   ghostTip: 'Online payment isn’t available yet. Record the payment by hand.',
 } as const;

@@ -9,20 +9,20 @@ const registrationsHelp: HelpPageContent = {
       id: 'statuses',
       group: 'How registrations work',
       heading: 'What each registration status means',
-      summary: 'Pending review, Active, Waitlisted, Declined, and Withdrawn — what each one does.',
-      keywords: ['status', 'pending review', 'active', 'waitlisted', 'declined', 'withdrawn', 'accepted', 'received', 'what families see'],
-      searchText: 'accepted received holds a spot family word registration status pending review active waitlisted declined withdrawn capacity queue position decline email approved',
+      summary: 'To review, Active, Waitlisted, Declined, and Withdrawn — what each one does, and where it shows.',
+      keywords: ['status', 'to review', 'pending review', 'active', 'waitlisted', 'declined', 'withdrawn', 'released', 'spot released', 'ended', 'accepted', 'received', 'what families see'],
+      searchText: 'accepted received holds a spot family word registration status to review pending review active waitlisted declined withdrawn ended tab release the spot spot released reads withdrawn capacity queue position decline email approved',
       content: (
         <>
           <p>Every registration sits in one of five states:</p>
           <ul>
-            <li><strong>Pending review</strong> — the family submitted the form but no one has acted on it yet. This is the default unless the season approves new registrations while a division has room. A child in Pending review holds a spot, and families read this state as <strong>Received</strong>.</li>
+            <li><strong>To review</strong> — the family submitted the form but no one has acted on it yet. This is the default unless the season approves new registrations while a division has room. A child under To review holds a spot, and families read this state as <strong>Received</strong>.</li>
             <li><strong>Active</strong> — approved; families read it as <strong>Accepted</strong>. The player is eligible for team assignment and counts against the division capacity.</li>
             <li><strong>Waitlisted</strong> — the division is full or you placed the player on the waitlist manually. The player holds a numbered position, and a new sign-up never jumps it: while a division has a waitlist, a new child joins the queue even if a spot looks free. If the season moves the waitlist up on its own, the next waitlisted player advances to Active automatically when a spot opens.</li>
             <li><strong>Declined</strong> — you declined the registration; a decline email goes to the family. The player does not count against capacity.</li>
-            <li><strong>Withdrawn</strong> — the registration was cancelled after approval. It&apos;s kept for your records but the player is no longer active.</li>
+            <li><strong>Withdrawn</strong> — the registration ended after approval, or you released the spot of an accepted family that hadn&apos;t paid (the family reads <strong>Withdrawn</strong> for both). It&apos;s kept for your records but the player is no longer active.</li>
           </ul>
-          <p>Setting a player to Active, Waitlisted, or Declined emails the family, so they always know where they stand.</p>
+          <p>Declined, withdrawn and released registrations show together on the <strong>Ended</strong> tab, with what happened to any money. Setting a player to Active, Waitlisted, or Declined emails the family, so they always know where they stand. A withdrawal emails them only when money was refunded or kept, and a released spot always does.</p>
         </>
       ),
     },
@@ -31,17 +31,17 @@ const registrationsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to work the daily registration review queue',
       summary: 'Review pending players, confirm details, and keep the queue from backing up.',
-      keywords: ['daily review', 'pending registrations', 'approve', 'decline', 'fee paid', 'review queue', 'division full', 'add to the waitlist instead'],
-      searchText: 'division is full add to the waitlist instead one needs attention notice per sign-up several children one reference daily review queue pending registrations approve waitlist decline fee paid payment search player name parent email status tabs duplicate confirm',
+      keywords: ['daily review', 'to review', 'pending registrations', 'approve', 'decline', 'mark received', 'fee', 'review queue', 'division full', 'add to the waitlist instead', 'select several', 'bulk approve'],
+      searchText: 'division is full add to the waitlist instead one needs attention notice per sign-up several children one reference daily review queue to review pending registrations approve waitlist decline mark received fee owing payment search player name parent email status tabs duplicate confirm tick several rows approve promote waitlist mark received move division email one at a time decline withdraw',
       content: (
         <>
-          <p>Use this routine when registrations are actively coming in. The page is a single table — actions sit right on each row, and the status tabs (Pending review, Active, Waitlist, Declined / withdrawn) plus the search box are how you move through it.</p>
+          <p>Use this routine when registrations are actively coming in. The page is a single table — actions sit right on each row, and the tabs (To review, Active, Waitlist, Ended) plus the search box are how you move through it. Tick several rows and a bar offers Approve, Promote, Waitlist, Mark received, Move division and Email for all of them at once.</p>
           <ol>
-            <li>Open <strong>Registrations</strong> and start on the <strong>Pending review</strong> tab.</li>
+            <li>Open <strong>Registrations</strong> and start on the <strong>To review</strong> tab.</li>
             <li>Use the <strong>search box</strong> (player name or parent email) to find a specific family or spot duplicates.</li>
             <li>Check each row&apos;s player, guardian contact, and division before acting.</li>
             <li>Click <strong>Approve</strong>, <strong>Waitlist</strong>, or <strong>Decline</strong> on the row. If the division is full, Approve is refused with <em>Add to the waitlist instead</em>.</li>
-            <li>Use the <strong>Fee paid</strong> toggle to track payment separately from status. Approving never creates a fee line; ticking Fee paid writes it into the season&apos;s accounting book.</li>
+            <li>When a family pays, click <strong>Mark received</strong> on their Active row. Approving never creates a fee line; marking a fee received writes it into the season&apos;s book, and the Fee column shows what is owing and for how many days.</li>
           </ol>
           <p>During peak registration, clear the pending list at least once a day so families know where they stand and the waitlist order stays clean.</p>
         </>
@@ -50,11 +50,11 @@ const registrationsHelp: HelpPageContent = {
         {
           id: 'faq-registration-review-best-practice',
           question: 'What should I check before approving a registration?',
-          answerText: 'Confirm division, player details, guardian contact, payment status, and any duplicate submissions before approving. Approving emails the family automatically.',
+          answerText: 'Confirm division, player details, guardian contact, the fee, and any duplicate submissions before approving. Approving emails the family automatically.',
           keywords: ['approve registration', 'review pending', 'duplicate'],
           popular: true,
           answer: (
-            <p>Confirm the division, player details, guardian contact, payment status, and any duplicate submissions, then approve, waitlist, or decline. Each of those actions emails the family.</p>
+            <p>Confirm the division, player details, guardian contact, the fee, and any duplicate submissions, then approve, waitlist, or decline. Each of those actions emails the family.</p>
           ),
         },
       ],
@@ -96,8 +96,8 @@ const registrationsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to add a manual registration',
       summary: 'Enter a player who registered outside the public form.',
-      keywords: ['manual registration', 'add registration', 'walk-in', 'carry-over player', 'registration night', 'division full', 'add to the waitlist instead'],
-      searchText: 'manual registration add registration by hand walk-in carry-over player public form offline division status active pending waitlisted guardian fee paid registration night in person table one laptop too many attempts league registrar can add finished season locked no add registration',
+      keywords: ['manual registration', 'add registration', 'walk-in', 'carry-over player', 'registration night', 'division full', 'add to the waitlist instead', 'mark received'],
+      searchText: 'manual registration add registration by hand walk-in carry-over player public form offline division status active to review pending waitlisted guardian fee mark received registration night in person table one laptop too many attempts league registrar can add finished season locked no add registration',
       content: (
         <>
           <p>Use manual registration for walk-ins, migrated records, late approvals, or players collected outside the public form. The owner, club admin, league admin and league registrar can all add one by hand, including after registration has closed.</p>
@@ -105,11 +105,11 @@ const registrationsHelp: HelpPageContent = {
             <li>Click <strong>Add registration</strong>.</li>
             <li>Enter player and guardian details exactly as you want them in exports and communications.</li>
             <li>Select the correct season division.</li>
-            <li>Choose the starting status — <strong>Active</strong>, <strong>Pending review</strong>, or <strong>Waitlisted</strong>.</li>
-            <li>Mark the fee paid if payment has already been received.</li>
-            <li>Save and confirm the player appears in the expected status tab.</li>
+            <li>Choose the starting status — <strong>Active</strong>, <strong>To review</strong>, or <strong>Waitlisted</strong>.</li>
+            <li>Save and confirm the player appears in the expected tab.</li>
+            <li>If payment has already been received, click <strong>Mark received</strong> on their row.</li>
           </ol>
-          <p>A full division refuses a hand-added registration with <em>Add to the waitlist instead</em>, and moving a child into a full division is refused too, so a manual entry can&apos;t take a spot that isn&apos;t there. Add the player as waitlisted, or free a spot first. A manual entry creates no fee line on its own; marking its fee paid writes one income line into the season&apos;s accounting book. Add registration isn&apos;t offered once the season is finished; the season&apos;s registrations are locked then.</p>
+          <p>A full division refuses a hand-added registration with <em>Add to the waitlist instead</em>, and moving a child into a full division is refused too, so a manual entry can&apos;t take a spot that isn&apos;t there. Add the player as waitlisted, or free a spot first. A manual entry creates no fee line on its own; marking its fee received writes one income line into the season&apos;s book. Add registration isn&apos;t offered once the season is finished; the season&apos;s registrations are locked then.</p>
         </>
       ),
       faqs: [
@@ -187,14 +187,15 @@ const registrationsHelp: HelpPageContent = {
       id: 'pending-day-to-day',
       group: 'How registrations work',
       heading: 'Handling pending registrations day-to-day',
-      summary: 'The page opens on Pending review; act on each row and track fees with the toggle.',
-      keywords: ['pending', 'review', 'search', 'fee paid', 'add registration'],
-      searchText: 'pending review default tab search box player name parent email fee paid toggle add registration walk-in row actions decline confirm finished season locked registrations locked fee paid stays open',
+      summary: 'The page opens on To review; act on each row and take fees with Mark received.',
+      keywords: ['pending', 'to review', 'review', 'search', 'mark received', 'fee', 'add registration'],
+      searchText: 'to review pending review default tab search box player name parent email mark received fee owing days amber add registration walk-in row actions decline withdraw release the spot refunded kept by the club confirm finished season locked registrations locked mark received undo correct the price stay open',
       content: (
         <>
-          <p>The Registrations page opens on the <strong>Pending review</strong> tab. Work the list by approving, waitlisting, or declining each row — declining asks you to confirm first, and tells you whether auto-promote will fill the spot.</p>
-          <p>The <strong>search box</strong> finds a player or parent email across all tabs when a family contacts you directly. If a family pays later, use the <strong>Fee paid</strong> toggle to track payment separately from status; ticking it records the fee in the season&apos;s accounting book, and unticking it (or declining the registration) voids that line. To add a player outside the public form, use <strong>Add registration</strong>.</p>
-          <p>When the season is finished (completed or archived), its registrations are locked: the row actions and <strong>Add registration</strong> are gone, and a line at the top says so. The <strong>Fee paid</strong> toggle and <strong>Email families</strong> stay, because fees still arrive after the last game.</p>
+          <p>The Registrations page opens on the <strong>To review</strong> tab. Work the list by approving, waitlisting, or declining each row — declining opens a window that asks what happened to any money, and tells you whether the waitlist will move up on its own to fill the spot.</p>
+          <p>The <strong>search box</strong> finds a player or parent email across all tabs when a family contacts you directly. When a family pays, click <strong>Mark received</strong> on their row: it records the whole amount still owing, with the date and how. If you marked one by mistake, <strong>Undo: marked received by mistake</strong> takes it back; if the money is going back to the family, decline or withdraw the registration and choose <strong>Refunded</strong>. To add a player outside the public form, use <strong>Add registration</strong>.</p>
+          <p>When the season is finished (completed or archived), its registrations are locked: the row actions and <strong>Add registration</strong> are gone, and a line at the top says so. <strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong> and <strong>Email families</strong> stay, because fees still arrive after the last game.</p>
+          <p>The full day-to-day workflow, including the Fee column, ending a registration, correcting a price and moving a child to another division, is in <em>Managing registrations day to day</em> in the House league guide.</p>
         </>
       ),
     },
@@ -208,7 +209,7 @@ const registrationsHelp: HelpPageContent = {
       content: (
         <>
           <p>The <strong>Waitlist</strong> tab shows waitlisted players in queue order — position #1 is next in line, and each player&apos;s waitlist position is shown on their row.</p>
-          <p>If <strong>Auto-promote from waitlist</strong> is on for the season, a spot that opens from a decline or withdrawal advances the next waitlisted player automatically — you&apos;ll see a notice in the confirmation message when it happens. If it&apos;s off, click <strong>Promote</strong> to move a player from Waitlisted to Active. Either way, the family is emailed.</p>
+          <p>If <strong>Auto-promote from waitlist</strong> is on for the season, a spot that opens from a decline or withdrawal advances the next waitlisted player automatically — you&apos;ll see a notice in the confirmation message when it happens. If it&apos;s off, the spot stays open and you click <strong>Promote</strong> to move a player from Waitlisted to Active. Either way, the family is emailed. A division that is still full leaves the child on the waitlist.</p>
         </>
       ),
     },

@@ -414,9 +414,9 @@ function ChildTable({ lines, chips }: { lines: readonly FamilyChildLine[]; chips
                 <td className={l.current ? undefined : repKit.dim}>
                   {whereOf(l)}
                   {/* 9b-2 (copy §13): a house-league fee is the price fixed when the family signed up. */}
-                  {l.league?.feeCents != null && l.league.fixedOn && (
-                    <span className={fam.ladder}>{FAMILY_LINE_WORDS.fixed(formatStoredDate(l.league.fixedOn))}</span>
-                  )}
+                  {l.league?.feeCents != null && (l.league.corrected != null
+                    ? <span className={fam.ladder}>{FAMILY_LINE_WORDS.corrected(l.league.corrected)}</span>
+                    : l.league.fixedOn && <span className={fam.ladder}>{FAMILY_LINE_WORDS.fixed(formatStoredDate(l.league.fixedOn))}</span>)}
                 </td>
                 {f ? (
                   <>

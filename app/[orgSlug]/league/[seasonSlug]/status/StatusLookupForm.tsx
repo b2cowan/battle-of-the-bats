@@ -33,7 +33,7 @@ type Registration = {
   kept: { amount: number; reason: string } | null;
   withdrawRequestedAt: string | null;
 };
-type Found = { registrations: Registration[]; howToPay: string | null; clubName: string; reviewFirst: boolean };
+type Found = { registrations: Registration[]; howToPay: string | null; clubName: string; reviewFirst: boolean; finished: boolean };
 
 // Field, label and button faces are the club frame's (Club Tier Stage 4b-1): 44px fields with the form-field border,
 // 14px/600 labels, the club's fill on the one button.
@@ -116,7 +116,7 @@ export default function StatusLookupForm({
       }
       setFound({
         registrations: Array.isArray(data.registrations) ? data.registrations : [],
-        howToPay: data.howToPay ?? null, clubName: data.clubName ?? '', reviewFirst: !!data.reviewFirst,
+        howToPay: data.howToPay ?? null, clubName: data.clubName ?? '', reviewFirst: !!data.reviewFirst, finished: !!data.finished,
       });
       setState('done');
     } catch {
@@ -131,7 +131,7 @@ export default function StatusLookupForm({
   const paidKids = regs.filter(r => r.status === 'active' && r.paid && (r.fee ?? 0) > 0);
   const accepted = regs.filter(r => r.status === 'active' && (r.fee ?? 0) > 0);
   // A child can be asked about while live and not already asked about.
-  const askable = regs.filter(r => !ended(r) && !r.withdrawRequestedAt && asked !== r.child);
+  const askable = found?.finished ? [] : regs.filter(r => !ended(r) && !r.withdrawRequestedAt && asked !== r.child);
   const askOne = askable.length === 1 ? askable[0] : null;
   const askFor = askOne ?? askable.find(r => r.child === askChild) ?? null;
 

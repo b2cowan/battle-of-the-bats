@@ -57,6 +57,8 @@ export default function ReceiveWindow({
 
   const many = targets.length > 1;
   const one = targets[0];
+  // The screen hands over the targets it opened on, so a read-again never empties this list; if one ever did, draw nothing.
+  if (!one) return null;
   const total = targets.reduce((n, t) => n + Math.round(t.owing * 100), 0) / 100;
 
   async function go() {

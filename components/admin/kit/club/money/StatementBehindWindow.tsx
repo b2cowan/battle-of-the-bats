@@ -41,7 +41,9 @@ export default function StatementBehindWindow({ item, categoryName, report, q, o
   /** An allocation behind a line, open in this window's place (Stage 3d) — × turns it back. */
   const allocation = useAllocationHandOff({ q, orgSlug, onChanged });
   const costs = item.costs ?? [];
-  const moved = item.direction === 'in' ? 'received' : 'paid';
+  // A revenue row can be net NEGATIVE since Club Tier 9b-2 (house-league refunds net their fees row): a year with more
+  // refunded than received reads "returned", never a sign-less "received".
+  const moved = item.direction === 'in' ? (item.actual < 0 ? 'returned' : 'received') : 'paid';
   const books = [...new Set(costs.map(c => report.lineBooks[c.id]?.ledgerId).filter((x): x is string => !!x))];
   const bookName = books.length === 1 ? costs.map(c => report.lineBooks[c.id]?.bookName).find(Boolean) ?? null : null;
   const where = bookName ? `on ${bookName}` : 'on the club’s books';
