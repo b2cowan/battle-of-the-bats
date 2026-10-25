@@ -58,7 +58,7 @@
     "rgba(167,139,250,0.12)": 1,
     "rgba(167,139,250,0.7)": 1
   },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx": {
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx": {
     "#f0f0f0": 3,
     "rgba(74,222,128,0.1)": 1,
     "#4ade80": 1,

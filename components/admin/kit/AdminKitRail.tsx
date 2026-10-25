@@ -48,11 +48,13 @@ import { useAdminKitNav } from './useAdminKitNav';
 import { STATUS_WORD } from '@/lib/tournament-status-words';
 import { useRailTeamName } from './useRailTeam';
 import { briefPageCount, briefProgramCount } from './club/ClubBriefProvider';
+import { useHouseLeagueAccess, useHouseLeagueSeasons, type FrameSeason } from './useHouseLeagueSeasons';
+import { seasonGroup, seasonPageHref, seasonPagesFor, seasonSegment, toReviewLabel } from '@/lib/house-league-season';
+import type { HouseLeagueAccess } from '@/lib/house-league-access';
 import styles from './AdminKitFrame.module.css';
 
-type SeasonOption = { id: string; name: string };
-/** A page as both the rail and the strip's menu list it. */
-type PageRow = { href: string; label: string; active: boolean };
+/** A page as both the rail and the strip's menu list it (a season's Registrations carries its waiting count). */
+type PageRow = { href: string; label: string; active: boolean; count?: number; countLabel?: string };
 
 /** The amber waiting count, worn by a rail door and by its row in the strip's menu. */
 function WaitingCount({ count, label, className = '' }: { count: number; label: string; className?: string }) {
@@ -62,9 +64,9 @@ function WaitingCount({ count, label, className = '' }: { count: number; label: 
 
 /** One rail door — the coach rail's row, with the admin's worklist count and chat badge. `stripIcon` is an
  *  icon only the strip draws (a row the full sidebar lists by name alone). */
-function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, sub, count = 0, chatUnread }: {
+function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, sub, count = 0, countLabel, chatUnread }: {
   href: string; label: string; active: boolean; icon?: ElementType; stripIcon?: ElementType; sub?: boolean;
-  count?: number; chatUnread?: number;
+  count?: number; countLabel?: string; chatUnread?: number;
 }) {
   return (
     <Link
@@ -75,7 +77,7 @@ function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, sub, c
       {Icon && <Icon size={14} aria-hidden />}
       {StripIcon && <StripIcon size={14} aria-hidden className={strip.whenStrip} />}
       <span className={strip.rowLabel}>{label}</span>
-      <WaitingCount count={count} label={`${count} need attention`} className={strip.cornerCount} />
+      <WaitingCount count={count} label={countLabel ?? `${count} need attention`} className={strip.cornerCount} />
       {chatUnread !== undefined && <ChatUnreadBadge count={chatUnread} className={strip.cornerCount} />}
     </Link>
   );
@@ -111,34 +113,6 @@ function ProgramRow({ href, label, icon: Icon, open, hasPages, opensPages, count
   );
 }
 
-/** Inside a house-league season: the club's other seasons, for the season switcher (and its rows in the
- *  strip's menu). Only fetched while you are inside one. */
-function useHouseLeagueSeasons(enabled: boolean): SeasonOption[] {
-  const { currentOrg } = useOrg();
-  const slug = enabled ? currentOrg?.slug : undefined;
-  const [seasons, setSeasons] = useState<SeasonOption[]>([]);
-  useEffect(() => {
-    if (!slug) return;
-    // A late answer for the org you just left must not overwrite this one's list (/review, slice 1 —
-    // today's rail has the same unguarded fetch; this copy does not repeat it).
-    let stale = false;
-    fetch(`/api/admin/house-league/seasons?orgSlug=${encodeURIComponent(slug)}`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (stale) return;
-        const list: unknown[] = Array.isArray(d?.seasons) ? d.seasons : [];
-        setSeasons(list
-          .filter((s): s is SeasonOption & { status?: string } =>
-            !!s && typeof (s as SeasonOption).id === 'string' && typeof (s as SeasonOption).name === 'string')
-          .filter(s => s.status !== 'archived')
-          .map(s => ({ id: s.id, name: s.name })));
-      })
-      .catch(() => {});
-    return () => { stale = true; };
-  }, [slug]);
-  return seasons;
-}
-
 export default function AdminKitRail() {
   const pathname = usePathname();
   const nav = useAdminKitNav();
@@ -150,6 +124,8 @@ export default function AdminKitRail() {
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
   const repTeamName = useRailTeamName(repTeamId);
   const seasons = useHouseLeagueSeasons(!!seasonId);
+  const thisSeason = seasons.find(s => s.id === seasonId) ?? null;
+  const leagueAccess = useHouseLeagueAccess(thisSeason);
 
   // The strip: the setting as rendered (for a menu row's accessibility attributes only — CSS owns the look),
   // the one open menu, and the rail the name bubble and the menu hang beside.
@@ -197,12 +173,15 @@ export default function AdminKitRail() {
           count={briefProgramCount(brief, p.key)}
           menu={opensMenu(p) ? menuFor(p.key) : undefined}
         />
-        {open && p.pages.map(pageRow)}
+        {open && p.key === 'house-league' && seasonId && seasonPath ? (
+          // 9a·2: inside a season, House league's own rows and the season's block are set in under it, one line beside them.
+          <div className={styles.seasonBlock}>
+            {p.pages.map(pageRow)}
+            <SeasonBlock seasonId={seasonId} seasons={seasons} pages={seasonPages(seasonPath, pathname, leagueAccess, thisSeason)} />
+          </div>
+        ) : open && p.pages.map(pageRow)}
         {open && p.key === 'rep-teams' && repTeamPath && (
           <RepTeamBlock name={repTeamName} pages={repTeamPages(repTeamPath, pathname)} />
-        )}
-        {open && p.key === 'house-league' && seasonId && seasonPath && (
-          <SeasonBlock seasonId={seasonId} seasons={seasons} pages={seasonPages(seasonPath, pathname)} />
         )}
       </div>
     );
@@ -234,16 +213,23 @@ export default function AdminKitRail() {
       {menuProgram.key === 'house-league' && seasonId && seasonPath && (
         <>
           <StripMenuGroup label="Season">
-            {seasonPages(seasonPath, pathname).map(r => (
-              <StripMenuLink key={r.href} href={r.href} active={r.active}>{r.label}</StripMenuLink>
+            {seasonPages(seasonPath, pathname, leagueAccess, thisSeason).map(r => (
+              <StripMenuLink
+                key={r.href}
+                href={r.href}
+                active={r.active}
+                trailing={r.count ? <WaitingCount count={r.count} label={r.countLabel ?? ''} /> : undefined}
+              >
+                {r.label}
+              </StripMenuLink>
             ))}
           </StripMenuGroup>
           {/* The full rail's season switcher, as rows: each other season opens on the page you are on. */}
           {seasons.length > 1 && (
             <StripMenuGroup label="Other seasons">
               {seasons.filter(s => s.id !== seasonId).map(s => (
-                <StripMenuLink key={s.id} href={`${base}/house-league/seasons/${s.id}/${seasonSubPath(pathname)}`}>
-                  {s.name}
+                <StripMenuLink key={s.id} href={seasonPageHref(`${base}/house-league/seasons/${s.id}`, seasonSegment(pathname))}>
+                  {switcherName(s)}
                 </StripMenuLink>
               ))}
             </StripMenuGroup>
@@ -368,9 +354,9 @@ export default function AdminKitRail() {
   );
 }
 
-/** The page a house-league season link opens on: the one you are on, else Registrations (the switcher's rule). */
-function seasonSubPath(pathname: string): string {
-  return pathname.match(/\/seasons\/[^/]+\/([^/]+)/)?.[1] ?? 'registrations';
+/** A season as the switcher names it: a finished one says so (copy §7; a `<select>` option cannot carry a tag). */
+function switcherName(s: FrameSeason): string {
+  return seasonGroup(s) === 'past' ? `${s.name} · Finished` : s.name;
 }
 
 /** A rep team's five pages, for its block in the rail and in the strip's menu. */
@@ -385,15 +371,24 @@ function repTeamPages(t: string, pathname: string): PageRow[] {
   ];
 }
 
-/** A house-league season's five pages, for its block in the rail and in the strip's menu. */
-function seasonPages(s: string, pathname: string): PageRow[] {
-  return [
-    ['registrations', 'Registrations'],
-    ['teams', 'Teams & draft'],
-    ['schedule', 'Schedule'],
-    ['standings', 'Standings'],
-    ['notifications', 'Notifications'],
-  ].map(([key, label]) => ({ href: `${s}/${key}`, label, active: pathname.startsWith(`${s}/${key}`) }));
+/**
+ * A house-league season's pages (9a·2: Overview · Registrations · Teams & draft · Schedule · Standings · Money · Email
+ * families), the ones this person can open, for its block in the rail and in the strip's menu. Registrations carries the
+ * season's waiting count, the amber pill alone.
+ */
+function seasonPages(s: string, pathname: string, access: HouseLeagueAccess | null, season: FrameSeason | null): PageRow[] {
+  const at = seasonSegment(pathname);
+  const pages = access ? seasonPagesFor(access) : [];
+  return pages.map(p => {
+    const count = p.key === 'registrations' ? season?.pendingReviewCount ?? 0 : 0;
+    return {
+      href: seasonPageHref(s, p.segment),
+      label: p.label,
+      active: at === p.segment,
+      count,
+      countLabel: count ? toReviewLabel(count) : undefined,
+    };
+  });
 }
 
 /**
@@ -412,8 +407,12 @@ function RepTeamBlock({ name, pages }: { name: string | null; pages: PageRow[] }
   );
 }
 
-/** Inside one house-league season — today's "Season" block: the switcher and five pages. */
-function SeasonBlock({ seasonId, seasons, pages }: { seasonId: string; seasons: SeasonOption[]; pages: PageRow[] }) {
+/**
+ * Inside one house-league season — its block, set in under House league (9a·2): the switcher, then the season's pages.
+ * The switcher shows whenever the list has read the season you are in (one season reads as its name), lists live seasons
+ * first and finished ones marked, and keeps the page you are on.
+ */
+function SeasonBlock({ seasonId, seasons, pages }: { seasonId: string; seasons: FrameSeason[]; pages: PageRow[] }) {
   const pathname = usePathname();
   const router = useRouter();
   const { currentOrg } = useOrg();
@@ -421,20 +420,20 @@ function SeasonBlock({ seasonId, seasons, pages }: { seasonId: string; seasons: 
   return (
     <>
       <div className={styles.subLabel}>Season</div>
-      {seasons.length > 1 && (
+      {seasons.some(s => s.id === seasonId) && (
         <div className={styles.switcher}>
           <select
             className={styles.switcherSelect}
             value={seasonId}
             aria-label="Switch season"
             id="hl-season-select"
-            onChange={e => router.push(`${base}/house-league/seasons/${e.target.value}/${seasonSubPath(pathname)}`)}
+            onChange={e => router.push(seasonPageHref(`${base}/house-league/seasons/${e.target.value}`, seasonSegment(pathname)))}
           >
-            {seasons.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            {seasons.map(o => <option key={o.id} value={o.id}>{switcherName(o)}</option>)}
           </select>
         </div>
       )}
-      {pages.map(r => <RailRow key={r.href} href={r.href} label={r.label} active={r.active} sub />)}
+      {pages.map(r => <RailRow key={r.href} href={r.href} label={r.label} active={r.active} sub count={r.count} countLabel={r.countLabel} />)}
     </>
   );
 }

@@ -1649,7 +1649,7 @@ export const SCREENS = [
   // ── House league (the 2026 Fall season, registration open) ──
   { id: 'admin-house-league',          area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league` },
   { id: 'admin-hl-season',             area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}` },
-  { id: 'admin-hl-ledger',             area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/ledger` },
+  { id: 'admin-hl-ledger',             area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/money` },
   { id: 'admin-hl-notifications',      area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/notifications` },
   { id: 'admin-hl-registrations',      area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },
   { id: 'admin-hl-registrations-registrar', area: 'house-league', session: 'repClubRegistrar', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },

@@ -111,6 +111,18 @@
 .subLabelTeam { text-transform: none; letter-spacing: 0.02em; font-size: var(--type-label); color: var(--home-olive); }
 .chevron { margin-left: auto; opacity: 0.55; flex-shrink: 0; transition: transform 0.2s ease; }
 .chevronOpen { transform: rotate(90deg); }
+/* Inside a house-league season (Club Tier Stage 9a, 9a·2): House league's rows and the season's block are set in under the
+   program, one line beside them — the drawn block. Its rows keep their own indent less the inset, so names line up.
+   (After `.subLabel` and `.sub`, whose own rules a guard reads first.) */
+.seasonBlock {
+  margin-left: calc(1.25rem + 7px);
+  border-left: 2px solid var(--home-line-strong);
+  display: flex;
+  flex-direction: column;
+}
+.seasonBlock .sub,
+.seasonBlock .subLabel { padding-left: calc(14px + 0.5rem - 2px); }
+.seasonBlock .switcher { padding-left: 0.6rem; }
 
 /* A waiting count on a door (today's worklist badge), the coach rail's folded-count weight. */
 .count {
@@ -240,6 +252,7 @@
   }
   :global(html[data-sidebar='strip']) .countWhenOpen { display: inline-flex; }
   :global(html[data-sidebar='strip']) .sub,
+  :global(html[data-sidebar='strip']) .seasonBlock,
   :global(html[data-sidebar='strip']) .subLabel,
   :global(html[data-sidebar='strip']) .switcher,
   :global(html[data-sidebar='strip']) .groupHeader,

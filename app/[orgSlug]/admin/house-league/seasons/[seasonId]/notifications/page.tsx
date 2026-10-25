@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { Mail, Send, ArrowLeft, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
+import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import HelpCallout from '@/components/help/HelpCallout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
@@ -48,8 +48,15 @@ function buildPayload(subject: string, message: string, audience: Audience) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+/**
+ * The season's Email families (Club Tier Stage 9a: the row's name, Q12; the page keeps its path). It still sends through
+ * the season's own composer: the switch to the club's Families window, with each season's own allowance, lands in 9d
+ * (owner 2026-10-24, plan §0c). Who may: the one house-league gate's `email` (Q17: the registrar too); it stays open on a
+ * finished season (owner 2026-10-24).
+ */
 export default function NotificationsPage() {
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const { currentOrg, loading } = useOrg();
+  const access = useHouseLeagueAccess();
   // Admin Design Continuity slice 2: the kit's version while the switch is on; today's while it is off.
   const kit = useAdminKit();
   const kx = useKitStyle();
@@ -57,7 +64,6 @@ export default function NotificationsPage() {
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-  const isAdmin = userRole === 'owner' || userRole === 'league_admin';
 
   const [subject,  setSubject]  = useState('');
   const [message,  setMessage]  = useState('');
@@ -115,24 +121,13 @@ export default function NotificationsPage() {
 
   // ── Guards ──────────────────────────────────────────────────────────────────
 
-  if (loading) return <LoadingState label="Loading notifications…" />;
+  if (loading) return <LoadingState label="Loading Email families…" />;
 
-  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_house_league')) {
+  if (!access?.email) {
     return (
       <div className={styles.accessDenied}>
         <Mail size={32} />
-        <h2>Access restricted</h2>
-        <p>You don&apos;t have access to the House league module.</p>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className={styles.accessDenied}>
-        <Mail size={32} />
-        <h2>Admin only</h2>
-        <p>Only league admins and owners can send notifications.</p>
+        <p>You don&apos;t have access to this page.</p>
       </div>
     );
   }
@@ -238,7 +233,7 @@ export default function NotificationsPage() {
 
       <AdminPageHeader
         eyebrow="House league"
-        title="Send notification"
+        title="Email families"
         backTo={{ href: `${base}/house-league/seasons/${seasonId}/registrations`, label: 'Registrations' }}
       />
 

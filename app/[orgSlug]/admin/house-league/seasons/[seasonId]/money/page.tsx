@@ -1,0 +1,246 @@
+'use client';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { useOrg } from '@/lib/org-context';
+import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
+import styles from '../../../house-league.module.css';
+import type { AccountingEntry, AccountingLedger, LedgerSummary } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
+
+interface AnnotatedEntry extends AccountingEntry {
+  playerFirstName: string | null;
+  playerLastName:  string | null;
+  divisionId:      string | null;
+  registrationId:  string | null;
+}
+
+interface LedgerData {
+  ledger:        AccountingLedger;
+  summary:       LedgerSummary;
+  entries:       AnnotatedEntry[];
+  expectedTotal: number;
+  feePerReg:     number;
+  activeCount:   number;
+}
+
+interface SeasonInfo { id: string; name: string; }
+
+function fmt(n: number): string {
+  return n.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 2 });
+}
+
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+/**
+ * The season's Money (Club Tier Stage 9a, Q18 — today's Ledger, renamed; `/ledger` redirects here). Read by everyone who
+ * opens house league AND by the treasurer through Accounting (Q17), so it asks the one gate's `readMoney`, and it does not
+ * need the season's own read (a treasurer has none): the season's name comes from its book when the season can't be read.
+ * Its contents are 9b-2's (the Money band); this part only names it and opens it to the treasurer.
+ */
+export default function MoneyPage() {
+  const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
+  const { currentOrg, user } = useOrg();
+  // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+
+  const access = useHouseLeagueAccess();
+  const canView = !!access?.readMoney;
+  // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
+  const kit = useAdminKit();
+
+  const [season,  setSeason]  = useState<SeasonInfo | null>(null);
+  const [data,    setData]    = useState<LedgerData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    if (!canView) return;
+    setLoading(true);
+    try {
+      const [seasonRes, ledgerRes] = await Promise.all([
+        fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`),
+        fetch(`/api/admin/house-league/seasons/${seasonId}/ledger${orgQuery}`),
+      ]);
+      const [sd, ld] = await Promise.all([seasonRes.json().catch(() => ({})), ledgerRes.json()]);
+      if (!ledgerRes.ok) throw new Error(ld.error ?? 'Failed to load the season’s money');
+      setSeason(sd.season ? { id: sd.season.id, name: sd.season.name } : { id: seasonId, name: ld.ledger?.name ?? '' });
+      setData(ld);
+    } finally {
+      setLoading(false);
+    }
+  }, [seasonId, canView, orgQuery]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (!user) return null;
+  if (!canView) {
+    return (
+      <div className={styles.page}>
+        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>You don&apos;t have access to this page.</p>
+      </div>
+    );
+  }
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <LoadingState label="Loading the season’s money…" />
+      </div>
+    );
+  }
+
+  const collected   = data?.summary.postedIncome   ?? 0;
+  const outstanding = data?.summary.pendingIncome  ?? 0;
+  const expected    = data?.expectedTotal          ?? 0;
+  const entries     = data?.entries                ?? [];
+
+  return (
+    <div className={styles.page}>
+      {/* Header — today's as `legacy` while the switch is off. On the kit the breadcrumb becomes the
+          eyebrow (still a link to House league) and the way up to the season (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `/${orgSlug}/admin/house-league`, label: 'House league' }]}
+        title="Money"
+        backTo={season?.name && access?.read ?{ href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season.name } : undefined}
+      />
+
+      {/* Summary tiles */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.85rem', marginBottom: '2rem' }}>
+        <SummaryTile label="Expected" value={fmt(expected)} sub={`${data?.activeCount ?? 0} active × ${fmt(data?.feePerReg ?? 0)}`} color="var(--info-light)" />
+        <SummaryTile label="Collected" value={fmt(collected)} sub="Posted entries" color="var(--success-light)" />
+        <SummaryTile label="Outstanding" value={fmt(outstanding)} sub="Pending entries" color="var(--warning-light)" />
+      </div>
+
+      {/* No fee configured */}
+      {(data?.feePerReg ?? 0) === 0 && (
+        <div style={kx({
+          padding: '1rem 1.25rem',
+          borderRadius: '2px',
+          background: 'var(--white-03)',
+          border: '1px solid var(--white-8)',
+          fontSize: '0.875rem',
+          color: 'var(--white-40)',
+          marginBottom: '1.5rem',
+        }, { ...KIT_SURFACE.card, ...KIT_INK.secondary })}>
+          No registration fee is configured for this season. Set a fee amount in the season settings to track payments here.
+        </div>
+      )}
+
+      {/* Entries table */}
+      {entries.length === 0 ? (
+        <div style={kx({
+          padding: '2.5rem 1.5rem',
+          textAlign: 'center',
+          border: '1px dashed var(--white-10)',
+          borderRadius: '2px',
+          color: 'var(--white-35)',
+          fontSize: '0.9rem',
+        }, KIT_SURFACE.empty)}>
+          No fee entries yet. Entries are created automatically when registrations are approved (if auto-generate fees is enabled).
+        </div>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table className={styles.scheduleTable}>
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th style={{ textAlign: 'right' }}>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map(e => {
+                const isPaid = e.status === 'posted';
+                const isVoid = e.status === 'void';
+                const playerName = e.playerFirstName
+                  ? `${e.playerFirstName} ${e.playerLastName}`
+                  : e.description;
+                return (
+                  <tr
+                    key={e.id}
+                    style={{ opacity: isVoid ? 0.4 : 1 }}
+                  >
+                    <td style={kx({ fontWeight: 600, color: '#f0f0f0' }, KIT_INK.primary)}>
+                      {e.registrationId ? (
+                        <Link
+                          href={`/${orgSlug}/admin/house-league/seasons/${seasonId}/registrations`}
+                          style={kx({ color: '#f0f0f0', textDecoration: 'none' }, KIT_INK.primary)}
+                        >
+                          {playerName}
+                        </Link>
+                      ) : playerName}
+                    </td>
+                    <td className={styles.scoreCell} style={{ textAlign: 'right' }}>
+                      {fmt(e.amount)}
+                    </td>
+                    <td>
+                      <span
+                        className={kit ? `badge ${isPaid ? 'badge-success' : isVoid ? 'badge-neutral' : 'badge-warning'}` : styles.statusBadge}
+                        style={
+                          kit ? undefined
+                          : isPaid
+                            ? { background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.25)' }
+                            : isVoid
+                              ? { background: 'var(--white-5)', color: 'var(--white-30)' }
+                              : { background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)' }
+                        }
+                      >
+                        {isPaid ? 'Paid' : isVoid ? 'Void' : 'Pending'}
+                      </span>
+                    </td>
+                    <td style={{ color: 'var(--white-50)', whiteSpace: 'nowrap' }}>
+                      {fmtDate(e.updatedAt)}
+                    </td>
+                    <td style={kx({ color: 'var(--white-40)', fontSize: '0.8rem' }, KIT_INK.tertiary)}>
+                      {e.description}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p style={kx({ marginTop: '1rem', fontSize: '0.72rem', color: 'var(--white-30)' }, KIT_INK.tertiary)}>
+        Fee status is managed from the{' '}
+        <Link
+          href={`/${orgSlug}/admin/house-league/seasons/${seasonId}/registrations`}
+          style={{ color: 'var(--white-50)', textDecoration: 'underline' }}
+        >
+          Registrations
+        </Link>
+        {' '}page.
+      </p>
+    </div>
+  );
+}
+
+function SummaryTile({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
+  const kx = useKitStyle();
+  return (
+    <div style={kx({
+      padding: '1rem 1.25rem',
+      borderRadius: '2px',
+      background: 'var(--white-03)',
+      border: '1px solid var(--white-8)',
+    }, KIT_SURFACE.card)}>
+      <div style={kx({ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-35)', marginBottom: '0.4rem' }, KIT_INK.eyebrow)}>
+        {label}
+      </div>
+      <div style={{ fontSize: '1.5rem', fontWeight: 800, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.1, marginBottom: '0.25rem' }}>
+        {value}
+      </div>
+      <div style={kx({ fontSize: '0.72rem', color: 'var(--white-30)' }, KIT_INK.tertiary)}>
+        {sub}
+      </div>
+    </div>
+  );
+}

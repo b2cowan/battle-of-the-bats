@@ -9,7 +9,7 @@
     "kx": 1,
     "helpers": 2
   },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx": {
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx": {
     "useAdminKit": 1,
     "kx": 10,
     "helpers": 2

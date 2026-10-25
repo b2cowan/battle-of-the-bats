@@ -4,7 +4,7 @@
     "face": 5,
     "heavy": 1
   },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx": {
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx": {
     "caps": 1,
     "heavy": 1
   },

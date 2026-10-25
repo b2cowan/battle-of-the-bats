@@ -1,0 +1,130 @@
+/* A house-league season on a phone (Club Tier Stage 9a, 9a·3; frame C). The desk keeps the rail's season block, so the
+   whole frame exists only at the kit's phone width. */
+.frame { display: none; }
+
+@media (max-width: 900px) {
+  .frame {
+    display: block;
+    background: var(--home-card);
+    border-bottom: 1px solid var(--home-line);
+    margin: 0 0 1rem;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem 0.6rem;
+}
+.title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.eyebrow {
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+  color: var(--text-tertiary);
+}
+.name {
+  font-family: var(--font-display);
+  font-size: var(--type-title);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The switch: the symbol alone (the phone secondary-action rule) — no border, no fill, 44 px, named for a screen reader. */
+.switch {
+  flex-shrink: 0;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+}
+.switch:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+
+/* The season's pages: 44 px pills in one row that scrolls sideways (never wraps, never pushes the screen wide). */
+.strip {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding: 0 1rem 0.75rem;
+  scrollbar-width: none;
+}
+.strip::-webkit-scrollbar { display: none; }
+.pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--home-line-strong);
+  color: var(--text-secondary);
+  font-size: var(--type-body);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pillOn {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--home-card);
+}
+.pill:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+
+/* The amber waiting count, the pill alone (the product's one waiting-count face). */
+.count {
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-data); /* type-ok: readout */
+  font-size: var(--type-token);
+  font-weight: 700;
+  color: var(--home-amber);
+  background: rgba(var(--home-amber-rgb), 0.11);
+  border: 1px solid rgba(var(--home-amber-rgb), 0.32);
+}
+/* On the current (dark) pill the count stays readable in both themes. */
+.pillOn .count { color: var(--home-card); background: var(--home-amber); border-color: var(--home-amber); }
+
+/* The switch sheet: one row per season, live first, finished ones marked. */
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.25rem;
+  border-bottom: 1px solid var(--home-line);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: var(--type-body);
+}
+.optionOn { font-weight: 700; }
+.optionName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.finished {
+  flex-shrink: 0;
+  font-size: var(--type-token);
+  font-family: var(--font-data); /* type-ok: chip */
+  text-transform: uppercase; /* type-ok: chip */
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}

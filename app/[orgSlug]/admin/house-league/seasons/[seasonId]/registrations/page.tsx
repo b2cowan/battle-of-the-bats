@@ -16,7 +16,8 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_BUTTON, KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
-import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision, LeagueTeam } from '@/lib/types';
+import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision, LeagueSeasonStatus, LeagueTeam } from '@/lib/types';
+import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import LoadingState from '@/components/shared/LoadingState';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -36,6 +37,7 @@ const TABS: { key: Tab; label: string }[] = [
 interface SeasonInfo {
   id: string;
   name: string;
+  status: LeagueSeasonStatus;
   autoPromoteWaitlist: boolean;
 }
 
@@ -169,7 +171,7 @@ function StatusBadge({ status }: { status: LeagueRegistrationStatus }) {
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export default function RegistrationsPage() {
-  const { currentOrg, userRole } = useOrg();
+  const { currentOrg } = useOrg();
   const { seasonId } = useParams<{ seasonId: string }>();
   // Admin Design Continuity slice 2: the kit's version while the switch is on; today's while it is off.
   const kit = useAdminKit();
@@ -177,10 +179,13 @@ export default function RegistrationsPage() {
   // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
-  const isAdminOrOwner   = userRole === 'owner' || userRole === 'league_admin';
-  const canManageRegs    = isAdminOrOwner || userRole === 'league_registrar';
-
   const [season,      setSeason]      = useState<SeasonInfo | null>(null);
+  // Who may (the one house-league gate, Stage 9a, Q17): the club admin and the registrar work this desk; a finished season
+  // locks the registrations and keeps the fee tick (Q16). A control a person can't use is absent.
+  const access         = useHouseLeagueAccess(season);
+  const canManageRegs  = !!access?.register;
+  const canTakeFees    = !!access?.takeFees;
+  const canEmail       = !!access?.email;
   const [divisions,   setDivisions]   = useState<LeagueDivision[]>([]);
   const [regs,        setRegs]        = useState<LeagueRegistration[]>([]);
   const [fetching,    setFetching]    = useState(true);
@@ -240,6 +245,7 @@ export default function RegistrationsPage() {
       setSeason({
         id:                  seasonData.season.id,
         name:                seasonData.season.name,
+        status:              seasonData.season.status,
         autoPromoteWaitlist: seasonData.season.autoPromoteWaitlist,
       });
       setDivisions(seasonData.divisions ?? []);
@@ -661,14 +667,17 @@ export default function RegistrationsPage() {
           disabled={tabRegs.length === 0}
         />
         )}
+        {canEmail && (
         <button
           className={styles.iconBtn}
           style={kx({ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }, KIT_BUTTON.secondary)}
           onClick={() => setComposeOpen(true)}
         >
           <Mail size={14} />
-          Message registrants
+          Email families
         </button>
+        )}
+        {canManageRegs && (
         <button
           className={styles.iconBtn}
           style={kx({ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem', color: 'var(--logic-lime)', borderColor: 'rgba(var(--logic-lime-rgb),0.3)' }, KIT_BUTTON.primary)}
@@ -677,6 +686,7 @@ export default function RegistrationsPage() {
           <Plus size={14} />
           Add registration
         </button>
+        )}
     </>
   );
 
@@ -688,7 +698,7 @@ export default function RegistrationsPage() {
         eyebrow="House league"
         title="Registrations"
         backTo={{ href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season?.name ?? 'Season' }}
-        actions={kit && isAdminOrOwner ? headerActions : undefined}
+        actions={kit && (canEmail || canManageRegs) ? headerActions : undefined}
       />
 
       {/* ── Empty state help cue ──────────────────────────────────────────── */}
@@ -833,9 +843,9 @@ export default function RegistrationsPage() {
                     <input
                       type="checkbox"
                       checked={reg.registrationFeePaid}
-                      onChange={() => canManageRegs && toggleFeePaid(reg)}
-                      disabled={!canManageRegs}
-                      style={{ cursor: canManageRegs ? 'pointer' : 'default', width: 15, height: 15 }}
+                      onChange={() => canTakeFees && toggleFeePaid(reg)}
+                      disabled={!canTakeFees}
+                      style={{ cursor: canTakeFees ? 'pointer' : 'default', width: 15, height: 15 }}
                       title={reg.registrationFeePaid ? 'Fee paid' : 'Fee not yet paid'}
                     />
                   </td>
@@ -998,7 +1008,7 @@ export default function RegistrationsPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modal} style={{ maxWidth: 520 }}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Message registrants</h2>
+              <h2 className={styles.modalTitle}>Email families</h2>
               <button className={styles.modalCloseBtn} onClick={() => setComposeOpen(false)}>
                 <X size={18} />
               </button>

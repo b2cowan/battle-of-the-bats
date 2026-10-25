@@ -27,7 +27,7 @@
     "hex": 2,
     "rgba": 0
   },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx": {
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx": {
     "hex": 8,
     "rgba": 0
   },
