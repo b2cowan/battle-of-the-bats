@@ -243,7 +243,7 @@ export async function recordFamilyPayment(ctx: AuthContextWithRole, page: Family
     if (line.kind !== 'league') continue;
     const [season, regRead] = await Promise.all([
       getLeagueSeasonById(line.seasonId, ctx.org.id),
-      supabaseAdmin.from('league_registrations').select('id, fee_entry_id, registration_fee_paid, player_first_name, player_last_name')
+      supabaseAdmin.from('league_registrations').select('id, fee_entry_id, fee_amount, registration_fee_paid, player_first_name, player_last_name')
         .eq('id', line.regId).eq('org_id', ctx.org.id).eq('season_id', line.seasonId).maybeSingle(),
     ]);
     if (regRead.error) throw regRead.error;
@@ -252,7 +252,7 @@ export async function recordFamilyPayment(ctx: AuthContextWithRole, page: Family
     if (!season || !reg || reg.registration_fee_paid) return refuse(409, 'changed', sofar ? W.partly(sofar) : W.changed, sofar);
     const refused = await setLeagueFeePaid(ctx, {
       season: { id: season.id, name: season.name, registrationFee: season.registrationFee ?? null },
-      reg: { id: reg.id, feeEntryId: reg.fee_entry_id ?? null, playerFirstName: reg.player_first_name, playerLastName: reg.player_last_name },
+      reg: { id: reg.id, feeEntryId: reg.fee_entry_id ?? null, feeAmount: reg.fee_amount != null ? Number(reg.fee_amount) : null, playerFirstName: reg.player_first_name, playerLastName: reg.player_last_name },
     }, true);
     if (refused) {
       const words = (refused.body as { error?: string }).error ?? W.failed;

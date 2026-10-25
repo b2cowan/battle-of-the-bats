@@ -1,7 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
-import { loadOrgFamilyWorld, householdOf, fullName, personDisplayName, readRepMoney } from './families-read';
+import { loadOrgFamilyWorld, householdOf, fullName, personDisplayName, readRepMoney, leagueRegOwes } from './families-read';
 import { familyFileStatement, type FamilyFile, type FamilyFileChild } from './family-file';
 import { readHandoffs, handoffNamer } from './families-payment';
 import { NOTE_COLUMNS } from './families-notes';
@@ -161,7 +161,7 @@ export async function buildFamilyFile(orgId: string, orgName: string, personId: 
         reminders,
         leagueFees: league.map(r => ({
           child: fullName(r.player_first_name, r.player_last_name), season: r.league_seasons?.name ?? 'House league',
-          fee: r.league_seasons?.registration_fee != null ? Number(r.league_seasons.registration_fee) : null,
+          fee: leagueRegOwes(r),
           paid: r.registration_fee_paid === true,
         })),
         handoffs: [...handoffs].reverse().map(h => ({

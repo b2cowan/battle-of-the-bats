@@ -13,6 +13,7 @@ import { fmt } from './coach-money-summary';
 import { proposeDuplicates, unionFind, type DuplicateChildIn, type DuplicatePersonIn, type DuplicateProposal } from './families-duplicates';
 import { isCurrentLeagueSeason, isCurrentRepYear, isLiveRegStatus, type AudiencePerson } from './families-audience';
 import { listsByPerson } from './families-lists';
+import { registrationOwes } from './league-price';
 
 /**
  * lib/families-read.ts — server-side assembly for the Families area (P2 chunks C–E; Club Tier Stage 5a).
@@ -204,15 +205,22 @@ const toCents = (n: unknown): number => Math.round(Number(n ?? 0) * 100);
 
 /** A house-league registration's fee in the Dues · Paid · Balance columns (owner 2026-10-18, §329 W3: the record's
  *  table reads one way for every child, and its band counts what the "Owes money" list counts). The registration records
- *  paid / not paid, never a part payment — so Paid is all of the fee or none of it. Null figures when the season sets no
- *  fee (nothing is owed on it). */
+ *  paid / not paid, never a part payment — so Paid is all of the fee or none of it. The fee is the price recorded when the
+ *  child signed up, else the season's (Club Tier 9b-1, lib/league-price.ts). Null figures when neither is set (nothing is
+ *  owed on it). */
 export interface LeagueFeeLine { feeCents: number | null; paidCents: number; balanceCents: number }
 export function leagueFeeLine(r: any): LeagueFeeLine {
-  const fee = r.league_seasons?.registration_fee;
+  const fee = leagueRegOwes(r);
   if (fee == null) return { feeCents: null, paidCents: 0, balanceCents: 0 };
   const feeCents = toCents(fee);
   const paidCents = r.registration_fee_paid === true ? feeCents : 0;
   return { feeCents, paidCents, balanceCents: feeCents - paidCents };
+}
+
+/** What a raw league_registrations row (with its league_seasons join) owes, in dollars: the one rule. */
+export function leagueRegOwes(r: any): number | null {
+  const n = (v: unknown) => (v == null ? null : Number(v));
+  return registrationOwes({ feeAmount: n(r.fee_amount) }, { registrationFee: n(r.league_seasons?.registration_fee) });
 }
 
 /** Every row of one org's table, paged, ordered on `id` (unique). */
@@ -247,7 +255,7 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
       'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, status, team_id, program_year_id, tryout_registration_id, created_at, rep_teams(name, slug), rep_program_years(year, status, name, credit_application)',
       orgId, q => q.neq('status', 'callup')),
     orgRows<any>('league_registrations',
-      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, status, registration_fee_paid, waiver_accepted_at, registered_at, season_id, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
+      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, status, registration_fee_paid, fee_amount, waiver_accepted_at, registered_at, season_id, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
       orgId),
     orgRows<any>('family_links', 'id, person_id, player_id, user_id, status, role, relationship, invited_email, claimed_email, updated_at', orgId),
     orgRows<any>('family_email_optouts', 'id, email, source, opted_out_at', orgId),

@@ -2,15 +2,15 @@
 
 **Generated:** 2026-10-25 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 358 divergence(s)** across dev/prod.
+**⚠️ 371 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 12 | 0 | — |
-| Columns | 191 | 1 | 0 |
-| Indexes | 48 | 0 | 2 |
+| Columns | 200 | 1 | 0 |
+| Indexes | 49 | 0 | 2 |
 | Constraints | 50 | 0 | — |
-| RLS / CHECK | 54 | 0 | 0 (RLS state) |
+| RLS / CHECK | 57 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (12)
@@ -31,7 +31,7 @@
 _none_
 
 ## Columns
-### Only in DEV (191)
+### Only in DEV (200)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -50,6 +50,15 @@ _none_
 - `family_email_sends.team_ids`
 - `league_divisions.born_from_year`
 - `league_divisions.born_to_year`
+- `league_divisions.early_price`
+- `league_divisions.note`
+- `league_divisions.price`
+- `league_registrations.fee_amount`
+- `league_registrations.signup_position`
+- `league_registrations.signup_ref`
+- `league_seasons.ask_email_consent`
+- `league_seasons.early_bird_until`
+- `league_seasons.how_to_pay`
 - `online_payment_refunds.amount`
 - `online_payment_refunds.created_at`
 - `online_payment_refunds.created_by`
@@ -231,11 +240,12 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (48)
+### Only in DEV (49)
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
 - `idx_rep_team_tryout_contacts_org`
 - `idx_rep_team_tryout_contacts_setter`
+- `league_registrations_signup_ref_idx`
 - `online_payment_refunds_cost_entry_idx`
 - `online_payment_refunds_created_by_idx`
 - `online_payment_refunds_entry_idx`
@@ -352,7 +362,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (54)
+### CHECK only in DEV (57)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -364,6 +374,9 @@ _none_
 - `family_email_sends.family_email_sends_status_check`
 - `family_email_sends.family_email_sends_subject_check`
 - `league_divisions.league_divisions_born_years_check`
+- `league_divisions.league_divisions_price_check`
+- `league_registrations.league_registrations_fee_amount_check`
+- `league_seasons.league_seasons_how_to_pay_check`
 - `online_payment_refunds.online_payment_refunds_amount_chk`
 - `online_payment_refunds.online_payment_refunds_note_chk`
 - `online_payment_refunds.online_payment_refunds_origin_chk`

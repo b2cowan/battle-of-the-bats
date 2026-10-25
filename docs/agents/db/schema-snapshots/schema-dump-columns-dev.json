@@ -6246,6 +6246,33 @@
     "ordinal_position": 8
   },
   {
+    "table_name": "league_divisions",
+    "column_name": "price",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "league_divisions",
+    "column_name": "early_price",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "league_divisions",
+    "column_name": "note",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
     "table_name": "league_email_log",
     "column_name": "id",
     "data_type": "uuid",
@@ -6921,6 +6948,33 @@
     "ordinal_position": 25
   },
   {
+    "table_name": "league_registrations",
+    "column_name": "signup_ref",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
+    "table_name": "league_registrations",
+    "column_name": "signup_position",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 27
+  },
+  {
+    "table_name": "league_registrations",
+    "column_name": "fee_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 28
+  },
+  {
     "table_name": "league_seasons",
     "column_name": "id",
     "data_type": "uuid",
@@ -7090,6 +7144,33 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 20
+  },
+  {
+    "table_name": "league_seasons",
+    "column_name": "early_bird_until",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
+    "table_name": "league_seasons",
+    "column_name": "how_to_pay",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "league_seasons",
+    "column_name": "ask_email_consent",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 23
   },
   {
     "table_name": "league_teams",

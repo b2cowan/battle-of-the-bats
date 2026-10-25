@@ -2589,6 +2589,13 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_program_years.born_to_year -->
 **`born_from_year` / `born_to_year`** (smallint, nullable; CHECK each 1900–2100 and from ≤ to; mig 349, Club Tier Stage 4c-2) — the season's **birth years**: who may play, as families read it ("Born 2012–2013"). **On the season, not the team** (Ask 4): a team's years move every September, and a team can have two seasons open in the autumn. **An empty side is no limit on that side**; both empty shows nothing. ⚠ The DB CHECK is the WEAK form: the strict rule depends on today (no year after this calendar year) and on the club's cut-off (`organizations.birthday_cutoffs` — off January 1 the same year twice runs backwards), and lives only in [lib/born-years.ts](../../../lib/born-years.ts). So a stored pair can pass here and still be **unshowable** — a one-year team after its sport moved off January 1 (owner ruling 2026-10-22, C12): no line, and it stays in every Born in list. Written from the admin team page's Team details; *Start next season* writes the new season's pair one year later.
 
+<!-- dict:col:league_divisions.price -->
+<!-- dict:col:league_divisions.early_price -->
+**`price` / `early_price`** (numeric(10,2), nullable, each ≥ 0 CHECK `league_divisions_price_check`; mig 361, Club Tier 9b-1, owner Q2 · 9b·2) — the division's own price and its early-bird amount, dollars. **NULL `price` = the season's `registration_fee`** (the tournament's rule: a division's own fee, else the event's); NULL `early_price` = no early bird in this division. **Editing either never moves a registration's price** — each child's amount is recorded on `league_registrations.fee_amount` when they sign up. Read only through [lib/league-price.ts](../../../lib/league-price.ts).
+
+<!-- dict:col:league_divisions.note -->
+**`note`** (text, nullable, ≤120 chars, same CHECK; mig 361, owner 9b·13) — a short line ("Tuesday nights") a family reads when two divisions share an age group and they pick one; also on the Overview.
+
 <!-- dict:col:rep_program_years.born_years_carried -->
 **`born_years_carried`** (bool, NOT NULL, default false; mig 349) — true when *Start next season* wrote the pair one year later (and either side was set). Drives the note under the boxes ("Moved one year later when the 2028 season started…"); cleared when the club saves the years. The note's other end — the season's first game has started — is read at render time, not stored.
 
@@ -6607,7 +6614,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`description`** (text, nullable) — optional blurb.
 
 <!-- dict:col:league_seasons.registration_fee -->
-**`registration_fee`** (numeric, nullable) — **dollars** (not cents); display-only on the form. The amount the one fee write (`setLeagueFeePaid` → `club_league_fee_set`) posts when a fee is marked received; 0 = a free season (the 9a checklist's "Free"). _Cross-ref:_ Accounting.
+**`registration_fee`** (numeric, nullable) — **dollars** (not cents). **The season's price: a division with no `price` of its own charges this** (Club Tier 9b-1, [lib/league-price.ts](../../../lib/league-price.ts)). Since mig 361 the one fee write (`setLeagueFeePaid` → `club_league_fee_set`) posts the registration's recorded `fee_amount`, and this only for a row with none (every row before mig 361 was backfilled from it); 0 = a free season (the checklist's "Free"). _Cross-ref:_ Accounting.
 
 <!-- dict:col:league_seasons.auto_generate_fees -->
 **`auto_generate_fees`** (bool, NOT NULL, default false) — **DEAD, no longer written** (Club Tier Stage 9a, S1·b, 2026-10-24): nothing has read it since Stage 7a's paid-only fee write (approving a registration creates no fee line), and from 9a neither the season routes nor any screen write it, so every new row keeps the default. Existing rows keep whatever they held, read by nothing. **Do not drop it in 9a** — a DROP COLUMN goes last in a release (prod release history).
@@ -6628,6 +6635,15 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 <!-- dict:col:league_seasons.waiver_text -->
 **`waiver_text`** (text, nullable) — free-text waiver shown on the public registration form.
+
+<!-- dict:col:league_seasons.early_bird_until -->
+**`early_bird_until`** (date, nullable; mig 361, Club Tier 9b-1, owner 9b·2) — the season's ONE early-bird day, the club's day. A child who signs up **on or before** it pays their division's `early_price` (when the division has one). Compared as a plain YYYY-MM-DD against `tournamentToday()` at sign-up — never re-zoned. Read only through [lib/league-price.ts](../../../lib/league-price.ts).
+
+<!-- dict:col:league_seasons.how_to_pay -->
+**`how_to_pay`** (text, nullable, ≤1000 chars CHECK; mig 361, owner 9b·9) — the club's own words on how to pay (e.g. "e-Transfer to treasurer@… within 14 days"). **Required before Open registration whenever any price in the season is above $0**; a free season needs none. Shown to a family once a child is accepted (confirmation, status page, acceptance and promotion emails) until online payment (12b).
+
+<!-- dict:col:league_seasons.ask_email_consent -->
+**`ask_email_consent`** (bool, NOT NULL, default true; mig 361) — the public form shows the unticked "may email me about future seasons and club news" line beside the waiver. A tick writes a `family_consents` row (basis `league_registration`, scope `marketing`).
 
 <!-- dict:col:league_seasons.draft_state -->
 **`draft_state`** (jsonb, nullable; added mig 079) — **transient live player-draft snapshot** (a **rotating** draft assigning registered players to teams — a plain repeating rotation `(pickNumber-1) % len`, **not** serpentine/snake); null = no active draft, cleared on finalize ([draft/route.ts:172](../../../app/api/admin/house-league/seasons/[seasonId]/draft/route.ts#L172)) or when placement runs ([placement/route.ts:114](../../../app/api/admin/house-league/seasons/[seasonId]/placement/route.ts#L114)). Typed `LeagueDraftState` ([lib/types.ts:708-716](../../../lib/types.ts#L708-L716)). Mig 079 self-labels "DEV ONLY / already in prod" but the column is **identical in both envs** — decide from the snapshot, not the migration.
@@ -6842,6 +6858,13 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 <!-- dict:col:league_registrations.waiver_accepted_at -->
 **`waiver_accepted_at`** (timestamptz, nullable — mig 252) — when the guardian accepted the season waiver on the public form. **NULL = not recorded, never "not accepted":** admin-manual rows (no guardian saw a waiver) and every row written before mig 252 (the form REQUIRED the tick but stored nothing — Families P2 mockup-session finding, plan §5.3 gap 7). **Deliberately never backfilled.** Acceptance also files a `family_consents` ledger row (`basis='league_registration'`, `scope='child_data'`, `consent_text` = the season's waiver text at that moment — the season's copy can be edited later, the ledger row cannot) via `recordLeagueWaiverConsent` ([lib/org-people.ts](../../../lib/org-people.ts)), fire-and-forget from [register/route.ts](../../../app/api/league/[orgSlug]/[seasonSlug]/register/route.ts).
+
+<!-- dict:col:league_registrations.signup_ref -->
+<!-- dict:col:league_registrations.signup_position -->
+**`signup_ref` / `signup_position`** (text / smallint, nullable; mig 361, Club Tier 9b-1, owner Q5) — one reference shared by every child a family signed up together, and each child's place in that sign-up (1, 2, …). The family's status page finds the whole sign-up by reference + guardian email. Indexed `(org_id, signup_ref)` where set. NULL on rows from before mig 361 (each is its own sign-up, found by its registration id's first eight characters as before).
+
+<!-- dict:col:league_registrations.fee_amount -->
+**`fee_amount`** (numeric(10,2), nullable, ≥ 0 CHECK; mig 361, owner ruling 2026-10-25 "record the price at sign-up") — **what this child pays, RECORDED when they sign up** (the division's price or its early amount on that day, [lib/league-price.ts](../../../lib/league-price.ts)) and **never moved by a later price edit**. NULL = owes the season's `registration_fee` (mig 361 backfilled every existing row from it; a row prod's old code writes before the promote has none). `club_league_fee_set` posts `coalesce(fee_amount, season.registration_fee)`; every TS reader goes through `registrationOwes`. Correcting one registration's price is 9b-2.
 
 <!-- dict:col:league_registrations.registered_at -->
 **`registered_at`** (timestamptz, NOT NULL, default `now()`) — **the effective create stamp** (no `created_at` column exists); drives default list ordering (newest first). Never written by code; admin-manual rows are not back-dated (gotcha 2).

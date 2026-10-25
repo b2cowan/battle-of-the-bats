@@ -24,7 +24,8 @@ interface LedgerData {
   summary:       LedgerSummary;
   entries:       AnnotatedEntry[];
   expectedTotal: number;
-  feePerReg:     number;
+  /** The one price every active registrant owes; null when their recorded prices differ. */
+  feePerReg:     number | null;
   activeCount:   number;
 }
 
@@ -126,13 +127,13 @@ export default function MoneyPage() {
 
       {/* Summary tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.85rem', marginBottom: '2rem' }}>
-        <SummaryTile label="Expected" value={fmt(expected)} sub={`${data?.activeCount ?? 0} active × ${fmt(data?.feePerReg ?? 0)}`} color="var(--info-light)" />
+        <SummaryTile label="Expected" value={fmt(expected)} sub={data?.feePerReg === null ? `${data.activeCount} active` : `${data?.activeCount ?? 0} active × ${fmt(data?.feePerReg ?? 0)}`} color="var(--info-light)" />
         <SummaryTile label="Collected" value={fmt(collected)} sub="Posted entries" color="var(--success-light)" />
         <SummaryTile label="Outstanding" value={fmt(outstanding)} sub="Pending entries" color="var(--warning-light)" />
       </div>
 
       {/* No fee configured */}
-      {(data?.feePerReg ?? 0) === 0 && (
+      {data?.feePerReg !== null && (data?.feePerReg ?? 0) === 0 && (
         <div style={kx({
           padding: '1rem 1.25rem',
           borderRadius: '2px',

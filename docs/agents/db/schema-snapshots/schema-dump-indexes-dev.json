@@ -1351,6 +1351,11 @@
   },
   {
     "tablename": "league_registrations",
+    "indexname": "league_registrations_signup_ref_idx",
+    "indexdef": "CREATE INDEX league_registrations_signup_ref_idx ON public.league_registrations USING btree (org_id, signup_ref) WHERE (signup_ref IS NOT NULL)"
+  },
+  {
+    "tablename": "league_registrations",
     "indexname": "league_registrations_status_idx",
     "indexdef": "CREATE INDEX league_registrations_status_idx ON public.league_registrations USING btree (season_id, status)"
   },

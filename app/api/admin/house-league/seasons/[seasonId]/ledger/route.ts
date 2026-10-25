@@ -9,6 +9,7 @@ import {
   getRegistrationsForSeason,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { registrationOwes } from '@/lib/league-price';
 
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
@@ -46,10 +47,15 @@ export const GET = withObservability(async (_req: Request,
     };
   });
 
-  // Expected = fee × active registrants (independent of whether entries exist)
-  const feePerReg    = season.registrationFee ?? 0;
-  const activeCount  = regs.filter(r => r.status === 'active').length;
-  const expectedTotal = feePerReg * activeCount;
+  // Expected = what each active registrant owes, summed (independent of whether entries exist). Each child's price is the
+  // one recorded at sign-up (Club Tier 9b-1, lib/league-price.ts), so prices can differ: feePerReg is the one price they all
+  // owe, or null when they differ.
+  const active        = regs.filter(r => r.status === 'active');
+  const owed          = active.map(r => registrationOwes(r, season) ?? 0);
+  const activeCount   = active.length;
+  const expectedTotal = owed.reduce((s, n) => s + n, 0);
+  const feePerReg: number | null = activeCount === 0 ? (season.registrationFee ?? 0)
+    : owed.every(n => n === owed[0]) ? owed[0] : null;
 
   return NextResponse.json({
     ledger,

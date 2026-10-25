@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-25",
-  "total": 358,
+  "total": 371,
   "counts": {
     "tables": 12,
-    "columns": 192,
-    "indexes": 50,
+    "columns": 201,
+    "indexes": 51,
     "constraints": 50,
-    "rls": 54
+    "rls": 57
   },
   "items": [
     {
@@ -51,6 +51,18 @@
     },
     {
       "key": "check:only-dev:league_divisions.league_divisions_born_years_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_divisions.league_divisions_price_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_registrations.league_registrations_fee_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_seasons.league_seasons_how_to_pay_check",
       "sig": ""
     },
     {
@@ -295,6 +307,42 @@
     },
     {
       "key": "column:only-dev:league_divisions.born_to_year",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_divisions.early_price",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_divisions.note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_divisions.price",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.fee_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.signup_position",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.signup_ref",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_seasons.ask_email_consent",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_seasons.early_bird_until",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_seasons.how_to_pay",
       "sig": ""
     },
     {
@@ -1215,6 +1263,10 @@
     },
     {
       "key": "index:only-dev:idx_rep_team_tryout_contacts_setter",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_registrations_signup_ref_idx",
       "sig": ""
     },
     {

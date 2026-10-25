@@ -6248,6 +6248,33 @@
         "column_default": null
       },
       {
+        "table_name": "league_divisions",
+        "pos": 9,
+        "column_name": "price",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_divisions",
+        "pos": 10,
+        "column_name": "early_price",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_divisions",
+        "pos": 11,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_email_log",
         "pos": 1,
         "column_name": "id",
@@ -6923,6 +6950,33 @@
         "column_default": null
       },
       {
+        "table_name": "league_registrations",
+        "pos": 26,
+        "column_name": "signup_ref",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 27,
+        "column_name": "signup_position",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 28,
+        "column_name": "fee_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_seasons",
         "pos": 1,
         "column_name": "id",
@@ -7092,6 +7146,33 @@
         "udt_name": "jsonb",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 21,
+        "column_name": "early_bird_until",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 22,
+        "column_name": "how_to_pay",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 23,
+        "column_name": "ask_email_consent",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
       },
       {
         "table_name": "league_teams",
@@ -30150,6 +30231,11 @@
       },
       {
         "tablename": "league_registrations",
+        "indexname": "league_registrations_signup_ref_idx",
+        "indexdef": "CREATE INDEX league_registrations_signup_ref_idx ON public.league_registrations USING btree (org_id, signup_ref) WHERE (signup_ref IS NOT NULL)"
+      },
+      {
+        "tablename": "league_registrations",
         "indexname": "league_registrations_status_idx",
         "indexdef": "CREATE INDEX league_registrations_status_idx ON public.league_registrations USING btree (season_id, status)"
       },
@@ -34624,6 +34710,12 @@
         "check_clause": "(((born_from_year IS NULL) OR ((born_from_year >= 1900) AND (born_from_year <= 2100))) AND ((born_to_year IS NULL) OR ((born_to_year >= 1900) AND (born_to_year <= 2100))) AND ((born_from_year IS NULL) OR (born_to_year IS NULL) OR (born_from_year <= born_to_year)))"
       },
       {
+        "kind": "CHECK",
+        "table_name": "league_divisions",
+        "detail": "league_divisions_price_check",
+        "check_clause": "(((price IS NULL) OR (price >= (0)::numeric)) AND ((early_price IS NULL) OR (early_price >= (0)::numeric)) AND ((note IS NULL) OR (char_length(note) <= 120)))"
+      },
+      {
         "kind": "RLS",
         "table_name": "league_divisions",
         "detail": "ENABLED",
@@ -34668,6 +34760,12 @@
       {
         "kind": "CHECK",
         "table_name": "league_registrations",
+        "detail": "league_registrations_fee_amount_check",
+        "check_clause": "((fee_amount IS NULL) OR (fee_amount >= (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_registrations",
         "detail": "league_registrations_source_check",
         "check_clause": "(source = ANY (ARRAY['public_form'::text, 'admin_manual'::text]))"
       },
@@ -34682,6 +34780,12 @@
         "table_name": "league_registrations",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_seasons",
+        "detail": "league_seasons_how_to_pay_check",
+        "check_clause": "((how_to_pay IS NULL) OR (char_length(how_to_pay) <= 1000))"
       },
       {
         "kind": "CHECK",

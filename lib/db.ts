@@ -26,6 +26,7 @@ import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForP
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
 import { CLUB_OWNED_BOOK_KINDS } from './club-money-figures';
 import { toCents, toDollars } from './coach-register';
+import { registrationOwes } from './league-price';
 import { cleanSiteList } from './public-site-patch';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, ClubNotice, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
@@ -2272,6 +2273,9 @@ export interface LeagueSeasonInput {
   seasonStartDate?: string | null;
   seasonEndDate?: string | null;
   waiverText?: string | null;
+  earlyBirdUntil?: string | null;
+  howToPay?: string | null;
+  askEmailConsent?: boolean;
 }
 
 export interface LeagueTeamInput {
@@ -2344,6 +2348,9 @@ function mapLeagueSeason(row: any): LeagueSeason {
     seasonStartDate:           row.season_start_date ?? null,
     seasonEndDate:             row.season_end_date ?? null,
     waiverText:                row.waiver_text ?? null,
+    earlyBirdUntil:            row.early_bird_until ?? null,
+    howToPay:                  row.how_to_pay ?? null,
+    askEmailConsent:           row.ask_email_consent ?? true,
     draftState:                row.draft_state ?? null,
     createdAt:                 row.created_at,
     updatedAt:                 row.updated_at,
@@ -2359,6 +2366,9 @@ function mapLeagueDivision(row: any): LeagueDivision {
     sortOrder: row.sort_order,
     bornFromYear: row.born_from_year ?? null,
     bornToYear:   row.born_to_year ?? null,
+    price:        row.price != null ? Number(row.price) : null,
+    earlyPrice:   row.early_price != null ? Number(row.early_price) : null,
+    note:         row.note ?? null,
     createdAt: row.created_at,
   };
 }
@@ -2399,6 +2409,9 @@ function mapLeagueRegistration(row: any): LeagueRegistration {
     adminNotes:          row.admin_notes ?? null,
     source:              row.source,
     waiverAcceptedAt:    row.waiver_accepted_at ?? null,
+    signupRef:           row.signup_ref ?? null,
+    signupPosition:      row.signup_position ?? null,
+    feeAmount:           row.fee_amount != null ? Number(row.fee_amount) : null,
     registeredAt:        row.registered_at,
     updatedAt:           row.updated_at,
   };
@@ -2475,6 +2488,9 @@ export async function updateLeagueSeason(
   if (input.seasonStartDate           !== undefined) patch.season_start_date           = input.seasonStartDate;
   if (input.seasonEndDate             !== undefined) patch.season_end_date             = input.seasonEndDate;
   if (input.waiverText                !== undefined) patch.waiver_text                 = input.waiverText;
+  if (input.earlyBirdUntil            !== undefined) patch.early_bird_until            = input.earlyBirdUntil;
+  if (input.howToPay                  !== undefined) patch.how_to_pay                  = input.howToPay;
+  if (input.askEmailConsent           !== undefined) patch.ask_email_consent           = input.askEmailConsent;
   if (input.status                    !== undefined) patch.status                      = input.status;
   await supabaseAdmin
     .from('league_seasons')
@@ -3027,7 +3043,6 @@ export async function getLeagueSeasonSummary(season: LeagueSeason): Promise<Leag
     getRegistrationsForSeason(season.id),
   ]);
   const sized = divisions.length > 0 && divisions.every(d => typeof d.capacity === 'number' && d.capacity > 0);
-  const fee = season.registrationFee ?? 0;
   return {
     season,
     divisionCount:           divisions.length,
@@ -3036,7 +3051,8 @@ export async function getLeagueSeasonSummary(season: LeagueSeason): Promise<Leag
     pendingReviewCount:      regs.filter(r => r.status === 'pending_review').length,
     teamCount:               teams.length,
     spotCount:               sized ? divisions.reduce((n, d) => n + (d.capacity ?? 0), 0) : null,
-    unpaidFeeCount:          fee > 0 ? regs.filter(r => r.status === 'active' && !r.registrationFeePaid).length : 0,
+    // Each child owes the price recorded at sign-up, else the season's (Club Tier 9b-1, lib/league-price.ts).
+    unpaidFeeCount:          regs.filter(r => r.status === 'active' && !r.registrationFeePaid && (registrationOwes(r, season) ?? 0) > 0).length,
   };
 }
 

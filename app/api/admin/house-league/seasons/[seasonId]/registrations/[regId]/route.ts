@@ -46,6 +46,9 @@ function mapRow(row: any) {
     adminNotes:          row.admin_notes ?? null,
     source:              row.source,
     waiverAcceptedAt:    row.waiver_accepted_at ?? null,
+    signupRef:           row.signup_ref ?? null,
+    signupPosition:      row.signup_position ?? null,
+    feeAmount:           row.fee_amount != null ? Number(row.fee_amount) : null,
     registeredAt:        row.registered_at,
     updatedAt:           row.updated_at,
   };

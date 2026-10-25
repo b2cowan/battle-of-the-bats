@@ -322,6 +322,10 @@
     "360_a_season_no_longer_carries_a_free_text_division.sql": {
       "prod": "held",
       "note": "Drops the free-text league_seasons.division label (the real divisions are league_divisions); the owner asked for it removed on 2026-10-25. A dropped column is invisible to check:migrations. Prod HAS the column. Apply on prod only AFTER the promote that carries the code that stops reading and writing it (old code inserting a season with a division key would fail once it is gone), and delete nothing by hand first: the owner said club data is dev-only, but check prod for any season with a non-empty division before dropping. Applied to DEV on the day the code changed."
+    },
+    "361_house_league_prices_and_signups.sql": {
+      "prod": "pending",
+      "note": "Additive columns (visible to check:migrations) PLUS a replaced function: club_league_fee_set now posts the registration's recorded fee_amount, falling back to the season price (same signature, so prod's old code keeps working), and a data backfill of fee_amount from the season price. Apply to prod at or before the promote carrying Club Tier 9b-1 Part 1. Applied to DEV 2026-10-25."
     }
   }
 }

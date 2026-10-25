@@ -4,6 +4,7 @@ import type { Refused } from './club-money-route';
 import { closedYearFromError, isClosedYearError, loadFiscalSetting, refuseIfClosed } from './club-fiscal-year-server';
 import { canHouseLeague } from './house-league-access';
 import { supabaseAdmin } from './supabase-admin';
+import { registrationOwes } from './league-price';
 import type { AuthContextWithRole } from './api-auth';
 
 /**
@@ -20,7 +21,9 @@ import type { AuthContextWithRole } from './api-auth';
  * What, in order:
  *   1. The club's fiscal year is checked before writing. The database lock also protects the atomic write.
  *   2. `club_league_fee_set` holds the registration row, voids any old line on undo or correction,
- *      posts one new line only when paid, and updates `registration_fee_paid` and `fee_entry_id` together.
+ *      posts one new line only when paid, and updates `registration_fee_paid` and `fee_entry_id` together. The line's
+ *      amount is what THIS registration owes: the price recorded when the child signed up, else the season's (mig 361,
+ *      lib/league-price.ts `registrationOwes` — the same rule in SQL).
  *   3. An approval or waitlist promotion creates no receivable; a second paid press creates no second line.
  * Returns null when done, or the refusal (the fiscal year's words) as data — a route sends it with `moveRefused`.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -33,7 +36,7 @@ export function canMarkLeagueFeePaid(ctx: Pick<AuthContextWithRole, 'role' | 'ca
 
 export interface LeagueFeeTarget {
   season: { id: string; name: string; registrationFee: number | null };
-  reg: { id: string; feeEntryId: string | null; playerFirstName: string; playerLastName: string };
+  reg: { id: string; feeEntryId: string | null; feeAmount: number | null; playerFirstName: string; playerLastName: string };
 }
 
 export async function setLeagueFeePaid(
@@ -44,7 +47,7 @@ export async function setLeagueFeePaid(
   const orgId = ctx.org.id;
   const day = tournamentToday();
   const setting = await loadFiscalSetting(orgId);
-  const newLineRefusal = paid && season.registrationFee ? refuseIfClosed(setting, [day], { canMove: true, kind: 'recorded' }) : null;
+  const newLineRefusal = paid && registrationOwes(reg, season) ? refuseIfClosed(setting, [day], { canMove: true, kind: 'recorded' }) : null;
   if (newLineRefusal) return newLineRefusal;
   let oldDay: string | null = null;
   if (reg.feeEntryId) {

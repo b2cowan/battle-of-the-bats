@@ -974,6 +974,12 @@ export interface LeagueSeason {
   seasonStartDate: string | null;
   seasonEndDate: string | null;
   waiverText: string | null;
+  /** The season's one early-bird day, the club's day (mig 361, 9b·2); read through lib/league-price.ts. */
+  earlyBirdUntil: string | null;
+  /** The club's own words on how to pay (mig 361, 9b·9); required before Open registration when any price is above $0. */
+  howToPay: string | null;
+  /** The form asks the unticked "may email me about future seasons" line (mig 361). */
+  askEmailConsent: boolean;
   draftState: LeagueDraftState | null;
   createdAt: string;
   updatedAt: string;
@@ -988,6 +994,11 @@ export interface LeagueDivision {
   /** Birth years (mig 349, Stage 4c-2): read through lib/born-years.ts with the season's sport's cut-off. */
   bornFromYear: number | null;
   bornToYear: number | null;
+  /** The division's own price and early-bird amount (mig 361); null price = the season's. Read through lib/league-price.ts. */
+  price: number | null;
+  earlyPrice: number | null;
+  /** A short line a family reads when two divisions share an age group (mig 361, 9b·13). */
+  note: string | null;
   createdAt: string;
 }
 
@@ -1027,6 +1038,11 @@ export interface LeagueRegistration {
   // null = not recorded: admin-manual rows, and every row written before the
   // acceptance was stored at all.
   waiverAcceptedAt: string | null;
+  /** One reference shared by every child signed up together, and this child's place in it (mig 361, Q5). */
+  signupRef: string | null;
+  signupPosition: number | null;
+  /** What this child pays, RECORDED at sign-up (mig 361); null = the season's price. Read through registrationOwes. */
+  feeAmount: number | null;
   registeredAt: string;
   updatedAt: string;
 }
