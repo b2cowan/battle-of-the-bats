@@ -222,3 +222,26 @@ export function rareDoor(move: 'complete' | 'archive' | 'reopen', f: Pick<MoveFa
   if (move === 'archive') return { sentence: 'Finished and settled?', link: 'Archive the season…' };
   return { sentence: 'Need to change something?', link: 'Reopen the season…' };
 }
+
+/**
+ * DELETING A SEASON THAT IS ONLY A SHELL (owner, 2026-10-25). Not a status move: it removes the season. Offered only while the
+ * season has not opened registration and nothing real (a family, a team, a game, an email) is attached; after that the way out
+ * is Archive. Same window shape as the moves: sentence at the left, Cancel · the action at the right.
+ */
+export function deleteSeasonWords(seasonName: string): MoveWords {
+  return {
+    title: `Delete ${seasonName}?`, phoneTitle: 'Delete the season?',
+    lead: 'The season is removed for good. What goes with it:',
+    changes: [
+      'Its divisions and the setup you did: dates, fee and waiver.',
+      'Nobody sees a change. Nothing is public yet and no family has registered.',
+      'Its web address is freed up, so you can use it again.',
+    ],
+    looseEnds: [],
+    foot: 'This can’t be undone.',
+    button: 'Delete season', busy: 'Deleting…',
+  };
+}
+
+/** The rare door's sentence and link for a shell, at the end of the season page. */
+export const DELETE_DOOR = { sentence: 'Made this by mistake?', link: 'Delete the season…' } as const;

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import {
+  deleteDraftLeagueSeason,
+  getLeagueSeasonAttachments,
   getLeagueSeasonById,
   getDivisionsForSeason,
   getRegistrationsForSeason,
@@ -64,8 +66,15 @@ export const GET = withObservability(async (_req: Request,
     teamCount:     teamsByDivision.get(d.id)    ?? 0,
   }));
 
+  // Delete is offered only to a shell: not yet open, with no families, teams, games or sent email. The page leaves the door out
+  // otherwise; DELETE below enforces the same rule.
+  // A failed count must never take the whole season page down for a convenience, so it reads as "not deletable".
+  const deletable = season.status === 'draft'
+    && await getLeagueSeasonAttachments(seasonId, ctx!.org.id).then(a => !a.any, () => false);
+
   return NextResponse.json({
     season,
+    deletable,
     // The club's cut-off for this season's sport — what the division windows' birth years count from (Stage 4c-2).
     birthdayCutoff: cutoffFor(ctx!.org.birthdayCutoffs, season.sport),
     divisions: divisionsWithStats,
@@ -159,4 +168,29 @@ export const PATCH = withObservability(async (req: Request,
   await updateLeagueSeason(seasonId, ctx!.org.id, patch);
   const updated = await getLeagueSeasonById(seasonId, ctx!.org.id);
   return NextResponse.json(updated);
+}, { route: '/api/admin/house-league/seasons/[seasonId]' });
+
+// A season is deleted only while it is a shell (owner, 2026-10-25): it has not opened registration, and no family, team, game
+// or sent email is attached. After that it is official, and it ends by being archived, never deleted. Same people as editing it.
+export const DELETE = withObservability(async (req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
+  const { seasonId } = await params;
+  // The season is read first so a finished season is refused through the one gate (423), like every other write.
+  const season = ctx ? await getLeagueSeasonById(seasonId, ctx.org.id) : null;
+  const err = houseLeagueRefusal(ctx, 'run', season);
+  if (err) return err;
+  if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+
+  if (season.status !== 'draft') {
+    return NextResponse.json({ error: 'Only a season that has not opened registration can be deleted. Archive it instead.' }, { status: 409 });
+  }
+  if ((await getLeagueSeasonAttachments(seasonId, ctx!.org.id)).any) {
+    return NextResponse.json({ error: 'This season already has families, teams, games, email or money entries attached, so it can’t be deleted. Archive it instead.' }, { status: 409 });
+  }
+  if (!(await deleteDraftLeagueSeason(seasonId, ctx!.org.id))) {
+    return NextResponse.json({ error: 'This season just changed, so it can’t be deleted. Reload the page.' }, { status: 409 });
+  }
+  return NextResponse.json({ ok: true });
 }, { route: '/api/admin/house-league/seasons/[seasonId]' });

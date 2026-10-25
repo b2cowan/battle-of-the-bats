@@ -169,9 +169,11 @@ export default function HouseLeagueHome() {
           onClose={() => setCreating(false)}
           onCapHit={kind => { setCreating(false); setCapHit(kind); }}
           onCreated={season => {
-            setCreating(false);
             announceSeasonsChanged();
-            // A new season's next step is its own page (the checklist, 9a·4).
+            // A new season's next step is its own page (the checklist, 9a·4). ⚠ Navigate with the window STILL OPEN:
+            // closing it first lets its Back step tidy its history entry before the router has pushed, and that Back
+            // cancels the navigation (KitDialog's header) — the coach landed back on a list that did not show the new
+            // season. The page unmounts as it leaves, so the window goes with it.
             router.push(`${base}/seasons/${season.id}`);
           }}
         />

@@ -1621,13 +1621,18 @@ export async function getOrganizationBySlug(slug: string): Promise<Organization 
   return applyEntitlementGrants(mapOrg(data));
 }
 
-export async function getTournamentsByOrg(orgId: string, options: ReadOptions = {}): Promise<Tournament[]> {
+/** `strict`: a failed read throws rather than reading as "no tournaments" — for a page that would otherwise tell
+ *  families the club hosts none (the club's Tournaments page, Stage 4f). */
+export async function getTournamentsByOrg(orgId: string, options: ReadOptions & { strict?: boolean } = {}): Promise<Tournament[]> {
   const { data, error } = await readClient(options)
     .from('tournaments')
     .select('*')
     .eq('org_id', orgId)
     .order('year', { ascending: false });
-  if (error) return [];
+  if (error) {
+    if (options.strict) throw error;
+    return [];
+  }
   return (data || []).map(mapTournament);
 }
 
@@ -1928,13 +1933,15 @@ function mapArchive(r: any): TournamentArchive {
 
 // ── Tournament Archives ───────────────────────────────────────────────────────
 
-export async function getArchivesByOrg(orgId: string): Promise<TournamentArchive[]> {
+/** `strict` as getTournamentsByOrg's. */
+export async function getArchivesByOrg(orgId: string, options: { strict?: boolean } = {}): Promise<TournamentArchive[]> {
   const { data, error } = await readClient()
     .from('tournament_archives')
     .select('*')
     .eq('org_id', orgId)
     .order('sealed_at', { ascending: false });
   if (error || !data) {
+    if (error && options.strict) throw error;
     if (error) console.error('getArchivesByOrg error', error);
     return [];
   }
@@ -2477,6 +2484,65 @@ export async function updateLeagueSeason(
     .update(patch)
     .eq('id', seasonId)
     .eq('org_id', orgId);
+}
+
+/**
+ * What makes a season REAL, so it can no longer be deleted (owner, 2026-10-25: a shell may be deleted; once it is official it is
+ * archived, never deleted). Families (registrations), teams, games, any email sent or notification logged, and MONEY: any entry
+ * in the season's own book (a fee marked received lands there through a registration, but a treasurer can also post to a draft
+ * season's book by hand). Setup alone — divisions, dates, the fee, practices — is not attachment: those go with the season, and
+ * so does an EMPTY book (see deleteDraftLeagueSeason). A count query per table; callers ask only about a season that has not
+ * opened registration, and only after proving the season is the caller's org's.
+ */
+export async function getLeagueSeasonAttachments(seasonId: string, orgId: string): Promise<{ registrations: number; teams: number; games: number; emails: number; money: number; any: boolean }> {
+  const count = async (table: string) => {
+    const { count: n, error } = await supabaseAdmin.from(table).select('id', { count: 'exact', head: true }).eq('season_id', seasonId);
+    if (error) throw error;
+    return n ?? 0;
+  };
+  // The season's book has no foreign key to the season (entity_id), so it is looked up and counted on its own.
+  const moneyEntries = async () => {
+    const book = await getLeagueSeasonLedger(orgId, seasonId);
+    if (!book) return 0;
+    const { count: n, error } = await supabaseAdmin.from('accounting_entries').select('id', { count: 'exact', head: true }).eq('ledger_id', book.id);
+    if (error) throw error;
+    return n ?? 0;
+  };
+  const [registrations, teams, games, emailLog, notificationLog, money] = await Promise.all([
+    count('league_registrations'), count('league_teams'), count('league_games'),
+    count('league_email_log'), count('league_notification_log'), moneyEntries(),
+  ]);
+  const emails = emailLog + notificationLog;
+  return { registrations, teams, games, emails, money, any: registrations + teams + games + emails + money > 0 };
+}
+
+/**
+ * Delete a season that has not opened registration. The status guard is IN the delete, so a season that opened between the
+ * caller's check and this write is simply not deleted (returns false). Its divisions, practices and logs go with it (the
+ * foreign keys cascade); the caller has already refused a season with families, teams, games, email or money entries.
+ * ⚠ THE SEASON'S ACCOUNTING BOOK HAS NO FOREIGN KEY TO IT (entity_id), and opening the season's Money page creates that book even
+ * on a draft, so deleting the season alone would leave an empty book pointing at nothing, listed in Accounting for good. The
+ * (empty) book goes first: if it fails, nothing is deleted; if the season then turns out to have opened, the book is simply
+ * re-made the next time its Money page is read. KNOWN WINDOW: the check and the delete are separate round trips, so a manual
+ * registration, team, game or book entry added by a second admin in those milliseconds on a still-draft season goes with it.
+ */
+export async function deleteDraftLeagueSeason(seasonId: string, orgId: string): Promise<boolean> {
+  const { error: bookError } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .delete()
+    .eq('org_id', orgId)
+    .eq('entity_type', 'league_season')
+    .eq('entity_id', seasonId);
+  if (bookError) throw bookError;
+  const { data, error } = await supabaseAdmin
+    .from('league_seasons')
+    .delete()
+    .eq('id', seasonId)
+    .eq('org_id', orgId)
+    .eq('status', 'draft')
+    .select('id');
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
 }
 
 // ─── Division helpers ─────────────────────────────────────────────────────────

@@ -66,15 +66,17 @@ export default function CreateLeagueSeasonDialog({ orgSlug, onClose, onCreated, 
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        setBusy(false);
         if (data.capHit) { onCapHit(data.capHit); return; }
         setError(data.error ?? 'We couldn’t create the season. Try again.');
         return;
       }
+      // ⚠ STAY BUSY once it is made: the caller opens the new season's page with this window still open (KitDialog's header),
+      // and until the page leaves, a live Create button would send a second request and a live Cancel would cancel the move.
       onCreated({ id: data.id, name: data.name });
     } catch {
-      setError('We couldn’t create the season. Try again.');
-    } finally {
       setBusy(false);
+      setError('We couldn’t create the season. Try again.');
     }
   }
 

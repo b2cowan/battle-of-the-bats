@@ -9,13 +9,14 @@
  *   the figures band — Players · To review · Waitlist · Teams, one joined band (the money figure is 9b-2's, not built);
  *   Divisions — a table on the kit (Add, and a pencil per row, open today's window; prices are 9b-1's);
  *   Season and Registration — each reads first and edits whole;
- *   the rare door — Complete (and on a finished season Archive / Reopen) ends the body, a sentence and a link.
+ *   the rare door — Complete (and on a finished season Archive / Reopen) ends the body, a sentence and a link. A shell that
+ *   has not opened registration and has nothing real attached ends with "Delete the season…" instead (owner 2026-10-25).
  * EVERY STATUS CHANGE ASKS (SeasonStatusWindow). A finished season (completed / archived) reads in place, every write
  * control absent, through the one gate (Q16): `houseLeagueAccess(…, season)` says `run: false` and the page renders from
  * it. The registrar reads it all with no pencils and no doors (frame C).
  */
 import { useCallback, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Check, ExternalLink, Pencil, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -24,6 +25,7 @@ import { ClubSection, EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoa
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import SeasonStatePill from '@/components/admin/kit/club/SeasonStatePill';
 import SeasonStatusWindow from '@/components/admin/kit/club/league/SeasonStatusWindow';
+import DeleteSeasonWindow from '@/components/admin/kit/club/league/DeleteSeasonWindow';
 import DivisionWindow, { type SeasonDivision } from '@/components/admin/kit/club/league/DivisionWindow';
 import { RegistrationBlock, SeasonBlock } from '@/components/admin/kit/club/league/SeasonRecordBlocks';
 import s from '@/components/admin/kit/club/league/LeagueSeason.module.css';
@@ -31,7 +33,7 @@ import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin
 import { isFreeFloorLeague, type LeagueCapKind } from '@/lib/free-floor';
 import { fireLeagueEvent } from '@/lib/league-events-client';
 import { seasonChecklist, seasonDates } from '@/lib/house-league-season';
-import { movesFrom, rareDoor, type StatusMove } from '@/lib/house-league-status-words';
+import { DELETE_DOOR, movesFrom, rareDoor, type StatusMove } from '@/lib/house-league-status-words';
 import { JAN_1, bornLine, type Cutoff } from '@/lib/born-years';
 import { sportLabel } from '@/lib/sports';
 import { pluralize } from '@/lib/utils';
@@ -39,6 +41,8 @@ import type { LeagueSeason } from '@/lib/types';
 
 interface SeasonDetail {
   season: LeagueSeason;
+  /** A shell the season may still be deleted from: not yet open, nothing real attached (decided by the server). */
+  deletable?: boolean;
   birthdayCutoff?: Cutoff;
   divisions: SeasonDivision[];
   summary: {
@@ -54,11 +58,13 @@ export default function SeasonOverviewPage() {
   const { currentOrg, loading: orgLoading } = useOrg();
   const { seasonId } = useParams<{ seasonId: string }>();
   const orgSlug = currentOrg?.slug ?? '';
+  const router = useRouter();
 
   const [detail, setDetail] = useState<SeasonDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState<'missing' | 'error' | null>(null);
   const [move, setMove] = useState<StatusMove | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [divisionOpen, setDivisionOpen] = useState<SeasonDivision | 'new' | null>(null);
   const [capHit, setCapHit] = useState<LeagueCapKind | null>(null);
 
@@ -281,6 +287,23 @@ export default function SeasonOverviewPage() {
         );
       })}
 
+      {canRun && detail.deletable && (
+        <p className={s.rareDoor}>
+          {DELETE_DOOR.sentence}{' '}
+          <button type="button" className={repKit.inlineLink} onClick={() => setDeleting(true)}>{DELETE_DOOR.link}</button>
+        </p>
+      )}
+
+      {deleting && (
+        <DeleteSeasonWindow
+          seasonId={season.id}
+          seasonName={season.name}
+          orgSlug={orgSlug}
+          onClose={() => setDeleting(false)}
+          // ⚠ Leave with the window STILL OPEN (KitDialog's header): the page unmounts and takes it along.
+          onDeleted={() => { announceSeasonsChanged(); router.push(`/${orgSlug}/admin/house-league`); }}
+        />
+      )}
       {move && (
         <SeasonStatusWindow
           move={move}
