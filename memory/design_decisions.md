@@ -7,6 +7,42 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-24 — SUPPORT CONSOLE STAGE 1, FIVE ASKS RULED AS RECOMMENDED (owner, paste-back on https://claude.ai/artifact/7DWPUBp9cDp26a2P359zLW)
+
+**Decision (as ruled):**
+- **Ask 1:** the strip and the browser tab call the portal **"Support console"** (one word, `PLATFORM_PORTAL_LABEL` in `lib/workspace-labels.ts`).
+- **Ask 2:** **Help opens in place**, inside the console shell with the menu, from the menu foot (N4: Help, then Collapse sidebar). The System group keeps only Dev tools and disappears on production.
+- **Ask 3:** **Sign out returns to the console's own sign-in**, and the shared account menu **hides Notification settings, Account settings and Send feedback** in the console (they open the customer account area and our own feedback inbox). A shared-menu change: `signOutTo="platform"` and `showAccount={false}`; no other host changes.
+- **Ask 4:** **Overview and the club record get a colour-only pass** (shell, frame, standard title, body type, warm tokens; layout untouched) because Stage 2 rebuilds both. The pale `--pa-*` good/bad/caution tokens are not readable on warm paper and were replaced on every console screen.
+- **Ask 5:** **the sign-in page is always warm**, like every signed-out page (the 2026-10-23 rule; a signed-out visitor has no Warm / Dark control). This corrected the build prompt's "follows the saved setting".
+**Rationale:** the console was the last working surface in the old look; each ask was the choice that kept it on the product's own rails.
+**Applies to:** the platform admin console and, for Ask 3, the shared `AccountMenu`. Reading, not a new ruling: D3 ("data face only for codes") was applied to table and cell content; chips and the small capital eyebrows keep the typewriter face under the 2026-10-19 lettering ruling.
+
+### 2026-10-24 — THE PLATFORM ADMIN TAKES THE HOUSE LOOK: ITS DARK EXCEPTIONS RETIRE, AND FIVE RULE CONFLICTS ARE SETTLED FOR IT (owner, paste-back on https://claude.ai/artifact/RCpPoxNNxGDfiC4FFo4m1g)
+
+**Decision (as ruled, by ticked box):**
+- **F1.** The support console's three written exceptions retire: K-10 (the platform admin uses the data face), this
+  log's "operator shells / platform-admin login stay dark" line, and `NAV_STANDARD.md`'s "platform admin keeps its own
+  look". The sign-in page follows too. The console takes the admin kit, the one Warm / Dark setting (warm by default)
+  and the navigation standard in full.
+- **D1–D5**, five places where the written rules disagreed, settled for the console's drawings as the design pass
+  recommended:
+  - D1: a section heading sits above its card (the club kit), not inside it.
+  - D2: white button for every action, lime for the one main action, olive text for a door.
+  - D3: no compact-log exception. Rows are compact or comfortable by content; times take the body face; only codes
+    (routes, web addresses, Stripe ids) take the data face.
+  - D4: the navigation standard applies in full and its platform line is deleted.
+  - D5: a one-of-several form choice is a dropdown, or radio rows with a line each, never a segmented row.
+
+**Rationale:** the console was the last working surface in the old look. The owner wants it on the client portals'
+path, and the exceptions existed only to hold the old look in place. D1–D5 were contradictions between two written
+rules, which the design pass surfaced while reviewing the drawings.
+
+**Applies to:** the platform admin console. These were asked about the console's drawings; whether D1, D2 or D5 also
+re-settles a club or coach screen was not asked. The doc lines F1 retires (the K-10 register row, the nav standard's
+platform line, this log's dark-shell clause) are edited when Stage 1 ships, so they never describe a console that
+hasn't changed yet. Plan: `docs/projects/active/PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md`.
+
 ### 2026-10-23 — THE PUBLIC SITE'S LISTS ROW OPENS TO FOUR FOLDED LINES, ONE LIST OPEN AT A TIME (owner, "go ahead with option 1", drawing https://claude.ai/artifact/33pExFnsaKrQ6Y7VSGHkr2)
 
 **Decision:** the Contacts, documents and sponsors row no longer opens to four full lists. It opens to four flat lines (Who to contact, Documents and policies, Questions families ask, Sponsors), each with a peek line under its title (the first names in the list; for sponsors "N showing · N ended"; "None yet" when empty) and a plain grey count at the right. Tapping a line opens its list and closes any other; Add stays at the foot of the open list. The row opens with every list folded. The row keeps its name, its ready mark and its place; sponsors stay in the row (Option 2, a separate Sponsors row, was drawn and not chosen).
@@ -46,6 +82,9 @@ Not a club's or organizer's own pages, which keep their brand (M2).
 - **Supersedes, for the marketing pages only,** the 2026-07-23 clause "Marketing pages … stay dark by design" (Ask 1 A). The whole
   marketing set (bar, footer, all marketing routes) moves in one release. That clause's other surfaces (org-branded tournament pages,
   platform-admin login, operator shells) are not touched by this ruling.
+  *(Superseded 2026-10-24 for the platform admin, owner ruling F1 (entry above): the console and its sign-in leave the dark look.
+  The sign-in is always warm, like every signed-out page. The operator shells are the club and coach admins, which already follow
+  the setting. The note is added, the old line is not rewritten.)*
 - **The marketing pages are always warm,** whatever the visitor's Warm / Dark setting (Ask 5 B). The auth screens keep following the
   setting (2026-07-23, unchanged).
 - **The wordmark is redrawn** as its own piece of work before the marketing stage (Ask 2 C), **together with the browser-tab mark

@@ -1,0 +1,730 @@
+<title>Support Console End State</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: a 920 reading column for the words and asks; each drawing breaks out to a true-size 1440 frame inside its own
+   horizontal scroller. The document chrome is cool stone; the frames wear FieldLogicHQ's real warm (or dark) tokens. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8; --red: #9c321d; --red-soft: #f6e2dc;
+  --tag: #1d4f8a; --tag-soft: #dde8f5;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); }
+.wrap { max-width: 920px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 90px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; letter-spacing: -.4px; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 21px; line-height: 1.3; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0 0 4px; }
+p { margin: 0; max-width: 72ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.lede { display: grid; gap: 12px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 10px; margin-block: 18px 26px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bar a.jump { font: 600 13px/1 var(--font-body); padding: 9px 11px; min-height: 36px; display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.bar .sw { margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.bar .sw button { font: 600 13px/1 var(--font-body); min-height: 36px; padding: 8px 12px; border: 0; background: var(--card); color: var(--ink); cursor: pointer; }
+.bar .sw button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); }
+.screen { display: grid; gap: 14px; margin-bottom: 46px; scroll-margin-top: 80px; }
+.screen-head { display: grid; gap: 6px; }
+.screen-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); letter-spacing: .08em; }
+.ba { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.before { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 14px; align-items: start; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+@media (max-width: 640px) { .before { grid-template-columns: minmax(0, 1fr); } }
+.before button.shot { padding: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; cursor: zoom-in; background: #0a0a0a; max-height: 170px; display: block; width: 100%; }
+.before img { display: block; width: 100%; height: auto; }
+.lbl { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.scroller { overflow-x: auto; margin-inline: calc(50% - 50vw + 16px); padding-inline: max(16px, calc(50vw - 736px)); padding-block: 4px 10px; }
+.scroller > .fx { width: 1440px; }
+.scroller > .fx.win { width: 600px; }
+.scroller > .fx.wide-note { width: 1440px; }
+.hint { font-size: 12.5px; color: var(--dim); }
+button.tag { font: 700 11px/1 var(--font-data); letter-spacing: .04em; padding: 5px 7px; border-radius: 6px; border: 1px solid var(--tag); background: var(--tag-soft); color: var(--tag); cursor: pointer; white-space: nowrap; }
+.tagrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+/* asks */
+.ask { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+.ask .q { font-weight: 700; }
+.ask .rec { font-size: 14px; color: var(--soft); }
+.ask .rec b { color: var(--ink); }
+.ask .opts { display: grid; gap: 4px; }
+.ask label { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+.ask input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+.ask textarea { width: 100%; min-height: 56px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+table.doc { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.doc th { text-align: left; font: 600 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.doc td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.doc tr:last-child td { border-bottom: 0; }
+.paste { display: grid; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.paste textarea { width: 100%; min-height: 220px; font: 13px/1.5 var(--font-data); padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); max-width: min(560px, calc(100vw - 32px)); padding: 18px 18px 14px; }
+dialog::backdrop { background: rgba(20, 24, 18, .45); }
+dialog .foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+dialog button.close { font: 600 14px/1 var(--font-body); min-height: 40px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+dialog.zoom { max-width: calc(100vw - 32px); width: 1200px; padding: 10px; }
+dialog.zoom .z { max-height: 80vh; overflow: auto; } dialog.zoom img { width: 100%; display: block; }
+
+/* ═════ The product frames — FieldLogicHQ warm tokens, dark on the switch. Type stays on the ladder: 10 · 11 · 12 · 14 · 16 · 20 · 24 ═════ */
+.fx { --p: #F8F4ED; --c: #FFFFFF; --ln: rgba(70,55,30,.12); --ln2: rgba(70,55,30,.20); --fill: rgba(70,55,30,.05); --fieldbg: #F8F4ED;
+  --i: #241E15; --i2: #4A4235; --i3: #615A54; --ol: #57651E; --ols: rgba(87,101,30,.10); --lime: #D9F99D; --limei: #241E15; --tabon: #57651E;
+  --am: #835006; --rd: #B03A22; --gr: #34662A; --scrim: rgba(36,30,21,.34);
+  background: var(--p); color: var(--i); font: 14px/1.45 var(--font-body); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative; }
+.fx.dark { --p: #0A0A0A; --c: #111827; --ln: rgba(255,255,255,.08); --ln2: rgba(255,255,255,.14); --fill: rgba(255,255,255,.03); --fieldbg: rgba(255,255,255,.05);
+  --i: #F1F5F9; --i2: rgba(255,255,255,.70); --i3: rgba(255,255,255,.50); --ol: #D9F99D; --ols: rgba(30,58,138,.18); --lime: #D9F99D; --limei: #0A0A0A; --tabon: #F1F5F9;
+  --am: #F59E0B; --rd: #EF4444; --gr: #22C55E; --scrim: rgba(13,17,26,.55); }
+.fx * { box-sizing: border-box; }
+.fx svg.ic { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.strip { height: 48px; display: grid; grid-template-columns: 240px 1fr auto; align-items: center; background: var(--c); border-bottom: 1px solid var(--ln); }
+.strip .lock { display: flex; align-items: center; gap: 8px; padding-left: 20px; font: 700 16px/1 var(--font-body); }
+.strip .lock .mk { width: 20px; height: 20px; border-radius: 5px; background: var(--ol); }
+.strip .lock em { font-style: normal; color: var(--ol); }
+.strip .mid { display: flex; align-items: center; gap: 16px; padding-left: 20px; }
+.strip .portal { font: 600 14px/1 var(--font-body); color: var(--i2); }
+.strip .find { margin: 0 auto; width: 440px; display: flex; align-items: center; gap: 8px; height: 34px; border: 1px solid var(--ln2); border-radius: 999px; padding: 0 12px; color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+.strip .find .k { margin-left: auto; font: 700 10px/1 var(--font-data); border: 1px solid var(--ln2); border-radius: 4px; padding: 2px 5px; }
+.strip .find.typed { color: var(--i); border-color: var(--ol); }
+.strip .end { display: flex; align-items: center; gap: 6px; padding-right: 16px; }
+.strip .end .b { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.strip .end .b svg.ic { width: 18px; height: 18px; }
+.strip .end .av { width: 30px; height: 30px; border-radius: 999px; background: var(--ols); color: var(--ol); display: inline-flex; align-items: center; justify-content: center; font: 700 12px/1 var(--font-body); }
+.app { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 840px; }
+.side { background: var(--c); border-right: 1px solid var(--ln); padding: 12px 0 16px; display: flex; flex-direction: column; }
+.grp { display: grid; }
+.gl { display: flex; align-items: center; gap: 8px; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); padding: 12px 20px 6px; }
+.gl .cv { margin-left: auto; opacity: .55; display: inline-flex; }
+.gl.folded .cv { transform: rotate(-90deg); }
+.it { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 20px; color: var(--i2); font-size: 14px; }
+.it.on { background: var(--ols); color: var(--ol); font-weight: 600; }
+.it .pill { margin-left: auto; }
+.side .foot { margin-top: auto; border-top: 1px solid var(--ln); padding-top: 8px; }
+.main { padding: 28px 40px 48px; min-width: 0; }
+.page { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px; }
+.ph { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 34px; }
+.ph .back { color: var(--i2); font-weight: 600; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; padding: 6px 8px; margin-left: -8px; }
+.ph .rule { width: 1px; align-self: stretch; margin: 2px 0; background: var(--ln2); }
+.ph h1 { font: 700 20px/1.3 var(--font-body); margin: 0; letter-spacing: 0; color: var(--i); }
+.ph .end { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.ph .help { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.ph .help svg.ic { width: 18px; height: 18px; }
+.ph .quiet { font-size: 12px; color: var(--i3); }
+.chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font: 700 10px/1.3 var(--font-data); letter-spacing: .05em; border: 1px solid var(--ln2); background: var(--ols); color: var(--i2); white-space: nowrap; }
+.chip.ok { color: var(--ol); background: color-mix(in srgb, var(--ol) 7%, transparent); border-color: color-mix(in srgb, var(--ol) 25%, transparent); }
+.chip.warn { color: var(--am); background: color-mix(in srgb, var(--am) 8%, transparent); border-color: color-mix(in srgb, var(--am) 30%, transparent); }
+.chip.bad { color: var(--rd); background: color-mix(in srgb, var(--rd) 8%, transparent); border-color: color-mix(in srgb, var(--rd) 30%, transparent); }
+.pill { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; font: 700 10px/1 var(--font-data); color: var(--am); background: color-mix(in srgb, var(--am) 11%, transparent); border: 1px solid color-mix(in srgb, var(--am) 32%, transparent); }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; font: 600 14px/1 var(--font-body); border: 1px solid var(--ln2); background: var(--c); color: var(--i); white-space: nowrap; }
+.btn.lime { background: var(--lime); border-color: var(--lime); color: var(--limei); }
+.btn.door { border: 0; background: none; color: var(--ol); padding: 0 4px; }
+.band { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.band > div { padding: 14px 16px; border-right: 1px solid var(--ln); min-width: 0; display: grid; gap: 4px; }
+.band > div:last-child { border-right: 0; }
+.band .k { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.band .v { font: 700 24px/1.1 var(--font-body); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.band .v.warn { color: var(--am); }
+.band .s { font-size: 12px; color: var(--i3); }
+.sec { font: 700 16px/1.3 var(--font-body); margin: 0 0 -8px; }
+.card { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; }
+.tb { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--ln); }
+.tb .count { font-size: 14px; color: var(--i2); }
+.tb .gap { flex: 1; }
+.tb .note { font-size: 12px; color: var(--i3); }
+.view { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--ol); background: var(--ols); color: var(--ol); font: 600 14px/1 var(--font-body); }
+.view .n { font: 700 11px/1 var(--font-data); opacity: .65; }
+.fpill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--ln2); color: var(--i2); font: 600 12px/1 var(--font-body); background: var(--c); }
+.search { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; width: 256px; border-radius: 999px; border: 1px solid var(--ln2); color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+table.t { width: 100%; border-collapse: collapse; }
+table.t th { font: 700 12px/1.2 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--i2); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--ln); white-space: nowrap; }
+table.t td { padding: 7px 14px; border-bottom: 1px solid var(--ln); vertical-align: middle; font-variant-numeric: tabular-nums; }
+table.t tr.two td { padding: 11px 14px; }
+table.t tr:last-child td { border-bottom: 0; }
+table.t .r { text-align: right; }
+table.t .nm { color: var(--i); font-weight: 600; text-decoration: underline; text-decoration-color: var(--ln2); text-underline-offset: 3px; }
+table.t .sub { display: block; font-size: 12px; color: var(--i3); font-weight: 400; }
+table.t .cv { width: 40px; text-align: right; color: var(--ol); }
+table.t .ts { color: var(--i2); white-space: nowrap; }
+table.t .none { color: var(--i3); }
+.code { font: 400 12px/1.3 var(--font-data); }
+table.t tr.band-row td { background: color-mix(in srgb, var(--ol) 10%, transparent); font: 700 12px/1.2 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--i2); padding: 8px 14px; }
+.flagline { display: block; font-size: 12px; color: var(--am); font-weight: 600; margin-top: 2px; }
+.callout { display: flex; gap: 10px; align-items: flex-start; background: var(--c); border: 1px solid var(--ln); border-left: 3px solid var(--ol); border-radius: 8px; padding: 12px 14px; font-size: 14px; color: var(--i2); }
+.callout svg.ic { width: 16px; height: 16px; color: var(--ol); margin-top: 2px; }
+.callout.warn { border-left-color: var(--am); } .callout.warn svg.ic { color: var(--am); }
+.callout .go { margin-left: auto; color: var(--ol); font-weight: 600; white-space: nowrap; }
+.subnav { display: flex; gap: 4px; border-bottom: 1px solid var(--ln); }
+.subnav span { padding: 10px 14px; font-weight: 600; font-size: 14px; color: var(--i2); border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; gap: 6px; align-items: baseline; }
+.subnav span.on { color: var(--tabon); border-bottom-color: var(--ol); }
+.subnav .n { font: 700 11px/1 var(--font-data); opacity: .65; }
+.ex { position: absolute; right: 14px; bottom: 10px; font: 700 10px/1 var(--font-data); color: var(--i3); letter-spacing: .06em; text-transform: uppercase; }
+/* a window (the kit window: tinted edge, no shadow) */
+.win { background: var(--scrim); padding: 28px; }
+.dlg { background: var(--c); border-radius: 12px; border: 1px solid color-mix(in srgb, var(--ol) 30%, transparent); }
+.dlg .dh { display: flex; align-items: center; padding: 18px 24px 6px; }
+.dlg .dh h2 { font: 700 16px/1.3 var(--font-body); margin: 0; }
+.dlg .dh .x { margin-left: auto; width: 44px; height: 44px; margin-right: -12px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: var(--i2); }
+.dlg .db { padding: 10px 24px 16px; display: grid; gap: 14px; }
+.lines { display: grid; grid-template-columns: 140px 1fr; gap: 8px 14px; font-size: 14px; }
+.lines dt { color: var(--i3); } .lines dd { margin: 0; }
+.fld { display: grid; gap: 6px; }
+.fld .fl { font-size: 12px; font-weight: 650; color: var(--i2); }
+.fld .fl .req { color: inherit; margin-left: 2px; }
+.inp { height: 36px; border: 1px solid var(--ln2); border-radius: 6px; padding: 0 10px; display: flex; align-items: center; color: var(--i); background: var(--fieldbg); font-size: 14px; }
+.inp.area { height: 80px; align-items: flex-start; padding-top: 8px; }
+.inp .chev { margin-left: auto; color: var(--i3); display: inline-flex; }
+.radio { display: grid; gap: 2px; border: 1px solid var(--ln2); border-radius: 8px; padding: 10px 12px; }
+.radio.on { border-color: var(--ol); background: var(--ols); }
+.radio b { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+.radio b::before { content: ""; width: 14px; height: 14px; border-radius: 999px; border: 2px solid var(--ln2); }
+.radio.on b::before { border: 4px solid var(--ol); }
+.radio span { font-size: 12px; color: var(--i3); padding-left: 22px; }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.quick span { height: 34px; display: inline-flex; align-items: center; padding: 0 12px; font-size: 14px; border-radius: 999px; border: 1px solid var(--ln2); color: var(--i2); }
+.quick span.on { border-color: var(--ol); color: var(--ol); background: var(--ols); }
+.df { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-top: 1px solid var(--ln); }
+.df .sent { font-size: 14px; color: var(--i2); flex: 1; }
+.df .bts { display: flex; gap: 8px; }
+/* the Find panel, under the strip */
+.fpanel { position: absolute; left: 50%; transform: translateX(-30px); top: 50px; width: 520px; background: var(--c); border: 1px solid var(--ln2); border-radius: 10px; z-index: 4; }
+.fpanel .fh { padding: 10px 14px; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); border-top: 1px solid var(--ln); }
+.fpanel .fh:first-child { border-top: 0; }
+.fpanel .fr { display: flex; align-items: center; gap: 10px; padding: 8px 14px; }
+.fpanel .fr.on { background: var(--ols); }
+.fpanel .fr b { font-weight: 600; } .fpanel .fr .sub { font-size: 12px; color: var(--i3); }
+.fpanel .fr .cv { margin-left: auto; color: var(--ol); }
+.fpanel .ft { padding: 9px 14px; border-top: 1px solid var(--ln); font-size: 12px; color: var(--i3); }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-today" viewBox="0 0 24 24"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-clubs" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.5c3 0 5 1.8 5 4.5"/></symbol>
+  <symbol id="i-free" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4"/><rect x="5" y="12" width="14" height="9"/><path d="M12 8v13M12 8c-2-4-6-4-6-1s6 1 6 1c2-4 6-4 6-1s-6 1-6 1"/></symbol>
+  <symbol id="i-retention" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></symbol>
+  <symbol id="i-status" viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></symbol>
+  <symbol id="i-errors" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 9v4M12 16.5v.01"/></symbol>
+  <symbol id="i-feedback" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+  <symbol id="i-leads" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/></symbol>
+  <symbol id="i-campaigns" viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></symbol>
+  <symbol id="i-decks" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/></symbol>
+  <symbol id="i-plans" viewBox="0 0 24 24"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-approval" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/></symbol>
+  <symbol id="i-bulk" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></symbol>
+  <symbol id="i-templates" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-staff" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/></symbol>
+  <symbol id="i-audit" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-sent" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17v.01"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 3v18"/></symbol>
+  <symbol id="i-collapse" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4h11l-2 4 2 4H5"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="lede">
+  <p class="eyebrow">Platform admin, reorganized for support · the end state, drawn · 2026-10-24</p>
+  <h1>Support Console End State</h1>
+  <p>This is the whole proposal, drawn at true size as it would look once every stage is built. Each changed part carries a blue <b>stage tag</b> (S1 to S9). Click any tag for what changes and why. Before is a capture from today's dev server, and after is drawn. The frames are 1440 pixels wide, the size of a desk screen. On a narrower window they scroll sideways inside their own box, so they are never shrunk. Figures marked <b>example</b> are made up for the drawing. Real dev numbers are used wherever they exist. Your seven questions sit beside the drawing each one decides. The drawings have been through the design review, and its five rule conflicts are listed for you to rule in the <a href="#fmt">formatting check</a>. The walk behind every finding is on <b>Support Console Walk</b>.</p>
+</header>
+
+<div class="bar" role="navigation" aria-label="Screens">
+  <a class="jump" href="#e1">1 · Menu &amp; Today</a><a class="jump" href="#e2">2 · Find</a><a class="jump" href="#e3">3 · Customer story</a><a class="jump" href="#e4">4 · Money</a><a class="jump" href="#e5">5 · Free time</a><a class="jump" href="#e6">6 · Status</a><a class="jump" href="#e7">7 · Web addresses</a><a class="jump" href="#fmt">Formatting check</a><a class="jump" href="#lad">Ladder</a><a class="jump" href="#paste">Paste-back</a>
+  <span class="sw" role="group" aria-label="Frames theme"><button type="button" id="sw-warm" aria-pressed="true">Warm</button><button type="button" id="sw-dark" aria-pressed="false">Dark</button></span>
+</div>
+
+<!-- ═══════════ E1 MENU + TODAY ═══════════ -->
+<section class="screen" id="e1">
+  <div class="screen-head"><span class="n">SCREEN 1</span><h2>The menu by job, and Today as the front door</h2>
+  <p>The console takes the product's navigation standard: the top strip with the lockup, the portal's name and Find in the middle, and a menu grouped by the work (<b>Customers</b>, <b>Health</b>, <b>Growth</b>, <b>Product</b>, <b>Records</b>, then your private Bookkeeping, where it sits today). Help and Collapse sit at the menu's foot, as in every portal. This screen shows every group open so you can read the whole menu. On the other screens, only the group you are in stays open. The front door stops being a dashboard of business numbers and becomes <b>Today</b>, a list of what is waiting on us, each with its count in the amber pill. The business numbers keep their own page, one door at the end.</p></div>
+  <div class="before"><button class="shot" data-src="cap/home.jpg" aria-label="Today's Overview at full size"><img src="cap/home.jpg" alt="Overview today: dark console, five tiles, Action Queue boxes, plan mix"></button><div><div class="lbl">Before</div><p>19 entries in 7 groups named for data (Command Center, Billing &amp; Product, Governance). All capitals, data face, pinned dark, and its own nav that the navigation standard lists as an exception. The front door opens on five figure tiles, then the Action Queue as amber-bordered boxes, then plan mix and billing events. It has no tile for errors, feedback or health.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags on this screen</span>
+    <button class="tag" data-n="Stage 1, the warm foundation. The console moves onto the product's kit, the one Warm / Dark setting (warm by default) and the navigation standard: the top strip, the menu rows, Help and Collapse at the foot, an icon on every entry. It also takes the body face, sentence case, the 1200 page frame and 8 px cards with no shadow. It is a restyle, and no screen changes job. It needs ask F1 and two shared changes: the guard that keeps the kit marker in two places must allow the platform shell, and the navigation standard drops its platform exception line.">S1 · RESTYLED</button>
+    <button class="tag" data-n="Stage 2. The menu is regrouped by job. Founding Season folds into Free time. Customer Users becomes People, and Platform Users becomes Staff. Each role trims the same menu, and an entry a role may only read carries a small Read marker. One rulebook decides both the menu and the screens, ending today's disagreement over clubs.">S2 · MENU</button>
+    <button class="tag" data-n="Stage 2. Today replaces Overview as the front door: a table of what waits on us, grouped by job, each row naming its queue and its count in the amber pill. It reads the queues Overview reads today, plus errors, feedback, grants ending and club addresses. The business numbers (plan mix, billing events, growth, usage, metric notes) keep their own page behind the Business numbers door at the end.">S2 · TODAY</button>
+    <button class="tag" data-n="Stage 5. The health line at the top of Today is the Status page in one sentence. It turns amber or red when Status does, and it is the door to Status.">S5 · HEALTH LINE</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-find=""></div>
+    <div class="app">
+      <aside class="side" data-active="today" data-open="all"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Today</h1><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="callout"><svg class="ic"><use href="#i-check"/></svg><span><b>Everything is up.</b> The last production build passed on Oct 19 at 2:14 p.m. Errors are a little above a usual day.</span><span class="go">Status ›</span></div>
+        <h2 class="sec">Waiting on us</h2>
+        <div class="card">
+          <div class="tb"><span class="count">32 waiting in 9 queues</span></div>
+          <table class="t">
+            <thead><tr><th>Queue</th><th>Why it waits</th><th class="r">Waiting</th><th class="cv"></th></tr></thead>
+            <tbody>
+              <tr class="band-row"><td colspan="4">Customers · 19 waiting</td></tr>
+              <tr><td class="nm">Owner inactive</td><td>The club's owner has not signed in for 60 days</td><td class="r"><span class="pill">9</span></td><td class="cv">›</td></tr>
+              <tr><td class="nm">Retention</td><td>A cancelled or past-due club to follow up</td><td class="r"><span class="pill">7</span></td><td class="cv">›</td></tr>
+              <tr><td class="nm">Free time ending</td><td>A grant ends in the next 14 days (example)</td><td class="r"><span class="pill">2</span></td><td class="cv">›</td></tr>
+              <tr><td class="nm">Missing owner</td><td>A club with no owner on record</td><td class="r"><span class="pill">1</span></td><td class="cv">›</td></tr>
+              <tr class="band-row"><td colspan="4">Health · 7 waiting</td></tr>
+              <tr><td class="nm">New errors</td><td>An error group nobody has looked at (example)</td><td class="r"><span class="pill">4</span></td><td class="cv">›</td></tr>
+              <tr><td class="nm">New feedback</td><td>A message from inside the product, not yet triaged</td><td class="r"><span class="pill">3</span></td><td class="cv">›</td></tr>
+              <tr class="band-row"><td colspan="4">Growth · 6 waiting</td></tr>
+              <tr><td class="nm">Campaigns past due</td><td>A planned campaign whose send date has passed</td><td class="r"><span class="pill">5</span></td><td class="cv">›</td></tr>
+              <tr><td class="nm">Campaigns due soon</td><td>Due in the next 7 days</td><td class="r"><span class="pill">1</span></td><td class="cv">›</td></tr>
+              <tr class="band-row"><td colspan="4">Product · nothing waiting</td></tr>
+              <tr><td class="nm">Approval queue</td><td>A catalog or price change waiting to be approved</td><td class="r none">—</td><td class="cv">›</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div><span class="btn door">Business numbers: plan mix, billing events, growth and usage ›</span></div>
+      </div></main>
+    </div>
+    <span class="ex">Dev numbers · two rows example</span>
+  </div></div>
+  <div class="ask" data-q="Q1"><div class="q">Question 1 · Who does support, and should the menu follow the task, the role, or both?</div>
+    <p class="rec"><b>Recommended: both.</b> The menu follows the job, and each role trims it. Keep the six roles as they are, fix the one rulebook so the menu and the screens agree, and decide old issue M3 (whether Billing keeps Support's powers; I would say no). If you are the whole support team for the next year, nothing here costs you anything. The roles stay out of your way.</p>
+    <p class="rec">What rides on it: the menu groups, the Read marker, and whether Stage 8 rewrites the roles or only aligns them.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Menu by job, roles trim it (recommended)"> Menu by job, roles trim it (recommended)</label>
+      <label><input type="checkbox" data-o="A different menu per role"> A different menu per role</label>
+      <label><input type="checkbox" data-o="Keep today's data groups, restyle only"> Keep today's data groups, restyle only</label>
+      <label><input type="checkbox" data-o="Billing loses Support's account powers (M3)"> Billing loses Support's account powers (M3)</label>
+    </div><textarea aria-label="Notes on question 1" placeholder="Who does support today, and who might next year?"></textarea></div>
+  <div class="ask" data-q="Q4"><div class="q">Question 4 · Is any support job done from a phone?</div>
+    <p class="rec"><b>Recommended: desktop only, and say so.</b> Every task in the walk is done at a desk with two windows open. The one exception worth a thought is glancing at Status from a phone at a tournament. I would make Status and Today readable on a phone and leave everything else desktop. Everything here is drawn desktop only.</p>
+    <div class="opts"><label><input type="checkbox" data-o="Desktop only; Status and Today readable on a phone (recommended)"> Desktop only; Status and Today readable on a phone (recommended)</label><label><input type="checkbox" data-o="Desktop only, nothing on a phone"> Desktop only, nothing on a phone</label><label><input type="checkbox" data-o="Whole console on a phone"> Whole console on a phone</label></div>
+    <textarea aria-label="Notes on question 4" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ E2 FIND ═══════════ -->
+<section class="screen" id="e2">
+  <div class="screen-head"><span class="n">SCREEN 2</span><h2>Find, from anywhere</h2>
+  <p>Press <b>/</b> or click the box in the strip. One search across people (email, name), clubs (name, web name, owner) and Stripe numbers (customer, subscription, charge). People and clubs come back in one list, grouped. A person shows their clubs underneath, so an email leads to its club in one step. A result opens a record the role may read, and nothing else.</p></div>
+  <div class="before"><button class="shot" data-src="cap/customer-users.jpg" aria-label="Customer Users at full size"><img src="cap/customer-users.jpg" alt="Customer Users list with search"></button><div><div class="lbl">Before</div><p>Two separate searches. Customer Users matches email, name and club, but only within the first 1,000 accounts, without saying so. Organizations matches a club's name and web name only. Nothing matches a Stripe number or card digits.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Stage 2. Find is new: a single search that reads the whole customer base on the server, with no 1,000 cap, and returns people and clubs together. It is a new way to read customer data, so it obeys the same rulebook as the screens: Growth and Read only find what they may read, and a result never opens a door the role cannot open. It changes nothing in sign-in itself.">S2 · NEW</button>
+    <button class="tag" data-n="Card digits stay out of Find on purpose. Stripe does not let us search by the last four, and we only store them for Founding Season saves. The last four show on the customer's Money tab once found, which is where a support person compares them.">Card digits: not a search key</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-find="lynx"></div>
+    <div class="app">
+      <aside class="side" data-active="today" data-open="none"></aside>
+      <main class="main" style="opacity:.4"><div class="page"><div class="ph"><h1>Today</h1></div><div class="card" style="height:520px"></div></div></main>
+    </div>
+    <div class="fpanel">
+      <div class="fh">Clubs · 2</div>
+      <div class="fr on"><div><b>UAT Lakeshore Lynx</b><div class="sub">Club · Active · uat-rep-only · owner uat-rep-only-owner@uat-rep-club.local</div></div><span class="cv">›</span></div>
+      <div class="fr"><div><b>Lynx U13 Coaches Portal</b><div class="sub">Premium Coaches Portal · Trialing · example</div></div><span class="cv">›</span></div>
+      <div class="fh">People · 1</div>
+      <div class="fr"><div><b>Dana Lynx</b><div class="sub">dana.lynx@example.ca · owner of UAT Lakeshore Lynx · last signed in Oct 22 · example</div></div><span class="cv">›</span></div>
+      <div class="ft">↑ ↓ to move · Enter to open · searching all 94 accounts and 28 clubs</div>
+    </div>
+    <span class="ex">One club real · rest example</span>
+  </div></div>
+</section>
+
+<!-- ═══════════ E3 CUSTOMER STORY ═══════════ -->
+<section class="screen" id="e3">
+  <div class="screen-head"><span class="n">SCREEN 3</span><h2>The customer record reads first: its story</h2>
+  <p>A club's record opens on what has happened to it, not on a form. The chips say its plan and state once. The band holds the figures every task asks first. <b>Story</b> is one dated list of everything: plan changes, free time, Stripe charges and refunds, notes, staff actions, emails sent. Each entry has who did it and why. Edits sit behind each tab's pencil, and a plan or grant change offers <b>Put it back</b> from its story entry.</p></div>
+  <div class="before"><button class="shot" data-src="cap/org-detail.jpg" aria-label="Org record at full size"><img src="cap/org-detail.jpg" alt="Org record opening on Internal Notes and an editable identity form"></button><div><div class="lbl">Before</div><p>About 2,000 pixels tall. A six-figure strip, a "primary actions" box, an "account context" box that repeats the strip, then five workflow tabs opening on a notes box and the club's name and web-name fields, ready to edit. The audit shows its last 8 rows on a fifth tab. Stripe's history is not there.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Stage 2. The record is rebuilt to read first. The header shows the name, the plan and state chips, and the Help glyph. The band holds figures only. There are four tabs (Story, Money, Access, People and tournaments) in place of five. The Account context box and the Primary actions box go: they repeated the strip. Rename and delete move to the end of the Access tab as rare doors.">S2 · RESTYLED</button>
+    <button class="tag" data-n="Stage 2 builds Story from what we already keep: plan changes, grants, notes, staff actions, team moves. Stage 3 adds Stripe's charges and refunds to it, and Stage 5 adds emails sent. A reason shows on every entry once the audit log has a place for it (Stage 3).">S2 · STORY</button>
+    <button class="tag" data-n="Put it back: on a plan, limit, section or free-time entry, the story offers to restore the previous value. It opens the same confirm window, asks for a reason, and writes a new story entry. It is never offered for anything that reached Stripe or a customer's inbox. See question 2.">S2 · PUT IT BACK</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-find=""></div>
+    <div class="app">
+      <aside class="side" data-active="clubs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back">← Clubs &amp; portals</span><span class="rule"></span><h1>Free Test Org</h1><span class="chip">Tournament</span><span class="chip ok">Active</span><span class="chip ok">Free time until Nov 30</span><div class="end"><span class="btn">Email the owner</span><span class="btn">Add a note</span><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="band"><div><div class="k">Tournaments</div><div class="v">1 of 1</div><div class="s">on the Tournament plan</div></div><div><div class="k">Staff seats</div><div class="v">1 of 3</div><div class="s">1 member</div></div><div><div class="k">Paid to date</div><div class="v">$0.00</div><div class="s">no Stripe subscription</div></div><div><div class="k">Free time left</div><div class="v">37 days</div><div class="s">Club until Nov 30, then Tournament</div></div></div>
+        <div class="subnav"><span class="on">Story</span><span>Money</span><span>Access</span><span>People &amp; tournaments <span class="n">2</span></span></div>
+        <div class="card">
+          <div class="tb"><span class="count">9 entries, newest first</span><span class="gap"></span><span class="search"><svg class="ic"><use href="#i-search"/></svg>Search the story…</span><span class="fpill">Type <svg class="ic"><use href="#i-down"/></svg></span></div>
+          <table class="t">
+            <thead><tr><th style="width:170px">When</th><th>What happened</th><th style="width:220px">Who</th><th>Why</th><th class="cv"></th></tr></thead>
+            <tbody>
+              <tr class="two"><td class="ts">Oct 24, 3:02 p.m.</td><td><span class="nm">Free time granted: Club until Nov 30</span><span class="sub">Goes back to Tournament by itself</span></td><td>owner@fieldlogichq.ca</td><td>Pilot month for the spring league</td><td class="cv">›</td></tr>
+              <tr class="two"><td class="ts">Oct 24, 2:55 p.m.</td><td><span class="nm">Note</span><span class="sub">Called Dana, agreed a one-month pilot before they pay</span></td><td>owner@fieldlogichq.ca</td><td class="none">—</td><td class="cv">›</td></tr>
+              <tr class="two"><td class="ts">Oct 2, 9:14 a.m.</td><td><span class="nm">Email sent: Password reset</span><span class="sub">Delivered</span></td><td>The product</td><td>Requested by free-owner@dev.local</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Sep 18, 11:40 a.m.</td><td><span class="nm">Tournament limit changed: 1 → 2 → put back to 1</span></td><td>support@fieldlogichq.ca</td><td>Entered on the wrong club</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Jun 12, 4:21 p.m.</td><td><span class="nm">Club created on the Tournament plan</span></td><td>free-owner@dev.local</td><td>Sign-up</td><td class="cv">›</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Club and dates real · story entries example</span>
+  </div></div>
+</section>
+
+<!-- ═══════════ E4 MONEY ═══════════ -->
+<section class="screen" id="e4">
+  <div class="screen-head"><span class="n">SCREEN 4</span><h2>The Money tab: "I was charged twice"</h2>
+  <p>Stripe's own record beside ours, read live when the tab opens. Every charge, refund and subscription event, with what our side recorded in the next column. The innocent pairs that look like doubles get named: a plan change with its partial-month charge, a renewal on the same day as a change, two clubs on one card. A likely duplicate (the same amount, minutes apart, with nothing on our side) gets a flag line under its name, and the callout above the table says so once. Opening a charge reads it first. Its refund is a second, small window, and either way the story records it.</p></div>
+  <div class="before"><button class="shot" data-src="cap/org-stripe-billing-access.jpg" aria-label="Billing and Access tab at full size"><img src="cap/org-stripe-billing-access.jpg" alt="Billing and Access tab with Open Stripe link"></button><div><div class="lbl">Before</div><p>Plan, status and period end from our side only. Open Stripe goes to the customer in another window. The refund happens there and nothing comes back.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Stage 3. The Money tab is new. It reads Stripe when it opens (charges, refunds, invoices, subscription events for this customer) and lines each one up against what we recorded. It reads only, and it never runs on a schedule.">S3 · NEW</button>
+    <button class="tag" data-n="Stage 3. The pattern labels: a charge within minutes of another for the same amount, with no matching record of ours, is flagged as a likely duplicate. A plan change followed by a partial-month charge, a renewal next to a change, and two clubs sharing a card are each labelled as what they are. The label explains. The person still decides.">S3 · LABELS</button>
+    <button class="tag" data-n="Stage 3. The audit log gets a place for the reason, so every change, refund and hand-off shows who and why on the story. Today the reason is tucked inside the stored value, and some changes record none.">S3 · REASON</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-find=""></div>
+    <div class="app">
+      <aside class="side" data-active="clubs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back">← Clubs &amp; portals</span><span class="rule"></span><h1>UAT Club Org</h1><span class="chip">Club</span><span class="chip ok">Active</span><div class="end"><span class="btn">Email Ellen Park</span><span class="btn">Add a note</span><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="band"><div><div class="k">Paid to date</div><div class="v">$1,192.00</div><div class="s">since Jun 9, 2026</div></div><div><div class="k">Refunded</div><div class="v">$0.00</div><div class="s">none</div></div><div><div class="k">Next charge</div><div class="v">$149.00</div><div class="s">Nov 2, card ending 4242</div></div><div><div class="k">Charges</div><div class="v">5</div><div class="s">1 flagged</div></div></div>
+        <div class="subnav"><span>Story</span><span class="on">Money</span><span>Access</span><span>People &amp; tournaments <span class="n">2</span></span></div>
+        <div class="callout warn"><svg class="ic"><use href="#i-flag"/></svg><span><b>One charge looks like a duplicate.</b> Two Club monthly charges of $149.00, three minutes apart on Oct 2, and we recorded one renewal.</span></div>
+        <div class="card">
+          <div class="tb"><span class="count">5 charges and events</span><span class="note">Read from Stripe at 3:05 p.m.</span><span class="gap"></span><span class="code">cus_UfrHrNUoE0FO6g</span><span class="btn door">Open in Stripe ↗</span><span class="fpill">Type <svg class="ic"><use href="#i-down"/></svg></span><span class="btn">Export</span></div>
+          <table class="t">
+            <thead><tr><th style="width:170px">When</th><th>Charge or event</th><th>Stripe says</th><th>We recorded</th><th class="r">Amount</th><th class="cv"></th></tr></thead>
+            <tbody>
+              <tr class="two"><td class="ts">Oct 2, 9:03 a.m.</td><td><span class="nm">Club monthly</span><span class="flagline">⚑ Same amount 3 minutes after the next row · likely duplicate</span></td><td>Paid, card 4242</td><td class="none">—</td><td class="r">$149.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Oct 2, 9:00 a.m.</td><td><span class="nm">Club monthly</span></td><td>Paid, card 4242</td><td>Renewal, Club</td><td class="r">$149.00</td><td class="cv">›</td></tr>
+              <tr class="two"><td class="ts">Sep 14, 2:20 p.m.</td><td><span class="nm">Plan change, Tournament Plus to Club</span><span class="sub">Partial month: not a duplicate</span></td><td>Paid, card 4242</td><td>Plan change by support@</td><td class="r">$61.40</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Sep 2, 9:00 a.m.</td><td><span class="nm">Tournament Plus monthly</span></td><td>Paid, card 4242</td><td>Renewal, Tournament Plus</td><td class="r">$89.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Jun 9, 1:12 p.m.</td><td><span class="nm">Subscription started</span></td><td>Active</td><td>Checkout</td><td class="r none">—</td><td class="cv">›</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Club real · charges example</span>
+  </div></div>
+  <p class="hint">The charge, opened from the flagged row. It reads first (true size, 576 wide):</p>
+  <div class="scroller"><div class="fx win" data-frame>
+    <div class="dlg">
+      <div class="dh"><h2>Club monthly, Oct 2 at 9:03 a.m.</h2><span class="x" aria-hidden="true">×</span></div>
+      <div class="db">
+        <dl class="lines"><dt>Amount</dt><dd>$149.00</dd><dt>Card</dt><dd>ending 4242</dd><dt>Stripe says</dt><dd>Paid</dd><dt>We recorded</dt><dd class="none">Nothing</dd><dt>Why it's flagged</dt><dd>Same amount, 3 minutes after the 9:00 a.m. renewal</dd><dt>In Stripe</dt><dd><span class="code">ch_3Q8x…4Lk</span> <span style="color:var(--ol);font-weight:600">Open ↗</span></dd></dl>
+      </div>
+      <div class="df"><span class="sent">Read from Stripe at 3:05 p.m.</span><div class="bts"><span class="btn">Close</span><span class="btn">Refund this charge…</span></div></div>
+    </div>
+  </div></div>
+  <p class="hint">"Refund this charge…" opens the small task window over it:</p>
+  <div class="scroller"><div class="fx win" data-frame>
+    <div class="dlg">
+      <div class="dh"><h2>Refund the Oct 2 charge</h2><span class="x" aria-hidden="true">×</span></div>
+      <div class="db">
+        <div class="radio on"><b>Refund in full</b><span>Returns $149.00 to the card ending 4242</span></div>
+        <div class="radio"><b>Part refund</b><span>Choose an amount up to $149.00</span></div>
+        <div class="fld"><span class="fl">Why<span class="req">*</span></span><div class="inp area">Charged twice on renewal. Customer emailed Oct 24.</div></div>
+        <div class="callout"><svg class="ic"><use href="#i-check"/></svg><span>The story records the refund with your reason, and Stripe emails the customer the receipt.</span></div>
+      </div>
+      <div class="df"><span class="sent">Stripe emails the receipt.</span><div class="bts"><span class="btn">Cancel</span><span class="btn lime">Refund $149.00</span></div></div>
+    </div>
+  </div></div>
+  <div class="ask" data-q="Q7"><div class="q">Question 7 · A refund or credit for a double billing: done from the console, or a deliberate hand-off to Stripe with a recorded note?</div>
+    <p class="rec"><b>Recommended: refund from the console, full or part, with the reason required.</b> Credits stay in Stripe. A refund is the one money action that comes up at a desk with a customer waiting. Doing it here means the story records it every time, instead of only when someone remembers. The drawn windows do exactly this. If you would rather keep every money write in Stripe, "Refund this charge…" becomes "Refund in Stripe…", and the console asks for the reason before it opens the charge there.</p>
+    <p class="rec">What rides on it: whether Stage 3 writes to Stripe at all (a refund is a real money write, so it would get its own adversarial review), and what the Billing role may do.</p>
+    <div class="opts"><label><input type="checkbox" data-o="Refund from the console; credits stay in Stripe (recommended)"> Refund from the console; credits stay in Stripe (recommended)</label><label><input type="checkbox" data-o="Hand off to Stripe, with the reason recorded first"> Hand off to Stripe, with the reason recorded first</label><label><input type="checkbox" data-o="Refunds and credits both from the console"> Refunds and credits both from the console</label></div>
+    <textarea aria-label="Notes on question 7" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ E5 FREE TIME ═══════════ -->
+<section class="screen" id="e5">
+  <div class="screen-head"><span class="n">SCREEN 5</span><h2>Give free time: one idea of "free for a while"</h2>
+  <p>One window, on every customer record and on <b>Free time</b>. You choose what (the whole plan, or one section), which plan, until when, and why. A note in the window says what will happen, including that it ends by itself. The grant shows as a chip on the record and an entry on the story. Today lists it 14 days before it ends, and the customer's billing page says "Free until November 30". <b>Founding Season becomes a named group of these grants</b>, so the October 1, 2027 end is a real end, not a date somebody must act on.</p></div>
+  <div class="before"><button class="shot" data-src="cap/org-overrides-billing-access.jpg" aria-label="Plan and overrides at full size"><img src="cap/org-overrides-billing-access.jpg" alt="Plan and Limits form, Active Overrides card"></button><div><div class="lbl">Before</div><p>Four controls that each sound like the answer. A plan change is permanent. An override ends by itself but covers one section, sits behind an unconfirmed switch, and applies with no confirmation. "Comp Period" grants nothing. Founding Season has an end date that ends nothing.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Stage 4. The timed grant is extended to a whole plan. While the grant runs, the product treats the club as being on the granted plan. When it ends, the club is simply back on its own plan, because the product stops reading the grant. Nothing runs on a schedule to switch it back, so nothing can fail to run. This is the deferred plan-tier slice of the timed-grants work, so the plan or tier trial TODO lands here too.">S4 · WHOLE PLAN</button>
+    <button class="tag" data-n="Stage 4. Comp Period is retired as a choice (it granted nothing), and the four controls become this one window. The section switch on the Access tab stays for permanent section changes, and it gains the confirm window and a reason.">S4 · ONE WINDOW</button>
+    <button class="tag" data-n="Stage 4. The customer sees their own free time: their billing page shows Free until, with the date. That is a change to a customer screen, so it is drawn on the Club and Coaches billing pages in Stage 4's own drawings before it is built.">S4 · CUSTOMER SEES IT</button>
+    <button class="tag" data-n="Stage 4 starts with a one-minute check owed since the enforcement plan: is the timed-grant switch on in production? If it is off, every timed grant given there today does nothing.">S4 · SWITCH CHECK</button>
+  </div>
+  <div class="scroller"><div class="fx win" data-frame>
+    <div class="dlg">
+      <div class="dh"><h2>Give free time to Free Test Org</h2><span class="x" aria-hidden="true">×</span></div>
+      <div class="db">
+        <div class="fld"><span class="fl">What</span><div class="inp">A whole plan<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></div></div>
+        <div class="fld"><span class="fl">Plan</span><div class="inp">Club<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></div></div>
+        <div class="fld"><span class="fl">Until</span><div class="inp">November 30, 2026<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></div><div class="quick"><span>2 weeks</span><span class="on">1 month</span><span>3 months</span><span>End of season</span></div></div>
+        <div class="fld"><span class="fl">Why<span class="req">*</span></span><div class="inp area">Pilot month for the spring league</div></div>
+        <div class="callout"><svg class="ic"><use href="#i-check"/></svg><span>Free Test Org goes back to Tournament by itself on November 30. Their billing page shows "Free until November 30".</span></div>
+      </div>
+      <div class="df"><span class="sent">Ends Nov 30 on its own. Nothing is charged.</span><div class="bts"><span class="btn">Cancel</span><span class="btn lime">Give free time</span></div></div>
+    </div>
+  </div></div>
+  <div class="ask" data-q="Q5"><div class="q">Question 5 · Which open lines land inside this project?</div>
+    <p class="rec"><b>Recommended:</b> timed grants <b>in</b> (Stage 4, extended to a whole plan, with Founding Season folded in), and the tier trial with it. Observability and feedback <b>in</b> as screens (Stage 5). "Shown vs enforced" in as a rule each stage checks. The Stripe price guard (H8) <b>out</b>, handed to /billing, since it is a check on the customer's checkout.</p>
+    <div class="opts"><label><input type="checkbox" data-o="Timed grants in, whole plan, Founding Season folded in (recommended)"> Timed grants in, whole plan, Founding Season folded in (recommended)</label><label><input type="checkbox" data-o="Observability + feedback screens in"> Observability and feedback screens in</label><label><input type="checkbox" data-o="Shown-vs-enforced as a per-stage rule"> Shown vs enforced as a rule each stage checks</label><label><input type="checkbox" data-o="H8 price guard handed to /billing"> H8 price guard handed to /billing</label></div>
+    <textarea aria-label="Notes on question 5" placeholder="Notes"></textarea></div>
+  <div class="ask" data-q="Q2"><div class="q">Question 2 · Editing live customer data: what needs a confirmation, a reason, an undo?</div>
+    <p class="rec"><b>Recommended:</b> <b>every</b> change to a live customer opens a window whose foot says what changes. <b>Every</b> change asks why, and the reason shows on the story. <b>Put it back</b> is offered for plan, limit, section and free-time changes, and never for anything that reached Stripe or an inbox. Notes and lead updates stay light: no window, and they save as you type.</p>
+    <div class="opts"><label><input type="checkbox" data-o="Confirm + reason on every live change; Put it back for plan/limit/section/free time (recommended)"> Confirm and reason on every live change; Put it back for plan, limit, section, free time (recommended)</label><label><input type="checkbox" data-o="Confirm only on plan and money changes"> Confirm only on plan and money changes</label><label><input type="checkbox" data-o="No Put it back; change it again instead"> No Put it back; change it again instead</label></div>
+    <textarea aria-label="Notes on question 2" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ E6 STATUS ═══════════ -->
+<section class="screen" id="e6">
+  <div class="screen-head"><span class="n">SCREEN 6</span><h2>Status: is everything working?</h2>
+  <p>One page that reads everything it can reach when you open it, and says when it read. It covers production and dev answering, each branch's latest build, the production database's vital signs, the scheduled jobs' last run, and errors in the last 24 hours against the week. Below that, whatever is failing right now: a route opens its error, the error names the people who hit it, and each person is a link to their record.</p></div>
+  <div class="before"><button class="shot" data-src="cap/observability.jpg" aria-label="Observability at full size"><img src="cap/observability.jpg" alt="Observability dashboard"></button><div><div class="lbl">Before</div><p>Errors live here. Up or down, builds and the database live in the morning check on your PC, or in the Amplify, Supabase and AWS log consoles. That is 5 to 6 places.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Stage 5. Status is new and reads on open only. It runs nothing by itself and touches no shared automation. The build and database rows need the deployed site to hold read-only keys for the hosting and database accounts. Adding those to production is an owner step the stage will list.">S5 · NEW</button>
+    <button class="tag" data-n="Stage 5. The error rows are today's Observability, restyled onto the kit. The stale warning that routes are not captured goes (546 of 581 are). The person in a sample event becomes a link to their record.">S5 · ERRORS</button>
+    <button class="tag" data-n="Question 6 decides this row. The morning check runs on your PC and writes to a folder there, which the deployed console cannot read. To show its result here, the check would also save its summary where the console can read it. That changes shared automation, so it is your call. If you say no, the row becomes a plain reminder of where the check lives.">ASK Q6 · MORNING CHECK</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-find=""></div>
+    <div class="app">
+      <aside class="side" data-active="status" data-open="Health"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Status</h1><div class="end"><span class="quiet">Read at 3:05 p.m.</span><span class="btn">Read again</span><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="band"><div><div class="k">Checks passing</div><div class="v">5 of 7</div><div class="s">2 to look at</div></div><div><div class="k">Production answer time</div><div class="v">212 ms</div><div class="s">a usual day is 240 ms</div></div><div><div class="k">API errors, 24 hours</div><div class="v warn">12</div><div class="s">a usual day is 9</div></div><div><div class="k">Database connections</div><div class="v">14 of 60</div><div class="s">cache hit 99.8%</div></div></div>
+        <h2 class="sec">Everything we check</h2>
+        <div class="card">
+          <table class="t">
+            <thead><tr><th>Check</th><th>State</th><th>Detail</th><th class="cv"></th></tr></thead>
+            <tbody>
+              <tr><td class="nm">Production site</td><td><span class="chip ok">Up</span></td><td>fieldlogichq.ca answered in 212 ms</td><td class="cv">›</td></tr>
+              <tr><td class="nm">Dev site</td><td><span class="chip ok">Up</span></td><td>answered in 340 ms</td><td class="cv">›</td></tr>
+              <tr><td class="nm">Builds</td><td><span class="chip ok">Passing</span></td><td>Production passed Oct 19 · Dev passed today at 1:48 p.m.</td><td class="cv">›</td></tr>
+              <tr><td class="nm">Database</td><td><span class="chip ok">Healthy</span></td><td>14 of 60 connections · no slow statements in the last hour</td><td class="cv">›</td></tr>
+              <tr><td class="nm">Scheduled jobs</td><td><span class="chip warn">One late</span></td><td>The club address check last ran 41 minutes ago (it runs every 15)</td><td class="cv">›</td></tr>
+              <tr><td class="nm">Errors</td><td><span class="chip warn">A little high</span></td><td>12 in 24 hours · a usual day is 9 · 4 new groups</td><td class="cv">›</td></tr>
+              <tr><td class="nm">Morning check</td><td><span class="chip ok">Clear</span></td><td>Today at 7:30 a.m. · 0 findings · opens its report (only if question 6 is yes)</td><td class="cv">›</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h2 class="sec">Failing now</h2>
+        <div class="card">
+          <table class="t">
+            <thead><tr><th>Error</th><th>Route</th><th class="r">Times</th><th class="r">People</th><th>Last seen</th><th class="cv"></th></tr></thead>
+            <tbody>
+              <tr><td class="nm">ReferenceError on the Bookkeeping page</td><td class="code">/platform-admin/bookkeeping</td><td class="r">4</td><td class="r">1</td><td class="ts">2:49 p.m.</td><td class="cv">›</td></tr>
+              <tr class="two"><td><span class="nm">Payment intent not found</span><span class="sub">example</span></td><td class="code">/api/billing/webhook</td><td class="r">6</td><td class="r">2</td><td class="ts">11:20 a.m.</td><td class="cv">›</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">First failing row real (dev) · rest example</span>
+  </div></div>
+  <div class="ask" data-q="Q6"><div class="q">Question 6 · What does "the status of our dev servers" mean, and should the console show the morning check's result?</div>
+    <p class="rec"><b>Recommended reading:</b> the deployed sites (production and dev), their builds, and the databases, not the dev server on your PC. <b>Recommended:</b> yes, show the morning check's result on Status. That means one change to the morning check, so it also saves its summary where the deployed console can read it. It is a change to shared automation, made in its own commit, only on your word here. Until then the row says where the check lives.</p>
+    <div class="opts"><label><input type="checkbox" data-o="Deployed sites + builds + databases (recommended reading)"> Deployed sites, builds and databases (recommended reading)</label><label><input type="checkbox" data-o="It also means my local dev server"> It also means my local dev server</label><label><input type="checkbox" data-o="Yes: morning check saves its summary for Status (shared automation change)"> Yes: the morning check saves its summary for Status (a shared automation change)</label><label><input type="checkbox" data-o="No: keep the morning check local"> No: keep the morning check local</label></div>
+    <textarea aria-label="Notes on question 6" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ E7 CLUB WEB ADDRESSES ═══════════ -->
+<section class="screen" id="e7">
+  <div class="screen-head"><span class="n">SCREEN 7</span><h2>Club web addresses, for the Club release</h2>
+  <p>Club Tier built a club's own web address to need no support ticket, and that is right. But when a club calls, we can't see what they see. This list shows every connected address with the same state the club sees on its own page, its last check and padlock date, and how many of the hosting's allowed addresses are used. It reads only.</p></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Stage 6 (the Club release's support jobs). New, read only. It reads the same per-club address records the 15-minute check keeps, so it adds no new checking. The quota tile reads the hosting's own limit on open. Also in Stage 6: setting up a club from a lead in one window, the add-on switch that checks nothing, and the overrides list that leaves out the families section.">S6 · NEW</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-find=""></div>
+    <div class="app">
+      <aside class="side" data-active="web" data-open="Health"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Club web addresses</h1><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="band"><div><div class="k">In use</div><div class="v">3 of 5</div><div class="s">the hosting's limit today</div></div><div><div class="k">Working</div><div class="v">1</div><div class="s">checked every hour</div></div><div><div class="k">Not working</div><div class="v warn">1</div><div class="s">owner emailed</div></div><div><div class="k">Waiting to connect</div><div class="v">1</div><div class="s">gives up after 2 days</div></div></div>
+        <div class="callout"><svg class="ic"><use href="#i-check"/></svg><span>Our request to raise the limit to 500 has been open with AWS since October 23.</span></div>
+        <div class="card">
+          <div class="tb"><span class="view">All addresses <span class="n">3</span> <svg class="ic"><use href="#i-down"/></svg></span><span class="gap"></span><span class="search"><svg class="ic"><use href="#i-search"/></svg>Search clubs and addresses…</span></div>
+          <table class="t">
+            <thead><tr><th>Club</th><th>Address</th><th>State</th><th>Last check</th><th>Padlock until</th><th class="cv"></th></tr></thead>
+            <tbody>
+              <tr><td class="nm">Riverside Hawks</td><td class="code">www.riversidehawks.ca</td><td><span class="chip ok">Working</span></td><td class="ts">2:58 p.m.</td><td class="ts">Jan 14, 2027</td><td class="cv">›</td></tr>
+              <tr class="two"><td><span class="nm">Lakeshore Lynx</span><span class="sub">Record 2 stopped pointing at us · owner emailed at 9:15 a.m.</span></td><td class="code">www.lakeshorelynx.ca</td><td><span class="chip bad">Not working</span></td><td class="ts">2:58 p.m.</td><td class="ts">Dec 2, 2026</td><td class="cv">›</td></tr>
+              <tr class="two"><td><span class="nm">Milton Minor Ball</span><span class="sub">Day 1 of 2</span></td><td class="code">www.miltonminorball.ca</td><td><span class="chip">Waiting to connect</span></td><td class="ts">2:45 p.m.</td><td class="ts none">—</td><td class="cv">›</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Example · no address is connected on dev</span>
+  </div></div>
+</section>
+
+<!-- ═══════════ FORMATTING CHECK ═══════════ -->
+<section class="screen" id="fmt">
+  <div class="screen-head"><span class="n">FORMATTING CHECK</span><h2>The client portals' rules, against today's platform admin</h2>
+  <p>Read from the written standard, the exception register, the navigation standard and the design log (not from an older hub's CSS). "Today" is measured on the captures. "Drawn" is what the frames above do, after the design review.</p></div>
+  <div class="tbl"><table class="doc">
+    <thead><tr><th>Rule</th><th>Today</th><th>Drawn</th></tr></thead>
+    <tbody>
+      <tr><td>One Warm / Dark setting, warm by default</td><td>Pinned dark in every setting, by a written exception and the layout itself</td><td>Warm by default, Dark on the switch (try the switch at the top). Needs ask F1.</td></tr>
+      <tr><td>The navigation standard: top strip, menu rows, Help and Collapse at the foot, an icon per entry</td><td>Its own nav, listed in the standard as an exception</td><td>The standard in full. Needs ask F1</td></tr>
+      <tr><td>Page frame: 960 reading, 1200 tables, centred</td><td>Content runs the full width of the window</td><td>1200, centred, every frame</td></tr>
+      <tr><td>Body face; headings in the body face (2026-10-19)</td><td>Data face everywhere (exception K-10). Titles in the display face, 24 px capitals, under a "Command Center" eyebrow</td><td>Body face, title 20/700, no eyebrow. Data face only for codes: routes, web addresses, Stripe numbers. Times in the body face</td></tr>
+      <tr><td>Type stays on the ladder</td><td>Sizes such as 8.8, 17.6, 22.4 and 25.6 px</td><td>10 · 11 · 12 · 14 · 16 · 20 · 24 only</td></tr>
+      <tr><td>Table headings: display face, capitals, secondary ink</td><td>Already met</td><td>Kept</td></tr>
+      <tr><td>The name is the link, one chevron column, no controls in cells</td><td>Customer Users: 98 links and buttons inside cells. Staff: Deactivate and Remove in every row. Organizations: a View link per row</td><td>Name link and chevron. Actions live on the record</td></tr>
+      <tr><td>Delete is never a row action</td><td>Remove on every staff row</td><td>Moves to the staff record, as a rare door ending the body</td></tr>
+      <tr><td>An item row is never tinted; empty is an em dash</td><td>n/a</td><td>A flag line under the name, never a tinted row; "—" for empty</td></tr>
+      <tr><td>A record reads first, edits whole</td><td>The club record opens on editable identity fields and a notes box</td><td>Story first, edits behind the pencil. A charge window reads first, and its refund is a second window</td></tr>
+      <tr><td>One toolbar: what is read · Search · Filter · Tools; Export is one button</td><td>Organizations: six separate inputs and buttons. Several screens use Filter, Export and Clear side by side</td><td>A count or the view pill, then Search, a square Type filter, Export at the far right</td></tr>
+      <tr><td>Figures in one joined band, 3 or 4 tiles, never 5</td><td>Overview: five separate tiles</td><td>Joined bands of 4, figures only. A status is said once, by a chip</td></tr>
+      <tr><td>A waiting count is the amber pill</td><td>Amber-bordered boxes with a number inside</td><td>Amber pill, in the menu and on Today</td></tr>
+      <tr><td>One lime per screen</td><td>Lime on every heading, the active menu entry and the eyebrows</td><td>Lime only on a window's main button</td></tr>
+      <tr><td>A window: tinted edge, no shadow; sentence left, buttons right; the × is a plain glyph</td><td>Confirm steps inline, with the sentence above the buttons</td><td>As drawn in screens 4 and 5</td></tr>
+      <tr><td>A one-of-several form choice is a dropdown (or radio rows with a line each)</td><td>n/a</td><td>Dropdowns in Free time, radio rows in Refund</td></tr>
+      <tr><td>Times read "8:00 a.m."</td><td>"Last visit Oct 24, 2026, 02:49 p.m." has a leading zero</td><td>"2:49 p.m.", never put in capitals</td></tr>
+      <tr><td>Plain words, one spelling</td><td>"Use 9999 for unlimited", "MODULE_FAMILIES", "Load Delete Preflight…"</td><td>"Unlimited", "Families", "Delete this club…"</td></tr>
+    </tbody></table></div>
+  <div class="ask" data-q="F1"><div class="q">Ask F1 · Retire the console's written exceptions to the house look</div>
+    <p class="rec">The dark look is held in place on purpose by three lines: exception <b>K-10</b> ("the platform admin uses the data face"), the design log's line that operator shells stay dark, and the navigation standard's "platform admin keeps its own look". The layout also pins dark. <b>Recommended: retire all three,</b> so the console takes the same kit, navigation and setting as every client screen. Keep the sign-in page dark only if you want staff to see at a glance that they are entering the console. I would not.</p>
+    <div class="opts"><label><input type="checkbox" data-o="Retire K-10, the 'operator shells stay dark' line and the nav exception (recommended)"> Retire K-10, the "operator shells stay dark" line and the nav exception (recommended)</label><label><input type="checkbox" data-o="Sign-in page follows too (recommended)"> The sign-in page follows too (recommended)</label><label><input type="checkbox" data-o="Keep the console dark"> Keep the console dark</label></div>
+    <textarea aria-label="Notes on ask F1" placeholder="Notes"></textarea></div>
+  <div class="ask" data-q="D"><div class="q">Design review: five places where the written rules disagree with each other</div>
+    <p class="rec">The design pass checked every frame against the written rules and found 25 things. Twenty were plain fixes and are already in the drawings above: the window frame, the field and chip recipes, the band recipe, the nav rows, the type ladder, the toolbar shape, name links, empty cells and more. These five are places where two written rules disagree. Each drawing follows the design pass's recommendation, and each needs your ruling before Stage 1 builds anything.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="D1 section heading ABOVE its card (club kit), not inside (coach portal)"> <span><b>D1 · Where a section heading sits.</b> The club kit puts it above the card, and the coaches portal inside. Drawn above, because the console is moving onto the admin kit.</span></label>
+      <label><input type="checkbox" data-o="D2 button tiers: white for every action, lime for the one main action, olive text for a door"> <span><b>D2 · Button tiers.</b> Two design-log entries from Oct 1 disagree about an olive outlined button. Drawn with the later one: white for every action, lime for the one main action, olive text for a door.</span></label>
+      <label><input type="checkbox" data-o="D3 no compact-log exception: rows by content, times in body face, codes in data face"> <span><b>D3 · No new exception for log tables.</b> I had proposed one (compact rows, times in the data face). The design pass showed it breaks the standard's rule that density follows content, not screen, and the Oct 19 ruling that times use the body face. Withdrawn. Rows go compact or comfortable by what they hold. Only codes use the data face.</span></label>
+      <label><input type="checkbox" data-o="D4 nav standard applied in full; its platform exception line deleted"> <span><b>D4 · The navigation standard in full.</b> The standard still lists the platform console as keeping its own look. Drawn with the standard applied in full: strip, rows, foot, icons. This rides on F1.</span></label>
+      <label><input type="checkbox" data-o="D5 form one-of-N = dropdown or radio rows with a line each, never a segmented row"> <span><b>D5 · A pick-one in a form.</b> Your Aug 22 rule (a dropdown, never a segmented row) against the Oct 19 view-pill look. Drawn with your rule: dropdowns, and radio rows where each option needs a line under it.</span></label>
+    </div>
+    <p class="rec">Two smaller notes from the same pass: the standard's badge row still says chips are in capitals, which the built kit and the Oct 19 ruling no longer do, so it wants correcting. And a band of non-money figures has no ruled recipe yet. The drawings reuse the money band so the two can't drift apart.</p>
+    <textarea aria-label="Notes on the design review" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ LADDER ═══════════ -->
+<section class="screen" id="lad">
+  <div class="screen-head"><span class="n">THE LADDER</span><h2>Nine stages, each drawn, ruled, built and walked</h2>
+  <p>Stage 1 is the foundation. Each later stage is one job, drawn in detail before it is built, then walked by you against real support work. The order after Stage 1 is your question 3. The last stage waits on its own trigger, not a date.</p></div>
+  <div class="tbl"><table class="doc">
+    <thead><tr><th>Stage</th><th>Covers</th><th>Shared changes or owner steps</th></tr></thead>
+    <tbody>
+      <tr><td><b>S1</b> Warm foundation</td><td>The kit, the Warm / Dark setting, the navigation standard, the frame, type and words on every screen. No screen changes job</td><td>Ask F1 and rulings D1–D5. Shared: the kit-switch guard must allow the platform shell, and the navigation standard drops its platform line. Console styles are written as plain rules, so the old-look gate stays at zero</td></tr>
+      <tr><td><b>S2</b> Find, the menu, Today, the customer record</td><td>Screens 1–3. One rulebook for the menu and the screens. The 1,000-account cap ends</td><td>Find is a new way to read customer data, drawn and reviewed as a security change. No sign-in change</td></tr>
+      <tr><td><b>S3</b> Money</td><td>Screen 4. Stripe's record beside ours, refund (question 7), a reason in the audit log, bulk and single plan changes made to agree, M6</td><td>A database change for the reason. An adversarial review on any money write</td></tr>
+      <tr><td><b>S4</b> Free time</td><td>Screen 5. A timed whole-plan grant, Founding Season as a group, the customer sees it, Comp Period retired</td><td>Production's timed-grant switch checked first. /billing on the customer billing pages</td></tr>
+      <tr><td><b>S5</b> Health</td><td>Screen 6. Status, Errors restyled, Feedback with a reply, Sent email for every email</td><td>Read-only keys for hosting and the database on production. Question 6 (the morning check). The mail service's delivery callback</td></tr>
+      <tr><td><b>S6</b> The Club release's jobs</td><td>Screen 7, setting up a club from a lead, the add-on and override gaps (H03)</td><td>Rides the Club release</td></tr>
+      <tr><td><b>S7</b> Growth and product</td><td>Leads, Campaigns, Pitch decks as a list of saved decks, Plans &amp; pricing, Approval queue, Templates, Export registry. H1 settled</td><td>None</td></tr>
+      <tr><td><b>S8</b> Records</td><td>Staff (roles per question 1, M3), Audit log search across all rows (M4), Help</td><td>A role change is a security change, drawn first</td></tr>
+      <tr><td><b>S9</b> Company accounting review</td><td>The same two walks over Bookkeeping: record a purchase, find a receipt, correct an entry, see a period's spending, hand the accountant a package</td><td>Trigger: the bookkeeping project's work is complete</td></tr>
+    </tbody></table></div>
+  <div class="ask" data-q="Q3"><div class="q">Question 3 · After the foundation, which job goes first: the one done most, or the one that hurts most?</div>
+    <p class="rec"><b>Recommended: S2 first (Find and the record), then S4 (free time), then S3 (money).</b> Every one of your three tasks starts with finding the customer and reading their record, so S2 pays off in all of them. Free time is the one that can quietly cost money today: a comp that never ends. Money is the most work, and a double billing is rare before customers pay at volume.</p>
+    <div class="opts"><label><input type="checkbox" data-o="S1 → S2 → S4 → S3 → S5 → S6 → S7 → S8 → S9 (recommended)"> S1, S2, S4, S3, S5, S6, S7, S8, S9 (recommended)</label><label><input type="checkbox" data-o="Money (S3) right after S2"> Money (S3) right after S2</label><label><input type="checkbox" data-o="Health (S5) right after S2"> Health (S5) right after S2</label><label><input type="checkbox" data-o="S6 first, for the Club release"> S6 first, for the Club release</label></div>
+    <textarea aria-label="Notes on question 3" placeholder="Notes"></textarea></div>
+  <div class="ask" data-q="R"><div class="q">Found on the way: report now, or leave for its stage?</div>
+    <p class="rec">Four things the walk found are worth fixing before their stage comes round. (1) The bulk plan change skips the steps the single change runs. Moving clubs to Club in bulk would not start their trials. (2) The timed-grant switch on production is unconfirmed. (3) The new Bookkeeping page threw an error 4 times on dev (that project's session is building it). (4) Two old platform data routes have no callers. <b>Recommended:</b> (1) as a small fix now, (2) as your one-minute check, (3) passed to the bookkeeping session, (4) left for S7.</p>
+    <div class="opts"><label><input type="checkbox" data-o="Fix the bulk plan change now"> Fix the bulk plan change now</label><label><input type="checkbox" data-o="I will check the grant switch on production"> I will check the grant switch on production</label><label><input type="checkbox" data-o="Pass the Bookkeeping error to its session"> Pass the Bookkeeping error to its session</label></div>
+    <textarea aria-label="Notes on found items" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ PASTE-BACK ═══════════ -->
+<section class="screen" id="paste">
+  <div class="screen-head"><span class="n">PASTE-BACK</span><h2>Your answers, ready to paste into the chat</h2><p>Tick and type above. Your answers stay in this browser only. Copy them here when you're done.</p></div>
+  <div class="paste"><button class="btn-doc" type="button" id="make">Copy my answers</button><textarea id="out" aria-label="Your answers" readonly></textarea></div>
+</section>
+</div>
+
+<dialog id="note" aria-labelledby="note-h"><h3 id="note-h">Detail</h3><p id="note-b"></p><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+<dialog id="zoom" class="zoom" aria-label="Capture at full size"><div class="z"><img id="zoom-img" alt=""></div><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+
+<script>
+/* core: draw the strip + menu into each frame, the theme switch, tags, captures. Kept apart from the answers script. */
+(function () {
+  var MENU = [
+    { g: '', items: [['today', 'Today', 32]] },
+    { g: 'Customers', items: [['clubs', 'Clubs & portals'], ['people', 'People'], ['free', 'Free time'], ['retention', 'Retention', 7]] },
+    { g: 'Health', items: [['status', 'Status'], ['errors', 'Errors', 4], ['feedback', 'Feedback', 3], ['web', 'Club web addresses']] },
+    { g: 'Growth', items: [['leads', 'Leads'], ['campaigns', 'Campaigns', 5], ['decks', 'Pitch decks']] },
+    { g: 'Product', items: [['plans', 'Plans & pricing'], ['approval', 'Approval queue'], ['bulk', 'Bulk changes'], ['templates', 'Email templates'], ['export', 'Export registry']] },
+    { g: 'Records', items: [['staff', 'Staff'], ['audit', 'Audit log'], ['sent', 'Sent email']] },
+    { g: 'Private', items: [['book', 'Bookkeeping']] }
+  ];
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function ic(id) { return '<svg class="ic" aria-hidden="true"><use href="#i-' + id + '"/></svg>'; }
+  function pill(n) { return n ? '<span class="pill">' + n + '</span>' : ''; }
+  document.querySelectorAll('aside.side').forEach(function (side) {
+    var active = side.getAttribute('data-active'), open = side.getAttribute('data-open'), h = '';
+    MENU.forEach(function (grp) {
+      var isOpen = !grp.g || open === 'all' || open === grp.g;
+      var sum = grp.items.reduce(function (t, it) { return t + (it[2] || 0); }, 0);
+      h += '<div class="grp">';
+      if (grp.g) h += '<div class="gl' + (isOpen ? '' : ' folded') + '">' + esc(grp.g) + (isOpen ? '' : pill(sum)) + '<span class="cv">' + ic('down') + '</span></div>';
+      if (isOpen) grp.items.forEach(function (it) { h += '<div class="it' + (it[0] === active ? ' on' : '') + '">' + ic(it[0]) + esc(it[1]) + pill(it[2]) + '</div>'; });
+      h += '</div>';
+    });
+    h += '<div class="foot"><div class="it">' + ic('help') + 'Help</div><div class="it">' + ic('collapse') + 'Collapse sidebar</div></div>';
+    side.innerHTML = h;
+  });
+  document.querySelectorAll('.strip').forEach(function (st) {
+    var q = st.getAttribute('data-find');
+    st.innerHTML = '<span class="lock"><span class="mk"></span><span>FieldLogic<em>HQ</em></span></span>' +
+      '<div class="mid"><span class="portal">Support console</span><div class="find' + (q ? ' typed' : '') + '">' + ic('search') + (q ? esc(q) : 'Find a person, club or Stripe number') + '<span class="k">' + (q ? 'Esc' : '/') + '</span></div></div>' +
+      '<div class="end"><span class="b">' + ic('bell') + '</span><span class="av">RC</span></div>';
+  });
+  var frames = document.querySelectorAll('[data-frame]');
+  function theme(dark) {
+    frames.forEach(function (f) { f.classList.toggle('dark', dark); });
+    document.getElementById('sw-warm').setAttribute('aria-pressed', dark ? 'false' : 'true');
+    document.getElementById('sw-dark').setAttribute('aria-pressed', dark ? 'true' : 'false');
+    try { localStorage.setItem('pasc-frames', dark ? 'dark' : 'warm'); } catch (e) {}
+  }
+  document.getElementById('sw-warm').addEventListener('click', function () { theme(false); });
+  document.getElementById('sw-dark').addEventListener('click', function () { theme(true); });
+  try { if (localStorage.getItem('pasc-frames') === 'dark') theme(true); } catch (e) {}
+  var note = document.getElementById('note'), zoom = document.getElementById('zoom');
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button.tag');
+    if (t) { document.getElementById('note-h').textContent = t.textContent; document.getElementById('note-b').textContent = t.getAttribute('data-n'); note.showModal(); return; }
+    var s = e.target.closest('button.shot');
+    if (s) { var i = document.getElementById('zoom-img'); i.src = s.getAttribute('data-src'); i.alt = s.getAttribute('aria-label'); zoom.showModal(); return; }
+    if (e.target.closest('button.close')) { var d = e.target.closest('dialog'); if (d) d.close(); }
+  });
+  [note, zoom].forEach(function (d) { d.addEventListener('click', function (e) { if (e.target === d) d.close(); }); });
+})();
+</script>
+<script>
+/* answers: checkboxes + notes kept in this browser, and the paste-back */
+(function () {
+  var KEY = 'pasc-answers-v1', state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  document.querySelectorAll('.ask').forEach(function (a) {
+    var q = a.getAttribute('data-q'); if (!q) return;
+    var s = state[q] || { o: [], n: '' };
+    a.querySelectorAll('input[type="checkbox"]').forEach(function (c) {
+      c.checked = s.o.indexOf(c.getAttribute('data-o')) >= 0;
+      c.addEventListener('change', function () {
+        var cur = state[q] || { o: [], n: '' }, v = c.getAttribute('data-o');
+        cur.o = cur.o.filter(function (x) { return x !== v; }); if (c.checked) cur.o.push(v);
+        state[q] = cur; save();
+      });
+    });
+    var ta = a.querySelector('textarea');
+    if (ta) { ta.value = s.n || ''; ta.addEventListener('input', function () { var cur = state[q] || { o: [], n: '' }; cur.n = ta.value; state[q] = cur; save(); }); }
+  });
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Support console kickoff: my answers'];
+    document.querySelectorAll('.ask').forEach(function (a) {
+      var q = a.getAttribute('data-q'); if (!q) return;
+      var title = a.querySelector('.q').textContent;
+      var picked = []; a.querySelectorAll('input[type="checkbox"]').forEach(function (c) { if (c.checked) picked.push(c.getAttribute('data-o')); });
+      var n = (a.querySelector('textarea') || {}).value || '';
+      lines.push('', title, picked.length ? '  Picked: ' + picked.join(' | ') : '  Picked: (nothing)');
+      if (n.trim()) lines.push('  Notes: ' + n.trim());
+    });
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Copy my answers'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>

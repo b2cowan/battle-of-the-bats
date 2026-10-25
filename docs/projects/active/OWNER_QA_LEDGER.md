@@ -26386,3 +26386,16 @@ republished; tick positions unchanged).
 
 **Open for the owner:** a logo's pixel size is remembered inside the organization's existing `pdf_settings` JSON (no schema change), measured the first time a send or sample needs it; until then a club shows its initials. The What's new line goes to `/release` at promote: "Emails to your families now show your club's name, colours and logo, and replies go where you expect." (not yet added to the release notes).
 <!-- /§370 -->
+
+## §371 · Support console · Stage 1, the warm foundation — **the platform admin looks and behaves like the rest of FieldLogicHQ: warm by default, Dark on the account setting, the product's top strip, a folding menu with Help and Collapse at the foot, an account menu with Appearance and Sign out, the standard page title, joined figure bands, white buttons with one lime action per screen, normal type instead of all capitals in a typewriter face; the sign-in page is always warm; nothing moved**
+
+**Built:** 2026-10-24 from `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE1_BUILD_PROMPT.md`, after the drawings (https://claude.ai/artifact/7DWPUBp9cDp26a2P359zLW) and the owner's five rulings the same day (Support console as the name, Help in place, account menu without the customer rows and signing out to the console sign-in, a colour pass on Overview and the club record, sign-in always warm). Not committed at the time of writing; no migration. Dev only.
+
+**The walk:** [Support console Stage 1 walk](PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE1_WALK.html), published https://claude.ai/artifact/DnTBX4BCZnTdyqK3fP4JyF 2026-10-24. 23 parts, one per screen plus the shell and a narrow window, and a list of eight calls the build made that the owner may overrule. Owed: sign in as a super admin on the dev server and tick it.
+
+**Not run by the builder:** the formal layout sweep (`check:layout`): its saved platform-admin sign-in is stale and refreshing it would overwrite a shared file, so a probe loaded all 20 console routes at 390, 768 and 1440 instead and found no page scrolling sideways and no 404. The club record is not in the sweep list (the fixture carries no organization id). Dark was looked at on six screens, not all. No real data was changed.
+
+**Guards the build added or changed:** `platform-admin-stage1-guard` (new: no dark pin, K-10 gone, menu foot order, who-sees-what unchanged, the portal name in one place) and `admin-kit-switch-guard` (the console layout is the third door for the admin marker; its sign-in goes through `GuestKitRoot`). `table-recipe-guard`'s known-debt list lost the playbook sheet. `check-admin-type` now scans the console (Bookkeeping held out until its own plan closes).
+
+**Open for the owner:** the calls listed at the foot of the walk (no per-screen ? glyph, the catalog switch as a dropdown, two filters as check boxes, Overview's small capital lines, the shared blue help callouts, one help article's capital letters, the account door's icon). Bookkeeping's inside is the Bookkeeping plan's session and still wears the old console look.
+<!-- /§371 -->

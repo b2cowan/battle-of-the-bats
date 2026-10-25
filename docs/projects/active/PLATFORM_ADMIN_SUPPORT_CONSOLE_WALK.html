@@ -1,0 +1,392 @@
+<title>Support Console Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column (920) of stations; each station = intent → path as built (with its capture) → counts → verdict → proposed.
+   Document chrome sits on a cool stone ground so the product captures read as specimens, not as the page. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8; --red: #9c321d; --red-soft: #f6e2dc;
+  --green: #2f6b3a; --green-soft: #e0efdc;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --green: #92d49c; --green-soft: #16261a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --green: #92d49c; --green-soft: #16261a; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); }
+.wrap { max-width: 920px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 80px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; letter-spacing: -.4px; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 20px; line-height: 1.3; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0 0 6px; }
+p { margin: 0; max-width: 72ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.lede { display: grid; gap: 12px; margin-bottom: 18px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.facts div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.facts b { display: block; font: 600 22px/1.2 var(--font-body); font-variant-numeric: tabular-nums; }
+.facts span { font-size: 13px; color: var(--soft); }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--ground); display: flex; gap: 6px; flex-wrap: wrap; padding-block: 10px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
+nav.tabs button { font: 600 14px/1 var(--font-body); min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+nav.tabs button[aria-selected="true"] { background: var(--olive-soft); border-color: var(--olive); color: var(--olive); }
+section.tab { display: grid; gap: 18px; }
+.intro { display: grid; gap: 8px; }
+article.st { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.st-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+.st-head .who { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--olive-soft); color: var(--olive); }
+.st-head .who.added { background: var(--amber-soft); color: var(--amber); }
+.label { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin-bottom: 4px; }
+.intent { border-left: 3px solid var(--olive); padding-left: 12px; }
+ol.path { margin: 0; padding-left: 22px; display: grid; gap: 4px; }
+ol.path li { padding-left: 2px; }
+ol.path .leave { color: var(--red); font-weight: 600; }
+.counts { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.counts div { flex: 1 1 120px; padding: 8px 12px; border-right: 1px solid var(--line); min-width: 0; }
+.counts div:last-child { border-right: 0; }
+.counts b { display: block; font: 600 20px/1.2 var(--font-body); font-variant-numeric: tabular-nums; }
+.counts span { font-size: 12.5px; color: var(--soft); }
+.counts .bad b { color: var(--red); }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 720px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+figure { margin: 0; min-width: 0; }
+figure button.shot { display: block; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; cursor: zoom-in; background: #0a0a0a; max-height: 340px; }
+figure img { display: block; width: 100%; height: auto; }
+figcaption { font-size: 12.5px; color: var(--dim); margin-top: 6px; }
+.verdict ul, .plain { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.flags { display: flex; flex-wrap: wrap; gap: 6px; }
+button.flag { font: 600 12.5px/1.2 var(--font-body); min-height: 32px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--red); background: var(--red-soft); color: var(--red); cursor: pointer; text-align: left; }
+button.flag.warn { border-color: var(--amber); background: var(--amber-soft); color: var(--amber); }
+button.flag.ok { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+.proposed { background: var(--olive-soft); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; }
+.proposed .delta { font: 600 13px/1.3 var(--font-data); color: var(--olive); }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font: 600 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.v-fixed { color: var(--green); font-weight: 600; } .v-open { color: var(--red); font-weight: 600; } .v-part { color: var(--amber); font-weight: 600; } .v-moot { color: var(--dim); font-weight: 600; }
+.rule { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: grid; gap: 6px; }
+.rule .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); max-width: min(560px, calc(100vw - 32px)); padding: 18px 18px 14px; }
+dialog::backdrop { background: rgba(20, 24, 18, .45); }
+dialog .foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+dialog button.close { font: 600 14px/1 var(--font-body); min-height: 40px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+dialog.zoom { max-width: calc(100vw - 32px); width: 1200px; padding: 10px; }
+dialog.zoom .z { max-height: 80vh; overflow: auto; }
+dialog.zoom img { width: 100%; height: auto; display: block; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+<header class="lede">
+  <p class="eyebrow">Platform admin, reorganized for support · kickoff walk · measured 2026-10-24</p>
+  <h1>Support Console Walk</h1>
+  <p>I walked the platform admin twice over the same screens. Walk A asks what each of the six support roles sees and can change. Walk B follows a person who arrives with a job to do, click by click. Every capture was taken on the dev server at a 1440-pixel desk width, signed in as the test super admin, with every change blocked so nothing was written. The end state, the formatting check and your questions are on the companion page, <b>Support Console End State</b>, linked from the project index.</p>
+  <div class="facts">
+    <div><b>36</b><span>screens, counting sign-in. Two are old addresses that forward to Plans &amp; Pricing.</span></div>
+    <div><b>19</b><span>menu entries in 7 groups, named for what the system holds, not the job being done.</span></div>
+    <div><b>0</b><span>ways to search the whole console. Two lists each search their own columns.</span></div>
+    <div><b>5–6</b><span>places to look to answer "is everything working?". One of them is a file on your PC.</span></div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Walk sections">
+  <button role="tab" id="t-b" aria-selected="true" data-tab="b">Walk B · by task</button>
+  <button role="tab" id="t-a" aria-selected="false" data-tab="a">Walk A · by role</button>
+  <button role="tab" id="t-s" aria-selected="false" data-tab="s">Standing back</button>
+  <button role="tab" id="t-r" aria-selected="false" data-tab="r">Old issues re-checked</button>
+</nav>
+
+<!-- ═════════════════ WALK B ═════════════════ -->
+<section class="tab" id="p-b" role="tabpanel" aria-labelledby="t-b">
+  <div class="intro">
+    <h2>Walk B: a person arrives with a job</h2>
+    <p>Your three tasks come first, then nine more the walk turned up. Each station has the same parts: what the person knows when they arrive, the path as built, the counts, my verdict, and the proposed path with its click count before and after. Red flags are things that can go wrong. Amber flags are things that slow a person down. Click any flag for its detail.</p>
+  </div>
+
+  <!-- T1 -->
+  <article class="st" id="t1">
+    <div class="st-head"><span class="who">Owner-named</span><h2>1 · "I was charged twice"</h2></div>
+    <div class="intent"><div class="label">The intent</div><p>A customer emails support. They give an email address, maybe a club name, maybe the last four digits of a card. Done means: the customer is found, every charge sits beside what our side recorded, a real duplicate is told apart from two legitimate charges (a plan change, a renewal plus a partial-month charge, two clubs on one card), the money is put right, and a record says what was done and why.</p></div>
+    <div class="cols">
+      <div><div class="label">Path as built</div>
+        <ol class="path">
+          <li>Customer Users, type the email, press Search.</li>
+          <li>Click the club in that person's row to open its record.</li>
+          <li>The record shows our plan, status and period end. It shows no charge, invoice or payment.</li>
+          <li>Press <b>Open Stripe</b>. <span class="leave">You leave the console.</span></li>
+          <li class="leave">In Stripe: find the payments list, compare the two charges, work out why, refund there.</li>
+          <li>Come back. Open the Support tab, type a note by hand, press Add Note.</li>
+        </ol>
+      </div>
+      <figure><button class="shot" data-src="cap/org-stripe-billing-access.jpg" aria-label="Open the org record's Billing and Access tab at full size"><img src="cap/org-stripe-billing-access.jpg" alt="The org record's Billing and Access tab: plan and limits form, no charges listed" loading="lazy"></button><figcaption>The org record, Billing &amp; Access tab. Every money fact here is ours. Stripe's own record is one link away, in another window.</figcaption></figure>
+    </div>
+    <div class="counts"><div><b>3 + Stripe</b><span>screens here, then Stripe's</span></div><div><b>~14</b><span>clicks, 6 here and about 8 in Stripe</span></div><div class="bad"><b>1</b><span>trip out to Stripe, for the actual job</span></div><div class="bad"><b>0</b><span>trace on our side unless someone types a note</span></div></div>
+    <div class="verdict"><div class="label">Verdict</div>
+      <p>The path makes sense only to someone who already knows the money lives in Stripe. A first-time support person would look for charges on the record, find none, and either guess or ask. The console cannot answer the question it was asked. It can only hand you over.</p>
+      <div class="flags" style="margin-top:8px">
+        <button class="flag" data-n="The refund happens in Stripe and nothing comes back. Our audit log, the org record and the customer's story all stay silent unless the person remembers to type a note. Six months later nobody on our side can tell that the customer was refunded, or why.">Refund leaves no trace</button>
+        <button class="flag" data-n="The audit log has no place for a reason. Where a screen asks for one, the reason is tucked inside the stored value and shown as raw text. Revoking a grant and switching an add-on record no reason at all.">No reason column in the audit log</button>
+        <button class="flag warn" data-n="Card last four is not searchable anywhere in the console. It is stored only for Founding Season card saves. A customer who gives only their card digits sends you straight to Stripe.">Card digits find nothing</button>
+        <button class="flag warn" data-n="Customer Users reads only the first 1,000 accounts and says nothing when there are more. Past that size, a customer you search for can simply not be there.">Search silently stops at 1,000 accounts</button>
+      </div>
+    </div>
+    <div class="proposed"><div class="label">Proposed path (drawn: End State › The customer record, Money)</div>
+      <p>Type the email in <b>Find</b>, which sits on every page. Open the customer, then the <b>Money</b> tab: Stripe's charges, refunds and subscription events listed beside what we recorded, with the usual innocent pairs labelled (a plan change, a renewal and a partial month, two clubs on one card). Refund or hand off to Stripe (your question 7). Either way the console writes the record, with the reason, onto the customer's story.</p>
+      <p class="delta">~14 clicks and 1 trip out → 5 clicks, and a record written for you</p></div>
+  </article>
+
+  <!-- T2 -->
+  <article class="st" id="t2">
+    <div class="st-head"><span class="who">Owner-named</span><h2>2 · Activate a customer without charging them, for a while</h2></div>
+    <div class="intent"><div class="label">The intent</div><p>A club gets a free month, or a coach gets a comp season. Done means: it is granted, everyone can see when it ends, it ends by itself, and later the customer's record shows who granted it and why.</p></div>
+    <div class="cols">
+      <div><div class="label">Path as built: three different things, and none does the job whole</div>
+        <ol class="path">
+          <li>Organizations, search, View, then the Billing &amp; Access tab.</li>
+          <li><b>Way 1, change the plan:</b> pick the plan, give a reason, Review, Confirm. It is <b>permanent</b>. The screen calls it a "free comp". Nothing ends it, and nothing reminds anyone.</li>
+          <li><b>Way 2, add an override:</b> pick a kind, sections, an end date, a reason, Apply (no confirmation step). It ends by itself, but only for one section or a forced status, never a whole plan. It only works where a background switch is on, and nobody has confirmed that switch is on in production.</li>
+          <li><b>Way 3, the "Comp Period" override:</b> the screen itself warns that it grants nothing. It is a label.</li>
+          <li><b>Way 4, Founding Season:</b> set at checkout, with an end date of October 1, 2027. The desk says outright that nothing in the product turns a comp off by itself.</li>
+        </ol>
+      </div>
+      <figure><button class="shot" data-src="cap/org-overrides-billing-access.jpg" aria-label="Open the plan and overrides tab at full size"><img src="cap/org-overrides-billing-access.jpg" alt="Plan and Limits form with 'Use 9999 for unlimited', and an Active Overrides card reading None" loading="lazy"></button><figcaption>Plan and Limits, then Active Overrides below the fold. Two separate ideas of "free", on one tab.</figcaption></figure>
+    </div>
+    <div class="counts"><div><b>6–8</b><span>clicks, depending on which way</span></div><div class="bad"><b>Permanent</b><span>the only whole-plan option</span></div><div class="bad"><b>Remember</b><span>someone must undo it by hand</span></div><div class="bad"><b>Unseen</b><span>the customer never sees an override's end date</span></div></div>
+    <div class="verdict"><div class="label">Verdict</div>
+      <p>This is your hunch, confirmed in the code. "Free for a month" today means a plan change that someone has to remember to undo. The timed tool exists but only covers single sections, sits behind a switch nobody has confirmed, and applies without a confirmation step. A first-time person meets four controls that all sound like the answer, and one of them is a label that does nothing. On your question of one idea of "free for a while" or two: today it is four, and it should be one (see the End State).</p>
+      <div class="flags" style="margin-top:8px">
+        <button class="flag" data-n="A plan change with no subscription behind it is a free plan forever. The record shows nothing about when it was meant to end. The only memory is the reason text inside the audit log.">A free month never ends</button>
+        <button class="flag" data-n="Apply Override writes straight away, with no confirmation step. The plan change has one, the override does not.">Override applies with no confirmation</button>
+        <button class="flag warn" data-n="Timed grants only take effect where a background switch is on. It is on in dev. The enforcement plan lists checking it on production as a one-minute owner step it still owes. Until someone checks, a timed grant on production may do nothing at all.">Works only if a switch is on</button>
+        <button class="flag warn" data-n="Comp Period sounds like the answer, and the screen has to warn that it grants no access. A control that needs a warning saying it does nothing should not be offered.">"Comp Period" grants nothing</button>
+        <button class="flag warn" data-n="The Founding Season desk is read only on purpose (owner ruling 2026-09-07). Its comps end on October 1, 2027, and that date ends nothing. How the turn-off runs is a decision due May 2027.">Founding comps have no off switch</button>
+      </div>
+    </div>
+    <div class="proposed"><div class="label">Proposed path (drawn: End State › Give free time)</div>
+      <p>On the customer, press <b>Give free time</b>. A window asks what (the whole plan, or one section), which plan, until when, and why. The foot sentence says what happens: "Lakeshore Lynx gets Club free until November 30. It goes back to Tournament by itself." The record then wears a "Free until Nov 30" chip. The <b>Today</b> page lists every grant ending in the next 14 days, and the customer's own billing page says "Free until November 30". Founding Season becomes a named group of these same grants, not a second idea.</p>
+      <p class="delta">6–8 clicks, permanent → 5 clicks, ends by itself, seen by everyone</p></div>
+  </article>
+
+  <!-- T3 -->
+  <article class="st" id="t3">
+    <div class="st-head"><span class="who">Owner-named</span><h2>3 · Are the servers up, and how is the API handling errors?</h2></div>
+    <div class="intent"><div class="label">The intent</div><p>You sit down and want one answer: is everything up, are the recent builds green, are errors rising, which route is failing, and what happened to the person who hit it. ("Dev servers" is your question 6. I have read it as the deployed sites and their builds plus the databases, not your own PC.)</p></div>
+    <div class="cols">
+      <div><div class="label">Path as built: where each answer lives today</div>
+        <ol class="path">
+          <li><b>Errors rising, which route:</b> Observability. It reads only errors the app caught itself.</li>
+          <li><b>What happened to the person:</b> open the issue, read the email in a sample event, then retype it into Customer Users. It is not a link.</li>
+          <li class="leave"><b>Is the database healthy:</b> the morning check on your PC, or the Supabase console.</li>
+          <li class="leave"><b>Are builds green:</b> the morning check, or the Amplify console.</li>
+          <li class="leave"><b>Raw logs:</b> the AWS log console.</li>
+          <li class="leave"><b>First-time alerts:</b> the admin email inbox.</li>
+        </ol>
+      </div>
+      <figure><button class="shot" data-src="cap/observability.jpg" aria-label="Open Observability at full size"><img src="cap/observability.jpg" alt="Observability: metric tiles, a chart and a 50-row issue table" loading="lazy"></button><figcaption>Observability: good error triage, about 4,300 pixels tall, and it can't tell you whether the site is up.</figcaption></figure>
+    </div>
+    <div class="counts"><div class="bad"><b>5–6</b><span>places to look</span></div><div><b>1</b><span>of them inside the console</span></div><div class="bad"><b>On your PC</b><span>the morning check is a local file</span></div><div><b>Two</b><span>error rates that measure different things</span></div></div>
+    <div class="verdict"><div class="label">Verdict</div>
+      <p>The error triage is good: severity, route, count, affected orgs, a 14-day trend, and feedback joined to the error. What is missing is the first question, "is it up?". The best answer you have, the morning check, runs on your own PC and writes to a folder there, so the deployed console cannot read it. The other answers sit in three AWS and Supabase consoles. A support person who isn't you has no way to see any of it.</p>
+      <div class="flags" style="margin-top:8px">
+        <button class="flag warn" data-n="The morning check measures server errors from the hosting edge. Observability counts errors the app caught itself. Both are called an error rate, and on a bad day they will disagree.">Two error rates, one name</button>
+        <button class="flag warn" data-n="Observability still warns that routes are not yet wrapped. In fact 546 of the 581 routes are now captured. The ones that are not are mostly developer routes. The warning makes the screen look less trustworthy than it is.">A stale coverage warning</button>
+        <button class="flag warn" data-n="An issue's sample events show the email of the person who hit it as plain text. Getting from the error to the person's record means retyping the address in another screen.">From error to person = retype</button>
+        <button class="flag" data-n="The dev console's own error list held a ReferenceError on the new Bookkeeping page, 4 times. That page belongs to the bookkeeping project's session, which is still building it. Reported here, not fixed.">Found on the way: a Bookkeeping page error on dev</button>
+      </div>
+    </div>
+    <div class="proposed"><div class="label">Proposed path (drawn: End State › Status)</div>
+      <p>A <b>Status</b> page under Health reads everything it can when you open it: production and the dev site answering, the last builds of each branch, the database's vital signs, errors in the last 24 hours against the week, and the scheduled jobs' last run. A failing route opens its issue, the issue names the person, and the person is a link to their record. Showing the morning check's own result here means changing that check so it also saves its summary where the console can read it. That is a change to shared automation, so it is your question 6, not something I would wire.</p>
+      <p class="delta">5–6 places → 1 page, then 3 clicks to the person</p></div>
+  </article>
+
+  <!-- T4 -->
+  <article class="st" id="t4">
+    <div class="st-head"><span class="who added">Added</span><h2>4 · Find a person from an email, not knowing their club</h2></div>
+    <div class="cols">
+      <div><ol class="path"><li>Guess that "Customer Users" holds customers and "Platform Users" holds staff. The two names sit in different groups of the menu.</li><li>Type the email, press Search. Each row lists the person's clubs as links.</li></ol>
+      <p style="margin-top:8px">It works today, at today's size. It stops working silently past 1,000 accounts. Organizations searches only a club's name and its web name, so an email typed there finds nothing, and the screen does not point you to Customer Users.</p></div>
+      <figure><button class="shot" data-src="cap/customer-users.jpg" aria-label="Open Customer Users at full size"><img src="cap/customer-users.jpg" alt="Customer Users: search box over a 50-row table with an Actions button in each row" loading="lazy"></button><figcaption>Customer Users: 50 rows, each with its own Actions button and club links inside the cells.</figcaption></figure>
+    </div>
+    <div class="proposed"><p><b>Find</b> on every page: email, name, club, web name, Stripe customer or subscription number. One list of results, people and clubs together, each opening its record.</p><p class="delta">2 screens, after knowing which one → 1 box, from anywhere</p></div>
+  </article>
+
+  <!-- T5 -->
+  <article class="st" id="t5">
+    <div class="st-head"><span class="who added">Added</span><h2>5 · A club's whole subscription story on one screen</h2></div>
+    <div class="cols">
+      <div><p>The record holds the pieces across five tabs. Notes are on Support, the plan and grants on Billing &amp; Access, sections on Entitlements, people on People &amp; Tournaments, and the last 8 audit rows on Activity. Stripe's own history is not there at all. To tell the story you visit every tab, then Stripe, and keep the order in your head. The record opens on an editable identity form and a notes box, so the first thing a support person sees is a place to change something.</p></div>
+      <figure><button class="shot" data-src="cap/org-detail.jpg" aria-label="Open the org record at full size"><img src="cap/org-detail.jpg" alt="Org record opening on Internal Notes and an editable Organization Identity form" loading="lazy"></button><figcaption>The record opens on a notes box and the name and web-name fields, ready to edit.</figcaption></figure>
+    </div>
+    <div class="proposed"><p>The record reads first: a money band (plan · status · next charge · free time), then <b>Story</b>, one dated list of everything that happened to this customer: plan changes, grants, Stripe charges and refunds, notes, staff actions, each with who and why. Edits sit behind the pencil.</p><p class="delta">5 tabs + Stripe → 1 list</p></div>
+  </article>
+
+  <!-- T6 -->
+  <article class="st" id="t6">
+    <div class="st-head"><span class="who added">Added</span><h2>6 · Change a plan mid-season</h2></div>
+    <p>The plan form says plainly that it "changes access only, not billing". That is honest, and it means the person must then go to Stripe and change what the customer pays, by hand, or the two disagree. The bulk screen's plan change has drifted from the single-club one. It skips the follow-on steps the single change runs: starting a Club trial, removing a Founding comp, restoring a reactivated club. The same request gives a different result depending on which screen you used.</p>
+    <div class="flags"><button class="flag" data-n="The single-club plan change runs a set of follow-on steps (Club trial start, Founding comp removal, reactivation restore). The bulk plan change shares only the over-limit archive step. Moving ten clubs to Club in bulk would not start their trials. This is a correctness bug to report and fix, whatever the reorganization decides.">Bulk and single plan changes disagree</button><button class="flag warn" data-n="The tournament limit box says to type 9999 for unlimited. That is the storage showing through. A person should pick Unlimited.">"Use 9999 for unlimited"</button></div>
+    <div class="proposed"><p>The plan window's foot sentence says both halves: what changes in access now, and what the customer pays (or "Stripe is not changed, so open it and change the price"), with the Stripe step recorded on the story. Bulk and single share one rule.</p></div>
+  </article>
+
+  <!-- T7 -->
+  <article class="st" id="t7">
+    <div class="st-head"><span class="who added">Added</span><h2>7 · A customer who can't sign in</h2></div>
+    <p>Customer Users, find them, then the row's Actions menu: Reset Password, Confirm Email, Revoke sessions, Edit, Ban. Reset Password sends a link. Neither the product nor the console records that the email was sent, so you can't tell whether it went or bounced. There is no way to see the errors this person hit, and no "send a sign-in link".</p>
+    <div class="proposed"><p>The person's record shows how they sign in, when they last did, the emails we sent them with each one's result, and the errors they hit. The recovery actions sit on that record.</p></div>
+  </article>
+
+  <!-- T8 -->
+  <article class="st" id="t8">
+    <div class="st-head"><span class="who added">Added</span><h2>8 · A club whose own web address stopped working</h2></div>
+    <p>Club Tier's own web address feature is built so that support never touches a club's address. The club connects it, a check runs every 15 minutes, and only the club owner is emailed. That is right for the club, and it leaves us blind. No console screen lists connected addresses, their state or their last check. The hosting allows 5 addresses and the request for 500 is still open with AWS. The product has a refusal for "we've hit our own ceiling" that nothing ever produces. When a club calls, today's path is the AWS console or a DNS lookup.</p>
+    <div class="proposed"><p><b>Club web addresses</b> under Health: every connected address, its state, its last check and padlock date, and a quota readout ("3 of 5 used · request for 500 open"). It reads only, and it shows the same state the club sees.</p></div>
+  </article>
+
+  <!-- T9 -->
+  <article class="st" id="t9">
+    <div class="st-head"><span class="who added">Added</span><h2>9 · Answer an in-app feedback message</h2></div>
+    <div class="cols">
+      <div><p>Feedback lists messages with status, links to the club and to a matching error, and an escalate step. There is no reply. The sender's email is plain text, so you copy it into your own mail client, and the answer is recorded nowhere. Changing the status tells the customer nothing.</p></div>
+      <figure><button class="shot" data-src="cap/feedback.jpg" aria-label="Open Feedback at full size"><img src="cap/feedback.jpg" alt="Feedback list with status filters" loading="lazy"></button><figcaption>Feedback: triage without a reply.</figcaption></figure>
+    </div>
+    <div class="proposed"><p>Open a message as a record, write the reply in a window that shows exactly what the customer will receive, and send. The reply is kept on the message and on the customer's story. Sending to a customer asks before it goes, per the standing rule.</p></div>
+  </article>
+
+  <!-- T10 -->
+  <article class="st" id="t10">
+    <div class="st-head"><span class="who added">Added</span><h2>10 · Find a marketing resource to send a prospect</h2></div>
+    <div class="cols">
+      <div><p>Pitch Deck Studio is a composer of about 12,300 pixels with 98 buttons: every slide, with up, down and remove arrows. A saved deck gets a private link, and the only route to a PDF is printing that page. To send a prospect a deck, you scroll the composer to find the saved decks.</p></div>
+      <figure><button class="shot" data-src="cap/pitch-deck-studio.jpg" aria-label="Open Pitch Deck Studio at full size"><img src="cap/pitch-deck-studio.jpg" alt="Pitch Deck Studio: a long column of slide cards with arrow buttons" loading="lazy"></button><figcaption>Built for composing a deck, not for handing one out.</figcaption></figure>
+    </div>
+    <div class="proposed"><p><b>Pitch decks</b> opens on a list of the saved decks, each with <b>Copy link</b>. The composer sits behind each deck.</p><p class="delta">a long scroll → 2 clicks to a link</p></div>
+  </article>
+
+  <!-- T11 -->
+  <article class="st" id="t11">
+    <div class="st-head"><span class="who added">Added</span><h2>11 · "I never got the email"</h2></div>
+    <p>Account emails (password resets, invites, notices) go out and are recorded nowhere. Campaign emails are recorded per person, but "sent" only means our mail service accepted the message. Nothing tells us whether it was delivered, bounced or marked as spam. Support cannot answer this question at all today.</p>
+    <div class="proposed"><p>A <b>Sent email</b> log for every email the product sends, shown on the person's record. Its "delivered or bounced" half needs the mail service to call us back, which is a new incoming route. It runs nothing on a schedule.</p></div>
+  </article>
+
+  <!-- T12 -->
+  <article class="st" id="t12">
+    <div class="st-head"><span class="who added">Added</span><h2>12 · Set up a club when the Club plan goes on sale</h2></div>
+    <p>From Club Tier's readiness plan: the only way a Club exists is a staff member changing an org's plan on its record (which now starts the 90-day trial and removes a Founding comp). The add-on switch checks nothing. The overrides list leaves out the families section. Early Access cannot turn a lead into a club. A support playbook and rollback runbook for the release are still to be written. The Club release adds no other platform job, because the web address, sponsors, payments and the coach's portal move are all built to be self-serve.</p>
+    <div class="proposed"><p><b>Set up a club</b> from a lead or from a customer: plan, trial end, sections, owner invite, one window, one confirmation. The add-on and override gaps get fixed on the way past.</p></div>
+  </article>
+</section>
+
+<!-- ═════════════════ WALK A ═════════════════ -->
+<section class="tab" id="p-a" role="tabpanel" aria-labelledby="t-a" hidden>
+  <div class="intro">
+    <h2>Walk A: the six support roles</h2>
+    <p>The six roles are real and enforced on the server for every screen. What each sees comes from one rulebook, and what each can change comes from the screen code. Walked from the rulebook and the code, not by signing in as each, because that would mean changing a test account's role.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Role</th><th>The job it exists for</th><th>Opens</th><th>Can change</th><th>Fit</th></tr></thead>
+    <tbody>
+      <tr><td><b>Super admin</b></td><td>The owner</td><td>Everything (Bookkeeping only by its owner address)</td><td>Everything, incl. deleting clubs and staff</td><td class="v-fixed">Fits</td></tr>
+      <tr><td><b>Support</b></td><td>Troubleshooting, accounts</td><td>Overview, clubs, people, Retention, Export registry, Errors, Feedback, Audit, Help</td><td>People's sign-in and details, club notes, name and owner, feedback status</td><td class="v-part">Mostly. It can read an error but not mark it fixed.</td></tr>
+      <tr><td><b>Billing</b></td><td>Plans, money, retention</td><td>The above minus Errors, plus Founding Season, Plans (read), Bulk changes</td><td>Plans, limits, grants, cancel, retention, bulk billing changes, and everything Support can change</td><td class="v-part">Carries all of Support's powers too. Never decided (old issue M3).</td></tr>
+      <tr><td><b>Product</b></td><td>The plan catalog</td><td>Plans &amp; Pricing, Approval queue, Templates, Growth, Errors, Feedback, Founding Season, Bulk changes</td><td>Catalog, templates, a club's sections, error status, bulk section changes, growth</td><td class="v-fixed">Fits</td></tr>
+      <tr><td><b>Growth</b></td><td>Marketing resources, leads</td><td>Overview, clubs (read), people (read), Leads, Campaigns, Pitch decks, Audit, Help</td><td>Leads, campaigns, decks</td><td class="v-part">Fits, though the menu never marks clubs as read only for it.</td></tr>
+      <tr><td><b>Read only</b></td><td>An observer</td><td>Overview, clubs, people, Audit, Help</td><td>Nothing, though it can download the whole staff audit log</td><td class="v-fixed">Fits</td></tr>
+    </tbody></table></div>
+  <article class="st">
+    <h3>What the role walk found</h3>
+    <div class="flags">
+      <button class="flag" data-n="The rulebook says nobody may change anything on Organizations, yet Support, Billing and Product all change things there, through older permission checks. Because the rulebook says no one writes, the menu cannot mark clubs as view-only for Growth and Read only, even though their buttons are locked on the page. Two answers to one question is how a future change opens a door by accident.">The rulebook and the screens disagree about clubs</button>
+      <button class="flag warn" data-n="Billing can reset passwords, ban people and edit their details, because it was given Support's permission too. Old issue M3 asked whether that was meant. It was never decided.">Billing carries Support's powers</button>
+      <button class="flag warn" data-n="Support is the troubleshooting role, and it can open an error but cannot resolve, ignore or snooze it. Only Product and the super admin can.">The troubleshooter can't close an error</button>
+      <button class="flag ok" data-n="Bookkeeping opens for one email address, not for a role. A super admin who is not the owner does not see it. That is right for a private book, and it should stay that way through the reorganization.">Bookkeeping follows a person, not a role (right)</button>
+      <button class="flag warn" data-n="Platform Users is the staff list. Customer Users is the customer list. The names differ by one word and sit in different groups.">"Platform Users" vs "Customer Users"</button>
+    </div>
+    <p><b>The fit, in one line:</b> the six roles draw good permission lines, but they do nothing to shape the menu. Every role meets the same seven groups, sorted by what the system stores. A role trims entries out of a menu built around data, not jobs. The recommendation (question 1) is a menu built from the jobs, with each role trimming it, and one rulebook that both the menu and the screens read.</p>
+  </article>
+</section>
+
+<!-- ═════════════════ STANDING BACK ═════════════════ -->
+<section class="tab" id="p-s" role="tabpanel" aria-labelledby="t-s" hidden>
+  <div class="intro"><h2>Standing back: rules that cut across both walks</h2><p>Each of these showed up at three or more stations. They become the rules every stage builds to.</p></div>
+  <div class="rule"><span class="n">R1</span><h3>One place to find a customer</h3><p>Every task starts with "who is this?", and today the answer depends on which list you guessed. Find sits on every page and searches people, clubs and Stripe numbers together. Nothing is capped without saying so.</p></div>
+  <div class="rule"><span class="n">R2</span><h3>A customer record reads first, and edits whole</h3><p>The record opens on editable forms today. It should open on the story, with changes behind the pencil, like every client screen since the portal ruling.</p></div>
+  <div class="rule"><span class="n">R3</span><h3>A change to a live customer confirms in one sentence</h3><p>The plan change confirms. A grant, a section switch and an add-on switch don't. Every change to a live customer gets a window whose foot sentence says what changes and what doesn't ("Stripe is not changed").</p></div>
+  <div class="rule"><span class="n">R4</span><h3>Every change records who and why</h3><p>The reason gets its own place in the audit log and shows on the customer's story. Today some writes record a reason inside the stored value, and some record none.</p></div>
+  <div class="rule"><span class="n">R5</span><h3>Undo is "put it back", from the story</h3><p>A plan, a limit, a grant or a section change shows its previous value on the story, with Put it back (which asks for a reason too). There is no undo for anything that reached Stripe or a customer's inbox (question 2).</p></div>
+  <div class="rule"><span class="n">R6</span><h3>A section you may only read shows as a record, without controls</h3><p>Today a read-only role sees locked forms. It should see the same record without the pencil, and the menu marks the entry. Absent beats disabled.</p></div>
+  <div class="rule"><span class="n">R7</span><h3>The money truth is shown, never remembered</h3><p>Whatever happened in Stripe is shown beside our record, so nobody keeps it in their head between two windows.</p></div>
+  <div class="rule"><span class="n">R8</span><h3>Plain words, the product's look</h3><p>No all-caps mono menu, no "9999 for unlimited", no raw keys like "module_families". The console takes the same kit and Warm / Dark setting as every client screen (see the formatting check on the End State).</p></div>
+</section>
+
+<!-- ═════════════════ RE-CHECK ═════════════════ -->
+<section class="tab" id="p-r" role="tabpanel" aria-labelledby="t-r" hidden>
+  <div class="intro"><h2>The earlier walkthroughs' issues, re-checked against today's code</h2><p>From the platform admin programme and its archived operator walkthroughs. The programme summary is out of date: two of its four "unbuilt gaps", a per-club team limit and removing the last staff user, are both built.</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Issue</th><th>What it was</th><th>Today</th><th>Lands in</th></tr></thead>
+    <tbody>
+      <tr><td>H1</td><td>An unlimited plan kept an old finite cap</td><td class="v-part">Data cleared. A console-only price table still exists, and it is unclear whether it is the one enforced.</td><td>Stage 7</td></tr>
+      <tr><td>H2–H6, H14</td><td>Plan save wiped the cap, no team-limit field, expired grants shown as active, silent revoke, "Comp Period" read as access, a plan change looked like billing</td><td class="v-fixed">Fixed</td><td>n/a</td></tr>
+      <tr><td>H7</td><td>Timed grants off by default</td><td class="v-part">Fixed in code. Production's switch still unconfirmed.</td><td>Stage 4</td></tr>
+      <tr><td>H8b</td><td>Checkout should stay closed when a plan has no Stripe price</td><td class="v-open">Still open. It is a check on a customer screen.</td><td>Hand-off to /billing</td></tr>
+      <tr><td>M3</td><td>Billing carries Support's powers</td><td class="v-open">Still open, never decided</td><td>Question 1, Stage 8</td></tr>
+      <tr><td>M4</td><td>Audit search only covers the 100 rows on screen</td><td class="v-open">Still open</td><td>Stage 8</td></tr>
+      <tr><td>M5, M1, M2</td><td>Cancel hidden, raw plan keys, bulk change hid side effects</td><td class="v-fixed">Fixed</td><td>n/a</td></tr>
+      <tr><td>M6</td><td>A Coaches Portal plan change keeps the Stripe link</td><td class="v-open">Still open, never decided</td><td>Stage 3</td></tr>
+      <tr><td>M7</td><td>Lists capped without saying so</td><td class="v-part">Approval queue fixed. People list still stops at 1,000 accounts.</td><td>Stage 2</td></tr>
+      <tr><td>6.2</td><td>Founding campaigns editable only in code</td><td class="v-moot">Kept that way on purpose</td><td>n/a</td></tr>
+      <tr><td>Past expiry</td><td>A grant could be given an end date in the past</td><td class="v-part">Blocked on the screen only, not on the server</td><td>Stage 4</td></tr>
+      <tr><td>6.4</td><td>Audit table overflow fix</td><td class="v-part">Built, never checked by you</td><td>Stage 8</td></tr>
+    </tbody></table></div>
+  <article class="st"><h3>Never walked by anyone</h3><p>Retention, the Founding Season desk, Feedback's escalate step, the Export registry, Email templates, Pitch Deck Studio, visits, and Bookkeeping. Each is now a station above or a rung on the ladder.</p>
+  <h3 style="margin-top:6px">Open TODO lines: in or out of this project</h3>
+  <ul class="plain">
+    <li><b>Timed grants (comps and trials):</b> <b>in</b>, as Stage 4, extended to a whole plan. Your task 2 cannot be done well without it.</li>
+    <li><b>Plan or tier trial:</b> in, as the same thing. A "trial of Club" is free time on the Club plan.</li>
+    <li><b>Stripe price guard (H8):</b> out. It is a customer checkout check. Hand it to /billing.</li>
+    <li><b>Plan limits shown vs enforced:</b> out as a project, in as a rule. Each section checks that what it shows is what the product enforces as it is rebuilt.</li>
+    <li><b>Observability and in-app feedback:</b> in, as screens (Stage 5). The capture itself is built.</li>
+  </ul></article>
+</section>
+</div>
+
+<dialog id="note" aria-labelledby="note-h"><h3 id="note-h">Detail</h3><p id="note-b"></p><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+<dialog id="zoom" class="zoom" aria-label="Capture at full size"><div class="z"><img id="zoom-img" alt=""></div><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+
+<script>
+/* navigation only — kept apart from content so nothing else can break it */
+(function () {
+  var tabs = document.querySelectorAll('nav.tabs button');
+  function show(k, push) {
+    tabs.forEach(function (b) { var on = b.getAttribute('data-tab') === k; b.setAttribute('aria-selected', on ? 'true' : 'false'); document.getElementById('p-' + b.getAttribute('data-tab')).hidden = !on; });
+    if (push) { try { history.replaceState(null, '', '#' + k); } catch (e) {} }
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-tab'), true); window.scrollTo({ top: 0 }); }); });
+  var h = (location.hash || '').replace('#', '');
+  if (['a', 'b', 's', 'r'].indexOf(h) >= 0) show(h, false);
+})();
+</script>
+<script>
+(function () {
+  var note = document.getElementById('note'), zoom = document.getElementById('zoom');
+  document.addEventListener('click', function (e) {
+    var f = e.target.closest('button.flag');
+    if (f) { document.getElementById('note-h').textContent = f.textContent; document.getElementById('note-b').textContent = f.getAttribute('data-n'); note.showModal(); return; }
+    var s = e.target.closest('button.shot');
+    if (s) { var i = document.getElementById('zoom-img'); i.src = s.getAttribute('data-src'); i.alt = s.getAttribute('aria-label'); zoom.showModal(); return; }
+    if (e.target.closest('button.close')) { var d = e.target.closest('dialog'); if (d) d.close(); }
+  });
+  [note, zoom].forEach(function (d) { d.addEventListener('click', function (e) { if (e.target === d) d.close(); }); });
+})();
+</script>

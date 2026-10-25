@@ -1,0 +1,231 @@
+<title>Support Console Stage 1 Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: the console looks and works like the rest of FieldLogicHQ, and nothing moved. Checkable walk with a paste-back. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 240px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Support console · stage 1 · owner walk · 2026-10-24</p>
+  <h1>Support Console Stage 1 Walk</h1>
+  <p>One question: <b>does the console look and work like the rest of FieldLogicHQ, and has nothing moved?</b> Tick what holds, and write what does not. Your ticks stay in this browser, and the paste-back at the foot gathers them for the chat. Nothing here is released: the build is on the dev server.</p>
+</header>
+
+<div class="card signin">
+  <h2>Sign in first</h2>
+  <p>Open <code>http://localhost:3000/platform-admin/login</code> on the dev server and sign in with a <b>super admin</b> platform account. Walk once in <b>Warm</b>, then switch to <b>Dark</b> from the account menu (top right) and glance at three or four screens. Use a desk-width window; the last section checks a narrow one.</p>
+  <p class="hint">The drawings this walk checks against: <a href="https://claude.ai/artifact/7DWPUBp9cDp26a2P359zLW">Support Console Stage 1</a>.</p>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <button class="btn-doc" type="button" id="make">Copy my answers</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  var S = [
+    ["shell", "The shell, sign-in and menu", "/platform-admin/login", [
+      "The sign-in page is warm and reads like the customer sign-in: the product's name, Staff access, Email, Password with the eye, Forgot password, one lime Sign in. Its words are unchanged.",
+      "After sign-in the top strip shows the FieldLogicHQ name, the words Support console, and the account person-icon at the right. There is no bell and no search box.",
+      "The account menu shows who is signed in, Appearance (Warm / Dark) and Sign out only: no Notification settings, no Account settings, no Send feedback. Choosing Dark turns the whole console dark and it stays after a reload.",
+      "Sign out lands on the console's own sign-in page (not the customer sign-in), and that page is warm even right after using Dark.",
+      "The menu folds: only the group holding the page you are on is open, the others show a chevron, and clicking a group opens it. Every entry is where it was under today's group names.",
+      "At the foot of the menu there is Help, then Collapse sidebar. Help opens the console help in place, with the menu still there. Collapse folds the menu to a narrow strip of icons and brings it back.",
+      "Dev tools sits in a System group (dev only) and Bookkeeping in a Private finance group. A view-only role would see a small eye beside entries it cannot edit (check with a non-super-admin account if you have one).",
+      "A wide table never makes the page itself scroll sideways, in either theme."
+    ]],
+    ["orgs", "Organizations", "/platform-admin/orgs", [
+      "One joined band of six figures, a Needs attention line, then Account directory with the count at the left of its card and Export at the far right.",
+      "Search, plan and status dropdowns and the three check boxes still filter; the Empty orgs figure still toggles its filter; Canceled (3) still filters.",
+      "Each row's name opens the club record, with a chevron at the right; status and cohort are small chips; the slug is the only typewriter text.",
+      "Nothing from the old look remains: no neon, no all-capitals titles, no View buttons."
+    ]],
+    ["cu", "Customer users", "/platform-admin/customer-users", [
+      "The All / Unconfirmed choice is now a dropdown and the search still carries across it.",
+      "A row's Actions menu opens fully and is not clipped by the table; the windows it opens (edit, ban, remove, notes) look like the rest of the product.",
+      "Rows read as cards on a phone-width window."
+    ]],
+    ["ret", "Retention", "/platform-admin/retention", [
+      "Process expiry is the page's one lime button, in the title bar; the table and its states read clearly. (The raw state names such as retained_inactive are unchanged.)"
+    ]],
+    ["early", "Early access", "/platform-admin/early-access", [
+      "The summary band, the two conversion lists, one toolbar and the table with its detail panel look like the other lists. (Dev has no leads: the walk may show an empty table.)"
+    ]],
+    ["email", "Email campaigns", "/platform-admin/email", [
+      "Stats are one band; Past due and Upcoming have their headings above their cards; the preview, confirm and planned-date windows have white buttons and one lime action.",
+      "Sent history still expands a row to its recipients and scrolls inside its own box."
+    ]],
+    ["pitch", "Pitch deck studio", "/platform-admin/pitch-deck-studio", [
+      "The long composer is restyled (type, buttons, headings), not restructured, and shows no lime."
+    ]],
+    ["found", "Founding season", "/platform-admin/founding-season", [
+      "Band, the summer-ask callout, one card with its filters (the two 'No card yet' / 'No 2028 choice' filters are now check boxes) and the table."
+    ]],
+    ["cr", "Approval queue", "/platform-admin/change-requests", [
+      "Band of four, one card with the count, search and five dropdowns; a request's title still opens its detail window."
+    ]],
+    ["plans", "Plans & pricing", "/platform-admin/plans-pricing", [
+      "Three joined figures, Plans and Product catalog as underline tabs, Plan workspace table with the plan name as the door.",
+      "A plan's window: Availability, Limits & trials, Pricing, Feature access, Pending changes, each heading above its card; Request live / Request early access / Edit limits are white; the Change note carries no star (it is optional, as before).",
+      "The Production / Test choice is a dropdown labelled Stripe mode and the price table follows it.",
+      "Product catalog: the Planning / Feature matrix / Catalog records switch is now a dropdown; every view still opens."
+    ]],
+    ["bulk", "Bulk operations", "/platform-admin/bulk-operations", [
+      "Steps 1, 2 and 3 as in the drawing; the Reason has a star; Review bulk operation is the one lime button and fades until accounts are selected, then changes to Confirm bulk operation in place.",
+      "Selecting accounts, previewing and recording a result behaves exactly as before (do not apply a real change on a shared database)."
+    ]],
+    ["tpl", "Email templates", "/platform-admin/email-templates", [
+      "The category tabs, the list, and a template's editor: Subject, Heading and Body carry the star, Save is the one lime button, Send test and Discard are white, Reset opens a confirm window."
+    ]],
+    ["exp", "Export registry", "/platform-admin/exports", [
+      "Band, a Module dropdown and a Round trips check box, and the comparison table scrolling inside its own box."
+    ]],
+    ["obs", "Observability", "/platform-admin/observability", [
+      "Figures band, the Calls vs. errors chart in the new colours with the same data, Top error routes, the issue list with severity and status chips; the 24h / 7d / 30d choice is a dropdown.",
+      "Filter is the one lime button, Clear is an olive link, Export is at the far right; Route and Org slug fields are square, Search is the rounded one.",
+      "An issue's page (open one): facts band, triage controls (Resolve, Ignore, Snooze) still work, samples and the occurrences chart under their headings."
+    ]],
+    ["fb", "Feedback", "/platform-admin/feedback", [
+      "The list, its filters and the status and escalate controls read like the rest; Escalated, Open and the like are now written with a capital."
+    ]],
+    ["users", "Platform users", "/platform-admin/users", [
+      "The staff list with a count, role dropdowns and the add / edit windows; roles read Super admin, Read only and so on."
+    ]],
+    ["audit", "Audit log", "/platform-admin/audit", [
+      "Filters, Export, and the log table with times in the body face (8:00 a.m. style) and only the action key in the typewriter face; pagination buttons disable properly."
+    ]],
+    ["ov", "Overview (colour pass only)", "/platform-admin", [
+      "Same five tiles, action queue boxes, tabs and panels as before, now in the warm colours; every status colour is readable on paper in Warm and in Dark.",
+      "Its title is the standard page title, and 'Live operational snapshot · last visit …' is a small grey line under it."
+    ]],
+    ["rec", "The club record (colour pass only)", "/platform-admin/orgs/<any club>", [
+      "Same order as before: header with the club's name and chips, six-field band, Primary actions, Account context, the five workflow tabs, notes, identity, ownership, teams brought in, then the danger zone with Delete.",
+      "Every window on it (plan change, overrides, add-ons, ownership) is readable in Warm and Dark; the plan-change confirm is the one lime button."
+    ]],
+    ["dev", "Dev tools and Bookkeeping", "/platform-admin/dev-tools · /platform-admin/bookkeeping", [
+      "Dev tools (a seed console) is restyled lightly and reads like the rest.",
+      "Bookkeeping has the new strip, menu and frame only. Its inside is another session's work and still looks like the old console; that is expected."
+    ]],
+    ["help", "Help", "/platform-admin/help", [
+      "The help hub and an article open inside the shell with the menu, in Warm and Dark."
+    ]],
+    ["narrow", "A narrow window", "any screen, window about 400 px wide", [
+      "The menu is gone and a menu button sits at the left of the strip; it opens the menu as a panel over the page, and choosing a page closes it. Rows are large enough to tap. Escape, a tap outside the panel and the phone's Back gesture all close it.",
+      "No screen scrolls sideways; lists turn into cards or scroll inside their own box."
+    ]]
+  ];
+  var CALLS = [
+    ["The small ? beside each title in the drawings is not built. The console has no per-screen help drawer, so Help is one place: the menu foot. A per-screen ? would need help written for each screen (a later stage)."],
+    ["Product catalog's three-way switch (Planning / Feature matrix / Catalog records) became a dropdown, by the 'a choice is a dropdown' rule. You drew only Plans / Product catalog as tabs."],
+    ["Founding season's two 'No card yet' / 'No 2028 choice' filter buttons and Export registry's Round trips toggle became check boxes."],
+    ["Overview keeps the small capital line over each panel title (Subscription health over Plan mix and so on); folding them into the headings waits for Stage 2's rebuild."],
+    ["The club record keeps 'Expires (optional)'; the standing rule marks required fields rather than optional ones. Say if you want '(optional)' dropped."],
+    ["The shared blue 'help' callouts on Customer users and Audit log still use the shared help component's own look, which is not warm olive. Restyling it would change the club and coach portals too."],
+    ["The menu's Help article that quotes 'Send Password Reset Email' differs only in case from the screen now; the help article is for /docs."],
+    ["The strip's account door shows the person icon, not a letter in a circle as the drawings did."]
+  ];
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem('pas1-walk') || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem('pas1-walk', JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[3].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = (i + 1) + ' ' + s[1].split(' (')[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card"><div class="sec-head"><span class="n">W' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="route">' + esc(s[2]) + '</span></div>';
+    s[3].forEach(function (t, k) { h += '<label class="chk"><input type="checkbox" data-k="' + id + '.' + k + '"> <span>' + esc(t) + '</span></label>'; });
+    h += '<textarea aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" data-k="call.' + k + '"> <span>' + esc(c[0]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function progress() {
+    var done = document.querySelectorAll('.sec input[type=checkbox]:checked').length - document.querySelectorAll('#rule input:checked').length;
+    document.getElementById('prog').textContent = done + ' of ' + total + ' ticked';
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Support console stage 1 walk: my results'];
+    S.forEach(function (s, i) {
+      var miss = [], ok = 0;
+      s[3].forEach(function (t, k) { if (state[s[0] + '.' + k]) ok++; else miss.push(k + 1); });
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', 'W' + (i + 1) + ' ' + s[1] + ': ' + ok + '/' + s[3].length + ' ticked' + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (state['call.' + k] ? '[accepted] ' : '[not ticked] ') + c[0]); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Copy my answers'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>

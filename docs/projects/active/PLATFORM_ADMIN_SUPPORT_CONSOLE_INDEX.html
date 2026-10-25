@@ -1,0 +1,236 @@
+<title>Support Console Index</title>
+<!--
+PROJECT INDEX HUB — TEMPLATE (house format from 2026-10-19; owner: "a project hub that holds summaries and logs what was
+done but doesn't keep the detailed mockups / QA walks"). Read this block; keep the short data note below it when you copy.
+
+WHY: the old one-artifact hub put every mockup, screenshot and walk inside one page. Every republish must read the whole
+live page first, and the Club Tier hub reached 4 MB (~1M tokens per publish). This hub is an INDEX: a ~15 KB page that
+renders from the artifact's own database, so routine updates are small data writes and the page is almost never
+republished. The DETAIL is its own artifacts, each linked from its stage: a stage's drawings, each QA walk (the checkable
+walk page — memory feedback_qa_walkthroughs_as_checkable_artifacts), each decisions round.
+
+HOW TO USE:
+1. Copy this file to docs/projects/active/<PROJECT_NAME>_INDEX.html; replace "[Project]" in <title> and <h1>.
+2. Publish it ONCE with the Artifact tool and capabilities {db:{rules:[{path:"",read:"view",write:"admin"}]}}
+   (everyone who can open it reads; only the owner and Editors write). Keep the URL; record it in the plan's header,
+   the TODO line and memory.
+3. Fill it with the ArtifactData tool (one `batch`): hub/meta, one stages/<key> per stage, log/<id> rows. Shapes below.
+4. As the project moves: a new log row per build / ruling / walk / release (date, sort "YYYY-MM-DD#NN", what, anchor);
+   an `update` to the stage's state + anchor (+ a link when a walk or drawing page is published). Never republish the
+   page for news — only when its LAYOUT changes.
+5. Anchors are positive facts with their proof ("Built f1618c02 2026-10-19", "Walk §345 ✅ 2026-10-19", "On prod
+   2026-10-18 (job 281)"), never perishable negatives ("not pushed", "pending") — AGENCY_RULES status wording.
+6. Words are product-owner words: what the user sees, not file paths or function names.
+-->
+<!--
+  Data (the artifact's database):
+    hub/meta            { title, oneLine, target, status, archiveUrl, archiveLabel, updated }
+    stages/<key>        { order, title, state, anchor, summary, decisions[], walks[], links[{label,url}] }
+    log/<id>            { date "YYYY-MM-DD", sort "YYYY-MM-DD#NN" (newest first by this), what, anchor, stage }
+  state ∈ done · in-progress · ruled · drawn · queued · cut.
+-->
+<style>
+/* Layout: a single column — the project card, then the stage list (state chip + anchor + summary, the detail folded),
+   then the dated log. Rows, not tiles: it is read top to bottom, like a ledger. */
+:root {
+  --paper: #f4f3ee; --card: #ffffff; --ink: #20271c; --muted: #5a6453; --faint: #7d8676; --line: #d8dccf;
+  --olive: #4b6322; --olive-soft: #e8eedb; --lime: #d9f99d;
+  --done: #2f6b3a; --done-soft: #e2f0df; --prog: #8a5a12; --prog-soft: #f6eedb;
+  --ruled: #245f79; --ruled-soft: #e2eef3; --queued: #5a6453; --queued-soft: #ecede7; --cut: #8d3a2e; --cut-soft: #f4e3df;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0f120d; --card: #161b13; --ink: #edf1e7; --muted: #a2ac97; --faint: #7f8a75; --line: #2b3326;
+  --olive: #c8e78e; --olive-soft: #1f2818; --lime: #d9f99d;
+  --done: #8fd39b; --done-soft: #15261a; --prog: #f2c26b; --prog-soft: #2a2213;
+  --ruled: #8cc6e0; --ruled-soft: #13232b; --queued: #a2ac97; --queued-soft: #1e231b; --cut: #f0a194; --cut-soft: #2c1814;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0f120d; --card: #161b13; --ink: #edf1e7; --muted: #a2ac97; --faint: #7f8a75; --line: #2b3326;
+  --olive: #c8e78e; --olive-soft: #1f2818; --lime: #d9f99d;
+  --done: #8fd39b; --done-soft: #15261a; --prog: #f2c26b; --prog-soft: #2a2213;
+  --ruled: #8cc6e0; --ruled-soft: #13232b; --queued: #a2ac97; --queued-soft: #1e231b; --cut: #f0a194; --cut-soft: #2c1814;
+  color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--ink); font: 15px/1.55 var(--font-body); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; }
+.eyebrow { font: 700 11px/1.2 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+h1 { font-size: 27px; line-height: 1.2; letter-spacing: -.4px; margin: 0 0 8px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.project { display: grid; gap: 10px; margin: 0 0 28px; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 6px; }
+.facts > div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.facts h3 { font: 700 11px/1.2 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+.facts p { font-size: 14px; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 30px 0 12px; }
+.section-head .count { font-size: 13px; color: var(--muted); }
+.tools { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.tools button { font: 600 13px/1 var(--font-body); min-height: 40px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.tools button[aria-pressed="true"] { background: var(--olive-soft); border-color: var(--olive); color: var(--olive); }
+.stages { display: grid; gap: 8px; }
+details.stage { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+details.stage > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; padding: 13px 16px; min-height: 44px; }
+details.stage > summary::-webkit-details-marker { display: none }
+.st-title { font-weight: 700; font-size: 15.5px; }
+.st-anchor { grid-column: 1 / -1; font: 500 12.5px/1.4 var(--font-data); color: var(--muted); overflow-wrap: anywhere; }
+.st-summary { grid-column: 1 / -1; font-size: 14px; color: var(--ink); }
+.chip { align-self: start; display: inline-flex; align-items: center; font: 700 10.5px/1 var(--font-data); letter-spacing: .07em; text-transform: uppercase; padding: 5px 9px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.chip[data-state="done"] { color: var(--done); background: var(--done-soft); }
+.chip[data-state="in-progress"] { color: var(--prog); background: var(--prog-soft); }
+.chip[data-state="ruled"], .chip[data-state="drawn"] { color: var(--ruled); background: var(--ruled-soft); }
+.chip[data-state="queued"] { color: var(--queued); background: var(--queued-soft); }
+.chip[data-state="cut"] { color: var(--cut); background: var(--cut-soft); }
+.st-body { padding: 0 16px 14px; display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
+.st-body h4 { font: 700 11px/1.2 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+.st-body ul { margin: 0; padding-left: 20px; font-size: 14px; display: grid; gap: 3px; }
+.links { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+.walks { display: flex; flex-wrap: wrap; gap: 6px; }
+.walks span { font: 600 12px/1 var(--font-data); padding: 5px 8px; border-radius: 6px; background: var(--olive-soft); color: var(--olive); }
+.log { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.log ol { list-style: none; margin: 0; padding: 0; }
+.log li { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 2px 14px; padding: 10px 16px; border-top: 1px solid var(--line); }
+.log li:first-child { border-top: 0; }
+.log time { font: 500 12.5px/1.6 var(--font-data); color: var(--muted); font-variant-numeric: tabular-nums; }
+.log .what { font-size: 14px; }
+.log .anchor { grid-column: 2; font: 500 12px/1.4 var(--font-data); color: var(--faint); overflow-wrap: anywhere; }
+.more { display: flex; justify-content: center; padding: 10px; border-top: 1px solid var(--line); }
+.more button { font: 600 13.5px/1 var(--font-body); min-height: 44px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); cursor: pointer; }
+.empty { background: var(--card); border: 1px dashed var(--line); border-radius: 12px; padding: 18px; color: var(--muted); font-size: 14px; }
+.note { font-size: 13px; color: var(--muted); margin-top: 14px; }
+@media (max-width: 640px) {
+  .facts { grid-template-columns: minmax(0, 1fr); }
+  h1 { font-size: 23px; }
+  .log li { grid-template-columns: minmax(0, 1fr); }
+  .log .anchor { grid-column: 1; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="project" id="project">
+    <p class="eyebrow">Project index</p>
+    <h1 id="p-title">Platform admin, reorganized for support</h1>
+    <p id="p-one"></p>
+    <div class="facts">
+      <div><h3>Where it stands</h3><p id="p-status">Loading the project’s summary…</p></div>
+      <div><h3>Release target</h3><p id="p-target"></p></div>
+    </div>
+    <p id="p-archive"></p>
+  </header>
+
+  <section aria-labelledby="h-stages">
+    <div class="section-head">
+      <h2 id="h-stages">Stages</h2><span class="count" id="stage-count"></span>
+      <div class="tools" role="group" aria-label="Show stages">
+        <button type="button" id="f-all" aria-pressed="true">All</button>
+        <button type="button" id="f-open" aria-pressed="false">Still open</button>
+      </div>
+    </div>
+    <div class="stages" id="stages"><p class="empty">The stages appear here once the index is filled in.</p></div>
+  </section>
+
+  <section aria-labelledby="h-log">
+    <div class="section-head"><h2 id="h-log">What was done</h2><span class="count" id="log-count"></span></div>
+    <div class="log" id="log"><p class="empty" style="border:0">Each build, ruling, walk and release is logged here, newest first.</p></div>
+  </section>
+  <p class="note">The detail lives on its own pages, linked from each stage: the drawings, the QA walks and the decision rounds.</p>
+</div>
+
+<script>
+(function () {
+  var stages = [], log = [], filter = 'all', logAll = false, openKeys = {};
+  try { filter = localStorage.getItem('hub-filter') || 'all'; } catch (e) {}
+  var $ = function (id) { return document.getElementById(id); };
+  var text = function (el, t) { el.textContent = t == null ? '' : String(t); return el; };
+  var make = function (tag, cls, t) { var el = document.createElement(tag); if (cls) el.className = cls; if (t != null) text(el, t); return el; };
+  var safeUrl = function (u) { return typeof u === 'string' && /^https:\/\//.test(u) ? u : null; };
+  var OPEN = { 'in-progress': 1, ruled: 1, drawn: 1, queued: 1 };
+  var LABEL = { done: 'Done', 'in-progress': 'In progress', ruled: 'Ruled', drawn: 'Drawn', queued: 'Queued', cut: 'Cut' };
+
+  function renderMeta(m) {
+    if (!m) return;
+    text($('p-title'), m.title || 'Project'); if (m.title) document.title = m.title + ' · Index';
+    text($('p-one'), m.oneLine); text($('p-status'), m.status); text($('p-target'), m.target);
+    var a = $('p-archive'); a.textContent = '';
+    var u = safeUrl(m.archiveUrl);
+    if (u) { a.appendChild(document.createTextNode((m.archiveLabel || 'Earlier drawings and walks') + ': ')); var l = make('a', null, 'the archive hub'); l.href = u; l.target = '_blank'; l.rel = 'noopener'; a.appendChild(l); }
+  }
+
+  function renderStages() {
+    var host = $('stages'); host.textContent = '';
+    var shown = stages.filter(function (s) { return filter === 'all' || OPEN[s.state]; });
+    var done = stages.filter(function (s) { return s.state === 'done'; }).length;
+    text($('stage-count'), stages.length ? (done + ' of ' + stages.length + ' done') : '');
+    $('f-all').setAttribute('aria-pressed', String(filter === 'all')); $('f-open').setAttribute('aria-pressed', String(filter === 'open'));
+    if (!stages.length) { host.appendChild(make('p', 'empty', 'The stages appear here once the index is filled in.')); return; }
+    if (!shown.length) { host.appendChild(make('p', 'empty', 'Every stage is done.')); return; }
+    shown.forEach(function (s) {
+      var d = make('details', 'stage'); d.open = !!openKeys[s.key];
+      d.addEventListener('toggle', function () { openKeys[s.key] = d.open; });
+      var sum = make('summary');
+      sum.appendChild(make('span', 'st-title', s.title));
+      var chip = make('span', 'chip', LABEL[s.state] || s.state || ''); chip.setAttribute('data-state', s.state || ''); sum.appendChild(chip);
+      if (s.anchor) sum.appendChild(make('span', 'st-anchor', s.anchor));
+      if (s.summary) sum.appendChild(make('span', 'st-summary', s.summary));
+      d.appendChild(sum);
+      var body = make('div', 'st-body'), any = false;
+      if (Array.isArray(s.decisions) && s.decisions.length) {
+        any = true; var box = make('div'); box.appendChild(make('h4', null, 'Decisions')); var ul = make('ul');
+        s.decisions.forEach(function (x) { ul.appendChild(make('li', null, x)); }); box.appendChild(ul); body.appendChild(box);
+      }
+      if (Array.isArray(s.walks) && s.walks.length) {
+        any = true; var wb = make('div'); wb.appendChild(make('h4', null, 'QA walks')); var w = make('div', 'walks');
+        s.walks.forEach(function (x) { w.appendChild(make('span', null, x)); }); wb.appendChild(w); body.appendChild(wb);
+      }
+      var links = Array.isArray(s.links) ? s.links.filter(function (l) { return l && safeUrl(l.url); }) : [];
+      if (links.length) {
+        any = true; var lb = make('div'); lb.appendChild(make('h4', null, 'Open')); var lk = make('div', 'links');
+        links.forEach(function (l) { var a = make('a', null, l.label || l.url); a.href = l.url; a.target = '_blank'; a.rel = 'noopener'; lk.appendChild(a); });
+        lb.appendChild(lk); body.appendChild(lb);
+      }
+      if (any) d.appendChild(body); else sum.style.cursor = 'default';
+      host.appendChild(d);
+    });
+  }
+
+  function renderLog() {
+    var host = $('log'); host.textContent = '';
+    text($('log-count'), log.length ? log.length + ' entries' : '');
+    if (!log.length) { host.appendChild(make('p', 'empty', 'Each build, ruling, walk and release is logged here, newest first.')).style.border = '0'; return; }
+    var ol = make('ol'), rows = logAll ? log : log.slice(0, 15);
+    rows.forEach(function (r) {
+      var li = make('li'); var t = make('time', null, r.date || ''); if (r.date) t.setAttribute('datetime', r.date);
+      li.appendChild(t); li.appendChild(make('span', 'what', r.what || ''));
+      if (r.anchor) li.appendChild(make('span', 'anchor', r.anchor));
+      ol.appendChild(li);
+    });
+    host.appendChild(ol);
+    if (log.length > 15) {
+      var m = make('div', 'more'), b = make('button', null, logAll ? 'Show the latest 15' : 'Show all ' + log.length);
+      b.type = 'button'; b.addEventListener('click', function () { logAll = !logAll; renderLog(); }); m.appendChild(b); host.appendChild(m);
+    }
+  }
+
+  function setFilter(f) { filter = f; try { localStorage.setItem('hub-filter', f); } catch (e) {} renderStages(); }
+  $('f-all').addEventListener('click', function () { setFilter('all'); });
+  $('f-open').addEventListener('click', function () { setFilter('open'); });
+  renderStages(); renderLog();
+
+  if (!window.claude || typeof window.claude.use !== 'function') { text($('p-status'), 'Open this page on claude.ai to read the project’s index.'); return; }
+  window.claude.use('db').then(function (db) {
+    if (!db) { text($('p-status'), 'The project’s index could not be read in this view. Sign in to claude.ai and open it again.'); return; }
+    db.doc('hub/meta').onSnapshot(function (snap) { if (snap.exists) renderMeta(snap.data()); }, function () {});
+    db.collection('stages').orderBy('order').onSnapshot(function (q) {
+      stages = q.docs.map(function (d) { var x = Object.assign({}, d.data()); x.key = d.id; return x; }); renderStages();
+    }, function () {});
+    db.collection('log').orderBy('sort', 'desc').limit(1000).onSnapshot(function (q) {
+      log = q.docs.map(function (d) { return d.data(); }); renderLog();
+    }, function () {});
+  });
+})();
+</script>

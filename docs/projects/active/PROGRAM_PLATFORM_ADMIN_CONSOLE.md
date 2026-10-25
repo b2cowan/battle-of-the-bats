@@ -16,6 +16,13 @@ struck through.
 
 The walkthroughs themselves are **not exhausted**: several areas were never walked.
 
+> **Re-checked against the code 2026-10-24** by the support console kickoff (`PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md`,
+> "Kickoff findings"): the per-org team cap (H3) and removing the last staff user (A.2) are **built**, so neither is an
+> open gap. The open items are H8b, M3, M4, M6, M7 and a server-side past-expiry check, plus the never-walked areas
+> (Retention, the Founding desk, Feedback escalate, Export registry, Email templates, Pitch Deck Studio, visits,
+> Bookkeeping). The support console project carries all of them on its stage ladder. Plan from that file, not from the
+> list below.
+
 ---
 
 ## 1. Outstanding work

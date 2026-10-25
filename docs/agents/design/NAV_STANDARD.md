@@ -6,8 +6,9 @@ with your recommendations"*). Hub: https://claude.ai/artifact/RtcrWCxpfuNMkTRQMK
 (`CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6).
 
 **Covers:** the desktop sidebar, the phone bottom bar and the phone More sheet of the club admin, the tournament admin
-(the same sidebar, in tournament mode), the Premium Coaches Portal and the free Coaches Portal. Platform admin is an
-exception (below).
+(the same sidebar, in tournament mode), the Premium Coaches Portal and the free Coaches Portal, and — since **2026-10-24**
+(Support console Stage 1, owner ruling F1/D4) — the **platform admin's support console**: its top strip, folding menu, foot
+(Help, then Collapse sidebar) and narrow-width menu panel follow N1–N6 and N9. It was an exception until then.
 
 **Built** 2026-10-17 by `docs/projects/active/NAV_CONSISTENCY_PLAN.md`, stages A–D (§10 there has the as-built notes;
 the QA walks are owed). Two rulings joined at the build, the same day: **one club phone bar** and its tile set (N8), with
@@ -68,7 +69,10 @@ Lucide names as imported. "Changed" is what the ruling moves; everything else al
 - **The free portal's tiles are its tools** (every tool the coach turned on, then Explore), not shortcuts.
 - **Sidebar widths stay as they are:** admin 240px, Premium coach 220px (its layouts are tuned to it), free coach 248px
   with its team header (ruled 2026-10-15, P5). One width was considered and left.
-- **Platform admin keeps its own look** (a ruled exception in its layout).
+- **The support console's foot has no other-portal door** (2026-10-24): Help, then Collapse sidebar. Staff hold no workspace, so there
+  is nothing to name by destination. Its strip names the portal "Support console" (N6) and carries no bell and no Find box yet
+  (Find is Stage 2; nothing sits behind a bell). Below 900 its menu opens as a panel from a button in the strip (it has no bottom bar).
+  *(The earlier line "Platform admin keeps its own look" retired the same day.)*
 - **The folded sidebar strip keeps its own row look** (N9 changed the full sidebar's rows only): the free strip keeps its
   rounded tile, lime tint and edge bar for the page you're on.
 - **The free portal's install prompt shows on its signed-in pages only** (owner, 2026-10-17), never on sign-up or

@@ -1,0 +1,1050 @@
+<title>Support Console Stage 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: a 920 reading column for the words and asks; each drawing breaks out to a true-size 1440 frame inside its own
+   horizontal scroller. The document chrome is cool stone; the frames wear FieldLogicHQ's real warm (or dark) tokens. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8; --red: #9c321d; --red-soft: #f6e2dc;
+  --tag: #1d4f8a; --tag-soft: #dde8f5;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); }
+.wrap { max-width: 920px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 90px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; letter-spacing: -.4px; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 21px; line-height: 1.3; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0 0 4px; }
+p { margin: 0; max-width: 72ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.lede { display: grid; gap: 12px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 10px; margin-block: 18px 26px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bar a.jump { font: 600 13px/1 var(--font-body); padding: 9px 11px; min-height: 36px; display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.bar .sw { margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.bar .sw button { font: 600 13px/1 var(--font-body); min-height: 36px; padding: 8px 12px; border: 0; background: var(--card); color: var(--ink); cursor: pointer; }
+.bar .sw button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); }
+.screen { display: grid; gap: 14px; margin-bottom: 46px; scroll-margin-top: 80px; }
+.screen-head { display: grid; gap: 6px; }
+.screen-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); letter-spacing: .08em; }
+.ba { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.before { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 14px; align-items: start; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+@media (max-width: 640px) { .before { grid-template-columns: minmax(0, 1fr); } }
+.before button.shot { padding: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; cursor: zoom-in; background: #0a0a0a; max-height: 170px; display: block; width: 100%; }
+.before img { display: block; width: 100%; height: auto; }
+.lbl { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.scroller { overflow-x: auto; margin-inline: calc(50% - 50vw + 16px); padding-inline: max(16px, calc(50vw - 736px)); padding-block: 4px 10px; }
+.scroller > .fx { width: 1440px; }
+.scroller > .fx.win { width: 600px; }
+.scroller > .fx.wide-note { width: 1440px; }
+.hint { font-size: 12.5px; color: var(--dim); }
+button.tag { font: 700 11px/1 var(--font-data); letter-spacing: .04em; padding: 5px 7px; border-radius: 6px; border: 1px solid var(--tag); background: var(--tag-soft); color: var(--tag); cursor: pointer; white-space: nowrap; }
+.tagrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+/* asks */
+.ask { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+.ask .q { font-weight: 700; }
+.ask .rec { font-size: 14px; color: var(--soft); }
+.ask .rec b { color: var(--ink); }
+.ask .opts { display: grid; gap: 4px; }
+.ask label { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+.ask input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+.ask textarea { width: 100%; min-height: 56px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+table.doc { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.doc th { text-align: left; font: 600 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.doc td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.doc tr:last-child td { border-bottom: 0; }
+.paste { display: grid; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.paste textarea { width: 100%; min-height: 220px; font: 13px/1.5 var(--font-data); padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); max-width: min(560px, calc(100vw - 32px)); padding: 18px 18px 14px; }
+dialog::backdrop { background: rgba(20, 24, 18, .45); }
+dialog .foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+dialog button.close { font: 600 14px/1 var(--font-body); min-height: 40px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+dialog.zoom { max-width: calc(100vw - 32px); width: 1200px; padding: 10px; }
+dialog.zoom .z { max-height: 80vh; overflow: auto; } dialog.zoom img { width: 100%; display: block; }
+
+/* ═════ The product frames — FieldLogicHQ warm tokens, dark on the switch. Type stays on the ladder: 10 · 11 · 12 · 14 · 16 · 20 · 24 ═════ */
+.fx { --p: #F8F4ED; --c: #FFFFFF; --ln: rgba(70,55,30,.12); --ln2: rgba(70,55,30,.20); --fill: rgba(70,55,30,.05); --fieldbg: #F8F4ED;
+  --i: #241E15; --i2: #4A4235; --i3: #615A54; --ol: #57651E; --ols: rgba(87,101,30,.10); --lime: #D9F99D; --limei: #241E15; --tabon: #57651E;
+  --am: #835006; --rd: #B03A22; --gr: #34662A; --scrim: rgba(36,30,21,.34);
+  background: var(--p); color: var(--i); font: 14px/1.45 var(--font-body); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative; }
+.fx.dark { --p: #0A0A0A; --c: #111827; --ln: rgba(255,255,255,.08); --ln2: rgba(255,255,255,.14); --fill: rgba(255,255,255,.03); --fieldbg: rgba(255,255,255,.05);
+  --i: #F1F5F9; --i2: rgba(255,255,255,.70); --i3: rgba(255,255,255,.50); --ol: #D9F99D; --ols: rgba(30,58,138,.18); --lime: #D9F99D; --limei: #0A0A0A; --tabon: #F1F5F9;
+  --am: #F59E0B; --rd: #EF4444; --gr: #22C55E; --scrim: rgba(13,17,26,.55); }
+.fx * { box-sizing: border-box; }
+.fx svg.ic { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.strip { height: 48px; display: grid; grid-template-columns: 240px 1fr auto; align-items: center; background: var(--c); border-bottom: 1px solid var(--ln); }
+.strip .lock { display: flex; align-items: center; gap: 8px; padding-left: 20px; font: 700 16px/1 var(--font-body); }
+.strip .lock .mk { width: 20px; height: 20px; border-radius: 5px; background: var(--ol); }
+.strip .lock em { font-style: normal; color: var(--ol); }
+.strip .mid { display: flex; align-items: center; gap: 16px; padding-left: 20px; }
+.strip .portal { font: 600 14px/1 var(--font-body); color: var(--i2); }
+.strip .find { margin: 0 auto; width: 440px; display: flex; align-items: center; gap: 8px; height: 34px; border: 1px solid var(--ln2); border-radius: 999px; padding: 0 12px; color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+.strip .find .k { margin-left: auto; font: 700 10px/1 var(--font-data); border: 1px solid var(--ln2); border-radius: 4px; padding: 2px 5px; }
+.strip .find.typed { color: var(--i); border-color: var(--ol); }
+.strip .end { display: flex; align-items: center; gap: 6px; padding-right: 16px; }
+.strip .end .b { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.strip .end .b svg.ic { width: 18px; height: 18px; }
+.strip .end .av { width: 30px; height: 30px; border-radius: 999px; background: var(--ols); color: var(--ol); display: inline-flex; align-items: center; justify-content: center; font: 700 12px/1 var(--font-body); }
+.app { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 840px; }
+.side { background: var(--c); border-right: 1px solid var(--ln); padding: 12px 0 16px; display: flex; flex-direction: column; }
+.grp { display: grid; }
+.gl { display: flex; align-items: center; gap: 8px; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); padding: 12px 20px 6px; }
+.gl .cv { margin-left: auto; opacity: .55; display: inline-flex; }
+.gl.folded .cv { transform: rotate(-90deg); }
+.it { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 20px; color: var(--i2); font-size: 14px; }
+.it.on { background: var(--ols); color: var(--ol); font-weight: 600; }
+.it .pill { margin-left: auto; }
+.side .foot { margin-top: auto; border-top: 1px solid var(--ln); padding-top: 8px; }
+.main { padding: 28px 40px 48px; min-width: 0; }
+.page { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px; }
+.ph { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 34px; }
+.ph .back { color: var(--i2); font-weight: 600; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; padding: 6px 8px; margin-left: -8px; }
+.ph .rule { width: 1px; align-self: stretch; margin: 2px 0; background: var(--ln2); }
+.ph h1 { font: 700 20px/1.3 var(--font-body); margin: 0; letter-spacing: 0; color: var(--i); }
+.ph .end { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.ph .help { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.ph .help svg.ic { width: 18px; height: 18px; }
+.ph .quiet { font-size: 12px; color: var(--i3); }
+.chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font: 700 10px/1.3 var(--font-data); letter-spacing: .05em; border: 1px solid var(--ln2); background: var(--ols); color: var(--i2); white-space: nowrap; }
+.chip.ok { color: var(--ol); background: color-mix(in srgb, var(--ol) 7%, transparent); border-color: color-mix(in srgb, var(--ol) 25%, transparent); }
+.chip.warn { color: var(--am); background: color-mix(in srgb, var(--am) 8%, transparent); border-color: color-mix(in srgb, var(--am) 30%, transparent); }
+.chip.bad { color: var(--rd); background: color-mix(in srgb, var(--rd) 8%, transparent); border-color: color-mix(in srgb, var(--rd) 30%, transparent); }
+.pill { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; font: 700 10px/1 var(--font-data); color: var(--am); background: color-mix(in srgb, var(--am) 11%, transparent); border: 1px solid color-mix(in srgb, var(--am) 32%, transparent); }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; font: 600 14px/1 var(--font-body); border: 1px solid var(--ln2); background: var(--c); color: var(--i); white-space: nowrap; }
+.btn.lime { background: var(--lime); border-color: var(--lime); color: var(--limei); }
+.btn.door { border: 0; background: none; color: var(--ol); padding: 0 4px; }
+.band { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.band > div { padding: 14px 16px; border-right: 1px solid var(--ln); min-width: 0; display: grid; gap: 4px; }
+.band > div:last-child { border-right: 0; }
+.band .k { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.band .v { font: 700 24px/1.1 var(--font-body); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.band .v.warn { color: var(--am); }
+.band .s { font-size: 12px; color: var(--i3); }
+.sec { font: 700 16px/1.3 var(--font-body); margin: 0 0 -8px; }
+.card { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; }
+.tb { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--ln); }
+.tb .count { font-size: 14px; color: var(--i2); }
+.tb .gap { flex: 1; }
+.tb .note { font-size: 12px; color: var(--i3); }
+.view { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--ol); background: var(--ols); color: var(--ol); font: 600 14px/1 var(--font-body); }
+.view .n { font: 700 11px/1 var(--font-data); opacity: .65; }
+.fpill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--ln2); color: var(--i2); font: 600 12px/1 var(--font-body); background: var(--c); }
+.search { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; width: 256px; border-radius: 999px; border: 1px solid var(--ln2); color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+table.t { width: 100%; border-collapse: collapse; }
+table.t th { font: 700 12px/1.2 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--i2); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--ln); white-space: nowrap; }
+table.t td { padding: 7px 14px; border-bottom: 1px solid var(--ln); vertical-align: middle; font-variant-numeric: tabular-nums; }
+table.t tr.cmf td { padding: 11px 14px; }
+table.t tr:last-child td { border-bottom: 0; }
+table.t .r { text-align: right; }
+table.t .nm { color: var(--i); font-weight: 600; text-decoration: underline; text-decoration-color: var(--ln2); text-underline-offset: 3px; }
+table.t .sub { display: block; font-size: 12px; color: var(--i3); font-weight: 400; }
+table.t .cv { width: 40px; text-align: right; color: var(--ol); }
+table.t .ts { color: var(--i2); white-space: nowrap; }
+table.t .none { color: var(--i3); }
+.code { font: 400 12px/1.3 var(--font-data); }
+table.t tr.band-row td { background: color-mix(in srgb, var(--ol) 10%, transparent); font: 700 12px/1.2 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--i2); padding: 8px 14px; }
+.flagline { display: block; font-size: 12px; color: var(--am); font-weight: 600; margin-top: 2px; }
+.callout { display: flex; gap: 10px; align-items: flex-start; background: var(--c); border: 1px solid var(--ln); border-left: 3px solid var(--ol); border-radius: 8px; padding: 12px 14px; font-size: 14px; color: var(--i2); }
+.callout svg.ic { width: 16px; height: 16px; color: var(--ol); margin-top: 2px; }
+.callout.warn { border-left-color: var(--am); } .callout.warn svg.ic { color: var(--am); }
+.callout .go { margin-left: auto; color: var(--ol); font-weight: 600; white-space: nowrap; }
+.subnav { display: flex; gap: 4px; border-bottom: 1px solid var(--ln); }
+.subnav span { padding: 10px 14px; font-weight: 600; font-size: 14px; color: var(--i2); border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; gap: 6px; align-items: baseline; }
+.subnav span.on { color: var(--tabon); border-bottom-color: var(--ol); }
+.subnav .n { font: 700 11px/1 var(--font-data); opacity: .65; }
+.ex { position: absolute; right: 14px; bottom: 10px; font: 700 10px/1 var(--font-data); color: var(--i3); letter-spacing: .06em; text-transform: uppercase; }
+/* a window (the kit window: tinted edge, no shadow) */
+.win { background: var(--scrim); padding: 28px; }
+.dlg { background: var(--c); border-radius: 12px; border: 1px solid color-mix(in srgb, var(--ol) 30%, transparent); }
+.dlg .dh { display: flex; align-items: center; padding: 18px 24px 6px; }
+.dlg .dh h2 { font: 700 16px/1.3 var(--font-body); margin: 0; }
+.dlg .dh .x { margin-left: auto; width: 44px; height: 44px; margin-right: -12px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: var(--i2); }
+.dlg .db { padding: 10px 24px 16px; display: grid; gap: 14px; }
+.lines { display: grid; grid-template-columns: 140px 1fr; gap: 8px 14px; font-size: 14px; }
+.lines dt { color: var(--i3); } .lines dd { margin: 0; }
+.fld { display: grid; gap: 6px; }
+.fld .fl { font-size: 12px; font-weight: 650; color: var(--i2); }
+.fld .fl .req { color: inherit; margin-left: 2px; }
+.inp { height: 36px; border: 1px solid var(--ln2); border-radius: 6px; padding: 0 10px; display: flex; align-items: center; color: var(--i); background: var(--fieldbg); font-size: 14px; }
+.inp.area { height: 80px; align-items: flex-start; padding-top: 8px; }
+.inp .chev { margin-left: auto; color: var(--i3); display: inline-flex; }
+.radio { display: grid; gap: 2px; border: 1px solid var(--ln2); border-radius: 8px; padding: 10px 12px; }
+.radio.on { border-color: var(--ol); background: var(--ols); }
+.radio b { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+.radio b::before { content: ""; width: 14px; height: 14px; border-radius: 999px; border: 2px solid var(--ln2); }
+.radio.on b::before { border: 4px solid var(--ol); }
+.radio span { font-size: 12px; color: var(--i3); padding-left: 22px; }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.quick span { height: 34px; display: inline-flex; align-items: center; padding: 0 12px; font-size: 14px; border-radius: 999px; border: 1px solid var(--ln2); color: var(--i2); }
+.quick span.on { border-color: var(--ol); color: var(--ol); background: var(--ols); }
+.df { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-top: 1px solid var(--ln); }
+.df .sent { font-size: 14px; color: var(--i2); flex: 1; }
+.df .bts { display: flex; gap: 8px; }
+/* the Find panel, under the strip */
+.fpanel { position: absolute; left: 50%; transform: translateX(-30px); top: 50px; width: 520px; background: var(--c); border: 1px solid var(--ln2); border-radius: 10px; z-index: 4; }
+.fpanel .fh { padding: 10px 14px; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); border-top: 1px solid var(--ln); }
+.fpanel .fh:first-child { border-top: 0; }
+.fpanel .fr { display: flex; align-items: center; gap: 10px; padding: 8px 14px; }
+.fpanel .fr.on { background: var(--ols); }
+.fpanel .fr b { font-weight: 600; } .fpanel .fr .sub { font-size: 12px; color: var(--i3); }
+.fpanel .fr .cv { margin-left: auto; color: var(--ol); }
+.fpanel .ft { padding: 9px 14px; border-top: 1px solid var(--ln); font-size: 12px; color: var(--i3); }
+/* ═════ Stage 1 additions ═════ */
+.fx .fold { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--am); z-index: 3; pointer-events: none; }
+.fx .fold span { position: absolute; right: 12px; top: -9px; background: var(--p); color: var(--am); font: 700 10px/1 var(--font-data); padding: 0 6px; letter-spacing: .06em; text-transform: uppercase; }
+.fx .app.auto { min-height: 0; }
+.band.c6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.band.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.band.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.band .v.sm { font-size: 20px; }
+.chk { width: 16px; height: 16px; border: 1.5px solid var(--ln2); border-radius: 4px; display: inline-block; vertical-align: middle; background: var(--fieldbg); }
+.chk.on { background: var(--ol); border-color: var(--ol); box-shadow: inset 0 0 0 2px var(--c); }
+.cols2 { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; }
+.tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tools .gap { flex: 1; }
+.chkl { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--i2); }
+.sel { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px 0 12px; border: 1px solid var(--ln2); border-radius: 8px; background: var(--fieldbg); color: var(--i); font-size: 14px; white-space: nowrap; }
+.sel .chev { color: var(--i3); display: inline-flex; }
+.sel.w { width: 100%; height: 36px; border-radius: 6px; justify-content: space-between; }
+.acct { position: absolute; right: 12px; top: 50px; width: 288px; background: var(--c); border: 1px solid var(--ln2); border-radius: 12px; padding: 8px; z-index: 6; display: grid; gap: 2px; }
+.acct .id { display: flex; gap: 10px; padding: 10px; align-items: center; }
+.acct .id .av { width: 32px; height: 32px; border-radius: 999px; background: var(--ols); color: var(--ol); display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 var(--font-body); }
+.acct .cap { font: 700 10px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); }
+.acct .val { font-size: 14px; color: var(--i); }
+.acct .ap { padding: 6px 10px 10px; display: grid; gap: 6px; }
+.acct .seg { display: flex; gap: 4px; border: 1px solid var(--ln2); border-radius: 8px; padding: 3px; }
+.acct .seg span { flex: 1; height: 28px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; border-radius: 6px; color: var(--i2); }
+.acct .seg span.on { background: var(--ols); color: var(--ol); }
+.acct .r { display: flex; gap: 10px; height: 36px; align-items: center; padding: 0 10px; border-radius: 8px; color: var(--i2); font-size: 14px; }
+.acct .r.out { color: var(--rd); }
+.acct .r.ghost { opacity: .45; text-decoration: line-through; }
+.acct .sep { height: 1px; background: var(--ln); margin: 4px 0; }
+.rails { display: flex; gap: 28px; padding: 24px; align-items: flex-start; background: var(--p); }
+.rails .col { display: grid; gap: 8px; }
+.rails .col .side { height: 1060px; border: 1px solid var(--ln); border-radius: 8px; width: 240px; }
+.rails .col .side.slim { width: 64px; }
+.side.slim .it { padding: 0; justify-content: center; }
+.side.slim .it .eye { display: none; }
+.rails .col .lbl2 { max-width: 240px; }
+.nw { white-space: nowrap; }
+/* the kit eyebrow: 11 px, .09em, in the typewriter face with the chips (admin lettering ruling 2026-10-19); D3 covers cell content */
+.fx .lbl2, .fx .band .k, .fx .aq .gl2, .fx .tile5 .k, .fx .acct .cap { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; }
+.fx .cap12 { font-size: 12px; line-height: 1.4; color: var(--i3); margin: 0; max-width: none; }
+.fx .inp, .fx .sel.w { height: 34px; }
+.fx .nm0 { color: var(--i); font-weight: 600; }
+.fx .lk { display: inline-flex; align-items: center; gap: .45em; line-height: 1; }
+.fx .lk .mk2 { width: 1.1em; height: 1.1em; fill: var(--ol); flex: none; }
+.fx .lk .nm2 { font-weight: 700; color: var(--i); }
+.fx .lk .hq { font-weight: 600; color: var(--ol); }
+.fx .lk.big .hq { font-weight: 500; }
+.fx.dark .lk .mk2 { fill: var(--i); }
+.fx.dark .lk .hq { color: var(--i2); }
+.fx .strip .lock { padding-left: 20px; font: 16px/1 var(--font-body); }
+.fx .tile5 .v, .fx .band .v { font-variant-numeric: tabular-nums; }
+.fx .band .v.quiet { font-size: 14px; font-weight: 400; color: var(--i3); letter-spacing: 0; }
+.fx .band .v.txt { font-size: 14px; font-weight: 600; letter-spacing: 0; word-break: break-all; }
+.fx .subnav .n { font: 600 12px/1 var(--font-body); }
+.phone .drawer .side .it { height: 44px; font-size: 16px; padding: 0 16px; }
+.phone .drawer .side .it svg.ic { width: 17px; height: 17px; }
+.phone .drawer .side .gl { padding: 14px 16px 6px; }
+.phone .cardrow { background: var(--c); border: 1px solid var(--ln); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+.phone .cardrow .top { display: flex; align-items: center; gap: 8px; }
+.phone .cardrow .top .nm { flex: 1; }
+.phone .cardrow .meta { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--i3); flex-wrap: wrap; }
+.phone .six { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.phone .six > div { padding: 10px 12px; border-right: 1px solid var(--ln); border-bottom: 1px solid var(--ln); display: grid; gap: 2px; }
+.phone .six > div:nth-child(3n) { border-right: 0; } .phone .six > div:nth-child(n+4) { border-bottom: 0; }
+.phone .six .k { font: 700 10px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); }
+.phone .six .v { font: 700 20px/1.1 var(--font-body); }
+.tb.tools { gap: 8px; flex-wrap: nowrap; }
+.side.slim .it .t, .side.slim .gl, .side.slim .it .pill { display: none; }
+.side.slim .grp + .grp { border-top: 1px solid var(--ln); margin-top: 6px; padding-top: 6px; }
+.side .it .eye { margin-left: auto; opacity: .6; display: inline-flex; }
+.side .it .eye svg.ic { width: 12px; height: 12px; }
+.side .gl.cur { color: var(--i2); }
+.lbl2 { font: 700 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--i3); }
+.chart { width: 100%; height: 220px; display: block; }
+.bars { display: grid; gap: 10px; padding: 14px 16px; }
+.bars .b { display: grid; gap: 4px; font-size: 12px; }
+.bars .b .h { display: flex; justify-content: space-between; color: var(--i2); }
+.bars .b .tr { height: 6px; border-radius: 999px; background: var(--fill); overflow: hidden; }
+.bars .b .tr i { display: block; height: 100%; background: var(--ol); border-radius: 999px; }
+.pad { padding: 14px 16px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.tabsl { display: flex; gap: 4px; }
+.sign { display: grid; place-items: center; min-height: 720px; background: var(--p); }
+.sign .card2 { width: 400px; background: var(--c); border: 1px solid var(--ln); border-radius: 12px; padding: 32px 40px 36px; display: grid; gap: 18px; }
+.sign .lock2 { display: flex; align-items: center; justify-content: center; font: 20px/1 var(--font-body); }
+.sign h1 { font: 700 20px/1.3 var(--font-body); text-align: center; margin: 0; }
+.sign .sub { text-align: center; font-size: 12px; color: var(--i3); }
+.sign .btn.full { width: 100%; justify-content: center; height: 42px; }
+.sign .lr { display: flex; justify-content: space-between; align-items: baseline; }
+.sign .lr .door { color: var(--ol); font-size: 12px; font-weight: 600; }
+.phones { display: flex; gap: 28px; padding: 24px; background: var(--p); align-items: flex-start; }
+.phone { width: 390px; height: 720px; border: 1px solid var(--ln2); border-radius: 18px; overflow: hidden; position: relative; background: var(--p); }
+.phone .pstrip { height: 48px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 4px; background: var(--c); border-bottom: 1px solid var(--ln); }
+.phone .pstrip .mb { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.phone .pstrip .mb svg.ic { width: 20px; height: 20px; }
+.phone .pstrip .grow { flex: 1; font: 700 16px/1 var(--font-body); }
+.phone .pstrip .grow em { font-style: normal; color: var(--ol); }
+.phone .pbody { padding: 16px; display: grid; gap: 14px; }
+.phone .sc { overflow-x: auto; border: 1px solid var(--ln); border-radius: 8px; background: var(--c); }
+.phone .sc table { min-width: 560px; }
+.phone .scrim { position: absolute; inset: 0; background: var(--scrim); }
+.phone .drawer { position: absolute; left: 0; top: 0; bottom: 0; width: 290px; background: var(--c); border-right: 1px solid var(--ln); display: flex; flex-direction: column; overflow: hidden; }
+.phone .drawer .dh { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px 0 16px; border-bottom: 1px solid var(--ln); font: 700 16px/1 var(--font-body); }
+.phone .drawer .dh em { font-style: normal; color: var(--ol); }
+.phone .drawer .dh .mb { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); font-size: 20px; }
+.phone .drawer .side { border: 0; flex: 1; overflow: hidden; }
+.tags-inline { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+.box.find { border-left: 3px solid var(--amber); }
+.box h3 { margin: 0; }
+.box ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.stepn { font: 700 16px/1.3 var(--font-body); color: var(--ol); margin-right: 8px; font-variant-numeric: tabular-nums; }
+.ph .sub { font-size: 12px; color: var(--i3); }
+.tile5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.tile5 > div { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; }
+.tile5 .k { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.tile5 .v { font: 700 24px/1.1 var(--font-body); }
+.aq { display: grid; gap: 10px; padding: 14px 16px; }
+.aq .g { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.aq .gl2 { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); width: 100%; }
+.aq .q { display: inline-flex; gap: 8px; align-items: baseline; padding: 6px 10px; border: 1px solid var(--ln2); border-radius: 6px; font-size: 12px; color: var(--i2); }
+.aq .q b { font: 700 14px/1 var(--font-body); color: var(--i); }
+.aq .q.hot { border-color: color-mix(in srgb, var(--am) 40%, transparent); background: color-mix(in srgb, var(--am) 8%, transparent); }
+.aq .q.hot b { color: var(--am); }
+.ta { height: 88px; border: 1px solid var(--ln2); border-radius: 6px; background: var(--fieldbg); padding: 8px 10px; color: var(--i3); font-size: 14px; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-today" viewBox="0 0 24 24"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-clubs" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.5c3 0 5 1.8 5 4.5"/></symbol>
+  <symbol id="i-free" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4"/><rect x="5" y="12" width="14" height="9"/><path d="M12 8v13M12 8c-2-4-6-4-6-1s6 1 6 1c2-4 6-4 6-1s-6 1-6 1"/></symbol>
+  <symbol id="i-retention" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></symbol>
+  <symbol id="i-status" viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></symbol>
+  <symbol id="i-errors" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 9v4M12 16.5v.01"/></symbol>
+  <symbol id="i-feedback" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+  <symbol id="i-leads" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/></symbol>
+  <symbol id="i-campaigns" viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></symbol>
+  <symbol id="i-decks" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/></symbol>
+  <symbol id="i-plans" viewBox="0 0 24 24"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-approval" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/></symbol>
+  <symbol id="i-bulk" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></symbol>
+  <symbol id="i-templates" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-staff" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/></symbol>
+  <symbol id="i-audit" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-sent" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17v.01"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 3v18"/></symbol>
+  <symbol id="i-collapse" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="M4 17l6-6-6-6M12 19h8"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h13v4"/><path d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z"/><path d="M16 14h.01"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-bellc" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></symbol>
+</svg>
+
+<div class="wrap">
+<header class="lede">
+  <p class="eyebrow">Support console, stage 1 · the warm foundation · drawn 2026-10-24</p>
+  <h1>Support Console Stage 1</h1>
+  <p>Stage 1 makes the platform admin look and behave like the rest of FieldLogicHQ. It does not change what any screen does. Every drawing is at true size (1440 pixels wide, a desk screen) and on a narrower window it scrolls sideways inside its own box. <b>Before</b> is a capture from today's dev server. <b>After</b> is drawn with the product's real warm and dark colours. Blue tags say what changed and why, and each opens on click. Use the <b>Warm / Dark</b> switch at the top to flip every drawing. Your five questions sit beside the drawing each one decides.</p>
+</header>
+
+<section class="screen" id="staff" style="margin-top:22px">
+  <div class="screen-head"><span class="n">WHAT STAFF WILL SEE</span><h2>The same console, in the product's look</h2></div>
+  <div class="box">
+    <ul>
+      <li><b>What changes.</b> The dark neon console becomes the product's admin look: a top strip with the FieldLogicHQ mark and an account menu, a menu that folds, a standard page title, white buttons with one lime action per screen, and normal type instead of all capitals in a typewriter face.</li>
+      <li><b>Nothing moves.</b> Every menu entry keeps its place under today's group names, and every button stays where it was. A support person who knew the console yesterday finds everything where it was.</li>
+      <li><b>Warm or Dark.</b> The console follows the same Warm / Dark setting as the rest of the product, warm by default, switched from the account menu.</li>
+      <li><b>The sign-in page</b> wears the same look. It is always warm, like every other signed-out page (question 5).</li>
+      <li><b>Left for Stage 2.</b> Find, the menu regrouped by job, Today in place of Overview, and the customer record with its Story. Overview and the club record get a colour pass only, so they sit in the new look without being rebuilt.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="screen" id="found">
+  <div class="screen-head"><span class="n">BEFORE THE DRAWINGS</span><h2>Five things the code and the rules showed that the build prompt did not say</h2></div>
+  <div class="box find">
+    <ul>
+      <li><b>The shared account menu does not fit a staff member.</b> It always carries <i>Notification settings</i> and <i>Account settings</i>, which open the customer account area, and <i>Send feedback</i>, which would send feedback to our own inbox. The prompt asked only for a new sign-out destination. The menu needs a second change to hide those rows. This is your question 3 below.</li>
+      <li><b>Overview and the club record cannot be left alone in Warm.</b> Their stylesheets lean on the product's dark colours. Most of them turn warm on their own, but the pale green, red and amber that mark good, bad and caution on a dark ground do not, and on cream paper they would be hard to read. A colour-only pass fixes it without touching their layout. This is question 4.</li>
+      <li><b>Help leaves the menu body.</b> The navigation standard puts Help at the foot of every menu, so the System group keeps only Dev tools, which exists only on dev. On production that group disappears. Help can open in place (question 2) instead of a new tab.</li>
+      <li><b>The sign-in page cannot follow a Warm / Dark setting.</b> The build prompt said it should, but a signed-out visitor has no setting, and the rule since 2026-10-23 is that every signed-out page is warm and signing out resets the browser to warm. So the sign-in is always warm. This is your question 5.</li>
+      <li><b>The private finance group is titled "Private finance"</b>, not "Bookkeeping". Bookkeeping is its only entry, and it still shows only for the owner's email allowlist. Nothing about who sees it changes.</li>
+    </ul>
+    <p class="hint">Also noted: the console names the paid coaches plan two ways today, "Coaches Portal" on Organizations and Plans &amp; pricing and "Premium Coaches Portal" on Overview. The drawings keep each screen's own word, because Stage 1 changes no words. The plan facts doc says the paid plan is the Premium Coaches Portal, so the words pass in Stage 2 should settle on that. Also noted: the account menu's Appearance control is a two-way segmented row. That is shared with the coaches portal and is not one of the console's form choices, so rule D5 does not reach it. It stays as it is.</p>
+  </div>
+</section>
+
+<div class="bar" role="navigation" aria-label="Specimens">
+  <a class="jump" href="#a1">A · Organizations</a><a class="jump" href="#a2">A · Observability</a><a class="jump" href="#a3">A · Plans &amp; pricing</a><a class="jump" href="#b">B · The shell</a><a class="jump" href="#c">C · A form</a><a class="jump" href="#d">D · Sign-in</a><a class="jump" href="#e">E · Stage 2's two</a><a class="jump" href="#f">F · Narrow</a><a class="jump" href="#fmt">Formatting</a><a class="jump" href="#paste">Paste-back</a>
+  <span class="sw" role="group" aria-label="Frames theme"><button type="button" id="sw-warm" aria-pressed="true">Warm</button><button type="button" id="sw-dark" aria-pressed="false">Dark</button></span>
+</div>
+
+<!-- ═══════════ A1 ORGANIZATIONS ═══════════ -->
+<section class="screen" id="a1">
+  <div class="screen-head"><span class="n">SPECIMEN A1</span><h2>Organizations, a list</h2>
+  <p>The same screen: six figures, the needs-attention notice, the search and its filters, and the 30-row directory. The figures join into one band, the section heading sits above its card, Export moves into the toolbar at the far right, as the table standard puts page actions, the count leads the toolbar, the slug stays in the data face because it is a code, and <b>View</b> becomes the name link plus a chevron. The dashed line marks where a 900-pixel-tall screen ends. The search, the filters and the first rows are all above it.</p></div>
+  <div class="before"><button class="shot" data-src="cap/orgs.jpg" aria-label="Organizations today at full size"><img src="cap/orgs.jpg" alt="Organizations today: dark console with six figure tiles, search and filters, directory"></button><div><div class="lbl">Before</div><p>Dark, all capitals, typewriter face on every table, six separate boxed tiles, a small caption over every heading, and a View button on every row.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The page takes the product's 1200 table frame, centred, and the standard page title (20 px, bold) with the help glyph at the end. The eyebrow caption above the title goes, because the menu already says where you are.">S1 · RESTYLED · frame and title</button>
+    <button class="tag" data-n="Six separate boxed tiles become one joined band, the same band the money screens use. Same six figures, same words in sentence case.">S1 · RESTYLED · figures</button>
+    <button class="tag" data-n="Rule D3. Rows are compact or comfortable by their content. Times and names take the body face, and only the slug stays in the data face because it is a web name. Table headings take the display face, as the table standard says.">S1 · RESTYLED · table type</button>
+    <button class="tag" data-n="Rule D1 and D2. The section heading sits above its card, and every action is a white button. Export is a white button in the toolbar, at the far right, with the count at the left (a title never carries a count). The only lime on this screen would be a primary action. There is none here, so there is no lime. The Search customer users door is olive text.">S1 · RESTYLED · headings and buttons</button>
+    <button class="tag" data-n="The View button on each row becomes the name as a link with a chevron at the right end. It opens the same club record. This is the standard list row, and the click target is bigger.">S1 · RESTYLED · row door</button>
+    <button class="tag" data-n="No behaviour changes. The search, plan and status filters, the three check boxes, the Export file and the Canceled shortcut all do what they do today.">UNCHANGED · every control</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip></div>
+    <div class="app auto">
+      <aside class="side" data-active="orgs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Organizations</h1><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="band c6">
+          <div><span class="k">Total accounts</span><span class="v">30</span></div>
+          <div><span class="k">Past due</span><span class="v">0</span></div>
+          <div><span class="k">Active / trial</span><span class="v">27</span></div>
+          <div><span class="k">Founding season</span><span class="v">5</span></div>
+          <div><span class="k">Free league starter</span><span class="v">1</span></div>
+          <div><span class="k">Empty orgs</span><span class="v warn">3</span></div>
+        </div>
+        <div class="callout warn"><svg class="ic"><use href="#i-errors"/></svg><span><b>Needs attention.</b> Accounts with billing or access risk are ready for review.</span><span class="btn go" style="margin-left:auto">Canceled (3)</span></div>
+        <h2 class="sec">Account directory</h2>
+        <div class="card">
+          <div class="tb"><span class="count">30 accounts</span><span class="gap"></span><span class="btn door">Search customer users ›</span><span class="btn"><svg class="ic"><use href="#i-export"/></svg>Export</span></div>
+          <div class="tb tools">
+            <span class="search" style="width:240px"><svg class="ic"><use href="#i-search"/></svg>Search name or slug</span>
+            <span class="sel">All plans <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span>
+            <span class="sel">All statuses <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span>
+            <span class="chkl"><span class="chk"></span>Founding season only</span>
+            <span class="chkl"><span class="chk"></span>League starter only</span>
+            <span class="chkl"><span class="chk"></span>Empty orgs only</span>
+          </div>
+          <table class="t"><thead><tr><th>Name</th><th>Slug</th><th>Plan</th><th>Status</th><th>Cohort</th><th>Created</th><th class="cv"></th></tr></thead><tbody data-fill="orgs"></tbody></table>
+        </div>
+      </div></main>
+    </div>
+    <div class="fold" style="top:900px"><span>A 900 px screen ends here</span></div>
+    <span class="ex">Dev data · today's 30 accounts</span>
+  </div></div>
+</section>
+
+<!-- ═══════════ A2 OBSERVABILITY ═══════════ -->
+<section class="screen" id="a2">
+  <div class="screen-head"><span class="n">SPECIMEN A2</span><h2>Observability, the dense one</h2>
+  <p>Four figures, the calls-and-errors chart, four small panels, and the issue list (the first 14 of 50 rows are drawn; the rest are the same row). The route names stay in the data face because they are codes. Times and counts do not. Severity and status stay as small chips in the typewriter face the kit gives chips. The one lime on this screen is the main action of the filter bar, <b>Filter</b>.</p></div>
+  <div class="before"><button class="shot" data-src="cap/observability.jpg" aria-label="Observability today at full size"><img src="cap/observability.jpg" alt="Observability today: dark console with figures, chart, panels and a long issue list"></button><div><div class="lbl">Before</div><p>A 4,300-pixel page in typewriter type throughout. The chart and the panels are boxed in neon, and the issue list is a compact log with every cell in the data face.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The 24 hours / 7 days / 30 days switch is a view range, so it becomes a dropdown in the page header, the way the club screens pick a period. It is the same three choices. A row of three joined buttons is the segmented look rule D5 retires for one-of-several choices.">S1 · RESTYLED · range is a dropdown</button>
+    <button class="tag" data-n="Rule D3. The issue list has no log-table exception. Rows are comfortable because each issue has two lines (its title and its error class). Severity and status are small chips, counts are right-aligned numbers in the body face, and only the route (a code) is in the data face.">S1 · RESTYLED · log table</button>
+    <button class="tag" data-n="Rule D1. Each of the four panels and the issue list gets its heading above its card, in sentence case. The small caption over each heading goes.">S1 · RESTYLED · headings above cards</button>
+    <button class="tag" data-n="Filter is the main action of the filter bar, so it is the screen's one lime button. Export and Clear are white and an olive door. The numbers, the chart's data and the issue rows are not touched.">S1 · RESTYLED · one lime</button>
+    <button class="tag" data-n="The chart is redrawn with the product's colours, one line for calls and one for errors. Its data, scale and range are the same as today's. The explanation paragraph under the figures stays as a small grey caption, because it says what the figures cover.">UNCHANGED · data and scale</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip></div>
+    <div class="app auto">
+      <aside class="side" data-active="obs" data-open="Support &amp; diagnostics"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Observability</h1><div class="end"><span class="sel">Last 24 hours <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="band">
+          <div><span class="k">Captured errors</span><span class="v">40</span><span class="s">All sources, last 24 hours</span></div>
+          <div><span class="k">Error rate</span><span class="v">0.00%</span><span class="s">Instrumented traffic only</span></div>
+          <div><span class="k">Open issues</span><span class="v">617</span><span class="s">15 new in this window</span></div>
+          <div><span class="k">Affected orgs</span><span class="v">0</span><span class="s">In this window</span></div>
+        </div>
+        <p class="cap12">The figures differ on purpose. The error rate covers only instrumented routes, so it can show a clean 0.00% while captured errors from all sources are higher. Issue counts include snoozed issues whose snooze has expired.</p>
+        <h2 class="sec">Calls and errors</h2>
+        <div class="card pad"><svg class="chart" viewBox="0 0 1160 220" role="img" aria-label="Calls and errors over the last 24 hours" data-chart></svg></div>
+        <div class="two">
+          <div style="display:grid;gap:10px;align-content:start"><h2 class="sec" style="margin:0">Top error routes</h2><div class="card"><div class="bars" data-fill="routes"></div></div></div>
+          <div style="display:grid;gap:10px;align-content:start"><h2 class="sec" style="margin:0">Where errors come from</h2><div class="card"><div class="bars">
+            <div class="b"><div class="h"><span>Server</span><span>28</span></div><div class="tr"><i style="width:70%"></i></div></div>
+            <div class="b"><div class="h"><span>Client</span><span>12</span></div><div class="tr"><i style="width:30%"></i></div></div>
+            <div class="b" style="margin-top:8px"><div class="h"><span>Triage health</span><span>15 new issues in the last 24 hours</span></div></div>
+          </div></div></div>
+        </div>
+        <h2 class="sec">Issues</h2>
+        <div class="callout"><svg class="ic"><use href="#i-help"/></svg><span><b>What is an issue?</b> Each row is one distinct error fingerprint. A flood of identical failures collapses into a single issue you can triage. Open one to read scrubbed samples, then resolve, ignore or snooze it.</span></div>
+        <div class="card">
+          <div class="tb tools"><span class="search" style="width:260px"><svg class="ic"><use href="#i-search"/></svg>Search title, error or route</span><span class="sel">All severities <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span><span class="sel">Open <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span><span class="sel" style="width:150px;color:var(--i3)">Route</span><span class="sel" style="width:150px;color:var(--i3)">Org slug</span><span class="btn lime">Filter</span><span class="btn door">Clear</span><span class="gap"></span><span class="btn"><svg class="ic"><use href="#i-export"/></svg>Export</span></div>
+          <table class="t"><thead><tr><th>Severity</th><th>Status</th><th>Issue</th><th>Route</th><th class="r">Count</th><th class="r">Orgs</th></tr></thead><tbody data-fill="issues"></tbody></table>
+          <div class="tb"><span class="note">Showing 1 to 50 · drawn: the first 14 rows</span><span class="gap"></span><span class="btn">Previous</span><span class="btn">Next</span></div>
+        </div>
+      </div></main>
+    </div>
+    <div class="fold" style="top:900px"><span>A 900 px screen ends here</span></div>
+    <span class="ex">Dev data from today's capture · the chart's line is drawn to its shape</span>
+  </div></div>
+</section>
+
+<!-- ═══════════ A3 PLANS & PRICING ═══════════ -->
+<section class="screen" id="a3">
+  <div class="screen-head"><span class="n">SPECIMEN A3</span><h2>Plans &amp; pricing, the largest</h2>
+  <p>The list screen first, then the plan window it opens, which holds the form, the price table and the one-of-two choice rule D5 retires. The captured page is one screen tall, so the whole list is above the dashed line.</p></div>
+  <div class="before"><button class="shot" data-src="cap/plans-pricing.jpg" aria-label="Plans and pricing today at full size"><img src="cap/plans-pricing.jpg" alt="Plans and pricing today: dark console with three figures, two tabs and the plan workspace table"></button><div><div class="lbl">Before</div><p>Three tiles, a tab bar, a caption-and-heading block, and the plan table in typewriter type with a description sentence at the top right. The plan window, a long form with a Production / Test switch, is not in this capture.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The page header has no subtitle slot on purpose, so the sentence about managing plan availability moves out of the header. The Plan workspace section below keeps its own line (scan plan state, open a plan for details), which already says the same thing for this screen.">S1 · RESTYLED · header</button>
+    <button class="tag" data-n="Plans and Product catalog become the kit's tabs, an underline on the current one, in sentence case.">S1 · RESTYLED · tabs</button>
+    <button class="tag" data-n="Limits and trials keep their wording. Use 9999 for unlimited and the raw 9999 figures stay until Stage 4 rewrites them. Stage 1 does not touch words that are not copy it is restyling.">UNCHANGED · 9999 stays</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip></div>
+    <div class="app" style="min-height:860px">
+      <aside class="side" data-active="plans" data-open="Billing &amp; product"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Plans &amp; pricing</h1><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="band c3">
+          <div><span class="k">Total accounts</span><span class="v">30</span></div>
+          <div><span class="k">Paid plan accounts</span><span class="v">25</span></div>
+          <div><span class="k">Past due / canceled</span><span class="v">3</span></div>
+        </div>
+        <div class="subnav"><span class="on">Plans</span><span>Product catalog</span></div>
+        <h2 class="sec">Plan workspace</h2>
+        <p class="cap12" style="margin-top:-6px">Scan plan state, customer impact, pricing, limits, pending changes and the latest update. Open a plan for details and scoped edits.</p>
+        <div class="card"><table class="t"><thead><tr><th>Plan</th><th>Status</th><th>Impact</th><th>Pricing</th><th>Limits and trials</th><th>Pending</th><th>Updated</th><th class="cv"></th></tr></thead><tbody data-fill="plans"></tbody></table></div>
+      </div></main>
+    </div>
+    <div class="fold" style="top:900px"><span>A 900 px screen ends here</span></div>
+    <span class="ex">Dev data from today's capture</span>
+  </div></div>
+
+  <div class="tagrow" style="margin-top:6px"><span class="lbl">The plan window</span>
+    <button class="tag" data-n="Rule D5. Production and Test is a one-of-two choice about which Stripe prices the table shows. Today it is two joined tab buttons. It becomes a dropdown labelled Stripe mode, with the same two choices and the same table below it.">S1 · RESTYLED · D5 dropdown</button>
+    <button class="tag" data-n="Each panel (Availability, Limits and trials, Pricing, Feature access, Pending changes) has its heading above a plain card. Buttons are white. The Request early access button is white because requesting a change is not the screen's one main action. The change note is a required field and carries the required star.">S1 · RESTYLED · panels and buttons</button>
+    <button class="tag" data-n="The window uses the kit window: a tinted edge, no shadow, a plain close x, and the standard page frame inside. It opens and closes the same way as today.">S1 · RESTYLED · window</button>
+    <button class="tag" data-n="Price cells read Not set in this drawing because the captured Club plan has no production prices yet (0 of 2 slots). A test price is an id, so it is the one place in this window that takes the data face.">Dev data · prices not set</button>
+  </div>
+  <div class="scroller"><div class="fx win" style="width:1100px" data-frame>
+    <div class="win"><div class="dlg">
+      <div class="dh"><div><h2>Club</h2><div class="lbl2" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--i3);font-size:12px">Plan workspace</div></div><span class="x">×</span></div>
+      <div class="db">
+        <div class="band c5" style="grid-template-columns:repeat(5,minmax(0,1fr))">
+          <div><span class="k">Status</span><span class="v sm">Early access</span></div>
+          <div><span class="k">Impact</span><span class="v sm">8 accounts</span><span class="s">Active 8</span></div>
+          <div><span class="k">Pricing</span><span class="v sm">Live 0 of 2</span><span class="s">Test 2 of 2</span></div>
+          <div><span class="k">Features</span><span class="v sm">9 modules</span></div>
+          <div><span class="k">Pending</span><span class="v sm">0</span></div>
+        </div>
+        <div class="two">
+          <div style="display:grid;gap:8px;align-content:start"><h2 class="sec" style="margin:0">Availability</h2><div class="card pad" style="display:grid;gap:10px">
+            <span class="chip warn" style="justify-self:start">Early access</span>
+            <div class="fld"><span class="fl">Change note<span class="req"> *</span></span><div class="inp" style="color:var(--i3)">Reason for this change</div></div>
+            <span class="btn" style="justify-self:start">Request live</span>
+          </div></div>
+          <div style="display:grid;gap:8px;align-content:start"><h2 class="sec" style="margin:0">Limits and trials</h2><div class="card pad" style="display:grid;gap:10px">
+            <div class="lines" style="grid-template-columns:120px 1fr"><dt>Tournaments</dt><dd>9999</dd><dt>Seats</dt><dd>9999</dd><dt>Trial days</dt><dd>90</dd></div>
+            <span class="btn" style="justify-self:start">Edit limits</span>
+          </div></div>
+        </div>
+        <div style="display:grid;gap:8px;align-content:start"><h2 class="sec" style="margin:0">Pricing</h2><div class="card">
+          <div class="tb tools"><div class="fld" style="width:220px"><span class="fl">Stripe mode</span><span class="sel w">Production <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div><span class="gap"></span><span class="note">Subscription pricing appears first. Related add-ons appear below when available.</span></div>
+          <table class="t"><thead><tr><th>Item</th><th>Scope</th><th>Monthly</th><th>Annual</th><th>Latest change</th></tr></thead><tbody>
+            <tr><td class="nm0">Club subscription</td><td>Plan</td><td class="none">Not set</td><td class="none">Not set</td><td class="none">None</td></tr>
+            <tr><td class="nm0">Families add-on</td><td>Add-on</td><td class="none">Not set</td><td class="none">Not set</td><td class="none">None</td></tr>
+          </tbody></table></div></div>
+      </div>
+    </div></div>
+  </div></div>
+</section>
+
+<!-- ═══════════ B THE SHELL ═══════════ -->
+<section class="screen" id="b">
+  <div class="screen-head"><span class="n">SPECIMEN B</span><h2>The shell: strip, menu, foot, account menu</h2>
+  <p>Three things are new on every screen. The <b>top strip</b> carries the FieldLogicHQ mark, the portal's name and the account menu. The <b>menu</b> folds, and the group holding the page you are on is always open. The <b>foot</b> holds Help, then Collapse sidebar. Sign out lives only in the account menu. There is no bell, because the console has no notifications behind it, and no Find box, because Find is Stage 2 and the strip's middle stays empty.</p></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="New on every console screen. The strip is the product's own strip, 48 px tall, with the lockup at the left in the colour that follows the setting, the portal's name next to it, and the account menu at the right end. It replaces the PLATFORM ADMIN badge and the ACTIVE SESSION block in the old sidebar.">S1 · NEW · top strip</button>
+    <button class="tag" data-n="Navigation standard N1 to N6 and N9. Rows 14 px with 14 px icons, group headings 11 px capitals, a chevron on a heading that can fold, the olive tint across the full row for the page you are on. Sentence case for every label. The icons are today's, resized from 15 to 14 px. The product's icon dictionary has no console entries, except Overview, which takes the dictionary's grid icon that every other Overview uses.">S1 · RESTYLED · the menu</button>
+    <button class="tag" data-n="Who sees what does not change. A role still sees only the areas it can view, and an entry a role can read but not edit carries the small eye marker, as today. Bookkeeping still shows only for the owner's email allowlist. Dev tools still shows only where the dev-tools flag is on, for a super admin.">UNCHANGED · who sees what</button>
+    <button class="tag" data-n="Help moves from the System group to the foot, where every portal keeps it, so System keeps only Dev tools and disappears on production. Collapse sidebar folds the menu to a 64 px strip of icons.">S1 · MOVED · Help to the foot</button>
+    <button class="tag" data-n="The popover opens in place. It shows who is signed in, Appearance (Warm or Dark), and Sign out. The shared menu also carries Notification settings, Account settings and Send feedback today. They would open the customer account area and our own feedback form, so the drawing leaves them out. That needs a small change to the shared menu, your question 3.">S1 · SHARED CHANGE · account menu</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="height:420px">
+    <div class="strip" data-strip></div>
+    <div class="acct" style="top:50px"><div class="id"><span class="av">B</span><div><div class="cap">Signed in</div><div class="val">you@fieldlogichq.ca</div></div></div>
+      <div class="ap"><span class="cap">Appearance</span><div class="seg"><span class="on">Warm <svg class="ic"><use href="#i-tick"/></svg></span><span>Dark</span></div></div>
+      <div class="sep"></div>
+      <div class="r out"><svg class="ic"><use href="#i-out"/></svg>Sign out</div>
+    </div>
+    <div style="padding:40px;opacity:.4"><div class="ph"><h1 style="font:700 20px/1.3 var(--font-body)">Organizations</h1></div></div>
+    <span class="ex">The account menu, open</span>
+  </div></div>
+
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="rails">
+      <div class="col"><span class="lbl2">The menu on Organizations (as built)</span><aside class="side" data-active="orgs" data-open="Customers"></aside></div>
+      <div class="col"><span class="lbl2">Every group open (to read the whole list)</span><aside class="side" data-active="orgs" data-open="all" data-extras="1"></aside></div>
+      <div class="col"><span class="lbl2">Collapsed</span><aside class="side slim" data-active="orgs" data-open="all" data-extras="1"></aside></div>
+      <div class="col" style="flex:1;max-width:420px"><span class="lbl2">Reading the drawing</span>
+        <div class="box" style="font-size:14px">
+          <p>Every entry is where it was, under today's seven group names and the private finance group, in today's order. Only the capitals became sentence case.</p>
+          <p><b>Dev tools</b> is drawn in System because the dev-tools flag is on in this drawing. On production that group is gone.</p>
+          <p>The <b>eye</b> beside Audit log shows how a read-only entry is marked for a role that can look but not edit. It is an example role.</p>
+          <p>The collapsed menu shows icons only, with a hairline between groups. Hover or focus names each one.</p>
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="ask" data-q="Q1"><div class="q">Question 1 · What does the strip call the portal, and the browser tab?</div>
+    <p class="rec"><b>Recommended: "Support console".</b> It names the job the console does, and it is what the end-state drawings already showed. Staff and the code say "Platform admin". The tab would read "Support console — FieldLogicHQ". The word is yours.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Support console (recommended)"> Support console (recommended)</label>
+      <label><input type="checkbox" data-o="Platform admin"> Platform admin</label>
+      <label><input type="checkbox" data-o="Another name, in the notes"> Another name, in the notes</label>
+    </div><textarea aria-label="Notes on question 1" placeholder="Notes"></textarea></div>
+  <div class="ask" data-q="Q2"><div class="q">Question 2 · Does Help open in place, or in a new tab?</div>
+    <p class="rec"><b>Recommended: in place.</b> Every portal opens its help inside itself, and it keeps the menu on the left so you can go back to what you were doing. Today it opens in a new tab with no menu. In place also means the System group no longer holds Help.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Help opens in place, with the menu (recommended)"> Help opens in place, with the menu (recommended)</label>
+      <label><input type="checkbox" data-o="Help keeps opening in a new tab"> Help keeps opening in a new tab</label>
+    </div><textarea aria-label="Notes on question 2" placeholder="Notes"></textarea></div>
+  <div class="ask" data-q="Q3"><div class="q">Question 3 · Sign out, and which rows the account menu shows staff</div>
+    <p class="rec"><b>Recommended: both, as drawn.</b> (1) Sign out returns to the console's own sign-in page, not the customer sign-in the menu sends everyone else to. (2) The three customer rows are hidden in the console. <b>This changes the shared account menu</b>, which the coaches and club portals also use: one new sign-out destination and one switch to hide the rows. Nothing changes for them.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Sign out returns to the console sign-in (recommended)"> Sign out returns to the console sign-in (recommended)</label>
+      <label><input type="checkbox" data-o="Sign out goes to the customer sign-in like every portal"> Sign out goes to the customer sign-in like every portal</label>
+      <label><input type="checkbox" data-o="Hide Notification settings, Account settings and Send feedback in the console (recommended)"> Hide Notification settings, Account settings and Send feedback in the console (recommended)</label>
+      <label><input type="checkbox" data-o="Show those rows as the menu does today"> Show those rows as the menu does today</label>
+    </div><textarea aria-label="Notes on question 3" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ C A FORM ═══════════ -->
+<section class="screen" id="c">
+  <div class="screen-head"><span class="n">SPECIMEN C</span><h2>A form screen: Bulk operations</h2>
+  <p>Three steps on one page: choose accounts, configure the action, preview and confirm. The drawing shows three accounts ticked, an example. A count of what is selected is already one of the four figures, so the title carries none. The confirm step is in place on this screen (the button changes to Confirm bulk operation), so there is no window to draw. Each action is a white button, the one main action is lime, choices are dropdowns, and the required Reason carries the star.</p></div>
+  <div class="before"><button class="shot" data-src="cap/bulk-operations.jpg" aria-label="Bulk operations today at full size"><img src="cap/bulk-operations.jpg" alt="Bulk operations today: dark console with figures and a three-step form"></button><div><div class="lbl">Before</div><p>Dark, step captions over each heading, a lime outlined Select filtered button, an all-capitals Review bulk operation button, and no marker on the required Reason field except a placeholder.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Rule D2. Select filtered is a white button. Review bulk operation is the screen's one main action, so it is the one lime button. It fades when nothing is selected. When it changes to Confirm bulk operation it stays lime.">S1 · RESTYLED · button tiers</button>
+    <button class="tag" data-n="Rule D5. Bulk action, Target status and the two filters are one-of-several choices, so they are dropdowns. They already are today. Nothing here was segmented, so nothing changes in kind.">S1 · RESTYLED · choices</button>
+    <button class="tag" data-n="Reason is required, so it carries the required star in its label. Optional expiry carries no tag, because the product marks what is required and never what is optional.">S1 · RESTYLED · required marker</button>
+    <button class="tag" data-n="The three steps stay numbered because the order is real: you cannot preview before you choose. The number becomes a small olive figure beside the heading instead of a caption above it. The operation's logic, the guarded confirm and the audit trail are not touched. The shared plan-change rule behind it stays as built on 2026-10-24.">UNCHANGED · logic and order</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip></div>
+    <div class="app auto">
+      <aside class="side" data-active="bulk" data-open="Billing &amp; product"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Bulk operations</h1><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="band"><div><span class="k">Total accounts</span><span class="v">30</span></div><div><span class="k">Filtered</span><span class="v">30</span></div><div><span class="k">Selected</span><span class="v">3</span></div><div><span class="k">Recent batches</span><span class="v">0</span></div></div>
+        <div class="cols2">
+          <div class="stack">
+            <h2 class="sec"><span class="stepn">1</span>Choose accounts</h2>
+            <div class="card">
+              <div class="tb tools"><span class="search" style="width:240px"><svg class="ic"><use href="#i-search"/></svg>Search account or slug</span><span class="sel">All plans <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span><span class="sel">All statuses <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span><span class="gap"></span><span class="btn">Select filtered</span></div>
+              <table class="t"><thead><tr><th style="width:36px"></th><th>Account</th><th>Plan</th><th>Status</th></tr></thead><tbody data-fill="bulk"></tbody></table>
+              <div class="tb"><span class="note">Drawn: the first 10 of 30 accounts. The rest are the same row.</span></div>
+            </div>
+          </div>
+          <div class="stack">
+            <h2 class="sec"><span class="stepn">2</span>Configure action</h2>
+            <div class="card pad" style="display:grid;gap:14px">
+              <div class="fld"><span class="fl">Bulk action</span><span class="sel w">Subscription status override <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+              <div class="fld"><span class="fl">Target status</span><span class="sel w">Active <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+              <div class="fld"><span class="fl">Expiry</span><div class="inp" style="color:var(--i3)">yyyy-mm-dd</div></div>
+              <div class="fld"><span class="fl">Reason<span class="req"> *</span></span><div class="ta">Explain why this bulk operation is being applied.</div></div>
+            </div>
+            <h2 class="sec"><span class="stepn">3</span>Preview and confirm</h2>
+            <div class="card pad" style="display:grid;gap:10px"><span class="lbl2">Subscription status override</span><div class="band-v" style="font:700 24px/1.1 var(--font-body)">3 accounts</div><p style="font-size:14px;color:var(--i2)">Create a subscription status override set to Active.</p><span class="btn lime" style="justify-self:start">Review bulk operation</span></div>
+          </div>
+        </div>
+        <h2 class="sec">Recent bulk operations</h2>
+        <div class="card"><div class="pad" style="color:var(--i3)">No bulk operations recorded yet.</div><div class="tb" style="border-top:1px solid var(--ln);border-bottom:0"><span class="gap"></span><span class="btn door">View all bulk operations in the audit log ›</span></div></div>
+      </div></main>
+    </div>
+    <span class="ex">Dev data · three selections are an example</span>
+  </div></div>
+</section>
+
+<!-- ═══════════ D SIGN-IN ═══════════ -->
+<section class="screen" id="d">
+  <div class="screen-head"><span class="n">SPECIMEN D</span><h2>The sign-in page</h2>
+  <p>Drawn warm whatever the switch says. A signed-out visitor has no Warm / Dark control, and the rule since 2026-10-23 is that every signed-out page is warm and signing out resets the browser to warm. So there is no Dark sign-in to draw (question 5). The words are the same, the card takes the product's field and button look, and Sign in is the one lime action.</p></div>
+  <div class="before"><button class="shot" data-src="cap/login.jpg" aria-label="Sign-in page today at full size"><img src="cap/login.jpg" alt="Sign-in page today: dark card on a dark grid with a lime Sign in button"></button><div><div class="lbl">Before</div><p>A dark card on a dark grid, the name in a single colour, all-capital typewriter type, and a lime Sign in button.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The page is no longer pinned dark. It is warm, the one signed-out look, and the lockup is the warm one (the olive mark, the name in ink, HQ in olive). Two checks in the build stay green: the page still shows the brand lockup, and the forgot-password flow keeps its exact shape.">S1 · RESTYLED · warm, like every signed-out page</button>
+    <button class="tag" data-n="The title Staff access and the sentence Internal platform, authorized personnel only keep their words, now in sentence case in the body face. Email, Password with its show/hide eye, Forgot password and Sign in are the same controls.">UNCHANGED · words and controls</button>
+  </div>
+  <div class="scroller"><div class="fx" style="height:700px" data-fixed>
+    <div class="sign"><div class="card2">
+      <div class="lock2"><span class="lk big" style="font-size:20px"><svg class="mk2" viewBox="10 10 44 44" aria-hidden="true"><path d="M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z"/></svg><span class="nm2">FieldLogic<span class="hq">HQ</span></span></span></div>
+      <div><h1>Staff access</h1><p class="sub" style="margin:4px auto 0">Internal platform, authorized personnel only</p></div>
+      <div class="fld"><span class="fl">Email</span><div class="inp" style="color:var(--i3)">you@fieldlogichq.ca</div></div>
+      <div class="fld"><div class="lr"><span class="fl">Password</span><span class="door">Forgot password?</span></div><div class="inp" style="color:var(--i3)">Enter password<span class="chev"><svg class="ic"><use href="#i-eye"/></svg></span></div></div>
+      <span class="btn lime full">Sign in</span>
+    </div></div>
+    <span class="ex">Warm</span>
+  </div></div>
+    <div class="ask" data-q="Q5"><div class="q">Question 5 · The sign-in page: always warm, or follow a saved Warm / Dark choice?</div>
+    <p class="rec"><b>Recommended: always warm.</b> A person who is not signed in has no Warm / Dark control, and your 2026-10-23 rule makes every signed-out page warm and resets the browser to warm on sign-out. A Dark sign-in would only appear in a browser that never signed out, which is rare and looks like a bug. The build prompt said the sign-in should follow the setting, and that was written before this rule was applied to it. Once signed in, the console follows the person's own choice.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Sign-in is always warm (recommended)"> Sign-in is always warm (recommended)</label>
+      <label><input type="checkbox" data-o="Sign-in follows the browser's last saved choice, Dark included"> Sign-in follows the browser's last saved choice, Dark included</label>
+    </div><textarea aria-label="Notes on question 5" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ E THE TWO STAGE-2 SCREENS ═══════════ -->
+<section class="screen" id="e">
+  <div class="screen-head"><span class="n">SPECIMEN E</span><h2>Overview and the club record, the boundary on purpose</h2>
+  <p>Stage 2 rebuilds both: Overview becomes Today, and the club record becomes a record with a Story. So Stage 1 gives them the shell, the frame, the title and the type, plus a <b>colour pass only</b> (question 4) so they read properly in Warm. The layout inside is exactly today's: the five tiles, the action queue's boxes, the tabs. Their structure is outlined as unchanged.</p></div>
+  <div class="before"><button class="shot" data-src="cap/home.jpg" aria-label="Overview today at full size"><img src="cap/home.jpg" alt="Overview today: dark console with five tiles, action queue, plan mix"></button><div><div class="lbl">Before · Overview</div><p>Five boxed tiles with icon squares, the Action queue as amber-bordered boxes, then tabs over plan mix and billing tables. Stage 2 replaces all of it with Today.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Shell, 1200 frame, standard title and body type. The captions over headings go, and the title is the standard 20 px. The Live operational snapshot line stays as quiet text at the right end.">S1 · RESTYLED · frame, title, type</button>
+    <button class="tag" data-n="Colours only, no layout. The product's fixed pale green, red and amber for good, bad and caution are replaced with the warm set, and white-tinted lines become the warm hairline. Without this, the status colours on cream paper would be hard to read. This is question 4.">S1 · RESTYLED · colour pass</button>
+    <button class="tag" data-n="The five separate figure tiles (every other screen joins its figures into one band), the action queue's boxes and the four tabs stay exactly as built, with the same figures, until Stage 2 replaces this screen with Today. Do not read this frame as the new standard for figures.">UNCHANGED · structure until Stage 2</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip></div>
+    <div class="app auto">
+      <aside class="side" data-active="overview" data-open="Command center"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Overview</h1><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <p class="cap12" style="margin-top:-6px">Live operational snapshot · last visit Oct 24, 2026, 2:49 p.m.</p>
+        <div class="tile5">
+          <div><span class="k">Organizations</span><span class="v">28</span></div>
+          <div><span class="k">Users</span><span class="v">94</span><span class="s" style="font-size:12px;color:var(--i3)">Auth users loaded</span></div>
+          <div><span class="k">Tournaments</span><span class="v">33</span></div>
+          <div><span class="k">Teams</span><span class="v">313</span></div>
+          <div><span class="k">Estimated MRR</span><span class="v">$2,740</span><span class="s" style="font-size:12px;color:var(--i3)">$32,880 ARR</span></div>
+        </div>
+        <h2 class="sec">Action queue</h2>
+        <div class="card"><div class="aq">
+          <div class="g"><span class="gl2">Billing · 7 items need attention</span><span class="q"><b>0</b>Past due orgs</span><span class="q"><b>0</b>Past due since visit</span><span class="q"><b>0</b>Trials ending soon</span><span class="q"><b>0</b>Overrides expiring soon</span><span class="q hot"><b>7</b>Retention records</span></div>
+          <div class="g"><span class="gl2">Accounts · 10 items need attention</span><span class="q hot"><b>1</b>Missing owners</span><span class="q hot"><b>9</b>Owner inactive</span></div>
+          <div class="g"><span class="gl2">Growth and marketing · 6 items need attention</span><span class="q"><b>0</b>New leads</span><span class="q hot"><b>5</b>Campaigns past due</span><span class="q"><b>1</b>Campaigns due soon</span></div>
+        </div></div>
+        <div class="subnav"><span class="on">Subscription</span><span>Growth</span><span>Usage</span><span>Metric notes</span></div>
+        <div class="two">
+          <div style="display:grid;gap:10px;align-content:start"><h2 class="sec" style="margin:0">Plan mix</h2><div class="card"><div class="bars">
+            <div class="b"><div class="h"><span>Tournament</span><span>5</span></div><div class="tr"><i style="width:18%"></i></div></div>
+            <div class="b"><div class="h"><span>Premium Coaches Portal</span><span>6</span></div><div class="tr"><i style="width:22%"></i></div></div>
+            <div class="b"><div class="h"><span>Tournament Plus</span><span>7</span></div><div class="tr"><i style="width:26%"></i></div></div>
+            <div class="b"><div class="h"><span>Club</span><span>7</span></div><div class="tr"><i style="width:26%"></i></div></div>
+          </div></div></div>
+          <div style="display:grid;gap:10px;align-content:start"><h2 class="sec" style="margin:0">Status by plan</h2><div class="card"><table class="t"><thead><tr><th>Plan</th><th class="r">Active</th><th class="r">Trialing</th><th class="r">Past due</th><th class="r">Canceled</th></tr></thead><tbody>
+            <tr><td class="nm0">Tournament</td><td class="r">5</td><td class="r">0</td><td class="r">0</td><td class="r">0</td></tr>
+            <tr><td class="nm0">Premium Coaches Portal</td><td class="r">3</td><td class="r">0</td><td class="r">0</td><td class="r">3</td></tr>
+            <tr><td class="nm0">Club</td><td class="r">7</td><td class="r">0</td><td class="r">0</td><td class="r">0</td></tr>
+          </tbody></table></div></div>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Dev data · drawn to the first screens of today's page</span>
+  </div></div>
+
+  <div class="before"><button class="shot" data-src="cap/org-detail.jpg" aria-label="The club record today at full size"><img src="cap/org-detail.jpg" alt="The club record today: dark console with owner band, account context, workflow tabs, notes"></button><div><div class="lbl">Before · the club record</div><p>A header with the club's name and two status boxes, a six-field band, a Primary actions box, Account context, five workflow tabs, then notes, identity, ownership and a delete section at the foot.</p></div></div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip></div>
+    <div class="app auto">
+      <aside class="side" data-active="orgs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Organizations</span><span class="rule"></span><h1>UAT Lakeshore Lynx</h1><span class="chip">Club</span><span class="chip ok">Active</span><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <p class="cap12" style="margin-top:-6px"><span class="code">/uat-rep-only</span> · Created Oct 23, 2026</p>
+        <div class="band c6">
+          <div><span class="k">Owner</span><span class="v txt">uat-rep-only-owner@uat-rep-club.local</span></div>
+          <div><span class="k">Members</span><span class="v sm">1</span></div>
+          <div><span class="k">Tournaments</span><span class="v sm">0</span></div>
+          <div><span class="k">Teams</span><span class="v sm">9 / 15</span></div>
+          <div><span class="k">Billing period</span><span class="v quiet">Not set</span></div>
+          <div><span class="k">Period end</span><span class="v quiet">Not set</span></div>
+        </div>
+        <h2 class="sec">Primary actions</h2>
+        <div class="card pad" style="display:flex;gap:12px;align-items:center"><div class="cap12" style="font-size:14px;color:var(--i2)">Start with owner contact and billing context, then review the workflow below.</div><span class="gap" style="flex:1"></span><span class="btn">Email owner</span><span class="btn">Audit log</span></div>
+        <div class="subnav"><span class="on">Support</span><span>Billing &amp; access</span><span>Entitlements</span><span>People &amp; tournaments <span class="n">1</span></span><span>Activity</span></div>
+        <h2 class="sec">Internal notes</h2>
+        <div class="card pad" style="display:grid;gap:10px"><div class="ta">Add support context, billing notes, account flags</div><span class="btn" style="justify-self:start">Add note</span><span class="note" style="font-size:12px;color:var(--i3)">No internal notes yet.</span></div>
+        <p class="hint" style="margin-top:4px">Drawn: the top of the record. Identity, ownership, teams brought in and the danger zone below it keep today's order and get the same colour pass.</p>
+      </div></main>
+    </div>
+    <span class="ex">Dev data · UAT Lakeshore Lynx</span>
+  </div></div>
+  <div class="ask" data-q="Q4"><div class="q">Question 4 · Overview and the club record: a colour pass, or leave them rough until Stage 2?</div>
+    <p class="rec"><b>Recommended: a colour-only pass, no layout change.</b> Most colours on these two screens turn warm on their own. The pale good, bad and caution colours do not, and they would read faintly on cream paper. Fixing the colours is a small job, and Stage 2's rebuild is not wasted by it, because that rebuild replaces the layout, not the palette. The alternative saves a few hours now and leaves two screens looking unfinished in Warm until Stage 2.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Colour-only pass on Overview and the club record (recommended)"> Colour-only pass on Overview and the club record (recommended)</label>
+      <label><input type="checkbox" data-o="Shell, frame, title and type only; accept the pale colours until Stage 2"> Shell, frame, title and type only; accept the pale colours until Stage 2</label>
+      <label><input type="checkbox" data-o="Do the full restyle on both now"> Do the full restyle on both now</label>
+    </div><textarea aria-label="Notes on question 4" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ F NARROW ═══════════ -->
+<section class="screen" id="f">
+  <div class="screen-head"><span class="n">SPECIMEN F</span><h2>Below tablet width: the menu still opens, nothing scrolls sideways</h2>
+  <p>This is not a phone design. Your ruling is desktop only, with Status and Today readable on a phone in later stages. Stage 1 only has to keep two things true on a narrow window. The menu opens from a button in the strip and sits on top of the page, with the touch sizes the navigation standard gives a phone (16 px rows, 44 px tall). A wide list becomes cards, as Organizations already does, and the page itself never moves sideways. The drawing is a 390-pixel phone.</p></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Below 900 px wide the menu column is hidden and a menu button appears at the left of the strip. It opens the same menu as a panel over the page, with a dim scrim, and the page behind keeps its place. Headings fold as on a desk, with the current group open. There is no Collapse row in the panel, because a panel closes instead. Today the menu collapses to a row of links at the top of the page.">S1 · RESTYLED · the menu as a panel</button>
+    <button class="tag" data-n="Organizations and the Founding season desk already turn their table into cards on a narrow window, and that is left as built. A table that cannot sensibly be cards (a comparison) scrolls inside its own card. Either way the page never gets a sideways scrollbar. This is the standing rule for every operator screen, and the layout check enforces it.">UNCHANGED · lists become cards</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="width:auto;border:0;background:transparent">
+    <div class="phones">
+      <div class="phone"><div class="pstrip"><span class="mb"><svg class="ic"><use href="#i-menu"/></svg></span><span class="grow"><span class="lk" style="font-size:16px"><svg class="mk2" viewBox="10 10 44 44" aria-hidden="true"><path d="M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z"/></svg><span class="nm2">FieldLogic<span class="hq">HQ</span></span></span></span><span class="mb"><span style="width:30px;height:30px;border-radius:999px;background:var(--ols);color:var(--ol);display:inline-flex;align-items:center;justify-content:center;font:700 12px/1 var(--font-body)">B</span></span></div>
+        <div class="pbody"><div class="ph"><h1>Organizations</h1><div class="end"><span class="help"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+          <div class="six"><div><span class="k">Total accounts</span><span class="v">30</span></div><div><span class="k">Past due</span><span class="v">0</span></div><div><span class="k">Active / trial</span><span class="v">27</span></div><div><span class="k">Founding</span><span class="v">5</span></div><div><span class="k">Free league</span><span class="v">1</span></div><div><span class="k">Empty orgs</span><span class="v">3</span></div></div>
+          <div data-fill="cards" style="display:grid;gap:10px"></div>
+          <span class="cap12">The list becomes cards, as Organizations already does at this width. The page never scrolls sideways.</span>
+        </div></div>
+      <div class="phone"><div class="pstrip"><span class="mb"><svg class="ic"><use href="#i-menu"/></svg></span><span class="grow"><span class="lk" style="font-size:16px"><svg class="mk2" viewBox="10 10 44 44" aria-hidden="true"><path d="M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z"/></svg><span class="nm2">FieldLogic<span class="hq">HQ</span></span></span></span></div>
+        <div class="pbody" style="opacity:.6"><div class="ph"><h1>Organizations</h1></div><div data-fill="cards" style="display:grid;gap:10px"></div></div>
+        <div class="scrim"></div>
+        <div class="drawer"><div class="dh"><span class="lk" style="font-size:16px"><svg class="mk2" viewBox="10 10 44 44" aria-hidden="true"><path d="M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z"/></svg><span class="nm2">FieldLogic<span class="hq">HQ</span></span></span><span class="mb">×</span></div><aside class="side" data-active="orgs" data-open="Customers"></aside></div>
+      </div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ═══════════ FORMATTING CHECK ═══════════ -->
+<section class="screen" id="fmt">
+  <div class="screen-head"><span class="n">FORMATTING CHECK</span><h2>The written rules, checked against the drawings</h2></div>
+  <div class="tbl"><table class="doc"><thead><tr><th>Rule</th><th>In these drawings</th></tr></thead><tbody>
+    <tr><td>Type ladder 10 · 11 · 12 · 14 · 16 · 20 · 24</td><td>Every size is on the ladder. The page title is 20, section headings 16, body 14, table heads 12 in the display face, figures 24, chips and captions 10 or 11.</td></tr>
+    <tr><td>Frame 960 reading, 1200 tables, centred</td><td>Every console list and form drawn is 1200. No console screen is a prose page; if one is found in the sweep it takes 960. The two Stage 2 screens are drawn at 1200 because both hold wide grids.</td></tr>
+    <tr><td>One lime per screen</td><td>Observability has Filter, Bulk operations has Review bulk operation, the sign-in has Sign in. Organizations, Plans &amp; pricing and the club record have none.</td></tr>
+    <tr><td>D1 heading above its card</td><td>Every section heading is above its card, with no caption over it.</td></tr>
+    <tr><td>D2 button tiers</td><td>White for every action, lime for the one main action, olive text for a door.</td></tr>
+    <tr><td>D3 faces</td><td>Body face for cell content, display face for table heads. The typewriter face is for codes (slugs, routes, a test price id), chips and the small capital labels over figures, as the 2026-10-19 lettering ruling keeps it. Figures and times are body face.</td></tr>
+    <tr><td>D5 choices</td><td>Observability's range and the plan window's Stripe mode are dropdowns. The account menu's Appearance row is the shared segmented control and is not changed.</td></tr>
+    <tr><td>Sentence case and one spelling</td><td>Every label, heading and button is in sentence case. Times read as 2:49 p.m. The words "organization" and "authorized" keep their current spelling.</td></tr>
+    <tr><td>Required marker</td><td>Reason and Change note carry the star. Optional fields carry nothing.</td></tr>
+    <tr><td>Title carries no count or subtitle</td><td>A count moves to the toolbar (Organizations) or is already a figure (Bulk operations). A snapshot line or a slug line becomes a small grey caption in the body.</td></tr>
+    <tr><td>A disabled button fades</td><td>Review bulk operation would fade at 0 selected. It is drawn enabled with three ticked.</td></tr>
+  </tbody></table></div>
+</section>
+
+<section class="screen" id="paste">
+  <div class="screen-head"><span class="n">PASTE-BACK</span><h2>Your answers, ready to paste into the chat</h2><p>Tick and type above. Your answers stay in this browser only. Copy them here when you are done.</p></div>
+  <div class="paste"><button class="btn-doc" type="button" id="make">Copy my answers</button><textarea id="out" aria-label="Your answers" readonly></textarea></div>
+</section>
+</div>
+
+<dialog id="note" aria-labelledby="note-h"><h3 id="note-h">Detail</h3><p id="note-b"></p><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+<dialog id="zoom" class="zoom" aria-label="Capture at full size"><div class="z"><img id="zoom-img" alt=""></div><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+<script>
+/* core: draw the strip, the menu and the table rows into each frame; the theme switch; tags; captures. */
+(function () {
+  var MENU = [
+    { g: "Command center", items: [["overview", "Overview", "grid"]] },
+    { g: "Customers", items: [["orgs", "Organizations", "clubs"], ["cu", "Customer users", "search"], ["retention", "Retention", "retention"]] },
+    { g: "Growth", items: [["early", "Early access", "mail"], ["email", "Email campaigns", "campaigns"], ["decks", "Pitch deck studio", "decks"]] },
+    { g: "Billing & product", items: [["founding", "Founding season", "spark"], ["approval", "Approval queue", "approval"], ["plans", "Plans & pricing", "plans"], ["bulk", "Bulk operations", "bulk"], ["templates", "Email templates", "templates"], ["export", "Export registry", "export"]] },
+    { g: "Support & diagnostics", items: [["obs", "Observability", "errors"], ["feedback", "Feedback", "feedback"]] },
+    { g: "Governance", items: [["users", "Platform users", "staff"], ["audit", "Audit log", "audit", true]] },
+    { g: "System", items: [["dev", "Dev tools", "terminal"]], extra: true },
+    { g: "Private finance", items: [["book", "Bookkeeping", "wallet"]] }
+  ];
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+  function ic(id) { return '<svg class="ic" aria-hidden="true"><use href="#i-' + id + '"/></svg>'; }
+  document.querySelectorAll("aside.side").forEach(function (side) {
+    var active = side.getAttribute("data-active"), open = (side.getAttribute("data-open") || "").replace(/&amp;/g, "&");
+    var extras = side.getAttribute("data-extras"), slim = side.classList.contains("slim"), h = "";
+    MENU.forEach(function (grp) {
+      if (grp.extra && !extras) return;
+      var has = grp.items.some(function (it) { return it[0] === active; });
+      var isOpen = open === "all" || open === grp.g || (has && open !== "none") || slim;
+      h += '<div class="grp"><div class="gl' + (isOpen ? "" : " folded") + (has ? " cur" : "") + '">' + esc(grp.g) + '<span class="cv">' + ic("down") + "</span></div>";
+      if (isOpen) grp.items.forEach(function (it) {
+        h += '<div class="it' + (it[0] === active ? " on" : "") + '">' + ic(it[2]) + '<span class="t">' + esc(it[1]) + "</span>" + (it[3] ? '<span class="eye">' + ic("eye") + "</span>" : "") + "</div>";
+      });
+      h += "</div>";
+    });
+    var inDrawer = !!side.closest(".drawer");
+    h += '<div class="foot"><div class="it">' + ic("help") + '<span class="t">Help</span></div>' + (inDrawer ? "" : '<div class="it">' + ic(slim ? "expand" : "collapse") + '<span class="t">' + (slim ? "Expand sidebar" : "Collapse sidebar") + "</span></div>") + "</div>";
+    side.innerHTML = h;
+  });
+  document.querySelectorAll("[data-strip]").forEach(function (st) {
+    st.className = "strip";
+    st.innerHTML = '<span class="lock"><span class="lk" style="font-size:16px"><svg class="mk2" viewBox="10 10 44 44" aria-hidden="true"><path d="M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z"/></svg><span class="nm2">FieldLogic<span class="hq">HQ</span></span></span></span><div class="mid"><span class="portal">Support console</span></div><div class="end"><span class="av">B</span></div>';
+  });
+
+  var ORGS = [
+    ["UAT Lakeshore Lynx", 1, "uat-rep-only", "Club", "Active", "", "Oct 23, 2026"],
+    ["FCHP Free Club", 0, "fchp-free-club", "Tournament", "Active", "", "Oct 14, 2026"],
+    ["FCHP Plus Club", 0, "fchp-plus-club", "Tournament Plus", "Active", "", "Oct 14, 2026"],
+    ["UAT Calendar Club", 1, "uat-calendar-club", "Club", "Active", "Empty", "Oct 7, 2026"],
+    ["UAT Rep Club", 1, "uat-rep-club", "Club", "Active", "", "Oct 7, 2026"],
+    ["UAT Standalone Team (No Metrics) Coaches Portal", 0, "uat-standalone-nodev", "Coaches Portal", "Active", "", "Sep 14, 2026"],
+    ["UAT Standalone Team Coaches Portal", 0, "uat-standalone", "Coaches Portal", "Active", "", "Sep 13, 2026"],
+    ["QA Families Fixture (throwaway)", 1, "qa-families-fixture", "Club", "Active", "", "Aug 17, 2026"],
+    ["QA Money Lab (throwaway)", 0, "qa-money-lab", "Club", "Active", "", "Aug 12, 2026"],
+    ["QA Cancel Lab (throwaway)", 0, "qa-cancel-lab", "Club", "Active", "", "Aug 6, 2026"],
+    ["Riverdale Ridge Baseball", 0, "riverdale-ridge", "Club", "Active", "", "Aug 4, 2026"],
+    ["Riverdale Minor Ball Association", 0, "riverdale-minor-ball", "Tournament Plus", "Active", "", "Aug 2, 2026"],
+    ["toronto blue jays5 Coaches Portal", 0, "toronto-blue-jays5-coaches-portal", "Coaches Portal", "Canceled", "", "Jun 26, 2026"],
+    ["Dev Club · Association Org", 0, "dev-club-assoc-org", "Club · Association", "Active", "Empty", "Jun 26, 2026"],
+    ["FP5 Cluster5 Test", 0, "fp5-c5-test", "Tournament Plus", "Active", "", "Jun 16, 2026"],
+    ["FP5 Draft Test", 0, "fp5-draft-test", "Tournament Plus", "Active", "", "Jun 16, 2026"],
+    ["FP5 Wizard Test", 0, "fp5-wizard-test", "Tournament", "Active", "Empty", "Jun 16, 2026"],
+    ["Test Minor Softball", 0, "test-minor-softball", "Tournament", "Active", "League starter|Founding", "Jun 12, 2026"],
+    ["Free Test Org", 0, "free-test-org", "Tournament", "Active", "", "Jun 12, 2026"],
+    ["Dev Club Org", 0, "dev-club-org", "Club · Association", "Active", "", "Jun 11, 2026"],
+    ["Dev League Org", 0, "dev-league-org", "League Plus", "Active", "", "Jun 11, 2026"],
+    ["UAT Club Org", 1, "uat-club-org", "Club", "Active", "", "Jun 9, 2026"],
+    ["Milton Softball Organization", 0, "milton-softball-organization", "Tournament Plus", "Active", "", "Jun 9, 2026"],
+    ["Dev Standalone Team", 0, "dev-standalone-team", "Coaches Portal", "Active", "Founding", "May 25, 2026"],
+    ["Dev Tournament+ Org", 0, "dev-tplus-org", "Tournament Plus", "Active", "Founding", "May 23, 2026"],
+    ["Webhook Smoke 957453 Team Workspace", 0, "webhook-smoke-957453-team-workspace", "Coaches Portal", "Canceled", "", "May 22, 2026"],
+    ["Webhook Smoke 258524 Team Workspace", 0, "webhook-smoke-258524-team-workspace", "Coaches Portal", "Canceled", "", "May 22, 2026"],
+    ["Dev Test Org", 0, "dev-test-org", "Tournament Plus", "Active", "Founding", "May 22, 2026"],
+    ["UAT Test Org", 1, "uat-test-org", "Tournament", "Active", "", "May 21, 2026"],
+    ["UAT Plus Org", 1, "uat-plus-org", "Tournament Plus", "Active", "Founding", "May 21, 2026"]
+  ];
+  function chips(c) { return c ? c.split("|").map(function (x) { return '<span class="chip' + (x === "Empty" ? " warn" : "") + '">' + x + "</span>"; }).join(" ") : ""; }
+  function fill(key, html) { document.querySelectorAll('[data-fill="' + key + '"]').forEach(function (n) { n.innerHTML = html; }); }
+  fill("orgs", ORGS.map(function (o) {
+    return '<tr><td><span class="nm">' + esc(o[0]) + "</span>" + (o[1] ? ' <span class="chip">Note</span>' : "") + '</td><td class="code">' + o[2] + "</td><td class=\"nw\">" + esc(o[3]) + '</td><td><span class="chip' + (o[4] === "Active" ? " ok" : "") + '">' + o[4] + "</span></td><td>" + chips(o[5]) + '</td><td class="ts">' + o[6] + '</td><td class="cv">›</td></tr>';
+  }).join(""));
+  fill("cards", ORGS.slice(0, 4).map(function (o) {
+    return '<div class="cardrow"><div class="top"><span class="nm">' + esc(o[0]) + '</span><span class="chip ok">' + o[4] + '</span></div><div class="meta"><span class="code">' + o[2] + "</span><span>" + esc(o[3]) + "</span></div></div>";
+  }).join(""));
+  fill("orgs-short", ORGS.slice(0, 6).map(function (o) {
+    return '<tr><td><span class="nm">' + esc(o[0]) + '</span></td><td class="code">' + o[2] + "</td><td>" + esc(o[3]) + '</td><td><span class="chip ok">' + o[4] + "</span></td></tr>";
+  }).join(""));
+  fill("bulk", ORGS.slice(0, 10).map(function (o, i) {
+    return '<tr class="cmf"><td><span class="chk' + (i === 1 || i === 2 || i === 9 ? " on" : "") + '"></span></td><td><span class="nm">' + esc(o[0]) + '</span><span class="sub code">' + o[2] + "</span></td><td>" + esc(o[3]) + '</td><td><span class="chip ok">' + o[4] + "</span></td></tr>";
+  }).join(""));
+
+  var ISSUES = [
+    ["warn", "ReferenceError @ /platform-admin/bookkeeping", "ReferenceError", "/platform-admin/bookkeeping", "3"],
+    ["error", "Error @ /[orgSlug]/admin/families/emails", "Error", "GET /[orgSlug]/admin/families/emails", "2"],
+    ["error", "Error @ /platform-admin/bookkeeping", "Error", "GET /platform-admin/bookkeeping", "1"],
+    ["warn", "ReferenceError @ /uat-rep-club/uat-rep-club-invitational-2026", "ReferenceError", "/uat-rep-club/uat-rep-club-invitational-2026", "1"],
+    ["error", "ReferenceError @ /[orgSlug]/[tournamentSlug]", "ReferenceError", "GET /[orgSlug]/[tournamentSlug]", "1"],
+    ["error", "Error @ /[orgSlug]/league/[seasonSlug]", "Error", "GET /[orgSlug]/league/[seasonSlug]", "14"],
+    ["error", "Error @ /dev/crash-test", "Error", "GET /dev/crash-test", "5"],
+    ["error", "Error @ /zz-s5-retry", "Error", "GET /zz-s5-retry", "3"],
+    ["bad", "Error @ /platform-admin/login", "Error", "GET /platform-admin/login", "1"],
+    ["bad", "Error @ /auth/login", "Error", "GET /auth/login", "5"],
+    ["error", "Error @ /[orgSlug]/admin/public-site/preview", "Error", "GET /[orgSlug]/admin/public-site/preview", "1"],
+    ["error", "Error @ /[orgSlug]/coaches/teams/[teamId]", "Error", "GET /[orgSlug]/coaches/teams/[teamId]", "1,544"],
+    ["error", "Error @ /[orgSlug]/coaches/teams/[teamId]/schedule", "Error", "GET /[orgSlug]/coaches/teams/[teamId]/schedule", "42"],
+    ["warn", "TypeError @ /uat-rep-club/admin/tournaments/registrations", "TypeError", "GET /uat-rep-club/admin/tournaments/registrations", "4"]
+  ];
+  var SEV = { warn: ["warn", "Warning"], error: ["bad", "Error"], bad: ["bad", "Critical"] };
+  fill("issues", ISSUES.map(function (r) {
+    return '<tr class="cmf"><td><span class="chip ' + SEV[r[0]][0] + '">' + SEV[r[0]][1] + '</span></td><td><span class="chip">Open</span></td><td><span class="nm">' + esc(r[1]) + '</span><span class="sub">' + r[2] + '</span></td><td class="code">' + esc(r[3]) + '</td><td class="r">' + r[4] + '</td><td class="r">0</td></tr>';
+  }).join(""));
+  var ROUTES = [["/dev/crash-test", 9], ["/[orgSlug]/league/[seasonSlug]", 8], ["/zz-s5-retry", 7], ["/platform-admin/bookkeeping", 4], ["/[orgSlug]/admin/families/emails", 2], ["/[orgSlug]/admin/public-site", 2]];
+  fill("routes", ROUTES.map(function (r) { return '<div class="b"><div class="h"><span class="code">' + esc(r[0]) + "</span><span>" + r[1] + '</span></div><div class="tr"><i style="width:' + Math.round(r[1] / 9 * 100) + '%"></i></div></div>'; }).join(""));
+  var PLANS = [
+    ["Tournament", "Live", "5 accounts", "Active 5", "Free", "No Stripe price", "1 slot / 3 seats", "0 trial / override", "None", "May 20, 2026"],
+    ["Coaches Portal", "Live", "6 accounts", "Active 3 / Canceled 3", "Live 0 of 2", "Test 2 of 2", "1 slot / 3 seats", "0 trial / defaults", "None", "May 22, 2026"],
+    ["Tournament Plus", "Live", "8 accounts", "Active 8", "Live 0 of 2", "Test 2 of 2", "9999 slots / 9999 seats", "14 trial / override", "None", "Jun 29, 2026"],
+    ["League Plus", "Early access", "1 account", "Active 1", "Live 0 of 2", "Test 2 of 2", "9999 slots / 9999 seats", "30 trial / override", "None", "Jun 29, 2026"],
+    ["Club", "Early access", "8 accounts", "Active 8", "Live 0 of 2", "Test 2 of 2", "9999 slots / 9999 seats", "90 trial / override", "None", "Sep 25, 2026"],
+    ["Club · Association", "Early access", "2 accounts", "Active 2", "Live 0 of 2", "Test 2 of 2", "9999 slots / 9999 seats", "90 trial / defaults", "None", "Jun 23, 2026"]
+  ];
+  fill("plans", PLANS.map(function (p) {
+    return '<tr class="cmf"><td><span class="nm">' + p[0] + '</span></td><td><span class="chip ' + (p[1] === "Live" ? "ok" : "warn") + '">' + p[1] + "</span></td><td>" + p[2] + '<span class="sub">' + p[3] + "</span></td><td>" + p[4] + '<span class="sub">' + p[5] + "</span></td><td>" + p[6] + '<span class="sub">' + p[7] + '</span></td><td class="none">' + p[8] + '</td><td class="ts">' + p[9] + '</td><td class="cv">›</td></tr>';
+  }).join(""));
+
+  /* the chart: one scale for both lines, labels name values the axis reaches */
+  var ch = document.querySelector("[data-chart]");
+  if (ch) {
+    var calls = [40, 18, 38, 40, 36, 256, 150, 74, 62, 46, 44, 52, 48, 40, 24, 22, 20, 26, 30, 70, 34, 22, 18, 24];
+    var errs = [0, 0, 0, 0, 0, 8, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0];
+    var L = 52, R = 1140, T = 12, B = 190, max = 256;
+    function X(i) { return L + i * (R - L) / (calls.length - 1); }
+    function Y(v) { return B - v * (B - T) / max; }
+    function line(a) { return a.map(function (v, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); }).join(" "); }
+    var g = "";
+    [0, 64, 128, 192, 256].forEach(function (v) { g += '<line x1="' + L + '" x2="' + R + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="var(--ln)"/><text x="' + (L - 8) + '" y="' + (Y(v) + 4) + '" text-anchor="end" fill="var(--i3)" font-size="11">' + v + "</text>"; });
+    ["14:51", "18:51", "22:51", "02:51", "06:51", "10:51"].forEach(function (t, k) { var i = k * (calls.length - 1) / 5; g += '<text x="' + X(i) + '" y="212" text-anchor="middle" fill="var(--i3)" font-size="11">' + t + "</text>"; });
+    g += '<path d="' + line(calls) + " L" + R + " " + B + " L" + L + " " + B + 'Z" fill="var(--ol)" opacity=".10"/>';
+    g += '<path d="' + line(calls) + '" fill="none" stroke="var(--ol)" stroke-width="2"/><path d="' + line(errs) + '" fill="none" stroke="var(--rd)" stroke-width="2"/>';
+    g += '<circle cx="' + X(23) + '" cy="' + Y(24) + '" r="3.5" fill="var(--ol)"/><text x="' + (X(5) + 8) + '" y="' + (Y(256) + 10) + '" fill="var(--i2)" font-size="11">256 calls</text>';
+    g += '<g font-size="11" fill="var(--i2)"><rect x="' + (R - 150) + '" y="0" width="10" height="3" fill="var(--ol)"/><text x="' + (R - 134) + '" y="5">Calls</text><rect x="' + (R - 80) + '" y="0" width="10" height="3" fill="var(--rd)"/><text x="' + (R - 64) + '" y="5">Errors</text></g>';
+    ch.innerHTML = g;
+  }
+
+  var frames = document.querySelectorAll("[data-frame]");
+  function theme(dark) {
+    frames.forEach(function (f) { f.classList.toggle("dark", dark); });
+    document.getElementById("sw-warm").setAttribute("aria-pressed", dark ? "false" : "true");
+    document.getElementById("sw-dark").setAttribute("aria-pressed", dark ? "true" : "false");
+    try { localStorage.setItem("pas1-frames", dark ? "dark" : "warm"); } catch (e) {}
+  }
+  document.getElementById("sw-warm").addEventListener("click", function () { theme(false); });
+  document.getElementById("sw-dark").addEventListener("click", function () { theme(true); });
+  try { if (localStorage.getItem("pas1-frames") === "dark") theme(true); } catch (e) {}
+  var note = document.getElementById("note"), zoom = document.getElementById("zoom");
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("button.tag");
+    if (t) { document.getElementById("note-h").textContent = t.textContent; document.getElementById("note-b").textContent = t.getAttribute("data-n"); note.showModal(); return; }
+    var s = e.target.closest("button.shot");
+    if (s) { var i = document.getElementById("zoom-img"); i.src = s.getAttribute("data-src"); i.alt = s.getAttribute("aria-label"); zoom.showModal(); return; }
+    if (e.target.closest("button.close")) { var d = e.target.closest("dialog"); if (d) d.close(); }
+  });
+  [note, zoom].forEach(function (d) { d.addEventListener("click", function (e) { if (e.target === d) d.close(); }); });
+})();
+</script>
+<script>
+/* answers: checkboxes + notes kept in this browser, and the paste-back */
+(function () {
+  var KEY = "pas1-answers-v1", state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  document.querySelectorAll(".ask").forEach(function (a) {
+    var q = a.getAttribute("data-q"); if (!q) return;
+    var s = state[q] || { o: [], n: "" };
+    a.querySelectorAll('input[type="checkbox"]').forEach(function (c) {
+      c.checked = s.o.indexOf(c.getAttribute("data-o")) >= 0;
+      c.addEventListener("change", function () {
+        var cur = state[q] || { o: [], n: "" }, v = c.getAttribute("data-o");
+        cur.o = cur.o.filter(function (x) { return x !== v; }); if (c.checked) cur.o.push(v);
+        state[q] = cur; save();
+      });
+    });
+    var ta = a.querySelector("textarea");
+    if (ta) { ta.value = s.n || ""; ta.addEventListener("input", function () { var cur = state[q] || { o: [], n: "" }; cur.n = ta.value; state[q] = cur; save(); }); }
+  });
+  document.getElementById("make").addEventListener("click", function () {
+    var lines = ["Support console stage 1 drawings: my answers"];
+    document.querySelectorAll(".ask").forEach(function (a) {
+      var q = a.getAttribute("data-q"); if (!q) return;
+      var title = a.querySelector(".q").textContent;
+      var picked = []; a.querySelectorAll('input[type="checkbox"]').forEach(function (c) { if (c.checked) picked.push(c.getAttribute("data-o")); });
+      var n = (a.querySelector("textarea") || {}).value || "";
+      lines.push("", title, picked.length ? "  Picked: " + picked.join(" | ") : "  Picked: (nothing)");
+      if (n.trim()) lines.push("  Notes: " + n.trim());
+    });
+    var out = document.getElementById("out"); out.value = lines.join("\n");
+    var done = function () { document.getElementById("make").textContent = "Copied"; setTimeout(function () { document.getElementById("make").textContent = "Copy my answers"; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>
