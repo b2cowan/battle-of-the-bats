@@ -25,55 +25,14 @@
   margin: 0 auto;
 }
 
-/* ── Season card grid ─────────────────────────────────────────────────────── */
-.seasonGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.75rem;
-}
-
-.seasonCard {
-  padding: 1.25rem 1.5rem;
-  border-radius: 2px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  transition: border-color 0.15s;
-}
-.seasonCard:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.35);
-}
-
-.seasonCardTop {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.seasonCardMeta {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.6rem;
-}
+/* ⚰ The home's season cards (.seasonGrid, .seasonCard*, .seasonStats) — retired with the home's move to the kit
+   (Club Tier Stage 9a, Part 3: grouped rows, components/admin/kit/club/HouseLeagueHome.module.css). */
 
 .seasonName {
   font-size: 1rem;
   font-weight: 700;
   color: var(--white-90);
   line-height: 1.3;
-}
-
-.seasonStats {
-  display: flex;
-  gap: 1.25rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
 }
 
 .statItem {
@@ -93,15 +52,6 @@
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--white-80);
-}
-
-.seasonCardActions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-top: auto;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255,255,255,0.06);
 }
 
 /* ── Status badges ────────────────────────────────────────────────────────── */
@@ -1190,17 +1140,14 @@
 :global([data-admin-kit]) .accessDenied h2 { color: var(--text-secondary); }
 
 /* ── Cards: seasons, divisions, the season's own panel → the kit card ── */
-:global([data-admin-kit]) .seasonCard,
 :global([data-admin-kit]) .divisionCard,
 :global([data-admin-kit]) .seasonHeader {
   background: var(--card-bg);
   border: 1px solid var(--home-line);
   border-radius: 8px;
 }
-:global([data-admin-kit]) .seasonCard:hover { border-color: var(--home-line-strong); }
 :global([data-admin-kit]) .seasonName,
 :global([data-admin-kit]) .divisionName { color: var(--text-primary); }
-:global([data-admin-kit]) .seasonCardActions,
 :global([data-admin-kit]) .seasonDates { border-top-color: var(--home-line); }
 :global([data-admin-kit]) .divisionLinks { border-top-color: var(--home-line); }
 

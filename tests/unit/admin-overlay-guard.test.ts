@@ -76,7 +76,6 @@ const LAYERS: Record<string, { file: string; selector?: string; inline?: true }>
  * none. ⚠ Adding a file here is the decision — a FORM names its layer; a MENU says what it does instead of taking input.
  */
 const WINDOWS: Record<string, { layers: string[] } | { notAForm: string }> = {
-  'app/[orgSlug]/admin/house-league/page.tsx': { layers: ['houseLeague'] },
   'app/[orgSlug]/admin/house-league/seasons/[seasonId]/page.tsx': { layers: ['houseLeague'] },
   'app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx': { layers: ['houseLeague'] },
   'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx': { layers: ['houseLeague'] },

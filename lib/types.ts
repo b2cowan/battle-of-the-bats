@@ -1096,6 +1096,10 @@ export interface LeagueSeasonSummary {
   waitlistCount: number;
   pendingReviewCount: number;
   teamCount: number;
+  /** The divisions' spots added up; null when a division has no size (or there are none) — the home then counts players. */
+  spotCount: number | null;
+  /** Active registrations whose fee is above $0 and not marked received (the status windows' loose end; 0 on a free season). */
+  unpaidFeeCount: number;
 }
 
 // ── Rep Teams Module ──────────────────────────────────────────────────────────

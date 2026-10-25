@@ -3,11 +3,7 @@
     "kitScope": 11
   },
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
-    "kitScope": 126
-  },
-  "app/[orgSlug]/admin/house-league/page.tsx": {
-    "kx": 1,
-    "helpers": 2
+    "kitScope": 123
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx": {
     "useAdminKit": 1,

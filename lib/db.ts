@@ -2963,6 +2963,8 @@ export async function getLeagueSeasonSummary(season: LeagueSeason): Promise<Leag
     getTeamsForSeason(season.id),
     getRegistrationsForSeason(season.id),
   ]);
+  const sized = divisions.length > 0 && divisions.every(d => typeof d.capacity === 'number' && d.capacity > 0);
+  const fee = season.registrationFee ?? 0;
   return {
     season,
     divisionCount:           divisions.length,
@@ -2970,6 +2972,8 @@ export async function getLeagueSeasonSummary(season: LeagueSeason): Promise<Leag
     waitlistCount:           regs.filter(r => r.status === 'waitlisted').length,
     pendingReviewCount:      regs.filter(r => r.status === 'pending_review').length,
     teamCount:               teams.length,
+    spotCount:               sized ? divisions.reduce((n, d) => n + (d.capacity ?? 0), 0) : null,
+    unpaidFeeCount:          fee > 0 ? regs.filter(r => r.status === 'active' && !r.registrationFeePaid).length : 0,
   };
 }
 

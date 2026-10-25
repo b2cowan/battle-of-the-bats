@@ -1,0 +1,58 @@
+/* House league's home (Club Tier Stage 9a, Part 3; frame A). The groups are the kit's sections; the Past seasons shelf
+   is a section whose heading is the fold. */
+
+/* A row's title: the season's name, then its pill, kept on one line where it fits and wrapping cleanly where not. */
+.rowTitle { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.5rem; }
+
+/* The row's second line, said only when it has something true to say (copy §1). */
+.note { display: block; margin-top: 0.15rem; color: var(--text-secondary); }
+
+/* Running now with nothing in it: the page keeps its anchor. */
+.empty { margin: 0; padding: 0.25rem 1.1rem 1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* Past seasons: a closed shelf at the bottom (9a·1), the section's shape with the heading as its toggle. */
+.shelf {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  margin: 0 0 0.75rem;
+  min-width: 0;
+}
+.shelfToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  padding: 0.6rem 1.1rem;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  border-radius: 8px;
+}
+.shelfToggle:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.shelfTitle {
+  margin: 0;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+.shelfCount {
+  min-width: 1.4rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--home-line-strong);
+  font-family: var(--font-data); /* type-ok: readout */
+  font-size: var(--type-label);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.shelfChevron { margin-left: auto; color: var(--text-tertiary); transition: transform 0.2s ease; }
+.shelfChevronOpen { transform: rotate(90deg); }
