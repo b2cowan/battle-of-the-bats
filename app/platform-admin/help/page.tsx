@@ -96,7 +96,7 @@ export default function PlatformAdminHelpPage() {
       title: 'Product Operator',
       steps: [
         { label: 'Triage feedback and find related error groups', href: '/platform-admin/help/platform-admin#feedback-triage' },
-        { label: 'Review and action the Approval Queue', href: '/platform-admin/help/platform-admin#change-requests' },
+        { label: 'Review and action the approval queue', href: '/platform-admin/help/platform-admin#change-requests' },
         { label: 'Edit an email template safely', href: '/platform-admin/help/platform-admin#email-templates' },
         { label: 'Send a batch marketing email', href: '/platform-admin/help/platform-admin#email-batch-send' },
         { label: 'Work with plans, pricing, and the feature matrix', href: '/platform-admin/help/platform-admin#plans-pricing' },

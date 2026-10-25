@@ -1,7 +1,9 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { RefreshCw, ArrowRight, AlertTriangle } from 'lucide-react';
+import { RefreshCw, AlertTriangle } from 'lucide-react';
 import type { ExportCatalogEntry } from '@/lib/export';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import kit from '../console.module.css';
 import styles from './exports.module.css';
 
 /** The module names a person uses, in the order the product is usually talked about. */
@@ -66,77 +68,83 @@ export default function ExportRegistryClient({ entries }: { entries: readonly Ex
     .filter(g => g.rows.length > 0), [shown]);
 
   return (
-    <div className={styles.page}>
-      <header className={styles.head}>
-        <p className={styles.crumb}>Billing &amp; Product</p>
-        <h1 className={styles.h1}>Export Registry</h1>
-        <p className={styles.lede}>
-          Every way data leaves FieldLogicHQ — what it is, who can take it, which plan it needs, and
-          whether the product can read it back. Generated from the code and proven against it on
-          every build.
-        </p>
-      </header>
+    <div className={kit.page}>
+      <AdminPageHeader title="Export registry" />
 
-      <div className={styles.stats}>
-        <div className={styles.stat}><b>{counts.total}</b><span>Export surfaces</span></div>
-        <div className={styles.stat}><b className={styles.plain}>{counts.live}</b><span>Live today</span></div>
-        <div className={styles.stat}><b className={styles.plain}>{counts.none}</b><span>Deliberately none</span></div>
-        <div className={styles.stat}><b className={styles.trip}>{counts.trips}</b><span>Round trips</span></div>
-        <div className={styles.stat}><b className={styles.gated}>{counts.gated}</b><span>Plan-gated</span></div>
-      </div>
+      <p className={kit.caption}>
+        Every way data leaves FieldLogicHQ — what it is, who can take it, which plan it needs, and
+        whether the product can read it back. Generated from the code and proven against it on
+        every build.
+      </p>
 
-      <div className={styles.controls}>
-        <input
-          className={styles.search}
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Search a surface, module or format…"
-          aria-label="Search exports"
-        />
-        <button
-          type="button"
-          className={`${styles.chip} ${module === 'all' ? styles.chipOn : ''}`}
-          aria-pressed={module === 'all'}
-          onClick={() => setModule('all')}
-        >All modules</button>
-        {MODULES.map(m => (
-          <button
-            key={m.id}
-            type="button"
-            className={`${styles.chip} ${module === m.id ? styles.chipOn : ''}`}
-            aria-pressed={module === m.id}
-            onClick={() => setModule(m.id)}
-          >{m.label}</button>
-        ))}
-        <button
-          type="button"
-          className={`${styles.chip} ${tripsOnly ? styles.chipTrip : ''}`}
-          aria-pressed={tripsOnly}
-          onClick={() => setTripsOnly(v => !v)}
-        >
-          <RefreshCw size={11} aria-hidden /> Round trips
-        </button>
-      </div>
-
-      {shown.length === 0 ? (
-        <p className={styles.empty}>No export matches that. Try a different word, or clear the filters.</p>
-      ) : (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Surface</th><th>Who</th><th>Formats</th><th>Plan</th>
-                <th>Round trip</th><th>State</th>
-              </tr>
-            </thead>
-            <tbody>
-              {grouped.map(group => (
-                <ExportGroup key={group.id} label={group.label} rows={group.rows} />
-              ))}
-            </tbody>
-          </table>
+      <section className={kit.band} aria-label="Export registry totals">
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Export surfaces</span>
+          <strong className={kit.bandValue}>{counts.total}</strong>
         </div>
-      )}
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Live today</span>
+          <strong className={kit.bandValue}>{counts.live}</strong>
+        </div>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Deliberately none</span>
+          <strong className={kit.bandValue}>{counts.none}</strong>
+        </div>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Round trips</span>
+          <strong className={kit.bandValue}>{counts.trips}</strong>
+        </div>
+        <div className={`${kit.bandCell} ${counts.gated > 0 ? kit.bandWarn : ''}`}>
+          <span className={kit.bandLabel}>Plan-gated</span>
+          <strong className={kit.bandValue}>{counts.gated}</strong>
+        </div>
+      </section>
+
+      <div className={kit.card}>
+        <div className={kit.toolbar}>
+          <input
+            type="search"
+            className={`${kit.search} ${styles.searchField}`}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search a surface, module or format…"
+            aria-label="Search exports"
+          />
+          <select
+            className={kit.select}
+            aria-label="Module"
+            value={module}
+            onChange={e => setModule(e.target.value as ExportCatalogEntry['module'] | 'all')}
+          >
+            <option value="all">All modules</option>
+            {MODULES.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+          </select>
+          <label className={kit.check}>
+            <input type="checkbox" checked={tripsOnly} onChange={e => setTripsOnly(e.target.checked)} />
+            Round trips
+          </label>
+        </div>
+
+        {shown.length === 0 ? (
+          <p className={kit.empty}>No export matches that. Try a different word, or clear the filters.</p>
+        ) : (
+          <div className={kit.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Surface</th><th>Who</th><th>Formats</th><th>Plan</th>
+                  <th>Round trip</th><th>State</th>
+                </tr>
+              </thead>
+              <tbody className={kit.comfortable}>
+                {grouped.map(group => (
+                  <ExportGroup key={group.id} label={group.label} rows={group.rows} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       <p className={styles.legend}>
         <span><RefreshCw size={11} aria-hidden className={styles.tripInk} /> the product reads this file back</span>
@@ -144,7 +152,7 @@ export default function ExportRegistryClient({ entries }: { entries: readonly Ex
         <span>— one-way</span>
       </p>
 
-      <p className={styles.foot}>
+      <p className={kit.caption}>
         Showing {shown.length} of {entries.length}. A screen cannot gain an export without gaining a
         row here — the build refuses it.
       </p>
@@ -168,42 +176,43 @@ function ExportRow({ entry: e }: { entry: ExportCatalogEntry }) {
     <tr>
       <td>
         <span className={styles.surface}>{e.label}</span>
-        <span className={styles.where}>{e.page}</span>
+        <span className={kit.sub}>{e.page}</span>
       </td>
-      <td className={styles.who}>{e.audiences.map(a => AUDIENCE_LABEL[a] ?? a).join(' · ')}</td>
+      <td>{e.audiences.map(a => AUDIENCE_LABEL[a] ?? a).join(' · ')}</td>
       <td>
         <span className={styles.fmts}>
           {e.formats.map(f => (
-            <span key={f} className={`${styles.fmt} ${f === 'pdf' ? styles.fmtPdf : ''}`}>
+            <span key={f} className={`${kit.chip} ${f === 'pdf' ? kit.chipWarn : ''}`}>
               {f.toUpperCase()}
             </span>
           ))}
         </span>
       </td>
-      <td className={`${styles.plan} ${e.minPlan ? styles.planGated : ''}`}>
+      <td className={`${kit.nowrap} ${e.minPlan ? styles.planGated : kit.muted}`}>
         {e.minPlan ? PLAN_LABEL[e.minPlan] ?? e.minPlan : 'No plan gate'}
       </td>
       <td>
         {/* Three states, and the middle one is the reason this column is worth a page. A file that
             LOOKS re-importable is more dangerous than one that plainly is not. */}
         {e.roundTrip ? (
-          <span className={`${styles.rt} ${styles.rtYes}`}>
+          <span className={`${kit.chip} ${kit.chipInfo}`}>
             <RefreshCw size={11} aria-hidden /> Yes
           </span>
         ) : e.roundTripCaveat ? (
-          <span className={`${styles.rt} ${styles.rtRisk}`} title={e.roundTripCaveat}>
+          <span className={`${kit.chip} ${kit.chipWarn}`} title={e.roundTripCaveat}>
             <AlertTriangle size={11} aria-hidden /> By coincidence
           </span>
         ) : (
-          <span className={styles.rt}>—</span>
+          <span className={kit.muted}>—</span>
         )}
       </td>
       <td>
         {absent
-          ? <span className={`${styles.state} ${styles.stateNone}`}>
-              Deliberately none<span className={styles.reason}>{absent}</span>
-            </span>
-          : <span className={styles.state}>Live</span>}
+          ? <>
+              <span className={`${kit.chip} ${kit.chipQuiet}`}>Deliberately none</span>
+              <span className={styles.reason}>{absent}</span>
+            </>
+          : <span className={`${kit.chip} ${kit.chipOk}`}>Live</span>}
       </td>
     </tr>
     {/* ⚠ THE CAVEAT IS WRITTEN OUT, NOT LEFT IN A TOOLTIP. It is the whole reason the "by

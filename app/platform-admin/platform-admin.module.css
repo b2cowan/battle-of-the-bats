@@ -1,271 +1,154 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE SUPPORT CONSOLE'S SHELL (Support console Stage 1, owner 2026-10-24 — F1: the dark console and its three written
+   exceptions retire; the console takes the admin kit, the one Warm / Dark setting and the navigation standard).
+
+   The shell is the club admin's, value for value: the strip is the coach strip's skin (`CoachTopStrip.module.css`),
+   the rail is `AdminKitFrame.module.css`'s, and the ground is the kit's page tone. Nothing here is a literal colour —
+   every value is a portal token, so Warm and Dark both come from the palette in `app/globals.css`.
+
+   ⚠ Written as PLAIN rules, never `[data-admin-kit] …`: the old-look gate (`check:old-look`) refuses a `[data-admin-kit]`
+   selector in a file outside its baseline, and the console is not in it. The marker on the layout is what turns the
+   palette on; these rules read the tokens it remaps.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
 .shell {
+  /* The same two variables the club admin's shell declares, read by the shared rail's skin (`.rail` sizes and pins itself
+     by them). ONE declaration each; the strip's 64 when the person collapsed the sidebar. */
+  --admin-topstrip-h: var(--chrome-bar-h);
+  --admin-rail-w: 240px;
+  /* The fixed strip covers the top of the window, so a sticky bar (the help guide's way back and contents, a detail panel)
+     sticks BELOW it: the shared help sheet reads this (0 elsewhere). */
+  --help-sticky-top: var(--chrome-bar-h);
   display: flex;
   min-height: 100vh;
+  padding-top: var(--admin-topstrip-h);
   background: var(--pitch-black);
+  /* The one hover tint for a console row that OPENS (`kit.clickableRow`, read in `console.module.css`). A token, so a console
+     module reads one value. It follows the accent: lime on Dark, olive on Warm. */
+  --pa-row-hover: rgba(var(--logic-lime-rgb), 0.06);
+}
+@media (min-width: 901px) {
+  :global(html[data-sidebar='strip']) .shell { --admin-rail-w: 64px; }
+  /* The collapsed menu is a column of icon tiles: the view-only eye has no room beside an icon (the row's title still says why). */
+  :global(html[data-sidebar='strip']) .navViewOnly { display: none; }
+}
+@media (max-width: 900px) {
+  /* The strip stays on a narrow window (it carries the menu button); the rail is replaced by the panel. */
+  .shell { flex-direction: column; }
 }
 
-/* ⚠ ONE TABLE RECIPE FOR THE CONSOLE (app-wide table standard, owner-approved 2026-09-06;
-   register K-10 / F-05 / F-06). Fourteen modules each restated a copy of one recipe — headings at
-   0.55rem (8.8px, the smallest text in the product), padding drifting from 0.45 to 0.85rem, four
-   hover tints, and body sizes that were never applied because the global cell rule beat them.
-   The global baseline now owns size, tracking, case, ink, rule and density; the console keeps
-   exactly one thing of its own, its data face (K-10 — shell identity, decided with `btn-data` on
-   2026-05-24), stated once here. Hover belongs to a row that opens (`.clickableRow`, `.rowLink`),
-   never to every row. */
-.shell table { font-family: var(--font-data); }
-/* The one hover tint for a console row that OPENS (`.clickableRow`, `.rowLink`, the plan rows).
-   A token, not a literal in five modules — that is how the console reached four hover tints. */
-.shell { --pa-row-hover: rgba(var(--logic-lime-rgb), 0.06); }
-
-.sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  position: sticky;
+/* ── The top strip ── The coach strip's skin (`CoachTopStrip.module.css`), as its own class: that module hides its strip
+   below 900, where the club admin's bottom bar takes over, and the console has no bottom bar — a narrow window keeps
+   this strip so the menu button stays reachable. */
+.strip {
+  position: fixed;
   top: 0;
-  align-self: flex-start;
-  max-height: 100vh;
-  border-right: 1px solid rgba(var(--logic-lime-rgb), 0.25);
-  background: rgba(5, 10, 5, 0.6);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-}
-
-.sidebarHeader {
-  padding: 1.5rem 1.25rem 1.25rem;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.15);
-}
-
-.platformBadge {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.platformSub {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--data-gray);
-  margin-top: 0.25rem;
-}
-
-.nav {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  padding: 1rem 0.75rem;
-}
-
-.navGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.navGroupLabel {
-  font-family: var(--font-data);
-  font-size: 0.48rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.45);
-  padding: 0 0.75rem 0.18rem;
-}
-
-.navLink {
+  left: 0;
+  right: 0;
+  height: var(--chrome-bar-h);
+  z-index: 80;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.75rem;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  text-decoration: none;
-  border: 1px solid transparent;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  gap: 0.9rem;
+  padding: 0 1rem 0 1.25rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--home-line);
+}
+/* The menu button: narrow windows only (the rail is the menu above 900). 44 wide, the touch floor. */
+.menuBtn,
+.drawerClose {
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.menuBtn:hover,
+.drawerClose:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.menuBtn { display: none; margin-left: -0.75rem; }
+.drawerClose { display: inline-flex; }
+.menuBtn:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+@media (max-width: 900px) {
+  .menuBtn { display: inline-flex; }
 }
 
-.navLink:hover {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.25);
-  background: rgba(var(--logic-lime-rgb), 0.04);
+/* ── The page ── The kit's ground (the page tone with its quiet 40px grid), the way `.adminMain.adminMainKit` paints it. */
+.main {
+  flex: 1;
+  min-width: 0;
+  background: var(--pitch-black);
+  background-image:
+    linear-gradient(to right, rgba(var(--blueprint-blue-rgb), 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--blueprint-blue-rgb), 0.07) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+/* The frame (the table standard's page widths): the shell centres a 1200 column and pads it; a reading page sets its own
+   960 inside it (`.page { max-width: 960px; margin-inline: auto }`, as the club admin's do). */
+.mainPad {
+  padding: 2rem;
+}
+.content {
+  max-width: 1200px;
+  margin-inline: auto;
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .mainPad { padding: 1rem; }
 }
 
-.navLinkActive,
-.navLinkActive:hover {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-}
-
+/* A role that can read an area but not edit it: the small eye after its menu row (hover says why). */
 .navViewOnly {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  color: var(--white-35, rgba(255, 255, 255, 0.35));
+  color: var(--text-tertiary);
+  opacity: 0.7;
 }
 
-.sidebarFooter {
-  padding: 1rem 1.25rem 1.5rem;
-  border-top: 1px solid rgba(var(--logic-lime-rgb), 0.15);
+/* ── The narrow-width panel ── The same menu as a panel over the page (a menu sits on top of the page it opens over —
+   the drawer-layer ruling). Below 900 only; a scrim dims the page, which keeps its place. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.45);
 }
-
-.sessionLabel {
-  font-family: var(--font-data);
-  font-size: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.5);
-  margin-bottom: 0.3rem;
+.drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 91;
+  width: min(290px, 86vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--card-bg);
+  border-right: 1px solid var(--home-line);
 }
-
-.sessionEmail {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  color: var(--data-gray);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-bottom: 0.75rem;
-}
-
-.signOutBtn {
+.drawerHead {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  background: none;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.15);
-  padding: 0.35rem 0.6rem;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  cursor: pointer;
-  width: 100%;
-  transition: color 0.15s, border-color 0.15s;
+  justify-content: space-between;
+  height: var(--chrome-bar-h);
+  padding: 0 0.25rem 0 1.25rem;
+  border-bottom: 1px solid var(--home-line);
+  flex-shrink: 0;
 }
-
-.signOutBtn:hover {
-  color: var(--fl-text);
-  border-color: rgba(var(--logic-lime-rgb), 0.35);
-}
-
-.main {
+.drawerScroll {
   flex: 1;
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0 1rem;
   overflow-y: auto;
-  min-width: 0;
-  background: var(--pitch-black);
-  background-image:
-    linear-gradient(to right, rgba(var(--logic-lime-rgb), 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(var(--logic-lime-rgb), 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
 }
-
-.helpMain {
-  min-height: 100vh;
-  width: 100%;
-}
-
-@media (max-width: 920px) {
-  .shell {
-    display: block;
-  }
-
-  .sidebar {
-    position: static;
-    width: 100%;
-    max-height: none;
-    border-right: 0;
-    border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.25);
-    overflow: visible;
-  }
-
-  .sidebarHeader,
-  .sidebarFooter {
-    padding: 0.9rem 1rem;
-  }
-
-  .nav {
-    display: flex;
-    flex-direction: row;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-  }
-
-  .navGroup {
-    min-width: max-content;
-    scroll-snap-align: start;
-  }
-
-  .navGroupLabel {
-    padding: 0 0.4rem 0.2rem;
-  }
-
-  .navLink {
-    min-height: 2.35rem;
-    padding: 0.5rem 0.65rem;
-    white-space: nowrap;
-  }
-
-  .sidebarFooter {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.25rem 0.75rem;
-    align-items: center;
-  }
-
-  .sessionLabel {
-    grid-column: 1 / -1;
-    margin-bottom: 0;
-  }
-
-  .sessionEmail {
-    margin-bottom: 0;
-  }
-
-  .signOutBtn {
-    width: auto;
-    min-height: 2.2rem;
-  }
-
-  .main {
-    padding: 1rem;
-    overflow-y: visible;
-  }
-
-  .helpMain {
-    min-height: 100vh;
-  }
-}
-
-@media (max-width: 560px) {
-  .sidebarHeader {
-    padding-bottom: 0.75rem;
-  }
-
-  .nav {
-    padding-inline: 0.75rem;
-  }
-
-  .sidebarFooter {
-    grid-template-columns: 1fr;
-  }
-
-  .signOutBtn {
-    width: 100%;
-    justify-content: center;
-  }
+/* A phone's rows are for thumbs (nav standard N1): 16px type, 44px tall (the icons are 17px, set where they are drawn). The nav
+   body puts this class on its rows when it draws the panel. */
+.drawerRow { min-height: var(--tap-min, 44px); }
+a.drawerRow { font-size: 1rem; }
+@media (min-width: 901px) {
+  .scrim, .drawer { display: none; }
 }

@@ -1,8 +1,5 @@
-/* Matches the observability StatusControls .readOnlyNote so the least-privilege
-   message is visually uniform across every platform-admin surface. */
+/* The least-privilege note, one look on every platform-admin surface (matches the "View-only for your role" hint). */
 .note {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  color: var(--data-gray);
-  font-style: italic;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
 }

@@ -1,11 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { Loader, ArrowLeft, Send, RotateCcw, Check, Undo2, X } from 'lucide-react';
+import { Loader, Send, RotateCcw, Check, Undo2, X } from 'lucide-react';
 import { renderHeadingAndBody } from '@/lib/email-markup';
 import { warmEmailBody } from '@/lib/email-envelope-warm';
 import { familyTemplateSample } from '@/lib/email-family-template-sample';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import kit from '../../console.module.css';
 import styles from '../email-templates.module.css';
 
 type Template = {
@@ -179,9 +180,9 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
 
   // ── Render ────────────────────────────────────────────────────────────────────
 
-  if (loading) return <p className={styles.loadingMsg}>Loading template…</p>;
-  if (loadErr) return <p className={styles.errorMsg}>Error: {loadErr}</p>;
-  if (!tmpl)   return <p className={styles.errorMsg}>Template not found.</p>;
+  if (loading) return <p className={kit.notice}>Loading template…</p>;
+  if (loadErr) return <p className={`${kit.notice} ${kit.noticeBad}`}>Error: {loadErr}</p>;
+  if (!tmpl)   return <p className={`${kit.notice} ${kit.noticeBad}`}>Template not found.</p>;
 
   const isBusy = saving || resetting || testing;
   const preview = buildPreviewHtml({ key: templateKey, heading, body, cta_label: ctaLabel || null });
@@ -192,78 +193,86 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
     (ctaLabel || '') !== (tmpl.cta_label ?? '');
 
   return (
-    <div className={styles.editorPage}>
-      <div className={styles.editorHeader}>
-        <Link href="/platform-admin/email-templates" className={styles.backLink}>
-          <ArrowLeft size={11} />
-          Email Templates
-        </Link>
-        <h1 className={styles.editorTitle}>{tmpl.label}</h1>
-        <p className={styles.editorDesc}>{tmpl.description}</p>
-        <div className={styles.editorMeta}>
-          <span className={styles.keyChip}>{tmpl.key}</span>
-          {tmpl.is_customised ? (
-            <span className={styles.badgeCustomised}>Customised</span>
-          ) : (
-            <span className={styles.badgeDefault}>Default</span>
-          )}
-          {tmpl.updated_by && (
-            <span style={{ fontSize: '0.62rem', color: 'rgba(241,245,249,0.3)' }}>
-              last updated by {tmpl.updated_by}
-            </span>
-          )}
-        </div>
-      </div>
+    <div className={kit.page}>
+      <AdminPageHeader
+        backTo={{ href: '/platform-admin/email-templates', label: 'Email templates' }}
+        title={tmpl.label}
+        titleChips={
+          <>
+            <span className={`${kit.chip} ${kit.chipQuiet}`}>{tmpl.key}</span>
+            {tmpl.is_customised ? (
+              <span className={`${kit.chip} ${kit.chipOk}`}>Customised</span>
+            ) : (
+              <span className={`${kit.chip} ${kit.chipQuiet}`}>Default</span>
+            )}
+          </>
+        }
+      />
+
+      <p className={kit.caption}>
+        {tmpl.description}
+        {tmpl.updated_by && <> · last updated by {tmpl.updated_by}</>}
+      </p>
 
       {tmpl.is_customised ? (
-        <div className={styles.customisedNote}>
-          <strong>Customised</strong> — the copy below is your saved edit and overrides the original.
-          &ldquo;Reset to default&rdquo; puts the original copy back.
+        <div className={`${kit.callout} ${kit.calloutWarn}`}>
+          <span>
+            <strong>Customised</strong> — the copy below is your saved edit and overrides the original.
+            &ldquo;Reset to default&rdquo; puts the original copy back.
+          </span>
         </div>
       ) : (
-        <div className={styles.defaultNote}>
-          <strong>Default</strong> — this is the original built-in copy. Edit and <strong>Save</strong> to
-          override it (it becomes &ldquo;Customised&rdquo;); you can reset to this original at any time.
+        <div className={kit.callout}>
+          <span>
+            <strong>Default</strong> — this is the original built-in copy. Edit and <strong>Save</strong> to
+            override it (it becomes &ldquo;Customised&rdquo;); you can reset to this original at any time.
+          </span>
         </div>
       )}
 
       <div className={styles.split}>
         {/* ── Form ───────────────────────────────────────────────────────────── */}
-        <div className={styles.formPanel}>
+        <div className={`${kit.card} ${kit.cardPad} ${styles.formPanel}`}>
 
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Subject line</label>
+          <div className={kit.fieldGroup}>
+            <label className={kit.label} htmlFor="email-template-subject">Subject line<span className={kit.req} aria-hidden="true"> *</span></label>
             <input
-              className={styles.input}
+              id="email-template-subject"
+              className={`${kit.field} ${styles.full}`}
               value={subject}
               onChange={e => setSubject(e.target.value)}
               placeholder="Email subject…"
+              required
             />
           </div>
 
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Heading</label>
+          <div className={kit.fieldGroup}>
+            <label className={kit.label} htmlFor="email-template-heading">Heading<span className={kit.req} aria-hidden="true"> *</span></label>
             <input
-              className={styles.input}
+              id="email-template-heading"
+              className={`${kit.field} ${styles.full}`}
               value={heading}
               onChange={e => setHeading(e.target.value)}
               placeholder="Email heading…"
+              required
             />
           </div>
 
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Body</label>
-            <span className={styles.fieldHint}>
-              Blank line = new paragraph · **bold** · <code>- </code>bullet · <code>::callout Label</code> … <code>::end</code> box
-              · <code>::button Label | {'{{url}}'}</code> · <code>::link Label | {'{{url}}'}</code>. Use the chips to insert variables.
+          <div className={kit.fieldGroup}>
+            <label className={kit.label} htmlFor="email-template-body">Body<span className={kit.req} aria-hidden="true"> *</span></label>
+            <span className={kit.hint}>
+              Blank line = new paragraph · **bold** · <code className={kit.code}>- </code>bullet · <code className={kit.code}>::callout Label</code> … <code className={kit.code}>::end</code> box
+              · <code className={kit.code}>::button Label | {'{{url}}'}</code> · <code className={kit.code}>::link Label | {'{{url}}'}</code>. Use the chips to insert variables.
             </span>
             <textarea
+              id="email-template-body"
               ref={bodyRef}
-              className={styles.textarea}
+              className={kit.textarea}
               value={body}
               onChange={e => setBody(e.target.value)}
               placeholder="Email body text…"
               rows={10}
+              required
             />
             {tmpl.variables.length > 0 && (
               <div className={styles.varChips}>
@@ -282,62 +291,70 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
             )}
           </div>
 
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>CTA button label</label>
-            <span className={styles.fieldHint}>
+          <div className={kit.fieldGroup}>
+            <label className={kit.label} htmlFor="email-template-cta">CTA button label</label>
+            <span className={kit.hint}>
               Leave blank if this email has no call-to-action button.
             </span>
             <input
-              className={styles.input}
+              id="email-template-cta"
+              className={`${kit.field} ${styles.full}`}
               value={ctaLabel}
               onChange={e => setCtaLabel(e.target.value)}
               placeholder="e.g. View Schedule →"
             />
           </div>
 
-          <div className={styles.actions}>
+          <div className={kit.formActions}>
             <button
-              className={styles.saveBtn}
+              type="button"
+              className="btn btn-primary"
               onClick={handleSave}
               disabled={isBusy || !dirty}
               title={dirty ? 'Save your changes' : 'No unsaved changes'}
             >
-              {saving ? <Loader size={12} className={styles.spin} /> : <Check size={12} />}
+              {saving ? <Loader size={14} className={kit.spin} aria-hidden /> : <Check size={14} aria-hidden />}
               Save
             </button>
 
             <button
-              className={styles.testBtn}
+              type="button"
+              className="btn btn-secondary"
               onClick={handleTestSend}
               disabled={isBusy}
               title="Send a preview to your platform admin email"
             >
-              {testing ? <Loader size={12} className={styles.spin} /> : <Send size={12} />}
+              {testing ? <Loader size={14} className={kit.spin} aria-hidden /> : <Send size={14} aria-hidden />}
               Send test
             </button>
 
             <button
-              className={styles.discardBtn}
+              type="button"
+              className="btn btn-secondary"
               onClick={handleDiscard}
               disabled={isBusy || !dirty}
               title={dirty ? 'Undo unsaved edits and go back to the last saved version' : 'No unsaved changes'}
             >
-              <Undo2 size={12} />
+              <Undo2 size={14} aria-hidden />
               Discard changes
             </button>
 
             <button
-              className={styles.resetBtn}
+              type="button"
+              className="btn btn-secondary"
               onClick={() => setShowResetConfirm(true)}
               disabled={isBusy || !tmpl.is_customised}
               title={!tmpl.is_customised ? 'Already using the default' : 'Reset to built-in default'}
             >
-              {resetting ? <Loader size={12} className={styles.spin} /> : <RotateCcw size={12} />}
+              {resetting ? <Loader size={14} className={kit.spin} aria-hidden /> : <RotateCcw size={14} aria-hidden />}
               Reset to default
             </button>
 
             {status && (
-              <span className={`${styles.statusMsg} ${status.type === 'ok' ? styles.statusOk : styles.statusErr}`}>
+              <span
+                role="status"
+                className={`${styles.statusMsg} ${status.type === 'ok' ? styles.statusOk : styles.statusErr}`}
+              >
                 {status.msg}
               </span>
             )}
@@ -345,45 +362,45 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
         </div>
 
         {/* ── Preview ────────────────────────────────────────────────────────── */}
-        <div className={styles.previewPanel}>
-          <div className={styles.previewLabel}>
-            Live Preview
+        <section className={`${kit.section} ${styles.previewPanel}`}>
+          <h2 className={kit.sectionTitle}>Live preview</h2>
+          <div className={kit.card}>
+            <div className={styles.previewSubject}>
+              <span className={styles.previewSubjectKey}>Subject: </span>
+              {subject || <em className={kit.muted}>no subject</em>}
+            </div>
+            <div
+              className={styles.previewFrame}
+              // eslint-disable-next-line react/no-danger
+              dangerouslySetInnerHTML={{ __html: preview }}
+            />
           </div>
-          <div className={styles.previewSubject}>
-            <span className={styles.previewSubjectKey}>Subject: </span>
-            {subject || <em style={{ opacity: 0.4 }}>no subject</em>}
-          </div>
-          <div
-            className={styles.previewFrame}
-            // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{ __html: preview }}
-          />
-          <p style={{ marginTop: '0.5rem', fontSize: '0.62rem', color: 'rgba(241,245,249,0.25)', fontFamily: 'var(--font-data)' }}>
-            Variable tokens shown as <span style={{ fontFamily: 'monospace', color: '#93c5fd' }}>{'{{tokens}}'}</span>. Real values injected at send time.
+          <p className={kit.caption}>
+            Variable tokens shown as <span className={kit.code}>{'{{tokens}}'}</span>. Real values injected at send time.
           </p>
-        </div>
+        </section>
       </div>
 
       {showResetConfirm && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setShowResetConfirm(false))?.(); }}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <span className={styles.modalTitle}>Reset to default?</span>
-              <button className={styles.modalClose} onClick={() => setShowResetConfirm(false)} aria-label="Close">
-                <X size={14} />
+        <div className="modal-overlay" onPointerDown={e => { if (e.target === e.currentTarget) (() => setShowResetConfirm(false))?.(); }}>
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="email-template-reset-title" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 id="email-template-reset-title">Reset to default?</h3>
+              <button type="button" className={styles.modalClose} onClick={() => setShowResetConfirm(false)} aria-label="Close">
+                <X size={16} />
               </button>
             </div>
-            <p className={styles.modalBody}>
+            <p>
               This restores the original built-in copy for <strong>{tmpl.label}</strong> and discards
               your saved customisation. This can&rsquo;t be undone.
             </p>
-            <div className={styles.modalActions}>
-              <button className={styles.resetBtn} onClick={doReset} disabled={resetting}>
-                {resetting ? <Loader size={12} className={styles.spin} /> : <RotateCcw size={12} />}
-                Reset to default
-              </button>
-              <button className={styles.testBtn} onClick={() => setShowResetConfirm(false)} disabled={resetting}>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowResetConfirm(false)} disabled={resetting}>
                 Cancel
+              </button>
+              <button type="button" className="btn btn-danger" onClick={doReset} disabled={resetting}>
+                {resetting ? <Loader size={14} className={kit.spin} aria-hidden /> : <RotateCcw size={14} aria-hidden />}
+                Reset to default
               </button>
             </div>
           </div>

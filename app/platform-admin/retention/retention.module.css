@@ -1,0 +1,23 @@
+/* The retention queue's own parts; the rest is the console kit (../console.module.css). */
+
+/* Nine columns: a little tighter across so the "+30 days" action stays in view on a laptop. */
+.queueTable th,
+.queueTable td { padding-inline: 0.65rem; }
+
+.hintLine { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+
+.days { font-variant-numeric: tabular-nums; }
+
+/* The deadline chip sits under the number on a computer (the table is wide), beside it on a phone card. */
+.daysChip { display: flex; width: fit-content; margin-top: 0.2rem; }
+
+@media (max-width: 640px) {
+  .daysChip { display: inline-flex; margin: 0 0 0 0.4rem; }
+}
+
+/* The "+30 days" reason form, inside its table cell. */
+.inlineForm { display: grid; gap: 0.5rem; min-width: 220px; }
+
+@media (max-width: 640px) {
+  .inlineForm { min-width: 0; width: 100%; }
+}

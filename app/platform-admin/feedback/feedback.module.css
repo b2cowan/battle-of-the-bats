@@ -1,286 +1,42 @@
-.page { max-width: 1300px; }
+/* Feedback — only what is truly this screen's own. The page column, card, toolbar, chips, buttons, fields and the
+   table come from the console kit (../console.module.css) and the product's global table baseline. */
 
-.header {
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-}
+.fromCell { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-tertiary); }
+.bodyCell { min-width: 9rem; }
 
-.headerLabel {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.title {
-  font-weight: 800;
-  font-size: 1.5rem;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  color: var(--fl-text);
-}
-
-.count {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  color: var(--data-gray);
-  margin-left: auto;
-}
-
-.filterBar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-  margin-bottom: 1.25rem;
-}
-
-.filterSelect {
-  padding: 0.4rem 0.65rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-}
-
-.filterSelect option { background: var(--pa-option-bg); }
-
-.filterBtn {
-  padding: 0.4rem 0.9rem;
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.filterBtn:hover { background: rgba(var(--logic-lime-rgb), 0.18); }
-
-.filterClear {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  color: var(--data-gray);
-  text-decoration: none;
-  padding: 0.4rem 0.5rem;
-  transition: color 0.15s;
-}
-
-.filterClear:hover { color: var(--fl-text); }
-
-.tableWrap { overflow-x: auto; }
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.table th {
-  white-space: nowrap;
-}
-.table td {
-  vertical-align: top;
-}
-
-.tsCell {
-  color: var(--data-gray);
-  white-space: nowrap;
-  font-size: 0.65rem;
-}
-
-.emailCell {
-  color: var(--data-gray);
-  font-size: 0.65rem;
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dimText { color: var(--data-gray); }
-
-.orgLink {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  color: var(--fl-text);
-  text-decoration: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.orgLink:hover {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-}
-
-.bodyDetails { max-width: 360px; }
-
+/* The item's title opens its body in place; a native disclosure keeps the row to one line until it is read. */
+.bodyDetails { max-width: 320px; }
 .bodyDetails summary {
-  font-size: 0.7rem;
-  color: var(--fl-text);
+  font-size: var(--type-body);
+  color: var(--text-primary);
   cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
-
 .bodyDetails pre {
   max-width: min(520px, 72vw);
   max-height: 20rem;
   overflow: auto;
   margin: 0.5rem 0 0;
   padding: 0.75rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.16);
-  background: var(--pa-preview-bg);
-  color: var(--fl-text);
-  font-family: monospace;
-  font-size: 0.68rem;
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
+  background: var(--home-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--type-body);
   line-height: 1.5;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
+.issueLink { display: inline-block; margin-top: 0.5rem; font-size: var(--type-support); }
 
-.issueLink {
-  display: inline-block;
-  margin-top: 0.5rem;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--logic-lime);
-  text-decoration: none;
-}
+/* Status control, escalation flag and escalate button stack in one cell. */
+.statusCell { display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+.statusControl,
+.escalateControl { display: inline-flex; flex-direction: column; gap: 0.25rem; }
 
-.issueLink:hover { text-decoration: underline; }
-
-.statusCell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.4rem;
-}
-
-.statusControl {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.escalateControl {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.escalateBtn,
-.escalateBtnActive {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 0.25rem 0.5rem;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-
-.escalateBtn {
-  background: transparent;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
-  color: var(--data-gray);
-}
-
-.escalateBtn:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-  color: var(--fl-text);
-}
-
-.escalateBtnActive {
-  background: rgba(248, 113, 113, 0.1);
-  border: 1px solid rgba(248, 113, 113, 0.4);
-  color: var(--danger);
-}
-
-.escalateBtnActive:hover { background: rgba(248, 113, 113, 0.18); }
-
-.escalateBtn:disabled,
-.escalateBtnActive:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.statusSelect {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  padding: 0.3rem 0.45rem;
-  text-transform: capitalize;
-}
-
-.statusSelect option { background: var(--pa-option-bg); }
-
-.statusSelect:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.statusError {
-  font-size: 0.6rem;
-  color: var(--danger);
-}
-
-.emptyCell {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--data-gray);
-  text-align: center;
-  padding: 2rem;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(var(--logic-lime-rgb), 0.15);
-}
-
-.pageBtn {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-  text-decoration: none;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  transition: background 0.15s;
-}
-
-.pageBtn:hover { background: rgba(var(--logic-lime-rgb), 0.06); }
-
-.pageBtnDisabled {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  padding: 0.35rem 0.75rem;
-  border: 1px solid transparent;
-  opacity: 0.4;
-}
-
-.pageInfo {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  color: var(--data-gray);
-  margin: 0 auto;
+@media (max-width: 640px) {
+  .fromCell { max-width: none; white-space: normal; }
+  .bodyCell { min-width: 0; }
+  .bodyDetails { max-width: none; }
 }

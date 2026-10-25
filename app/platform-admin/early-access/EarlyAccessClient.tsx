@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Check, Clipboard, Mail, RefreshCw, Search, X } from 'lucide-react';
+import { Check, Clipboard, Mail, RefreshCw, X } from 'lucide-react';
 import ExportMenu from '@/components/admin/ExportMenu';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import {
   EARLY_ACCESS_FEATURE_LABELS,
   EARLY_ACCESS_PLAN_LABELS,
@@ -12,6 +13,7 @@ import {
   type EarlyAccessStatus,
 } from '@/lib/early-access-admin';
 import { fmtAbsoluteDate } from '@/lib/format-date';
+import kit from '../console.module.css';
 import styles from './early-access.module.css';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -76,6 +78,15 @@ function labelList(values: string[], labels: Record<string, string>) {
 
 function statusLabel(value: string) {
   return EARLY_ACCESS_STATUS_LABELS[value as EarlyAccessStatus] ?? value.replace(/_/g, ' ');
+}
+
+// New / qualified wear the plain chip; the rest of the pipeline reads by its verdict.
+function statusChip(value: string) {
+  if (value === 'pilot_candidate' || value === 'waiting_for_launch') return kit.chipInfo;
+  if (value === 'contacted' || value === 'converted') return kit.chipOk;
+  if (value === 'not_a_fit' || value === 'do_not_contact') return kit.chipBad;
+  if (value === 'new' || value === 'qualified') return '';
+  return kit.chipQuiet;
 }
 
 const PAGE_SIZE = 100;
@@ -313,241 +324,259 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <div className={styles.headerLabel}>Growth Pipeline</div>
-          <h1 className={styles.title}>Early Access</h1>
-        </div>
-        <div className={styles.count}>{total} leads</div>
-      </header>
+    <div className={kit.page}>
+      <AdminPageHeader title="Early access" />
 
-      <section className={styles.summaryGrid} aria-label="Early access summary">
-        <div className={styles.metric} title="Counts below reflect the leads currently in view (this page), not the full pipeline total shown in the header.">
-          <span className={styles.metricLabel}>In view</span>
-          <strong>{leads.length}</strong>
+      <section className={kit.band} aria-label="Early access summary">
+        <div className={kit.bandCell} title="Counts below reflect the leads currently in view (this page), not the full pipeline total shown in the toolbar.">
+          <span className={kit.bandLabel}>In view</span>
+          <strong className={kit.bandValue}>{leads.length}</strong>
         </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>New</span>
-          <strong>{summary.newLeads}</strong>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>New</span>
+          <strong className={kit.bandValue}>{summary.newLeads}</strong>
         </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>Pilot</span>
-          <strong>{summary.pilotCandidates}</strong>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Pilot</span>
+          <strong className={kit.bandValue}>{summary.pilotCandidates}</strong>
         </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>Converted</span>
-          <strong>{summary.converted}</strong>
-          <span className={styles.metricHint}>{conversionRate}% rate</span>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Converted</span>
+          <strong className={kit.bandValue}>{summary.converted}</strong>
+          <span className={kit.bandNote}>{conversionRate}% rate</span>
         </div>
-        <div className={summary.followUpsDue > 0 ? `${styles.metric} ${styles.metricWarn}` : styles.metric}>
-          <span className={styles.metricLabel}>Follow-up Due</span>
-          <strong>{summary.followUpsDue}</strong>
+        <div className={`${kit.bandCell} ${summary.followUpsDue > 0 ? kit.bandWarn : ''}`}>
+          <span className={kit.bandLabel}>Follow-up due</span>
+          <strong className={kit.bandValue}>{summary.followUpsDue}</strong>
         </div>
       </section>
 
-      <section className={styles.conversionGrid} aria-label="Conversion breakdown">
-        <div className={styles.breakdownPanel}>
-          <div className={styles.notesLabel}>Conversions By Plan Interest</div>
-          {conversionByPlan.length === 0 ? (
-            <p className={styles.muted}>No leads loaded.</p>
-          ) : (
-            <div className={styles.conversionList}>
-              {conversionByPlan.map(row => (
-                <div key={row.label} className={styles.conversionItem}>
-                  <span>{row.label}</span>
-                  <strong>{row.converted}/{row.total}</strong>
-                  <em>{row.rate}%</em>
-                </div>
-              ))}
-            </div>
-          )}
+      <section className={kit.two} aria-label="Conversion breakdown">
+        <div className={kit.section}>
+          <h2 className={kit.sectionTitle}>Conversions by plan interest</h2>
+          <div className={`${kit.card} ${kit.cardPad}`}>
+            {conversionByPlan.length === 0 ? (
+              <p className={kit.caption}>No leads loaded.</p>
+            ) : (
+              <div className={styles.conversionList}>
+                {conversionByPlan.map(row => (
+                  <div key={row.label} className={styles.conversionItem}>
+                    <span>{row.label}</span>
+                    <strong>{row.converted}/{row.total}</strong>
+                    <em>{row.rate}%</em>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        <div className={styles.breakdownPanel}>
-          <div className={styles.notesLabel}>Conversions By Feature Interest</div>
-          {conversionByFeature.length === 0 ? (
-            <p className={styles.muted}>No leads loaded.</p>
-          ) : (
-            <div className={styles.conversionList}>
-              {conversionByFeature.map(row => (
-                <div key={row.label} className={styles.conversionItem}>
-                  <span>{row.label}</span>
-                  <strong>{row.converted}/{row.total}</strong>
-                  <em>{row.rate}%</em>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className={kit.section}>
+          <h2 className={kit.sectionTitle}>Conversions by feature interest</h2>
+          <div className={`${kit.card} ${kit.cardPad}`}>
+            {conversionByFeature.length === 0 ? (
+              <p className={kit.caption}>No leads loaded.</p>
+            ) : (
+              <div className={styles.conversionList}>
+                {conversionByFeature.map(row => (
+                  <div key={row.label} className={styles.conversionItem}>
+                    <span>{row.label}</span>
+                    <strong>{row.converted}/{row.total}</strong>
+                    <em>{row.rate}%</em>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </section>
-
-      <div className={styles.filterBar}>
-        <label className={styles.searchBox}>
-          <Search size={14} />
-          <input
-            value={filters.q}
-            onChange={event => updateFilter('q', event.target.value)}
-            placeholder="Search contacts, orgs, notes..."
-          />
-        </label>
-        <select value={filters.plan} onChange={event => updateFilter('plan', event.target.value)}>
-          <option value="">All plans</option>
-          {Object.entries(EARLY_ACCESS_PLAN_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
-        <select value={filters.feature} onChange={event => updateFilter('feature', event.target.value)}>
-          <option value="">All features</option>
-          {Object.entries(EARLY_ACCESS_FEATURE_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
-        <select value={filters.status} onChange={event => updateFilter('status', event.target.value)}>
-          <option value="">All statuses</option>
-          {EARLY_ACCESS_STATUSES.map(status => (
-            <option key={status} value={status}>{EARLY_ACCESS_STATUS_LABELS[status]}</option>
-          ))}
-        </select>
-        <select value={filters.consent} onChange={event => updateFilter('consent', event.target.value)}>
-          <option value="">Any consent</option>
-          <option value="yes">Consented</option>
-          <option value="no">No updates</option>
-        </select>
-        <select value={dateRangePreset} onChange={event => applyDatePreset(event.target.value)} title="Filter by signup date">
-          <option value="">Any date</option>
-          <option value="7">Last 7 days</option>
-          <option value="30">Last 30 days</option>
-          <option value="90">Last 90 days</option>
-          <option value="custom">Custom…</option>
-        </select>
-        {dateRangePreset === 'custom' && (
-          <>
-            <input
-              type="date"
-              value={filters.dateFrom}
-              max={filters.dateTo || undefined}
-              onChange={event => updateFilter('dateFrom', event.target.value)}
-              title="From date"
-            />
-            <input
-              type="date"
-              value={filters.dateTo}
-              min={filters.dateFrom || undefined}
-              onChange={event => updateFilter('dateTo', event.target.value)}
-              title="To date"
-            />
-          </>
-        )}
-        <button className={styles.iconButton} onClick={resetFilters} title="Clear filters" type="button">
-          <X size={14} />
-          Clear
-        </button>
-        <button className={styles.iconButton} onClick={copyConsentedEmails} title="Copy consented emails" type="button">
-          <Clipboard size={14} />
-          Copy emails
-        </button>
-        <ExportMenu
-          formats={['xlsx', 'csv']}
-          onExportXLSX={handleExportXLSX}
-          onExportCSV={handleExportCSV}
-          label="Export"
-        />
-      </div>
 
       {(message || error) && (
-        <div className={error ? styles.error : styles.message}>
+        <div className={`${kit.notice} ${error ? kit.noticeBad : kit.noticeGood}`} role="status">
           {error || message}
         </div>
       )}
 
       <div className={styles.workspace}>
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Organization</th>
-                <th>Contact</th>
-                <th>Interest</th>
-                <th>Status</th>
-                <th>Submitted</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && (
-                <tr>
-                  <td colSpan={6} className={styles.emptyCell}>Loading early-access leads...</td>
-                </tr>
-              )}
-              {!loading && leads.length === 0 && (
-                <tr>
-                  <td colSpan={6} className={styles.emptyCell}>No early-access leads match these filters.</td>
-                </tr>
-              )}
-              {!loading && leads.map(lead => (
-                <tr key={lead.id} className={selectedId === lead.id ? styles.selectedRow : undefined}>
-                  <td>
-                    <button className={styles.orgButton} onClick={() => openLead(lead)} type="button">
-                      {lead.organization_name || 'No organization'}
-                    </button>
-                    <div className={styles.muted}>{lead.sports || 'No sport/program listed'}</div>
-                  </td>
-                  <td>
-                    <div className={styles.primaryText}>{lead.name}</div>
-                    <div className={styles.muted}>{lead.email}</div>
-                  </td>
-                  <td>
-                    <div>{labelList(lead.plan_interest, EARLY_ACCESS_PLAN_LABELS)}</div>
-                    <div className={styles.muted}>{labelList(lead.features_interested, EARLY_ACCESS_FEATURE_LABELS)}</div>
-                  </td>
-                  <td>
-                    <span className={`${styles.statusBadge} ${styles[`status_${lead.internal_status}`] ?? ''}`}>
-                      {statusLabel(lead.internal_status)}
-                    </span>
-                    {(lead.converted_org_id || lead.converted_at) && (
-                      <div className={styles.convertedMeta}>
-                        Converted {formatDate(lead.converted_at)}
-                      </div>
-                    )}
-                    {lead.follow_up_due_at && (
-                      <div className={lead.follow_up_due_at <= todayDate() ? styles.followUpDue : styles.muted}>
-                        Follow up {formatDate(lead.follow_up_due_at)}
-                      </div>
-                    )}
-                    {!lead.release_notifications_consent && (
-                      <div className={styles.noConsent}>No release updates</div>
-                    )}
-                  </td>
-                  <td className={styles.dateCell}>
-                    {formatDate(lead.created_at)}
-                    {lead.submission_count > 1 && (
-                      <div className={styles.muted}>{lead.submission_count} submissions</div>
-                    )}
-                  </td>
-                  <td>
-                    <button className={styles.viewButton} onClick={() => openLead(lead)} type="button">
-                      View
-                    </button>
-                  </td>
-                </tr>
+        <div className={kit.card}>
+          <div className={kit.toolbar}>
+            <span className={kit.count}>{total} leads</span>
+            <span className={kit.toolbarEnd}>
+              <button className="btn btn-secondary btn-sm" onClick={copyConsentedEmails} title="Copy consented emails" type="button">
+                <Clipboard size={14} aria-hidden />
+                Copy emails
+              </button>
+              <ExportMenu
+                formats={['xlsx', 'csv']}
+                onExportXLSX={handleExportXLSX}
+                onExportCSV={handleExportCSV}
+                label="Export"
+              />
+            </span>
+          </div>
+          <div className={kit.toolbar}>
+            <input
+              type="search"
+              className={kit.search}
+              aria-label="Search leads"
+              value={filters.q}
+              onChange={event => updateFilter('q', event.target.value)}
+              placeholder="Search contacts, orgs, notes..."
+            />
+            <select className={kit.select} aria-label="Plan" value={filters.plan} onChange={event => updateFilter('plan', event.target.value)}>
+              <option value="">All plans</option>
+              {Object.entries(EARLY_ACCESS_PLAN_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
               ))}
-            </tbody>
-          </table>
+            </select>
+            <select className={kit.select} aria-label="Feature" value={filters.feature} onChange={event => updateFilter('feature', event.target.value)}>
+              <option value="">All features</option>
+              {Object.entries(EARLY_ACCESS_FEATURE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+            <select className={kit.select} aria-label="Status" value={filters.status} onChange={event => updateFilter('status', event.target.value)}>
+              <option value="">All statuses</option>
+              {EARLY_ACCESS_STATUSES.map(status => (
+                <option key={status} value={status}>{EARLY_ACCESS_STATUS_LABELS[status]}</option>
+              ))}
+            </select>
+            <select className={kit.select} aria-label="Consent" value={filters.consent} onChange={event => updateFilter('consent', event.target.value)}>
+              <option value="">Any consent</option>
+              <option value="yes">Consented</option>
+              <option value="no">No updates</option>
+            </select>
+            <select className={kit.select} aria-label="Signup date" value={dateRangePreset} onChange={event => applyDatePreset(event.target.value)} title="Filter by signup date">
+              <option value="">Any date</option>
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="custom">Custom…</option>
+            </select>
+            {dateRangePreset === 'custom' && (
+              <>
+                <input
+                  type="date"
+                  className={kit.field}
+                  aria-label="From date"
+                  value={filters.dateFrom}
+                  max={filters.dateTo || undefined}
+                  onChange={event => updateFilter('dateFrom', event.target.value)}
+                  title="From date"
+                />
+                <input
+                  type="date"
+                  className={kit.field}
+                  aria-label="To date"
+                  value={filters.dateTo}
+                  min={filters.dateFrom || undefined}
+                  onChange={event => updateFilter('dateTo', event.target.value)}
+                  title="To date"
+                />
+              </>
+            )}
+            <button className={kit.door} onClick={resetFilters} title="Clear filters" type="button">
+              Clear
+            </button>
+          </div>
+
+          <div className={`${kit.tableWrap} table-cards`}>
+            <table className={styles.leadTable}>
+              <thead>
+                <tr>
+                  <th>Organization</th>
+                  <th>Contact</th>
+                  <th>Interest</th>
+                  <th>Status</th>
+                  <th>Submitted</th>
+                  <th aria-label="View"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading && (
+                  <tr>
+                    <td colSpan={6} className={kit.empty}>Loading early-access leads...</td>
+                  </tr>
+                )}
+                {!loading && leads.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className={kit.empty}>No early-access leads match these filters.</td>
+                  </tr>
+                )}
+                {!loading && leads.map(lead => (
+                  <tr key={lead.id} className={`${kit.comfortable} ${styles.leadRow} ${selectedId === lead.id ? styles.selectedRow : ''}`}>
+                    <td className="table-cards-title">
+                      <div>
+                        <button className={styles.orgButton} onClick={() => openLead(lead)} type="button">
+                          {lead.organization_name || 'No organization'}
+                        </button>
+                        <span className={kit.sub}>{lead.sports || 'No sport/program listed'}</span>
+                      </div>
+                    </td>
+                    <td data-label="Contact">
+                      <div>
+                        <span className={styles.primaryText}>{lead.name}</span>
+                        <span className={`${kit.sub} ${styles.breakAny}`}>{lead.email}</span>
+                      </div>
+                    </td>
+                    <td data-label="Interest">
+                      <div>
+                        {labelList(lead.plan_interest, EARLY_ACCESS_PLAN_LABELS)}
+                        <span className={kit.sub}>{labelList(lead.features_interested, EARLY_ACCESS_FEATURE_LABELS)}</span>
+                      </div>
+                    </td>
+                    <td data-label="Status">
+                      <div>
+                        <span className={`${kit.chip} ${statusChip(lead.internal_status)}`}>
+                          {statusLabel(lead.internal_status)}
+                        </span>
+                        {(lead.converted_org_id || lead.converted_at) && (
+                          <span className={`${kit.sub} ${styles.metaOk}`}>
+                            Converted {formatDate(lead.converted_at)}
+                          </span>
+                        )}
+                        {lead.follow_up_due_at && (
+                          <span className={`${kit.sub} ${lead.follow_up_due_at <= todayDate() ? styles.metaWarn : ''}`}>
+                            Follow up {formatDate(lead.follow_up_due_at)}
+                          </span>
+                        )}
+                        {!lead.release_notifications_consent && (
+                          <span className={`${kit.sub} ${styles.metaBad}`}>No release updates</span>
+                        )}
+                      </div>
+                    </td>
+                    <td data-label="Submitted" className={kit.nowrap}>
+                      <div>
+                        {formatDate(lead.created_at)}
+                        {lead.submission_count > 1 && (
+                          <span className={kit.sub}>{lead.submission_count} submissions</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <button className="btn btn-secondary btn-sm" onClick={() => openLead(lead)} type="button">
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {total > PAGE_SIZE && (
             <div className={styles.pagination}>
               <button
-                className={styles.pageButton}
+                className="btn btn-secondary btn-sm"
                 onClick={() => setOffset(o => Math.max(0, o - PAGE_SIZE))}
                 disabled={offset === 0 || loading}
                 type="button"
               >
                 Previous
               </button>
-              <span className={styles.pageInfo}>
+              <span className={kit.countQuiet}>
                 {leads.length > 0 ? `${offset + 1}–${offset + leads.length}` : '0'} of {total}
               </span>
               <button
-                className={styles.pageButton}
+                className="btn btn-secondary btn-sm"
                 onClick={() => setOffset(o => o + PAGE_SIZE)}
                 disabled={offset + leads.length >= total || loading}
                 type="button"
@@ -558,10 +587,10 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
           )}
         </div>
 
-        <aside className={styles.detailPanel} aria-label="Lead detail">
+        <aside className={`${kit.card} ${kit.cardPad} ${styles.detailPanel}`} aria-label="Lead detail">
           {!selectedLead && (
             <div className={styles.emptyDetail}>
-              <Mail size={18} />
+              <Mail size={18} aria-hidden />
               <p>Select a lead to review details, update status, and copy outreach text.</p>
             </div>
           )}
@@ -569,12 +598,9 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
           {selectedLead && (
             <>
               <div className={styles.detailHeader}>
-                <div>
-                  <div className={styles.headerLabel}>Lead Detail</div>
-                  <h2>{selectedLead.organization_name || selectedLead.name}</h2>
-                </div>
-                <button className={styles.closeButton} onClick={() => setSelectedId(null)} type="button" title="Close detail">
-                  <X size={15} />
+                <h2 className={kit.sectionTitle}>{selectedLead.organization_name || selectedLead.name}</h2>
+                <button className={styles.closeButton} onClick={() => setSelectedId(null)} type="button" title="Close detail" aria-label="Close detail">
+                  <X size={16} aria-hidden />
                 </button>
               </div>
 
@@ -608,7 +634,7 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
                         {selectedLead.converted_org_id && organizationById.get(selectedLead.converted_org_id) && (
                           <>
                             {' '}
-                            <Link href={`/platform-admin/orgs/${selectedLead.converted_org_id}`} className={styles.detailLink}>
+                            <Link href={`/platform-admin/orgs/${selectedLead.converted_org_id}`} className={kit.nameLink}>
                               {organizationById.get(selectedLead.converted_org_id)!.name}
                             </Link>
                           </>
@@ -623,18 +649,19 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
                 </div>
                 <div>
                   <dt>Source</dt>
-                  <dd>{selectedLead.source_path || 'Unknown'}</dd>
+                  <dd>{selectedLead.source_path ? <span className={kit.code}>{selectedLead.source_path}</span> : 'Unknown'}</dd>
                 </div>
               </dl>
 
               <div className={styles.notesBlock}>
-                <div className={styles.notesLabel}>What would make this useful?</div>
+                <div className={kit.label}>What would make this useful?</div>
                 <p>{selectedLead.notes || 'No notes submitted.'}</p>
               </div>
 
-              <label className={styles.fieldLabel}>
-                Status{' '}
+              <label className={kit.fieldGroup}>
+                <span className={kit.label}>Status</span>
                 <select
+                  className={`${kit.select} ${kit.wide} ${styles.dimDisabled}`}
                   value={draftStatus}
                   onChange={event => setDraftStatus(event.target.value as EarlyAccessStatus)}
                   disabled={!canManageGrowth}
@@ -645,9 +672,10 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
                 </select>
               </label>
 
-              <label className={styles.fieldLabel}>
-                Converted organization{' '}
+              <label className={kit.fieldGroup}>
+                <span className={kit.label}>Converted organization</span>
                 <select
+                  className={`${kit.select} ${kit.wide} ${styles.dimDisabled}`}
                   value={draftConvertedOrgId}
                   onChange={event => setDraftConvertedOrgId(event.target.value)}
                   disabled={!canManageGrowth}
@@ -661,19 +689,21 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
                 </select>
               </label>
 
-              <label className={styles.fieldLabel}>
-                Follow-up due{' '}
+              <label className={kit.fieldGroup}>
+                <span className={kit.label}>Follow-up due</span>
                 <input
                   type="date"
+                  className={`${kit.field} ${kit.wide} ${styles.dimDisabled}`}
                   value={draftFollowUpDueAt}
                   onChange={event => setDraftFollowUpDueAt(event.target.value)}
                   disabled={!canManageGrowth}
                 />
               </label>
 
-              <label className={styles.fieldLabel}>
-                Next action{' '}
+              <label className={kit.fieldGroup}>
+                <span className={kit.label}>Next action</span>
                 <textarea
+                  className={`${kit.textarea} ${kit.wide} ${styles.dimDisabled}`}
                   value={draftNextAction}
                   onChange={event => setDraftNextAction(event.target.value)}
                   rows={3}
@@ -682,9 +712,10 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
                 />
               </label>
 
-              <label className={styles.fieldLabel}>
-                Internal notes{' '}
+              <label className={kit.fieldGroup}>
+                <span className={kit.label}>Internal notes</span>
                 <textarea
+                  className={`${kit.textarea} ${kit.wide} ${styles.dimDisabled}`}
                   value={draftNotes}
                   onChange={event => setDraftNotes(event.target.value)}
                   rows={6}
@@ -693,44 +724,47 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
                 />
               </label>
 
-              <div className={styles.actionRow}>
-                <button className={styles.primaryButton} onClick={() => saveLead()} disabled={saving || !canManageGrowth} type="button">
-                  <Check size={14} />
+              <div className={kit.formActions}>
+                <button className="btn btn-primary btn-sm" onClick={() => saveLead()} disabled={saving || !canManageGrowth} type="button">
+                  <Check size={14} aria-hidden />
                   Save
                 </button>
-                <button className={styles.iconButton} onClick={() => saveLead({ markConverted: true })} disabled={saving || !canManageGrowth} type="button">
-                  <Check size={14} />
+                <button className="btn btn-secondary btn-sm" onClick={() => saveLead({ markConverted: true })} disabled={saving || !canManageGrowth} type="button">
+                  <Check size={14} aria-hidden />
                   Mark converted
                 </button>
-                <button className={styles.iconButton} onClick={() => saveLead({ markContacted: true })} disabled={saving || !canManageGrowth} type="button">
-                  <RefreshCw size={14} />
+                <button className="btn btn-secondary btn-sm" onClick={() => saveLead({ markContacted: true })} disabled={saving || !canManageGrowth} type="button">
+                  <RefreshCw size={14} aria-hidden />
                   Mark contacted
                 </button>
                 <button
-                  className={styles.iconButton}
+                  className="btn btn-secondary btn-sm"
                   onClick={() => copyText(selectedLead.email, 'Copied email.')}
                   type="button"
                 >
-                  <Clipboard size={14} />
+                  <Clipboard size={14} aria-hidden />
                   Email
                 </button>
               </div>
 
               <section className={styles.templates} aria-label="Outreach templates">
-                <div className={styles.notesLabel}>Templates</div>
+                <div className={kit.label}>Templates</div>
                 <button
+                  className="btn btn-secondary btn-sm"
                   onClick={() => copyText(applyTemplate(TEMPLATE_COPY.league, selectedLead), 'Copied League Plus template.')}
                   type="button"
                 >
                   League Plus beta invite
                 </button>
                 <button
+                  className="btn btn-secondary btn-sm"
                   onClick={() => copyText(applyTemplate(TEMPLATE_COPY.club, selectedLead), 'Copied Club update.')}
                   type="button"
                 >
                   Club roadmap update
                 </button>
                 <button
+                  className="btn btn-secondary btn-sm"
                   onClick={() => copyText(applyTemplate(TEMPLATE_COPY.feedback, selectedLead), 'Copied feedback template.')}
                   type="button"
                 >

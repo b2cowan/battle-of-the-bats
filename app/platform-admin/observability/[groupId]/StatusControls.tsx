@@ -1,9 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ObsStatus } from '@/lib/observability/dashboard';
+import kit from '../../console.module.css';
 import styles from '../observability.module.css';
+
+const TRIAGE_BUTTONS: [ObsStatus, string][] = [
+  ['resolved', 'Resolve'],
+  ['ignored', 'Ignore'],
+  ['snoozed', 'Snooze'],
+];
 
 const SNOOZE_OPTIONS = [
   { hours: 24, label: '24 hours' },
@@ -54,45 +61,38 @@ export default function StatusControls({
 
   return (
     <div className={styles.triage}>
-      <span className={styles.triageLabel}>Triage</span>
+      <span className={kit.eye}>Triage</span>
 
       {currentStatus !== 'open' && (
-        <button className={styles.triageBtn} disabled={readOnly || busy} onClick={() => apply('open')}>Reopen</button>
+        <button type="button" className="btn btn-secondary btn-sm" disabled={readOnly || busy} onClick={() => apply('open')}>Reopen</button>
       )}
-      <button
-        className={`${styles.triageBtn} ${currentStatus === 'resolved' ? styles.triageBtnActive : ''}`}
-        disabled={readOnly || busy}
-        onClick={() => apply('resolved')}
-      >
-        Resolve
-      </button>
-      <button
-        className={`${styles.triageBtn} ${currentStatus === 'ignored' ? styles.triageBtnActive : ''}`}
-        disabled={readOnly || busy}
-        onClick={() => apply('ignored')}
-      >
-        Ignore
-      </button>
+      {TRIAGE_BUTTONS.map(([status, label]) => (
+        <Fragment key={status}>
+          {status === 'snoozed' && (
+            <select
+              className={kit.select}
+              value={snoozeHours}
+              disabled={readOnly || busy}
+              onChange={e => setSnoozeHours(Number(e.target.value))}
+              aria-label="Snooze duration"
+            >
+              {SNOOZE_OPTIONS.map(o => <option key={o.hours} value={o.hours}>{o.label}</option>)}
+            </select>
+          )}
+          <button
+            type="button"
+            className={`btn btn-secondary btn-sm ${currentStatus === status ? styles.triageOn : ''}`}
+            aria-pressed={currentStatus === status}
+            disabled={readOnly || busy}
+            onClick={() => (status === 'snoozed' ? apply('snoozed', { snoozeHours }) : apply(status))}
+          >
+            {label}
+          </button>
+        </Fragment>
+      ))}
 
-      <select
-        className={styles.snoozeSelect}
-        value={snoozeHours}
-        disabled={readOnly || busy}
-        onChange={e => setSnoozeHours(Number(e.target.value))}
-        aria-label="Snooze duration"
-      >
-        {SNOOZE_OPTIONS.map(o => <option key={o.hours} value={o.hours}>{o.label}</option>)}
-      </select>
-      <button
-        className={`${styles.triageBtn} ${currentStatus === 'snoozed' ? styles.triageBtnActive : ''}`}
-        disabled={readOnly || busy}
-        onClick={() => apply('snoozed', { snoozeHours })}
-      >
-        Snooze
-      </button>
-
-      {readOnly && <span className={styles.readOnlyNote}>View-only for your role</span>}
-      {error && <span className={styles.triageError}>{error}</span>}
+      {readOnly && <span className={kit.hint}>View-only for your role</span>}
+      {error && <span className={kit.fieldError}>{error}</span>}
     </div>
   );
 }

@@ -1,685 +1,96 @@
-.page {
-  max-width: 1280px;
-  --email-modal-bg: #0b0f14; /* token-exempt: custom near-black modal tint, no exact --bg/--surface match */
-}
-
-/* ── Page header ─────────────────────────────────────────────────────────── */
-.header {
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.headerLabel {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.title {
-  font-weight: 800;
-  font-size: 1.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0;
-  color: var(--fl-text);
-  margin: 0.2rem 0 0;
-}
-
-/* ── Stats row ───────────────────────────────────────────────────────────── */
-.statsSubtitle {
-  margin: 0 0 0.6rem;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--data-gray);
-}
-
-.statsRow {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-}
-
-.statCard[title] {
-  cursor: help;
-}
-
-.statCard {
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.18);
-  background: rgba(255, 255, 255, 0.025);
-  padding: 0.9rem 1rem;
-}
-
-.statValue {
-  font-family: var(--font-data);
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--fl-text);
-  line-height: 1;
-  margin-bottom: 0.3rem;
-}
-
-.statLabel {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
-/* ── Section headers ─────────────────────────────────────────────────────── */
-.sectionHeader {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.12);
-}
-
-.sectionTitle {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.sectionNote {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  color: var(--data-gray);
-}
-
-.section {
-  margin-bottom: 2.5rem;
-}
-
-/* ── Table ───────────────────────────────────────────────────────────────── */
-/* Wide multi-column tables scroll within their panel instead of pushing the page wide. */
-.tableScroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.tableScroll .table {
-  min-width: 760px;
-}
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.table th {
-  white-space: nowrap;
-}
-.table td {
-  vertical-align: middle;
-}
-
-.table tr:last-child td {
-  border-bottom: none;
-}
-
-.emailKey {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.65rem;
-  color: var(--logic-lime);
-  white-space: nowrap;
-}
-
-.subject {
-  color: var(--fl-text);
-  /* inline-block so max-width + text-overflow actually apply (they are ignored on an inline span,
-     which let the full subject blow the table width past the viewport). */
-  display: inline-block;
-  vertical-align: middle;
-  max-width: 280px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.65rem;
-}
-
-.sendDate {
-  white-space: nowrap;
-  color: var(--data-gray);
-  font-size: 0.65rem;
-}
-
-.audience {
-  color: var(--data-gray);
-  font-size: 0.62rem;
-}
-
-.recipientCount {
-  font-weight: 700;
-  color: var(--fl-text);
-  white-space: nowrap;
-}
-
-/* ── Status badges ───────────────────────────────────────────────────────── */
-.badge {
-  display: inline-block;
-  font-family: var(--font-data);
-  font-size: 0.52rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.5rem;
-  border: 1px solid;
-}
-
-.badgeScheduled {
-  color: rgba(var(--logic-lime-rgb), 0.7);
-  border-color: rgba(var(--logic-lime-rgb), 0.3);
-  background: rgba(var(--logic-lime-rgb), 0.06);
-}
-
-.badgeSent,
-.badgeComplete {
-  color: var(--success-light);
-  border-color: rgba(74, 222, 128, 0.35);
-  background: rgba(74, 222, 128, 0.06);
-}
-
-.badgePending,
-.badgeRunning {
-  color: var(--warning);
-  border-color: rgba(var(--warning-rgb), 0.35);
-  background: rgba(var(--warning-rgb), 0.06);
-}
-
-.badgeFailed {
-  color: var(--danger-light);
-  border-color: rgba(248, 113, 113, 0.35);
-  background: rgba(248, 113, 113, 0.06);
-}
-
-.badgeNotBuilt {
-  color: rgba(241, 245, 249, 0.3);
-  border-color: rgba(255, 255, 255, 0.08);
-  background: transparent;
-}
-
-.badgePastDue {
-  color: var(--danger-light);
-  border-color: rgba(248, 113, 113, 0.45);
-  background: rgba(248, 113, 113, 0.08);
-}
-
-.badgeDueSoon {
-  color: var(--warning);
-  border-color: rgba(var(--warning-rgb), 0.4);
-  background: rgba(var(--warning-rgb), 0.08);
-}
-
-.badgePlanned {
-  color: rgba(148, 163, 184, 0.9);
-  border-color: rgba(148, 163, 184, 0.3);
-  background: rgba(148, 163, 184, 0.06);
-}
-
-.badgeAuto {
-  color: var(--pa-info);
-  border-color: rgba(147, 197, 253, 0.3);
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-}
-
-/* ── Action buttons ──────────────────────────────────────────────────────── */
-.actions {
-  display: flex;
-  gap: 0.4rem;
-  align-items: center;
-}
-
-.btnAction {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.3rem 0.65rem;
-  border: 1px solid;
-  background: none;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.btnPreview {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.3);
-}
-.btnPreview:hover {
-  background: rgba(var(--logic-lime-rgb), 0.1);
-}
-
-.btnSend {
-  color: var(--success-light);
-  border-color: rgba(74, 222, 128, 0.3);
-}
-.btnSend:hover:not(:disabled) {
-  background: rgba(74, 222, 128, 0.08);
-}
-.btnSend:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.btnExpand {
-  color: var(--data-gray);
-  border-color: rgba(255, 255, 255, 0.1);
-  font-size: 0.55rem;
-}
-.btnExpand:hover {
-  color: var(--fl-text);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.btnResubscribe {
-  color: rgba(241, 245, 249, 0.5);
-  border-color: rgba(255, 255, 255, 0.12);
-  font-size: 0.55rem;
-}
-.btnResubscribe:hover:not(:disabled) {
-  color: var(--fl-text);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-.btnResubscribe:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-/* ── Expandable sends sub-table ──────────────────────────────────────────── */
-.expandedRow td {
-  background: rgba(0, 0, 0, 0.25);
-  padding: 0;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.08);
-}
-
-.subTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--type-support);
-}
-
-.subTable th {
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.4);
-  padding: 0.35rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.subTable td {
-  padding: 0.45rem 1rem;
-  color: rgba(241, 245, 249, 0.65);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.025);
-}
-
-.subTable tr:last-child td {
-  border-bottom: none;
-}
-
-.resendId {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.58rem;
-  color: rgba(241, 245, 249, 0.35);
-}
-
-/* ── Preview modal ───────────────────────────────────────────────────────── */
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  z-index: 1000;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 2rem 1rem;
-  overflow-y: auto;
-}
-
-.modal {
-  background: var(--email-modal-bg);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
-  width: 100%;
-  max-width: 680px;
-  position: relative;
-}
-
-.modalHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.15);
-}
-
-.modalTitle {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.modalSubject {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--fl-text);
-  margin-top: 0.2rem;
-}
-
-.modalClose {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--data-gray);
-  width: 1.75rem;
-  height: 1.75rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  flex-shrink: 0;
-  transition: color 0.15s, border-color 0.15s;
-}
-.modalClose:hover {
-  color: var(--fl-text);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.modalBody {
-  padding: 1.25rem;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.previewFrame {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: var(--email-modal-bg);
-}
-
-.notBuiltNotice {
-  padding: 2rem;
-  text-align: center;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-}
-
-/* ── Empty states ────────────────────────────────────────────────────────── */
-.emptyState {
-  padding: 1.5rem;
-  text-align: center;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  color: var(--data-gray);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* ── Send confirmation dialog ────────────────────────────────────────────── */
-.confirmDialog {
-  padding: 1.5rem;
-}
-
-.confirmTitle {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--danger-light);
-  margin-bottom: 0.75rem;
-}
-
-.confirmBody {
-  font-size: 0.82rem;
-  line-height: 1.65;
-  color: rgba(241, 245, 249, 0.75);
-  margin-bottom: 1.25rem;
-}
-
-.confirmActions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btnConfirmSend {
-  background: rgba(74, 222, 128, 0.12);
-  border: 1px solid rgba(74, 222, 128, 0.35);
-  color: var(--success-light);
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.45rem 1rem;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btnConfirmSend:hover:not(:disabled) {
-  background: rgba(74, 222, 128, 0.2);
-}
-.btnConfirmSend:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btnCancel {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.45rem 1rem;
-  cursor: pointer;
-}
-.btnCancel:hover {
-  color: var(--fl-text);
-}
-
-.sendingNote {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  color: var(--warning);
-  margin-top: 0.5rem;
-}
-
-/* ── Toast / result notification ─────────────────────────────────────────── */
-.resultBanner {
-  padding: 0.75rem 1rem;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  border: 1px solid;
-  margin-bottom: 1.25rem;
-}
-
-.resultSuccess {
-  color: var(--success-light);
-  border-color: rgba(74, 222, 128, 0.3);
-  background: rgba(74, 222, 128, 0.06);
-}
-
-.resultError {
-  color: var(--danger-light);
-  border-color: rgba(248, 113, 113, 0.3);
-  background: rgba(248, 113, 113, 0.06);
-}
-
-/* ── Needs sending (P2: past due + upcoming) ───────────────────────────────── */
-.needsSending {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin: 0.25rem 0 1.5rem;
-}
-
-.needsGroup {
-  border: 1px solid;
-  border-radius: 3px;
-  padding: 0.75rem 0.9rem;
-}
-
-.needsPastDue {
-  border-color: rgba(248, 113, 113, 0.4);
-  background: rgba(248, 113, 113, 0.05);
-}
-
-.needsUpcoming {
-  border-color: rgba(var(--warning-rgb), 0.3);
-  background: rgba(var(--warning-rgb), 0.04);
-}
-
-.needsTitle {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.6rem;
-}
-
-.needsPastDue .needsTitle { color: var(--danger-light); }
-.needsUpcoming .needsTitle { color: var(--warning); }
-
+/* The email dashboard's own parts. The page column, band, sections, cards, tables, chips and buttons are the console's
+   shared recipes (`../console.module.css`) and the product's global kit; the windows are the global `.modal` family. */
+
+.help { cursor: help; }
+
+/* ── Needs sending (past due + upcoming): a heading above its card, one row per campaign ── */
+.needsTitle { display: flex; align-items: center; gap: 0.4rem; }
+.needsCard { padding: 0.25rem 1rem; }
+/* two classes, so the coloured edge beats the card's own one-pixel border whatever order the modules load in */
+.needsCard.needsBad { border-left: 3px solid var(--danger); }
+.needsCard.needsWarn { border-left: 3px solid var(--warning); }
 .needsItem {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.4rem 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.needsItem:first-of-type { border-top: none; }
-
-.needsItemMain {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  min-width: 0;
   flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--home-line);
 }
-
-.needsDate {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--fl-text);
-  white-space: nowrap;
-}
-
+.needsItem:first-child { border-top: none; }
+.needsItemMain { display: flex; align-items: baseline; gap: 0.25rem 0.75rem; min-width: 0; flex-wrap: wrap; }
+.needsDate { font-size: var(--type-body); font-weight: 650; color: var(--text-primary); white-space: nowrap; }
 .needsSubject {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  color: rgba(241, 245, 249, 0.7);
+  font-size: var(--type-body);
+  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 46ch;
 }
+.needsDays { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
 
-.needsDays {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  color: rgba(241, 245, 249, 0.4);
+/* ── Scheduled sends / history table cells ── */
+/* inline-block so max-width + text-overflow apply (they are ignored on an inline span, which let a full subject blow the
+   table width past the viewport). */
+.subject {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--text-primary);
 }
-
-.needsSendBtn,
-.needsSendBtnGhost {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 0.35rem 0.7rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  white-space: nowrap;
-  border-radius: 2px;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.needsSendBtn {
-  background: rgba(248, 113, 113, 0.12);
-  border: 1px solid rgba(248, 113, 113, 0.5);
-  color: var(--danger-light);
-}
-
-.needsSendBtn:hover {
-  background: rgba(248, 113, 113, 0.2);
-  border-color: var(--danger-light);
-}
-
-.needsSendBtnGhost {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--data-gray);
-}
-
-.needsSendBtnGhost:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  color: var(--fl-text);
-}
-
-/* ── Editable planned date (in Scheduled Sends) ────────────────────────────── */
+.actions { display: flex; gap: 0.4rem; align-items: center; justify-content: flex-end; }
 .dateEditBtn {
-  font-family: inherit;
-  background: transparent;
-  border: 1px solid transparent;
-  color: inherit;
-  cursor: pointer;
-  padding: 0.15rem 0.3rem;
-  margin: -0.15rem -0.3rem;
-  border-radius: 2px;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  transition: border-color 0.15s, background 0.15s;
+  font-family: inherit;
+  font-size: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text-primary);
+  cursor: pointer;
 }
+.dateEditBtn:hover { color: var(--home-olive); }
+.expandCell { width: 2.5rem; }
+.okNum { color: var(--success); }
+.warnNum { color: var(--warning); }
+.badNum { color: var(--danger); }
 
-.dateEditBtn:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-  background: rgba(var(--logic-lime-rgb), 0.06);
-}
+/* ── The expanded batch's own recipients table ── */
+.expandedRow td { background: var(--home-olive-soft); padding: 0; }
+.subTable { width: 100%; }
+.subNote { padding: 1rem; text-align: center; color: var(--text-tertiary); font-size: var(--type-body); }
+.subError { color: var(--danger); }
 
-.dateInput {
-  font-family: var(--font-data);
-  font-size: 0.85rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--fl-text);
-  padding: 0.5rem 0.6rem;
-  border-radius: 2px;
-  width: 100%;
-  box-sizing: border-box;
-  color-scheme: dark;
+/* ── Windows (the global .modal family supplies the frame) ── */
+.modalClose {
+  background: none;
+  border: 0;
+  color: var(--text-tertiary);
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
-
-.dateInput:focus {
-  outline: none;
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-}
+.modalClose:hover { color: var(--text-primary); }
+.modalSubject { font-size: var(--type-body); font-weight: 600; color: var(--text-secondary); margin-top: 0.2rem; }
+.modalBody { max-height: 60vh; overflow-y: auto; }
+.previewFrame { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--card-bg); }
+.previewNotice { padding: 2rem; text-align: center; color: var(--text-tertiary); font-size: var(--type-body); }
+.previewError { color: var(--danger); }
+.confirmTitle { font-size: var(--type-body); font-weight: 700; color: var(--danger); margin-bottom: 0.75rem; }
+.sendingNote { font-size: var(--type-support); color: var(--warning); }
+.dateInput { width: 100%; box-sizing: border-box; }
+.dateError { font-size: var(--type-support); color: var(--danger); margin-top: 0.5rem; }
+.audience { display: inline-block; vertical-align: top; max-width: 9rem; color: var(--text-tertiary); }
+.iconBtn { padding: 0.45rem 0.6rem; }
+.triggerDate { display: inline-block; vertical-align: top; max-width: 7.5rem; }

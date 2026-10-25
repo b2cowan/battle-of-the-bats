@@ -2,6 +2,7 @@
 // CumulativeChart pattern in app/[orgSlug]/coaches/.../budget-vs-actual/page.tsx.
 // Renders two lines (instrumented calls + errors) on a shared axis so an error spike
 // stands out against call volume. Server-renderable (no hooks / no 'use client').
+// Colour is the palette's tokens only (olive for calls, danger for errors), so Warm and Dark both read.
 
 import type { ChartPoint } from '@/lib/observability/dashboard';
 
@@ -9,14 +10,16 @@ function fmtInt(n: number) {
   return Math.round(n).toLocaleString('en-CA');
 }
 
+const AXIS_TEXT = { fill: 'var(--text-tertiary)', fontSize: 'var(--type-label)' } as const;
+
 export default function CallsVsErrorsChart({ data }: { data: ChartPoint[] }) {
   if (data.length === 0) {
     return null;
   }
 
-  const VW = 880;
-  const VH = 200;
-  const ML = 52;
+  const VW = 1160;
+  const VH = 220;
+  const ML = 56;
   const MR = 12;
   const MT = 14;
   const MB = 34;
@@ -51,34 +54,34 @@ export default function CallsVsErrorsChart({ data }: { data: ChartPoint[] }) {
     <svg viewBox={`0 0 ${VW} ${VH}`} style={{ width: '100%', height: 'auto', display: 'block' }} role="img" aria-label="Calls versus errors over time">
       {gridLines.map((g, i) => (
         <g key={i}>
-          <line x1={ML} y1={g.y} x2={ML + CW} y2={g.y} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-          <text x={ML - 6} y={g.y + 4} textAnchor="end" fontSize="9" fill="rgba(255,255,255,0.3)">{g.label}</text>
+          <line x1={ML} y1={g.y} x2={ML + CW} y2={g.y} style={{ stroke: 'var(--home-line)' }} strokeWidth="1" />
+          <text x={ML - 8} y={g.y + 4} textAnchor="end" style={AXIS_TEXT}>{g.label}</text>
         </g>
       ))}
-      <line x1={ML} y1={MT + CH} x2={ML + CW} y2={MT + CH} stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+      <line x1={ML} y1={MT + CH} x2={ML + CW} y2={MT + CH} style={{ stroke: 'var(--home-line-strong)' }} strokeWidth="1" />
 
-      <path d={callsArea} fill="rgba(132,204,22,0.06)" />
-      <path d={callsPath} stroke="var(--logic-lime)" strokeWidth="2" fill="none" />
-      <path d={errorsPath} stroke="#f87171" strokeWidth="2" fill="none" />
+      <path d={callsArea} style={{ fill: 'color-mix(in srgb, var(--home-olive) 8%, transparent)' }} />
+      <path d={callsPath} style={{ stroke: 'var(--home-olive)' }} strokeWidth="2" fill="none" />
+      <path d={errorsPath} style={{ stroke: 'var(--danger)' }} strokeWidth="2" fill="none" />
 
       {data.map((d, i) => (
-        d.errors > 0 ? <circle key={`e${i}`} cx={xPos(i)} cy={yPos(d.errors)} r="2.5" fill="#f87171" /> : null
+        d.errors > 0 ? <circle key={`e${i}`} cx={xPos(i)} cy={yPos(d.errors)} r="2.5" style={{ fill: 'var(--danger)' }} /> : null
       ))}
 
       {data.map((d, i) => {
         if (i % labelStep !== 0 && i !== n - 1) return null;
         return (
-          <text key={`x${i}`} x={xPos(i)} y={VH - 6} textAnchor="middle" fontSize="8.5" fill="rgba(255,255,255,0.35)">
+          <text key={`x${i}`} x={xPos(i)} y={VH - 8} textAnchor={i === n - 1 ? "end" : "middle"} style={AXIS_TEXT}>
             {d.label}
           </text>
         );
       })}
 
-      <g transform={`translate(${ML + 8},${MT + 6})`}>
-        <line x1="0" y1="6" x2="18" y2="6" stroke="var(--logic-lime)" strokeWidth="2" />
-        <text x="22" y="10" fontSize="9" fill="rgba(255,255,255,0.5)">Calls</text>
-        <line x1="74" y1="6" x2="92" y2="6" stroke="#f87171" strokeWidth="2" />
-        <text x="96" y="10" fontSize="9" fill="rgba(255,255,255,0.5)">Errors</text>
+      <g transform={`translate(${ML + 10},${MT + 4})`}>
+        <line x1="0" y1="6" x2="18" y2="6" style={{ stroke: 'var(--home-olive)' }} strokeWidth="2" />
+        <text x="24" y="10" style={AXIS_TEXT}>Calls</text>
+        <line x1="76" y1="6" x2="94" y2="6" style={{ stroke: 'var(--danger)' }} strokeWidth="2" />
+        <text x="100" y="10" style={AXIS_TEXT}>Errors</text>
       </g>
     </svg>
   );

@@ -1,118 +1,39 @@
-﻿.page {
-  max-width: 1240px;
+/* The Overview's own boxes. The column, the page title, the tabs and the buttons come from the console kit
+   (console.module.css) and the global .btn classes; this file keeps only the tiles, queue boxes and panels this
+   screen draws. A colour pass only (Support console Stage 1): the structure is the same, rebuilt later by Stage 2. */
+
+/* A status read from a code ("past due") starts with a capital. */
+.matrixHeader::first-letter,
+.compactList span::first-letter {
+  text-transform: uppercase; /* type-ok: readout */
 }
 
-.header {
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-end;
-}
-
-.headerLabel,
-.sectionKicker {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
+.sectionTitle {
+  color: var(--text-primary);
+  font-size: var(--type-heading);
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.title {
-  font-weight: 800;
-  font-size: 1.6rem;
-  text-transform: uppercase;
-  letter-spacing: 0;
-  color: var(--fl-text);
-  margin: 0.25rem 0 0;
-  line-height: 1.1;
-}
-
-.headerMeta {
-  display: grid;
-  gap: 0.25rem;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  color: var(--data-gray);
-  text-align: right;
+  line-height: 1.3;
+  margin: 0.15rem 0 0;
 }
 
 .metricGrid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.8rem;
-  margin-bottom: 1rem;
 }
 
-.metricCard {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  min-width: 0;
-  min-height: 7.25rem;
-  padding: 1rem 1.1rem;
-  background: rgba(12, 19, 32, 0.82);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.24);
-}
-
-.iconWrap {
-  width: 42px;
-  height: 42px;
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--logic-lime);
-  flex-shrink: 0;
-}
-
-.metricValue {
-  font-family: var(--font-data);
-  font-size: 1.7rem;
-  font-weight: 800;
-  color: var(--logic-lime);
-  line-height: 1;
-}
-
-.metricLabel,
-.statusTile span,
 .alertLabel {
-  font-family: var(--font-data);
-  font-size: 0.56rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
-.metricSub {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  color: var(--data-gray);
-  margin-top: 0.2rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
 }
 
 .alertStrip {
   display: grid;
   gap: 0.55rem;
   padding: 0.85rem 1rem;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.18);
-  background: rgba(var(--logic-lime-rgb), 0.035);
-}
-
-.sectionTitle {
-  color: var(--fl-text);
-  font-size: 0.9rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0;
-  margin: 0.25rem 0 0;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
 }
 
 .alertGrid {
@@ -136,20 +57,14 @@
 }
 
 .alertGroupLabel {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
 }
 
 .alertGroupCount {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: rgba(241, 245, 249, 0.4);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
 }
 
 .alertGroupCountUrgent {
@@ -158,9 +73,8 @@
 
 .alertRoleNote {
   margin: 0;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--data-gray);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
 }
 
 .alertItem {
@@ -171,22 +85,27 @@
   padding: 0.4rem 0.7rem;
   min-height: 2rem;
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--fl-text);
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
+  color: var(--text-primary);
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--card-bg);
+}
+
+a.alertItem:hover {
+  border-color: var(--home-olive);
 }
 
 .alertWarn {
-  border-color: rgba(251, 191, 36, 0.4);
-  background: rgba(251, 191, 36, 0.06);
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+  background: color-mix(in srgb, var(--warning) 6%, transparent);
 }
 
 .alertValue {
-  font-family: var(--font-data);
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--logic-lime);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
   line-height: 1;
   min-width: 1rem;
   text-align: center;
@@ -201,44 +120,6 @@
   gap: 1rem;
 }
 
-.tabBar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  align-items: center;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.24);
-}
-
-.tabButton {
-  appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 0;
-  background: rgba(255, 255, 255, 0.025);
-  color: var(--data-gray);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  line-height: 1;
-  min-height: 2.7rem;
-  padding: 0 1rem;
-  text-transform: uppercase;
-}
-
-.tabButton:hover,
-.tabButton:focus-visible {
-  border-color: rgba(var(--logic-lime-rgb), 0.36);
-  color: var(--fl-text);
-  outline: none;
-}
-
-.tabButtonActive {
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  border-color: rgba(var(--logic-lime-rgb), 0.44);
-  color: var(--logic-lime);
-}
-
 .tabPanel {
   min-width: 0;
 }
@@ -251,8 +132,9 @@
 
 .panel,
 .panelWide {
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.16);
-  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
   padding: 1rem;
   min-width: 0;
 }
@@ -267,7 +149,7 @@
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
-  color: var(--logic-lime);
+  color: var(--text-tertiary);
 }
 
 .barList,
@@ -290,32 +172,28 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--data-gray);
-  text-transform: capitalize;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
 }
 
 .barMeta strong,
 .compactList strong,
 .sourceList strong {
-  color: var(--fl-text);
-  font-size: 0.78rem;
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums;
 }
 
 .sourceList {
   margin-top: 1rem;
   padding-top: 0.9rem;
-  border-top: 1px solid rgba(var(--logic-lime-rgb), 0.12);
+  border-top: 1px solid var(--home-line);
 }
 
 .sourceListTitle {
-  font-family: var(--font-data);
-  font-size: 0.56rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
 }
 
 .sourceList span {
@@ -325,16 +203,16 @@
 
 .barTrack {
   height: 0.45rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
-  background: rgba(255, 255, 255, 0.035);
+  border-radius: 999px;
+  background: var(--home-line);
   overflow: hidden;
 }
 
 .barFill {
   display: block;
   height: 100%;
-  background: var(--logic-lime);
-  opacity: 0.78;
+  border-radius: 999px;
+  background: var(--home-olive);
 }
 
 .statusGrid {
@@ -348,14 +226,14 @@
   display: grid;
   gap: 0.25rem;
   padding: 0.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
 }
 
 .statusTile strong {
-  font-family: var(--font-data);
-  color: var(--fl-text);
-  font-size: 1.1rem;
+  color: var(--text-primary);
+  font-size: var(--type-title);
+  font-variant-numeric: tabular-nums;
 }
 
 .matrix {
@@ -369,17 +247,15 @@
 .matrixHeader,
 .matrixPlan,
 .matrixCell {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
+  font-size: var(--type-support);
   padding: 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--home-line);
+  border-radius: 4px;
 }
 
 .matrixHeader {
-  color: var(--data-gray);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: rgba(12, 19, 32, 0.7);
+  color: var(--text-tertiary);
+  font-weight: 650;
 }
 
 .matrixRow {
@@ -387,14 +263,15 @@
 }
 
 .matrixPlan {
-  color: var(--fl-text);
-  font-weight: 700;
+  color: var(--text-primary);
+  font-weight: 650;
 }
 
 .matrixCell {
-  color: var(--logic-lime);
+  color: var(--text-primary);
   text-align: center;
-  font-weight: 800;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
 }
 
 .lifecycleGrid {
@@ -404,25 +281,23 @@
 }
 
 .lifecycleGrid div {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
+  font-size: var(--type-body);
   padding: 0.6rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--logic-lime);
+  border: 1px solid var(--home-line);
+  border-radius: 4px;
+  color: var(--text-primary);
   text-align: center;
-  font-weight: 800;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
 }
 
 .lifecycleGrid .lifecycleHeader {
-  color: var(--data-gray);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: rgba(12, 19, 32, 0.7);
-  font-size: 0.58rem;
+  color: var(--text-tertiary);
+  font-size: var(--type-support);
 }
 
 .lifecycleGrid .lifecycleLabel {
-  color: var(--fl-text);
+  color: var(--text-primary);
   text-align: left;
 }
 
@@ -432,19 +307,18 @@
   gap: 0.55rem;
   margin-top: 1rem;
   padding-top: 0.9rem;
-  border-top: 1px solid rgba(var(--logic-lime-rgb), 0.12);
+  border-top: 1px solid var(--home-line);
 }
 
 .recoveryRate strong {
-  font-family: var(--font-data);
-  color: var(--logic-lime);
-  font-size: 1.4rem;
+  color: var(--text-primary);
+  font-size: var(--type-figure);
+  font-variant-numeric: tabular-nums;
 }
 
 .recoveryRate span {
-  font-family: var(--font-data);
-  color: var(--data-gray);
-  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  font-size: var(--type-support);
 }
 
 .statRow {
@@ -455,25 +329,24 @@
 }
 
 .statRow div {
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
   padding: 0.8rem;
   display: grid;
   gap: 0.25rem;
 }
 
 .statRow strong {
-  font-family: var(--font-data);
-  color: var(--logic-lime);
-  font-size: 1.35rem;
+  color: var(--text-primary);
+  font-size: var(--type-figure);
+  font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
 .statRow span,
 .panelCopy {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  color: var(--data-gray);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
   line-height: 1.55;
 }
 
@@ -482,42 +355,18 @@
 }
 
 .panelLinkRow a {
-  font-family: var(--font-data);
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--home-olive);
   text-decoration: none;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+}
+
+.panelLinkRow a:hover {
+  text-decoration: underline;
 }
 
 .snapshotActions {
   margin-top: 1rem;
-}
-
-.snapshotButton {
-  font-family: var(--font-data);
-  font-size: 0.64rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.38);
-  cursor: pointer;
-  min-height: 2.35rem;
-  padding: 0 0.9rem;
-}
-
-.snapshotButton:hover:not(:disabled) {
-  background: rgba(var(--logic-lime-rgb), 0.16);
-  border-color: var(--logic-lime);
-}
-
-.snapshotButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
 }
 
 .usageGrid {
@@ -533,29 +382,28 @@
   align-items: center;
   gap: 0.45rem 0.6rem;
   padding: 0.8rem;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.025);
-  color: var(--logic-lime);
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
+  color: var(--text-tertiary);
 }
 
 .usageTile strong {
-  font-family: var(--font-data);
-  color: var(--fl-text);
-  font-size: 1.25rem;
+  color: var(--text-primary);
+  font-size: var(--type-title);
+  font-variant-numeric: tabular-nums;
 }
 
 .usageTile span {
   grid-column: 1 / -1;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  color: var(--data-gray);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
   line-height: 1.4;
 }
 
 .moduleGrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   padding-top: 0.9rem;
-  border-top: 1px solid rgba(var(--logic-lime-rgb), 0.12);
+  border-top: 1px solid var(--home-line);
 }
 
 .panelCopy {
@@ -578,14 +426,8 @@
 }
 
 @media (max-width: 900px) {
-  .header,
   .alertStrip {
     display: block;
-  }
-
-  .headerMeta {
-    text-align: left;
-    margin-top: 0.75rem;
   }
 
   .alertGrid {
@@ -602,10 +444,6 @@
   .usageGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .tabButton {
-    flex: 1 1 10rem;
-  }
 }
 
 @media (max-width: 620px) {
@@ -615,13 +453,5 @@
   .statusGrid,
   .statRow {
     grid-template-columns: 1fr;
-  }
-
-  .tabBar {
-    gap: 0.35rem;
-  }
-
-  .tabButton {
-    flex-basis: 100%;
   }
 }

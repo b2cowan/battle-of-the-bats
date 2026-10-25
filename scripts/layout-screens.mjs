@@ -1901,6 +1901,19 @@ export const SCREENS = [
     route: 'app/(consumer)/auth/reset-confirm/page' },
   { id: 'auth-reset-tap-broken',     session: 'anon', path: () => '/auth/reset-confirm',          ready: 'text=That link has expired or was already used.', widths: ['320'],
     route: 'app/(consumer)/auth/reset-confirm/page', note: 'lands on the forgot screen with the amber notice (U4 screen 3)' },
+
+  // ── THE SUPPORT CONSOLE (platform admin) — Stage 1, 2026-10-24: the console took the house look, so its screens inherit the
+  // house rules by being listed. The signed-in role is `platformAdmin` (tests/uat/.auth/platform-admin.json). The club record
+  // (/platform-admin/orgs/<id>) is NOT listed: the fixture context carries no organization id for it; Stage 2 rebuilds it
+  // and lists it then.
+  { id: 'platform-orgs',            session: 'platformAdmin', path: () => '/platform-admin/orgs',            ready: 'h1:has-text("Organizations")',
+    route: 'app/platform-admin/orgs/page' },
+  { id: 'platform-customer-users',  session: 'platformAdmin', path: () => '/platform-admin/customer-users',  ready: 'h1:has-text("Customer users")',
+    route: 'app/platform-admin/customer-users/page' },
+  { id: 'platform-observability',   session: 'platformAdmin', path: () => '/platform-admin/observability',   ready: 'h1:has-text("Observability")',
+    route: 'app/platform-admin/observability/page' },
+  { id: 'platform-plans-pricing',   session: 'platformAdmin', path: () => '/platform-admin/plans-pricing',   ready: 'h1:has-text("Plans & pricing")',
+    route: 'app/platform-admin/plans-pricing/page' },
 ];
 
 /**

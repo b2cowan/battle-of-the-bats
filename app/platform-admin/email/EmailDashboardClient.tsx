@@ -2,12 +2,14 @@
 
 import { useState, useCallback, useEffect, Fragment } from 'react';
 import Link from 'next/link';
-import { Send, Eye, ChevronDown, ChevronRight, X, RotateCcw, Pencil, Lock, Calendar, AlertTriangle, Clock } from 'lucide-react';
+import { Send, Eye, ChevronDown, ChevronRight, X, RotateCcw, Pencil, Lock, AlertTriangle, Clock } from 'lucide-react';
 import type { EmailBatch, OptOutOrg, MarketingSchedule } from './page';
 import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import { warmEmailForPreview } from '@/lib/email-envelope-warm';
 import { UPCOMING_WINDOW_DAYS, classifyCampaignSend, daysUntil, formatPlannedDate } from '@/lib/marketing-schedule';
 import { LIVE_MARKETING_CAMPAIGNS } from '@/lib/marketing-email-defaults';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import kit from '../console.module.css';
 import styles from './email.module.css';
 
 // ── Founding season email schedule ────────────────────────────────────────────
@@ -52,25 +54,30 @@ const formatDate = (iso: string | null): string => fmtAbsoluteDateTime(iso);
 
 function StatusBadge({ status }: { status: string }) {
   const cls: Record<string, string> = {
-    scheduled: styles.badgeScheduled,
-    pending: styles.badgePending,
-    running: styles.badgeRunning,
-    complete: styles.badgeComplete,
-    sent: styles.badgeSent,
-    failed: styles.badgeFailed,
-    past_due: styles.badgePastDue,
-    due_soon: styles.badgeDueSoon,
-    planned: styles.badgePlanned,
-    auto: styles.badgeAuto,
+    scheduled: '',
+    pending: kit.chipWarn,
+    running: kit.chipWarn,
+    complete: kit.chipOk,
+    sent: kit.chipOk,
+    failed: kit.chipBad,
+    past_due: kit.chipBad,
+    due_soon: kit.chipWarn,
+    planned: kit.chipQuiet,
+    auto: kit.chipInfo,
   };
   const label: Record<string, string> = {
+    scheduled: 'Scheduled',
+    pending: 'Pending',
+    running: 'Running',
+    complete: 'Complete',
+    failed: 'Failed',
     sent: 'Sent',
     past_due: 'Past due',
     due_soon: 'Due soon',
     planned: 'Planned',
     auto: 'Auto',
   };
-  return <span className={`${styles.badge} ${cls[status] ?? styles.badgeNotBuilt}`}>{label[status] ?? status}</span>;
+  return <span className={`${kit.chip} ${cls[status] ?? kit.chipQuiet}`}>{label[status] ?? status}</span>;
 }
 
 // ── Sub-component: individual sends for an expanded batch ─────────────────────
@@ -110,19 +117,19 @@ function BatchSendsTable({ batchId }: { batchId: string }) {
 
   if (loading) return (
     <table className={styles.subTable}>
-      <tbody><tr><td colSpan={5} style={{ textAlign: 'center', padding: '1rem', color: 'var(--data-gray)' }}>Loading…</td></tr></tbody>
+      <tbody><tr><td colSpan={5} className={styles.subNote}>Loading…</td></tr></tbody>
     </table>
   );
 
   if (error) return (
     <table className={styles.subTable}>
-      <tbody><tr><td colSpan={5} style={{ textAlign: 'center', padding: '1rem', color: '#f87171' }}>Error: {error}</td></tr></tbody>
+      <tbody><tr><td colSpan={5} className={`${styles.subNote} ${styles.subError}`}>Error: {error}</td></tr></tbody>
     </table>
   );
 
   if (!sends?.length) return (
     <table className={styles.subTable}>
-      <tbody><tr><td colSpan={5} style={{ textAlign: 'center', padding: '1rem', color: 'var(--data-gray)' }}>No send records found.</td></tr></tbody>
+      <tbody><tr><td colSpan={5} className={styles.subNote}>No send records found.</td></tr></tbody>
     </table>
   );
 
@@ -144,7 +151,7 @@ function BatchSendsTable({ batchId }: { batchId: string }) {
             <td>{s.recipient_name ?? '—'}</td>
             <td><StatusBadge status={s.status} />{s.suppression_reason ? ` (${s.suppression_reason})` : ''}</td>
             <td>{formatDate(s.sent_at)}</td>
-            <td><span className={styles.resendId}>{s.resend_message_id ?? '—'}</span></td>
+            <td><span className={kit.code}>{s.resend_message_id ?? '—'}</span></td>
           </tr>
         ))}
       </tbody>
@@ -184,26 +191,26 @@ function PreviewModal({
   }, [email.emailKey]);
 
   return (
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
-        <div className={styles.modalHeader}>
+    <div className="modal-overlay" onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
+      <div className="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="email-preview-title" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
           <div>
-            <div className={styles.modalTitle}>Email Preview — {email.emailKey}</div>
+            <h3 id="email-preview-title">Email preview — {email.emailKey}</h3>
             <div className={styles.modalSubject}>{subject}</div>
           </div>
-          <button className={styles.modalClose} onClick={onClose} aria-label="Close">
-            <X size={14} />
+          <button type="button" className={styles.modalClose} onClick={onClose} aria-label="Close">
+            <X size={16} />
           </button>
         </div>
         <div className={styles.modalBody}>
           {error ? (
-            <div className={styles.notBuiltNotice}>
-              <p style={{ margin: '0 0 0.5rem', color: '#f87171' }}>Couldn&apos;t load preview.</p>
-              <p style={{ margin: 0, opacity: 0.7 }}>{error}</p>
+            <div className={styles.previewNotice}>
+              <p className={styles.previewError}>Couldn&apos;t load preview.</p>
+              <p>{error}</p>
             </div>
           ) : html === null ? (
-            <div className={styles.notBuiltNotice}>
-              <p style={{ margin: 0, opacity: 0.6 }}>Loading preview…</p>
+            <div className={styles.previewNotice}>
+              <p>Loading preview…</p>
             </div>
           ) : (
             <div className={styles.previewFrame}>
@@ -211,9 +218,9 @@ function PreviewModal({
             </div>
           )}
         </div>
-        <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid rgba(30,58,138,0.2)', textAlign: 'right' }}>
-          <Link href={`/platform-admin/email-templates/${email.emailKey}`} className={styles.btnAction} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <Pencil size={11} /> Edit content
+        <div className="modal-footer">
+          <Link href={`/platform-admin/email-templates/${email.emailKey}`} className="btn btn-secondary btn-sm">
+            <Pencil size={12} aria-hidden /> Edit content
           </Link>
         </div>
       </div>
@@ -237,42 +244,41 @@ function SendConfirmModal({
   sending: boolean;
 }) {
   return (
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onCancel)?.(); }}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
-        <div className={styles.modalHeader}>
-          <div className={styles.modalTitle}>Confirm Send</div>
-          <button className={styles.modalClose} onClick={onCancel} aria-label="Close">
-            <X size={14} />
+    <div className="modal-overlay" onPointerDown={e => { if (e.target === e.currentTarget) (onCancel)?.(); }}>
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="email-confirm-title" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 id="email-confirm-title">Confirm send</h3>
+          <button type="button" className={styles.modalClose} onClick={onCancel} aria-label="Close">
+            <X size={16} />
           </button>
         </div>
-        <div className={styles.confirmDialog}>
-          <div className={styles.confirmTitle}>⚠ This will send real emails</div>
-          <p className={styles.confirmBody}>
-            You are about to send <strong>{email.emailKey}</strong> to{' '}
-            <strong>{recipientCount} recipient{recipientCount !== 1 ? 's' : ''}</strong>.
-            <br /><br />
-            Subject: <em>{email.subject}</em>
-            <br /><br />
-            This action cannot be undone. Ensure RESEND_API_KEY is configured and
-            the recipient list looks correct before proceeding.
+        <div className={styles.confirmTitle}>⚠ This will send real emails</div>
+        <p>
+          You are about to send <strong>{email.emailKey}</strong> to{' '}
+          <strong>{recipientCount} recipient{recipientCount !== 1 ? 's' : ''}</strong>.
+          <br /><br />
+          Subject: <em>{email.subject}</em>
+          <br /><br />
+          This action cannot be undone. Ensure RESEND_API_KEY is configured and
+          the recipient list looks correct before proceeding.
+        </p>
+        {sending && (
+          <p className={styles.sendingNote}>
+            Sending in progress — do not close this window.
           </p>
-          <div className={styles.confirmActions}>
-            <button
-              className={styles.btnConfirmSend}
-              onClick={onConfirm}
-              disabled={sending}
-            >
-              {sending ? 'Sending…' : `Send to ${recipientCount} recipients`}
-            </button>
-            <button className={styles.btnCancel} onClick={onCancel} disabled={sending}>
-              Cancel
-            </button>
-          </div>
-          {sending && (
-            <p className={styles.sendingNote}>
-              Sending in progress — do not close this window.
-            </p>
-          )}
+        )}
+        <div className="modal-footer">
+          <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={sending}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={onConfirm}
+            disabled={sending}
+          >
+            {sending ? 'Sending…' : `Send to ${recipientCount} recipients`}
+          </button>
         </div>
       </div>
     </div>
@@ -424,18 +430,12 @@ export default function EmailDashboardClient({
     .sort((a, b) => (a.plannedDate ?? '').localeCompare(b.plannedDate ?? ''));
 
   return (
-    <div className={styles.page}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div>
-          <div className={styles.headerLabel}>Platform Admin</div>
-          <h1 className={styles.title}>Email Dashboard</h1>
-        </div>
-      </div>
+    <div className={kit.page}>
+      <AdminPageHeader title="Email dashboard" />
 
       {/* Result banner */}
       {lastResult && (
-        <div className={`${styles.resultBanner} ${lastResult.message ? styles.resultError : styles.resultSuccess}`}>
+        <div className={`${kit.notice} ${lastResult.message ? kit.noticeBad : kit.noticeGood}`} role="status">
           {lastResult.message
             ? `Error: ${lastResult.message}`
             : `Sent: ${lastResult.sent} · Suppressed: ${lastResult.suppressed} · Failed: ${lastResult.failed} · Batch: ${lastResult.batchId ?? 'n/a'}`
@@ -444,270 +444,285 @@ export default function EmailDashboardClient({
       )}
 
       {/* ── Needs sending (past due + upcoming) ── */}
-      {(pastDue.length > 0 || upcoming.length > 0) && (
-        <div className={styles.needsSending}>
-          {pastDue.length > 0 && (
-            <div className={`${styles.needsGroup} ${styles.needsPastDue}`}>
-              <div className={styles.needsTitle}>
-                <AlertTriangle size={13} /> Past due — send now ({pastDue.length})
-              </div>
-              {pastDue.map(r => (
-                <div key={r.email.emailKey} className={styles.needsItem}>
-                  <div className={styles.needsItemMain}>
-                    <span className={styles.needsDate}>{r.plannedDate ? formatPlannedDate(r.plannedDate) : '—'}</span>
-                    <span className={styles.needsSubject} title={r.subject}>{r.subject}</span>
-                  </div>
-                  <button className={styles.needsSendBtn} onClick={() => setSendTarget(r.email)}>
-                    <Send size={11} /> Send now
-                  </button>
+      {pastDue.length > 0 && (
+        <section className={kit.section}>
+          <h2 className={`${kit.sectionTitle} ${styles.needsTitle}`}>
+            <AlertTriangle size={15} aria-hidden /> Past due — send now ({pastDue.length})
+          </h2>
+          <div className={`${kit.card} ${styles.needsCard} ${styles.needsBad}`}>
+            {pastDue.map(r => (
+              <div key={r.email.emailKey} className={styles.needsItem}>
+                <div className={styles.needsItemMain}>
+                  <span className={styles.needsDate}>{r.plannedDate ? formatPlannedDate(r.plannedDate) : '—'}</span>
+                  <span className={styles.needsSubject} title={r.subject}>{r.subject}</span>
                 </div>
-              ))}
-            </div>
-          )}
-          {upcoming.length > 0 && (
-            <div className={`${styles.needsGroup} ${styles.needsUpcoming}`}>
-              <div className={styles.needsTitle}>
-                <Clock size={13} /> Upcoming — next {UPCOMING_WINDOW_DAYS} days ({upcoming.length})
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSendTarget(r.email)}>
+                  <Send size={12} aria-hidden /> Send now
+                </button>
               </div>
-              {upcoming.map(r => (
-                <div key={r.email.emailKey} className={styles.needsItem}>
-                  <div className={styles.needsItemMain}>
-                    <span className={styles.needsDate}>{r.plannedDate ? formatPlannedDate(r.plannedDate) : '—'}</span>
-                    <span className={styles.needsSubject} title={r.subject}>{r.subject}</span>
-                    <span className={styles.needsDays}>
-                      in {daysUntil(r.plannedDate!, todayISO)} day{daysUntil(r.plannedDate!, todayISO) !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <button className={styles.needsSendBtnGhost} onClick={() => setSendTarget(r.email)}>
-                    <Send size={11} /> Send early
-                  </button>
+            ))}
+          </div>
+        </section>
+      )}
+      {upcoming.length > 0 && (
+        <section className={kit.section}>
+          <h2 className={`${kit.sectionTitle} ${styles.needsTitle}`}>
+            <Clock size={15} aria-hidden /> Upcoming — next {UPCOMING_WINDOW_DAYS} days ({upcoming.length})
+          </h2>
+          <div className={`${kit.card} ${styles.needsCard} ${styles.needsWarn}`}>
+            {upcoming.map(r => (
+              <div key={r.email.emailKey} className={styles.needsItem}>
+                <div className={styles.needsItemMain}>
+                  <span className={styles.needsDate}>{r.plannedDate ? formatPlannedDate(r.plannedDate) : '—'}</span>
+                  <span className={styles.needsSubject} title={r.subject}>{r.subject}</span>
+                  <span className={styles.needsDays}>
+                    in {daysUntil(r.plannedDate!, todayISO)} day{daysUntil(r.plannedDate!, todayISO) !== 1 ? 's' : ''}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSendTarget(r.email)}>
+                  <Send size={12} aria-hidden /> Send early
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Stats */}
-      <p className={styles.statsSubtitle}>
+      <section className={kit.band} aria-label="Founding season email audience">
+        <div className={`${kit.bandCell} ${styles.help}`} title="All organizations on a Founding Season comp period (free through September 30, 2027), including opted-out.">
+          <span className={kit.bandLabel}>Founding season orgs</span>
+          <strong className={kit.bandValue}>{recipientCount + optOutCount}</strong>
+        </div>
+        <div className={`${kit.bandCell} ${styles.help}`} title="Founding-season orgs that have NOT opted out of marketing email — the default 'founding' send audience.">
+          <span className={kit.bandLabel}>Active recipients</span>
+          <strong className={kit.bandValue}>{recipientCount}</strong>
+        </div>
+        <div className={`${kit.bandCell} ${styles.help}`} title="Founding-season orgs that opted out of marketing email and are suppressed from every send.">
+          <span className={kit.bandLabel}>Opted out</span>
+          <strong className={kit.bandValue}>{optOutCount}</strong>
+        </div>
+      </section>
+      <p className={kit.caption}>
         Founding season organizations with active marketing email consent. Counts exclude opted-out orgs.
       </p>
-      <div className={styles.statsRow}>
-        <div className={styles.statCard} title="All organizations on a Founding Season comp period (free through September 30, 2027), including opted-out.">
-          <div className={styles.statValue}>{recipientCount + optOutCount}</div>
-          <div className={styles.statLabel}>Founding Season Orgs</div>
-        </div>
-        <div className={styles.statCard} title="Founding-season orgs that have NOT opted out of marketing email — the default 'founding' send audience.">
-          <div className={styles.statValue}>{recipientCount}</div>
-          <div className={styles.statLabel}>Active Recipients</div>
-        </div>
-        <div className={styles.statCard} title="Founding-season orgs that opted out of marketing email and are suppressed from every send.">
-          <div className={styles.statValue}>{optOutCount}</div>
-          <div className={styles.statLabel}>Opted Out</div>
-        </div>
-      </div>
 
       {/* ── Scheduled Sends ── */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTitle}>Scheduled Sends</span>
-          <span className={styles.sectionNote}>
-            All {SCHEDULED_EMAILS.length} founding season emails. <strong>Subject, content &amp; calendar send dates are editable</strong>;
-            <Lock size={10} style={{ verticalAlign: '-1px', margin: '0 0.15rem 0 0.3rem', opacity: 0.6 }} />
-            trigger-based timing &amp; audience are set by the system. Sends are manual — this board tells you when.
-          </span>
-        </div>
-        <div className={styles.tableScroll}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Email key</th>
-              <th>Subject</th>
-              <th>Send date</th>
-              <th>Audience</th>
-              <th>Recipients</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ email, plannedDate, sent, status, subject, editableDate }) => {
-              const count = email.isTransactional ? null : (recipientCounts[email.emailKey] ?? recipientCount);
-
-              return (
-                <tr key={email.emailKey}>
-                  <td><span className={styles.emailKey}>{email.emailKey}</span></td>
-                  <td><span className={styles.subject} title={subject}>{subject}</span></td>
-                  <td>
-                    {editableDate ? (
-                      <button
-                        className={styles.dateEditBtn}
-                        onClick={() => openDateEditor(email)}
-                        title="Edit planned send date"
-                      >
-                        <Calendar size={10} style={{ verticalAlign: '-1px', marginRight: '0.3rem', opacity: 0.75 }} />
-                        <span className={styles.sendDate}>{plannedDate ? formatPlannedDate(plannedDate) : 'Set date'}</span>
-                        <Pencil size={9} style={{ marginLeft: '0.35rem', opacity: 0.5 }} />
-                      </button>
-                    ) : (
-                      <span title="System-defined: this email fires on an event, not a fixed date.">
-                        <Lock size={9} style={{ verticalAlign: '-1px', marginRight: '0.3rem', opacity: 0.45 }} />
-                        <span className={styles.sendDate}>{email.sendDate}</span>
-                      </span>
-                    )}
-                  </td>
-                  <td title="System-defined audience (backed by real queries + consent rules).">
-                    <Lock size={9} style={{ verticalAlign: '-1px', marginRight: '0.3rem', opacity: 0.45 }} />
-                    <span className={styles.audience}>{email.audience}</span>
-                  </td>
-                  <td>
-                    <span className={styles.recipientCount}>
-                      {email.isTransactional ? '—' : count ?? '…'}
-                    </span>
-                  </td>
-                  <td>
-                    <StatusBadge status={status} />
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <Link
-                        href={`/platform-admin/email-templates/${email.emailKey}`}
-                        className={`${styles.btnAction} ${styles.btnPreview}`}
-                        title="Edit content (subject & body)"
-                      >
-                        <Pencil size={11} />
-                      </Link>
-                      <button
-                        className={`${styles.btnAction} ${styles.btnPreview}`}
-                        onClick={() => setPreviewEmail(email)}
-                        title="Preview"
-                      >
-                        <Eye size={11} />
-                      </button>
-                      {!email.isTransactional && (
-                        <button
-                          className={`${styles.btnAction} ${styles.btnSend}`}
-                          onClick={() => setSendTarget(email)}
-                          disabled={sent}
-                          title={sent ? 'Already sent' : 'Send now'}
-                        >
-                          <Send size={11} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
+      <section className={kit.section}>
+        <h2 className={kit.sectionTitle}>Scheduled sends</h2>
+        <p className={kit.caption}>
+          All {SCHEDULED_EMAILS.length} founding season emails. <strong>Subject, content &amp; calendar send dates are editable</strong>;
+          <Lock size={10} aria-hidden style={{ verticalAlign: '-1px', margin: '0 0.15rem 0 0.3rem', opacity: 0.6 }} />
+          trigger-based timing &amp; audience are set by the system. Sends are manual — this board tells you when.
+        </p>
+        <div className={kit.card}>
+          <div className={`${kit.tableWrap} table-cards`}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Email key</th>
+                  <th>Subject</th>
+                  <th>Send date</th>
+                  <th>Audience</th>
+                  <th>Recipients</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        </div>
-      </div>
+              </thead>
+              <tbody>
+                {rows.map(({ email, plannedDate, sent, status, subject, editableDate }) => {
+                  const count = email.isTransactional ? null : (recipientCounts[email.emailKey] ?? recipientCount);
 
-      {/* ── Sent History ── */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTitle}>Sent History</span>
-          <span className={styles.sectionNote}>Batch-level log — expand row for individual recipients</span>
-        </div>
-        {batches.length === 0 ? (
-          <div className={styles.emptyState}>No email batches sent yet.</div>
-        ) : (
-          <div className={styles.tableScroll}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th></th>
-                <th>Email key</th>
-                <th>Subject</th>
-                <th>Triggered by</th>
-                <th>Recipients</th>
-                <th>Sent</th>
-                <th>Suppressed</th>
-                <th>Failed</th>
-                <th>Status</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {batches.map(batch => (
-                <Fragment key={batch.id}>
-                  <tr>
-                    <td style={{ width: '2rem' }}>
-                      <button
-                        className={`${styles.btnAction} ${styles.btnExpand}`}
-                        onClick={() => setExpandedBatch(expandedBatch === batch.id ? null : batch.id)}
-                        title="Expand recipients"
-                      >
-                        {expandedBatch === batch.id ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
-                      </button>
-                    </td>
-                    <td><span className={styles.emailKey}>{batch.email_key}</span></td>
-                    <td><span className={styles.subject} title={batch.subject}>{batch.subject}</span></td>
-                    <td><span className={styles.audience}>{batch.triggered_by}</span></td>
-                    <td>{batch.recipient_count}</td>
-                    <td style={{ color: '#4ade80' }}>{batch.sent_count}</td>
-                    <td style={{ color: '#f59e0b' }}>{batch.suppressed_count}</td>
-                    <td style={{ color: '#f87171' }}>{batch.failed_count}</td>
-                    <td><StatusBadge status={batch.status} /></td>
-                    <td><span className={styles.sendDate}>{formatDate(batch.created_at)}</span></td>
-                  </tr>
-                  {expandedBatch === batch.id && (
-                    <tr className={styles.expandedRow}>
-                      <td colSpan={10}>
-                        <BatchSendsTable batchId={batch.id} />
+                  return (
+                    <tr key={email.emailKey}>
+                      <td className="table-cards-title"><span className={`${kit.code} ${kit.nowrap}`}>{email.emailKey}</span></td>
+                      <td data-label="Subject"><span className={styles.subject} title={subject}>{subject}</span></td>
+                      <td data-label="Send date">
+                        {editableDate ? (
+                          <button
+                            type="button"
+                            className={styles.dateEditBtn}
+                            onClick={() => openDateEditor(email)}
+                            title="Edit planned send date"
+                          >
+                            <span>{plannedDate ? formatPlannedDate(plannedDate) : 'Set date'}</span>
+                            <Pencil size={10} aria-hidden style={{ marginLeft: '0.35rem', opacity: 0.5 }} />
+                          </button>
+                        ) : (
+                          <span title="System-defined: this email fires on an event, not a fixed date.">
+                            <span className={styles.triggerDate}>
+                              <Lock size={10} aria-hidden style={{ verticalAlign: '-1px', marginRight: '0.3rem', opacity: 0.45 }} />
+                              {email.sendDate}
+                            </span>
+                          </span>
+                        )}
+                      </td>
+                      <td data-label="Audience" title="System-defined audience (backed by real queries + consent rules).">
+                        <span className={styles.audience}>
+                          <Lock size={10} aria-hidden style={{ verticalAlign: '-1px', marginRight: '0.3rem', opacity: 0.45 }} />
+                          {email.audience}
+                        </span>
+                      </td>
+                      <td data-label="Recipients" className={kit.num}>
+                        {email.isTransactional ? '—' : count ?? '…'}
+                      </td>
+                      <td data-label="Status">
+                        <StatusBadge status={status} />
+                      </td>
+                      <td data-label="Actions">
+                        <div className={styles.actions}>
+                          <Link
+                            href={`/platform-admin/email-templates/${email.emailKey}`}
+                            className={`btn btn-secondary btn-sm ${styles.iconBtn}`}
+                            title="Edit content (subject & body)"
+                            aria-label="Edit content (subject & body)"
+                          >
+                            <Pencil size={12} aria-hidden />
+                          </Link>
+                          <button
+                            type="button"
+                            className={`btn btn-secondary btn-sm ${styles.iconBtn}`}
+                            onClick={() => setPreviewEmail(email)}
+                            title="Preview"
+                            aria-label="Preview"
+                          >
+                            <Eye size={12} aria-hidden />
+                          </button>
+                          {!email.isTransactional && (
+                            <button
+                              type="button"
+                              className={`btn btn-secondary btn-sm ${styles.iconBtn}`}
+                              onClick={() => setSendTarget(email)}
+                              disabled={sent}
+                              title={sent ? 'Already sent' : 'Send now'}
+                              aria-label={sent ? 'Already sent' : 'Send now'}
+                            >
+                              <Send size={12} aria-hidden />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
-                  )}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Sent History ── */}
+      <section className={kit.section}>
+        <h2 className={kit.sectionTitle}>Sent history</h2>
+        <p className={kit.caption}>Batch-level log — expand row for individual recipients</p>
+        {batches.length === 0 ? (
+          <div className={kit.card}><div className={kit.empty}>No email batches sent yet.</div></div>
+        ) : (
+          <div className={kit.card}>
+            {/* A COMPARISON-shaped log (ten columns, a row that opens a nested table): it keeps its columns and
+                scrolls inside its own box — it never becomes cards. */}
+            <div className={kit.tableWrap}>
+              <table>
+                <thead>
+                  <tr>
+                    <th aria-label="Expand"></th>
+                    <th>Email key</th>
+                    <th>Subject</th>
+                    <th>Triggered by</th>
+                    <th className={kit.num}>Recipients</th>
+                    <th className={kit.num}>Sent</th>
+                    <th className={kit.num}>Suppressed</th>
+                    <th className={kit.num}>Failed</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {batches.map(batch => (
+                    <Fragment key={batch.id}>
+                      <tr>
+                        <td className={styles.expandCell}>
+                          <button
+                            type="button"
+                            className={`btn btn-secondary btn-sm ${styles.iconBtn}`}
+                            onClick={() => setExpandedBatch(expandedBatch === batch.id ? null : batch.id)}
+                            title="Expand recipients"
+                            aria-label="Expand recipients"
+                            aria-expanded={expandedBatch === batch.id}
+                          >
+                            {expandedBatch === batch.id ? <ChevronDown size={12} aria-hidden /> : <ChevronRight size={12} aria-hidden />}
+                          </button>
+                        </td>
+                        <td><span className={`${kit.code} ${kit.nowrap}`}>{batch.email_key}</span></td>
+                        <td><span className={styles.subject} title={batch.subject}>{batch.subject}</span></td>
+                        <td className={kit.muted}>{batch.triggered_by}</td>
+                        <td className={kit.num}>{batch.recipient_count}</td>
+                        <td className={`${kit.num} ${styles.okNum}`}>{batch.sent_count}</td>
+                        <td className={`${kit.num} ${styles.warnNum}`}>{batch.suppressed_count}</td>
+                        <td className={`${kit.num} ${styles.badNum}`}>{batch.failed_count}</td>
+                        <td><StatusBadge status={batch.status} /></td>
+                        <td className={kit.nowrap}>{formatDate(batch.created_at)}</td>
+                      </tr>
+                      {expandedBatch === batch.id && (
+                        <tr className={styles.expandedRow}>
+                          <td colSpan={10}>
+                            <BatchSendsTable batchId={batch.id} />
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
-      </div>
+      </section>
 
       {/* ── Opt-Outs ── */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTitle}>Opt-Outs</span>
-          <span className={styles.sectionNote}>{optOuts.length} org{optOuts.length !== 1 ? 's' : ''} unsubscribed</span>
-        </div>
+      <section className={kit.section}>
+        <h2 className={kit.sectionTitle}>Opt-outs</h2>
+        <p className={kit.caption}>{optOuts.length} org{optOuts.length !== 1 ? 's' : ''} unsubscribed</p>
         {optOuts.length === 0 ? (
-          <div className={styles.emptyState}>No opt-outs yet.</div>
+          <div className={kit.card}><div className={kit.empty}>No opt-outs yet.</div></div>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Org name</th>
-                <th>Owner email</th>
-                <th>Opted out</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {optOuts.map(org => (
-                <tr key={org.orgId}>
-                  <td>{org.orgName}</td>
-                  <td>{org.ownerEmail ?? '—'}</td>
-                  <td><span className={styles.sendDate}>{formatDate(org.optedOutAt)}</span></td>
-                  <td>
-                    <button
-                      className={`${styles.btnAction} ${styles.btnResubscribe}`}
-                      onClick={() => handleResubscribe(org.orgId)}
-                      disabled={resubscribing === org.orgId}
-                      title="Re-subscribe (only if org owner has explicitly requested)"
-                    >
-                      <RotateCcw size={10} />
-                      {resubscribing === org.orgId ? ' …' : ' Re-subscribe'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className={kit.card}>
+            <div className={`${kit.tableWrap} table-cards`}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Org name</th>
+                    <th>Owner email</th>
+                    <th>Opted out</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {optOuts.map(org => (
+                    <tr key={org.orgId}>
+                      <td className="table-cards-title">{org.orgName}</td>
+                      <td data-label="Owner email">{org.ownerEmail ?? '—'}</td>
+                      <td data-label="Opted out" className={kit.nowrap}>{formatDate(org.optedOutAt)}</td>
+                      <td data-label="Action">
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => handleResubscribe(org.orgId)}
+                          disabled={resubscribing === org.orgId}
+                          title="Re-subscribe (only if org owner has explicitly requested)"
+                        >
+                          <RotateCcw size={12} aria-hidden />
+                          {resubscribing === org.orgId ? ' …' : ' Re-subscribe'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
-      </div>
+      </section>
 
       {/* ── Modals ── */}
       {previewEmail && (
@@ -725,36 +740,35 @@ export default function EmailDashboardClient({
       )}
 
       {dateEditKey && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => !savingDate && setDateEditKey(null))?.(); }}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <div className={styles.modalTitle}>Planned send date</div>
-              <button className={styles.modalClose} onClick={() => setDateEditKey(null)} aria-label="Close" disabled={savingDate}>
-                <X size={14} />
+        <div className="modal-overlay" onPointerDown={e => { if (e.target === e.currentTarget) (() => !savingDate && setDateEditKey(null))?.(); }}>
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="email-date-title" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 id="email-date-title">Planned send date</h3>
+              <button type="button" className={styles.modalClose} onClick={() => setDateEditKey(null)} aria-label="Close" disabled={savingDate}>
+                <X size={16} />
               </button>
             </div>
-            <div className={styles.confirmDialog}>
-              <p className={styles.confirmBody} style={{ marginBottom: '0.75rem' }}>
-                Set the planned send date for <strong>{dateEditKey}</strong>. This is a reminder of when to
-                send — it appears in the &ldquo;upcoming&rdquo; and &ldquo;past due&rdquo; lists. It does{' '}
-                <strong>not</strong> send automatically.
-              </p>
-              <input
-                type="date"
-                className={styles.dateInput}
-                value={dateDraft}
-                onChange={e => setDateDraft(e.target.value)}
-                disabled={savingDate}
-              />
-              {dateError && <p className={styles.sendingNote} style={{ color: '#f87171' }}>{dateError}</p>}
-              <div className={styles.confirmActions}>
-                <button className={styles.btnConfirmSend} onClick={handleSaveDate} disabled={savingDate || !dateDraft}>
-                  {savingDate ? 'Saving…' : 'Save date'}
-                </button>
-                <button className={styles.btnCancel} onClick={() => setDateEditKey(null)} disabled={savingDate}>
-                  Cancel
-                </button>
-              </div>
+            <p>
+              Set the planned send date for <strong>{dateEditKey}</strong>. This is a reminder of when to
+              send — it appears in the &ldquo;upcoming&rdquo; and &ldquo;past due&rdquo; lists. It does{' '}
+              <strong>not</strong> send automatically.
+            </p>
+            <input
+              type="date"
+              className={`${kit.field} ${styles.dateInput}`}
+              aria-label="Planned send date"
+              value={dateDraft}
+              onChange={e => setDateDraft(e.target.value)}
+              disabled={savingDate}
+            />
+            {dateError && <p className={styles.dateError}>{dateError}</p>}
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={() => setDateEditKey(null)} disabled={savingDate}>
+                Cancel
+              </button>
+              <button type="button" className="btn btn-primary" onClick={handleSaveDate} disabled={savingDate || !dateDraft}>
+                {savingDate ? 'Saving…' : 'Save date'}
+              </button>
             </div>
           </div>
         </div>

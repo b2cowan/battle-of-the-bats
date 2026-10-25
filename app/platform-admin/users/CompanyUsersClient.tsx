@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { UserPlus, Check, Copy } from 'lucide-react';
 import type { PlatformUser } from '@/lib/types';
 import { fmtAbsoluteDate } from '@/lib/format-date';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import kit from '../console.module.css';
 import styles from './users.module.css';
 
 interface Props {
@@ -18,8 +20,8 @@ const PLATFORM_ROLES = [
   { value: 'billing', label: 'Billing' },
   { value: 'product', label: 'Product' },
   { value: 'growth', label: 'Growth' },
-  { value: 'read_only', label: 'Read Only' },
-  { value: 'super_admin', label: 'Super Admin' },
+  { value: 'read_only', label: 'Read only' },
+  { value: 'super_admin', label: 'Super admin' },
 ];
 
 function roleLabel(role: string) {
@@ -128,153 +130,173 @@ export default function CompanyUsersClient({ users: initial, bootstrapEmails, ca
   const isBootstrap = (email: string) => bootstrapEmails.includes(email.toLowerCase());
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <div className={styles.headerLabel}>System Access</div>
-          <h1 className={styles.title}>Platform Users</h1>
-        </div>
-        {canManageUsers && (
-          <button className={styles.inviteBtn} onClick={() => { setShowInvite(s => !s); setSetupLink(''); setInviteErr(''); }}>
+    <div className={kit.page}>
+      <AdminPageHeader
+        title="Platform users"
+        actions={canManageUsers ? (
+          <button
+            type="button"
+            className={`btn ${showInvite ? 'btn-secondary' : 'btn-primary'}`}
+            onClick={() => { setShowInvite(s => !s); setSetupLink(''); setInviteErr(''); }}
+          >
             <UserPlus size={14} />
-            Add User
+            Add user
           </button>
-        )}
-      </header>
+        ) : undefined}
+      />
 
       {showInvite && canManageUsers && (
-        <div className={styles.inviteCard}>
-          <h2 className={styles.inviteTitle}>Add Company User</h2>
-          <p className={styles.inviteHint}>No email is sent. After creating, copy the one-time setup link shown below and share it securely with the new user.</p>
-          <form onSubmit={handleInvite} className={styles.inviteForm}>
-            <div className={styles.inviteRow}>
-              <div className={styles.inviteField}>
-                <label className={styles.fieldLabel}>Display Name</label>
-                <input
-                  className={styles.fieldInput}
-                  value={invName}
-                  onChange={e => setInvName(e.target.value)}
-                  placeholder="e.g. Jane Smith"
-                />
+        <section className={kit.section}>
+          <h2 className={kit.sectionTitle}>Add company user</h2>
+          <div className={`${kit.card} ${kit.cardPad} ${styles.inviteCard}`}>
+            <p className={kit.caption}>No email is sent. After creating, copy the one-time setup link shown below and share it securely with the new user.</p>
+            <form onSubmit={handleInvite} className={styles.inviteForm}>
+              <div className={kit.formGrid}>
+                <div className={kit.fieldGroup}>
+                  <label className={kit.label} htmlFor="platform-user-name">Display name</label>
+                  <input
+                    id="platform-user-name"
+                    className={kit.field}
+                    value={invName}
+                    onChange={e => setInvName(e.target.value)}
+                    placeholder="e.g. Jane Smith"
+                  />
+                </div>
+                <div className={kit.fieldGroup}>
+                  <label className={kit.label} htmlFor="platform-user-email">Email <span className={kit.req}>*</span></label>
+                  <input
+                    id="platform-user-email"
+                    className={kit.field}
+                    type="email"
+                    value={invEmail}
+                    onChange={e => setInvEmail(e.target.value)}
+                    placeholder="jane@fieldlogichq.ca"
+                    required
+                  />
+                </div>
+                <div className={kit.fieldGroup}>
+                  <label className={kit.label} htmlFor="platform-user-role">Role</label>
+                  <select
+                    id="platform-user-role"
+                    className={kit.select}
+                    value={invRole}
+                    onChange={e => setInvRole(e.target.value)}
+                  >
+                    {PLATFORM_ROLES.map(role => (
+                      <option key={role.value} value={role.value}>{role.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className={styles.inviteField}>
-                <label className={styles.fieldLabel}>Email <span className={styles.required}>*</span></label>
-                <input
-                  className={styles.fieldInput}
-                  type="email"
-                  value={invEmail}
-                  onChange={e => setInvEmail(e.target.value)}
-                  placeholder="jane@fieldlogichq.ca"
-                  required
-                />
+              {inviteErr && <p className={kit.fieldError}>{inviteErr}</p>}
+              <div className={kit.formActions}>
+                <button className="btn btn-primary" type="submit" disabled={inviting}>
+                  {inviting ? 'Creating…' : 'Create'}
+                </button>
               </div>
-              <div className={styles.inviteField}>
-                <label className={styles.fieldLabel}>Role</label>
-                <select
-                  className={styles.fieldInput}
-                  value={invRole}
-                  onChange={e => setInvRole(e.target.value)}
-                >
-                  {PLATFORM_ROLES.map(role => (
-                    <option key={role.value} value={role.value}>{role.label}</option>
-                  ))}
-                </select>
+            </form>
+            {setupLink && (
+              <div className={kit.callout}>
+                <span>Password setup link — share with the new user:</span>
+                <code className={`${kit.code} ${styles.link}`}>{setupLink}</code>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={handleCopy}>
+                  {copied ? <Check size={12} /> : <Copy size={12} />}
+                  {copied ? 'Copied' : 'Copy'}
+                </button>
               </div>
-              <button className={styles.submitBtn} type="submit" disabled={inviting}>
-                {inviting ? 'Creating…' : 'Create'}
-              </button>
-            </div>
-            {inviteErr && <p className={styles.rowError}>{inviteErr}</p>}
-          </form>
-          {setupLink && (
-            <div className={styles.linkBox}>
-              <span className={styles.linkLabel}>Password setup link — share with the new user:</span>
-              <code className={styles.link}>{setupLink}</code>
-              <button className={styles.copyBtn} onClick={handleCopy}>
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </section>
       )}
 
-      {/* `table-cards` (global): the list becomes cards at ≤640 — table standard, register F-12. */}
-      <div className={`${styles.tableWrap} table-cards`}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Added</th>
-              <th>Invited By</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.length === 0 && (
-              <tr><td colSpan={7} className={styles.emptyCell}>No company users yet.</td></tr>
-            )}
-            {users.map(u => (
-              <tr key={u.id}>
-                <td className={`${styles.nameCell} table-cards-title`}>{u.displayName || '—'}</td>
-                <td className={styles.emailCell} data-label="Email">
-                  {u.email}
-                  {isBootstrap(u.email) && <span className={styles.bootstrapBadge}>bootstrap</span>}
-                </td>
-                <td data-label="Role">
-                  {isBootstrap(u.email) || !canManageUsers ? (
-                    <span className={styles.roleBadge}>{roleLabel(u.role)}</span>
-                  ) : (
-                    <select
-                      className={styles.roleSelect}
-                      value={u.role}
-                      onChange={event => handleRoleChange(u, event.target.value)}
-                      disabled={busy[u.id]}
-                    >
-                      {PLATFORM_ROLES.map(role => (
-                        <option key={role.value} value={role.value}>{role.label}</option>
-                      ))}
-                    </select>
-                  )}
-                </td>
-                <td data-label="Status">
-                  <span className={u.isActive ? styles.badgeActive : styles.badgeInactive}>
-                    {u.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className={styles.dateCell} data-label="Added">{fmtDate(u.createdAt)}</td>
-                <td className={styles.invitedByCell} data-label="Invited by">
-                  <span className={styles.invitedByValue} title={u.invitedBy || undefined}>{u.invitedBy || '—'}</span>
-                </td>
-                <td className={styles.actionsCell}>
-                  {rowErr[u.id] && <span className={styles.rowError}>{rowErr[u.id]}</span>}
-                  {!isBootstrap(u.email) && canManageUsers && (
-                    <>
-                      <button
-                        className={styles.resetBtn}
-                        onClick={() => handleToggle(u)}
-                        disabled={busy[u.id]}
-                      >
-                        {busy[u.id] ? '…' : u.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button
-                        className={styles.removeBtn}
-                        onClick={() => setPendingRemove(u)}
-                        disabled={busy[u.id]}
-                      >
-                        Remove
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <section className={kit.section}>
+        <div className={kit.card}>
+          <div className={kit.toolbar}>
+            <span className={kit.count}>{users.length === 1 ? '1 user' : `${users.length} users`}</span>
+          </div>
+          {/* `table-cards` (global): the list becomes cards at ≤640 — table standard, register F-12. */}
+          <div className={`${kit.tableWrap} table-cards`}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Added</th>
+                  <th>Invited by</th>
+                  <th aria-label="Actions"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.length === 0 && (
+                  <tr><td colSpan={7} className={kit.empty}>No company users yet.</td></tr>
+                )}
+                {users.map(u => (
+                  <tr key={u.id}>
+                    <td className="table-cards-title">{u.displayName || '—'}</td>
+                    <td data-label="Email">
+                      {u.email}
+                      {isBootstrap(u.email) && <>{' '}<span className={`${kit.chip} ${kit.chipInfo}`}>bootstrap</span></>}
+                    </td>
+                    <td data-label="Role">
+                      {isBootstrap(u.email) || !canManageUsers ? (
+                        <span className={`${kit.chip} ${kit.chipOk}`}>{roleLabel(u.role)}</span>
+                      ) : (
+                        <select
+                          className={kit.select}
+                          aria-label={`Role for ${u.email}`}
+                          value={u.role}
+                          onChange={event => handleRoleChange(u, event.target.value)}
+                          disabled={busy[u.id]}
+                        >
+                          {PLATFORM_ROLES.map(role => (
+                            <option key={role.value} value={role.value}>{role.label}</option>
+                          ))}
+                        </select>
+                      )}
+                    </td>
+                    <td data-label="Status">
+                      <span className={`${kit.chip} ${u.isActive ? kit.chipOk : kit.chipQuiet}`}>
+                        {u.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className={kit.nowrap} data-label="Added">{fmtDate(u.createdAt)}</td>
+                    <td data-label="Invited by">
+                      <span className={styles.invitedBy} title={u.invitedBy || undefined}>{u.invitedBy || '—'}</span>
+                    </td>
+                    <td>
+                      <div className={styles.actionsCell}>
+                        {rowErr[u.id] && <span className={kit.fieldError}>{rowErr[u.id]}</span>}
+                        {!isBootstrap(u.email) && canManageUsers && (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => handleToggle(u)}
+                              disabled={busy[u.id]}
+                            >
+                              {busy[u.id] ? '…' : u.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-danger btn-sm"
+                              onClick={() => setPendingRemove(u)}
+                              disabled={busy[u.id]}
+                            >
+                              Remove
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
       {pendingRemove && (
         <div className={styles.modalBackdrop} role="presentation">
@@ -284,17 +306,17 @@ export default function CompanyUsersClient({ users: initial, bootstrapEmails, ca
             aria-modal="true"
             aria-labelledby="remove-platform-user-title"
           >
-            <div className={styles.confirmTitle} id="remove-platform-user-title">
-              Remove Platform User
-            </div>
+            <h2 className={kit.sectionTitle} id="remove-platform-user-title">
+              Remove platform user
+            </h2>
             <p className={styles.modalCopy}>
               Remove {pendingRemove.email} from platform admin access? This cannot be undone from this screen.
             </p>
-            {rowErr[pendingRemove.id] && <span className={styles.rowError}>{rowErr[pendingRemove.id]}</span>}
+            {rowErr[pendingRemove.id] && <span className={kit.fieldError}>{rowErr[pendingRemove.id]}</span>}
             <div className={styles.modalActions}>
               <button
                 type="button"
-                className={styles.cancelBtn}
+                className="btn btn-secondary"
                 onClick={() => setPendingRemove(null)}
                 disabled={busy[pendingRemove.id]}
               >
@@ -302,11 +324,11 @@ export default function CompanyUsersClient({ users: initial, bootstrapEmails, ca
               </button>
               <button
                 type="button"
-                className={styles.removeBtn}
+                className="btn btn-danger"
                 onClick={() => handleRemove(pendingRemove)}
                 disabled={busy[pendingRemove.id]}
               >
-                {busy[pendingRemove.id] ? 'Removing...' : 'Remove User'}
+                {busy[pendingRemove.id] ? 'Removing...' : 'Remove user'}
               </button>
             </div>
           </section>

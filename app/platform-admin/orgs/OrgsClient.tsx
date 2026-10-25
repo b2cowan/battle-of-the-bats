@@ -7,7 +7,9 @@ import {
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
 import { fmtAbsoluteDate } from '@/lib/format-date';
-import styles from './orgs.module.css';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import kit from '../console.module.css';
+import { SUBSCRIPTION_STATUS_LABELS, subscriptionStatusChip, subscriptionStatusLabel } from '../chips';
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
@@ -79,13 +81,6 @@ const PLAN_LABELS: Record<string, string> = {
 
 const fmtDate = (iso: string) => fmtAbsoluteDate(iso);
 
-function statusClass(status: string) {
-  if (status === 'active')   return styles.badgeActive;
-  if (status === 'trialing') return styles.badgeTrialing;
-  if (status === 'past_due') return styles.badgePastDue;
-  return styles.badgeMuted;
-}
-
 export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props) {
   const [search,              setSearch]              = useState('');
   const [planFilter,          setPlanFilter]          = useState('');
@@ -156,243 +151,214 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <div className={styles.headerLabel}>Customers</div>
-          <h1 className={styles.title}>Organizations</h1>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <ExportMenu
-            formats={['xlsx', 'csv']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            disabled={filteredOrgs.length === 0}
-          />
-          <div className={styles.count}>
-            {filteredOrgs.length === orgs.length
-              ? `${orgs.length} total`
-              : `${filteredOrgs.length} of ${orgs.length}`}
-          </div>
-        </div>
-      </header>
+    <div className={kit.page}>
+      <AdminPageHeader title="Organizations" />
 
-      <section className={styles.summaryGrid} aria-label="Organization account snapshot">
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>Total Accounts</span>
-          <strong>{orgs.length}</strong>
+      <section className={kit.band} aria-label="Organization account snapshot">
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Total accounts</span>
+          <strong className={kit.bandValue}>{orgs.length}</strong>
         </div>
-        <div className={`${styles.metric} ${pastDueCount > 0 ? styles.metricWarn : ''}`}>
-          <span className={styles.metricLabel}>Past Due</span>
-          <strong>{pastDueCount}</strong>
+        <div className={`${kit.bandCell} ${pastDueCount > 0 ? kit.bandWarn : ''}`}>
+          <span className={kit.bandLabel}>Past due</span>
+          <strong className={kit.bandValue}>{pastDueCount}</strong>
         </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>Active / Trial</span>
-          <strong>{activeOrTrialing}</strong>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Active / trial</span>
+          <strong className={kit.bandValue}>{activeOrTrialing}</strong>
         </div>
-        <div className={`${styles.metric} ${foundingSeasonCount > 0 ? styles.metricHighlight : ''}`}>
-          <span className={styles.metricLabel}>Founding Season</span>
-          <strong>{foundingSeasonCount}</strong>
+        <div className={`${kit.bandCell} ${foundingSeasonCount > 0 ? kit.bandGood : ''}`}>
+          <span className={kit.bandLabel}>Founding season</span>
+          <strong className={kit.bandValue}>{foundingSeasonCount}</strong>
         </div>
-        <div className={`${styles.metric} ${freeFloorCount > 0 ? styles.metricHighlight : ''}`}>
-          <span className={styles.metricLabel}>Free League Starter</span>
-          <strong>{freeFloorCount}</strong>
+        <div className={`${kit.bandCell} ${freeFloorCount > 0 ? kit.bandGood : ''}`}>
+          <span className={kit.bandLabel}>Free League Starter</span>
+          <strong className={kit.bandValue}>{freeFloorCount}</strong>
         </div>
         <button
           type="button"
-          className={`${styles.metric} ${styles.metricButton} ${emptyOrgCount > 0 ? styles.metricWarn : ''} ${emptyOrgOnly ? styles.metricButtonActive : ''}`}
+          className={`${kit.bandCell} ${emptyOrgCount > 0 ? kit.bandWarn : ''} ${emptyOrgOnly ? kit.bandOn : ''}`}
           onClick={() => setEmptyOrgOnly(v => !v)}
           title="Orgs with no tournaments, leagues, rep teams, or members beyond the owner"
           aria-pressed={emptyOrgOnly}
         >
-          <span className={styles.metricLabel}>Empty Orgs</span>
-          <strong>{emptyOrgCount}</strong>
+          <span className={kit.bandLabel}>Empty orgs</span>
+          <strong className={kit.bandValue}>{emptyOrgCount}</strong>
         </button>
       </section>
 
-      <section className={`${styles.attentionStrip} ${pastDueCount > 0 || canceledCount > 0 ? styles.attentionWarn : ''}`}>
-        <div>
-          <div className={styles.sectionKicker}>Needs Attention</div>
-          <div className={styles.attentionText}>
-            {pastDueCount > 0 || canceledCount > 0
-              ? 'Accounts with billing or access risk are ready for review.'
-              : 'No past-due or canceled accounts in the current directory.'}
-          </div>
-        </div>
-        <div className={styles.attentionActions}>
+      <div className={`${kit.callout} ${pastDueCount > 0 || canceledCount > 0 ? kit.calloutWarn : ''}`}>
+        <span>
+          <strong>Needs attention.</strong>{' '}
+          {pastDueCount > 0 || canceledCount > 0
+            ? 'Accounts with billing or access risk are ready for review.'
+            : 'No past-due or canceled accounts in the current directory.'}
+        </span>
+        <span className={kit.calloutEnd}>
           {pastDueCount > 0 && (
-            <button type="button" onClick={() => setStatusFilter('past_due')} className={styles.attentionBtn}>
+            <button type="button" onClick={() => setStatusFilter('past_due')} className="btn btn-secondary btn-sm">
               Past due ({pastDueCount})
             </button>
           )}
           {canceledCount > 0 && (
-            <button type="button" onClick={() => setStatusFilter('canceled')} className={styles.attentionBtn}>
+            <button type="button" onClick={() => setStatusFilter('canceled')} className="btn btn-secondary btn-sm">
               Canceled ({canceledCount})
             </button>
           )}
-          {pastDueCount === 0 && canceledCount === 0 && (
-            <span className={styles.attentionOk}>Clear</span>
-          )}
-        </div>
-      </section>
+          {pastDueCount === 0 && canceledCount === 0 && <span className={kit.chipOk + ' ' + kit.chip}>Clear</span>}
+        </span>
+      </div>
 
-      <section className={styles.workflowPanel}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <div className={styles.sectionKicker}>Primary Workflow</div>
-            <h2 className={styles.sectionTitle}>Find Accounts</h2>
+      <section className={kit.section}>
+        <h2 className={kit.sectionTitle}>Account directory</h2>
+        <div className={kit.card}>
+          <div className={kit.toolbar}>
+            <span className={kit.count}>
+              {filteredOrgs.length === orgs.length
+                ? `${orgs.length} accounts`
+                : `${filteredOrgs.length} of ${orgs.length} accounts`}
+            </span>
+            <span className={kit.toolbarEnd}>
+              <Link href="/platform-admin/customer-users" className={kit.door}>Search customer users ›</Link>
+              <ExportMenu
+                formats={['xlsx', 'csv']}
+                onExportXLSX={handleExportXLSX}
+                onExportCSV={handleExportCSV}
+                disabled={filteredOrgs.length === 0}
+              />
+            </span>
           </div>
-          <Link href="/platform-admin/customer-users" className={styles.secondaryAction}>
-            Search Customer Users
-          </Link>
-        </div>
-
-        <div className={styles.filterBar}>
-          <input
-            type="search"
-            className={styles.filterInput}
-            placeholder="Search name, slug or web address..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          <select
-            className={styles.filterSelect}
-            value={planFilter}
-            onChange={e => setPlanFilter(e.target.value)}
-          >
-            <option value="">All plans</option>
-            {PLANS.map(p => <option key={p} value={p}>{PLAN_LABELS[p]}</option>)}
-          </select>
-          <select
-            className={styles.filterSelect}
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-          >
-            <option value="">All statuses</option>
-            {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <label className={styles.filterCheckbox}>
+          <div className={kit.toolbar}>
             <input
-              type="checkbox"
-              checked={foundingSeasonOnly}
-              onChange={e => setFoundingSeasonOnly(e.target.checked)}
-            />{' '}
-            Founding Season only
-          </label>
-          <label className={styles.filterCheckbox}>
-            <input
-              type="checkbox"
-              checked={freeFloorOnly}
-              onChange={e => setFreeFloorOnly(e.target.checked)}
-            />{' '}
-            League Starter only
-          </label>
-          <label className={styles.filterCheckbox}>
-            <input
-              type="checkbox"
-              checked={emptyOrgOnly}
-              onChange={e => setEmptyOrgOnly(e.target.checked)}
-            />{' '}
-            Empty orgs only
-          </label>
-          {attentionFilter && (
-            <button
-              type="button"
-              className={styles.attentionBtn}
-              onClick={() => setAttentionFilter('')}
-              title="Clear attention filter"
+              type="search"
+              className={kit.search}
+              placeholder="Search name, slug or web address"
+              aria-label="Search organizations"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            <select
+              className={kit.select}
+              aria-label="Plan"
+              value={planFilter}
+              onChange={e => setPlanFilter(e.target.value)}
             >
-              {ATTENTION_LABELS[attentionFilter]} ✕
-            </button>
-          )}
-          {(search || planFilter || statusFilter || foundingSeasonOnly || freeFloorOnly || emptyOrgOnly || attentionFilter) && (
-            <button
-              className={styles.filterClear}
-              onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); setFoundingSeasonOnly(false); setFreeFloorOnly(false); setEmptyOrgOnly(false); setAttentionFilter(''); }}
+              <option value="">All plans</option>
+              {PLANS.map(p => <option key={p} value={p}>{PLAN_LABELS[p]}</option>)}
+            </select>
+            <select
+              className={kit.select}
+              aria-label="Status"
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
             >
-              Clear
-            </button>
-          )}
-        </div>
-      </section>
-
-      <section className={styles.tableSection}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <div className={styles.sectionKicker}>Grouped Detail</div>
-            <h2 className={styles.sectionTitle}>Account Directory</h2>
+              <option value="">All statuses</option>
+              {STATUSES.map(s => <option key={s} value={s}>{SUBSCRIPTION_STATUS_LABELS[s]}</option>)}
+            </select>
+            <label className={kit.check}>
+              <input
+                type="checkbox"
+                checked={foundingSeasonOnly}
+                onChange={e => setFoundingSeasonOnly(e.target.checked)}
+              />
+              <span>Founding season only</span>
+            </label>
+            <label className={kit.check}>
+              <input
+                type="checkbox"
+                checked={freeFloorOnly}
+                onChange={e => setFreeFloorOnly(e.target.checked)}
+              />
+              <span>League Starter only</span>
+            </label>
+            <label className={kit.check}>
+              <input
+                type="checkbox"
+                checked={emptyOrgOnly}
+                onChange={e => setEmptyOrgOnly(e.target.checked)}
+              />
+              <span>Empty orgs only</span>
+            </label>
+            {attentionFilter && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setAttentionFilter('')}
+                title="Clear attention filter"
+              >
+                {ATTENTION_LABELS[attentionFilter]} ✕
+              </button>
+            )}
+            {(search || planFilter || statusFilter || foundingSeasonOnly || freeFloorOnly || emptyOrgOnly || attentionFilter) && (
+              <button
+                type="button"
+                className={kit.door}
+                onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); setFoundingSeasonOnly(false); setFreeFloorOnly(false); setEmptyOrgOnly(false); setAttentionFilter(''); }}
+              >
+                Clear
+              </button>
+            )}
           </div>
-          <div className={styles.sectionMeta}>
-            {filteredOrgs.length} shown
-          </div>
-        </div>
 
-        {/* `table-cards` (global, app/globals.css): a LIST becomes cards at ≤640 — the console had no
-            phone shape at all and this table scrolled sideways with rows wrapping to 121px (table
-            standard, register F-12). The name is the card's title and takes no label. */}
-        <div className={`${styles.tableWrap} table-cards`}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Slug</th>
-                <th>Plan</th>
-                <th>Status</th>
-                <th>Cohort</th>
-                <th>Created</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrgs.length === 0 && (
+          {/* `table-cards` (global, app/globals.css): a LIST becomes cards at ≤640 — the console had no
+              phone shape at all and this table scrolled sideways with rows wrapping to 121px (table
+              standard, register F-12). The name is the card's title and takes no label. */}
+          <div className={`${kit.tableWrap} table-cards`}>
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={7} className={styles.emptyCell}>No organizations match the current filter.</td>
+                  <th>Name</th>
+                  <th>Slug</th>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Cohort</th>
+                  <th>Created</th>
+                  <th aria-label="Open"></th>
                 </tr>
-              )}
-              {filteredOrgs.map(org => (
-                <tr key={org.id}>
-                  <td className="table-cards-title">
-                    <span className={styles.orgName}>{org.name}</span>
-                    {org.internalNotes && (
-                      <span className={styles.noteIndicator} title="Has internal note">note</span>
-                    )}
-                  </td>
-                  <td data-label="Slug"><span className={styles.slug}>{org.slug}</span></td>
-                  <td data-label="Plan">
-                    <span className={styles.planLabel}>{PLAN_LABELS[org.planId] ?? org.planId}</span>
-                  </td>
-                  <td data-label="Status">
-                    <span className={`${styles.badge} ${statusClass(org.subscriptionStatus)}`}>
-                      {org.subscriptionStatus}
-                    </span>
-                  </td>
-                  <td data-label="Cohort">
-                    {org.isFreeFloor && (
-                      <span className={styles.foundingBadge} title="Free League Starter floor (plan_id stays 'tournament')">
-                        League Starter
+              </thead>
+              <tbody>
+                {filteredOrgs.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className={kit.empty}>No organizations match the current filter.</td>
+                  </tr>
+                )}
+                {filteredOrgs.map(org => (
+                  <tr key={org.id}>
+                    <td className="table-cards-title">
+                      <Link href={`/platform-admin/orgs/${org.id}`} className={kit.nameLink}>{org.name}</Link>
+                      {org.internalNotes && (
+                        <>{' '}<span className={kit.chip} title="Has internal note">Note</span></>
+                      )}
+                    </td>
+                    <td data-label="Slug"><span className={kit.code}>{org.slug}</span></td>
+                    <td data-label="Plan" className={kit.nowrap}>{PLAN_LABELS[org.planId] ?? org.planId}</td>
+                    <td data-label="Status">
+                      <span className={`${kit.chip} ${subscriptionStatusChip(org.subscriptionStatus)}`}>
+                        {subscriptionStatusLabel(org.subscriptionStatus)}
                       </span>
-                    )}
-                    {org.isFoundingSeason && (
-                      <span className={styles.foundingBadge}>Founding</span>
-                    )}
-                    {org.emptyOrg && (
-                      <span className={styles.emptyBadge} title="No tournaments, leagues, rep teams, or members beyond the owner">
-                        Empty
-                      </span>
-                    )}
-                  </td>
-                  <td className={styles.dateCell} data-label="Created">{fmtDate(org.createdAt)}</td>
-                  <td className={styles.actionsCell}>
-                    <div className={styles.actionGroup}>
-                      <Link href={`/platform-admin/orgs/${org.id}`} className={styles.viewLink}>
-                        View
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                    <td data-label="Cohort">
+                      {org.isFreeFloor && (
+                        <span className={`${kit.chip} ${kit.chipOk}`} title="Free League Starter floor (plan_id stays 'tournament')">
+                          League Starter
+                        </span>
+                      )}{' '}
+                      {org.isFoundingSeason && (
+                        <span className={`${kit.chip} ${kit.chipOk}`}>Founding</span>
+                      )}{' '}
+                      {org.emptyOrg && (
+                        <span className={`${kit.chip} ${kit.chipWarn}`} title="No tournaments, leagues, rep teams, or members beyond the owner">
+                          Empty
+                        </span>
+                      )}
+                    </td>
+                    <td data-label="Created" className={kit.nowrap}>{fmtDate(org.createdAt)}</td>
+                    <td className={kit.rowDoor}><Link href={`/platform-admin/orgs/${org.id}`} tabIndex={-1} aria-hidden="true" className={kit.rowDoorLink}>›</Link></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </div>

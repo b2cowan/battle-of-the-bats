@@ -341,31 +341,6 @@
     "app/coaches/team/[basicTeamId]/team.module.css": [
       "contentGrid"
     ],
-    "app/platform-admin/email-templates/email-templates.module.css": [
-      "categoryGroup",
-      "categoryHeading"
-    ],
-    "app/platform-admin/observability/observability.module.css": [
-      "eventRoute"
-    ],
-    "app/platform-admin/orgs/orgs.module.css": [
-      "addonChip",
-      "addonChipOff",
-      "addonChipOn",
-      "addonChips",
-      "addonSaveBtn",
-      "addonsInner",
-      "addonsLabel",
-      "addonsRow",
-      "addonsSavedStatic"
-    ],
-    "app/platform-admin/pitch-deck-studio/pitch-deck-studio.module.css": [
-      "factQuiet"
-    ],
-    "app/platform-admin/users/users.module.css": [
-      "linkRow",
-      "pageLabel"
-    ],
     "app/pricing/page.module.css": [
       "coachesCallout",
       "coachesCalloutBody",

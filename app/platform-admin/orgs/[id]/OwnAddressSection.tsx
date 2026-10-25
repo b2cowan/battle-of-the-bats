@@ -44,7 +44,7 @@ export default function OwnAddressSection({ orgId, address, status }: { orgId: s
         lets another club (or this one) connect it. The club&apos;s pages go back to the FieldLogicHQ address at once.
       </p>
       {!asking ? (
-        <button type="button" className={styles.saveBtn} onClick={() => { setAsking(true); setError(''); }}>Release this address…</button>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setAsking(true); setError(''); }}>Release this address…</button>
       ) : (
         <div className={styles.formRow}>
           <label className={styles.formLabel} htmlFor="release-address-reason">Reason *</label>
@@ -57,8 +57,8 @@ export default function OwnAddressSection({ orgId, address, status }: { orgId: s
           />
           {error && <span className={styles.rowError}>{error}</span>}
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <button type="button" className={styles.saveBtn} disabled={saving} onClick={release}>{saving ? 'Releasing…' : 'Release address'}</button>
-            <button type="button" className={styles.cancelBtn} disabled={saving} onClick={() => { setAsking(false); setReason(''); setError(''); }}>Cancel</button>
+            <button type="button" className="btn btn-danger btn-sm" disabled={saving} onClick={release}>{saving ? 'Releasing…' : 'Release address'}</button>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={saving} onClick={() => { setAsking(false); setReason(''); setError(''); }}>Cancel</button>
           </div>
         </div>
       )}

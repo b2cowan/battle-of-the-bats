@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import kit from '../../console.module.css';
 import styles from '../feedback.module.css';
+import { cap } from '../../chips';
 
 const STATUSES = ['new', 'triaged', 'acknowledged', 'resolved'] as const;
 
@@ -52,7 +54,7 @@ export default function StatusControls({
   return (
     <span className={styles.statusControl}>
       <select
-        className={styles.statusSelect}
+        className={kit.select}
         value={status}
         disabled={readOnly || busy}
         onChange={e => apply(e.target.value)}
@@ -60,10 +62,10 @@ export default function StatusControls({
         title={readOnly ? 'View-only for your role' : undefined}
       >
         {STATUSES.map(s => (
-          <option key={s} value={s}>{s}</option>
+          <option key={s} value={s}>{cap(s)}</option>
         ))}
       </select>
-      {error && <span className={styles.statusError}>{error}</span>}
+      {error && <span className={kit.fieldError}>{error}</span>}
     </span>
   );
 }

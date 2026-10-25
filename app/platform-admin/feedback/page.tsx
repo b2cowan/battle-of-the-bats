@@ -2,11 +2,13 @@ import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { isPlatformAreaReadOnly } from '@/lib/platform-areas';
-import HelpCallout from '@/components/help/HelpCallout';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import StatusControls from './[id]/StatusControls';
 import EscalateControls from './[id]/EscalateControls';
 import FeedbackExportClient from './FeedbackExportClient';
+import { cap, feedbackTypeChip, feedbackStatusChip } from '../chips';
+import kit from '../console.module.css';
 import styles from './feedback.module.css';
 
 const PAGE_SIZE = 100;
@@ -36,18 +38,6 @@ type FeedbackRow = {
   escalated_at: string | null;
   created_at: string;
   organizations: { id: string; name: string } | { id: string; name: string }[] | null;
-};
-
-const TYPE_BADGE: Record<string, string> = {
-  bug: 'badge-danger',
-  feature: 'badge-info',
-  feedback: 'badge-neutral',
-};
-const STATUS_BADGE: Record<string, string> = {
-  new: 'badge-warning',
-  triaged: 'badge-info',
-  acknowledged: 'badge-info',
-  resolved: 'badge-success',
 };
 
 function orgFromJoin(value: FeedbackRow['organizations']) {
@@ -136,127 +126,131 @@ export default async function FeedbackTriagePage({
   const hasPrev = offset > 0;
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLabel}>Support &amp; Diagnostics</div>
-        <h1 className={styles.title}>Feedback</h1>
-        <div className={styles.count}>{rows.length} shown</div>
-      </header>
+    <div className={kit.page}>
+      <AdminPageHeader title="Feedback" />
 
-      <HelpCallout
-        variant="info"
-        title="In-app feedback queue"
-        body={`Bug reports, feature requests, and general feedback submitted from inside the app (admin, coach, scorekeeper, and anonymous). Move each item New → Triaged → Acknowledged → Resolved; a bug that hit a captured error shows a link to the related issue. Feedback is retained indefinitely.${readOnly ? ' Status changes require support or product access.' : ' Use the status dropdown to triage items, and Escalate to product to flag an item the product team needs to act on (filter by Escalated to see the flagged queue); transitions are audit-logged with your email. Error group status changes (in Observability) require product access.'}`}
-      />
-
-      <form method="GET" action="/platform-admin/feedback" className={styles.filterBar}>
-        <select name="type" defaultValue={filters.type} className={styles.filterSelect}>
-          <option value="">All types</option>
-          {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <select name="category" defaultValue={filters.category} className={styles.filterSelect}>
-          <option value="">All categories</option>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select name="status" defaultValue={filters.status} className={styles.filterSelect}>
-          <option value="all">All statuses</option>
-          {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-          <option value="escalated">escalated</option>
-        </select>
-        <button type="submit" className={styles.filterBtn}>Filter</button>
-        <FeedbackExportClient type={filters.type} category={filters.category} status={filters.status} />
-        {(filters.type || filters.category || filters.status !== 'all') && (
-          // status=all widens to every status (and clears type/category); a bare URL would re-apply New.
-          <Link href="/platform-admin/feedback?status=all" className={styles.filterClear}>Clear</Link>
-        )}
-      </form>
-
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Category</th>
-              <th>Org</th>
-              <th>From</th>
-              <th>Title / Body</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 && (
-              <tr><td colSpan={7} className={styles.emptyCell}>No feedback found.</td></tr>
-            )}
-            {rows.map(row => {
-              const org = orgFromJoin(row.organizations);
-              const reqId = requestIdOf(row.context);
-              const groupId = reqId ? issueLinks.get(reqId) : undefined;
-              return (
-                <tr key={row.id}>
-                  <td className={styles.tsCell}>{fmtAbsoluteDateTime(row.created_at)}</td>
-                  <td>
-                    <span className={`badge ${TYPE_BADGE[row.type] ?? 'badge-neutral'}`}>{row.type}</span>
-                  </td>
-                  <td className={styles.dimText}>{row.category ?? '—'}</td>
-                  <td>
-                    {row.org_id && org ? (
-                      <Link href={`/platform-admin/orgs/${row.org_id}`} className={styles.orgLink}>{org.name}</Link>
-                    ) : (
-                      <span className={styles.dimText}>Platform / anonymous</span>
-                    )}
-                  </td>
-                  <td className={styles.emailCell}>{row.user_email ?? row.submitter_name ?? '—'}</td>
-                  <td>
-                    <details className={styles.bodyDetails}>
-                      <summary>{row.title ?? row.body.slice(0, 80)}</summary>
-                      <pre>{row.body}</pre>
-                      {groupId ? (
-                        <Link href={`/platform-admin/observability/${groupId}`} className={styles.issueLink}>
-                          View related issue →
-                        </Link>
-                      ) : row.type === 'bug' ? (
-                        <span className={styles.dimText}>No linked error event — correlate manually by org + time in Observability.</span>
-                      ) : null}
-                    </details>
-                  </td>
-                  <td>
-                    <div className={styles.statusCell}>
-                      {readOnly ? (
-                        <span className={`badge ${STATUS_BADGE[row.status] ?? 'badge-neutral'}`}>{row.status}</span>
-                      ) : (
-                        <StatusControls id={row.id} currentStatus={row.status} readOnly={readOnly} />
-                      )}
-                      {row.escalated_at && (
-                        <span className="badge badge-danger" title="Flagged for the product team">Escalated</span>
-                      )}
-                      {!readOnly && (
-                        <EscalateControls id={row.id} escalated={!!row.escalated_at} />
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className={kit.callout}>
+        <span>
+          <strong>In-app feedback queue</strong>{' '}
+          {`Bug reports, feature requests, and general feedback submitted from inside the app (admin, coach, scorekeeper, and anonymous). Move each item New → Triaged → Acknowledged → Resolved; a bug that hit a captured error shows a link to the related issue. Feedback is retained indefinitely.${readOnly ? ' Status changes require support or product access.' : ' Use the status dropdown to triage items, and Escalate to product to flag an item the product team needs to act on (filter by Escalated to see the flagged queue); transitions are audit-logged with your email. Error group status changes (in Observability) require product access.'}`}
+        </span>
       </div>
 
-      {(hasPrev || hasNext) && (
-        <div className={styles.pagination}>
-          {hasPrev ? (
-            <Link href={buildHref(filters, { offset: offset - PAGE_SIZE })} className={styles.pageBtn}>Previous</Link>
-          ) : (
-            <span className={styles.pageBtnDisabled}>Previous</span>
+      <div className={kit.card}>
+        <form method="GET" action="/platform-admin/feedback" className={kit.toolbar}>
+          <span className={kit.count}>{rows.length} shown</span>
+          <select name="type" defaultValue={filters.type} className={kit.select} aria-label="Type">
+            <option value="">All types</option>
+            {TYPES.map(t => <option key={t} value={t}>{cap(t)}</option>)}
+          </select>
+          <select name="category" defaultValue={filters.category} className={kit.select} aria-label="Category">
+            <option value="">All categories</option>
+            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select name="status" defaultValue={filters.status} className={kit.select} aria-label="Status">
+            <option value="all">All statuses</option>
+            {STATUSES.map(s => <option key={s} value={s}>{cap(s)}</option>)}
+            <option value="escalated">Escalated</option>
+          </select>
+          <button type="submit" className="btn btn-primary btn-sm">Filter</button>
+          {(filters.type || filters.category || filters.status !== 'all') && (
+            // status=all widens to every status (and clears type/category); a bare URL would re-apply New.
+            <Link href="/platform-admin/feedback?status=all" className={kit.door}>Clear</Link>
           )}
-          <span className={styles.pageInfo}>Showing {offset + 1}-{offset + rows.length}</span>
-          {hasNext ? (
-            <Link href={buildHref(filters, { offset: offset + PAGE_SIZE })} className={styles.pageBtn}>Next</Link>
-          ) : (
-            <span className={styles.pageBtnDisabled}>Next</span>
-          )}
+          <span className={kit.toolbarEnd}>
+            <FeedbackExportClient type={filters.type} category={filters.category} status={filters.status} />
+          </span>
+        </form>
+
+        <div className={`${kit.tableWrap} table-cards`}>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Org</th>
+                <th>From</th>
+                <th>Title / Body</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody className={kit.comfortable}>
+              {rows.length === 0 && (
+                <tr><td colSpan={7} className={kit.empty}>No feedback found.</td></tr>
+              )}
+              {rows.map(row => {
+                const org = orgFromJoin(row.organizations);
+                const reqId = requestIdOf(row.context);
+                const groupId = reqId ? issueLinks.get(reqId) : undefined;
+                return (
+                  <tr key={row.id}>
+                    <td data-label="Date" className={kit.nowrap}>{fmtAbsoluteDateTime(row.created_at)}</td>
+                    <td data-label="Type">
+                      <span className={`${kit.chip} ${feedbackTypeChip(row.type)}`}>{cap(row.type)}</span>
+                    </td>
+                    <td data-label="Category" className={kit.muted}>{row.category ?? '—'}</td>
+                    <td data-label="Org">
+                      {row.org_id && org ? (
+                        <Link href={`/platform-admin/orgs/${row.org_id}`} className={kit.nameLink}>{org.name}</Link>
+                      ) : (
+                        <span className={kit.muted}>Platform / anonymous</span>
+                      )}
+                    </td>
+                    <td data-label="From" className={styles.fromCell}>{row.user_email ?? row.submitter_name ?? '—'}</td>
+                    <td className={`table-cards-title ${styles.bodyCell}`}>
+                      <details className={styles.bodyDetails}>
+                        <summary>{row.title ?? row.body.slice(0, 80)}</summary>
+                        <pre>{row.body}</pre>
+                        {groupId ? (
+                          <Link href={`/platform-admin/observability/${groupId}`} className={`${kit.door} ${styles.issueLink}`}>
+                            View related issue →
+                          </Link>
+                        ) : row.type === 'bug' ? (
+                          <span className={`${kit.muted} ${styles.issueLink}`}>No linked error event — correlate manually by org + time in Observability.</span>
+                        ) : null}
+                      </details>
+                    </td>
+                    <td data-label="Status">
+                      <div className={styles.statusCell}>
+                        {readOnly ? (
+                          <span className={`${kit.chip} ${feedbackStatusChip(row.status)}`}>{cap(row.status)}</span>
+                        ) : (
+                          <StatusControls id={row.id} currentStatus={row.status} readOnly={readOnly} />
+                        )}
+                        {row.escalated_at && (
+                          <span className={`${kit.chip} ${kit.chipBad}`} title="Flagged for the product team">Escalated</span>
+                        )}
+                        {!readOnly && (
+                          <EscalateControls id={row.id} escalated={!!row.escalated_at} />
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
+
+        {(hasPrev || hasNext) && (
+          <div className={kit.foot}>
+            <span className={kit.countQuiet}>Showing {offset + 1}-{offset + rows.length}</span>
+            <span className={kit.toolbarEnd}>
+              {hasPrev ? (
+                <Link href={buildHref(filters, { offset: offset - PAGE_SIZE })} className="btn btn-secondary btn-sm">Previous</Link>
+              ) : (
+                <button type="button" className="btn btn-secondary btn-sm" disabled>Previous</button>
+              )}
+              {hasNext ? (
+                <Link href={buildHref(filters, { offset: offset + PAGE_SIZE })} className="btn btn-secondary btn-sm">Next</Link>
+              ) : (
+                <button type="button" className="btn btn-secondary btn-sm" disabled>Next</button>
+              )}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronDown, KeyRound, MailCheck, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, KeyRound, MailCheck, Trash2 } from 'lucide-react';
 import ExportMenu from '@/components/admin/ExportMenu';
 import HelpCallout from '@/components/help/HelpCallout';
 import { fmtAbsoluteDate, fmtAbsoluteDateTime, fmtSince } from '@/lib/format-date';
@@ -12,6 +12,9 @@ import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import kit from '../console.module.css';
+import { humanize } from '../chips';
 import styles from './customer-users.module.css';
 import { useDismissable } from '@/lib/overlay-hooks';
 
@@ -99,11 +102,11 @@ type NoteRow = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function statusClass(value: string, s: Record<string, string>) {
-  if (value === 'active') return s.badgeActive;
-  if (value === 'banned' || value === 'canceled') return s.badgeDanger;
-  if (value === 'unconfirmed' || value === 'trialing' || value === 'past_due') return s.badgeWarn;
-  return s.badgeMuted;
+function statusChip(value: string) {
+  if (value === 'active') return kit.chipOk;
+  if (value === 'banned' || value === 'canceled') return kit.chipBad;
+  if (value === 'unconfirmed' || value === 'trialing' || value === 'past_due') return kit.chipWarn;
+  return kit.chipQuiet;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -399,29 +402,19 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
 
   const isBusy = (userId: string) => busy?.userId === userId;
 
-  return (
-    <div className={styles.page}>
+  // The bulk auth-status filter keeps the search that is already applied (the same hrefs the old filter links carried).
+  const buildFilterHref = (status: string) => {
+    const params = new URLSearchParams();
+    if (status) params.set('authStatus', status);
+    if (query) params.set('q', query);
+    const qs = params.toString();
+    return `/platform-admin/customer-users${qs ? `?${qs}` : ''}`;
+  };
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className={styles.header}>
-        <div>
-          <div className={styles.headerLabel}>Customer Support</div>
-          <h1 className={styles.title}>Customer Users</h1>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <ExportMenu
-            formats={['xlsx', 'csv']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            disabled={initialRows.length === 0}
-          />
-          <div className={styles.count}>
-            {query.length >= 2
-              ? `${total} result${total === 1 ? '' : 's'}`
-              : `${total} user${total === 1 ? '' : 's'}`}
-          </div>
-        </div>
-      </header>
+  return (
+    <div className={kit.page}>
+
+      <AdminPageHeader title="Customer users" />
 
       <HelpCallout
         variant="info"
@@ -432,247 +425,264 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
       />
 
       {!canManageUsers && (
-        <div className={styles.viewOnlyBanner}>
+        <div className={kit.notice}>
           View-only access — search and review user records. Contact the support team to take action on a user.
         </div>
       )}
 
-      {/* ── Search bar ─────────────────────────────────────────────────────── */}
-      <form method="GET" action="/platform-admin/customer-users" className={styles.searchBar}>
-        <label className={styles.searchBox}>
-          <Search size={14} />
-          <input
-            name="q"
-            defaultValue={query}
-            placeholder="Search email, name, user id, org, or slug..."
-            minLength={2}
-          />
-        </label>
-        {/* Preserve the active auth-status filter when searching. */}
-        {authStatusFilter && <input type="hidden" name="authStatus" value={authStatusFilter} />}
-        <button className={styles.searchBtn} type="submit">Search</button>
-        {(query || authStatusFilter) && <Link href="/platform-admin/customer-users" className={styles.clearLink}>Clear</Link>}
-      </form>
-
-      {/* ── Bulk filters ───────────────────────────────────────────────────── */}
-      {/* Isolate every account that never confirmed its email — the residue the
-          decoupled signup flow can leave (account created, never verified). */}
-      <div className={styles.filterRow}>
-        <Link
-          href={`/platform-admin/customer-users${query ? `?q=${encodeURIComponent(query)}` : ''}`}
-          className={`${styles.filterChip} ${!authStatusFilter ? styles.filterChipActive : ''}`}
-          aria-pressed={!authStatusFilter}
-        >
-          All
-        </Link>
-        <Link
-          href={`/platform-admin/customer-users?authStatus=unconfirmed${query ? `&q=${encodeURIComponent(query)}` : ''}`}
-          className={`${styles.filterChip} ${authStatusFilter === 'unconfirmed' ? styles.filterChipActive : ''}`}
-          aria-pressed={authStatusFilter === 'unconfirmed'}
-        >
-          Unconfirmed
-        </Link>
-      </div>
-
-      {/* ── Table ──────────────────────────────────────────────────────────── */}
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Auth</th>
-              <th>Last Sign In</th>
-              <th>Organizations</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {initialRows.length === 0 && (
-              <tr><td colSpan={5} className={styles.emptyCell}>
-                {query.length >= 2 ? 'No customer users match this search.' : 'No users found.'}
-              </td></tr>
-            )}
-            {initialRows.map(row => {
-              const reset    = resetState[row.userId] ?? {};
-              const rowError = rowErrors[row.userId];
-              const menuOpen = openMenuId === row.userId;
-              const rowBusy  = isBusy(row.userId);
-              const hasEmail = row.email && row.email !== '(unknown)';
-
-              return (
-                <tr key={row.userId}>
-                  <td>
-                    <div className={styles.primaryText}>{row.displayName || '-'}</div>
-                    <div className={styles.emailText}>{row.email}</div>
-                    <div className={styles.userId}>{row.userId}</div>
-                    {row.livePortalCount > 1 && (
-                      <div
-                        className={styles.multiPortalFlag}
-                        title="This account owns more than one live Premium Coaches Portal — review for the one-portal cleanup."
-                      >
-                        ⚠ {row.livePortalCount} live portals
-                      </div>
-                    )}
-                    {reset.sent && (
-                      <div className={styles.resetSentBox}>
-                        <MailCheck size={12} />
-                        <span>Reset email sent to {row.email}</span>
-                      </div>
-                    )}
-                    {(reset.error || rowError) && (
-                      <div className={styles.rowError}>{reset.error || rowError}</div>
-                    )}
-                  </td>
-
-                  <td>
-                    <span className={`${styles.badge} ${statusClass(row.authStatus, styles)}`}>
-                      {row.authStatus}
-                    </span>
-                  </td>
-
-                  <td className={styles.dateCell}>
-                    <span title={row.lastSignIn ? fmtAbsoluteDateTime(row.lastSignIn) : undefined}>
-                      {fmtSince(row.lastSignIn, '-')}
-                    </span>
-                  </td>
-
-                  <td>
-                    <div className={styles.membershipList}>
-                      {row.memberships.length === 0 && <span className={styles.dimText}>No org memberships found</span>}
-                      {row.memberships.map(m => (
-                        <div key={`${row.userId}-${m.orgId}`} className={styles.membership}>
-                          <Link href={`/platform-admin/orgs/${m.orgId}`} className={styles.orgLink}>{m.orgName}</Link>
-                          <span className={styles.slug}>/{m.orgSlug}</span>
-                          <span className={`${styles.badge} ${styles.badgeMuted}`}>{m.role}</span>
-                          <span className={`${styles.badge} ${statusClass(m.status, styles)}`}>{m.status}</span>
-                          <span className={styles.dimText}>{PLAN_CONFIG[m.planId as keyof typeof PLAN_CONFIG]?.label ?? m.planId} / {m.subscriptionStatus}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </td>
-
-                  <td className={styles.actionsCell}>
-                    {!canManageUsers ? (
-                      <span className={styles.viewOnlyCell}>View only</span>
-                    ) : (
-                    <div className={styles.actionsMenu} ref={menuOpen ? menuRef : undefined}>
-                      <button
-                        className={styles.actionBtn}
-                        type="button"
-                        disabled={rowBusy || !hasEmail}
-                        onClick={() => setOpenMenuId(menuOpen ? null : row.userId)}
-                        aria-expanded={menuOpen}
-                      >
-                        {rowBusy ? (
-                          <>
-                            {busy?.action === 'reset'           && 'Sending...'}
-                            {busy?.action === 'ban'             && 'Banning...'}
-                            {busy?.action === 'unban'           && 'Unbanning...'}
-                            {busy?.action === 'confirm-email'   && 'Confirming...'}
-                            {busy?.action === 'revoke-sessions' && 'Revoking...'}
-                            {busy?.action === 'update'          && 'Saving...'}
-                            {busy?.action === 'delete'          && 'Deleting...'}
-                          </>
-                        ) : (
-                          <><KeyRound size={13} />Actions<ChevronDown size={11} /></>
-                        )}
-                      </button>
-
-                      {menuOpen && (
-                        <div className={styles.menuList}>
-                          {/* Triage order: everyday/safe → edits → destructive (last). */}
-                          <button className={styles.menuItem} type="button" onClick={() => sendReset(row)}>
-                            Reset Password
-                          </button>
-                          {row.authStatus === 'unconfirmed' && (
-                            <button className={styles.menuItem} type="button" onClick={() => handleConfirmEmail(row.userId, row.email)}>
-                              Confirm Email
-                            </button>
-                          )}
-                          <button
-                            className={styles.menuItem}
-                            type="button"
-                            onClick={() => { setOpenMenuId(null); setConfirmModal({ userId: row.userId, email: row.email, action: 'revoke-sessions' }); }}
-                          >
-                            Revoke Sessions
-                          </button>
-                          <div className={styles.menuDivider} />
-                          <button className={styles.menuItem} type="button" onClick={() => openEditModal(row)}>
-                            Edit Info
-                          </button>
-                          <button className={styles.menuItem} type="button" onClick={() => openNotesModal(row)}>
-                            Notes
-                          </button>
-                          <div className={styles.menuDivider} />
-                          {row.authStatus !== 'banned' ? (
-                            <button
-                              className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                              type="button"
-                              onClick={() => { setOpenMenuId(null); setConfirmModal({ userId: row.userId, email: row.email, action: 'ban' }); }}
-                            >
-                              Ban User
-                            </button>
-                          ) : (
-                            <button
-                              className={styles.menuItem}
-                              type="button"
-                              onClick={() => { setOpenMenuId(null); setConfirmModal({ userId: row.userId, email: row.email, action: 'unban' }); }}
-                            >
-                              Unban User
-                            </button>
-                          )}
-                          {canDelete && (
-                            <button
-                              className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                              type="button"
-                              onClick={() => openDeleteModal(row.userId, row.email)}
-                            >
-                              Delete User
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ── Pagination ─────────────────────────────────────────────────────────── */}
-      {total > pageSize && (() => {
-        const totalPages = Math.ceil(total / pageSize);
-        const buildHref = (p: number) => {
-          const params = new URLSearchParams();
-          if (query) params.set('q', query);
-          if (authStatusFilter) params.set('authStatus', authStatusFilter);
-          params.set('page', String(p));
-          return `/platform-admin/customer-users?${params.toString()}`;
-        };
-        return (
-          <div className={styles.pagination}>
-            {page > 1
-              ? <Link href={buildHref(page - 1)} className={styles.pageBtn}>← Prev</Link>
-              : <span className={`${styles.pageBtn} ${styles.pageBtnDisabled}`}>← Prev</span>}
-            <span className={styles.pageInfo}>Page {page} of {totalPages}</span>
-            {page < totalPages
-              ? <Link href={buildHref(page + 1)} className={styles.pageBtn}>Next →</Link>
-              : <span className={`${styles.pageBtn} ${styles.pageBtnDisabled}`}>Next →</span>}
+      <section className={kit.section}>
+        <div className={kit.card}>
+          {/* ── Count · search · bulk filter · export ─────────────────────────── */}
+          <div className={kit.toolbar}>
+            <span className={kit.count}>
+              {query.length >= 2
+                ? `${total} result${total === 1 ? '' : 's'}`
+                : `${total} user${total === 1 ? '' : 's'}`}
+            </span>
+            <form method="GET" action="/platform-admin/customer-users" className={styles.searchForm}>
+              <input
+                type="search"
+                name="q"
+                className={kit.search}
+                defaultValue={query}
+                placeholder="Search email, name, user id, org, or slug..."
+                aria-label="Search customer users"
+                minLength={2}
+              />
+              {/* Preserve the active auth-status filter when searching. */}
+              {authStatusFilter && <input type="hidden" name="authStatus" value={authStatusFilter} />}
+              <button className="btn btn-secondary btn-sm" type="submit">Search</button>
+              {(query || authStatusFilter) && <Link href="/platform-admin/customer-users" className={kit.door}>Clear</Link>}
+            </form>
+            {/* Isolate every account that never confirmed its email — the residue the
+                decoupled signup flow can leave (account created, never verified). */}
+            <select
+              className={kit.select}
+              aria-label="Filter by auth status"
+              value={authStatusFilter}
+              onChange={e => router.push(buildFilterHref(e.target.value))}
+            >
+              <option value="">All</option>
+              <option value="unconfirmed">Unconfirmed</option>
+              {authStatusFilter && authStatusFilter !== 'unconfirmed' && (
+                <option value={authStatusFilter}>{humanize(authStatusFilter)}</option>
+              )}
+            </select>
+            <span className={kit.toolbarEnd}>
+              <ExportMenu
+                formats={['xlsx', 'csv']}
+                onExportXLSX={handleExportXLSX}
+                onExportCSV={handleExportCSV}
+                disabled={initialRows.length === 0}
+              />
+            </span>
           </div>
-        );
-      })()}
+
+          {/* ── Table ──────────────────────────────────────────────────────────── */}
+          {/* No `kit.tableWrap` here on purpose: its overflow would clip the row Actions menu. `table-cards`
+              (global) turns the list into cards at ≤640. */}
+          <div className="table-cards">
+            <table className={kit.comfortable}>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Auth</th>
+                  <th>Last sign in</th>
+                  <th>Organizations</th>
+                  <th aria-label="Actions"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {initialRows.length === 0 && (
+                  <tr><td colSpan={5} className={kit.empty}>
+                    {query.length >= 2 ? 'No customer users match this search.' : 'No users found.'}
+                  </td></tr>
+                )}
+                {initialRows.map(row => {
+                  const reset    = resetState[row.userId] ?? {};
+                  const rowError = rowErrors[row.userId];
+                  const menuOpen = openMenuId === row.userId;
+                  const rowBusy  = isBusy(row.userId);
+                  const hasEmail = row.email && row.email !== '(unknown)';
+
+                  return (
+                    <tr key={row.userId}>
+                      <td className="table-cards-title">
+                        <div className={styles.primaryText}>{row.displayName || '-'}</div>
+                        <span className={kit.sub}>{row.email}</span>
+                        <span className={`${kit.sub} ${kit.code}`}>{row.userId}</span>
+                        {row.livePortalCount > 1 && (
+                          <div className={styles.inCell}>
+                            <span
+                              className={`${kit.chip} ${kit.chipBad}`}
+                              title="This account owns more than one live Premium Coaches Portal — review for the one-portal cleanup."
+                            >
+                              ⚠ {row.livePortalCount} live portals
+                            </span>
+                          </div>
+                        )}
+                        {reset.sent && (
+                          <div className={`${kit.notice} ${kit.noticeGood} ${styles.inCellNotice}`}>
+                            <MailCheck size={12} />
+                            <span>Reset email sent to {row.email}</span>
+                          </div>
+                        )}
+                        {(reset.error || rowError) && (
+                          <div className={`${kit.fieldError} ${styles.inCell}`}>{reset.error || rowError}</div>
+                        )}
+                      </td>
+
+                      <td data-label="Auth">
+                        <span className={`${kit.chip} ${statusChip(row.authStatus)}`}>
+                          {humanize(row.authStatus)}
+                        </span>
+                      </td>
+
+                      <td className={kit.nowrap} data-label="Last sign in">
+                        <span title={row.lastSignIn ? fmtAbsoluteDateTime(row.lastSignIn) : undefined}>
+                          {fmtSince(row.lastSignIn, '-')}
+                        </span>
+                      </td>
+
+                      <td data-label="Organizations">
+                        <div className={styles.membershipList}>
+                          {row.memberships.length === 0 && <span className={kit.muted}>No org memberships found</span>}
+                          {row.memberships.map(m => (
+                            <div key={`${row.userId}-${m.orgId}`} className={styles.membership}>
+                              <Link href={`/platform-admin/orgs/${m.orgId}`} className={kit.nameLink}>{m.orgName}</Link>
+                              <span className={kit.code}>/{m.orgSlug}</span>
+                              <span className={`${kit.chip} ${kit.chipQuiet}`}>{humanize(m.role)}</span>
+                              <span className={`${kit.chip} ${statusChip(m.status)}`}>{humanize(m.status)}</span>
+                              <span className={kit.muted}>{PLAN_CONFIG[m.planId as keyof typeof PLAN_CONFIG]?.label ?? m.planId} / {humanize(m.subscriptionStatus)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+
+                      <td className={styles.actionsCell}>
+                        {!canManageUsers ? (
+                          <span className={kit.muted}>View only</span>
+                        ) : (
+                        <div className={styles.actionsMenu} ref={menuOpen ? menuRef : undefined}>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            type="button"
+                            disabled={rowBusy || !hasEmail}
+                            onClick={() => setOpenMenuId(menuOpen ? null : row.userId)}
+                            aria-expanded={menuOpen}
+                          >
+                            {rowBusy ? (
+                              <>
+                                {busy?.action === 'reset'           && 'Sending...'}
+                                {busy?.action === 'ban'             && 'Banning...'}
+                                {busy?.action === 'unban'           && 'Unbanning...'}
+                                {busy?.action === 'confirm-email'   && 'Confirming...'}
+                                {busy?.action === 'revoke-sessions' && 'Revoking...'}
+                                {busy?.action === 'update'          && 'Saving...'}
+                                {busy?.action === 'delete'          && 'Deleting...'}
+                              </>
+                            ) : (
+                              <><KeyRound size={13} />Actions<ChevronDown size={11} /></>
+                            )}
+                          </button>
+
+                          {menuOpen && (
+                            <div className={styles.menuList}>
+                              {/* Triage order: everyday/safe → edits → destructive (last). */}
+                              <button className={styles.menuItem} type="button" onClick={() => sendReset(row)}>
+                                Reset password
+                              </button>
+                              {row.authStatus === 'unconfirmed' && (
+                                <button className={styles.menuItem} type="button" onClick={() => handleConfirmEmail(row.userId, row.email)}>
+                                  Confirm email
+                                </button>
+                              )}
+                              <button
+                                className={styles.menuItem}
+                                type="button"
+                                onClick={() => { setOpenMenuId(null); setConfirmModal({ userId: row.userId, email: row.email, action: 'revoke-sessions' }); }}
+                              >
+                                Revoke sessions
+                              </button>
+                              <div className={styles.menuDivider} />
+                              <button className={styles.menuItem} type="button" onClick={() => openEditModal(row)}>
+                                Edit info
+                              </button>
+                              <button className={styles.menuItem} type="button" onClick={() => openNotesModal(row)}>
+                                Notes
+                              </button>
+                              <div className={styles.menuDivider} />
+                              {row.authStatus !== 'banned' ? (
+                                <button
+                                  className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                                  type="button"
+                                  onClick={() => { setOpenMenuId(null); setConfirmModal({ userId: row.userId, email: row.email, action: 'ban' }); }}
+                                >
+                                  Ban user
+                                </button>
+                              ) : (
+                                <button
+                                  className={styles.menuItem}
+                                  type="button"
+                                  onClick={() => { setOpenMenuId(null); setConfirmModal({ userId: row.userId, email: row.email, action: 'unban' }); }}
+                                >
+                                  Unban user
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                                  type="button"
+                                  onClick={() => openDeleteModal(row.userId, row.email)}
+                                >
+                                  Delete user
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── Pagination ─────────────────────────────────────────────────────────── */}
+          {total > pageSize && (() => {
+            const totalPages = Math.ceil(total / pageSize);
+            const buildHref = (p: number) => {
+              const params = new URLSearchParams();
+              if (query) params.set('q', query);
+              if (authStatusFilter) params.set('authStatus', authStatusFilter);
+              params.set('page', String(p));
+              return `/platform-admin/customer-users?${params.toString()}`;
+            };
+            return (
+              <div className={styles.pagination}>
+                {page > 1
+                  ? <Link href={buildHref(page - 1)} className="btn btn-secondary btn-sm">← Prev</Link>
+                  : <button type="button" className="btn btn-secondary btn-sm" disabled>← Prev</button>}
+                <span className={kit.countQuiet}>Page {page} of {totalPages}</span>
+                {page < totalPages
+                  ? <Link href={buildHref(page + 1)} className="btn btn-secondary btn-sm">Next →</Link>
+                  : <button type="button" className="btn btn-secondary btn-sm" disabled>Next →</button>}
+              </div>
+            );
+          })()}
+        </div>
+      </section>
 
       {/* ── Ban / Unban / Revoke-sessions confirmation modal ─────────────────── */}
       {confirmModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalBox}>
             <h2 className={styles.modalTitle}>
-              {confirmModal.action === 'ban'             && 'Ban User'}
-              {confirmModal.action === 'unban'           && 'Unban User'}
-              {confirmModal.action === 'revoke-sessions' && 'Revoke All Sessions'}
+              {confirmModal.action === 'ban'             && 'Ban user'}
+              {confirmModal.action === 'unban'           && 'Unban user'}
+              {confirmModal.action === 'revoke-sessions' && 'Revoke all sessions'}
             </h2>
             <p className={styles.modalBody}>
               {confirmModal.action === 'ban' && (
@@ -686,17 +696,17 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
               )}
             </p>
             <div className={styles.modalActions}>
-              <button className={styles.modalCancel} type="button" onClick={() => setConfirmModal(null)}>
+              <button className="btn btn-secondary" type="button" onClick={() => setConfirmModal(null)}>
                 Cancel
               </button>
               <button
-                className={confirmModal.action === 'ban' ? styles.modalConfirmDanger : styles.modalConfirm}
+                className={confirmModal.action === 'ban' ? 'btn btn-danger' : 'btn btn-primary'}
                 type="button"
                 onClick={() => executeConfirmedAction(confirmModal.userId, confirmModal.email, confirmModal.action)}
               >
-                {confirmModal.action === 'ban'             && 'Ban User'}
-                {confirmModal.action === 'unban'           && 'Unban User'}
-                {confirmModal.action === 'revoke-sessions' && 'Revoke Sessions'}
+                {confirmModal.action === 'ban'             && 'Ban user'}
+                {confirmModal.action === 'unban'           && 'Unban user'}
+                {confirmModal.action === 'revoke-sessions' && 'Revoke sessions'}
               </button>
             </div>
           </div>
@@ -707,34 +717,36 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
       {editModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalBox}>
-            <h2 className={styles.modalTitle}>Edit User Info</h2>
-            <div className={styles.formGroup}>
-              <label className={styles.fieldLabel}>Email</label>
+            <h2 className={styles.modalTitle}>Edit user info</h2>
+            <div className={kit.fieldGroup}>
+              <label className={kit.label} htmlFor="customer-user-edit-email">Email</label>
               <input
-                className={styles.fieldInput}
+                id="customer-user-edit-email"
+                className={`${kit.field} ${kit.wide}`}
                 type="email"
                 value={editEmail}
                 onChange={e => setEditEmail(e.target.value)}
                 disabled={editBusy}
               />
             </div>
-            <div className={styles.formGroup}>
-              <label className={styles.fieldLabel}>Display Name</label>
+            <div className={kit.fieldGroup}>
+              <label className={kit.label} htmlFor="customer-user-edit-name">Display name</label>
               <input
-                className={styles.fieldInput}
+                id="customer-user-edit-name"
+                className={`${kit.field} ${kit.wide}`}
                 type="text"
                 value={editDisplayName}
                 onChange={e => setEditDisplayName(e.target.value)}
                 disabled={editBusy}
               />
             </div>
-            {editError && <p className={styles.modalError}>{editError}</p>}
+            {editError && <p className={kit.fieldError}>{editError}</p>}
             <div className={styles.modalActions}>
-              <button className={styles.modalCancel} type="button" onClick={() => setEditModal(null)} disabled={editBusy}>
+              <button className="btn btn-secondary" type="button" onClick={() => setEditModal(null)} disabled={editBusy}>
                 Cancel
               </button>
-              <button className={styles.modalConfirm} type="button" onClick={handleUpdateUser} disabled={editBusy}>
-                {editBusy ? 'Saving...' : 'Save Changes'}
+              <button className="btn btn-primary" type="button" onClick={handleUpdateUser} disabled={editBusy}>
+                {editBusy ? 'Saving...' : 'Save changes'}
               </button>
             </div>
           </div>
@@ -748,7 +760,7 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
         return (
           <div className={styles.modalOverlay}>
             <div className={styles.modalBox}>
-              <h2 className={styles.modalTitle}>Delete User</h2>
+              <h2 className={styles.modalTitle}>Delete user</h2>
               {ownedOrgs.length > 0 && (
                 <div className={styles.modalWarning}>
                   <strong>Owner of {ownedOrgs.length} organization{ownedOrgs.length !== 1 ? 's' : ''}:</strong>
@@ -783,11 +795,12 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
                 This permanently removes <strong>{deleteModal.email}</strong> from FieldLogicHQ.
                 Organization data is not deleted automatically. Type the user&apos;s email to confirm.
               </p>
-              <div className={styles.formGroup}>
+              <div className={kit.fieldGroup}>
                 <input
-                  className={styles.fieldInput}
+                  className={`${kit.field} ${kit.wide}`}
                   type="text"
                   placeholder={deleteModal.email}
+                  aria-label="Type the user's email to confirm"
                   value={deleteConfirmText}
                   onChange={e => setDeleteConfirmText(e.target.value)}
                   autoFocus
@@ -795,19 +808,19 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
               </div>
               <div className={styles.modalActions}>
                 <button
-                  className={styles.modalCancel}
+                  className="btn btn-secondary"
                   type="button"
                   onClick={() => { setDeleteModal(null); setDeleteConfirmText(''); setDeleteImpact(null); }}
                 >
                   Cancel
                 </button>
                 <button
-                  className={styles.modalConfirmDanger}
+                  className="btn btn-danger"
                   type="button"
                   disabled={deleteConfirmText.trim().toLowerCase() !== deleteModal.email.toLowerCase()}
                   onClick={handleDeleteUser}
                 >
-                  Delete Permanently
+                  Delete permanently
                 </button>
               </div>
             </div>
@@ -819,14 +832,15 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
       {notesModal && (
         <div className={styles.modalOverlay}>
           <div className={`${styles.modalBox} ${styles.modalBoxWide}`}>
-            <h2 className={styles.modalTitle}>Support Notes</h2>
-            <p className={styles.modalBodySmall}>{notesModal.email}</p>
+            <h2 className={styles.modalTitle}>Support notes</h2>
+            <p className={`${kit.code} ${styles.modalEmail}`}>{notesModal.email}</p>
 
             {/* Add note */}
             <div className={styles.noteAddRow}>
               <textarea
-                className={styles.noteTextarea}
+                className={kit.textarea}
                 placeholder="Add a note..."
+                aria-label="Add a note"
                 value={newNoteText}
                 onChange={e => setNewNoteText(e.target.value)}
                 rows={3}
@@ -834,16 +848,16 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
                 disabled={notesBusy}
               />
               <button
-                className={styles.modalConfirm}
+                className="btn btn-primary"
                 type="button"
                 disabled={notesBusy || !newNoteText.trim()}
                 onClick={handleAddNote}
               >
-                {notesBusy ? 'Saving...' : 'Add Note'}
+                {notesBusy ? 'Saving...' : 'Add note'}
               </button>
             </div>
 
-            {notesError && <p className={styles.modalError}>{notesError}</p>}
+            {notesError && <p className={kit.fieldError}>{notesError}</p>}
 
             {/* Notes list */}
             <div className={styles.notesList}>
@@ -866,8 +880,9 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
                       onClick={() => handleDeleteNote(note.id)}
                       disabled={notesBusy}
                       title="Delete note"
+                      aria-label="Delete note"
                     >
-                      <Trash2 size={11} />
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 </div>
@@ -875,7 +890,7 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
             </div>
 
             <div className={styles.modalActions}>
-              <button className={styles.modalCancel} type="button" onClick={() => setNotesModal(null)}>
+              <button className="btn btn-secondary" type="button" onClick={() => setNotesModal(null)}>
                 Close
               </button>
             </div>

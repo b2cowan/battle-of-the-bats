@@ -2,7 +2,7 @@ import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { EXPORT_CATALOG } from '@/lib/export';
 import ExportRegistryClient from './ExportRegistryClient';
 
-export const metadata = { title: 'Export Registry — Platform Admin' };
+export const metadata = { title: 'Export registry — Platform Admin' };
 
 /**
  * EVERY WAY DATA LEAVES FIELDLOGICHQ, in one place.

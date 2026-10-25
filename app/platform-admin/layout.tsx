@@ -3,12 +3,14 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { getPlatformAdminContext } from '@/lib/platform-auth';
 import { canAccessBookkeeping } from '@/lib/bookkeeping-access';
-import PlatformAdminNav from './PlatformAdminNav';
-import PlatformVisitRecorder from './PlatformVisitRecorder';
+import { PLATFORM_PORTAL_LABEL } from '@/lib/workspace-labels';
+import { AdminKitProvider, GuestKitRoot } from '@/components/admin/AdminKitProvider';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
-import styles from './platform-admin.module.css';
+import { adminKitAttr } from '@/lib/admin-kit-marker';
+import PlatformShell from './PlatformShell';
+import PlatformVisitRecorder from './PlatformVisitRecorder';
 
-export const metadata: Metadata = { title: 'Platform Admin — FieldLogicHQ' };
+export const metadata: Metadata = { title: `${PLATFORM_PORTAL_LABEL} — FieldLogicHQ` };
 
 export default async function PlatformAdminLayout({
   children,
@@ -18,10 +20,12 @@ export default async function PlatformAdminLayout({
   const headersList = await headers();
   const pathname    = headersList.get('x-pathname') ?? '';
 
-  // Login page renders without the sidebar shell — no auth check needed here
-  // since middleware already gates everything else
+  // The sign-in page renders without the shell — no auth check needed here since middleware already gates everything
+  // else. ⚖ It is ALWAYS WARM, like every signed-out page (owner 2026-10-24, Support console Stage 1 Ask 5; the rule of
+  // 2026-10-23: a signed-out visitor has no Warm / Dark control, and signing out resets the browser to warm). `GuestKitRoot`
+  // is the kit's fixed-warm root — the one the volunteer shells use — so no account setting can turn it dark.
   if (pathname === '/platform-admin/login') {
-    return <>{children}</>;
+    return <GuestKitRoot>{children}</GuestKitRoot>;
   }
 
   const auth = await getPlatformAdminContext();
@@ -29,30 +33,20 @@ export default async function PlatformAdminLayout({
     redirect('/platform-admin/login?next=/platform-admin');
   }
 
-  if (pathname.startsWith('/platform-admin/help')) {
-    return (
-      <main className={`${styles.main} ${styles.helpMain}`}>
-        {/* The console is dark in every setting, and the root default bar is the paper (S4 Part B), so it pins its own. */}
-        <CoachThemeColor fixed="dark" />
-        <PlatformVisitRecorder />
-        {children}
-      </main>
-    );
-  }
-
+  // ⚖ THE CONSOLE TAKES THE ADMIN KIT (owner ruling F1, 2026-10-24 — `memory/design_decisions.md`: its dark-console
+  // exceptions retired, and the old "RULED EXCEPTION … do not unify" comment that stood here went with them). The marker
+  // sits on a box-less wrapper ABOVE the shell, as the club admin's layout places it, so the warm palette applies to
+  // everything inside, the account's Warm / Dark setting chooses, and the status-bar colour follows it. The help pages
+  // wear the same shell now (they open in place, with the menu).
   return (
-    /* Platform-admin is a RULED EXCEPTION to the nav grammar (top-nav audit §3): an internal
-       console with a 220px sidebar and NO top bar, deliberately carrying no FieldLogicHQ
-       wordmark door back into the customer-facing app. It is a different product for a
-       different audience, not a fourth surface of the same one. Do not "unify" it into the
-       operator strip family. */
-    <div className={styles.shell}>
-      <PlatformAdminNav sessionEmail={auth.user.email ?? ''} role={auth.role} canBookkeep={canAccessBookkeeping(auth)} />
-      <main className={styles.main}>
-        <CoachThemeColor fixed="dark" />
-        <PlatformVisitRecorder />
-        {children}
-      </main>
-    </div>
+    <AdminKitProvider on>
+      <div style={{ display: 'contents' }} {...adminKitAttr}>
+        <CoachThemeColor />
+        <PlatformShell role={auth.role} canBookkeep={canAccessBookkeeping(auth)}>
+          <PlatformVisitRecorder />
+          {children}
+        </PlatformShell>
+      </div>
+    </AdminKitProvider>
   );
 }

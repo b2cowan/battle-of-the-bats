@@ -1,384 +1,55 @@
-﻿.page {
-  max-width: 1240px;
-  --changereq-modal-bg: #07100b; /* token-exempt: custom near-black modal tint, no exact --bg/--surface match */
-  --changereq-proposal-text: #bfdbfe; /* token-exempt: pale blue proposal-diff text, no brand token match */
-}
+/* Approval queue — only what is this screen's own: the request cell, and the detail window.
+   Everything shared (page column, band, card, toolbar, chips, table roles, buttons) comes from ../console.module.css
+   and the product's global kit. */
 
-.pageHeader {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 2rem;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-}
-
-.headerLabel {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.title {
-  margin: 0.25rem 0 0;
-  font-size: 1.5rem;
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: 0;
-  text-transform: uppercase;
-  color: var(--fl-text);
-}
-
-.pageIntro {
-  max-width: 520px;
-  margin: 0;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  line-height: 1.55;
-  color: var(--data-gray);
-}
-
-.summaryGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1px;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.18);
-  background: rgba(var(--logic-lime-rgb), 0.16);
-}
-
-.summaryGrid div {
-  min-height: 74px;
-  padding: 0.9rem 1rem;
-  background: rgba(7, 12, 8, 0.94);
-}
-
-.summaryGrid span,
-.filterBar span {
-  display: block;
-  margin-bottom: 0.35rem;
-  font-family: var(--font-data);
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
-.summaryGrid strong {
-  display: block;
-  font-size: 1.35rem;
-  line-height: 1;
-  color: var(--logic-lime);
-}
-
-.errorBanner,
-.successBanner {
-  margin: 1rem 0;
-  padding: 0.6rem 0.75rem;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  line-height: 1.45;
-}
-
-.errorBanner {
-  border: 1px solid rgba(248, 113, 113, 0.32);
-  background: rgba(248, 113, 113, 0.08);
-  color: var(--pa-neg);
-}
-
-.successBanner {
-  border: 1px solid rgba(134, 239, 172, 0.32);
-  background: rgba(134, 239, 172, 0.08);
-  color: var(--pa-pos);
-}
-
-.filterBar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 0.75rem;
-  margin: 1rem 0 1.25rem;
-  padding: 1rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.16);
-  background: rgba(255, 255, 255, 0.018);
-}
-
-.filterBar label {
-  min-width: 0;
-}
-
-.filterBar select,
-.filterBar input {
-  width: 100%;
-  min-height: 2.2rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--fl-text);
-  outline: none;
-  padding: 0.4rem 0.55rem;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  line-height: 1.4;
-}
-
-.filterBar select:focus,
-.filterBar input:focus {
-  border-color: var(--logic-lime);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.filterBar option {
-  background: var(--structural-slate);
-  color: var(--pa-option-text);
-}
-
-.filterBar option:checked {
-  background: var(--pa-option-checked-bg);
-  color: var(--white);
-}
-
-.searchField {
-  min-width: 240px;
-}
-
-.tableWrap {
-  overflow-x: visible;
-}
-.table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-}
-.table th {
-  white-space: nowrap;
-}
-.table td {
-  vertical-align: top;
-  overflow-wrap: anywhere;
-}
-
-.requestColumn { width: 34%; }
-.statusColumn { width: 7.5rem; }
-.severityColumn { width: 7rem; }
-.ownerColumn { width: 18%; }
-.targetColumn { width: 15%; }
-.updatedColumn { width: 9.5rem; }
-
-.clickableRow {
-  cursor: pointer;
-}
-
-.clickableRow:hover td {
-  background: var(--pa-row-hover);
-}
-
+/* ── The request cell: the title opens the detail window; the summary under it is clamped to two lines ── */
 .requestCell {
-  max-width: 100%;
-}
-
-.requestCell span,
-.ownerCell strong,
-.ownerCell span,
-.targetCell strong,
-.targetCell span {
-  display: block;
+  min-width: 16rem;
+  max-width: 34rem;
 }
 
 .requestButton {
   display: block;
-  width: 100%;
-  margin-bottom: 0.25rem;
-  border: 0;
+  max-width: 100%;
+  margin: 0;
   padding: 0;
-  background: transparent;
-  color: var(--fl-text);
-  cursor: pointer;
+  border: 0;
+  background: none;
   font-family: inherit;
-  font-size: 0.8rem;
-  font-weight: 800;
+  font-size: var(--type-body);
+  font-weight: 600;
   line-height: 1.35;
   text-align: left;
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--home-line-strong);
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
 
 .requestButton:hover {
-  color: var(--logic-lime);
+  color: var(--home-olive);
+  text-decoration-color: var(--home-olive);
 }
 
-.requestCell span {
+.summary {
   display: -webkit-box;
   overflow: hidden;
-  color: var(--data-gray);
-  line-height: 1.45;
+  margin-top: 0.15rem;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-}
-
-.ownerCell strong,
-.targetCell strong {
-  color: var(--fl-text);
-  font-size: 0.7rem;
-  line-height: 1.35;
-}
-
-.ownerCell span,
-.targetCell span,
-.dateCell {
-  margin-top: 0.2rem;
-  color: var(--data-gray);
-  font-size: 0.66rem;
-  line-height: 1.4;
-}
-
-.muted {
-  color: var(--data-gray);
-  font-size: 0.7rem;
-}
-
-.actionCell {
-  min-width: 168px;
-  text-align: right;
 }
 
 .actionStack {
   display: inline-flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.35rem;
+  gap: 0.5rem;
 }
 
-.primaryBtn,
-.secondaryBtn,
-.dangerBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  border: 1px solid transparent;
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  min-height: 2rem;
-  padding: 0.35rem 0.65rem;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
+.spinOlive { color: var(--home-olive); }
 
-.primaryBtn {
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
-}
-
-.primaryBtn:hover {
-  border-color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.16);
-}
-
-.secondaryBtn {
-  border-color: rgba(147, 197, 253, 0.32);
-  background: rgba(var(--info-rgb), 0.06);
-  color: var(--pa-info);
-}
-
-.secondaryBtn:hover {
-  border-color: rgba(147, 197, 253, 0.5);
-}
-
-.dangerBtn {
-  border-color: rgba(248, 113, 113, 0.3);
-  background: rgba(248, 113, 113, 0.06);
-  color: var(--pa-neg);
-}
-
-.dangerBtn:hover {
-  border-color: rgba(248, 113, 113, 0.52);
-}
-
-.badgeLive,
-.badgePlanned,
-.badgeRetired,
-.badgeDraft,
-.severityLaunchBlocker,
-.severityHigh,
-.severityMedium,
-.severityLow {
-  display: inline-block;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0.22rem 0.5rem;
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.badgeLive {
-  border-color: rgba(134, 239, 172, 0.35);
-  background: rgba(134, 239, 172, 0.07);
-  color: var(--pa-pos);
-}
-
-.badgePlanned {
-  border-color: rgba(147, 197, 253, 0.35);
-  background: rgba(147, 197, 253, 0.07);
-  color: var(--pa-info);
-}
-
-.badgeRetired {
-  border-color: rgba(248, 113, 113, 0.3);
-  background: rgba(248, 113, 113, 0.06);
-  color: var(--pa-neg);
-}
-
-.badgeDraft {
-  background: transparent;
-  color: var(--data-gray);
-}
-
-.severityLaunchBlocker {
-  border-color: rgba(248, 113, 113, 0.38);
-  background: rgba(248, 113, 113, 0.08);
-  color: var(--pa-neg);
-}
-
-.severityHigh {
-  border-color: rgba(251, 191, 36, 0.38);
-  background: rgba(251, 191, 36, 0.08);
-  color: var(--warning);
-}
-
-.severityMedium {
-  border-color: rgba(147, 197, 253, 0.35);
-  background: rgba(147, 197, 253, 0.07);
-  color: var(--pa-info);
-}
-
-.severityLow {
-  background: transparent;
-  color: var(--data-gray);
-}
-
-.emptyCell {
-  padding: 1rem 0.75rem;
-  color: var(--data-gray);
-  font-size: 0.7rem;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.spin {
-  animation: spin 0.8s linear infinite;
-  color: var(--logic-lime);
-}
-
+/* ── The detail window ── */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -388,14 +59,15 @@
   justify-content: center;
   overflow-y: auto;
   padding: 5vh 1rem;
-  background: rgba(0, 0, 0, 0.72);
+  background: color-mix(in srgb, var(--pitch-black) 60%, transparent);
 }
 
 .detailModal {
   width: min(760px, 100%);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.24);
-  background: var(--changereq-modal-bg);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--card-bg);
+  box-shadow: 0 24px 80px color-mix(in srgb, var(--pitch-black) 35%, transparent);
 }
 
 .modalHeader {
@@ -404,32 +76,31 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.1rem;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.18);
+  border-bottom: 1px solid var(--home-line);
 }
 
 .modalTitle {
   margin: 0.25rem 0 0;
-  color: var(--fl-text);
-  font-size: 1rem;
+  font-size: var(--type-heading);
+  font-weight: 700;
   line-height: 1.3;
+  color: var(--text-primary);
 }
 
+/* A close × is a plain glyph. */
 .modalCloseBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--data-gray);
+  border: 0;
+  background: none;
+  color: var(--text-tertiary);
   cursor: pointer;
 }
 
-.modalCloseBtn:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.32);
-  color: var(--fl-text);
-}
+.modalCloseBtn:hover { color: var(--text-primary); }
 
 .modalBody {
   display: grid;
@@ -445,82 +116,68 @@
   gap: 0.45rem;
 }
 
-.attentionPill {
-  display: inline-block;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0.22rem 0.5rem;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
+/* The four facts: one joined box, hairlines between (the band's idiom). */
 .detailGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
   margin: 0;
-  background: rgba(var(--logic-lime-rgb), 0.14);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.16);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--home-line);
+  overflow: hidden;
 }
 
 .detailGrid div {
   min-width: 0;
-  padding: 0.7rem;
-  background: rgba(255, 255, 255, 0.025);
+  padding: 0.7rem 0.85rem;
+  background: var(--card-bg);
 }
 
-.detailGrid dt,
-.detailSection h3 {
-  margin: 0 0 0.35rem;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
+.detailGrid dt { margin: 0 0 0.3rem; }
 
 .detailGrid dd {
   margin: 0;
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
+  font-size: var(--type-body);
   line-height: 1.45;
+  color: var(--text-primary);
   overflow-wrap: anywhere;
 }
 
 .detailSection {
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.13);
-  padding: 0.85rem;
-  background: rgba(255, 255, 255, 0.018);
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+
+.detailSection h3 {
+  margin: 0 0 0.4rem;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-primary);
 }
 
 .detailSection p {
   margin: 0;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
+  font-size: var(--type-body);
   line-height: 1.55;
+  color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
 
-.detailSection p + p {
-  margin-top: 0.55rem;
-}
+.detailSection p + p { margin-top: 0.55rem; }
 
 .proposalBlock {
   max-height: 220px;
   overflow: auto;
   margin: 0.75rem 0 0;
   padding: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.22);
-  color: var(--changereq-proposal-text);
-  font-family: var(--font-data);
-  font-size: 0.64rem;
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
+  background: var(--home-olive-soft);
+  color: var(--text-secondary);
+  font-family: var(--font-data); /* type-ok: code */
+  font-size: var(--type-support);
   line-height: 1.45;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -529,10 +186,51 @@
 .historyList {
   display: grid;
   gap: 0.35rem;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
+  font-size: var(--type-body);
   line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* The Stripe price check: a mark and a line per check. */
+.checkList {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checkRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: var(--type-support);
+}
+
+.checkPass { font-weight: 700; color: var(--success); }
+.checkWarnMark { font-weight: 700; color: var(--warning); }
+.checkNone { font-weight: 700; color: var(--text-tertiary); }
+
+.detailSection p.checkFail,
+.checkFail {
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.detailSection p.checkWarn,
+.checkWarn {
+  margin-top: 0;
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--warning);
+}
+
+.confirmRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  cursor: pointer;
 }
 
 .modalFooter {
@@ -541,7 +239,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 1rem 1.1rem;
-  border-top: 1px solid rgba(var(--logic-lime-rgb), 0.18);
+  border-top: 1px solid var(--home-line);
 }
 
 .modalActions {
@@ -550,23 +248,6 @@
 }
 
 @media (max-width: 980px) {
-  .pageHeader {
-    display: block;
-  }
-
-  .pageIntro {
-    margin-top: 0.75rem;
-  }
-
-  .summaryGrid,
-  .filterBar {
-    grid-template-columns: 1fr;
-  }
-
-  .searchField {
-    min-width: 0;
-  }
-
   .modalFooter {
     align-items: stretch;
     flex-direction: column-reverse;
@@ -584,77 +265,17 @@
 }
 
 @media (max-width: 640px) {
-  .summaryGrid {
-    grid-template-columns: 1fr 1fr;
-  }
+  .requestCell { min-width: 0; max-width: none; }
 
-  .table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-  }
+  .detailGrid { grid-template-columns: minmax(0, 1fr); }
 
-  .table,
-  .table tbody,
-  .table tr,
-  .table td {
-    display: block;
-    width: 100%;
-  }
-
-  .table tr {
-    margin-bottom: 0.75rem;
-    border: 1px solid rgba(var(--logic-lime-rgb), 0.14);
-    background: rgba(255, 255, 255, 0.018);
-  }
-
-  .table td {
-    display: grid;
-    grid-template-columns: 6.5rem minmax(0, 1fr);
-    gap: 0.75rem;
-    padding: 0.65rem 0.75rem;
-    border-bottom-color: rgba(255, 255, 255, 0.045);
-  }
-
-  .table td::before {
-    content: attr(data-label);
-    color: var(--data-gray);
-    font-family: var(--font-data);
-    font-size: var(--type-label);
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .table td:first-child {
-    display: block;
-  }
-
-  .table td:first-child::before {
-    display: block;
-    margin-bottom: 0.35rem;
-  }
-
-  .table td:last-child {
-    border-bottom: 0;
-  }
-
-  .detailGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .modalOverlay {
-    padding: 0;
-  }
+  .modalOverlay { padding: 0; }
 
   .detailModal {
     min-height: 100vh;
     width: 100%;
+    border-radius: 0;
   }
 
-  .modalBody {
-    max-height: none;
-  }
+  .modalBody { max-height: none; }
 }

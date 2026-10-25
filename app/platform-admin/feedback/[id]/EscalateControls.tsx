@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import kit from '../../console.module.css';
 import styles from '../feedback.module.css';
 
 /**
@@ -50,14 +51,14 @@ export default function EscalateControls({
     <span className={styles.escalateControl}>
       <button
         type="button"
-        className={escalated ? styles.escalateBtnActive : styles.escalateBtn}
+        className="btn btn-secondary btn-sm"
         disabled={busy}
         onClick={toggle}
         title={escalated ? 'Clear the product escalation flag' : 'Flag this item for the product team'}
       >
         {escalated ? 'Clear escalation' : 'Escalate to product'}
       </button>
-      {error && <span className={styles.statusError}>{error}</span>}
+      {error && <span className={kit.fieldError}>{error}</span>}
     </span>
   );
 }

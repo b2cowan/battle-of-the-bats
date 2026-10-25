@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import ExportMenu from '@/components/admin/ExportMenu';
-import HelpCallout from '@/components/help/HelpCallout';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -14,6 +14,7 @@ import { pluralize } from '@/lib/utils';
 // surfaces that show a customer's card must never describe it differently.
 import { formatCardOnFile } from '@/lib/billing-format';
 import type { FoundingAccountRow } from '@/lib/founding-season-desk';
+import kit from '../console.module.css';
 import styles from './founding-season.module.css';
 
 // ── Export ────────────────────────────────────────────────────────────────────
@@ -116,118 +117,123 @@ export default function FoundingSeasonDeskClient({
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLabel}>Billing &amp; Product</div>
-        <h1 className={styles.title}>Founding Season</h1>
-        <div className={styles.count}>
-          {anyFilter
-            ? `${filtered.length} of ${totals.accounts} accounts`
-            : `${pluralize(totals.accounts, 'account')} · free through ${freeSeasonEndsLabel}`}
-        </div>
-      </header>
+    <div className={kit.page}>
+      <AdminPageHeader title="Founding season" />
 
-      <div className={styles.metrics}>
-        <div className={`${styles.metric} ${styles.metricHighlight}`}>
-          <span className={styles.metricLabel}>Founding accounts</span>
-          <strong>{totals.accounts}</strong>
-          <span className={styles.metricSub}>
+      <section className={kit.band} aria-label="Founding season snapshot">
+        <div className={`${kit.bandCell} ${kit.bandGood}`}>
+          <span className={kit.bandLabel}>Founding accounts</span>
+          <strong className={kit.bandValue}>{totals.accounts}</strong>
+          <span className={kit.bandNote}>
             {pluralize(totals.organizations, 'org')} · {pluralize(totals.coachesPortals, 'portal')}
           </span>
         </div>
-        <div className={`${styles.metric} ${totals.noCard > 0 ? styles.metricWarn : ''}`}>
-          <span className={styles.metricLabel}>No card yet</span>
-          <strong>{totals.noCard}</strong>
-          <span className={styles.metricSub}>
+        <div className={`${kit.bandCell} ${totals.noCard > 0 ? kit.bandWarn : ''}`}>
+          <span className={kit.bandLabel}>No card yet</span>
+          <strong className={kit.bandValue}>{totals.noCard}</strong>
+          <span className={kit.bandNote}>
             {totals.accounts > 0 ? `${Math.round((totals.noCard / totals.accounts) * 100)}%` : '—'}
           </span>
         </div>
-        <div className={`${styles.metric} ${totals.noChoice > 0 ? styles.metricWarn : ''}`}>
-          <span className={styles.metricLabel}>No {nextYearLabel} choice yet</span>
-          <strong>{totals.noChoice}</strong>
-          <span className={styles.metricSub}>
+        <div className={`${kit.bandCell} ${totals.noChoice > 0 ? kit.bandWarn : ''}`}>
+          <span className={kit.bandLabel}>No {nextYearLabel} choice yet</span>
+          <strong className={kit.bandValue}>{totals.noChoice}</strong>
+          <span className={kit.bandNote}>
             {totals.accounts > 0 ? `${Math.round((totals.noChoice / totals.accounts) * 100)}%` : '—'}
           </span>
         </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>Free season ends</span>
-          <strong>{freeSeasonEndsLabel}</strong>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Free season ends</span>
+          <strong className={`${kit.bandValue} ${kit.bandValueSm}`}>{freeSeasonEndsLabel}</strong>
           {/* Clock-dependent, so it is read on the CLIENT — a server render would bake in the day
               the page was built. Same rule the console's other freshness figures follow. */}
-          <span className={styles.metricSub}>{fmtDaysLeft(freeSeasonEndsIso).trim() || '(ended)'}</span>
+          <span className={kit.bandNote}>{fmtDaysLeft(freeSeasonEndsIso).trim() || '(ended)'}</span>
         </div>
-      </div>
+      </section>
 
       {!cardWindowOpen && (
-        <HelpCallout
-          variant="tip"
-          title="The summer ask has not opened yet"
-          body={`Founding accounts are not asked for a card or a ${nextYearLabel} plan until the card window opens. Until then this desk is a record of who is on the free season and what they are doing with it — the "no card yet" and "no choice yet" columns will fill in over the summer.`}
-        />
+        <div className={kit.callout}>
+          <span>
+            <strong>The summer ask has not opened yet.</strong>{' '}
+            {`Founding accounts are not asked for a card or a ${nextYearLabel} plan until the card window opens. Until then this desk is a record of who is on the free season and what they are doing with it — the "no card yet" and "no choice yet" columns will fill in over the summer.`}
+          </span>
+        </div>
       )}
 
-      <div className={styles.filterBar}>
-        <input
-          className={styles.filterInput}
-          placeholder="Search account or billing contact…"
-          aria-label="Search accounts"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <select
-          className={styles.filterSelect}
-          aria-label="Account kind"
-          value={kindFilter}
-          onChange={e => setKindFilter(e.target.value)}
-        >
-          <option value="">All kinds</option>
-          <option value="organization">Organizations</option>
-          <option value="coaches_portal">Coaches Portals</option>
-        </select>
-        <button
-          type="button"
-          className={`${styles.filterBtn} ${noCardOnly ? styles.filterBtnOn : ''}`}
-          aria-pressed={noCardOnly}
-          onClick={() => setNoCardOnly(v => !v)}
-        >
-          No card yet
-        </button>
-        <button
-          type="button"
-          className={`${styles.filterBtn} ${noChoiceOnly ? styles.filterBtnOn : ''}`}
-          aria-pressed={noChoiceOnly}
-          onClick={() => setNoChoiceOnly(v => !v)}
-        >
-          No {nextYearLabel} choice
-        </button>
-        <ExportMenu
-          formats={['xlsx', 'csv']}
-          onExportXLSX={handleExportXLSX}
-          onExportCSV={handleExportCSV}
-          disabled={filtered.length === 0}
-        />
-        {anyFilter && (
-          <button
-            type="button"
-            className={styles.filterClear}
-            onClick={() => { setSearch(''); setKindFilter(''); setNoCardOnly(false); setNoChoiceOnly(false); }}
+      <div className={kit.card}>
+        <div className={kit.toolbar}>
+          <span className={kit.count}>
+            {anyFilter
+              ? `${filtered.length} of ${totals.accounts} accounts`
+              : `${pluralize(totals.accounts, 'account')} · free through ${freeSeasonEndsLabel}`}
+          </span>
+          <span className={kit.toolbarEnd}>
+            <ExportMenu
+              formats={['xlsx', 'csv']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              disabled={filtered.length === 0}
+            />
+          </span>
+        </div>
+        <div className={kit.toolbar}>
+          <input
+            type="search"
+            className={`${kit.search} ${styles.toolSearch}`}
+            placeholder="Search account or billing contact…"
+            aria-label="Search accounts"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <select
+            className={kit.select}
+            aria-label="Account kind"
+            value={kindFilter}
+            onChange={e => setKindFilter(e.target.value)}
           >
-            Clear filters
-          </button>
-        )}
-      </div>
+            <option value="">All kinds</option>
+            <option value="organization">Organizations</option>
+            <option value="coaches_portal">Coaches Portals</option>
+          </select>
+          <label className={kit.check}>
+            <input
+              type="checkbox"
+              checked={noCardOnly}
+              onChange={e => setNoCardOnly(e.target.checked)}
+            />
+            {' '}
+            No card yet
+          </label>
+          <label className={kit.check}>
+            <input
+              type="checkbox"
+              checked={noChoiceOnly}
+              onChange={e => setNoChoiceOnly(e.target.checked)}
+            />
+            {' '}
+            No {nextYearLabel} choice
+          </label>
+          {anyFilter && (
+            <button
+              type="button"
+              className={kit.door}
+              onClick={() => { setSearch(''); setKindFilter(''); setNoCardOnly(false); setNoChoiceOnly(false); }}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
 
       {filtered.length === 0 ? (
-        <HelpCallout
-          variant="tip"
-          title={rows.length === 0 ? 'No founding accounts' : 'Nothing matches these filters'}
-          body={rows.length === 0
+        <div className={kit.empty}>
+          <strong>{rows.length === 0 ? 'No founding accounts.' : 'Nothing matches these filters.'}</strong>{' '}
+          {rows.length === 0
             ? 'No account currently holds a Founding Season comp. Accounts appear here as they sign up during the offer window.'
             : 'Clear the filters to see every founding account.'}
-        />
+        </div>
       ) : (
-        <div className={`${styles.tableWrap} table-cards`}>
-          <table className={styles.table}>
+        <div className={`${kit.tableWrap} table-cards`}>
+          <table className={`${kit.comfortable} ${styles.table}`}>
             <thead>
               <tr>
                 <th>Account</th>
@@ -247,20 +253,18 @@ export default function FoundingSeasonDeskClient({
                 return (
                   <tr key={row.orgId}>
                     {/* The lead cell is the card's title on a phone and takes no label. */}
-                    <td>
-                      <span className={styles.acct}>
-                        <Link href={`/platform-admin/orgs/${row.orgId}?tab=billing`} className={styles.acctLink}>
-                          {row.name}
-                        </Link>
-                        <span className={styles.acctSlug}>{row.slug}</span>
-                      </span>
+                    <td className="table-cards-title">
+                      <Link href={`/platform-admin/orgs/${row.orgId}?tab=billing`} className={kit.nameLink}>
+                        {row.name}
+                      </Link>
+                      <span className={`${kit.sub} ${kit.code}`}>{row.slug}</span>
                     </td>
                     <td data-label="Kind">
-                      <span className={`${styles.chip} ${row.kind === 'coaches_portal' ? styles.chipCoach : styles.chipOrg}`}>
+                      <span className={`${kit.chip} ${row.kind === 'coaches_portal' ? kit.chipInfo : kit.chipQuiet}`}>
                         {KIND_LABEL[row.kind]}
                       </span>
                     </td>
-                    <td data-label="Plan" className={styles.dim}>{row.planLabel}</td>
+                    <td data-label="Plan" className={kit.muted}>{row.planLabel}</td>
                     <td data-label="Free through">
                       {fmtAbsoluteDate(row.freeThrough)}
                       {/* ⚠ A row migration 279 never reached still carries the pre-2026-09-07
@@ -268,7 +272,7 @@ export default function FoundingSeasonDeskClient({
                           this desk is the only surface anyone would ever notice it on. */}
                       {row.isLegacyExpiry && (
                         <span
-                          className={styles.chipLegacy}
+                          className={`${kit.chip} ${kit.chipWarn} ${styles.legacy}`}
                           title="This comp still sits on the pre-2026-09-07 instant — the backfill has not reached this row. The account is still recognised as founding."
                         >
                           Legacy
@@ -277,19 +281,19 @@ export default function FoundingSeasonDeskClient({
                     </td>
                     <td data-label="Card on file">
                       {card
-                        ? <span className={styles.stacked}><b className={styles.yes}>{card}</b><span>{fmtAbsoluteDate(row.cardOnFileAt)}</span></span>
-                        : <span className={styles.dash}>—</span>}
+                        ? <><span className={styles.yes}>{card}</span><span className={kit.sub}>{fmtAbsoluteDate(row.cardOnFileAt)}</span></>
+                        : <span className={kit.muted}>—</span>}
                     </td>
                     <td data-label={`${nextYearLabel} choice`}>
                       {row.nextSeasonPlanId
-                        ? <span className={styles.stacked}><b>{row.nextSeasonPlanLabel}</b><span>{row.nextSeasonBillingCycle} · {fmtAbsoluteDate(row.nextSeasonChosenAt)}</span></span>
-                        : <span className={styles.dash}>—</span>}
+                        ? <><span>{row.nextSeasonPlanLabel}</span><span className={kit.sub}>{row.nextSeasonBillingCycle} · {fmtAbsoluteDate(row.nextSeasonChosenAt)}</span></>
+                        : <span className={kit.muted}>—</span>}
                     </td>
                     {/* NOT a page-view metric — the product keeps none. This is the most recent
                         sign-in across the account's owners, named for what it is. */}
-                    <td data-label="Owner last seen" className={styles.dim}>{fmtSince(row.ownerLastSeenAt, 'Never')}</td>
-                    <td data-label="Used it for" className={styles.dim}>{row.usageLabel}</td>
-                    <td data-label="Billing contact" className={styles.dim}>{row.billingContact ?? '—'}</td>
+                    <td data-label="Owner last seen" className={kit.muted}>{fmtSince(row.ownerLastSeenAt, 'Never')}</td>
+                    <td data-label="Used it for" className={`${kit.muted} ${styles.wrap}`}>{row.usageLabel}</td>
+                    <td data-label="Billing contact" className={`${kit.muted} ${styles.wrap}`}>{row.billingContact ?? '—'}</td>
                   </tr>
                 );
               })}
@@ -297,8 +301,9 @@ export default function FoundingSeasonDeskClient({
           </table>
         </div>
       )}
+      </div>
 
-      <p className={styles.footnote}>
+      <p className={kit.caption}>
         Card on file is recorded in the app when Stripe confirms it — this list never calls Stripe.
         {noCardOnly && ' These are the same accounts the "no card yet" reminder audience reaches, minus anyone who has opted out.'}
       </p>

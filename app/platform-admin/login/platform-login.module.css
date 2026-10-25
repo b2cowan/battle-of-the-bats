@@ -1,12 +1,15 @@
-﻿.page {
+/* The support console's sign-in (Support console Stage 1, owner 2026-10-24, Ask 5): the product's warm sign-in look, ALWAYS
+   warm — the layout wraps this page in the kit's fixed-warm root (`GuestKitRoot`), so every colour below is a portal token
+   and nothing here reads the account's Warm / Dark setting. Words unchanged; sentence case in the body face. */
+.page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--pitch-black);
   background-image:
-    linear-gradient(to right, rgba(var(--logic-lime-rgb), 0.025) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(var(--logic-lime-rgb), 0.025) 1px, transparent 1px);
+    linear-gradient(to right, rgba(var(--blueprint-blue-rgb), 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--blueprint-blue-rgb), 0.07) 1px, transparent 1px);
   background-size: 40px 40px;
   padding: 2rem 1.5rem;
 }
@@ -14,47 +17,39 @@
 .card {
   width: 100%;
   max-width: 400px;
-  background: var(--hud-surface);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
-  padding: 2.5rem;
-  box-shadow: 0 0 0 1px rgba(var(--logic-lime-rgb), 0.06), 0 0 32px rgba(var(--logic-lime-rgb), 0.04);
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 12px;
+  padding: 2rem 2.5rem 2.25rem;
 }
 
 /* ── Header ──────────────────────────────────────────────── */
 .header {
   text-align: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.12);
+  margin-bottom: 1.5rem;
 }
 
-/* The one name (BrandLockup, on its dark tone) draws itself; this only spaces it. */
+/* The one name (BrandLockup, on its warm tone) draws itself; this only spaces it. */
 .wordmark { margin-bottom: 1rem; }
 
 .title {
-  font-family: var(--font-data);
-  font-size: 1rem;
+  font-size: var(--type-title);
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--fl-text);
-  margin-bottom: 0.35rem;
+  line-height: 1.3;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
 }
 
 .sub {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  opacity: 0.6;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
 }
 
 /* ── Form ────────────────────────────────────────────────── */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.1rem;
 }
 
 .field {
@@ -64,29 +59,28 @@
 }
 
 .label {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
 }
 
 .input {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(var(--logic-lime-rgb), 0.03);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.18);
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.85rem;
-  padding: 0.625rem 0.875rem;
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--type-body);
+  min-height: var(--admin-control-h);
+  padding: 0.5rem 0.75rem;
   outline: none;
   transition: border-color 0.15s;
 }
 
-.input:focus         { border-color: var(--logic-lime); }
-.input::placeholder  { color: var(--data-gray); opacity: 0.35; }
+.input:focus         { border-color: var(--home-olive); }
+.input::placeholder  { color: var(--text-tertiary); opacity: 0.8; }
 
 /* ── Password toggle ─────────────────────────────────────── */
 .pwWrap { position: relative; }
@@ -94,46 +88,46 @@
 
 .pwToggle {
   position: absolute;
-  right: 0.75rem;
+  right: 0.5rem;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: var(--data-gray);
-  padding: 0.25rem;
+  color: var(--text-tertiary);
+  padding: 0.5rem;
   cursor: pointer;
   transition: color 0.15s;
 }
-.pwToggle:hover { color: var(--fl-text); }
+.pwToggle:hover { color: var(--text-primary); }
 
 /* ── Error ───────────────────────────────────────────────── */
 .error {
   background: rgba(var(--danger-rgb), 0.07);
   border: 1px solid rgba(var(--danger-rgb), 0.28);
+  border-radius: 6px;
   padding: 0.625rem 1rem;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
+  font-size: var(--type-body);
   color: var(--danger);
 }
 
-/* ── Submit ──────────────────────────────────────────────── */
+/* ── Submit ── the one main action: lime fill, ink text (the product's ink-on-lime action) ── */
 .submitBtn {
   width: 100%;
-  padding: 0.875rem;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  background: var(--logic-lime);
-  color: var(--pitch-black);
+  min-height: 42px;
+  padding: 0.6rem 1rem;
+  font-family: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
   border: none;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: filter 0.15s;
   margin-top: 0.25rem;
 }
 
-.submitBtn:hover:not(:disabled) { background: var(--white); }
+.submitBtn:hover:not(:disabled) { filter: brightness(0.96); }
 .submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Label row (label + forgot link side by side) ────────────── */
@@ -143,42 +137,38 @@
   justify-content: space-between;
 }
 
+/* A door: olive text, no box. */
 .forgotLink {
   background: none;
   border: none;
   padding: 0;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--data-gray);
+  font-family: inherit;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--home-olive);
   cursor: pointer;
-  transition: color 0.15s;
 }
-.forgotLink:hover { color: var(--logic-lime); }
+.forgotLink:hover { text-decoration: underline; }
 
 /* ── Back link (forgot-password view) ───────────────────────── */
 .backLink {
   background: none;
   border: none;
   padding: 0;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--data-gray);
+  font-family: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--home-olive);
   cursor: pointer;
-  transition: color 0.15s;
   text-align: left;
 }
-.backLink:hover { color: var(--fl-text); }
+.backLink:hover { text-decoration: underline; }
 
 /* ── Reset sent confirmation ─────────────────────────────────── */
 .resetConfirm {
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  color: var(--fl-text);
+  font-size: var(--type-body);
+  color: var(--text-primary);
   line-height: 1.65;
   margin-bottom: 1.5rem;
 }
-.resetConfirm strong { color: var(--logic-lime); font-weight: 700; }
+.resetConfirm strong { font-weight: 700; }

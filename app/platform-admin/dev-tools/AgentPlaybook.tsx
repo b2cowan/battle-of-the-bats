@@ -591,7 +591,7 @@ function OverviewPage({ onSelect }: { onSelect: (key: AgentKey) => void }) {
       </div>
 
       {/* How conversations work */}
-      <SectionHeader icon={MessageSquare} label="How Conversations Work" />
+      <SectionHeader icon={MessageSquare} label="How conversations work" />
       <div className={styles.rulesBox}>
         {[
           { bold: 'One agent per conversation', rest: ' — mixing two agents in the same chat bloats context. Use a fresh conversation for each step. Exception: /billing + /ux can share a conversation for short sessions (3–4 pages max).' },
@@ -612,7 +612,7 @@ function OverviewPage({ onSelect }: { onSelect: (key: AgentKey) => void }) {
       </div>
 
       {/* Sequencing */}
-      <SectionHeader icon={ArrowRight} label="Recommended Sequencing" />
+      <SectionHeader icon={ArrowRight} label="Recommended sequencing" />
       <p className={styles.pipelineIntro}>
         For any significant review or feature, work through agents in this order. Each layer filters noise for the next.
       </p>
@@ -632,7 +632,7 @@ function OverviewPage({ onSelect }: { onSelect: (key: AgentKey) => void }) {
       </div>
 
       {/* Quick reference */}
-      <SectionHeader icon={Zap} label="Quick Reference" />
+      <SectionHeader icon={Zap} label="Quick reference" />
       <div className={styles.quickRef}>
         {QUICK_REF.map(({ trigger, cmd }, i) => (
           <div key={i} className={styles.quickRefRow}>

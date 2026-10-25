@@ -305,29 +305,29 @@ export default function DeckComposer({
       <div className={styles.editorActions}>
         <button
           type="button"
-          className={styles.btnPrimary}
+          className="btn btn-secondary btn-sm"
           onClick={save}
           disabled={busy || !dirty || order.length === 0 || (target.kind !== 'standing' && !name.trim())}
         >
           {busy ? 'Working…' : target.kind === 'new' ? 'Create this deck' : 'Publish this running order'}
         </button>
         {target.kind === 'standing' && source === 'saved' && (
-          <button type="button" className={styles.btnGhost} onClick={revert} disabled={busy}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={revert} disabled={busy}>
             Return to the code default
           </button>
         )}
         {target.kind === 'custom' && (
           confirmingDelete ? (
             <>
-              <button type="button" className={styles.btnDanger} onClick={destroy} disabled={busy}>
+              <button type="button" className="btn btn-danger btn-sm" onClick={destroy} disabled={busy}>
                 Really delete — its link dies with it
               </button>
-              <button type="button" className={styles.btnGhost} onClick={() => setConfirmingDelete(false)} disabled={busy}>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setConfirmingDelete(false)} disabled={busy}>
                 Keep it
               </button>
             </>
           ) : (
-            <button type="button" className={styles.btnGhost} onClick={() => setConfirmingDelete(true)} disabled={busy}>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setConfirmingDelete(true)} disabled={busy}>
               Delete this deck
             </button>
           )

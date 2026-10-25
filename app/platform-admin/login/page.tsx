@@ -6,7 +6,6 @@ import { signIn } from '@/lib/auth';
 import { signInErrorCopy } from '@/lib/auth-errors';
 import styles from './platform-login.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
-import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 
 
 function LoginForm() {
@@ -76,8 +75,8 @@ function LoginForm() {
     return (
       <div className={styles.card}>
         <div className={styles.header}>
-          <BrandLockup href={null} tone="mono" size={17} className={styles.wordmark} />
-          <h1 className={styles.title}>Reset Password</h1>
+          <BrandLockup href={null} tone="warm" size={17} className={styles.wordmark} />
+          <h1 className={styles.title}>Reset password</h1>
           <p className={styles.sub}>We&apos;ll send a reset link to your email</p>
         </div>
 
@@ -110,7 +109,7 @@ function LoginForm() {
             {resetError && <div className={styles.error}>{resetError}</div>}
 
             <button type="submit" className={styles.submitBtn} disabled={resetLoading}>
-              {resetLoading ? 'Sending…' : 'Send Reset Link'}
+              {resetLoading ? 'Sending…' : 'Send reset link'}
             </button>
 
             <button type="button" className={styles.backLink} onClick={() => setMode('login')}>
@@ -126,8 +125,8 @@ function LoginForm() {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <BrandLockup href={null} tone="mono" size={17} className={styles.wordmark} />
-        <h1 className={styles.title}>Staff Access</h1>
+        <BrandLockup href={null} tone="warm" size={17} className={styles.wordmark} />
+        <h1 className={styles.title}>Staff access</h1>
         <p className={styles.sub}>Internal platform — authorized personnel only</p>
       </div>
 
@@ -173,7 +172,7 @@ function LoginForm() {
         {error && <div className={styles.error}>{error}</div>}
 
         <button type="submit" className={styles.submitBtn} disabled={loading}>
-          {loading ? 'Authenticating…' : 'Sign In'}
+          {loading ? 'Authenticating…' : 'Sign in'}
         </button>
       </form>
     </div>
@@ -183,8 +182,8 @@ function LoginForm() {
 export default function PlatformLoginPage() {
   return (
     <div className={styles.page}>
-      {/* A dark page in every setting; the root default bar is the paper (S4 Part B). */}
-      <CoachThemeColor fixed="dark" />
+      {/* Warm in every setting, like every signed-out page (owner 2026-10-24, Support console Stage 1 Ask 5): the layout wraps
+          this page in the kit's fixed-warm root, which also sets the status-bar colour. */}
       <Suspense fallback={<div className={styles.card} />}>
         <LoginForm />
       </Suspense>

@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Check, Loader, X } from 'lucide-react';
-import HelpCallout from '@/components/help/HelpCallout';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { fmtAbsoluteDateTime } from '@/lib/format-date';
+import { pluralize } from '@/lib/utils';
 import type { PlatformChangeApplicationRow, PlatformChangeRequestRow } from './types';
 import type { PriceValidationResult } from '@/lib/stripe-price-validation';
+import kit from '../console.module.css';
 import styles from './change-requests.module.css';
 
 type StripePriceUpdateProposal = {
@@ -44,8 +47,8 @@ type PlanConfigUpdateProposal = {
 };
 
 const CHANGE_REQUEST_TYPES = [
-  { value: 'plan_version', label: 'Plan Version' },
-  { value: 'feature_matrix', label: 'Feature Matrix' },
+  { value: 'plan_version', label: 'Plan version' },
+  { value: 'feature_matrix', label: 'Feature matrix' },
   { value: 'addon', label: 'Add-on' },
   { value: 'pricing', label: 'Pricing' },
   { value: 'grandfathering', label: 'Grandfathering' },
@@ -55,7 +58,7 @@ const CHANGE_REQUEST_TYPES = [
 
 const CHANGE_REQUEST_STATUSES = [
   { value: 'draft', label: 'Draft' },
-  { value: 'needs_review', label: 'Needs Review' },
+  { value: 'needs_review', label: 'Needs review' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
   { value: 'implemented', label: 'Implemented' },
@@ -65,29 +68,29 @@ const CHANGE_REQUEST_STATUSES = [
 const STATUS_VIEW_OPTIONS = [
   {
     value: 'action_needed',
-    label: 'Action Needed',
+    label: 'Action needed',
     statuses: ['needs_review', 'approved'],
   },
   {
     value: 'open',
-    label: 'All Open',
+    label: 'All open',
     statuses: ['draft', 'needs_review', 'approved'],
   },
   {
     value: 'closed',
-    label: 'Closed / History',
+    label: 'Closed / history',
     statuses: ['implemented', 'rejected', 'canceled'],
   },
   {
     value: 'all',
-    label: 'All Requests',
+    label: 'All requests',
     statuses: null,
   },
 ];
 
 const SEVERITY_FILTERS = [
-  { value: 'all', label: 'All Severities' },
-  { value: 'launch_blocker', label: 'Launch Blocker' },
+  { value: 'all', label: 'All severities' },
+  { value: 'launch_blocker', label: 'Launch blocker' },
   { value: 'high', label: 'High' },
   { value: 'medium', label: 'Medium' },
   { value: 'low', label: 'Low' },
@@ -101,7 +104,7 @@ const SEVERITY_RANK: Record<string, number> = {
 };
 
 const ATTENTION_FILTERS = [
-  { value: 'all', label: 'All Attention' },
+  { value: 'all', label: 'All attention' },
   { value: 'reviewer', label: 'Reviewer' },
   { value: 'submitter', label: 'Submitter' },
   { value: 'implementer', label: 'Implementer' },
@@ -223,24 +226,24 @@ function getPlanConfigProposal(request: PlatformChangeRequestRow): PlanConfigUpd
 }
 
 function generatedApplyLabel(request: PlatformChangeRequestRow) {
-  if (getStripePriceProposal(request)) return 'Price';
-  if (getPlanGatingProposal(request)) return 'Availability';
-  if (getPlanConfigProposal(request)) return 'Limits';
+  if (getStripePriceProposal(request)) return 'price';
+  if (getPlanGatingProposal(request)) return 'availability';
+  if (getPlanConfigProposal(request)) return 'limits';
   return null;
 }
 
 function statusClass(status: string) {
-  if (status === 'implemented' || status === 'approved') return styles.badgeLive;
-  if (status === 'needs_review') return styles.badgePlanned;
-  if (status === 'rejected' || status === 'canceled') return styles.badgeRetired;
-  return styles.badgeDraft;
+  if (status === 'implemented' || status === 'approved') return kit.chipOk;
+  if (status === 'needs_review') return kit.chipInfo;
+  if (status === 'rejected' || status === 'canceled') return kit.chipBad;
+  return kit.chipQuiet;
 }
 
 function severityClass(priority: string) {
-  if (priority === 'launch_blocker') return styles.severityLaunchBlocker;
-  if (priority === 'high') return styles.severityHigh;
-  if (priority === 'medium') return styles.severityMedium;
-  return styles.severityLow;
+  if (priority === 'launch_blocker') return kit.chipBad;
+  if (priority === 'high') return kit.chipWarn;
+  if (priority === 'medium') return kit.chipInfo;
+  return kit.chipQuiet;
 }
 
 function attentionKey(request: PlatformChangeRequestRow) {
@@ -505,17 +508,17 @@ export default function ChangeRequestsClient({
     request: PlatformChangeRequestRow,
     opts?: { approveDisabled?: boolean; approveTitle?: string },
   ) {
-    if (!canManageProduct) return <span className={styles.muted}>Read only</span>;
+    if (!canManageProduct) return <span className={kit.muted}>Read only</span>;
 
     const generatedLabel = generatedApplyLabel(request);
     const isBusy = busy?.startsWith(`${request.id}:`);
-    if (isBusy) return <Loader size={14} className={styles.spin} />;
+    if (isBusy) return <Loader size={14} className={`${kit.spin} ${styles.spinOlive}`} />;
     const approveDisabled = Boolean(opts?.approveDisabled);
 
     if (request.status === 'draft') {
       return (
-        <button className={styles.secondaryBtn} onClick={() => updateStatus(request, 'needs_review')}>
-          Submit for Review
+        <button className="btn btn-secondary" onClick={() => updateStatus(request, 'needs_review')}>
+          Submit for review
         </button>
       );
     }
@@ -523,11 +526,11 @@ export default function ChangeRequestsClient({
     if (request.status === 'needs_review') {
       return (
         <span className={styles.actionStack}>
-          <button className={styles.primaryBtn} onClick={() => updateStatus(request, 'approved')} disabled={approveDisabled} title={opts?.approveTitle}>
+          <button className="btn btn-primary" onClick={() => updateStatus(request, 'approved')} disabled={approveDisabled} title={opts?.approveTitle}>
             <Check size={13} />
-            {generatedLabel ? 'Approve & Apply' : 'Approve'}
+            {generatedLabel ? 'Approve & apply' : 'Approve'}
           </button>
-          <button className={styles.dangerBtn} onClick={() => updateStatus(request, 'rejected')}>
+          <button className="btn btn-danger" onClick={() => updateStatus(request, 'rejected')}>
             <X size={13} />
             Reject
           </button>
@@ -537,179 +540,166 @@ export default function ChangeRequestsClient({
 
     if (request.status === 'approved') {
       return (
-        <button className={styles.primaryBtn} onClick={() => updateStatus(request, generatedLabel ? 'approved' : 'implemented')} disabled={approveDisabled} title={opts?.approveTitle}>
+        <button className="btn btn-primary" onClick={() => updateStatus(request, generatedLabel ? 'approved' : 'implemented')} disabled={approveDisabled} title={opts?.approveTitle}>
           <Check size={13} />
-          {generatedLabel ? `Apply ${generatedLabel}` : 'Mark Implemented'}
+          {generatedLabel ? `Apply ${generatedLabel}` : 'Mark implemented'}
         </button>
       );
     }
 
-    return <span className={styles.muted}>Closed</span>;
+    return <span className={kit.muted}>Closed</span>;
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.pageHeader}>
-        <div>
-          <div className={styles.headerLabel}>Billing &amp; Product</div>
-          <h1 className={styles.title}>Approval Queue</h1>
-        </div>
-        <p className={styles.pageIntro}>
-          Review product, pricing, entitlement, campaign, and approval requests from one queue.
-          The default view shows action-needed requests only; generated plan and price approvals apply immediately.
-        </p>
-      </header>
+    <div className={kit.page}>
+      <AdminPageHeader title="Approval queue" />
 
-      <HelpCallout
-        variant="info"
-        title="How the Approval Queue relates to Plans & Pricing"
-        body="Most requests here are created automatically by the Plans & Pricing catalog flow (and billing-initiated catalog actions) — this queue is where you review and move them forward. Approving a generated price, gating, or config change applies it immediately to the catalog; every transition is audit-logged."
-        cta={{ label: 'Open Plans & Pricing', href: '/platform-admin/plans-pricing' }}
-      />
+      <p className={kit.caption}>
+        Review product, pricing, entitlement, campaign, and approval requests from one queue.
+        The default view shows action-needed requests only; generated plan and price approvals apply immediately.
+      </p>
 
-      <section className={styles.summaryGrid} aria-label="Change request summary">
-        <div>
-          <span>Action Needed</span>
-          <strong>{actionNeededCount}</strong>
+      <div className={kit.callout}>
+        <span>
+          <strong>How the approval queue relates to Plans &amp; pricing.</strong>{' '}
+          Most requests here are created automatically by the Plans &amp; pricing catalog flow (and billing-initiated catalog actions) — this queue is where you review and move them forward. Approving a generated price, gating, or config change applies it immediately to the catalog; every transition is audit-logged.
+        </span>
+        <span className={kit.calloutEnd}>
+          <Link href="/platform-admin/plans-pricing" className={kit.door}>Open Plans &amp; pricing ›</Link>
+        </span>
+      </div>
+
+      <section className={kit.band} aria-label="Change request summary">
+        <div className={`${kit.bandCell} ${actionNeededCount > 0 ? kit.bandWarn : ''}`}>
+          <span className={kit.bandLabel}>Action needed</span>
+          <strong className={kit.bandValue}>{actionNeededCount}</strong>
         </div>
-        <div>
-          <span>Needs Review</span>
-          <strong>{reviewCount}</strong>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Needs review</span>
+          <strong className={kit.bandValue}>{reviewCount}</strong>
         </div>
-        <div>
-          <span>Price Changes</span>
-          <strong>{priceCount}</strong>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Price changes</span>
+          <strong className={kit.bandValue}>{priceCount}</strong>
         </div>
-        <div>
-          <span>Implemented</span>
-          <strong>{implementedCount}</strong>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Implemented</span>
+          <strong className={kit.bandValue}>{implementedCount}</strong>
         </div>
       </section>
 
       {(notice || error) && (
-        <div className={error ? styles.errorBanner : styles.successBanner}>
+        <div className={`${kit.notice} ${error ? kit.noticeBad : kit.noticeGood}`}>
           {error || notice}
         </div>
       )}
 
-      <section className={styles.filterBar} aria-label="Change request filters">
-        <label>
-          <span>Type</span>
-          <select value={typeFilter} onChange={event => setTypeFilter(event.target.value)}>
-            <option value="all">All Types</option>
+      <div className={kit.card}>
+        <div className={kit.toolbar} role="group" aria-label="Change request filters">
+          <span className={kit.count}>{pluralize(filteredRequests.length, 'request')}</span>
+          <input
+            type="search"
+            className={kit.search}
+            aria-label="Search"
+            value={search}
+            placeholder="Title, user, target, or proposal"
+            onChange={event => setSearch(event.target.value)}
+          />
+          <select className={kit.select} aria-label="Type" value={typeFilter} onChange={event => setTypeFilter(event.target.value)}>
+            <option value="all">All types</option>
             {CHANGE_REQUEST_TYPES.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
-        </label>
-        <label>
-          <span>Status View</span>
-          <select value={statusView} onChange={event => setStatusView(event.target.value)}>
+          <select className={kit.select} aria-label="Status view" value={statusView} onChange={event => setStatusView(event.target.value)}>
             {STATUS_VIEW_OPTIONS.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
-            <optgroup label="Exact Status">
+            <optgroup label="Exact status">
               {CHANGE_REQUEST_STATUSES.map(option => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </optgroup>
           </select>
-        </label>
-        <label>
-          <span>Severity</span>
-          <select value={severityFilter} onChange={event => setSeverityFilter(event.target.value)}>
+          <select className={kit.select} aria-label="Severity" value={severityFilter} onChange={event => setSeverityFilter(event.target.value)}>
             {SEVERITY_FILTERS.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
-        </label>
-        <label>
-          <span>Attention</span>
-          <select value={attentionFilter} onChange={event => setAttentionFilter(event.target.value)}>
+          <select className={kit.select} aria-label="Attention" value={attentionFilter} onChange={event => setAttentionFilter(event.target.value)}>
             {ATTENTION_FILTERS.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
-        </label>
-        <label>
-          <span>Submitted By</span>
-          <select value={submitterFilter} onChange={event => setSubmitterFilter(event.target.value)}>
-            <option value="all">All Submitters</option>
+          <select className={kit.select} aria-label="Submitted by" value={submitterFilter} onChange={event => setSubmitterFilter(event.target.value)}>
+            <option value="all">All submitters</option>
             {submitters.map(email => (
               <option key={email} value={email}>{email}</option>
             ))}
           </select>
-        </label>
-        <label className={styles.searchField}>
-          <span>Search</span>
-          <input
-            value={search}
-            placeholder="Title, user, target, or proposal"
-            onChange={event => setSearch(event.target.value)}
-          />
-        </label>
-      </section>
+        </div>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th className={styles.requestColumn}>Request</th>
-              <th className={styles.statusColumn}>Status</th>
-              <th className={styles.severityColumn}>Severity</th>
-              <th className={styles.ownerColumn}>Owner</th>
-              <th className={styles.targetColumn}>Target</th>
-              <th className={styles.updatedColumn}>Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRequests.length === 0 ? (
+        <div className={`${kit.tableWrap} table-cards`}>
+          <table className={kit.comfortable}>
+            <thead>
               <tr>
-                <td colSpan={6} className={styles.emptyCell}>No change requests match this view.</td>
+                <th>Request</th>
+                <th>Status</th>
+                <th>Severity</th>
+                <th>Owner</th>
+                <th>Target</th>
+                <th>Updated</th>
               </tr>
-            ) : filteredRequests.map(request => {
-              const submitter = request.submitted_by_email ?? request.created_by_email;
-
-              return (
-                <tr
-                  key={request.id}
-                  className={styles.clickableRow}
-                  onClick={() => setSelectedRequestId(request.id)}
-                >
-                  <td className={styles.requestCell} data-label="Request">
-                    <button
-                      type="button"
-                      className={styles.requestButton}
-                      onClick={() => setSelectedRequestId(request.id)}
-                    >
-                      {request.title}
-                    </button>
-                    <span>{requestDisplaySummary(request)}</span>
-                  </td>
-                  <td data-label="Status">
-                    <span className={statusClass(request.status)}>
-                      {optionLabel(CHANGE_REQUEST_STATUSES, request.status)}
-                    </span>
-                  </td>
-                  <td data-label="Severity">
-                    <span className={severityClass(request.priority)}>
-                      {optionLabel(SEVERITY_FILTERS, request.priority)}
-                    </span>
-                  </td>
-                  <td className={styles.ownerCell} data-label="Owner">
-                    <strong>{attentionLabel(request)}</strong>
-                    <span>{submitter}</span>
-                  </td>
-                  <td className={styles.targetCell} data-label="Target">
-                    <strong>{targetLabel(request)}</strong>
-                    <span>{optionLabel(CHANGE_REQUEST_TYPES, request.request_type)}</span>
-                  </td>
-                  <td className={styles.dateCell} data-label="Updated">{formatDate(request.updated_at ?? request.created_at)}</td>
+            </thead>
+            <tbody>
+              {filteredRequests.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className={kit.empty}>No change requests match this view.</td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ) : filteredRequests.map(request => {
+                const submitter = request.submitted_by_email ?? request.created_by_email;
+
+                return (
+                  <tr
+                    key={request.id}
+                    className={kit.clickableRow}
+                    onClick={() => setSelectedRequestId(request.id)}
+                  >
+                    <td className={`${styles.requestCell} table-cards-title`}>
+                      <button
+                        type="button"
+                        className={styles.requestButton}
+                        onClick={() => setSelectedRequestId(request.id)}
+                      >
+                        {request.title}
+                      </button>
+                      <span className={`${kit.sub} ${styles.summary}`}>{requestDisplaySummary(request)}</span>
+                    </td>
+                    <td data-label="Status">
+                      <span className={`${kit.chip} ${statusClass(request.status)}`}>
+                        {optionLabel(CHANGE_REQUEST_STATUSES, request.status)}
+                      </span>
+                    </td>
+                    <td data-label="Severity">
+                      <span className={`${kit.chip} ${severityClass(request.priority)}`}>
+                        {optionLabel(SEVERITY_FILTERS, request.priority)}
+                      </span>
+                    </td>
+                    <td data-label="Owner">
+                      <strong>{attentionLabel(request)}</strong>
+                      <span className={kit.sub}>{submitter}</span>
+                    </td>
+                    <td data-label="Target">
+                      <strong>{targetLabel(request)}</strong>
+                      <span className={kit.sub}>{optionLabel(CHANGE_REQUEST_TYPES, request.request_type)}</span>
+                    </td>
+                    <td data-label="Updated" className={kit.nowrap}>{formatDate(request.updated_at ?? request.created_at)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {selectedRequest && (
@@ -723,7 +713,7 @@ export default function ChangeRequestsClient({
           >
             <div className={styles.modalHeader}>
               <div>
-                <div className={styles.headerLabel}>Approval Detail</div>
+                <div className={kit.eye}>Approval detail</div>
                 <h2 id="change-request-detail-title" className={styles.modalTitle}>{selectedRequest.title}</h2>
               </div>
               <button
@@ -738,30 +728,30 @@ export default function ChangeRequestsClient({
 
             <div className={styles.modalBody}>
               <div className={styles.modalBadgeRow}>
-                <span className={statusClass(selectedRequest.status)}>
+                <span className={`${kit.chip} ${statusClass(selectedRequest.status)}`}>
                   {optionLabel(CHANGE_REQUEST_STATUSES, selectedRequest.status)}
                 </span>
-                <span className={severityClass(selectedRequest.priority)}>
+                <span className={`${kit.chip} ${severityClass(selectedRequest.priority)}`}>
                   {optionLabel(SEVERITY_FILTERS, selectedRequest.priority)}
                 </span>
-                <span className={styles.attentionPill}>{attentionLabel(selectedRequest)}</span>
+                <span className={kit.chip}>{attentionLabel(selectedRequest)}</span>
               </div>
 
               <dl className={styles.detailGrid}>
                 <div>
-                  <dt>Type</dt>
+                  <dt className={kit.eye}>Type</dt>
                   <dd>{optionLabel(CHANGE_REQUEST_TYPES, selectedRequest.request_type)}</dd>
                 </div>
                 <div>
-                  <dt>Target</dt>
+                  <dt className={kit.eye}>Target</dt>
                   <dd>{targetLabel(selectedRequest)}</dd>
                 </div>
                 <div>
-                  <dt>Submitted By</dt>
+                  <dt className={kit.eye}>Submitted by</dt>
                   <dd>{selectedRequest.submitted_by_email ?? selectedRequest.created_by_email}</dd>
                 </div>
                 <div>
-                  <dt>Last Updated</dt>
+                  <dt className={kit.eye}>Last updated</dt>
                   <dd>{formatDate(selectedRequest.updated_at ?? selectedRequest.created_at)}</dd>
                 </div>
               </dl>
@@ -784,41 +774,41 @@ export default function ChangeRequestsClient({
                 <section className={styles.detailSection}>
                   <h3>Stripe price check</h3>
                   {validatingPrice ? (
-                    <p className={styles.muted}>Checking price against Stripe…</p>
+                    <p className={kit.muted}>Checking price against Stripe…</p>
                   ) : !priceValidation ? (
-                    <p className={styles.muted}>Could not validate this price.</p>
+                    <p className={kit.muted}>Could not validate this price.</p>
                   ) : (
                     <div>
                       {!priceValidation.validated && (
-                        <p style={{ color: '#f59e0b', fontSize: '0.72rem', marginTop: 0 }}>
+                        <p className={styles.checkWarn}>
                           Not checked against Stripe in this environment — {priceValidation.skippedReason}
                         </p>
                       )}
-                      <ul style={{ listStyle: 'none', padding: 0, margin: '0.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <ul className={styles.checkList}>
                         {priceValidation.checks.map(c => (
-                          <li key={c.key} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.72rem', alignItems: 'baseline' }}>
-                            <span style={{ fontWeight: 700, color: c.status === 'pass' ? '#4ade80' : c.status === 'warn' ? '#f59e0b' : c.status === 'fail' ? '#f87171' : '#94a3b8' }}>
+                          <li key={c.key} className={styles.checkRow}>
+                            <span className={c.status === 'pass' ? styles.checkPass : c.status === 'warn' ? styles.checkWarnMark : c.status === 'fail' ? styles.checkFail : styles.checkNone}>
                               {c.status === 'pass' ? '✓' : c.status === 'warn' ? '⚠' : c.status === 'fail' ? '✗' : '–'}
                             </span>
                             <span>
                               {c.label}
                               {c.actual && (
-                                <span style={{ color: '#94a3b8' }}>
+                                <span className={kit.muted}>
                                   {' '}— {c.actual}{c.expected && c.expected !== c.actual ? ` (expected ${c.expected})` : ''}
                                 </span>
                               )}
-                              {c.detail && <span style={{ color: '#94a3b8' }}> — {c.detail}</span>}
+                              {c.detail && <span className={kit.muted}> — {c.detail}</span>}
                             </span>
                           </li>
                         ))}
                       </ul>
                       {priceValidation.hardBlock && (
-                        <p style={{ color: '#f87171', fontWeight: 700, fontSize: '0.72rem' }}>
+                        <p className={styles.checkFail}>
                           This price can’t be applied — resolve the ✗ items above.
                         </p>
                       )}
                       {!priceValidation.hardBlock && priceValidation.warn && (
-                        <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', color: '#f59e0b', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
+                        <label className={`${styles.checkWarn} ${styles.confirmRow}`}>
                           <input type="checkbox" checked={warnConfirmed} onChange={e => setWarnConfirmed(e.target.checked)} />
                           <span>I’ve reviewed the ⚠ warnings and want to apply this price anyway.</span>
                         </label>
@@ -829,7 +819,7 @@ export default function ChangeRequestsClient({
               )}
 
               <section className={styles.detailSection}>
-                <h3>Stage History</h3>
+                <h3>Stage history</h3>
                 <div className={styles.historyList}>
                   <span>Created {formatDate(selectedRequest.created_at)} by {selectedRequest.created_by_email}</span>
                   <span>{selectedRequest.submitted_at ? `Submitted ${formatDate(selectedRequest.submitted_at)} by ${selectedRequest.submitted_by_email ?? selectedRequest.created_by_email}` : 'Not submitted yet'}</span>
@@ -847,7 +837,7 @@ export default function ChangeRequestsClient({
             </div>
 
             <div className={styles.modalFooter}>
-              <button type="button" className={styles.secondaryBtn} onClick={() => setSelectedRequestId(null)}>
+              <button type="button" className="btn btn-secondary" onClick={() => setSelectedRequestId(null)}>
                 Close
               </button>
               <div className={styles.modalActions}>{renderActions(selectedRequest, (() => {

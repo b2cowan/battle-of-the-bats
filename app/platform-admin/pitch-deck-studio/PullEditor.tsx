@@ -163,14 +163,14 @@ export default function PullEditor({
           <div className={styles.editorActions}>
             <button
               type="button"
-              className={styles.btnPrimary}
+              className="btn btn-secondary btn-sm"
               onClick={save}
               disabled={busy || !dirty || chosen.length === 0}
             >
               {busy ? 'Working…' : 'Publish this pull'}
             </button>
             {source === 'saved' && (
-              <button type="button" className={styles.btnGhost} onClick={clearSaved} disabled={busy}>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={clearSaved} disabled={busy}>
                 Return to the code default
               </button>
             )}

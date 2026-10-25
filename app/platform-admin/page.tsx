@@ -35,6 +35,8 @@ import {
 import MetricSnapshotButton from './MetricSnapshotButton';
 import OverviewTabs from './OverviewTabs';
 import MetricCard from '@/components/platform-admin/MetricCard';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import kit from './console.module.css';
 import styles from './overview.module.css';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -218,7 +220,7 @@ export default async function PlatformOverviewPage() {
       ],
     },
     {
-      label: 'Growth & Marketing',
+      label: 'Growth & marketing',
       tiles: [
         { label: 'New leads', value: stats.alerts.newEarlyAccessLeads, area: 'early_access', href: '/platform-admin/early-access', warn: true, title: 'New early-access signups awaiting triage in the lead pipeline.' },
         { label: 'Campaigns past due', value: campaignAlerts.pastDue, area: 'email', href: '/platform-admin/email', warn: true, title: 'Marketing campaigns whose planned send date has arrived or passed and haven’t been sent.' },
@@ -234,17 +236,9 @@ export default async function PlatformOverviewPage() {
   ];
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <div className={styles.headerLabel}>Command Center</div>
-          <h1 className={styles.title}>Overview</h1>
-        </div>
-        <div className={styles.headerMeta}>
-          <span>Live operational snapshot</span>
-          <span>{lastVisitLabel}</span>
-        </div>
-      </header>
+    <div className={kit.page}>
+      <AdminPageHeader title="Overview" />
+      <p className={`${kit.caption} ${kit.captionTight}`}>Live operational snapshot · {lastVisitLabel}</p>
 
       <section className={styles.metricGrid} aria-label="Platform totals">
         <MetricCard label="Organizations" value={stats.totals.organizations} Icon={Building2} />
@@ -267,8 +261,8 @@ export default async function PlatformOverviewPage() {
 
       <section className={styles.alertStrip} aria-label="Needs attention">
         <div>
-          <div className={styles.sectionKicker}>Needs Attention</div>
-          <h2 className={styles.sectionTitle}>Action Queue</h2>
+          <div className={kit.eye}>Needs attention</div>
+          <h2 className={styles.sectionTitle}>Action queue</h2>
         </div>
         {alertGroups
           // Hide any group the signed-in role can't act on (no viewable tiles in it).
@@ -318,8 +312,8 @@ export default async function PlatformOverviewPage() {
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <div>
-                  <div className={styles.sectionKicker}>Subscription Health</div>
-                  <h2 className={styles.sectionTitle}>Plan Mix</h2>
+                  <div className={kit.eye}>Subscription health</div>
+                  <h2 className={styles.sectionTitle}>Plan mix</h2>
                 </div>
                 <BarChart3 size={16} />
               </div>
@@ -336,7 +330,7 @@ export default async function PlatformOverviewPage() {
               <div className={styles.statusGrid}>
                 {STATUS_ORDER.map(status => (
                   <div key={status} className={styles.statusTile}>
-                    <span>{statusLabel(status)}</span>
+                    <span className={kit.eye}>{statusLabel(status)}</span>
                     <strong>{stats.subscription.byStatus[status] ?? 0}</strong>
                   </div>
                 ))}
@@ -346,8 +340,8 @@ export default async function PlatformOverviewPage() {
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <div>
-                  <div className={styles.sectionKicker}>Billing Detail</div>
-                  <h2 className={styles.sectionTitle}>Status By Plan</h2>
+                  <div className={kit.eye}>Billing detail</div>
+                  <h2 className={styles.sectionTitle}>Status by plan</h2>
                 </div>
                 <Gauge size={16} />
               </div>
@@ -370,8 +364,8 @@ export default async function PlatformOverviewPage() {
             <section className={styles.panelWide}>
               <div className={styles.panelHeader}>
                 <div>
-                  <div className={styles.sectionKicker}>Lifecycle History</div>
-                  <h2 className={styles.sectionTitle}>Billing Events</h2>
+                  <div className={kit.eye}>Lifecycle history</div>
+                  <h2 className={styles.sectionTitle}>Billing events</h2>
                 </div>
                 <CreditCard size={16} />
               </div>
@@ -405,8 +399,8 @@ export default async function PlatformOverviewPage() {
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <div>
-                  <div className={styles.sectionKicker}>Growth</div>
-                  <h2 className={styles.sectionTitle}>New Accounts</h2>
+                  <div className={kit.eye}>Growth</div>
+                  <h2 className={styles.sectionTitle}>New accounts</h2>
                 </div>
                 <Sparkles size={16} />
               </div>
@@ -431,8 +425,8 @@ export default async function PlatformOverviewPage() {
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <div>
-                  <div className={styles.sectionKicker}>Growth Pipeline</div>
-                  <h2 className={styles.sectionTitle}>Early Access</h2>
+                  <div className={kit.eye}>Growth pipeline</div>
+                  <h2 className={styles.sectionTitle}>Early access</h2>
                 </div>
                 <Mail size={16} />
               </div>
@@ -450,7 +444,7 @@ export default async function PlatformOverviewPage() {
                 ))}
               </div>
               <div className={styles.sourceList}>
-                <div className={styles.sourceListTitle}>Top Source Paths</div>
+                <div className={styles.sourceListTitle}>Top source paths</div>
                 {stats.growth.sourcePathRows.length > 0 ? (
                   stats.growth.sourcePathRows.map(row => (
                     <div key={row.source}>
@@ -470,7 +464,7 @@ export default async function PlatformOverviewPage() {
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <div>
-                  <div className={styles.sectionKicker}>Free Tier</div>
+                  <div className={kit.eye}>Free tier</div>
                   <h2 className={styles.sectionTitle}>League Starter</h2>
                 </div>
                 <CalendarDays size={16} />
@@ -499,8 +493,8 @@ export default async function PlatformOverviewPage() {
             <section className={styles.panelWide}>
               <div className={styles.panelHeader}>
                 <div>
-                  <div className={styles.sectionKicker}>Product Usage</div>
-                  <h2 className={styles.sectionTitle}>Modules And Activity</h2>
+                  <div className={kit.eye}>Product usage</div>
+                  <h2 className={styles.sectionTitle}>Modules and activity</h2>
                 </div>
                 <Layers size={16} />
               </div>
@@ -533,8 +527,8 @@ export default async function PlatformOverviewPage() {
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <div>
-                  <div className={styles.sectionKicker}>Metric Notes</div>
-                  <h2 className={styles.sectionTitle}>How Counts Are Calculated</h2>
+                  <div className={kit.eye}>Metric notes</div>
+                  <h2 className={styles.sectionTitle}>How counts are calculated</h2>
                 </div>
                 <AlertCircle size={16} />
               </div>

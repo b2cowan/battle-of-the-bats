@@ -1,0 +1,255 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE SUPPORT CONSOLE'S SHARED RECIPES (Support console Stage 1, owner 2026-10-24; drawings: artifact 7DWPUBp9cDp26a2P359zLW).
+
+   One home for the parts every console screen draws the same way, so 22 stylesheets stop restating them (the console's old
+   look reached ~12,000 lines because each screen redrew its own band, toolbar, chip and callout). A screen imports this as
+   `kit` and keeps in its own module only what is truly its own.
+
+   ⚖ THE RULES IT WEARS (F1 + D1–D5, `memory/design_decisions.md` 2026-10-24; `TABLE_AND_LIST_STANDARD.md`):
+     · D1 a section heading sits ABOVE its card (`.sectionTitle`), never inside it, and carries no caption over it;
+     · D2 a white button for every action, lime for the ONE main action, olive text for a door — the buttons are the
+       product's own global `.btn`, `.btn-secondary`, `.btn-primary` (the kit styles them under the marker); `.door` is the
+       olive text link;
+     · D3 no log-table exception: cell content is the body face and times too; the data face is for codes only (slugs, routes,
+       web addresses, ids) — `.code` — plus chips and the small capitals over figures (the 2026-10-19 lettering ruling);
+     · D5 a one-of-several choice is a dropdown, never a segmented row;
+     · figures join into ONE band (`.band`), the type ladder is 10 · 11 · 12 · 14 · 16 · 20 · 24 (the tokens below).
+
+   ⚠ TOKENS ONLY — no literal colour, size or face. Warm and Dark both come from the palette the layout's marker turns on.
+   Plain rules, never `[data-admin-kit] …` (the old-look gate refuses that selector in a file outside its baseline).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── The page column ── 1200 is the shell's; a reading page adds `.reading` for the 960. */
+.page { display: grid; gap: 1.1rem; min-width: 0; }
+.reading { max-width: 960px; margin-inline: auto; width: 100%; }
+
+/* ── Section heading, above its card (D1) ── */
+.sectionTitle { font-size: var(--type-heading); font-weight: 700; line-height: 1.3; color: var(--text-primary); margin: 0; }
+.sectionLede { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.15rem 0 0; }
+.section { display: grid; gap: 0.6rem; min-width: 0; align-content: start; }
+
+/* ── The card ── */
+.card { background: var(--card-bg); border: 1px solid var(--home-line); border-radius: 8px; min-width: 0; }
+.cardPad { padding: 1rem 1.1rem; }
+
+/* ── The joined figure band ── one box, hairlines between the figures (a gap of 1px on the line colour, so a band
+   that wraps keeps its rules). A figure that opens a filter is a `button.bandCell`. */
+.band {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--home-line);
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.bandCell {
+  background: var(--card-bg);
+  padding: 0.85rem 1rem;
+  display: grid;
+  gap: 0.2rem;
+  align-content: start;
+  min-width: 0;
+  text-align: left;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  border: 0;
+}
+button.bandCell { cursor: pointer; align-content: start; }
+button.bandCell:hover { background: var(--home-olive-soft); }
+button.bandCell:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.bandOn { background: var(--home-olive-soft); }
+.bandValue { font-size: var(--type-figure); font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.bandValueSm { font-size: var(--type-title); }
+.bandValueText { font-size: var(--type-body); font-weight: 600; overflow-wrap: anywhere; color: var(--text-primary); }
+.bandNote { font-size: var(--type-support); color: var(--text-tertiary); }
+.bandWarn .bandValue { color: var(--warning); }
+.bandGood .bandValue { color: var(--home-olive); }
+
+/* ── Small capitals over a value (the kit eyebrow: 11px, .09em, the typewriter face) — a figure's label is one ── */
+.bandLabel,
+.eye {
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+  color: var(--text-tertiary);
+}
+
+/* ── A small grey caption (a fact that sat under a title moves to the body it describes) ── */
+.caption { font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); margin: 0; }
+/* A caption that tucks up under the page title it follows (the title's own gap is the page grid's). */
+.captionTight { margin-top: -0.6rem; }
+
+/* ── Callout: a notice, an explanation, a needs-attention line ── */
+.callout {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--home-olive);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+}
+.callout strong { color: var(--text-primary); font-weight: 650; }
+.calloutWarn { border-left-color: var(--warning); }
+.calloutBad { border-left-color: var(--danger); }
+.calloutEnd { margin-left: auto; display: inline-flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ── Toolbar: count at the left, search and filters, page actions at the far right (table standard §3.9) ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.65rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--home-line);
+}
+.toolbarEnd { margin-left: auto; display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+/* The card's foot: a count or a pager under the table, its actions at the far right (`kit.toolbarEnd`). */
+.foot { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; padding: 0.7rem 1rem; border-top: 1px solid var(--home-line); }
+.count { font-size: var(--type-body); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.countQuiet { font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+/* The ONE rounded field in a toolbar is Search; every other field is square-cornered (the toolbar rule). */
+.search,
+.field,
+.select {
+  min-height: var(--admin-control-h);
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--type-body);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.search { border-radius: 999px; padding: 0 0.9rem; min-width: 16rem; }
+.field { border-radius: 8px; padding: 0 0.75rem; }
+.select { border-radius: 8px; padding: 0 0.6rem; cursor: pointer; }
+.search:focus, .field:focus, .select:focus { border-color: var(--home-olive); }
+.search::placeholder, .field::placeholder { color: var(--text-tertiary); }
+.textarea {
+  width: 100%;
+  min-height: 5.5rem;
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 6px;
+  padding: 0.55rem 0.75rem;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+.textarea:focus { border-color: var(--home-olive); }
+.textarea::placeholder { color: var(--text-tertiary); }
+.check { display: inline-flex; align-items: center; gap: 0.4rem; font-size: var(--type-support); color: var(--text-secondary); cursor: pointer; }
+.check input { accent-color: var(--home-olive); }
+
+/* ── A labelled form field; a required one carries the star in its label (never "optional" on the rest) ── */
+.fieldGroup { display: grid; gap: 0.35rem; min-width: 0; }
+.label { font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
+.req { margin-left: 0.15rem; color: inherit; }
+.hint { font-size: var(--type-support); color: var(--text-tertiary); }
+.formGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.85rem 1rem; }
+.formActions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.fieldError { font-size: var(--type-support); color: var(--danger); }
+
+/* ── Tables: the product's global table baseline owns size, heading face, rule and density; these are the cells' roles ── */
+.tableWrap { overflow-x: auto; min-width: 0; }
+.nameLink { color: var(--text-primary); font-weight: 600; text-decoration: underline; text-decoration-color: var(--home-line-strong); text-underline-offset: 3px; }
+.nameLink:hover { text-decoration-color: var(--home-olive); color: var(--home-olive); }
+.sub { display: block; font-size: var(--type-support); color: var(--text-tertiary); font-weight: 400; }
+.code { font-family: var(--font-data); font-size: var(--type-support); color: var(--text-secondary); overflow-wrap: anywhere; } /* type-ok: code */
+.muted { color: var(--text-tertiary); }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.nowrap { white-space: nowrap; }
+.rowDoor { width: 2.5rem; text-align: right; color: var(--home-olive); }
+/* The chevron is a real link too, so the row's right edge opens it like the name does (the name stays the tab stop). */
+.rowDoorLink { display: block; color: inherit; text-decoration: none; }
+.clickableRow { cursor: pointer; }
+.clickableRow:hover { background: var(--pa-row-hover); }
+.comfortable td { padding-block: var(--table-pad-comfortable, 0.7rem); }
+.empty { padding: 2rem 1rem; text-align: center; color: var(--text-tertiary); font-size: var(--type-body); }
+
+/* ── A busy button's spinner (the lucide Loader, turning) ── */
+.spin { animation: kit-spin 0.8s linear infinite; }
+@keyframes kit-spin { to { transform: rotate(360deg); } }
+
+/* ── A control that fills its row ── */
+.wide { width: 100%; }
+
+/* ── A door: olive text, no box ── */
+.door { color: var(--home-olive); font-weight: 650; font-size: var(--type-body); background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-decoration: none; }
+.door:hover { text-decoration: underline; }
+.doorSm { font-size: var(--type-support); }
+
+/* ── Chips: state in the typewriter face at the token size; colour never carries the verdict alone (the word does) ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-family: var(--font-data); /* type-ok: chip */
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line-strong);
+}
+.chipOk { color: var(--home-olive); background: color-mix(in srgb, var(--home-olive) 8%, transparent); border-color: color-mix(in srgb, var(--home-olive) 28%, transparent); }
+.chipWarn { color: var(--warning); background: color-mix(in srgb, var(--warning) 9%, transparent); border-color: color-mix(in srgb, var(--warning) 32%, transparent); }
+.chipBad { color: var(--danger); background: color-mix(in srgb, var(--danger) 9%, transparent); border-color: color-mix(in srgb, var(--danger) 32%, transparent); }
+.chipInfo { color: var(--info); background: color-mix(in srgb, var(--info) 9%, transparent); border-color: color-mix(in srgb, var(--info) 30%, transparent); }
+.chipQuiet { background: transparent; color: var(--text-tertiary); }
+
+/* ── Tabs: an underline on the current one, sentence case ── */
+.tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--home-line); overflow-x: auto; }
+.tab {
+  padding: 0.65rem 0.9rem;
+  margin-bottom: -1px;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.tab:hover { color: var(--text-primary); }
+.tabOn { color: var(--home-olive); border-bottom-color: var(--home-olive); }
+.tabCount { font-size: var(--type-support); font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0.7; }
+
+/* ── Loading / error / success notices inside a screen ── */
+.notice { font-size: var(--type-body); padding: 0.6rem 0.9rem; border-radius: 6px; border: 1px solid var(--home-line); background: var(--card-bg); color: var(--text-secondary); }
+.noticeBad { border-color: color-mix(in srgb, var(--danger) 35%, transparent); color: var(--danger); background: color-mix(in srgb, var(--danger) 6%, transparent); }
+.noticeGood { border-color: color-mix(in srgb, var(--home-olive) 35%, transparent); color: var(--home-olive); background: color-mix(in srgb, var(--home-olive) 6%, transparent); }
+
+
+/* ── A stack of paired panels (two columns, equal tops; one column on a narrow window) ── */
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem; align-items: start; }
+@media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); } }
+
+/* ── Phone: the toolbar's controls fill the width, and a band stacks two to a row ── */
+@media (max-width: 640px) {
+  .search { flex: 1 1 100%; }
+  .toolbarEnd { margin-left: 0; width: 100%; }
+  .band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

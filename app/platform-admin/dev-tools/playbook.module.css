@@ -1,23 +1,28 @@
-﻿/* ─── Playbook container ─────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   Agent playbook (a tab of Dev tools). Warm admin look: tokens only, the type ladder, sentence case.
+   The data face is for commands and paths only (code), never the whole component.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
 .playbook {
-  font-family: var(--font-data, monospace);
-  color: var(--white-75);
-  --dev-debug: #ffff00; /* token-exempt: dev-console hazard yellow, no brand token */
+  color: var(--text-secondary);
+  font-size: var(--type-body);
+  min-width: 0;
+}
+
+.playbook code {
+  font-family: var(--font-data); /* type-ok: code */
+  color: var(--text-primary);
+  background: var(--home-olive-soft);
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  font-size: var(--type-support);
 }
 
 .intro {
-  font-size: 0.75rem;
-  line-height: 1.7;
-  color: var(--white-45);
-  margin-bottom: 2rem;
-}
-
-.intro code {
-  color: var(--dev-debug);
-  background: rgba(255,255,0,0.08);
-  padding: 0.1rem 0.35rem;
-  border-radius: 3px;
-  font-size: 0.72rem;
+  font-size: var(--type-body);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 1.5rem;
 }
 
 /* ─── Section headers ────────────────────────────────────────────────────────── */
@@ -25,17 +30,13 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.55rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(255,255,0,0.6);
-  margin-bottom: 1rem;
-  margin-top: 2.25rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255,255,0,0.12);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  margin-top: 1.75rem;
 }
-.sectionHeader svg { flex-shrink: 0; }
+.sectionHeader svg { flex-shrink: 0; color: var(--home-olive); }
 
 /* ─── Agent tile grid ────────────────────────────────────────────────────────── */
 .agentGrid {
@@ -46,24 +47,24 @@
 }
 
 .agentCard {
-  background: rgba(255,255,255,0.025);
-  border: 1px solid var(--border-2);
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
   border-radius: 8px;
   padding: 0.85rem 1rem;
-  border-left-width: 3px;
   text-align: left;
   width: 100%;
-  font-family: var(--font-data, monospace);
+  font-family: inherit;
+  color: inherit;
 }
 
 .agentCardClickable {
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .agentCardClickable:hover {
-  background: rgba(255,255,255,0.055);
-  transform: translateY(-1px);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
 }
 
 .agentCardClickable:hover .agentArrow {
@@ -80,23 +81,24 @@
 
 .agentIcon { flex-shrink: 0; }
 
-.agentCmd {
-  font-size: 0.88rem;
-  font-weight: 800;
-  letter-spacing: 0.03em;
+.playbook .agentCmd {
+  font-size: var(--type-heading);
+  font-weight: 700;
+  background: none;
+  padding: 0;
   flex: 1;
 }
 
 .agentArrow {
-  opacity: 0.25;
+  opacity: 0.4;
   transition: opacity 0.15s, transform 0.15s;
   flex-shrink: 0;
-  color: rgba(255,255,255,0.5);
+  color: var(--text-tertiary);
 }
 
 .agentHeadline {
-  font-size: 0.68rem;
-  color: var(--white-45);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
   line-height: 1.4;
   margin-bottom: 0.6rem;
 }
@@ -108,89 +110,60 @@
 }
 
 .agentTag {
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 0.12rem 0.4rem;
-  border-radius: 3px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--white-10);
-  color: rgba(255,255,255,0.3);
+  font-size: var(--type-token);
+  font-weight: 650;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--home-line-strong);
+  color: var(--text-tertiary);
 }
 
 /* ─── Accent colours ─────────────────────────────────────────────────────────── */
-/* accent-green/blue/red reuse global status tokens; accent-yellow uses --dev-debug.
-   accent-purple/orange/cyan/pink/teal are an intentional categorical rainbow
-   legend — not semantic status colors, so left as literal hex (not token-mapped).
-   accent-lime maps to --logic-lime (brand lime), not part of that legend. */
-.accent-green  { border-left-color: rgba(var(--success-rgb),0.6); }
-.accent-green  .agentIcon, .accent-green  .agentCmd,
-.accent-green  .detailHeaderIcon, .accent-green .detailCmd { color: var(--success); }
+/* One custom property per agent drives the card edge, the icon and the command. The first five reuse the
+   status tokens; the rest are an intentional categorical legend, blended from the same tokens (no literals). */
+.accent-green  { --accent: var(--success); }
+.accent-blue   { --accent: var(--info); }
+.accent-yellow { --accent: var(--warning); }
+.accent-red    { --accent: var(--danger); }
+.accent-lime   { --accent: var(--home-olive); }
+.accent-purple { --accent: color-mix(in srgb, var(--info) 65%, var(--danger)); }
+.accent-pink   { --accent: color-mix(in srgb, var(--danger) 65%, var(--info)); }
+.accent-orange { --accent: color-mix(in srgb, var(--warning) 60%, var(--danger)); }
+.accent-cyan   { --accent: color-mix(in srgb, var(--info) 60%, var(--success)); }
+.accent-teal   { --accent: color-mix(in srgb, var(--success) 60%, var(--info)); }
 
-.accent-blue   { border-left-color: rgba(var(--info-rgb),0.6); }
-.accent-blue   .agentIcon, .accent-blue   .agentCmd,
-.accent-blue   .detailHeaderIcon, .accent-blue .detailCmd { color: var(--info-light); }
-
-.accent-yellow { border-left-color: rgba(255,255,0,0.5); }
-.accent-yellow .agentIcon, .accent-yellow .agentCmd,
-.accent-yellow .detailHeaderIcon, .accent-yellow .detailCmd { color: var(--dev-debug); }
-
-.accent-purple { border-left-color: rgba(167,139,250,0.6); }
-.accent-purple .agentIcon, .accent-purple .agentCmd,
-.accent-purple .detailHeaderIcon, .accent-purple .detailCmd { color: #a78bfa; } /* token-exempt: rainbow legend hue, non-semantic */
-
-.accent-orange { border-left-color: rgba(251,146,60,0.6); }
-.accent-orange .agentIcon, .accent-orange .agentCmd,
-.accent-orange .detailHeaderIcon, .accent-orange .detailCmd { color: #fb923c; } /* token-exempt: rainbow legend hue, non-semantic */
-
-.accent-red    { border-left-color: rgba(var(--danger-rgb),0.6); }
-.accent-red    .agentIcon, .accent-red    .agentCmd,
-.accent-red    .detailHeaderIcon, .accent-red .detailCmd { color: var(--danger); }
-
-.accent-cyan   { border-left-color: rgba(34,211,238,0.6); }
-.accent-cyan   .agentIcon, .accent-cyan   .agentCmd,
-.accent-cyan   .detailHeaderIcon, .accent-cyan .detailCmd { color: #22d3ee; } /* token-exempt: rainbow legend hue, non-semantic */
-
-.accent-pink   { border-left-color: rgba(244,114,182,0.6); }
-.accent-pink   .agentIcon, .accent-pink   .agentCmd,
-.accent-pink   .detailHeaderIcon, .accent-pink .detailCmd { color: #f472b6; } /* token-exempt: rainbow legend hue, non-semantic */
-
-.accent-teal   { border-left-color: rgba(45,212,191,0.6); }
-.accent-teal   .agentIcon, .accent-teal   .agentCmd,
-.accent-teal   .detailHeaderIcon, .accent-teal .detailCmd { color: #2dd4bf; } /* token-exempt: rainbow legend hue, non-semantic */
-
-.accent-lime   { border-left-color: rgba(var(--logic-lime-rgb), 0.6); }
-.accent-lime   .agentIcon, .accent-lime   .agentCmd,
-.accent-lime   .detailHeaderIcon, .accent-lime .detailCmd { color: var(--logic-lime); }
+.agentCard,
+.detailHeader { border-left: 3px solid color-mix(in srgb, var(--accent, var(--home-line-strong)) 60%, transparent); }
+.agentIcon,
+.detailHeaderIcon,
+.playbook .agentCmd,
+.playbook .detailCmd { color: var(--accent, var(--text-primary)); }
 
 /* ─── Back button ────────────────────────────────────────────────────────────── */
 .backBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-family: var(--font-data, monospace);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--white-35);
+  font-family: inherit;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--home-olive);
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
-  margin-bottom: 1.5rem;
-  transition: color 0.15s;
+  margin-bottom: 1rem;
 }
-.backBtn:hover { color: rgba(255,255,0,0.7); }
+.backBtn:hover { text-decoration: underline; }
 
 /* ─── Agent detail header ────────────────────────────────────────────────────── */
 .detailHeader {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  background: rgba(255,255,255,0.025);
-  border: 1px solid var(--border-2);
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
   border-left-width: 4px;
   border-radius: 8px;
   padding: 1.1rem 1.25rem;
@@ -202,17 +175,18 @@
   margin-top: 0.15rem;
 }
 
-.detailCmd {
-  font-size: 1.3rem;
-  font-weight: 900;
-  letter-spacing: 0.02em;
+.playbook .detailCmd {
+  font-size: var(--type-title);
+  font-weight: 700;
   display: block;
   margin-bottom: 0.25rem;
+  background: none;
+  padding: 0;
 }
 
 .detailHeadline {
-  font-size: 0.75rem;
-  color: var(--white-45);
+  font-size: var(--type-body);
+  color: var(--text-secondary);
   line-height: 1.4;
 }
 
@@ -221,9 +195,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  background: rgba(0,0,0,0.25);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 6px;
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
   padding: 0.75rem 1rem;
 }
 
@@ -234,16 +208,18 @@
 }
 
 .loadsFromIcon {
-  color: rgba(255,255,0,0.4);
+  color: var(--text-tertiary);
   flex-shrink: 0;
-  margin-top: 0.15rem;
+  margin-top: 0.2rem;
 }
 
-.loadsFromText {
-  font-size: 0.66rem;
-  color: var(--white-45);
+.playbook .loadsFromText {
+  font-size: var(--type-support);
+  color: var(--text-secondary);
   line-height: 1.5;
   word-break: break-word;
+  background: none;
+  padding: 0;
 }
 
 /* ─── Conversation rules ─────────────────────────────────────────────────────── */
@@ -251,8 +227,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
   border-radius: 8px;
   padding: 1rem 1.25rem;
   margin-bottom: 0.5rem;
@@ -263,37 +239,29 @@
   grid-template-columns: 6px 1fr;
   gap: 0.75rem;
   align-items: start;
-  font-size: 0.72rem;
+  font-size: var(--type-body);
   line-height: 1.55;
-  color: rgba(255,255,255,0.5);
+  color: var(--text-secondary);
 }
 
 .ruleDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(255,255,0,0.45);
-  margin-top: 0.45rem;
+  background: var(--home-olive);
+  margin-top: 0.5rem;
   flex-shrink: 0;
 }
 
-.rule strong { color: rgba(255,255,255,0.78); }
-
-.rule code, .rulesBox code {
-  color: var(--dev-debug);
-  background: rgba(255,255,0,0.08);
-  padding: 0.05rem 0.3rem;
-  border-radius: 3px;
-  font-size: 0.7rem;
-}
+.rule strong { color: var(--text-primary); }
 
 /* ─── Notes box ──────────────────────────────────────────────────────────────── */
 .notesBox {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  background: rgba(255,220,0,0.04);
-  border: 1px solid rgba(255,220,0,0.15);
+  background: color-mix(in srgb, var(--warning) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning) 32%, transparent);
   border-radius: 8px;
   padding: 0.85rem 1rem;
 }
@@ -303,30 +271,30 @@
   grid-template-columns: 16px 1fr;
   gap: 0.6rem;
   align-items: start;
-  font-size: 0.7rem;
+  font-size: var(--type-body);
   line-height: 1.55;
-  color: var(--white-45);
+  color: var(--text-secondary);
 }
 
 .noteIcon {
-  color: rgba(255,220,0,0.5);
-  margin-top: 0.15rem;
+  color: var(--warning);
+  margin-top: 0.2rem;
   flex-shrink: 0;
 }
 
 /* ─── Prompt blocks ──────────────────────────────────────────────────────────── */
 .prompt {
-  background: rgba(0,0,0,0.4);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-left: 3px solid rgba(255,255,0,0.25);
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--home-olive);
   border-radius: 6px;
   padding: 0.65rem 0.9rem;
-  font-size: 0.68rem;
+  font-size: var(--type-support);
   line-height: 1.6;
-  color: var(--white-60);
+  color: var(--text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: var(--font-data, monospace);
+  font-family: var(--font-data); /* type-ok: code */
   margin: 0;
 }
 
@@ -334,27 +302,25 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 /* ─── Handoff example ────────────────────────────────────────────────────────── */
 .handoffExample { margin-bottom: 0.5rem; }
 
 .handoffLabel {
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--white-20);
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
   margin-bottom: 0.4rem;
 }
 
 /* ─── Pipeline ───────────────────────────────────────────────────────────────── */
 .pipelineIntro {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.38);
+  font-size: var(--type-body);
+  color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 1rem;
+  margin: 0 0 1rem;
 }
 
 .pipeline {
@@ -369,7 +335,7 @@
   grid-template-columns: 28px 1fr;
   gap: 0.75rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid var(--white-05);
+  border-bottom: 1px solid var(--home-line);
 }
 .pipelineStep:last-child { border-bottom: none; }
 
@@ -377,11 +343,11 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(255,255,0,0.08);
-  border: 1px solid rgba(255,255,0,0.25);
-  color: rgba(255,255,0,0.7);
-  font-size: 0.65rem;
-  font-weight: 800;
+  background: var(--home-olive-soft);
+  border: 1px solid color-mix(in srgb, var(--home-olive) 30%, transparent);
+  color: var(--home-olive);
+  font-size: var(--type-support);
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -398,34 +364,30 @@
   margin-bottom: 0.2rem;
 }
 
-.pipelineCmd {
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: var(--dev-debug);
-  background: rgba(255,255,0,0.08);
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
+.playbook .pipelineCmd {
+  font-size: var(--type-body);
+  font-weight: 700;
 }
 
 .pipelineLabel {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: rgba(255,255,255,0.7);
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-primary);
 }
 
 .pipelineDetail {
-  font-size: 0.66rem;
-  color: rgba(255,255,255,0.33);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
   line-height: 1.5;
 }
 
 /* ─── Quick reference ────────────────────────────────────────────────────────── */
 .quickRef {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
   border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .quickRefRow {
@@ -434,67 +396,38 @@
   gap: 1rem;
   align-items: center;
   padding: 0.55rem 1rem;
-  border-bottom: 1px solid var(--white-05);
+  border-bottom: 1px solid var(--home-line);
 }
 .quickRefRow:last-child { border-bottom: none; }
 
 .quickRefTrigger {
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.38);
+  font-size: var(--type-body);
+  color: var(--text-secondary);
 }
 
-.quickRefCmd {
-  font-size: 0.68rem;
+.playbook .quickRefCmd {
+  font-size: var(--type-support);
   font-weight: 700;
-  color: var(--dev-debug);
   text-align: right;
   white-space: nowrap;
 }
 
 .quickRefDivider {
   height: 1px;
-  background: rgba(255,255,0,0.1);
+  background: var(--home-line-strong);
 }
 
 /* ─── Role / tier tables ─────────────────────────────────────────────────────── */
+/* Size, heading face, rule and density come from the global table baseline. */
 .roleTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.66rem;
   margin-bottom: 0.5rem;
 }
 
-.roleTable thead tr {
-  background: rgba(0,0,0,0.3);
-}
-
-.roleTable th {
-  text-align: left;
-  padding: 0.45rem 0.75rem;
-  font-size: 0.55rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255,255,0,0.5);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-
 .roleTable td {
-  padding: 0.45rem 0.75rem;
-  color: rgba(255,255,255,0.5);
-  border-bottom: 1px solid var(--white-05);
+  color: var(--text-secondary);
   line-height: 1.45;
-}
-
-.roleTable tr:last-child td { border-bottom: none; }
-
-.roleTable td:first-child code,
-.roleTable code {
-  color: var(--dev-debug);
-  background: rgba(255,255,0,0.08);
-  padding: 0.05rem 0.3rem;
-  border-radius: 3px;
-  font-size: 0.66rem;
 }
 
 /* ─── Ordered list ───────────────────────────────────────────────────────────── */
@@ -504,31 +437,18 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  font-size: 0.7rem;
+  font-size: var(--type-body);
   line-height: 1.55;
-  color: var(--white-45);
+  color: var(--text-secondary);
 }
 
-.orderedList strong { color: rgba(255,255,255,0.72); }
-
-.orderedList code {
-  color: var(--dev-debug);
-  background: rgba(255,255,0,0.08);
-  padding: 0.05rem 0.3rem;
-  border-radius: 3px;
-  font-size: 0.68rem;
-}
+.orderedList strong { color: var(--text-primary); }
 
 /* ─── Footer ─────────────────────────────────────────────────────────────────── */
 .footer {
-  font-size: 0.6rem;
-  color: var(--white-20);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
   line-height: 1.7;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255,255,255,0.06);
-}
-
-.footer code {
-  color: rgba(255,255,0,0.5);
-  font-size: 0.6rem;
+  border-top: 1px solid var(--home-line);
 }

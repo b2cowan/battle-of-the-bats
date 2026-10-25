@@ -1,30 +1,19 @@
 import Link from 'next/link';
-import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { isPlatformAreaReadOnly } from '@/lib/platform-areas';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import { getErrorGroupDetail, type EventSample } from '@/lib/observability/dashboard';
 import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import StatusControls from './StatusControls';
+import { cap, severityChip, issueStatusChip, feedbackTypeChip, feedbackStatusChip } from '../../chips';
+import kit from '../../console.module.css';
 import styles from '../observability.module.css';
 
 export const dynamic = 'force-dynamic';
 
-const SEVERITY_BADGE: Record<string, string> = {
-  critical: 'badge-danger',
-  error: 'badge-danger',
-  warning: 'badge-warning',
-  info: 'badge-info',
-};
-const STATUS_BADGE: Record<string, string> = {
-  open: 'badge-warning',
-  resolved: 'badge-success',
-  ignored: 'badge-neutral',
-  snoozed: 'badge-info',
-};
-const FB_TYPE_BADGE: Record<string, string> = { bug: 'badge-danger', feature: 'badge-info', feedback: 'badge-neutral' };
-const FB_STATUS_BADGE: Record<string, string> = { new: 'badge-warning', triaged: 'badge-info', acknowledged: 'badge-info', resolved: 'badge-success' };
+const BACK = { href: '/platform-admin/observability', label: 'Observability' };
 
 type RelatedFeedback = {
   id: string; type: string; status: string; title: string | null; body: string;
@@ -62,11 +51,11 @@ function jsonPretty(v: unknown): string {
 }
 
 function Sparkline({ data }: { data: { label: string; count: number }[] }) {
-  const VW = 560, VH = 90, MT = 8, MB = 18, ML = 4, MR = 4;
+  const VW = 1100, VH = 110, MT = 8, MB = 22, ML = 4, MR = 4;
   const CH = VH - MT - MB;
   const max = Math.max(...data.map(d => d.count), 1);
   const n = data.length;
-  const gap = 3;
+  const gap = 4;
   const bw = (VW - ML - MR - gap * (n - 1)) / n;
   return (
     <svg viewBox={`0 0 ${VW} ${VH}`} style={{ width: '100%', height: 'auto', display: 'block' }} role="img" aria-label="Occurrences per day, last 14 days">
@@ -76,9 +65,9 @@ function Sparkline({ data }: { data: { label: string; count: number }[] }) {
         const y = MT + (CH - h);
         return (
           <g key={d.label}>
-            <rect x={x} y={y} width={bw} height={Math.max(h, d.count > 0 ? 2 : 0)} fill="var(--logic-lime)" opacity={d.count > 0 ? 0.8 : 0.15} />
+            <rect x={x} y={y} width={bw} height={Math.max(h, d.count > 0 ? 2 : 0)} rx={2} style={{ fill: 'var(--home-olive)' }} opacity={d.count > 0 ? 0.8 : 0.15} />
             {(i === 0 || i === n - 1) && (
-              <text x={x + bw / 2} y={VH - 5} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.35)">{d.label}</text>
+              <text x={x + bw / 2} y={VH - 6} textAnchor="middle" style={{ fill: 'var(--text-tertiary)', fontSize: 'var(--type-label)' }}>{d.label}</text>
             )}
           </g>
         );
@@ -96,30 +85,30 @@ function EventCard({ ev }: { ev: EventSample }) {
       meta={
         <span className={styles.eventSummary}>
           {ev.status_code != null && <span>{ev.status_code}</span>}
-          <span className={`badge ${ev.source === 'client' ? 'badge-info' : 'badge-neutral'}`}>{ev.source ?? 'server'}</span>
+          <span className={`${kit.chip} ${ev.source === 'client' ? kit.chipInfo : kit.chipQuiet}`}>{cap(ev.source ?? 'server')}</span>
           <span>{fmtDateTime(ev.occurred_at)}</span>
         </span>
       }
     >
       <div className={styles.eventBody}>
         <div className={styles.eventSummary}>
-          {ev.org_slug && <span>org: <strong style={{ color: 'var(--fl-text)' }}>{ev.org_slug}</strong></span>}
+          {ev.org_slug && <span>org: <strong className={`${styles.eventStrong} ${kit.code}`}>{ev.org_slug}</strong></span>}
           {ev.user_role && <span>role: {ev.user_role}</span>}
           {ev.user_email && <span>{ev.user_email}</span>}
-          {ev.request_id && <span>req: <code>{ev.request_id}</code></span>}
+          {ev.request_id && <span>req: <code className={kit.code}>{ev.request_id}</code></span>}
         </div>
         {ev.error_message && (
           <div>
-            <div className={styles.eventPreLabel}>Message</div>
+            <div className={`${kit.eye} ${styles.preLabel}`}>Message</div>
             <pre className={styles.pre}>{ev.error_message}</pre>
           </div>
         )}
         <div>
-          <div className={styles.eventPreLabel}>Stack trace (redacted)</div>
+          <div className={`${kit.eye} ${styles.preLabel}`}>Stack trace (redacted)</div>
           <pre className={styles.pre}>{ev.stack_trace || '—'}</pre>
         </div>
         <div>
-          <div className={styles.eventPreLabel}>Request context (redacted)</div>
+          <div className={`${kit.eye} ${styles.preLabel}`}>Request context (redacted)</div>
           <pre className={styles.pre}>{jsonPretty(ev.request_context)}</pre>
         </div>
       </div>
@@ -140,10 +129,9 @@ export default async function ErrorGroupDetailPage({
 
   if (!detail) {
     return (
-      <div className={styles.page}>
-        <Link href="/platform-admin/observability" className={styles.backLink}><ArrowLeft size={13} /> Observability</Link>
-        <div className={styles.detailHeader}>
-          <h1 className={styles.detailTitle}>Issue not found</h1>
+      <div className={`${kit.page} ${kit.reading}`}>
+        <AdminPageHeader title="Issue not found" backTo={BACK} />
+        <div className={`${kit.card} ${kit.cardPad}`}>
           <p className={styles.emptyPanel}>This error group does not exist or has been purged.</p>
         </div>
       </div>
@@ -154,50 +142,68 @@ export default async function ErrorGroupDetailPage({
   const related = await getRelatedFeedback(groupId);
 
   return (
-    <div className={styles.page}>
-      <Link href="/platform-admin/observability" className={styles.backLink}><ArrowLeft size={13} /> Observability</Link>
+    <div className={kit.page}>
+      <AdminPageHeader
+        title={g.title || g.error_name || 'Untitled error'}
+        backTo={BACK}
+        titleChips={
+          <>
+            <span className={`${kit.chip} ${severityChip(g.severity)}`}>{cap(g.severity)}</span>
+            <span className={`${kit.chip} ${issueStatusChip(g.status)}`}>{cap(g.status)}</span>
+            <span className={`${kit.chip} ${g.env === 'production' ? kit.chipQuiet : kit.chipInfo}`}>{cap(g.env)}</span>
+          </>
+        }
+      />
 
-      <div className={styles.detailHeader}>
-        <div className={styles.detailTitleRow}>
-          <AlertTriangle size={18} style={{ color: 'var(--logic-lime)' }} />
-          <h1 className={styles.detailTitle}>{g.title || g.error_name || 'Untitled error'}</h1>
-          <span className={`badge ${SEVERITY_BADGE[g.severity] ?? 'badge-neutral'}`}>{g.severity}</span>
-          <span className={`badge ${STATUS_BADGE[g.status] ?? 'badge-neutral'}`}>{g.status}</span>
-          <span className={`badge ${g.env === 'production' ? 'badge-neutral' : 'badge-info'}`}>{g.env}</span>
+      <p className={`${kit.caption} ${kit.code}`}>{g.error_name ?? '—'} · fp {g.fingerprint.slice(0, 16)}</p>
+
+      <section className={kit.band} aria-label="Issue facts">
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Route</span>
+          <span className={`${kit.bandValueText} ${kit.code}`}>{g.http_method ? `${g.http_method} ` : ''}{g.route ?? '—'}</span>
         </div>
-
-        <div className={styles.fingerprint}>{g.error_name ?? '—'} · fp {g.fingerprint.slice(0, 16)}</div>
-
-        <div className={styles.detailMetaGrid}>
-          <div className={styles.detailMeta}><span className={styles.detailMetaLabel}>Route</span><span className={styles.detailMetaValue}>{g.http_method ? `${g.http_method} ` : ''}{g.route ?? '—'}</span></div>
-          <div className={styles.detailMeta}><span className={styles.detailMetaLabel}>Occurrences</span><span className={styles.detailMetaValue}>{Number(g.occurrence_count).toLocaleString()}</span></div>
-          <div className={styles.detailMeta}><span className={styles.detailMetaLabel}>Affected orgs</span><span className={styles.detailMetaValue}>{Number(g.distinct_org_count).toLocaleString()}</span></div>
-          <div className={styles.detailMeta}><span className={styles.detailMetaLabel}>First seen</span><span className={styles.detailMetaValue}>{fmtDateTime(g.first_seen_at)}</span></div>
-          <div className={styles.detailMeta}><span className={styles.detailMetaLabel}>Last seen</span><span className={styles.detailMetaValue}>{fmtDateTime(g.last_seen_at)}</span></div>
-          {g.status === 'resolved' && (
-            <div className={styles.detailMeta}><span className={styles.detailMetaLabel}>Resolved</span><span className={styles.detailMetaValue}>{fmtDateTime(g.resolved_at)}{g.resolved_by ? ` · ${g.resolved_by}` : ''}</span></div>
-          )}
-          {g.status === 'snoozed' && (
-            <div className={styles.detailMeta}>
-              <span className={styles.detailMetaLabel}>Snoozed until</span>
-              <span className={styles.detailMetaValue}>
-                {fmtDateTime(g.snooze_until)}
-                {detail.snoozeExpired && <span className={styles.expiredTag}>expired</span>}
-              </span>
-            </div>
-          )}
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Occurrences</span>
+          <strong className={`${kit.bandValue} ${kit.bandValueSm}`}>{Number(g.occurrence_count).toLocaleString()}</strong>
         </div>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Affected orgs</span>
+          <strong className={`${kit.bandValue} ${kit.bandValueSm}`}>{Number(g.distinct_org_count).toLocaleString()}</strong>
+        </div>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>First seen</span>
+          <span className={kit.bandValueText}>{fmtDateTime(g.first_seen_at)}</span>
+        </div>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Last seen</span>
+          <span className={kit.bandValueText}>{fmtDateTime(g.last_seen_at)}</span>
+        </div>
+        {g.status === 'resolved' && (
+          <div className={kit.bandCell}>
+            <span className={kit.bandLabel}>Resolved</span>
+            <span className={kit.bandValueText}>{fmtDateTime(g.resolved_at)}{g.resolved_by ? ` · ${g.resolved_by}` : ''}</span>
+          </div>
+        )}
+        {g.status === 'snoozed' && (
+          <div className={kit.bandCell}>
+            <span className={kit.bandLabel}>Snoozed until</span>
+            <span className={kit.bandValueText}>
+              {fmtDateTime(g.snooze_until)}
+              {detail.snoozeExpired && <>{' '}<span className={`${kit.chip} ${kit.chipWarn}`}>Expired</span></>}
+            </span>
+          </div>
+        )}
+      </section>
 
+      <div className={`${kit.card} ${kit.cardPad}`}>
         <StatusControls groupId={g.id} currentStatus={g.status} readOnly={readOnly} />
       </div>
 
       {related.length > 0 && (
-        <>
-          <div className={styles.sectionHead}>
-            <span className={styles.sectionKicker}>Support</span>
-            <h2 className={styles.sectionTitle}>Related feedback</h2>
-            <span className={styles.count}>{related.length}</span>
-          </div>
+        <section className={kit.section}>
+          <h2 className={kit.sectionTitle}>
+            Related feedback <span className={styles.titleCount}>{related.length}</span>
+          </h2>
           <div className={styles.eventList}>
             {related.map(f => (
               <CollapsibleCard
@@ -206,8 +212,8 @@ export default async function ErrorGroupDetailPage({
                 title={f.title ?? f.body.slice(0, 80)}
                 meta={
                   <span className={styles.eventSummary}>
-                    <span className={`badge ${FB_TYPE_BADGE[f.type] ?? 'badge-neutral'}`}>{f.type}</span>
-                    <span className={`badge ${FB_STATUS_BADGE[f.status] ?? 'badge-neutral'}`}>{f.status}</span>
+                    <span className={`${kit.chip} ${feedbackTypeChip(f.type)}`}>{cap(f.type)}</span>
+                    <span className={`${kit.chip} ${feedbackStatusChip(f.status)}`}>{cap(f.status)}</span>
                     <span>{f.user_email ?? f.submitter_name ?? 'anonymous'}</span>
                     <span>{fmtDateTime(f.created_at)}</span>
                   </span>
@@ -216,29 +222,32 @@ export default async function ErrorGroupDetailPage({
                 <pre className={styles.pre}>{f.body}</pre>
               </CollapsibleCard>
             ))}
-            <Link href="/platform-admin/feedback?status=all">Open Feedback →</Link>
+            <Link href="/platform-admin/feedback?status=all" className={kit.door}>Open Feedback →</Link>
           </div>
-        </>
+        </section>
       )}
 
-      <div className={styles.sparkWrap}>
-        <p className={styles.chartTitle}>Occurrences · last 14 days (from sampled events)</p>
-        <Sparkline data={detail.daily} />
-      </div>
-
-      <div className={styles.sectionHead}>
-        <span className={styles.sectionKicker}>Samples</span>
-        <h2 className={styles.sectionTitle}>Recent occurrences</h2>
-        <span className={styles.count}>{detail.events.length} shown</span>
-      </div>
-
-      {detail.events.length === 0 ? (
-        <p className={styles.emptyPanel}>No sampled occurrences stored for this issue (they may have been purged after 30 days).</p>
-      ) : (
-        <div className={styles.eventList}>
-          {detail.events.map(ev => <EventCard key={ev.id} ev={ev} />)}
+      <section className={kit.section}>
+        <h2 className={kit.sectionTitle}>Occurrences · last 14 days (from sampled events)</h2>
+        <div className={`${kit.card} ${kit.cardPad}`}>
+          <Sparkline data={detail.daily} />
         </div>
-      )}
+      </section>
+
+      <section className={kit.section}>
+        <h2 className={kit.sectionTitle}>
+          Recent occurrences <span className={styles.titleCount}>{detail.events.length} shown</span>
+        </h2>
+        {detail.events.length === 0 ? (
+          <div className={`${kit.card} ${kit.cardPad}`}>
+            <p className={styles.emptyPanel}>No sampled occurrences stored for this issue (they may have been purged after 30 days).</p>
+          </div>
+        ) : (
+          <div className={styles.eventList}>
+            {detail.events.map(ev => <EventCard key={ev.id} ev={ev} />)}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

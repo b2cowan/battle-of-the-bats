@@ -1,380 +1,27 @@
-﻿.page { max-width: 1200px; }
+/* Platform users' own parts; the page, card, table, fields, chips and buttons are the console kit (../console.module.css). */
 
-.header {
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-}
+.inviteCard { display: grid; gap: 0.85rem; }
+.inviteForm { display: grid; gap: 0.85rem; }
 
-.headerLabel {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
+.link { flex: 1; min-width: 0; word-break: break-all; }
 
-.title {
-  font-weight: 800;
-  font-size: 1.5rem;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  color: var(--fl-text);
-}
-
-.count {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  color: var(--data-gray);
-  margin-left: auto;
-}
-
-.tableWrap { overflow-x: auto; }
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.table th {
-  white-space: nowrap;
-}
-.table td {
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-.emailCell {
-  color: var(--fl-text);
-  font-family: monospace;
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-.dateCell {
-  color: var(--data-gray);
-  white-space: nowrap;
-}
-
-.invitedByCell {
-  color: var(--data-gray);
-}
-
-.invitedByValue {
+.invitedBy {
   display: block;
-  max-width: 12rem;
+  max-width: 7rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: monospace;
-  font-size: 0.72rem;
 }
 
 .actionsCell {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.resetBtn {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.35rem 0.6rem;
-  background: rgba(var(--logic-lime-rgb), 0.06);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-  color: var(--logic-lime);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-
-.resetBtn:hover:not(:disabled) {
-  background: rgba(var(--logic-lime-rgb), 0.14);
-  border-color: var(--logic-lime);
-}
-
-.resetBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.rowError {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  color: var(--danger);
-}
-
-.emptyCell {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--data-gray);
-  text-align: center;
-  padding: 2rem;
-}
-
-.linkRow td {
-  padding: 0 0.75rem 0.75rem;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.1);
-}
-
-.linkBox {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: rgba(var(--logic-lime-rgb), 0.04);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
-  flex-wrap: wrap;
-}
-
-.linkLabel {
-  font-family: var(--font-data);
-  font-size: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-  flex-shrink: 0;
-}
-
-.link {
-  font-family: monospace;
-  font-size: 0.65rem;
-  color: var(--data-gray);
-  word-break: break-all;
-  flex: 1;
-  min-width: 0;
-}
-
-.copyBtn {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.3rem 0.6rem;
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-  color: var(--logic-lime);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.15s;
-}
-
-.copyBtn:hover {
-  background: rgba(var(--logic-lime-rgb), 0.16);
-}
-
-.nameCell { color: var(--fl-text); }
-
-.badgeActive {
-  font-family: var(--font-data);
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.5rem;
-  background: rgba(var(--success-rgb), 0.1);
-  border: 1px solid rgba(var(--success-rgb), 0.35);
-  color: var(--success);
-}
-
-.badgeInactive {
-  font-family: var(--font-data);
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.5rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--data-gray);
-}
-
-.bootstrapBadge {
-  margin-left: 0.5rem;
-  font-family: var(--font-data);
-  font-size: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.15rem 0.4rem;
-  background: rgba(var(--blueprint-blue-rgb, 79, 163, 224), 0.12);
-  border: 1px solid rgba(var(--blueprint-blue-rgb, 79, 163, 224), 0.3);
-  color: var(--blueprint-blue);
-}
-
-.roleBadge,
-.roleSelect {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.roleBadge {
-  display: inline-flex;
-  padding: 0.22rem 0.5rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.06);
-}
-
-.roleSelect {
-  min-width: 6.25rem;
-  padding: 0.3rem 0.4rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--fl-text);
-  outline: none;
-}
-
-.roleSelect:focus {
-  border-color: var(--logic-lime);
-}
-
-.inviteBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.45rem 0.9rem;
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
-  color: var(--logic-lime);
-  cursor: pointer;
-  transition: background 0.15s;
-  flex-shrink: 0;
-}
-.inviteBtn:hover { background: rgba(var(--logic-lime-rgb), 0.16); }
-
-.inviteCard {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.inviteTitle {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--logic-lime);
-  margin: 0 0 0.4rem;
-}
-
-.inviteHint {
-  margin: 0 0 1rem;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  line-height: 1.5;
-  color: var(--data-gray);
-}
-
-.inviteForm {}
-
-.inviteRow {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.inviteField { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 180px; }
-
-.fieldLabel {
-  font-family: var(--font-data);
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
-.required { color: var(--danger); }
-
-.fieldInput {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--fl-text);
-  padding: 0.45rem 0.65rem;
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.fieldInput:focus { border-color: rgba(var(--logic-lime-rgb), 0.5); }
-
-.submitBtn {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.45rem 1rem;
-  background: var(--logic-lime);
-  border: none;
-  /* dark ink on lime; differs from --on-lime (#0f1123), pinned pending normalization */
-  color: var(--black);
-  cursor: pointer;
-  transition: opacity 0.15s;
-  white-space: nowrap;
-  align-self: flex-end;
-}
-.submitBtn:hover:not(:disabled) { opacity: 0.85; }
-.submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.removeBtn {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.35rem 0.6rem;
-  background: rgba(var(--danger-rgb), 0.08);
-  border: 1px solid rgba(var(--danger-rgb), 0.3);
-  color: var(--danger);
-  cursor: pointer;
-  transition: background 0.15s;
-  white-space: nowrap;
-}
-.removeBtn:hover:not(:disabled) { background: rgba(var(--danger-rgb), 0.16); }
-.removeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* Neutral cancel/back-out for confirm modals — never lime, never red. */
-.cancelBtn {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.35rem 0.6rem;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--data-gray);
-  cursor: pointer;
-  transition: border-color 0.15s;
-  white-space: nowrap;
-}
-.cancelBtn:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.25); }
-.cancelBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-
+/* The remove-user question. */
 .modalBackdrop {
   position: fixed;
   inset: 0;
@@ -383,79 +30,33 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.72);
+  background: color-mix(in srgb, var(--pitch-black) 55%, transparent);
 }
 
 .confirmModal {
   width: min(32rem, 100%);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  background: var(--pa-confirm-bg);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 1.25rem 3rem rgba(0, 0, 0, 0.45);
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
   padding: 1.25rem;
 }
 
-.confirmTitle {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
 .modalCopy {
-  margin: 0.75rem 0 0;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
+  margin: 0;
+  font-size: var(--type-body);
   line-height: 1.55;
-  color: var(--data-gray);
+  color: var(--text-secondary);
 }
 
 .modalActions {
   display: flex;
   justify-content: flex-end;
   gap: 0.6rem;
-  margin-top: 1.1rem;
 }
 
-/* Pagination */
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(var(--logic-lime-rgb), 0.15);
-}
-
-.pageBtn {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.35rem 0.75rem;
-  background: rgba(var(--logic-lime-rgb), 0.06);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-  color: var(--logic-lime);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-
-.pageBtn:hover:not(:disabled) {
-  background: rgba(var(--logic-lime-rgb), 0.14);
-  border-color: var(--logic-lime);
-}
-
-.pageBtn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.pageLabel {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  color: var(--data-gray);
-  letter-spacing: 0.06em;
+@media (max-width: 640px) {
+  .invitedBy { max-width: none; }
+  .actionsCell { justify-content: flex-start; flex-wrap: wrap; }
 }

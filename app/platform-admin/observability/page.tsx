@@ -1,10 +1,6 @@
 import Link from 'next/link';
-import {
-  AlertOctagon, Activity, FolderOpen, Building2, Clock, Sparkles, Route as RouteIcon, Hash, MonitorSmartphone,
-} from 'lucide-react';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
-import HelpCallout from '@/components/help/HelpCallout';
-import MetricCard from '@/components/platform-admin/MetricCard';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import {
   getDashboardData, getCronFreshness, getErrorGroups,
   normalizeWindow, OBS_WINDOWS, ISSUES_PAGE_SIZE,
@@ -14,22 +10,12 @@ import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import CallsVsErrorsChart from './CallsVsErrorsChart';
 import IssuesExportClient from './IssuesExportClient';
 import IssuesFilterBar from './IssuesFilterBar';
+import WindowSelect from './WindowSelect';
+import { cap, severityChip, issueStatusChip } from '../chips';
+import kit from '../console.module.css';
 import styles from './observability.module.css';
 
 export const dynamic = 'force-dynamic';
-
-const SEVERITY_BADGE: Record<string, string> = {
-  critical: 'badge-danger',
-  error: 'badge-danger',
-  warning: 'badge-warning',
-  info: 'badge-info',
-};
-const STATUS_BADGE: Record<string, string> = {
-  open: 'badge-warning',
-  resolved: 'badge-success',
-  ignored: 'badge-neutral',
-  snoozed: 'badge-info',
-};
 
 const SEVERITY_OPTIONS = ['critical', 'error', 'warning', 'info'];
 const STATUS_OPTIONS = ['open', 'resolved', 'ignored', 'snoozed'];
@@ -78,14 +64,14 @@ function fmtMttr(hours: number | null): string {
   return `${(hours / 24).toFixed(1)}d`;
 }
 
-function BreakdownBars({ rows, max, fmtLabel }: { rows: { label: string; count: number }[]; max: number; fmtLabel?: (s: string) => string }) {
+function BreakdownBars({ rows, max, fmtLabel, code }: { rows: { label: string; count: number }[]; max: number; fmtLabel?: (s: string) => string; code?: boolean }) {
   if (rows.length === 0) return <p className={styles.emptyPanel}>No data in this window.</p>;
   return (
     <div className={styles.barList}>
       {rows.map(r => (
         <div key={r.label} className={styles.barRow}>
           <div className={styles.barMeta}>
-            <span>{fmtLabel ? fmtLabel(r.label) : r.label}</span>
+            <span className={code ? kit.code : undefined}>{fmtLabel ? fmtLabel(r.label) : r.label}</span>
             <strong>{r.count.toLocaleString()}</strong>
           </div>
           <div className={styles.barTrack}>
@@ -142,62 +128,65 @@ export default async function ObservabilityDashboardPage({
   const sourceMax = Math.max(...data.bySource.map(r => r.count), 1);
   const hasFilters = !!(params.severity || params.route || params.org || params.q) || params.status !== 'all';
 
-  return (
-    <div className={styles.page}>
-      {/* ── Header + toolbar ───────────────────────────────────────────── */}
-      <header className={styles.header}>
-        <div>
-          <div className={styles.headerLabel}>Support &amp; Diagnostics</div>
-          <h1 className={styles.title}>Observability</h1>
-        </div>
-        <div className={styles.toolbar}>
-          <div className={styles.segmented} role="group" aria-label="Time window">
-            {(Object.keys(OBS_WINDOWS) as ObsWindowKey[]).map(wk => (
-              <Link
-                key={wk}
-                href={buildHref(params, { window: wk, offset: 0 })}
-                className={`${styles.segLink} ${params.window === wk ? styles.segActive : ''}`}
-              >
-                {OBS_WINDOWS[wk].label}
-              </Link>
-            ))}
-          </div>
-          <span
-            className={`${styles.freshnessChip} ${freshnessStale ? styles.freshnessStale : ''} ${!freshnessEnabled && !anyJobError ? styles.freshnessOff : ''}`}
-            title={
-              anyJobError
-                ? 'A rollup/retention job is reporting errors — see observability_cron_heartbeat.error_detail'
-                : sweepStale
-                  ? 'The nightly retention sweep has not run in over 26h — check pg_cron'
-                  : freshnessEnabled
-                    ? `Rollup job last ran ${mostRecent.minutesAgo} min ago`
-                    : 'No cron run recorded yet — confirm migration 122 is applied and pg_cron is running'
-            }
-          >
-            <span className={styles.freshnessDot} />
-            {freshnessEnabled
-              ? `Last rollup ${mostRecent.minutesAgo}m ago${anyJobError ? ' · job error' : sweepStale ? ' · sweep stale' : ''}`
-              : anyJobError
-                ? 'Rollup job failing'
-                : 'Rollup has not run yet'}
-          </span>
-        </div>
-      </header>
+  const windowKeys = Object.keys(OBS_WINDOWS) as ObsWindowKey[];
 
-      {/* ── Metric cards ───────────────────────────────────────────────── */}
-      <section className={styles.metricGrid} aria-label="Headline metrics">
-        <MetricCard label={`Captured errors · ${OBS_WINDOWS[params.window].label}`} value={data.totalErrors} sub="all sources" Icon={AlertOctagon} />
-        <MetricCard
-          label="Error rate"
-          value={data.errorRatePct === null ? '—' : `${data.errorRatePct.toFixed(2)}%`}
-          sub="instrumented traffic only"
-          Icon={Activity}
-        />
-        <MetricCard label="Open issues" value={data.openIssues} sub={`${data.newIssues} new in window`} Icon={FolderOpen} />
-        <MetricCard label="Affected orgs" value={data.affectedOrgs} sub={data.eventsCapped ? 'in window · sampled' : 'in this window'} Icon={Building2} />
+  return (
+    <div className={kit.page}>
+      <AdminPageHeader
+        title="Observability"
+        actions={
+          <>
+            <span
+              className={`${kit.chip} ${freshnessStale ? kit.chipWarn : !freshnessEnabled && !anyJobError ? kit.chipQuiet : kit.chipOk}`}
+              title={
+                anyJobError
+                  ? 'A rollup/retention job is reporting errors — see observability_cron_heartbeat.error_detail'
+                  : sweepStale
+                    ? 'The nightly retention sweep has not run in over 26h — check pg_cron'
+                    : freshnessEnabled
+                      ? `Rollup job last ran ${mostRecent.minutesAgo} min ago`
+                      : 'No cron run recorded yet — confirm migration 122 is applied and pg_cron is running'
+              }
+            >
+              {freshnessEnabled
+                ? `Last rollup ${mostRecent.minutesAgo}m ago${anyJobError ? ' · job error' : sweepStale ? ' · sweep stale' : ''}`
+                : anyJobError
+                  ? 'Rollup job failing'
+                  : 'Rollup has not run yet'}
+            </span>
+            <WindowSelect
+              value={params.window}
+              options={windowKeys.map(wk => ({ key: wk, label: OBS_WINDOWS[wk].label, href: buildHref(params, { window: wk, offset: 0 }) }))}
+            />
+          </>
+        }
+      />
+
+      {/* ── Figures ────────────────────────────────────────────────────── */}
+      <section className={kit.band} aria-label="Headline metrics">
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>{`Captured errors · ${OBS_WINDOWS[params.window].label}`}</span>
+          <strong className={kit.bandValue}>{data.totalErrors.toLocaleString()}</strong>
+          <span className={kit.bandNote}>All sources</span>
+        </div>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Error rate</span>
+          <strong className={kit.bandValue}>{data.errorRatePct === null ? '—' : `${data.errorRatePct.toFixed(2)}%`}</strong>
+          <span className={kit.bandNote}>Instrumented traffic only</span>
+        </div>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Open issues</span>
+          <strong className={kit.bandValue}>{data.openIssues.toLocaleString()}</strong>
+          <span className={kit.bandNote}>{`${data.newIssues} new in window`}</span>
+        </div>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Affected orgs</span>
+          <strong className={kit.bandValue}>{data.affectedOrgs.toLocaleString()}</strong>
+          <span className={kit.bandNote}>{data.eventsCapped ? 'In window · sampled' : 'In this window'}</span>
+        </div>
       </section>
 
-      <p className={styles.coverageNote}>
+      <p className={kit.caption}>
         Two different measures on purpose: the <strong>error rate</strong> (and the calls-vs-errors chart) covers only
         instrumented (wrapped) routes, so it can show a true failures-÷-requests rate; <strong>captured errors</strong> and
         the issue list come from global error capture across all sources, so they are more complete. A 0% instrumented error
@@ -207,156 +196,161 @@ export default async function ObservabilityDashboardPage({
       </p>
 
       {/* ── Calls vs errors chart ──────────────────────────────────────── */}
-      <section className={`${styles.panel} ${styles.panelWide}`} style={{ marginBottom: '1.25rem' }}>
-        <div className={styles.panelHead}>
-          <h2 className={styles.panelTitle}>Calls vs. Errors</h2>
-          <span className={styles.panelHint}>
+      <section className={kit.section}>
+        <h2 className={kit.sectionTitle}>Calls vs. errors</h2>
+        <div className={`${kit.card} ${kit.cardPad}`}>
+          <p className={`${kit.caption} ${styles.chartCaption}`}>
             {data.totalCalls.toLocaleString()} calls · {data.totalErrorsMetric.toLocaleString()} errors (instrumented)
-          </span>
-        </div>
-        {data.totalCalls === 0 && data.totalErrorsMetric === 0 ? (
-          <p className={styles.emptyPanel}>
-            No instrumented request metrics in this window yet. Metrics accrue from routes wrapped with{' '}
-            <code>withObservability</code>; coverage expands in later phases.
           </p>
-        ) : (
-          <CallsVsErrorsChart data={data.series} />
-        )}
+          {data.totalCalls === 0 && data.totalErrorsMetric === 0 ? (
+            <p className={styles.emptyPanel}>
+              No instrumented request metrics in this window yet. Metrics accrue from routes wrapped with{' '}
+              <code className={kit.code}>withObservability</code>; coverage expands in later phases.
+            </p>
+          ) : (
+            <CallsVsErrorsChart data={data.series} />
+          )}
+        </div>
       </section>
 
       {/* ── §6 breakdown panels ────────────────────────────────────────── */}
-      <section className={styles.panelsGrid}>
-        <div className={styles.panel}>
-          <div className={styles.panelHead}>
-            <h2 className={styles.panelTitle}><RouteIcon size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} />Top error routes</h2>
+      <div className={kit.two}>
+        <section className={kit.section}>
+          <h2 className={kit.sectionTitle}>Top error routes</h2>
+          <div className={`${kit.card} ${kit.cardPad}`}>
+            <BreakdownBars rows={data.byRoute.map(r => ({ label: r.route, count: r.count }))} max={routeMax} code />
           </div>
-          <BreakdownBars rows={data.byRoute.map(r => ({ label: r.route, count: r.count }))} max={routeMax} />
-        </div>
+        </section>
 
-        <div className={styles.panel}>
-          <div className={styles.panelHead}>
-            <h2 className={styles.panelTitle}><Hash size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} />Status codes</h2>
+        <section className={kit.section}>
+          <h2 className={kit.sectionTitle}>Status codes</h2>
+          <div className={`${kit.card} ${kit.cardPad}`}>
+            {data.byStatusCode.length === 0 ? (
+              <p className={styles.emptyPanel}>No data in this window.</p>
+            ) : (
+              <div className={styles.codeGrid}>
+                {data.byStatusCode.map(c => (
+                  <div key={c.code} className={styles.codeTile}>
+                    <strong>{c.count.toLocaleString()}</strong>
+                    <span className={kit.code}>{c.code}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          {data.byStatusCode.length === 0 ? (
-            <p className={styles.emptyPanel}>No data in this window.</p>
-          ) : (
-            <div className={styles.codeGrid}>
-              {data.byStatusCode.map(c => (
-                <div key={c.code} className={styles.codeTile}>
-                  <strong>{c.count.toLocaleString()}</strong>
-                  <span>{c.code}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        </section>
 
-        <div className={styles.panel}>
-          <div className={styles.panelHead}>
-            <h2 className={styles.panelTitle}><MonitorSmartphone size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} />Client vs. server</h2>
+        <section className={kit.section}>
+          <h2 className={kit.sectionTitle}>Client vs. server</h2>
+          <div className={`${kit.card} ${kit.cardPad}`}>
+            <BreakdownBars
+              rows={data.bySource.map(r => ({ label: r.source, count: r.count }))}
+              max={sourceMax}
+              fmtLabel={s => (s === 'client' ? 'Client' : s === 'server' ? 'Server' : s)}
+            />
           </div>
-          <BreakdownBars
-            rows={data.bySource.map(r => ({ label: r.source, count: r.count }))}
-            max={sourceMax}
-            fmtLabel={s => (s === 'client' ? 'Client' : s === 'server' ? 'Server' : s)}
-          />
-        </div>
+        </section>
 
-        <div className={styles.panel}>
-          <div className={styles.panelHead}>
-            <h2 className={styles.panelTitle}><Clock size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} />Triage health</h2>
+        <section className={kit.section}>
+          <h2 className={kit.sectionTitle}>Triage health</h2>
+          <div className={`${kit.card} ${kit.cardPad}`}>
+            <div className={styles.mttrValue}>{fmtMttr(data.mttrHours)}</div>
+            <div className={styles.mttrSub}>Mean time to resolve · all-time (resolved issues)</div>
+            <div className={`${styles.mttrValue} ${styles.mttrSecond}`}>{data.newIssues.toLocaleString()}</div>
+            <div className={styles.mttrSub}>New issues in {OBS_WINDOWS[params.window].label.toLowerCase()}</div>
           </div>
-          <div className={styles.mttrValue}>{fmtMttr(data.mttrHours)}</div>
-          <div className={styles.mttrSub}>Mean time to resolve · all-time (resolved issues)</div>
-          <div className={styles.mttrValue} style={{ marginTop: '0.9rem' }}>{data.newIssues.toLocaleString()}</div>
-          <div className={styles.mttrSub}>New issues in {OBS_WINDOWS[params.window].label.toLowerCase()}</div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {/* ── Issue list ─────────────────────────────────────────────────── */}
-      <div className={styles.sectionHead}>
-        <Sparkles size={15} style={{ color: 'var(--logic-lime)' }} />
-        <span className={styles.sectionKicker}>Triage</span>
-        <h2 className={styles.sectionTitle}>Issues</h2>
-        <span className={styles.count}>
-          {issues.rows.length} shown{params.offset > 0 ? ` · from #${params.offset + 1}` : ''}
-        </span>
-      </div>
+      <section className={kit.section}>
+        <h2 className={kit.sectionTitle}>Issues</h2>
 
-      <HelpCallout
-        variant="info"
-        title="What is an issue?"
-        body="Each row is one distinct error fingerprint — a flood of identical failures collapses into a single triable issue. This dashboard shows this environment's errors (production on the live site, dev on the dev site). Use the filters to narrow by severity, status, route, or org. Click an issue to read scrubbed samples and resolve / ignore / snooze it."
-      />
-
-      <IssuesFilterBar
-        windowKey={params.window}
-        severity={params.severity}
-        status={params.status}
-        route={params.route}
-        org={params.org}
-        q={params.q}
-        severityOptions={SEVERITY_OPTIONS}
-        statusOptions={STATUS_OPTIONS}
-        hasFilters={hasFilters}
-      >
-        <IssuesExportClient
-          filters={{ severity: params.severity, status: params.status, route: params.route, org: params.org, q: params.q }}
-          disabled={issues.rows.length === 0}
-        />
-      </IssuesFilterBar>
-
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Severity</th>
-              <th>Status</th>
-              <th>Issue</th>
-              <th>Route</th>
-              <th style={{ textAlign: 'right' }}>Count</th>
-              <th style={{ textAlign: 'right' }}>Orgs</th>
-              <th>Last seen</th>
-            </tr>
-          </thead>
-          <tbody>
-            {issues.rows.length === 0 && (
-              <tr><td colSpan={7} className={styles.emptyCell}>No issues match these filters.</td></tr>
-            )}
-            {issues.rows.map(row => (
-              <tr key={row.id} className={styles.rowLink}>
-                <td><span className={`badge ${SEVERITY_BADGE[row.severity] ?? 'badge-neutral'}`}>{row.severity}</span></td>
-                <td>
-                  <span className={`badge ${STATUS_BADGE[row.status] ?? 'badge-neutral'}`}>{row.status}</span>
-                  {row.snoozeExpired && <span className={styles.expiredTag}>expired</span>}
-                </td>
-                <td>
-                  <Link href={`/platform-admin/observability/${row.id}`} className={styles.issueTitle}>
-                    {row.title || row.errorName || 'Untitled error'}
-                  </Link>
-                  {row.errorName && row.title && <span className={styles.issueName}>{row.errorName}</span>}
-                </td>
-                <td className={styles.routeCell}>{row.httpMethod ? `${row.httpMethod} ` : ''}{row.route || '—'}</td>
-                <td className={styles.numCell}>{row.occurrenceCount.toLocaleString()}</td>
-                <td className={styles.numCell}>{row.distinctOrgCount.toLocaleString()}</td>
-                <td className={styles.tsCell}>{fmtDateTime(row.lastSeenAt)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {(issues.hasPrev || issues.hasNext) && (
-        <div className={styles.pagination}>
-          {issues.hasPrev
-            ? <Link href={buildHref(params, { offset: Math.max(0, params.offset - ISSUES_PAGE_SIZE) })} className={styles.pageBtn}>Previous</Link>
-            : <span className={styles.pageBtnDisabled}>Previous</span>}
-          <span className={styles.pageInfo}>Showing {params.offset + 1}–{params.offset + issues.rows.length}</span>
-          {issues.hasNext
-            ? <Link href={buildHref(params, { offset: params.offset + ISSUES_PAGE_SIZE })} className={styles.pageBtn}>Next</Link>
-            : <span className={styles.pageBtnDisabled}>Next</span>}
+        <div className={kit.callout}>
+          <span>
+            <strong>What is an issue?</strong>{' '}
+            Each row is one distinct error fingerprint — a flood of identical failures collapses into a single triable issue. This dashboard shows this environment&apos;s errors (production on the live site, dev on the dev site). Use the filters to narrow by severity, status, route, or org. Click an issue to read scrubbed samples and resolve / ignore / snooze it.
+          </span>
         </div>
-      )}
+
+        <div className={kit.card}>
+          <IssuesFilterBar
+            windowKey={params.window}
+            severity={params.severity}
+            status={params.status}
+            route={params.route}
+            org={params.org}
+            q={params.q}
+            severityOptions={SEVERITY_OPTIONS}
+            statusOptions={STATUS_OPTIONS}
+            hasFilters={hasFilters}
+          >
+            <IssuesExportClient
+              filters={{ severity: params.severity, status: params.status, route: params.route, org: params.org, q: params.q }}
+              disabled={issues.rows.length === 0}
+            />
+          </IssuesFilterBar>
+
+          <div className={`${kit.tableWrap} table-cards`}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Severity</th>
+                  <th>Status</th>
+                  <th>Issue</th>
+                  <th>Route</th>
+                  <th className={kit.num}>Count</th>
+                  <th className={kit.num}>Orgs</th>
+                  <th>Last seen</th>
+                </tr>
+              </thead>
+              <tbody className={kit.comfortable}>
+                {issues.rows.length === 0 && (
+                  <tr><td colSpan={7} className={kit.empty}>No issues match these filters.</td></tr>
+                )}
+                {issues.rows.map(row => (
+                  <tr key={row.id}>
+                    <td data-label="Severity"><span className={`${kit.chip} ${severityChip(row.severity)}`}>{cap(row.severity)}</span></td>
+                    <td data-label="Status">
+                      <span className={`${kit.chip} ${issueStatusChip(row.status)}`}>{cap(row.status)}</span>
+                      {row.snoozeExpired && <>{' '}<span className={`${kit.chip} ${kit.chipWarn}`}>Expired</span></>}
+                    </td>
+                    <td className={`table-cards-title ${styles.issueCell}`}>
+                      <Link href={`/platform-admin/observability/${row.id}`} className={kit.nameLink}>
+                        {row.title || row.errorName || 'Untitled error'}
+                      </Link>
+                      {row.errorName && row.title && <span className={`${kit.sub} ${kit.code}`}>{row.errorName}</span>}
+                    </td>
+                    <td data-label="Route" className={styles.routeCell} title={row.route ?? undefined}>
+                      <span className={kit.code}>{row.httpMethod ? `${row.httpMethod} ` : ''}{row.route || '—'}</span>
+                    </td>
+                    <td data-label="Count" className={kit.num}>{row.occurrenceCount.toLocaleString()}</td>
+                    <td data-label="Orgs" className={kit.num}>{row.distinctOrgCount.toLocaleString()}</td>
+                    <td data-label="Last seen" className={kit.nowrap}>{fmtDateTime(row.lastSeenAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className={kit.foot}>
+            <span className={kit.countQuiet}>
+              {issues.rows.length} shown{params.offset > 0 ? ` · from #${params.offset + 1}` : ''}
+            </span>
+            {(issues.hasPrev || issues.hasNext) && (
+              <span className={kit.toolbarEnd}>
+                <span className={kit.countQuiet}>Showing {params.offset + 1}–{params.offset + issues.rows.length}</span>
+                {issues.hasPrev
+                  ? <Link href={buildHref(params, { offset: Math.max(0, params.offset - ISSUES_PAGE_SIZE) })} className="btn btn-secondary btn-sm">Previous</Link>
+                  : <button type="button" className="btn btn-secondary btn-sm" disabled>Previous</button>}
+                {issues.hasNext
+                  ? <Link href={buildHref(params, { offset: params.offset + ISSUES_PAGE_SIZE })} className="btn btn-secondary btn-sm">Next</Link>
+                  : <button type="button" className="btn btn-secondary btn-sm" disabled>Next</button>}
+              </span>
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

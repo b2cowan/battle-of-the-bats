@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { Loader } from 'lucide-react';
 import type { BulkOperationRow, BulkOrgRow } from './page';
 import { fmtAbsoluteDate } from '@/lib/format-date';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import kit from '../console.module.css';
+import { SUBSCRIPTION_STATUS_LABELS, humanize } from '../chips';
 import styles from './bulk-operations.module.css';
 
 type BulkActionType = 'subscription_status_override' | 'comp_period' | 'plan_change' | 'module_addon_enablement';
@@ -27,18 +30,11 @@ const PLAN_LABELS: Record<string, string> = {
   club_large: 'Club · Association',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  active: 'Active',
-  trialing: 'Trialing',
-  past_due: 'Past Due',
-  canceled: 'Canceled',
-};
-
 const ACTION_LABELS: Record<BulkActionType, string> = {
-  subscription_status_override: 'Subscription Status Override',
-  comp_period: 'Comp Period Grant',
-  plan_change: 'Plan Change',
-  module_addon_enablement: 'Module Add-On',
+  subscription_status_override: 'Subscription status override',
+  comp_period: 'Comp period grant',
+  plan_change: 'Plan change',
+  module_addon_enablement: 'Module add-on',
 };
 
 const PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
@@ -56,10 +52,10 @@ const MODULE_OPERATION_LABELS: Record<ModuleOperation, string> = {
 
 const formatDate = (value: string | null | undefined) => fmtAbsoluteDate(value, 'Not set');
 
-function statusClass(status: string) {
-  if (status === 'completed' || status === 'active') return styles.badgeGood;
-  if (status === 'partial_failed' || status === 'past_due' || status === 'trialing') return styles.badgeWarn;
-  return styles.badgeMuted;
+function statusChip(status: string) {
+  if (status === 'completed' || status === 'active') return kit.chipOk;
+  if (status === 'partial_failed' || status === 'past_due' || status === 'trialing') return kit.chipWarn;
+  return kit.chipQuiet;
 }
 
 export default function BulkOperationsClient({
@@ -114,7 +110,7 @@ export default function BulkOperationsClient({
   const moduleLabel = MODULE_OPTIONS.find(module => module.value === targetModule)?.label ?? targetModule;
 
   const previewCopy = actionType === 'subscription_status_override'
-    ? `Create a subscription status override set to ${STATUS_LABELS[targetStatus] ?? targetStatus}.`
+    ? `Create a subscription status override set to ${SUBSCRIPTION_STATUS_LABELS[targetStatus] ?? targetStatus}.`
     : actionType === 'comp_period'
       // "Grant" alone read as "gives them something" — the single-org screen warns explicitly that
       // it does not. Same action, opposite impression (audit 2026-08-06). Say what it is.
@@ -210,169 +206,166 @@ export default function BulkOperationsClient({
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <div className={styles.headerLabel}>Billing & Product</div>
-          <h1 className={styles.title}>Bulk Operations</h1>
-          <p className={styles.intro}>
-            Select organizations, preview the impact, add a reason, then confirm the guarded operation.
-          </p>
-        </div>
-        <div className={styles.count}>{selectedIds.length} selected</div>
-      </header>
+    <div className={kit.page}>
+      <AdminPageHeader title="Bulk operations" />
 
-      <section className={styles.snapshotGrid}>
-        <div className={styles.snapshotItem}>
-          <span>Total Accounts</span>
-          <strong>{orgs.length}</strong>
+      <p className={kit.caption}>
+        Select organizations, preview the impact, add a reason, then confirm the guarded operation.
+      </p>
+
+      <section className={kit.band} aria-label="Bulk operations snapshot">
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Total accounts</span>
+          <strong className={kit.bandValue}>{orgs.length}</strong>
         </div>
-        <div className={styles.snapshotItem}>
-          <span>Filtered</span>
-          <strong>{filteredOrgs.length}</strong>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Filtered</span>
+          <strong className={kit.bandValue}>{filteredOrgs.length}</strong>
         </div>
-        <div className={styles.snapshotItem}>
-          <span>Selected</span>
-          <strong>{selectedIds.length}</strong>
+        <div className={`${kit.bandCell} ${selectedIds.length > 0 ? kit.bandGood : ''}`}>
+          <span className={kit.bandLabel}>Selected</span>
+          <strong className={kit.bandValue}>{selectedIds.length}</strong>
         </div>
-        <div className={styles.snapshotItem}>
-          <span>Recent Batches</span>
-          <strong>{operations.length}</strong>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Recent batches</span>
+          <strong className={kit.bandValue}>{operations.length}</strong>
         </div>
       </section>
 
       {(!canManageBilling || !canManageProduct) && (
-        <section className={styles.notice}>
+        <div className={kit.callout}>
           Bulk billing actions require billing access. Module add-on actions require product access.
-        </section>
+        </div>
       )}
 
       {(error || saved) && (
-        <section className={error ? styles.errorBanner : styles.successBanner}>
+        <div className={`${kit.notice} ${error ? kit.noticeBad : kit.noticeGood}`}>
           {error || saved}
-        </section>
+        </div>
       )}
 
-      <section className={styles.workspace}>
-        <div className={styles.leftColumn}>
-          <section className={styles.panel}>
-            <div className={styles.panelHead}>
-              <div>
-                <div className={styles.sectionKicker}>Step 1</div>
-                <h2>Choose Accounts</h2>
+      <div className={styles.workspace}>
+        <div className={styles.column}>
+          <section className={kit.section}>
+            <h2 className={kit.sectionTitle}><span className={styles.step}>1</span>Choose accounts</h2>
+            <div className={kit.card}>
+              <div className={kit.toolbar}>
+                <input
+                  className={`${kit.search} ${styles.toolSearch}`}
+                  type="search"
+                  placeholder="Search account or slug..."
+                  aria-label="Search accounts"
+                  value={search}
+                  onChange={event => setSearch(event.target.value)}
+                />
+                <select className={kit.select} aria-label="Plan" value={planFilter} onChange={event => setPlanFilter(event.target.value)}>
+                  <option value="">All plans</option>
+                  {PLANS.map(plan => <option key={plan} value={plan}>{PLAN_LABELS[plan]}</option>)}
+                </select>
+                <select className={kit.select} aria-label="Status" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
+                  <option value="">All statuses</option>
+                  {STATUSES.map(status => <option key={status} value={status}>{SUBSCRIPTION_STATUS_LABELS[status]}</option>)}
+                </select>
+                <span className={kit.toolbarEnd}>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={toggleFilteredSelection}>
+                    {allFilteredSelected ? 'Clear filtered' : 'Select filtered'}
+                  </button>
+                </span>
               </div>
-              <button type="button" className={styles.secondaryBtn} onClick={toggleFilteredSelection}>
-                {allFilteredSelected ? 'Clear Filtered' : 'Select Filtered'}
-              </button>
-            </div>
 
-            <div className={styles.filterBar}>
-              <input
-                className={styles.input}
-                type="search"
-                placeholder="Search account or slug..."
-                value={search}
-                onChange={event => setSearch(event.target.value)}
-              />
-              <select className={styles.select} value={planFilter} onChange={event => setPlanFilter(event.target.value)}>
-                <option value="">All plans</option>
-                {PLANS.map(plan => <option key={plan} value={plan}>{PLAN_LABELS[plan]}</option>)}
-              </select>
-              <select className={styles.select} value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
-                <option value="">All statuses</option>
-                {STATUSES.map(status => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
-              </select>
-            </div>
-
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Account</th>
-                    <th>Plan</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOrgs.length === 0 ? (
-                    <tr><td colSpan={4} className={styles.emptyCell}>No accounts match this filter.</td></tr>
-                  ) : filteredOrgs.map(org => (
-                    <tr key={org.id}>
-                      <td>
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(org.id)}
-                          onChange={() => toggleOrg(org.id)}
-                          aria-label={`Select ${org.name}`}
-                        />
-                      </td>
-                      <td>
-                        <Link href={`/platform-admin/orgs/${org.id}`} className={styles.accountLink}>{org.name}</Link>
-                        <small>{org.slug}</small>
-                      </td>
-                      <td>{PLAN_LABELS[org.planId] ?? org.planId}</td>
-                      <td><span className={statusClass(org.subscriptionStatus)}>{STATUS_LABELS[org.subscriptionStatus] ?? org.subscriptionStatus}</span></td>
+              <div className={`${kit.tableWrap} table-cards`}>
+                <table className={kit.comfortable}>
+                  <thead>
+                    <tr>
+                      <th aria-label="Select"></th>
+                      <th>Account</th>
+                      <th>Plan</th>
+                      <th>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredOrgs.length === 0 ? (
+                      <tr><td colSpan={4} className={kit.empty}>No accounts match this filter.</td></tr>
+                    ) : filteredOrgs.map(org => (
+                      <tr key={org.id}>
+                        <td data-label="Select">
+                          <input
+                            type="checkbox"
+                            className={styles.rowCheck}
+                            checked={selectedIds.includes(org.id)}
+                            onChange={() => toggleOrg(org.id)}
+                            aria-label={`Select ${org.name}`}
+                          />
+                        </td>
+                        <td className="table-cards-title">
+                          <Link href={`/platform-admin/orgs/${org.id}`} className={kit.nameLink}>{org.name}</Link>
+                          <span className={`${kit.sub} ${kit.code}`}>{org.slug}</span>
+                        </td>
+                        <td data-label="Plan" className={kit.nowrap}>{PLAN_LABELS[org.planId] ?? org.planId}</td>
+                        <td data-label="Status"><span className={`${kit.chip} ${statusChip(org.subscriptionStatus)}`}>{SUBSCRIPTION_STATUS_LABELS[org.subscriptionStatus] ?? org.subscriptionStatus}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
         </div>
 
-        <div className={styles.rightColumn}>
-          <section className={styles.panel}>
-            <div className={styles.panelHead}>
-              <div>
-                <div className={styles.sectionKicker}>Step 2</div>
-                <h2>Configure Action</h2>
-              </div>
-            </div>
-
-            <label className={styles.field}>
-              <span>Bulk Action</span>
+        <div className={styles.column}>
+          <section className={kit.section}>
+            <h2 className={kit.sectionTitle}><span className={styles.step}>2</span>Configure action</h2>
+            <div className={`${kit.card} ${kit.cardPad} ${styles.form}`}>
+            <label className={kit.fieldGroup}>
+              <span className={kit.label}>Bulk action</span>
               <select
-                className={styles.select}
+                className={`${kit.select} ${kit.wide}`}
                 value={actionType}
                 onChange={event => {
                   setActionType(event.target.value as BulkActionType);
                   setConfirming(false);
                 }}
               >
-                <option value="subscription_status_override">Subscription Status Override</option>
-                <option value="comp_period">Comp Period Grant</option>
-                <option value="plan_change">Plan Change</option>
+                <option value="subscription_status_override">Subscription status override</option>
+                <option value="comp_period">Comp period grant</option>
+                <option value="plan_change">Plan change</option>
                 <option value="module_addon_enablement" disabled={!canManageProduct}>
-                  Module Add-On Enablement{canManageProduct ? '' : ' (requires product access)'}
+                  Module add-on enablement{canManageProduct ? '' : ' (requires product access)'}
                 </option>
               </select>
             </label>
 
             {actionType === 'subscription_status_override' && (
-              <label className={styles.field}>
-                <span>Target Status</span>
-                <select className={styles.select} value={targetStatus} onChange={event => setTargetStatus(event.target.value)}>
-                  {STATUSES.map(status => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
+              <label className={kit.fieldGroup}>
+                <span className={kit.label}>Target status</span>
+                <select className={`${kit.select} ${kit.wide}`} value={targetStatus} onChange={event => setTargetStatus(event.target.value)}>
+                  {STATUSES.map(status => <option key={status} value={status}>{SUBSCRIPTION_STATUS_LABELS[status]}</option>)}
                 </select>
               </label>
             )}
 
             {actionType === 'plan_change' && (
               <>
-                <label className={styles.field}>
-                  <span>Target Plan</span>
-                  <select className={styles.select} value={targetPlan} onChange={event => setTargetPlan(event.target.value)}>
+                <label className={kit.fieldGroup}>
+                  <span className={kit.label}>Target plan</span>
+                  <select className={`${kit.select} ${kit.wide}`} value={targetPlan} onChange={event => setTargetPlan(event.target.value)}>
                     {PLANS.map(plan => <option key={plan} value={plan}>{PLAN_LABELS[plan]}</option>)}
                   </select>
                 </label>
-                <div className={`${styles.billingClarity} ${styles.billingClarityCaution}`}>
+                <div className={styles.note}>
                   <p>
                     <strong>This changes access only — not billing.</strong> A plan change here updates each
                     org&rsquo;s plan and resets its tournament limit to the new plan&rsquo;s default. It does{' '}
                     <strong>not</strong> touch Stripe — no charge, refund, proration, or cancellation. Any paid
                     org keeps billing at its old price and goes out of sync. Re-price each org from its own
                     Billing &amp; Access screen (downgrades, prorated) or the Stripe Dashboard (upgrades).
+                  </p>
+                  <p>
+                    Each org gets exactly what its own plan change would do: moving onto Club starts its Club
+                    trial (unless it is already paying or has had one) and ends a Founding Season comp; a custom
+                    team limit set for the old plan is cleared; a cancelled org brought back is restored; and
+                    tournaments over the new limit are archived. Each org&rsquo;s result line says which of
+                    these happened.
                   </p>
                   {targetPlan === 'tournament' && (
                     <p>
@@ -388,10 +381,10 @@ export default function BulkOperationsClient({
 
             {actionType === 'module_addon_enablement' && (
               <>
-                <label className={styles.field}>
-                  <span>Module Add-On</span>
+                <label className={kit.fieldGroup}>
+                  <span className={kit.label}>Module add-on</span>
                   <select
-                    className={styles.select}
+                    className={`${kit.select} ${kit.wide}`}
                     value={targetModule}
                     onChange={event => {
                       setTargetModule(event.target.value);
@@ -401,10 +394,10 @@ export default function BulkOperationsClient({
                     {MODULE_OPTIONS.map(module => <option key={module.value} value={module.value}>{module.label}</option>)}
                   </select>
                 </label>
-                <label className={styles.field}>
-                  <span>Operation</span>
+                <label className={kit.fieldGroup}>
+                  <span className={kit.label}>Operation</span>
                   <select
-                    className={styles.select}
+                    className={`${kit.select} ${kit.wide}`}
                     value={moduleOperation}
                     onChange={event => {
                       setModuleOperation(event.target.value as ModuleOperation);
@@ -422,22 +415,22 @@ export default function BulkOperationsClient({
               // Carried over from the single-org override form, which has warned about this for a
               // while. This screen said only "Grant a comp period", which invites exactly the
               // mistake the other screen works to prevent (audit 2026-08-06).
-              <div className={`${styles.billingClarity} ${styles.billingClarityCaution}`}>
+              <div className={styles.note}>
                 <p>
-                  ⚠ Comp Period is a <strong>billing/founding-season tag only — it grants no section or
+                  ⚠ Comp period is a <strong>billing/founding-season tag only — it grants no section or
                   plan access.</strong> It marks these accounts as comped (e.g. for the Founding cohort
                   badge) but unlocks nothing. To actually give orgs access, use{' '}
-                  <strong>Module Add-on Enablement</strong> for specific sections, or a{' '}
-                  <strong>Subscription Status Override</strong> to change their access state.
+                  <strong>Module add-on enablement</strong> for specific sections, or a{' '}
+                  <strong>Subscription status override</strong> to change their access state.
                 </p>
               </div>
             )}
 
             {(actionType === 'subscription_status_override' || actionType === 'comp_period') && (
-              <label className={styles.field}>
-                <span>{actionType === 'comp_period' ? 'Expires At' : 'Optional Expiry'}</span>
+              <label className={kit.fieldGroup}>
+                <span className={kit.label}>{actionType === 'comp_period' ? 'Expires at' : 'Optional expiry'}</span>
                 <input
-                  className={styles.input}
+                  className={`${kit.field} ${kit.wide}`}
                   type="date"
                   value={expiresAt}
                   onChange={event => setExpiresAt(event.target.value)}
@@ -445,11 +438,12 @@ export default function BulkOperationsClient({
               </label>
             )}
 
-            <label className={styles.field}>
-              <span>Reason</span>
+            <label className={kit.fieldGroup}>
+              <span className={kit.label}>Reason<span className={kit.req} aria-hidden="true"> *</span></span>
               <textarea
-                className={styles.textarea}
+                className={kit.textarea}
                 value={reason}
+                aria-required="true"
                 placeholder="Required: explain why this bulk operation is being applied."
                 onChange={event => {
                   setReason(event.target.value);
@@ -457,20 +451,16 @@ export default function BulkOperationsClient({
                 }}
               />
             </label>
+            </div>
           </section>
 
-          <section className={styles.panel}>
-            <div className={styles.panelHead}>
-              <div>
-                <div className={styles.sectionKicker}>Step 3</div>
-                <h2>Preview & Confirm</h2>
-              </div>
-            </div>
-
-            <div className={styles.previewBox}>
-              <span>{ACTION_LABELS[actionType]}</span>
-              <strong>{selectedOrgs.length} account{selectedOrgs.length === 1 ? '' : 's'}</strong>
-              <p>{previewCopy}</p>
+          <section className={kit.section}>
+            <h2 className={kit.sectionTitle}><span className={styles.step}>3</span>Preview and confirm</h2>
+            <div className={`${kit.card} ${kit.cardPad} ${styles.form}`}>
+            <div className={styles.preview}>
+              <span className={kit.eye}>{ACTION_LABELS[actionType]}</span>
+              <strong className={styles.previewCount}>{selectedOrgs.length} account{selectedOrgs.length === 1 ? '' : 's'}</strong>
+              <p className={kit.caption}>{previewCopy}</p>
             </div>
 
             {selectedOrgs.length > 0 && (
@@ -481,7 +471,7 @@ export default function BulkOperationsClient({
                     <small>
                       {actionType === 'module_addon_enablement'
                         ? `${moduleLabel}: ${org.enabledAddons.includes(targetModule) ? 'Currently enabled' : 'Not enabled'}`
-                        : `${PLAN_LABELS[org.planId] ?? org.planId} / ${STATUS_LABELS[org.subscriptionStatus] ?? org.subscriptionStatus}`}
+                        : `${PLAN_LABELS[org.planId] ?? org.planId} / ${SUBSCRIPTION_STATUS_LABELS[org.subscriptionStatus] ?? org.subscriptionStatus}`}
                     </small>
                   </div>
                 ))}
@@ -491,25 +481,21 @@ export default function BulkOperationsClient({
 
             <button
               type="button"
-              className={styles.primaryBtn}
+              className={`btn btn-primary ${kit.wide}`}
               onClick={applyBulkOperation}
               disabled={busy || !canApplySelectedAction || selectedIds.length === 0}
             >
-              {busy ? <Loader size={13} className={styles.spin} /> : confirming ? 'Confirm Bulk Operation' : 'Review Bulk Operation'}
+              {busy ? <Loader size={13} className={kit.spin} /> : confirming ? 'Confirm bulk operation' : 'Review bulk operation'}
             </button>
+            </div>
           </section>
         </div>
-      </section>
+      </div>
 
       {results.length > 0 && (
-        <section className={styles.panel}>
-          <div className={styles.panelHead}>
-            <div>
-              <div className={styles.sectionKicker}>Result</div>
-              <h2>Latest Operation</h2>
-            </div>
-          </div>
-          <div className={styles.resultGrid}>
+        <section className={kit.section}>
+          <h2 className={kit.sectionTitle}>Latest operation</h2>
+          <div className={`${kit.card} ${kit.cardPad} ${styles.resultGrid}`}>
             {results.map(result => (
               <div key={result.orgId} className={result.ok ? styles.resultOk : styles.resultFail}>
                 <strong>{result.name}</strong>
@@ -520,44 +506,41 @@ export default function BulkOperationsClient({
         </section>
       )}
 
-      <section className={styles.panel}>
-        <div className={styles.panelHead}>
-          <div>
-            <div className={styles.sectionKicker}>Audit Trail</div>
-            <h2>Recent Bulk Operations</h2>
-          </div>
-        </div>
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Action</th>
-                <th>Status</th>
-                <th>Targets</th>
-                <th>Actor</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {operations.length === 0 ? (
-                <tr><td colSpan={5} className={styles.emptyCell}>No bulk operations recorded yet.</td></tr>
-              ) : operations.map(operation => (
-                <tr key={operation.id}>
-                  <td>
-                    {ACTION_LABELS[operation.action_type as BulkActionType] ?? operation.action_type}
-                    <small>{operation.reason}</small>
-                  </td>
-                  <td><span className={statusClass(operation.status)}>{operation.status.replace('_', ' ')}</span></td>
-                  <td>{operation.success_count} / {operation.target_count}</td>
-                  <td>{operation.created_by_email}</td>
-                  <td>{formatDate(operation.created_at)}</td>
+      <section className={kit.section}>
+        <h2 className={kit.sectionTitle}>Recent bulk operations</h2>
+        <div className={kit.card}>
+          <div className={`${kit.tableWrap} table-cards`}>
+            <table className={kit.comfortable}>
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th>Status</th>
+                  <th>Targets</th>
+                  <th>Actor</th>
+                  <th>Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className={styles.panelFooterLink}>
-          <Link href="/platform-admin/audit?action=run_bulk_operation">View all bulk operations in Audit Log →</Link>
+              </thead>
+              <tbody>
+                {operations.length === 0 ? (
+                  <tr><td colSpan={5} className={kit.empty}>No bulk operations recorded yet.</td></tr>
+                ) : operations.map(operation => (
+                  <tr key={operation.id}>
+                    <td className="table-cards-title">
+                      {ACTION_LABELS[operation.action_type as BulkActionType] ?? operation.action_type}
+                      <span className={kit.sub}>{operation.reason}</span>
+                    </td>
+                    <td data-label="Status"><span className={`${kit.chip} ${statusChip(operation.status)}`}>{humanize(operation.status)}</span></td>
+                    <td data-label="Targets" className={kit.nowrap}>{operation.success_count} / {operation.target_count}</td>
+                    <td data-label="Actor">{operation.created_by_email}</td>
+                    <td data-label="Date" className={kit.nowrap}>{formatDate(operation.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className={styles.cardFoot}>
+            <Link href="/platform-admin/audit?action=run_bulk_operation" className={kit.door}>View all bulk operations in Audit Log →</Link>
+          </div>
         </div>
       </section>
     </div>

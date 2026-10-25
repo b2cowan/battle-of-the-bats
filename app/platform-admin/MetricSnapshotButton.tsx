@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import styles from './overview.module.css';
 
 type State = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -24,11 +23,11 @@ export default function MetricSnapshotButton({ canSnapshot = true }: { canSnapsh
   return (
     <button
       type="button"
-      className={styles.snapshotButton}
+      className="btn btn-secondary btn-sm"
       onClick={handleClick}
       disabled={state === 'saving'}
     >
-      {state === 'saving' ? 'Saving...' : state === 'saved' ? 'Snapshot Saved' : 'Save Today Snapshot'}
+      {state === 'saving' ? 'Saving...' : state === 'saved' ? 'Snapshot saved' : 'Save today snapshot'}
     </button>
   );
 }

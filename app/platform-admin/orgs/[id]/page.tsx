@@ -10,6 +10,9 @@ import HelpTooltip from '@/components/help/HelpTooltip';
 import OrgDetailClient from './OrgDetailClient';
 import { holdsSlot } from '@/lib/tournament-slot';
 import { clubDomainStore } from '@/lib/club-domain-store';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import kit from '../../console.module.css';
+import { subscriptionStatusChip, subscriptionStatusLabel } from '../../chips';
 import styles from './orgDetail.module.css';
 
 type OverrideRow = {
@@ -412,38 +415,31 @@ export default async function OrgDetailPage({
   ];
 
   return (
-    <div className={styles.page}>
-      <div className={styles.backRow}>
-        <Link href="/platform-admin/orgs" className={styles.backLink}>Back to Organizations</Link>
-      </div>
-
-      <header className={styles.accountHero}>
-        <div className={styles.accountHeroMain}>
-          <div className={styles.headerLabel}>Organization Account</div>
-          <h1 className={styles.title}>{org.name}</h1>
-          <div className={styles.heroMeta}>
-            <span className={styles.mono}>/{org.slug}</span>
-            <span>Created {fmtDate(org.created_at as string)}</span>
-          </div>
-        </div>
-        <div className={styles.heroActions}>
-          <div className={styles.heroBadges}>
-            <span className={styles.headerPlan}>{planCfg?.label ?? org.plan_id}</span>
-            <span className={`${styles.headerStatus} ${subscriptionStatus === 'active' ? styles.headerStatusActive : subscriptionStatus === 'trialing' ? styles.headerStatusTrialing : styles.headerStatusMuted}`}>
-              {subscriptionStatus}
+    <div className={kit.page}>
+      <AdminPageHeader
+        title={org.name as string}
+        backTo={{ href: '/platform-admin/orgs', label: 'Organizations' }}
+        titleChips={
+          <>
+            <span className={kit.chip}>{planCfg?.label ?? (org.plan_id as string)}</span>
+            <span className={`${kit.chip} ${subscriptionStatusChip(subscriptionStatus)}`}>
+              {subscriptionStatusLabel(subscriptionStatus)}
             </span>
             {isFreeFloor && (
-              <span className={styles.leagueStarterBadge} title="Free League Starter floor (plan_id stays 'tournament')">
+              <span className={`${kit.chip} ${kit.chipOk}`} title="Free League Starter floor (plan_id stays 'tournament')">
                 League Starter
               </span>
             )}
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
+      <p className={`${kit.caption} ${kit.captionTight}`}>
+        <span className={kit.code}>/{org.slug}</span> · Created {fmtDate(org.created_at as string)}
+      </p>
 
       {attentionItems.length > 0 && (
         <section className={styles.attentionPanel} aria-label="Needs attention">
-          <h2 className={styles.sectionTitle}>Needs Attention</h2>
+          <h2 className={styles.sectionTitle}>Needs attention</h2>
           <ul className={styles.attentionList}>
             {attentionItems.map(item => (
               <li key={item}>{item}</li>
@@ -452,52 +448,52 @@ export default async function OrgDetailPage({
         </section>
       )}
 
-      <section className={styles.snapshotGrid} aria-label="Account snapshot">
-        <div className={styles.snapshotItem}>
-          <span className={styles.fieldLabel}>Owner</span>
-          <span className={styles.fieldValue}>{ownerSummary}</span>
+      <section className={kit.band} aria-label="Account snapshot">
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Owner</span>
+          <span className={kit.bandValueText}>{ownerSummary}</span>
         </div>
-        <div className={styles.snapshotItem}>
-          <span className={styles.fieldLabel}>Members</span>
-          <span className={styles.fieldValue}>{members.length}</span>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Members</span>
+          <span className={kit.bandValue}>{members.length}</span>
         </div>
-        <div className={styles.snapshotItem}>
-          <span className={styles.fieldLabel}>Tournaments</span>
-          <span className={styles.fieldValue}>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Tournaments</span>
+          <span className={kit.bandValue}>
             {tournaments.length}{effectiveTournamentLimit !== null && effectiveTournamentLimit < 9999 ? ` / ${effectiveTournamentLimit}` : ''}
           </span>
         </div>
         {currentIsClubBand && (
-          <div className={styles.snapshotItem}>
-            <span className={styles.fieldLabel}>Teams</span>
-            <span className={styles.fieldValue}>
+          <div className={kit.bandCell}>
+            <span className={kit.bandLabel}>Teams</span>
+            <span className={kit.bandValue}>
               {teamCount}{effectiveTeamLimit !== null && effectiveTeamLimit < 9999 ? ` / ${effectiveTeamLimit}` : ''}{teamLimitIsCustom ? ' (custom)' : ''}
             </span>
           </div>
         )}
-        <div className={styles.snapshotItem}>
-          <span className={styles.fieldLabel}>Billing Period</span>
-          <span className={styles.fieldValue}>{(org.subscription_period as string | null) ?? 'Not set'}</span>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Billing period</span>
+          <span className={kit.bandValueText}>{(org.subscription_period as string | null) ?? 'Not set'}</span>
         </div>
-        <div className={styles.snapshotItem}>
-          <span className={styles.fieldLabel}>Current Period End</span>
-          <span className={styles.fieldValue}>{fmtNullableDate((org.current_period_end as string | null) ?? null)}</span>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Current period end</span>
+          <span className={kit.bandValueText}>{fmtNullableDate((org.current_period_end as string | null) ?? null)}</span>
         </div>
-        <div className={styles.snapshotItem}>
-          <span className={styles.fieldLabel}>
-            Active Overrides
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>
+            Active overrides
             <HelpTooltip
-              title="Active Overrides"
+              title="Active overrides"
               body="Counts active comps and timed grants (subscription-status holds and feature-access trials). Plan and limit changes — including a custom team cap — are NOT counted here; those edit the account directly. All grants are audit-logged."
             />
           </span>
-          <span className={styles.fieldValue}>{activeOverrides.length}</span>
+          <span className={kit.bandValue}>{activeOverrides.length}</span>
         </div>
       </section>
 
       <section className={styles.quickActions} aria-label="Primary account actions">
         <div className={styles.quickActionIntro}>
-          <h2 className={styles.sectionTitle}>Primary Actions</h2>
+          <h2 className={styles.sectionTitle}>Primary actions</h2>
           <p className={styles.emptyNote}>Start with owner contact, billing context, then review the grouped workflow below.</p>
         </div>
         <div className={styles.actionRow}>
@@ -505,25 +501,25 @@ export default async function OrgDetailPage({
             <a
               key={member.userId}
               href={`mailto:${member.email}`}
-              className={styles.adminLink}
+              className="btn btn-secondary btn-sm"
             >
               Email {member.displayName || member.email}
             </a>
           ))}
           {stripeUrl && (
-            <a href={stripeUrl} target="_blank" rel="noreferrer" className={styles.adminLink}>
+            <a href={stripeUrl} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
               Open Stripe
             </a>
           )}
-          <Link href={`/platform-admin/audit?q=${encodeURIComponent(org.name as string)}`} className={styles.adminLink}>
-            Audit Log
+          <Link href={`/platform-admin/audit?q=${encodeURIComponent(org.name as string)}`} className="btn btn-secondary btn-sm">
+            Audit log
           </Link>
         </div>
       </section>
 
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Account Context</h2>
+          <h2 className={styles.sectionTitle}>Account context</h2>
           <span className={styles.sectionHint}>Quick reference only. Use the workflow tabs below for edits and investigation.</span>
         </div>
         <div className={styles.contextGrid}>
@@ -540,7 +536,7 @@ export default async function OrgDetailPage({
             <span className={styles.fieldValue}>{planCfg?.label ?? org.plan_id}</span>
           </div>
           <div className={styles.field}>
-            <span className={styles.fieldLabel}>Stripe Subscription</span>
+            <span className={styles.fieldLabel}>Stripe subscription</span>
             {stripeSubUrl ? (
               <span className={styles.mono}>
                 <a href={stripeSubUrl} target="_blank" rel="noreferrer" className={styles.inlineLink}>
@@ -553,12 +549,12 @@ export default async function OrgDetailPage({
             )}
           </div>
           <div className={styles.field}>
-            <span className={styles.fieldLabel}>Stripe Customer</span>
+            <span className={styles.fieldLabel}>Stripe customer</span>
             <span className={styles.mono}>{(org.stripe_customer_id as string | null) ?? 'Not set'}</span>
           </div>
           {planCfg && (
             <div className={styles.field}>
-              <span className={styles.fieldLabel}>Staff Seat Limit</span>
+              <span className={styles.fieldLabel}>Staff seat limit</span>
               <span className={styles.fieldValue}>
                 {planCfg.seatLimit >= 9999 ? 'Unlimited' : planCfg.seatLimit}
               </span>
@@ -566,12 +562,12 @@ export default async function OrgDetailPage({
           )}
           {planCfg && (
             <div className={styles.field}>
-              <span className={styles.fieldLabel}>Officials Free Seats</span>
+              <span className={styles.fieldLabel}>Officials free seats</span>
               <span className={styles.fieldValue}>{planCfg.officialsFreeSeats ? 'Yes' : 'No'}</span>
             </div>
           )}
           <div className={`${styles.field} ${styles.fieldFull}`}>
-            <span className={styles.fieldLabel}>Active Modules</span>
+            <span className={styles.fieldLabel}>Active modules</span>
             <div className={styles.moduleTagRow}>
               {activeModules.map(m => (
                 <span key={m} className={styles.moduleTagIncluded}>

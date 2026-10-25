@@ -6,8 +6,12 @@ import {
   CreditCard, BookOpen, Terminal, ClipboardList, X,
 } from 'lucide-react';
 import styles from './dev.module.css';
+import kit from '../console.module.css';
+import { humanize } from '../chips';
 import AgentPlaybook from './AgentPlaybook';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import type { OrgPlan } from '@/lib/types';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -97,27 +101,33 @@ interface MockBillingConfig {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 
-const ORG_PLAN_OPTIONS: { value: OrgPlan; label: string; price: string }[] = [
-  { value: 'tournament',      label: 'Tournament',        price: 'Free'    },
-  { value: 'tournament_plus', label: 'Tournament+',       price: '$39/mo'  },
-  { value: 'league',          label: 'League Plus',       price: '$89/mo'  },
-  { value: 'club',            label: 'Club',              price: '$219/mo' },
-  { value: 'club_large',      label: 'Club · Association', price: '$379/mo' },
-];
+// Labels and prices come from the plan config (the plan facts' single source), never restated here.
+const ORG_PLAN_IDS: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club', 'club_large'];
+const ORG_PLAN_OPTIONS: { value: OrgPlan; label: string; price: string }[] = ORG_PLAN_IDS.map(id => {
+  const plan = PLAN_CONFIG[id];
+  return {
+    value: id,
+    label: plan.label,
+    price: plan.monthlyPrice > 0 ? `${formatPriceAmount(plan.monthlyPrice)}/mo` : formatPriceAmount(plan.monthlyPrice),
+  };
+});
 
-const PLAN_COLORS: Record<string, { text: string; border: string; bg: string }> = {
-  tournament:      { text: '#86efac', border: 'rgba(34,197,94,0.45)',  bg: 'rgba(34,197,94,0.1)'  },
-  tournament_plus: { text: '#93c5fd', border: 'rgba(59,130,246,0.45)', bg: 'rgba(59,130,246,0.1)' },
-  league:          { text: '#fde68a', border: 'rgba(251,191,36,0.45)', bg: 'rgba(251,191,36,0.1)' },
-  club:            { text: '#a5b4fc', border: 'rgba(99,102,241,0.45)', bg: 'rgba(99,102,241,0.1)' },
-  club_large:      { text: '#a5b4fc', border: 'rgba(99,102,241,0.45)', bg: 'rgba(99,102,241,0.1)' },
-  team:            { text: '#f9a8d4', border: 'rgba(236,72,153,0.45)', bg: 'rgba(236,72,153,0.1)' },
+// Each plan wears a distinct tint, drawn from the status tokens (the module's tone classes set one custom property).
+const PLAN_TONES: Record<string, string> = {
+  tournament:      styles.toneOk,
+  tournament_plus: styles.toneInfo,
+  league:          styles.toneWarn,
+  club:            styles.toneOlive,
+  club_large:      styles.toneOlive,
+  team:            styles.toneQuiet,
 };
+const planTone = (planId: string): string => PLAN_TONES[planId] ?? PLAN_TONES.tournament;
 
-// Dev-tools plan badge label — keep the existing lowercase style for legacy keys but
-// render the new band with its proper name (raw '_'-replace would show "club large").
+// Dev-tools plan badge label — the legacy keys keep their raw words (sentence case), and the new band
+// renders with its proper name (raw '_'-replace would show "club large").
 function planBadgeLabel(id: string): string {
-  return id === 'club_large' ? 'Club · Association' : id.replace('_', ' ');
+  if (id === 'club_large') return 'Club · Association';
+  return humanize(id);
 }
 
 // Plan gates toggle is only available when NEXT_PUBLIC_DEV_PLAN_GATES_TOGGLE=true
@@ -149,20 +159,20 @@ function LiveCredentials({ data }: { data: MembershipData | null }) {
       {/* Header row */}
       <div className={styles.liveCredHeader}>
         <span className={styles.liveCredLabel}>
-          DB Memberships — password: <code>devpass123</code>
+          DB memberships — password: <code>devpass123</code>
         </span>
         <div className={styles.liveCredViewToggle}>
           <button
             className={`${styles.liveCredViewBtn} ${view === 'byOrg' ? styles.liveCredViewBtnActive : ''}`}
             onClick={() => setView('byOrg')}
           >
-            By Org
+            By org
           </button>
           <button
             className={`${styles.liveCredViewBtn} ${view === 'byUser' ? styles.liveCredViewBtnActive : ''}`}
             onClick={() => setView('byUser')}
           >
-            By User
+            By user
           </button>
         </div>
       </div>
@@ -178,7 +188,6 @@ function LiveCredentials({ data }: { data: MembershipData | null }) {
             <>
               <div className={styles.credPills}>
                 {data.byOrg.map(org => {
-                  const pc = PLAN_COLORS[org.planId] ?? PLAN_COLORS.tournament;
                   const isActive = org.orgId === activeOrgId;
                   return (
                     <button
@@ -187,10 +196,7 @@ function LiveCredentials({ data }: { data: MembershipData | null }) {
                       onClick={() => setSelectedOrgId(org.orgId)}
                     >
                       {org.slug}
-                      <span
-                        className={styles.planBadge}
-                        style={{ color: pc.text, borderColor: pc.border, background: pc.bg, fontSize: '0.5rem' }}
-                      >
+                      <span className={`${styles.planBadge} ${planTone(org.planId)}`}>
                         {planBadgeLabel(org.planId)}
                       </span>
                     </button>
@@ -206,7 +212,7 @@ function LiveCredentials({ data }: { data: MembershipData | null }) {
                     <span className={styles.credDetailCount}>{activeOrg.members.length} member{activeOrg.members.length !== 1 ? 's' : ''}</span>
                   </div>
                   {activeOrg.members.length === 0 ? (
-                    <div className={styles.credEmpty}>No members — run Seed Users</div>
+                    <div className={styles.credEmpty}>No members — run Seed users</div>
                   ) : (
                     activeOrg.members.map(m => (
                       <div key={m.userId} className={styles.credDetailRow}>
@@ -224,7 +230,7 @@ function LiveCredentials({ data }: { data: MembershipData | null }) {
         <>
           {/* User pill selector */}
           {data.byUser.length === 0 ? (
-            <div className={styles.credEmpty}>No users seeded yet — seed an org + run Seed Users first</div>
+            <div className={styles.credEmpty}>No users seeded yet — seed an org + run Seed users first</div>
           ) : (
             <>
               <div className={styles.credPills}>
@@ -235,7 +241,7 @@ function LiveCredentials({ data }: { data: MembershipData | null }) {
                     onClick={() => setSelectedUserId(u.userId)}
                   >
                     {u.email.replace('@dev.local', '')}
-                    <span style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.3)' }}>
+                    <span className={styles.credPillCount}>
                       {u.orgs.length} org{u.orgs.length !== 1 ? 's' : ''}
                     </span>
                   </button>
@@ -253,14 +259,10 @@ function LiveCredentials({ data }: { data: MembershipData | null }) {
                     <div className={styles.credEmpty}>No org memberships</div>
                   ) : (
                     activeUser.orgs.map(o => {
-                      const pc = PLAN_COLORS[o.planId] ?? PLAN_COLORS.tournament;
                       return (
                         <div key={o.orgId} className={styles.credDetailRow}>
                           <code className={styles.credDetailSlug}>/{o.slug}</code>
-                          <span
-                            className={styles.planBadge}
-                            style={{ color: pc.text, borderColor: pc.border, background: pc.bg, fontSize: '0.5rem' }}
-                          >
+                          <span className={`${styles.planBadge} ${planTone(o.planId)}`}>
                             {planBadgeLabel(o.planId)}
                           </span>
                           <span className={styles.credDetailRole}>{ROLE_DISPLAY[o.role] ?? o.role}</span>
@@ -299,12 +301,13 @@ function OrgSeedModal({
     <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => !busy && onClose())?.(); }}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <p className={styles.modalTitle}>Seed Org + Owner</p>
+        <div className={styles.modalHead}>
+          <p className={styles.modalTitle}>Seed org + owner</p>
           <button
+            className={styles.closeBtn}
             onClick={onClose}
             disabled={busy}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', padding: '0.1rem' }}
+            aria-label="Close"
           >
             <X size={15} />
           </button>
@@ -315,22 +318,14 @@ function OrgSeedModal({
           <div className={styles.modalSublabel}>Select plan tier</div>
           <div className={styles.planGrid}>
             {ORG_PLAN_OPTIONS.map(opt => {
-              const pc = PLAN_COLORS[opt.value];
               const active = selectedPlan === opt.value;
               return (
                 <button
                   key={opt.value}
-                  className={styles.planTile}
+                  className={`${styles.planTile} ${planTone(opt.value)} ${active ? styles.planTileActive : ''}`}
                   onClick={() => setSelectedPlan(opt.value)}
-                  style={{
-                    borderColor: active ? pc.border : 'rgba(255,255,255,0.1)',
-                    background:  active ? pc.bg    : 'transparent',
-                  }}
                 >
-                  <span
-                    className={styles.planTileName}
-                    style={{ color: active ? pc.text : 'rgba(255,255,255,0.6)' }}
-                  >
+                  <span className={styles.planTileName}>
                     {opt.label}
                   </span>
                   <span className={styles.planTilePrice}>{opt.price}</span>
@@ -342,11 +337,11 @@ function OrgSeedModal({
 
         {/* Actions */}
         <div className={styles.modalActions}>
-          <button className={styles.wipeCancelBtn} onClick={onClose} disabled={busy}>
+          <button className="btn btn-secondary btn-sm" onClick={onClose} disabled={busy}>
             Cancel
           </button>
-          <button className={styles.seedBtn} onClick={() => onSeed(selectedPlan)} disabled={busy}>
-            {busy ? <Loader size={13} className={styles.spin} /> : 'Seed'}
+          <button className="btn btn-secondary btn-sm" onClick={() => onSeed(selectedPlan)} disabled={busy}>
+            {busy ? <Loader size={13} className={kit.spin} /> : 'Seed'}
           </button>
         </div>
       </div>
@@ -372,9 +367,9 @@ function OrgListPanel({
   return (
     <div className={styles.orgListPanel}>
       <div className={styles.orgListHeader}>
-        <Building2 size={13} style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+        <Building2 size={13} className={styles.listIcon} />
         <span className={styles.orgListTitle}>
-          Seeded Orgs ({orgList.length})
+          Seeded orgs ({orgList.length})
         </span>
       </div>
 
@@ -382,7 +377,6 @@ function OrgListPanel({
         <div className={styles.orgEmptyMsg}>No orgs seeded yet</div>
       ) : (
         orgList.map(org => {
-          const pc = PLAN_COLORS[org.plan_id] ?? PLAN_COLORS.tournament;
           const isConfirming = confirmId === org.id;
           const isWiping     = wipingOrgId === org.id;
           const result       = wipeResults[org.id];
@@ -394,37 +388,34 @@ function OrgListPanel({
                 <span className={styles.orgSlug}>
                   {org.slug}
                   {org.protected && (
-                    <span style={{ marginLeft: '0.4rem', fontSize: '0.55rem', fontWeight: 700, color: 'rgba(255,220,0,0.5)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                    <span className={`${kit.chip} ${kit.chipWarn} ${styles.uatTag}`}>
                       UAT
                     </span>
                   )}
                 </span>
 
                 {/* Plan badge */}
-                <span
-                  className={styles.planBadge}
-                  style={{ color: pc.text, borderColor: pc.border, background: pc.bg }}
-                >
+                <span className={`${styles.planBadge} ${planTone(org.plan_id)}`}>
                   {planBadgeLabel(org.plan_id)}
                 </span>
 
                 {/* Wipe action */}
                 {org.protected ? (
                   /* UAT-protected — show lock, no wipe */
-                  <div style={{ width: 26, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Lock size={12} style={{ color: 'rgba(255,220,0,0.35)' }} />
+                  <div className={styles.orgLock}>
+                    <Lock size={12} />
                   </div>
                 ) : isConfirming ? (
                   <div className={styles.orgWipeConfirm}>
                     <button
-                      className={styles.orgWipeYes}
+                      className="btn btn-danger btn-sm"
                       onClick={() => { onWipeOrg(org.id); setConfirmId(null); }}
                       disabled={isWiping}
                     >
-                      {isWiping ? <Loader size={11} className={styles.spin} /> : 'Wipe'}
+                      {isWiping ? <Loader size={11} className={kit.spin} /> : 'Wipe'}
                     </button>
                     <button
-                      className={styles.orgWipeNo}
+                      className="btn btn-secondary btn-sm"
                       onClick={() => setConfirmId(null)}
                       disabled={isWiping}
                     >
@@ -437,9 +428,10 @@ function OrgListPanel({
                     onClick={() => setConfirmId(org.id)}
                     disabled={wipingOrgId !== null}
                     title={`Wipe ${org.slug}`}
+                    aria-label={`Wipe ${org.slug}`}
                   >
                     {isWiping
-                      ? <Loader size={11} className={styles.spin} />
+                      ? <Loader size={11} className={kit.spin} />
                       : <Trash2 size={12} />
                     }
                   </button>
@@ -449,8 +441,7 @@ function OrgListPanel({
               {/* Per-org wipe result */}
               {result && (
                 <div
-                  className={result.ok ? styles.logOk : styles.logErr}
-                  style={{ padding: '0.4rem 1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}
+                  className={`${result.ok ? styles.logOk : styles.logErr} ${styles.logRowResult}`}
                 >
                   {result.ok ? <CheckCircle size={11} /> : <AlertCircle size={11} />}
                   <div className={styles.logLines}>
@@ -495,8 +486,8 @@ function UserListPanel({
   return (
     <div className={styles.orgListPanel}>
       <div className={styles.orgListHeader}>
-        <Users size={13} style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
-        <span className={styles.orgListTitle}>Auth Users ({users.length})</span>
+        <Users size={13} className={styles.listIcon} />
+        <span className={styles.orgListTitle}>Auth users ({users.length})</span>
       </div>
 
       {users.length === 0 ? (
@@ -510,16 +501,16 @@ function UserListPanel({
           return (
             <div key={user.userId}>
               <div className={styles.orgRow}>
-                <span className={styles.orgSlug}>{user.email}</span>
+                <span className={styles.orgEmail}>{user.email}</span>
 
                 <div className={styles.userOrgTags}>
                   {user.ownedOrgs.map(o => (
-                    <span key={o.orgId} className={`${styles.userOrgTag} ${styles.userOrgTagOwner}`}>
+                    <span key={o.orgId} className={`${kit.chip} ${kit.chipBad}`}>
                       /{o.slug} owner
                     </span>
                   ))}
                   {user.otherMemberships.map(m => (
-                    <span key={m.orgId} className={styles.userOrgTag}>
+                    <span key={m.orgId} className={`${kit.chip} ${kit.chipQuiet}`}>
                       /{m.slug} {m.role}
                     </span>
                   ))}
@@ -531,14 +522,14 @@ function UserListPanel({
                 {isConfirming ? (
                   <div className={styles.orgWipeConfirm}>
                     <button
-                      className={styles.orgWipeYes}
+                      className="btn btn-danger btn-sm"
                       onClick={() => { onDeleteUser(user.userId); setConfirmId(null); }}
                       disabled={isDeleting}
                     >
-                      {isDeleting ? <Loader size={11} className={styles.spin} /> : 'Delete'}
+                      {isDeleting ? <Loader size={11} className={kit.spin} /> : 'Delete'}
                     </button>
                     <button
-                      className={styles.orgWipeNo}
+                      className="btn btn-secondary btn-sm"
                       onClick={() => setConfirmId(null)}
                     >
                       No
@@ -550,9 +541,10 @@ function UserListPanel({
                     onClick={() => handleDeleteClick(user)}
                     disabled={deletingUserId !== null}
                     title={`Delete ${user.email}`}
+                    aria-label={`Delete ${user.email}`}
                   >
                     {isDeleting
-                      ? <Loader size={11} className={styles.spin} />
+                      ? <Loader size={11} className={kit.spin} />
                       : <Trash2 size={12} />
                     }
                   </button>
@@ -561,8 +553,7 @@ function UserListPanel({
 
               {result && (
                 <div
-                  className={result.ok ? styles.logOk : styles.logErr}
-                  style={{ padding: '0.4rem 1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}
+                  className={`${result.ok ? styles.logOk : styles.logErr} ${styles.logRowResult}`}
                 >
                   {result.ok ? <CheckCircle size={11} /> : <AlertCircle size={11} />}
                   <div className={styles.logLines}>
@@ -579,58 +570,43 @@ function UserListPanel({
       {modalUser && (
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setModalUser(null))?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <p className={styles.modalTitle}>Delete User</p>
+            <div className={styles.modalHead}>
+              <p className={styles.modalTitle}>Delete user</p>
               <button
+                className={styles.closeBtn}
                 onClick={() => setModalUser(null)}
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', padding: '0.1rem' }}
+                aria-label="Close"
               >
                 <X size={15} />
               </button>
             </div>
-            <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.55 }}>
-              Deleting <strong style={{ color: 'var(--white-90)' }}>{modalUser.email}</strong> will also permanently delete the following owned org(s) and all their data:
+            <p className={styles.modalLead}>
+              Deleting <strong>{modalUser.email}</strong> will also permanently delete the following owned org(s) and all their data:
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-              {modalUser.ownedOrgs.map(o => {
-                const pc = PLAN_COLORS[o.planId] ?? PLAN_COLORS.tournament;
-                return (
-                  <div
-                    key={o.orgId}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      padding: '0.4rem 0.7rem',
-                      background: 'rgba(239,68,68,0.05)',
-                      border: '1px solid rgba(239,68,68,0.15)',
-                      borderRadius: '5px',
-                    }}
-                  >
-                    <span style={{ fontFamily: 'var(--font-data, monospace)', fontSize: '0.72rem', color: 'var(--white-75)', flex: 1 }}>
-                      /{o.slug}
-                    </span>
-                    <span
-                      className={styles.planBadge}
-                      style={{ color: pc.text, borderColor: pc.border, background: pc.bg, fontSize: '0.5rem' }}
-                    >
-                      {planBadgeLabel(o.planId)}
-                    </span>
-                  </div>
-                );
-              })}
+            <div className={styles.ownedList}>
+              {modalUser.ownedOrgs.map(o => (
+                <div key={o.orgId} className={styles.ownedRow}>
+                  <span className={styles.ownedSlug}>
+                    /{o.slug}
+                  </span>
+                  <span className={`${styles.planBadge} ${planTone(o.planId)}`}>
+                    {planBadgeLabel(o.planId)}
+                  </span>
+                </div>
+              ))}
             </div>
-            <p style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.28)', margin: 0 }}>
+            <p className={styles.modalFine}>
               This cannot be undone.
             </p>
             <div className={styles.modalActions}>
-              <button className={styles.wipeCancelBtn} onClick={() => setModalUser(null)}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setModalUser(null)}>
                 Cancel
               </button>
               <button
-                className={styles.wipeBtn}
-                style={{ fontSize: '0.65rem' }}
+                className="btn btn-danger btn-sm"
                 onClick={() => { onDeleteUser(modalUser.userId); setModalUser(null); }}
               >
-                <Trash2 size={13} /> Delete User + Orgs
+                <Trash2 size={13} /> Delete user + orgs
               </button>
             </div>
           </div>
@@ -644,7 +620,7 @@ function UserListPanel({
 
 function StatusPill({ count, label }: { count: number; label: string }) {
   return (
-    <span className={count > 0 ? styles.pillHas : styles.pillEmpty}>
+    <span className={`${kit.chip} ${count > 0 ? kit.chipOk : kit.chipQuiet}`}>
       {count} {label}
     </span>
   );
@@ -672,29 +648,29 @@ function ReadinessPanel({
             Confirms Coaches Portal price slots, app URL, plan gate, webhook secret, and Stripe price metadata.
           </div>
         </div>
-        <button className={styles.refreshBtn} onClick={onRefresh} title="Refresh checkout readiness">
+        <button className={styles.refreshBtn} onClick={onRefresh} title="Refresh checkout readiness" aria-label="Refresh checkout readiness">
           <RefreshCw size={14} />
         </button>
       </div>
 
       {!readiness ? (
         <div className={styles.logOk}>
-          <Loader size={12} className={styles.spin} />
+          <Loader size={12} className={kit.spin} />
           <div>Checking Coaches Portal checkout setup...</div>
         </div>
       ) : (
         <>
           <div className={styles.readinessSummary}>
-            <span className={readiness.readyForStripeSmoke ? styles.pillHas : styles.pillEmpty}>
+            <span className={`${kit.chip} ${readiness.readyForStripeSmoke ? kit.chipOk : kit.chipQuiet}`}>
               Stripe smoke {readiness.readyForStripeSmoke ? 'ready' : 'blocked'}
             </span>
-            <span className={styles.pillEmpty}>
+            <span className={`${kit.chip} ${kit.chipQuiet}`}>
               Env: {readiness.stripeEnvironment}
             </span>
-            <span className={failing > 0 ? styles.pillFail : styles.pillHas}>
+            <span className={`${kit.chip} ${failing > 0 ? kit.chipBad : kit.chipOk}`}>
               {failing} failing
             </span>
-            <span className={warning > 0 ? styles.pillWarn : styles.pillHas}>
+            <span className={`${kit.chip} ${warning > 0 ? kit.chipWarn : kit.chipOk}`}>
               {warning} warnings
             </span>
           </div>
@@ -737,7 +713,7 @@ function MockBillingPanel({
   const sourceLabel = !config
     ? 'Loading'
     : config.source === 'runtime_override'
-      ? 'Dev Tools override'
+      ? 'Dev tools override'
       : config.source === 'production'
         ? 'Production locked'
         : '.env.local default';
@@ -755,42 +731,42 @@ function MockBillingPanel({
       <div className={styles.toolHeader}>
         <Zap size={15} />
         <div className={styles.cardMeta}>
-          <div className={styles.cardTitle}>Mock Billing</div>
+          <div className={styles.cardTitle}>Mock billing</div>
           <div className={styles.cardDesc}>{description}</div>
         </div>
       </div>
 
       <div className={styles.toolStatus}>
-        <span className={config?.effectiveEnabled ? styles.pillHas : styles.pillEmpty}>
+        <span className={`${kit.chip} ${config?.effectiveEnabled ? kit.chipOk : kit.chipQuiet}`}>
           {config?.effectiveEnabled ? 'Enabled' : 'Disabled'}
         </span>
-        <span className={styles.pillEmpty}>Source: {sourceLabel}</span>
-        <span className={config?.stripeConfigured ? styles.pillHas : styles.pillWarn}>
+        <span className={`${kit.chip} ${kit.chipQuiet}`}>Source: {sourceLabel}</span>
+        <span className={`${kit.chip} ${config?.stripeConfigured ? kit.chipOk : kit.chipWarn}`}>
           Stripe {config?.stripeConfigured ? 'configured' : 'missing'}
         </span>
       </div>
 
       <div className={styles.toolActions}>
         <button
-          className={config?.effectiveEnabled ? styles.toolBtn : `${styles.toolBtn} ${styles.toolBtnPrimary}`}
+          className="btn btn-secondary btn-sm"
           onClick={() => onSetOverride(true)}
           disabled={busy || !config || config.effectiveEnabled}
         >
-          {busy ? <Loader size={13} className={styles.spin} /> : 'Enable Mock'}
+          {busy ? <Loader size={13} className={kit.spin} /> : 'Enable mock'}
         </button>
         <button
-          className={!config?.effectiveEnabled ? styles.toolBtn : `${styles.toolBtn} ${styles.toolBtnPrimary}`}
+          className="btn btn-secondary btn-sm"
           onClick={() => onSetOverride(false)}
           disabled={busy || !config || !config.effectiveEnabled}
         >
-          Disable Mock
+          Disable mock
         </button>
         <button
-          className={`${styles.toolBtn} ${styles.toolBtnMuted}`}
+          className="btn btn-secondary btn-sm"
           onClick={() => onSetOverride(null)}
           disabled={busy || !config || config.override === null}
         >
-          Use .env Default
+          Use .env default
         </button>
       </div>
     </section>
@@ -844,7 +820,7 @@ function SeedCard({
           <div className={styles.cardTitle}>
             {title}
             {kind && (
-              <span className={kind === 'standalone' ? styles.kindBadgeStandalone : styles.kindBadgeAdditive}>
+              <span className={`${kit.chip} ${kind === 'standalone' ? kit.chipQuiet : kit.chipInfo} ${styles.kindBadge}`}>
                 {kind === 'standalone' ? 'Standalone' : 'Additive'}
               </span>
             )}
@@ -857,11 +833,11 @@ function SeedCard({
           </div>
         ) : (
           <button
-            className={styles.seedBtn}
+            className="btn btn-secondary btn-sm"
             onClick={() => onSeed(orgOptions && selectedOrgId ? selectedOrgId : undefined)}
             disabled={busy}
           >
-            {busy ? <Loader size={13} className={styles.spin} /> : 'Seed'}
+            {busy ? <Loader size={13} className={kit.spin} /> : 'Seed'}
           </button>
         )}
       </div>
@@ -906,15 +882,15 @@ function SeedCard({
 // ─── Card sections — static grouping, keys match CARDS ───────────────────────
 
 const CARD_SECTIONS: { label: string; sublabel?: string; keys: string[] }[] = [
-  { label: 'Platform Access', keys: ['platform-user'] },
-  { label: 'Orgs & Users',    keys: ['org', 'users']  },
+  { label: 'Platform access', keys: ['platform-user'] },
+  { label: 'Orgs & users',    keys: ['org', 'users']  },
   {
-    label:    'Org Features',
+    label:    'Org features',
     sublabel: 'additive — seeds into an existing org',
     keys:     ['tournament', 'house-league', 'rep-team'],
   },
   {
-    label:    'Standalone Products',
+    label:    'Standalone products',
     sublabel: 'creates its own org space',
     keys:     ['team-workspace', 'team-claim'],
   },
@@ -1153,7 +1129,7 @@ export default function DevDashboard() {
       key:         'platform-user',
       endpoint:    '/api/dev/seed/platform-user',
       icon:        Shield,
-      title:       'Platform Admin',
+      title:       'Platform admin',
       description: 'A FieldLogicHQ staff account with access to /platform-admin',
       creates:     'platform@dev.local (platform admin)',
       kind:        undefined as 'additive' | 'standalone' | undefined,
@@ -1166,7 +1142,7 @@ export default function DevDashboard() {
       key:         'org',
       endpoint:    '/api/dev/seed/org',
       icon:        Building2,
-      title:       'Org + Owner',
+      title:       'Org + owner',
       description: 'Creates a plan-specific org (dev-tournament-org, dev-league-org, etc.). Re-seed to change its plan.',
       creates:     'dev-{plan}-org, owner@dev.local (owner)',
       kind:        undefined as 'additive' | 'standalone' | undefined,
@@ -1179,12 +1155,12 @@ export default function DevDashboard() {
       key:         'users',
       endpoint:    '/api/dev/seed/users',
       icon:        Users,
-      title:       'User Set',
+      title:       'User set',
       description: 'Plan-appropriate roles for every seeded org — league & club add league-admin and treasurer',
       creates:     'admin/staff/coach for all orgs; league-admin/treasurer for league & club',
       kind:        undefined as 'additive' | 'standalone' | undefined,
       locked:      !hasOrg,
-      lockReason:  'Seed Org + Owner first' as string | undefined,
+      lockReason:  'Seed org + owner first' as string | undefined,
       orgOptions:  undefined as OrgSelectOption[] | undefined,
       badges:      <StatusPill count={status?.orgUsers ?? 0} label="non-owner members" />,
     },
@@ -1197,7 +1173,7 @@ export default function DevDashboard() {
       creates:     '1 tournament, 2 divisions, 8 teams, 12 games',
       kind:        'additive' as 'additive' | 'standalone' | undefined,
       locked:      !hasOrg,
-      lockReason:  'Seed Org + Owner first' as string | undefined,
+      lockReason:  'Seed org + owner first' as string | undefined,
       orgOptions:  addOrgOptions,
       badges:      <StatusPill count={status?.tournaments ?? 0} label="tournaments" />,
     },
@@ -1205,12 +1181,12 @@ export default function DevDashboard() {
       key:         'house-league',
       endpoint:    '/api/dev/seed/house-league',
       icon:        CalendarDays,
-      title:       'House league Season',
+      title:       'House league season',
       description: 'An active recreational season with divisions, teams, games, and sample registrations',
       creates:     '1 season, 2 divisions, 6 teams, 6 games, 2 registrations',
       kind:        'additive' as 'additive' | 'standalone' | undefined,
       locked:      !hasOrg,
-      lockReason:  'Seed Org + Owner first' as string | undefined,
+      lockReason:  'Seed org + owner first' as string | undefined,
       orgOptions:  addOrgOptions,
       badges:      <StatusPill count={status?.leagueSeasons ?? 0} label="seasons" />,
     },
@@ -1218,12 +1194,12 @@ export default function DevDashboard() {
       key:         'rep-team',
       endpoint:    '/api/dev/seed/rep-team',
       icon:        UserCheck,
-      title:       'Rep Team',
+      title:       'Rep team',
       description: 'A competitive team program with roster players, a coach, and upcoming events — added to an existing org',
       creates:     '1 team, 1 program year, 3 players, 1 coach link, 2 events',
       kind:        'additive' as 'additive' | 'standalone' | undefined,
       locked:      !hasOrg,
-      lockReason:  'Seed Org + Owner first' as string | undefined,
+      lockReason:  'Seed org + owner first' as string | undefined,
       orgOptions:  addOrgOptions,
       badges:      <StatusPill count={status?.repTeams ?? 0} label="rep teams" />,
     },
@@ -1244,12 +1220,12 @@ export default function DevDashboard() {
       key:         'team-claim',
       endpoint:    '/api/dev/seed/team-claim',
       icon:        ClipboardList,
-      title:       'Coaches Portal Claim Link',
+      title:       'Coaches Portal claim link',
       description: 'Creates a secure claim link for a dev tournament team contact',
       creates:     'one available Coaches Portal claim URL',
       kind:        'standalone' as 'additive' | 'standalone' | undefined,
       locked:      (status?.tournaments ?? 0) === 0,
-      lockReason:  'Seed Tournament first — claim links attach to a tournament team contact' as string | undefined,
+      lockReason:  'Seed tournament first — claim links attach to a tournament team contact' as string | undefined,
       orgOptions:  undefined as OrgSelectOption[] | undefined,
       badges:      <StatusPill count={status?.teamClaims ?? 0} label="portal claims" />,
     },
@@ -1258,32 +1234,31 @@ export default function DevDashboard() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerBadge}>DEV TOOLS</div>
-        <h1 className={styles.title}>{tab === 'seed' ? 'Seed Dashboard' : 'Agent Playbook'}</h1>
-        {tab === 'seed' && (
-          <button className={styles.refreshBtn} onClick={fetchStatus} title="Refresh status">
+    <div className={`${kit.page} ${kit.reading}`}>
+      <AdminPageHeader
+        title={tab === 'seed' ? 'Seed dashboard' : 'Agent playbook'}
+        actions={tab === 'seed' ? (
+          <button className={styles.refreshBtn} onClick={fetchStatus} title="Refresh status" aria-label="Refresh status">
             <RefreshCw size={14} />
           </button>
-        )}
-      </header>
+        ) : undefined}
+      />
 
       {/* Tab strip */}
-      <div className={styles.tabs}>
+      <div className={kit.tabs}>
         <button
-          className={`${styles.tab} ${tab === 'seed' ? styles.tabActive : ''}`}
+          className={`${kit.tab} ${tab === 'seed' ? kit.tabOn : ''}`}
           onClick={() => setTab('seed')}
         >
           <Terminal size={12} />
-          Seed Dashboard
+          Seed dashboard
         </button>
         <button
-          className={`${styles.tab} ${tab === 'playbook' ? styles.tabActive : ''}`}
+          className={`${kit.tab} ${tab === 'playbook' ? kit.tabOn : ''}`}
           onClick={() => setTab('playbook')}
         >
           <BookOpen size={12} />
-          Agent Playbook
+          Agent playbook
         </button>
       </div>
 
@@ -1305,14 +1280,11 @@ export default function DevDashboard() {
 
       {/* Seed cards — grouped by section */}
       <div className={styles.cards}>
-        {CARD_SECTIONS.map((section, idx) => {
+        {CARD_SECTIONS.map(section => {
           const sectionCards = CARDS.filter(c => section.keys.includes(c.key));
           return (
-            <div key={section.label}>
-              <div
-                className={styles.sectionDivider}
-                style={idx === 0 ? { borderTop: 'none', marginTop: 0, paddingTop: 0 } : undefined}
-              >
+            <div key={section.label} className={styles.cardGroup}>
+              <div className={styles.sectionDivider}>
                 <span className={styles.sectionLabel}>{section.label}</span>
                 {section.sublabel && (
                   <span className={styles.sectionSublabel}>{section.sublabel}</span>
@@ -1362,80 +1334,55 @@ export default function DevDashboard() {
 
       {/* Plan gates toggle — local only */}
       {PLAN_GATES_TOGGLE_ENABLED && (
-        <div style={{
-          border: '1px solid rgba(255,255,0,0.2)',
-          borderRadius: '8px',
-          padding: '1rem 1.25rem',
-          marginBottom: '1.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-          flexWrap: 'wrap' as const,
-        }}>
-          <Zap size={15} style={{ color: 'rgba(255,255,0,0.6)', flexShrink: 0 }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#f0f0f0', marginBottom: '0.2rem' }}>
-              Plan Gates
+        <div className={styles.gatesBox}>
+          <Zap size={15} className={styles.gatesIcon} />
+          <div className={styles.gatesText}>
+            <div className={styles.gatesTitle}>
+              Plan gates
             </div>
-            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>
+            <div className={styles.gatesDesc}>
               {planGatesMode === 'live'
                 ? 'All plans treated as live — checkout CTAs visible on pricing page.'
                 : 'Gates enforced — League Plus and Club show early-access CTAs.'}
             </div>
           </div>
           <button
+            className="btn btn-secondary btn-sm"
             onClick={togglePlanGates}
             disabled={planGatesBusy}
-            style={{
-              flexShrink: 0,
-              fontFamily: 'var(--font-data, monospace)',
-              fontSize: '0.65rem',
-              fontWeight: 800,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase' as const,
-              padding: '0.35rem 0.85rem',
-              background: planGatesMode === 'live' ? 'rgba(255,255,0,0.1)'     : 'rgba(255,255,255,0.05)',
-              border:     planGatesMode === 'live' ? '1px solid rgba(255,255,0,0.45)' : '1px solid rgba(255,255,255,0.15)',
-              color:      planGatesMode === 'live' ? '#ffff00'                  : 'rgba(255,255,255,0.5)',
-              borderRadius: '5px',
-              cursor: planGatesBusy ? 'wait' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-            }}
           >
             {planGatesBusy
-              ? <Loader size={13} className={styles.spin} />
-              : planGatesMode === 'live' ? 'Enforce Gates' : 'All Live'}
+              ? <Loader size={13} className={kit.spin} />
+              : planGatesMode === 'live' ? 'Enforce gates' : 'All live'}
           </button>
         </div>
       )}
 
       {/* Danger zone */}
       <div className={styles.danger}>
-        <div className={styles.dangerLabel}>Danger Zone</div>
+        <div className={styles.dangerLabel}>Danger zone</div>
         {wipeConfirm ? (
           <div className={styles.wipeConfirm}>
             <span className={styles.dangerDesc}>This deletes all orgs, users, and data. Cannot be undone.</span>
-            <button className={styles.wipeBtn} onClick={handleWipe} disabled={wiping}>
-              {wiping ? <Loader size={14} className={styles.spin} /> : <Trash2 size={14} />}
+            <button className="btn btn-danger btn-sm" onClick={handleWipe} disabled={wiping}>
+              {wiping ? <Loader size={14} className={kit.spin} /> : <Trash2 size={14} />}
               {wiping ? 'Wiping…' : 'Yes, wipe everything'}
             </button>
-            <button className={styles.wipeCancelBtn} onClick={() => setWipeConfirm(false)} disabled={wiping}>
+            <button className="btn btn-secondary btn-sm" onClick={() => setWipeConfirm(false)} disabled={wiping}>
               Cancel
             </button>
           </div>
         ) : (
           <>
-            <button className={styles.wipeBtn} onClick={() => setWipeConfirm(true)} disabled={wiping || wipingOrgId !== null}>
+            <button className="btn btn-danger btn-sm" onClick={() => setWipeConfirm(true)} disabled={wiping || wipingOrgId !== null}>
               <Trash2 size={14} />
-              Wipe Everything
+              Wipe everything
             </button>
             <span className={styles.dangerDesc}>Deletes all orgs, all auth users, and all data.</span>
           </>
         )}
         {wipeResult && (
-          <div className={wipeResult.ok ? styles.logOk : styles.logErr} style={{ marginTop: '0.5rem' }}>
+          <div className={`${wipeResult.ok ? styles.logOk : styles.logErr} ${styles.logStandalone}`}>
             {wipeResult.ok ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
             <div className={styles.logLines}>
               {wipeResult.error && <div>{wipeResult.error}</div>}

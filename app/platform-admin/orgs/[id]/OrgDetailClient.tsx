@@ -2,21 +2,21 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './orgDetail.module.css';
+import kit from '../../console.module.css';
+import { cap } from '../../chips';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { fmtAbsoluteDate, fmtAbsoluteDateTime, fmtSince, fmtDaysLeft } from '@/lib/format-date';
 import { holdsSlot } from '@/lib/tournament-slot';
 import OwnAddressSection from './OwnAddressSection';
 
-// Platform-admin styles set the console's monospace font per-element, so an unstyled checkbox/radio
-// <label> falls back to the browser default (wrong font AND larger size). Reuse this on every
-// checkbox label in this screen so they all match the surrounding console text.
+// A checkbox <label> in this screen wears the kit's check look (12px, secondary ink); reuse this on every one.
 const CHECKBOX_LABEL_STYLE = {
   display: 'flex',
   alignItems: 'center',
   gap: '0.5rem',
   cursor: 'pointer',
-  fontFamily: 'var(--font-data)',
-  fontSize: '0.75rem',
+  fontSize: 'var(--type-support)',
+  color: 'var(--text-secondary)',
 } as const;
 
 interface Override {
@@ -159,9 +159,9 @@ const ADDON_MODULE_LABELS: Record<string, string> = {
 };
 
 const OVERRIDE_TYPE_LABELS: Record<string, string> = {
-  subscription_status: 'Subscription Status',
-  comp_period:         'Comp Period',
-  module_addon:        'Feature Access',
+  subscription_status: 'Subscription status',
+  comp_period:         'Comp period',
+  module_addon:        'Feature access',
 };
 
 type ApiErrorBody = {
@@ -228,11 +228,10 @@ function isExpiringSoon(expiresAt: string | null) {
 
 const daysLeftLabel = (iso: string) => fmtDaysLeft(iso);
 
-function tournamentStatusClass(status: string, styles: Record<string, string>) {
-  if (status === 'active') return styles.badgeActive;
-  if (status === 'completed') return styles.badgeMuted;
-  if (status === 'draft') return styles.badgeDraft;
-  return styles.badgeMuted;
+function tournamentStatusClass(status: string) {
+  if (status === 'active') return kit.chipOk;
+  if (status === 'draft') return kit.chipInfo;
+  return kit.chipQuiet;
 }
 
 export default function OrgDetailClient({
@@ -763,9 +762,9 @@ export default function OrgDetailClient({
     canManageBilling && subscriptionStatus !== 'canceled' && (isPaidPlanNow || hasStripeLink);
   const tabItems: Array<{ id: TabId; label: string; count?: number }> = [
     { id: 'support', label: 'Support', count: notes.length },
-    { id: 'billing', label: 'Billing & Access', count: activeOverrides.length },
+    { id: 'billing', label: 'Billing & access', count: activeOverrides.length },
     { id: 'entitlements', label: 'Entitlements', count: addonEdits.length },
-    { id: 'people', label: 'People & Tournaments', count: members.length + tournaments.length },
+    { id: 'people', label: 'People & tournaments', count: members.length + tournaments.length },
     { id: 'activity', label: 'Activity', count: auditEvents.length },
   ];
 
@@ -878,23 +877,23 @@ export default function OrgDetailClient({
     <div className={styles.workflowShell} id="org-workflows">
       <div className={styles.workflowHeader}>
         <div>
-          <h2 className={styles.sectionTitle}>Account Workflows</h2>
+          <h2 className={styles.sectionTitle}>Account workflows</h2>
           <p className={styles.emptyNote}>Grouped by what platform staff usually need to do next.</p>
         </div>
       </div>
 
-      <div className={styles.workflowTabs} role="tablist" aria-label="Organization workflows">
+      <div className={kit.tabs} role="tablist" aria-label="Organization workflows">
         {tabItems.map(tab => (
           <button
             key={tab.id}
             type="button"
             role="tab"
             aria-selected={activeTab === tab.id}
-            className={`${styles.workflowTab} ${activeTab === tab.id ? styles.workflowTabActive : ''}`}
+            className={`${kit.tab} ${activeTab === tab.id ? kit.tabOn : ''}`}
             onClick={() => selectTab(tab.id)}
           >
             <span>{tab.label}</span>
-            {typeof tab.count === 'number' && <span className={styles.tabCount}>{tab.count}</span>}
+            {typeof tab.count === 'number' && <span className={kit.tabCount}>{tab.count}</span>}
           </button>
         ))}
       </div>
@@ -904,7 +903,7 @@ export default function OrgDetailClient({
           <div className={styles.workflowGrid}>
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>Internal Notes</h3>
+                <h3 className={styles.sectionTitle}>Internal notes</h3>
                 {notesSaved && <span className={styles.savedIndicator}>Saved</span>}
               </div>
               {canManageSupport && (
@@ -918,11 +917,11 @@ export default function OrgDetailClient({
                   />
                   <div className={styles.notesActions}>
                     <button
-                      className={styles.saveBtn}
+                      className="btn btn-secondary btn-sm"
                       onClick={handleNoteCreate}
                       disabled={notesSaving}
                     >
-                      {notesSaving ? 'Saving...' : 'Add Note'}
+                      {notesSaving ? 'Saving...' : 'Add note'}
                     </button>
                     {notesError && <span className={styles.rowError}>{notesError}</span>}
                   </div>
@@ -958,14 +957,14 @@ export default function OrgDetailClient({
                             />
                             <div className={styles.notesActions}>
                               <button
-                                className={styles.saveBtn}
+                                className="btn btn-secondary btn-sm"
                                 onClick={() => handleNoteUpdate(note.id)}
                                 disabled={notesSaving}
                               >
-                                {notesSaving ? 'Saving...' : 'Save Edit'}
+                                {notesSaving ? 'Saving...' : 'Save edit'}
                               </button>
                               <button
-                                className={styles.cancelBtn}
+                                className="btn btn-secondary btn-sm"
                                 onClick={() => setEditingNotes(prev => {
                                   const next = { ...prev };
                                   delete next[note.id];
@@ -1007,10 +1006,10 @@ export default function OrgDetailClient({
 
             {canManageSupport && (
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Organization Identity</h3>
+                <h3 className={styles.sectionTitle}>Organization identity</h3>
                 <form className={styles.overrideForm} onSubmit={handleIdentitySave}>
                 <div className={styles.formRow}>
-                  <label className={styles.formLabel}>Name</label>
+                  <label className={styles.formLabel}>Name *</label>
                   <input
                     className={styles.formInput}
                     value={identityName}
@@ -1019,7 +1018,7 @@ export default function OrgDetailClient({
                   />
                 </div>
                 <div className={styles.formRow}>
-                  <label className={styles.formLabel}>Slug</label>
+                  <label className={styles.formLabel}>Slug *</label>
                   <input
                     className={styles.formInput}
                     value={identitySlug}
@@ -1032,7 +1031,7 @@ export default function OrgDetailClient({
                   </p>
                 </div>
                 <div className={styles.formRow}>
-                  <label className={styles.formLabel}>Reason</label>
+                  <label className={styles.formLabel}>Reason *</label>
                   <textarea
                     className={styles.formTextarea}
                     value={identityReason}
@@ -1044,8 +1043,8 @@ export default function OrgDetailClient({
                 </div>
                 {identityError && <div className={styles.rowError}>{identityError}</div>}
                 <div className={styles.notesActions}>
-                  <button type="submit" className={styles.saveBtn} disabled={identitySaving}>
-                    {identitySaving ? 'Saving...' : identitySaved ? 'Saved' : 'Save Identity'}
+                  <button type="submit" className="btn btn-secondary btn-sm" disabled={identitySaving}>
+                    {identitySaving ? 'Saving...' : identitySaved ? 'Saved' : 'Save identity'}
                   </button>
                 </div>
                 </form>
@@ -1054,7 +1053,7 @@ export default function OrgDetailClient({
 
             {canManageSupport && (
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Account Ownership</h3>
+                <h3 className={styles.sectionTitle}>Account ownership</h3>
                 <p className={styles.emptyNote}>
                   Current owner{currentOwners.length === 1 ? '' : 's'}:{' '}
                   {currentOwners.length > 0 ? currentOwners.map(o => o.email).join(', ') : 'none assigned'}.
@@ -1062,8 +1061,8 @@ export default function OrgDetailClient({
                 {eligibleNewOwners.length === 0 ? (
                   <p className={styles.warningNote}>
                     No other active members to transfer to. Invite the new owner to this organization and
-                    have them accept first, then return here. (You can also use Make Owner on the
-                    People &amp; Tournaments tab.)
+                    have them accept first, then return here. (You can also use Make owner on the
+                    People &amp; tournaments tab.)
                   </p>
                 ) : (
                   <div className={styles.formRow}>
@@ -1083,7 +1082,7 @@ export default function OrgDetailClient({
                       </select>
                       <button
                         type="button"
-                        className={styles.saveBtn}
+                        className="btn btn-secondary btn-sm"
                         disabled={!ownerPickId}
                         onClick={() => {
                           const m = members.find(x => x.userId === ownerPickId);
@@ -1114,7 +1113,7 @@ export default function OrgDetailClient({
 
             {!canManageSupport && (
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Organization Identity &amp; Ownership</h3>
+                <h3 className={styles.sectionTitle}>Organization identity &amp; ownership</h3>
                 <p className={styles.emptyNote}>
                   Requires support access to rename the organization, change its slug, or transfer ownership.
                 </p>
@@ -1152,12 +1151,12 @@ export default function OrgDetailClient({
               )}
             </section>
 
-            <div className={styles.dangerDivider}>Danger Zone</div>
+            <div className={styles.dangerDivider}>Danger zone</div>
 
             {isSuperAdmin && (
               <section className={`${styles.section} ${styles.dangerSection}`}>
                 <div className={styles.sectionHeader}>
-                  <h3 className={styles.sectionTitle}>Delete Organization</h3>
+                  <h3 className={styles.sectionTitle}>Delete organization</h3>
                   <span className={styles.overrideType}>super admin only</span>
                 </div>
 
@@ -1171,10 +1170,10 @@ export default function OrgDetailClient({
                     <div className={styles.notesActions}>
                       <button
                         type="button"
-                        className={styles.revokeBtn}
+                        className="btn btn-danger btn-sm"
                         onClick={handleLoadDeletePreflight}
                       >
-                        Load Delete Preflight…
+                        Load delete preflight…
                       </button>
                     </div>
                   </>
@@ -1194,7 +1193,7 @@ export default function OrgDetailClient({
                           className={styles.historyToggle}
                           onClick={() => setActiveTab('billing')}
                         >
-                          Cancel Subscription in Billing &amp; Access
+                          Cancel subscription in Billing &amp; access
                         </button>{' '}
                         , then reload the preflight here.
                       </p>
@@ -1275,7 +1274,7 @@ export default function OrgDetailClient({
                           </button>
                           <button
                             type="button"
-                            className={styles.revokeBtn}
+                            className="btn btn-danger btn-sm"
                             onClick={handleDeleteOrg}
                             disabled={
                               deleteOrgSaving ||
@@ -1283,7 +1282,7 @@ export default function OrgDetailClient({
                               !deleteOrgReason.trim()
                             }
                           >
-                            {deleteOrgSaving ? 'Deleting…' : 'Delete Organization'}
+                            {deleteOrgSaving ? 'Deleting…' : 'Delete organization'}
                           </button>
                         </div>
                       </>
@@ -1296,7 +1295,7 @@ export default function OrgDetailClient({
             {!isSuperAdmin && (
               <section className={`${styles.section} ${styles.dangerSection}`}>
                 <div className={styles.sectionHeader}>
-                  <h3 className={styles.sectionTitle}>Delete Organization</h3>
+                  <h3 className={styles.sectionTitle}>Delete organization</h3>
                   <span className={styles.overrideType}>super admin only</span>
                 </div>
                 <p className={styles.emptyNote}>
@@ -1317,10 +1316,10 @@ export default function OrgDetailClient({
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h3 className={styles.sectionTitle}>
-                  Plan And Limits
+                  Plan and limits
                   <HelpTooltip
-                    title="Plan And Limits"
-                    body="This changes the org's access (plan + limits) only — it never touches Stripe. No charge, refund, proration, or cancellation happens here; the confirm step explains the real path to change billing. Setting the free Tournament plan only clears the stored Stripe subscription fields and leaves the account active — it does not cancel a live subscription. The only Stripe-touching control is Cancel Subscription."
+                    title="Plan and limits"
+                    body="This changes the org's access (plan + limits) only — it never touches Stripe. No charge, refund, proration, or cancellation happens here; the confirm step explains the real path to change billing. Setting the free Tournament plan only clears the stored Stripe subscription fields and leaves the account active — it does not cancel a live subscription. The only Stripe-touching control is Cancel subscription."
                   />
                 </h3>
                 {planSaved && <span className={styles.savedIndicator}>Saved</span>}
@@ -1328,15 +1327,15 @@ export default function OrgDetailClient({
               <form className={styles.overrideForm} onSubmit={handlePlanSubmit}>
                 <div className={styles.planSafetyGrid}>
                   <div className={styles.planMetric}>
-                    <span className={styles.fieldLabel}>Current Plan</span>
+                    <span className={styles.fieldLabel}>Current plan</span>
                     <strong>{initialPlan?.label ?? currentPlanId}</strong>
                   </div>
                   <div className={styles.planMetric}>
-                    <span className={styles.fieldLabel}>Current Tournament Limit</span>
+                    <span className={styles.fieldLabel}>Current tournament limit</span>
                     <strong>{fmtLimit(currentTournamentLimit)}</strong>
                   </div>
                   <div className={styles.planMetric}>
-                    <span className={styles.fieldLabel}>Non-Archived Tournaments</span>
+                    <span className={styles.fieldLabel}>Non-archived tournaments</span>
                     <strong>{tournaments.length}</strong>
                   </div>
                   {currentIsClubBand && (
@@ -1362,7 +1361,7 @@ export default function OrgDetailClient({
                   <p>
                     To start, re-price, or stop what the customer actually pays, use the paths called out below
                     and on the confirm step. The only control here that reaches Stripe is{' '}
-                    <strong>Cancel Subscription</strong>.
+                    <strong>Cancel subscription</strong>.
                   </p>
                 </div>
                 <div className={styles.formRow}>
@@ -1380,7 +1379,7 @@ export default function OrgDetailClient({
                 </div>
 
                 <div className={styles.formRow}>
-                  <label className={styles.formLabel}>Tournament Limit</label>
+                  <label className={styles.formLabel}>Tournament limit</label>
                   <input
                     className={styles.formInput}
                     type="number"
@@ -1403,7 +1402,7 @@ export default function OrgDetailClient({
 
                 {isClubBand && (
                 <div className={styles.formRow}>
-                  <label className={styles.formLabel}>Custom Team Limit</label>
+                  <label className={styles.formLabel}>Custom team limit</label>
                   <input
                     className={styles.formInput}
                     type="number"
@@ -1462,7 +1461,7 @@ export default function OrgDetailClient({
                     <p>
                       🛑 Setting this org to free will <strong>not</strong> stop its Stripe billing — the
                       subscription keeps charging, and afterward this console can no longer cancel it.{' '}
-                      <strong>To stop billing, use Cancel Subscription instead</strong> (that one does cancel in
+                      <strong>To stop billing, use Cancel subscription instead</strong> (that one does cancel in
                       Stripe). Only set the plan to free after the subscription is already cancelled.
                     </p>
                   </div>
@@ -1500,14 +1499,14 @@ export default function OrgDetailClient({
                       <p>
                         🛑 The Stripe subscription was <strong>not</strong> cancelled and is still charging — and
                         is no longer linked here. Cancel it directly in the Stripe Dashboard. (In future, run
-                        Cancel Subscription before setting an org to free.)
+                        Cancel subscription before setting an org to free.)
                       </p>
                     )}
                   </div>
                 )}
 
-                <button type="submit" className={styles.saveBtn} disabled={planSaving || !planChanged}>
-                  {planSaving ? 'Saving...' : 'Review Change'}
+                <button type="submit" className="btn btn-secondary btn-sm" disabled={planSaving || !planChanged}>
+                  {planSaving ? 'Saving...' : 'Review change'}
                 </button>
                 </>
                 )}
@@ -1517,15 +1516,15 @@ export default function OrgDetailClient({
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h3 className={styles.sectionTitle}>
-                  Active Overrides
+                  Active overrides
                   <HelpTooltip
-                    title="Active Overrides"
+                    title="Active overrides"
                     body="Overrides let you manually grant subscription access states or comp periods without rewriting the account's base billing fields. Plan and limit changes — including a custom team cap — are NOT overrides; they edit the account directly and are not counted here. All changes are audit-logged with a required reason."
                   />
                 </h3>
                 {canManageBilling && (
-                  <button className={styles.addBtn} onClick={() => setShowForm(f => !f)}>
-                    {showForm ? 'Cancel' : '+ Add Override'}
+                  <button className="btn btn-secondary btn-sm" onClick={() => setShowForm(f => !f)}>
+                    {showForm ? 'Cancel' : '+ Add override'}
                   </button>
                 )}
               </div>
@@ -1539,9 +1538,9 @@ export default function OrgDetailClient({
                     value={formType}
                     onChange={e => setFormType(e.target.value as typeof formType)}
                   >
-                    <option value="subscription_status">Subscription Status</option>
-                    <option value="comp_period">Comp Period</option>
-                    <option value="module_addon">Feature Access Trial (timed)</option>
+                    <option value="subscription_status">Subscription status</option>
+                    <option value="comp_period">Comp period</option>
+                    <option value="module_addon">Feature access trial (timed)</option>
                   </select>
                 </div>
 
@@ -1566,7 +1565,7 @@ export default function OrgDetailClient({
 
                 {formType === 'subscription_status' && (
                   <div className={styles.formRow}>
-                    <label className={styles.formLabel}>Status Value</label>
+                    <label className={styles.formLabel}>Status value</label>
                     <select
                       className={styles.formSelect}
                       value={formValue}
@@ -1582,10 +1581,10 @@ export default function OrgDetailClient({
                 {formType === 'comp_period' && (
                   <div className={styles.formRow}>
                     <p className={styles.warningNote}>
-                      ⚠ Comp Period is a <strong>billing/founding-season tag only — it grants no section or plan access.</strong>{' '}
+                      ⚠ Comp period is a <strong>billing/founding-season tag only — it grants no section or plan access.</strong>{' '}
                       It marks the account as comped (e.g. for the Founding cohort badge) but does not unlock any feature.
-                      To actually give an org access, use a <strong>Feature Access Trial (timed)</strong> for specific sections or a{' '}
-                      <strong>Subscription Status</strong> override to change the account&apos;s access state.
+                      To actually give an org access, use a <strong>Feature access trial (timed)</strong> for specific sections or a{' '}
+                      <strong>Subscription status</strong> override to change the account&apos;s access state.
                     </p>
                   </div>
                 )}
@@ -1617,7 +1616,7 @@ export default function OrgDetailClient({
                       aria-label="Expiry time (optional)"
                     />
                   </div>
-                  <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.55rem', opacity: 0.7 }}>
+                  <span className={styles.emptyNote}>
                     Pick a date. Time is optional — leave it blank to expire at the end of that day (23:59).
                   </span>
                 </div>
@@ -1636,8 +1635,8 @@ export default function OrgDetailClient({
 
                 {formError && <div className={styles.rowError}>{formError}</div>}
 
-                <button type="submit" className={styles.saveBtn} disabled={formSaving}>
-                  {formSaving ? 'Saving...' : 'Apply Override'}
+                <button type="submit" className="btn btn-secondary btn-sm" disabled={formSaving}>
+                  {formSaving ? 'Saving...' : 'Apply override'}
                 </button>
               </form>
             )}
@@ -1677,14 +1676,14 @@ export default function OrgDetailClient({
                         <>
                           <span className={styles.confirmLabel}>Confirm revoke?</span>
                           <button
-                            className={styles.confirmBtn}
+                            className="btn btn-danger btn-sm"
                             onClick={() => handleRevoke(o.id)}
                             disabled={revoking[o.id]}
                           >
                             {revoking[o.id] ? 'Revoking...' : 'Yes, revoke'}
                           </button>
                           <button
-                            className={styles.cancelBtn}
+                            className="btn btn-secondary btn-sm"
                             onClick={() => setRevokeConfirm(r => ({ ...r, [o.id]: false }))}
                           >
                             Cancel
@@ -1692,7 +1691,7 @@ export default function OrgDetailClient({
                         </>
                       ) : (
                         <button
-                          className={styles.revokeBtn}
+                          className="btn btn-danger btn-sm"
                           onClick={() => setRevokeConfirm(r => ({ ...r, [o.id]: true }))}
                         >
                           Revoke
@@ -1740,7 +1739,7 @@ export default function OrgDetailClient({
             {canCancelSubscription && (
               <section className={styles.section}>
                 <div className={styles.sectionHeader}>
-                  <h3 className={styles.sectionTitle}>Cancel Subscription</h3>
+                  <h3 className={styles.sectionTitle}>Cancel subscription</h3>
                 </div>
                 {hasStripeLink ? (
                   <p className={styles.warningNote}>
@@ -1761,10 +1760,10 @@ export default function OrgDetailClient({
                 ) : (
                   <button
                     type="button"
-                    className={styles.revokeBtn}
+                    className="btn btn-danger btn-sm"
                     onClick={handleOpenCancelModal}
                   >
-                    Cancel Subscription…
+                    Cancel subscription…
                   </button>
                 )}
                 {cancelSubError && !cancelSubModalOpen && (
@@ -1786,7 +1785,7 @@ export default function OrgDetailClient({
                 <span className={styles.fieldValue}>{scopeWallHitCount}</span>
               </div>
             )}
-            <h3 className={styles.sectionTitle}>Section Access Overrides</h3>
+            <h3 className={styles.sectionTitle}>Section access overrides</h3>
             {!canManageProduct && (
               <p className={styles.emptyNote}>Requires product access to change section access overrides.</p>
             )}
@@ -1813,11 +1812,11 @@ export default function OrgDetailClient({
                 </div>
                 <div className={styles.notesActions}>
                   <button
-                    className={styles.saveBtn}
+                    className="btn btn-secondary btn-sm"
                     onClick={handleAddonSave}
                     disabled={addonSaving || !canManageProduct}
                   >
-                    {addonSaving ? 'Saving...' : addonSaved ? 'Saved' : 'Save Overrides'}
+                    {addonSaving ? 'Saving...' : addonSaved ? 'Saved' : 'Save overrides'}
                   </button>
                   {addonError && <span className={styles.rowError}>{addonError}</span>}
                 </div>
@@ -1838,26 +1837,26 @@ export default function OrgDetailClient({
               {members.length === 0 ? (
                 <p className={styles.emptyNote}>No members found.</p>
               ) : (
-                <div className={styles.tableWrap}>
+                <div className={`${kit.tableWrap} table-cards`}>
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        <th>Display Name</th>
+                        <th>Display name</th>
                         <th>Email</th>
                         <th>Role</th>
                         <th>Status</th>
-                        <th>Last Sign In</th>
+                        <th>Last sign in</th>
                         <th></th>
                       </tr>
                     </thead>
                     <tbody>
                       {members.map(m => (
                         <tr key={m.userId}>
-                          <td>{m.displayName || <span className={styles.dimText}>-</span>}</td>
-                          <td className={styles.mono}>{m.email}</td>
-                          <td className={styles.capText}>{m.role}</td>
-                          <td className={styles.capText}>{m.status}</td>
-                          <td className={styles.dimText}>
+                          <td className="table-cards-title">{m.displayName || <span className={styles.dimText}>-</span>}</td>
+                          <td data-label="Email">{m.email}</td>
+                          <td data-label="Role" className={styles.capText}>{m.role}</td>
+                          <td data-label="Status" className={styles.capText}>{m.status}</td>
+                          <td data-label="Last sign in" className={styles.dimText}>
                             <span title={m.lastSignIn ? fmtAbsoluteDateTime(m.lastSignIn) : undefined}>
                               {fmtSince(m.lastSignIn, '-')}
                             </span>
@@ -1867,7 +1866,7 @@ export default function OrgDetailClient({
                               {m.email && m.email !== '(unknown)' && (
                                 <a
                                   href={`/platform-admin/customer-users?q=${encodeURIComponent(m.email)}`}
-                                  className={styles.adminLink}
+                                  className="btn btn-secondary btn-sm"
                                   title="Open this person in Customer Users (password reset, ban, notes)"
                                 >
                                   User record
@@ -1884,7 +1883,7 @@ export default function OrgDetailClient({
                                     setTransferOwnerModal({ userId: m.userId, email: m.email, displayName: m.displayName });
                                   }}
                                 >
-                                  Make Owner
+                                  Make owner
                                 </button>
                               )}
                             </div>
@@ -1898,11 +1897,11 @@ export default function OrgDetailClient({
             </section>
 
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>Non-Archived Tournaments</h3>
+              <h3 className={styles.sectionTitle}>Non-archived tournaments</h3>
               {tournaments.length === 0 ? (
                 <p className={styles.emptyNote}>No non-archived tournaments.</p>
               ) : (
-                <div className={styles.tableWrap}>
+                <div className={`${kit.tableWrap} table-cards`}>
                   <table className={styles.table}>
                     <thead>
                       <tr>
@@ -1915,14 +1914,14 @@ export default function OrgDetailClient({
                     <tbody>
                       {tournaments.map(t => (
                         <tr key={t.id}>
-                          <td>{t.name}</td>
-                          <td>
-                            <span className={`${styles.badge} ${tournamentStatusClass(t.status, styles)}`}>
-                              {t.status}
+                          <td className="table-cards-title">{t.name}</td>
+                          <td data-label="Status">
+                            <span className={`${kit.chip} ${tournamentStatusClass(t.status)}`}>
+                              {cap(t.status)}
                             </span>
                           </td>
-                          <td className={styles.dimText}>{t.startDate ? fmtDate(t.startDate) : '-'}</td>
-                          <td className={styles.dimText}>{t.endDate ? fmtDate(t.endDate) : '-'}</td>
+                          <td data-label="Start" className={styles.dimText}>{t.startDate ? fmtDate(t.startDate) : '-'}</td>
+                          <td data-label="End" className={styles.dimText}>{t.endDate ? fmtDate(t.endDate) : '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1936,15 +1935,15 @@ export default function OrgDetailClient({
         {activeTab === 'activity' && (
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h3 className={styles.sectionTitle}>Recent Platform Activity</h3>
-              <a href={auditHref} className={styles.adminLink}>
-                Audit Log
+              <h3 className={styles.sectionTitle}>Recent platform activity</h3>
+              <a href={auditHref} className={kit.door}>
+                Audit log
               </a>
             </div>
             {auditEvents.length === 0 ? (
               <p className={styles.emptyNote}>No platform audit entries for this org yet.</p>
             ) : (
-              <div className={styles.tableWrap}>
+              <div className={`${kit.tableWrap} table-cards`}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
@@ -1952,17 +1951,17 @@ export default function OrgDetailClient({
                       <th>Actor</th>
                       <th>Action</th>
                       <th>Field</th>
-                      <th>New Value</th>
+                      <th>New value</th>
                     </tr>
                   </thead>
                   <tbody>
                     {auditEvents.map(event => (
                       <tr key={event.id}>
-                        <td className={styles.dimText}>{fmtDateTime(event.createdAt)}</td>
-                        <td className={styles.mono}>{event.actorEmail}</td>
-                        <td>{event.action}</td>
-                        <td className={styles.dimText}>{event.field ?? '-'}</td>
-                        <td className={styles.mono}>{fmtAuditValue(event.newValue)}</td>
+                        <td className="table-cards-title">{fmtDateTime(event.createdAt)}</td>
+                        <td data-label="Actor">{event.actorEmail}</td>
+                        <td data-label="Action">{event.action}</td>
+                        <td data-label="Field" className={styles.dimText}>{event.field ?? '-'}</td>
+                        <td data-label="New value" className={styles.mono}>{fmtAuditValue(event.newValue)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1982,7 +1981,7 @@ export default function OrgDetailClient({
             aria-labelledby="cancel-sub-title"
           >
             <div>
-              <div className={styles.sectionTitle} id="cancel-sub-title">Cancel Subscription</div>
+              <div className={styles.sectionTitle} id="cancel-sub-title">Cancel subscription</div>
               {cancelSubPreflightLoading && (
                 <p className={styles.emptyNote}>Loading account details…</p>
               )}
@@ -2037,7 +2036,7 @@ export default function OrgDetailClient({
             <div className={styles.modalActions}>
               <button
                 type="button"
-                className={styles.cancelBtn}
+                className="btn btn-secondary btn-sm"
                 onClick={handleCloseCancelModal}
                 disabled={cancelSubSaving}
               >
@@ -2045,11 +2044,11 @@ export default function OrgDetailClient({
               </button>
               <button
                 type="button"
-                className={styles.confirmBtn}
+                className="btn btn-danger btn-sm"
                 onClick={handleCancelSubscription}
                 disabled={cancelSubSaving || cancelSubPreflightLoading}
               >
-                {cancelSubSaving ? 'Canceling…' : 'Confirm Cancel Subscription'}
+                {cancelSubSaving ? 'Canceling…' : 'Confirm cancel subscription'}
               </button>
             </div>
           </section>
@@ -2065,7 +2064,7 @@ export default function OrgDetailClient({
             aria-labelledby="transfer-owner-title"
           >
             <div>
-              <div className={styles.sectionTitle} id="transfer-owner-title">Transfer Ownership</div>
+              <div className={styles.sectionTitle} id="transfer-owner-title">Transfer ownership</div>
               <p className={styles.modalCopy}>
                 <strong>{transferOwnerModal.displayName || transferOwnerModal.email}</strong> will
                 become the owner. All current owners will be demoted to admin.
@@ -2086,7 +2085,7 @@ export default function OrgDetailClient({
             <div className={styles.modalActions}>
               <button
                 type="button"
-                className={styles.cancelBtn}
+                className="btn btn-secondary btn-sm"
                 onClick={() => { setTransferOwnerModal(null); setTransferOwnerReason(''); setTransferOwnerError(''); }}
                 disabled={transferOwnerSaving}
               >
@@ -2094,11 +2093,11 @@ export default function OrgDetailClient({
               </button>
               <button
                 type="button"
-                className={styles.confirmBtn}
+                className="btn btn-danger btn-sm"
                 onClick={handleTransferOwnership}
                 disabled={transferOwnerSaving || !transferOwnerReason.trim()}
               >
-                {transferOwnerSaving ? 'Transferring…' : 'Confirm Transfer'}
+                {transferOwnerSaving ? 'Transferring…' : 'Confirm transfer'}
               </button>
             </div>
           </section>
@@ -2114,7 +2113,7 @@ export default function OrgDetailClient({
             aria-labelledby="delete-note-title"
           >
             <div>
-              <div className={styles.sectionTitle} id="delete-note-title">Delete Internal Note</div>
+              <div className={styles.sectionTitle} id="delete-note-title">Delete internal note</div>
               <p className={styles.modalCopy}>
                 This removes the note from the support timeline. The audit log will keep a record of the delete action.
               </p>
@@ -2124,7 +2123,7 @@ export default function OrgDetailClient({
             <div className={styles.modalActions}>
               <button
                 type="button"
-                className={styles.cancelBtn}
+                className="btn btn-secondary btn-sm"
                 onClick={() => setNotePendingDelete(null)}
                 disabled={noteDeleting[notePendingDelete.id]}
               >
@@ -2132,11 +2131,11 @@ export default function OrgDetailClient({
               </button>
               <button
                 type="button"
-                className={styles.confirmBtn}
+                className="btn btn-danger btn-sm"
                 onClick={() => handleNoteDelete(notePendingDelete.id)}
                 disabled={noteDeleting[notePendingDelete.id]}
               >
-                {noteDeleting[notePendingDelete.id] ? 'Deleting...' : 'Delete Note'}
+                {noteDeleting[notePendingDelete.id] ? 'Deleting...' : 'Delete note'}
               </button>
             </div>
           </section>
@@ -2195,7 +2194,7 @@ export default function OrgDetailClient({
                   <p>
                     🛑 Setting this org to free will <strong>not</strong> stop its Stripe billing — the
                     subscription keeps charging, and afterward this console can no longer cancel it.{' '}
-                    <strong>To stop billing, use Cancel Subscription instead</strong> (that one does cancel in
+                    <strong>To stop billing, use Cancel subscription instead</strong> (that one does cancel in
                     Stripe). Only set the plan to free after the subscription is already cancelled.
                   </p>
                 </div>
@@ -2216,7 +2215,7 @@ export default function OrgDetailClient({
             <div className={styles.modalActions}>
               <button
                 type="button"
-                className={styles.cancelBtn}
+                className="btn btn-secondary btn-sm"
                 onClick={() => setPlanConfirmOpen(false)}
                 disabled={planSaving}
               >
@@ -2224,7 +2223,7 @@ export default function OrgDetailClient({
               </button>
               <button
                 type="button"
-                className={styles.applyBtn}
+                className="btn btn-primary btn-sm"
                 onClick={handlePlanSave}
                 disabled={planSaving}
               >

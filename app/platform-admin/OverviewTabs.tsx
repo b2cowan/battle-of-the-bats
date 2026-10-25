@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { useState } from 'react';
+import kit from './console.module.css';
 import styles from './overview.module.css';
 
 type TabId = 'subscription' | 'growth' | 'usage' | 'notes';
@@ -18,7 +19,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'subscription', label: 'Subscription' },
   { id: 'growth', label: 'Growth' },
   { id: 'usage', label: 'Usage' },
-  { id: 'notes', label: 'Metric Notes' },
+  { id: 'notes', label: 'Metric notes' },
 ];
 
 export default function OverviewTabs({ subscription, growth, usage, notes, defaultTab = 'subscription' }: Props) {
@@ -27,13 +28,13 @@ export default function OverviewTabs({ subscription, growth, usage, notes, defau
 
   return (
     <section className={styles.tabsShell} aria-label="Overview sections">
-      <nav className={styles.tabBar} role="tablist" aria-label="Overview metric groups">
+      <nav className={kit.tabs} role="tablist" aria-label="Overview metric groups">
         {TABS.map(tab => (
           <button
             key={tab.id}
             id={`overview-tab-${tab.id}`}
             type="button"
-            className={`${styles.tabButton} ${activeTab === tab.id ? styles.tabButtonActive : ''}`}
+            className={`${kit.tab} ${activeTab === tab.id ? kit.tabOn : ''}`}
             onClick={() => setActiveTab(tab.id)}
             role="tab"
             aria-selected={activeTab === tab.id}

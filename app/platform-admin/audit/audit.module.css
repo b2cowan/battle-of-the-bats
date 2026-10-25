@@ -1,151 +1,30 @@
-﻿.page { max-width: 1600px; }
+/* The audit log's own parts. The page, toolbar, table, chips and buttons are the console kit (../console.module.css). */
 
-.header {
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-}
+/* Seven columns of log data: a little tighter across so the values stay in view on a laptop. */
+.logTable th,
+.logTable td { padding-inline: 0.7rem; }
 
-.headerLabel {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.title {
-  font-weight: 800;
-  font-size: 1.5rem;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  color: var(--fl-text);
-}
-
-.count {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  color: var(--data-gray);
-  margin-left: auto;
-}
-
-.tableWrap { overflow-x: auto; }
-.table {
-  /* Size to content, don't stretch to 100% of the container — stretching dumped the extra width
-     into the text columns (huge Superuser/Org gaps) and pushed the table off-screen. The
-     .tableWrap scrolls if the content is genuinely wider than the viewport. */
-  width: max-content;
-  border-collapse: collapse;
-}
-.table th {
-  white-space: nowrap;
-}
-.table td {
-  vertical-align: middle;
-}
-
-.tsCell {
-  color: var(--data-gray);
-  white-space: nowrap;
-  font-size: 0.65rem;
-}
-
-.tsDate {
-  display: block;
-  color: var(--fl-text);
-}
-
-.tsTime {
-  display: block;
-  margin-top: 0.15rem;
-  color: var(--data-gray);
-}
-
-.emailCell {
-  color: var(--data-gray);
-  white-space: nowrap;
-  font-size: 0.65rem;
-}
-
-.actionCell {
-  white-space: nowrap;
-}
-
-.actionCell span {
-  display: block;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  color: var(--logic-lime);
-  text-transform: capitalize;
-}
-
-.actionCell code {
-  display: block;
-  margin-top: 0.18rem;
-  font-family: monospace;
-  font-size: 0.58rem;
-  color: var(--data-gray);
-}
-
-.orgLink {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  color: var(--fl-text);
-  text-decoration: none;
-  white-space: nowrap;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.orgLink:hover {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-}
+/* The filter form sits inside the toolbar row; its fields flow as the toolbar's own. */
+.filterForm { display: contents; }
 
 .orgCell {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: nowrap;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
 }
 
-.orgFilterLink {
-  font-family: var(--font-data);
-  font-size: 0.52rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.14rem 0.38rem;
+@media (max-width: 640px) {
+  .orgCell { flex-direction: row; align-items: center; gap: 0.6rem; }
 }
 
-.orgFilterLink:hover {
-  color: var(--fl-text);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.dimText {
-  color: var(--data-gray);
-  font-size: 0.65rem;
-}
-
-.valueDetails {
-  /* Two value columns at 290 pushed the 7-column table past the page width. Trim so the whole
-     table fits on a normal wide screen; full value is one click away via the expander, and the
-     .tableWrap still scrolls on genuinely narrow viewports. */
-  max-width: 180px;
-}
+/* An old/new value: one clipped line, the whole value one click away. */
+.valueDetails { max-width: 110px; }
 
 .valueDetails summary {
-  font-family: monospace;
-  font-size: 0.65rem;
-  color: var(--data-gray);
+  font-family: var(--font-data); /* type-ok: code */
+  font-size: var(--type-support);
+  color: var(--text-secondary);
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -158,191 +37,25 @@
   overflow: auto;
   margin: 0.5rem 0 0;
   padding: 0.75rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.16);
-  background: var(--pa-preview-bg);
-  color: var(--fl-text);
-  font-family: monospace;
-  font-size: 0.68rem;
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
+  background: var(--home-olive-soft);
+  color: var(--text-primary);
+  font-family: var(--font-data); /* type-ok: code */
+  font-size: var(--type-support);
   line-height: 1.5;
   white-space: pre-wrap;
-}
-
-.emptyCell {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--data-gray);
-  text-align: center;
-  padding: 2rem;
-}
-
-.filterBar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-  margin-bottom: 1.25rem;
-}
-
-.filterInput {
-  flex: 1;
-  min-width: 180px;
-  padding: 0.4rem 0.65rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-}
-
-.filterDate,
-.filterSelect {
-  padding: 0.4rem 0.65rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-}
-
-.filterSelect option { background: var(--pa-option-bg); }
-
-.filterBtn,
-.exportBtn {
-  padding: 0.4rem 0.9rem;
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.15s;
-  text-decoration: none;
-}
-
-.filterBtn:hover,
-.exportBtn:hover { background: rgba(var(--logic-lime-rgb), 0.18); }
-
-.exportBtn {
-  color: var(--data-gray);
-  border-color: rgba(255, 255, 255, 0.12);
-  background: transparent;
-}
-
-.filterClear {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  color: var(--data-gray);
-  text-decoration: none;
-  padding: 0.4rem 0.5rem;
-  transition: color 0.15s;
-}
-
-.filterClear:hover { color: var(--fl-text); }
-
-.messageCallout,
-.errorCallout {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  border: 1px solid;
-}
-
-.messageCallout {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.3);
-  background: rgba(var(--logic-lime-rgb), 0.05);
-}
-
-.errorCallout {
-  color: var(--danger);
-  border-color: rgba(248, 113, 113, 0.35);
-  background: rgba(248, 113, 113, 0.06);
-}
-
-.dismissBtn {
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.inlineForm {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-width: 220px;
-}
-
-.reasonInput {
-  width: 100%;
-  box-sizing: border-box;
-  resize: vertical;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  padding: 0.4rem 0.55rem;
-}
-
-.inlineActions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .pagination {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(var(--logic-lime-rgb), 0.15);
+  padding: 0.7rem 1rem;
+  border-top: 1px solid var(--home-line);
 }
 
-.pageBtn {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-  text-decoration: none;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  transition: background 0.15s;
-}
-
-.pageBtn:hover { background: rgba(var(--logic-lime-rgb), 0.06); }
-
-.pageBtnDisabled {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  padding: 0.35rem 0.75rem;
-  border: 1px solid transparent;
-  opacity: 0.4;
-}
-
-.pageInfo {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  color: var(--data-gray);
-  margin: 0 auto;
+@media (max-width: 640px) {
+  .valueDetails { max-width: none; min-width: 0; text-align: left; }
 }

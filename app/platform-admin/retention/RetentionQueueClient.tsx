@@ -6,7 +6,9 @@ import Link from 'next/link';
 import RequiresAccess from '@/components/platform-admin/RequiresAccess';
 import HelpCallout from '@/components/help/HelpCallout';
 import { fmtAbsoluteDate } from '@/lib/format-date';
-import styles from '../audit/audit.module.css';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import kit from '../console.module.css';
+import styles from './retention.module.css';
 
 type RetentionRow = {
   id: string;
@@ -107,32 +109,45 @@ export default function RetentionQueueClient({ rows, canManageBilling }: { rows:
   }
 
   return (
-    <>
-      <div className={styles.filterBar}>
-        <button
-          className={styles.filterBtn}
-          onClick={processExpiry}
-          disabled={processing || !canManageBilling}
-          title={!canManageBilling ? 'Requires billing access' : undefined}
-        >
-          {processing ? 'Processing...' : 'Process expiry'}
-        </button>
-        <span className={styles.dimText}>
-          Sends 14-day warnings and moves expired records into pending purge.
-        </span>
+    <div className={kit.page}>
+      <AdminPageHeader
+        title="Retention queue"
+        actions={
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={processExpiry}
+            disabled={processing || !canManageBilling}
+            title={!canManageBilling ? 'Requires billing access' : undefined}
+          >
+            {processing ? 'Processing...' : 'Process expiry'}
+          </button>
+        }
+      />
+
+      <HelpCallout
+        variant="warning"
+        title="Records approaching purge"
+        body="This queue shows retained billing records with a purge deadline in the next 30 days, plus records that have already moved into pending purge. Process expiry to send owner notices, then extend retention when support needs more time to resolve a billing or restoration case."
+      />
+
+      <p className={`${kit.caption} ${styles.hintLine}`}>
+        Sends 14-day warnings and moves expired records into pending purge.
         {!canManageBilling && <RequiresAccess permission="billing access" role="billing" />}
-      </div>
+      </p>
 
       {(message || error) && (
-        <div className={error ? styles.errorCallout : styles.messageCallout}>
-          {error || message}
-          <button
-            className={styles.dismissBtn}
-            onClick={() => { setMessage(''); setError(''); }}
-            type="button"
-          >
-            Dismiss
-          </button>
+        <div className={`${kit.callout} ${error ? kit.calloutBad : ''}`}>
+          <span>{error || message}</span>
+          <span className={kit.calloutEnd}>
+            <button
+              className={kit.door}
+              onClick={() => { setMessage(''); setError(''); }}
+              type="button"
+            >
+              Dismiss
+            </button>
+          </span>
         </div>
       )}
 
@@ -143,94 +158,102 @@ export default function RetentionQueueClient({ rows, canManageBilling }: { rows:
           body="No retained records are approaching their purge deadline. Accounts appear here after cancellation or downgrade as their retention window counts down."
         />
       ) : (
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Org</th>
-              <th>Record</th>
-              <th>Type</th>
-              <th>State</th>
-              <th>Retention Deadline</th>
-              <th>Days</th>
-              <th>Notices</th>
-              <th>Extensions</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(row => (
-              <tr key={row.id}>
-                <td>
-                  <Link href={`/platform-admin/orgs/${row.orgId}?tab=billing`} className={styles.orgLink}>
-                    {row.orgName}
-                  </Link>
-                </td>
-                <td>{row.displayName}</td>
-                <td className={styles.actionCell}>{row.recordType}</td>
-                <td className={styles.dimText}>{row.retainedState}</td>
-                <td className={styles.tsCell}>{fmtDate(row.retentionUntil)}</td>
-                <td>
-                  {row.daysRemaining}
-                  {row.daysRemaining <= 0 ? (
-                    <span className="badge badge-danger" style={{ marginLeft: '0.4rem' }}>PAST DEADLINE</span>
-                  ) : row.daysRemaining <= 3 ? (
-                    <span className="badge badge-warning" style={{ marginLeft: '0.4rem' }}>URGENT</span>
-                  ) : null}
-                </td>
-                <td className={styles.tsCell}>{noticeLabel(row)}</td>
-                <td>
-                  {row.extensionCount}
-                  {row.lastExtensionReason && (
-                    <span className={styles.dimText} title={row.lastExtensionReason}> - reason</span>
-                  )}
-                </td>
-                <td>
-                  {extendId === row.id ? (
-                    <div className={styles.inlineForm}>
-                      <textarea
-                        className={styles.reasonInput}
-                        value={reason}
-                        onChange={event => setReason(event.target.value)}
-                        rows={2}
-                        placeholder="Reason for support extension"
-                      />
-                      <div className={styles.inlineActions}>
-                        <button
-                          className={styles.filterBtn}
-                          onClick={() => extend(row)}
-                          disabled={busyId === row.id}
-                          type="button"
-                        >
-                          {busyId === row.id ? 'Extending...' : 'Save'}
-                        </button>
-                        <button
-                          className={styles.filterClear}
-                          onClick={() => { setExtendId(null); setReason(''); }}
-                          type="button"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      className={styles.filterBtn}
-                      onClick={() => startExtend(row)}
-                      disabled={busyId === row.id || !canManageBilling}
-                      title={!canManageBilling ? 'Requires billing access' : undefined}
-                      type="button"
-                    >
-                      +30 days
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        <section className={kit.section}>
+          <div className={kit.card}>
+            <div className={kit.toolbar}>
+              <span className={kit.count}>{rows.length} records</span>
+            </div>
+            <div className={`${kit.tableWrap} table-cards`}>
+              <table className={`${kit.comfortable} ${styles.queueTable}`}>
+                <thead>
+                  <tr>
+                    <th>Org</th>
+                    <th>Record</th>
+                    <th>Type</th>
+                    <th>State</th>
+                    <th>Retention deadline</th>
+                    <th>Days</th>
+                    <th>Notices</th>
+                    <th>Extensions</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(row => (
+                    <tr key={row.id}>
+                      <td className="table-cards-title">
+                        <Link href={`/platform-admin/orgs/${row.orgId}?tab=billing`} className={kit.nameLink}>
+                          {row.orgName}
+                        </Link>
+                      </td>
+                      <td data-label="Record">{row.displayName}</td>
+                      <td data-label="Type">{row.recordType}</td>
+                      <td data-label="State" className={kit.nowrap}><span className={kit.code}>{row.retainedState}</span></td>
+                      <td data-label="Retention deadline" className={kit.nowrap}>{fmtDate(row.retentionUntil)}</td>
+                      <td data-label="Days" className={kit.nowrap}>
+                        <span className={styles.days}>{row.daysRemaining}</span>
+                        {row.daysRemaining <= 0 ? (
+                          <span className={`${kit.chip} ${kit.chipBad} ${styles.daysChip}`}>Past deadline</span>
+                        ) : row.daysRemaining <= 3 ? (
+                          <span className={`${kit.chip} ${kit.chipWarn} ${styles.daysChip}`}>Urgent</span>
+                        ) : null}
+                      </td>
+                      <td data-label="Notices">{noticeLabel(row)}</td>
+                      <td data-label="Extensions">
+                        {row.extensionCount}
+                        {row.lastExtensionReason && (
+                          <span className={kit.muted} title={row.lastExtensionReason}> - reason</span>
+                        )}
+                      </td>
+                      <td data-label="Action">
+                        {extendId === row.id ? (
+                          <div className={styles.inlineForm}>
+                            <textarea
+                              className={kit.textarea}
+                              value={reason}
+                              onChange={event => setReason(event.target.value)}
+                              rows={2}
+                              placeholder="Reason for support extension"
+                              aria-label="Reason for support extension"
+                            />
+                            <div className={kit.formActions}>
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => extend(row)}
+                                disabled={busyId === row.id}
+                                type="button"
+                              >
+                                {busyId === row.id ? 'Extending...' : 'Save'}
+                              </button>
+                              <button
+                                className={kit.door}
+                                onClick={() => { setExtendId(null); setReason(''); }}
+                                type="button"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => startExtend(row)}
+                            disabled={busyId === row.id || !canManageBilling}
+                            title={!canManageBilling ? 'Requires billing access' : undefined}
+                            type="button"
+                          >
+                            +30 days
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
       )}
-    </>
+    </div>
   );
 }

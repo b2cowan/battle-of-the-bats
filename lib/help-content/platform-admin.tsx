@@ -14,23 +14,26 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Orientation',
       heading: 'Where to work first',
       summary: 'Use the right platform-admin area for the request before changing account state.',
-      keywords: ['overview', 'organizations', 'customer users', 'plans pricing', 'bulk operations', 'audit'],
+      keywords: ['overview', 'organizations', 'customer users', 'plans pricing', 'plans & pricing', 'bulk operations', 'audit', 'audit log', 'support console', 'menu', 'sidebar', 'collapse sidebar', 'account menu', 'sign out', 'appearance', 'warm', 'dark', 'help', 'private finance'],
+      searchText: 'where to work first support console menu groups command center customers growth billing & product support & diagnostics governance system private finance bookkeeping owner only help at the foot of the menu opens in place collapse sidebar menu button top strip account menu appearance warm dark sign out staff access',
       links: [
         { label: 'Organizations', href: '/platform-admin/orgs' },
-        { label: 'Customer Users', href: '/platform-admin/customer-users' },
-        { label: 'Audit Log', href: '/platform-admin/audit' },
+        { label: 'Customer users', href: '/platform-admin/customer-users' },
+        { label: 'Audit log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
           <p>Start from the smallest surface that answers the support question.</p>
           <ul>
-            <li><strong>Customer Users</strong> is best when the request is about a person: password reset, login status, last sign-in, or which organizations they belong to.</li>
+            <li><strong>Customer users</strong> is best when the request is about a person: password reset, login status, last sign-in, or which organizations they belong to.</li>
             <li><strong>Organizations</strong> is best when the request is about an account: plan, status, modules, members, tournaments, notes, and account-specific audit history.</li>
-            <li><strong>Bulk Operations</strong> is only for intentional multi-account changes. Every run needs a reason and writes batch plus per-org audit entries.</li>
-            <li><strong>Plans &amp; Pricing</strong> is for product packaging, feature matrix, live plan configuration, Stripe price IDs, and approved catalog changes.</li>
-            <li><strong>Audit Log</strong> is the source of truth for who changed what and when.</li>
+            <li><strong>Bulk operations</strong> is only for intentional multi-account changes. Every run needs a reason and writes batch plus per-org audit entries.</li>
+            <li><strong>Plans &amp; pricing</strong> is for product packaging, feature matrix, live plan configuration, Stripe price IDs, and approved catalog changes.</li>
+            <li><strong>Audit log</strong> is the source of truth for who changed what and when.</li>
           </ul>
-          <p>If a customer is asking how to use the app, open the customer-facing guide from the Help Center first. Platform employees see those same guide articles from `/platform-admin/help` without needing to enter a customer org.</p>
+          <p>If a customer is asking how to use the app, open the customer-facing guide from <strong>Help</strong> first. Platform employees see those same guide articles from `/platform-admin/help` without needing to enter a customer org.</p>
+          <p>The menu on the left groups the areas you can open: <strong>Command center</strong> (Overview), <strong>Customers</strong>, <strong>Growth</strong>, <strong>Billing &amp; product</strong>, <strong>Support &amp; diagnostics</strong>, <strong>Governance</strong>, and <strong>System</strong> (Dev tools, only where it is turned on). Your role decides which areas appear. <strong>Bookkeeping</strong> sits in its own last group, <strong>Private finance</strong>, and shows only for the owner. Click a group heading to fold or open it; the group you are on stays open. <strong>Help</strong> is at the foot of the menu and opens inside the console, not in a new window. <strong>Collapse sidebar</strong>, the last row, folds the menu to a strip of icons. On a narrow screen the menu opens from the menu button in the top strip.</p>
+          <p>The top strip carries the FieldLogicHQ name, <strong>Support console</strong>, and the account menu: <strong>Appearance</strong> (Warm or Dark) and <strong>Sign out</strong>. Sign out lives only there. The console is warm by default and follows the Appearance setting you choose; the sign-in page (<strong>Staff access</strong>) is always warm.</p>
         </>
       ),
     },
@@ -38,24 +41,24 @@ const platformAdminHelp: HelpPageContent = {
       id: 'reset-password',
       group: 'Support SOP',
       heading: 'How to reset a customer password',
-      summary: 'Send a password reset email to the customer from Customer Users.',
+      summary: 'Send a password reset email to the customer from Customer users.',
       keywords: ['password', 'reset', 'login', 'customer users', 'reset email', 'recovery link', 'forgot password'],
       searchText: 'how do i reset a password customer cannot login send reset email to customer customer users reset email sent recovery link forgot password',
       links: [
-        { label: 'Customer Users', href: '/platform-admin/customer-users' },
+        { label: 'Customer users', href: '/platform-admin/customer-users' },
         { label: 'Customer login help', href: '/platform-admin/help/org' },
       ],
       content: (
         <>
           <ol>
-            <li>Go to <strong>Customer Users</strong>.</li>
+            <li>Go to <strong>Customer users</strong>.</li>
             <li>Search at least two characters from the user's email, name, user ID, organization, or org slug.</li>
             <li>Confirm you have the right person by checking their email and organization memberships.</li>
-            <li>Open the <strong>Actions</strong> menu on the user's row and choose <strong>Reset Password</strong>.</li>
+            <li>Open the <strong>Actions</strong> menu on the user's row and choose <strong>Reset password</strong>.</li>
             <li>FieldLogicHQ emails the reset link straight to the customer. You'll see a <strong>&ldquo;Reset email sent to&hellip;&rdquo;</strong> confirmation &mdash; no link is shown to you, and there is nothing to copy or forward.</li>
             <li>Tell the customer to check their inbox and open the email to set a new password. Do not set or ask for the customer's password.</li>
           </ol>
-          <p>The reset action is audit-logged as <strong>Send Password Reset Email</strong>. If the customer doesn't receive the email, confirm their email address and auth status in Customer Users (use <strong>Edit Info</strong> to correct a wrong address), and/or have them press <strong>Forgot your password?</strong> on the sign-in page, which sends the same kind of link (<strong>Send me a reset link</strong>, then the email&rsquo;s <strong>Reset my password</strong>, then <strong>Save password</strong>).</p>
+          <p>The reset action is audit-logged as <strong>Send password reset email</strong>. If the customer doesn't receive the email, confirm their email address and auth status in Customer users (use <strong>Edit info</strong> to correct a wrong address), and/or have them press <strong>Forgot your password?</strong> on the sign-in page, which sends the same kind of link (<strong>Send me a reset link</strong>, then the email&rsquo;s <strong>Reset my password</strong>, then <strong>Save password</strong>).</p>
           <p>If the customer belongs to multiple organizations, resetting the password affects the same login across all of their FieldLogicHQ memberships.</p>
         </>
       ),
@@ -74,7 +77,7 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-reset-unknown-email',
           question: 'What if the user row has no usable email?',
           answer: (
-            <p>The reset needs a valid email to send to, so the <strong>Reset Password</strong> action is unavailable when the row has no usable address. Search by organization first, verify the member record from the org detail People tab, and confirm or correct the email with the customer before sending a reset.</p>
+            <p>The reset needs a valid email to send to, so the <strong>Reset password</strong> action is unavailable when the row has no usable address. Search by organization first, verify the member record from the org detail People tab, and confirm or correct the email with the customer before sending a reset.</p>
           ),
           answerText: 'The reset needs a valid email to send to. Search by organization, verify the member record, and confirm or correct the email before sending a reset.',
           keywords: ['unknown email', 'missing email'],
@@ -85,23 +88,23 @@ const platformAdminHelp: HelpPageContent = {
       id: 'manage-customer-user-access',
       group: 'Support SOP',
       heading: 'How to manage a customer user\'s access and details',
-      summary: 'Ban, unban, sign out, confirm email, edit details, or add support notes for a single user from Customer Users.',
+      summary: 'Ban, unban, sign out, confirm email, edit details, or add support notes for a single user from Customer users.',
       keywords: ['ban user', 'unban', 'revoke sessions', 'sign out', 'confirm email', 'verify email', 'edit user', 'change email', 'display name', 'user notes', 'lock account', 'suspend'],
-      searchText: 'ban a user unban suspend lock account revoke sessions sign out all devices force logout confirm verify email change a user email display name edit user info user support notes customer users actions menu',
+      searchText: 'ban a user unban suspend lock account revoke sessions sign out all devices force logout confirm verify email change a user email display name edit user info user support notes customer users actions menu unconfirmed filter auth status dropdown all unconfirmed',
       links: [
-        { label: 'Customer Users', href: '/platform-admin/customer-users' },
+        { label: 'Customer users', href: '/platform-admin/customer-users' },
       ],
       content: (
         <>
-          <p>These actions all live behind the <strong>Actions</strong> menu on a user&apos;s row in <strong>Customer Users</strong>. Confirm you have the right person — check the email and organization memberships — before using them. Each action affects the user&apos;s single FieldLogicHQ login across all of their org memberships.</p>
+          <p>These actions all live behind the <strong>Actions</strong> menu on a user&apos;s row in <strong>Customer users</strong>. Confirm you have the right person — check the email and organization memberships — before using them. Each action affects the user&apos;s single FieldLogicHQ login across all of their org memberships.</p>
           <ul>
-            <li><strong>Ban User</strong> immediately blocks sign-in. Use it for abuse, fraud, or a security hold. The user keeps their data but cannot log in. Choose <strong>Unban User</strong> to restore access.</li>
-            <li><strong>Revoke Sessions</strong> signs the user out of all devices and invalidates active sessions without banning them. Use it after a suspected account compromise or when the user asks to be logged out everywhere.</li>
-            <li><strong>Confirm Email</strong> force-confirms an unconfirmed email so the user can sign in without opening the confirmation email. It only appears when the user&apos;s auth status is <code>unconfirmed</code>. Verify you are talking to the real account holder first.</li>
-            <li><strong>Edit Info</strong> corrects a user&apos;s email address or display name. Changing the email changes the address they sign in with — confirm the new address with the customer first.</li>
-            <li><strong>Notes</strong> opens <strong>Support Notes</strong> for that user, for person-level context. These are separate from an organization&apos;s internal notes: use org notes for account history and user notes for person-specific history.</li>
+            <li><strong>Ban user</strong> immediately blocks sign-in. Use it for abuse, fraud, or a security hold. The user keeps their data but cannot log in. Choose <strong>Unban user</strong> to restore access.</li>
+            <li><strong>Revoke sessions</strong> signs the user out of all devices and invalidates active sessions without banning them. Use it after a suspected account compromise or when the user asks to be logged out everywhere.</li>
+            <li><strong>Confirm email</strong> force-confirms an unconfirmed email so the user can sign in without opening the confirmation email. It only appears when the user&apos;s auth status is <code>unconfirmed</code>; to find every such account, choose <strong>Unconfirmed</strong> in the dropdown beside the search box (the other choice is <strong>All</strong>). Verify you are talking to the real account holder first.</li>
+            <li><strong>Edit info</strong> corrects a user&apos;s email address or display name. Changing the email changes the address they sign in with — confirm the new address with the customer first.</li>
+            <li><strong>Notes</strong> opens <strong>Support notes</strong> for that user, for person-level context. These are separate from an organization&apos;s internal notes: use org notes for account history and user notes for person-specific history.</li>
           </ul>
-          <p>For password recovery use <strong>Reset Password</strong> (see <em>How to reset a customer password</em>). For permanent removal use <strong>Delete User</strong> (see <em>How to delete a user</em>). Ban, unban, and revoke-sessions each ask for confirmation, and all of these actions are audit-logged.</p>
+          <p>For password recovery use <strong>Reset password</strong> (see <em>How to reset a customer password</em>). For permanent removal use <strong>Delete user</strong> (see <em>How to delete a user</em>). Ban, unban, and revoke-sessions each ask for confirmation, and all of these actions are audit-logged.</p>
         </>
       ),
       faqs: [
@@ -117,9 +120,9 @@ const platformAdminHelp: HelpPageContent = {
         },
         {
           id: 'faq-confirm-email-safe',
-          question: 'Is it safe to use Confirm Email for a customer who never received the confirmation email?',
+          question: 'Is it safe to use Confirm email for a customer who never received the confirmation email?',
           answer: (
-            <p>Yes, once you have verified you are speaking with the real account holder. Confirm Email marks the address as confirmed so they can continue. If you cannot verify their identity, have them get a fresh link themselves: <strong>Send the link again</strong> is on the screen they saw after signing up, and under the amber &ldquo;Confirm your email first&rdquo; notice sign-in shows them. A link older than an hour opens sign-in with an expired-link notice and <strong>Email me a new link</strong>. Either way, an account that came to start a team, a league or an organization finds it waiting on its Home, under <strong>Workspaces</strong> and marked <strong>Not named yet</strong> (a Coach Premium setup is marked <strong>Setup not finished</strong>), until it does.</p>
+            <p>Yes, once you have verified you are speaking with the real account holder. Confirm email marks the address as confirmed so they can continue. If you cannot verify their identity, have them get a fresh link themselves: <strong>Send the link again</strong> is on the screen they saw after signing up, and under the amber &ldquo;Confirm your email first&rdquo; notice sign-in shows them. A link older than an hour opens sign-in with an expired-link notice and <strong>Email me a new link</strong>. Either way, an account that came to start a team, a league or an organization finds it waiting on its Home, under <strong>Workspaces</strong> and marked <strong>Not named yet</strong> (a Coach Premium setup is marked <strong>Setup not finished</strong>), until it does.</p>
           ),
           answerText: 'Yes, after verifying you are speaking with the real account holder. Otherwise have them press Send the link again, on the screen they saw after signing up or under the Confirm your email first notice on sign-in. A link older than an hour opens sign-in with an expired-link notice and Email me a new link. Either way, an account that came to start a team, a league or an organization finds it waiting on its Home, under Workspaces and marked Not named yet (a Coach Premium setup is marked Setup not finished), until it does.',
           keywords: ['confirm email', 'verification', 'unconfirmed', 'send the link again', 'sign in resend', 'confirm your email first', 'email me a new link', 'expired link', 'not named yet', 'finish creating your team', 'setup not finished', 'run a tournament', 'create account', 'create team'],
@@ -132,25 +135,25 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'How to temporarily override billing access',
       summary: 'Use org overrides for support windows, grace periods, trial exceptions, and comp periods.',
       keywords: ['billing', 'override', 'subscription status', 'comp period', 'grace period', 'past due', 'active'],
-      searchText: 'how do i override billing requirements subscription status active comp period grace period customer unsubscribed expired trial',
+      searchText: 'how do i override billing requirements subscription status active comp period grace period customer unsubscribed expired trial active overrides add override apply override billing & access feature access trial timed',
       links: [
         { label: 'Organizations', href: '/platform-admin/orgs' },
-        { label: 'Bulk Operations', href: '/platform-admin/bulk-operations' },
+        { label: 'Bulk operations', href: '/platform-admin/bulk-operations' },
       ],
       content: (
         <>
           <p>Use an override when the customer should keep access for a defined support reason without rewriting their base billing record. Overrides are different from plan changes: they sit on top of billing state, can expire, and can be revoked.</p>
           <ol>
-            <li>Go to <strong>Organizations</strong>, open the customer account, then open <strong>Billing &amp; Access</strong>.</li>
-            <li>Under <strong>Active Overrides</strong>, click <strong>Add Override</strong>.</li>
-            <li>Choose <strong>Subscription Status</strong> when the account should behave as <code>active</code>, <code>trialing</code>, <code>past_due</code>, or <code>canceled</code> for a temporary period. ⚠ <strong>This genuinely changes what the customer can reach</strong> — <code>active</code> reinstates a cut-off account without touching Stripe (the intended unblock), and <code>canceled</code> shuts them out of the whole product. It is not a display flag.</li>
-            <li>Choose <strong>Comp Period</strong> when the business decision is a no-charge access window with a clear end date.</li>
+            <li>Go to <strong>Organizations</strong>, open the customer account, then open <strong>Billing &amp; access</strong>.</li>
+            <li>Under <strong>Active overrides</strong>, click <strong>Add override</strong>.</li>
+            <li>Choose <strong>Subscription status</strong> when the account should behave as <code>active</code>, <code>trialing</code>, <code>past_due</code>, or <code>canceled</code> for a temporary period. ⚠ <strong>This genuinely changes what the customer can reach</strong> — <code>active</code> reinstates a cut-off account without touching Stripe (the intended unblock), and <code>canceled</code> shuts them out of the whole product. It is not a display flag.</li>
+            <li>Choose <strong>Comp period</strong> when the business decision is a no-charge access window with a clear end date. Choose <strong>Feature access trial (timed)</strong> to grant chosen sections for a limited time.</li>
             <li>Set an expiry whenever the exception is temporary. Use the shortest reasonable period.</li>
             <li>Enter a reason that would make sense to another employee reading the audit trail later.</li>
-            <li>Apply the override, then add or update the internal support note with the customer-facing context and follow-up date.</li>
+            <li>Click <strong>Apply override</strong>, then add or update the internal support note with the customer-facing context and follow-up date.</li>
           </ol>
           <p>Expired active overrides appear as platform-admin alerts. Revoke them when the support window is done, or create a new override with a fresh reason if the extension is approved.</p>
-          <p>Changing the base plan or tournament limit is a separate guarded flow in the same <strong>Billing &amp; Access</strong> tab. Use it only when the customer's actual package should change.</p>
+          <p>Changing the base plan or tournament limit is a separate guarded flow in the same <strong>Billing &amp; access</strong> tab. Use it only when the customer's actual package should change.</p>
         </>
       ),
       faqs: [
@@ -172,11 +175,11 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'How to provide module access for an unsubscribed account',
       summary: 'Grant an org-specific module override without changing the plan feature matrix.',
       keywords: ['module', 'addon', 'add-on', 'entitlement', 'unsubscribed', 'house league', 'rep teams', 'accounting', 'public site'],
-      searchText: 'how do i provide access to modules for unsubscribed override billing requirements enable addon module access house league rep teams accounting public site',
+      searchText: 'how do i provide access to modules for unsubscribed override billing requirements enable addon module access house league rep teams accounting public site section access overrides save overrides',
       links: [
         { label: 'Organizations', href: '/platform-admin/orgs' },
-        { label: 'Plans & Pricing', href: '/platform-admin/plans-pricing' },
-        { label: 'Bulk Operations', href: '/platform-admin/bulk-operations' },
+        { label: 'Plans & pricing', href: '/platform-admin/plans-pricing' },
+        { label: 'Bulk operations', href: '/platform-admin/bulk-operations' },
       ],
       content: (
         <>
@@ -185,13 +188,13 @@ const platformAdminHelp: HelpPageContent = {
             <li>Confirm who approved the exception and how long it should last. Module overrides do not currently carry their own expiry, so the follow-up note matters.</li>
             <li>Open <strong>Organizations</strong>, then open the customer account.</li>
             <li>Open the <strong>Entitlements</strong> tab.</li>
-            <li>Under <strong>Module Overrides</strong>, turn on the module the plan does not normally include: Public site, House league, Accounting, or Rep teams.</li>
-            <li>Click <strong>Save Overrides</strong>.</li>
+            <li>Under <strong>Section access overrides</strong>, turn on the module the plan does not normally include (the switch reads <strong>Enabled</strong>): Public site, House league, Accounting, or Rep teams.</li>
+            <li>Click <strong>Save overrides</strong>.</li>
             <li>Add an internal support note with the module, approval source, expected end date, and customer-facing reason.</li>
             <li>Ask the customer to refresh their admin shell. The module should appear in their navigation if their role also has the relevant capability.</li>
           </ol>
-          <p>If the customer needs the account to remain usable while unpaid or past due, pair the module override with the right billing override from <strong>Billing &amp; Access</strong>. Module access and billing status are separate controls.</p>
-          <p>To remove the exception, return to <strong>Entitlements</strong>, turn the module off, save, and leave a note. For many organizations, use <strong>Bulk Operations</strong> with <strong>Module Add-On Enablement</strong>.</p>
+          <p>If the customer needs the account to remain usable while unpaid or past due, pair the module override with the right billing override from <strong>Billing &amp; access</strong>. Module access and billing status are separate controls.</p>
+          <p>To remove the exception, return to <strong>Entitlements</strong>, turn the module off, save, and leave a note. For many organizations, use <strong>Bulk operations</strong> with <strong>Module add-on enablement</strong>.</p>
         </>
       ),
       faqs: [
@@ -259,8 +262,8 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Support SOP',
       heading: 'How to use the observability dashboard and resolve error groups',
       summary: 'Read the error dashboard, open an error group, and resolve, ignore, or snooze it.',
-      keywords: ['observability', 'error tracking', 'error group', 'issue', 'resolve', 'ignore', 'snooze', 'stack trace', 'error rate'],
-      searchText: 'how do i use observability dashboard error tracking error groups issues resolve ignore snooze reopen stack trace error rate freshness affected orgs',
+      keywords: ['observability', 'error tracking', 'error group', 'issue', 'resolve', 'ignore', 'snooze', 'stack trace', 'error rate', 'time window', 'last 24h', 'last 7d', 'last 30d'],
+      searchText: 'how do i use observability dashboard error tracking error groups issues resolve ignore snooze reopen stack trace error rate freshness affected orgs time window dropdown last 24h last 7d last 30d environment production dev',
       links: [
         { label: 'Observability', href: '/platform-admin/observability' },
         { label: 'Feedback', href: '/platform-admin/feedback' },
@@ -269,9 +272,9 @@ const platformAdminHelp: HelpPageContent = {
         <>
           <p><strong>Observability</strong> is the in-house error console. Each row is one distinct error fingerprint — a flood of identical failures collapses into a single triable <em>issue</em>, so the list stays workable.</p>
           <ul>
-            <li>The top metric cards show errors in the selected window, error rate (from instrumented routes only), open issues, and affected orgs. Switch the environment (Production / Dev) and time window with the toggles.</li>
+            <li>The top metric cards show errors in the selected window, error rate (from instrumented routes only), open issues, and affected orgs. Pick the time window (<strong>Last 24h</strong>, <strong>Last 7d</strong>, or <strong>Last 30d</strong>) from the dropdown in the page header. The dashboard shows the errors of the environment you are on (production on the live site, dev on the dev site); there is no environment switch.</li>
             <li>The <strong>freshness chip</strong> reports when the rollup job last ran. A green chip is healthy; an amber chip (&ldquo;job error&rdquo; / &ldquo;sweep stale&rdquo;) or &ldquo;Rollup has not run yet&rdquo; means the data is stale and the cron job needs attention — flag it to engineering rather than trusting the counts.</li>
-            <li>The issue list opens on <strong>Open</strong> by default. Filter by severity, status, environment, route, or org slug. Export (XLSX/CSV) carries the active filters.</li>
+            <li>The issue list opens on <strong>Open</strong> by default. Search by title, error, or route, and filter by severity, status, route, or org slug. Export (XLSX/CSV) carries the active filters.</li>
           </ul>
           <p>Open an issue to read its detail: route and HTTP method, occurrence count, affected orgs, first/last seen, a 14-day occurrence sparkline, scrubbed sample events (stack trace and request context, redacted), and any <strong>related feedback</strong> matched by request ID.</p>
           <p>Triage an open issue with the status controls:</p>
@@ -316,17 +319,17 @@ const platformAdminHelp: HelpPageContent = {
       searchText: 'owner left the company transfer organization ownership reassign make owner change account owner demote current owner promote member to owner',
       links: [
         { label: 'Organizations', href: '/platform-admin/orgs' },
-        { label: 'Audit Log', href: '/platform-admin/audit' },
+        { label: 'Audit log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
           <p>Use this when an account needs a different owner — most often when the current owner has left the company and another existing member should take over. The new owner must already be an <strong>active member</strong> of the organization.</p>
           <ol>
             <li>Open <strong>Organizations</strong> and open the customer account.</li>
-            <li>Open the <strong>People &amp; Tournaments</strong> tab and review the <strong>Members</strong> table.</li>
+            <li>Open the <strong>People &amp; tournaments</strong> tab and review the <strong>Members</strong> table.</li>
             <li>Find the member who should become the owner. If they are not listed, have them invited into the org and accept first — they must be an active member before you can transfer ownership.</li>
-            <li>Click <strong>Make Owner</strong> on that member&apos;s row.</li>
-            <li>Enter a reason and click <strong>Confirm Transfer</strong>.</li>
+            <li>Click <strong>Make owner</strong> on that member&apos;s row. (On the <strong>Support</strong> tab, <strong>Account ownership</strong> does the same: pick the member, then <strong>Transfer ownership…</strong>.)</li>
+            <li>Enter a reason and click <strong>Confirm transfer</strong>.</li>
             <li>Add an internal note on the <strong>Support</strong> tab recording who requested the change and why.</li>
           </ol>
           <p>The selected member becomes the owner and <strong>all previous owners are demoted to admin</strong>. The change is audit-logged and cannot be reversed from this screen — to undo it, run another transfer. This is different from <em>Teams brought in</em> on the same Support tab, the record of coaches&apos; own teams moved into a club (see <em>Teams brought into a club</em>).</p>
@@ -337,9 +340,9 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-org-transfer-no-member',
           question: 'The intended new owner is not a member of the org yet. What do I do?',
           answer: (
-            <p>Make Owner only lists existing active members. The new owner must first be invited to the organization and accept, or otherwise be added as an active member, before you can transfer ownership to them. Do not delete the departing owner until a new owner is in place.</p>
+            <p>Make owner only lists existing active members. The new owner must first be invited to the organization and accept, or otherwise be added as an active member, before you can transfer ownership to them. Do not delete the departing owner until a new owner is in place.</p>
           ),
-          answerText: 'Make Owner only lists existing active members. Invite or add the new owner first, then transfer. Do not delete the old owner until a new owner exists.',
+          answerText: 'Make owner only lists existing active members. Invite or add the new owner first, then transfer. Do not delete the old owner until a new owner exists.',
           keywords: ['not a member', 'no member', 'invite owner'],
           popular: true,
         },
@@ -354,7 +357,7 @@ const platformAdminHelp: HelpPageContent = {
       searchText: 'team brought into a club coaches portal ownership transfer no operator step second yes moves the team read only record support tab teams brought in stripe cancellation failed cancel by hand error dashboard org owned rep team',
       links: [
         { label: 'Organizations', href: '/platform-admin/orgs' },
-        { label: 'Audit Log', href: '/platform-admin/audit' },
+        { label: 'Audit log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
@@ -386,9 +389,8 @@ const platformAdminHelp: HelpPageContent = {
       keywords: ['coaches portal premium launch', 'stripe prices', 'readiness', 'coach checkout', 'club capacity bands', 'club association band'],
       searchText: 'coaches portal premium launch readiness Stripe price IDs sandbox live direct checkout Club capacity bands Club Association band retired org billed extra team per-team add-on cancellation past due mobile coach portal help documentation',
       links: [
-        { label: 'Dev Tools', href: '/platform-admin/dev-tools' },
-        { label: 'Stripe Prices', href: '/platform-admin/plans-pricing' },
-        { label: 'Plans & Pricing', href: '/platform-admin/plans-pricing' },
+        { label: 'Dev tools', href: '/platform-admin/dev-tools' },
+        { label: 'Plans & pricing', href: '/platform-admin/plans-pricing' },
       ],
       content: (
         <>
@@ -397,8 +399,8 @@ const platformAdminHelp: HelpPageContent = {
             <li>Confirm Stripe has sandbox and live recurring prices for direct Premium Coaches Portal at <strong>$29 CAD monthly</strong> and <strong>$290 CAD annual/seasonal</strong>.</li>
             <li>Confirm Stripe has sandbox and live recurring prices for the two <strong>Club capacity bands</strong> — Club and Club&nbsp;·&nbsp;Association — each monthly and annual (Club Repackaging, 2026-06-22).</li>
             <li><strong>Retired:</strong> the org-billed &quot;$19/team&quot; Coaches Portal takeover and the &quot;Club extra rep team&quot; ($19/$190) add-on are gone — do not create or reuse those price IDs. A Club subscription includes the whole coaching staff up to its band cap, with no per-team fee.</li>
-            <li>Paste each <code>price_...</code> ID into the matching sandbox or live row in <strong>Stripe Prices</strong> or <strong>Plans &amp; Pricing</strong>.</li>
-            <li>Run <strong>Dev Tools &gt; Coaches Portal checkout readiness</strong> and resolve any missing app URL, webhook secret, Premium gate, or price-row failures.</li>
+            <li>Paste each <code>price_...</code> ID into the matching Test (sandbox) or Production (live) row in <strong>Plans &amp; pricing</strong>; the <strong>Stripe mode</strong> dropdown switches between the two.</li>
+            <li>Run <strong>Dev tools &gt; Coaches Portal Checkout Readiness</strong> and resolve any missing app URL, webhook secret, Premium gate, or price-row failures.</li>
             <li>Complete manual sandbox smokes for direct Coaches Portal checkout, tournament-claim checkout, cancellation or past-due simulation, and Club / Club&nbsp;·&nbsp;Association band checkout.</li>
             <li>Ask the product owner to visually check the public pricing page, Coaches Portal signup page, and mobile Coaches Portal flows.</li>
           </ol>
@@ -423,22 +425,22 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Billing & Product SOP',
       heading: 'How to run guarded bulk operations',
       summary: 'Apply billing or product exceptions to multiple accounts with preview, reason, confirmation, and audit logging.',
-      keywords: ['bulk operations', 'bulk', 'comp period', 'plan change', 'module addon', 'subscription status'],
+      keywords: ['bulk operations', 'bulk', 'comp period', 'plan change', 'module addon', 'subscription status', 'select filtered', 'review bulk operation', 'confirm bulk operation'],
       links: [
-        { label: 'Bulk Operations', href: '/platform-admin/bulk-operations' },
-        { label: 'Audit Log', href: '/platform-admin/audit' },
+        { label: 'Bulk operations', href: '/platform-admin/bulk-operations' },
+        { label: 'Audit log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
           <p>Bulk operations are intentionally guarded. Use them only when the same approved action should apply to multiple accounts.</p>
           <ol>
-            <li>Go to <strong>Bulk Operations</strong>.</li>
+            <li>Go to <strong>Bulk operations</strong>.</li>
             <li>Filter by account name, slug, plan, or subscription status.</li>
-            <li>Select individual accounts or use <strong>Select Filtered</strong> after reviewing the filtered list.</li>
-            <li>Choose the action: Subscription Status Override, Comp Period Grant, Plan Change, or Module Add-On Enablement.</li>
+            <li>Select individual accounts or use <strong>Select filtered</strong> after reviewing the filtered list.</li>
+            <li>Choose the action: Subscription status override, Comp period grant, Plan change, or Module add-on enablement.</li>
             <li>Set the target value. Comp periods require an expiration date. Module add-ons require enable or remove.</li>
             <li>Enter a clear reason. This reason appears in the batch record and audit log.</li>
-            <li>Review the preview panel, click <strong>Review Bulk Operation</strong>, then click <strong>Confirm Bulk Operation</strong>.</li>
+            <li>Review the preview panel, click <strong>Review bulk operation</strong>, then click <strong>Confirm bulk operation</strong>.</li>
             <li>Review the result list and recent bulk operation table for failures or skipped accounts.</li>
           </ol>
           <p>Billing actions require billing access. Module add-on actions require product access. A super admin can perform both.</p>
@@ -461,7 +463,7 @@ const platformAdminHelp: HelpPageContent = {
             <li>Use <strong>Support</strong> on the org detail page for customer context, follow-up dates, implementation notes, and risk flags.</li>
             <li>Edit notes when you are correcting or clarifying the same support event.</li>
             <li>Delete only when the note is wrong or should not have been stored. Deletes are audit-logged.</li>
-            <li>Use <strong>Organization Identity</strong> only for support-approved name or slug corrections. Changing a slug updates URLs immediately and can break links the customer already shared.</li>
+            <li>Use <strong>Organization identity</strong> only for support-approved name or slug corrections. Changing a slug updates URLs immediately and can break links the customer already shared.</li>
           </ul>
         </>
       ),
@@ -473,18 +475,18 @@ const platformAdminHelp: HelpPageContent = {
       summary: 'Use org activity and the global audit log to answer who changed what and when.',
       keywords: ['audit', 'audit log', 'investigate', 'actor', 'before after', 'json', 'filter'],
       links: [
-        { label: 'Audit Log', href: '/platform-admin/audit' },
+        { label: 'Audit log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
           <ol>
             <li>Open the customer's org detail page and check <strong>Activity</strong> for recent account-specific entries.</li>
-            <li>For a wider search, open <strong>Audit Log</strong>.</li>
-            <li>Filter by organization, actor email, action, and date range.</li>
-            <li>Open full JSON values when you need before/after details for plan changes, module add-ons, catalog applications, or bulk operations.</li>
+            <li>For a wider search, open <strong>Audit log</strong>.</li>
+            <li>Search by organization name or actor email, then filter by <strong>Action</strong> and the <strong>From</strong> and <strong>To</strong> dates.</li>
+            <li>Open a row&apos;s <strong>Old value</strong> or <strong>New value</strong> to see the full JSON when you need before/after details for plan changes, module add-ons, catalog applications, or bulk operations.</li>
             <li>Export the audit result if you need to attach a concise account history to an internal ticket.</li>
           </ol>
-          <p>The audit log records platform-admin actions such as reset link generation, overrides, plan and limit changes, module add-on updates, internal note edits, platform user changes, pricing/config changes, and bulk operation runs.</p>
+          <p>The audit log records platform-admin actions such as password reset emails, overrides, plan and limit changes, module add-on updates, internal note edits, platform user changes, pricing/config changes, and bulk operation runs.</p>
         </>
       ),
     },
@@ -494,7 +496,7 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'How to handle retained or at-risk accounts',
       summary: 'Use the retention queue for accounts approaching retention deadlines after downgrade or cancellation.',
       keywords: ['retention', 'cancel', 'cancellation', 'downgrade', 'archive', 'purge', 'deadline', 'coaches portal retention', '365 days', 'one year', 'retention reminder', 'warning email', 'process retention'],
-      searchText: 'retention window length how long is data kept 90 days organization 365 days one year coaches portal cancelled coaches portal reminder warning email 14 days 30 days before deadline process expiry button run the sweep manually pending purge',
+      searchText: 'retention window length how long is data kept 90 days organization 365 days one year coaches portal cancelled coaches portal reminder warning email 14 days 30 days before deadline process expiry button run the sweep manually pending purge extend retention plus 30 days',
       links: [
         { label: 'Retention', href: '/platform-admin/retention' },
       ],
@@ -509,7 +511,7 @@ const platformAdminHelp: HelpPageContent = {
             <li>Open <strong>Retention</strong>.</li>
             <li>Select <strong>Process expiry</strong>. This sends the warning emails that are due and marks expired records as pending purge.</li>
             <li>Review accounts due soon, including the retention deadline and reason.</li>
-            <li>If approved, extend the deadline using the available action and enter the reason.</li>
+            <li>If approved, click <strong>+30 days</strong> on the account&apos;s row, enter the reason, and save. Each extension adds 30 days.</li>
             <li>Document any customer communication in the org's internal notes.</li>
           </ol>
           <HelpNote variant="warning" title="Nothing runs this on a schedule">Warning emails go out only when someone selects Process expiry. Run it at least weekly, or a customer can miss the reminder they were promised.</HelpNote>
@@ -520,26 +522,26 @@ const platformAdminHelp: HelpPageContent = {
     {
       id: 'change-requests',
       group: 'Product SOP',
-      heading: 'How to review and action the Approval Queue',
+      heading: 'How to review and action the approval queue',
       summary: 'Work the catalog approval queue: submit, approve, and apply pricing, gating, and config changes.',
       keywords: ['approval queue', 'change requests', 'approval', 'pricing change', 'stripe price', 'plan gating', 'plan config', 'needs review', 'apply', 'implemented'],
       searchText: 'how do i review action the approval queue change requests approve apply pricing gating config draft needs review approved implemented stripe price update auto apply',
       links: [
-        { label: 'Approval Queue', href: '/platform-admin/change-requests' },
-        { label: 'Plans & Pricing', href: '/platform-admin/plans-pricing' },
-        { label: 'Audit Log', href: '/platform-admin/audit' },
+        { label: 'Approval queue', href: '/platform-admin/change-requests' },
+        { label: 'Plans & pricing', href: '/platform-admin/plans-pricing' },
+        { label: 'Audit log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
-          <p>The <strong>Approval Queue</strong> is the single review queue for product, pricing, entitlement, campaign, and approval changes. Requests are <strong>created from the Plans &amp; Pricing catalog flow</strong> (and billing-initiated catalog actions), not from this page — here you review and move them forward. The queue opens on <strong>Action Needed</strong> (items in needs review or approved).</p>
+          <p>The <strong>Approval queue</strong> is the single review queue for product, pricing, entitlement, campaign, and approval changes. Requests are <strong>created from the Plans &amp; pricing catalog flow</strong> (and billing-initiated catalog actions), not from this page — here you review and move them forward. The queue opens on <strong>Action needed</strong> (items in needs review or approved).</p>
           <ol>
             <li>Open a request to read its summary, the human-readable proposal, the raw proposal payload, and the stage history (created / submitted / reviewed / applied).</li>
-            <li>Move it through the lifecycle: <strong>Draft → Needs Review → Approved → Implemented</strong> (or <strong>Rejected / Canceled</strong>). The detail footer shows only the actions valid for the current status.</li>
-            <li>For a <strong>generated</strong> proposal (a Stripe price change, plan availability/gating change, or plan config/limit change), approval <strong>auto-applies</strong>: the button reads <strong>Approve &amp; Apply</strong> and on click the change is written and the request jumps straight to <strong>Implemented</strong>. There is no separate manual step.</li>
-            <li>For a <strong>manual</strong> request (e.g. a feature-matrix publish), approval sets it to <strong>Approved</strong> and leaves a separate <strong>Mark Implemented</strong> step for the implementer to take after doing the manual work.</li>
+            <li>Move it through the lifecycle: <strong>Draft → Needs review → Approved → Implemented</strong> (or <strong>Rejected / Canceled</strong>). The detail footer shows only the actions valid for the current status.</li>
+            <li>For a <strong>generated</strong> proposal (a Stripe price change, plan availability/gating change, or plan config/limit change), approval <strong>auto-applies</strong>: the button reads <strong>Approve &amp; apply</strong> and on click the change is written and the request jumps straight to <strong>Implemented</strong>. There is no separate manual step.</li>
+            <li>For a <strong>manual</strong> request (e.g. a feature-matrix publish), approval sets it to <strong>Approved</strong> and leaves a separate <strong>Mark implemented</strong> step for the implementer to take after doing the manual work.</li>
           </ol>
           <p><strong>Safe-harbour for price changes:</strong> a generated change captures the slot&apos;s current value when the request was created. If the slot changed since then, applying it is blocked with a 409 that names the current vs. expected value — create a fresh request from the current row rather than forcing it. Stripe price IDs must start with <code>price_</code>, and when the environment matches the change is live-validated against Stripe (an inactive price is rejected). Always confirm the price ID is from the correct Stripe environment (sandbox vs. live) before approving.</p>
-          <p>Every transition and every auto-apply is audit-logged. The Approval Queue also surfaces as a queue you reach from Plans &amp; Pricing.</p>
+          <p>Every transition and every auto-apply is audit-logged. The approval queue also surfaces as a queue you reach from Plans &amp; pricing.</p>
           <p><strong>Permission boundary:</strong> super admin and product can submit, approve, and apply. Billing can <em>view</em> the queue (actions show <em>Read only</em>). Support and growth do not see this surface.</p>
         </>
       ),
@@ -548,9 +550,9 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-cr-auto-apply',
           question: 'Does approving a change request apply it, or is there a separate step?',
           answer: (
-            <p>It depends on the request. A generated price, gating, or config change <strong>auto-applies on approval</strong> and goes straight to Implemented. A manual request (like a feature-matrix publish) only becomes Approved on approval and needs a separate <strong>Mark Implemented</strong> step after you do the manual work.</p>
+            <p>It depends on the request. A generated price, gating, or config change <strong>auto-applies on approval</strong> and goes straight to Implemented. A manual request (like a feature-matrix publish) only becomes Approved on approval and needs a separate <strong>Mark implemented</strong> step after you do the manual work.</p>
           ),
-          answerText: 'Generated price/gating/config changes auto-apply on approval and become Implemented. Manual requests need a separate Mark Implemented step.',
+          answerText: 'Generated price/gating/config changes auto-apply on approval and become Implemented. Manual requests need a separate Mark implemented step.',
           keywords: ['auto apply', 'approve', 'implemented', 'manual'],
           popular: true,
         },
@@ -558,7 +560,7 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-cr-stale-price',
           question: 'Applying a price change was blocked saying the slot changed. What do I do?',
           answer: (
-            <p>The Stripe price slot was modified after this request was created, so applying it would overwrite a newer value. Cancel the stale request if the current value is already correct, or create a fresh request from the current Plans &amp; Pricing row and approve that one.</p>
+            <p>The Stripe price slot was modified after this request was created, so applying it would overwrite a newer value. Cancel the stale request if the current value is already correct, or create a fresh request from the current Plans &amp; pricing row and approve that one.</p>
           ),
           answerText: 'The slot changed after the request was created. Cancel the stale request if the value is already correct, or create a fresh request from the current row.',
           keywords: ['stale', 'slot changed', '409', 'price change blocked'],
@@ -573,10 +575,10 @@ const platformAdminHelp: HelpPageContent = {
       keywords: ['email templates', 'transactional email', 'marketing campaign', 'founding season', 'retired campaign', 'variable token', 'test send', 'reset to default', 'subject', 'heading', 'cta'],
       searchText: 'how do i edit email templates safely customise transactional email copy marketing campaigns founding season retired campaign cannot send test refused variable tokens curly braces test send reset to default subject heading body cta which category',
       links: [
-        { label: 'Email Templates', href: '/platform-admin/email-templates' },
+        { label: 'Email templates', href: '/platform-admin/email-templates' },
       ],
       content: (
-        <p><strong>Email Templates</strong> lets you override the copy of platform emails. Editing a template replaces the built-in default; the FieldLogicHQ brand envelope (header, footer) is always applied automatically.</p>
+        <p><strong>Email templates</strong> lets you override the copy of platform emails. Editing a template replaces the built-in default; the FieldLogicHQ brand envelope (header, footer) is always applied automatically.</p>
       ),
       subtopics: [
         {
@@ -587,7 +589,7 @@ const platformAdminHelp: HelpPageContent = {
               <p>Every platform email is in this editor, but they do not behave the same way, and the difference decides how careful you have to be.</p>
               <ul>
                 <li><strong>Transactional</strong> — <strong>Authentication</strong>, <strong>Billing</strong>, <strong>Tournament</strong>, <strong>Rep teams</strong>, <strong>House league</strong> and <strong>System</strong>. These fire automatically on a customer action, so a copy mistake reaches real customers with no further step from you.</li>
-                <li><strong>Marketing</strong> — the Founding Season campaigns, and the largest group in the list. Nothing here sends by itself: you send each one by hand from the <strong>Email</strong> dashboard, which is where the audience and the planned date live. This editor owns only the words.</li>
+                <li><strong>Marketing / Campaign</strong> — the Founding season campaigns, and the largest group in the list. Nothing here sends by itself: you send each one by hand from <strong>Email campaigns</strong>, which is where the audience and the planned date live. This editor owns only the words.</li>
               </ul>
             </>
           ),
@@ -626,7 +628,7 @@ const platformAdminHelp: HelpPageContent = {
           title: 'Who may edit, and what needs a second pair of eyes',
           content: (
             <>
-              <p>Email Templates is <strong>super admin and product only</strong> — it is not visible to support, billing, or growth.</p>
+              <p>Email templates is <strong>super admin and product only</strong> — it is not visible to support, billing, or growth.</p>
               <p><strong>Review with the product owner before saving</strong> any transactional template that goes straight to a customer: the auth, billing, tournament, rep-teams and house-league categories. Those send themselves, so there is no second chance to catch a mistake. System templates are internal, and marketing campaigns get their review when you send them from the Email dashboard.</p>
             </>
           ),
@@ -659,32 +661,35 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Product SOP',
       heading: 'How to work with plans, pricing, and feature matrix changes',
       summary: 'Live product packaging changes require the approved catalog workflow — sequenced by customer impact.',
-      keywords: ['plans pricing', 'product catalog', 'feature matrix', 'stripe price', 'approval', 'campaign', 'risk ladder', 'plan config', 'gating'],
+      keywords: ['plans pricing', 'plans & pricing', 'product catalog', 'feature matrix', 'stripe price', 'approval', 'campaign', 'risk ladder', 'plan config', 'gating', 'stripe mode', 'production', 'test', 'change note', 'catalog records', 'planning'],
+      searchText: 'how do i work with plans pricing feature matrix changes stripe mode production test dropdown product catalog workspace planning feature matrix catalog records change note optional stripe price id',
       links: [
-        { label: 'Plans & Pricing', href: '/platform-admin/plans-pricing' },
-        { label: 'Approval Queue', href: '/platform-admin/change-requests' },
-        { label: 'Bulk Operations', href: '/platform-admin/bulk-operations' },
+        { label: 'Plans & pricing', href: '/platform-admin/plans-pricing' },
+        { label: 'Approval queue', href: '/platform-admin/change-requests' },
+        { label: 'Bulk operations', href: '/platform-admin/bulk-operations' },
       ],
       content: (
         <>
-          <p><strong>Plans &amp; Pricing</strong> is for global product configuration — it changes the product for <em>every</em> customer, which is different from a one-customer override. Treat the controls as a <strong>risk ladder</strong>, from lowest to highest customer impact:</p>
+          <p><strong>Plans &amp; pricing</strong> is for global product configuration — it changes the product for <em>every</em> customer, which is different from a one-customer override. Treat the controls as a <strong>risk ladder</strong>, from lowest to highest customer impact:</p>
           <ol>
             <li><strong>Gating status</strong> (live / early access) — controls whether a plan is offered. Reversible.</li>
             <li><strong>Config limits</strong> (tournament caps, seat caps, trial days) — affects what customers on the plan can do.</li>
             <li><strong>Stripe price IDs</strong> — affects real billing; a wrong ID can break checkout or charge the wrong amount.</li>
             <li><strong>Feature matrix</strong> — which modules each plan actually includes; highest blast radius and least immediately reversible, because it changes what existing customers can <em>do</em>, not just what a plan is advertised as.</li>
           </ol>
-          <p><strong>Recommended sequence for any change:</strong> verify subscriber impact (use the impact summaries) → create a change request → get it approved → apply. Generated price, gating, and config changes auto-apply on approval through the <strong>Approval Queue</strong> (see <em>How to review and action the Approval Queue</em>).</p>
+          <p><strong>Recommended sequence for any change:</strong> verify subscriber impact (use the impact summaries) → create a change request → get it approved → apply. Generated price, gating, and config changes auto-apply on approval through the <strong>Approval queue</strong> (see <em>How to review and action the approval queue</em>).</p>
           <p><strong>Stripe price change checklist:</strong></p>
           <ul>
-            <li>Confirm the <code>price_...</code> ID is from the correct Stripe environment — sandbox vs. live.</li>
+            <li>Confirm the <code>price_...</code> ID is from the correct Stripe environment — sandbox vs. live. <strong>Stripe mode</strong> is a dropdown (<strong>Production</strong> or <strong>Test</strong>) that switches every price table on the screen, so check it before you edit.</li>
+            <li>The <strong>Change note</strong> on a price edit is optional, but say why the ID is changing for the next person reading the request.</li>
             <li>Confirm no org is on a Stripe-managed subscription that swapping the price would break.</li>
             <li>Let the change-request flow validate the ID against Stripe before it applies; do not force a blocked (stale) apply.</li>
           </ul>
+          <p>The page has two tabs, <strong>Plans</strong> and <strong>Product catalog</strong>. On <strong>Product catalog</strong>, the workspace dropdown switches between <strong>Planning</strong>, <strong>Feature matrix</strong>, and <strong>Catalog records</strong>.</p>
           <p><strong>When to use which tool:</strong></p>
           <ul>
-            <li><strong>Plans &amp; Pricing</strong> — global changes that should affect every customer.</li>
-            <li><strong>Bulk Operations</strong> — the same exception applied to a chosen set of orgs.</li>
+            <li><strong>Plans &amp; pricing</strong> — global changes that should affect every customer.</li>
+            <li><strong>Bulk operations</strong> — the same exception applied to a chosen set of orgs.</li>
             <li><strong>Org-level Entitlements / billing override</strong> — a single-customer exception (see <em>How to provide module access</em> and <em>How to temporarily override billing access</em>).</li>
           </ul>
           <p>Live feature matrix publishing must come from an approved Feature Matrix request.</p>
@@ -696,22 +701,22 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Growth SOP',
       heading: 'How to send a batch marketing email',
       summary: 'Trigger a founding-season marketing send safely, with a pre-send review and the confirm modal.',
-      keywords: ['email', 'batch send', 'marketing email', 'founding season', 'recipients', 'send history', 'opt out', 'resend'],
+      keywords: ['email', 'email campaigns', 'email dashboard', 'batch send', 'marketing email', 'founding season', 'recipients', 'send history', 'sent history', 'confirm send', 'opt out', 'resend'],
       searchText: 'how do i send a batch marketing email founding season recipients preview confirm send irreversible cannot be undone send history opted out resubscribe',
       links: [
-        { label: 'Email', href: '/platform-admin/email' },
+        { label: 'Email campaigns', href: '/platform-admin/email' },
       ],
       content: (
         <>
-          <p>The <strong>Email</strong> dashboard triggers the founding-season marketing emails. Sends go to <strong>real customers</strong> and <strong>cannot be recalled</strong>, so the review step matters.</p>
+          <p><strong>Email campaigns</strong> (the page is headed <strong>Email dashboard</strong>) triggers the founding-season marketing emails. Sends go to <strong>real customers</strong> and <strong>cannot be recalled</strong>, so the review step matters.</p>
           <ol>
-            <li>Check the audience stats at the top: <strong>Founding Season Orgs</strong>, <strong>Active Recipients</strong> (founding orgs minus opt-outs), and <strong>Opted Out</strong>. <strong>The per-email <em>Recipients</em> column is the only count that tells you who will actually receive that email</strong> — always read that one. It can legitimately be lower than the headline figure: the stats at the top count every account holding a free season, while these campaigns are written for organizations and are sent only to them.</li>
+            <li>Check the audience stats at the top: <strong>Founding season orgs</strong>, <strong>Active recipients</strong> (founding orgs minus opt-outs), and <strong>Opted out</strong>. <strong>The per-email <em>Recipients</em> column is the only count that tells you who will actually receive that email</strong> — always read that one. It can legitimately be lower than the headline figure: the stats at the top count every account holding a free season, while these campaigns are written for organizations and are sent only to them.</li>
             <li>Click the <strong>Preview</strong> (eye) icon to read the exact email before sending — the preview is rendered by the same code as the send, so what you read is what goes out. The board lists only campaigns that can actually be sent; a retired campaign (one whose product we no longer sell) leaves the board entirely rather than sitting there waiting to be clicked.</li>
-            <li>Click <strong>Send</strong>. The <strong>Confirm Send</strong> modal restates the email key, the recipient count, and the subject, with the warning <em>&ldquo;This will send real emails… This action cannot be undone.&rdquo;</em> Read all three before confirming.</li>
+            <li>Click the <strong>Send now</strong> (paper-plane) icon on the email&apos;s row. The <strong>Confirm send</strong> modal restates the email key, the recipient count, and the subject, with the warning <em>&ldquo;This will send real emails… This action cannot be undone.&rdquo;</em> Read all three before confirming.</li>
             <li>Confirm with <strong>Send to N recipients</strong>. Do not close the window while it says <em>&ldquo;Sending in progress.&rdquo;</em> When it finishes you get a result line: <em>Sent / Suppressed / Failed / Batch</em>.</li>
-            <li>If a send partially fails, open <strong>Sent History</strong> and expand the batch row for per-recipient delivery status (sent / suppressed / failed) before deciding whether to re-send to anyone.</li>
+            <li>If a send partially fails, open <strong>Sent history</strong> and expand the batch row for per-recipient delivery status (sent / suppressed / failed) before deciding whether to re-send to anyone.</li>
           </ol>
-          <p>Use the <strong>Opt-Outs</strong> table only to re-subscribe an org that has <em>explicitly</em> asked to be re-added. Opt-outs are excluded from Active Recipients automatically.</p>
+          <p>Use the <strong>Opt-outs</strong> table only to re-subscribe an org that has <em>explicitly</em> asked to be re-added. Opt-outs are excluded from Active Recipients automatically.</p>
           <p><strong>Permission boundary:</strong> growth, product, and super admin can trigger a send. Billing and support cannot — the Email surface is not visible to them.</p>
         </>
       ),
@@ -720,7 +725,7 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-email-batch-recall',
           question: 'Can I recall a marketing email after sending it?',
           answer: (
-            <p>No. Once you confirm the send, the emails go out and cannot be undone or recalled. Preview the email and verify the recipient count in the Confirm Send modal before clicking send.</p>
+            <p>No. Once you confirm the send, the emails go out and cannot be undone or recalled. Preview the email and verify the recipient count in the Confirm send modal before clicking send.</p>
           ),
           answerText: 'No — a sent batch cannot be recalled. Preview and verify the recipient count in the confirm modal before sending.',
           keywords: ['recall', 'undo', 'cannot be undone', 'irreversible'],
@@ -730,7 +735,7 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-email-batch-recipient-count',
           question: 'Which number is the real recipient count?',
           answer: (
-            <p>The per-email <strong>Recipients</strong> column (and the count restated in the Confirm Send modal). That is Active Recipients — founding orgs minus opt-outs — not the total org count. Always confirm that number before sending.</p>
+            <p>The per-email <strong>Recipients</strong> column (and the count restated in the Confirm send modal). That is Active recipients — founding orgs minus opt-outs — not the total org count. Always confirm that number before sending.</p>
           ),
           answerText: 'The per-email Recipients column / the count in the confirm modal — Active Recipients, not total orgs.',
           keywords: ['recipient count', 'how many', 'active recipients'],
@@ -743,18 +748,18 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'How to manage the early-access lead pipeline',
       summary: 'Work early-access leads through the pipeline: status, notes, outreach templates, and conversion.',
       keywords: ['early access', 'leads', 'pipeline', 'outreach', 'convert', 'follow up', 'growth', 'lead status', 'export'],
-      searchText: 'how do i manage early access lead pipeline status new qualified contacted pilot converted not a fit do not contact outreach templates mark converted follow up export copy emails',
+      searchText: 'how do i manage early access lead pipeline status new qualified contacted pilot converted not a fit do not contact outreach templates mark converted follow up export copy emails follow-up due in view tiles',
       links: [
-        { label: 'Early Access', href: '/platform-admin/early-access' },
+        { label: 'Early access', href: '/platform-admin/early-access' },
       ],
       content: (
         <>
-          <p><strong>Early Access</strong> is the growth lead pipeline. The summary tiles show leads loaded, New, Pilot, Converted (with rate), and Follow-up Due. The conversion panels break down what is converting by plan interest and feature interest.</p>
+          <p><strong>Early access</strong> is the growth lead pipeline. The summary tiles show leads <strong>In view</strong>, <strong>New</strong>, <strong>Pilot</strong>, <strong>Converted</strong> (with rate), and <strong>Follow-up due</strong>. The conversion panels break down what is converting by plan interest and feature interest.</p>
           <ol>
             <li>Filter the list by search text, plan interest, feature interest, status, or consent. Click a lead to open the detail panel.</li>
             <li>Move the lead through its lifecycle with the status select: <strong>New → Qualified → Contacted → Pilot candidate → Waiting for launch → Converted</strong>, or close it as <strong>Not a fit</strong> / <strong>Do not contact</strong>. Any status can be set directly — there is no forced order.</li>
             <li>Record work in the detail panel: set a <strong>Follow-up due</strong> date, a <strong>Next action</strong>, and <strong>Internal notes</strong>, then <strong>Save</strong>. Use <strong>Mark contacted</strong> to stamp the last-contacted date.</li>
-            <li>For outreach, use the built-in <strong>Templates</strong> (League Plus beta invite, Club roadmap update, Feedback call). Clicking one copies the subject and body with the lead&apos;s name and org filled in — paste into your email tool and personalise before sending. <strong>Copy email</strong> grabs the lead&apos;s address; <strong>Copy emails</strong> grabs all consented addresses in the current view.</li>
+            <li>For outreach, use the built-in <strong>Templates</strong> (League Plus beta invite, Club roadmap update, Feedback call). Clicking one copies the subject and body with the lead&apos;s name and org filled in — paste into your email tool and personalise before sending. The <strong>Email</strong> button in the panel copies the lead&apos;s address; <strong>Copy emails</strong> grabs all consented addresses in the current view.</li>
             <li>To convert a lead, first pick the <strong>Converted organization</strong> in the panel, then click <strong>Mark converted</strong>. This links the lead to that org and records the conversion (a lead with no org selected cannot be marked converted).</li>
           </ol>
           <p><strong>Reporting:</strong> the list loads at most <strong>100 leads</strong> — when the true total exceeds that, narrow with filters or <strong>Export</strong> (XLSX/CSV) for the full pipeline. Respect consent: only consented leads are included in <em>Copy emails</em>.</p>
@@ -793,7 +798,7 @@ const platformAdminHelp: HelpPageContent = {
       links: [
         { label: 'Organizations', href: '/platform-admin/orgs' },
         { label: 'Retention', href: '/platform-admin/retention' },
-        { label: 'Audit Log', href: '/platform-admin/audit' },
+        { label: 'Audit log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
@@ -803,14 +808,14 @@ const platformAdminHelp: HelpPageContent = {
       subtopics: [
         {
           id: 'cancel-subscription-find',
-          title: 'Get to the Cancel Subscription control',
+          title: 'Get to the Cancel subscription control',
           content: (
             <HelpSteps>
               <li>Go to <strong>Organizations</strong> and open the customer account.</li>
-              <li>Confirm the subscription status in Account Context is not already <code>canceled</code>.</li>
-              <li>Open <strong>Billing &amp; Access</strong>.</li>
-              <li>Scroll to <strong>Cancel Subscription</strong> at the bottom of the tab. This section only appears when a Stripe subscription ID is on file and the account is not already canceled.</li>
-              <li>Click <strong>Cancel Subscription…</strong>.</li>
+              <li>Confirm the subscription status in Account context is not already <code>canceled</code>.</li>
+              <li>Open <strong>Billing &amp; access</strong>.</li>
+              <li>Scroll to <strong>Cancel subscription</strong> at the bottom of the tab. This section only appears when a Stripe subscription ID is on file and the account is not already canceled.</li>
+              <li>Click <strong>Cancel subscription…</strong>.</li>
             </HelpSteps>
           ),
         },
@@ -823,7 +828,7 @@ const platformAdminHelp: HelpPageContent = {
                 <li>Review the preflight: modules shutting down and the number of tournaments that will be archived.</li>
                 <li>Enter a reason that explains why the cancellation is being initiated by platform staff rather than the customer. This appears in the audit log.</li>
                 <li>Check <strong>Send cancellation confirmation email to org owner</strong> if the customer expects a confirmation email.</li>
-                <li>Click <strong>Confirm Cancel Subscription</strong>.</li>
+                <li>Click <strong>Confirm cancel subscription</strong>.</li>
                 <li>Add an internal note on the <strong>Support</strong> tab with the customer-facing context: what was discussed, who approved, and any retention or resubscription commitments.</li>
               </HelpSteps>
               <p>Check the <strong>Retention</strong> queue after cancellation and extend the deadline if the customer has negotiated additional time.</p>
@@ -865,9 +870,9 @@ const platformAdminHelp: HelpPageContent = {
         },
         {
           id: 'faq-cancel-no-stripe-id',
-          question: 'The Cancel Subscription section is not showing. Why?',
+          question: 'The Cancel subscription section is not showing. Why?',
           answer: (
-            <p>The section only appears when the org has a Stripe subscription ID on file and the account is not already canceled. If the subscription was already canceled in Stripe but the FieldLogicHQ status was not updated, use a <strong>Subscription Status Override</strong> in the Active Overrides section to set it to canceled, or change the base plan to the free Tournament tier.</p>
+            <p>The section only appears when the org has a Stripe subscription ID on file and the account is not already canceled. If the subscription was already canceled in Stripe but the FieldLogicHQ status was not updated, use a <strong>Subscription status</strong> override in the <strong>Active overrides</strong> section to set it to canceled, or change the base plan to the free Tournament tier.</p>
           ),
           answerText: 'The section only appears when a Stripe subscription ID is on file and status is not canceled. Use a billing override or plan change if the section is missing.',
           keywords: ['cancel section missing', 'no stripe id', 'already canceled'],
@@ -877,12 +882,12 @@ const platformAdminHelp: HelpPageContent = {
           question: 'Should I cancel the subscription or just add a canceled status override?',
           answer: (
             <>
-              <p>If the customer wants their billing to stop and the account closed, use <strong>Cancel Subscription</strong>. That cancels the Stripe subscription so no further charges occur. A status override does <strong>not</strong> stop Stripe from billing.</p>
+              <p>If the customer wants their billing to stop and the account closed, use <strong>Cancel subscription</strong>. That cancels the Stripe subscription so no further charges occur. A status override does <strong>not</strong> stop Stripe from billing.</p>
               <p><strong>⚠ A status override is not cosmetic.</strong> Since 2026-08-06 the access rail reads the effective subscription status, so setting an override to <code>canceled</code> <strong>genuinely shuts the customer out of the whole product</strong> while Stripe keeps charging them — the worst combination available. Never use it as a &ldquo;just for display&rdquo; flag.</p>
               <p>The reverse is the useful case: an <code>active</code> override <strong>reinstates</strong> an account without touching Stripe, which is the intended way to unblock a customer who was cut off in error. <em>Operational caveat:</em> timed overrides only take effect when entitlement grants are enabled in the environment — if an override reports success but nothing changes for the customer, check that first before assuming the rail is broken.</p>
             </>
           ),
-          answerText: 'Use Cancel Subscription if the customer wants billing to stop — a status override does not stop Stripe charges. WARNING: a status override is not cosmetic. Since 2026-08-06 the access rail reads the effective subscription status, so an override set to canceled genuinely shuts the customer out of the entire product while Stripe keeps charging them. Never use it as a display-only flag. The reverse is the useful case: an active override reinstates an account without touching Stripe, and is the intended way to unblock a customer cut off in error. Timed overrides only apply when entitlement grants are enabled in the environment — if an override reports success but nothing changes for the customer, check that before assuming the rail is broken.',
+          answerText: 'Use Cancel subscription if the customer wants billing to stop — a status override does not stop Stripe charges. WARNING: a status override is not cosmetic. Since 2026-08-06 the access rail reads the effective subscription status, so an override set to canceled genuinely shuts the customer out of the entire product while Stripe keeps charging them. Never use it as a display-only flag. The reverse is the useful case: an active override reinstates an account without touching Stripe, and is the intended way to unblock a customer cut off in error. Timed overrides only apply when entitlement grants are enabled in the environment — if an override reports success but nothing changes for the customer, check that before assuming the rail is broken.',
           keywords: ['cancel vs override', 'status override', 'stop billing', 'override locks out customer', 'override not cosmetic', 'reinstate', 'unblock customer', 'restore access', 'override did nothing', 'entitlement grants'],
           popular: true,
         },
@@ -896,7 +901,7 @@ const platformAdminHelp: HelpPageContent = {
       keywords: ['delete user', 'remove user', 'gdpr', 'data deletion', 'user removal', 'account delete'],
       searchText: 'how do i delete a user remove user account permanently gdpr data deletion right to erasure customer users',
       links: [
-        { label: 'Customer Users', href: '/platform-admin/customer-users' },
+        { label: 'Customer users', href: '/platform-admin/customer-users' },
         { label: 'Organizations', href: '/platform-admin/orgs' },
       ],
       content: (
@@ -904,7 +909,7 @@ const platformAdminHelp: HelpPageContent = {
           <p>User deletion is permanent. The Supabase auth record is removed and the user can no longer sign in. Organization data and tournaments the user created are <strong>not</strong> automatically deleted — only their personal auth record and associated user metadata are removed.</p>
           <p><strong>Before deleting a user, check their organization memberships.</strong></p>
           <ol>
-            <li>Go to <strong>Customer Users</strong> and search for the user.</li>
+            <li>Go to <strong>Customer users</strong> and search for the user.</li>
             <li>Review the <strong>Organizations</strong> column on the user's row to see which orgs they belong to and their role in each.</li>
             <li>If the user is the <strong>sole owner</strong> of one or more organizations, handle those orgs first:
               <ul>
@@ -912,8 +917,8 @@ const platformAdminHelp: HelpPageContent = {
                 <li>If the org should be closed: cancel the subscription if active (see <strong>How to cancel a customer subscription</strong>), then delete the org (see <strong>How to delete an organization</strong>) before deleting the user.</li>
               </ul>
             </li>
-            <li>Once org ownership is resolved, return to <strong>Customer Users</strong> and click <strong>Delete</strong> on the user&apos;s row.</li>
-            <li>Type the user&apos;s email to confirm and click <strong>Delete</strong>.</li>
+            <li>Once org ownership is resolved, return to <strong>Customer users</strong>, open the <strong>Actions</strong> menu on the user&apos;s row, and choose <strong>Delete user</strong>.</li>
+            <li>Type the user&apos;s email to confirm and click <strong>Delete permanently</strong>.</li>
             <li>Write an entry in the platform audit log by adding an internal note to any affected organizations explaining the deletion and its reason.</li>
           </ol>
           <p>The delete action is audit-logged as <code>delete_user</code>. If the deletion was requested for GDPR or data erasure reasons, document the request source and date in the internal notes of each affected organization before deleting the user.</p>
@@ -952,7 +957,7 @@ const platformAdminHelp: HelpPageContent = {
       links: [
         { label: 'Organizations', href: '/platform-admin/orgs' },
         { label: 'Retention', href: '/platform-admin/retention' },
-        { label: 'Audit Log', href: '/platform-admin/audit' },
+        { label: 'Audit log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
@@ -960,12 +965,12 @@ const platformAdminHelp: HelpPageContent = {
           <p><strong>Before deleting an organization, complete these steps in order:</strong></p>
           <ol>
             <li><strong>Confirm the request.</strong> Get written confirmation from the account owner or a documented internal approval. For GDPR erasure requests, note the request date and source in internal notes before proceeding.</li>
-            <li><strong>Cancel the subscription.</strong> If the org has an active Stripe subscription, cancel it first using the <strong>Cancel Subscription</strong> action in <strong>Billing &amp; Access</strong>. This stops billing and creates a retention record. See <em>How to cancel a customer subscription</em>.</li>
+            <li><strong>Cancel the subscription.</strong> If the org has an active Stripe subscription, cancel it first using the <strong>Cancel subscription</strong> action in <strong>Billing &amp; access</strong>. This stops billing and creates a retention record. See <em>How to cancel a customer subscription</em>.</li>
             <li><strong>Check retention records.</strong> If data is currently in the <strong>Retention</strong> queue for this org, review whether it should be purged immediately or allowed to expire normally.</li>
-            <li><strong>Delete the organization.</strong> Open the org in <strong>Organizations</strong>, go to the <strong>Support</strong> tab, scroll to <strong>Delete Organization</strong>, and follow the confirmation steps. You will be required to type the org slug and enter a mandatory reason.</li>
-            <li><strong>Delete user accounts if required.</strong> If the deletion is part of a data erasure request and the users have no other organizations, delete their user accounts from <strong>Customer Users</strong> after the org is removed.</li>
+            <li><strong>Delete the organization.</strong> Open the org in <strong>Organizations</strong>, go to the <strong>Support</strong> tab, scroll to <strong>Delete organization</strong> under the Danger zone, click <strong>Load delete preflight…</strong>, and follow the confirmation steps. You will be required to type the org slug and enter a mandatory reason.</li>
+            <li><strong>Delete user accounts if required.</strong> If the deletion is part of a data erasure request and the users have no other organizations, delete their user accounts from <strong>Customer users</strong> after the org is removed.</li>
           </ol>
-          <p>Organization deletion is a super admin action. If you do not see the <strong>Delete Organization</strong> section on the Support tab, your platform role does not have super admin access — escalate to a super admin to complete the deletion.</p>
+          <p>Organization deletion is a super admin action. If you do not see the <strong>Delete organization</strong> section on the Support tab, your platform role does not have super admin access — escalate to a super admin to complete the deletion.</p>
         </>
       ),
       faqs: [
@@ -973,7 +978,7 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-delete-org-stripe',
           question: 'Do I need to cancel Stripe separately before deleting the org?',
           answer: (
-            <p>Yes. The org deletion process does not automatically cancel Stripe subscriptions. Cancel the subscription from <strong>Billing &amp; Access</strong> first so billing stops before the org record is removed.</p>
+            <p>Yes. The org deletion process does not automatically cancel Stripe subscriptions. Cancel the subscription from <strong>Billing &amp; access</strong> first so billing stops before the org record is removed.</p>
           ),
           answerText: 'Yes. Cancel the Stripe subscription from Billing & Access before deleting the org — the deletion does not stop Stripe billing automatically.',
           keywords: ['stripe', 'cancel before delete', 'billing'],
@@ -998,14 +1003,14 @@ const platformAdminHelp: HelpPageContent = {
       summary: 'Invite, activate, deactivate, remove, and role-scope platform users.',
       keywords: ['platform users', 'employee access', 'invite', 'deactivate', 'role', 'super admin', 'support', 'billing', 'product'],
       links: [
-        { label: 'Platform Users', href: '/platform-admin/users' },
+        { label: 'Platform users', href: '/platform-admin/users' },
       ],
       content: (
         <>
           <p>Only users with platform-user management permission can change employee access.</p>
           <ol>
-            <li>Go to <strong>Platform Users</strong>.</li>
-            <li>Click <strong>Add User</strong>, enter name, email, and role, then create the account.</li>
+            <li>Go to <strong>Platform users</strong>.</li>
+            <li>Click <strong>Add user</strong>, enter name, email, and role, then create the account.</li>
             <li>Copy the password setup link and send it through an approved internal channel.</li>
             <li>Use the role dropdown to adjust access later. Use the smallest role that fits the job.</li>
             <li>Deactivate for temporary removal. Remove only when the person should lose platform-admin access entirely.</li>
@@ -1020,7 +1025,7 @@ const platformAdminHelp: HelpPageContent = {
       id: 'faq-customer-vs-platform-docs',
       question: 'Can platform admins see the same help docs customers see?',
       answer: (
-        <p>Yes. The platform Help Center links to the same customer guide content under platform-admin routes, plus the protected employee-only Platform Admin Operations guide.</p>
+        <p>Yes. <strong>Help</strong>, at the foot of the console menu, links to the same customer guide content under platform-admin routes, plus the protected employee-only Platform Admin Operations guide.</p>
       ),
       answerText: 'Yes. Platform admins can see customer guide content plus the protected employee-only operations guide.',
       keywords: ['customer docs', 'platform docs', 'help center'],

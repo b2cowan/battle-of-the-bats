@@ -251,30 +251,6 @@
     "hex": 0,
     "rgba": 1
   },
-  "app/platform-admin/change-requests/ChangeRequestsClient.tsx": {
-    "hex": 9,
-    "rgba": 0
-  },
-  "app/platform-admin/dev-tools/page.tsx": {
-    "hex": 8,
-    "rgba": 6
-  },
-  "app/platform-admin/email-templates/[key]/EmailTemplateEditor.tsx": {
-    "hex": 4,
-    "rgba": 2
-  },
-  "app/platform-admin/email-templates/page.tsx": {
-    "hex": 1,
-    "rgba": 0
-  },
-  "app/platform-admin/email/EmailDashboardClient.tsx": {
-    "hex": 6,
-    "rgba": 1
-  },
-  "app/platform-admin/observability/CallsVsErrorsChart.tsx": {
-    "hex": 3,
-    "rgba": 0
-  },
   "app/unsubscribe/confirmed/page.tsx": {
     "hex": 4,
     "rgba": 3

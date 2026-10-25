@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Loader, Check, X } from 'lucide-react';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
@@ -13,6 +13,9 @@ import type {
   ProductCatalogAddonRow,
   ProductCatalogVersionRow,
 } from './page';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import kit from '../console.module.css';
+import { cap } from '../chips';
 import styles from './plans-pricing.module.css';
 import { pluralize } from '@/lib/utils';
 import { fmtAbsoluteDate, fmtAbsoluteDateTime } from '@/lib/format-date';
@@ -23,13 +26,13 @@ type CatalogView = 'planning' | 'matrix' | 'records';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'plans', label: 'Plans' },
-  { id: 'catalog', label: 'Product Catalog' },
+  { id: 'catalog', label: 'Product catalog' },
 ];
 
 const CATALOG_VIEWS: { id: CatalogView; label: string }[] = [
   { id: 'planning', label: 'Planning' },
-  { id: 'matrix', label: 'Feature Matrix' },
-  { id: 'records', label: 'Catalog Records' },
+  { id: 'matrix', label: 'Feature matrix' },
+  { id: 'records', label: 'Catalog records' },
 ];
 
 interface PlanGatingRow {
@@ -199,7 +202,7 @@ const ADDON_CATALOG_KEY_BY_PRICE_PLAN: Record<string, string> = {
 
 const CHANGE_REQUEST_STATUSES = [
   { value: 'draft', label: 'Draft' },
-  { value: 'needs_review', label: 'Needs Review' },
+  { value: 'needs_review', label: 'Needs review' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
   { value: 'implemented', label: 'Implemented' },
@@ -210,7 +213,7 @@ const PRIORITIES = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
-  { value: 'launch_blocker', label: 'Launch Blocker' },
+  { value: 'launch_blocker', label: 'Launch blocker' },
 ];
 
 const CAMPAIGN_TYPES = [
@@ -306,12 +309,13 @@ function optionLabel(options: { value: string; label: string }[], value: string 
   return options.find(option => option.value === value)?.label ?? value ?? 'Not set';
 }
 
+/** The chip colour for a record's state; the caller puts it beside `kit.chip`. */
 function statusClass(status: string) {
-  if (status === 'published' || status === 'live') return styles.badgeLive;
-  if (status === 'approved' || status === 'active' || status === 'implemented') return styles.badgeLive;
-  if (status === 'scheduled' || status === 'planned' || status === 'needs_review') return styles.badgePlanned;
-  if (status === 'rejected' || status === 'retired' || status === 'archived' || status === 'canceled' || status === 'ended') return styles.badgeRetired;
-  return styles.badgeGated;
+  if (status === 'published' || status === 'live') return kit.chipOk;
+  if (status === 'approved' || status === 'active' || status === 'implemented') return kit.chipOk;
+  if (status === 'scheduled' || status === 'planned' || status === 'needs_review') return kit.chipInfo;
+  if (status === 'rejected' || status === 'retired' || status === 'archived' || status === 'canceled' || status === 'ended') return kit.chipBad;
+  return kit.chipQuiet;
 }
 
 function buildFeatureMatrixDraft(featureMatrix: FeatureMatrixRow[]): FeatureMatrixDraft {
@@ -404,7 +408,7 @@ function buildPriceChangeRequestDraft(
   planImpact: PlanImpact | undefined,
 ): PriceChangeRequestDraft {
   const planName = PRICE_PLAN_LABELS[row.plan_id] ?? row.plan_id;
-  const cycle = row.billing_cycle.charAt(0).toUpperCase() + row.billing_cycle.slice(1);
+  const cycle = cap(row.billing_cycle);
   const environment = row.environment === 'live' ? 'Production' : 'Test';
   const targets = priceRequestTargets(row);
   const currentPrice = row.price_id ?? 'not set';
@@ -1092,9 +1096,9 @@ export default function PlansPricingClient({
   function renderImpact(planId: string) {
     const impact = impactsByPlan.get(planId);
     return (
-      <div className={styles.impactCell}>
+      <div className={styles.stack}>
         <strong>{impactSummary(impact)}</strong>
-        <span>{statusBreakdown(impact)}</span>
+        <span className={kit.sub}>{statusBreakdown(impact)}</span>
       </div>
     );
   }
@@ -1160,7 +1164,7 @@ export default function PlansPricingClient({
 
     const rows = priceRows.filter(row => row.plan_id === planId);
     if (rows.length === 0) {
-      return { primary: 'No price slots', secondary: 'Not configured in Stripe Prices' };
+      return { primary: 'No price slots', secondary: 'Not configured in Stripe prices' };
     }
 
     const live = rows.filter(row => row.environment === 'live');
@@ -1196,16 +1200,16 @@ export default function PlansPricingClient({
 
   function renderSummaryStack(primary: string, secondary: string) {
     return (
-      <div className={styles.planSummaryStack}>
+      <div className={styles.stack}>
         <strong>{primary}</strong>
-        <span>{secondary}</span>
+        <span className={kit.sub}>{secondary}</span>
       </div>
     );
   }
 
   function renderCompactChange(updatedAt: string | null | undefined) {
     return (
-      <span className={updatedAt ? styles.compactChange : styles.noteEmpty}>
+      <span className={updatedAt ? undefined : styles.noteEmpty}>
         {updatedAt ? formatMonthDay(updatedAt) : 'Not changed'}
       </span>
     );
@@ -1224,7 +1228,7 @@ export default function PlansPricingClient({
       return (
         <tr
           key={planId}
-          className={styles.row}
+          className={kit.clickableRow}
           onClick={() => setSelectedPlanId(planId)}
           onKeyDown={event => {
             if (event.key === 'Enter' || event.key === ' ') {
@@ -1235,19 +1239,19 @@ export default function PlansPricingClient({
           tabIndex={0}
           title="Open plan details"
         >
-          <td className={styles.planName}>{meta.label}</td>
-          <td>
-            <span className={isLive ? styles.badgeLive : styles.badgeGated}>
-              {gating ? (isLive ? 'Live' : 'Early Access') : 'Not configured'}
+          <td className="table-cards-title"><span className={kit.nameLink}>{meta.label}</span></td>
+          <td data-label="Status">
+            <span className={`${kit.chip} ${isLive ? kit.chipOk : gating ? kit.chipWarn : kit.chipQuiet}`}>
+              {gating ? (isLive ? 'Live' : 'Early access') : 'Not configured'}
             </span>
           </td>
-          <td>{renderImpact(planId)}</td>
-          <td>{renderSummaryStack(priceSummary.primary, priceSummary.secondary)}</td>
-          <td>{renderSummaryStack(configSummary.primary, configSummary.secondary)}</td>
-          <td>
+          <td data-label="Impact">{renderImpact(planId)}</td>
+          <td data-label="Pricing">{renderSummaryStack(priceSummary.primary, priceSummary.secondary)}</td>
+          <td data-label="Limits & trials">{renderSummaryStack(configSummary.primary, configSummary.secondary)}</td>
+          <td data-label="Pending">
             {pending.length > 0 ? (
               <Link
-                className={styles.pendingPlanLink}
+                className={styles.pendingLink}
                 href="/platform-admin/change-requests"
                 onClick={event => event.stopPropagation()}
               >
@@ -1257,7 +1261,8 @@ export default function PlansPricingClient({
               <span className={styles.noteEmpty}>None</span>
             )}
           </td>
-          <td>{renderCompactChange(latest?.updated_at)}</td>
+          <td data-label="Updated" className={kit.nowrap}>{renderCompactChange(latest?.updated_at)}</td>
+          <td className={kit.rowDoor} aria-hidden="true">›</td>
         </tr>
       );
     });
@@ -1268,9 +1273,9 @@ export default function PlansPricingClient({
 
     if (!row) {
       return (
-        <div className={styles.priceStatusStack}>
+        <div className={styles.priceStack}>
           {displayPrice && <strong className={styles.priceAmount}>{displayPrice}</strong>}
-          <span className={styles.priceStatusEmpty}>Missing slot</span>
+          <span className={`${kit.chip} ${kit.chipQuiet}`}>Missing slot</span>
         </div>
       );
     }
@@ -1279,16 +1284,16 @@ export default function PlansPricingClient({
     const pendingProposal = pendingRequest ? getStripePriceProposal(pendingRequest) : null;
 
     return (
-      <div className={styles.priceStatusStack}>
+      <div className={styles.priceStack}>
         {displayPrice && <strong className={styles.priceAmount}>{displayPrice}</strong>}
-        <span className={row.price_id ? styles.priceStatusSet : styles.priceStatusEmpty}>
+        <span className={`${kit.chip} ${row.price_id ? kit.chipOk : kit.chipQuiet}`}>
           {row.price_id ? 'Configured' : 'Not set'}
         </span>
-        {row.price_id && <small>{row.price_id}</small>}
+        {row.price_id && <span className={`${kit.code} ${styles.priceId}`}>{row.price_id}</span>}
         {pendingRequest && (
-          <small className={styles.pendingPriceBadge}>
+          <span className={`${kit.sub} ${styles.pendingText}`}>
             {optionLabel(CHANGE_REQUEST_STATUSES, pendingRequest.status)}: {pendingProposal?.proposedPriceId ?? 'clear price ID'}
-          </small>
+          </span>
         )}
       </div>
     );
@@ -1313,19 +1318,20 @@ export default function PlansPricingClient({
           const pendingCount = group.rows.filter(row => pendingStripePriceRequestByRow.has(row.id)).length;
 
           return (
-            <tr key={group.planId} className={styles.row} onClick={() => setSelectedPriceProductId(group.planId)}>
-              <td className={styles.planName}>
-                {group.label}
-                <small className={styles.muted}>{cleanProductName(group.productName)}</small>
+            <tr key={group.planId} className={kit.clickableRow} onClick={() => setSelectedPriceProductId(group.planId)}>
+              <td className="table-cards-title">
+                <span className={kit.nameLink}>{group.label}</span>
+                <span className={kit.sub}>{cleanProductName(group.productName)}</span>
               </td>
-              <td>{group.planId === 'rep_team' || group.planId === 'org_team_addon' ? 'Add-on purchases' : impactSummary(planImpact)}</td>
-              <td>{priceCell(group.monthly, group, 'monthly')}</td>
-              <td>{priceCell(group.annual, group, 'annual')}</td>
-              <td>{productLastChange(group)}</td>
+              <td data-label="Scope">{group.planId === 'rep_team' || group.planId === 'org_team_addon' ? 'Add-on purchases' : impactSummary(planImpact)}</td>
+              <td data-label="Monthly">{priceCell(group.monthly, group, 'monthly')}</td>
+              <td data-label="Annual">{priceCell(group.annual, group, 'annual')}</td>
+              <td data-label="Latest change">{productLastChange(group)}</td>
               <td className={styles.actionCell}>
                 {pendingCount > 0 && (
-                  <span className={styles.pendingCount}>{pendingCount} pending</span>
+                  <span className={styles.pendingText}>{pendingCount} pending</span>
                 )}
+                <span className={styles.chev} aria-hidden="true">›</span>
               </td>
             </tr>
           );
@@ -1348,7 +1354,7 @@ export default function PlansPricingClient({
           return (
             <Fragment key={row.id}>
               <tr
-                className={styles.priceSlotRow}
+                className={isEditing ? undefined : kit.clickableRow}
                 onClick={() => !isEditing && startPriceEdit(row)}
                 onKeyDown={event => {
                   if (isEditing) return;
@@ -1360,14 +1366,14 @@ export default function PlansPricingClient({
                 tabIndex={isEditing ? undefined : 0}
                 title={isEditing ? undefined : 'Click to edit'}
               >
-                <td className={styles.muted}>
-                  {row.billing_cycle.charAt(0).toUpperCase() + row.billing_cycle.slice(1)}
+                <td className={kit.muted}>
+                  {cap(row.billing_cycle)}
                 </td>
                 <td className={styles.priceIdCell}>
                   {isEditing ? (
                     <input
                       autoFocus
-                      className={styles.priceInput}
+                      className={`${kit.field} ${kit.code} ${styles.priceInput}`}
                       value={val}
                       placeholder="price_..."
                       onChange={event => setPriceEditing(prev => ({ ...prev, [row.id]: event.target.value }))}
@@ -1379,11 +1385,11 @@ export default function PlansPricingClient({
                     />
                   ) : (
                     <>
-                      <span className={row.price_id ? styles.priceIdSet : styles.priceIdEmpty}>
-                        {row.price_id ?? 'Not set - click to edit'}
-                      </span>
+                      {row.price_id
+                        ? <span className={kit.code}>{row.price_id}</span>
+                        : <span className={kit.muted}>Not set - click to edit</span>}
                       {pendingRequest && (
-                        <span className={styles.pendingPriceBadge}>
+                        <span className={`${kit.sub} ${styles.pendingText}`}>
                           {optionLabel(CHANGE_REQUEST_STATUSES, pendingRequest.status)} request: {pendingProposal?.proposedPriceId ?? 'clear price ID'}
                         </span>
                       )}
@@ -1393,7 +1399,7 @@ export default function PlansPricingClient({
                 <td>{renderLastChange(row.updated_at, row.updated_by_email, row.last_change_note)}</td>
                 <td>
                   {pendingRequest ? (
-                    <span className={styles.pendingPriceBadge}>
+                    <span className={styles.pendingText}>
                       {optionLabel(CHANGE_REQUEST_STATUSES, pendingRequest.status)} request
                     </span>
                   ) : (
@@ -1404,15 +1410,24 @@ export default function PlansPricingClient({
                   {isEditing ? (
                     <span className={styles.actionBtns}>
                       <button
-                        className={styles.saveBtn}
+                        type="button"
+                        className="btn btn-primary btn-sm"
                         onClick={() => savePrice(row)}
                         disabled={isBusy}
                         title="Request approval"
+                        aria-label="Request approval"
                       >
-                        {isBusy ? <Loader size={12} className={styles.spin} /> : <Check size={12} />}
+                        {isBusy ? <Loader size={14} className={kit.spin} /> : <Check size={14} />}
                       </button>
-                      <button className={styles.cancelBtn} onClick={() => cancelPriceEdit(row.id)} disabled={isBusy} title="Cancel">
-                        <X size={12} />
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => cancelPriceEdit(row.id)}
+                        disabled={isBusy}
+                        title="Cancel"
+                        aria-label="Cancel"
+                      >
+                        <X size={14} />
                       </button>
                     </span>
                   ) : isSaved ? (
@@ -1423,10 +1438,10 @@ export default function PlansPricingClient({
               {isEditing && (
                 <tr className={styles.noteRow}>
                   <td colSpan={5}>
-                    <label>
-                      <span>Change note</span>
+                    <label className={kit.fieldGroup}>
+                      <span className={kit.label}>Change note</span>
                       <input
-                        className={styles.noteInput}
+                        className={kit.field}
                         value={priceNotes[row.id] ?? ''}
                         placeholder="Why is this Stripe price ID changing?"
                         onChange={event => setPriceNotes(prev => ({ ...prev, [row.id]: event.target.value }))}
@@ -1452,6 +1467,44 @@ export default function PlansPricingClient({
     if (configEditPlan) cancelConfigEdit();
   }
 
+  /** A section inside a window: the heading ABOVE a plain card, its one line under the heading (D1). */
+  function renderPanel(title: string, lede: string, body: ReactNode, flush = false) {
+    return (
+      <section className={kit.section}>
+        <div>
+          <h3 className={kit.sectionTitle}>{title}</h3>
+          <p className={kit.sectionLede}>{lede}</p>
+        </div>
+        <div className={flush ? kit.card : `${kit.card} ${kit.cardPad}`}>{body}</div>
+      </section>
+    );
+  }
+
+  /** The Stripe mode choice (D5): one of two, so a dropdown. The same state drives every price table on the screen. */
+  function renderStripeModeField(extra?: ReactNode) {
+    return (
+      <label className={`${kit.fieldGroup} ${styles.modeField}`}>
+        <span className={kit.label}>Stripe mode{extra}</span>
+        <select
+          className={kit.select}
+          value={priceEnvironmentTab}
+          onChange={event => setPriceEnvironmentTab(event.target.value as PriceEnvironmentTab)}
+        >
+          <option value="live">Production</option>
+          <option value="sandbox">Test</option>
+        </select>
+      </label>
+    );
+  }
+
+  function renderEnvironmentChip() {
+    return (
+      <span className={`${kit.chip} ${priceEnvironmentTab === 'live' ? kit.chipOk : kit.chipWarn}`}>
+        {priceEnvironmentTab === 'live' ? 'Production / Live Mode' : 'Test / Sandbox Mode'}
+      </span>
+    );
+  }
+
   function renderSelectedPlanModal() {
     if (!selectedPlanId || !selectedPlanMeta) return null;
 
@@ -1463,226 +1516,198 @@ export default function PlansPricingClient({
     const priceSummary = priceSummaryForPlan(selectedPlanId);
 
     return (
-      <div className={styles.modalBackdrop} role="presentation" onClick={closeSelectedPlanModal}>
+      <div className={styles.backdrop} role="presentation" onClick={closeSelectedPlanModal}>
         <div
-          className={styles.planDetailModal}
+          className={`${styles.window} ${styles.windowWide}`}
           role="dialog"
           aria-modal="true"
           aria-labelledby="plan-detail-title"
           onClick={event => event.stopPropagation()}
         >
-          <div className={styles.modalHeader}>
+          <div className={styles.windowHead}>
             <div>
-              <div className={styles.headerLabel}>Plan Workspace</div>
-              <h2 id="plan-detail-title" className={styles.modalTitle}>{selectedPlanMeta.label}</h2>
+              <h2 id="plan-detail-title" className={styles.windowTitle}>{selectedPlanMeta.label}</h2>
+              <p className={styles.windowSub}>Plan workspace</p>
             </div>
             <button
               type="button"
-              className={styles.cancelBtn}
+              className={styles.close}
               onClick={closeSelectedPlanModal}
               title="Close"
+              aria-label="Close"
             >
-              <X size={12} />
+              <X size={18} />
             </button>
           </div>
 
-          <div className={styles.planDetailSummary}>
-            <div>
-              <span>Status</span>
-              <strong>{isLive ? 'Live' : 'Early Access'}</strong>
+          <div className={kit.band}>
+            <div className={kit.bandCell}>
+              <span className={kit.bandLabel}>Status</span>
+              <strong className={`${kit.bandValue} ${kit.bandValueSm}`}>{isLive ? 'Live' : 'Early access'}</strong>
             </div>
-            <div>
-              <span>Impact</span>
-              <strong>{impactSummary(impactsByPlan.get(selectedPlanId))}</strong>
+            <div className={kit.bandCell}>
+              <span className={kit.bandLabel}>Impact</span>
+              <strong className={`${kit.bandValue} ${kit.bandValueSm}`}>{impactSummary(impactsByPlan.get(selectedPlanId))}</strong>
             </div>
-            <div>
-              <span>Pricing</span>
-              <strong>{priceSummary.primary}</strong>
+            <div className={kit.bandCell}>
+              <span className={kit.bandLabel}>Pricing</span>
+              <strong className={`${kit.bandValue} ${kit.bandValueSm}`}>{priceSummary.primary}</strong>
             </div>
-            <div>
-              <span>Features</span>
-              <strong>{selectedPlanFeatureCount} modules</strong>
+            <div className={kit.bandCell}>
+              <span className={kit.bandLabel}>Features</span>
+              <strong className={`${kit.bandValue} ${kit.bandValueSm}`}>{selectedPlanFeatureCount} modules</strong>
             </div>
-            <div>
-              <span>Pending</span>
-              <strong>{selectedPlanPendingRequests.length}</strong>
+            <div className={`${kit.bandCell} ${selectedPlanPendingRequests.length > 0 ? kit.bandWarn : ''}`}>
+              <span className={kit.bandLabel}>Pending</span>
+              <strong className={`${kit.bandValue} ${kit.bandValueSm}`}>{selectedPlanPendingRequests.length}</strong>
             </div>
           </div>
 
-          <div className={styles.planDetailIntro}>
-            <p>{selectedPlanMeta.summary}</p>
+          <div className={styles.stack}>
+            <p className={kit.caption}>{selectedPlanMeta.summary}</p>
             {renderLastChange(latest?.updated_at, latest?.updated_by_email, latest?.last_change_note)}
           </div>
 
-          <div className={styles.planDetailGrid}>
-            <section className={styles.planDetailPanel}>
-              <div className={styles.sectionHead}>
-                <h3 className={styles.sectionTitle}>Availability</h3>
-                <p className={styles.sectionDesc}>Availability edits create review requests from this plan.</p>
-              </div>
-              <div className={styles.planPanelBody}>
-                <span className={isLive ? styles.badgeLive : styles.badgeGated}>
-                  {selectedPlanGating ? (isLive ? 'Live' : 'Early Access') : 'Not configured'}
+          <div className={kit.two}>
+            {renderPanel('Availability', 'Availability edits create review requests from this plan.', (
+              <div className={styles.panelBody}>
+                <span className={`${kit.chip} ${isLive ? kit.chipOk : selectedPlanGating ? kit.chipWarn : kit.chipQuiet}`}>
+                  {selectedPlanGating ? (isLive ? 'Live' : 'Early access') : 'Not configured'}
                 </span>
-                <label className={styles.fieldLabel}>
-                  <span>Change Note</span>
+                <label className={`${kit.fieldGroup} ${styles.fill}`}>
+                  <span className={kit.label}>Change note</span>
                   <input
-                    className={styles.noteInput}
+                    className={kit.field}
                     value={gatingNotes[selectedPlanId] ?? ''}
                     placeholder="Reason for this change"
                     onChange={event => setGatingNotes(prev => ({ ...prev, [selectedPlanId]: event.target.value }))}
                   />
                 </label>
                 <button
-                  className={isLive ? styles.deactivateBtn : styles.activateBtn}
+                  type="button"
+                  className="btn btn-secondary"
                   onClick={() => startGatingRequest(selectedPlanId, gatingStatus)}
                   disabled={!canManageProduct}
                 >
-                  {isLive ? 'Request Early Access' : 'Request Live'}
+                  {isLive ? 'Request early access' : 'Request live'}
                 </button>
               </div>
-            </section>
+            ))}
 
-            <section className={styles.planDetailPanel}>
-              <div className={styles.sectionHead}>
-                <h3 className={styles.sectionTitle}>Limits &amp; Trials</h3>
-                <p className={styles.sectionDesc}>Limit edits create review requests from this plan.</p>
-              </div>
-              {isConfigEditing ? (
-                <div className={styles.planConfigForm}>
-                  <label className={styles.fieldLabel}>
-                    <span>Tournament Limit</span>
-                    <input
-                      autoFocus
-                      type="number"
-                      min={0}
-                      className={styles.numInput}
-                      value={configDraft?.tournament_limit ?? ''}
-                      placeholder={selectedPlanDefaults ? String(selectedPlanDefaults.tournamentLimit) : ''}
-                      onChange={event => setConfigDraft(draft => draft ? { ...draft, tournament_limit: event.target.value } : draft)}
-                    />
-                  </label>
-                  <label className={styles.fieldLabel}>
-                    <span>Seat Limit</span>
-                    <input
-                      type="number"
-                      min={0}
-                      className={styles.numInput}
-                      value={configDraft?.seat_limit ?? ''}
-                      placeholder={selectedPlanDefaults ? String(selectedPlanDefaults.seatLimit) : ''}
-                      onChange={event => setConfigDraft(draft => draft ? { ...draft, seat_limit: event.target.value } : draft)}
-                    />
-                  </label>
-                  <label className={styles.fieldLabel}>
-                    <span>Trial Days</span>
-                    <input
-                      type="number"
-                      min={0}
-                      className={styles.numInput}
-                      value={configDraft?.trial_days ?? ''}
-                      placeholder={selectedPlanDefaults ? String(selectedPlanDefaults.trialDays) : ''}
-                      onChange={event => setConfigDraft(draft => draft ? { ...draft, trial_days: event.target.value } : draft)}
-                    />
-                  </label>
-                  <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                    <span>Change Note</span>
-                    <input
-                      className={styles.noteInput}
-                      value={configChangeNote}
-                      placeholder={`Why are ${impactSummary(impactsByPlan.get(selectedPlanId))} being affected?`}
-                      onChange={event => setConfigChangeNote(event.target.value)}
-                    />
-                  </label>
-                  <div className={styles.formActions}>
-                    <span className={styles.actionBtns}>
-                      <button
-                        className={styles.saveBtn}
-                        onClick={() => saveConfig(selectedPlanId)}
-                        disabled={!canManageProduct}
-                        title="Request review"
-                      >
-                        <Check size={12} />
-                      </button>
-                      <button className={styles.cancelBtn} onClick={cancelConfigEdit} title="Cancel">
-                        <X size={12} />
-                      </button>
-                    </span>
-                  </div>
-                  {configError && <div className={`${styles.errorBanner} ${styles.fullWidth}`}>{configError}</div>}
-                </div>
-              ) : (
-                <div className={styles.planPanelBody}>
-                  {renderSummaryStack(configSummary.primary, configSummary.secondary)}
-                  <div className={styles.planMetricGrid}>
-                    <div>
-                      <span>Tournaments</span>
-                      <strong>{selectedPlanConfig?.tournament_limit ?? selectedPlanDefaults?.tournamentLimit ?? 'N/A'}</strong>
-                    </div>
-                    <div>
-                      <span>Seats</span>
-                      <strong>{selectedPlanConfig?.seat_limit ?? selectedPlanDefaults?.seatLimit ?? 'N/A'}</strong>
-                    </div>
-                    <div>
-                      <span>Trial Days</span>
-                      <strong>{selectedPlanConfig?.trial_days ?? selectedPlanDefaults?.trialDays ?? 'N/A'}</strong>
-                    </div>
-                  </div>
-                  <button className={styles.editBtn} onClick={() => startConfigEdit(selectedPlanId)} disabled={!canManageProduct}>
-                    Edit Limits
+            {renderPanel('Limits & trials', 'Limit edits create review requests from this plan.', isConfigEditing ? (
+              <div className={`${kit.formGrid} ${styles.limitsGrid}`}>
+                <label className={kit.fieldGroup}>
+                  <span className={kit.label}>Tournament limit</span>
+                  <input
+                    autoFocus
+                    type="number"
+                    min={0}
+                    className={`${kit.field} ${styles.numInput}`}
+                    value={configDraft?.tournament_limit ?? ''}
+                    placeholder={selectedPlanDefaults ? String(selectedPlanDefaults.tournamentLimit) : ''}
+                    onChange={event => setConfigDraft(draft => draft ? { ...draft, tournament_limit: event.target.value } : draft)}
+                  />
+                </label>
+                <label className={kit.fieldGroup}>
+                  <span className={kit.label}>Seat limit</span>
+                  <input
+                    type="number"
+                    min={0}
+                    className={`${kit.field} ${styles.numInput}`}
+                    value={configDraft?.seat_limit ?? ''}
+                    placeholder={selectedPlanDefaults ? String(selectedPlanDefaults.seatLimit) : ''}
+                    onChange={event => setConfigDraft(draft => draft ? { ...draft, seat_limit: event.target.value } : draft)}
+                  />
+                </label>
+                <label className={kit.fieldGroup}>
+                  <span className={kit.label}>Trial days</span>
+                  <input
+                    type="number"
+                    min={0}
+                    className={`${kit.field} ${styles.numInput}`}
+                    value={configDraft?.trial_days ?? ''}
+                    placeholder={selectedPlanDefaults ? String(selectedPlanDefaults.trialDays) : ''}
+                    onChange={event => setConfigDraft(draft => draft ? { ...draft, trial_days: event.target.value } : draft)}
+                  />
+                </label>
+                <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                  <span className={kit.label}>Change note</span>
+                  <input
+                    className={kit.field}
+                    value={configChangeNote}
+                    placeholder={`Why are ${impactSummary(impactsByPlan.get(selectedPlanId))} being affected?`}
+                    onChange={event => setConfigChangeNote(event.target.value)}
+                  />
+                </label>
+                <div className={`${kit.formActions} ${styles.wide}`}>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => saveConfig(selectedPlanId)}
+                    disabled={!canManageProduct}
+                    title="Request review"
+                    aria-label="Request review"
+                  >
+                    <Check size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={cancelConfigEdit}
+                    title="Cancel"
+                    aria-label="Cancel"
+                  >
+                    <X size={14} />
                   </button>
                 </div>
-              )}
-            </section>
+                {configError && <div className={`${kit.notice} ${kit.noticeBad} ${styles.wide}`}>{configError}</div>}
+              </div>
+            ) : (
+              <div className={styles.panelBody}>
+                {renderSummaryStack(configSummary.primary, configSummary.secondary)}
+                <dl className={`${styles.lines} ${styles.fill}`}>
+                  <dt>Tournaments</dt>
+                  <dd>{selectedPlanConfig?.tournament_limit ?? selectedPlanDefaults?.tournamentLimit ?? 'N/A'}</dd>
+                  <dt>Seats</dt>
+                  <dd>{selectedPlanConfig?.seat_limit ?? selectedPlanDefaults?.seatLimit ?? 'N/A'}</dd>
+                  <dt>Trial days</dt>
+                  <dd>{selectedPlanConfig?.trial_days ?? selectedPlanDefaults?.trialDays ?? 'N/A'}</dd>
+                </dl>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => startConfigEdit(selectedPlanId)}
+                  disabled={!canManageProduct}
+                >
+                  Edit limits
+                </button>
+              </div>
+            ))}
+          </div>
 
-            <section className={`${styles.planDetailPanel} ${styles.planDetailPanelWide}`}>
-              <div className={styles.sectionHead}>
-                <h3 className={styles.sectionTitle}>Pricing</h3>
-                <p className={styles.sectionDesc}>
-                  Plan and related add-on price edits create review requests.
-                </p>
+          {renderPanel('Pricing', 'Plan and related add-on price edits create review requests.', (
+            <>
+              <div className={`${kit.toolbar} ${styles.modeBar}`}>
+                {renderStripeModeField()}
+                {renderEnvironmentChip()}
+                <span className={kit.hint}>Subscription pricing appears first; related add-ons appear below when available.</span>
               </div>
-              <div className={styles.inlineTabs} role="tablist" aria-label="Plan price environment">
-                <button
-                  type="button"
-                  className={`${styles.inlineTab} ${priceEnvironmentTab === 'live' ? styles.inlineTabActive : ''}`}
-                  onClick={() => setPriceEnvironmentTab('live')}
-                  role="tab"
-                  aria-selected={priceEnvironmentTab === 'live'}
-                >
-                  Production
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.inlineTab} ${priceEnvironmentTab === 'sandbox' ? styles.inlineTabActive : ''}`}
-                  onClick={() => setPriceEnvironmentTab('sandbox')}
-                  role="tab"
-                  aria-selected={priceEnvironmentTab === 'sandbox'}
-                >
-                  Test
-                </button>
-              </div>
-              <div className={styles.environmentNote}>
-                <span className={priceEnvironmentTab === 'live' ? styles.badgeLiveEnv : styles.badgeSandbox}>
-                  {priceEnvironmentTab === 'live' ? 'Production / Live Mode' : 'Test / Sandbox Mode'}
-                </span>
-                <span>Subscription pricing appears first; related add-ons appear below when available.</span>
-              </div>
-              <div className={styles.tableWrap}>
-                <table className={styles.table}>
+              <div className={`${kit.tableWrap} table-cards`}>
+                <table className={kit.comfortable}>
                   <thead>
                     <tr>
                       <th>Item</th>
                       <th>Scope</th>
                       <th>Monthly</th>
                       <th>Annual</th>
-                      <th>Latest Change</th>
+                      <th>Latest change</th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     {selectedPlanPricingGroups.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className={styles.emptyCell}>
+                        <td colSpan={6} className={kit.empty}>
                           {selectedPlanId === 'tournament'
                             ? 'The free Tournament plan does not require Stripe price IDs.'
                             : 'No Stripe price slots found for this plan or related add-ons in this environment.'}
@@ -1692,47 +1717,41 @@ export default function PlansPricingClient({
                   </tbody>
                 </table>
               </div>
-            </section>
+            </>
+          ), true)}
 
-            <section className={styles.planDetailPanel}>
-              <div className={styles.sectionHead}>
-                <h3 className={styles.sectionTitle}>Feature Access</h3>
-                <p className={styles.sectionDesc}>Feature edits still use the Product Catalog matrix workflow.</p>
-              </div>
-              <div className={styles.planPanelBody}>
+          <div className={kit.two}>
+            {renderPanel('Feature access', 'Feature edits still use the Product catalog matrix workflow.', (
+              <div className={styles.panelBody}>
                 {renderSummaryStack(`${selectedPlanFeatureCount} modules enabled`, 'Published matrix')}
                 <button
                   type="button"
-                  className={styles.editBtn}
+                  className={kit.door}
                   onClick={() => {
                     closeSelectedPlanModal();
                     setActiveTab('catalog');
                     setCatalogView('matrix');
                   }}
                 >
-                  Open Matrix
+                  Open matrix ›
                 </button>
               </div>
-            </section>
+            ))}
 
-            <section className={styles.planDetailPanel}>
-              <div className={styles.sectionHead}>
-                <h3 className={styles.sectionTitle}>Pending Changes</h3>
-                <p className={styles.sectionDesc}>Requests needing review or application for this plan.</p>
-              </div>
-              <div className={styles.planPanelBody}>
+            {renderPanel('Pending changes', 'Requests needing review or application for this plan.', (
+              <div className={styles.panelBody}>
                 {selectedPlanPendingRequests.length > 0 ? (
                   <>
-                    <strong className={styles.pendingPlanCount}>{selectedPlanPendingRequests.length} pending</strong>
-                    <Link className={styles.secondaryLink} href="/platform-admin/change-requests">
-                      Open Approval Queue
+                    <strong className={styles.pendingText}>{selectedPlanPendingRequests.length} pending</strong>
+                    <Link className={kit.door} href="/platform-admin/change-requests">
+                      Open approval queue ›
                     </Link>
                   </>
                 ) : (
                   <span className={styles.noteEmpty}>No pending requests for this plan.</span>
                 )}
               </div>
-            </section>
+            ))}
           </div>
         </div>
       </div>
@@ -1740,52 +1759,44 @@ export default function PlansPricingClient({
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.pageHeader}>
-        <div>
-          <div className={styles.headerLabel}>Platform Admin</div>
-          <h1 className={styles.title}>Plans &amp; Pricing</h1>
-        </div>
-        <p className={styles.pageIntro}>
-          Manage plan availability, checkout limits, trial windows, and Stripe price IDs with
-          subscriber impact visible before each change.
-        </p>
-      </header>
+    <div className={kit.page}>
+      <AdminPageHeader title="Plans & pricing" />
 
-      <section className={styles.snapshotPanel}>
-        <div className={styles.snapshotItem}>
-          <span>Total Accounts</span>
-          <strong>{totalAccounts}</strong>
+      <section className={kit.band} aria-label="Account snapshot">
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Total accounts</span>
+          <strong className={kit.bandValue}>{totalAccounts}</strong>
         </div>
-        <div className={styles.snapshotItem}>
-          <span>Paid Plan Accounts</span>
-          <strong>{paidAccounts}</strong>
+        <div className={kit.bandCell}>
+          <span className={kit.bandLabel}>Paid plan accounts</span>
+          <strong className={kit.bandValue}>{paidAccounts}</strong>
         </div>
-        <div className={styles.snapshotItem}>
-          <span>Past Due / Canceled</span>
-          <strong>{riskAccounts}</strong>
+        <div className={`${kit.bandCell} ${riskAccounts > 0 ? kit.bandWarn : ''}`}>
+          <span className={kit.bandLabel}>Past due / canceled</span>
+          <strong className={kit.bandValue}>{riskAccounts}</strong>
         </div>
       </section>
 
       {pendingChangeRequests.length > 0 && (
-        <section className={styles.pendingApprovalBanner}>
-          <div>
-            <div className={styles.sectionTitle}>Approval Queue</div>
-            <p className={styles.sectionDesc}>
-              {pendingChangeRequests.length} change request{pendingChangeRequests.length === 1 ? '' : 's'} waiting for review or application — including plan availability, pricing, and Stripe price changes.
-            </p>
-          </div>
-          <Link className={styles.activateBtn} href="/platform-admin/change-requests">
-            Review Requests
-          </Link>
-        </section>
+        <div className={`${kit.callout} ${kit.calloutWarn}`}>
+          <span>
+            <strong>Approval queue.</strong>{' '}
+            {pendingChangeRequests.length} change request{pendingChangeRequests.length === 1 ? '' : 's'} waiting for review or application — including plan availability, pricing, and Stripe price changes.
+          </span>
+          <span className={kit.calloutEnd}>
+            <Link className="btn btn-secondary btn-sm" href="/platform-admin/change-requests">
+              Review requests
+            </Link>
+          </span>
+        </div>
       )}
 
-      <nav className={styles.tabBar}>
+      <nav className={kit.tabs}>
         {TABS.map(tab => (
           <button
             key={tab.id}
-            className={`${styles.tab} ${activeTab === tab.id ? styles.tabActive : ''}`}
+            type="button"
+            className={`${kit.tab} ${activeTab === tab.id ? kit.tabOn : ''}`}
             onClick={() => setActiveTab(tab.id)}
           >
             {tab.label}
@@ -1793,85 +1804,85 @@ export default function PlansPricingClient({
         ))}
       </nav>
 
-      <section className={styles.section} hidden={activeTab !== 'plans'}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Plan Workspace</h2>
-          <p className={styles.sectionDesc}>
-            Scan plan state, customer impact, pricing, limits, pending changes, and latest update.
+      <section className={`${kit.section} ${styles.pane}`} hidden={activeTab !== 'plans'}>
+        <div>
+          <h2 className={kit.sectionTitle}>Plan workspace</h2>
+          <p className={kit.sectionLede}>
+            Manage plan availability, checkout limits, trial windows, and Stripe price IDs with
+            subscriber impact visible before each change. Scan plan state, customer impact, pricing, limits, pending changes, and latest update.
             Open a plan for details and scoped edits.
           </p>
         </div>
-        <div className={styles.tableWrap}>
-          <table className={`${styles.table} ${styles.planOverviewTable}`}>
-            <thead>
-              <tr>
-                <th>Plan</th>
-                <th>Status</th>
-                <th>Impact</th>
-                <th>Pricing</th>
-                <th>Limits &amp; Trials</th>
-                <th>Pending</th>
-                <th>Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {renderPlanOverviewRows()}
-            </tbody>
-          </table>
+        <div className={kit.card}>
+          <div className={`${kit.tableWrap} table-cards`}>
+            <table className={kit.comfortable}>
+              <thead>
+                <tr>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Impact</th>
+                  <th>Pricing</th>
+                  <th>Limits &amp; trials</th>
+                  <th>Pending</th>
+                  <th>Updated</th>
+                  <th aria-label="Open"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {renderPlanOverviewRows()}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
-      <section className={styles.section} hidden={activeTab !== 'catalog'}>
-        <p className={styles.sectionDesc}>
+      <section className={`${kit.section} ${styles.pane} ${styles.stacked}`} hidden={activeTab !== 'catalog'}>
+        <p className={kit.caption}>
           Review the current product catalog, module packaging, and planned add-ons before pricing or
           entitlement changes become live customer-facing work.
         </p>
 
-        <div className={styles.catalogSummary}>
-          <div>
-            <span>Catalog Versions</span>
-            <strong>{catalogVersions.length}</strong>
+        <div className={kit.band}>
+          <div className={kit.bandCell}>
+            <span className={kit.bandLabel}>Catalog versions</span>
+            <strong className={kit.bandValue}>{catalogVersions.length}</strong>
           </div>
-          <div>
-            <span>Add-ons</span>
-            <strong>{addonCatalog.length}</strong>
+          <div className={kit.bandCell}>
+            <span className={kit.bandLabel}>Add-ons</span>
+            <strong className={kit.bandValue}>{addonCatalog.length}</strong>
           </div>
-          <div>
-            <span>Plan Modules</span>
-            <strong>{featureMatrixRows.length}</strong>
+          <div className={kit.bandCell}>
+            <span className={kit.bandLabel}>Plan modules</span>
+            <strong className={kit.bandValue}>{featureMatrixRows.length}</strong>
           </div>
-          <div>
-            <span>Approval Queue</span>
-            <strong>{catalogChangeRequests.length}</strong>
+          <div className={kit.bandCell}>
+            <span className={kit.bandLabel}>Approval queue</span>
+            <strong className={kit.bandValue}>{catalogChangeRequests.length}</strong>
           </div>
-          <div>
-            <span>Campaigns</span>
-            <strong>{catalogCampaigns.length}</strong>
+          <div className={kit.bandCell}>
+            <span className={kit.bandLabel}>Campaigns</span>
+            <strong className={kit.bandValue}>{catalogCampaigns.length}</strong>
           </div>
         </div>
 
         {(catalogError || catalogSaved) && (
-          <div className={catalogError ? styles.errorBanner : styles.successBanner}>
+          <div className={`${kit.notice} ${catalogError ? kit.noticeBad : kit.noticeGood}`}>
             {catalogError || catalogSaved}
           </div>
         )}
 
-        <div className={styles.catalogModeBar}>
-          <div className={styles.inlineTabs} role="tablist" aria-label="Product catalog workspace">
+        <div className={styles.viewBar}>
+          <select
+            className={kit.select}
+            aria-label="Product catalog workspace"
+            value={catalogView}
+            onChange={event => setCatalogView(event.target.value as CatalogView)}
+          >
             {CATALOG_VIEWS.map(view => (
-              <button
-                key={view.id}
-                type="button"
-                className={`${styles.inlineTab} ${catalogView === view.id ? styles.inlineTabActive : ''}`}
-                onClick={() => setCatalogView(view.id)}
-                role="tab"
-                aria-selected={catalogView === view.id}
-              >
-                {view.label}
-              </button>
+              <option key={view.id} value={view.id}>{view.label}</option>
             ))}
-          </div>
-          <p className={styles.catalogModeNote}>
+          </select>
+          <p className={kit.caption}>
             {catalogView === 'planning'
               ? 'Campaign work stays here; request approvals and status changes live in the central queue.'
               : catalogView === 'matrix'
@@ -1883,667 +1894,682 @@ export default function PlansPricingClient({
         {catalogView === 'planning' && (
           <>
             {pendingStripePriceRequests.length > 0 && (
-              <div className={styles.inlineNotice}>
-                <strong>{pendingStripePriceRequests.length} pricing request{pendingStripePriceRequests.length === 1 ? '' : 's'} pending</strong>
-                <span>Approving a generated Stripe price request applies its proposed price ID and marks it implemented.</span>
+              <div className={`${kit.callout} ${kit.calloutWarn}`}>
+                <span>
+                  <strong>{pendingStripePriceRequests.length} pricing request{pendingStripePriceRequests.length === 1 ? '' : 's'} pending.</strong>{' '}
+                  Approving a generated Stripe price request applies its proposed price ID and marks it implemented.
+                </span>
               </div>
             )}
 
-            <div className={styles.inlineNotice}>
-              <strong>Change approvals moved</strong>
-              <span>Review, approve, reject, and apply catalog requests from the central Approval Queue.</span>
-              <Link className={styles.secondaryLink} href="/platform-admin/change-requests">
-                Open Approval Queue
-              </Link>
+            <div className={kit.callout}>
+              <span>
+                <strong>Change approvals moved.</strong>{' '}
+                Review, approve, reject, and apply catalog requests from the central approval queue.
+              </span>
+              <span className={kit.calloutEnd}>
+                <Link className={kit.door} href="/platform-admin/change-requests">
+                  Open approval queue ›
+                </Link>
+              </span>
             </div>
 
-        <section className={styles.governancePanel}>
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Campaign Tracking</h2>
-            <p className={styles.sectionDesc}>
-              Track coupon, promo, trial, launch, and retention campaigns separately from live Stripe
-              price IDs.
-            </p>
-          </div>
-
-          {canManageProduct && (
-            <div className={styles.formPanel}>
-              <label className={styles.fieldLabel}>
-                <span>Title</span>
-                <input
-                  className={styles.noteInput}
-                  value={campaignDraft.title}
-                  placeholder="Example: Club 90-day launch trial"
-                  onChange={event => setCampaignDraft(draft => ({ ...draft, title: event.target.value }))}
-                />
-              </label>
-              <label className={styles.fieldLabel}>
-                <span>Type</span>
-                <select
-                  className={styles.selectInput}
-                  value={campaignDraft.campaign_type}
-                  onChange={event => setCampaignDraft(draft => ({ ...draft, campaign_type: event.target.value }))}
-                >
-                  {CAMPAIGN_TYPES.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label className={styles.fieldLabel}>
-                <span>Status</span>
-                <select
-                  className={styles.selectInput}
-                  value={campaignDraft.status}
-                  onChange={event => setCampaignDraft(draft => ({ ...draft, status: event.target.value }))}
-                >
-                  {CAMPAIGN_STATUSES.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label className={styles.fieldLabel}>
-                <span>Starts</span>
-                <input
-                  className={styles.noteInput}
-                  type="date"
-                  value={campaignDraft.starts_at}
-                  onChange={event => setCampaignDraft(draft => ({ ...draft, starts_at: event.target.value }))}
-                />
-              </label>
-              <label className={styles.fieldLabel}>
-                <span>Ends</span>
-                <input
-                  className={styles.noteInput}
-                  type="date"
-                  value={campaignDraft.ends_at}
-                  onChange={event => setCampaignDraft(draft => ({ ...draft, ends_at: event.target.value }))}
-                />
-              </label>
-              <label className={styles.fieldLabel}>
-                <span>Coupon Code</span>
-                <input
-                  className={styles.noteInput}
-                  value={campaignDraft.coupon_code}
-                  placeholder="Optional"
-                  onChange={event => setCampaignDraft(draft => ({ ...draft, coupon_code: event.target.value }))}
-                />
-              </label>
-              <label className={styles.fieldLabel}>
-                <span>Trial Days</span>
-                <input
-                  className={styles.noteInput}
-                  type="number"
-                  min={0}
-                  value={campaignDraft.trial_days}
-                  placeholder="Optional"
-                  onChange={event => setCampaignDraft(draft => ({ ...draft, trial_days: event.target.value }))}
-                />
-              </label>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Target Plans</span>
-                <span className={styles.checkboxGroup}>
-                  {PLAN_ORDER.map(planId => (
-                    <label key={planId}>
-                      <input
-                        type="checkbox"
-                        checked={campaignDraft.target_plan_ids.includes(planId)}
-                        onChange={() => toggleCampaignPlan(planId)}
-                      />
-                      {planLabel(planId)}
-                    </label>
-                  ))}
-                </span>
-              </label>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Discount Summary</span>
-                <input
-                  className={styles.noteInput}
-                  value={campaignDraft.discount_summary}
-                  placeholder="Example: 20% off annual League Plus for first season"
-                  onChange={event => setCampaignDraft(draft => ({ ...draft, discount_summary: event.target.value }))}
-                />
-              </label>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Notes</span>
-                <textarea
-                  className={styles.textArea}
-                  value={campaignDraft.notes}
-                  placeholder="Add eligibility, approval, and launch notes."
-                  onChange={event => setCampaignDraft(draft => ({ ...draft, notes: event.target.value }))}
-                />
-              </label>
-              <div className={styles.formActions}>
-                <button
-                  className={styles.activateBtn}
-                  onClick={createCampaign}
-                  disabled={catalogBusy === 'campaign' || !campaignDraft.title.trim()}
-                >
-                  {catalogBusy === 'campaign' ? <Loader size={12} className={styles.spin} /> : 'Add Campaign'}
-                </button>
+            <section className={kit.section}>
+              <div>
+                <h2 className={kit.sectionTitle}>Campaign tracking</h2>
+                <p className={kit.sectionLede}>
+                  Track coupon, promo, trial, launch, and retention campaigns separately from live Stripe
+                  price IDs.
+                </p>
               </div>
-            </div>
-          )}
 
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Campaign</th>
-                  <th>Status</th>
-                  <th>Type</th>
-                  <th>Target Plans</th>
-                  <th>Window</th>
-                  <th>Offer</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {catalogCampaigns.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className={styles.emptyCell}>No product campaigns yet.</td>
-                  </tr>
-                ) : catalogCampaigns.map(campaign => (
-                  <tr key={campaign.id}>
-                    <td className={styles.planName}>
-                      {campaign.title}
-                      <small className={styles.muted}>{campaign.coupon_code ?? campaign.campaign_key}</small>
-                    </td>
-                    <td>
-                      <span className={statusClass(campaign.status)}>
-                        {optionLabel(CAMPAIGN_STATUSES, campaign.status)}
+              {canManageProduct && (
+                <div className={`${kit.card} ${kit.cardPad}`}>
+                  <div className={kit.formGrid}>
+                    <label className={kit.fieldGroup}>
+                      <span className={kit.label}>Title</span>
+                      <input
+                        className={kit.field}
+                        value={campaignDraft.title}
+                        placeholder="Example: Club 90-day launch trial"
+                        onChange={event => setCampaignDraft(draft => ({ ...draft, title: event.target.value }))}
+                      />
+                    </label>
+                    <label className={kit.fieldGroup}>
+                      <span className={kit.label}>Type</span>
+                      <select
+                        className={kit.select}
+                        value={campaignDraft.campaign_type}
+                        onChange={event => setCampaignDraft(draft => ({ ...draft, campaign_type: event.target.value }))}
+                      >
+                        {CAMPAIGN_TYPES.map(option => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className={kit.fieldGroup}>
+                      <span className={kit.label}>Status</span>
+                      <select
+                        className={kit.select}
+                        value={campaignDraft.status}
+                        onChange={event => setCampaignDraft(draft => ({ ...draft, status: event.target.value }))}
+                      >
+                        {CAMPAIGN_STATUSES.map(option => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className={kit.fieldGroup}>
+                      <span className={kit.label}>Starts</span>
+                      <input
+                        className={kit.field}
+                        type="date"
+                        value={campaignDraft.starts_at}
+                        onChange={event => setCampaignDraft(draft => ({ ...draft, starts_at: event.target.value }))}
+                      />
+                    </label>
+                    <label className={kit.fieldGroup}>
+                      <span className={kit.label}>Ends</span>
+                      <input
+                        className={kit.field}
+                        type="date"
+                        value={campaignDraft.ends_at}
+                        onChange={event => setCampaignDraft(draft => ({ ...draft, ends_at: event.target.value }))}
+                      />
+                    </label>
+                    <label className={kit.fieldGroup}>
+                      <span className={kit.label}>Coupon code</span>
+                      <input
+                        className={kit.field}
+                        value={campaignDraft.coupon_code}
+                        placeholder="Optional"
+                        onChange={event => setCampaignDraft(draft => ({ ...draft, coupon_code: event.target.value }))}
+                      />
+                    </label>
+                    <label className={kit.fieldGroup}>
+                      <span className={kit.label}>Trial days</span>
+                      <input
+                        className={kit.field}
+                        type="number"
+                        min={0}
+                        value={campaignDraft.trial_days}
+                        placeholder="Optional"
+                        onChange={event => setCampaignDraft(draft => ({ ...draft, trial_days: event.target.value }))}
+                      />
+                    </label>
+                    <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                      <span className={kit.label}>Target plans</span>
+                      <span className={styles.checkGroup}>
+                        {PLAN_ORDER.map(planId => (
+                          <label key={planId} className={kit.check}>
+                            <input
+                              type="checkbox"
+                              checked={campaignDraft.target_plan_ids.includes(planId)}
+                              onChange={() => toggleCampaignPlan(planId)}
+                            />
+                            {planLabel(planId)}
+                          </label>
+                        ))}
                       </span>
-                    </td>
-                    <td className={styles.muted}>{optionLabel(CAMPAIGN_TYPES, campaign.campaign_type)}</td>
-                    <td className={styles.muted}>{formatPlanList(campaign.target_plan_ids)}</td>
-                    <td className={styles.muted}>
-                      {formatDateOnly(campaign.starts_at)} - {formatDateOnly(campaign.ends_at)}
-                    </td>
-                    <td className={styles.muted}>
-                      {campaign.discount_summary ?? (campaign.trial_days != null ? `${campaign.trial_days} trial days` : 'Not set')}
-                    </td>
-                    <td className={styles.actionCell}>
-                      {canManageProduct ? (
-                        <select
-                          className={styles.selectInput}
-                          value={campaign.status}
-                          disabled={catalogBusy === campaign.id}
-                          onChange={event => updateCampaignStatus(campaign.id, event.target.value)}
-                        >
-                          {CAMPAIGN_STATUSES.map(option => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span className={styles.muted}>Read only</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                    </label>
+                    <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                      <span className={kit.label}>Discount summary</span>
+                      <input
+                        className={kit.field}
+                        value={campaignDraft.discount_summary}
+                        placeholder="Example: 20% off annual League Plus for first season"
+                        onChange={event => setCampaignDraft(draft => ({ ...draft, discount_summary: event.target.value }))}
+                      />
+                    </label>
+                    <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                      <span className={kit.label}>Notes</span>
+                      <textarea
+                        className={kit.textarea}
+                        value={campaignDraft.notes}
+                        placeholder="Add eligibility, approval, and launch notes."
+                        onChange={event => setCampaignDraft(draft => ({ ...draft, notes: event.target.value }))}
+                      />
+                    </label>
+                    <div className={`${kit.formActions} ${styles.wide}`}>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={createCampaign}
+                        disabled={catalogBusy === 'campaign' || !campaignDraft.title.trim()}
+                      >
+                        {catalogBusy === 'campaign' ? <Loader size={14} className={kit.spin} /> : 'Add campaign'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className={kit.card}>
+                <div className={`${kit.tableWrap} table-cards`}>
+                  <table className={kit.comfortable}>
+                    <thead>
+                      <tr>
+                        <th>Campaign</th>
+                        <th>Status</th>
+                        <th>Type</th>
+                        <th>Target plans</th>
+                        <th>Window</th>
+                        <th>Offer</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {catalogCampaigns.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className={kit.empty}>No product campaigns yet.</td>
+                        </tr>
+                      ) : catalogCampaigns.map(campaign => (
+                        <tr key={campaign.id}>
+                          <td className="table-cards-title">
+                            <span className={styles.name}>{campaign.title}</span>
+                            <span className={`${kit.sub} ${kit.code}`}>{campaign.coupon_code ?? campaign.campaign_key}</span>
+                          </td>
+                          <td data-label="Status">
+                            <span className={`${kit.chip} ${statusClass(campaign.status)}`}>
+                              {optionLabel(CAMPAIGN_STATUSES, campaign.status)}
+                            </span>
+                          </td>
+                          <td data-label="Type" className={kit.muted}>{optionLabel(CAMPAIGN_TYPES, campaign.campaign_type)}</td>
+                          <td data-label="Target plans" className={kit.muted}>{formatPlanList(campaign.target_plan_ids)}</td>
+                          <td data-label="Window" className={kit.muted}>
+                            {formatDateOnly(campaign.starts_at)} - {formatDateOnly(campaign.ends_at)}
+                          </td>
+                          <td data-label="Offer" className={kit.muted}>
+                            {campaign.discount_summary ?? (campaign.trial_days != null ? `${campaign.trial_days} trial days` : 'Not set')}
+                          </td>
+                          <td className={styles.actionCell}>
+                            {canManageProduct ? (
+                              <select
+                                className={kit.select}
+                                value={campaign.status}
+                                disabled={catalogBusy === campaign.id}
+                                onChange={event => updateCampaignStatus(campaign.id, event.target.value)}
+                              >
+                                {CAMPAIGN_STATUSES.map(option => (
+                                  <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span className={kit.muted}>Read only</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
           </>
         )}
 
         {catalogView === 'records' && (
-        <div className={styles.catalogGrid}>
-          <section className={styles.catalogPanel}>
-            <div className={styles.sectionHead}>
-              <h2 className={styles.sectionTitle}>Plan Versions</h2>
-              <p className={styles.sectionDesc}>
-                Published and draft catalog records. Future live publishing controls should hang off
-                this history instead of ad hoc edits.
-              </p>
-            </div>
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Version</th>
-                    <th>Status</th>
-                    <th>Effective</th>
-                    <th>Published</th>
-                    <th>Notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {catalogVersions.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className={styles.emptyCell}>
-                        No catalog versions found. Apply migration 058 to seed the baseline catalog.
-                      </td>
-                    </tr>
-                  ) : catalogVersions.map(version => (
-                    <tr key={version.id}>
-                      <td className={styles.planName}>
-                        {version.title}
-                        <small className={styles.muted}>{version.description ?? version.version_key}</small>
-                      </td>
-                      <td>
-                        <span className={statusClass(version.status)}>{version.status.replace('_', ' ')}</span>
-                      </td>
-                      <td className={styles.muted}>{formatDate(version.effective_at)}</td>
-                      <td className={styles.muted}>{formatDate(version.published_at)}</td>
-                      <td className={styles.notePreview}>{version.notes ?? 'No note'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+          <>
+            <section className={kit.section}>
+              <div>
+                <h2 className={kit.sectionTitle}>Plan versions</h2>
+                <p className={kit.sectionLede}>
+                  Published and draft catalog records. Future live publishing controls should hang off
+                  this history instead of ad hoc edits.
+                </p>
+              </div>
+              <div className={kit.card}>
+                <div className={`${kit.tableWrap} table-cards`}>
+                  <table className={kit.comfortable}>
+                    <thead>
+                      <tr>
+                        <th>Version</th>
+                        <th>Status</th>
+                        <th>Effective</th>
+                        <th>Published</th>
+                        <th>Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {catalogVersions.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className={kit.empty}>
+                            No catalog versions found. Apply migration 058 to seed the baseline catalog.
+                          </td>
+                        </tr>
+                      ) : catalogVersions.map(version => (
+                        <tr key={version.id}>
+                          <td className="table-cards-title">
+                            <span className={styles.name}>{version.title}</span>
+                            <span className={kit.sub}>{version.description ?? version.version_key}</span>
+                          </td>
+                          <td data-label="Status">
+                            <span className={`${kit.chip} ${statusClass(version.status)}`}>{version.status.replace('_', ' ')}</span>
+                          </td>
+                          <td data-label="Effective" className={kit.muted}>{formatDate(version.effective_at)}</td>
+                          <td data-label="Published" className={kit.muted}>{formatDate(version.published_at)}</td>
+                          <td data-label="Notes" className={styles.notePreview}>{version.notes ?? 'No note'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
 
-          <section className={styles.catalogPanel}>
-            <div className={styles.sectionHead}>
-              <h2 className={styles.sectionTitle}>Add-on Catalog</h2>
-              <p className={styles.sectionDesc}>
-                Add-ons and packaged modules that can later support public pricing, coupons, and
-                grandfathering rules.
-              </p>
-            </div>
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Add-on</th>
-                    <th>Status</th>
-                    <th>Included Plans</th>
-                    <th>Pricing</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {addonCatalog.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className={styles.emptyCell}>
-                        No add-ons found. Apply migration 058 to seed the catalog.
-                      </td>
-                    </tr>
-                  ) : addonCatalog.map(addon => (
-                    <tr key={addon.id}>
-                      <td className={styles.planName}>
-                        {addon.label}
-                        <small className={styles.muted}>{addon.description ?? addon.addon_key}</small>
-                      </td>
-                      <td>
-                        <span className={statusClass(addon.status)}>{addon.status.replace('_', ' ')}</span>
-                      </td>
-                      <td className={styles.muted}>{formatPlanList(addon.default_included_plans)}</td>
-                      <td className={styles.muted}>
-                        {addon.pricing_model === 'included'
-                          ? 'Included'
-                          : `${formatMoney(addon.monthly_price)} monthly / ${formatMoney(addon.annual_price)} annual`}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+            <section className={kit.section}>
+              <div>
+                <h2 className={kit.sectionTitle}>Add-on catalog</h2>
+                <p className={kit.sectionLede}>
+                  Add-ons and packaged modules that can later support public pricing, coupons, and
+                  grandfathering rules.
+                </p>
+              </div>
+              <div className={kit.card}>
+                <div className={`${kit.tableWrap} table-cards`}>
+                  <table className={kit.comfortable}>
+                    <thead>
+                      <tr>
+                        <th>Add-on</th>
+                        <th>Status</th>
+                        <th>Included plans</th>
+                        <th>Pricing</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {addonCatalog.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className={kit.empty}>
+                            No add-ons found. Apply migration 058 to seed the catalog.
+                          </td>
+                        </tr>
+                      ) : addonCatalog.map(addon => (
+                        <tr key={addon.id}>
+                          <td className="table-cards-title">
+                            <span className={styles.name}>{addon.label}</span>
+                            <span className={kit.sub}>{addon.description ?? addon.addon_key}</span>
+                          </td>
+                          <td data-label="Status">
+                            <span className={`${kit.chip} ${statusClass(addon.status)}`}>{addon.status.replace('_', ' ')}</span>
+                          </td>
+                          <td data-label="Included plans" className={kit.muted}>{formatPlanList(addon.default_included_plans)}</td>
+                          <td data-label="Pricing" className={kit.muted}>
+                            {addon.pricing_model === 'included'
+                              ? 'Included'
+                              : `${formatMoney(addon.monthly_price)} monthly / ${formatMoney(addon.annual_price)} annual`}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
 
-          <section className={styles.catalogPanel}>
-            <div className={styles.sectionHead}>
-              <h2 className={styles.sectionTitle}>Add-on Stripe Prices</h2>
-              <p className={styles.sectionDesc}>
-                Add-on price slots stay with Product Catalog because they are not standalone plan rows.
-                Price edits still create review requests in the Approval Queue.
-              </p>
-            </div>
-            <div className={styles.inlineTabs} role="tablist" aria-label="Add-on price environment">
-              <button
-                type="button"
-                className={`${styles.inlineTab} ${priceEnvironmentTab === 'live' ? styles.inlineTabActive : ''}`}
-                onClick={() => setPriceEnvironmentTab('live')}
-                role="tab"
-                aria-selected={priceEnvironmentTab === 'live'}
-              >
-                Production
-              </button>
-              <button
-                type="button"
-                className={`${styles.inlineTab} ${priceEnvironmentTab === 'sandbox' ? styles.inlineTabActive : ''}`}
-                onClick={() => setPriceEnvironmentTab('sandbox')}
-                role="tab"
-                aria-selected={priceEnvironmentTab === 'sandbox'}
-              >
-                Test
-              </button>
-            </div>
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Impact</th>
-                    <th>Monthly</th>
-                    <th>Annual</th>
-                    <th>Latest Change</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {addonPriceProductGroups.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className={styles.emptyCell}>No add-on Stripe price slots found.</td>
-                    </tr>
-                  ) : renderPriceProductRows(addonPriceProductGroups)}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </div>
+            <section className={kit.section}>
+              <div>
+                <h2 className={kit.sectionTitle}>Add-on Stripe prices</h2>
+                <p className={kit.sectionLede}>
+                  Add-on price slots stay with Product catalog because they are not standalone plan rows.
+                  Price edits still create review requests in the approval queue.
+                </p>
+              </div>
+              <div className={kit.card}>
+                <div className={`${kit.toolbar} ${styles.modeBar}`}>
+                  {renderStripeModeField()}
+                  {renderEnvironmentChip()}
+                </div>
+                <div className={`${kit.tableWrap} table-cards`}>
+                  <table className={kit.comfortable}>
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Impact</th>
+                        <th>Monthly</th>
+                        <th>Annual</th>
+                        <th>Latest change</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {addonPriceProductGroups.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className={kit.empty}>No add-on Stripe price slots found.</td>
+                        </tr>
+                      ) : renderPriceProductRows(addonPriceProductGroups)}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+          </>
         )}
 
         {catalogView === 'matrix' && (
           <>
-        <section className={styles.featureMatrixSection}>
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Feature Matrix</h2>
-            <p className={styles.sectionDesc}>
-              Module entitlements from the published product catalog matrix. Draft edits below create
-              Product Catalog change requests; approved requests can be published from the review panel.
-            </p>
-          </div>
-
-          {/* ── The honesty banner (audit 2026-08-06) ────────────────────────────────────────
-              Publishing this matrix used to LOOK like a packaging change taking effect — change
-              request, second-person approval, "Feature matrix published", grid redraws. In fact
-              the published table is read only by this screen: the live gate reads a constant in
-              lib/plan-config.ts. Nobody's access changed. Wiring it up for real is a genuine
-              project (the gate is synchronous and runs in client components), so until then this
-              screen states the limit plainly rather than implying an effect it does not have. */}
-          <div className={styles.matrixTruthBanner}>
-            <p>
-              <strong>Publishing here does not change what customers can access.</strong> This matrix is
-              the record of intended packaging. Live entitlement is still read from{' '}
-              <code>lib/plan-config.ts</code>, so a real packaging change needs a code update and a
-              deploy. Publish to record the decision — then raise the code change.
-            </p>
-            {featureMatrixDrift.length > 0 ? (
-              <>
-                <p>
-                  ⚠ <strong>{featureMatrixDrift.length} module{featureMatrixDrift.length === 1 ? '' : 's'} published but NOT live</strong>{' '}
-                  — these are waiting on that code change:
+            <section className={kit.section}>
+              <div>
+                <h2 className={kit.sectionTitle}>Feature matrix</h2>
+                <p className={kit.sectionLede}>
+                  Module entitlements from the published product catalog matrix. Draft edits below create
+                  Product catalog change requests; approved requests can be published from the review panel.
                 </p>
-                <ul>
-                  {featureMatrixDrift.map(row => (
-                    <li key={`${row.planId}:${row.moduleKey}`}>
-                      <strong>{planLabel(row.planId)}</strong> · {row.moduleKey} —{' '}
-                      published as <strong>{row.publishedIncluded ? 'included' : 'not included'}</strong>,
-                      live product says <strong>{row.liveIncluded ? 'included' : 'not included'}</strong>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              <p>
-                ✅ Published matrix and live product currently agree — nothing outstanding.
-              </p>
-            )}
-          </div>
-          <div className={styles.tableWrap}>
-            <table className={`${styles.table} ${styles.matrixTable}`}>
-              <thead>
-                <tr>
-                  <th>Module</th>
-                  {PLAN_ORDER.map(planId => (
-                    <th key={planId}>{planLabel(planId)}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {featureMatrixRows.map(feature => (
-                  <tr key={feature.key}>
-                    <td className={styles.planName}>
-                      {feature.label}
-                      <small className={styles.muted}>{feature.description}</small>
-                    </td>
-                    {PLAN_ORDER.map(planId => {
-                      const included = feature.includedPlans[planId];
-                      return (
-                        <td key={planId} className={styles.matrixCell}>
-                          <span className={included ? styles.includedMark : styles.excludedMark}>
-                            {included ? <Check size={14} /> : <X size={14} />}
-                            {included ? 'Included' : 'Not included'}
+              </div>
+
+              {/* ── The honesty banner (audit 2026-08-06) ────────────────────────────────────────
+                  Publishing this matrix used to LOOK like a packaging change taking effect — change
+                  request, second-person approval, "Feature matrix published", grid redraws. In fact
+                  the published table is read only by this screen: the live gate reads a constant in
+                  lib/plan-config.ts. Nobody's access changed. Wiring it up for real is a genuine
+                  project (the gate is synchronous and runs in client components), so until then this
+                  screen states the limit plainly rather than implying an effect it does not have. */}
+              <div className={`${kit.callout} ${kit.calloutWarn}`}>
+                <div className={styles.stackText}>
+                  <p>
+                    <strong>Publishing here does not change what customers can access.</strong> This matrix is
+                    the record of intended packaging. Live entitlement is still read from{' '}
+                    <code className={kit.code}>lib/plan-config.ts</code>, so a real packaging change needs a code update and a
+                    deploy. Publish to record the decision — then raise the code change.
+                  </p>
+                  {featureMatrixDrift.length > 0 ? (
+                    <>
+                      <p>
+                        ⚠ <strong>{featureMatrixDrift.length} module{featureMatrixDrift.length === 1 ? '' : 's'} published but NOT live</strong>{' '}
+                        — these are waiting on that code change:
+                      </p>
+                      <ul>
+                        {featureMatrixDrift.map(row => (
+                          <li key={`${row.planId}:${row.moduleKey}`}>
+                            <strong>{planLabel(row.planId)}</strong> · {row.moduleKey} —{' '}
+                            published as <strong>{row.publishedIncluded ? 'included' : 'not included'}</strong>,
+                            live product says <strong>{row.liveIncluded ? 'included' : 'not included'}</strong>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p>
+                      ✅ Published matrix and live product currently agree — nothing outstanding.
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className={kit.card}>
+                <div className={kit.tableWrap}>
+                  <table className={`${kit.comfortable} ${styles.matrix}`}>
+                    <thead>
+                      <tr>
+                        <th>Module</th>
+                        {PLAN_ORDER.map(planId => (
+                          <th key={planId}>{planLabel(planId)}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {featureMatrixRows.map(feature => (
+                        <tr key={feature.key}>
+                          <td>
+                            <span className={styles.name}>{feature.label}</span>
+                            <span className={kit.sub}>{feature.description}</span>
+                          </td>
+                          {PLAN_ORDER.map(planId => {
+                            const included = feature.includedPlans[planId];
+                            return (
+                              <td key={planId} className={styles.matrixCell}>
+                                <span className={`${styles.mark} ${included ? styles.markOn : styles.markOff}`}>
+                                  {included ? <Check size={14} /> : <X size={14} />}
+                                  {included ? 'Included' : 'Not included'}
+                                </span>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            <section className={kit.section}>
+              <div>
+                <h2 className={kit.sectionTitle}>Publish approved matrix</h2>
+                <p className={kit.sectionLede}>
+                  Select an approved feature matrix request, review the exact plan/module changes, then
+                  publish it into the live product catalog matrix.
+                </p>
+              </div>
+
+              {canManageProduct ? (
+                <div className={`${kit.card} ${kit.cardPad}`}>
+                  <div className={styles.vstack}>
+                    <label className={kit.fieldGroup}>
+                      <span className={kit.label}>Approved feature matrix request</span>
+                      <select
+                        className={kit.select}
+                        value={selectedFeaturePublishId}
+                        onChange={event => {
+                          setSelectedFeaturePublishId(event.target.value);
+                          setFeaturePublishConfirming(false);
+                        }}
+                      >
+                        <option value="">Select approved matrix request</option>
+                        {approvedFeatureMatrixRequests.map(request => (
+                          <option key={request.id} value={request.id}>{request.title}</option>
+                        ))}
+                      </select>
+                    </label>
+
+                    {selectedFeaturePublishRequest ? (
+                      <>
+                        <div className={styles.previewGrid}>
+                          <div>
+                            <span className={kit.eye}>Proposal</span>
+                            <strong>{selectedFeaturePublishRequest.title}</strong>
+                            <span className={kit.sub}>{selectedFeaturePublishRequest.impact_summary ?? 'No impact summary'}</span>
+                          </div>
+                          <div>
+                            <span className={kit.eye}>Preview</span>
+                            <strong>{selectedFeaturePublishChanges.length} change{selectedFeaturePublishChanges.length === 1 ? '' : 's'}</strong>
+                            <span className={kit.sub}>{selectedFeaturePublishEntitlements ? 'Validated feature matrix proposal' : 'Invalid proposal payload'}</span>
+                          </div>
+                        </div>
+
+                        {selectedFeaturePublishChanges.length > 0 ? (
+                          <div className={styles.changeList}>
+                            {selectedFeaturePublishChanges.map(change => (
+                              <div key={`${change.planId}:${change.moduleKey}`} className={styles.changeItem}>
+                                <span className={kit.eye}>{planLabel(change.planId)}</span>
+                                <strong>{change.moduleKey.replace('module_', '').replace(/_/g, ' ')}</strong>
+                                <span className={kit.sub}>
+                                  {change.current ? 'Included' : 'Not included'} to {change.proposed ? 'included' : 'not included'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className={kit.empty}>This approved request matches the current live matrix.</div>
+                        )}
+
+                        <label className={kit.fieldGroup}>
+                          <span className={kit.label}>Publish note</span>
+                          <input
+                            className={kit.field}
+                            value={featurePublishNote}
+                            placeholder="Summarize why this approved matrix is being published now."
+                            onChange={event => {
+                              setFeaturePublishNote(event.target.value);
+                              setFeaturePublishConfirming(false);
+                            }}
+                          />
+                        </label>
+
+                        <div className={styles.footRow}>
+                          <span>
+                            {featurePublishConfirming
+                              ? 'Click confirm to publish these entitlement changes.'
+                              : 'Review the preview before publishing.'}
                           </span>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={publishFeatureMatrixRequest}
+                            disabled={
+                              catalogBusy === 'feature-matrix-publish' ||
+                              selectedFeaturePublishChanges.length === 0 ||
+                              !selectedFeaturePublishEntitlements
+                            }
+                          >
+                            {catalogBusy === 'feature-matrix-publish'
+                              ? <Loader size={14} className={kit.spin} />
+                              : featurePublishConfirming ? 'Confirm publish' : 'Publish matrix'}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className={kit.empty}>
+                        {approvedFeatureMatrixRequests.length === 0
+                          ? 'No approved feature matrix requests are ready to publish.'
+                          : 'Select an approved request to preview its matrix changes.'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className={kit.card}>
+                  <div className={kit.empty}>Read-only roles can review published entitlements but cannot publish matrix changes.</div>
+                </div>
+              )}
+            </section>
 
-        <section className={styles.featureMatrixSection}>
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Publish Approved Matrix</h2>
-            <p className={styles.sectionDesc}>
-              Select an approved Feature Matrix request, review the exact plan/module changes, then
-              publish it into the live product catalog matrix.
-            </p>
-          </div>
+            <section className={kit.section}>
+              <div>
+                <h2 className={kit.sectionTitle}>Draft feature matrix change</h2>
+                <p className={kit.sectionLede}>
+                  Toggle proposed module access by plan, then save the draft into the approval workflow.
+                  Live entitlements stay unchanged until a later approved implementation.
+                </p>
+              </div>
 
-          {canManageProduct ? (
-            <div className={styles.publishPanel}>
-              <label className={styles.fieldLabel}>
-                <span>Approved Feature Matrix Request</span>
-                <select
-                  className={styles.selectInput}
-                  value={selectedFeaturePublishId}
-                  onChange={event => {
-                    setSelectedFeaturePublishId(event.target.value);
-                    setFeaturePublishConfirming(false);
-                  }}
-                >
-                  <option value="">Select approved matrix request</option>
-                  {approvedFeatureMatrixRequests.map(request => (
-                    <option key={request.id} value={request.id}>{request.title}</option>
-                  ))}
-                </select>
-              </label>
-
-              {selectedFeaturePublishRequest ? (
+              {canManageProduct ? (
                 <>
-                  <div className={styles.proposalPreview}>
-                    <div>
-                      <span className={styles.headerLabel}>Proposal</span>
-                      <strong>{selectedFeaturePublishRequest.title}</strong>
-                      <small>{selectedFeaturePublishRequest.impact_summary ?? 'No impact summary'}</small>
-                    </div>
-                    <div>
-                      <span className={styles.headerLabel}>Preview</span>
-                      <strong>{selectedFeaturePublishChanges.length} change{selectedFeaturePublishChanges.length === 1 ? '' : 's'}</strong>
-                      <small>{selectedFeaturePublishEntitlements ? 'Validated feature matrix proposal' : 'Invalid proposal payload'}</small>
+                  <div className={`${kit.card} ${kit.cardPad}`}>
+                    <div className={kit.formGrid}>
+                      <label className={kit.fieldGroup}>
+                        <span className={kit.label}>Title</span>
+                        <input
+                          className={kit.field}
+                          value={featureDraftTitle}
+                          onChange={event => setFeatureDraftTitle(event.target.value)}
+                        />
+                      </label>
+                      <label className={kit.fieldGroup}>
+                        <span className={kit.label}>Effective date</span>
+                        <input
+                          className={kit.field}
+                          type="date"
+                          value={featureDraftEffectiveAt}
+                          onChange={event => setFeatureDraftEffectiveAt(event.target.value)}
+                        />
+                      </label>
+                      <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                        <span className={kit.label}>Impact summary</span>
+                        <input
+                          className={kit.field}
+                          value={featureDraftImpact}
+                          placeholder="Who would be affected if this matrix is later implemented?"
+                          onChange={event => setFeatureDraftImpact(event.target.value)}
+                        />
+                      </label>
+                      <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                        <span className={kit.label}>Description</span>
+                        <textarea
+                          className={kit.textarea}
+                          value={featureDraftDescription}
+                          placeholder="Explain the packaging reason, launch notes, and approval criteria."
+                          onChange={event => setFeatureDraftDescription(event.target.value)}
+                        />
+                      </label>
                     </div>
                   </div>
 
-                  {selectedFeaturePublishChanges.length > 0 ? (
-                    <div className={styles.changeList}>
-                      {selectedFeaturePublishChanges.map(change => (
-                        <div key={`${change.planId}:${change.moduleKey}`} className={styles.changeItem}>
-                          <span>{planLabel(change.planId)}</span>
-                          <strong>{change.moduleKey.replace('module_', '').replace(/_/g, ' ')}</strong>
-                          <small>
-                            {change.current ? 'Included' : 'Not included'} to {change.proposed ? 'included' : 'not included'}
-                          </small>
-                        </div>
-                      ))}
+                  <div className={kit.card}>
+                    <div className={kit.tableWrap}>
+                      <table className={`${kit.comfortable} ${styles.matrix}`}>
+                        <thead>
+                          <tr>
+                            <th>Module</th>
+                            {PLAN_ORDER.map(planId => (
+                              <th key={planId}>{planLabel(planId)}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {featureMatrixRows.map(feature => (
+                            <tr key={feature.key}>
+                              <td>
+                                <span className={styles.name}>{feature.label}</span>
+                                <span className={kit.sub}>{feature.description}</span>
+                              </td>
+                              {PLAN_ORDER.map(planId => {
+                                const current = Boolean(feature.includedPlans[planId]);
+                                const proposed = Boolean(featureDraft[planId]?.[feature.key]);
+                                const changed = current !== proposed;
+                                return (
+                                  <td key={planId} className={styles.matrixCell}>
+                                    <button
+                                      type="button"
+                                      className={`${styles.toggle} ${proposed ? styles.toggleOn : ''} ${changed ? styles.toggleChanged : ''}`}
+                                      onClick={() => toggleFeatureDraft(planId, feature.key)}
+                                    >
+                                      {proposed ? <Check size={14} /> : <X size={14} />}
+                                      {proposed ? 'Included' : 'Not included'}
+                                    </button>
+                                    {changed && (
+                                      <span className={styles.delta}>
+                                        was {current ? 'included' : 'not included'}
+                                      </span>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  ) : (
-                    <div className={styles.emptyCell}>This approved request matches the current live matrix.</div>
-                  )}
 
-                  <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                    <span>Publish Note</span>
-                    <input
-                      className={styles.noteInput}
-                      value={featurePublishNote}
-                      placeholder="Summarize why this approved matrix is being published now."
-                      onChange={event => {
-                        setFeaturePublishNote(event.target.value);
-                        setFeaturePublishConfirming(false);
-                      }}
-                    />
-                  </label>
-
-                  <div className={styles.featureDraftFooter}>
-                    <span>
-                      {featurePublishConfirming
-                        ? 'Click confirm to publish these entitlement changes.'
-                        : 'Review the preview before publishing.'}
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.activateBtn}
-                      onClick={publishFeatureMatrixRequest}
-                      disabled={
-                        catalogBusy === 'feature-matrix-publish' ||
-                        selectedFeaturePublishChanges.length === 0 ||
-                        !selectedFeaturePublishEntitlements
-                      }
-                    >
-                      {catalogBusy === 'feature-matrix-publish'
-                        ? <Loader size={12} className={styles.spin} />
-                        : featurePublishConfirming ? 'Confirm Publish' : 'Publish Matrix'}
-                    </button>
+                    <div className={`${kit.cardPad} ${styles.footRow} ${styles.cardFoot}`}>
+                      <span>{matrixChanges.length} proposed change{matrixChanges.length === 1 ? '' : 's'}</span>
+                      <span className={styles.actionBtns}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={resetFeatureDraft}
+                          disabled={catalogBusy === 'feature-matrix'}
+                        >
+                          Reset draft
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={createFeatureMatrixRequest}
+                          disabled={catalogBusy === 'feature-matrix' || matrixChanges.length === 0}
+                        >
+                          {catalogBusy === 'feature-matrix'
+                            ? <Loader size={14} className={kit.spin} />
+                            : 'Save draft request'}
+                        </button>
+                      </span>
+                    </div>
                   </div>
                 </>
               ) : (
-                <div className={styles.emptyCell}>
-                  {approvedFeatureMatrixRequests.length === 0
-                    ? 'No approved Feature Matrix requests are ready to publish.'
-                    : 'Select an approved request to preview its matrix changes.'}
+                <div className={kit.card}>
+                  <div className={kit.empty}>Read-only roles can review the feature matrix but cannot draft entitlement changes.</div>
                 </div>
               )}
-            </div>
-          ) : (
-            <div className={styles.emptyCell}>Read-only roles can review published entitlements but cannot publish matrix changes.</div>
-          )}
-        </section>
-
-        <section className={styles.featureMatrixSection}>
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Draft Feature Matrix Change</h2>
-            <p className={styles.sectionDesc}>
-              Toggle proposed module access by plan, then save the draft into the approval workflow.
-              Live entitlements stay unchanged until a later approved implementation.
-            </p>
-          </div>
-
-          {canManageProduct ? (
-            <>
-              <div className={styles.formPanel}>
-                <label className={styles.fieldLabel}>
-                  <span>Title</span>
-                  <input
-                    className={styles.noteInput}
-                    value={featureDraftTitle}
-                    onChange={event => setFeatureDraftTitle(event.target.value)}
-                  />
-                </label>
-                <label className={styles.fieldLabel}>
-                  <span>Effective Date</span>
-                  <input
-                    className={styles.noteInput}
-                    type="date"
-                    value={featureDraftEffectiveAt}
-                    onChange={event => setFeatureDraftEffectiveAt(event.target.value)}
-                  />
-                </label>
-                <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                  <span>Impact Summary</span>
-                  <input
-                    className={styles.noteInput}
-                    value={featureDraftImpact}
-                    placeholder="Who would be affected if this matrix is later implemented?"
-                    onChange={event => setFeatureDraftImpact(event.target.value)}
-                  />
-                </label>
-                <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                  <span>Description</span>
-                  <textarea
-                    className={styles.textArea}
-                    value={featureDraftDescription}
-                    placeholder="Explain the packaging reason, launch notes, and approval criteria."
-                    onChange={event => setFeatureDraftDescription(event.target.value)}
-                  />
-                </label>
-              </div>
-
-              <div className={styles.tableWrap}>
-                <table className={`${styles.table} ${styles.matrixTable}`}>
-                  <thead>
-                    <tr>
-                      <th>Module</th>
-                      {PLAN_ORDER.map(planId => (
-                        <th key={planId}>{planLabel(planId)}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {featureMatrixRows.map(feature => (
-                      <tr key={feature.key}>
-                        <td className={styles.planName}>
-                          {feature.label}
-                          <small className={styles.muted}>{feature.description}</small>
-                        </td>
-                        {PLAN_ORDER.map(planId => {
-                          const current = Boolean(feature.includedPlans[planId]);
-                          const proposed = Boolean(featureDraft[planId]?.[feature.key]);
-                          const changed = current !== proposed;
-                          return (
-                            <td key={planId} className={styles.matrixCell}>
-                              <button
-                                type="button"
-                                className={`${styles.matrixToggle} ${proposed ? styles.matrixToggleOn : ''} ${changed ? styles.matrixToggleChanged : ''}`}
-                                onClick={() => toggleFeatureDraft(planId, feature.key)}
-                              >
-                                {proposed ? <Check size={14} /> : <X size={14} />}
-                                {proposed ? 'Included' : 'Not included'}
-                              </button>
-                              {changed && (
-                                <small className={styles.matrixDelta}>
-                                  was {current ? 'included' : 'not included'}
-                                </small>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className={styles.featureDraftFooter}>
-                <span>{matrixChanges.length} proposed change{matrixChanges.length === 1 ? '' : 's'}</span>
-                <span className={styles.actionBtns}>
-                  <button
-                    type="button"
-                    className={styles.cancelBtn}
-                    onClick={resetFeatureDraft}
-                    disabled={catalogBusy === 'feature-matrix'}
-                  >
-                    Reset Draft
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.activateBtn}
-                    onClick={createFeatureMatrixRequest}
-                    disabled={catalogBusy === 'feature-matrix' || matrixChanges.length === 0}
-                  >
-                    {catalogBusy === 'feature-matrix'
-                      ? <Loader size={12} className={styles.spin} />
-                      : 'Save Draft Request'}
-                  </button>
-                </span>
-              </div>
-            </>
-          ) : (
-            <div className={styles.emptyCell}>Read-only roles can review the feature matrix but cannot draft entitlement changes.</div>
-          )}
-        </section>
+            </section>
           </>
         )}
       </section>
@@ -2551,111 +2577,113 @@ export default function PlansPricingClient({
       {renderSelectedPlanModal()}
 
       {selectedPriceProduct && (
-        <div className={styles.modalBackdrop} role="presentation" onClick={() => setSelectedPriceProductId(null)}>
+        <div className={styles.backdrop} role="presentation" onClick={() => setSelectedPriceProductId(null)}>
           <div
-            className={styles.priceProductModal}
+            className={`${styles.window} ${styles.windowMid}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="price-product-title"
             onClick={event => event.stopPropagation()}
           >
-            <div className={styles.modalHeader}>
+            <div className={styles.windowHead}>
               <div>
-                <div className={styles.headerLabel}>
-                  {priceEnvironmentTab === 'live' ? 'Production Prices' : 'Test Prices'}
-                </div>
-                <h2 id="price-product-title" className={styles.modalTitle}>{selectedPriceProduct.label}</h2>
+                <h2 id="price-product-title" className={styles.windowTitle}>{selectedPriceProduct.label}</h2>
+                <p className={styles.windowSub}>
+                  {priceEnvironmentTab === 'live' ? 'Production prices' : 'Test prices'}
+                </p>
               </div>
               <button
                 type="button"
-                className={styles.cancelBtn}
+                className={styles.close}
                 onClick={() => setSelectedPriceProductId(null)}
                 title="Close"
+                aria-label="Close"
               >
-                <X size={12} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className={styles.productModalSummary}>
-              <span>{cleanProductName(selectedPriceProduct.productName)}</span>
-              <span className={priceEnvironmentTab === 'live' ? styles.badgeLiveEnv : styles.badgeSandbox}>
-                {priceEnvironmentTab === 'live' ? 'Production / Live Mode' : 'Test / Sandbox Mode'}
-              </span>
+            <div className={styles.viewBar}>
+              <span className={kit.count}>{cleanProductName(selectedPriceProduct.productName)}</span>
+              {renderEnvironmentChip()}
             </div>
 
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Cycle</th>
-                    <th>Price ID</th>
-                    <th>Last Change</th>
-                    <th>Pending</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {renderPriceSlotRows(selectedPriceProduct.rows)}
-                </tbody>
-              </table>
+            <div className={kit.card}>
+              <div className={kit.tableWrap}>
+                <table className={kit.comfortable}>
+                  <thead>
+                    <tr>
+                      <th>Cycle</th>
+                      <th>Price ID</th>
+                      <th>Last change</th>
+                      <th>Pending</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderPriceSlotRows(selectedPriceProduct.rows)}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {planRequestDraft && (
-        <div className={styles.modalBackdrop} role="presentation">
-          <div className={styles.requestModal} role="dialog" aria-modal="true" aria-labelledby="plan-request-title">
-            <div className={styles.modalHeader}>
+        <div className={styles.backdrop} role="presentation">
+          <div className={styles.window} role="dialog" aria-modal="true" aria-labelledby="plan-request-title">
+            <div className={styles.windowHead}>
               <div>
-                <div className={styles.headerLabel}>Approval Request</div>
-                <h2 id="plan-request-title" className={styles.modalTitle}>Submit Plan Change</h2>
+                <h2 id="plan-request-title" className={styles.windowTitle}>Submit plan change</h2>
+                <p className={styles.windowSub}>Approval request</p>
               </div>
               <button
                 type="button"
-                className={styles.cancelBtn}
+                className={styles.close}
                 onClick={() => setPlanRequestDraft(null)}
                 disabled={catalogBusy === 'plan-change-request'}
                 title="Close"
+                aria-label="Close"
               >
-                <X size={12} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className={styles.requestSummary}>
-              <div>
-                <span>Plan</span>
-                <strong>{planLabel(planRequestDraft.target_plan_id)}</strong>
+            <div className={kit.band}>
+              <div className={kit.bandCell}>
+                <span className={kit.bandLabel}>Plan</span>
+                <strong className={kit.bandValueText}>{planLabel(planRequestDraft.target_plan_id)}</strong>
               </div>
-              <div>
-                <span>Type</span>
-                <strong>{planRequestDraft.proposal.kind === 'plan_gating_update' ? 'Availability' : 'Limits & Trials'}</strong>
+              <div className={kit.bandCell}>
+                <span className={kit.bandLabel}>Type</span>
+                <strong className={kit.bandValueText}>{planRequestDraft.proposal.kind === 'plan_gating_update' ? 'Availability' : 'Limits & trials'}</strong>
               </div>
-              <div>
-                <span>Priority</span>
-                <strong>{optionLabel(PRIORITIES, planRequestDraft.priority)}</strong>
+              <div className={kit.bandCell}>
+                <span className={kit.bandLabel}>Priority</span>
+                <strong className={kit.bandValueText}>{optionLabel(PRIORITIES, planRequestDraft.priority)}</strong>
               </div>
-              <div>
-                <span>Status</span>
-                <strong>Needs Review</strong>
+              <div className={kit.bandCell}>
+                <span className={kit.bandLabel}>Status</span>
+                <strong className={kit.bandValueText}>Needs review</strong>
               </div>
             </div>
 
-            {planRequestError && <div className={styles.errorBanner}>{planRequestError}</div>}
+            {planRequestError && <div className={`${kit.notice} ${kit.noticeBad}`}>{planRequestError}</div>}
 
-            <div className={styles.modalForm}>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Title</span>
+            <div className={kit.formGrid}>
+              <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                <span className={kit.label}>Title</span>
                 <input
-                  className={styles.noteInput}
+                  className={kit.field}
                   value={planRequestDraft.title}
                   onChange={event => setPlanRequestDraft(draft => draft ? { ...draft, title: event.target.value } : draft)}
                 />
               </label>
-              <label className={styles.fieldLabel}>
-                <span>Priority</span>
+              <label className={kit.fieldGroup}>
+                <span className={kit.label}>Priority</span>
                 <select
-                  className={styles.selectInput}
+                  className={kit.select}
                   value={planRequestDraft.priority}
                   onChange={event => setPlanRequestDraft(draft => draft ? { ...draft, priority: event.target.value } : draft)}
                 >
@@ -2664,18 +2692,18 @@ export default function PlansPricingClient({
                   ))}
                 </select>
               </label>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Impact Summary</span>
+              <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                <span className={kit.label}>Impact summary</span>
                 <input
-                  className={styles.noteInput}
+                  className={kit.field}
                   value={planRequestDraft.impact_summary}
                   onChange={event => setPlanRequestDraft(draft => draft ? { ...draft, impact_summary: event.target.value } : draft)}
                 />
               </label>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Description</span>
+              <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                <span className={kit.label}>Description</span>
                 <textarea
-                  className={styles.textArea}
+                  className={kit.textarea}
                   value={planRequestDraft.description}
                   onChange={event => setPlanRequestDraft(draft => draft ? { ...draft, description: event.target.value } : draft)}
                 />
@@ -2685,7 +2713,7 @@ export default function PlansPricingClient({
             <div className={styles.modalActions}>
               <button
                 type="button"
-                className={styles.cancelBtn}
+                className="btn btn-secondary"
                 onClick={() => setPlanRequestDraft(null)}
                 disabled={catalogBusy === 'plan-change-request'}
               >
@@ -2693,13 +2721,13 @@ export default function PlansPricingClient({
               </button>
               <button
                 type="button"
-                className={styles.activateBtn}
+                className="btn btn-primary"
                 onClick={submitPlanChangeRequest}
                 disabled={catalogBusy === 'plan-change-request' || !planRequestDraft.title.trim()}
               >
                 {catalogBusy === 'plan-change-request'
-                  ? <Loader size={12} className={styles.spin} />
-                  : 'Submit for Review'}
+                  ? <Loader size={14} className={kit.spin} />
+                  : 'Submit for review'}
               </button>
             </div>
           </div>
@@ -2707,58 +2735,61 @@ export default function PlansPricingClient({
       )}
 
       {priceRequestDraft && (
-        <div className={styles.modalBackdrop} role="presentation">
-          <div className={styles.requestModal} role="dialog" aria-modal="true" aria-labelledby="price-request-title">
-            <div className={styles.modalHeader}>
+        <div className={styles.backdrop} role="presentation">
+          <div className={styles.window} role="dialog" aria-modal="true" aria-labelledby="price-request-title">
+            <div className={styles.windowHead}>
               <div>
-                <div className={styles.headerLabel}>Approval Request</div>
-                <h2 id="price-request-title" className={styles.modalTitle}>Submit Price Change</h2>
+                <h2 id="price-request-title" className={styles.windowTitle}>Submit price change</h2>
+                <p className={styles.windowSub}>Approval request</p>
               </div>
               <button
                 type="button"
-                className={styles.cancelBtn}
+                className={styles.close}
                 onClick={() => setPriceRequestDraft(null)}
                 disabled={catalogBusy === 'price-change-request'}
                 title="Close"
+                aria-label="Close"
               >
-                <X size={12} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className={styles.requestSummary}>
-              <div>
-                <span>Plan</span>
-                <strong>{PRICE_PLAN_LABELS[priceRequestDraft.row.plan_id] ?? priceRequestDraft.row.plan_id}</strong>
+            <div className={kit.band}>
+              <div className={kit.bandCell}>
+                <span className={kit.bandLabel}>Plan</span>
+                <strong className={kit.bandValueText}>{PRICE_PLAN_LABELS[priceRequestDraft.row.plan_id] ?? priceRequestDraft.row.plan_id}</strong>
               </div>
-              <div>
-                <span>Cycle</span>
-                <strong>{priceRequestDraft.row.billing_cycle}</strong>
+              <div className={kit.bandCell}>
+                <span className={kit.bandLabel}>Cycle</span>
+                <strong className={kit.bandValueText}>{priceRequestDraft.row.billing_cycle}</strong>
               </div>
-              <div>
-                <span>Environment</span>
-                <strong>{priceRequestDraft.row.environment}</strong>
+              <div className={kit.bandCell}>
+                <span className={kit.bandLabel}>Environment</span>
+                <strong className={kit.bandValueText}>{priceRequestDraft.row.environment}</strong>
               </div>
-              <div>
-                <span>Proposed</span>
-                <strong>{priceRequestDraft.proposedPriceId || 'Clear price ID'}</strong>
+              <div className={kit.bandCell}>
+                <span className={kit.bandLabel}>Proposed</span>
+                {priceRequestDraft.proposedPriceId
+                  ? <strong className={`${kit.bandValueText} ${kit.code}`}>{priceRequestDraft.proposedPriceId}</strong>
+                  : <strong className={kit.bandValueText}>Clear price ID</strong>}
               </div>
             </div>
 
-            {priceRequestError && <div className={styles.errorBanner}>{priceRequestError}</div>}
+            {priceRequestError && <div className={`${kit.notice} ${kit.noticeBad}`}>{priceRequestError}</div>}
 
-            <div className={styles.modalForm}>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Title</span>
+            <div className={kit.formGrid}>
+              <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                <span className={kit.label}>Title</span>
                 <input
-                  className={styles.noteInput}
+                  className={kit.field}
                   value={priceRequestDraft.title}
                   onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, title: event.target.value } : draft)}
                 />
               </label>
-              <label className={styles.fieldLabel}>
-                <span>Priority</span>
+              <label className={kit.fieldGroup}>
+                <span className={kit.label}>Priority</span>
                 <select
-                  className={styles.selectInput}
+                  className={kit.select}
                   value={priceRequestDraft.priority}
                   onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, priority: event.target.value } : draft)}
                 >
@@ -2767,27 +2798,27 @@ export default function PlansPricingClient({
                   ))}
                 </select>
               </label>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Impact Summary</span>
+              <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                <span className={kit.label}>Impact summary</span>
                 <input
-                  className={styles.noteInput}
+                  className={kit.field}
                   value={priceRequestDraft.impact_summary}
                   onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, impact_summary: event.target.value } : draft)}
                 />
               </label>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Change Note</span>
+              <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                <span className={kit.label}>Change note</span>
                 <input
-                  className={styles.noteInput}
+                  className={kit.field}
                   value={priceRequestDraft.changeNote}
                   placeholder="Why is this Stripe price ID changing?"
                   onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, changeNote: event.target.value } : draft)}
                 />
               </label>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Description</span>
+              <label className={`${kit.fieldGroup} ${styles.wide}`}>
+                <span className={kit.label}>Description</span>
                 <textarea
-                  className={styles.textArea}
+                  className={kit.textarea}
                   value={priceRequestDraft.description}
                   onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, description: event.target.value } : draft)}
                 />
@@ -2797,7 +2828,7 @@ export default function PlansPricingClient({
             <div className={styles.modalActions}>
               <button
                 type="button"
-                className={styles.cancelBtn}
+                className="btn btn-secondary"
                 onClick={() => setPriceRequestDraft(null)}
                 disabled={catalogBusy === 'price-change-request'}
               >
@@ -2805,13 +2836,13 @@ export default function PlansPricingClient({
               </button>
               <button
                 type="button"
-                className={styles.activateBtn}
+                className="btn btn-primary"
                 onClick={submitPriceChangeRequest}
                 disabled={catalogBusy === 'price-change-request' || !priceRequestDraft.title.trim()}
               >
                 {catalogBusy === 'price-change-request'
-                  ? <Loader size={12} className={styles.spin} />
-                  : 'Submit for Review'}
+                  ? <Loader size={14} className={kit.spin} />
+                  : 'Submit for review'}
               </button>
             </div>
           </div>

@@ -32,6 +32,7 @@ import { AUDIENCE_LABEL, buildPitchLibraryReport } from './report';
 import SlideCard from './SlideCard';
 import PullEditor from './PullEditor';
 import DeckComposer, { type ComposerSlide } from './DeckComposer';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from './pitch-deck-studio.module.css';
 
 /**
@@ -115,10 +116,7 @@ export default async function PitchDeckStudioPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLabel}>Growth</div>
-        <h1 className={styles.title}>Pitch Deck Studio</h1>
-      </header>
+      <AdminPageHeader title="Pitch deck studio" />
 
       <p className={styles.desc}>
         Every pitch slide we own, every deck we compose them into, and where each one is actually

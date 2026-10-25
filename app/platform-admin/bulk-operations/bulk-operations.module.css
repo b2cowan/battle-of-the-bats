@@ -1,395 +1,108 @@
-.page {
-  max-width: 1180px;
-  --bulkops-badge-warn: #fde68a; /* token-exempt: pale amber badge text, no brand token match */
-}
+/* Bulk operations — only what is this screen's own. Everything shared (page column, band, cards, toolbar,
+   fields, chips, table roles, buttons) comes from ../console.module.css and the product's global kit. */
 
-.header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 2rem;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-}
-
-.headerLabel,
-.sectionKicker {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-}
-
-.title {
-  margin: 0.25rem 0 0;
-  font-size: 2rem;
-  line-height: 1;
-  text-transform: uppercase;
-  color: var(--fl-text);
-}
-
-.intro {
-  max-width: 620px;
-  margin: 0.75rem 0 0;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  line-height: 1.6;
-  color: var(--data-gray);
-}
-
-.count {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  color: var(--data-gray);
-  white-space: nowrap;
-}
-
-.snapshotGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1px;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.18);
-  background: rgba(var(--logic-lime-rgb), 0.16);
-}
-
-.snapshotItem {
-  min-height: 82px;
-  padding: 1rem;
-  background: rgba(7, 12, 8, 0.94);
-}
-
-.snapshotItem span,
-.previewBox span {
-  display: block;
-  margin-bottom: 0.35rem;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
-.snapshotItem strong {
-  display: block;
-  font-size: 1.65rem;
-  line-height: 1;
-  color: var(--logic-lime);
-}
-
-.notice,
-.errorBanner,
-.successBanner {
-  margin-bottom: 1rem;
-  padding: 0.75rem 0.9rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
-  background: rgba(255, 255, 255, 0.018);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  line-height: 1.45;
-  color: var(--data-gray);
-}
-
-.errorBanner {
-  border-color: rgba(248, 113, 113, 0.34);
-  background: rgba(248, 113, 113, 0.06);
-  color: var(--pa-neg);
-}
-
-.successBanner {
-  border-color: rgba(var(--logic-lime-rgb), 0.34);
-  background: rgba(var(--logic-lime-rgb), 0.07);
-  color: var(--logic-lime);
-}
-
-/* Billing-clarity note for the bulk Plan Change action — this writes access only,
-   never Stripe (matches the org-detail screen, walkthrough finding B.1/M2). */
-.billingClarity {
-  margin: 0 0 1rem;
-  padding: 0.75rem 0.9rem;
-  border-radius: 4px;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  line-height: 1.5;
-}
-
-.billingClarity p {
-  margin: 0;
-}
-
-.billingClarity p + p {
-  margin-top: 0.5rem;
-}
-
-.billingClarityCaution {
-  border: 1px solid rgba(252, 211, 77, 0.4);
-  background: rgba(252, 211, 77, 0.08);
-  color: var(--pa-caution);
-}
-
-.billingClarityDanger {
-  border: 1px solid rgba(248, 113, 113, 0.45);
-  background: rgba(248, 113, 113, 0.1);
-  color: var(--pa-neg);
-}
-
+/* Two columns: the account picker is the wide one, the step cards are the narrow one. */
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.8fr);
-  gap: 1rem;
+  gap: 1.1rem;
   align-items: start;
 }
 
-.leftColumn,
-.rightColumn {
+.column {
+  display: grid;
+  gap: 1.1rem;
   min-width: 0;
+  align-content: start;
 }
 
-.rightColumn {
+/* The step number: a small olive figure beside the heading, in the body face (not a caption). */
+.step {
+  display: inline-block;
+  margin-right: 0.5rem;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--home-olive);
+}
+
+/* A step card's fields stack. */
+.form {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
-.panel {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.18);
-  background: rgba(5, 10, 5, 0.54);
-}
 
-.panelHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
+/* The picker's column is narrower than a full-width table, so Search gives way before the toolbar wraps. */
+.toolSearch { flex: 1 1 11.5rem; min-width: 11.5rem; }
 
-.panelHead h2 {
-  margin: 0.25rem 0 0;
-  font-size: 1.1rem;
-  line-height: 1.1;
-  text-transform: uppercase;
-  color: var(--fl-text);
-}
+.rowCheck { accent-color: var(--home-olive); }
 
-.filterBar {
+/* The billing-clarity note on a plan change / comp period: a warning edge, support size. */
+.note {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(140px, 0.45fr) minmax(140px, 0.45fr);
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--warning);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font-size: var(--type-support);
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
-.field {
+.note p { margin: 0; }
+.note strong { color: var(--text-primary); font-weight: 650; }
+
+/* Step 3: what the operation will touch. */
+.preview {
   display: grid;
-  gap: 0.35rem;
-  margin-bottom: 0.85rem;
+  gap: 0.3rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--home-olive-soft);
 }
 
-.field span {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
+.previewCount {
+  font-size: var(--type-title);
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }
 
-.input,
-.select,
-.textarea {
-  width: 100%;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
-  background: rgba(255, 255, 255, 0.035);
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  padding: 0.55rem 0.65rem;
-}
-
-.textarea {
-  min-height: 92px;
-  resize: vertical;
-  line-height: 1.45;
-}
-
-.tableWrap {
-  overflow-x: auto;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.table th,
-.table td {
-  vertical-align: top;
-}
-
-.table small,
-.accountLink + small {
-  display: block;
-  margin-top: 0.25rem;
-  color: var(--data-gray);
-}
-
-.accountLink {
-  color: var(--fl-text);
-  text-decoration: none;
-  font-weight: 800;
-}
-
-.accountLink:hover {
-  color: var(--logic-lime);
-}
-
-.emptyCell {
-  padding: 1.2rem;
-  color: var(--data-gray);
-}
-
-.badgeGood,
-.badgeWarn,
-.badgeMuted {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.55rem;
-  padding: 0.18rem 0.48rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.badgeGood {
-  border-color: rgba(var(--logic-lime-rgb), 0.34);
-  color: var(--logic-lime);
-}
-
-.badgeWarn {
-  border-color: rgba(250, 204, 21, 0.34);
-  color: var(--bulkops-badge-warn);
-}
-
-.badgeMuted {
-  color: var(--data-gray);
-}
-
-.secondaryBtn,
-.primaryBtn {
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.36);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.secondaryBtn {
-  padding: 0.42rem 0.7rem;
-}
-
-.primaryBtn {
-  width: 100%;
-  justify-content: center;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: 2.4rem;
-  padding: 0.55rem 0.85rem;
-}
-
-.secondaryBtn:hover:not(:disabled),
-.primaryBtn:hover:not(:disabled) {
-  border-color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.14);
-}
-
-.secondaryBtn:disabled,
-.primaryBtn:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.previewBox {
-  margin-bottom: 0.9rem;
-  padding: 0.85rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.18);
-  background: rgba(255, 255, 255, 0.018);
-}
-
-.previewBox strong {
-  display: block;
-  font-size: 1.35rem;
-  color: var(--logic-lime);
-}
-
-.previewBox p {
-  margin: 0.55rem 0 0;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  line-height: 1.45;
-  color: var(--data-gray);
-}
-
-.panelFooterLink {
-  margin-top: 0.85rem;
-  text-align: right;
-}
-
-.panelFooterLink a {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-  text-decoration: none;
-}
-
-.panelFooterLink a:hover {
-  text-decoration: underline;
-}
+.preview p { margin: 0; }
 
 .selectedList {
   display: grid;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .selectedList div {
-  padding: 0.62rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.018);
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid var(--home-line);
 }
 
-.selectedList span,
-.selectedList small {
-  display: block;
-  font-family: var(--font-data);
-}
+.selectedList div:last-child { border-bottom: 0; }
 
 .selectedList span {
-  color: var(--fl-text);
-  font-size: 0.72rem;
-  font-weight: 800;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .selectedList small {
-  margin-top: 0.2rem;
-  color: var(--data-gray);
-  font-size: 0.62rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
 }
 
+/* The latest operation's per-account result lines. */
 .resultGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -398,48 +111,37 @@
 
 .resultOk,
 .resultFail {
-  padding: 0.75rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
-  background: rgba(var(--logic-lime-rgb), 0.045);
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--home-olive) 30%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--home-olive) 6%, transparent);
 }
 
 .resultFail {
-  border-color: rgba(248, 113, 113, 0.28);
-  background: rgba(248, 113, 113, 0.055);
-}
-
-.resultOk strong,
-.resultFail strong,
-.resultOk span,
-.resultFail span {
-  display: block;
-  font-family: var(--font-data);
+  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
 }
 
 .resultOk strong,
 .resultFail strong {
-  margin-bottom: 0.25rem;
-  color: var(--fl-text);
+  font-size: var(--type-body);
+  color: var(--text-primary);
 }
 
 .resultOk span,
 .resultFail span {
-  font-size: 0.68rem;
-  color: var(--data-gray);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
 }
 
-.spin {
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.cardFoot {
+  padding: 0.7rem 1rem;
+  border-top: 1px solid var(--home-line);
+  text-align: right;
 }
 
 @media (max-width: 980px) {
-  .snapshotGrid,
-  .workspace,
-  .filterBar {
-    grid-template-columns: 1fr;
-  }
+  .workspace { grid-template-columns: minmax(0, 1fr); }
 }
