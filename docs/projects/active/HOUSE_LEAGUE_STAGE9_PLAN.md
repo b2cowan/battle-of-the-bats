@@ -58,6 +58,24 @@ All 15 round-2 asks ruled as recommended (§6a). 9a and 9b are fully ruled.
   screen and email; staff keep the Approve button. **9b·13** two divisions for one age group: the family picks, seeing each
   division's note and room.
 
+## 0c · Owner rulings 2026-10-24, the 9a build session (all as recommended)
+
+- **Part 6:** in 9a "Email families" is a rename only; it keeps opening the season's own composer. The switch to the
+  Families window, Q12c's per-season allowance, the 9d audiences, the season's sent history and retiring the old page and
+  modal all land together in 9d.
+- **Email on a finished season stays open** (the gate's one addition to Q16): the convenor and registrar can still email a
+  completed season's families. A note to families is not a change to the season's record, and the Families window's
+  season audience cannot reach a finished season.
+- **Reopen registration** is offered only while the season is in Registration closed (play has not started). Once it is
+  Playing now, late players are added by hand; reopening sign-ups mid-season is S2·b's dates work (9b).
+- **Archive** stays a label-only door in 9a, said plainly in its window; what Archive does is 9f's. ⚠ The option's
+  description as asked said Archive "moves the season off your Past seasons list"; that was the asking session's error —
+  in the code an archived season stays under Past seasons, and the copy (`HOUSE_LEAGUE_STAGE9A_COPY.md` §4.6) says so. The
+  build follows the code and the copy (it stays on the shelf); the owner was told of the correction the same day.
+- **Part 1 committed `29b1618c3`** (the one gate, the two backward status steps, the guard). Until Part 4 builds the status
+  windows, the old screens show edit controls on a finished season that the server refuses: Part 4 must land with Part 1
+  before any promote.
+
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
 - The trust list re-verified (§3); the coupling check for a standalone League Plus club; the ledger seam under D1 (C18);
