@@ -158,7 +158,7 @@ check the snapshot before touching it); the org home's empty-tournaments hero (S
 
 | Stage | Covers | Asks | Size |
 |---|---|---|---|
-| **9a** The frame and who can do what | Home (Running now · Getting ready · Past seasons shelf); season block with Overview, Money, Email families and a working switcher; phone season header + tab strip inside house league's frame; two live seasons (admin, index, club home); every status change asks (rare door + window); one write gate matched to D8 + registrar/treasurer; dead fee switch removed; old look retired on home and overview | Q12 Q14 Q16 Q17 Q18 S1·b 9a·1–4 | M |
+| **9a** The frame and who can do what — **BUILT 2026-10-24** (§9; walk §372 owed) | Home (Running now · Getting ready · Past seasons shelf); season block with Overview, Money, Email families and a working switcher; phone season header + tab strip inside house league's frame; two live seasons (admin, index, club home); every status change asks (rare door + window); one write gate matched to D8 + registrar/treasurer; dead fee switch removed; old look retired on home and overview | Q12 Q14 Q16 Q17 Q18 S1·b 9a·1–4 | M |
 | **9b-1** Sign-up, payments-ready | Create reshaped (Setup = the Overview's Divisions and Registration blocks, extended); price per division + early bird, one resolver; real dates; atomic capacity + waitlist constraint; no duplicate child; approve respects capacity; several children; CASL; DOB picks division; staff notice on every public sign-up. Server and public form only — the Registrations screen is rebuilt once, in 9b-2 | Q5 S1·a S2·b | L |
 | **9b-2** Money, honest | Frozen price (per-registration correction with a reason; Move division asks to re-price); one ending path with refunds as money out; Money band; Money stays open after Complete; Registrations on the kit (Withdraw, Move division, Release the spot, bulk, Paid/Owing filter, phone rows); the club's own payment instructions until 12b; "Ask to withdraw" on the status page; Statement filing + Walk 7a 7.6; ghost pay spots; Families balance from the frozen price. **12b drawn right after this is ruled.** | Q1 Q2 Q3 Q4 Q6 Q10 Q15 | L |
 | **9c** Teams and people | Ratings (convenor-only) + balanced snake draft; draft per division; coach accounts (if Q7) as a column of 9a's gate; Publish teams with placement notices; the status page shows the team | Q7 Q8 Q9 | M–L |
@@ -230,11 +230,17 @@ book line); Ethan Brown marked paid then declined (shows F12; the decline auto-p
 Henry's guardian (two children); venue "Maple Grove Park" with Diamond 1 and 2 and permit "Maple Grove diamonds 2026"
 (service role, no app path); all 2026 games linked to the venue; one game cancelled. Fixture artifacts: game times read
 6:00 a.m. (seeded at 10:00 UTC), and 9 of 10 paid ticks in 2026 predate the fee writer and have no book line.
+Added 2026-10-24 for the 9a walk (`.probe/hl/roles9a.mjs`, idempotent, creates new accounts only and never resets a
+password): `league-clubadmin@dev.local` (admin), `league-registrar@dev.local` (league_registrar), `league-treasurer@dev.local`
+(treasurer), all `devpass123`. ⚠ The League plan carries no Accounting, so this club's treasurer reads no Money (the
+gate's rule); a treasurer's Money read needs a Club-plan club.
 
 ## 8 · Stage 13 inputs (found outside house league's block; not drawn here)
 
 The League-plan phone bar (Overview · Calendar · House league · Families · More); "Notifications" meaning three things;
-the org home's empty-tournaments hero for a league-only club.
+the org home's empty-tournaments hero for a league-only club. **From the 9a build:** a treasurer (Accounting only) has no
+menu door to a season's Money — the gate opens Money to them (Q17) but the menu lists House league only for people who
+open it, and the menu's top level is Stage 13's.
 
 ## 9 · Status log
 
@@ -242,3 +248,19 @@ the org home's empty-tournaments hero for a league-only club.
 - 2026-10-24 — owner ruled 26 of 27 (§0), committed fa1528058; round 2 (9b + the two questions) drawn, /ux and /design
   applied, published https://claude.ai/artifact/Ru3aDgVoyBTJb8XivYPLgT; 15 asks open.
 - 2026-10-24 — 9a build prompt written (`HOUSE_LEAGUE_STAGE9A_BUILD_PROMPT.md`; recommends the Email families switch-over move to 9d with Q12c) and the Stage 12 kickoff prompt (`CLUB_TIER_STAGE12_KICKOFF_PROMPT.md`; 12a + 12b drawn together, 12c beside).
+- 2026-10-24 — **9a BUILT**, dev only, four rulings in §0c. Commits: `29b1618c3` Part 1 the one gate
+  (`lib/house-league-access.ts` + `lib/house-league-gate.ts`, every route, the two backward status steps, reviewed in three
+  lenses) · `0f6ac568f` the words (`HOUSE_LEAGUE_STAGE9A_COPY.md`) · `53184dbf5` Part 2 the season frame (rail block +
+  switcher, phone header + strip, Money at /money, Email families) · `eb3aff61b` Part 3 the home · `d0180b8e2` Part 4 the
+  season page and the status windows · `52dffe9eb` Part 5 every live season public · `313d736b0` fixes from `/review` on
+  the whole (three lenses, no Critical/High) · `b7944619b` help. Part 6: the rename only, as ruled. Guards:
+  `house-league-gate-guard`, `-season-frame`, `-home`, `-season-page`, `-public-seasons`. Walk: §372,
+  https://claude.ai/artifact/M3mkiar1SGya4jifLbQJjh.
+  **Not run:** `check:layout` — the UAT club the sweep uses now forwards to its own web address (another session's 4e
+  live-run), so every fixture page leaves the dev server; a per-role probe (`.probe/hl/gate9a.mjs`) checked the matrix
+  against the server instead. The layout baseline is unrefreshed for the rebuilt screens until it runs.
+  **Left open:** the Registrations screen's old buttons and windows (9b-2 rebuilds it); the club site's team bands and the
+  editor's House league line still name one live season (`runningLeagueSeason` in `lib/club-public-teams.ts`,
+  `lib/public-site-editor-facts.ts`); the record blocks' checkboxes read the saved value until the re-read lands;
+  `house-league.module.css` stays on the colour-debt list (the sub-pages still use it). Promote note: Part 1 locks finished
+  seasons, and Part 4 brings their reopen door, so the two promote together (they do, as one branch).

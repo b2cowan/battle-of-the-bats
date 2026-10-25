@@ -1,0 +1,219 @@
+<title>House League 9a Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: house league's frame works as ruled, and each person can do exactly what Q17 says. Checkable walk with a paste-back. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.people { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; font-size: 14px; }
+.people dt { font: 600 12.5px/1.6 var(--font-data); color: var(--soft); }
+.people dd { margin: 0; min-width: 0; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.who { font: 600 12px/1.5 var(--font-data); color: var(--amber); }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 240px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Club Tier · house league · stage 9a · owner walk · 2026-10-24</p>
+  <h1>House League 9a Walk</h1>
+  <p>One question: <b>does house league's frame work as you ruled it, and can each person do exactly what Q17 says, no more and no less?</b> Tick what holds, and write what does not. Your ticks stay in this browser, and the paste-back at the foot gathers them for the chat. Nothing here is released: the build is on the dev server only.</p>
+</header>
+
+<div class="card signin">
+  <h2>Sign in first</h2>
+  <p>On the dev server (<code>http://localhost:3000</code>) the club is <b>dev-league-org</b>. Every account's password is <code>devpass123</code>. Walk W1 to W8 as the owner, then sign out and walk W9 to W11 as each other person.</p>
+  <dl class="people">
+    <dt>Owner</dt><dd><code>league-owner@dev.local</code></dd>
+    <dt>Club admin</dt><dd><code>league-clubadmin@dev.local</code> (added today for this walk)</dd>
+    <dt>Registrar</dt><dd><code>league-registrar@dev.local</code> (added today)</dd>
+    <dt>Treasurer</dt><dd><code>league-treasurer@dev.local</code> (added today; see W11 for why it reads nothing on this club)</dd>
+  </dl>
+  <p class="hint">The seasons: <b>2025</b> completed, <b>2026</b> playing but past its Aug 30 end, <b>2027</b> taking sign-ups. The drawings this walk checks against: <a href="https://claude.ai/artifact/UtrYHLaqbkfQQC2kBbGEQ7">Stage 9 hub, tab "9a drawn"</a>. W5 changes 2026 and puts it back; nothing else is left changed except a test season you create in W4.</p>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <button class="btn-doc" type="button" id="make">Copy my answers</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  var S = [
+    ["home", "The House league home", "Owner", "/dev-league-org/admin/house-league", [
+      "Seasons are grouped: Running now holds 2027 (Registration open) and 2026 (Ended Aug 30, amber); there is no Getting ready group; Past seasons is a closed shelf with a count of 1, and opening it shows 2025.",
+      "Each row reads its dates, then the sport, then divisions and players or spots, and is one link to the season. 2026 has a second line, 'Past its end date: complete it from the season page'. 2027's line about its close date says it was set to close on a date that has passed.",
+      "A season with registrations to review shows the small amber number alone, at the right of its row.",
+      "There are no status buttons on the home (no Mark complete, Close registration or Archive) and no 'U10' style chip.",
+      "+ Create season sits at the top right and opens a window (it does not create on its own)."
+    ]],
+    ["rail", "The rail's season block (desk)", "Owner", "open 2026 from the home", [
+      "Under House league, Seasons and a Season block are set in with a line beside them: the switcher, then Overview, Registrations (with its amber count if any), Teams & draft, Schedule, Standings, Money, Email families.",
+      "The switcher lists 2027 and 2026 first, then '2025 · Finished'. Choosing another season keeps the page you were on (try it from Standings).",
+      "Money opens what used to be the Ledger, titled Money. Typing the old address (…/ledger) lands on Money.",
+      "Email families opens the season's composer, titled Email families. On Registrations the button that used to say Message registrants says Email families."
+    ]],
+    ["season", "A season's own page", "Owner", "2026 · Overview", [
+      "The header: the season's name, its dates and sport, the Ended Aug 30 pill and View public page. No Status strip, no Edit button, no 'U10' chip.",
+      "One joined band of four: Players (of N spots), To review, Waitlist, Teams (with 'N players unplaced' when some are). No money figure.",
+      "Divisions is a table: name, Ages (what families read), Players as a bar and words, Teams, and a pencil per row. The pencil and + Add division open windows; Delete this division sits at the end of the edit window and asks first.",
+      "Season and Registration read first. The pencil in a block's head turns that whole block into its fields, and the tick in the same spot turns it back. A change saves when you leave the field, with the small saving pill. There is no 'Auto-generate fee entries' switch anywhere.",
+      "At the very end of the page: 'This season ended Aug 30. Complete the season…' as a sentence and a link, not a button row."
+    ]],
+    ["draft", "A season getting ready", "Owner", "home · + Create season", [
+      "Create a test season (any name). It lands on its own page, which leads with 'Before you open registration' and three lines: divisions with spots, the season's dates, the fee. Each has an empty tick.",
+      "Open registration is not on the page at all until all three are done. Add a division with a number of spots, set both dates and a fee (0 is fine): the ticks fill, and Open registration appears beside the heading.",
+      "Open registration opens a window that says what changes for families, ending 'Families are not emailed when you open registration.' Press Cancel (opening it would put a test season on the public site).",
+      "The home now shows a Getting ready group with your test season and '… to do before registration can open' or 'Ready to open registration'. (The test season stays as a draft; drafts are never public.)"
+    ]],
+    ["windows", "Every status change asks", "Owner", "2027 and 2026", [
+      "2027: the Registration block carries Close registration. Its window lists what changes, warns in amber about any registrations waiting or families on the waitlist, has 'You can reopen registration later.' at the foot's left, and Cancel then Close registration at the right. Press Cancel.",
+      "2026: press Complete the season… The window says the season moves to Past seasons, registrations, teams and the schedule lock, Money stays open, you can still email its families, families are not emailed, and warns (amber, never blocking) about what is still waiting or owing. Press Complete season.",
+      "2026 now reads Finished, sits under Past seasons on the home, and its page ends with 'Finished and settled? Archive the season…' and 'Need to change something? Reopen the season…'.",
+      "Press Reopen the season… then Reopen season. 2026 is back to Ended Aug 30 under Running now, with everything editable again. (W5 leaves 2026 as it found it.)"
+    ]],
+    ["finished", "A finished season reads in place, locked", "Owner", "2025", [
+      "Every page of 2025 (Overview, Registrations, Teams & draft, Schedule, Standings, Money) has one quiet line saying the season is finished. Email families has none, and its composer still works.",
+      "No write control shows: no pencils, no + Add division, no approve or decline buttons, no team or schedule editing. The Fee paid ticks on Registrations still work (tick one and untick it).",
+      "The end of its Overview offers Archive the season… and Reopen the season… (open each and press Cancel)."
+    ]],
+    ["phone", "On a phone", "Owner", "any season page, window about 390 px wide", [
+      "Above every season page: 'Season', the season's name, its pill, and a chevron button with no border. The chevron opens a sheet of seasons, finished ones marked Finished; picking one keeps the page you were on.",
+      "Under it, a strip of page pills (Overview … Email families) that scrolls sideways, the current page dark and scrolled into view, the amber count on Registrations. Every pill is a comfortable tap. The phone bar and More sheet at the bottom are unchanged.",
+      "A status window (try Complete the season… on 2026, then Cancel) fills the screen with a back arrow, is titled 'Complete the season?', and starts its body with the season's name.",
+      "Nothing scrolls the page sideways, on the home, a season page or the public pages."
+    ]],
+    ["public", "Every live season on the public side", "Signed out (or another browser)", "/dev-league-org/league · /dev-league-org", [
+      "The league page shows Running now with 2027 (Registration open, with Register and Season page) and 2026 (Final standings, with Schedule and Standings), then Past seasons with 2025. Before, only one live season showed.",
+      "Each row is one link to the season page, and its own links are large enough to tap on a phone. The words Current season, Season active and View season are gone.",
+      "The club home's House league section lists both live seasons the same way. Open now still lists 2027 with its sign-up line, as it did."
+    ]],
+    ["admin", "The club admin can now save", "Club admin", "sign in as league-clubadmin@dev.local", [
+      "House league opens with + Create season; a season's page has its pencils, + Add division and the status doors, exactly as the owner sees them.",
+      "A change saves: edit 2027's Season block description and leave the field; the saving pill shows saved, and it is still there after a reload. (Before 9a every club admin save was refused.)",
+      "On a finished season (2025) the club admin sees the same lock as the owner."
+    ]],
+    ["registrar", "The registrar works the desk and reads the rest", "Registrar", "sign in as league-registrar@dev.local", [
+      "A season's Overview has no pencils, no + Add division, no Open / Close / Start / Complete doors and no checklist button, and no sentence explaining their absence.",
+      "Registrations has Add registration and Email families, and the approve, waitlist and decline actions. Adding a registration by hand now works (before 9a it was refused).",
+      "Email families opens and can send (send only to yourself, or Cancel). Before 9a the registrar was shown an 'Admin only' wall.",
+      "Teams & draft and Schedule read only: no drag, no add or edit. On the home a past-its-end season says 'Past its end date' with no 'complete it' door named.",
+      "On 2025 (finished) the Fee paid ticks still work; approving and declining are gone."
+    ]],
+    ["treasurer", "The treasurer reads Money (optional)", "Treasurer", "sign in as league-treasurer@dev.local", [
+      "On dev-league-org the treasurer sees no House league and every season address says 'You don't have access to this page.', Money included. That is the rule, not a fault: this club is on the League plan, which has no Accounting, so there is no book for a treasurer to read.",
+      "Optional, on a Club-plan club with a house league: a treasurer opening a season's Money address reads Money and nothing else. There is no menu door to it yet (see the calls below)."
+    ]]
+  ];
+  var CALLS = [
+    ["The season page has two blocks that read first and edit whole, Season (name, dates, division label, description) and Registration (its dates, fee, waiver, how new registrations are taken), where the drawing showed Registration only. Today's edit window held both sets of fields, and putting the season's name under 'Registration' would misname it."],
+    ["The switcher in the rail stays a dropdown (like the tournament switcher), so a finished season reads '2025 · Finished' as words rather than a small tag. The phone's switch sheet does show a Finished tag."],
+    ["The Start the season window's opening line is 'The season starts.' The copy had 'The season moves to Running now.', but a closed season is already under Running now on the home."],
+    ["Archive is a label only, as you ruled, and an archived season stays under Past seasons. (The question I asked you described it as leaving that list, which was my error; the code and the copy keep it there.)"],
+    ["Editing a division still saves when you press Save in its window, as it always has, rather than as you type."],
+    ["The club home's Open now line keeps today's 'Sign up by {date} · $165.00' rather than the copy's 'Registration open · $165 per player', so the sign-up deadline is not lost (9a·7 kept Open now as it was)."],
+    ["The public season rows no longer show a season's description or division label (drawing E draws neither)."],
+    ["The Registrations screen keeps its old buttons, small on a phone, and its old windows until 9b-2 rebuilds it; the Email families composer is the old one until 9d. Both now sit inside the new frame and follow the new rules about who sees what."],
+    ["A treasurer has no menu door to a season's Money: the menu's top level is Stage 13's and was not touched. Recorded as a Stage 13 input."],
+    ["The club site's team bands and the site editor's House league line still name one live season; the home's House league section names every one. Recorded as a follow-up."],
+    ["The layout sweep was not run: the test club it uses now forwards to its own web address (another session's live-run test), so none of its pages stay on the dev server. A probe signed in as each person and checked every rule above against the server instead."]
+  ];
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem('hl9a-walk') || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem('hl9a-walk', JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[4].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = 'W' + (i + 1) + ' ' + s[1].split(' (')[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card"><div class="sec-head"><span class="n">W' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="who">' + esc(s[2]) + '</span><span class="route">' + esc(s[3]) + '</span></div>';
+    s[4].forEach(function (t, k) { h += '<label class="chk"><input type="checkbox" id="c-' + id + '-' + k + '" data-k="' + id + '.' + k + '"> <span>' + esc(t) + '</span></label>'; });
+    h += '<textarea id="n-' + id + '" aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" id="c-call-' + k + '" data-k="call.' + k + '"> <span>' + esc(c[0]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea id="n-calls" aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function progress() {
+    var done = document.querySelectorAll('#sections input[type=checkbox]:checked').length;
+    document.getElementById('prog').textContent = done + ' of ' + total + ' ticked';
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['House league 9a walk: my results'];
+    S.forEach(function (s, i) {
+      var miss = [], ok = 0;
+      s[4].forEach(function (t, k) { if (state[s[0] + '.' + k]) ok++; else miss.push(k + 1); });
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', 'W' + (i + 1) + ' ' + s[1] + ' (' + s[2] + '): ' + ok + '/' + s[4].length + ' ticked' + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (state['call.' + k] ? '[accepted] ' : '[not ticked] ') + c[0]); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Copy my answers'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>
