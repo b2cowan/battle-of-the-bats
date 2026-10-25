@@ -2,24 +2,25 @@
 
 **Generated:** 2026-10-25 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 372 divergence(s)** across dev/prod.
+**⚠️ 384 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 12 | 0 | — |
-| Columns | 201 | 1 | 0 |
-| Indexes | 49 | 0 | 2 |
-| Constraints | 50 | 0 | — |
-| RLS / CHECK | 57 | 0 | 0 (RLS state) |
+| Tables | 13 | 0 | — |
+| Columns | 207 | 1 | 0 |
+| Indexes | 51 | 0 | 2 |
+| Constraints | 51 | 0 | — |
+| RLS / CHECK | 59 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (12)
+### Only in DEV (13)
 - `family_email_sends`
 - `online_payment_refunds`
 - `online_payments`
 - `org_custom_domains`
 - `org_payment_accounts`
 - `org_site_notices`
+- `platform_record_opens`
 - `rep_team_tryout_contacts`
 - `stripe_connect_events`
 - `tournament_fee_book_settings`
@@ -31,7 +32,7 @@
 _none_
 
 ## Columns
-### Only in DEV (201)
+### Only in DEV (207)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -138,19 +139,18 @@ _none_
 - `org_custom_domains.status`
 - `org_custom_domains.updated_at`
 - `org_custom_domains.waiting_since`
-- `org_payment_accounts.charges_enabled`
+- `org_payment_accounts.card_payments_reason`
+- `org_payment_accounts.card_payments_status`
 - `org_payment_accounts.connected_at`
 - `org_payment_accounts.connected_by`
 - `org_payment_accounts.country`
 - `org_payment_accounts.created_at`
-- `org_payment_accounts.details_submitted`
-- `org_payment_accounts.disabled_reason`
 - `org_payment_accounts.disconnected_at`
 - `org_payment_accounts.disconnected_by`
 - `org_payment_accounts.fee_payer`
 - `org_payment_accounts.livemode`
+- `org_payment_accounts.onboarding_finished_at`
 - `org_payment_accounts.org_id`
-- `org_payment_accounts.payouts_enabled`
 - `org_payment_accounts.refund_policy`
 - `org_payment_accounts.requirements_deadline`
 - `org_payment_accounts.requirements_due`
@@ -179,6 +179,13 @@ _none_
 - `org_site_notices.posted_by_user_id`
 - `organizations.birthday_cutoffs`
 - `organizations.coach_names_policy`
+- `platform_record_opens.actor_email`
+- `platform_record_opens.actor_user_id`
+- `platform_record_opens.id`
+- `platform_record_opens.opened_at`
+- `platform_record_opens.record_id`
+- `platform_record_opens.record_kind`
+- `platform_record_opens.via_find`
 - `rep_program_years.born_from_year`
 - `rep_program_years.born_to_year`
 - `rep_program_years.born_years_carried`
@@ -241,7 +248,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (49)
+### Only in DEV (51)
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
 - `idx_rep_team_tryout_contacts_org`
@@ -274,6 +281,8 @@ _none_
 - `org_payment_accounts_stripe_account_key`
 - `org_site_notices_org_idx`
 - `org_site_notices_pkey`
+- `platform_record_opens_opened_at_idx`
+- `platform_record_opens_pkey`
 - `rep_team_tryout_contacts_pkey`
 - `stripe_connect_events_pkey`
 - `stripe_connect_events_received_idx`
@@ -304,7 +313,7 @@ _none_
   - prod: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (50)
+### Only in DEV (51)
 - `family_email_sends.family_email_sends_org_id_fkey`
 - `family_email_sends.family_email_sends_pkey`
 - `family_email_sends.family_email_sends_sent_by_fkey`
@@ -328,6 +337,7 @@ _none_
 - `org_payment_accounts.org_payment_accounts_terms_by_fk`
 - `org_site_notices.org_site_notices_org_fk`
 - `org_site_notices.org_site_notices_pkey`
+- `platform_record_opens.platform_record_opens_pkey`
 - `rep_team_tryout_contacts.rep_team_tryout_contacts_org_fk`
 - `rep_team_tryout_contacts.rep_team_tryout_contacts_pkey`
 - `rep_team_tryout_contacts.rep_team_tryout_contacts_reset_by_fk`
@@ -363,7 +373,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (57)
+### CHECK only in DEV (59)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -398,6 +408,7 @@ _none_
 - `org_custom_domains.org_custom_domains_lowercase`
 - `org_custom_domains.org_custom_domains_name_parts`
 - `org_custom_domains.org_custom_domains_status_check`
+- `org_payment_accounts.org_payment_accounts_card_payments_status_chk`
 - `org_payment_accounts.org_payment_accounts_fee_payer_chk`
 - `org_payment_accounts.org_payment_accounts_refund_policy_chk`
 - `org_payment_accounts.org_payment_accounts_terms_chk`
@@ -412,6 +423,7 @@ _none_
 - `org_site_notices.org_site_notices_notice_check`
 - `organizations.organizations_birthday_cutoffs_shape`
 - `organizations.organizations_coach_names_policy_check`
+- `platform_record_opens.platform_record_opens_record_kind_check`
 - `rep_program_years.rep_program_years_born_years_check`
 - `rep_program_years.rep_program_years_tryout_description_length`
 - `rep_team_tryout_contacts.rep_team_tryout_contacts_email_check`

@@ -7106,10 +7106,10 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 ## `org_payment_accounts`
 <!-- dict:table:org_payment_accounts -->
 
-**Purpose (migration 358, Stage 12a, 2026-10-25 — [CLUB_TIER_STAGE12_PAYMENTS_PLAN.md](../../projects/active/CLUB_TIER_STAGE12_PAYMENTS_PLAN.md) §0c, [schema review](../../projects/active/CLUB_TIER_STAGE12A_SCHEMA_REVIEW.md)):** the club's connected Stripe account — **one row per organization** (PK `org_id`). The club connects its OWN account: charges are direct charges on it, so FieldLogicHQ never holds the money; Stripe covers the club's unrecoverable losses, and the account shape (Express Dashboard, `fees.payer = application`, `losses.payments = stripe`) lives in one place, [lib/stripe-connect.ts](../../../lib/stripe-connect.ts). The row holds only the CURRENT state; connect, disconnect, fee-payer change and terms agreement are also written to `org_audit_log` because the fee-payer history decides what a payer was charged. RLS is on, every grant to `anon`/`authenticated` revoked: server-only (service role).
+**Purpose (migration 358, Stage 12a, 2026-10-25 — [CLUB_TIER_STAGE12_PAYMENTS_PLAN.md](../../projects/active/CLUB_TIER_STAGE12_PAYMENTS_PLAN.md) §0c, [schema review](../../projects/active/CLUB_TIER_STAGE12A_SCHEMA_REVIEW.md)):** the club's connected Stripe account — **one row per organization** (PK `org_id`). The club connects its OWN account: charges are direct charges on it, so FieldLogicHQ never holds the money; Stripe covers the club's unrecoverable losses, and the account shape — **Stripe Accounts v2** since migration 364 (owner 2026-10-25, plan §0d): Express Dashboard, `fees_collector = application`, `losses_collector = stripe` — lives in one place, [lib/stripe-connect.ts](../../../lib/stripe-connect.ts). The row holds only the CURRENT state; connect, disconnect, fee-payer change and terms agreement are also written to `org_audit_log` because the fee-payer history decides what a payer was charged. RLS is on, every grant to `anon`/`authenticated` revoked: server-only (service role).
 
 **Gotchas (read first):**
-1. **Stripe's facts are cached, never typed.** `charges_enabled`, `payouts_enabled`, `details_submitted`, `requirements_due`, `disabled_reason`, `requirements_deadline`, `country` are re-read from Stripe on every `account.updated` (the handler re-fetches the account rather than trusting the payload, so event order does not matter). Nothing on the screen writes them by hand.
+1. **Stripe's facts are cached, never typed.** `card_payments_status`, `card_payments_reason`, `requirements_due`, `requirements_deadline`, `country` are re-read from Stripe (the v2 account, `lib/online-payment-landing.ts` `syncPayoutsAccount`) on every v2 account event — `v2.core.account[requirements].updated`, `v2.core.account[configuration.merchant].capability_status_updated`, `v2.core.account.closed`, all THIN events on the account webhook — and on the owner's return from Stripe's sign-up. A thin event carries no data, so order never matters. `onboarding_finished_at` is stamped once by the same sync and never cleared. Nothing on the screen writes them by hand. **Until migration 364 (2026-10-25) the row held v1's `charges_enabled` / `payouts_enabled` / `details_submitted` / `disabled_reason`; they are gone, and v2 has no such fields.**
 2. **A live/test switch is a NEW account id**, not an edit: the row is replaced through one function. A payment keeps its own `livemode`.
 3. **Disconnect stops new pay pages and nothing more** — Stripe, not FieldLogicHQ, carries the account's losses, so FieldLogicHQ cannot pause or reject it. `disconnected_at` is the stamp; payments already taken keep working and keep the account id they were taken on.
 4. **The terms evidence is all there or not there** (`org_payment_accounts_terms_chk`): `terms_version`, `terms_agreed_at` and `terms_agreed_by_email` are all NULL or all set. The email is kept as text because `terms_agreed_by` is `ON DELETE SET NULL` — the evidence must outlive the user row.
@@ -7119,7 +7119,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`org_id`** (uuid PK, FK → `organizations.id` ON DELETE CASCADE) — the club; one connected account per org.
 
 <!-- dict:col:org_payment_accounts.stripe_account_id -->
-**`stripe_account_id`** (text, NOT NULL, UNIQUE index `org_payment_accounts_stripe_account_key`) — Stripe's `acct_…`. The unique index serves the `account.updated` / Connect-event lookup (account → org). Deliberately NOT referenced by an FK from `online_payments`.
+**`stripe_account_id`** (text, NOT NULL, UNIQUE index `org_payment_accounts_stripe_account_key`) — Stripe's `acct_…` (a v2 account since migration 364; the id format is unchanged). The unique index serves the account-event / Connect-event lookup (account → org). Deliberately NOT referenced by an FK from `online_payments`.
 
 <!-- dict:col:org_payment_accounts.livemode -->
 **`livemode`** (boolean, NOT NULL, default false) — whether this is a live-mode account. Stage 12a is test mode only.
@@ -7127,15 +7127,16 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:org_payment_accounts.country -->
 **`country`** (char(2), nullable) — the account's country, read from Stripe, never typed.
 
-<!-- dict:col:org_payment_accounts.charges_enabled -->
-<!-- dict:col:org_payment_accounts.payouts_enabled -->
-<!-- dict:col:org_payment_accounts.details_submitted -->
-**`charges_enabled` / `payouts_enabled` / `details_submitted`** (boolean, NOT NULL, default false) — Stripe's own flags, copied on each sync. A pay page opens only when `charges_enabled`; `payouts_enabled` going false is what raises the `payouts_need_attention` Needs-attention row (it clears when the account is enabled again).
+<!-- dict:col:org_payment_accounts.card_payments_status -->
+<!-- dict:col:org_payment_accounts.card_payments_reason -->
+**`card_payments_status`** (text, nullable, CHECK `active` | `pending` | `restricted` | `unsupported`) / **`card_payments_reason`** (text, nullable) — the v2 merchant configuration's `card_payments` capability and the code of its first `status_details` entry (e.g. `requirements_past_due`, `requirements_pending_verification`, `determining_status`; NULL while active). NULL status = not read yet (or a status Stripe added that the code does not know — stored as unread rather than refused). **A pay page opens only while the status is `active`** (`takesPayments`). The reason separates a wait on Stripe ("Setting up") from something the club must do ("Needs attention"). Migration 364.
+
+<!-- dict:col:org_payment_accounts.onboarding_finished_at -->
+**`onboarding_finished_at`** (timestamptz, nullable) — when Stripe's sign-up was first seen finished: no requirement entry asked for at sign-up (`routine_onboarding`, at ANY deadline — the link collects eventually-due items too) still waiting on the club without an error against it, on a read that returned both the capability and the requirements. Strict on purpose (review 2026-10-25): a stamp written early is permanent and would raise "Stripe needs something" mid-sign-up. **Set once by the sync and never cleared** — v1 `details_submitted`'s successor. It tells "Setting up" (NULL) from "Needs attention" (set, and Stripe asks for more), and the Payouts route refuses "Open Stripe" (the Express Dashboard sign-in) while it is NULL and card payments are not active, because Stripe does. Migration 364.
 
 <!-- dict:col:org_payment_accounts.requirements_due -->
-<!-- dict:col:org_payment_accounts.disabled_reason -->
 <!-- dict:col:org_payment_accounts.requirements_deadline -->
-**`requirements_due`** (text[], NOT NULL, default `{}`) / **`disabled_reason`** (text, nullable) / **`requirements_deadline`** (timestamptz, nullable) — what Stripe still needs from the club, why the account is disabled, and by when. Stripe's wording is turned into a plain sentence in code; the raw keys are stored.
+**`requirements_due`** (text[], NOT NULL, default `{}`) / **`requirements_deadline`** (timestamptz, nullable) — what Stripe is waiting on the club for, and by when. Since migration 364: the `description` of each v2 requirement entry with `awaiting_action_from = user` and a `minimum_deadline.status` of `currently_due` or `past_due` (eventually-due items are not listed); the deadline is `requirements.summary.minimum_deadline.time`, kept only while that summary is `currently_due`. Any entry here while card payments are active is what raises the `payouts_need_attention` Needs-attention row (it clears itself when the card stops reading "needs attention"). Stripe's wording is turned into a plain sentence in code; the raw keys are stored.
 
 <!-- dict:col:org_payment_accounts.stripe_synced_at -->
 **`stripe_synced_at`** (timestamptz, nullable) — when the Stripe facts above were last re-read.
@@ -7314,16 +7315,16 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 ## `stripe_connect_events`
 <!-- dict:table:stripe_connect_events -->
 
-**Purpose (migration 358, Stage 12a, 2026-10-25):** every Stripe Connect webhook event once — a short-circuit for repeat deliveries and an audit trail. **It is NOT what makes handling correct**: two concurrent deliveries can both see `processed_at` null, so correctness lives in the landing functions' row locks (`online_payment_land`, `_refund_land` are idempotent). No payload is stored, so no personal data; keep ~90 days (index on `received_at` for pruning). Handler: `INSERT … ON CONFLICT DO NOTHING`, then `SELECT … FOR UPDATE`, skip if `processed_at` is set. On `account.updated` the handler re-fetches the account from Stripe rather than trusting the payload. Webhooks for an unknown account are acknowledged and ignored. RLS is on: server-only.
+**Purpose (migration 358, Stage 12a, 2026-10-25):** every Stripe Connect webhook event once, from BOTH Connect webhooks (the payments one: v1 snapshot checkout/refund events; the account one: v2 thin account events, since migration 364 / plan §0d) — a short-circuit for repeat deliveries and an audit trail. **It is NOT what makes handling correct**: two concurrent deliveries can both see `processed_at` null, so correctness lives in the landing functions' row locks (`online_payment_land`, `_refund_land` are idempotent). No payload is stored, so no personal data; keep ~90 days (index on `received_at` for pruning). Handler (both webhooks): read the row, skip if `processed_at` is set, otherwise insert it (or bump `attempts`). Not atomic and not locked: two concurrent deliveries can both run, which is safe because every handler is idempotent (correction 2026-10-25: this said `ON CONFLICT DO NOTHING` + `FOR UPDATE`, which the code never did). On a v2 account event (thin: it carries no data) the handler re-fetches the account from Stripe. Webhooks for an unknown account are acknowledged and ignored. RLS is on: server-only.
 
 <!-- dict:col:stripe_connect_events.id -->
 **`id`** (text PK) — Stripe's event id (`evt_…`).
 
 <!-- dict:col:stripe_connect_events.type -->
-**`type`** (text, NOT NULL) — the event type (e.g. `checkout.session.completed`, `account.updated`, `charge.refunded`).
+**`type`** (text, NOT NULL) — the event type (e.g. `checkout.session.completed`, `refund.updated`, `v2.core.account[requirements].updated`).
 
 <!-- dict:col:stripe_connect_events.account -->
-**`account`** (text, nullable) — the connected account the event is about; no FK.
+**`account`** (text, nullable) — the connected account the event is about (for a v2 thin event, its `related_object.id`); no FK.
 
 <!-- dict:col:stripe_connect_events.livemode -->
 **`livemode`** (boolean, nullable) — the event's mode.

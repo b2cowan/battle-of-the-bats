@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-25",
-  "total": 372,
+  "total": 384,
   "counts": {
-    "tables": 12,
-    "columns": 202,
-    "indexes": 51,
-    "constraints": 50,
-    "rls": 57
+    "tables": 13,
+    "columns": 208,
+    "indexes": 53,
+    "constraints": 51,
+    "rls": 59
   },
   "items": [
     {
@@ -146,6 +146,10 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:org_payment_accounts.org_payment_accounts_card_payments_status_chk",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:org_payment_accounts.org_payment_accounts_fee_payer_chk",
       "sig": ""
     },
@@ -199,6 +203,10 @@
     },
     {
       "key": "check:only-dev:organizations.organizations_coach_names_policy_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_record_opens.platform_record_opens_record_kind_check",
       "sig": ""
     },
     {
@@ -662,7 +670,11 @@
       "sig": ""
     },
     {
-      "key": "column:only-dev:org_payment_accounts.charges_enabled",
+      "key": "column:only-dev:org_payment_accounts.card_payments_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_payment_accounts.card_payments_status",
       "sig": ""
     },
     {
@@ -682,14 +694,6 @@
       "sig": ""
     },
     {
-      "key": "column:only-dev:org_payment_accounts.details_submitted",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:org_payment_accounts.disabled_reason",
-      "sig": ""
-    },
-    {
       "key": "column:only-dev:org_payment_accounts.disconnected_at",
       "sig": ""
     },
@@ -706,11 +710,11 @@
       "sig": ""
     },
     {
-      "key": "column:only-dev:org_payment_accounts.org_id",
+      "key": "column:only-dev:org_payment_accounts.onboarding_finished_at",
       "sig": ""
     },
     {
-      "key": "column:only-dev:org_payment_accounts.payouts_enabled",
+      "key": "column:only-dev:org_payment_accounts.org_id",
       "sig": ""
     },
     {
@@ -823,6 +827,34 @@
     },
     {
       "key": "column:only-dev:organizations.coach_names_policy",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_record_opens.actor_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_record_opens.actor_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_record_opens.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_record_opens.opened_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_record_opens.record_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_record_opens.record_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_record_opens.via_find",
       "sig": ""
     },
     {
@@ -1138,6 +1170,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:platform_record_opens.platform_record_opens_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_team_tryout_contacts.rep_team_tryout_contacts_org_fk",
       "sig": ""
     },
@@ -1382,6 +1418,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:platform_record_opens_opened_at_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_record_opens_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_team_tryout_contacts_pkey",
       "sig": ""
     },
@@ -1471,6 +1515,10 @@
     },
     {
       "key": "table:only-dev:org_site_notices",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:platform_record_opens",
       "sig": ""
     },
     {

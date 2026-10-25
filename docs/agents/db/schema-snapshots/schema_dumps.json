@@ -9012,48 +9012,12 @@
       },
       {
         "table_name": "org_payment_accounts",
-        "pos": 5,
-        "column_name": "charges_enabled",
-        "data_type": "boolean",
-        "udt_name": "bool",
-        "is_nullable": "NO",
-        "column_default": "false"
-      },
-      {
-        "table_name": "org_payment_accounts",
-        "pos": 6,
-        "column_name": "payouts_enabled",
-        "data_type": "boolean",
-        "udt_name": "bool",
-        "is_nullable": "NO",
-        "column_default": "false"
-      },
-      {
-        "table_name": "org_payment_accounts",
-        "pos": 7,
-        "column_name": "details_submitted",
-        "data_type": "boolean",
-        "udt_name": "bool",
-        "is_nullable": "NO",
-        "column_default": "false"
-      },
-      {
-        "table_name": "org_payment_accounts",
         "pos": 8,
         "column_name": "requirements_due",
         "data_type": "ARRAY",
         "udt_name": "_text",
         "is_nullable": "NO",
         "column_default": "'{}'::text[]"
-      },
-      {
-        "table_name": "org_payment_accounts",
-        "pos": 9,
-        "column_name": "disabled_reason",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
       },
       {
         "table_name": "org_payment_accounts",
@@ -9180,6 +9144,33 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 24,
+        "column_name": "card_payments_status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 25,
+        "column_name": "card_payments_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 26,
+        "column_name": "onboarding_finished_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "org_people",
@@ -12371,6 +12362,69 @@
         "table_name": "platform_plan_versions",
         "pos": 12,
         "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_record_opens",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_record_opens",
+        "pos": 2,
+        "column_name": "actor_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_record_opens",
+        "pos": 3,
+        "column_name": "actor_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_record_opens",
+        "pos": 4,
+        "column_name": "record_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_record_opens",
+        "pos": 5,
+        "column_name": "record_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_record_opens",
+        "pos": 6,
+        "column_name": "via_find",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "platform_record_opens",
+        "pos": 7,
+        "column_name": "opened_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -31149,6 +31203,16 @@
         "indexdef": "CREATE UNIQUE INDEX platform_plan_versions_version_key_key ON public.platform_plan_versions USING btree (version_key)"
       },
       {
+        "tablename": "platform_record_opens",
+        "indexname": "platform_record_opens_opened_at_idx",
+        "indexdef": "CREATE INDEX platform_record_opens_opened_at_idx ON public.platform_record_opens USING btree (opened_at DESC)"
+      },
+      {
+        "tablename": "platform_record_opens",
+        "indexname": "platform_record_opens_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_record_opens_pkey ON public.platform_record_opens USING btree (id)"
+      },
+      {
         "tablename": "platform_user_notes",
         "indexname": "platform_user_notes_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_user_notes_pkey ON public.platform_user_notes USING btree (id)"
@@ -35105,6 +35169,12 @@
       {
         "kind": "CHECK",
         "table_name": "org_payment_accounts",
+        "detail": "org_payment_accounts_card_payments_status_chk",
+        "check_clause": "((card_payments_status IS NULL) OR (card_payments_status = ANY (ARRAY['active'::text, 'pending'::text, 'restricted'::text, 'unsupported'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_payment_accounts",
         "detail": "org_payment_accounts_fee_payer_chk",
         "check_clause": "(fee_payer = ANY (ARRAY['family'::text, 'club'::text]))"
       },
@@ -35723,6 +35793,18 @@
       {
         "kind": "RLS",
         "table_name": "platform_plan_versions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_record_opens",
+        "detail": "platform_record_opens_record_kind_check",
+        "check_clause": "(record_kind = ANY (ARRAY['club'::text, 'person'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_record_opens",
         "detail": "ENABLED",
         "check_clause": null
       },

@@ -330,6 +330,14 @@
     "362_a_house_league_spot_is_taken_once.sql": {
       "prod": "pending",
       "note": "Functions only (invisible to check:migrations): league_registration_place / _move / _change_division / _end, league_waitlist_promote (+ helpers league_held_count, league_waitlist_close_gap, league_waitlist_promote_locked, league_name_key, league_is_duplicate); club_league_fee_end redefined with the same signature to run league_registration_end without promoting. The code carrying Club Tier 9b-1 Part 3 CALLS the new functions, so this MUST be applied to prod BEFORE that promote, or every house-league sign-up and staff status change 500s (the public demo too, after its reseed). Requires 361. Applied to DEV 2026-10-25; race-tested there with scripts/house-league-signup-race.mjs (16 checks)."
+    },
+    "364_a_club_payouts_account_reads_accounts_v2.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 12a rework onto Stripe Accounts v2 (CLUB_TIER_STAGE12_PAYMENTS_PLAN.md §0d). DROPS org_payment_accounts.charges_enabled / payouts_enabled / details_submitted / disabled_reason (invisible to check:migrations) and ADDS card_payments_status (+ CHECK) / card_payments_reason / onboarding_finished_at (visible). Needs 358 first; apply with 358 + 359 at the release that ships Stage 12a — the 12a code reads only the new columns, so prod without it 500s every payouts read. Verify on prod: the four dropped columns are absent. Applied to DEV 2026-10-25 (no account rows existed)."
+    },
+    "365_support_console_lookup_and_records_opened.sql": {
+      "prod": "pending",
+      "note": "Support console Stage 2. Functions (invisible to check:migrations): platform_people_search, platform_find_people, platform_people_by_ids, platform_find_clubs — SECURITY DEFINER over auth.users, execute revoked from PUBLIC/anon/authenticated, service_role only. Plus the visible table platform_record_opens (the trail of records opened). The Stage 2 console code CALLS these, so apply to prod BEFORE that promote, or Find, People, Today and the clubs list 500. After applying, verify with the anon key that every function returns 42501 (.probe/pasc/s2-anon-rpc.mjs pattern). Applied to DEV 2026-10-25."
     }
   }
 }
