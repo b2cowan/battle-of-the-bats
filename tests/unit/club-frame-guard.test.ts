@@ -14,7 +14,7 @@ import { readCode, readSource, filesUnder } from './_source-code.ts';
  *   2. The platform's phone bar leaves every club page; tournament pages keep it (the carve-out, Ask 8).
  *   3. No typewriter face on a club page (DC-03), and none of the "digital ledger" voice.
  *   4. Every club page names itself in the browser tab ("page · club"); the description is the club's own words.
- *   5. One name per thing: House league, Past tournaments.
+ *   5. One name per thing: House league, Tournaments.
  *   6. The colours come from the one derivation, written by the org layout.
  * The colour rule itself is pinned by club-colour-roles.test.ts.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -28,8 +28,10 @@ const CLUB_PAGES = filesUnder(ORG, '.tsx')
   .filter(f => !NOT_CLUB.some(prefix => f.startsWith(prefix)));
 /** The six shortcut addresses forward or show "not found" — they render no page of their own to title. (`/teams` is
  *  the club's Teams page since 4b-2a, so it names itself like any other.) */
-const SHORTCUTS = new Set(['news', 'rules', 'schedule', 'standings', 'register', 'results']
-  .map(d => `${ORG}/${d}/page.tsx`));
+const SHORTCUTS = new Set([...['news', 'rules', 'schedule', 'standings', 'register', 'results']
+  .map(d => `${ORG}/${d}/page.tsx`),
+  // The old Past tournaments address forwards to the Tournaments page (Stage 4f, Ask 6), so it renders nothing either.
+  `${ORG}/archives/page.tsx`]);
 
 const BAR = 'components/public/ClubBar.tsx';
 const FOOTER = 'components/public/ClubFooter.tsx';
@@ -160,10 +162,11 @@ describe('4 · every club page names itself: "page · club" (End state 8)', () =
 });
 
 describe('5 · one name per thing (design log "Names")', () => {
-  it('the tabs say House league and Past tournaments', () => {
+  it('the tabs say House league and Tournaments (Stage 4f: Past tournaments retired into the Tournaments page)', () => {
     const sections = readCode('lib/org-public-sections.ts');
     assert.match(sections, /label: 'House league'/);
-    assert.match(sections, /label: 'Past tournaments'/);
+    assert.match(sections, /label: 'Tournaments'/);
+    assert.doesNotMatch(sections, /label: 'Past tournaments'/);
     assert.doesNotMatch(sections, /label: 'Archives'|label: 'League'/);
   });
 });

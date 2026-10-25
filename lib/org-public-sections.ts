@@ -3,7 +3,8 @@
  * club's tabs (Nav Unification Stage F; in the club's own bar since Club Tier Stage 4b-1).
  *
  * One name per thing (Club Tier Stage 4, design log "Names", ruled 2026-10-19): the tab says what the page says —
- * "House league", "Past tournaments" — never a second word for the same place. (The Stage E "›" crumb that used to
+ * "House league", "Tournaments" — never a second word for the same place. (Stage 4f, ruled 2026-10-25, Ask 1: one
+ * Tournaments tab holds current, upcoming and past; the Past tournaments tab retired into its page.) (The Stage E "›" crumb that used to
  * read this table retired with the platform's org bar in 4b-1: the tabs and the page's own title answer "where am I",
  * and the club's name in its bar is the way home.)
  */
@@ -19,9 +20,9 @@ export interface OrgSection {
 const ORDERED_WITH: Record<string, string> = { tryouts: 'teams' };
 
 /**
- * The section table, in tab order: Home · Teams · Tryouts · House league · Past tournaments (Club Tier Stage 4b-2a, Ask
+ * The section table, in tab order: Home · Teams · Tryouts · House league · Tournaments (Club Tier Stage 4b-2a, Ask
  * 9A; the club Tryouts tab joined third in 4b-2b, Ask 14 — seasonal: present only while the Tryouts page has a team to
- * list, `tryoutsTabShows`). `''` (the club's home) is the first tab. Every section is a real page: until
+ * list, `tryoutsTabShows`; Tournaments took Past tournaments' place in 4f). `''` (the club's home) is the first tab. Every section is a real page: until
  * 4b-2a `/{orgSlug}/teams` was a redirect shim, nameable but never a tab (a tab on a redirect would have laundered that
  * into navigation); a section must have its page before it joins this table.
  */
@@ -30,7 +31,7 @@ const ORG_SECTIONS: OrgSection[] = [
   { key: 'teams',    label: 'Teams' },
   { key: 'tryouts',  label: 'Tryouts' },
   { key: 'league',   label: 'House league' },
-  { key: 'archives', label: 'Past tournaments' },
+  { key: 'tournaments', label: 'Tournaments' },
 ];
 
 /**
@@ -48,6 +49,8 @@ export function activeOrgSectionKey(pathname: string, orgSlug: string, sections?
   // there — the tab is the way back to the club's list, and "← {team}" on the page is the way on to the team. While
   // the seasonal tab is absent they stay under Teams, where the URL lives (design log 2026-10-21).
   if (segment === 'teams' && parts[2] === 'tryouts' && sections?.some(s => s.key === 'tryouts')) return 'tryouts';
+  // An archived tournament's page is one of the club's tournaments (Stage 4f, Ask 6): the tab is its way back.
+  if (segment === 'archives') return 'tournaments';
   return ORG_SECTIONS.some(s => s.key === segment) ? segment : null;
 }
 
@@ -62,7 +65,7 @@ export function activeOrgSectionKey(pathname: string, orgSlug: string, sections?
  * that as "render no tab row" rather than showing a row with a single Home tab in it.
  */
 export function orgSectionsFor(
-  available: { league: boolean; archives: boolean; teams: boolean; tryouts?: boolean },
+  available: { league: boolean; tournaments: boolean; teams: boolean; tryouts?: boolean },
   /** The club's section order from its editor (Stage 4c-1): it SORTS the tabs after Home and never hides one (a hidden
    *  section arrives here as not available). A tab it does not rank keeps its table place after the ranked ones. */
   order?: readonly string[],
@@ -71,7 +74,7 @@ export function orgSectionsFor(
     if (s.key === 'teams') return available.teams;
     if (s.key === 'tryouts') return !!available.tryouts;
     if (s.key === 'league') return available.league;
-    if (s.key === 'archives') return available.archives;
+    if (s.key === 'tournaments') return available.tournaments;
     return true; // Home is always present
   });
   if (!order) return present;

@@ -150,20 +150,20 @@ test.describe('Stage 4b-1 — a club page advertises nothing, at any width', () 
    am I". What survives is its real job — a way back up from any depth, for an anonymous visitor. */
 test.describe('Stage 4b-1 — the club\'s name is the way home, at any depth', () => {
   test('no "›" crumb on a club page', async ({ page }) => {
-    await page.goto(`${TOURNAMENT_TIER_ORG}/archives`, { waitUntil: 'networkidle' });
+    await page.goto(`${TOURNAMENT_TIER_ORG}/tournaments`, { waitUntil: 'networkidle' });
     await expect(page.getByText('›', { exact: true })).toHaveCount(0);
   });
 
   test('the club\'s name in its bar is a real link back to the club\'s home', async ({ page }) => {
-    await page.goto(`${TOURNAMENT_TIER_ORG}/archives`, { waitUntil: 'networkidle' });
+    await page.goto(`${TOURNAMENT_TIER_ORG}/tournaments`, { waitUntil: 'networkidle' });
     await expect(page.locator(`[data-club-bar] a[href="${TOURNAMENT_TIER_ORG}"]`).first()).toBeVisible();
   });
 
   test('every club page names itself: "page · club"', async ({ page }) => {
     await page.goto(`${ORG}/league`, { waitUntil: 'networkidle' });
     await expect(page).toHaveTitle(/^House league · \S/);
-    await page.goto(`${TOURNAMENT_TIER_ORG}/archives`, { waitUntil: 'networkidle' });
-    await expect(page).toHaveTitle(/^Past tournaments · \S/);
+    await page.goto(`${TOURNAMENT_TIER_ORG}/tournaments`, { waitUntil: 'networkidle' });
+    await expect(page).toHaveTitle(/^Tournaments · \S/);
   });
 
   test('one footer, with the quiet credit on a paid club', async ({ page }) => {

@@ -25,7 +25,34 @@ import { getRegistrationState } from '@/lib/registration-state';
 import { getClubSiteContent } from '@/lib/club-page-meta';
 import { orgHref } from '@/lib/club-base';
 import type { ClubSiteHomeProps } from '@/components/public/ClubSiteHome';
-import type { Organization } from '@/lib/types';
+import type { Organization, Tournament } from '@/lib/types';
+
+/**
+ * A tournament's row as the home prints it — and the Tournaments page's Current and upcoming part (Stage 4f), so the two
+ * cannot drift: its dates (the year only when it is not this year's) and a status true to its dates (S4-03).
+ * Registration is asked only of an event that has not started and whose register page is not hidden.
+ */
+export async function clubTournamentRows(
+  ts: readonly Tournament[],
+  today: string,
+  href: (path: string) => string,
+): Promise<ClubSiteHomeProps['tournaments']> {
+  const thisYear = today.slice(0, 4);
+  return Promise.all(ts.map(async t => {
+    const asksRegistration = t.status === 'active' && !!t.startDate && today < t.startDate && !t.publicHiddenPages?.includes('register');
+    const registrationOpen = asksRegistration
+      ? await Promise.all([getDivisions(t.id, { admin: true }), getTeams(t.id, { admin: true })])
+          .then(([divisions, teams]) => getRegistrationState(t, divisions, teams.filter(x => x.status !== 'rejected')).state === 'open')
+      : false;
+    return {
+      id: t.id,
+      href: href(`/${t.slug}`),
+      name: t.name,
+      dates: t.startDate ? formatEventDateRange(t.startDate, t.endDate, !t.startDate.startsWith(thisYear)) : null,
+      status: tournamentHomeStatus(t, today, registrationOpen),
+    };
+  }));
+}
 
 /**
  * `base` (Stage 4e): `{ ownHost: true }` on a club's own web address, so every link below is spelled for the address the
@@ -108,25 +135,10 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
   const sectionPrefs = { order: siteContent?.homeSectionOrder, hidden: siteContent?.homeSectionsHidden };
   const carries = siteSectionCarries(org);
 
-  // Tournaments, with a status true to their dates (S4-03), chosen and ordered by `clubHomeTournaments` (running and
-  // coming first; one that just finished after). A club that hid the section is not asked for them at all.
-  // Registration is asked only of an event that has not started and whose register page is not hidden.
+  // Tournaments, chosen and ordered by `clubHomeTournaments` (running and coming first; one that just finished after).
+  // A club that hid the section is not asked for them at all.
   const shownTournaments = isSectionShown('tournaments', sectionPrefs, carries) ? clubHomeTournaments(allTournaments, today) : [];
-  const tournaments = await Promise.all(shownTournaments.map(async t => {
-    const asksRegistration = t.status === 'active' && !!t.startDate && today < t.startDate && !t.publicHiddenPages?.includes('register');
-    const registrationOpen = asksRegistration
-      ? await Promise.all([getDivisions(t.id, { admin: true }), getTeams(t.id, { admin: true })])
-          .then(([divisions, teams]) => getRegistrationState(t, divisions, teams.filter(x => x.status !== 'rejected')).state === 'open')
-      : false;
-    const status = tournamentHomeStatus(t, today, registrationOpen);
-    return {
-      id: t.id,
-      href: href(`/${t.slug}`),
-      name: t.name,
-      dates: t.startDate ? formatEventDateRange(t.startDate, t.endDate, !t.startDate.startsWith(thisYear)) : null,
-      status,
-    };
-  }));
+  const tournaments = await clubTournamentRows(shownTournaments, today, href);
 
   return {
     orgSlug,

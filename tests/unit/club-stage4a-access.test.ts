@@ -16,7 +16,7 @@ import { clubNotFoundFace } from '../../lib/club-not-found-face.ts';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-const PAGES: PublicClubPage[] = ['home', 'teams', 'league', 'archives'];
+const PAGES: PublicClubPage[] = ['home', 'teams', 'league', 'tournaments', 'archives'];
 
 function org(over: Partial<PublicClubAccessOrg> = {}): PublicClubAccessOrg {
   return { isPublic: true, subscriptionStatus: 'active', planId: 'club', enabledAddons: [], freeFloor: null, accountKind: 'organization', ...over } as PublicClubAccessOrg;

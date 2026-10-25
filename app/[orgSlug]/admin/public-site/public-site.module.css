@@ -347,6 +347,16 @@
   flex: 1;
   min-width: 0;
 }
+/* Past tournaments under Tournaments (Stage 4f): a whole line of the row, indented past the handle so its words start
+   under Tournaments'; on the page's paper, hairlined from its parent. The row wraps only to hold it. */
+.sectionRow:has(.subOption) { flex-wrap: wrap; }
+.subOption {
+  flex: 0 0 calc(100% + 8px);
+  margin-left: -8px;
+  padding-left: 56px;
+  border-top: 1px solid var(--home-line);
+  background: var(--home-paper);
+}
 .sectionText {
   flex: 1;
   min-width: 0;

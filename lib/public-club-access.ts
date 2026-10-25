@@ -20,17 +20,18 @@ import type { Organization } from './types';
  */
 
 /** Which kind of club page is asking. `teams` covers the team page, its calendar and every tryout address. */
-export type PublicClubPage = 'home' | 'teams' | 'league' | 'archives' | 'about';
+export type PublicClubPage = 'home' | 'teams' | 'league' | 'tournaments' | 'archives' | 'about';
 
 /**
  * What each page needs the plan to carry. The home needs nothing beyond the switch: a tournament-only org without the
- * public-site module keeps its basic home (the home itself picks its layout from the plan). Archives are sealed
- * tournaments, which every plan carries.
+ * public-site module keeps its basic home (the home itself picks its layout from the plan). The Tournaments page (Stage
+ * 4f) and an archive page (a sealed tournament) need the tournaments module, which every plan carries.
  */
 const PAGE_MODULE: Record<PublicClubPage, Capability | null> = {
   home: null,
   teams: 'module_rep_teams',
   league: 'module_house_league',
+  tournaments: 'module_tournaments',
   archives: 'module_tournaments',
   // The About page (Stage 4c-1) is the public site's own page: a plan without the module has no editor to fill it.
   about: 'module_public_site',

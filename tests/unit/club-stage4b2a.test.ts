@@ -158,16 +158,16 @@ describe('the club’s own groups (Ask 4A)', () => {
   });
 });
 
-describe('the tab row: Home · Teams · House league · Past tournaments (Ask 9A)', () => {
+describe('the tab row: Home · Teams · House league · Tournaments (Ask 9A; Tournaments since 4f)', () => {
   it('Teams is second when the club lists a team', () => {
-    assert.deepEqual(orgSectionsFor({ league: true, archives: true, teams: true }).map(s => s.label),
-      ['Home', 'Teams', 'House league', 'Past tournaments']);
+    assert.deepEqual(orgSectionsFor({ league: true, tournaments: true, teams: true }).map(s => s.label),
+      ['Home', 'Teams', 'House league', 'Tournaments']);
   });
   it('a club that lists no team has no Teams tab', () => {
-    assert.deepEqual(orgSectionsFor({ league: true, archives: false, teams: false }).map(s => s.label), ['Home', 'House league']);
+    assert.deepEqual(orgSectionsFor({ league: true, tournaments: false, teams: false }).map(s => s.label), ['Home', 'House league']);
   });
   it('a rep-only club: Home · Teams', () => {
-    assert.deepEqual(orgSectionsFor({ league: false, archives: false, teams: true }).map(s => s.key), ['', 'teams']);
+    assert.deepEqual(orgSectionsFor({ league: false, tournaments: false, teams: true }).map(s => s.key), ['', 'teams']);
   });
 });
 

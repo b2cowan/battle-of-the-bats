@@ -139,7 +139,7 @@ export const clubHosts: ClubHostCache = createClubHostCache({ load: fetchClubHos
 // ── What a path on a club's own host means ──────────────────────────────────────────────────────────────
 
 /** The club's public sections (the same list the consumer chrome knows): the only reserved words that are NOT off-limits here. */
-const PUBLIC_SECTIONS = new Set(['about', 'archives', 'league', 'news', 'register', 'results', 'rules', 'schedule', 'standings', 'teams', 'tryouts']);
+const PUBLIC_SECTIONS = new Set(['about', 'archives', 'league', 'news', 'register', 'results', 'rules', 'schedule', 'standings', 'teams', 'tournaments', 'tryouts']);
 /** Day-of and operator shells: never served on a club's own address, whatever their slug. */
 const OPERATOR_SECTIONS = new Set(['admin', 'check-in', 'coaches', 'official', 'scorekeeper']);
 /**

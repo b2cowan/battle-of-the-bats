@@ -113,7 +113,8 @@ export default function AdminTournamentsPage({
   // Past tournaments lists sealed records only, so its door shows when there is one to list: the band's last
   // row on a phone (a 44px row, as each sealed record's), the band row's right edge at a desk.
   const hasLedger = canSeal && lists.sealed.length > 0;
-  const ledgerHref = `/${orgSlug}/archives`;
+  // The club's Tournaments page, its past part (Stage 4f: the old /archives address only forwards there).
+  const ledgerHref = `/${orgSlug}/tournaments#past`;
 
   const newButton = canWrite && ready && !atLimit ? (
     <button

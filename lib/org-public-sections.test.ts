@@ -11,25 +11,25 @@ import {
   ORG_SECTION_TABS_MIN,
 } from './org-public-sections.ts';
 
-test('one name per thing: the tabs say what the pages say (Club Tier Stage 4, "Names")', () => {
+test('one name per thing: the tabs say what the pages say (Club Tier Stage 4, "Names"; 4f: Tournaments)', () => {
   assert.deepEqual(
-    orgSectionsFor({ league: true, archives: true, teams: true }).map(s => s.label),
-    ['Home', 'Teams', 'House league', 'Past tournaments'],
+    orgSectionsFor({ league: true, tournaments: true, teams: true }).map(s => s.label),
+    ['Home', 'Teams', 'House league', 'Tournaments'],
   );
 });
 
 test('orgSectionsFor: Home is always present; the rest follow availability', () => {
   assert.deepEqual(
-    orgSectionsFor({ league: true, archives: true, teams: true }).map(s => s.key),
-    ['', 'teams', 'league', 'archives'],
+    orgSectionsFor({ league: true, tournaments: true, teams: true }).map(s => s.key),
+    ['', 'teams', 'league', 'tournaments'],
   );
-  assert.deepEqual(orgSectionsFor({ league: true, archives: false, teams: false }).map(s => s.key), ['', 'league']);
-  assert.deepEqual(orgSectionsFor({ league: false, archives: true, teams: false }).map(s => s.key), ['', 'archives']);
-  assert.deepEqual(orgSectionsFor({ league: false, archives: false, teams: true }).map(s => s.key), ['', 'teams']);
+  assert.deepEqual(orgSectionsFor({ league: true, tournaments: false, teams: false }).map(s => s.key), ['', 'league']);
+  assert.deepEqual(orgSectionsFor({ league: false, tournaments: true, teams: false }).map(s => s.key), ['', 'tournaments']);
+  assert.deepEqual(orgSectionsFor({ league: false, tournaments: false, teams: true }).map(s => s.key), ['', 'teams']);
 });
 
 test('orgSectionsFor: an org with nothing else falls below the render floor', () => {
-  const sections = orgSectionsFor({ league: false, archives: false, teams: false });
+  const sections = orgSectionsFor({ league: false, tournaments: false, teams: false });
   assert.deepEqual(sections.map(s => s.key), ['']);
   // A row holding only "Home" is chrome that says nothing — the gate is what stops it rendering.
   assert.ok(sections.length < ORG_SECTION_TABS_MIN);
@@ -39,7 +39,10 @@ test('activeOrgSectionKey: the org root is the Home tab, sections match at any d
   assert.equal(activeOrgSectionKey('/ravens', 'ravens'), '');
   assert.equal(activeOrgSectionKey('/ravens/league', 'ravens'), 'league');
   assert.equal(activeOrgSectionKey('/ravens/league/spring-2026/standings', 'ravens'), 'league');
-  assert.equal(activeOrgSectionKey('/ravens/archives/abc-123', 'ravens'), 'archives');
+  assert.equal(activeOrgSectionKey('/ravens/tournaments', 'ravens'), 'tournaments');
+  // An archived tournament's page, and the old Past tournaments address, are under Tournaments (Stage 4f, Ask 6).
+  assert.equal(activeOrgSectionKey('/ravens/archives/abc-123', 'ravens'), 'tournaments');
+  assert.equal(activeOrgSectionKey('/ravens/archives', 'ravens'), 'tournaments');
   assert.equal(activeOrgSectionKey('/ravens/league?season=2026', 'ravens'), 'league');
 });
 
@@ -55,13 +58,13 @@ test('activeOrgSectionKey: an unnamed section highlights NOTHING rather than lyi
 test('a team page reads as inside the Teams tab (Club Tier Stage 4b-2a, End state 3)', () => {
   // Until 4b-2a `teams` was named but never a tab (no index page); a team's page is now one level under the Teams page.
   assert.equal(activeOrgSectionKey('/ravens/teams/u14-select', 'ravens'), 'teams');
-  const tabs = orgSectionsFor({ league: true, archives: true, teams: true });
+  const tabs = orgSectionsFor({ league: true, tournaments: true, teams: true });
   assert.ok(tabs.some(t => t.key === activeOrgSectionKey('/ravens/teams/u14-select', 'ravens')));
 });
 
 test('a team tryout page lights Tryouts while the club shows that tab, Teams while it does not (2026-10-21)', () => {
-  const inSeason = orgSectionsFor({ league: false, archives: false, teams: true, tryouts: true });
-  const offSeason = orgSectionsFor({ league: false, archives: false, teams: true, tryouts: false });
+  const inSeason = orgSectionsFor({ league: false, tournaments: false, teams: true, tryouts: true });
+  const offSeason = orgSectionsFor({ league: false, tournaments: false, teams: true, tryouts: false });
   for (const path of ['/ravens/teams/u14-select/tryouts', '/ravens/teams/u14-select/tryouts/register', '/ravens/teams/u14-select/tryouts?x=1']) {
     assert.equal(activeOrgSectionKey(path, 'ravens', inSeason), 'tryouts', path);
     assert.equal(activeOrgSectionKey(path, 'ravens', offSeason), 'teams', path);

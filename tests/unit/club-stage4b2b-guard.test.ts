@@ -54,7 +54,8 @@ describe('1 · one rule decides a team’s tryout state; every surface reads it'
     assert.match(readCode('lib/org-public-sections.ts'), /\{ key: 'teams',\s+label: 'Teams' \},\s*\{ key: 'tryouts',\s+label: 'Tryouts' \},/);
   });
   it('the Tryouts address is a club section (a static folder, matched before a tournament slug — none uses "tryouts")', () => {
-    assert.match(readCode('lib/consumer-routes.ts'), /'teams', 'tryouts',/);
+    // (Stage 4f's 'tournaments' sits between them, alphabetically.)
+    assert.match(readCode('lib/consumer-routes.ts'), /'teams', 'tournaments',\s+'tryouts',/);
     assert.ok(existsSync(TRYOUTS_PAGE));
   });
 });

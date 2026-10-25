@@ -128,7 +128,7 @@ export const PUBLIC_SITE_WORDS = {
 
   // Home page
   homePage: 'Home page',
-  homeLead: 'What families see on your home page, in this order. Open now always comes first and shows only while something is open.',
+  homeLead: 'What families see on your home page and in your site’s tabs, in this order. Open now always comes first and shows only while something is open.',
   alwaysFirst: 'Always first',
   /** Open now's locked row, said aloud (copy table B), and its shorter line on a phone (drawings ~L1541). */
   openNowLocked: 'Open now always comes first',

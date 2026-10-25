@@ -655,6 +655,13 @@ export default function PublicSitePage() {
                             <SwitchButton on={r.shown} name={r.name} caption={r.sub} onToggle={() => toggleSection(r.key as SiteSectionKey)} disabled={!canWrite} />
                           </span>
                         )}
+                        {/* A sub-option (Past tournaments, Stage 4f) is drawn inside its row: it rides a drag, has no
+                            number or handle of its own, is not a section, and is absent while its row is hidden. */}
+                        {r.option && (
+                          <span className={styles.subOption}>
+                            <SwitchButton on={r.option.shown} name={r.option.name} caption={r.option.sub} onToggle={() => toggleSection(r.option!.key as SiteSectionKey)} disabled={!canWrite} />
+                          </span>
+                        )}
                       </li>
                     )}
                   </ReorderRow>

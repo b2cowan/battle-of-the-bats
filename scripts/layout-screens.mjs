@@ -1820,8 +1820,12 @@ export const SCREENS = [
     route: 'app/[orgSlug]/teams/[teamSlug]/tryouts' },
   { id: 'club-house-league',      session: 'anon', path: () => '/uat-rep-club/league',                   ready: 'h1', widths: ['320'],
     route: 'app/[orgSlug]/league' },
-  { id: 'club-past-tournaments',  session: 'anon', path: () => '/free-test-org/archives',                ready: 'h1', widths: ['320'],
-    route: 'app/[orgSlug]/archives' },
+  // Club Tier Stage 4f: the Tournaments page took over Past tournaments (whose address now forwards to it). The free club
+  // has a finished tournament nobody sealed (the past part); the rep club has a coming one (Current and upcoming).
+  { id: 'club-tournaments',       session: 'anon', path: () => '/free-test-org/tournaments',             ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/tournaments' },
+  { id: 'club-tournaments-current', session: 'anon', path: () => '/uat-rep-club/tournaments',            ready: 'h1', widths: ['320'],
+    route: 'app/[orgSlug]/tournaments' },
   // Club Tier Stage 4b-2a: the Teams page, and the home's rep-only shape (the navy club, `seed-club-fixture.mjs --rep-only-club`).
   { id: 'club-teams',             session: 'anon', path: () => '/uat-rep-club/teams',                   ready: 'h1', widths: ['320'],
     route: 'app/[orgSlug]/teams/page' },

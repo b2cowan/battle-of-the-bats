@@ -122,10 +122,13 @@ describe('R6 — Results\' figures read the record rule; its rows still list eve
 
 describe('R3 — the tab you are on is in view; R3b — one spelling', () => {
   it('the row scrolls to the active tab — the ROW, never the window', () => {
-    assert.match(tabBar, /querySelector<HTMLElement>\('\[aria-current="page"\]'\)/);
-    assert.match(tabBar, /el\.scrollTo\(\{ left: el\.scrollLeft \+ delta, behavior: 'instant' \}\)/);
+    // The rule lives in lib/use-active-tab-in-view.ts since Club Tier 4f (shared with the club's section tabs).
+    const rule = readCode('lib/use-active-tab-in-view.ts');
+    assert.match(rule, /querySelector<HTMLElement>\('\[aria-current="page"\]'\)/);
+    assert.match(rule, /row\.scrollTo\(\{ left: row\.scrollLeft \+ delta, behavior: 'instant' \}\)/);
+    assert.doesNotMatch(rule, /scrollIntoView/, 'scrollIntoView also scrolls the page when the row is off screen');
     assert.doesNotMatch(tabBar, /scrollIntoView/, 'scrollIntoView also scrolls the page when the row is off screen');
-    assert.match(tabBar, /\}, \[activeId, tabsKey, remeasureKey\]\);/, 're-checked when the caller says the row width moved');
+    assert.match(tabBar, /useActiveTabInView\(barRef, 48, \[activeId, tabsKey, remeasureKey\]\);/, 're-checked when the caller says the row width moved');
   });
   it('"Playing time" — the tab says what the page\'s own finding chips say', () => {
     assert.match(hub, /\{ id: 'playing-time', label: 'Playing time',/);

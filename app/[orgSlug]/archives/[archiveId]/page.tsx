@@ -1,12 +1,13 @@
+import Link from 'next/link';
+import { orgLinks } from '@/lib/org-links';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { forwardToOwnAddress } from '@/lib/club-forward';
 import { cache } from 'react';
-import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getArchiveById } from '@/lib/db';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubPageMetadata } from '@/lib/club-page-meta';
-import { orgLinks } from '@/lib/org-links';
 import kit from '@/components/public/ClubKit.module.css';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import type { Game, Team } from '@/lib/types';
@@ -105,17 +106,22 @@ export default async function ArchiveDetailPage({
   }
 
   const sealedDate = formatDate(sealedAt);
-  const href = await orgLinks(orgSlug);
+  // No tab row without the public site (a Tournament-plan org): the tab is not there to be the way back, so the page
+  // keeps one, to the list this record sits on (review 2026-10-25).
+  const backToList = !hasModuleEntitlement(org, 'module_public_site') ? (await orgLinks(orgSlug))('/tournaments#past') : null;
 
   return (
     // The pages' own column (`.container`): the club's bar takes the same edge, so the heading sits under its logo.
     <div className="container" style={{ paddingBlock: '2rem 5rem', fontFamily: 'var(--club-text-face)', color: 'var(--club-text)' }}>
       <div style={{ maxWidth: '1000px' }}>
 
-        {/* Back link */}
-        <Link href={href('/archives')} className={kit.back} style={{ marginBottom: 0 }}>
-          ← Past tournaments
-        </Link>
+        {/* No "← Past tournaments" (Stage 4f, Ask 6): the Tournaments tab is lit here and is the way back, the rule the
+            About page follows (no back link where the tab row goes). Where there is no tab row, one link back. */}
+        {backToList && (
+          <Link href={backToList} className={kit.back} style={{ marginBottom: '0.75rem' }}>
+            ← Tournaments
+          </Link>
+        )}
 
         {/* Header */}
         <div
@@ -123,7 +129,6 @@ export default async function ArchiveDetailPage({
             borderBottom: '1px solid var(--club-line)',
             paddingBottom: '1.25rem',
             marginBottom: '2rem',
-            marginTop: '0.75rem',
           }}
         >
           <div className={kit.band} style={{ marginBottom: 0 }}>{season}</div>

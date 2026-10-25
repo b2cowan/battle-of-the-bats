@@ -7,7 +7,7 @@ import {
   normalizeSectionOrder,
   normalizeHiddenSections,
   clubHomeSectionsFor,
-  isSectionShown,
+  isSectionShown, shownByClub,
   editorSectionRows,
   reorderedSections,
 } from '../../lib/club-site-sections.ts';
@@ -198,41 +198,70 @@ describe('the home\'s sections: the club\'s order, its show/hide, and what the p
   });
 
   describe('the editor\'s rows', () => {
-    const facts = { teams: 8, leagueSeason: '2027', tournaments: 2, archives: 1, about: true };
+    const facts = { teams: 8, leagueSeason: '2027', tournaments: 2, past: 4, about: true };
     it('Open now leads, locked; then the club\'s order', () => {
       const rows = editorSectionRows({ order: ['about', 'teams'], hidden: [] }, facts, carriesAll);
-      assert.deepEqual(rows.map(r => r.key), ['openNow', 'about', 'teams', 'league', 'tournaments', 'archives']);
+      assert.deepEqual(rows.map(r => r.key), ['openNow', 'about', 'teams', 'league', 'tournaments']);
       assert.equal(rows[0].locked, true);
       assert.equal(rows.slice(1).every(r => !r.locked), true);
+    });
+    it('Past tournaments is Tournaments\' sub-option: right under it wherever its own slot is, never a section (Stage 4f)', () => {
+      const rows = editorSectionRows({ order: ['archives', 'about', 'tournaments'], hidden: [] }, facts, carriesAll);
+      assert.deepEqual(rows.map(r => r.key), ['openNow', 'about', 'tournaments', 'teams', 'league']);
+      assert.equal(rows.find(r => r.key === 'tournaments')?.option?.key, 'archives');
+      assert.ok(rows.filter(r => r.key !== 'tournaments').every(r => !r.option));
+    });
+    it('while Tournaments is off the sub-option is absent, and its own setting is kept for when it returns', () => {
+      const off = editorSectionRows({ order: undefined, hidden: ['tournaments', 'archives'] }, facts, carriesAll);
+      assert.equal(off.find(r => r.key === 'tournaments')?.option, undefined);
+      const back = editorSectionRows({ order: undefined, hidden: ['archives'] }, facts, carriesAll);
+      assert.equal(back.find(r => r.key === 'tournaments')?.option?.shown, false);
+      assert.equal(back.find(r => r.key === 'tournaments')?.option?.sub, 'Hidden from families');
+      // The one rule: a sub-option shows only while its parent does.
+      assert.equal(shownByClub('archives', ['tournaments']), false);
+      assert.equal(shownByClub('archives', []), true);
+      assert.equal(isSectionShown('archives', { order: undefined, hidden: ['tournaments'] }, carriesAll), false);
+    });
+    it('a drag never moves Past tournaments\' stored slot', () => {
+      assert.deepEqual(reorderedSections(['teams', 'archives', 'league', 'tournaments', 'about'], ['tournaments', 'teams', 'league', 'about']),
+        ['tournaments', 'archives', 'teams', 'league', 'about']);
     });
     it('a section the PLAN does not carry is absent — no explanation', () => {
       const rows = editorSectionRows({ order: undefined, hidden: [] }, facts, { teams: false, league: true, tournaments: false });
       assert.deepEqual(rows.map(r => r.key), ['openNow', 'league', 'about']);
     });
     it('a section the club does not run YET keeps a live switch and says when it shows', () => {
-      const rows = editorSectionRows({ order: undefined, hidden: [] }, { teams: 0, leagueSeason: null, tournaments: 0, archives: 0, about: false }, carriesAll);
-      const by = Object.fromEntries(rows.map(r => [r.key, r]));
+      const rows = editorSectionRows({ order: undefined, hidden: [] }, { teams: 0, leagueSeason: null, tournaments: 0, past: 0, about: false }, carriesAll);
+      const by = Object.fromEntries(rows.flatMap(r => (r.option ? [r, r.option] : [r])).map(r => [r.key, r]));
       assert.equal(by.league.sub, 'Shows once you publish a season');
       assert.equal(by.tournaments.sub, 'Shows once you host a tournament');
-      assert.equal(by.archives.sub, 'Shows once you have an archived tournament');
+      assert.equal(by.archives.sub, 'Shows once a tournament finishes');
       assert.equal(by.teams.sub, 'Shows once you add a team');
       assert.equal(by.league.locked, false, 'still switchable in advance');
     });
     it('each row says what it shows today', () => {
-      const by = Object.fromEntries(editorSectionRows({ order: undefined, hidden: [] }, facts, carriesAll).map(r => [r.key, r]));
+      const by = Object.fromEntries(editorSectionRows({ order: undefined, hidden: [] }, facts, carriesAll).flatMap(r => (r.option ? [r, r.option] : [r])).map(r => [r.key, r]));
       assert.equal(by.openNow.sub, 'Open tryouts and an open house-league sign-up, while they are open');
       assert.equal(by.teams.sub, 'Your 8 teams in your groups, each with its tryout state');
       assert.equal(by.league.sub, 'Your 2027 sign-up and divisions');
-      assert.equal(by.tournaments.sub, 'Your upcoming tournaments');
-      assert.equal(by.archives.sub, 'A way to your archived tournaments');
+      assert.equal(by.tournaments.sub, 'Your current and upcoming tournaments, on your home page and as a tab');
+      assert.equal(by.archives.sub, '4 past tournaments, at the bottom of your Tournaments page');
       assert.equal(by.about.sub, 'Your about text, with a way to your About page');
     });
     it('one team is "Your 1 team"; a hidden section says so', () => {
-      const by = Object.fromEntries(editorSectionRows({ order: undefined, hidden: ['teams'] }, { ...facts, teams: 1 }, carriesAll).map(r => [r.key, r]));
+      const by = Object.fromEntries(editorSectionRows({ order: undefined, hidden: ['teams'] }, { ...facts, teams: 1 }, carriesAll).flatMap(r => (r.option ? [r, r.option] : [r])).map(r => [r.key, r]));
       assert.equal(by.teams.shown, false);
       assert.equal(by.teams.sub, 'Hidden from families');
-      const one = Object.fromEntries(editorSectionRows({ order: undefined, hidden: [] }, { ...facts, teams: 1 }, carriesAll).map(r => [r.key, r]));
+      const one = Object.fromEntries(editorSectionRows({ order: undefined, hidden: [] }, { ...facts, teams: 1 }, carriesAll).flatMap(r => (r.option ? [r, r.option] : [r])).map(r => [r.key, r]));
       assert.equal(one.teams.sub, 'Your 1 team in your groups, with its tryout state');
+    });
+    it('Tournaments with nothing current says what the tab shows; one past tournament is "1 past tournament" (4f)', () => {
+      const by = Object.fromEntries(editorSectionRows({ order: undefined, hidden: [] }, { ...facts, tournaments: 0, past: 1 }, carriesAll).flatMap(r => (r.option ? [r, r.option] : [r])).map(r => [r.key, r]));
+      assert.equal(by.tournaments.sub, 'No current tournament. Your tab shows your past ones.');
+      assert.equal(by.archives.sub, '1 past tournament, at the bottom of your Tournaments page');
+      // With the past part hidden the tab has nothing to show, so the row waits for the next tournament.
+      const pastOff = Object.fromEntries(editorSectionRows({ order: undefined, hidden: ['archives'] }, { ...facts, tournaments: 0, past: 1 }, carriesAll).flatMap(r => (r.option ? [r, r.option] : [r])).map(r => [r.key, r]));
+      assert.equal(pastOff.tournaments.sub, 'Shows once you host a tournament');
     });
   });
 });
@@ -294,19 +323,20 @@ describe('the editor\'s save: each card sends only its fields, and a refused fie
 });
 
 describe('the tab row follows the editor', () => {
-  const all = { league: true, archives: true, teams: true, tryouts: true };
+  const all = { league: true, tournaments: true, teams: true, tryouts: true };
   it('Home first, then the club\'s order, Tryouts riding with Teams', () => {
-    const order = normalizeSectionOrder(['archives', 'league', 'teams', 'tournaments', 'about']);
-    assert.deepEqual(orgSectionsFor(all, order).map(s => s.key), ['', 'archives', 'league', 'teams', 'tryouts']);
+    // The Tournaments tab takes the Tournaments row's place (Stage 4f, Ask 7); the Past tournaments slot decides nothing.
+    const order = normalizeSectionOrder(['archives', 'tournaments', 'league', 'teams', 'about']);
+    assert.deepEqual(orgSectionsFor(all, order).map(s => s.key), ['', 'tournaments', 'league', 'teams', 'tryouts']);
   });
   it('the order only sorts: a hidden section arrives as not available, and a tab the order does not rank stays', () => {
     // A hidden House league (the availability step folds the club's switch in).
-    assert.deepEqual(orgSectionsFor({ ...all, league: false }, normalizeSectionOrder(['archives'])).map(s => s.key), ['', 'archives', 'teams', 'tryouts']);
+    assert.deepEqual(orgSectionsFor({ ...all, league: false }, normalizeSectionOrder(['tournaments'])).map(s => s.key), ['', 'tournaments', 'teams', 'tryouts']);
     // An order that ranks nothing the tab row has keeps the table's order — no tab disappears.
-    assert.deepEqual(orgSectionsFor(all, ['about']).map(s => s.key), ['', 'teams', 'tryouts', 'league', 'archives']);
+    assert.deepEqual(orgSectionsFor(all, ['about']).map(s => s.key), ['', 'teams', 'tryouts', 'league', 'tournaments']);
   });
   it('without an order the table\'s order stands (callers outside the club site)', () => {
-    assert.deepEqual(orgSectionsFor(all).map(s => s.key), ['', 'teams', 'tryouts', 'league', 'archives']);
+    assert.deepEqual(orgSectionsFor(all).map(s => s.key), ['', 'teams', 'tryouts', 'league', 'tournaments']);
   });
 });
 
@@ -386,8 +416,8 @@ describe('the /review fixes (2026-10-21)', () => {
     assert.deepEqual(r.ok && r.patch.questions?.map(q => q.id), ['same', 'new-1', 'new-2']);
   });
   it('the editor\'s House league row says the home\'s words when only past seasons are published', () => {
-    const facts = { teams: 0, leagueSeason: null, leaguePast: true, tournaments: 0, archives: 0, about: false };
-    const by = Object.fromEntries(editorSectionRows({ order: undefined, hidden: [] }, facts, { teams: false, league: true, tournaments: false }).map(r => [r.key, r]));
+    const facts = { teams: 0, leagueSeason: null, leaguePast: true, tournaments: 0, past: 0, about: false };
+    const by = Object.fromEntries(editorSectionRows({ order: undefined, hidden: [] }, facts, { teams: false, league: true, tournaments: false }).flatMap(r => (r.option ? [r, r.option] : [r])).map(r => [r.key, r]));
     assert.equal(by.league.sub, 'Past seasons and results');
   });
 });

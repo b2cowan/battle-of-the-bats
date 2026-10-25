@@ -42,6 +42,8 @@ const ASKS = /\b(requirePublicClubPage|resolvePublicClub|publicClubRefusal|resol
 /** Six since Stage 4b-2a: `/teams` became the club's Teams page (Ask 9A) — pinned in §4 below. */
 const SHORTCUTS = ['news', 'rules', 'schedule', 'standings', 'register', 'results'];
 const SHORTCUT_PAGES = new Set(SHORTCUTS.map(d => `${ORG}/${d}/page.tsx`));
+/** A forward to another club page, which asks the question itself: the old Past tournaments address (Stage 4f, Ask 6). */
+const FORWARD_PAGES = new Set([`${ORG}/archives/page.tsx`]);
 
 describe('1 · every public club page and route asks the one question', () => {
   it('the census is not empty (the scan found the club pages)', () => {
@@ -49,16 +51,17 @@ describe('1 · every public club page and route asks the one question', () => {
     assert.ok(CLUB_ROUTES.includes(`${ORG}/teams/[teamSlug]/page.tsx`));
     assert.ok(CLUB_ROUTES.includes(`${ORG}/teams/[teamSlug]/calendar/route.ts`));
   });
-  for (const f of [...CLUB_ROUTES, ...CLUB_APIS].filter(f => !SHORTCUT_PAGES.has(f))) {
+  for (const f of [...CLUB_ROUTES, ...CLUB_APIS].filter(f => !SHORTCUT_PAGES.has(f) && !FORWARD_PAGES.has(f))) {
     it(f, () => assert.match(readCode(f), ASKS, `${f} renders without asking the one question`));
   }
   it('the resolvers are built on the one question', () => {
     assert.match(readCode('lib/public-tryout.ts'), /resolvePublicClub\(orgSlug, 'teams'\)/);
     assert.match(readCode('lib/public-league.ts'), /resolvePublicClub\(orgSlug, 'league'\)/);
   });
-  it('the team page and its tryouts ask for the rep-teams page; archives for archives', () => {
+  it('the team page and its tryouts ask for the rep-teams page; tournaments and archives for theirs', () => {
     assert.match(readCode(`${ORG}/teams/[teamSlug]/page.tsx`), /requirePublicClubPage\(orgSlug, 'teams'\)/);
-    assert.match(readCode(`${ORG}/archives/page.tsx`), /requirePublicClubPage\(orgSlug, 'archives'\)/);
+    // The old Past tournaments page forwards to the Tournaments page (Stage 4f), which asks the rule.
+    assert.match(readCode(`${ORG}/tournaments/page.tsx`), /requirePublicClubPage\(orgSlug, 'tournaments'\)/);
     assert.match(readCode(`${ORG}/archives/[archiveId]/page.tsx`), /requirePublicClubPage\(orgSlug, 'archives'\)/);
     assert.match(readCode(`${ORG}/page.tsx`), /requirePublicClubPage\(orgSlug, 'home'\)/);
   });

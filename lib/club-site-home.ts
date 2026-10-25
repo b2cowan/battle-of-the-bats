@@ -62,26 +62,64 @@ export function tournamentHomeStatus(
   return registrationOpen ? 'registrationOpen' : null;
 }
 
-/** How long a finished tournament stays on the home: families look for its results that week. Older ones belong to
- *  Past tournaments once the club archives them. */
+/** How long a finished tournament stays on the home: families look for its results that week. Every finished one is
+ *  on the Tournaments page's Past tournaments (Stage 4f). */
 export const RECENTLY_FINISHED_DAYS = 30;
 
 /**
  * The home's Tournaments: running and coming ones, soonest first; then any that finished in the last
  * RECENTLY_FINISHED_DAYS, latest first. A draft or archived tournament is never listed.
  */
-export function clubHomeTournaments<T extends { status: string; startDate?: string | null; endDate?: string | null }>(
+export function clubHomeTournaments<T extends DatedTournament>(
   all: readonly T[],
   today: string,
 ): T[] {
   const cutoff = addCalendarDays(today, -RECENTLY_FINISHED_DAYS);
-  const last = (t: T) => t.endDate ?? t.startDate ?? '';
-  const finished = (t: T) => t.status === 'completed' || (!!last(t) && last(t) < today);
   // A finished one — completed by the organizer, or still "active" after its dates — leaves after the window either way.
-  const shown = all.filter(t => (t.status === 'active' || t.status === 'completed') && (!finished(t) || last(t) >= cutoff));
-  const coming = shown.filter(t => !finished(t)).sort((a, b) => (a.startDate ?? '9999').localeCompare(b.startDate ?? '9999'));
-  const done = shown.filter(finished).sort((a, b) => last(b).localeCompare(last(a)));
-  return [...coming, ...done];
+  const { coming, finished } = splitListed(all, today);
+  return [...coming, ...finished.filter(t => lastDay(t) >= cutoff)];
+}
+
+type DatedTournament = { status: string; startDate?: string | null; endDate?: string | null };
+
+const lastDay = (t: DatedTournament) => t.endDate ?? t.startDate ?? '';
+/** Public at all: a draft is not, and an archived tournament has no public site (its sealed record speaks for it). */
+const isListedTournament = (t: DatedTournament) => t.status === 'active' || t.status === 'completed';
+/** Completed by the organizer, or its last day is behind the club's today. */
+const isFinishedTournament = (t: DatedTournament, today: string) => t.status === 'completed' || (!!lastDay(t) && lastDay(t) < today);
+/** The public tournaments in two runs: coming (running or not started), soonest first; finished, latest first. */
+function splitListed<T extends DatedTournament>(all: readonly T[], today: string): { coming: T[]; finished: T[] } {
+  const coming: T[] = [];
+  const finished: T[] = [];
+  for (const t of all) if (isListedTournament(t)) (isFinishedTournament(t, today) ? finished : coming).push(t);
+  coming.sort((a, b) => (a.startDate ?? '9999').localeCompare(b.startDate ?? '9999'));
+  finished.sort((a, b) => lastDay(b).localeCompare(lastDay(a)));
+  return { coming, finished };
+}
+
+/**
+ * THE CLUB'S TOURNAMENTS PAGE, in its three runs (Club Tier Stage 4f; ruled 2026-10-25, Asks 1 and 4):
+ *   · current — running and coming, soonest first (the home's list without its recently finished ones);
+ *   · finished — every finished tournament that is listed and has no sealed record, newest end date first, opening its
+ *     own site (Ask 4: until the club archives it, a finished tournament is on no list otherwise);
+ *   · archives — the sealed records, newest season first, opening their archive pages.
+ * One row per tournament (owner 2026-10-25): a sealed tournament is its archive row, whatever its status. An archived
+ * tournament that was never sealed has no public site and no record, so it is on no list, as before 4f. The two past
+ * runs are not interleaved: a sealed record keeps no event dates.
+ */
+export function clubTournamentParts<T extends DatedTournament & { id: string }, A extends { tournamentId: string | null; season: string }>(
+  all: readonly T[],
+  archives: readonly A[],
+  today: string,
+): { current: T[]; finished: T[]; archives: A[] } {
+  const sealed = new Set(archives.map(a => a.tournamentId).filter(Boolean));
+  const { coming, finished } = splitListed(all, today);
+  return {
+    current: coming,
+    finished: finished.filter(t => !sealed.has(t.id)),
+    // Stable: within a season the caller's order (the read's newest seal first) stands.
+    archives: [...archives].sort((a, b) => b.season.localeCompare(a.season, 'en-CA', { numeric: true })),
+  };
 }
 
 // ── The club's teams (Ask 4A, DC-01) ────────────────────────────────────────────────────────────

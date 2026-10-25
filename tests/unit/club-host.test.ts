@@ -100,7 +100,7 @@ describe('what a path on a club\'s own address means', () => {
     assert.deepEqual(r('/teams'), { kind: 'rewrite', to: '/lakeshore-lynx/teams' });
     assert.deepEqual(r('/teams/13u-aa/tryouts'), { kind: 'rewrite', to: '/lakeshore-lynx/teams/13u-aa/tryouts' });
     assert.deepEqual(r('/spring-classic/schedule'), { kind: 'rewrite', to: '/lakeshore-lynx/spring-classic/schedule' });
-    for (const section of ['about', 'archives', 'league', 'news', 'register', 'results', 'rules', 'schedule', 'standings', 'teams', 'tryouts']) {
+    for (const section of ['about', 'archives', 'league', 'news', 'register', 'results', 'rules', 'schedule', 'standings', 'teams', 'tournaments', 'tryouts']) {
       assert.equal(r(`/${section}`).kind, 'rewrite', section);
     }
   });
