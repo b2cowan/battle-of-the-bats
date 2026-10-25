@@ -56,17 +56,6 @@
 }
 
 /* The waitlist badge is a neutral status chip (DC-04). */
-.divisionWaitlistBadge {
-  font: 600 0.75rem/1 var(--club-text-face);
-  padding: 6px 10px;
-  border-radius: 20px;
-  background: var(--club-ground);
-  color: var(--club-soft);
-  border: 1px solid var(--club-line-2);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
 /* ── Waiver box ───────────────────────────────────────────────────────────── */
 .waiverBox {
   max-height: 180px;
@@ -138,3 +127,20 @@
   color: var(--club-ink);
   text-decoration: underline;
 }
+
+/* ── Club Tier 9b-1, Part 5: several children, each child's forecast, the confirmation's results ── */
+.childHead { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.linkButton {
+  background: none; border: none; padding: 0.35rem 0; min-height: 44px;
+  font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--club-ink); text-decoration: underline; text-underline-offset: 3px;
+  cursor: pointer;
+}
+.linkButton:focus-visible { outline: 2px solid var(--club-ink); outline-offset: 2px; border-radius: 4px; }
+.fit { margin: 0.25rem 0 0.5rem; padding: 0.6rem 0.8rem; border-left: 3px solid var(--club-fill); background: var(--club-card); border-radius: 0 6px 6px 0; }
+.fitLine { margin: 0; font-size: 0.9rem; font-weight: 600; color: var(--club-text); }
+.fitDim { margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--club-soft); }
+.pick { border: none; margin: 0.25rem 0 0.5rem; padding: 0; min-width: 0; }
+.nofit { padding: 0.9rem 1rem; margin: 0.25rem 0 0.5rem; }
+.nofitTitle { margin: 0; font-weight: 700; color: var(--club-text); }
+.results { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0; text-align: left; }
+.resultHead { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; color: var(--club-text); }

@@ -1,5 +1,7 @@
 ﻿import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import { possessive, registrationReference } from '@/lib/utils';
+import { nameList, ordinal, signupHeadline, signupToPay, type PlacedChild } from './league-signup';
+import { dollarsLine } from './house-league-season';
 import { STAFF_KIND_COPY, staffKindCopyFor, type StaffKind } from '@/lib/coach-capabilities';
 import {
   FOUNDING_SEASON_END_LABEL,
@@ -779,99 +781,115 @@ ${accountNoticeFootnoteHtml({ clubName: face.club.name, reason, replyLine: face.
   );
 }
 
-export function leagueRegistrationApprovedHtml(input: {
-  playerFirstName: string;
-  playerLastName: string;
-  guardianFirstName: string;
-  seasonName: string;
-  divisionName: string;
-  registrationId: string;
-  contactEmail?: string;
-  /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
-  face?: FamilyMailFace | null;
-}) {
-  const p = escapeEmailFields(input);
-  const ref = registrationReference(p.registrationId);
-  return familyNotice(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration approved</h2>
-    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>Great news — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> has been approved.</p>
-    <div style="${warmPanelStyle('secondary')}">
-      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration Details</p>
-      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
-        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
-        Season: <strong>${p.seasonName}</strong><br>
-        Division: <strong>${p.divisionName}</strong><br>
-        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
-      </p>
-    </div>
-    <p>We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
-  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
+/** One child in the sign-up email (Club Tier 9b-1, Part 6): what happened to them and what they pay. */
+export type SignupMailChild = PlacedChild;
+
+
+/** The how-to-pay block (copy §10): the total, the club's own words (escaped), "payable separately". */
+function payBlock(toPay: number, howToPay: string | null, clubName: string): string {
+  if (toPay <= 0) return '';
+  const how = howToPay
+    ? `<p style="margin:0.4rem 0 0;color:${WARM_EMAIL.ink};">${escapeEmailHtml(howToPay)}</p>`
+    : `<p style="margin:0.4rem 0 0;color:${WARM_EMAIL.ink};">${escapeEmailHtml(clubName)} will tell you how to pay.</p>`;
+  // 12b's online Pay now goes here; until then no button (a dead button in an email reads as broken).
+  return `<div style="${warmPanelStyle('olive')}">
+      <p style="margin:0;color:${WARM_EMAIL.ink};"><strong>To pay: ${dollarsLine(toPay)}.</strong></p>
+      ${how}
+      <p style="margin:0.4rem 0 0;color:${WARM_EMAIL.secondary};font-size:0.9rem;">Payable separately to ${escapeEmailHtml(clubName)}.</p>
+    </div>`;
 }
 
-export function leagueRegistrationPendingHtml(input: {
-  playerFirstName: string;
-  playerLastName: string;
-  guardianFirstName: string;
-  seasonName: string;
-  divisionName: string;
-  registrationId: string;
-  contactEmail?: string;
-  /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
-  face?: FamilyMailFace | null;
-}) {
-  const p = escapeEmailFields(input);
-  const ref = registrationReference(p.registrationId);
-  return familyNotice(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration received</h2>
-    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>We've received the registration for <strong>${p.playerFirstName} ${p.playerLastName}</strong> in <strong>${p.seasonName}</strong>. A league administrator will review it shortly.</p>
-    <div style="${warmPanelStyle('secondary')}">
-      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration Details</p>
-      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
-        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
-        Season: <strong>${p.seasonName}</strong><br>
-        Division: <strong>${p.divisionName}</strong><br>
-        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
-      </p>
-    </div>
-    <p>Your registration status is currently <strong>pending review</strong>. You will receive another email once a decision has been made. No payment is required until your registration is approved.</p>
-  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
+/** The reference and the way back to the status page (copy §10 `mail.ref`, `mail.status`). */
+function refBlock(reference: string, statusPath: string): string {
+  const url = `${SITE_URL}${statusPath}`;
+  return `<p style="margin:0.75rem 0 0;">Reference: <strong style="${DATA_FACE}">${escapeEmailHtml(reference)}</strong></p>
+    <p style="margin:0.25rem 0 0;color:${WARM_EMAIL.secondary};font-size:0.9rem;">Check your registration any time: <a href="${escapeEmailHtml(url)}" style="color:${WARM_EMAIL.olive};">${escapeEmailHtml(url)}</a>. You’ll need this reference and your email.</p>`;
 }
 
-export function leagueRegistrationWaitlistHtml(input: {
-  playerFirstName: string;
-  playerLastName: string;
+/**
+ * ONE EMAIL PER SIGN-UP (Club Tier 9b-1, Part 6; owner Q5, 9b·12; copy §10.1–§10.4): every child with their outcome and price,
+ * the total for the accepted ones, the club's how-to-pay words once a child is accepted, the reference and the way back.
+ * "Accepted", never "Approved". A received child's price says "once accepted"; a waitlisted child pays nothing unless a spot
+ * opens. All family-typed fields are escaped.
+ */
+export function leagueSignupHtml(input: {
   guardianFirstName: string;
   seasonName: string;
-  divisionName: string;
-  waitlistPosition: number;
-  registrationId: string;
-  contactEmail?: string;
-  /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
+  clubName: string;
+  reference: string;
+  /** The club's own how-to-pay words (shown only once a child is accepted). */
+  howToPay: string | null;
+  /** The family's status page, as a path on the platform ("/{org}/league/{season}/status"). */
+  statusPath: string;
+  children: SignupMailChild[];
   face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
-  const ref = registrationReference(p.registrationId);
+  const kids = input.children;
+  const first = (c: SignupMailChild) => escapeEmailHtml(c.firstName);
+  const full = (c: SignupMailChild) => escapeEmailHtml(`${c.firstName} ${c.lastName}`);
+  const accepted = kids.filter(c => c.status === 'active');
+  const received = kids.filter(c => c.status === 'pending_review');
+  const waiting = kids.filter(c => c.status === 'waitlisted');
+  const toPay = signupToPay(kids);
+  const free = kids.every(c => (c.fee ?? 0) === 0);
+
+  let lead: string;
+  if (waiting.length === kids.length) {
+    lead = kids.length === 1
+      ? `<strong>${full(kids[0])}</strong> is on the waitlist for <strong>${escapeEmailHtml(kids[0].divisionName)}</strong>, ${ordinal(kids[0].waitlistPosition ?? 1)} in line. The division is full right now.`
+      : `${escapeEmailHtml(nameList(kids.map(c => c.firstName)))} are on the waitlist for <strong>${p.seasonName}</strong>.`;
+  } else if (received.length === kids.length) {
+    lead = 'The club will review it and email you as each child is accepted. Nothing is due until then.';
+  } else if (accepted.length === kids.length) {
+    lead = kids.length === 1
+      ? `<strong>${possessive(full(kids[0]))}</strong> registration for <strong>${p.seasonName}</strong> is accepted.`
+      : `Your sign-up for <strong>${p.seasonName}</strong> is accepted for ${escapeEmailHtml(nameList(kids.map(c => c.firstName)))}.`;
+  } else {
+    const done = accepted.length
+      ? `${escapeEmailHtml(nameList(accepted.map(c => c.firstName)))} ${accepted.length === 1 ? 'is' : 'are'} accepted.`
+      : `${escapeEmailHtml(nameList(received.map(c => c.firstName)))} ${received.length === 1 ? 'is' : 'are'} received and waiting for the club’s review.`;
+    const wait = waiting.map(c => `${first(c)} is on the waitlist for ${escapeEmailHtml(c.divisionName)}, ${ordinal(c.waitlistPosition ?? 1)} in line.`).join(' ');
+    lead = `${done} ${wait}`;
+  }
+
+  const rows = kids.map(c => {
+    const price = c.fee == null ? '' : ` · ${dollarsLine(c.fee)}`;
+    const tail = c.status === 'waitlisted' ? ` · ${ordinal(c.waitlistPosition ?? 1)} on the waitlist`
+      : c.status === 'pending_review' ? `${price}${c.fee ? ' once accepted' : ''}`
+      : price;
+    return `<strong>${full(c)}</strong> · ${escapeEmailHtml(c.divisionName)}${tail}`;
+  }).join('<br>');
+  const panelLabel = waiting.length === kids.length ? 'Waitlist' : 'Registration details';
+
+  const waitNote = waiting.length && waiting.length < kids.length
+    ? `<p>${escapeEmailHtml(nameList(waiting.map(c => c.firstName)))} ${waiting.length === 1 ? 'pays' : 'pay'} nothing unless a spot opens. We’ll email you if one does.</p>` : '';
+  const allWaitNote = waiting.length === kids.length ? '<p>You pay nothing unless a spot opens. We’ll email you if one does.</p>' : '';
+  const freeNote = accepted.length && free ? '<p>There is nothing to pay: this season is free.</p>' : '';
+
   return familyNotice(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You're on the waitlist</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${escapeEmailHtml(signupHeadline(kids))}</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>We've received the registration for <strong>${p.playerFirstName} ${p.playerLastName}</strong> for <strong>${p.seasonName}</strong>.</p>
+    <p>${lead}</p>
     <div style="${warmPanelStyle('secondary')}">
-      <p style="${WARM_EMAIL_STYLE.panelLabel}">Waitlist Status</p>
-      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
-        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
-        Season: <strong>${p.seasonName}</strong><br>
-        Division: <strong>${p.divisionName}</strong><br>
-        Waitlist Position: <strong>#${p.waitlistPosition}</strong><br>
-        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
-      </p>
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">${panelLabel}</p>
+      <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">${rows}</p>
     </div>
-    <p><strong>${p.divisionName}</strong> is currently full. ${p.playerFirstName} has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>. You will be contacted if a spot becomes available.</p>
-  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
+    ${accepted.length && !free ? payBlock(toPay, input.howToPay, input.clubName) : ''}
+    ${freeNote}${waitNote}${allWaitNote}
+    ${refBlock(input.reference, input.statusPath)}
+    ${accepted.length ? `<p>We look forward to seeing ${escapeEmailHtml(nameList(accepted.map(c => c.firstName)))} on the field.</p>` : ''}
+  `, input.face, kids.length === 1 ? `${input.children[0].firstName} was signed up for ${input.seasonName}` : `your children were signed up for ${input.seasonName}`);
 }
 
 // ── House League admin-triggered status-change emails ─────────────────────────
+
+/** The price block on a single-child acceptance (staff Approve, a promotion): "To pay" + the club's words, or "free". */
+function acceptedPay(fee: number | null, howToPay: string | null, clubName: string): string {
+  if (fee == null) return '';
+  if (fee === 0) return '<p>There is nothing to pay: this season is free.</p>';
+  return payBlock(fee, howToPay, clubName);
+}
 
 export function leagueAdminApprovedHtml(input: {
   playerFirstName: string;
@@ -880,27 +898,37 @@ export function leagueAdminApprovedHtml(input: {
   seasonName: string;
   divisionName: string;
   registrationId: string;
+  /** The sign-up's reference, when the registration has one (else its own id's first eight characters). */
+  reference?: string | null;
+  /** The price this registration recorded at sign-up (9b-1: the acceptance email now states it). */
+  fee?: number | null;
+  howToPay?: string | null;
+  clubName?: string;
+  /** The family's status page path. */
+  statusPath?: string;
   contactEmail?: string;
   /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
   face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
-  const ref = registrationReference(p.registrationId);
+  const ref = input.reference ?? registrationReference(input.registrationId);
   return familyNotice(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration approved</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${p.playerFirstName} is accepted</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>Great news! <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> has been approved.</p>
+    <p><strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> is accepted.</p>
     <div style="${warmPanelStyle('secondary')}">
-      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration Details</p>
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration details</p>
       <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
-        Division: <strong>${p.divisionName}</strong><br>
-        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
+        Division: <strong>${p.divisionName}</strong>${input.fee != null ? `<br>
+        Price: <strong>${dollarsLine(input.fee)}</strong>` : ''}
       </p>
     </div>
-    <p>We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
-  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
+    ${acceptedPay(input.fee ?? null, input.howToPay ?? null, input.clubName ?? (input.face?.club.name ?? 'the club'))}
+    ${input.statusPath ? refBlock(ref, input.statusPath) : `<p>Reference: <strong style="${DATA_FACE}">${escapeEmailHtml(ref)}</strong></p>`}
+    <p>We look forward to seeing ${p.playerFirstName} on the field.</p>
+  `, input.face, `${input.playerFirstName} was signed up for ${input.seasonName}`);
 }
 
 export function leagueAdminWaitlistedHtml(input: {
@@ -910,29 +938,28 @@ export function leagueAdminWaitlistedHtml(input: {
   seasonName: string;
   divisionName: string;
   registrationId: string;
+  reference?: string | null;
   waitlistPosition: number;
+  statusPath?: string;
   contactEmail?: string;
   /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
   face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
-  const ref = registrationReference(p.registrationId);
+  const ref = input.reference ?? registrationReference(input.registrationId);
   return familyNotice(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Added to the waitlist</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>Unfortunately <strong>${p.divisionName}</strong> is currently full. <strong>${p.playerFirstName} ${p.playerLastName}</strong> has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>.</p>
+    <p><strong>${p.playerFirstName} ${p.playerLastName}</strong> is on the waitlist for <strong>${p.divisionName}</strong>, ${ordinal(input.waitlistPosition)} in line.</p>
     <div style="${warmPanelStyle('secondary')}">
-      <p style="${WARM_EMAIL_STYLE.panelLabel}">Waitlist Status</p>
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Waitlist</p>
       <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
-        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
-        Season: <strong>${p.seasonName}</strong><br>
-        Division: <strong>${p.divisionName}</strong><br>
-        Waitlist Position: <strong>#${p.waitlistPosition}</strong><br>
-        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
+        <strong>${p.playerFirstName} ${p.playerLastName}</strong> · ${p.divisionName} · ${ordinal(input.waitlistPosition)} on the waitlist
       </p>
     </div>
-    <p>You will be contacted if a spot becomes available. No payment is required until your registration is approved.</p>
-  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
+    <p>You pay nothing unless a spot opens. We’ll email you if one does.</p>
+    ${input.statusPath ? refBlock(ref, input.statusPath) : `<p>Reference: <strong style="${DATA_FACE}">${escapeEmailHtml(ref)}</strong></p>`}
+  `, input.face, `${input.playerFirstName} was signed up for ${input.seasonName}`);
 }
 
 export function leagueWaitlistPromotedHtml(input: {
@@ -942,27 +969,36 @@ export function leagueWaitlistPromotedHtml(input: {
   seasonName: string;
   divisionName: string;
   registrationId: string;
+  /** The sign-up's reference, when the registration has one (else its own id's first eight characters). */
+  reference?: string | null;
+  /** The price this registration recorded at sign-up (Q4: the promotion email carries the pay block). */
+  fee?: number | null;
+  howToPay?: string | null;
+  clubName?: string;
+  statusPath?: string;
   contactEmail?: string;
   /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
   face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
-  const ref = registrationReference(p.registrationId);
+  const ref = input.reference ?? registrationReference(input.registrationId);
   return familyNotice(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You're off the waitlist</h2>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">A spot opened for ${p.playerFirstName}</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p><strong>${p.playerFirstName} ${p.playerLastName}</strong> has been moved off the waitlist and is now registered for <strong>${p.divisionName}</strong>. Welcome!</p>
+    <p><strong>${p.playerFirstName} ${p.playerLastName}</strong> has moved off the waitlist and is accepted into <strong>${p.divisionName}</strong>. Welcome.</p>
     <div style="${warmPanelStyle('secondary')}">
-      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration Details</p>
+      <p style="${WARM_EMAIL_STYLE.panelLabel}">Registration details</p>
       <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
-        Division: <strong>${p.divisionName}</strong><br>
-        Reference: <strong style="${DATA_FACE}">#${ref}</strong>
+        Division: <strong>${p.divisionName}</strong>${input.fee != null ? `<br>
+        Price: <strong>${dollarsLine(input.fee)}</strong>` : ''}
       </p>
     </div>
-    <p>We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
-  `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
+    ${acceptedPay(input.fee ?? null, input.howToPay ?? null, input.clubName ?? (input.face?.club.name ?? 'the club'))}
+    ${input.statusPath ? refBlock(ref, input.statusPath) : `<p>Reference: <strong style="${DATA_FACE}">${escapeEmailHtml(ref)}</strong></p>`}
+    <p>We look forward to seeing ${p.playerFirstName} on the field.</p>
+  `, input.face, `${input.playerFirstName} was signed up for ${input.seasonName}`);
 }
 
 export function leagueRegistrationDeclinedHtml(input: {
@@ -987,7 +1023,7 @@ export function leagueRegistrationDeclinedHtml(input: {
   return familyNotice(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration update</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>We're sorry — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not approved.</p>
+    <p>We’re sorry: <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not accepted.</p>
     <p>${contactLine}</p>
   `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
 }

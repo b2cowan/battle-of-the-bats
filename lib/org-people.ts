@@ -36,14 +36,46 @@ export async function attachPeopleForOrg(orgId: string): Promise<void> {
 }
 
 /**
+ * File the consent-ledger row for the house-league form's unticked "may email me about future seasons and club news" line
+ * (Club Tier 9b-1, Part 5; CASL — plan §2 "consent beside the waiver writing a family_consents row"). Mirrors the waiver's
+ * row below: basis `league_registration`, scope `marketing`, the line's exact words as the evidence. ONE row per sign-up:
+ * `source_id` is the sign-up's first registration, so the live-unique key (org, email, basis, scope, source) holds one live
+ * row per sign-up and the record shows when and on which form each yes was given. Never fails the sign-up.
+ */
+export async function recordLeagueMarketingConsent(input: {
+  orgId: string;
+  guardianEmailNormalized: string;
+  registrationId: string;
+  consentText: string;
+  acceptedAt: string;
+}): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('family_consents')
+    .insert({
+      org_id: input.orgId,
+      guardian_email: input.guardianEmailNormalized,
+      basis: 'league_registration',
+      basis_started_at: input.acceptedAt,
+      scope: 'marketing',
+      source_table: 'league_registrations',
+      source_id: input.registrationId,
+      consent_text: input.consentText,
+    });
+  if (error && error.code !== '23505') {
+    console.error('[families] recordLeagueMarketingConsent failed:', error.message);
+  }
+}
+
+/**
  * File the consent-ledger row for a league waiver acceptance (mig 252).
  * The season's waiver text at the moment of acceptance is the evidence, stored
  * on the ledger row itself (family_consents.consent_text) — the season's copy
  * can be edited later, the ledger row cannot.
  *
- * The live-uniqueness index (org, email, basis, scope where withdrawn_at is null)
- * makes a second acceptance by the same guardian a no-op, which is correct: the
- * earliest live consent is the one that counts.
+ * The live-uniqueness index is (org, email, basis, scope, source_id) where withdrawn_at is
+ * null, and source_id is the REGISTRATION: each child's registration files its own row (a
+ * guardian signing up two children has two), and only a retry for the same registration is
+ * the no-op.
  */
 export async function recordLeagueWaiverConsent(input: {
   orgId: string;

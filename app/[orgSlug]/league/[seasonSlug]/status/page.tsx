@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 // The tab names the page, not the season: a family's lookup page, like the bar's own "Sign in".
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> }): Promise<Metadata> {
   const { orgSlug, seasonSlug } = await params;
-  return clubPageMetadata(orgSlug, () => 'Registration status', { path: `/league/${seasonSlug}/status` });
+  return clubPageMetadata(orgSlug, () => 'Check your registration', { path: `/league/${seasonSlug}/status` });
 }
 
 export default async function RegistrationStatusPage({
@@ -50,7 +50,7 @@ export default async function RegistrationStatusPage({
 
         <div style={{ marginBottom: '2rem' }}>
           <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
-          <h1 className={kit.title}>Registration status</h1>
+          <h1 className={kit.title}>Check your registration</h1>
           <p className={kit.sub}>{season.name}</p>
         </div>
 

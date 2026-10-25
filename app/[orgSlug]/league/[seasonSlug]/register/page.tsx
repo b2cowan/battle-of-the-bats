@@ -5,10 +5,14 @@ import type { Metadata } from 'next';
 import { getDivisionsForSeason } from '@/lib/db';
 import { clubDay, registrationState } from '@/lib/league-registration-state';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
-import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
+import { clubPageMetadata, getClubSeason, getClubSiteContent } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import RegisterForm, { DivisionWithCount } from '@/components/league/RegisterForm';
+import RegisterForm from '@/components/league/RegisterForm';
+import type { FormDivision } from '@/lib/league-signup';
+import { cutoffFor } from '@/lib/born-years';
+import { seasonDates } from '@/lib/house-league-season';
+import { tournamentToday } from '@/lib/timezone';
 import column from '../../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 
@@ -40,16 +44,21 @@ export default async function RegisterPage({
 
   const rawDivisions = await getDivisionsForSeason(season.id);
 
-  const divisions: DivisionWithCount[] = await Promise.all(
-    rawDivisions.map(async d => {
-      const { count } = await supabaseAdmin
-        .from('league_registrations')
-        .select('id', { count: 'exact', head: true })
-        .eq('division_id', d.id)
-        .eq('status', 'active');
-      return { id: d.id, name: d.name, capacity: d.capacity, activeCount: count ?? 0 };
-    }),
-  );
+  // What the form forecasts from (9b-1 Part 5): each division's birth years, price, note, and what holds a spot (accepted
+  // and received, mig 362) and who is waiting. The server decides for real, under the season lock.
+  const { data: regRows } = await supabaseAdmin
+    .from('league_registrations')
+    .select('division_id, status')
+    .eq('season_id', season.id)
+    .in('status', ['active', 'pending_review', 'waitlisted']);
+  const count = (id: string, statuses: string[]) => (regRows ?? []).filter(r => r.division_id === id && statuses.includes(r.status)).length;
+  const divisions: FormDivision[] = rawDivisions.map(d => ({
+    id: d.id, name: d.name, note: d.note, capacity: d.capacity,
+    heldCount: count(d.id, ['active', 'pending_review']), waitlistCount: count(d.id, ['waitlisted']),
+    bornFromYear: d.bornFromYear, bornToYear: d.bornToYear, price: d.price, earlyPrice: d.earlyPrice,
+  }));
+  // Where a family's questions go (the no-division-fits card): the club's public-site contact, never org.contactEmail.
+  const siteContent = await getClubSiteContent(org.id);
 
   // The dates and the status together (9b-1 Part 4): the form shows only while it takes a sign-up, and a closed form
   // says why (copy §12).
@@ -75,7 +84,7 @@ export default async function RegisterPage({
         {/* Page header */}
         <div style={{ marginBottom: '2rem' }}>
           <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
-          <h1 className={kit.title}>Register — {season.name}</h1>
+          <h1 className={kit.title}>Sign up — {season.name}</h1>
         </div>
 
         {/* Closed state */}
@@ -106,9 +115,14 @@ export default async function RegisterPage({
             orgName={org.name}
             seasonSlug={seasonSlug}
             seasonName={season.name}
+            seasonDates={seasonDates(season)}
             waiverText={season.waiverText}
-            registrationFee={season.registrationFee}
+            askEmailConsent={season.askEmailConsent}
             divisions={divisions}
+            season={{ registrationFee: season.registrationFee, earlyBirdUntil: season.earlyBirdUntil, autoApproveUnderCapacity: season.autoApproveUnderCapacity }}
+            cutoff={cutoffFor(org.birthdayCutoffs, season.sport)}
+            today={tournamentToday()}
+            contact={{ email: siteContent?.contactEmail ?? null, phone: null }}
           />
         )}
       </div>

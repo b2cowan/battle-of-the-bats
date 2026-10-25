@@ -309,15 +309,15 @@ describe('S3b — the words (copy items 10, 11)', () => {
     assert.ok(at >= 0, name);
     return email.slice(at, email.indexOf('\nexport function ', at + 10));
   };
-  it('the seven house-league headlines are sentence case with no emoji', () => {
+  // Club Tier 9b-1 (Part 6): the three public-form notices became ONE sign-up email (its headline comes from
+  // lib/league-signup.ts signupHeadline); the family reads "accepted", never "approved" (9b·12).
+  it('the house-league headlines are sentence case with no emoji', () => {
     const headlines: [string, string, string][] = [
-      ['leagueRegistrationApprovedHtml', 'Registration approved', 'Registration Approved!'],
-      ['leagueRegistrationPendingHtml', 'Registration received', 'Registration Received'],
-      ['leagueRegistrationWaitlistHtml', "You're on the waitlist", "You're on the Waitlist"],
-      ['leagueAdminApprovedHtml', 'Registration approved', 'Registration Approved!'],
+      ['leagueAdminApprovedHtml', '${p.playerFirstName} is accepted', 'Registration Approved!'],
       ['leagueAdminWaitlistedHtml', 'Added to the waitlist', 'Added to Waitlist'],
-      ['leagueWaitlistPromotedHtml', "You're off the waitlist", "You're Off the Waitlist!"],
+      ['leagueWaitlistPromotedHtml', 'A spot opened for ${p.playerFirstName}', "You're Off the Waitlist!"],
       ['leagueRegistrationDeclinedHtml', 'Registration update', 'Registration Update'],
+      ['leagueSignupHtml', '${escapeEmailHtml(signupHeadline(kids))}', 'Registration Approved!'],
     ];
     for (const [name, now, old] of headlines) {
       const src = builder(name);

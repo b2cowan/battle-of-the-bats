@@ -5,6 +5,7 @@ import { canMarkLeagueFeePaid, setLeagueFeePaid, voidLeagueRegistrationFee } fro
 import { moveRefused } from '@/lib/club-money-route';
 import { getLeagueSeasonById } from '@/lib/db';
 import { changeLeagueDivision, moveLeagueRegistration } from '@/lib/league-registration-place';
+import { registrationOwes } from '@/lib/league-price';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { divisionInSeason, teamsInSeason } from '@/lib/league-season-scope';
 import {
@@ -61,8 +62,8 @@ async function fetchReg(regId: string, seasonId: string) {
 
 /** The waitlist moved up (inside the same locked database step that freed the spot, mig 362): tell that family. */
 function emailPromoted(
-  org: Parameters<typeof systemMailFace>[0],
-  season: { name: string },
+  org: Parameters<typeof systemMailFace>[0] & { slug: string; name: string },
+  season: { name: string; slug: string; registrationFee: number | null; howToPay: string | null },
   seasonId: string,
   promotedId: string,
 ): void {
@@ -86,7 +87,8 @@ function emailPromoted(
           seasonName:        season.name,
           divisionName,
         },
-        defaultSubject: `You're off the waitlist — ${season.name}`,
+        defaultSubject: `A spot opened: ${next.playerFirstName} is accepted — ${season.name}`,
+        // Q4: the promotion carries the price this child signed up at and the club's how-to-pay words.
         defaultHtml: leagueWaitlistPromotedHtml({
           playerFirstName:  next.playerFirstName,
           playerLastName:   next.playerLastName,
@@ -94,9 +96,14 @@ function emailPromoted(
           seasonName:       season.name,
           divisionName,
           registrationId:   next.id,
+          reference:        next.signupRef,
+          fee:              registrationOwes(next, season),
+          howToPay:         season.howToPay,
+          clubName:         org.name,
+          statusPath:       `/${org.slug}/league/${season.slug}/status`,
           face,
         }),
-        family: face ? { face, reason: `${next.playerFirstName} was registered for ${season.name}` } : undefined,
+        family: face ? { face, reason: `${next.playerFirstName} was signed up for ${season.name}` } : undefined,
       });
     } catch (e) { console.error('[email] leagueWaitlistPromotedHtml failed', e); }
   })();
@@ -221,6 +228,8 @@ export const PATCH = withObservability(async (req: Request,
     seasonName:      season.name,
     divisionName:    '', // filled per-branch
     registrationId:  reg.id,
+    reference:       reg.signupRef,
+    statusPath:      `/${ctx!.org.slug}/league/${season.slug}/status`,
   };
 
   // The club's face (The public face, warm: S3b): read at most once for this request, worn by every email below. A face that
@@ -228,7 +237,7 @@ export const PATCH = withObservability(async (req: Request,
   let faceRead: ReturnType<typeof systemMailFace> | null = null;
   const faceOnce = () => (faceRead ??= systemMailFace(ctx!.org));
   const familyOf = (face: Awaited<ReturnType<typeof systemMailFace>>, playerFirstName: string) =>
-    face ? { face, reason: `${playerFirstName} was registered for ${season.name}` } : undefined;
+    face ? { face, reason: `${playerFirstName} was signed up for ${season.name}` } : undefined;
 
   // Resolve division name for emails
   let divisionName = 'your division';
@@ -276,8 +285,12 @@ export const PATCH = withObservability(async (req: Request,
               seasonName:        season.name,
               divisionName,
             },
-            defaultSubject: `Registration approved — ${season.name}`,
-            defaultHtml: leagueAdminApprovedHtml({ ...emailBase, divisionName, face }),
+            // The family reads "accepted" (9b·12); the email now states the price and how to pay.
+            defaultSubject: `${reg.playerFirstName} is accepted — ${season.name}`,
+            defaultHtml: leagueAdminApprovedHtml({
+              ...emailBase, divisionName, face,
+              fee: registrationOwes(reg, season), howToPay: season.howToPay, clubName: ctx!.org.name,
+            }),
             family: familyOf(face, reg.playerFirstName),
           });
         } catch (e) { console.error('[email] leagueAdminApprovedHtml failed', e); }
@@ -300,7 +313,7 @@ export const PATCH = withObservability(async (req: Request,
               divisionName,
               waitlistPosition:  newPos,
             },
-            defaultSubject: `Waitlist update — ${season.name}`,
+            defaultSubject: `${reg.playerFirstName} is on the waitlist — ${season.name}`,
             defaultHtml: leagueAdminWaitlistedHtml({ ...emailBase, divisionName, waitlistPosition: newPos, face }),
             family: familyOf(face, reg.playerFirstName),
           });

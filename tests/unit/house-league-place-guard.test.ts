@@ -49,7 +49,7 @@ describe('every door uses the locked functions', () => {
     for (const f of ['app/api/league/[orgSlug]/[seasonSlug]/register/route.ts', 'app/api/admin/house-league/seasons/[seasonId]/registrations/route.ts']) {
       const code = readCode(f);
       assert.match(code, /placeLeagueRegistration\(/, f);
-      assert.match(code, /feeAmount:\s*leaguePrice\(/, `${f} records the price on the club’s day`);
+      assert.match(code, /feeAmount:\s*leaguePrice\(|const fee = leaguePrice\([\s\S]{0,400}feeAmount: fee/, `${f} records the price on the club’s day`);
     }
   });
 

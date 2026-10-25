@@ -163,7 +163,8 @@ describe('house-league and tryout emails escape what a family typed', () => {
   const builders = [...src.matchAll(/export function ((?:league|tryout)\w*Html)\(/g)].map(m => m[1]);
 
   it('finds the builders (it cannot silently find none)', () => {
-    assert.ok(builders.length >= 8, `found only ${builders.length}: ${builders.join(', ')}`);
+    // 9b-1 folded the three public-form notices into one sign-up email: five league builders and the tryout ones.
+    assert.ok(builders.length >= 6, `found only ${builders.length}: ${builders.join(', ')}`);
   });
 
   for (const name of builders) {

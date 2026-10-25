@@ -1,26 +1,45 @@
 import { NextResponse } from 'next/server';
-import {
-  getLeagueSeasonBySlug,
-  getDivisionsForSeason,
-} from '@/lib/db';
-import { placeLeagueRegistration } from '@/lib/league-registration-place';
-import { leaguePrice } from '@/lib/league-price';
-import { isCalendarDate, tournamentToday } from '@/lib/timezone';
-import { registrationRefusal } from '@/lib/league-registration-state';
+import { randomBytes } from 'node:crypto';
+import { getLeagueSeasonBySlug, getDivisionsForSeason } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
-import {
-  leagueRegistrationApprovedHtml,
-  leagueRegistrationPendingHtml,
-  leagueRegistrationWaitlistHtml,
-} from '@/lib/email';
+import { leagueSignupHtml } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { systemMailFace } from '@/lib/club-email-context';
 import { withObservability } from '@/lib/observability';
 import { throttlePublicForm, throttlePublicFormRecipient } from '@/lib/public-form-throttle';
+import { placeLeagueRegistration } from '@/lib/league-registration-place';
+import { leaguePrice } from '@/lib/league-price';
+import { isCalendarDate, tournamentToday } from '@/lib/timezone';
+import { registrationRefusal } from '@/lib/league-registration-state';
+import { cutoffFor, bornFitsDate } from '@/lib/born-years';
+import { normalizeGuardianEmailRequired } from '@/lib/guardian-email';
+import { recordLeagueMarketingConsent } from '@/lib/org-people';
+import { notify } from '@/lib/notify';
+import { signupNotice, signupSubject, type PlacedChild } from '@/lib/league-signup';
 
 export const dynamic = 'force-dynamic';
 
-// ── Field validation ───────────────────────────────────────────────────────────
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * A FAMILY SIGNS UP ONE CHILD OR SEVERAL (Club Tier Stage 9b-1, Parts 3–6; owner Q5, 9b·4, 9b·5, 9b·12, 9b·13, S2·b;
+ * words HOUSE_LEAGUE_STAGE9B1_COPY.md §7, §8, §10–§12).
+ *
+ *   1. The form takes a sign-up only while its status AND its dates say so (the refusal says why).
+ *   2. Every child is checked first; nothing is placed until the whole request is well formed.
+ *   3. A date of birth is required on a season that sorts by age, and it picks the division (with the club's cut-off). A
+ *      child no division takes is NOT registered (9b·4); two divisions for one age group need the family's pick (9b·13).
+ *   4. Each child is placed through the one locked database step (Part 3), its price recorded on the club's day. Each gets
+ *      its own outcome (9b·5): accepted, received, waitlisted — or refused as already signed up. No all-or-nothing.
+ *   5. One reference ties the children together; one email lists them all; one notice reaches the club's Needs attention.
+ *   6. The unticked email-consent line, when ticked, files one consent row for the sign-up (CASL).
+ * The email and the notice are AWAITED (each in its own try): the email carries the family's reference and how to pay, and
+ * work left running after the response can be dropped on the host (Next after() on Amplify). Neither fails the sign-up.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+
+const MAX_CHILDREN = 8;
+/** The consent line's words, as the family read them (the evidence filed with a tick). */
+const consentLine = (club: string) => `${club} may email me about future seasons and club news. You can unsubscribe at any time.`;
 
 function isValidEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
@@ -33,7 +52,12 @@ function str(v: unknown, max?: number): string | null {
   return max ? t.slice(0, max) : t;
 }
 
-// ── Route ─────────────────────────────────────────────────────────────────────
+type ChildIn = { firstName: string | null; lastName: string | null; dob: string | null; divisionId: string | null; jersey: string | null; position: string | null; notes: string | null };
+
+/** A family's reference: eight characters they can read back (the status page takes it with their email). */
+function newReference(): string {
+  return randomBytes(4).toString('hex').toUpperCase();
+}
 
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> },) => {
@@ -42,7 +66,6 @@ export const POST = withObservability(async (req: Request,
   const throttled = throttlePublicForm(req);
   if (throttled) return throttled;
 
-  // 1. Resolve org + season
   // Gate the public register API exactly like the league index/sub-pages (audit J3-068):
   // a private, canceled, or non-entitled org must not accept public registrations.
   const org = await resolvePublicLeagueContext(orgSlug);
@@ -51,11 +74,10 @@ export const POST = withObservability(async (req: Request,
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
-  // 2. The form takes a sign-up only while its status AND its dates say so (9b-1 Part 4, S2·b); the refusal says why.
+  // 1. The form takes a sign-up only while its status AND its dates say so (9b-1 Part 4, S2·b); the refusal says why.
   const closed = registrationRefusal(season);
   if (closed) return NextResponse.json({ error: closed, code: 'not_open' }, { status: 409 });
 
-  // 3. Parse + validate body
   let body: Record<string, unknown>;
   try {
     body = await req.json();
@@ -63,157 +85,159 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const errors: Record<string, string> = {};
-
-  const divisionId       = str(body.divisionId);
-  const playerFirstName  = str(body.playerFirstName, 80);
-  const playerLastName   = str(body.playerLastName,  80);
-  const playerDob        = str(body.playerDateOfBirth);
-  const playerJersey     = str(body.playerJerseyPref, 3);
-  const playerPosition   = str(body.playerPositionPref, 60);
-  const playerNotes      = str(body.playerNotes, 500);
-  const guardianFirst    = str(body.guardianFirstName, 80);
-  const guardianLast     = str(body.guardianLastName,  80);
-  const guardianEmail    = str(body.guardianEmail, 200);
-  const guardianPhone    = str(body.guardianPhone, 30);
-  const waiverAccepted   = body.waiverAccepted === true;
-
-  if (!playerFirstName)  errors.playerFirstName  = 'Player first name is required';
-  if (!playerLastName)   errors.playerLastName   = 'Player last name is required';
-  if (playerDob && !isCalendarDate(playerDob)) errors.playerDateOfBirth = 'Enter a real date of birth';
-  if (!guardianFirst)    errors.guardianFirstName = 'Guardian first name is required';
-  if (!guardianLast)     errors.guardianLastName  = 'Guardian last name is required';
-  if (!guardianEmail)    errors.guardianEmail     = 'Guardian email is required';
-  else if (!isValidEmail(guardianEmail)) errors.guardianEmail = 'Enter a valid email address';
-
-  if (season.waiverText && !waiverAccepted) {
-    errors.waiverAccepted = 'You must accept the waiver to register';
+  // 2. The whole request, checked before anything is placed. One child in the old flat shape still reads as one child.
+  const rawChildren: Record<string, unknown>[] = Array.isArray(body.children)
+    ? (body.children as unknown[]).filter((c): c is Record<string, unknown> => !!c && typeof c === 'object')
+    : [{ firstName: body.playerFirstName, lastName: body.playerLastName, dateOfBirth: body.playerDateOfBirth, divisionId: body.divisionId,
+        jerseyPref: body.playerJerseyPref, positionPref: body.playerPositionPref, notes: body.playerNotes }];
+  if (rawChildren.length === 0) return NextResponse.json({ error: 'Add a child to sign up.' }, { status: 400 });
+  if (rawChildren.length > MAX_CHILDREN) {
+    return NextResponse.json({ error: `You can sign up ${MAX_CHILDREN} children at once. Sign up again for more.` }, { status: 400 });
   }
+  const kids: ChildIn[] = rawChildren.map(c => ({
+    firstName: str(c.firstName, 80), lastName: str(c.lastName, 80), dob: str(c.dateOfBirth), divisionId: str(c.divisionId),
+    jersey: str(c.jerseyPref, 3), position: str(c.positionPref, 60), notes: str(c.notes, 500),
+  }));
 
-  if (Object.keys(errors).length > 0) {
-    return NextResponse.json({ errors }, { status: 400 });
-  }
+  const guardianFirst = str(body.guardianFirstName, 80);
+  const guardianLast  = str(body.guardianLastName, 80);
+  const guardianEmail = str(body.guardianEmail, 200);
+  const guardianPhone = str(body.guardianPhone, 30);
+  const waiverAccepted = body.waiverAccepted === true;
+  const emailConsent = body.emailConsent === true;
 
-  // 4. Resolve division (required — season must have at least one division at this point)
   const divisions = await getDivisionsForSeason(season.id);
-  if (divisions.length === 0) {
-    return NextResponse.json(
-      { error: 'No divisions are available for this season' },
-      { status: 409 },
-    );
+  if (divisions.length === 0) return NextResponse.json({ error: 'No divisions are available for this season' }, { status: 409 });
+  const bands = divisions.some(d => d.bornFromYear != null || d.bornToYear != null);
+  const cutoff = cutoffFor(org.birthdayCutoffs, season.sport);
+
+  const errors: Record<string, string> = {};
+  const chosen: (typeof divisions[number] | 'nofit')[] = [];
+  kids.forEach((k, i) => {
+    const at = `children.${i}`;
+    if (!k.firstName) errors[`${at}.firstName`] = 'Enter a first name.';
+    if (!k.lastName) errors[`${at}.lastName`] = 'Enter a last name.';
+    if (k.dob && !isCalendarDate(k.dob)) errors[`${at}.dateOfBirth`] = 'Enter a real date of birth.';
+    else if (bands && !k.dob) errors[`${at}.dateOfBirth`] = 'Enter a date of birth so we can find the right division.';
+    if (errors[`${at}.dateOfBirth`]) { chosen.push('nofit'); return; }
+    // The date of birth picks the division (9b·4, 9b·13); with no age bands the family picks.
+    const fits = bands ? divisions.filter(d => (d.bornFromYear != null || d.bornToYear != null)
+      && bornFitsDate({ from: d.bornFromYear, to: d.bornToYear }, cutoff, k.dob!)) : divisions;
+    if (fits.length === 0) { chosen.push('nofit'); return; }
+    const pick = fits.length === 1 && (!k.divisionId || k.divisionId === fits[0].id) ? fits[0] : fits.find(d => d.id === k.divisionId);
+    if (!pick) { errors[`${at}.divisionId`] = `Choose a division for ${k.firstName ?? 'this child'}.`; chosen.push('nofit'); return; }
+    chosen.push(pick);
+  });
+  if (!guardianFirst) errors.guardianFirstName = 'Enter your first name.';
+  if (!guardianLast) errors.guardianLastName = 'Enter your last name.';
+  if (!guardianEmail) errors.guardianEmail = 'Enter your email address.';
+  else if (!isValidEmail(guardianEmail)) errors.guardianEmail = 'Enter a valid email address.';
+  if (season.waiverText && !waiverAccepted) errors.waiverAccepted = 'Agree to the waiver to sign up.';
+  if (Object.keys(errors).length > 0) return NextResponse.json({ errors }, { status: 400 });
+  if (chosen.every(c => c === 'nofit')) {
+    const year = kids[0].dob?.slice(0, 4);
+    return NextResponse.json({ error: `No division takes children born in ${year}. Contact ${org.name} to ask what is available.`, code: 'nofit' }, { status: 409 });
   }
 
-  const division = divisionId
-    ? divisions.find(d => d.id === divisionId) ?? null
-    : divisions.length === 1 ? divisions[0] : null;
-
-  if (!division) {
-    return NextResponse.json(
-      { error: 'Please select a valid division' },
-      { status: 400 },
-    );
-  }
-
-  // Last gate before the write + mail, so a family retrying after a late refusal (a stale
-  // division, a full season) has not spent any of its budget on an email that never went.
+  // Last gate before the writes and the mail, so a family retrying after a late refusal has not spent its budget.
   const recipientThrottled = throttlePublicFormRecipient(guardianEmail!);
   if (recipientThrottled) return recipientThrottled;
 
-  // 5. Place the child: ONE locked database step counts the spots (accepted and received children hold one), decides
-  // accepted / received / waitlisted, takes the next waitlist place and refuses the same child twice (Part 3, mig 362).
-  // The price is the one rule on the club's day of sign-up (lib/league-price.ts), recorded on the registration.
+  // 4. Each child through the one locked step, in the form's order; its own outcome.
+  const reference = newReference();
+  const today = tournamentToday();
   const waiverAcceptedAt = season.waiverText && waiverAccepted ? new Date().toISOString() : null;
-  const result = await placeLeagueRegistration({
-    orgId:      org.id,
-    seasonId:   season.id,
-    divisionId: division.id,
-    want:       'auto',
-    feeAmount:  leaguePrice(division, season, tournamentToday())?.amount ?? null,
-    child: {
-      firstName:         playerFirstName!,
-      lastName:          playerLastName!,
-      dateOfBirth:       playerDob,
-      jerseyPref:        playerJersey,
-      positionPref:      playerPosition,
-      notes:             playerNotes,
-      guardianFirstName: guardianFirst!,
-      guardianLastName:  guardianLast!,
-      guardianEmail:     guardianEmail!,
-      guardianPhone:     guardianPhone,
-      source:            'public_form',
-      waiverAcceptedAt,
-    },
-    // With waiverAcceptedAt this files the consent-ledger row (mig 252): the route only decides WHETHER acceptance was
-    // witnessed; the mechanics live with the placement.
-    waiverText: season.waiverText ?? null,
-  });
-  if ('refusal' in result) {
-    if (result.refusal === 'duplicate') {
-      return NextResponse.json(
-        { error: `${playerFirstName} ${playerLastName} is already signed up for this season. Use your reference to check their status.`, code: 'duplicate' },
-        { status: 409 },
-      );
+  type Result = PlacedChild & { outcome: 'active' | 'pending_review' | 'waitlisted' | 'duplicate' | 'nofit'; id: string | null };
+  const results: Result[] = [];
+  let position = 0;
+  for (let i = 0; i < kids.length; i++) {
+    const k = kids[i], d = chosen[i];
+    const base = { firstName: k.firstName!, lastName: k.lastName!, waitlistPosition: null, id: null };
+    if (d === 'nofit') { results.push({ ...base, divisionName: '', status: 'pending_review', fee: null, outcome: 'nofit' }); continue; }
+    const fee = leaguePrice(d, season, today)?.amount ?? null;
+    const placed = await placeLeagueRegistration({
+      orgId: org.id, seasonId: season.id, divisionId: d.id, want: 'auto', feeAmount: fee,
+      signupRef: reference, signupPosition: ++position,
+      child: {
+        firstName: k.firstName!, lastName: k.lastName!, dateOfBirth: k.dob, jerseyPref: k.jersey, positionPref: k.position, notes: k.notes,
+        guardianFirstName: guardianFirst!, guardianLastName: guardianLast!, guardianEmail: guardianEmail!, guardianPhone,
+        source: 'public_form', waiverAcceptedAt,
+      },
+      // With waiverAcceptedAt this files the consent-ledger row (mig 252) beside the placement.
+      waiverText: season.waiverText ?? null,
+    });
+    if ('refusal' in placed) {
+      results.push({ ...base, divisionName: d.name, status: 'pending_review', fee, outcome: placed.refusal === 'duplicate' ? 'duplicate' : 'nofit' });
+      continue;
     }
-    return NextResponse.json({ error: 'Please select a valid division' }, { status: 400 });
+    results.push({
+      ...base, id: placed.placed.id, divisionName: d.name, status: placed.placed.status as Result['status'],
+      waitlistPosition: placed.placed.waitlistPosition, fee, outcome: placed.placed.status as Result['outcome'],
+    });
   }
-  const registration = result.placed;
-  const regStatus = registration.status;
-  const waitlistPosition = registration.waitlistPosition;
+  const placedKids = results.filter(r => r.id);
+  if (placedKids.length === 0) {
+    const dup = results.find(r => r.outcome === 'duplicate');
+    return NextResponse.json({
+      error: dup ? `${dup.firstName} ${dup.lastName} is already signed up for this season. Use your reference to check their status.` : 'Nothing was signed up.',
+      code: dup ? 'duplicate' : 'nothing',
+    }, { status: 409 });
+  }
 
-  // 7. Send confirmation email (fire-and-forget — registration succeeds even if email fails)
-  const emailParams = {
-    playerFirstName:  playerFirstName!,
-    playerLastName:   playerLastName!,
-    guardianFirstName: guardianFirst!,
-    seasonName:       season.name,
-    divisionName:     division.name,
-    registrationId:   registration.id,
-    contactEmail:     undefined as string | undefined,
-  };
+  // 6. The email-consent line (CASL): one row for the sign-up, filed against its first registration.
+  if (emailConsent && season.askEmailConsent) {
+    await recordLeagueMarketingConsent({
+      orgId: org.id, guardianEmailNormalized: normalizeGuardianEmailRequired(guardianEmail!),
+      registrationId: placedKids[0].id!, consentText: consentLine(org.name), acceptedAt: new Date().toISOString(),
+    });
+  }
 
-  void (async () => {
-    try {
-      // The club's face (The public face, warm: S3b); a face that cannot be read is a plainer email, never a missed one.
-      const face = await systemMailFace(org);
-      let key: string;
-      let subject: string;
-      let html: string;
-      const vars = {
-        guardianFirstName: guardianFirst!,
-        playerFirstName:   playerFirstName!,
-        playerLastName:    playerLastName!,
-        seasonName:        season.name,
-        divisionName:      division.name,
-      };
-      if (regStatus === 'active') {
-        key     = 'league_registration_approved';
-        subject = `Registration approved — ${season.name}`;
-        html    = leagueRegistrationApprovedHtml({ ...emailParams, face });
-      } else if (regStatus === 'waitlisted') {
-        key     = 'league_registration_waitlisted';
-        subject = `You're on the waitlist — ${season.name}`;
-        html    = leagueRegistrationWaitlistHtml({ ...emailParams, waitlistPosition: waitlistPosition!, face });
-      } else {
-        key     = 'league_registration_pending';
-        subject = `Registration received — ${season.name}`;
-        html    = leagueRegistrationPendingHtml({ ...emailParams, face });
-      }
-      await sendTransactionalEmail({
-        key,
-        to: guardianEmail!,
-        vars: regStatus === 'waitlisted' ? { ...vars, waitlistPosition: waitlistPosition! } : vars,
-        defaultSubject: subject,
-        defaultHtml: html,
-        family: face ? { face, reason: `${playerFirstName} was registered for ${season.name}` } : undefined,
-      });
-    } catch (e) {
-      console.error('[league-register] email send failed:', e);
-    }
-  })();
+  // 5. One email per sign-up, and one notice for the club.
+  const anyAccepted = placedKids.some(r => r.status === 'active');
+  const children: PlacedChild[] = placedKids.map(r => ({
+    firstName: r.firstName, lastName: r.lastName, divisionName: r.divisionName, status: r.status, waitlistPosition: r.waitlistPosition, fee: r.fee,
+  }));
+  try {
+    const face = await systemMailFace(org);
+    await sendTransactionalEmail({
+      key: 'league_signup',
+      to: guardianEmail!,
+      vars: { guardianFirstName: guardianFirst!, seasonName: season.name, reference },
+      defaultSubject: signupSubject(children, season.name),
+      defaultHtml: leagueSignupHtml({
+        guardianFirstName: guardianFirst!, seasonName: season.name, clubName: org.name, reference,
+        howToPay: anyAccepted ? season.howToPay : null, statusPath: `/${org.slug}/league/${season.slug}/status`, children, face,
+      }),
+      family: face ? {
+        face,
+        reason: children.length === 1 ? `${children[0].firstName} was signed up for ${season.name}` : `your children were signed up for ${season.name}`,
+      } : undefined,
+    });
+  } catch (e) {
+    console.error('[league-register] email send failed:', e);
+  }
+  try {
+    const n = signupNotice(children, `${guardianFirst} ${guardianLast}`, season.name);
+    await notify({
+      orgId: org.id,
+      eventType: 'house_league_registration_new',
+      title: n.title,
+      body: n.body,
+      link: `/${org.slug}/admin/house-league/seasons/${season.id}/registrations`,
+    });
+  } catch (e) {
+    console.error('[league-register] staff notice failed:', e);
+  }
 
   return NextResponse.json({
-    id:               registration.id,
-    status:           registration.status,
-    waitlistPosition: registration.waitlistPosition,
+    reference,
+    guardianEmail: guardianEmail!,
+    howToPay: anyAccepted ? season.howToPay : null,
+    children: results.map(r => ({
+      firstName: r.firstName, lastName: r.lastName, outcome: r.outcome, divisionName: r.divisionName,
+      waitlistPosition: r.waitlistPosition, fee: r.fee,
+    })),
+    // The old single-child reply, kept for any caller that reads it.
+    id: placedKids[0].id, status: placedKids[0].status, waitlistPosition: placedKids[0].waitlistPosition,
   }, { status: 201 });
 }, { route: '/api/league/[orgSlug]/[seasonSlug]/register' });
