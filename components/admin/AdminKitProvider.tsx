@@ -55,7 +55,8 @@ function usePortalKitAttr(): Readonly<Record<string, string>> {
  * `[data-admin-kit] .x` rule); anywhere else (a public page, a preview island, the coaches portal), the
  * children exactly as they were — no element, no attribute.
  * It decides nothing: it forwards the layout's decision through the context. ⚠ The one place besides the
- * admin layout that may touch `adminKitAttr` (`tests/unit/admin-kit-switch-guard.test.ts`).
+ * admin layout and the support console's layout (`app/platform-admin/layout.tsx`, since 2026-10-24) that may
+ * touch `adminKitAttr` (`tests/unit/admin-kit-switch-guard.test.ts`).
  */
 export function PortalKitRoot({ children }: { children: ReactNode }) {
   const attr = usePortalKitAttr();

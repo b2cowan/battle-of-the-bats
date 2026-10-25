@@ -14,3 +14,10 @@ export const WORKSPACE_KIND_LABEL: Record<UserAccessContextKind, string> = {
   coaches_premium: 'Coaches Portal',
   fan: 'Following',
 };
+
+/**
+ * The platform admin's portal name (owner 2026-10-24, Support console Stage 1, Ask 1): the strip, the browser tab
+ * and the sign-in page read this one word. It is not a `UserAccessContextKind` (staff hold no workspace), so it
+ * lives beside the kinds instead of in the record.
+ */
+export const PLATFORM_PORTAL_LABEL = 'Support console';

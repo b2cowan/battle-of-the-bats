@@ -99,7 +99,9 @@ describe('the admin kit, released', () => {
   });
 
   it('each marker is spread in ONE place', () => {
-    const MARKER_DOORS = new Set(['app/[orgSlug]/admin/layout.tsx', 'components/admin/AdminKitProvider.tsx']);
+    // The support console's layout is the third door (Support console Stage 1, owner ruling F1, 2026-10-24: the console takes
+    // the admin kit). It spreads `adminKitAttr` unconditionally, and its sign-in page goes through `GuestKitRoot` instead.
+    const MARKER_DOORS = new Set(['app/[orgSlug]/admin/layout.tsx', 'app/platform-admin/layout.tsx', 'components/admin/AdminKitProvider.tsx']);
     // The volunteer shells hand their decision to the provider's `GuestKitRoot`, so the twins cannot drift.
     const GUEST_DOORS = new Set(['components/admin/AdminKitProvider.tsx']);
     const offenders: string[] = [];
@@ -125,6 +127,15 @@ describe('the admin kit, released', () => {
     // …and inside a public preview the context says OFF, so a portal opened there is the public page (R2).
     assert.match(read('app/[orgSlug]/admin/AdminChrome.tsx'), /data-public-preview>\s*<AdminKitProvider on=\{false\}>/,
       'the tournament preview island must turn the kit off for everything inside it');
+  });
+
+  it('the support console layout wears the admin marker unconditionally, and its sign-in is fixed warm', () => {
+    const src = stripComments(read('app/platform-admin/layout.tsx'));
+    assert.match(src, /<AdminKitProvider on>\s*<div style=\{\{ display: 'contents' \}\} \{\.\.\.adminKitAttr\}>/,
+      'the console shell must wear the admin marker with the kit on — the same shape as the club admin layout, nothing deciding it');
+    assert.doesNotMatch(src, /\bcookies\(|\bsearchParams\b/, 'no switch decides the console\'s kit');
+    assert.match(src, /pathname === '\/platform-admin\/login'\)\s*\{\s*return <GuestKitRoot>\{children\}<\/GuestKitRoot>;/,
+      'the sign-in page is warm in every setting, like every signed-out page (owner 2026-10-24, Ask 5)');
   });
 
   it('public layouts never carry the warm marker or the admin kit (R2)', () => {

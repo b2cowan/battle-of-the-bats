@@ -278,8 +278,9 @@
 
 .helpTocSticky {
   position: sticky;
-  top: 1.5rem;
-  max-height: calc(100vh - 3rem);
+  /* `--help-sticky-top` is 0 everywhere except the support console, whose fixed top strip the bar must clear. */
+  top: calc(var(--help-sticky-top, 0px) + 1.5rem);
+  max-height: calc(100vh - 3rem - var(--help-sticky-top, 0px));
   overflow-y: auto;
   padding-right: 2px;
   /* quiet scrollbar */
@@ -1218,7 +1219,7 @@
     display: flex;
     align-items: center;
     position: sticky;
-    top: 0;
+    top: var(--help-sticky-top, 0px);
     z-index: 5;
     width: 100%;
     margin: 0 0 0.9rem;

@@ -25,6 +25,11 @@
  * pops a menu can no longer say "you are here". The consumer shell's desktop top bar does NOT —
  * since 2026-10-23 its Account is this menu, at the right (the person icon lights on /account).
  *
+ * THE SUPPORT CONSOLE (platform admin, Stage 1, owner 2026-10-24) wears this menu too, with two differences it asks for:
+ * `signOutTo="platform"` lands on the console's own sign-in, and `showAccount={false}` leaves out Notification settings and
+ * Account settings, which open the CUSTOMER account area (a staff member has no notification settings there). It also passes
+ * `showFeedback={false}`: the feedback form would write to our own inbox. Every other host leaves all three as they were.
+ *
  * Sign out lands on the sign-in page inside a portal (owner-ruled: a coach signing out
  * mid-errand is on a shared machine or switching accounts — fastest way back in; matches what
  * the portal's sidebar door did before it retired into this menu). A PUBLIC page passes
@@ -66,6 +71,7 @@ export default function AccountMenu({
   showFeedback = true,
   warm = false,
   signOutTo = 'sign-in',
+  showAccount = true,
   className,
   wrapClassName,
   children,
@@ -79,8 +85,10 @@ export default function AccountMenu({
   showFeedback?: boolean;
   /** Warm portal skin: popover reads the --home-* set, like WorkspacesPill. */
   warm?: boolean;
-  /** 'here' on public pages — see the header comment. */
-  signOutTo?: 'sign-in' | 'here';
+  /** 'here' on public pages; 'platform' in the support console — see the header comment. */
+  signOutTo?: 'sign-in' | 'here' | 'platform';
+  /** False in the support console: no Notification settings / Account settings rows. */
+  showAccount?: boolean;
   /** The host bar's icon-door class — the trigger wears that row's exact skin. */
   className?: string;
   /** Lets a host re-anchor the popover (the marketing bar pins it to its own right edge on a phone). */
@@ -149,7 +157,7 @@ export default function AccountMenu({
       // Full navigation, not a router push — a fresh document guarantees no client state
       // (contexts, caches, realtime channels) survives the identity change.
       if (signOutTo === 'here') window.location.reload();
-      else window.location.assign('/auth/login');
+      else window.location.assign(signOutTo === 'platform' ? '/platform-admin/login' : '/auth/login');
     }
   }
 
@@ -206,10 +214,12 @@ export default function AccountMenu({
             </div>
           )}
 
-          <Link href={notifHref} className={styles.row} role="menuitem" onClick={() => setOpen(false)}>
-            <Bell size={15} aria-hidden />
-            Notification settings
-          </Link>
+          {showAccount && (
+            <Link href={notifHref} className={styles.row} role="menuitem" onClick={() => setOpen(false)}>
+              <Bell size={15} aria-hidden />
+              Notification settings
+            </Link>
+          )}
           {showFeedback && (
             <button
               type="button"
@@ -221,10 +231,12 @@ export default function AccountMenu({
               Send feedback
             </button>
           )}
-          <Link href={accountHref} className={styles.row} role="menuitem" onClick={() => setOpen(false)}>
-            <Settings size={15} aria-hidden />
-            Account settings
-          </Link>
+          {showAccount && (
+            <Link href={accountHref} className={styles.row} role="menuitem" onClick={() => setOpen(false)}>
+              <Settings size={15} aria-hidden />
+              Account settings
+            </Link>
+          )}
 
           <div className={styles.sep} aria-hidden />
           <button
