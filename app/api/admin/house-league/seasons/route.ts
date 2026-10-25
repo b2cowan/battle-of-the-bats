@@ -76,9 +76,9 @@ export const POST = withObservability(async (req: Request) => {
       division:                    typeof body.division === 'string' && body.division ? body.division : null,
       description:                  typeof body.description === 'string' && body.description ? body.description : null,
       registration_fee:             typeof body.registrationFee === 'number' ? body.registrationFee : null,
-      // Manual fee tracking only on the free floor: never auto-create accounting-ledger
-      // entries (the accounting module is a paid/Club differentiator the floor doesn't own).
-      auto_generate_fees:           body.autoGenerateFees === true && !isFreeFloorLeague(ctx!.org),
+      // ⚰ auto_generate_fees is no longer written (Club Tier Stage 9a, S1·b): stored, read by nothing — a fee reaches the
+      // season's book only when it is marked received (lib/league-fee-paid.ts). The column keeps its default; its DROP
+      // goes last in a release (prod release history), not here.
       auto_approve_under_capacity:  body.autoApproveUnderCapacity === true,
       auto_promote_waitlist:        body.autoPromoteWaitlist === true,
       registration_open_at:         typeof body.registrationOpenAt === 'string' && body.registrationOpenAt ? body.registrationOpenAt : null,

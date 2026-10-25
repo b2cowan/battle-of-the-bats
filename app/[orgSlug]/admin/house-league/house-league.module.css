@@ -35,12 +35,6 @@
   line-height: 1.3;
 }
 
-.statItem {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
 .statLabel {
   font-size: 0.65rem;
   text-transform: uppercase;
@@ -65,26 +59,9 @@
   letter-spacing: 0.06em;
   white-space: nowrap;
 }
-
-.statusDraft              { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
-.statusRegistrationOpen   { background: rgba(var(--success-rgb), 0.12); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
-.statusRegistrationClosed { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
 .statusActive             { background: rgba(var(--info-rgb), 0.12); color: var(--info); border: 1px solid rgba(var(--info-rgb), 0.25); }
-.statusCompleted          { background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); } /* token-exempt: purple status accent, no semantic token */
-.statusArchived           { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); }
 
 /* ── Age group badge ──────────────────────────────────────────────────────── */
-.divisionBadge {
-  display: inline-block;
-  padding: 0.2rem 0.55rem;
-  border-radius: 2px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  color: var(--info);
-  white-space: nowrap;
-}
 
 /* ── Empty state ──────────────────────────────────────────────────────────── */
 .emptyState {
@@ -96,74 +73,15 @@
 .emptyState p { margin: 0.5rem 0 0; }
 
 /* ── Season detail header ─────────────────────────────────────────────────── */
-.seasonHeader {
-  padding: 1.5rem;
-  border-radius: 2px;
-  background: var(--white-03);
-  border: 1px solid var(--border-2);
-  margin-bottom: 1.75rem;
-}
-
-.seasonHeaderTop {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.seasonHeaderLeft { flex: 1; }
 
 /* The kit layer's values folded into the base (admin type sweep Stage 5): house league renders only
    inside the admin shell, which always carries the kit marker, so the console base never showed. */
-.seasonHeaderName {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-title);
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem;
-}
-
-.seasonHeaderBadges {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.75rem;
-}
-
-.seasonHeaderActions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.seasonDates {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255,255,255,0.06);
-}
-
-.datePair {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
 
 .dateLabel {
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--white-40);
-}
-
-.dateValue {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--white-70);
 }
 
 /* ── Section header ───────────────────────────────────────────────────────── */
@@ -186,29 +104,6 @@
 }
 
 /* ── Division cards ───────────────────────────────────────────────────────── */
-.divisionGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.75rem;
-}
-
-.divisionCard {
-  padding: 1.25rem 1.5rem;
-  border-radius: 2px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.divisionCardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
 
 .divisionName {
   font-size: 0.95rem;
@@ -216,85 +111,11 @@
   color: var(--white-90);
 }
 
-.divisionCardActions {
-  display: flex;
-  gap: 0.35rem;
-}
-
 /* ── Capacity bar ─────────────────────────────────────────────────────────── */
-.capacityWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.capacityLabel {
-  font-size: 0.68rem;
-  color: var(--white-40);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.capacityBar {
-  height: 6px;
-  background: var(--white-8);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.capacityFill {
-  height: 100%;
-  border-radius: 2px;
-  background: var(--logic-lime);
-  transition: width 0.3s ease;
-}
-
-.capacityFillFull {
-  background: var(--danger);
-}
-
-.capacityText {
-  font-size: 0.75rem;
-  color: var(--white-60);
-  font-variant-numeric: tabular-nums;
-}
 
 /* ── Division sub-links ───────────────────────────────────────────────────── */
-.divisionLinks {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--white-05);
-}
-
-.divisionLink {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--white-40);
-  text-decoration: none;
-  padding: 0.2rem 0.5rem;
-  border-radius: 2px;
-  border: 1px solid var(--border-2);
-  transition: color 0.15s, border-color 0.15s;
-}
-.divisionLink:hover {
-  color: var(--blueprint-blue);
-  border-color: rgba(var(--blueprint-blue-rgb), 0.3);
-}
 
 /* ── Lifecycle controls ───────────────────────────────────────────────────── */
-.lifecycleBar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: 2px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
 
 .lifecycleLabel {
   font-size: 0.75rem;
@@ -303,12 +124,6 @@
   letter-spacing: 0.08em;
   color: var(--white-40);
   margin-right: 0.25rem;
-}
-
-.lifecycleHint {
-  font-size: 0.78rem;
-  color: var(--white-30);
-  margin-left: auto;
 }
 
 /* ── Form fields ──────────────────────────────────────────────────────────── */
@@ -347,11 +162,6 @@
 }
 
 /* Birth years in the division windows (Club Tier Stage 4c-2): two year boxes, the cut-off's dates as affixes off January 1. */
-.bornPair { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; }
-.bornBox { width: 5.5rem; }
-.bornAffix { font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap; }
-.bornDash { color: var(--text-tertiary); }
-.bornHeld { font-size: 0.78rem; margin: 0.3rem 0 0; color: var(--home-live); }
 
 .formGrid {
   display: grid;
@@ -430,22 +240,6 @@
 .toggle input:checked + .toggleSlider::before {
   transform: translateX(18px);
   background: var(--hud-surface);
-}
-
-.automationSection {
-  border: 1px solid var(--border-2);
-  border-radius: 2px;
-  padding: 0.75rem 1rem;
-  margin-top: 0.5rem;
-}
-
-.automationSectionTitle {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--white-40);
-  margin: 0 0 0.5rem;
 }
 
 /* ── Modals ───────────────────────────────────────────────────────────────── */
@@ -1140,24 +934,14 @@
 :global([data-admin-kit]) .accessDenied h2 { color: var(--text-secondary); }
 
 /* ── Cards: seasons, divisions, the season's own panel → the kit card ── */
-:global([data-admin-kit]) .divisionCard,
-:global([data-admin-kit]) .seasonHeader {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-}
 :global([data-admin-kit]) .seasonName,
 :global([data-admin-kit]) .divisionName { color: var(--text-primary); }
-:global([data-admin-kit]) .seasonDates { border-top-color: var(--home-line); }
-:global([data-admin-kit]) .divisionLinks { border-top-color: var(--home-line); }
 
 /* Labels over a figure → the kit eyebrow; the figure → the body face, tabular.
    (A section's title is not one of them: .sectionTitle is the A3 section title, set once above.) */
 :global([data-admin-kit]) .statLabel,
 :global([data-admin-kit]) .dateLabel,
-:global([data-admin-kit]) .capacityLabel,
 :global([data-admin-kit]) .lifecycleLabel,
-:global([data-admin-kit]) .automationSectionTitle,
 :global([data-admin-kit]) .weekLabel,
 :global([data-admin-kit]) .poolCount {
   font-family: var(--font-data);
@@ -1168,13 +952,9 @@
   color: var(--text-secondary);
 }
 :global([data-admin-kit]) .statValue { color: var(--text-primary); font-variant-numeric: tabular-nums; }
-:global([data-admin-kit]) .dateValue { color: var(--text-secondary); }
-:global([data-admin-kit]) .capacityText { color: var(--text-secondary); }
-:global([data-admin-kit]) .lifecycleHint { color: var(--text-tertiary); }
 
 /* ── Chips: status, division, game state, round, practice → the kit's chips ── */
 :global([data-admin-kit]) .statusBadge,
-:global([data-admin-kit]) .divisionBadge,
 :global([data-admin-kit]) .roundBadge,
 :global([data-admin-kit]) .recurrenceBadge {
   font-family: var(--font-data);
@@ -1185,29 +965,24 @@
   padding: 0.14rem 0.5rem;
   border: 1px solid transparent;
 }
-:global([data-admin-kit]) .statusDraft,
-:global([data-admin-kit]) .statusArchived,
 :global([data-admin-kit]) .gameStatusCancelled,
 :global([data-admin-kit]) .roundBadge {
   color: var(--text-secondary);
   background: var(--home-olive-soft);
   border-color: var(--home-line-strong);
 }
-:global([data-admin-kit]) .statusRegistrationOpen,
 :global([data-admin-kit]) .gameStatusCompleted {
   color: var(--badge-success-ink);
   background: rgba(var(--success-rgb), 0.08);
   border-color: rgba(var(--success-rgb), 0.28);
 }
-:global([data-admin-kit]) .statusRegistrationClosed,
 :global([data-admin-kit]) .gameStatusPostponed {
   color: var(--badge-warning-ink);
   background: rgba(var(--warning-rgb), 0.08);
   border-color: rgba(var(--warning-rgb), 0.3);
 }
 :global([data-admin-kit]) .statusActive,
-:global([data-admin-kit]) .gameStatusScheduled,
-:global([data-admin-kit]) .divisionBadge {
+:global([data-admin-kit]) .gameStatusScheduled {
   color: var(--info);
   background: rgba(var(--info-rgb), 0.08);
   border-color: rgba(var(--info-rgb), 0.3);
@@ -1218,11 +993,6 @@
 /* "Completed" was a hand-set purple with no token: a finished season is not a verdict, so on the
    kit it is the quiet chip. Practices were the same purple; on the kit they wear the portal's own
    practice colour (`--evt-practice`: purple in dark, plum in warm — the coach schedule's). */
-:global([data-admin-kit]) .statusCompleted {
-  color: var(--text-secondary);
-  background: var(--home-olive-soft);
-  border-color: var(--home-line-strong);
-}
 :global([data-admin-kit]) .practiceBadge,
 :global([data-admin-kit]) .recurrenceBadge {
   color: var(--text-secondary);
@@ -1231,20 +1001,10 @@
 }
 
 /* ── Capacity bar ── */
-:global([data-admin-kit]) .capacityBar { background: var(--home-line); border-radius: 6px; }
-:global([data-admin-kit]) .capacityFill { background: var(--home-olive); border-radius: 6px 0 0 6px; }
-:global([data-admin-kit]) .capacityFillFull { background: var(--home-live); }
 
 /* ── Division sub-links → the portal's quiet link pill ── */
-:global([data-admin-kit]) .divisionLink {
-  color: var(--text-secondary);
-  border-color: var(--home-line-strong);
-  border-radius: 999px;
-}
-:global([data-admin-kit]) .divisionLink:hover { color: var(--home-olive); border-color: var(--home-olive); }
 
 /* ── Lifecycle bar and the toolbars → a quiet card strip ── */
-:global([data-admin-kit]) .lifecycleBar,
 :global([data-admin-kit]) .teamsToolbar,
 :global([data-admin-kit]) .scheduleToolbar {
   background: var(--card-bg);
@@ -1276,7 +1036,6 @@
 :global([data-admin-kit]) .toggleDesc { color: var(--text-tertiary); }
 :global([data-admin-kit]) .toggleTitle { color: var(--text-primary); }
 :global([data-admin-kit]) .toggleRow { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .automationSection { border-color: var(--home-line); border-radius: 8px; }
 
 /* The switch → the portal's pill switch: olive when on, a line when off, a white knob. */
 :global([data-admin-kit]) .toggleSlider {

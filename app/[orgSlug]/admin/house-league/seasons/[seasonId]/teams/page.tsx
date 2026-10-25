@@ -15,7 +15,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useOrg } from '@/lib/org-context';
 import { houseLeagueTeamCap } from '@/lib/free-floor';
 import { LeagueUpgradeCta } from '@/components/admin/LeagueCapUpgrade';
-import { hasCapability } from '@/lib/roles';
+import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import {
@@ -42,7 +42,7 @@ const TEAMS_EXPORT_COLS: ExportColumnDef[] = [
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-interface SeasonInfo { id: string; name: string; }
+interface SeasonInfo { id: string; name: string; status: string; }
 
 interface FeedbackState {
   isOpen: boolean;
@@ -497,7 +497,7 @@ function DraftOverlay({
 
 export default function TeamsPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
-  const { currentOrg, userRole, userCapabilities } = useOrg();
+  const { currentOrg } = useOrg();
   // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
   const B = useKitButtons(LEGACY_BUTTONS);
   // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
@@ -528,9 +528,12 @@ export default function TeamsPage() {
   const [overPoolId, setOverPoolId] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  const canManage = userRole === 'owner' || userRole === 'league_admin';
+  // Who may (the one house-league gate, Stage 9a, Q16/Q17): the people who run the league, on a live season; everyone
+  // else who opens house league reads. A control a person can't use is absent.
+  const access = useHouseLeagueAccess(season);
+  const canManage = !!access?.run;
 
-  const hasAccess = hasCapability(userRole ?? 'staff', userCapabilities ?? null, 'module_house_league');
+  const hasAccess = !!access?.read;
 
   // Derived state
   const selectedDiv = divisions.find(d => d.id === selectedDivId);
@@ -559,7 +562,7 @@ export default function TeamsPage() {
     const res = await fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`);
     if (!res.ok) return;
     const { season: s, divisions: divs } = await res.json();
-    setSeason({ id: s.id, name: s.name });
+    setSeason({ id: s.id, name: s.name, status: s.status });
     setDivisions(divs ?? []);
     if (divs?.length && !selectedDivId) setSelectedDivId(divs[0].id);
   }, [seasonId, selectedDivId, orgQuery]);

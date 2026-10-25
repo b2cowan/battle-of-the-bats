@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
+import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -34,13 +34,14 @@ interface SeasonInfo { id: string; name: string; }
 
 export default function StandingsPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
-  const { currentOrg, user, userRole, userCapabilities } = useOrg();
+  const { currentOrg, user } = useOrg();
   // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
   const kx = useKitStyle();
   // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
-  const canView = hasCapability(userRole ?? 'staff', userCapabilities ?? null, 'module_house_league');
+  // Who may read (the one house-league gate, Stage 9a): everyone who opens house league.
+  const canView = !!useHouseLeagueAccess()?.read;
 
   const [season, setSeason]         = useState<SeasonInfo | null>(null);
   const [divisions, setDivisions]   = useState<LeagueDivision[]>([]);

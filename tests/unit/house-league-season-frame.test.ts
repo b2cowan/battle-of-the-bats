@@ -114,9 +114,18 @@ describe('2 · the frame is wired', () => {
   });
   it('the season screens decide their controls through the gate, never a role list', () => {
     for (const f of [
+      'app/[orgSlug]/admin/house-league/page.tsx',
+      'app/[orgSlug]/admin/house-league/seasons/[seasonId]/page.tsx',
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx',
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx',
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx',
-    ]) assert.doesNotMatch(readCode(f), /userRole ===|'league_admin'|'league_registrar'/, f);
+      'app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx',
+      'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx',
+      'app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx',
+    ]) {
+      const code = readCode(f);
+      assert.doesNotMatch(code, /userRole|hasCapability\(|'league_admin'|'league_registrar'/, f);
+      assert.match(code, /useHouseLeagueAccess\(/, `${f} decides what to render without the gate`);
+    }
   });
 });

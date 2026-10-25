@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import { isFreeFloorLeague } from '@/lib/free-floor';
 import {
   getLeagueSeasonById,
   getDivisionsForSeason,
@@ -74,6 +73,10 @@ export const GET = withObservability(async (_req: Request,
       activeRegistrationCount: regs.filter(r => r.status === 'active').length,
       waitlistCount:           regs.filter(r => r.status === 'waitlisted').length,
       pendingReviewCount:      regs.filter(r => r.status === 'pending_review').length,
+      // Stage 9a: the Teams figure's hint, and the status windows' "still owe fees" loose end (0 on a free season).
+      unplacedCount:           regs.filter(r => r.status === 'active' && !r.teamId).length,
+      unpaidFeeCount:          (season.registrationFee ?? 0) > 0
+        ? regs.filter(r => r.status === 'active' && !r.registrationFeePaid).length : 0,
     },
   });
 }, { route: '/api/admin/house-league/seasons/[seasonId]' });
@@ -102,9 +105,7 @@ export const PATCH = withObservability(async (req: Request,
   if ('division'               in body)      patch.division     = body.division ?? null;
   if ('description'            in body)      patch.description  = body.description ?? null;
   if ('registrationFee'        in body)      patch.registrationFee = body.registrationFee ?? null;
-  // Free-floor (League Starter) keeps manual fees only — force auto-fee generation off on UPDATE
-  // too (creation already does), so it can't be re-enabled to create module_accounting ledger entries.
-  if ('autoGenerateFees'       in body)      patch.autoGenerateFees = Boolean(body.autoGenerateFees) && !isFreeFloorLeague(ctx!.org);
+  // ⚰ autoGenerateFees is no longer written (Club Tier Stage 9a, S1·b): read by nothing; a body carrying it is ignored.
   if ('autoApproveUnderCapacity' in body)    patch.autoApproveUnderCapacity = Boolean(body.autoApproveUnderCapacity);
   if ('autoPromoteWaitlist'    in body)      patch.autoPromoteWaitlist = Boolean(body.autoPromoteWaitlist);
   if ('registrationOpenAt'     in body)      patch.registrationOpenAt  = body.registrationOpenAt  ?? null;

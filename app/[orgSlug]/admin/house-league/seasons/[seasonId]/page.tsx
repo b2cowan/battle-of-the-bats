@@ -1,992 +1,314 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+/**
+ * A HOUSE-LEAGUE SEASON'S OWN PAGE — its Overview (Club Tier Stage 9a, Part 4; owner 9a·4, 9a·6, Q16, S1·b; frames B, C, D;
+ * words HOUSE_LEAGUE_STAGE9A_COPY.md §3–§5).
+ *
+ *   the header — the season's name, dates · sport, what is happening (the pill), View public page;
+ *   one next step — a getting-ready season leads with its checklist and "Open registration" (absent until the three steps
+ *     are done); a closed one with "Start season"; Close / Reopen registration sit on the Registration block;
+ *   the figures band — Players · To review · Waitlist · Teams, one joined band (the money figure is 9b-2's, not built);
+ *   Divisions — a table on the kit (Add, and a pencil per row, open today's window; prices are 9b-1's);
+ *   Season and Registration — each reads first and edits whole;
+ *   the rare door — Complete (and on a finished season Archive / Reopen) ends the body, a sentence and a link.
+ * EVERY STATUS CHANGE ASKS (SeasonStatusWindow). A finished season (completed / archived) reads in place, every write
+ * control absent, through the one gate (Q16): `houseLeagueAccess(…, season)` says `run: false` and the page renders from
+ * it. The registrar reads it all with no pencils and no doors (frame C).
+ */
+import { useCallback, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { CalendarDays, Users, Pencil, Trash2, X, Plus, ExternalLink } from 'lucide-react';
+import { Check, ExternalLink, Pencil, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
-import FeedbackModal from '@/components/FeedbackModal';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
-import { isFreeFloorLeague } from '@/lib/free-floor';
+import { ClubSection, EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
+import SeasonStatePill from '@/components/admin/kit/club/SeasonStatePill';
+import SeasonStatusWindow from '@/components/admin/kit/club/league/SeasonStatusWindow';
+import DivisionWindow, { type SeasonDivision } from '@/components/admin/kit/club/league/DivisionWindow';
+import { RegistrationBlock, SeasonBlock } from '@/components/admin/kit/club/league/SeasonRecordBlocks';
+import s from '@/components/admin/kit/club/league/LeagueSeason.module.css';
+import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
+import { isFreeFloorLeague, type LeagueCapKind } from '@/lib/free-floor';
 import { fireLeagueEvent } from '@/lib/league-events-client';
-import HelpCallout from '@/components/help/HelpCallout';
-import HelpTooltip from '@/components/help/HelpTooltip';
-import { useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
-import styles from '../../house-league.module.css';
-import type { LeagueSeason, LeagueSeasonStatus } from '@/lib/types';
-import type { LeagueCapKind } from '@/lib/free-floor';
-import LoadingState from '@/components/shared/LoadingState';
-import { JAN_1, type Cutoff } from '@/lib/born-years';
-import { divisionBornState } from '@/lib/birthday-cutoff';
+import { seasonChecklist, seasonDates } from '@/lib/house-league-season';
+import { movesFrom, rareDoor, type StatusMove } from '@/lib/house-league-status-words';
+import { JAN_1, bornLine, type Cutoff } from '@/lib/born-years';
 import { sportLabel } from '@/lib/sports';
-import DivisionBornYears from './DivisionBornYears';
-
-// ── Types ──────────────────────────────────────────────────────────────────────
-
-interface DivisionWithStats {
-  id: string;
-  seasonId: string;
-  name: string;
-  capacity: number | null;
-  sortOrder: number;
-  createdAt: string;
-  activeCount: number;
-  waitlistCount: number;
-  teamCount: number;
-  bornFromYear: number | null;
-  bornToYear: number | null;
-}
+import type { LeagueSeason } from '@/lib/types';
 
 interface SeasonDetail {
   season: LeagueSeason;
-  /** The club's cut-off for this season's sport (Stage 4c-2): what the divisions' birth years count from. */
   birthdayCutoff?: Cutoff;
-  divisions: DivisionWithStats[];
+  divisions: SeasonDivision[];
   summary: {
     activeRegistrationCount: number;
     waitlistCount: number;
     pendingReviewCount: number;
+    unplacedCount: number;
+    unpaidFeeCount: number;
   };
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const many = (n: number, one: string, more: string) => `${n} ${n === 1 ? one : more}`;
 
-function formatDate(iso: string | null): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  draft:                'Draft',
-  registration_open:    'Registration open',
-  registration_closed:  'Registration closed',
-  active:               'Active',
-  completed:            'Completed',
-  archived:             'Archived',
-};
-
-const STATUS_CSS: Record<string, string> = {
-  draft:                styles.statusDraft,
-  registration_open:    styles.statusRegistrationOpen,
-  registration_closed:  styles.statusRegistrationClosed,
-  active:               styles.statusActive,
-  completed:            styles.statusCompleted,
-  archived:             styles.statusArchived,
-};
-
-// The next allowed transition for each status (single forward step)
-const NEXT_TRANSITION: Record<string, { status: LeagueSeasonStatus; label: string } | null> = {
-  draft:                { status: 'registration_open',   label: 'Open registration' },
-  registration_open:    { status: 'registration_closed', label: 'Close registration' },
-  registration_closed:  { status: 'active',              label: 'Activate season' },
-  active:               { status: 'completed',           label: 'Complete season' },
-  completed:            { status: 'archived',            label: 'Archive season' },
-  archived:             null,
-};
-
-// ── Edit season form ───────────────────────────────────────────────────────────
-
-interface EditForm {
-  name: string;
-  division: string;
-  description: string;
-  seasonStartDate: string;
-  seasonEndDate: string;
-  registrationFee: string;
-  registrationOpenAt: string;
-  registrationCloseAt: string;
-  waiverText: string;
-  autoApproveUnderCapacity: boolean;
-  autoPromoteWaitlist: boolean;
-  autoGenerateFees: boolean;
-}
-
-function seasonToEditForm(s: LeagueSeason): EditForm {
-  return {
-    name:                     s.name,
-    division:                 s.division ?? '',
-    description:              s.description ?? '',
-    seasonStartDate:          s.seasonStartDate ?? '',
-    seasonEndDate:            s.seasonEndDate ?? '',
-    registrationFee:          s.registrationFee != null ? String(s.registrationFee) : '',
-    registrationOpenAt:       s.registrationOpenAt
-      ? s.registrationOpenAt.slice(0, 16)
-      : '',
-    registrationCloseAt:      s.registrationCloseAt
-      ? s.registrationCloseAt.slice(0, 16)
-      : '',
-    waiverText:               s.waiverText ?? '',
-    autoApproveUnderCapacity: s.autoApproveUnderCapacity,
-    autoPromoteWaitlist:      s.autoPromoteWaitlist,
-    autoGenerateFees:         s.autoGenerateFees,
-  };
-}
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
-export default function SeasonDetailPage() {
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+export default function SeasonOverviewPage() {
+  const { currentOrg, loading: orgLoading } = useOrg();
   const { seasonId } = useParams<{ seasonId: string }>();
-  const base = `/${currentOrg?.slug ?? ''}/admin`;
-  // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
-  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-  const isAdmin = userRole === 'owner' || userRole === 'league_admin';
-  // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
-  const asterisk = useKitAsterisk();
+  const orgSlug = currentOrg?.slug ?? '';
 
-  const [detail,    setDetail]    = useState<SeasonDetail | null>(null);
-  const [fetching,  setFetching]  = useState(true);
+  const [detail, setDetail] = useState<SeasonDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState<'missing' | 'error' | null>(null);
+  const [move, setMove] = useState<StatusMove | null>(null);
+  const [divisionOpen, setDivisionOpen] = useState<SeasonDivision | 'new' | null>(null);
+  const [capHit, setCapHit] = useState<LeagueCapKind | null>(null);
 
-  // Edit season modal
-  const [editOpen,  setEditOpen]  = useState(false);
-  const [editForm,  setEditForm]  = useState<EditForm | null>(null);
-  const [saving,    setSaving]    = useState(false);
-
-  // Add division modal
-  const [addDivOpen,    setAddDivOpen]    = useState(false);
-  const [newDivName,    setNewDivName]    = useState('');
-  const [newDivCap,     setNewDivCap]     = useState('');
-  const [addingDiv,     setAddingDiv]     = useState(false);
-  const [capHit,        setCapHit]        = useState<LeagueCapKind | null>(null);
-  const [newDivFrom,    setNewDivFrom]    = useState('');
-  const [newDivTo,      setNewDivTo]      = useState('');
-
-  // Edit division modal
-  const [editDivId,     setEditDivId]     = useState<string | null>(null);
-  const [editDivName,   setEditDivName]   = useState('');
-  const [editDivCap,    setEditDivCap]    = useState('');
-  const [editDivFrom,   setEditDivFrom]   = useState('');
-  const [editDivTo,     setEditDivTo]     = useState('');
-  const [savingDiv,     setSavingDiv]     = useState(false);
-
-  // Delete division confirm
-  const [deleteDivId,   setDeleteDivId]   = useState<string | null>(null);
-  const [deletingDiv,   setDeletingDiv]   = useState(false);
-
-  // Lifecycle transition
-  const [transitioningTo, setTransitioningTo] = useState<LeagueSeasonStatus | null>(null);
-
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
-  const [feedbackMsg,  setFeedbackMsg]  = useState('');
-
-  function showFeedback(type: 'success' | 'danger', msg: string) {
-    setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
-  }
-
-  // Birth years (Club Tier Stage 4c-2): read through the club's cut-off for this season's sport; one rule, lib/born-years.ts.
-  const cutoff = detail?.birthdayCutoff ?? JAN_1;
-  const thisYear = new Date().getFullYear();
-  const addBorn  = divisionBornState(newDivFrom,  newDivTo,  true,           cutoff, thisYear);
-  // Has the admin changed a box since Edit division opened? Typing and then restoring the stored pair counts as untouched; an
-  // untouched pair is never sent back (see divisionBornState).
-  const editedDivision = detail?.divisions.find(d => d.id === editDivId);
-  const editBornTouched = editedDivision != null
-    && (editDivFrom !== (editedDivision.bornFromYear != null ? String(editedDivision.bornFromYear) : '')
-      || editDivTo !== (editedDivision.bornToYear != null ? String(editedDivision.bornToYear) : ''));
-  const editBorn = divisionBornState(editDivFrom, editDivTo, editBornTouched, cutoff, thisYear);
+  const access = useHouseLeagueAccess(detail?.season ?? null);
 
   const load = useCallback(async () => {
-    if (!seasonId) return;
-    setFetching(true);
+    if (!orgSlug || !seasonId) return;
     try {
-      const res  = await fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to load');
+      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}?orgSlug=${encodeURIComponent(orgSlug)}`);
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 404) { setFailed('missing'); return; }
+      if (!res.ok) throw new Error(data.error ?? 'load failed');
+      setFailed(null);
       setDetail(data);
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to load season.');
+    } catch {
+      setFailed('error');
     } finally {
-      setFetching(false);
+      setLoading(false);
     }
-  }, [seasonId, orgQuery]);
+  }, [orgSlug, seasonId]);
+  useDeferredLoad(!!currentOrg && !!seasonId, load);
 
-  useEffect(() => {
-    if (currentOrg && seasonId) load();
-  }, [currentOrg, seasonId, load]);
+  // A change here re-reads the page AND the season frame (the rail's pill, the phone header's).
+  const changed = useCallback(() => { void load(); announceSeasonsChanged(); }, [load]);
 
-  // ── Edit season ──────────────────────────────────────────────────────────────
-
-  function openEdit() {
-    if (!detail) return;
-    setEditForm(seasonToEditForm(detail.season));
-    setEditOpen(true);
-  }
-
-  async function handleSave() {
-    if (!editForm || !detail) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name:                     editForm.name.trim() || undefined,
-          division:                 editForm.division.trim() || null,
-          description:              editForm.description.trim() || null,
-          seasonStartDate:          editForm.seasonStartDate || null,
-          seasonEndDate:            editForm.seasonEndDate   || null,
-          registrationFee:          editForm.registrationFee ? parseFloat(editForm.registrationFee) : null,
-          registrationOpenAt:       editForm.registrationOpenAt  ? editForm.registrationOpenAt  + ':00Z' : null,
-          registrationCloseAt:      editForm.registrationCloseAt ? editForm.registrationCloseAt + ':00Z' : null,
-          waiverText:               editForm.waiverText.trim() || null,
-          autoApproveUnderCapacity: editForm.autoApproveUnderCapacity,
-          autoPromoteWaitlist:      editForm.autoPromoteWaitlist,
-          autoGenerateFees:         editForm.autoGenerateFees,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to save');
-      setEditOpen(false);
-      await load();
-      showFeedback('success', 'Season updated.');
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to save season.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  // ── Lifecycle transition ─────────────────────────────────────────────────────
-
-  async function handleTransition(newStatus: LeagueSeasonStatus) {
-    setTransitioningTo(newStatus);
-    try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to update status');
-      await load();
-      showFeedback('success', `Season is now ${STATUS_LABELS[newStatus] ?? newStatus}.`);
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to update season status.');
-    } finally {
-      setTransitioningTo(null);
-    }
-  }
-
-  // ── Add division ─────────────────────────────────────────────────────────────
-
-  function openAddDiv() {
-    setNewDivName('');
-    setNewDivCap('');
-    setNewDivFrom('');
-    setNewDivTo('');
-    setAddDivOpen(true);
-  }
-
-  async function handleAddDivision() {
-    if (!newDivName.trim() || addBorn.blocks) return;
-    setAddingDiv(true);
-    try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/divisions${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name:     newDivName.trim(),
-          capacity: newDivCap ? parseInt(newDivCap, 10) : null,
-          bornFromYear: addBorn.years?.from ?? null,
-          bornToYear:   addBorn.years?.to ?? null,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        // Free-floor cap hit → upgrade-aware modal instead of a generic error.
-        if (data.capHit) { setAddDivOpen(false); setCapHit(data.capHit); return; }
-        throw new Error(data.error ?? 'Failed to create division');
-      }
-      setAddDivOpen(false);
-      await load();
-      showFeedback('success', `Division "${newDivName}" added.`);
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to add division.');
-    } finally {
-      setAddingDiv(false);
-    }
-  }
-
-  // ── Edit division ────────────────────────────────────────────────────────────
-
-  function openEditDiv(div: DivisionWithStats) {
-    setEditDivId(div.id);
-    setEditDivName(div.name);
-    setEditDivCap(div.capacity != null ? String(div.capacity) : '');
-    setEditDivFrom(div.bornFromYear != null ? String(div.bornFromYear) : '');
-    setEditDivTo(div.bornToYear != null ? String(div.bornToYear) : '');
-  }
-
-  async function handleSaveDivision() {
-    if (!editDivId || editBorn.blocks) return;
-    setSavingDiv(true);
-    try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/divisions/${editDivId}${orgQuery}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name:     editDivName.trim() || undefined,
-          capacity: editDivCap ? parseInt(editDivCap, 10) : null,
-          // Only a pair the admin touched goes back; a stored pair left alone is left exactly as it is.
-          ...(editBornTouched && editBorn.years ? { bornFromYear: editBorn.years.from, bornToYear: editBorn.years.to } : {}),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to save division');
-      setEditDivId(null);
-      await load();
-      showFeedback('success', 'Division updated.');
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to update division.');
-    } finally {
-      setSavingDiv(false);
-    }
-  }
-
-  // ── Delete division ──────────────────────────────────────────────────────────
-
-  async function handleDeleteDivision() {
-    if (!deleteDivId) return;
-    setDeletingDiv(true);
-    try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/divisions/${deleteDivId}${orgQuery}`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to delete division');
-      setDeleteDivId(null);
-      await load();
-      showFeedback('success', 'Division deleted.');
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to delete division.');
-    } finally {
-      setDeletingDiv(false);
-    }
-  }
-
-  // ── Render ────────────────────────────────────────────────────────────────────
-
-  if (loading) return <LoadingState label="Loading the season…" />;
-
-  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_house_league')) {
-    return (
-      <div className={styles.accessDenied}>
-        <Users size={32} />
-        <h2>Access restricted</h2>
-        <p>You don&apos;t have access to the House league module. Contact your organization owner to enable it.</p>
-      </div>
-    );
-  }
-
-  if (fetching) return <LoadingState label="Loading the season…" />;
-  if (!detail)  return <p className={styles.muted}>Season not found.</p>;
-
-  const { season, divisions, summary } = detail;
-  const nextTransition = NEXT_TRANSITION[season.status];
-
-  return (
-    <div className={styles.page}>
-      {/* Back link */}
-      <div style={{ marginBottom: '1rem' }}>
-        <Link
-          href={`${base}/house-league`}
-          style={kx({ fontSize: '0.82rem', color: 'var(--white-40)', textDecoration: 'none' }, { color: 'var(--text-secondary)', fontWeight: 600 })}
+  const season = detail?.season;
+  const header = (
+    <AdminPageHeader
+      eyebrow="House league · season"
+      title={season?.name ?? 'Season'}
+      backTo={{ href: `/${orgSlug}/admin/house-league`, label: 'Seasons' }}
+      inlineActions
+      actions={season && season.status !== 'draft' && orgSlug ? (
+        <a
+          href={`/${orgSlug}/league/${season.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`btn btn-outline ${ck.iconOnlyPhone}`}
+          aria-label="View public page"
+          onClick={() => {
+            // §13 League Starter first-value signal (share), the free floor only. Fire-and-forget.
+            if (currentOrg && isFreeFloorLeague(currentOrg)) {
+              fireLeagueEvent('league_public_page_shared', { orgId: currentOrg.id, metadata: { seasonId: season.id } });
+            }
+          }}
         >
-          ← All seasons
-        </Link>
-      </div>
-
-      {/* Season header */}
-      <div className={styles.seasonHeader}>
-        <div className={styles.seasonHeaderTop}>
-          <div className={styles.seasonHeaderLeft}>
-            <h1 className={styles.seasonHeaderName}>{season.name}</h1>
-            <div className={styles.seasonHeaderBadges}>
-              {season.division && (
-                <span className={styles.divisionBadge}>{season.division}</span>
-              )}
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                <span className={`${styles.statusBadge} ${STATUS_CSS[season.status] ?? ''}`}>
-                  {STATUS_LABELS[season.status] ?? season.status}
-                </span>
-                <HelpTooltip
-                  title="Season statuses"
-                  body="Draft: configuration only, not visible publicly. Registration open: public form is live for parents. Registration closed: building teams and schedule. Active: games underway. Completed: season is over. Archived: season is retired."
-                />
-              </span>
-            </div>
-
-            {/* Quick stats */}
-            <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-              {[
-                { label: 'Active', value: summary.activeRegistrationCount },
-                { label: 'Pending', value: summary.pendingReviewCount },
-                { label: 'Waitlist', value: summary.waitlistCount },
-                { label: 'Divisions', value: divisions.length },
-              ].map(({ label, value }) =>
-                value > 0 || label === 'Divisions' ? (
-                  <div key={label} className={styles.statItem}>
-                    <span className={styles.statLabel}>{label}</span>
-                    <span className={styles.statValue}>{value}</span>
-                  </div>
-                ) : null,
-              )}
-            </div>
-          </div>
-
-          <div className={styles.seasonHeaderActions}>
-            {/* Public-facing season page (schedule / standings / registration). Only live once the
-                season leaves draft — the public route 404s on draft seasons. */}
-            {season.status !== 'draft' && currentOrg?.slug && (
-              <a
-                href={`/${currentOrg.slug}/league/${season.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-secondary"
-                style={{ fontSize: '0.82rem' }}
-                onClick={() => {
-                  // §13 League Starter first-value signal (share). Gated to the free floor so the
-                  // metric tracks free-tier sharing, not every house-league org. Fire-and-forget.
-                  if (currentOrg && isFreeFloorLeague(currentOrg)) {
-                    fireLeagueEvent('league_public_page_shared', { orgId: currentOrg.id, metadata: { seasonId: season.id } });
-                  }
-                }}
-              >
-                <ExternalLink size={13} style={{ marginRight: 4 }} />
-                View public page
-              </a>
-            )}
-            {isAdmin && (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ fontSize: '0.82rem' }}
-                onClick={openEdit}
-              >
-                <Pencil size={13} style={{ marginRight: 4 }} />
-                Edit
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Dates row */}
-        {(season.seasonStartDate || season.seasonEndDate || season.registrationOpenAt || season.registrationFee) && (
-          <div className={styles.seasonDates}>
-            {(season.seasonStartDate || season.seasonEndDate) && (
-              <div className={styles.datePair}>
-                <span className={styles.dateLabel}>Season dates</span>
-                <span className={styles.dateValue}>
-                  {formatDate(season.seasonStartDate)} — {formatDate(season.seasonEndDate)}
-                </span>
-              </div>
-            )}
-            {season.registrationOpenAt && (
-              <div className={styles.datePair}>
-                <span className={styles.dateLabel}>Registration opens</span>
-                <span className={styles.dateValue}>{formatDate(season.registrationOpenAt)}</span>
-              </div>
-            )}
-            {season.registrationCloseAt && (
-              <div className={styles.datePair}>
-                <span className={styles.dateLabel}>Registration closes</span>
-                <span className={styles.dateValue}>{formatDate(season.registrationCloseAt)}</span>
-              </div>
-            )}
-            {season.registrationFee != null && (
-              <div className={styles.datePair}>
-                <span className={styles.dateLabel}>Registration fee</span>
-                <span className={styles.dateValue}>${season.registrationFee.toFixed(2)}</span>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Lifecycle controls — admin only */}
-      {isAdmin && nextTransition && (
-        <>
-          {nextTransition.status === 'registration_open' && (
-            <div style={{ marginBottom: '0.75rem' }}>
-              <HelpCallout
-                variant="tip"
-                title="Opening registration publishes the public form"
-                body="Once registration opens, parents can submit registrations online. You can close it again at any time from this page."
-              />
-            </div>
-          )}
-          <div className={styles.lifecycleBar}>
-            <span className={styles.lifecycleLabel}>Status</span>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ fontSize: '0.82rem' }}
-              disabled={transitioningTo !== null}
-              onClick={() => handleTransition(nextTransition.status)}
-            >
-              {transitioningTo ? 'Updating…' : nextTransition.label}
-            </button>
-            {season.status === 'draft' && divisions.length === 0 && (
-              <span className={styles.lifecycleHint}>
-                Add at least one division before opening registration.
-              </span>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Divisions section */}
-      <div className={styles.sectionHeader}>
-        <span className={styles.sectionTitle}>Divisions</span>
-        {isAdmin && (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
-            onClick={openAddDiv}
-          >
-            <Plus size={13} style={{ marginRight: 3 }} />
-            Add division
-          </button>
-        )}
-      </div>
-
-      {divisions.length === 0 ? (
-        <div className={styles.emptyState} style={{ padding: '2rem 1rem' }}>
-          <p>No divisions yet.</p>
-          {isAdmin && (
-            <p>
-              <button type="button" className="btn btn-secondary" style={{ marginTop: '0.5rem', fontSize: '0.82rem' }} onClick={openAddDiv}>
-                Add your first division
-              </button>
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className={styles.divisionGrid}>
-          {divisions.map(div => (
-            <DivisionCard
-              key={div.id}
-              div={div}
-              seasonId={season.id}
-              base={base}
-              isAdmin={isAdmin}
-              onEdit={() => openEditDiv(div)}
-              onDelete={() => setDeleteDivId(div.id)}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Edit season modal */}
-      {editOpen && editForm && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setEditOpen(false))?.(); }}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Edit season</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setEditOpen(false)}><X size={16} /></button>
-            </div>
-
-            <div className={styles.formGrid}>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="es-name">Name</label>
-                <input
-                  id="es-name"
-                  className={styles.input}
-                  type="text"
-                  value={editForm.name}
-                  onChange={e => setEditForm(f => f && ({ ...f, name: e.target.value }))}
-                  maxLength={120}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-age">Division</label>
-                <input
-                  id="es-age"
-                  className={styles.input}
-                  type="text"
-                  value={editForm.division}
-                  onChange={e => setEditForm(f => f && ({ ...f, division: e.target.value }))}
-                  placeholder="e.g. U11, Adult"
-                  maxLength={30}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-fee">Registration fee (CAD)</label>
-                <input
-                  id="es-fee"
-                  className={styles.input}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={editForm.registrationFee}
-                  onChange={e => setEditForm(f => f && ({ ...f, registrationFee: e.target.value }))}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-start">Season start</label>
-                <input
-                  id="es-start"
-                  className={styles.input}
-                  type="date"
-                  value={editForm.seasonStartDate}
-                  onChange={e => setEditForm(f => f && ({ ...f, seasonStartDate: e.target.value }))}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-end">Season end</label>
-                <input
-                  id="es-end"
-                  className={styles.input}
-                  type="date"
-                  value={editForm.seasonEndDate}
-                  onChange={e => setEditForm(f => f && ({ ...f, seasonEndDate: e.target.value }))}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-reg-open">Registration opens</label>
-                <input
-                  id="es-reg-open"
-                  className={styles.input}
-                  type="datetime-local"
-                  value={editForm.registrationOpenAt}
-                  onChange={e => setEditForm(f => f && ({ ...f, registrationOpenAt: e.target.value }))}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-reg-close">Registration closes</label>
-                <input
-                  id="es-reg-close"
-                  className={styles.input}
-                  type="datetime-local"
-                  value={editForm.registrationCloseAt}
-                  onChange={e => setEditForm(f => f && ({ ...f, registrationCloseAt: e.target.value }))}
-                />
-              </div>
-
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="es-desc">Description</label>
-                <textarea
-                  id="es-desc"
-                  className={styles.textarea}
-                  value={editForm.description}
-                  onChange={e => setEditForm(f => f && ({ ...f, description: e.target.value }))}
-                  rows={3}
-                />
-              </div>
-
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="es-waiver">Waiver text</label>
-                <textarea
-                  id="es-waiver"
-                  className={styles.textarea}
-                  value={editForm.waiverText}
-                  onChange={e => setEditForm(f => f && ({ ...f, waiverText: e.target.value }))}
-                  rows={4}
-                  placeholder="Optional waiver shown on the public registration form"
-                />
-              </div>
-            </div>
-
-            <div className={styles.automationSection} style={{ marginTop: '1rem' }}>
-              <p className={styles.automationSectionTitle}>Automation</p>
-              {[
-                {
-                  key: 'autoApproveUnderCapacity' as const,
-                  title: 'Auto-approve under capacity',
-                  desc: 'New submissions go directly to Active status while a division has open spots.',
-                },
-                {
-                  key: 'autoPromoteWaitlist' as const,
-                  title: 'Auto-promote from waitlist',
-                  desc: 'Automatically advance the next waitlisted player when a spot opens.',
-                },
-                {
-                  key: 'autoGenerateFees' as const,
-                  title: 'Auto-generate fee entries',
-                  desc: 'Create an accounting entry when a registration is approved.',
-                },
-              ].map(({ key, title, desc }) => (
-                <div key={key} className={styles.toggleRow}>
-                  <div className={styles.toggleInfo}>
-                    <div className={styles.toggleTitle}>{title}</div>
-                    <div className={styles.toggleDesc}>{desc}</div>
-                  </div>
-                  <label className={styles.toggle}>
-                    <input
-                      type="checkbox"
-                      checked={editForm[key]}
-                      onChange={e => setEditForm(f => f && ({ ...f, [key]: e.target.checked }))}
-                    />
-                    <span className={styles.toggleSlider} />
-                  </label>
-                </div>
-              ))}
-            </div>
-
-            <div className={styles.modalFooter}>
-              <button type="button" className="btn btn-ghost" onClick={() => setEditOpen(false)}>Cancel</button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleSave}
-                disabled={saving || !editForm.name.trim()}
-              >
-                {saving ? 'Saving…' : 'Save changes'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add division modal */}
-      {addDivOpen && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setAddDivOpen(false))?.(); }}>
-          <div className={styles.modal} style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add division</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setAddDivOpen(false)}><X size={16} /></button>
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="div-name">Division name <span style={asterisk}>*</span></label>
-              <input
-                id="div-name"
-                className={styles.input}
-                type="text"
-                value={newDivName}
-                onChange={e => setNewDivName(e.target.value)}
-                placeholder="e.g. Division A, East"
-                maxLength={100}
-                autoFocus
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="div-cap">Capacity (optional)</label>
-              <input
-                id="div-cap"
-                className={styles.input}
-                type="number"
-                min="1"
-                step="1"
-                value={newDivCap}
-                onChange={e => setNewDivCap(e.target.value)}
-                placeholder="Leave blank for unlimited"
-              />
-              <p className={styles.hint}>Maximum number of active registrations for this division.</p>
-            </div>
-
-            <DivisionBornYears
-              idPrefix="div"
-              from={newDivFrom}
-              to={newDivTo}
-              state={addBorn}
-              onChange={(f, t) => { setNewDivFrom(f); setNewDivTo(t); }}
-              cutoff={cutoff}
-              sportLabel={sportLabel(detail?.season.sport)}
-            />
-
-            <div className={styles.modalFooter}>
-              <button type="button" className="btn btn-ghost" onClick={() => setAddDivOpen(false)}>Cancel</button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleAddDivision}
-                disabled={addingDiv || !newDivName.trim() || addBorn.blocks}
-              >
-                {addingDiv ? 'Adding…' : 'Add division'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit division modal */}
-      {editDivId && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setEditDivId(null))?.(); }}>
-          <div className={styles.modal} style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Edit division</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setEditDivId(null)}><X size={16} /></button>
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="ediv-name">Division name</label>
-              <input
-                id="ediv-name"
-                className={styles.input}
-                type="text"
-                value={editDivName}
-                onChange={e => setEditDivName(e.target.value)}
-                maxLength={100}
-                autoFocus
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="ediv-cap">Capacity</label>
-              <input
-                id="ediv-cap"
-                className={styles.input}
-                type="number"
-                min="1"
-                step="1"
-                value={editDivCap}
-                onChange={e => setEditDivCap(e.target.value)}
-                placeholder="Leave blank for unlimited"
-              />
-            </div>
-
-            <DivisionBornYears
-              idPrefix="ediv"
-              from={editDivFrom}
-              to={editDivTo}
-              state={editBorn}
-              onChange={(f, t) => { setEditDivFrom(f); setEditDivTo(t); }}
-              cutoff={cutoff}
-              sportLabel={sportLabel(detail?.season.sport)}
-            />
-
-            <div className={styles.modalFooter}>
-              <button type="button" className="btn btn-ghost" onClick={() => setEditDivId(null)}>Cancel</button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleSaveDivision}
-                disabled={savingDiv || !editDivName.trim() || editBorn.blocks}
-              >
-                {savingDiv ? 'Saving…' : 'Save'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete division confirm */}
-      {deleteDivId && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setDeleteDivId(null))?.(); }}>
-          <div className={styles.modal} style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Delete division</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setDeleteDivId(null)}><X size={16} /></button>
-            </div>
-            <p style={{ fontSize: '0.9rem', color: 'var(--white-70)', margin: '0 0 1rem' }}>
-              Are you sure? This cannot be undone. Divisions with registrations cannot be deleted.
-            </p>
-            <div className={styles.modalFooter}>
-              <button type="button" className="btn btn-ghost" onClick={() => setDeleteDivId(null)}>Cancel</button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleDeleteDivision}
-                disabled={deletingDiv}
-              >
-                {deletingDiv ? 'Deleting…' : 'Delete division'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <FeedbackModal
-        isOpen={feedbackOpen}
-        onClose={() => setFeedbackOpen(false)}
-        title={feedbackType === 'success' ? 'Done' : 'Error'}
-        message={feedbackMsg}
-        type={feedbackType}
-      />
-
-      {capHit && <LeagueCapUpgradeModal capHit={capHit} onClose={() => setCapHit(null)} orgId={currentOrg?.id} />}
-    </div>
+          <ExternalLink size={14} aria-hidden /><span className={ck.btnWord}>View public page</span>
+        </a>
+      ) : undefined}
+    />
   );
-}
 
-// ── Division Card ──────────────────────────────────────────────────────────────
+  if (orgLoading || loading) return <PageLoading header={header} label="Loading the season…" />;
+  if (access && !access.read) {
+    return <div className={repKit.page}>{header}<EmptyCard title="You don’t have access to this page." /></div>;
+  }
+  if (failed === 'missing') return <div className={repKit.page}>{header}<EmptyCard title="We couldn’t find this season." /></div>;
+  if (failed || !detail || !season) {
+    return <div className={repKit.page}>{header}<LoadFailed title="We couldn’t load the season." onRetry={() => { setLoading(true); void load(); }} /></div>;
+  }
 
-function DivisionCard({
-  div,
-  seasonId,
-  base,
-  isAdmin,
-  onEdit,
-  onDelete,
-}: {
-  div: DivisionWithStats;
-  seasonId: string;
-  base: string;
-  isAdmin: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const seasonBase = `${base}/house-league/seasons/${seasonId}`;
-  const pct = div.capacity ? Math.min(100, Math.round((div.activeCount / div.capacity) * 100)) : 0;
-  const isFull = div.capacity != null && div.activeCount >= div.capacity;
+  const { divisions, summary } = detail;
+  const canRun = !!access?.run;
+  const canMove = !!access?.changeStatus;
+  const cutoff = detail.birthdayCutoff ?? JAN_1;
+  const sport = sportLabel(season.sport);
+  const dates = seasonDates(season);
+  const spotCount = divisions.length > 0 && divisions.every(d => d.capacity != null && d.capacity > 0)
+    ? divisions.reduce((n, d) => n + (d.capacity ?? 0), 0) : null;
+  const steps = seasonChecklist({ ...season, divisionCount: divisions.length, spotCount });
+  const moves = movesFrom(season.status);
+  const facts = {
+    seasonName: season.name,
+    seasonStartDate: season.seasonStartDate,
+    seasonEndDate: season.seasonEndDate,
+    registrationCloseAt: season.registrationCloseAt,
+    autoApproveUnderCapacity: season.autoApproveUnderCapacity,
+    pendingReviewCount: summary.pendingReviewCount,
+    waitlistCount: summary.waitlistCount,
+    unpaidFeeCount: summary.unpaidFeeCount,
+  };
+  const teams = divisions.reduce((n, d) => n + d.teamCount, 0);
+
+  // Close / Reopen registration sit on the Registration block (9a·4); the others are the next step or the rare door.
+  const regDoor = canMove && (moves.includes('close') || moves.includes('reopenRegistration')) ? (
+    <button type="button" className="btn btn-outline" onClick={() => setMove(moves.includes('close') ? 'close' : 'reopenRegistration')}>
+      {moves.includes('close') ? 'Close registration' : 'Reopen registration'}
+    </button>
+  ) : undefined;
+  const rare = canMove ? (['complete', 'archive', 'reopen'] as const).filter(m => moves.includes(m)) : [];
 
   return (
-    <div className={styles.divisionCard}>
-      <div className={styles.divisionCardHeader}>
-        <span className={styles.divisionName}>{div.name}</span>
-        {isAdmin && (
-          <div className={styles.divisionCardActions}>
-            <button type="button" className={styles.iconBtn} onClick={onEdit} title="Edit division">
-              <Pencil size={13} />
-            </button>
-            <button type="button" className={`${styles.iconBtn} ${styles.iconBtnDanger}`} onClick={onDelete} title="Delete division">
-              <Trash2 size={13} />
-            </button>
+    <div className={repKit.page}>
+      {header}
+      <p className={s.sub}>
+        <span>{[dates ?? 'Dates not set', sport].join(' · ')}</span>
+        <SeasonStatePill season={season} />
+      </p>
+
+      {access?.finished && (
+        <p className={s.lockLine}>This season is finished, so this page is locked. Money stays open for late fees.</p>
+      )}
+
+      {/* The next step: a getting-ready season's checklist, with Open registration once it is done (9a·4). */}
+      {season.status === 'draft' && (
+        <ClubSection
+          title="Before you open registration"
+          actions={canMove && steps.every(st => st.done)
+            ? <button type="button" className="btn btn-lime" onClick={() => setMove('open')}>Open registration</button>
+            : undefined}
+        >
+          <ul className={s.checklist}>
+            {steps.map(st => (
+              <li key={st.key} className={`${s.step}${st.done ? '' : ` ${s.stepOpen}`}`}>
+                <span className={`${s.tick}${st.done ? ` ${s.tickDone}` : ''}`} role="img" aria-label={st.done ? 'Done' : 'Not done'}>
+                  {st.done && <Check size={13} aria-hidden />}
+                </span>
+                <span>{st.line}</span>
+              </li>
+            ))}
+          </ul>
+        </ClubSection>
+      )}
+      {season.status === 'registration_closed' && canMove && (
+        <ClubSection
+          title="Next step"
+          actions={<button type="button" className="btn btn-lime" onClick={() => setMove('start')}>Start season</button>}
+        >
+          <p className={s.emptyLine}>Registration is closed. Start the season when its teams and schedule are ready.</p>
+        </ClubSection>
+      )}
+
+      {season.status !== 'draft' && (
+        <div className={s.band} role="group" aria-label="This season">
+          <div className={s.tile}>
+            <span className={s.tileLabel}>Players</span>
+            <span className={s.tileValue}>{summary.activeRegistrationCount}</span>
+            {spotCount != null && <span className={s.tileHint}>of {many(spotCount, 'spot', 'spots')}</span>}
           </div>
-        )}
-      </div>
-
-      {/* Capacity bar */}
-      <div className={styles.capacityWrap}>
-        <span className={styles.capacityLabel}>Registrations</span>
-        {div.capacity != null ? (
-          <>
-            <div className={styles.capacityBar}>
-              <div
-                className={`${styles.capacityFill} ${isFull ? styles.capacityFillFull : ''}`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className={styles.capacityText}>
-              {div.activeCount} / {div.capacity}
-              {div.waitlistCount > 0 && ` · ${div.waitlistCount} waitlisted`}
-            </span>
-          </>
-        ) : (
-          <span className={styles.capacityText}>
-            {div.activeCount} active
-            {div.waitlistCount > 0 && ` · ${div.waitlistCount} waitlisted`}
-          </span>
-        )}
-      </div>
-
-      {/* Team count */}
-      {div.teamCount > 0 && (
-        <div className={styles.statItem}>
-          <span className={styles.statLabel}>Teams</span>
-          <span className={styles.statValue}>{div.teamCount}</span>
+          <div className={s.tile}>
+            <span className={s.tileLabel}>To review</span>
+            <span className={`${s.tileValue}${summary.pendingReviewCount ? ` ${s.amber}` : ''}`}>{summary.pendingReviewCount}</span>
+            <span className={s.tileHint}>Registrations</span>
+          </div>
+          <div className={s.tile}>
+            <span className={s.tileLabel}>Waitlist</span>
+            <span className={s.tileValue}>{summary.waitlistCount}</span>
+          </div>
+          <div className={s.tile}>
+            <span className={s.tileLabel}>Teams</span>
+            <span className={s.tileValue}>{teams}</span>
+            {summary.unplacedCount > 0 && <span className={s.tileHint}>{many(summary.unplacedCount, 'player', 'players')} unplaced</span>}
+          </div>
         </div>
       )}
 
-      {/* Sub-page links */}
-      <div className={styles.divisionLinks}>
-        <Link href={`${seasonBase}/registrations`} className={styles.divisionLink}>Registrations</Link>
-        <Link href={`${seasonBase}/teams`}         className={styles.divisionLink}>Teams</Link>
-        <Link href={`${seasonBase}/schedule`}      className={styles.divisionLink}>Schedule</Link>
-        <Link href={`${seasonBase}/standings`}     className={styles.divisionLink}>Standings</Link>
-        <Link href={`${seasonBase}/money`}         className={styles.divisionLink}>Money</Link>
-      </div>
+      <ClubSection
+        title="Divisions"
+        actions={canRun ? (
+          <button type="button" className={`btn btn-outline ${ck.iconOnlyPhone}`} onClick={() => setDivisionOpen('new')} aria-label="Add division">
+            <Plus size={14} aria-hidden /><span className={ck.btnWord}>Add division</span>
+          </button>
+        ) : undefined}
+      >
+        {divisions.length === 0 ? (
+          <p className={s.emptyLine}>No divisions yet.</p>
+        ) : (
+          <div className={s.tableWrap}>
+            <table className={ck.table}>
+              <thead>
+                <tr>
+                  <th scope="col">Division</th>
+                  <th scope="col">Ages</th>
+                  <th scope="col">Players</th>
+                  <th scope="col" className={ck.num}>Teams</th>
+                  {canRun && <th scope="col"><span className={s.srOnly}>Edit</span></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {divisions.map(d => {
+                  const pct = d.capacity ? Math.min(100, Math.round((d.activeCount / d.capacity) * 100)) : 0;
+                  const full = d.capacity != null && d.activeCount >= d.capacity;
+                  // What families read beside the division (4c-2's one line), or a dash when it has no birth years.
+                  const ages = bornLine({ from: d.bornFromYear, to: d.bornToYear }, cutoff) ?? '—';
+                  return (
+                    <tr key={d.id}>
+                      <td data-label="Division"><span className={ck.cellTitle}>{d.name}</span></td>
+                      <td data-label="Ages">{ages}</td>
+                      <td data-label="Players">
+                        {d.capacity != null && (
+                          <span className={s.meter} aria-hidden><span className={`${s.meterFill}${full ? ` ${s.meterFull}` : ''}`} style={{ width: `${pct}%` }} /></span>
+                        )}
+                        {d.capacity != null ? `${d.activeCount} / ${d.capacity}` : many(d.activeCount, 'player', 'players')}
+                        {d.waitlistCount > 0 && ` · ${d.waitlistCount} waitlisted`}
+                      </td>
+                      <td data-label="Teams" className={ck.num}>{d.teamCount}</td>
+                      {canRun && (
+                        <td className={ck.actions}>
+                          <button type="button" className={s.rowEdit} onClick={() => setDivisionOpen(d)} aria-label={`Edit ${d.name}`}>
+                            <Pencil size={15} aria-hidden />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </ClubSection>
+
+      <SeasonBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} />
+      <RegistrationBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} door={regDoor} />
+
+      {/* The rare doors end the body (a sentence and a link that asks), never a pinned row. */}
+      {rare.map(m => {
+        const door = rareDoor(m, season);
+        return (
+          <p key={m} className={s.rareDoor}>
+            {door.sentence}{' '}
+            <button type="button" className={s.doorLink} onClick={() => setMove(m)}>{door.link}</button>
+          </p>
+        );
+      })}
+
+      {move && (
+        <SeasonStatusWindow
+          move={move}
+          seasonId={season.id}
+          orgSlug={orgSlug}
+          facts={facts}
+          onClose={() => setMove(null)}
+          onDone={() => { setMove(null); changed(); }}
+        />
+      )}
+      {divisionOpen && (
+        <DivisionWindow
+          orgSlug={orgSlug}
+          seasonId={season.id}
+          division={divisionOpen === 'new' ? null : divisionOpen}
+          cutoff={cutoff}
+          sport={sport}
+          onClose={() => setDivisionOpen(null)}
+          onSaved={() => { setDivisionOpen(null); changed(); }}
+          onCapHit={kind => { setDivisionOpen(null); setCapHit(kind); }}
+        />
+      )}
+      {capHit && <LeagueCapUpgradeModal capHit={capHit} onClose={() => setCapHit(null)} orgId={currentOrg?.id} />}
     </div>
   );
 }

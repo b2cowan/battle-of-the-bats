@@ -92,7 +92,6 @@ type LeagueSeasonForm = {
   waiverText: string;
   autoApproveUnderCapacity: boolean;
   autoPromoteWaitlist: boolean;
-  autoGenerateFees: boolean;
 };
 
 
@@ -123,7 +122,6 @@ function getDefaultLeagueSeasonForm(): LeagueSeasonForm {
     waiverText: '',
     autoApproveUnderCapacity: true,
     autoPromoteWaitlist: true,
-    autoGenerateFees: false,
   };
 }
 
@@ -733,7 +731,6 @@ function OnboardingPageLegacy() {
       waiverText: leagueSeasonForm.waiverText.trim() || null,
       autoApproveUnderCapacity: leagueSeasonForm.autoApproveUnderCapacity,
       autoPromoteWaitlist: leagueSeasonForm.autoPromoteWaitlist,
-      autoGenerateFees: leagueSeasonForm.autoGenerateFees,
     };
   }
 
@@ -841,7 +838,6 @@ function OnboardingPageLegacy() {
         waiverText: '',
         autoApproveUnderCapacity: false,
         autoPromoteWaitlist: false,
-        autoGenerateFees: false,
       }));
     }
     if (taskId === 'league_tournament') {
@@ -1231,7 +1227,6 @@ function OnboardingPageLegacy() {
     }
 
     if (activeModal === 'league-registration') {
-      const leagueStarterFloor = Boolean(currentOrg && isFreeFloorLeague(currentOrg));
       return renderModalFrame(
         'Configure registration',
         'Set the defaults that control how public submissions are handled when registration opens.',
@@ -1289,9 +1284,8 @@ function OnboardingPageLegacy() {
                 {[
                   { key: 'autoApproveUnderCapacity', label: 'Auto-approve while spots are open', help: 'New registrations are confirmed automatically until a division reaches its max players. After that they go to the waitlist for you to review.' },
                   { key: 'autoPromoteWaitlist', label: 'Auto-promote from waitlist', help: 'When a confirmed spot opens up, the next person on the waitlist is moved in automatically.' },
-                  // The accounting fee-entry toggle is hidden on the free League Starter floor — it
-                  // requires the paid accounting module and is force-disabled server-side.
-                  ...(leagueStarterFloor ? [] : [{ key: 'autoGenerateFees', label: 'Auto-generate accounting fee entries', help: 'Creates a pending fee entry in the accounting ledger for each approved registration. Part of paid League/Club.' }]),
+                  // ⚰ "Auto-generate accounting fee entries" retired (Club Tier Stage 9a, S1·b): stored, read by nothing — a fee
+                  // reaches the season's book only when it is marked received (lib/league-fee-paid.ts).
                 ].map(({ key, label, help }) => (
                   <label key={key} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', cursor: 'pointer' }}>
                     <input

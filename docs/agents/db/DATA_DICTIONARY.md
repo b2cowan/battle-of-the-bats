@@ -6604,10 +6604,10 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`description`** (text, nullable) — optional blurb.
 
 <!-- dict:col:league_seasons.registration_fee -->
-**`registration_fee`** (numeric, nullable) — **dollars** (not cents); display-only on the form. Drives the auto-generated internal accounting entry (only when `auto_generate_fees` + this is set). _Cross-ref:_ Accounting.
+**`registration_fee`** (numeric, nullable) — **dollars** (not cents); display-only on the form. The amount the one fee write (`setLeagueFeePaid` → `club_league_fee_set`) posts when a fee is marked received; 0 = a free season (the 9a checklist's "Free"). _Cross-ref:_ Accounting.
 
 <!-- dict:col:league_seasons.auto_generate_fees -->
-**`auto_generate_fees`** (bool, NOT NULL, default false) — when true, approving a reg active auto-creates a `pending` income `accounting_entries` row for `registration_fee` via `createLeagueRegistrationFeeEntry` ([lib/db.ts:3601](../../../lib/db.ts#L3601)). INTERNAL ledger, NOT Stripe; fire-and-forget on the manual-add path.
+**`auto_generate_fees`** (bool, NOT NULL, default false) — **DEAD, no longer written** (Club Tier Stage 9a, S1·b, 2026-10-24): nothing has read it since Stage 7a's paid-only fee write (approving a registration creates no fee line), and from 9a neither the season routes nor any screen write it, so every new row keeps the default. Existing rows keep whatever they held, read by nothing. **Do not drop it in 9a** — a DROP COLUMN goes last in a release (prod release history).
 
 <!-- dict:col:league_seasons.auto_approve_under_capacity -->
 **`auto_approve_under_capacity`** (bool, NOT NULL, default false) — when true, a public submit **under** the division capacity is set `active` immediately; otherwise `pending_review` (see `league_registrations.status`).
