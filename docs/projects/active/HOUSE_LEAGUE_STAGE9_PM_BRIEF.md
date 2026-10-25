@@ -2,6 +2,11 @@
 
 > Deep dive walked and the first stage (9a) drawn 2026-10-24. Plan: `HOUSE_LEAGUE_STAGE9_PLAN.md`. Hub: the House League
 > Deep Dive artifact (source `HOUSE_LEAGUE_STAGE9_HUB.html`).
+>
+> **Status 2026-10-25:** 9a built and walked (§372 ✅). **9b-1 built** (sign-up, payments-ready): a season is set up on its
+> own page, families sign up several children at once and see each outcome first, a spot can only be taken once, and the
+> form's dates run it. Four owner rulings in its build session (plan §0d), the biggest: a child's price is fixed the day
+> they sign up. Owner walk §375 owed. Next: 9b-2 (money, honest).
 
 ## What this is
 

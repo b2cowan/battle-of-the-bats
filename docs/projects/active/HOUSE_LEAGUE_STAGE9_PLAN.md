@@ -76,6 +76,21 @@ All 15 round-2 asks ruled as recommended (§6a). 9a and 9b are fully ruled.
   windows, the old screens show edit controls on a finished season that the server refuses: Part 4 must land with Part 1
   before any promote.
 
+## 0d · Owner rulings 2026-10-25, the 9b-1 build session (all four as recommended)
+
+- **A child's price is recorded at sign-up.** The build prompt resolved the price from today's prices and the sign-up
+  date; a price edit would then have changed what an earlier family owes, against the drawn hint ("A price change applies
+  to new sign-ups only"). Ruled: the amount (with the early bird, by the sign-up date) is written on the registration when
+  the child signs up and never moves; existing registrations take the season price they owed. The correction window and
+  "Move division asks to re-price" stay 9b-2's.
+- **An existing division edits as drawn** (§3 of the drawing): the pencil flips the whole record in place, every field
+  autosaves, "Remove this division" only while nobody is in it. Add age groups is the create door and asks. This replaces
+  the 9a walk's accepted call "a division still saves when you press Save in its window".
+- **Order of work:** the price foundation and the race-proof sign-up first; the themed date picker commits before setup,
+  dates and the form (it did, `a8342ff0a`, before Part 2 started).
+- **On a review-first season a received child holds a spot**: once accepted and received children fill the size, the next
+  child goes to the waitlist and is told so before signing up.
+
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
 - The trust list re-verified (§3); the coupling check for a standalone League Plus club; the ledger seam under D1 (C18);
@@ -158,8 +173,8 @@ check the snapshot before touching it); the org home's empty-tournaments hero (S
 
 | Stage | Covers | Asks | Size |
 |---|---|---|---|
-| **9a** The frame and who can do what — **BUILT 2026-10-24** (§9; walk §372 owed) | Home (Running now · Getting ready · Past seasons shelf); season block with Overview, Money, Email families and a working switcher; phone season header + tab strip inside house league's frame; two live seasons (admin, index, club home); every status change asks (rare door + window); one write gate matched to D8 + registrar/treasurer; dead fee switch removed; old look retired on home and overview | Q12 Q14 Q16 Q17 Q18 S1·b 9a·1–4 | M |
-| **9b-1** Sign-up, payments-ready | Create reshaped (Setup = the Overview's Divisions and Registration blocks, extended); price per division + early bird, one resolver; real dates; atomic capacity + waitlist constraint; no duplicate child; approve respects capacity; several children; CASL; DOB picks division; staff notice on every public sign-up. Server and public form only — the Registrations screen is rebuilt once, in 9b-2 | Q5 S1·a S2·b | L |
+| **9a** The frame and who can do what — **BUILT 2026-10-24** (§9; walk §372 ✅ 2026-10-25) | Home (Running now · Getting ready · Past seasons shelf); season block with Overview, Money, Email families and a working switcher; phone season header + tab strip inside house league's frame; two live seasons (admin, index, club home); every status change asks (rare door + window); one write gate matched to D8 + registrar/treasurer; dead fee switch removed; old look retired on home and overview | Q12 Q14 Q16 Q17 Q18 S1·b 9a·1–4 | M |
+| **9b-1** Sign-up, payments-ready — **BUILT 2026-10-25** (§0d, §9; walk §375 owed) | Create reshaped (Setup = the Overview's Divisions and Registration blocks, extended); price per division + early bird, one resolver; real dates; atomic capacity + waitlist constraint; no duplicate child; approve respects capacity; several children; CASL; DOB picks division; staff notice on every public sign-up. Server and public form only — the Registrations screen is rebuilt once, in 9b-2 | Q5 S1·a S2·b | L |
 | **9b-2** Money, honest | Frozen price (per-registration correction with a reason; Move division asks to re-price); one ending path with refunds as money out; Money band; Money stays open after Complete; Registrations on the kit (Withdraw, Move division, Release the spot, bulk, Paid/Owing filter, phone rows); the club's own payment instructions until 12b; "Ask to withdraw" on the status page; Statement filing + Walk 7a 7.6; ghost pay spots; Families balance from the frozen price. **12b drawn right after this is ruled.** | Q1 Q2 Q3 Q4 Q6 Q10 Q15 | L |
 | **9c** Teams and people | Ratings (convenor-only) + balanced snake draft; draft per division; coach accounts (if Q7) as a column of 9a's gate; Publish teams with placement notices; the status page shows the team | Q7 Q8 Q9 | M–L |
 | **9d** The schedule | Generator rebuilt; C1–C12 admin + public; health (Q11); 11b; venue/permit links; Publish schedule + change notices; season email onto the batched sender | Q11 | L |
@@ -264,3 +279,23 @@ open it, and the menu's top level is Stage 13's.
   `lib/public-site-editor-facts.ts`); the record blocks' checkboxes read the saved value until the re-read lands;
   `house-league.module.css` stays on the colour-debt list (the sub-pages still use it). Promote note: Part 1 locks finished
   seasons, and Part 4 brings their reopen door, so the two promote together (they do, as one branch).
+- 2026-10-25 — 9a walk §372 came back clean (W11's second check called unneeded by the owner); 9a follow-ups committed (a season no
+  longer carries a free-text division, mig 360 on dev with its prod drop held; the club home's Open now drops the fee). **9b-1 build
+  prompt written** (`HOUSE_LEAGUE_STAGE9B1_BUILD_PROMPT.md`; code leads re-verified: capacity counts active only so a review-first
+  season never fills, staff approve never checks capacity, the fee RPC posts the season fee only, no staff notice on a public
+  sign-up; two ruled states (9b·4, 9b·13) were never drawn and need copy; the §6a note that 9b-1 links a hand-added child to its
+  person is probably wrong, since linking is lazy by design).
+- 2026-10-25 — **9b-1 BUILT** (dev; owner rulings §0d). Committed `395d5fe67` (Part 1: the price recorded at sign-up,
+  one rule in `lib/league-price.ts`, mig 361, every money reader) · `920a44b33` (Part 3: a spot is taken once — sign-up,
+  approve, waitlist, division moves and promotion in one locked database step, mig 362; nobody jumps the waitlist; the same
+  child once a season; race-tested on dev with `scripts/house-league-signup-race.mjs`; /review four lenses, findings fixed)
+  · `d792bc004` (Part 2: three-answer Create, Add age groups, a division's record in place, the Registration block, the
+  checklist enforced on the server) · `9796f3418` (Part 4: the dates run the form, `lib/league-registration-state.ts`, mig
+  363 remembers when the convenor closed it; Reopen until…; a season its date closed can start) · `965d34919` (Parts 5–6:
+  several children in one sign-up with each outcome shown first, the no-division-fits and two-divisions states, one email
+  per sign-up, one Needs attention notice, the email-consent row, the status page by reference). Words
+  `HOUSE_LEAGUE_STAGE9B1_COPY.md` (/marketing). Findings that changed the plan: the hand-added child IS linked to its person
+  (Families attaches by email when it loads; checked on dev — the §6a note was wrong, nothing added); the prompt's "resolve
+  the price from today's prices" would have repriced earlier families (ruled §0d). Left for 9b-2 as drawn: moving a child to
+  another division now respects room and the waitlist but keeps its price (re-pricing is 9b-2's). Migrations 361 and 362
+  are prod-pending in `MANUAL_PROD_STEPS.json` and MUST precede the promote (the code calls 362's functions); 363 is a column.

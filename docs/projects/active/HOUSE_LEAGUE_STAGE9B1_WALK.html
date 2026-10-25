@@ -1,0 +1,266 @@
+<title>House League Sign-up Walk</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 9b-1 · §375</span>
+    <h1>House league sign-up, payments-ready</h1>
+    <p class="sub">Written 2026-10-25. One purpose: a convenor sets up a season on its own page (three-answer Create, age groups with prices and an early bird, the form's dates, how to pay) and families sign up one child or several, seeing what happens to each child before they press Sign up, with a spot that can only be taken once.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Drawn on <a href="https://claude.ai/artifact/Ru3aDgVoyBTJb8XivYPLgT">the 9b drawings</a>, tab "9b-1 Sign-up"; words in HOUSE_LEAGUE_STAGE9B1_COPY.md. Your four rulings from the build session apply: a child's price is recorded when they sign up; a division's pencil opens its whole record and saves as you go; a child waiting for review holds a spot; the date picker went first.</p>
+    <p><strong>It passes when</strong> a season can be set up and opened only once its checklist is done, its dates open and close the form (and the page says whether the date or you closed it), a family sees each child's outcome first and gets one email and one reference, nobody can take the same spot twice or jump the waitlist, and the club gets one notice per sign-up.</p>
+    <p><strong>Not in this walk:</strong> the Registrations screen (rebuilt in 9b-2; its old buttons still work), correcting a price, withdrawals and refunds, the Owed / Still owing figures, teams on the status page, online payment, help articles (/docs runs with this build: check them last if they are in).</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> · admin <code>/dev-league-org/admin/house-league</code> · public <code>/dev-league-org/league</code></dd>
+      <dt>Owner</dt><dd><code>league-owner@dev.local</code> · <code>devpass123</code> (sign in only, never reset)</dd>
+      <dt>Registrar</dt><dd><code>league-registrar@dev.local</code> · <code>devpass123</code></dd>
+      <dt>A family</dt><dd>A private (incognito) window, nobody signed in. Use an email address you can read, so the emails reach you.</dd>
+      <dt>Restart</dt><dd>The dev server was restarted after the build (new files and shared modules).</dd>
+      <dt>Your season</dt><dd>You make it in part A: <em>Walk Summer 2027</em>. Delete it at the end if you like (it can be deleted only while it has no registrations, so leave it, or archive it).</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'house-league-signup-walk-v1';
+  var O = 'Owner, computer', R = 'Registrar, computer', F = 'A family, private window', P = 'A family, phone';
+  var PARTS = [
+    { id: 'A', title: 'Create a season in three answers', steps: [
+      { who: O, do: 'Open House league and press Create season.', see: 'A window titled "Create a house-league season" asking only Name, Sport and Season dates, with the line "Next, on the season’s page: age groups and prices, when the form opens and closes, the waiver and how families pay. Its web address is made from the name." No slug, fee, waiver or switches.' },
+      { who: O, do: 'Name <em>Walk Summer 2027</em>, Softball, May 31 to Aug 30, 2027. Press Create season.', see: 'The season’s page opens. Its checklist reads Age groups · Prices · Registration dates · Waiver (optional), each with what to do, and no Open registration button.' },
+      { who: O, do: 'Go back and try to create another season with the same name.', see: '"You already have a season with this name. Give this one a different name." Cancel.' }
+    ]},
+    { id: 'B', title: 'Add age groups, several at once', steps: [
+      { who: O, do: 'On the season’s page, press + Add age groups (also on the checklist line).', see: 'Chips U6 to U18 and "+ Type a name". The foot says "Tap the age groups you run."' },
+      { who: O, do: 'Tap U8, U10 and U12.', see: 'Three rows, birth years blank. The foot reads "3 new divisions · 3 still need their birth years" and Add is faded.' },
+      { who: O, do: 'Give U8 2019–2020, U10 2017–2018, U12 2014–2015.', see: 'An amber line: "No division takes children born in 2016. A child born then won’t fit any division." Nothing blocks.' },
+      { who: O, do: 'Change U12 to 2015–2016. Players: U8 12, <strong>U10 1</strong>, U12 12. Prices: 165, 165, 175. Press "Add 3 divisions".', see: 'The gap line is gone. The Divisions table shows Division · Born in · Players · Price · Early bird, with "0 / 1" for U10, and the hint "A price change applies to new sign-ups only…".' },
+      { who: O, do: 'Press + Add age groups again and tap U10.', see: 'The chip reads "U10 · already" and the new row is named <strong>U10 B</strong>. Give it 2017–2018, 12 players, 165. No overlap warning (same years on purpose). Press "Add 1 division".' },
+      { who: P, do: 'Open the season’s page on a phone (or 390 px) and open + Add age groups.', see: 'The window fills the screen with a back arrow; chips and rows fit with no sideways scroll. Close it without adding.' }
+    ]},
+    { id: 'C', title: 'A division reads first and edits whole', steps: [
+      { who: O, do: 'Press the pencil on U10.', see: 'The whole row turns into its record in place: Name, Players, Born in, Price, Early bird, Note for families, and "Remove this division…" at the foot (nobody is in it).' },
+      { who: O, do: 'Note for families: <em>Tuesday nights</em>. Tab out.', see: '"Saved" shows briefly and fades. Early bird’s hint says "Set the early-bird date under Registration first."' },
+      { who: O, do: 'Early bird: 145. Press ✓. Open U10 B and give it the note <em>Thursday nights</em>, ✓.', see: 'U10’s Early bird cell reads "$145, needs a date" in amber. Notes show under each name.' },
+      { who: O, do: 'Open U10 and clear its name, then tab out.', see: 'The name is held with "Give the division a name." and ✓ does nothing until you type it back. Type U10 back.' }
+    ]},
+    { id: 'D', title: 'The Registration block and the checklist', steps: [
+      { who: O, do: 'Read the Registration block.', see: 'Rows: Registration dates (Not set, with Set dates) · Early bird · Waiver (None) · Email consent ("Asked on the form, unticked, beside the waiver.") · How to pay (amber "Required before registration can open.") · New registrations · Waitlist. No fee row.' },
+      { who: O, do: 'Press its pencil. Form opens: today 8:00 a.m. Form closes: Nov 30, 5:00 p.m. Early-bird date: Oct 31. Turn on both switches ("Approve new registrations while a division has room", "Move the waitlist up on its own").', see: 'Each saves as you go. The U10 cell now reads "$145 through Oct 31". The checklist ticks Age groups, Prices ("$165 – $175 · early bird through Oct 31") and Registration dates, and shows a new line, How to pay.' },
+      { who: O, do: 'Read the checklist foot.', see: '"Add how to pay to open registration." No Open registration button yet.' },
+      { who: O, do: 'In the Registration block, How families pay: <em>e-Transfer to treasurer@devleague.ca within 14 days, with your child’s name in the message.</em> Waiver: any line.', see: 'The checklist is all ticked (Waiver "On. Families agree on the form.") and Open registration appears beside its heading.' },
+      { who: O, do: 'Press Open registration.', see: 'The window says the sign-up form goes live and "New registrations are approved while a division has room, and a full division starts a waitlist." Confirm. The page shows the dates row "Open until Nov 30."' }
+    ]},
+    { id: 'E', title: 'The public page reads the dates and prices', steps: [
+      { who: F, do: 'Open <code>/dev-league-org/league/walk-summer-2027</code>.', see: 'A chip "Registration open", the dates, "Price $165 – $175" with "Early bird through Oct 31", each division with its birth years and note, and "Register now" with "Registration closes Nov 30." under it.' }
+    ]},
+    { id: 'F', title: 'A family signs up two children and sees each outcome first', steps: [
+      { who: F, do: 'Press Register now. Child 1: Henry Walk, born 2017-04-12.', see: '"Henry fits more than one division. Choose one." Two cards: U10 · Tuesday nights · 1 spot left · $165, and U10 B · Thursday nights · 12 spots left · $165.' },
+      { who: F, do: 'Pick U10.', see: 'The fit line: "U10 · Tuesday nights · 1 spot left · $145 early bird".' },
+      { who: F, do: 'Press + Add another child. Child 2: Ava Walk, born 2018-02-01, pick U10.', see: '"U10 is full · Ava joins the waitlist, 1st in line · Ava pays nothing unless a spot opens".' },
+      { who: F, do: 'Add Child 3: Sam Walk, born 2012-06-01.', see: 'A card, not an error: "Sam doesn’t fit a division this season", "No division takes children born in 2012…", the club’s contact, "Nothing is signed up for Sam." The button reads "Sign up 2 children".' },
+      { who: F, do: 'Read the total and the agreement.', see: '"$145 to pay for Henry. Payable separately to Dev League Org…", "Ava pays nothing unless a spot opens." The waiver box, and the email-consent line UNTICKED with "Emails about this sign-up are sent either way."' },
+      { who: F, do: 'Fill the guardian with your own email, tick the waiver and the email line, press "Sign up 2 children".', see: '"You’re signed up", "Your reference: XXXXXXXX (one for this sign-up)", Henry tagged Accepted (U10 · $145), Ava tagged "Waitlist · 1st", a To pay card with $145, your how-to-pay words and a greyed Pay now, and "We’ve emailed this to …". Sam is not listed. Write the reference down.' },
+      { who: P, do: 'Do the same form on a phone up to the fit lines (do not submit).', see: 'Child blocks, fit lines and the total read cleanly at phone width with no sideways scroll.' }
+    ]},
+    { id: 'G', title: 'One email, one notice, the status page', steps: [
+      { who: F, do: 'Open the email.', see: 'One email: subject "Your sign-up for Walk Summer 2027: 1 accepted, 1 on the waitlist", both children with their outcome and price, "To pay: $145." with your how-to-pay words, "Payable separately to Dev League Org.", the reference and the status link. It says "accepted", never "approved".' },
+      { who: O, do: 'Open Needs attention (the bell).', see: 'One notice: "New sign-up: Henry Walk and Ava Walk", "… · Walk Summer 2027 · 1 approved, 1 on the waitlist". Clicking it opens the season’s Registrations.' },
+      { who: F, do: 'Open the status link, enter your email and the reference (lower case is fine).', see: '"Your registrations", "Reference: XXXXXXXX", Henry Accepted · U10 · "$145 to pay" (amber), Ava "Waitlist · 1st" · "Nothing to pay unless a spot opens" · "We’ll email you if a spot opens.", and one To pay card with your words and a greyed Pay now.' }
+    ]},
+    { id: 'H', title: 'A price is recorded at sign-up', steps: [
+      { who: O, do: 'Open U10’s record and change its price to 170 and its early bird to 150.', see: 'Saves. The table reads $170 and "$150 through Oct 31".' },
+      { who: F, do: 'Reload the status page lookup.', see: 'Henry still owes $145: the price he signed up at did not move.' },
+      { who: O, do: 'Put back: U10 price 165, early bird 145.', see: 'As before.' }
+    ]},
+    { id: 'I', title: 'Nobody takes a spot twice, and nobody jumps the line', steps: [
+      { who: F, do: 'Sign up Henry Walk again, born 2017-04-12, same email.', see: 'Refused: "Henry Walk is already signed up for this season. Use your reference to check their status."' },
+      { who: O, do: 'Open the season’s Registrations and Approve Ava (waitlisted).', see: 'Refused: "U10 is full. Add to the waitlist instead." Nothing changes.' },
+      { who: O, do: 'Decline Henry.', see: 'Ava moves up to the spot on her own (the waitlist switch is on). Your inbox gets "A spot opened: Ava is accepted — Walk Summer 2027" with Ava’s price ($145) and your how-to-pay words.' },
+      { who: O, do: 'Set U12’s Players to 1. In two private windows, sign up a different child born 2015 in each (different names and emails), and press Sign up in both at the same moment.', see: 'One window says "You’re signed up" (Accepted), the other "You’re on the waitlist" (Waitlist · 1st). The U12 row reads "1 / 1". Never two Accepted.' }
+    ]},
+    { id: 'J', title: 'The dates run the form', steps: [
+      { who: O, do: 'On the Registration block press Close registration and confirm.', see: 'The window says "The sign-up form closes now, whatever the close date says." The dates row reads "You closed registration on Oct 25." with "The close date was Nov 30."' },
+      { who: F, do: 'Reload the season’s public page and the Register page.', see: 'Public: "Registration closed" and "Registration for this season has closed." Register page: "Registration is closed" with the same line and "Already signed up? Check your status."' },
+      { who: O, do: 'Press "Reopen until…", pick Nov 30, confirm.', see: 'The window asks for a Close date ("The last day families can sign up."). The row reads "Open until Nov 30." again; the public page is open.' },
+      { who: O, do: 'Set Form opens to tomorrow 8:00 a.m.', see: 'The row reads "Opens Oct 26." The public chip reads "Opens Oct 26" and the Register page "Registration isn’t open yet" with "…opens Oct 26." Put back: Form opens today 8:00 a.m.' },
+      { who: O, do: 'Set Form opens to Oct 20 and Form closes to Oct 24, 5:00 p.m. (yesterday).', see: 'The row reads "Closed Oct 24" with "The close date passed." and a Reopen until… door; a Next step card offers Start season. The public page reads "Closed Oct 24". Put back: Form closes Nov 30.' }
+    ]},
+    { id: 'K', title: 'A free, review-first season', steps: [
+      { who: O, do: 'Create <em>Walk Free 2027</em>. Add age groups: tap U8, 2019–2020, 12 players, price 0. Set the form dates. Leave "Approve new registrations…" OFF.', see: 'The checklist has no How to pay line (the prices line reads "Free"), and Open registration appears once the dates are set. The Registration block says "Not needed: this season is free." and "Held for your review. A child waiting for review holds a spot."' },
+      { who: F, do: 'Open registration, then sign up one child born 2019 on its form.', see: 'The total reads "Free. There is nothing to pay." The confirmation says "We’ve received your sign-up", the child tagged Received, and nothing about paying.' },
+      { who: O, do: 'Set the division’s Players to 1, then sign up a second child as a family.', see: 'Before Sign up the form says the division is full and the child joins the waitlist: the received child holds the spot.' }
+    ]},
+    { id: 'L', title: 'Who can do what', steps: [
+      { who: R, do: 'Sign in as the registrar and open Walk Summer 2027.', see: 'The page reads: no pencils on the Divisions or the Registration block, no + Add age groups, no Open or Close door. The checklist (on Walk Free 2027 before it opened) shows lines without doors.' },
+      { who: R, do: 'Open Needs attention.', see: 'The sign-up notices are there for the registrar too.' }
+    ]},
+    { id: 'M', title: 'The season’s money still adds up', steps: [
+      { who: O, do: 'Open the season’s Money page.', see: 'Expected reads the sum of what each accepted child owes at the price they signed up at (with mixed prices it says "{n} active" rather than "× $165").' },
+      { who: O, do: 'Mark Ava’s fee paid on Registrations (Fee Paid tick) and reload her status page.', see: 'The Money page’s Collected shows $145 (her recorded price, not today’s), and the status page reads "$145 · paid Oct 25" with "Everything is paid. Thank you." when nobody else owes.' }
+    ]},
+    { id: 'N', title: 'Help', steps: [
+      { who: O, do: 'Open Help and search <em>age groups</em>, <em>early bird</em>, <em>how to pay</em>, <em>reopen</em>.', see: 'The house-league guides come up and describe what you just did (if /docs has landed; otherwise note it).' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['House league sign-up walk §375 (2026-10-25)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
