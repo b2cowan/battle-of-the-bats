@@ -26318,7 +26318,7 @@ republished; tick positions unchanged).
 
 **✅ PASSED 2026-10-23 (owner, 30 of 30):** A the Sponsors list in the editor 3/3 · B the home strip 4/4 · C the About page 2/2 · D adding a sponsor and its logo 8/8 · E a sponsor ends by itself and comes back with one edit 6/6 · F removing a sponsor 2/2 · G a phone 4/4 · H help 1/1.
 
-**Found during the walk, fixed after it:** a logo in the editor's 160 by 72 box showed only its top, because the box's single grid row sized itself to the image's own height and the box then cropped the image (the CSS said "contain", so it read correctly). The box, the list thumbnail, the club logo tile on the editor and the About page's sponsor logo now fix their one cell to the box (`grid-template: minmax(0, 1fr) / minmax(0, 1fr)`). The home strip was never affected (fixed 52 px image height). Uncommitted, and the owner has not looked at it in the browser yet.
+**Found during the walk, fixed after it:** a logo in the editor's 160 by 72 box showed only its top, because the box's single grid row sized itself to the image's own height and the box then cropped the image (the CSS said "contain", so it read correctly). The box, the list thumbnail, the club logo tile on the editor and the About page's sponsor logo now fix their one cell to the box (`grid-template: minmax(0, 1fr) / minmax(0, 1fr)`). The home strip was never affected (fixed 52 px image height). Committed in `576cb2a55` 2026-10-24; the owner confirmed the fix complete 2026-10-25.
 
 **Owed:** commit the logo-fit fix; `check:layout --changed` on the editor, the home and the About page; prod: apply 343 then 353 before the Club release.
 
@@ -26412,3 +26412,22 @@ republished; tick positions unchanged).
 
 **Open for the owner:** the eleven calls at the foot of the walk (two record blocks where one was drawn; the switcher's "· Finished" in words; the Start window's first line; Archive stays under Past seasons; a division saves on Save; Open now's line kept; no description on public rows; the old Registrations screen inside the new frame until 9b-2; no menu door to Money for a treasurer, a Stage 13 input; two club-site spots still naming one season; the layout sweep not run). Part 1 locks a finished season and Part 4 brings its Reopen door, so they promote together.
 <!-- /§372 -->
+
+## §373 · Club Tier · Stage 4e, a club's own web address — **an owner connects the club's address once (`club.b2cowan.com` in the live run) and every link, preview and sitemap then uses it; the old FieldLogicHQ address forwards to it for signed-out visitors and stays put for signed-in ones; a missing padlock record turns the row amber and clears itself when the record is back; a missing site record turns it red ("Not working") after two looks and clears itself; Stop takes everything back, and the host holds nothing afterwards**
+
+**Built:** Parts 1–6 + the review fixes, committed `9295ac4f6` through `907c2f459` (2026-10-24), then the close-out: the status check scheduled on **dev only** (migration 357), the public help article, and the real connection. Dev only; its production steps are recorded in `MANUAL_PROD_STEPS.json` (355 and 357), not done.
+
+**The walk:** [Own address live run](CLUB_TIER_STAGE4E_LIVE_RUN.html) — nine parts, 40 ticks, on the dev site with the owner's domain `b2cowan.com`: A get ready · B connect the address · C the records · D it goes live · E the club on its own address · F the old address forwards · G take the padlock record away · H take the site record away · I stop and clean up. Run by the owner with the builder doing the status-check nudges and the record checks.
+
+**✅ DONE 2026-10-25 (owner, 40 of 40):** A 3/3 · B 7/7 · C 3/3 · D 3/3 · E 6/6 · F 4/4 · G 5/5 · I 5/5, all **Pass**; H 4/4 ticked with **no verdict set** (the owner called 4e "done and walked").
+
+**Found during the walk, fixed:** (1) 2026-10-24: the connection key could not list DNS zones, which the host does first on every new connection, so the first attempt failed for every club; the permission was added in AWS (it stays; a **production step**). (2) 2026-10-25, step E4: on a club's own address the top bar of the club's tournament pages sent Sign in to a path that does not exist there ("Not found"); it now goes to sign-in on FieldLogicHQ and returns to the same page, one shared hook for both bars; committed `974c47fa7`, pushed to `dev`.
+
+**Observed, as built:** the "live" email once; padlock record removed → Needs attention on the next check (one "padlock missing" email), cleared on the next check once it was back; site record removed → first miss written down, Not working on the second check (one "not working" email), the host did not put the removed padlock record back by itself. The owner account is a test address, so every send is confirmed from the records, not from an inbox. The daily and hourly clocks were moved back by hand on the dev row so the walk did not wait a day.
+
+**Cleanup:** the host holds no `b2cowan.com`, no club row remains, the DNS zone is back to its original six records, and the temporary zone-write permission is removed from the connection key (read back: manage one app's domains + list zones only).
+
+**Not covered:** what a signed-in coach or staff member sees of a club on its own address (walk B's remainder); how a shared link previews in a real chat app; a domain whose DNS is outside our AWS account (the live run let the host write the records itself, so the path where a club adds them by hand is covered by the public how-to page only). `check:layout` could not measure any club admin screen because of a defect in the check itself (it reads "Page not found" from every page's hidden data); measured by a throwaway visible-text copy, the Public site page is clean at all four widths and Settings has one older 38 px button at 768 from the Public site builder.
+
+**Open for the owner:** the one-line fix to the layout check (a shared gate); production: the club-address keys and the DNS-listing permission on the production key, migration 357's production job, and AWS's answer on 500 domains per app.
+<!-- /§373 -->
