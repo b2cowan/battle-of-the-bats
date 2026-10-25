@@ -77,7 +77,7 @@ const orgHelp: HelpPageContent = {
                   <tr><th scope="row">Rep teams</th><td>✓</td><td>✓</td><td>team names only</td><td>—</td><td>—</td><td>—</td><td>—</td><td>their team, in the portal</td></tr>
                   <tr><th scope="row">Accounting</th><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>their team&rsquo;s money</td></tr>
                   <tr><th scope="row">Public site</th><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
-                  <tr><th scope="row">House league · Tournaments</th><td>✓</td><td>✓</td><td>—</td><td>game day</td><td>the house league</td><td>registrations</td><td>scores &amp; gate</td><td>—</td></tr>
+                  <tr><th scope="row">House league · Tournaments</th><td>✓</td><td>✓</td><td>—</td><td>game day</td><td>the house league</td><td>registrations, fees &amp; Email families</td><td>scores &amp; gate</td><td>—</td></tr>
                   <tr><th scope="row">Families</th><td>✓</td><td>if you turn it on</td><td>if you turn it on</td><td>—</td><td>if you turn it on</td><td>if you turn it on</td><td>—</td><td>—</td></tr>
                   <tr><th scope="row">Members</th><td>✓</td><td>✓</td><td>view</td><td>—</td><td>view</td><td>—</td><td>—</td><td>—</td></tr>
                   <tr><th scope="row">Plan &amp; billing · Settings · Audit log</th><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
@@ -98,8 +98,8 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and the public site&rsquo;s look (logo, colours, type and banner, in <strong>Public site</strong>). Cannot turn the public site on or off, and cannot open <strong>Settings</strong>, <strong>Plan &amp; billing</strong>, or the <strong>audit log</strong> — those stay owner-only — and doesn&rsquo;t see <strong>Families</strong> unless the owner turns it on for them.</li>
                 <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, what the club bills its teams, and the teams’ payment requests. Can see the team names money is allocated to, without a Rep teams door of their own.</li>
                 <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot finalize scores or change a result that&rsquo;s already final, create tournaments, manage registrations, or send communications.</li>
-                <li><strong>League admin</strong> — Runs the house league: seasons, registrations, teams, and schedules. Can view the member list.</li>
-                <li><strong>League registrar</strong> — Reviews and processes house league registrations only. Cannot manage seasons, schedules, or the member list.</li>
+                <li><strong>League admin</strong> — Runs the house league: seasons, registrations, fees, teams, schedules, and Email families. Can view the member list.</li>
+                <li><strong>League registrar</strong> — Works house league registrations (approve, decline, withdraw, add by hand), marks fees received, and uses Email families. Reads the rest of a season but cannot change seasons, teams or schedules, or see the member list.</li>
                 <li><strong>Coach</strong> — Accesses the Coaches Portal for their assigned rep team. Cannot access the main admin panel.</li>
                 <li><strong>Volunteer</strong> — Enters scores, checks teams in at the gate, or both, from their phone: whatever they&rsquo;re <strong>helping with</strong>, chosen when you invite them. Scoring opens <strong>Field scores</strong>, the gate opens <strong>Check-in</strong>. Doesn&rsquo;t access the admin panel at all.</li>
               </ul>
