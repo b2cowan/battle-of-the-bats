@@ -7,11 +7,12 @@
  * doors — Sign out everywhere, Ban this person, Delete this person — end the Account tab, each its own window with a
  * reason. Every window that reaches an inbox says it cannot be taken back. A role without the power sees none of it (R6).
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, Pencil } from 'lucide-react';
+import { Check, Pencil, X } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import type { StoryEntry } from '@/lib/platform-story-view';
 import { consoleClock, consoleDate } from '@/lib/console-dates';
 import { rememberConsoleRecent } from '@/lib/console-recent';
@@ -35,7 +36,7 @@ export type PersonRecordProps = {
 };
 
 type Tab = 'story' | 'clubs' | 'account';
-type Window = 'save' | 'reset' | 'note' | 'confirm' | 'signOut' | 'ban' | 'unban' | 'delete' | null;
+type Window = 'save' | 'discard' | 'reset' | 'note' | 'confirm' | 'signOut' | 'ban' | 'unban' | 'delete' | null;
 
 /** One call; null when it went through, else the server's sentence. */
 async function post(url: string, method: string, body: unknown): Promise<string | null> {
@@ -64,6 +65,15 @@ export default function PersonRecord({ person, clubs, story, can }: PersonRecord
     setWin('save');
   };
 
+  /** The ✕ beside the check mark: back to reading without saving. Nothing held leaves at once; held changes ask once. */
+  const discardEdit = () => {
+    if (!nameChanged && !emailChanged) { stopEditing(); return; }
+    setWin('discard');
+  };
+  /** The ✕ unmounts as editing ends, so focus goes back to the pencil rather than falling to the top of the page. */
+  const pencilRef = useRef<HTMLButtonElement>(null);
+  const stopEditing = () => { setEditing(false); requestAnimationFrame(() => pencilRef.current?.focus()); };
+
   const owned = clubs.find(c => c.role === 'owner');
   // The People list's own colours (one rule, `personStatusChip`), in the record's words.
   const chipWord = person.status === 'banned' ? 'Banned' : person.emailConfirmed ? 'Email confirmed' : 'Email not confirmed';
@@ -77,17 +87,22 @@ export default function PersonRecord({ person, clubs, story, can }: PersonRecord
         titleChips={chip}
         actions={can.support ? (
           <span className={styles.headActions}>
-            <button type="button" className={`${styles.pencil}${editing ? ` ${styles.pencilOn}` : ''}`} onClick={toggleEdit}
+            <button type="button" ref={pencilRef} className={`${styles.pencil}${editing ? ` ${styles.pencilOn}` : ''}`} onClick={toggleEdit}
               aria-label={editing ? 'Done editing — review the changes' : 'Edit this person'} title={editing ? 'Done editing' : 'Edit'}>
               {editing ? <Check size={16} aria-hidden /> : <Pencil size={15} aria-hidden />}
             </button>
+            {editing && (
+              <button type="button" className={styles.pencil} onClick={discardEdit} aria-label="Discard changes and stop editing" title="Discard changes">
+                <X size={16} aria-hidden />
+              </button>
+            )}
             <button type="button" className="btn btn-secondary" onClick={() => setWin('reset')}>Send a reset link</button>
             <button type="button" className="btn btn-secondary" onClick={() => setWin('note')}>Add a note</button>
           </span>
         ) : undefined}
       />
       <p className={styles.caption}>
-        {editing ? 'Editing. Nothing changes until you press the check mark and confirm.' : `${person.name ?? 'No name given'} · Signs in with email and password`}
+        {editing ? 'Editing. Nothing changes until you press the check mark and confirm. The ✕ puts everything back.' : `${person.name ?? 'No name given'} · Signs in with email and password`}
       </p>
       {notice && <div className={`${kit.notice} ${kit.noticeGood}`}>{notice}</div>}
 
@@ -220,6 +235,21 @@ export default function PersonRecord({ person, clubs, story, can }: PersonRecord
           onClose={() => setWin(null)}
         />
       )}
+      {win === 'discard' && (
+        <RecordWindow
+          title={`Discard your changes to ${person.email}`}
+          sentence={<>Your edits are dropped and this person goes back to reading, exactly as it was. Nothing is saved.</>}
+          cancelLabel="Keep editing"
+          confirmLabel="Discard changes"
+          askWhy={false}
+          onConfirm={async () => { setWin(null); stopEditing(); return null; }}
+          onClose={() => setWin(null)}
+        />
+      )}
+      <UnsavedChangesGuard
+        active={editing && (nameChanged || emailChanged)}
+        message={`You have unsaved changes to ${person.email}. Leave without saving them?`}
+      />
       {win === 'reset' && (
         <RecordWindow
           title={`Send a reset link to ${person.email}`}

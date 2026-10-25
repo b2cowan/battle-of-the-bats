@@ -10,11 +10,12 @@
  * body, never a pinned row).
  * ⚖ R6: a role without a power sees no control for it — absent, never disabled, and no banner.
  */
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Check, Mail, Pencil } from 'lucide-react';
+import { Check, Mail, Pencil, X } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import DateInput from '@/components/shared/DateInput';
 import { filterStory, type StoryEntry, type StoryKind } from '@/lib/platform-story-view';
 import { consoleDate, consoleDay } from '@/lib/console-dates';
@@ -68,6 +69,7 @@ export type ClubRecordProps = {
 
 type Window =
   | { kind: 'save' }
+  | { kind: 'discard' }
   | { kind: 'putBack'; entry: StoryEntry }
   | { kind: 'note' }
   | { kind: 'makeOwner'; member: ClubRecordProps['members'][number] }
@@ -138,6 +140,15 @@ export default function ClubRecord(props: ClubRecordProps) {
     if (!anyChange) { setEditing(false); return; }
     setWin({ kind: 'save' });
   };
+
+  /** The ✕ beside the check mark: back to reading without saving. Nothing held leaves at once; held changes ask once. */
+  const discardEdit = () => {
+    if (!anyChange) { stopEditing(); return; }
+    setWin({ kind: 'discard' });
+  };
+  /** The ✕ unmounts as editing ends, so focus goes back to the pencil rather than falling to the top of the page. */
+  const pencilRef = useRef<HTMLButtonElement>(null);
+  const stopEditing = () => { setEditing(false); requestAnimationFrame(() => pencilRef.current?.focus()); };
 
   /** Every held change in one sentence (R3), built as pieces so a club's name is never read as markup. */
   function saveSentence(): ReactNode {
@@ -285,12 +296,18 @@ export default function ClubRecord(props: ClubRecordProps) {
             {canEdit && (
               <button
                 type="button"
+                ref={pencilRef}
                 className={`${styles.pencil}${editing ? ` ${styles.pencilOn}` : ''}`}
                 onClick={toggleEdit}
                 aria-label={editing ? 'Done editing — review the changes' : 'Edit this record'}
                 title={editing ? 'Done editing' : 'Edit'}
               >
                 {editing ? <Check size={16} aria-hidden /> : <Pencil size={15} aria-hidden />}
+              </button>
+            )}
+            {canEdit && editing && (
+              <button type="button" className={styles.pencil} onClick={discardEdit} aria-label="Discard changes and stop editing" title="Discard changes">
+                <X size={16} aria-hidden />
               </button>
             )}
             {can.emailOwner && props.ownerEmail && (
@@ -302,7 +319,7 @@ export default function ClubRecord(props: ClubRecordProps) {
       />
       <p className={styles.caption}>
         {editing
-          ? 'Editing. Nothing changes until you press the check mark and confirm.'
+          ? 'Editing. Nothing changes until you press the check mark and confirm. The ✕ puts everything back.'
           : <>Owner {props.ownerEmail ?? 'none'} · <code className={kit.code}>{org.slug}</code> · Created {consoleDate(org.createdAt)}</>}
       </p>
 
@@ -485,6 +502,21 @@ export default function ClubRecord(props: ClubRecordProps) {
           onClose={() => setWin(null)}
         />
       )}
+      {win?.kind === 'discard' && (
+        <RecordWindow
+          title={`Discard your changes to ${org.name}`}
+          sentence={<>Your edits are dropped and {org.name} goes back to reading, exactly as it was. Nothing is saved.</>}
+          cancelLabel="Keep editing"
+          confirmLabel="Discard changes"
+          askWhy={false}
+          onConfirm={async () => { setWin(null); stopEditing(); return null; }}
+          onClose={() => setWin(null)}
+        />
+      )}
+      <UnsavedChangesGuard
+        active={editing && anyChange}
+        message={`You have unsaved changes to ${org.name}. Leave without saving them?`}
+      />
       {win?.kind === 'putBack' && win.entry.putBack && (
         <RecordWindow
           title={win.entry.putBack.title}
