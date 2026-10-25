@@ -1,6 +1,6 @@
 /* The audit log's own parts. The page, toolbar, table, chips and buttons are the console kit (../console.module.css). */
 
-/* Seven columns of log data: a little tighter across so the values stay in view on a laptop. */
+/* Eight columns of log data (the last is the row's ›): a little tighter across so the values stay in view on a laptop. */
 .logTable th,
 .logTable td { padding-inline: 0.7rem; }
 
@@ -14,38 +14,36 @@
   gap: 0.2rem;
 }
 
-@media (max-width: 640px) {
-  .orgCell { flex-direction: row; align-items: center; gap: 0.6rem; }
-}
-
-/* An old/new value: one clipped line, the whole value one click away. */
-.valueDetails { max-width: 110px; }
-
-.valueDetails summary {
+/* An old/new value in the row: one clipped line. The whole value is in the entry's window (the row opens it). */
+.val {
+  display: block;
+  max-width: 110px;
   font-family: var(--font-data); /* type-ok: code */
   font-size: var(--type-support);
   color: var(--text-secondary);
-  cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.valueDetails pre {
-  max-width: min(520px, 72vw);
-  max-height: 20rem;
-  overflow: auto;
-  margin: 0.5rem 0 0;
-  padding: 0.75rem;
-  border: 1px solid var(--home-line);
-  border-radius: 6px;
-  background: var(--home-olive-soft);
-  color: var(--text-primary);
-  font-family: var(--font-data); /* type-ok: code */
-  font-size: var(--type-support);
-  line-height: 1.5;
-  white-space: pre-wrap;
+/* The row's › — the cue that it opens, and the keyboard's way in (the row itself is not a tab stop). */
+.openCell { vertical-align: middle; }
+.openBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--home-olive);
+  font: inherit;
+  font-size: var(--type-title);
+  line-height: 1;
+  cursor: pointer;
 }
+.openBtn:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 6px; }
 
 .pagination {
   display: flex;
@@ -56,6 +54,113 @@
   border-top: 1px solid var(--home-line);
 }
 
+/* ── The entry's window ── */
+.entry { display: grid; gap: 1.1rem; }
+
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem 1.25rem; }
+.factValue { color: var(--text-primary); overflow-wrap: anywhere; margin-top: 0.15rem; }
+
+.changeHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
+.changeHead strong { color: var(--text-primary); font-weight: 650; }
+/* Copy acts in place and goes nowhere, so it is plain ink, never the olive of a door. */
+.copyBtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  cursor: pointer;
+}
+.copyBtn:hover { color: var(--text-primary); text-decoration: underline; }
+
+.panes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.pane { min-width: 0; border: 1px solid var(--home-line); border-radius: 6px; overflow: hidden; background: var(--home-paper); }
+.paneHead { padding: 0.45rem 0.65rem; border-bottom: 1px solid var(--home-line); }
+.paneBody {
+  margin: 0;
+  padding: 0.4rem 0;
+  max-height: 20rem;
+  overflow: auto;
+  font-family: var(--font-data); /* type-ok: code */
+  font-size: var(--type-support);
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.paneBody span { display: block; padding: 0 0.65rem; }
+/* What differs. The sentence under the panes says what the tint means, so colour is never the only signal. */
+.lineOld { background: color-mix(in srgb, var(--warning) 12%, transparent); }
+.lineNew { background: var(--home-olive-soft); }
+.legend { margin-top: 0.4rem; }
+
+/* Same moment: the other entries by this person in this second, one level deeper (the window's back line returns). */
+.moment { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.momentHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--home-paper);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.momentHead strong { color: var(--text-primary); font-weight: 650; font-size: var(--type-body); }
+.momentRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.75rem;
+  border: 0;
+  border-top: 1px solid var(--home-line);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+  text-align: left;
+  cursor: pointer;
+}
+.momentRow:hover { background: var(--home-olive-soft); }
+.momentRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.momentField { margin-left: 0.6rem; }
+.momentGo { color: var(--home-olive); font-size: var(--type-title); line-height: 1; }
+
+/* The foot's doors: olive text, no box, on the tap floor. */
+.footDoor {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding-inline: 0.25rem;
+  color: var(--home-olive);
+  font-size: var(--type-body);
+  font-weight: 650;
+  text-decoration: none;
+}
+.footDoor:hover { text-decoration: underline; }
+
+@media (max-width: 768px) {
+  .footDoor { min-height: var(--tap-min, 44px); }
+}
+
 @media (max-width: 640px) {
-  .valueDetails { max-width: none; min-width: 0; text-align: left; }
+  .orgCell { flex-direction: row; align-items: center; gap: 0.6rem; }
+
+  /* The list's cards: the › takes the card's top-right corner (a card's door is a corner, not a row), and the lead line
+     (the time) leaves it room. */
+  .logTable tr { position: relative; }
+  .logTable td.openCell { position: absolute; top: 0.1rem; right: 0.2rem; padding: 0; }
+  .openBtn { min-width: var(--tap-min, 44px); }
+  .leadCell { padding-right: 2.75rem; }
+  .val { max-width: none; min-width: 0; }
+
+  .panes { grid-template-columns: minmax(0, 1fr); }
+  /* On a phone the doors stack, each on its own line. */
+  .footDoor { flex: 1 1 100%; }
 }

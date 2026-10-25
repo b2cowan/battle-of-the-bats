@@ -1,0 +1,375 @@
+<title>Audit Log Entry Window</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review sheet. Document chrome sits on a cool slate ground so the product frames (warm console paper, fixed light) read as specimens.
+   Frames are drawn at true width: 1040 desktop list, 640 window, 390 phone. */
+:root {
+  /* document chrome */
+  --d-bg: #E9ECEF; --d-ink: #1B2128; --d-soft: #4A5560; --d-line: #CBD2D9; --d-card: #F6F8F9; --d-tag-new: #1F6F4A; --d-tag-re: #8A5A00; --d-tag-same: #5B6670;
+  /* product tokens (the console's warm palette, copied from globals) */
+  --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-ink: #241E15; --p-ink-soft: #4A4235; --p-dim: #615A54;
+  --p-line: rgba(70,55,30,.12); --p-line-strong: rgba(70,55,30,.20);
+  --p-olive: #57651E; --p-olive-soft: rgba(87,101,30,.10); --p-hover: rgba(87,101,30,.06); --p-amber: #835006; --p-amber-soft: rgba(131,80,6,.10);
+  --p-scrim: rgba(36,30,21,.45); --p-window-edge: rgba(70,95,140,.30);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --d-bg:#14181C; --d-ink:#E6EAEE; --d-soft:#A3AEB9; --d-line:#2E363E; --d-card:#1C2228; --d-tag-new:#6FD3A3; --d-tag-re:#E8B24D; --d-tag-same:#9AA6B2; color-scheme: dark; } }
+:root[data-theme="dark"] { --d-bg:#14181C; --d-ink:#E6EAEE; --d-soft:#A3AEB9; --d-line:#2E363E; --d-card:#1C2228; --d-tag-new:#6FD3A3; --d-tag-re:#E8B24D; --d-tag-same:#9AA6B2; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--d-bg); color: var(--d-ink); font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 1.55; padding-inline: 16px; padding-block: 28px 64px; }
+.doc { max-width: 1120px; margin-inline: auto; display: grid; gap: 40px; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.lede { color: var(--d-soft); max-width: 70ch; }
+.sec { display: grid; gap: 12px; min-width: 0; }
+.cap { color: var(--d-soft); font-size: 13px; max-width: 80ch; }
+.tag { display: inline-block; font: 600 11px/1 'IBM Plex Mono', monospace; letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 4px; border: 1px solid currentColor; vertical-align: 2px; margin-right: 6px; }
+.tag.new { color: var(--d-tag-new); } .tag.re { color: var(--d-tag-re); } .tag.same { color: var(--d-tag-same); }
+.stage { overflow-x: auto; border: 1px solid var(--d-line); border-radius: 10px; background: var(--d-card); padding: 18px; min-width: 0; }
+.stage > .row { display: flex; gap: 24px; align-items: flex-start; width: max-content; }
+.pair { display: grid; gap: 22px; width: max-content; }
+.lab { font: 600 11px/1 'IBM Plex Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--d-soft); margin-bottom: 8px; }
+
+/* ───────── product frames ───────── */
+.pf { font-family: Inter, system-ui, sans-serif; color: var(--p-ink); font-size: 14px; line-height: 1.5; text-align: left; }
+.pf * { font-family: inherit; }
+.pf .mono { font-family: 'IBM Plex Mono', monospace; }
+.page { width: 1040px; background: var(--p-paper); padding: 22px 26px 26px; border-radius: 6px; border: 1px solid var(--p-line); }
+.page h3 { font-size: 24px; margin: 0 0 14px; font-weight: 700; }
+.callout { background: var(--p-card); border: 1px solid var(--p-line); border-left: 3px solid var(--p-olive); border-radius: 8px; padding: 10px 14px; color: var(--p-ink-soft); margin-bottom: 14px; }
+.callout b { color: var(--p-ink); }
+.card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; }
+.tb { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--p-line); }
+.tb .count { color: var(--p-ink-soft); }
+.tb .search { flex: 0 0 210px; height: 36px; border-radius: 999px; border: 1px solid var(--p-line-strong); padding: 0 14px; display: flex; align-items: center; color: var(--p-dim); }
+.tb .fld { height: 36px; border-radius: 8px; border: 1px solid var(--p-line-strong); padding: 0 12px; display: flex; align-items: center; color: var(--p-dim); min-width: 120px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--p-line-strong); background: var(--p-card); color: var(--p-ink); font-weight: 600; font-size: 14px; white-space: nowrap; }
+.btn.sm { height: 32px; padding: 0 12px; }
+table.log { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.log th { text-align: left; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--p-ink-soft); padding: 10px 10px; border-bottom: 1px solid var(--p-line); }
+.log td { padding: 11px 10px; border-bottom: 1px solid var(--p-line); vertical-align: middle; font-size: 14px; overflow: hidden; }
+.log .sub { display: block; font-size: 12px; color: var(--p-dim); }
+.log .code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--p-ink-soft); }
+.log .muted { color: var(--p-dim); }
+.log .name { font-weight: 600; text-decoration: underline; text-decoration-color: var(--p-line-strong); text-underline-offset: 3px; }
+.log .door { color: var(--p-olive); font-weight: 650; font-size: 12px; }
+.log .org { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+.log .val { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--p-ink-soft); white-space: nowrap; text-overflow: ellipsis; overflow: hidden; display: block; }
+.log .tri { color: var(--p-ink-soft); margin-right: 5px; font-size: 10px; }
+.log .go { text-align: right; color: var(--p-olive); font-size: 18px; width: 36px; }
+.log tr.hover td { background: var(--p-hover); }
+.log tr.row td { cursor: pointer; }
+.log tr:last-child td { border-bottom: 0; }
+
+/* the window (KitDialog form, medium 640) */
+.scrim { background: var(--p-scrim); padding: 28px 26px; border-radius: 6px; display: grid; place-items: center; }
+.scrim.ph { padding: 0; }
+.win { width: 640px; background: var(--p-card); border: 1px solid var(--p-window-edge); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+.win.phone { width: 390px; border-radius: 0; border: 0; min-height: 780px; }
+.head { display: flex; align-items: flex-start; gap: 10px; padding: 18px 24px 12px; border-bottom: 1px solid var(--p-line); }
+.head .tb2 { flex: 1; min-width: 0; }
+.eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--p-ink-soft); margin-bottom: 3px; }
+.ttl { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; }
+.ident { font-size: 12px; color: var(--p-dim); margin-top: 3px; }
+.x { width: 32px; height: 32px; display: grid; place-items: center; color: var(--p-dim); border-radius: 7px; font-size: 15px; flex: none; }
+.phone .x { display: none; }
+.back { display: none; width: 44px; height: 44px; margin: -8px 0 0 -10px; place-items: center; color: var(--p-ink-soft); font-size: 20px; flex: none; }
+.phone .back { display: grid; }
+.wbody { padding: 16px 24px 20px; display: grid; gap: 18px; color: var(--p-ink-soft); }
+.phone .wbody { padding-inline: 20px; }
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+.phone .facts { grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.fl { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--p-dim); margin-bottom: 2px; }
+.fv { color: var(--p-ink); overflow-wrap: anywhere; }
+.fv.code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--p-ink-soft); }
+.sechead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.sechead b { color: var(--p-ink); font-size: 14px; }
+.doorlink { color: var(--p-olive); font-weight: 650; font-size: 12px; }
+.panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.phone .panes { grid-template-columns: 1fr; }
+.pane { border: 1px solid var(--p-line); border-radius: 6px; background: var(--p-paper); min-width: 0; overflow: hidden; }
+.pane .ph2 { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--p-dim); padding: 7px 10px; border-bottom: 1px solid var(--p-line); }
+.pane pre { margin: 0; padding: 6px 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; color: var(--p-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pane pre span { display: block; padding: 0 10px; }
+.pane pre span.old { background: var(--p-amber-soft); }
+.pane pre span.new { background: var(--p-olive-soft); }
+.pane pre span.gone { color: var(--p-dim); }
+.legend { font-size: 12px; color: var(--p-dim); margin-top: 6px; }
+.same { border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; }
+.same .sh { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: var(--p-paper); font-weight: 600; color: var(--p-ink); font-size: 13px; }
+.same .sh span { color: var(--p-dim); font-weight: 500; }
+.same .r { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 9px 12px; border-top: 1px solid var(--p-line); align-items: center; }
+.same .r .a { color: var(--p-ink); }
+.same .r .f { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--p-ink-soft); }
+.same .r .c { color: var(--p-olive); font-size: 18px; }
+.foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 13px 24px; border-top: 1px solid var(--p-line); }
+.foot .start { margin-right: auto; font-size: 12px; color: var(--p-dim); }
+.foot .end { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+.phone .foot { padding: 13px 20px 24px; flex-direction: column; align-items: stretch; margin-top: auto; }
+.phone .foot .end { flex-direction: column; margin: 0; }
+.phone .foot .btn { width: 100%; height: 44px; }
+.dot { color: var(--p-dim); }
+.fdoor { color: var(--p-olive); font-weight: 650; font-size: 14px; min-height: 34px; display: inline-flex; align-items: center; padding: 0 4px; }
+.phone .foot .fdoor { min-height: 44px; }
+.quiet { color: var(--p-ink-soft); font-weight: 600; font-size: 12px; }
+.nb { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--p-ink-soft); margin: 0 0 7px -2px; }
+.cards { display: grid; gap: 10px; padding: 12px; background: var(--p-paper); }
+.cardrow { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 12px 14px; position: relative; display: grid; gap: 7px; }
+.cardrow .t { font-weight: 600; color: var(--p-ink); padding-right: 28px; }
+.cardrow .t span { display: block; font-weight: 400; font-size: 12px; color: var(--p-dim); }
+.cardrow .corner { position: absolute; top: 8px; right: 12px; color: var(--p-olive); font-size: 20px; }
+.cardrow .kv { display: grid; grid-template-columns: 96px 1fr; gap: 8px; font-size: 13px; align-items: baseline; min-width: 0; }
+.cardrow .kv i { font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--p-dim); }
+.cardrow .kv .m { font-family: 'IBM Plex Mono', monospace; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* the doors table (document, not product) */
+table.doors { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--d-card); border: 1px solid var(--d-line); }
+.doors th, .doors td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--d-line); vertical-align: top; }
+.doors th { font: 600 11px/1.2 'IBM Plex Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--d-soft); }
+.doors td.mono { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--d-soft); }
+.tblwrap { overflow-x: auto; }
+.asks { display: grid; gap: 10px; counter-reset: ask; list-style: none; padding: 0; margin: 0; }
+.asks li { background: var(--d-card); border: 1px solid var(--d-line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 4px; }
+.asks b { font-size: 14px; }
+.asks span { color: var(--d-soft); font-size: 13px; }
+.asks em { font-style: normal; font-weight: 600; color: var(--d-tag-new); }
+.no { border-left: 3px solid var(--d-tag-re); background: var(--d-card); padding: 12px 14px; border-radius: 0 8px 8px 0; max-width: 80ch; }
+</style>
+
+<div class="doc">
+
+<header class="sec">
+  <h1>Audit log: opening an entry</h1>
+  <p class="lede">Today a row in the audit log only shows what it shows. After this change, clicking a row opens a window with the whole entry: who, when, which org, and the old and new values laid out in full. The window carries up to two doors that take you to the thing the entry was about. Example values below are made up for the drawing.</p>
+  <p class="cap"><span class="tag new">New</span>added &nbsp; <span class="tag re">Restyled</span>changed from today &nbsp; <span class="tag same">Unchanged</span>as it is today. The frames use the console's real look; open this page on your phone to judge the phone drawing at its real width.</p>
+</header>
+
+<!-- 1 · whole screen -->
+<section class="sec">
+  <h2>1 · The whole screen, before and after</h2>
+  <p class="cap"><span class="tag re">Restyled</span>Each row now opens the entry: a quiet › sits at the right edge (the same one the Orgs and People lists use) and the row tints when you point at it. The raw action key and the small ▶ in the two value columns leave the row, because the window shows them in full. <span class="tag same">Unchanged</span>Toolbar, filters, Export, the org name link and its Filter link (each still does its own job when clicked, without opening the window), and paging.</p>
+  <div class="stage"><div class="pair">
+    <div>
+      <div class="lab">Before · today</div>
+      <div class="pf page">
+        <h3>Audit log</h3>
+        <div class="callout"><b>About this log</b><br>The audit log records all consequential admin actions across all orgs. Use the filters to narrow by org, date, or action type. Logs are retained indefinitely.</div>
+        <div class="card">
+          <div class="tb"><span class="count">100 entries</span><span class="search">Search org or email...</span><span class="fld">Choose a date</span><span class="fld">Choose a date</span><span class="fld" style="min-width:150px">All actions</span><span class="btn sm">Filter</span><span class="btn sm" style="margin-left:auto">Export</span></div>
+          <table class="log">
+            <colgroup><col style="width:120px"><col style="width:210px"><col style="width:160px"><col style="width:170px"><col style="width:130px"><col style="width:110px"><col></colgroup>
+            <thead><tr><th>Timestamp</th><th>Superuser</th><th>Org</th><th>Action</th><th>Field</th><th>Old value</th><th>New value</th></tr></thead>
+            <tbody>
+              <tr><td>Oct 25, 2026<span class="sub">06:31:01 p.m.</span></td><td>uat-platform@fieldlogichq.ca</td><td><div class="org"><span class="name">UAT Lakeshore Lynx</span><span class="door">Filter</span></div></td><td>Update plan field<span class="sub code">update_plan</span></td><td class="muted">team_limit</td><td><span class="val"><span class="tri">▶</span>-</span></td><td><span class="val"><span class="tri">▶</span>15</span></td></tr>
+              <tr><td>Oct 25, 2026<span class="sub">06:31:01 p.m.</span></td><td>uat-platform@fieldlogichq.ca</td><td><div class="org"><span class="name">UAT Lakeshore Lynx</span><span class="door">Filter</span></div></td><td>Update plan field<span class="sub code">update_plan</span></td><td class="muted">club_trial</td><td><span class="val"><span class="tri">▶</span>-</span></td><td><span class="val"><span class="tri">▶</span>{"days":90,"…</span></td></tr>
+              <tr><td>Oct 25, 2026<span class="sub">06:31:01 p.m.</span></td><td>uat-platform@fieldlogichq.ca</td><td><div class="org"><span class="name">UAT Lakeshore Lynx</span><span class="door">Filter</span></div></td><td>Update plan and limit<span class="sub code">update_org_plan_and_l<br>imit</span></td><td class="muted">plan_and_limit</td><td><span class="val"><span class="tri">▶</span>{"plan_id":"…</span></td><td><span class="val"><span class="tri">▶</span>{"reason":"t…</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="lab">After · the third row is being pointed at</div>
+      <div class="pf page">
+        <h3>Audit log</h3>
+        <div class="callout"><b>About this log</b><br>The audit log records all consequential admin actions across all orgs. Use the filters to narrow by org, date, or action type. Logs are retained indefinitely.</div>
+        <div class="card">
+          <div class="tb"><span class="count">100 entries</span><span class="search">Search org or email...</span><span class="fld">Choose a date</span><span class="fld">Choose a date</span><span class="fld" style="min-width:150px">All actions</span><span class="btn sm">Filter</span><span class="btn sm" style="margin-left:auto">Export</span></div>
+          <table class="log">
+            <colgroup><col style="width:120px"><col style="width:210px"><col style="width:150px"><col style="width:160px"><col style="width:120px"><col style="width:100px"><col><col style="width:36px"></colgroup>
+            <thead><tr><th>Timestamp</th><th>Superuser</th><th>Org</th><th>Action</th><th>Field</th><th>Old value</th><th>New value</th><th></th></tr></thead>
+            <tbody>
+              <tr class="row"><td>Oct 25, 2026<span class="sub">06:31:01 p.m.</span></td><td>uat-platform@fieldlogichq.ca</td><td><div class="org"><span class="name">UAT Lakeshore Lynx</span><span class="door">Filter</span></div></td><td>Update plan field</td><td class="muted">team_limit</td><td><span class="val">-</span></td><td><span class="val">15</span></td><td class="go">›</td></tr>
+              <tr class="row"><td>Oct 25, 2026<span class="sub">06:31:01 p.m.</span></td><td>uat-platform@fieldlogichq.ca</td><td><div class="org"><span class="name">UAT Lakeshore Lynx</span><span class="door">Filter</span></div></td><td>Update plan field</td><td class="muted">club_trial</td><td><span class="val">-</span></td><td><span class="val">{"days":90,"reason":"UAT"}</span></td><td class="go">›</td></tr>
+              <tr class="row hover"><td>Oct 25, 2026<span class="sub">06:31:01 p.m.</span></td><td>uat-platform@fieldlogichq.ca</td><td><div class="org"><span class="name">UAT Lakeshore Lynx</span><span class="door">Filter</span></div></td><td>Update plan and limit</td><td class="muted">plan_and_limit</td><td><span class="val">{"plan_id":"tournament","team_limit":null}</span></td><td><span class="val">{"plan_id":"club","reason":"UAT setup"}</span></td><td class="go">›</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 2 · the window -->
+<section class="sec">
+  <h2>2 · The window, on a computer</h2>
+  <p class="cap"><span class="tag new">New</span>The console's own window (the 640 width the record windows use), opened from the third row above. Reads first, nothing to type. The page behind stays where it was, so closing returns you to the same row and filters.</p>
+  <ul class="cap" style="margin:0;padding-left:18px;display:grid;gap:3px">
+    <li><b>The change.</b> Old and new side by side in full, with the lines that differ tinted. The sentence under the panes says what the tint means, so colour is never the only signal.</li>
+    <li><b>Same moment.</b> The three entries beside it from this person in this second, one tap each (it swaps this window to that entry). Your UAT setup shows up as one event instead of four unrelated rows. Hidden when there are none.</li>
+    <li><b>The foot.</b> Two doors in olive text (the console's rule: a control that goes somewhere is olive text; an outlined button is for an act that opens a window). No lime button, since there is no main action here. <i>Copy</i> sits above the panes in plain ink, because it acts in place and goes nowhere; it says "Copied" for a moment after you press it.</li>
+    <li><b>Going into a same-moment entry.</b> The second window below is what you see after tapping one: a "‹ Update plan and limit" line above the title takes you back to where you were (on a phone, the ← at the top left does the same).</li>
+  </ul>
+  <div class="stage"><div class="row">
+    <div>
+      <div class="lab">Entry with an org</div>
+      <div class="pf scrim"><div class="win">
+        <div class="head"><div class="tb2"><div class="eyebrow">Audit entry</div><h4 class="ttl">Update plan and limit</h4><div class="ident">Oct 25, 2026 · 06:31:01 p.m.</div></div><span class="x">✕</span></div>
+        <div class="wbody">
+          <div class="facts">
+            <div><div class="fl">Superuser</div><div class="fv">uat-platform@fieldlogichq.ca</div></div>
+            <div><div class="fl">Org</div><div class="fv">UAT Lakeshore Lynx</div></div>
+            <div><div class="fl">Field</div><div class="fv code">plan_and_limit</div></div>
+            <div><div class="fl">Action key</div><div class="fv code">update_org_plan_and_limit</div></div>
+          </div>
+          <div>
+            <div class="sechead"><b>What changed</b><span class="quiet">Copy</span></div>
+            <div class="panes">
+              <div class="pane"><div class="ph2">Old value</div><pre><span>{</span><span class="old">  "plan_id": "tournament",</span><span class="old">  "team_limit": null,</span><span class="old">  "tournament_limit": 1</span><span>}</span></pre></div>
+              <div class="pane"><div class="ph2">New value</div><pre><span>{</span><span class="new">  "plan_id": "club",</span><span class="new">  "reason": "UAT setup: club trial",</span><span class="new">  "team_limit": 15,</span><span class="new">  "tournament_limit": 9999</span><span>}</span></pre></div>
+            </div>
+            <div class="legend">Tinted lines are the ones that differ.</div>
+          </div>
+          <div class="same">
+            <div class="sh">Same moment <span>3 other entries by this person at 06:31:01 p.m.</span></div>
+            <div class="r"><div><span class="a">Update plan field</span> &nbsp;<span class="f">team_limit</span></div><span class="c">›</span></div>
+            <div class="r"><div><span class="a">Update plan field</span> &nbsp;<span class="f">club_trial</span></div><span class="c">›</span></div>
+            <div class="r"><div><span class="a">Update plan field</span> &nbsp;<span class="f">tournament_limit</span></div><span class="c">›</span></div>
+          </div>
+        </div>
+        <div class="foot"><div class="end"><span class="fdoor">Show this org's entries</span><span class="fdoor">Open org</span></div></div>
+      </div></div>
+    </div>
+    <div>
+      <div class="lab">After tapping a same-moment entry</div>
+      <div class="pf scrim"><div class="win">
+        <div class="head"><div class="tb2"><span class="nb">‹ Update plan and limit</span><div class="eyebrow">Audit entry</div><h4 class="ttl">Update plan field</h4><div class="ident">Oct 25, 2026 · 06:31:01 p.m.</div></div><span class="x">✕</span></div>
+        <div class="wbody">
+          <div class="facts">
+            <div><div class="fl">Superuser</div><div class="fv">uat-platform@fieldlogichq.ca</div></div>
+            <div><div class="fl">Org</div><div class="fv">UAT Lakeshore Lynx</div></div>
+            <div><div class="fl">Field</div><div class="fv code">team_limit</div></div>
+            <div><div class="fl">Action key</div><div class="fv code">update_plan</div></div>
+          </div>
+          <div>
+            <div class="sechead"><b>What changed</b><span class="quiet">Copy</span></div>
+            <div class="panes">
+              <div class="pane"><div class="ph2">Old value</div><pre><span class="old gone">-</span></pre></div>
+              <div class="pane"><div class="ph2">New value</div><pre><span class="new">15</span></pre></div>
+            </div>
+            <div class="legend">Tinted lines are the ones that differ.</div>
+          </div>
+        </div>
+        <div class="foot"><div class="end"><span class="fdoor">Show this org's entries</span><span class="fdoor">Open org</span></div></div>
+      </div></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 3 · phone -->
+<section class="sec">
+  <h2>3 · The same window on a phone</h2>
+  <p class="cap"><span class="tag new">New</span>On a phone each row is already a card. The whole card opens the entry, with the › in the card's top-right corner (the lead line is the time, with no label above it, as the other cards in the console do). The window then fills the screen with ← at the top left. The panes stack, Old above New. The two doors stack at the 44px tap size. Open this page on your phone to judge it at real size.</p>
+  <div class="stage"><div class="row">
+    <div>
+      <div class="lab">The list as cards · 390 wide</div>
+      <div class="pf" style="width:390px;border:1px solid var(--p-line)"><div class="cards">
+        <div class="cardrow"><span class="corner">›</span><div class="t">Oct 25, 2026<span>06:31:01 p.m.</span></div>
+          <div class="kv"><i>Superuser</i><span>uat-platform@fieldlogichq.ca</span></div>
+          <div class="kv"><i>Org</i><span><b style="font-weight:600;text-decoration:underline;text-decoration-color:var(--p-line-strong)">UAT Lakeshore Lynx</b> &nbsp;<span style="color:var(--p-olive);font-weight:650;font-size:12px">Filter</span></span></div>
+          <div class="kv"><i>Action</i><span>Update plan field</span></div>
+          <div class="kv"><i>Field</i><span style="color:var(--p-dim)">team_limit</span></div>
+          <div class="kv"><i>Old value</i><span class="m">-</span></div>
+          <div class="kv"><i>New value</i><span class="m">15</span></div></div>
+        <div class="cardrow"><span class="corner">›</span><div class="t">Oct 25, 2026<span>06:31:01 p.m.</span></div>
+          <div class="kv"><i>Superuser</i><span>uat-platform@fieldlogichq.ca</span></div>
+          <div class="kv"><i>Org</i><span><b style="font-weight:600;text-decoration:underline;text-decoration-color:var(--p-line-strong)">UAT Lakeshore Lynx</b> &nbsp;<span style="color:var(--p-olive);font-weight:650;font-size:12px">Filter</span></span></div>
+          <div class="kv"><i>Action</i><span>Update plan and limit</span></div>
+          <div class="kv"><i>Field</i><span style="color:var(--p-dim)">plan_and_limit</span></div>
+          <div class="kv"><i>Old value</i><span class="m">{"plan_id":"tournament","team…</span></div>
+          <div class="kv"><i>New value</i><span class="m">{"plan_id":"club","reason":"…</span></div></div>
+      </div></div>
+    </div>
+    <div>
+      <div class="lab">390 wide</div>
+      <div class="pf"><div class="win phone">
+        <div class="head"><span class="back">←</span><div class="tb2"><div class="eyebrow">Audit entry</div><h4 class="ttl">Update plan and limit</h4><div class="ident">Oct 25, 2026 · 06:31:01 p.m.</div></div><span class="x">✕</span></div>
+        <div class="wbody">
+          <div class="facts">
+            <div style="grid-column:1 / -1"><div class="fl">Superuser</div><div class="fv">uat-platform@fieldlogichq.ca</div></div>
+            <div><div class="fl">Org</div><div class="fv">UAT Lakeshore Lynx</div></div>
+            <div><div class="fl">Field</div><div class="fv code">plan_and_limit</div></div>
+            <div style="grid-column:1 / -1"><div class="fl">Action key</div><div class="fv code">update_org_plan_and_limit</div></div>
+          </div>
+          <div>
+            <div class="sechead"><b>What changed</b><span class="quiet">Copy</span></div>
+            <div class="panes">
+              <div class="pane"><div class="ph2">Old value</div><pre><span>{</span><span class="old">  "plan_id": "tournament",</span><span class="old">  "team_limit": null,</span><span class="old">  "tournament_limit": 1</span><span>}</span></pre></div>
+              <div class="pane"><div class="ph2">New value</div><pre><span>{</span><span class="new">  "plan_id": "club",</span><span class="new">  "reason": "UAT setup: club trial",</span><span class="new">  "team_limit": 15,</span><span class="new">  "tournament_limit": 9999</span><span>}</span></pre></div>
+            </div>
+            <div class="legend">Tinted lines are the ones that differ.</div>
+          </div>
+          <div class="same">
+            <div class="sh">Same moment <span>3 more</span></div>
+            <div class="r"><div><span class="a">Update plan field</span> &nbsp;<span class="f">team_limit</span></div><span class="c">›</span></div>
+          </div>
+        </div>
+        <div class="foot"><div class="end"><span class="fdoor">Show this org's entries</span><span class="fdoor">Open org</span></div></div>
+      </div></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 4 · doors -->
+<section class="sec">
+  <h2>4 · Which doors each kind of entry gets</h2>
+  <p class="cap"><span class="tag new">New</span>At most two, taken from what the entry is about. The org's own page, its entries, or the screen where that kind of thing is managed. The rule is the one from the budget report's drill-in: two is a ceiling, and an entry with nothing to open gets none. A door never appears unless the entry carries enough to find its target, so none of them can lead to a missing page. Which exact screen each opens is confirmed against the console when this is built.</p>
+  <div class="tblwrap"><table class="doors">
+    <thead><tr><th>Entry is about</th><th>Examples</th><th>Door 1</th><th>Door 2</th></tr></thead>
+    <tbody>
+      <tr><td>An org</td><td class="mono">update_org_plan_and_limit · update_addons · create_internal_note · cancel_subscription · update_plan (with an org)</td><td>Open org</td><td>Show this org's entries</td></tr>
+      <tr><td>A feedback item</td><td class="mono">update_feedback_status</td><td>Open Feedback</td><td>Open org, when it has one</td></tr>
+      <tr><td>An early-access lead</td><td class="mono">update_early_access_lead</td><td>Open Leads</td><td>none</td></tr>
+      <tr><td>Plans and pricing</td><td class="mono">update_plan_config · update_plan_gating · update_stripe_price_id</td><td>Open Plans &amp; pricing</td><td>none</td></tr>
+      <tr><td>A console user</td><td class="mono">invite_platform_user · update_platform_user · remove_platform_user</td><td>Open Staff</td><td>none</td></tr>
+      <tr><td>A bulk run</td><td class="mono">run_bulk_operation (no org)</td><td>Open Bulk changes</td><td>none</td></tr>
+      <tr><td>A scheduled job</td><td class="mono">club_domains_tick · club_hand_back_sweep · sandbox ticks</td><td colspan="2">none. The foot says so in a sentence (drawn below).</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="stage"><div class="row">
+    <div>
+      <div class="lab">An entry with nothing to open</div>
+      <div class="pf scrim"><div class="win">
+        <div class="head"><div class="tb2"><div class="eyebrow">Audit entry</div><h4 class="ttl">Club domains tick</h4><div class="ident">Oct 25, 2026 · 07:00:04 a.m.</div></div><span class="x">✕</span></div>
+        <div class="wbody">
+          <div class="facts">
+            <div><div class="fl">Superuser</div><div class="fv">cron-scheduler</div></div>
+            <div><div class="fl">Org</div><div class="fv" style="color:var(--p-dim)">None. It covers every club.</div></div>
+            <div><div class="fl">Field</div><div class="fv code">result</div></div>
+            <div><div class="fl">Action key</div><div class="fv code">club_domains_tick</div></div>
+          </div>
+          <div>
+            <div class="sechead"><b>What changed</b><span class="quiet">Copy</span></div>
+            <div class="panes">
+              <div class="pane"><div class="ph2">Old value</div><pre><span class="gone">-</span></pre></div>
+              <div class="pane"><div class="ph2">New value</div><pre><span>{</span><span>  "changed": 1,</span><span>  "failed": 0,</span><span>  "emailed": {}</span><span>}</span></pre></div>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span class="start">This ran on a schedule, so there is nothing to open.</span></div>
+      </div></div>
+    </div>
+  </div></div>
+</section>
+
+<section class="sec">
+  <h2>What the window deliberately does not have</h2>
+  <p class="no"><b>No Revert, no Edit, no Delete.</b> An entry stores the old value of one field, not the whole record around it, so a revert from here would be a guess. A revert is also a consequential admin action in its own right, and the log is meant to be the record nobody changes. To put something back, go to the org (Open org) and use the screen that makes the change, which asks why and writes its own entry.</p>
+</section>
+
+<section class="sec">
+  <h2>Calls for you</h2>
+  <ol class="asks">
+    <li><b>1 · The whole row opens, not just a › at the end.</b><span>Recommended: the whole row (and the whole card on a phone), with the › as the cue. The org name and its Filter link keep working on their own. <em>Alternative:</em> only the › opens it, which is safer against stray clicks but a smaller target.</span></li>
+    <li><b>2 · The two value columns lose the ▶, and the raw key leaves the row.</b><span>Recommended: yes. The window shows both in full, and the key is what makes the Action cell wrap mid-word today. <em>Alternative:</em> keep the ▶ for a quick peek without opening the window.</span></li>
+    <li><b>3 · Tint the lines that differ.</b><span>Recommended: yes, with the one-line sentence under the panes. It matters most on the bigger entries where only one value in a long object moved.</span></li>
+    <li><b>4 · The "Same moment" list.</b><span>Recommended: yes, and quiet. It turns a burst of four rows into one event, and costs nothing when there is nothing beside it. It does add a level inside the window, so the drawing shows the "‹" way back. <em>Alternative:</em> the console's Newer / Older steps with a position ("3 of 100"), which have no level to come back from, but do not group a burst for you.</span></li>
+    <li><b>5 · Two doors, and "Show this person's entries" stays out.</b><span>Recommended: keep to two, in olive text as the console's rule has it. The search box already finds a person by email. <em>Alternative:</em> outlined buttons instead of olive text (you said "button"; the console reserves those for acts that open a window), or swap "Show this org's entries" for the person when the entry has no org.</span></li>
+    <li><b>6 · The org door's name.</b><span>The drawing says "Open org", as this page's own Org column does. The console's menu now calls that place Clubs &amp; portals, and a door is named for what it opens. <em>Alternative:</em> "Open club". Either way the other doors use the menu's names: Leads, Staff, Bulk changes, Plans &amp; pricing, Feedback.</span></li>
+  </ol>
+</section>
+
+</div>

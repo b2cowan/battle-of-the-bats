@@ -1,12 +1,15 @@
 import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
+import { canViewPlatformArea } from '@/lib/platform-areas';
+import { auditDoors, isScheduledEntry } from '@/lib/platform-audit-doors';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import kit from '../console.module.css';
 import { humanize } from '../chips';
 import styles from './audit.module.css';
 import HelpCallout from '@/components/help/HelpCallout';
 import AuditExportClient from './AuditExportClient';
+import AuditTable, { type AuditRowView } from './AuditTable';
 import DateInput from '@/components/shared/DateInput';
 import RecordsOpened, { RECORDS_OPENED } from './RecordsOpened';
 
@@ -135,17 +138,6 @@ function fmtTime(iso: string) {
   });
 }
 
-function fmtValue(v: unknown): string {
-  if (v === null || v === undefined) return '-';
-  const s = typeof v === 'string' ? v : JSON.stringify(v);
-  return s.length > 80 ? `${s.slice(0, 80)}...` : s;
-}
-
-function fullValue(v: unknown): string {
-  if (v === null || v === undefined) return '-';
-  return typeof v === 'string' ? v : JSON.stringify(v, null, 2);
-}
-
 function buildAuditHref(filters: Filters, extra: Partial<Filters> = {}) {
   const next = { ...filters, ...extra };
   const p = new URLSearchParams();
@@ -201,6 +193,35 @@ export default async function AuditLogPage({
 
   const hasNext = rows.length === PAGE_SIZE;
   const hasPrev = offset > 0;
+
+  const rowViews: AuditRowView[] = rows.map(row => {
+    const scheduled = isScheduledEntry(row.action, row.actorEmail);
+    const orgFilterHref = row.orgId && row.orgName ? buildAuditHref(filters, { orgId: row.orgId, offset: 0 }) : null;
+    return {
+      id: row.id,
+      actorEmail: row.actorEmail,
+      orgId: row.orgId,
+      orgName: row.orgName,
+      action: row.action,
+      actionLabel: actionLabel(row.action),
+      field: row.field,
+      oldValue: row.oldValue,
+      newValue: row.newValue,
+      dateLabel: fmtDate(row.createdAt),
+      timeLabel: fmtTime(row.createdAt),
+      momentKey: new Date(row.createdAt).toISOString().slice(0, 19),
+      orgFilterHref,
+      doors: auditDoors({
+        action: row.action,
+        orgId: row.orgId,
+        orgName: row.orgName,
+        orgEntriesHref: orgFilterHref ?? buildAuditHref(filters, { offset: 0 }),
+        canView: area => canViewPlatformArea(auth.role, area),
+        scheduled,
+      }),
+      scheduled,
+    };
+  });
 
   return (
     <div className={kit.page}>
@@ -268,68 +289,7 @@ export default async function AuditLogPage({
           </span>
           </div>
 
-          <div className={`${kit.tableWrap} table-cards`}>
-            <table className={`${kit.comfortable} ${styles.logTable}`}>
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>Superuser</th>
-                  <th>Org</th>
-                  <th>Action</th>
-                  <th>Field</th>
-                  <th>Old value</th>
-                  <th>New value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className={kit.empty}>No audit entries found.</td>
-                  </tr>
-                )}
-                {rows.map(row => (
-                  <tr key={row.id}>
-                    <td className={`${kit.nowrap} table-cards-title`}>
-                      {fmtDate(row.createdAt)}
-                      <span className={kit.sub}>{fmtTime(row.createdAt)}</span>
-                    </td>
-                    <td data-label="Superuser">{row.actorEmail}</td>
-                    <td data-label="Org">
-                      {row.orgId && row.orgName ? (
-                        <span className={styles.orgCell}>
-                          <Link href={`/platform-admin/orgs/${row.orgId}`} className={kit.nameLink}>
-                            {row.orgName}
-                          </Link>
-                          <Link href={buildAuditHref(filters, { orgId: row.orgId, offset: 0 })} className={`${kit.door} ${kit.doorSm}`}>
-                            Filter
-                          </Link>
-                        </span>
-                      ) : (
-                        <span className={kit.muted}>-</span>
-                      )}
-                    </td>
-                    <td data-label="Action">
-                      {actionLabel(row.action)}
-                      <span className={`${kit.sub} ${kit.code}`}>{row.action}</span>
-                    </td>
-                    <td data-label="Field" className={kit.muted}>{row.field ?? '-'}</td>
-                    <td data-label="Old value">
-                      <details className={styles.valueDetails}>
-                        <summary>{fmtValue(row.oldValue)}</summary>
-                        <pre>{fullValue(row.oldValue)}</pre>
-                      </details>
-                    </td>
-                    <td data-label="New value">
-                      <details className={styles.valueDetails}>
-                        <summary>{fmtValue(row.newValue)}</summary>
-                        <pre>{fullValue(row.newValue)}</pre>
-                      </details>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AuditTable rows={rowViews} />
 
           {(hasPrev || hasNext) && (
             <div className={styles.pagination}>
