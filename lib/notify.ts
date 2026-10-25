@@ -283,6 +283,9 @@ export async function notify(opts: NotifyOptions): Promise<void> {
             metadata:   opts.metadata ?? {},
           });
 
+        // A unique refusal means this exact notice is already open for them (mig 366 — one open copy of an online
+        // payments notice): two raises raced, the other won. They have it, so send them nothing more.
+        if (insertErr?.code === '23505') continue;
         if (insertErr) {
           console.error('[notify] Bell insert failed:', insertErr.message);
         }

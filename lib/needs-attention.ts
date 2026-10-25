@@ -81,16 +81,17 @@ const said = (outcome: string, extra: Partial<Settled> = {}): Settled => ({ by: 
 /** The org slug an admin or coach link starts with. */
 const slugOf = (link: string | null) => (link ? /^\/([^/?#]+)\/(?:admin|coaches)(?:[/?#]|$)/.exec(link)?.[1] ?? null : null);
 
-/** Rows whose `column` is one of `values`, read in chunks (an `in` list has a length limit). */
-async function rowsIn<T>(table: string, select: string, column: string, values: readonly string[], narrow?: (q: any) => any): Promise<T[]> { // eslint-disable-line @typescript-eslint/no-explicit-any
+/** Rows whose `column` is one of `values`, read in chunks (an `in` list has a length limit). `orderBy` must be unique
+ *  per row (the paging stands on it) — `id` unless the table has none, like `org_payment_accounts` (keyed by `org_id`). */
+async function rowsIn<T>(table: string, select: string, column: string, values: readonly string[], narrow?: (q: any) => any, orderBy = 'id'): Promise<T[]> { // eslint-disable-line @typescript-eslint/no-explicit-any
   const out: T[] = [];
   for (let i = 0; i < values.length; i += CHUNK) {
-    // Paged in id order: a response is capped at PAGE rows, and a read cut short raises no error — a hand-back's
+    // Paged in `orderBy` order (`id` unless the table has none): a response is capped at PAGE rows, and a read cut short raises no error — a hand-back's
     // Sundays past the cut read as "taken back" and cleared a notice still waiting (/review 2026-10-16).
     for (let from = 0; ; from += PAGE) {
       let q = supabaseAdmin.from(table).select(select).in(column, values.slice(i, i + CHUNK));
       if (narrow) q = narrow(q);
-      const { data, error } = await q.order('id').range(from, from + PAGE - 1);
+      const { data, error } = await q.order(orderBy).range(from, from + PAGE - 1);
       if (error) throw error;
       const page = (data ?? []) as unknown as T[];
       out.push(...page);
@@ -452,7 +453,7 @@ const paymentHandedOff: Resolver = async rows => {
  *  clears itself when Stripe says the account is enabled again, or when the club disconnects. */
 const payoutsNeedAttention: Resolver = async rows => {
   const out = new Map<string, Verdict>();
-  const accounts = new Map((await rowsIn<PayoutsAccountRow>('org_payment_accounts', PAYOUTS_ACCOUNT_COLUMNS, 'org_id', uniq(rows.map(r => r.org_id)))).map(a => [a.org_id, a]));
+  const accounts = new Map((await rowsIn<PayoutsAccountRow>('org_payment_accounts', PAYOUTS_ACCOUNT_COLUMNS, 'org_id', uniq(rows.map(r => r.org_id)), undefined, 'org_id')).map(a => [a.org_id, a]));
   for (const r of rows) {
     const state = payoutsState(factsFromRow(accounts.get(r.org_id)));
     // Only Stripe saying payments work again settles it; "setting up" is still a wait (review 2026-10-25, M2).

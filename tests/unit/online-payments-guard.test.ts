@@ -133,5 +133,7 @@ describe('every online-payments door reads the launch switch', () => {
     assert.match(create, /fees_collector: 'application'/);
     assert.match(create, /losses_collector: 'stripe'/);
     assert.match(create, /idempotencyKey: `club-account:\$\{args\.orgId\}`/);
+    // One fixed body under that key: what Stripe's form is handed goes in a separate call (/review 2026-10-25).
+    assert.doesNotMatch(create, /profile/);
   });
 });

@@ -33,6 +33,8 @@ export type PayoutsView = {
   refundPolicy: string;
   requirementsDue: number;
   deadline: string | null;
+  /** Stripe still has card payments on (teams see Pay now) — "needs attention" then means "still on", not "paused". */
+  paymentsOn: boolean;
   connectedAt: string | null;
   disconnectedAt: string | null;
   disconnectedBy: string | null;
@@ -100,7 +102,8 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
     state === 'not_set_up' ? W.notSetUpBody(view.rateLabel)
       : state === 'setting_up' ? W.settingUpBody(formatStoredDate(view.connectedAt, { withYear: false }))
         : state === 'taking_payments' ? W.takingBody(clubName)
-          : state === 'needs_attention' ? W.needsBody(view.deadline ? formatStoredDate(view.deadline, { withYear: false }) : null)
+          : state === 'needs_attention'
+            ? (view.paymentsOn ? W.needsBodyStillOn(view.deadline ? formatStoredDate(view.deadline, { withYear: false }) : null) : W.needsBody)
             : W.disconnectedBody(formatStoredDate(view.disconnectedAt, { withYear: false }), view.disconnectedBy);
   const hasRecord = state === 'setting_up' || state === 'taking_payments' || state === 'needs_attention';
 
@@ -123,7 +126,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
             </button>
           )}
         </div>
-        <h2 id="settings-payouts" className={styles.cardTitle}>{W.title[state]}</h2>
+        <h2 id="settings-payouts" className={styles.cardTitle}>{state === 'needs_attention' && view.paymentsOn ? W.needsTitleStillOn : W.title[state]}</h2>
         {view.testMode && <p className={ck.hint}>{W.testLine}</p>}
         <p className={pc.body}>{body}</p>
         {state !== 'disconnected' && <p className={ck.hint}>{W.ratesLine(view.rateLabel)}</p>}

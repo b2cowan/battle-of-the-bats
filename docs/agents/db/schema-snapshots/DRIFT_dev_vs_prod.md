@@ -2,13 +2,13 @@
 
 **Generated:** 2026-10-25 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 384 divergence(s)** across dev/prod.
+**⚠️ 385 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 13 | 0 | — |
 | Columns | 207 | 1 | 0 |
-| Indexes | 51 | 0 | 2 |
+| Indexes | 52 | 0 | 2 |
 | Constraints | 51 | 0 | — |
 | RLS / CHECK | 59 | 0 | 0 (RLS state) |
 
@@ -248,12 +248,13 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (51)
+### Only in DEV (52)
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
 - `idx_rep_team_tryout_contacts_org`
 - `idx_rep_team_tryout_contacts_setter`
 - `league_registrations_signup_ref_idx`
+- `notifications_one_open_online_payments_notice`
 - `online_payment_refunds_cost_entry_idx`
 - `online_payment_refunds_created_by_idx`
 - `online_payment_refunds_entry_idx`

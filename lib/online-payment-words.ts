@@ -127,16 +127,25 @@ export const PAYOUTS_WORDS = {
     `Payments go straight to your bank account through Stripe. Each card payment has a processing fee of ${rate}, and you choose who pays it. Stripe will ask for your legal name, a signing officer and your bank account.`,
   settingUpBody: (date: string) => `You started on ${date}. Teams keep seeing your “How to pay” text until setup is finished.`,
   takingBody: (clubName: string) => `Payouts go to your bank account on Stripe’s schedule. Receipts go out in the name “${clubName}”.`,
-  needsBody: (deadline: string | null) =>
+  // Paused: Stripe has switched card payments off, so the pay page shows "How to pay" (`takesPayments` is false).
+  needsBody: 'Stripe needs something more from you. Until then teams see your “How to pay” text instead of Pay now. Nothing already paid is affected.',
+  // Still on (derived, walk 2026-10-25): Stripe asks while card payments stay on — teams still see Pay now. Matches the
+  // Needs-attention notice's "stay on" body; the card used to say "paused" here.
+  needsTitleStillOn: 'Stripe needs something more from you',
+  needsBodyStillOn: (deadline: string | null) =>
     deadline
-      ? `Stripe needs something more from you by ${deadline}. Until then teams may see your “How to pay” text instead of Pay now. Nothing already paid is affected.`
-      : 'Stripe needs something more from you. Until then teams see your “How to pay” text instead of Pay now. Nothing already paid is affected.',
+      ? `Online payments are still on. Do it by ${deadline} to keep them on. Nothing already paid is affected.`
+      : 'Online payments are still on. Nothing already paid is affected.',
   disconnectedBody: (date: string, name: string | null) =>
     `Disconnected ${date}${name ? ` by ${name}` : ''}. Payments already made stay in your books; refunds of them are made in Stripe. Teams see your “How to pay” text.`,
   button: {
     not_set_up: 'Set up payouts', setting_up: 'Continue setup', taking_payments: 'Open Stripe', needs_attention: 'Fix in Stripe', disconnected: 'Set up payouts again',
   },
   opening: 'Opening Stripe…',
+  // Filled into Stripe's sign-up when the club has no public site Stripe can open (walk 2026-10-25, derived). The owner
+  // sees it on Stripe's form and can change it there; Stripe reads it for its review of the account.
+  stripeProductDescription: (clubName: string) =>
+    `${clubName} runs community sports programs. Families and teams pay registration, team and tournament fees online through FieldLogicHQ, and find the club through its members, schools and local sports groups.`,
   ratesLine: (rate: string) => `Processing fee: ${rate} per card payment.`,
   rareDisconnect: 'Disconnect payouts',
   ownerOnly: (home: PayoutsHome) => `The owner sets this up in ${home === 'club' ? 'Settings › Payouts' : 'Settings & access › Payouts'}.`,
@@ -193,8 +202,9 @@ export const PAYOUTS_WORDS = {
     takingBody: 'Online payments go to the club’s bank account.',
     takingLink: 'Open Stripe',
     needsLead: 'Needs attention',
-    needsBody: (deadline: string | null) =>
-      deadline ? `Online payments are paused: Stripe needs something from the owner by ${deadline}.` : 'Online payments are paused: Stripe needs something from the owner.',
+    needsBody: 'Online payments are paused: Stripe needs something from the owner.',
+    needsBodyStillOn: (deadline: string | null) =>
+      deadline ? `Online payments are still on. Stripe needs something from the owner by ${deadline}.` : 'Online payments are still on. Stripe needs something from the owner.',
     needsOwnerHint: (home: PayoutsHome) => `The owner fixes it in ${home === 'club' ? 'Settings › Payouts' : 'Settings & access › Payouts'}.`,
     offLead: 'Online payments are off',
     offBody: (date: string) => `The owner disconnected payouts on ${date}. Teams see the organizer’s payment instructions.`,

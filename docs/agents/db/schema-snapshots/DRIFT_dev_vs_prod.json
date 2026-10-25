@@ -1,10 +1,10 @@
 {
   "generated": "2026-10-25",
-  "total": 384,
+  "total": 385,
   "counts": {
     "tables": 13,
     "columns": 208,
-    "indexes": 53,
+    "indexes": 54,
     "constraints": 51,
     "rls": 59
   },
@@ -1307,6 +1307,10 @@
     },
     {
       "key": "index:only-dev:league_registrations_signup_ref_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:notifications_one_open_online_payments_notice",
       "sig": ""
     },
     {

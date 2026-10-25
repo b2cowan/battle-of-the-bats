@@ -80,6 +80,10 @@ naturally. In 12a the only payer is a team, so every variant says "teams" (famil
 | `payouts.needsAttention.bodyNoDeadline` | Stripe needs {requirement}. Until then teams see your “How to pay” text instead of Pay now. Nothing already paid is affected. | |
 | `payouts.needsAttention.bodyUnknown` | Stripe needs something more from you. Until then teams see your “How to pay” text instead of Pay now. Nothing already paid is affected. | When Stripe names nothing we can print |
 | `payouts.needsAttention.button` | Fix in Stripe | |
+| `payouts.needsAttention.titleStillOn` | Stripe needs something more from you | Derived (walk 2026-10-25): Stripe asks while card payments stay **on**. The rows above are the **paused** case only — the card used to say "paused" while teams still saw Pay now |
+| `payouts.needsAttention.bodyStillOn` | Online payments are still on. Do it by {deadline} to keep them on. Nothing already paid is affected. | Use when Stripe gives a deadline |
+| `payouts.needsAttention.bodyStillOnNoDeadline` | Online payments are still on. Nothing already paid is affected. | |
+| `payouts.stripeProductDescription` | {club} runs community sports programs. Families and teams pay registration, team and tournament fees online through FieldLogicHQ, and find the club through its members, schools and local sports groups. | Derived (walk 2026-10-25): filled into Stripe's sign-up when the club has no public site Stripe can open; the owner can change it on Stripe's form |
 | **Disconnected** | | |
 | `payouts.disconnected.pill` | Disconnected | |
 | `payouts.disconnected.title` | Online payments are off | |
@@ -168,6 +172,8 @@ nothing to tell them yet.
 | `status.needsLead` | Needs attention | Amber pill, not text in a name |
 | `status.needsBody` | Online payments are paused: Stripe needs something from the owner. | Stripe's requirement is the owner's to read, so no `{requirement}` here |
 | `status.needsBodyDeadline` | Online payments are paused: Stripe needs something from the owner by {deadline}. | |
+| `status.needsBodyStillOn` | Online payments are still on. Stripe needs something from the owner. | Derived (walk 2026-10-25): payments still on. The two rows above are the paused case, which now carries no deadline |
+| `status.needsBodyStillOnDeadline` | Online payments are still on. Stripe needs something from the owner by {deadline}. | |
 | `status.needsOwnerHintClub` | The owner fixes it in Settings › Payouts. | Treasurer on a League or Club plan |
 | `status.needsOwnerHintTournamentPlus` | The owner fixes it in Settings & access › Payouts. | Treasurer on Tournament Plus |
 | `status.offLead` | Online payments are off | |

@@ -6,10 +6,11 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { onlineFeeRateLabel } from '@/lib/plan-config';
 import { onlinePaymentsOn, stripeKeyIsTest, ONLINE_PAYMENTS_OFF_ERROR } from '@/lib/online-payments-switch';
 import { canConnectPayouts, canSeePayouts } from '@/lib/online-payment-access';
-import { factsFromRow, payoutsState, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from '@/lib/online-payment-account';
+import { factsFromRow, payoutsState, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from '@/lib/online-payment-account';
 import { ONLINE_FEE_PAYERS, onlineFee, type OnlineFeePayer } from '@/lib/online-payment-fee';
-import { createClubAccount, dashboardLink, onboardingLink, retrieveAccount } from '@/lib/stripe-connect';
+import { createClubAccount, dashboardLink, onboardingLink, prefillClubProfile, retrieveAccount } from '@/lib/stripe-connect';
 import { syncPayoutsAccount } from '@/lib/online-payment-landing';
+import { stripeProfileFor } from '@/lib/online-payment-profile';
 import { PAYMENTS_TERMS_VERSION } from '@/lib/online-payment-words';
 
 export const runtime = 'nodejs';
@@ -84,6 +85,7 @@ export const GET = withObservability(async (req: Request) => {
     refundPolicy: facts?.refundPolicy ?? '',
     requirementsDue: facts?.requirementsDue.length ?? 0,
     deadline: facts?.requirementsDeadline ?? null,
+    paymentsOn: takesPayments(facts),
     connectedAt: row?.connected_at ?? null,
     disconnectedAt: row?.disconnected_at ?? null,
     disconnectedBy: row?.disconnected_at ? await nameOf(row.disconnected_by) : null,
@@ -141,6 +143,10 @@ export const POST = withObservability(async (req: Request) => {
           fee_payer: feePayer, connected_by: ctx.user.id, connected_at: now, ...terms,
         }, { onConflict: 'org_id', ignoreDuplicates: true });
         if (error) throw error;
+        // What Stripe's sign-up would otherwise ask (walk 2026-10-25): the club's public site, or a description. Never blocks.
+        // The app's own address only — never the request's Host, which a client can name (/review 2026-10-25).
+        const profile = await stripeProfileFor(ctx.org, process.env.NEXT_PUBLIC_APP_URL ?? '').catch(() => null);
+        if (profile) await prefillClubProfile(acct.id, profile);
       } else {
         // Reconnecting reuses the club's account (a Stripe-covered account is never deleted) — unless Stripe has closed
         // it. Checked BEFORE the row changes: clearing the disconnect first would let a pay page open on a dead account.

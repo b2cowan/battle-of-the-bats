@@ -30354,6 +30354,11 @@
       },
       {
         "tablename": "notifications",
+        "indexname": "notifications_one_open_online_payments_notice",
+        "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text])))"
+      },
+      {
+        "tablename": "notifications",
         "indexname": "notifications_org_idx",
         "indexdef": "CREATE INDEX notifications_org_idx ON public.notifications USING btree (org_id, created_at DESC)"
       },

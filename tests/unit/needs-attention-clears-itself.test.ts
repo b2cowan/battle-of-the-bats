@@ -111,7 +111,11 @@ describe('the /review fixes (2026-10-16)', () => {
   });
 
   it('every read pages (a capped response must never read as "taken back")', () => {
-    assert.match(LIB, /async function rowsIn<T>[\s\S]*?\.order\('id'\)\.range\(from, from \+ PAGE - 1\)[\s\S]*?if \(page\.length < PAGE\) break;/);
+    assert.match(LIB, /async function rowsIn<T>[^\n]*orderBy = 'id'\)[\s\S]*?\.order\(orderBy\)\.range\(from, from \+ PAGE - 1\)[\s\S]*?if \(page\.length < PAGE\) break;/);
+  });
+
+  it('a table with no `id` pages by its own key — the payouts read sorted by `id` failed every time, so "Stripe needs something" never cleared (walk 2026-10-25)', () => {
+    assert.match(LIB, /rowsIn<PayoutsAccountRow>\('org_payment_accounts', PAYOUTS_ACCOUNT_COLUMNS, 'org_id', [^;]*, undefined, 'org_id'\)/);
   });
 
   it('a clear writes read first, then Done', () => {

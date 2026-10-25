@@ -1,6 +1,7 @@
 import 'server-only';
 import type Stripe from 'stripe';
 import { getStripe } from './stripe';
+import type { StripeProfile } from './online-payment-profile';
 
 /**
  * Every Stripe Connect call online payments make (Club Tier Stage 12). One module, so no route talks to Stripe directly
@@ -49,6 +50,29 @@ export async function createClubAccount(args: {
     },
     { apiVersion: CONNECT_ACCOUNT_API_VERSION, idempotencyKey: `club-account:${args.orgId}` },
   );
+}
+
+/**
+ * Hand Stripe's sign-up what it would otherwise ask the club (`lib/online-payment-profile.ts`), before the first onboarding
+ * link. A SEPARATE call from the creation, on purpose (/review 2026-10-25): the creation keeps one fixed body under its
+ * idempotency key, so a retried Set up payouts never meets a body that changed with the club's site; and nothing here can
+ * block setting up payouts. A website Stripe refuses is tried again as the description alone; any other failure leaves the
+ * question to Stripe's form, as before this existed.
+ */
+export async function prefillClubProfile(accountId: string, profile: StripeProfile): Promise<void> {
+  // Stripe's rule: the website when there is one, the description only when there is not.
+  const send = (p: { business_url?: string; product_description?: string }) => getStripe().v2.core.accounts.update(accountId, { defaults: { profile: p } });
+  try {
+    await send(profile.businessUrl ? { business_url: profile.businessUrl } : { product_description: profile.productDescription });
+  } catch (first) {
+    console.warn('[stripe-connect] Stripe refused the filled-in profile:', (first as Error).message);
+    if (!profile.businessUrl) return;
+    try {
+      await send({ product_description: profile.productDescription });
+    } catch (second) {
+      console.warn('[stripe-connect] Stripe refused the description too; the club answers in Stripe:', (second as Error).message);
+    }
+  }
 }
 
 /**
