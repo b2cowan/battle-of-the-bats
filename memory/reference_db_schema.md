@@ -86,7 +86,7 @@ id (uuid), venue_id (uuid) → diamonds.id NOT NULL, tournament_id (uuid) → to
 ## Module: League
 
 ### league_divisions
-id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capacity (integer), sort_order (integer), created_at, born_from_year, born_to_year
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capacity (integer), sort_order (integer), created_at, born_from_year, born_to_year, price (numeric), early_price (numeric), note
 - Indexes: league_divisions_season_id_idx
 
 ### league_email_log
@@ -106,11 +106,11 @@ id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) �
 - Indexes: idx_league_practices_org_venue, idx_league_practices_org_venue_facility, league_practices_division_id_idx, league_practices_org_idx, league_practices_recurrence_idx, league_practices_schedule_idx, league_practices_season_idx, league_practices_team_idx
 
 ### league_registrations
-id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_jersey_pref, player_position_pref, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, waitlist_position (integer), team_id (uuid) → league_teams.id, registration_fee_paid (boolean), fee_entry_id (uuid), admin_notes, source, registered_at, updated_at, org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id, waiver_accepted_at
-- Indexes: league_registrations_division_idx, league_registrations_guardian_idx, league_registrations_org_id_idx, league_registrations_person_id_idx, league_registrations_season_idx, league_registrations_status_idx, league_registrations_team_id_idx
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_jersey_pref, player_position_pref, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, waitlist_position (integer), team_id (uuid) → league_teams.id, registration_fee_paid (boolean), fee_entry_id (uuid), admin_notes, source, registered_at, updated_at, org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id, waiver_accepted_at, signup_ref, signup_position, fee_amount (numeric)
+- Indexes: league_registrations_division_idx, league_registrations_guardian_idx, league_registrations_org_id_idx, league_registrations_person_id_idx, league_registrations_season_idx, league_registrations_signup_ref_idx, league_registrations_status_idx, league_registrations_team_id_idx
 
 ### league_seasons
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb)
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at
 - Indexes: league_seasons_org_id_slug_key
 
 ### league_teams
@@ -539,7 +539,7 @@ user_id (uuid) NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type
 
 ### notifications
 id (uuid), org_id (uuid) → organizations.id NOT NULL, user_id (uuid) NOT NULL, event_type NOT NULL, title NOT NULL, body, link, read_at, created_at, metadata (jsonb), cleared_at
-- Indexes: notifications_org_idx, notifications_org_needs_attention_idx, notifications_user_needs_attention_idx, notifications_user_unread_idx
+- Indexes: notifications_one_open_online_payments_notice, notifications_org_idx, notifications_org_needs_attention_idx, notifications_user_needs_attention_idx, notifications_user_unread_idx
 
 ### plan_config_overrides
 id (uuid), plan_id NOT NULL, tournament_limit (integer), seat_limit (integer), trial_days (integer), updated_at, updated_by_email, last_change_note
@@ -593,6 +593,10 @@ plan_id NOT NULL, module_key NOT NULL, included (boolean), updated_by_email, upd
 ### platform_plan_versions
 id (uuid), version_key NOT NULL, title NOT NULL, description, status, effective_at, published_at, created_by_email, snapshot (jsonb), notes, created_at, updated_at
 - Indexes: idx_platform_plan_versions_status_time, platform_plan_versions_version_key_key
+
+### platform_record_opens
+id (bigint) NOT NULL, actor_user_id (uuid) NOT NULL, actor_email NOT NULL, record_kind NOT NULL, record_id (uuid) NOT NULL, via_find (boolean), opened_at
+- Indexes: platform_record_opens_opened_at_idx
 
 ### platform_user_notes
 id (uuid), user_id (uuid) NOT NULL, body NOT NULL, created_by_email NOT NULL, created_at
@@ -801,7 +805,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, first_day
 - Indexes: org_fiscal_years_closed_by_idx, org_fiscal_years_one_name, org_fiscal_years_one_start
 
 ### org_payment_accounts
-org_id (uuid) → organizations.id NOT NULL, stripe_account_id NOT NULL, livemode (boolean), country, charges_enabled (boolean), payouts_enabled (boolean), details_submitted (boolean), requirements_due, disabled_reason, requirements_deadline, stripe_synced_at, fee_payer, refund_policy, terms_version, terms_agreed_by (uuid), terms_agreed_by_email, terms_agreed_at, connected_by (uuid), connected_at, disconnected_by (uuid), disconnected_at, created_at, updated_at
+org_id (uuid) → organizations.id NOT NULL, stripe_account_id NOT NULL, livemode (boolean), country, requirements_due, requirements_deadline, stripe_synced_at, fee_payer, refund_policy, terms_version, terms_agreed_by (uuid), terms_agreed_by_email, terms_agreed_at, connected_by (uuid), connected_at, disconnected_by (uuid), disconnected_at, created_at, updated_at, card_payments_status, card_payments_reason, onboarding_finished_at
 - Indexes: org_payment_accounts_stripe_account_key
 
 ### org_people
@@ -904,7 +908,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **219 tables** across 10 modules.
+Total: **220 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -913,6 +917,6 @@ Total: **219 tables** across 10 modules.
 - Accounting: 9 tables
 - Stripe / Billing: 2 tables
 - Organization / Platform Core: 8 tables
-- Platform Admin: 20 tables
+- Platform Admin: 21 tables
 - CRM / Leads: 3 tables
 - Other: 70 tables

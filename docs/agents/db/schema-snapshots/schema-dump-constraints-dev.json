@@ -4190,6 +4190,16 @@
     "update_rule": null
   },
   {
+    "table_name": "platform_record_opens",
+    "constraint_name": "platform_record_opens_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "platform_user_notes",
     "constraint_name": "platform_user_notes_pkey",
     "constraint_type": "PRIMARY KEY",

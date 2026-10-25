@@ -7964,7 +7964,7 @@ The narrative spine tying together the already-documented columns. All paths use
 
 # Domain: Platform admin
 
-The **platform control plane** — the tables behind `/platform-admin/` that FieldLogicHQ staff (not org tenants) use to govern the whole fleet: who may operate the platform and what they did (`platform_users` / `platform_audit_log` / `platform_user_notes` / `platform_admin_visits`), a durable **business-event** telemetry log (`platform_events` — distinct from Observability's *error* log), the **plans & catalog control plane** with its human-in-the-loop change-approval gate (`plan_gating` / `plan_config_overrides` / `platform_plan_*` / `platform_addon_catalog` / `platform_catalog_change_requests` / `_change_applications` / `_campaigns`), and platform ops + the org-scoped data-import staging (`platform_bulk_operations` / `platform_metric_snapshots` / `import_batches` / `import_batch_rows`). 17 tables, three labeled sub-domains below.
+The **platform control plane** — the tables behind `/platform-admin/` that FieldLogicHQ staff (not org tenants) use to govern the whole fleet: who may operate the platform and what they did (`platform_users` / `platform_audit_log` / `platform_user_notes` / `platform_admin_visits` / `platform_record_opens`, the trail of records opened, mig 365), a durable **business-event** telemetry log (`platform_events` — distinct from Observability's *error* log), the **plans & catalog control plane** with its human-in-the-loop change-approval gate (`plan_gating` / `plan_config_overrides` / `platform_plan_*` / `platform_addon_catalog` / `platform_catalog_change_requests` / `_change_applications` / `_campaigns`), and platform ops + the org-scoped data-import staging (`platform_bulk_operations` / `platform_metric_snapshots` / `import_batches` / `import_batch_rows`). 18 tables, three labeled sub-domains below.
 
 > _Last verified: 2026-06-10 @ snapshot 2026-06-10, commit `cbcf7c7` (branch `feat/free-tier-coaches`). **`file:line` refs reflect the WORKING TREE at authoring**, which carries uncommitted edits in several cited files (`lib/platform-auth.ts` +20 at L123 = the new `requireSuperAdmin`, so the RBAC cites at L10–95 are above it and identical to `cbcf7c7`; `lib/import/types.ts` +2 at L61 = `emailsSent?`; plus `app/api/admin/tournaments/route.ts`, `app/api/admin/teams/route.ts`, `.../registrations/import/commit/route.ts`, `components/admin/import/TournamentTeamsImportDialog.tsx`) — line numbers in those files may differ by a few lines from `cbcf7c7`; the schema/RLS/grant/trigger facts are commit-independent. Live probes (2026-06-10, dev+prod `information_schema`/`pg_class`/`pg_policies`/`pg_trigger`/`role_table_grants`): all 17 tables are **column-, CHECK-, UNIQUE-, FK-identical dev↔prod (ZERO structural drift)**; **RLS ENABLED with ZERO policies and ZERO triggers** on every one of the 17 in both envs; **prod grants `anon`+`authenticated` full `SELECT/INSERT/UPDATE/DELETE` on 16 of the 17 (all but `plan_gating`, which is `service_role`-only) while dev grants only `REFERENCES/TRIGGER/TRUNCATE`** (the security headline below); content/row-counts probed (see per-table dead/unused notes)._
 
@@ -8093,6 +8093,39 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 
 <!-- dict:col:platform_admin_visits.visited_at -->
 **`visited_at`** (timestamptz, NOT NULL, default now()) — visit time; the only column the Overview consumes (ordered DESC limit 1).
+
+### `platform_record_opens`
+<!-- dict:table:platform_record_opens -->
+
+**Purpose:** the support console's **trail of records opened** (mig 365, Support console Stage 2, owner ruling A3 2026-10-25) — one row each time a staff member opens a club record (`/platform-admin/orgs/[id]`) or a person record (`/platform-admin/customer-users/[id]`): who, when, which record, and whether Find opened it. Super admin reads it in the Audit log under "Records opened".
+
+**Gotchas (read first):**
+1. **Never the words typed.** Find's search words are not stored anywhere (owner A3; threat T6/T14). A row names the record, not how it was searched for.
+2. **90 days, pruned on write — there is no scheduled job.** The writer (`lib/platform-record-opens.ts`) deletes rows older than 90 days in the same call that inserts. A console that nobody opens keeps its last 90 days until the next open.
+3. **Never on a customer's Story.** The club and person Stories read other tables; a guard test fails if they read this one.
+4. **Service role only.** RLS on with no policies, and `anon`/`authenticated` hold no privilege (rule 7).
+
+**Fields** (`id` is a bigint identity; no `updated_at` — append-only):
+
+<!-- dict:col:platform_record_opens.actor_user_id -->
+**`actor_user_id`** (uuid, NOT NULL, no FK [cross-schema to `auth.users`]) — the staff member's account id.
+
+<!-- dict:col:platform_record_opens.actor_email -->
+**`actor_email`** (text, NOT NULL) — the staff member's email, lowercased on write; what the Audit log's "Records opened" view shows.
+
+<!-- dict:col:platform_record_opens.record_kind -->
+**`record_kind`** (text, NOT NULL, CHECK `club` | `person`) — `club` = an `organizations` row (clubs, tournament hosts, coaches portals); `person` = an `auth.users` account.
+
+<!-- dict:col:platform_record_opens.record_id -->
+**`record_id`** (uuid, NOT NULL, no FK) — the organization id or the account id. No FK on purpose: a deleted club or person keeps its trail rows until they age out.
+
+<!-- dict:col:platform_record_opens.via_find -->
+**`via_find`** (boolean, NOT NULL, default false) — true when Find (the strip box) opened the record, false from a list or a link.
+
+<!-- dict:col:platform_record_opens.opened_at -->
+**`opened_at`** (timestamptz, NOT NULL, default now()) — when it was opened. Indexed `(opened_at DESC)` for the prune and the Audit log's newest-first read.
+
+**The read-only lookup over sign-in records (same migration, functions only — invisible to the column snapshots).** `platform_people_search(p_query, p_status, p_exclude_emails, p_clubs, p_offset, p_limit)` (the People list: ranked, paged, ≤100 a page, `total_count` for the pager), `platform_find_people(p_query, p_exclude_emails)` (Find's People group: 2–120 characters, `LIMIT 8` in SQL), `platform_people_by_ids(p_ids)` (owners/members by account id, ≤1,000 per call — the caller chunks) and `platform_find_clubs(p_query, p_exclude_slugs)` (Find's Clubs group: name, web name, own web address, owner email; `LIMIT 8`). All `SECURITY DEFINER`, `search_path = ''`, schema-qualified; they return **exactly** id, email, name (metadata `display_name` → `full_name` → `name`), last sign-in, created, banned-until, email-confirmed-at (clubs: id, name, slug, plan, status, kind, own address, one owner email). LIKE wildcards in the words are escaped. Staff accounts (`platform_users` + the bootstrap emails the caller passes) are left out. **Execute is revoked from PUBLIC, anon and authenticated and granted to service_role only** (rule 7; `tests/unit/support-console-lookup-guard.test.ts`, and a dev call with the anon key returned 42501 for all four on 2026-10-25). They end the 1,000-account cap the console's single `listUsers` pages had (Customer users, the clubs list's owner sign-ins, Today's owner-inactive count, the Founding Season desk).
 
 ### `platform_events`
 <!-- dict:table:platform_events -->

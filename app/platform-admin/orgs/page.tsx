@@ -3,6 +3,7 @@ import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import OrgsClient from './OrgsClient';
 import { clubDomainStore } from '@/lib/club-domain-store';
+import { peopleByIds } from '@/lib/platform-people-lookup';
 
 /**
  * ⚠ RECOGNITION IS THE SHARED RULE, NEVER A HAND-TYPED DATE (fixed 2026-09-07).
@@ -24,6 +25,27 @@ async function getFoundingSeasonOrgIds(): Promise<Set<string>> {
   return new Set((data ?? []).map(r => r.org_id as string));
 }
 
+const ORG_PAGE = 1000;
+
+/**
+ * Every organization, read a page at a time (Support console Stage 2). The unbounded select this replaced stopped at the
+ * database's default row cap without saying so — the same silent-cap bug the 1,000-account page was.
+ */
+async function readEveryOrganization(): Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }> {
+  const all: Array<Record<string, unknown>> = [];
+  for (let from = 0; ; from += ORG_PAGE) {
+    const { data, error } = await supabaseAdmin
+      .from('organizations')
+      .select('id, name, slug, plan_id, subscription_status, current_period_end, created_at, enabled_addons, internal_notes, free_floor')
+      .order('created_at', { ascending: false })
+      .order('id')
+      .range(from, from + ORG_PAGE - 1);
+    if (error) return { data: null, error };
+    all.push(...(data ?? []));
+    if (!data || data.length < ORG_PAGE) return { data: all, error: null };
+  }
+}
+
 async function getOrgs() {
   // Attention-filter windows mirror lib/platform-metrics.ts getCommandCenterStats
   // so this list's drill-through filters match the dashboard Action Queue counts.
@@ -31,18 +53,14 @@ async function getOrgs() {
   const trialWindowEnd = new Date(Date.now() + 14 * 86_400_000).toISOString();
   const inactiveOwnerCutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
-  const [orgsResult, foundingSeasonOrgIds, ownersResult, authUsersResult, overridesResult] = await Promise.all([
-    supabaseAdmin
-      .from('organizations')
-      .select('id, name, slug, plan_id, subscription_status, current_period_end, created_at, enabled_addons, internal_notes, free_floor')
-      .order('created_at', { ascending: false }),
+  const [orgsResult, foundingSeasonOrgIds, ownersResult, overridesResult] = await Promise.all([
+    readEveryOrganization(),
     getFoundingSeasonOrgIds(),
     supabaseAdmin
       .from('organization_members')
       .select('organization_id, user_id, status')
       .eq('role', 'owner')
       .limit(5000),
-    supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     supabaseAdmin
       .from('org_overrides')
       .select('org_id, expires_at')
@@ -116,9 +134,10 @@ async function getOrgs() {
     list.push(m.user_id);
     ownersByOrg.set(m.organization_id, list);
   }
-  const lastSignInByUser = new Map(
-    (authUsersResult.data?.users ?? []).map(u => [u.id, u.last_sign_in_at ?? null]),
-  );
+  // The owners' last sign-in, by account id with no cap (Support console Stage 2): it was the first page of 1,000
+  // accounts, so an owner past that page always read as inactive.
+  const owners = await peopleByIds(ownerRows.map(m => m.user_id)).catch(() => new Map<string, { lastSignInAt: string | null }>());
+  const lastSignInByUser = new Map([...owners].map(([id, p]) => [id, p.lastSignInAt]));
   // Orgs with an active override expiring within the next 14 days (and not yet lapsed). Expired
   // overrides auto-drop and stop granting access on their own, so we flag UPCOMING lapses to action.
   const expiringSoonOverrideOrgIds = new Set(

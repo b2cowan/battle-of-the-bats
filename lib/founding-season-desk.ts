@@ -10,6 +10,7 @@ import { pluralize } from '@/lib/utils';
 // The card and the next-season choice live in their own service-role-only table (mig 283) — NOT on
 // `organizations`, which is anon-readable for every public org.
 import { getOrgBillingFactsBulk } from '@/lib/billing-setup';
+import { peopleByIds } from '@/lib/platform-people-lookup';
 
 /**
  * THE FOUNDING SEASON DESK — every free account, in one list.
@@ -93,7 +94,7 @@ export async function getFoundingSeasonDeskData(): Promise<FoundingDeskData> {
     return { rows: [], totals: { accounts: 0, organizations: 0, coachesPortals: 0, noCard: 0, noChoice: 0 } };
   }
 
-  const [orgsRes, workspacesRes, ownersRes, authUsersRes, tournamentsRes, factsByOrg] = await Promise.all([
+  const [orgsRes, workspacesRes, ownersRes, tournamentsRes, factsByOrg] = await Promise.all([
     supabaseAdmin
       .from('organizations')
       .select('id, name, slug, plan_id, account_kind, created_at')
@@ -107,9 +108,6 @@ export async function getFoundingSeasonDeskData(): Promise<FoundingDeskData> {
       .select('organization_id, user_id')
       .in('organization_id', orgIds)
       .eq('role', 'owner'),
-    // The same source the Organizations page reads for owner freshness. One page is ample: the
-    // cohort is tens of accounts, and Phase 3 revisits this if it ever isn't.
-    supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     supabaseAdmin
       .from('tournaments')
       .select('org_id, status')
@@ -158,9 +156,9 @@ export async function getFoundingSeasonDeskData(): Promise<FoundingDeskData> {
     list.push(m.user_id as string);
     ownerIdsByOrg.set(key, list);
   }
-  const authUserById = new Map(
-    (authUsersRes.data?.users ?? []).map(u => [u.id, { email: u.email ?? null, lastSignInAt: u.last_sign_in_at ?? null }]),
-  );
+  // The owners' email and last sign-in, read by account id (Support console Stage 2, migration 365). It was the first page
+  // of 1,000 accounts, which an owner past that page fell off silently.
+  const authUserById = await peopleByIds([...ownerIdsByOrg.values()].flat());
 
   const rows: FoundingAccountRow[] = (orgsRes.data ?? []).map(org => {
     const orgId = org.id as string;

@@ -3,6 +3,7 @@ import { listDemoOrgIdsQuietly } from '@/lib/demo-org-server';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import { tournamentToday } from './timezone';
+import { countPeople, peopleByIds } from './platform-people-lookup';
 
 type OrgMetricRow = {
   id: string;
@@ -137,7 +138,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   const [
     orgsRes,
     membersRes,
-    authUsersRes,
+    peopleTotal,
     tournamentsTotal,
     tournamentsNonArchived,
     tournamentsActive,
@@ -166,7 +167,9 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .select('organization_id, user_id, role, status')
       .eq('role', 'owner')
       .limit(5000),
-    supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    // Every customer account, counted in the database (Support console Stage 2, migration 365) — this was the length of
+    // one 1,000-account page, so it stopped at 1,000 without saying so.
+    countPeople().catch(() => 0),
     safeCount('tournaments total', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }))),
     safeCount('tournaments non-archived', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).neq('status', 'archived'))),
     safeCount('tournaments active', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).eq('status', 'active'))),
@@ -236,9 +239,9 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   const overridesExpiringSoon = overrides.filter(
     row => row.expires_at && row.expires_at >= now && row.expires_at <= trialWindowEnd,
   ).length;
-  const authUserById = new Map(
-    (authUsersRes.data?.users ?? []).map(user => [user.id, user])
-  );
+  // The owners' last sign-in, read by account id with no cap (it was the first 1,000 accounts, so an owner past the
+  // first page always read as inactive).
+  const authUserById = await peopleByIds(members.map(member => member.user_id)).catch(() => new Map<string, { lastSignInAt: string | null }>());
 
   const byPlan = Object.fromEntries(PLAN_ORDER.map(plan => [plan, 0])) as Record<string, number>;
   const newOrgsByPlan = Object.fromEntries(PLAN_ORDER.map(plan => [plan, 0])) as Record<string, number>;
@@ -285,7 +288,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
     const ownerMembers = members.filter(member => member.organization_id === org.id);
     if (ownerMembers.length > 0) {
       const mostRecentOwnerSignIn = ownerMembers
-        .map(member => authUserById.get(member.user_id)?.last_sign_in_at ?? null)
+        .map(member => authUserById.get(member.user_id)?.lastSignInAt ?? null)
         .filter((value): value is string => Boolean(value))
         .sort()
         .at(-1);
@@ -333,7 +336,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
     generatedAt: now,
     totals: {
       organizations: orgs.length,
-      users: authUsersRes.data?.users?.length ?? 0,
+      users: peopleTotal,
       tournaments: tournamentsTotal,
       teams: teamsTotal,
       estimatedMrr,

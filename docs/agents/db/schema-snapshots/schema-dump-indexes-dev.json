@@ -2265,6 +2265,16 @@
     "indexdef": "CREATE UNIQUE INDEX platform_plan_versions_version_key_key ON public.platform_plan_versions USING btree (version_key)"
   },
   {
+    "tablename": "platform_record_opens",
+    "indexname": "platform_record_opens_opened_at_idx",
+    "indexdef": "CREATE INDEX platform_record_opens_opened_at_idx ON public.platform_record_opens USING btree (opened_at DESC)"
+  },
+  {
+    "tablename": "platform_record_opens",
+    "indexname": "platform_record_opens_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_record_opens_pkey ON public.platform_record_opens USING btree (id)"
+  },
+  {
     "tablename": "platform_user_notes",
     "indexname": "platform_user_notes_pkey",
     "indexdef": "CREATE UNIQUE INDEX platform_user_notes_pkey ON public.platform_user_notes USING btree (id)"
