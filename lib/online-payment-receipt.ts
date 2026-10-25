@@ -7,6 +7,7 @@ import { formatStoredDate } from './timezone';
 import { loadTeamPayFacts } from './team-pay-facts';
 import { refusalMessage } from './team-pay-view';
 import { teamPayUrl } from './team-pay-link';
+import { tournamentTracksPayments } from './tournament-payments-tracked';
 import { ONLINE_EMAIL_WORDS as E, SCOPE_LINE, cardLabel, money, receiptLabel } from './online-payment-words';
 
 /**
@@ -62,7 +63,8 @@ async function sendReceipt(op: OnlineForEmail): Promise<void> {
     op.fee_payer === 'family' && Number(op.fee_amount) > 0 ? warmEmailParagraph(escapeHtml(E.receiptFee(money(Number(op.fee_amount))))) : '',
     warmEmailParagraph(escapeHtml(E.receiptTotal(money(Number(op.total_amount)), cardLabel(op.card_brand, op.card_last4), formatStoredDate(op.paid_on)))),
   ];
-  const balance = facts.options?.choices.find(c => c.scope === 'balance');
+  // A payment can land after the organizer switched the event to "Not tracked here": the receipt then names no balance.
+  const balance = tournamentTracksPayments(facts.tournament.settings) ? facts.options?.choices.find(c => c.scope === 'balance') : undefined;
   if (balance) {
     lines.push(warmEmailParagraph(escapeHtml(E.receiptBalance(money(balance.fee.baseCents / 100), balance.dueDate ? formatStoredDate(balance.dueDate) : null))));
     if (payLink && !facts.refusal) lines.push(warmEmailButton(E.payBalance, payLink));

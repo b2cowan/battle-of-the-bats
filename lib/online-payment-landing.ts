@@ -50,25 +50,18 @@ async function refundPeople(org: Organization): Promise<string[]> {
   return [...new Set(members.filter(m => canRefundOnline(m, org)).map(m => m.user_id))];
 }
 
-/** Raise a Needs-attention item once per person: an uncleared one of the same kind and subject is never doubled. */
+/**
+ * Raise a Needs-attention item once per person: an uncleared one of the same kind and subject is never doubled. The
+ * database holds that (mig 366: one open copy per person and subject) and `notify()` reads its refusal as "already
+ * waiting", so this does not read the notifications table itself — a second reader would skip the bell rule.
+ */
 async function raiseOnce(p: {
   org: Organization; userIds: string[]; eventType: 'payouts_need_attention' | 'online_payment_not_recorded' | 'card_refund_failed';
   subjectKey: string; subjectId: string; title: string; body: string; link: string;
 }): Promise<void> {
   if (!p.userIds.length) return;
-  const { data } = await supabaseAdmin
-    .from('notifications')
-    .select('user_id, metadata')
-    .eq('org_id', p.org.id)
-    .eq('event_type', p.eventType)
-    .is('cleared_at', null);
-  const already = new Set(((data ?? []) as { user_id: string; metadata: Record<string, unknown> | null }[])
-    .filter(n => (n.metadata?.[p.subjectKey] ?? null) === p.subjectId)
-    .map(n => n.user_id));
-  const userIds = p.userIds.filter(u => !already.has(u));
-  if (!userIds.length) return;
   await notify({
-    orgId: p.org.id, userIds, eventType: p.eventType, title: p.title, body: p.body, link: p.link,
+    orgId: p.org.id, userIds: p.userIds, eventType: p.eventType, title: p.title, body: p.body, link: p.link,
     metadata: { [p.subjectKey]: p.subjectId }, requiredFeature: 'online_payments',
   });
 }

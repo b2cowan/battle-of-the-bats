@@ -7,6 +7,7 @@ export { refusalMessage };
 import { payLinkSecret, readTeamPayToken } from './team-pay-link';
 import { PAY_WORDS as W } from './online-payment-words';
 import { toCents } from './online-payment-fee';
+import { tournamentTracksPayments } from './tournament-payments-tracked';
 import type { PayScope } from './team-pay-options';
 
 /**
@@ -97,7 +98,9 @@ export async function buildTeamPayView(token: string, at?: { orgSlug: string; to
   if (!f) return blank(W.error.linkInvalid);
   if (at && (at.orgSlug !== f.org.slug || at.tournamentSlug !== f.tournament.slug)) return blank(W.error.linkInvalid);
   const settings = (f.tournament.settings ?? {}) as { payment_instructions?: string };
-  const howToPay = (settings.payment_instructions ?? '').trim() || null;
+  const tracked = tournamentTracksPayments(f.tournament.settings);
+  // An event that does not track payments shows no fee, amount, due date or how-to-pay text — whatever was typed before.
+  const howToPay = tracked ? (settings.payment_instructions ?? '').trim() || null : null;
   const receipts = await receiptsFor(teamId);
   const kind: PayPageKind =
     f.refusal === null ? 'owing'
@@ -122,12 +125,12 @@ export async function buildTeamPayView(token: string, at?: { orgSlug: string; to
     preselected: kind === 'owing' ? f.options?.preselected ?? null : null,
     savingCents: kind === 'owing' ? f.options?.savingCents ?? null : null,
     totalPaidCents: toCents(f.totalPaid),
-    schedule: {
+    schedule: tracked ? {
       totalCents: f.fee.totalFeeAmount ? toCents(f.fee.totalFeeAmount) : null,
       totalDue: f.fee.totalFeeDueDate,
       depositCents: f.fee.depositAmount ? toCents(f.fee.depositAmount) : null,
       depositDue: f.fee.depositDueDate,
-    },
+    } : { totalCents: null, totalDue: null, depositCents: null, depositDue: null },
     receipts,
   };
 }
