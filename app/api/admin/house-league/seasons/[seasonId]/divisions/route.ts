@@ -70,7 +70,12 @@ export const POST = withObservability(async (req: Request,
     );
   }
 
-  const capacity = typeof body.capacity === 'number' && body.capacity > 0 ? body.capacity : null;
+  // Spots are required: a division with no number can't tick the season's checklist.
+  const capacity = body.capacity;
+  if (typeof capacity !== 'number' || !Number.isInteger(capacity) || capacity < 1) {
+    return NextResponse.json({ error: 'Give the division its number of spots.' }, { status: 400 });
+  }
+  if (capacity > 100000) return NextResponse.json({ error: 'Spots can’t be more than 100,000.' }, { status: 400 });
 
   // Birth years (Club Tier Stage 4c-2): two years, an empty box is no limit on that side. Held with its reason (A15–A17) when
   // not four digits, after this year, or the earlier one is second. The stricter date rule off January 1 is the window's.

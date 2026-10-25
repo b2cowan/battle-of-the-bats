@@ -757,15 +757,14 @@ function OnboardingPageLegacy() {
     if (duplicateDivision) throw new Error(`Division names must be unique. "${duplicateDivision.name}" is listed more than once.`);
 
     const invalidCapacity = rows.find(row => {
-      if (!row.capacity) return false;
       const capacity = Number(row.capacity);
-      return !Number.isInteger(capacity) || capacity < 1;
+      return !row.capacity || !Number.isInteger(capacity) || capacity < 1;
     });
-    if (invalidCapacity) throw new Error(`Add a valid capacity for ${invalidCapacity.name}, or leave it blank.`);
+    if (invalidCapacity) throw new Error(`Give ${invalidCapacity.name} its number of spots.`);
 
     return rows.map((row, index) => ({
       name: row.name,
-      capacity: row.capacity ? Number(row.capacity) : null,
+      capacity: Number(row.capacity),
       sortOrder: index,
     }));
   }
@@ -1154,12 +1153,12 @@ function OnboardingPageLegacy() {
         'Set up divisions',
         leagueDivisionLimited
           ? 'Free League includes one division and up to 8 teams (you add teams after setup). Add more divisions by upgrading to League Plus.'
-          : 'Create the registration groups parents will choose from. Capacities can be blank if you do not need hard limits yet.',
+          : 'Create the registration groups parents will choose from, and give each one its number of spots.',
         (
           <div className={styles.inlineList}>
             <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', margin: 0, lineHeight: 1.5 }}>
               <strong style={{ color: 'var(--white-55)' }}>Max players</strong> caps how many players can register in a division — it&apos;s
-              not the number of teams{leagueDivisionLimited ? ' (your free plan includes up to 8 teams, added after setup)' : ''}. Leave it blank for no limit.
+              not the number of teams{leagueDivisionLimited ? ' (your free plan includes up to 8 teams, added after setup)' : ''}.
             </p>
             {!leagueDivisionLimited && (
               <>

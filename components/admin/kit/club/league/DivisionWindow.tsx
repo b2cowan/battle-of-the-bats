@@ -52,9 +52,11 @@ export default function DivisionWindow({ orgSlug, seasonId, division, cutoff, sp
   const dirty = adding ? !!(name || spots || from || to)
     : name !== division!.name || spots !== (division!.capacity != null ? String(division!.capacity) : '') || touched;
   const q = `?orgSlug=${encodeURIComponent(orgSlug)}`;
+  // Spots are required: the season's checklist counts a division as done only once it has a number.
+  const spotsOk = /^\d+$/.test(spots.trim()) && parseInt(spots, 10) >= 1;
 
   async function save() {
-    if (!name.trim() || born.blocks) return;
+    if (!name.trim() || !spotsOk || born.blocks) return;
     setBusy(true);
     setError(null);
     try {
@@ -66,7 +68,7 @@ export default function DivisionWindow({ orgSlug, seasonId, division, cutoff, sp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
-          capacity: spots ? parseInt(spots, 10) : null,
+          capacity: parseInt(spots, 10),
           ...(adding
             ? { bornFromYear: born.years?.from ?? null, bornToYear: born.years?.to ?? null }
             : touched && born.years ? { bornFromYear: born.years.from, bornToYear: born.years.to } : {}),
@@ -114,7 +116,7 @@ export default function DivisionWindow({ orgSlug, seasonId, division, cutoff, sp
         footer={
           <>
             <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>Cancel</button>
-            <button type="button" className="btn btn-lime" onClick={save} disabled={busy || !name.trim() || born.blocks}>
+            <button type="button" className="btn btn-lime" onClick={save} disabled={busy || !name.trim() || !spotsOk || born.blocks}>
               {busy ? (adding ? 'Adding…' : 'Saving…') : (adding ? 'Add division' : 'Save')}
             </button>
           </>
@@ -126,8 +128,8 @@ export default function DivisionWindow({ orgSlug, seasonId, division, cutoff, sp
           <input className={ck.input} value={name} maxLength={100} placeholder="e.g. Division A, East" onChange={e => setName(e.target.value)} />
         </label>
         <label className={ck.field}>
-          <span className={ck.label}>Spots</span>
-          <input className={ck.input} type="number" min="1" step="1" inputMode="numeric" value={spots} placeholder="Leave blank for no limit" onChange={e => setSpots(e.target.value)} />
+          <span className={ck.label}>Spots<span className={repKit.req} aria-hidden>*</span></span>
+          <input className={ck.input} type="number" min="1" step="1" inputMode="numeric" value={spots} onChange={e => setSpots(e.target.value)} />
           <span className={ck.hint}>The most players the division takes before a waitlist starts.</span>
         </label>
         <DivisionBornYears
