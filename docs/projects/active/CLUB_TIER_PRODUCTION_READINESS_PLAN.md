@@ -1362,7 +1362,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > - [x] 8 · Records (2026-10-25): plan §6 (the paragraph below), the TODO line, the PM brief row, the project index (Stage 4 entry), and `MANUAL_PROD_STEPS.json` (355 and 357 now name every production step). **No ledger section was written for the live run**; its record is the walk page and this log.
 > **✅ 4e DONE AND WALKED 2026-10-25 (owner).** Built on dev: Parts 1–6 + review fixes `9295ac4f6..907c2f459`, close-out commits after them. The real connection of `club.b2cowan.com` on dev passed the live run 40 of 40 and found one defect (Sign in from the club's tournament pages went to a path that does not exist on a club's own address), fixed in `974c47fa7`. Cleanup done: nothing left at the host, no club row, the DNS zone back to its original six records, and the temporary zone-write permission removed from the connection key. **Not on production, and recorded as steps rather than done:** the club-address keys in the production Amplify environment, `route53:ListHostedZones` on the production key, the production status-check job (migration 357), and AWS's answer on 500 domains per app (request pending).
 > **✅ STAGE 4 CLOSED 2026-10-25 (owner), without 4f.** Every piece is committed and walked and passed: 4b-1 §350, 4b-2a §352, 4b-2b §356, 4c-1 §357, 4c-2 Part A §360 and Part B §362, coach names §363, 4d the club's sponsors §366 (its logo-fit fix is committed in `576cb2a55`, confirmed complete by the owner), and 4e a club's own web address (the live run, **§373**, 40 of 40). 4a (one rule, one refusal) is committed and covered by tests, with no owner walk. All of it is on dev only; the production steps are in `MANUAL_PROD_STEPS.json`. **4f is its own piece of work from here**, kicked off by `CLUB_TIER_STAGE4F_DRAWING_PROMPT.md` (written 2026-10-25).
-> **4f · a "Tournaments" tab in the club's top row (added 2026-10-24, owner; its own piece of work since Stage 4 closed 2026-10-25; drawing prompt written 2026-10-25, `CLUB_TIER_STAGE4F_DRAWING_PROMPT.md`; not drawn, not ruled, not built).**
+> **4f · a "Tournaments" tab in the club's top row (added 2026-10-24, owner; its own piece of work since Stage 4 closed 2026-10-25; drawing prompt written 2026-10-25, `CLUB_TIER_STAGE4F_DRAWING_PROMPT.md`; DRAWN 2026-10-25, asks open — see the 🎨 line below).**
 > Today the top row reads Home · Teams · Tryouts · House league · Past tournaments; a club's current and upcoming tournaments
 > appear only as a section on its home page, so a family on a team page has no way to them. The ask: a **Tournaments** tab,
 > shown only while the club has a tournament, with a show/hide switch in the Public site editor like the other parts (the
@@ -1372,6 +1372,69 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > Needs the usual UX summary, drawing and ruling before any build. **The tournament-to-club link (advertising the club to
 > people attending its tournaments) is NOT part of 4f:** it lives in the separate follow-up project
 > `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`, because where it sits depends on the phone redesign of the tournament pages.
+> **🎨 4f DRAWN 2026-10-25, 7 ASKS OPEN, nothing built** — https://claude.ai/artifact/1nytYV7uYwY56eg6iM7h6K (source
+> `CLUB_TIER_STAGE4F_DRAWINGS.html`, today's captures in `club-tier-stage4f/`). Facts re-verified in the code and measured in
+> the club's real type on dev: **every tab already comes and goes** (Teams, House league, Past tournaments on content; Tryouts
+> seasonal by ruling), so "only while the club has a tournament" is the house rule; **the row is out of room** — a full club's
+> phone row already ends at 453 px of 390 in tryout season, six tabs end at 563; at a desk six tabs need 656 px and the band has
+> 605 at a 1,024 window (clipped below ~1,075 px, scrollbar hidden, unreachable with a mouse). The home's Tournaments section
+> already lists every running + coming tournament (no cap) plus 30 days of finished; the editor's Teams and House league
+> switches already govern home section AND tab, Tournaments the home only, Past tournaments the tab only. Found: a tournament
+> finished >30 days and never archived is on NO list (T4); the phone row never scrolls the current tab into view (T3); the
+> editor's card says "home page" for tabs (T5); a club page at `/tournaments` would shadow a tournament slugged "tournaments"
+> (none on dev; **check prod first**, T6). Recommendations: **Ask 1 = ONE Tournaments tab holding on now + past** (retires the
+> Past tournaments tab; "Past tournaments" stays as the page's past heading; a club that has hosted keeps the tab all year) ·
+> 2 home section unchanged (the Teams-grid rule: the tab is one tap away) · 3 no new switch (Tournaments covers section + tab;
+> Past tournaments switches the page's past part) · 4 list finished-not-archived under Past tournaments · 5 scroll the current
+> tab into view · 6 `/tournaments`, old archives address forwards to the past part · 7 the tab sits where the editor's row sits.
+> Plan-not-carrying and own-address frames need nothing new. /ux ran (Flow tab); /design ran before the hand-off (Design check
+> tab). **Stage 13 door:** 4f adds a door to the club's public top row — §7's "stages that add a nav door" list now names it.
+> **⚖ 4f RULED 2026-10-25 (owner): all 7 asks option A, with one change to Ask 3 — Past tournaments is a SUB-OPTION under
+> Tournaments, available only while Tournaments is on** (owner: no club wants to show old tournaments while hiding current ones).
+> So: one Tournaments tab (current + past; the Past tournaments tab retires — amends the 2026-10-19 Stage 4 "Names" line, the
+> word survives as the page's past heading and the editor sub-option); home section unchanged; the Tournaments switch covers the
+> home section, the tab and the page; the Past tournaments sub-option shows/hides the page's past part and is ABSENT (not greyed)
+> while Tournaments is off (absent beats disabled; it returns with its last setting); a finished, never-archived tournament is
+> listed under Past tournaments (before archived ones — an archive keeps no event dates); the phone row scrolls the current tab
+> into view; `/tournaments`, the old archives address forwards to the past part, archive pages light the tab and drop
+> "← Past tournaments"; the tab sits where the editor's Tournaments row sits. Carry-over: today's "Tournaments hidden, Past
+> shown" pairing no longer exists — none on dev; the build counts it on prod first and puts any club that has it to the owner.
+> Build's first step also: check prod for a tournament slugged "tournaments".
+> **📝 4f words + build prompt written 2026-10-25:** `CLUB_TIER_STAGE4F_COPY.md` (/marketing; draft for the owner's yes — the
+> count line is a plain "{n} tournaments", the Tournaments row drops its count, "tabs" not "top row", Past tournaments' empty
+> line waits for a *finished* tournament) and `CLUB_TIER_STAGE4F_BUILD_PROMPT.md` (a new chat: Part 0 two read-only prod counts +
+> the words' yes; Part 1 the page, tab, row and fixes; Part 2 the editor's sub-option; no migration expected). Note for the
+> build: the club's page list exists twice (`consumer-routes` and `club-host`, the own-address copy) — both need `tournaments`.
+> **🔨 4f BUILT 2026-10-25 (Parts 1 and 2, the build prompt run), committed `f818df35e` (after /simplify + /review) + help
+> `de4bebb7a`; walk §374 https://claude.ai/artifact/QqB3H2Z88QSvkJxTgCLgJn, result owed.** Part 0: production holds no tournament slugged "tournaments" and no site settings at all (its
+> `org_public_site_content` has 0 rows and still the pre-343 columns), so no club loses the old pairing; the owner said yes to
+> the words as written; no migration. **⚖ Owner 2026-10-25, a call the prompt got wrong:** "archived" is two things in the
+> code — a STATUS (the admin's Archive, or billing taking a tournament over a cap; it takes the public site down) and a SEAL
+> (the `tournament_archives` record the old page listed) — and neither implies the other (dev's two archived tournaments have
+> no record). Ruled: **one row per tournament — a sealed tournament is its archive row, whatever its status**; finished, listed
+> and unsealed = its own site; archived and never sealed = no public site, on no list (as before 4f). Built: the page
+> (`app/[orgSlug]/tournaments`, Current and upcoming = the home's rows via `clubTournamentRows`; Past = `clubTournamentParts`;
+> strict reads, so a failed read is the club's error, never "no tournaments"); the tab (`resolveOrgSections` asks yes/no
+> counts: current, or — with the sub-option on — finished or sealed); `/archives` forwards 308 to `/tournaments#past`; the
+> archive page's back link gone; the phone row scrolls the current tab into view; the editor's sub-option drawn inside the
+> Tournaments row (rides a drag, never counted). Every plan carries `module_tournaments` (CORE_MODULES), so "a plan without
+> tournaments" cannot occur — the walk checks the free Tournament-plan org instead. Walk fixture written straight to dev (no
+> reseed): uat-rep-club gained Summer Slam 2026 (completed, unsealed) and Spring Classic 2026 (sealed). Found, not fixed:
+> check:layout reads "Page not found" from every page's hidden data (same defect §373 reports; owner's one-line fix owed);
+> tournament slugs are not checked against the club's page names at creation (`tournaments`, `teams`, `league`…), a
+> pre-existing gap; 7 full-suite failures are other sessions' work (bookkeeping, payments census, possessive, stage-3 teams
+> toolbar, a migration grant, a notifications reader from 12a).
+> **/simplify + /review (2026-10-25, high-risk tier, 4 lenses each):** the tab asks two head counts (any listed tournament or
+> any sealed record) with Past tournaments on, one (any current) with it off, nothing when Tournaments is hidden; the sealed
+> list reads list columns only (`lib/club-archives.ts`, never `final_snapshot`); the current-tab rule is ONE hook shared with
+> HubTabBar (`lib/use-active-tab-in-view.ts`, instant — the house rule); the sub-option is declared once (`SUB_OPTION_OF`) and
+> the editor's rows nest it (`option`). Review fixes: the coach-reports guard pinned HubTabBar's moved code; **an archive page on
+> an org with no tab row (no public site) keeps one link back, "← Tournaments" — wording NOT in the approved copy, owner's yes
+> owed**; the admin's Past tournaments door links `/tournaments#past` directly; `/archives` forwards from the club's own slug
+> (the typed one could, in theory, be a `/\…` Location — not reproducible on dev, closed anyway). Left as reported: with
+> Tournaments hidden, the admin door and old shared links land on "not found" (the ruling); an archive page opens by direct link
+> while the past part is hidden (as before); the editor's Tournaments line ignores a recently finished tournament the home still
+> shows; the deprecated `show_archives_link` mirror is unaware of the sub-option (nothing reads it).
 > **Security fix found on the way (owner "fix it now", 2026-10-19):** every response now sends frame-ancestors 'self',
 > X-Frame-Options SAMEORIGIN and HSTS (this host only); production sent none, leaving admin and coach screens open to
 > clickjacking. Guard: tests/unit/security-headers.test.ts. Committed `7b28c175` 2026-10-19 (local, not pushed); verified on dev.
@@ -3083,7 +3146,7 @@ Stage 0 ─┬─ Stage 1 (shell + 1b buying) ─┬─ Stage 2 (rep teams) ─�
 Stage 9 (house league) ─── its own plan and release track; may run alongside Stage 10
 Stage 12 (payments, ⚖ 2026-10-19): 12a foundation (any time; no live charge before counsel) ─► 12b house league (after Stage 9) ·
                    12c tournaments (after Stage 7) ─► 12d hardening ─► Stage 8 ─► release (the release waits for Stage 12)
-Stage 13 (navigation, ⚖ 2026-10-20): after every stage that adds a nav door (7, 9, 10, 11, 12) ─► Stage 8's go/no-go
+Stage 13 (navigation, ⚖ 2026-10-20): after every stage that adds a nav door (4f, 7, 9, 10, 11, 12) ─► Stage 8's go/no-go
 Stage 14 (one player across seasons, ⚖ 2026-10-22): 14a (the season window) any time after Stage 4c-2's coach side ─► 14b child
                    record + picker ─► 14c documents ─► 14d existing-data merge ─► Stage 8's go/no-go (14b–14d draw after Stage 5,
                    whose Families book they build on; Stage 13 re-checks any door 14 adds)

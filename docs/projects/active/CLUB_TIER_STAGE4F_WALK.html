@@ -1,0 +1,193 @@
+<title>Tournaments Tab Walk</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 4f · §374</span>
+    <h1>A Tournaments tab</h1>
+    <p class="sub">Written 2026-10-25. One purpose: a family on any page of a club's site sees Tournaments in the tabs and reaches every tournament the club hosts on one page (current and upcoming, then past), and the club's admin shows or hides it with the Tournaments switch, with Past tournaments as a sub-option under it.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Drawn at <a href="https://claude.ai/artifact/1nytYV7uYwY56eg6iM7h6K">the Stage 4f drawings</a> (all seven asks option A, plus Past tournaments as a sub-option); words in CLUB_TIER_STAGE4F_COPY.md (your yes, 2026-10-25). The Past tournaments tab is gone: its list lives at the bottom of the new page, and its old address forwards there.</p>
+    <p><strong>It passes when</strong> the tab is on every club page and in view on a phone, the page shows the right tournaments in the right part with the right words, each row opens the right place, the old address and archive pages behave, and the editor's sub-option appears, disappears and keeps its setting.</p>
+    <p><strong>Not in this walk:</strong> the home's Tournaments section (unchanged by ruling), a tournament's own pages and the club-to-tournament link (the Public tournament site review), help articles (/docs runs after this walk), the club's own web address (no address is connected on dev, so that check waits for a live one).</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <dl class="facts">
+      <dt>Data</dt><dd>Already in place, no rebuild: two tournaments were added straight to the dev database for "UAT Rep Club" (no sign-in was reset). It now has one coming (<em>UAT Rep Club Invitational 2026</em>, Nov 1–3), one finished and never sealed (<em>Summer Slam 2026</em>, Aug 14–16), and one sealed (<em>Spring Classic 2026</em>, 13U, champion Oakville Royals, 18 teams, 41 games).</dd>
+      <dt>Restart</dt><dd>Done 2026-10-25 after the build (new files and routing changed).</dd>
+      <dt>Where</dt><dd><code>http://localhost:3000</code> · public <code>/uat-rep-club</code>, <code>/uat-rep-club/tournaments</code> · editor <code>/uat-rep-club/admin/public-site</code> (row "Home page")</dd>
+      <dt>Club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> · dev only</dd>
+      <dt>Also used</dt><dd><code>/free-test-org</code> (a free Tournament-plan org: no public site, one finished tournament) and <code>/uat-rep-only</code> (a club with no tournament at all). Neither needs a sign-in.</dd>
+      <dt>Put back</dt><dd>Steps that change a switch or the order say how to put it back.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'club-tournaments-tab-walk-v1';
+  var PARTS = [{"id":"A","title":"The tab, on every club page","steps":[{"who":"Nobody signed in, computer","do":"Open <code>/uat-rep-club</code> in a window 1440 px wide. Read the tabs beside the club's name.","see":"Home · Teams · (Tryouts, if in season) · House league · Tournaments. No \"Past tournaments\" tab."},{"who":"Nobody signed in, computer","do":"Open the Teams page, then a team page (<code>/uat-rep-club/teams/15u-aaa</code>), then House league.","see":"Tournaments is in the tabs on every one, in the same place."},{"who":"Nobody signed in, computer","do":"Narrow the window to about 1,024 px on the team page.","see":"Every tab still fits in the band; nothing is cut off."},{"who":"Nobody signed in, computer","do":"Click Tournaments.","see":"The Tournaments page opens and the Tournaments tab is the lit one."}]},{"id":"B","title":"A phone: the tab you are on is in view","steps":[{"who":"Phone, nobody signed in","do":"Open <code>/uat-rep-club</code> on a phone (or a 390 px window). Look at the white tab row under the club's band.","see":"The row starts at Home and does not move. Tournaments may be past the right edge; the row scrolls sideways."},{"who":"Phone, nobody signed in","do":"Scroll the row and tap Tournaments.","see":"On the new page the row has moved by itself, at once and without sliding, so the lit Tournaments tab is fully in view."},{"who":"Phone, nobody signed in","do":"Tap Home in the row (scroll back to it first if you need to).","see":"On the home page the row shows Home, lit, from the start."}]},{"id":"C","title":"The Tournaments page, one of each","steps":[{"who":"Nobody signed in, computer","do":"Open <code>/uat-rep-club/tournaments</code> at 1440 px.","see":"Title \"Tournaments\", and under it \"3 tournaments\". The browser tab reads \"Tournaments · UAT Rep Club\"."},{"who":"Nobody signed in, computer","do":"Read the first part.","see":"Heading \"Current and upcoming\", a table Tournament · Dates · Status: UAT Rep Club Invitational 2026, \"Nov 1–3\", with the same chip the home page shows beside it (or a dash if the home shows none)."},{"who":"Nobody signed in, computer","do":"Read the second part.","see":"Heading \"Past tournaments\", a table Season · Tournament · Division · Champion · Teams · Games. First Summer Slam 2026 (2026 · — · — · — · —), then Spring Classic 2026 (2026 · 13U · Oakville Royals · 18 · 41)."},{"who":"Nobody signed in, computer","do":"Click anywhere on the Summer Slam row.","see":"The tournament's own site opens (its public pages, still up because it was never archived)."},{"who":"Nobody signed in, computer","do":"Go back and click the Spring Classic row.","see":"Its archive page opens (the sealed record)."},{"who":"Phone, nobody signed in","do":"Open the same page on a phone.","see":"Rows, not tables. The Invitational shows its dates with its chip under them. Summer Slam reads \"Aug 14–16, 2026\" (with the year). Spring Classic stacks \"2026 · 13U\", \"Champion: Oakville Royals\", \"18 teams · 41 games\". Every row is easy to tap and nothing scrolls sideways."}]},{"id":"D","title":"An archive page, and the old address","steps":[{"who":"Nobody signed in","do":"On the Spring Classic archive page, look at the top and at the tabs.","see":"No \"← Past tournaments\" link. The Tournaments tab is lit. Everything below the head is as before."},{"who":"Nobody signed in","do":"Type the old address <code>/uat-rep-club/archives</code>.","see":"You land on <code>/uat-rep-club/tournaments#past</code>, scrolled to Past tournaments."}]},{"id":"E","title":"The editor: Past tournaments is a sub-option of Tournaments","steps":[{"who":"Club owner, computer","do":"Sign in, open <code>/uat-rep-club/admin/public-site</code> and open the \"Home page\" row.","see":"The opening line reads \"What families see on your home page and in your site's tabs, in this order.\" Tournaments says \"Your current and upcoming tournaments, on your home page and as a tab\"."},{"who":"Club owner, computer","do":"Look directly under Tournaments.","see":"Past tournaments, indented on a slightly darker ground, with no number and no drag handle: \"2 past tournaments, at the bottom of your Tournaments page\", switched on."},{"who":"Club owner, computer","do":"Close the row and read its one-line summary.","see":"\"{n} sections · … first\": Past tournaments is not counted as a section."},{"who":"Club owner, computer","do":"Open the row again and turn Past tournaments off. Reload <code>/uat-rep-club/tournaments</code> in another tab.","see":"The editor line reads \"Hidden from families\". The page shows only Current and upcoming, and \"1 tournament\"."},{"who":"Club owner, computer","do":"Now turn Tournaments off.","see":"Tournaments says \"Hidden from families\" and the Past tournaments sub-option disappears completely (not greyed)."},{"who":"Nobody signed in","do":"Reload <code>/uat-rep-club</code>, then open <code>/uat-rep-club/tournaments</code>.","see":"No Tournaments tab and no Tournaments section on the home page. The Tournaments address shows the club's \"not found\" page."},{"who":"Club owner, computer","do":"Turn Tournaments back on.","see":"The sub-option comes back, still OFF, the setting it had."},{"who":"Club owner, computer","do":"Put back: turn Past tournaments on.","see":"It reads \"2 past tournaments, …\" again, and the public page is back to \"3 tournaments\"."},{"who":"Club owner, computer","do":"Drag Tournaments by its number to the top of the list (just under Open now).","see":"Past tournaments travels with it, still directly under Tournaments. On the public site the Tournaments tab now comes right after Home."},{"who":"Club owner, computer","do":"Put back: drag Tournaments back to its place after House league.","see":"The tabs read Home · Teams · House league · Tournaments again."},{"who":"Phone, club owner","do":"Open the same editor row on a phone.","see":"The same rows at full width; the sub-option is indented the same way and easy to tap."}]},{"id":"F","title":"The page's other states","steps":[{"who":"Nobody signed in","do":"Open <code>/free-test-org/tournaments</code> (a free Tournament-plan org, no public site).","see":"No tab row (that plan has no club site tabs). The page shows only Past tournaments, with Free Cup (\"Jun 5–19, 2026\"), and \"1 tournament\". It used to say \"No past tournaments yet.\" here."},{"who":"Nobody signed in","do":"Open <code>/free-test-org/archives</code>.","see":"It forwards to the same page's Past tournaments."},{"who":"Nobody signed in","do":"Open <code>/uat-rep-only</code>, then <code>/uat-rep-only/tournaments</code> (a club with no tournament at all).","see":"No Tournaments tab on the home. The address shows the club's \"not found\" page, never an empty page."}]},{"id":"G","title":"A Tournament Plus org, and help","steps":[{"who":"Nobody signed in","do":"Open <code>/uat-plus-org/tournaments</code> (Tournament Plus: no public site, so no tabs).","see":"The Tournaments page, with its tournaments in the two parts; Past tournaments ends with UAT Phase 2C Plus Championship 2027 (sealed)."},{"who":"Nobody signed in","do":"Open that sealed row.","see":"Its archive page has <strong>← Tournaments</strong> at the top (there is no tab row here to be the way back). It opens the page's Past tournaments. ⚖ This wording is not in the approved copy: say yes or give the word in your notes."},{"who":"Club owner","do":"Open Help and search for <em>tournaments tab</em>, then <em>past tournaments</em>.","see":"The public pages guide (\"Your tournaments: the home page and the Tournaments tab\") and the Public site editor guide come up; neither describes a Past tournaments tab."}]}];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var rows = s.optionPair ? [[id + 'a', 'Checked it'], [id + 'b', 'Skipped it (no such tournament)']] : [[id, null]];
+      rows.forEach(function (r, ri) {
+        var row = el('label', 'step');
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + r[0]; cb.checked = !!state.ticks[r[0]];
+        cb.addEventListener('change', function () { state.ticks[r[0]] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, id: r[0], cb: cb });
+        var t = el('span', 'txt');
+        if (ri === 0) {
+          t.appendChild(el('span', 'who', id + ' · ' + s.who));
+          t.appendChild(el('span', null, s.do));
+          t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+        }
+        if (r[1]) t.appendChild(el('span', null, '<strong>' + r[1] + '</strong>'));
+        row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+      });
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['Tournaments tab walk §374 (2026-10-25)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

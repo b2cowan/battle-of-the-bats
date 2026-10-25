@@ -26431,3 +26431,13 @@ republished; tick positions unchanged).
 
 **Open for the owner:** the one-line fix to the layout check (a shared gate); production: the club-address keys and the DNS-listing permission on the production key, migration 357's production job, and AWS's answer on 500 domains per app.
 <!-- /§373 -->
+
+## §374
+**Club Tier Stage 4f · a Tournaments tab (built 2026-10-25, committed `f818df35e` + help `de4bebb7a`).** Walk: https://claude.ai/artifact/QqB3H2Z88QSvkJxTgCLgJn (source `docs/projects/active/CLUB_TIER_STAGE4F_WALK.html`, 32 checks in seven parts, paste-back summary). Result owed.
+
+**What it checks:** A, the Tournaments tab on every club page at 1440 and 1,024; B, the phone row scrolls the current tab into view; C, the Tournaments page with one tournament of each kind (current, finished and unsealed, sealed), its two desk tables, its phone rows, and where each row opens; D, an archive page with the tab lit and no "← Past tournaments", and the old `/archives` address forwarding to `#past`; E, the editor's Past tournaments sub-option (indented, no number, absent while Tournaments is off, keeps its setting, rides a drag, not counted in the summary) and what the public page does with each switch; F, the free Tournament-plan org (past only, no tabs) and a club with no tournament (no tab, "not found"); G, a Tournament Plus org's sealed record keeps "← Tournaments" (no tab row there; the wording asks the owner's yes) and the help articles.
+
+**Set-up (dev, done, no reseed):** uat-rep-club gained "UAT Rep Club Summer Slam 2026" (completed, Aug 14–16, never sealed) and "UAT Rep Club Spring Classic 2026" (completed, sealed: 13U, Oakville Royals, 18 teams, 41 games). Dev server restarted after the build.
+
+**Not covered:** the club's own web address (no address connected on dev), help articles (/docs after the walk), a club with nothing current but past ones (needs data changes; the words were approved). `check:layout` could not measure any club page: the same defect §373 reports.
+<!-- /§374 -->
