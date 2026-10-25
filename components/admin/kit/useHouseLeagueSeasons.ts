@@ -6,7 +6,8 @@ import { orderSeasons } from '@/lib/house-league-season';
 import type { LeagueSeason, LeagueSeasonSummary } from '@/lib/types';
 
 /** One season as the season frame (rail block, phone header and strip, lock line) lists it. */
-export type FrameSeason = Pick<LeagueSeason, 'id' | 'name' | 'status' | 'seasonStartDate' | 'seasonEndDate' | 'createdAt'> & {
+export type FrameSeason = Pick<LeagueSeason, 'id' | 'name' | 'status' | 'seasonStartDate' | 'seasonEndDate' | 'createdAt'
+  | 'registrationOpenAt' | 'registrationCloseAt' | 'registrationClosedAt'> & {
   /** Registrations waiting for review: the amber count on Registrations. */
   pendingReviewCount: number;
 };
@@ -38,6 +39,7 @@ async function read(slug: string) {
     store.seasons = orderSeasons((d.seasons ?? []).map(({ season: s, pendingReviewCount }) => ({
       id: s.id, name: s.name, status: s.status, seasonStartDate: s.seasonStartDate ?? null,
       seasonEndDate: s.seasonEndDate ?? null, createdAt: s.createdAt, pendingReviewCount,
+      registrationOpenAt: s.registrationOpenAt ?? null, registrationCloseAt: s.registrationCloseAt ?? null, registrationClosedAt: s.registrationClosedAt ?? null,
     })));
     emit();
   } catch { /* the frame keeps what it had */ } finally {

@@ -45,7 +45,8 @@ export const PATCH = withObservability(async (req: Request,
   const refused = houseLeagueRefusal(ctx, 'run', stored.season);
   if (refused) return refused;
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object') return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
   const patch: Parameters<typeof updateDivision>[1] = {};
 
   if (typeof body.name === 'string') {
@@ -82,7 +83,7 @@ export const PATCH = withObservability(async (req: Request,
   const price = priceFromBody(body.price), earlyPrice = priceFromBody(body.earlyPrice);
   if (price && 'error' in price) return NextResponse.json({ error: price.error }, { status: 400 });
   if (earlyPrice && 'error' in earlyPrice) return NextResponse.json({ error: earlyPrice.error }, { status: 400 });
-  const early = earlyPriceRefusal(price ? price.value : stored.price, earlyPrice ? earlyPrice.value : stored.earlyPrice);
+  const early = earlyPriceRefusal((price ? price.value : stored.price) ?? stored.season.registrationFee, earlyPrice ? earlyPrice.value : stored.earlyPrice);
   if (early) return NextResponse.json({ error: early }, { status: 400 });
   if (price) patch.price = price.value;
   if (earlyPrice) patch.earlyPrice = earlyPrice.value;
@@ -135,6 +136,15 @@ export const DELETE = withObservability(async (_req: Request,
       { error: 'This division has registrations, so it can’t be removed.' },
       { status: 409 },
     );
+  }
+
+  // Its teams and games would be deleted with it (they cascade): a division with any is refused too.
+  const [{ count: teams }, { count: games }] = await Promise.all([
+    supabaseAdmin.from('league_teams').select('id', { count: 'exact', head: true }).eq('division_id', divisionId),
+    supabaseAdmin.from('league_games').select('id', { count: 'exact', head: true }).eq('division_id', divisionId),
+  ]);
+  if ((teams ?? 0) > 0 || (games ?? 0) > 0) {
+    return NextResponse.json({ error: 'This division has teams or games, so it can’t be removed.' }, { status: 409 });
   }
 
   await deleteDivision(divisionId);

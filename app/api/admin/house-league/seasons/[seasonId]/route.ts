@@ -179,6 +179,9 @@ export const PATCH = withObservability(async (req: Request,
       if (closes && String(closes).slice(0, 16) < clubWallClock()) {
         return NextResponse.json({ error: 'Pick the day the form should close.' }, { status: 422 });
       }
+      // Reopening opens the form again, so it meets the same checklist as opening it (how to pay, when a price is set).
+      const refusal = openRegistrationRefusal({ ...season, ...patch }, await getDivisionsForSeason(seasonId));
+      if (refusal) return NextResponse.json({ error: refusal }, { status: 422 });
     }
     // Open registration only once the checklist is done (9b·1): enforced HERE, on the values this save leaves, with the
     // same function the page reads, so the page can never offer what this refuses.

@@ -134,7 +134,7 @@ export default function RegisterForm({
   const free = divisions.every(d => ((d.price ?? season.registrationFee) ?? 0) === 0);
   const spots = forecast.flatMap((f, i) => (f.kind === 'spot' ? [{ name: children[i].firstName || `Child ${i + 1}`, amount: f.amount ?? 0 }] : []));
   const waits = forecast.flatMap((f, i) => (f.kind === 'waitlist' ? [children[i].firstName || `Child ${i + 1}`] : []));
-  const sum = spots.reduce((s, c) => s + c.amount, 0);
+  const sum = Math.round(spots.reduce((s, c) => s + c.amount, 0) * 100) / 100;
   const review = !season.autoApproveUnderCapacity;
 
   return (

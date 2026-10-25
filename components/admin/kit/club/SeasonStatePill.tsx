@@ -11,7 +11,11 @@ const TONE: Record<SeasonTone, ChipTone> = { green: 'good', amber: 'warn', neutr
  * header and the phone's season header all wear this one — never a second set of words.
  */
 export default function SeasonStatePill({ season }: {
-  season: { status: LeagueSeasonStatus | string; seasonStartDate?: string | null; seasonEndDate?: string | null };
+  season: {
+    status: LeagueSeasonStatus | string; seasonStartDate?: string | null; seasonEndDate?: string | null;
+    // The form's dates (9b-1 Part 4): an opened season's pill reads "Opens Jun 1" / "Closed Aug 1" from them.
+    registrationOpenAt?: string | null; registrationCloseAt?: string | null; registrationClosedAt?: string | null;
+  };
 }) {
   const { label, tone } = seasonState(season);
   return <RepChip tone={TONE[tone]}>{label}</RepChip>;

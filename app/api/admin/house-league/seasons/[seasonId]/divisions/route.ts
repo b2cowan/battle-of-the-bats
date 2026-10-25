@@ -12,7 +12,7 @@ import { earlyPriceRefusal, priceFromBody } from '@/lib/league-price';
 type NewDivision = { name: string; capacity: number; born: { from: number | null; to: number | null }; price: number | null; earlyPrice: number | null; note: string | null };
 
 /** One division from the body, or why not. Names are unique within the season (case ignored): a family picks by name. */
-function readDivision(raw: Record<string, unknown>, thisYear: number): NewDivision | { error: string } {
+function readDivision(raw: Record<string, unknown>, thisYear: number, seasonFee: number | null): NewDivision | { error: string } {
   const name = typeof raw.name === 'string' ? raw.name.trim() : '';
   if (!name) return { error: 'Give the division a name.' };
   if (name.length > 100) return { error: 'A division’s name is 100 characters or fewer.' };
@@ -27,7 +27,8 @@ function readDivision(raw: Record<string, unknown>, thisYear: number): NewDivisi
   if (price && 'error' in price) return { error: price.error };
   if (earlyPrice && 'error' in earlyPrice) return { error: earlyPrice.error };
   const p = price?.value ?? null, e = earlyPrice?.value ?? null;
-  const early = earlyPriceRefusal(p, e);
+  // Judged against what the division really charges: its own price, else the season's.
+  const early = earlyPriceRefusal(p ?? seasonFee, e);
   if (early) return { error: early };
   const note = typeof raw.note === 'string' && raw.note.trim() ? raw.note.trim().slice(0, 120) : null;
   return { name, capacity, born: born.years, price: p, earlyPrice: e, note };
@@ -93,7 +94,7 @@ export const POST = withObservability(async (req: Request,
   const thisYear = new Date().getFullYear();
   const adds: NewDivision[] = [];
   for (const raw of raws) {
-    const d = readDivision(raw && typeof raw === 'object' ? raw : {}, thisYear);
+    const d = readDivision(raw && typeof raw === 'object' ? raw : {}, thisYear, season.registrationFee);
     if ('error' in d) return NextResponse.json({ error: d.error }, { status: 400 });
     adds.push(d);
   }

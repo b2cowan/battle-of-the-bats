@@ -38,10 +38,12 @@ export function clubWallClock(now: { date: string; time: string } = tournamentNo
   return `${now.date}T${now.time.slice(0, 5)}`;
 }
 
-const wall = (v: string | null | undefined) => (v && v.length >= 16 ? v.slice(0, 16) : v && v.length >= 10 ? `${v.slice(0, 10)}T00:00` : null);
+/** A stored time as the club's wall clock. A date with no time opens at the start of its day and closes at its end. */
+const wall = (v: string | null | undefined, end = false) =>
+  (v && v.length >= 16 ? v.slice(0, 16) : v && v.length >= 10 ? `${v.slice(0, 10)}T${end ? '23:59' : '00:00'}` : null);
 
 export function registrationState(season: RegDated, nowWall: string = clubWallClock()): RegState {
-  const opens = wall(season.registrationOpenAt), closes = wall(season.registrationCloseAt);
+  const opens = wall(season.registrationOpenAt), closes = wall(season.registrationCloseAt, true);
   switch (season.status) {
     case 'draft': return opens && closes ? 'draft' : 'notSet';
     case 'registration_open':
@@ -70,7 +72,9 @@ const day = (v: string | null | undefined) => (v ? clubDay(v) : null);
 export function registrationRefusal(season: RegDated, nowWall: string = clubWallClock()): string | null {
   switch (registrationState(season, nowWall)) {
     case 'open': return null;
-    case 'opensAhead': return 'Registration for this season isn’t open yet.';
+    case 'opensAhead':
+    case 'draft':
+    case 'notSet': return 'Registration for this season isn’t open yet.';
     case 'closedByDate':
     case 'closedByYou': return 'Registration for this season has closed.';
     default: return 'This season is no longer taking registrations.';

@@ -389,7 +389,8 @@ export function seasonNoteLine(
   }
   if (f.status === 'registration_closed') return canRun ? 'Registration is closed. Start the season from its page.' : 'Registration is closed.';
   if (f.status === 'draft') {
-    const left = f.checklistLeft ?? 0;
+    if (f.checklistLeft == null) return null;
+    const left = f.checklistLeft;
     return left ? `${pluralize(left, 'thing')} to do before registration can open` : 'Ready to open registration';
   }
   return null;

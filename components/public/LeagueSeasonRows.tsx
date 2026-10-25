@@ -18,6 +18,10 @@ export type PublicLeagueSeason = {
   status: LeagueSeasonStatus;
   seasonStartDate: string | null;
   seasonEndDate: string | null;
+  /** The form's dates (9b-1 Part 4): the chip and the Register link follow them, never the status alone. */
+  registrationOpenAt: string | null;
+  registrationCloseAt: string | null;
+  registrationClosedAt: string | null;
   /** The season's public page, spelled for the address the visitor is on (`/league/{slug}`, or the club's own host's). */
   href: string;
 };

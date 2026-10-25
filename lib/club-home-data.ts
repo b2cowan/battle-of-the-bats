@@ -87,6 +87,7 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
     sub: 'Past seasons and results',
     seasons: liveLeagueSeasons(publicLeagueSeasons).map(s => ({
       id: s.id, name: s.name, status: s.status, seasonStartDate: s.seasonStartDate, seasonEndDate: s.seasonEndDate,
+      registrationOpenAt: s.registrationOpenAt, registrationCloseAt: s.registrationCloseAt, registrationClosedAt: s.registrationClosedAt,
       href: href(`/league/${s.slug}`),
     })),
     today,

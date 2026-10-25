@@ -64,8 +64,11 @@ describe('the family’s words', () => {
 });
 
 describe('the status page finds the whole sign-up', () => {
-  it('by its reference or (an older registration) its own', () => {
-    assert.match(LOOKUP, /r\.signup_ref === refCode \|\| registrationReference\(String\(r\.id\)\) === refCode/);
+  it('by its reference or (an older registration) its own, and ONLY the registrations that reference names', () => {
+    assert.match(LOOKUP, /const named = rows\.filter\(\(r: any\) => r\.signup_ref === refCode \|\| registrationReference\(String\(r\.id\)\) === refCode\)/);
+    // Never every child under the email: anyone can sign up under any email and get a reference for it.
+    assert.match(LOOKUP, /const registrations = named\.map\(/);
+    assert.doesNotMatch(LOOKUP, /rows\.map\(\(r: any\) => \{/);
   });
   it('shows the club’s how-to-pay words only while an accepted child owes something', () => {
     assert.match(LOOKUP, /howToPay: owes \? season\.howToPay : null/);

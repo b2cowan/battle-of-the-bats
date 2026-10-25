@@ -138,8 +138,8 @@ export function hasAgeBands(divisions: readonly FormDivision[]): boolean {
 /** The divisions a date of birth fits. With no age bands, every division (the family picks). */
 export function divisionsFor(dob: string, divisions: readonly FormDivision[], cutoff: Cutoff): FormDivision[] {
   if (!hasAgeBands(divisions)) return [...divisions];
-  return divisions.filter(d => (d.bornFromYear != null || d.bornToYear != null)
-    && bornFitsDate({ from: d.bornFromYear, to: d.bornToYear }, cutoff, dob));
+  // An empty side is "no limit", so a division with no years at all takes every child (bornFitsDate).
+  return divisions.filter(d => bornFitsDate({ from: d.bornFromYear, to: d.bornToYear }, cutoff, dob));
 }
 
 export type ChildForecast =

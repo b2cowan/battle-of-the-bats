@@ -74,25 +74,25 @@ export const POST = withObservability(async (req: Request,
 
   const rows = data ?? [];
 
-  // Possession check: the supplied code must match one of THIS email's registrations (its sign-up's reference, or its own).
-  // If it does, the caller has proven they hold a real confirmation for this email, so we return all of that email's
-  // registrations this season (siblings signed up separately too). Otherwise: nothing.
-  const codeMatches = rows.some((r: any) => r.signup_ref === refCode || registrationReference(String(r.id)) === refCode);
-  if (!codeMatches) {
+  // Possession: a reference shows ONLY the registrations it names — the children of that one sign-up (or, for an older
+  // registration, that registration). Never every child under the email: anyone can sign up under any email they type,
+  // receive a reference for it, and would otherwise read another family's children with it (review 2026-10-25).
+  const named = rows.filter((r: any) => r.signup_ref === refCode || registrationReference(String(r.id)) === refCode);
+  if (named.length === 0) {
     return NextResponse.json({ registrations: [] });
   }
 
   const divisions = await getDivisionsForSeason(season.id);
   const divisionMap = Object.fromEntries(divisions.map(d => [d.id, d.name]));
   // The day each paid fee was received ("$150 · paid Oct 24").
-  const entryIds = rows.map((r: any) => r.fee_entry_id).filter(Boolean);
+  const entryIds = named.map((r: any) => r.fee_entry_id).filter(Boolean);
   const paidOn = new Map<string, string>();
   if (entryIds.length) {
     const { data: entries } = await supabaseAdmin.from('accounting_entries').select('id, entry_date').in('id', entryIds);
     for (const e of entries ?? []) paidOn.set(e.id as string, String(e.entry_date));
   }
 
-  const registrations = rows.map((r: any) => {
+  const registrations = named.map((r: any) => {
     const fee = registrationOwes({ feeAmount: r.fee_amount != null ? Number(r.fee_amount) : null }, season);
     return {
       ref: r.signup_ref ?? registrationReference(String(r.id)),

@@ -126,6 +126,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
   // this home named only the newest (F04), in its own words ("Season in progress — …").
   const defaultLiveSeasons    = liveLeagueSeasons(defaultPublicSeasons).map(s => ({
     id: s.id, name: s.name, status: s.status, seasonStartDate: s.seasonStartDate, seasonEndDate: s.seasonEndDate,
+    registrationOpenAt: s.registrationOpenAt, registrationCloseAt: s.registrationCloseAt, registrationClosedAt: s.registrationClosedAt,
     href: href(`/league/${s.slug}`),
   }));
   const leagueSection = defaultShowLeague && (

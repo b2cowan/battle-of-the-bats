@@ -121,8 +121,8 @@ export const POST = withObservability(async (req: Request,
     else if (bands && !k.dob) errors[`${at}.dateOfBirth`] = 'Enter a date of birth so we can find the right division.';
     if (errors[`${at}.dateOfBirth`]) { chosen.push('nofit'); return; }
     // The date of birth picks the division (9b·4, 9b·13); with no age bands the family picks.
-    const fits = bands ? divisions.filter(d => (d.bornFromYear != null || d.bornToYear != null)
-      && bornFitsDate({ from: d.bornFromYear, to: d.bornToYear }, cutoff, k.dob!)) : divisions;
+    // An empty side is "no limit": a division with no years takes every child.
+    const fits = bands ? divisions.filter(d => bornFitsDate({ from: d.bornFromYear, to: d.bornToYear }, cutoff, k.dob!)) : divisions;
     if (fits.length === 0) { chosen.push('nofit'); return; }
     const pick = fits.length === 1 && (!k.divisionId || k.divisionId === fits[0].id) ? fits[0] : fits.find(d => d.id === k.divisionId);
     if (!pick) { errors[`${at}.divisionId`] = `Choose a division for ${k.firstName ?? 'this child'}.`; chosen.push('nofit'); return; }
@@ -135,7 +135,7 @@ export const POST = withObservability(async (req: Request,
   if (season.waiverText && !waiverAccepted) errors.waiverAccepted = 'Agree to the waiver to sign up.';
   if (Object.keys(errors).length > 0) return NextResponse.json({ errors }, { status: 400 });
   if (chosen.every(c => c === 'nofit')) {
-    const year = kids[0].dob?.slice(0, 4);
+    const year = kids.find(k => k.dob)?.dob?.slice(0, 4);
     return NextResponse.json({ error: `No division takes children born in ${year}. Contact ${org.name} to ask what is available.`, code: 'nofit' }, { status: 409 });
   }
 
@@ -155,7 +155,10 @@ export const POST = withObservability(async (req: Request,
     const base = { firstName: k.firstName!, lastName: k.lastName!, waitlistPosition: null, id: null };
     if (d === 'nofit') { results.push({ ...base, divisionName: '', status: 'pending_review', fee: null, outcome: 'nofit' }); continue; }
     const fee = leaguePrice(d, season, today)?.amount ?? null;
-    const placed = await placeLeagueRegistration({
+    // One child failing to place never loses the others: it is reported, and the ones placed still get their email.
+    let placed: Awaited<ReturnType<typeof placeLeagueRegistration>>;
+    try {
+      placed = await placeLeagueRegistration({
       orgId: org.id, seasonId: season.id, divisionId: d.id, want: 'auto', feeAmount: fee,
       signupRef: reference, signupPosition: ++position,
       child: {
@@ -166,6 +169,11 @@ export const POST = withObservability(async (req: Request,
       // With waiverAcceptedAt this files the consent-ledger row (mig 252) beside the placement.
       waiverText: season.waiverText ?? null,
     });
+    } catch (e) {
+      console.error('[league-register] placing a child failed:', e);
+      results.push({ ...base, divisionName: d.name, status: 'pending_review', fee, outcome: 'nofit' });
+      continue;
+    }
     if ('refusal' in placed) {
       results.push({ ...base, divisionName: d.name, status: 'pending_review', fee, outcome: placed.refusal === 'duplicate' ? 'duplicate' : 'nofit' });
       continue;
