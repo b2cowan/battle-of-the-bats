@@ -1,46 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { withObservability } from '@/lib/observability';
+import { applyClubSections } from '@/lib/club-record-changes';
 
+/**
+ * A club's add-on sections (the one rule is `applyClubSections`; the record's pencil saves through `…/record`). From
+ * Support console Stage 2 a section change keeps its reason, like every other change.
+ */
 export const PATCH = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformPermission('manage_product');
+  const auth = await requirePlatformPower('club_sections');
   if (auth.response) return auth.response;
 
   const { id } = await params;
-  const body = await req.json() as { enabledAddons?: string[] };
-  const { enabledAddons } = body;
+  const body = await req.json() as { enabledAddons?: string[]; reason?: string };
+  if (!Array.isArray(body.enabledAddons)) return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+  if (!reason) return NextResponse.json({ error: 'Reason is required' }, { status: 400 });
 
-  if (!Array.isArray(enabledAddons)) {
-    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-  }
-
-  const { data: current } = await supabaseAdmin
-    .from('organizations')
-    .select('enabled_addons')
-    .eq('id', id)
-    .single();
-
-  const { error } = await supabaseAdmin
-    .from('organizations')
-    .update({ enabled_addons: enabledAddons })
-    .eq('id', id);
-
-  if (error) {
-    console.error('[platform-admin] addons update error:', error);
-    return NextResponse.json({ error: 'Update failed' }, { status: 500 });
-  }
-
-  await writePlatformAuditLog(
-    auth.user.email!,
-    id,
-    'update_addons',
-    'enabled_addons',
-    (current as any)?.enabled_addons ?? [],
-    enabledAddons,
-  );
-
+  const result = await applyClubSections({ orgId: id, enabledAddons: body.enabledAddons, reason, actorEmail: auth.user.email! });
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
   return NextResponse.json({ ok: true });
 }, { route: '/api/platform-admin/orgs/[id]/addons' });

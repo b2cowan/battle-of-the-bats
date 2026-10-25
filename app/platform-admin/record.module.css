@@ -1,0 +1,101 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   A CUSTOMER RECORD — a club or a person (Support console Stage 2; drawings Ub7fXLh29SC34Zp4oqKUx1, "The customer record
+   reads first"). What the shared recipes (`console.module.css`) do not already draw: the pencil, the caption's code, the
+   Story's columns and its quiet foot line, the edit form's changed value, the windows' sentence box, the rare doors.
+   Tokens only; plain rules.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── The head's pencil / check mark: 34 square, bordered; the check mark olive ── */
+.pencil {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.pencil:hover { color: var(--text-primary); border-color: var(--home-olive); }
+.pencil:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.pencilOn { color: var(--home-olive); border-color: var(--home-olive); }
+
+.headActions { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+.caption { font-size: var(--type-support); color: var(--text-tertiary); margin: -0.6rem 0 0; overflow-wrap: anywhere; }
+.code { font-family: var(--font-data); font-size: var(--type-support); } /* type-ok: code */
+
+/* ── The Story ── */
+.story { width: 100%; }
+.colWhen { width: 150px; white-space: nowrap; color: var(--text-tertiary); }
+.colWho { width: 290px; white-space: nowrap; }
+.colWhy { width: 230px; }
+.colPut { width: 110px; text-align: right; }
+.what { font-weight: 600; color: var(--text-primary); }
+.whatSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); font-weight: 400; overflow-wrap: anywhere; }
+.putBackAt { display: block; font-size: var(--type-support); color: var(--text-tertiary); font-weight: 400; }
+.quiet { color: var(--text-tertiary); }
+/* "Not set" in the band: quiet, not a figure. */
+.quietValue { font-weight: 400; color: var(--text-tertiary); }
+.putDoor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--home-olive);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.putDoor:hover { text-decoration: underline; }
+.tline { padding: 0.6rem 1rem; border-top: 1px solid var(--home-line); font-size: var(--type-support); color: var(--text-tertiary); }
+.more { display: flex; justify-content: center; padding: 0.6rem 1rem; border-top: 1px solid var(--home-line); }
+
+/* ── A tab's reading blocks ── */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.9rem 1.5rem; }
+.fact { display: grid; gap: 0.2rem; min-width: 0; }
+.factValue { font-size: var(--type-body); color: var(--text-primary); overflow-wrap: anywhere; }
+.factLine { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.blockHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.list { display: grid; gap: 0; }
+.listRow { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; padding: 0.6rem 0; border-top: 1px solid var(--home-line); }
+.listRow:first-child { border-top: 0; }
+.listMain { flex: 1; min-width: 12rem; font-size: var(--type-body); color: var(--text-primary); }
+.listSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── Rare doors: they end the tab's body, never a pinned foot row ── */
+.rareDoors { display: flex; gap: 1.25rem; flex-wrap: wrap; padding-top: 0.25rem; }
+.redDoor { color: var(--danger); font-weight: 650; font-size: var(--type-body); background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; }
+.redDoor:hover { text-decoration: underline; }
+
+/* ── The record while editing ── */
+.form { display: grid; gap: 1rem; }
+.editGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem 1.25rem; }
+.editPair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem 1rem; }
+/* The one changed-value mark. Element + class, so it out-ranks the shared field's own border whatever the load order. */
+input.changed, select.changed { border-color: var(--home-olive); }
+.sections { display: flex; flex-wrap: wrap; gap: 0.6rem 1.4rem; }
+.included { font-size: var(--type-support); color: var(--text-tertiary); }
+.readValue { min-height: var(--admin-control-h); display: flex; align-items: center; font-size: var(--type-body); color: var(--text-primary); }
+@media (max-width: 720px) {
+  .editGrid, .editPair { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── A window's sentence box (the confirm rule: every live change in one sentence) ── */
+.sentence {
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: var(--home-olive-soft);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.sentence strong { color: var(--text-primary); font-weight: 650; }
+.windowBody { display: grid; gap: 0.9rem; }
+.footNote { font-size: var(--type-body); color: var(--text-tertiary); }

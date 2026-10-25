@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requirePlatformAreaView, hasPlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformAreaView, hasPlatformPower } from '@/lib/platform-auth';
 import RetentionQueueClient from './RetentionQueueClient';
 
 type RetentionRowDb = {
@@ -57,7 +57,7 @@ async function getRetentionRows() {
 
 export default async function RetentionQueuePage() {
   const auth = await requirePlatformAreaView('retention');
-  const canManageBilling = hasPlatformPermission(auth.role, 'manage_billing');
+  const canManageBilling = hasPlatformPower(auth.role, 'retention');
   const rows = await getRetentionRows();
 
   return <RetentionQueueClient rows={rows} canManageBilling={canManageBilling} />;

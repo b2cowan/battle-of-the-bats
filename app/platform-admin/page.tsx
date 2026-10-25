@@ -1,551 +1,173 @@
 import Link from 'next/link';
-import {
-  AlertCircle,
-  ArchiveRestore,
-  BarChart3,
-  Building2,
-  CalendarDays,
-  CreditCard,
-  Gauge,
-  Layers,
-  Mail,
-  ShieldAlert,
-  Sparkles,
-  Trophy,
-  Users,
-  UsersRound,
-} from 'lucide-react';
-import { PLAN_CONFIG } from '@/lib/plan-config';
-import { getPlatformAdminContext, hasPlatformPermission } from '@/lib/platform-auth';
-import { canViewPlatformArea, canWritePlatformArea, type PlatformArea } from '@/lib/platform-areas';
-import HelpCallout from '@/components/help/HelpCallout';
+import { ChevronRight } from 'lucide-react';
+import { requirePlatformAreaView } from '@/lib/platform-auth';
+import { canViewPlatformArea } from '@/lib/platform-areas';
 import { getPreviousPlatformAdminVisit } from '@/lib/platform-admin-visits';
-import { fmtAbsoluteDateTime } from '@/lib/format-date';
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import { classifyCampaignSend } from '@/lib/marketing-schedule';
-import {
-  getCommandCenterStats,
-  getLatestPlatformMetricSnapshot,
-  MODULES,
-  PLAN_ORDER,
-  planLabel,
-  STATUS_ORDER,
-  statusLabel,
-} from '@/lib/platform-metrics';
-import MetricSnapshotButton from './MetricSnapshotButton';
-import OverviewTabs from './OverviewTabs';
-import MetricCard from '@/components/platform-admin/MetricCard';
+import { getWaitingSnapshot, WAITING_GROUP_LABELS, type WaitingGroupKey, type WaitingQueue } from '@/lib/platform-waiting';
+import { consoleDay, consoleClock } from '@/lib/console-dates';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import kit from './console.module.css';
-import styles from './overview.module.css';
-import { tournamentToday } from '@/lib/timezone';
-
-function BarRow({
-  label,
-  value,
-  total,
-}: {
-  label: string;
-  value: number;
-  total: number;
-}) {
-  const pct = total > 0 ? Math.max(3, Math.round((value / total) * 100)) : 0;
-  return (
-    <div className={styles.barRow}>
-      <div className={styles.barMeta}>
-        <span>{label}</span>
-        <strong>{value}</strong>
-      </div>
-      <div className={styles.barTrack}>
-        <span className={styles.barFill} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
-}
-
-function AlertItem({
-  label,
-  value,
-  href,
-  tone = 'neutral',
-  title,
-}: {
-  label: string;
-  value: number;
-  href?: string;
-  tone?: 'neutral' | 'warn';
-  title?: string;
-}) {
-  const content = (
-    <>
-      <span className={styles.alertValue}>{value}</span>
-      <span className={styles.alertLabel}>{label}</span>
-    </>
-  );
-
-  // href is omitted when the signed-in role can't reach the target area — render a
-  // non-clickable tile (with a "requires X access" tooltip) instead of a dead link.
-  if (href) {
-    return (
-      <Link className={`${styles.alertItem} ${tone === 'warn' ? styles.alertWarn : ''}`} href={href} title={title}>
-        {content}
-      </Link>
-    );
-  }
-
-  return (
-    <div className={`${styles.alertItem} ${tone === 'warn' ? styles.alertWarn : ''}`} title={title}>
-      {content}
-    </div>
-  );
-}
-
-// Role-aware first-login orientation. Each role is pointed only to surfaces it can
-// actually reach (e.g. growth is not sent to observability, which is hidden for it).
-const ORIENTATION_BY_ROLE: Record<string, { body: string; cta: { label: string; href: string } }> = {
-  super_admin: {
-    body: 'You have access to every area of the console. Read the Platform Admin Operations SOP before making account, billing, or pricing changes.',
-    cta: { label: 'Open the Operations SOP', href: '/platform-admin/help/platform-admin' },
-  },
-  support: {
-    body: 'Your job surfaces are Customer Users, Feedback, Observability (view), and Audit. Start with the Support SOP for password resets, feedback triage, and account investigation.',
-    cta: { label: 'Open the Support SOP', href: '/platform-admin/help/platform-admin#reset-password' },
-  },
-  billing: {
-    body: 'Your primary surfaces are Organizations (Billing & Access), Retention, Feedback, and Bulk Operations. Start with the Billing SOP for overrides, retention, and cancellations.',
-    cta: { label: 'Open the Billing SOP', href: '/platform-admin/help/platform-admin#billing-overrides' },
-  },
-  product: {
-    body: 'You have write access to Feedback, the Approval Queue, Email Templates, Email Campaigns, Plans & Pricing, and Observability. Start with the Product Operator path.',
-    cta: { label: 'Open the Product Operator path', href: '/platform-admin/help/platform-admin#change-requests' },
-  },
-  growth: {
-    body: 'Your surfaces are Early Access and Email Campaigns. Start with the Growth Operator path for the lead pipeline and batch marketing sends.',
-    cta: { label: 'Open the Growth Operator path', href: '/platform-admin/help/platform-admin#early-access-pipeline' },
-  },
-  read_only: {
-    body: 'This console is read-only for your role. You can view the Action Queue and org details, but no changes can be made from any surface.',
-    cta: { label: 'Browse the Operations SOP', href: '/platform-admin/help/platform-admin' },
-  },
-};
-
-const fmtDateTime = (iso: string) => fmtAbsoluteDateTime(iso);
+import styles from './today.module.css';
 
 /**
- * Marketing-campaign send alerts for the Action Queue: how many campaigns are past due
- * (planned date arrived/passed, not yet sent) and how many are due within the window.
- * Uses the SAME classification as the Email Dashboard so the two never disagree.
+ * Today — the support console's front door (Support console Stage 2, owner rulings A5 + Q4, 2026-10-25; drawings
+ * Ub7fXLh29SC34Zp4oqKUx1, "Today"). It replaced Overview.
+ *
+ * What is waiting on us, as one table grouped by job: each row a queue, why its items wait, and its count in the amber
+ * pill; a row opens the list that clears it. A queue with nothing waiting folds into the quiet "Clear: …" line under its
+ * group, and a group with nothing waiting is one quiet line. Above it, the health line says only what the console can read
+ * today — the product's own errors in 24 hours, a grey dot and no verdict (a green all-clear would vouch for builds and
+ * databases nothing checks yet; Stage 5 reads those). The business numbers stay, quiet and below, one door away.
+ * Roles trim it: each role sees the queues whose list it can open (`lib/platform-waiting.ts`).
+ * On a phone the table becomes one framed list per group (F-41).
  */
-async function getMarketingCampaignAlerts(): Promise<{ pastDue: number; dueSoon: number }> {
-  const todayISO = tournamentToday();
-  const [tmplRes, batchRes] = await Promise.all([
-    supabaseAdmin
-      .from('platform_email_templates')
-      .select('key, planned_send_date')
-      .eq('category', 'marketing'),
-    supabaseAdmin
-      .from('email_batches')
-      .select('email_key')
-      .eq('status', 'complete'),
-  ]);
-  const sentKeys = new Set((batchRes.data ?? []).map(b => b.email_key as string));
-  let pastDue = 0;
-  let dueSoon = 0;
-  for (const row of tmplRes.data ?? []) {
-    const status = classifyCampaignSend({
-      plannedDate: (row.planned_send_date as string | null) ?? null,
-      sent: sentKeys.has(row.key as string),
-      todayISO,
-    });
-    if (status === 'past_due') pastDue++;
-    else if (status === 'due_soon') dueSoon++;
-  }
-  return { pastDue, dueSoon };
+export const metadata = { title: 'Today — Support console' };
+
+const GROUP_ORDER: WaitingGroupKey[] = ['customers', 'health', 'growth', 'product'];
+
+function plural(n: number, one: string, many = `${one}s`) {
+  return `${n} ${n === 1 ? one : many}`;
 }
 
-export default async function PlatformOverviewPage() {
-  const auth = await getPlatformAdminContext();
-  const platformUser = auth?.user ?? null;
-  const role = auth?.role ?? 'read_only';
-  // The Action Queue is grouped by domain; each tile carries its own area so the render
-  // can (a) strip the link for areas this role can't reach and (b) hide whole groups the
-  // role can't act on. See `alertGroups` below.
-  // Trial-ending and expired-override alerts are billing-team work; retention writers
-  // (super_admin + billing) are the roles that can actually action them.
-  const canActionBillingAlerts = canWritePlatformArea(role, 'retention');
-  // Snapshot is a product write — only show the button to roles the API will accept.
-  const canSnapshot = hasPlatformPermission(role, 'manage_product');
-  const previousVisit = platformUser?.email ? await getPreviousPlatformAdminVisit(platformUser.email) : null;
-  // First-login orientation: shows once, then a localStorage flag keeps it dismissed.
-  const orientation = previousVisit === null ? ORIENTATION_BY_ROLE[role] : null;
-  const [stats, latestSnapshot, pricingRequestResult, campaignAlerts] = await Promise.all([
-    getCommandCenterStats({ since: previousVisit?.visited_at ?? null }),
-    getLatestPlatformMetricSnapshot(),
-    supabaseAdmin
-      .from('platform_catalog_change_requests')
-      .select('id', { count: 'exact', head: true })
-      .in('status', ['needs_review', 'approved']),
-    getMarketingCampaignAlerts(),
-  ]);
-  const orgTotal = stats.totals.organizations;
-  // Any catalog change request still awaiting action (review or implementation), across ALL request
-  // types — plan availability ("Live") toggles, plan config, and Stripe prices — so a pending launch
-  // approval is visible on first login. Matches the Approval Queue's "Action Needed" definition.
-  const pendingApprovalRequests = pricingRequestResult.count ?? 0;
-  const lastVisitLabel = previousVisit ? `Last visit ${fmtDateTime(previousVisit.visited_at)}` : 'First tracked visit';
-  const earlyAccessStatusRows = ['new', 'qualified', 'contacted', 'pilot_candidate', 'converted']
-    .map(status => ({ status, count: stats.growth.earlyAccessByStatus[status] ?? 0 }))
-    .filter(row => row.count > 0 || row.status === 'new');
+export default async function TodayPage() {
+  const auth = await requirePlatformAreaView('overview');
+  const previous = auth.user.email ? await getPreviousPlatformAdminVisit(auth.user.email) : null;
+  const { queues, stats, errors24h } = await getWaitingSnapshot(auth.role, previous?.visited_at ?? null);
 
-  // ── Action Queue, grouped by operational domain ────────────────────────────
-  // Each tile carries a plain-language tooltip + the `area` that gates its link and its
-  // group's visibility. `warn` marks tiles where a non-zero count means "act now".
-  type AlertTile = { label: string; value: number; area: PlatformArea; href: string; warn: boolean; title: string };
-  const alertGroups: { label: string; tiles: AlertTile[] }[] = [
-    {
-      label: 'Billing',
-      tiles: [
-        { label: 'Past due orgs', value: stats.alerts.pastDue, area: 'organizations', href: '/platform-admin/orgs?status=past_due', warn: true, title: 'Organizations with an overdue subscription payment. Opens the past-due org list.' },
-        { label: 'Past due since visit', value: stats.alerts.newPastDueSinceLastVisit, area: 'organizations', href: '/platform-admin/orgs?status=past_due', warn: true, title: 'Orgs that became past-due since your last login — new since you were last here.' },
-        { label: 'Trials ending soon', value: stats.alerts.trialEndingSoon, area: 'organizations', href: '/platform-admin/orgs?filter=trial_ending', warn: true, title: 'Paid-plan trials expiring soon; the card on file will be charged when they end.' },
-        { label: 'Overrides expiring soon', value: stats.alerts.overridesExpiringSoon, area: 'organizations', href: '/platform-admin/orgs?filter=expiring_overrides', warn: true, title: 'Comp / discount period overrides about to expire — the org reverts to standard billing.' },
-        { label: 'Retention records', value: stats.alerts.retentionAlertCount, area: 'retention', href: '/platform-admin/retention', warn: true, title: 'Cancelled orgs still inside the data-retention window — restorable if they resubscribe.' },
-      ],
-    },
-    {
-      label: 'Accounts',
-      tiles: [
-        { label: 'Missing owners', value: stats.alerts.orgsWithoutOwner, area: 'organizations', href: '/platform-admin/orgs?filter=no_owner', warn: true, title: 'Organizations with no owner account assigned — nobody can manage billing or settings.' },
-        { label: 'Owner inactive', value: stats.alerts.orgsWithInactiveOwner, area: 'organizations', href: '/platform-admin/orgs?filter=owner_inactive', warn: true, title: 'Orgs whose owner hasn’t signed in recently — may need outreach.' },
-      ],
-    },
-    {
-      label: 'Growth & marketing',
-      tiles: [
-        { label: 'New leads', value: stats.alerts.newEarlyAccessLeads, area: 'early_access', href: '/platform-admin/early-access', warn: true, title: 'New early-access signups awaiting triage in the lead pipeline.' },
-        { label: 'Campaigns past due', value: campaignAlerts.pastDue, area: 'email', href: '/platform-admin/email', warn: true, title: 'Marketing campaigns whose planned send date has arrived or passed and haven’t been sent.' },
-        { label: 'Campaigns due soon', value: campaignAlerts.dueSoon, area: 'email', href: '/platform-admin/email', warn: false, title: 'Marketing campaigns due to send within the next 30 days — plan ahead.' },
-      ],
-    },
-    {
-      label: 'Approvals',
-      tiles: [
-        { label: 'Approval queue', value: pendingApprovalRequests, area: 'change_requests', href: '/platform-admin/change-requests', warn: true, title: 'Plan-availability, plan-config, and Stripe-price change requests awaiting review or implementation.' },
-      ],
-    },
-  ];
+  const groups = GROUP_ORDER
+    .map(key => {
+      const all = queues.filter(q => q.group === key);
+      const waiting = all.filter(q => q.count > 0);
+      const clear = all.filter(q => q.count === 0);
+      return { key, label: WAITING_GROUP_LABELS[key], all, waiting, clear, total: waiting.reduce((s, q) => s + q.count, 0) };
+    })
+    .filter(g => g.all.length > 0);
+  const totalWaiting = groups.reduce((s, g) => s + g.total, 0);
+  const queuesWaiting = groups.reduce((s, g) => s + g.waiting.length, 0);
+  const seesErrors = canViewPlatformArea(auth.role, 'observability');
+
+  const nothingLine = (g: (typeof groups)[number]) =>
+    g.all.length === 1 ? `nothing waiting in ${g.all[0].clearLabel}` : 'nothing waiting';
+  const clearLine = (clear: WaitingQueue[]) => `Clear: ${clear.map(q => q.clearLabel).join(', ')}`;
 
   return (
     <div className={kit.page}>
-      <AdminPageHeader title="Overview" />
-      <p className={`${kit.caption} ${kit.captionTight}`}>Live operational snapshot · {lastVisitLabel}</p>
+      <AdminPageHeader title="Today" />
 
-      <section className={styles.metricGrid} aria-label="Platform totals">
-        <MetricCard label="Organizations" value={stats.totals.organizations} Icon={Building2} />
-        <MetricCard label="Users" value={stats.totals.users} sub="Auth users loaded" Icon={Users} />
-        <MetricCard label="Tournaments" value={stats.totals.tournaments} Icon={Trophy} />
-        <MetricCard label="Teams" value={stats.totals.teams} Icon={UsersRound} />
-        <MetricCard label="Estimated MRR" value={`$${stats.totals.estimatedMrr.toLocaleString()}`} sub={`$${stats.totals.estimatedArr.toLocaleString()} ARR`} Icon={CreditCard} />
-      </section>
-
-      {orientation && (
-        <HelpCallout
-          variant="info"
-          title="Welcome to the platform admin console"
-          body={orientation.body}
-          cta={orientation.cta}
-          dismissible
-          localStorageKey="pa_orientation_dismissed"
-        />
+      {seesErrors && (
+        <div className={styles.health}>
+          <span className={styles.dot} aria-hidden />
+          <span className={styles.healthText}>
+            <strong>{plural(errors24h, 'error')}</strong> in the last 24 hours.
+            <span className={styles.healthQuiet}> Builds and the databases are not checked here yet.</span>
+          </span>
+          <Link href="/platform-admin/observability" className={`${kit.door} ${styles.healthDoor}`}>Errors ›</Link>
+        </div>
       )}
 
-      <section className={styles.alertStrip} aria-label="Needs attention">
-        <div>
-          <div className={kit.eye}>Needs attention</div>
-          <h2 className={styles.sectionTitle}>Action queue</h2>
+      <section className={kit.section}>
+        <h2 className={kit.sectionTitle}>Waiting on us</h2>
+
+        {/* The desk: one table. */}
+        <div className={`${kit.card} ${styles.desk}`}>
+          <div className={kit.toolbar}>
+            <span className={kit.count}>
+              {totalWaiting === 0 ? 'Nothing waiting' : `${totalWaiting} waiting in ${plural(queuesWaiting, 'queue')}`}
+            </span>
+            {previous && (
+              <span className={`${kit.countQuiet} ${kit.toolbarEnd}`}>
+                Since your last visit on {consoleDay(previous.visited_at)} at {consoleClock(previous.visited_at)}
+              </span>
+            )}
+          </div>
+          <div className={kit.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.colQueue}>Queue</th>
+                  <th>Why it waits</th>
+                  <th className={`${kit.num} ${styles.colCount}`}>Waiting</th>
+                  <th className={styles.colDoor} aria-label="Open" />
+                </tr>
+              </thead>
+              <tbody>
+                {groups.map(g => (
+                  <GroupRows key={g.key} label={g.label} total={g.total} waiting={g.waiting}
+                    clear={g.waiting.length > 0 && g.clear.length > 0 ? clearLine(g.clear) : null}
+                    nothing={g.waiting.length === 0 ? nothingLine(g) : null} />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-        {alertGroups
-          // Hide any group the signed-in role can't act on (no viewable tiles in it).
-          .filter(group => group.tiles.some(t => canViewPlatformArea(role, t.area)))
-          .map(group => {
-            const total = group.tiles.reduce((sum, t) => sum + t.value, 0);
-            const urgent = group.tiles.some(t => t.warn && t.value > 0);
-            return (
-              <div key={group.label} className={styles.alertGroup}>
-                <div className={styles.alertGroupHead}>
-                  <span className={styles.alertGroupLabel}>{group.label}</span>
-                  {total > 0 && (
-                    <span className={`${styles.alertGroupCount} ${urgent ? styles.alertGroupCountUrgent : ''}`}>
-                      {total} {total === 1 ? 'item needs' : 'items need'} attention
-                    </span>
-                  )}
-                </div>
-                <div className={styles.alertGrid}>
-                  {group.tiles.map(t => {
-                    const clickable = canViewPlatformArea(role, t.area);
-                    return (
-                      <AlertItem
-                        key={t.label}
-                        label={t.label}
-                        value={t.value}
-                        href={clickable ? t.href : undefined}
-                        title={clickable ? t.title : `${t.title} (requires additional access for your role)`}
-                        tone={t.warn && t.value > 0 ? 'warn' : 'neutral'}
-                      />
-                    );
-                  })}
-                </div>
+
+        {/* A phone: one framed list per group. */}
+        <div className={styles.phone}>
+          {groups.map(g => (
+            <div key={g.key} className={styles.phoneGroup}>
+              <div className={kit.eye}>
+                {g.label} · {g.waiting.length > 0 ? `${g.total} waiting` : nothingLine(g)}
               </div>
-            );
-          })}
-        {!canActionBillingAlerts && (stats.alerts.trialEndingSoon > 0 || stats.alerts.overridesExpiringSoon > 0) && (
-          <p className={styles.alertRoleNote}>
-            Trials ending soon and overrides expiring soon require billing access — contact the billing team to action them.
-          </p>
-        )}
+              {g.waiting.length > 0 && (
+                <div className={styles.plist}>
+                  {g.waiting.map(q => (
+                    <Link key={q.key} href={q.href} className={styles.prow}>
+                      <span className={styles.ptext}>
+                        <strong>{q.label}</strong>
+                        <span>{q.why}</span>
+                      </span>
+                      <span className={kit.pill} aria-label={`${q.count} waiting`}>{q.count}</span>
+                      <ChevronRight size={16} className={styles.pchev} aria-hidden />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </section>
 
-      <OverviewTabs
-        defaultTab={role === 'growth' ? 'growth' : 'subscription'}
-        subscription={
-          <div className={styles.dashboardGrid}>
-            <section className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <div>
-                  <div className={kit.eye}>Subscription health</div>
-                  <h2 className={styles.sectionTitle}>Plan mix</h2>
-                </div>
-                <BarChart3 size={16} />
-              </div>
-              <div className={styles.barList}>
-                {PLAN_ORDER.map(plan => (
-                  <BarRow
-                    key={plan}
-                    label={PLAN_CONFIG[plan].label}
-                    value={stats.subscription.byPlan[plan] ?? 0}
-                    total={orgTotal}
-                  />
-                ))}
-              </div>
-              <div className={styles.statusGrid}>
-                {STATUS_ORDER.map(status => (
-                  <div key={status} className={styles.statusTile}>
-                    <span className={kit.eye}>{statusLabel(status)}</span>
-                    <strong>{stats.subscription.byStatus[status] ?? 0}</strong>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <div>
-                  <div className={kit.eye}>Billing detail</div>
-                  <h2 className={styles.sectionTitle}>Status by plan</h2>
-                </div>
-                <Gauge size={16} />
-              </div>
-              <div className={styles.matrix}>
-                <div className={styles.matrixHeader}>Plan</div>
-                {STATUS_ORDER.map(status => <div key={status} className={styles.matrixHeader}>{statusLabel(status)}</div>)}
-                {PLAN_ORDER.map(plan => (
-                  <div key={plan} className={styles.matrixRow}>
-                    <div className={styles.matrixPlan}>{planLabel(plan)}</div>
-                    {STATUS_ORDER.map(status => (
-                      <div key={`${plan}-${status}`} className={styles.matrixCell}>
-                        {stats.subscription.statusByPlan[plan]?.[status] ?? 0}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className={styles.panelWide}>
-              <div className={styles.panelHeader}>
-                <div>
-                  <div className={kit.eye}>Lifecycle history</div>
-                  <h2 className={styles.sectionTitle}>Billing events</h2>
-                </div>
-                <CreditCard size={16} />
-              </div>
-              <div className={styles.lifecycleGrid}>
-                <div className={styles.lifecycleHeader}>Event</div>
-                <div className={styles.lifecycleHeader}>7d</div>
-                <div className={styles.lifecycleHeader}>30d</div>
-                <div className={styles.lifecycleHeader}>90d</div>
-                <div className={styles.lifecycleLabel}>Cancellations</div>
-                <div>{stats.lifecycle.cancellations.days7}</div>
-                <div>{stats.lifecycle.cancellations.days30}</div>
-                <div>{stats.lifecycle.cancellations.days90}</div>
-                <div className={styles.lifecycleLabel}>Downgrades</div>
-                <div>{stats.lifecycle.downgrades.days7}</div>
-                <div>{stats.lifecycle.downgrades.days30}</div>
-                <div>{stats.lifecycle.downgrades.days90}</div>
-                <div className={styles.lifecycleLabel}>Recoveries</div>
-                <div>{stats.lifecycle.recoveries.days7}</div>
-                <div>{stats.lifecycle.recoveries.days30}</div>
-                <div>{stats.lifecycle.recoveries.days90}</div>
-              </div>
-              <div className={styles.recoveryRate}>
-                <strong>{stats.lifecycle.recoveryRate30}%</strong>
-                <span>30-day past-due recovery rate</span>
-              </div>
-            </section>
-          </div>
-        }
-        growth={
-          <div className={styles.dashboardGrid}>
-            <section className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <div>
-                  <div className={kit.eye}>Growth</div>
-                  <h2 className={styles.sectionTitle}>New accounts</h2>
-                </div>
-                <Sparkles size={16} />
-              </div>
-              <div className={styles.statRow}>
-                <div><strong>{stats.growth.newOrgs7}</strong><span>7 days</span></div>
-                <div><strong>{stats.growth.newOrgs30}</strong><span>30 days</span></div>
-                <div><strong>{stats.growth.newOrgs90}</strong><span>90 days</span></div>
-              </div>
-              <div className={styles.compactList}>
-                {PLAN_ORDER.map(plan => (
-                  <div key={plan}>
-                    <span>{planLabel(plan)}</span>
-                    <strong>{stats.growth.newOrgsByPlan[plan] ?? 0}</strong>
-                  </div>
-                ))}
-              </div>
-              <div className={styles.panelLinkRow}>
-                <Link href="/platform-admin/orgs">Review organizations</Link>
-              </div>
-            </section>
-
-            <section className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <div>
-                  <div className={kit.eye}>Growth pipeline</div>
-                  <h2 className={styles.sectionTitle}>Early access</h2>
-                </div>
-                <Mail size={16} />
-              </div>
-              <div className={styles.statRow}>
-                <div><strong>{stats.growth.earlyAccessTotal}</strong><span>Total leads</span></div>
-                <div><strong>{stats.growth.newLeads7}</strong><span>New 7 days</span></div>
-                <div><strong>{stats.growth.conversionRate}%</strong><span>Converted</span></div>
-              </div>
-              <div className={styles.compactList}>
-                {earlyAccessStatusRows.map(row => (
-                  <div key={row.status}>
-                    <span>{statusLabel(row.status)}</span>
-                    <strong>{row.count}</strong>
-                  </div>
-                ))}
-              </div>
-              <div className={styles.sourceList}>
-                <div className={styles.sourceListTitle}>Top source paths</div>
-                {stats.growth.sourcePathRows.length > 0 ? (
-                  stats.growth.sourcePathRows.map(row => (
-                    <div key={row.source}>
-                      <span>{row.source}</span>
-                      <strong>{row.count}</strong>
-                    </div>
-                  ))
-                ) : (
-                  <div><span>No sources yet</span><strong>0</strong></div>
-                )}
-              </div>
-              <div className={styles.panelLinkRow}>
-                <Link href="/platform-admin/early-access">Open pipeline</Link>
-              </div>
-            </section>
-
-            <section className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <div>
-                  <div className={kit.eye}>Free tier</div>
-                  <h2 className={styles.sectionTitle}>League Starter</h2>
-                </div>
-                <CalendarDays size={16} />
-              </div>
-              <div className={styles.statRow}>
-                <div><strong>{stats.leagueStarter.orgs}</strong><span>Free-floor orgs</span></div>
-                <div><strong>{stats.leagueStarter.created.days7}</strong><span>Created 7d</span></div>
-                <div><strong>{stats.leagueStarter.created.days30}</strong><span>Created 30d</span></div>
-              </div>
-              <div className={styles.compactList}>
-                <div><span>Seasons created (30d)</span><strong>{stats.leagueStarter.seasonsCreated30}</strong></div>
-                <div><span>Schedules generated (30d)</span><strong>{stats.leagueStarter.schedulesGenerated30}</strong></div>
-                <div><span>Public pages shared (30d)</span><strong>{stats.leagueStarter.publicShared30}</strong></div>
-                <div><span>Existing-user adds (30d)</span><strong>{stats.leagueStarter.existingUserAdded30}</strong></div>
-                <div><span>Scope-wall hits (30d)</span><strong>{stats.leagueStarter.scopeWallHits30}</strong></div>
-                <div><span>Upgrade intents (30d)</span><strong>{stats.leagueStarter.upgradeIntents30}</strong></div>
-              </div>
-              <div className={styles.panelLinkRow}>
-                <Link href="/platform-admin/orgs">Review League Starter orgs</Link>
-              </div>
-            </section>
-          </div>
-        }
-        usage={
-          <div className={styles.dashboardGrid}>
-            <section className={styles.panelWide}>
-              <div className={styles.panelHeader}>
-                <div>
-                  <div className={kit.eye}>Product usage</div>
-                  <h2 className={styles.sectionTitle}>Modules and activity</h2>
-                </div>
-                <Layers size={16} />
-              </div>
-              <div className={styles.usageGrid}>
-                <div className={styles.usageTile}><Trophy size={15} /><strong>{stats.usage.tournamentsNonArchived}</strong><span>Non-archived tournaments</span></div>
-                <div className={styles.usageTile}><CalendarDays size={15} /><strong>{stats.usage.tournamentsActive}</strong><span>Active tournaments</span></div>
-                <div className={styles.usageTile}><Sparkles size={15} /><strong>{stats.usage.tournamentsCreated30}</strong><span>Tournaments created 30 days</span></div>
-                <div className={styles.usageTile}><UsersRound size={15} /><strong>{stats.usage.teamsTotal}</strong><span>Tournament teams</span></div>
-                <div className={styles.usageTile}><Users size={15} /><strong>{stats.usage.leagueRegistrationsActive}</strong><span>Active league registrations</span></div>
-                <div className={styles.usageTile}><Building2 size={15} /><strong>{stats.usage.leagueSeasonsActive}</strong><span>Active league seasons</span></div>
-                <div className={styles.usageTile}><ShieldAlert size={15} /><strong>{stats.usage.repProgramYearsActive}</strong><span>Active rep years</span></div>
-                <div className={styles.usageTile}><CreditCard size={15} /><strong>{stats.usage.accountingEntriesTotal}</strong><span>Accounting entries</span></div>
-                <div className={styles.usageTile}><ArchiveRestore size={15} /><strong>{stats.usage.repTeamsTotal}</strong><span>Rep teams</span></div>
-              </div>
-              <div className={styles.moduleGrid}>
-                {MODULES.map(moduleDef => (
-                  <BarRow
-                    key={moduleDef.key}
-                    label={moduleDef.label}
-                    value={stats.usage.moduleCounts[moduleDef.key] ?? 0}
-                    total={orgTotal}
-                  />
-                ))}
-              </div>
-            </section>
-          </div>
-        }
-        notes={
-          <div className={styles.dashboardGrid}>
-            <section className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <div>
-                  <div className={kit.eye}>Metric notes</div>
-                  <h2 className={styles.sectionTitle}>How counts are calculated</h2>
-                </div>
-                <AlertCircle size={16} />
-              </div>
-              <p className={styles.panelCopy}>
-                Cancellation, downgrade, and recovery counts come from saved billing events. Historical trend charts are
-                still future work because they need daily metric snapshots.
-              </p>
-              <p className={styles.panelCopy}>
-                Latest daily snapshot: {latestSnapshot ? `${latestSnapshot.snapshot_date} (${latestSnapshot.source})` : 'none recorded yet'}.
-              </p>
-              <div className={styles.snapshotActions}>
-                <MetricSnapshotButton canSnapshot={canSnapshot} />
-              </div>
-            </section>
-          </div>
-        }
-      />
+      <div className={styles.numbers}>
+        <span><strong>{stats.totals.organizations}</strong> clubs and portals</span>
+        <span><strong>{stats.totals.users}</strong> people</span>
+        <span><strong>{stats.totals.tournaments}</strong> tournaments</span>
+        <span><strong>{stats.totals.teams}</strong> teams</span>
+        <span>about <strong>${stats.totals.estimatedMrr.toLocaleString('en-CA')}</strong> a month at list price</span>
+        <Link href="/platform-admin/business-numbers" className={`${kit.door} ${styles.numbersDoor}`}>
+          Business numbers: plan mix, billing, growth and usage ›
+        </Link>
+      </div>
     </div>
+  );
+}
+
+function GroupRows({ label, total, waiting, clear, nothing }: {
+  label: string;
+  total: number;
+  waiting: WaitingQueue[];
+  clear: string | null;
+  nothing: string | null;
+}) {
+  return (
+    <>
+      <tr className={styles.band}>
+        <td colSpan={4}>{label} · {nothing ?? `${total} waiting`}</td>
+      </tr>
+      {waiting.map(q => (
+        <tr key={q.key} className={kit.comfortable}>
+          <td className={styles.colQueue}><Link href={q.href} className={kit.nameLink}>{q.label}</Link></td>
+          <td className={kit.muted}>{q.why}</td>
+          <td className={kit.num}><span className={kit.pill} aria-label={`${q.count} waiting`}>{q.count}</span></td>
+          <td className={kit.rowDoor}>
+            <Link href={q.href} className={kit.rowDoorLink} aria-label={`Open ${q.label}`} tabIndex={-1}>›</Link>
+          </td>
+        </tr>
+      ))}
+      {clear && (
+        <tr className={styles.clear}>
+          <td colSpan={4}>{clear}</td>
+        </tr>
+      )}
+    </>
   );
 }

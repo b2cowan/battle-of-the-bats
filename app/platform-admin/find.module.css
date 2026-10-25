@@ -1,0 +1,295 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   FIND — the box in the middle of the console's strip and its panel (Support console Stage 2; drawings
+   Ub7fXLh29SC34Zp4oqKUx1, "Find" and its eight states). Tokens only; plain rules, never `[data-admin-kit] …`.
+
+   The box: a 34px pill, 440 wide, the search glyph, the words, the `/` key hint at the end; open = the olive border and
+   its soft ring. Between 900 and 1,200 it narrows to 280. Below 900 it is a 44px glyph in the strip, and opening it turns
+   the strip into the box with a back arrow, the panel at full width.
+   The panel: 520 wide, hanging from the box, 10px corners; rows 44 tall (a person's club rows 34) with a 28px icon tile,
+   a bold title and a one-line 12px sub; group headings 11px capitals; the foot 12px with key chips.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.slot {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.boxWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: 440px;
+  max-width: 100%;
+}
+@media (max-width: 1200px) {
+  .boxWrap { width: 280px; }
+}
+
+.box {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem 0 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--home-line-strong);
+  background: var(--home-card);
+  color: var(--text-tertiary);
+  cursor: text;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.box:hover { border-color: var(--home-olive); }
+.boxOn {
+  border-color: var(--home-olive);
+  box-shadow: 0 0 0 3px var(--home-olive-soft);
+}
+.boxIcon { flex-shrink: 0; }
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--type-body);
+}
+.input::placeholder { color: var(--text-tertiary); }
+
+.slash,
+.foot kbd {
+  font-family: var(--font-data); /* type-ok: key chip */
+  font-size: var(--type-token);
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 4px;
+  color: var(--text-tertiary);
+  background: transparent;
+}
+.slash { flex-shrink: 0; }
+
+/* The narrow window's glyph and back arrow — 44px, the touch floor. */
+.glyph,
+.back {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.glyph:hover,
+.back:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.glyph:focus-visible,
+.back:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+
+/* ── The panel ── */
+.panel {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  width: 520px;
+  max-width: calc(100vw - 2rem);
+  max-height: min(70vh, 640px);
+  overflow-y: auto;
+  padding: 0.35rem 0;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 10px;
+}
+
+.head {
+  padding: 0.55rem 0.9rem 0.3rem;
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase; /* type-ok: group heading */
+  color: var(--text-tertiary);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 44px;
+  padding: 0.3rem 0.9rem;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+.rowOn { background: var(--home-olive-soft); }
+
+.tile {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.05rem;
+}
+.title {
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.sub {
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.code {
+  font-family: var(--font-data); /* type-ok: code */
+  font-size: var(--type-support);
+}
+.chev { flex-shrink: 0; color: var(--home-olive); }
+
+.banned {
+  flex-shrink: 0;
+  font-family: var(--font-data); /* type-ok: chip */
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 32%, transparent);
+}
+
+/* A person's club, one row each beneath them. */
+.kid {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 34px;
+  padding: 0.2rem 0.9rem 0.2rem calc(0.9rem + 28px + 0.7rem);
+  cursor: pointer;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.kidText { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kidText strong { color: var(--text-primary); font-weight: 650; }
+
+/* "6 more not listed" and its door into the list. */
+.more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 34px;
+  padding: 0.2rem 0.9rem;
+  cursor: pointer;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.moreDoor { color: var(--home-olive); font-weight: 650; white-space: nowrap; }
+
+.hints {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.2rem 0.9rem 0.6rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+
+.msg {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.75rem 0.9rem;
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.msg strong { color: var(--text-primary); font-weight: 650; }
+
+.foot {
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.9rem 0.3rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  line-height: 1.6;
+}
+
+/* The page dims under an open panel; a click on it closes Find. It sits below the strip. */
+.scrim {
+  position: fixed;
+  top: var(--chrome-bar-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--pitch-black) 60%, transparent);
+}
+
+/* ── A narrow window: the glyph; open, the strip becomes the box ── */
+@media (max-width: 900px) {
+  .slot { flex: 0 0 auto; margin-left: auto; }
+  .glyph { display: inline-flex; }
+  .boxWrap { display: none; }
+  .slotOpen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--chrome-bar-h);
+    z-index: 3;
+    margin: 0;
+    padding: 0 0.75rem 0 0.25rem;
+    align-items: center;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--home-line);
+  }
+  .slotOpen .glyph { display: none; }
+  .slotOpen .boxWrap { display: flex; flex: 1; width: auto; position: static; }
+  .slotOpen .back { display: inline-flex; }
+  .slotOpen .box { height: 36px; }
+  .panel {
+    top: var(--chrome-bar-h);
+    left: 0;
+    right: 0;
+    transform: none;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - var(--chrome-bar-h));
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+  }
+  .slotOpen .panel { position: fixed; }
+  .tile { display: none; }
+  .kid { padding-left: 1.6rem; }
+}

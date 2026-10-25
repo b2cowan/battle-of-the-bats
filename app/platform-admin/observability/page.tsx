@@ -133,7 +133,7 @@ export default async function ObservabilityDashboardPage({
   return (
     <div className={kit.page}>
       <AdminPageHeader
-        title="Observability"
+        title="Errors"
         actions={
           <>
             <span

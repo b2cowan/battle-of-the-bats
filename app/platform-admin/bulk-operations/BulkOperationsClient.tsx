@@ -208,7 +208,7 @@ export default function BulkOperationsClient({
 
   return (
     <div className={kit.page}>
-      <AdminPageHeader title="Bulk operations" />
+      <AdminPageHeader title="Bulk changes" />
 
       <p className={kit.caption}>
         Select organizations, preview the impact, add a reason, then confirm the guarded operation.

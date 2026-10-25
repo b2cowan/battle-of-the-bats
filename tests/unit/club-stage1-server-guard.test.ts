@@ -145,10 +145,28 @@ describe('D6 / A08 — no Founding Season offer for Club', () => {
     assert.match(read('app/api/billing/choose-next-season/route.ts'), /foundingCompAppliesToPlan\(auth\.org\.planId\)/);
     // The operator's move runs the SAME database half of a plan change as a Stripe move and the
     // webhook — never its own copy (it had one, and it drifted from the shared rule).
-    const operatorRoute = read('app/api/platform-admin/orgs/[id]/plan/route.ts');
-    assert.match(operatorRoute, /applyPlanChangeSideEffects\(\{[\s\S]*?keepTeamLimit: teamLimitProvided/);
-    assert.doesNotMatch(operatorRoute, /revokeFoundingSeasonComp|update\(\{ team_limit: null/);
+    const operatorRule = read('lib/operator-plan-change.ts');
+    assert.match(operatorRule, /applyPlanChangeSideEffects\(\{[\s\S]*?keepTeamLimit: teamLimitProvided/);
+    assert.doesNotMatch(operatorRule, /revokeFoundingSeasonComp|update\(\{ team_limit: null/);
     assert.match(read('lib/plan-move.ts'), /revokeFoundingSeasonComp\(p\.orgId, p\.actor\)/);
+  });
+
+  it('an operator plan change is ONE rule — the single-org save and Bulk Operations both call it, neither keeps a copy', () => {
+    // 2026-10-24: the bulk path kept its own copy and skipped the Club trial, the Founding comp revoke,
+    // the stale team-limit clear and the reactivation restore — clubs moved onto Club in bulk got no trial.
+    // Bulk: the call must sit inside the plan_change branch, not merely somewhere in the file.
+    assert.match(read('app/api/platform-admin/bulk-operations/route.ts'),
+      /if \(actionType === 'plan_change'\) \{(?:(?!\n {6}\}\n)[^])*applyOperatorPlanChange\(\{/,
+      'the bulk plan_change branch no longer calls the shared operator plan change');
+    for (const route of ['app/api/platform-admin/orgs/[id]/plan/route.ts', 'app/api/platform-admin/bulk-operations/route.ts']) {
+      const src = read(route);
+      assert.match(src, /applyOperatorPlanChange\(\{/, `${route} no longer calls the shared operator plan change`);
+      assert.doesNotMatch(src, /applyPlanChangeSideEffects|restoreAfterReactivation|hadSubscriptionBefore|archiveOverCapTournamentsForPlanChange|\.update\(\{ plan_id|\.update\(updatePayload\)/,
+        `${route} repeats a step of the operator plan change instead of calling the shared rule`);
+    }
+    // The trial check counts these exact audit rows; a bulk trial must write the same row.
+    assert.match(read('lib/operator-plan-change.ts'), /'update_plan', 'club_trial'/);
+    assert.match(read('lib/operator-plan-change.ts'), /\.eq\('action', 'update_plan'\)\s*\.eq\('field', 'club_trial'\)/);
   });
 });
 
@@ -218,7 +236,7 @@ describe('Webhook + reactivation (A07, the band change)', () => {
   it('coming back from a cancellation restores what it took — webhook, mock checkout and operator', () => {
     assert.match(webhook, /restoreAfterReactivation\(updatedOrg\.id, cfg\.tournamentLimit\)/);
     assert.match(read('app/api/billing/create-checkout/route.ts'), /restoreAfterReactivation\(auth\.org\.id, plan\.tournamentLimit\)/);
-    assert.match(read('app/api/platform-admin/orgs/[id]/plan/route.ts'), /restoreAfterReactivation\(id, effectiveTournamentLimit\)/);
+    assert.match(read('lib/operator-plan-change.ts'), /restoreAfterReactivation\(orgId, effectiveTournamentLimit\)/);
   });
 
   it('reactivation closes the cancellation intent, so a later Stripe-side end is not mistaken for handled', () => {
@@ -255,11 +273,14 @@ describe('/review 2026-09-26 — what the adversarial review found, pinned', () 
     // A checkout abandoned at the card step never started: it is not a used trial.
     assert.match(move, /NEVER_STARTED = new Set\(\['incomplete', 'incomplete_expired'\]\)/);
     assert.match(read('app/api/billing/create-checkout/route.ts'), /hadSubscriptionBefore\(customerId\)/);
-    const operator = read('app/api/platform-admin/orgs/[id]/plan/route.ts');
-    assert.match(operator, /hadSubscriptionBefore\(customerId\)/);
-    // A failure after the plan is saved is reported to the operator, never swallowed.
-    assert.match(operator, /planChangeWarning: planChangeWarnings\.join/);
-    assert.match(read('app/platform-admin/orgs/[id]/OrgDetailClient.tsx'), /data\.planChangeWarning/);
+    assert.match(read('lib/operator-plan-change.ts'), /hadSubscriptionBefore\(customerId\)/);
+    // A failure after the plan is saved is reported to the operator, never swallowed — on one org's
+    // save as a warning, and on a bulk change in that org's result line.
+    assert.match(read('app/api/platform-admin/orgs/[id]/plan/route.ts'), /planChangeWarning: planChangeWarnings\.join/);
+    assert.match(read('app/api/platform-admin/bulk-operations/route.ts'), /for \(const warning of change\.warnings\)/);
+    // The club record's one pencil (Support console Stage 2) saves through `…/record`, which passes the same warnings on.
+    assert.match(read('app/api/platform-admin/orgs/[id]/record/route.ts'), /warnings\.push\(\.\.\.result\.warnings\)/);
+    assert.match(read('app/platform-admin/orgs/[id]/ClubRecord.tsx'), /data\.warnings/);
   });
 
   it('a repeated move down keeps the RUNNING phase\'s start (not the down phase already queued after it)', () => {

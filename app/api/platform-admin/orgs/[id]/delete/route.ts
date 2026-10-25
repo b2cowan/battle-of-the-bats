@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireSuperAdmin } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { sendEmail, orgClosedHtml } from '@/lib/email';
@@ -22,7 +22,7 @@ type OrgRow = {
 
 export const GET = withObservability(async (_req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requireSuperAdmin();
+  const auth = await requirePlatformPower('delete_records');
   if (auth.response) return auth.response;
 
   const { id } = await params;
@@ -78,7 +78,7 @@ export const GET = withObservability(async (_req: NextRequest,
 
 export const DELETE = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requireSuperAdmin();
+  const auth = await requirePlatformPower('delete_records');
   if (auth.response) return auth.response;
 
   const { id } = await params;

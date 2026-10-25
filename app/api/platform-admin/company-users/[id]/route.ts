@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { getPlatformUsers, updatePlatformUser, deletePlatformUser } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
@@ -8,7 +8,7 @@ import { withObservability } from '@/lib/observability';
 type Params = { params: Promise<{ id: string }> };
 
 export const PATCH = withObservability(async (req: NextRequest, { params }: Params) => {
-  const auth = await requirePlatformPermission('manage_platform_users');
+  const auth = await requirePlatformPower('staff');
   if (auth.response) return auth.response;
 
   const { id } = await params;
@@ -35,7 +35,7 @@ export const PATCH = withObservability(async (req: NextRequest, { params }: Para
 }, { route: '/api/platform-admin/company-users/[id]' });
 
 export const DELETE = withObservability(async (_req: NextRequest, { params }: Params) => {
-  const auth = await requirePlatformPermission('manage_platform_users');
+  const auth = await requirePlatformPower('staff');
   if (auth.response) return auth.response;
 
   const { id } = await params;

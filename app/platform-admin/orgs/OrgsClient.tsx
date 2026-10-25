@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { takeListSearch } from '@/lib/console-recent';
 import Link from 'next/link';
 import ExportMenu from '@/components/admin/ExportMenu';
 import {
@@ -91,6 +92,12 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
   const [attentionFilter,     setAttentionFilter]     = useState(
     ATTENTION_LABELS[initialFilter] ? initialFilter : '',
   );
+  // Find's "All N in Clubs & portals" door hands its words over through this tab's session storage, never the address
+  // (Support console Stage 2): picked up once, after the first paint.
+  useEffect(() => {
+    const handed = takeListSearch('clubs');
+    if (handed) setSearch(handed);
+  }, []);
 
   const statusCounts = orgs.reduce<Record<string, number>>((acc, org) => {
     acc[org.subscriptionStatus] = (acc[org.subscriptionStatus] ?? 0) + 1;
@@ -152,7 +159,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
 
   return (
     <div className={kit.page}>
-      <AdminPageHeader title="Organizations" />
+      <AdminPageHeader title="Clubs & portals" />
 
       <section className={kit.band} aria-label="Organization account snapshot">
         <div className={kit.bandCell}>

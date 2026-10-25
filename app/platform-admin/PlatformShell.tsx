@@ -7,7 +7,8 @@
  *   • the FieldLogicHQ name (`BrandLockup`, the colour that follows Warm / Dark), the portal's name, and the account menu
  *     with Appearance — the same three the club admin's strip carries, from the same parts;
  *   • NO bell: the console has no notifications behind it, and absent beats disabled;
- *   • NO Find box: Find is Stage 2, and the strip's middle stays empty until then;
+ *   • FIND in the middle (Stage 2, `FindBox`): one box, opened with /, searching every club and person on the server — and
+ *     Stripe numbers for the roles that hold `find_stripe`. Below 900 it is its glyph, beside the account menu;
  *   • the wordmark leads to the console's own front door, never out to the customer product (the console is a different
  *     product for a different audience).
  * Below 900 the rail gives way to a menu button in the strip that opens the SAME menu as a panel over the page. The panel
@@ -23,6 +24,8 @@ import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { PLATFORM_PORTAL_LABEL } from '@/lib/workspace-labels';
 import type { PlatformRole } from '@/lib/platform-auth';
 import PlatformAdminNav, { PlatformNavBody } from './PlatformAdminNav';
+import FindBox from './FindBox';
+import { hasPlatformPower } from '@/lib/platform-areas';
 import stripStyles from '@/components/coaches/CoachTopStrip.module.css';
 import styles from './platform-admin.module.css';
 
@@ -71,6 +74,7 @@ export default function PlatformShell({ role, canBookkeep, children }: {
         <BrandLockup href="/platform-admin" tone="follow" size={15} label={`${PLATFORM_PORTAL_LABEL} home`} />
         <span className={stripStyles.stripDivider} aria-hidden />
         <span className={stripStyles.stripLabel}>{PLATFORM_PORTAL_LABEL}</span>
+        <FindBox searchesStripe={hasPlatformPower(role, 'find_stripe')} />
         <div className={stripStyles.doors}>
           <AccountMenu
             className={stripStyles.iconDoor}

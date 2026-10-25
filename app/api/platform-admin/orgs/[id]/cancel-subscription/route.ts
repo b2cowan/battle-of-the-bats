@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import {
@@ -53,7 +53,7 @@ function mapOrgRow(row: OrgRow): Organization {
 
 export const GET = withObservability(async (_req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformPermission('manage_billing');
+  const auth = await requirePlatformPower('club_billing');
   if (auth.response) return auth.response;
 
   const { id } = await params;
@@ -86,7 +86,7 @@ export const GET = withObservability(async (_req: NextRequest,
 
 export const POST = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformPermission('manage_billing');
+  const auth = await requirePlatformPower('club_billing');
   if (auth.response) return auth.response;
 
   const { id } = await params;

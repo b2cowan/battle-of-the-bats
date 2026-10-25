@@ -182,10 +182,11 @@ describe('who may answer, and where', () => {
 describe('no FieldLogicHQ step is left', () => {
   it('the operator’s completion route is gone, and its page keeps a read-only record', () => {
     assert.ok(!existsSync(path.join(REPO, 'app/api/platform-admin/team-ownership-transfers')), 'the completion route came back');
-    const client = readCode('app/platform-admin/orgs/[id]/OrgDetailClient.tsx');
+    // The club record (Support console Stage 2) keeps the read-only record on its People & tournaments tab.
+    const client = readCode('app/platform-admin/orgs/[id]/ClubRecord.tsx');
     assert.doesNotMatch(client, /team-ownership-transfers/);
     assert.doesNotMatch(client, /Complete Transfer/);
-    assert.match(client, /teamMoves\.map\(move =>/);
+    assert.match(client, /teamMoves\.map\(/);
   });
 
   it('the page moved under Rep Teams, and the old address forwards to it', () => {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireSuperAdmin } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 import { isCronRequest } from '@/lib/cron-auth';
@@ -28,7 +28,7 @@ export const POST = withObservability(async (req: Request) => {
   const machine = isCronRequest(req);
   let actor = 'cron-scheduler';
   if (!machine) {
-    const auth = await requireSuperAdmin();
+    const auth = await requirePlatformPower('run_jobs');
     if (auth.response) return auth.response;
     actor = auth.user.email ?? 'platform-admin';
   }

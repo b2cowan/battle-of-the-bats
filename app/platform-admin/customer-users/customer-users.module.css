@@ -1,12 +1,6 @@
-/* Customer users' own parts: the Actions menu, the question/form windows, the notes list and a few in-cell rules.
-   The page, card, toolbar, table, fields, chips and buttons are the console kit (../console.module.css). */
-
-/* The search form flows as part of the toolbar row. */
-.searchForm { display: contents; }
-/* The long search hint needs room to read. */
-.searchForm input[type='search'] { flex: 1 1 24rem; max-width: 32rem; }
-
-.primaryText { color: var(--text-primary); font-weight: 650; }
+/* People's own parts (Support console Stage 2): a few in-cell rules and the pager. The page, card, toolbar, table,
+   fields, chips and buttons are the console kit (../console.module.css); a person's actions live on the person record,
+   so the old row menu, its windows and the notes list went with it. */
 
 .inCell { margin-top: 0.4rem; }
 .inCellNotice {
@@ -21,47 +15,6 @@
 .membershipList { display: flex; flex-direction: column; gap: 0.5rem; }
 .membership { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; }
 
-.actionsCell { white-space: nowrap; vertical-align: top; }
-
-/* ── Actions dropdown ── */
-.actionsMenu { position: relative; display: inline-block; }
-
-.menuList {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  min-width: 10rem;
-  background: var(--card-bg);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--pitch-black) 16%, transparent);
-  padding: 0.25rem 0;
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.menuItem {
-  display: block;
-  width: 100%;
-  padding: 0.5rem 0.85rem;
-  text-align: left;
-  font-family: inherit;
-  font-size: var(--type-body);
-  color: var(--text-primary);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.menuItem:hover { background: var(--home-olive-soft); }
-
-.menuItemDanger { color: var(--danger); }
-.menuItemDanger:hover { background: color-mix(in srgb, var(--danger) 8%, transparent); }
-
-.menuDivider { height: 1px; background: var(--home-line); margin: 0.25rem 0; }
-
 /* ── Pagination (the card's foot) ── */
 .pagination {
   display: flex;
@@ -70,112 +23,4 @@
   gap: 0.75rem;
   padding: 0.7rem 1rem;
   border-top: 1px solid var(--home-line);
-}
-
-/* ── The question / form windows ── */
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  background: color-mix(in srgb, var(--pitch-black) 55%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  z-index: 200;
-}
-
-.modalBox {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-  padding: 1.25rem 1.4rem;
-  width: 100%;
-  max-width: 420px;
-  max-height: 90vh;
-  overflow-y: auto;
-  display: grid;
-  gap: 0.85rem;
-}
-.modalBoxWide { max-width: 560px; }
-
-.modalTitle { font-size: var(--type-heading); font-weight: 700; line-height: 1.3; color: var(--text-primary); margin: 0; }
-
-.modalBody { margin: 0; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); }
-.modalBody strong { color: var(--text-primary); }
-
-.modalEmail { margin: 0; }
-
-.modalWarning {
-  font-size: var(--type-body);
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--danger) 7%, transparent);
-  border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-  line-height: 1.5;
-}
-.modalWarningList { margin: 0.4rem 0 0; padding-left: 1.2rem; }
-.modalWarningList li { margin-bottom: 0.25rem; }
-.modalWarningList a { color: var(--home-olive); font-weight: 650; text-decoration: none; }
-.modalWarningList a:hover { text-decoration: underline; }
-
-.modalActions { display: flex; justify-content: flex-end; gap: 0.6rem; }
-
-
-/* ── Notes window ── */
-.noteAddRow { display: grid; gap: 0.6rem; justify-items: start; }
-.noteAddRow textarea { justify-self: stretch; }
-
-.notesList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  max-height: 280px;
-  overflow-y: auto;
-  padding-right: 0.25rem;
-}
-
-.notesEmpty { font-size: var(--type-body); color: var(--text-tertiary); text-align: center; padding: 1rem 0; margin: 0; }
-
-.noteRow {
-  padding: 0.65rem 0.75rem;
-  border: 1px solid var(--home-line);
-  border-radius: 6px;
-  background: var(--home-olive-soft);
-}
-
-.noteBody {
-  font-size: var(--type-body);
-  color: var(--text-primary);
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin-bottom: 0.4rem;
-}
-
-.noteMeta {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-
-.noteDeleteBtn {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  background: transparent;
-  border: 0;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  padding: 0.25rem;
-}
-.noteDeleteBtn:hover { color: var(--danger); }
-.noteDeleteBtn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-@media (max-width: 640px) {
-  .actionsCell { white-space: normal; }
-  .menuList { left: auto; }
-  .modalActions { flex-wrap: wrap; }
 }

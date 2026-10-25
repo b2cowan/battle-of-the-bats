@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
+import { getPlatformAdminContext, hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import ChangeRequestsClient from './ChangeRequestsClient';
 import type { PlatformChangeApplicationRow, PlatformChangeRequestRow } from './types';
 
@@ -28,7 +28,7 @@ export default async function ChangeRequestsPage() {
     <ChangeRequestsClient
       initialRequests={requests}
       applications={applications}
-      canManageProduct={auth ? hasPlatformPermission(auth.role, 'manage_product') : false}
+      canManageProduct={auth ? hasPlatformPower(auth.role, 'catalog') : false}
       currentUserEmail={auth?.user.email ?? ''}
     />
   );

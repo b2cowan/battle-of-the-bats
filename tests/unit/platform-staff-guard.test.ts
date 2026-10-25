@@ -1,6 +1,6 @@
 /**
  * A SUPPORT OR BILLING ACTION IS FOR CUSTOMERS' ACCOUNTS (security fix, 2026-10-16; the second sweep's second finding).
- * The Customer users actions sit behind `manage_support` (support and billing) and took any account; a platform role
+ * The person actions sit behind `person_support` (support; billing lost it, Stage 2 A1) and took any account; a platform role
  * is read from the session's email, so changing emails escalated to super admin. Now each action refuses a staff
  * target — the account, or an email it would set or send to — unless the caller is a super admin.
  *
@@ -33,12 +33,14 @@ describe('the guard', () => {
 });
 
 describe('each Customer users action checks before it acts', () => {
+  // Support console Stage 2: every action reads the person by account number (`personForAction`) and names that account's
+  // email — never an email the request carries. `update` also names the email it would set.
   const cases: Array<[string, RegExp, string]> = [
-    ['update', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[email\] \}\)/, 'supabaseAdmin.auth.admin.updateUserById('],
-    ['ban', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[email\] \}\)/, 'supabaseAdmin.auth.admin.updateUserById('],
-    ['revoke-sessions', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[body\.email\] \}\)/, 'await fetch('],
-    ['confirm-email', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[body\.email\] \}\)/, 'supabaseAdmin.auth.admin.updateUserById('],
-    ['reset', /staffTargetRefusal\(auth\.role, \{ emails: \[email\] \}\)/, 'supabaseAdmin.auth.admin.generateLink('],
+    ['update', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[person\.email, email\] \}\)/, 'supabaseAdmin.auth.admin.updateUserById('],
+    ['ban', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[person\.email\] \}\)/, 'supabaseAdmin.auth.admin.updateUserById('],
+    ['revoke-sessions', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[person\.email\] \}\)/, 'await fetch('],
+    ['confirm-email', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[person\.email\] \}\)/, 'supabaseAdmin.auth.admin.updateUserById('],
+    ['reset', /staffTargetRefusal\(auth\.role, \{ userId: id, emails: \[email\] \}\)/, 'supabaseAdmin.auth.admin.generateLink('],
   ];
   for (const [name, call, act] of cases) {
     it(name, () => {
@@ -55,7 +57,7 @@ describe('each Customer users action checks before it acts', () => {
     for (const name of actions) {
       const src = readCode(`${USERS}/${name}/route.ts`);
       if (name === 'notes') continue;
-      if (/requireSuperAdmin\(/.test(src)) continue;
+      if (/requirePlatformPower\('delete_records'\)/.test(src)) continue;
       assert.ok(covered.has(name), `${name} is a support-gated user action without the staff check`);
     }
   });

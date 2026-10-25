@@ -326,7 +326,7 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
 
   return (
     <div className={kit.page}>
-      <AdminPageHeader title="Early access" />
+      <AdminPageHeader title="Leads" />
 
       <section className={kit.band} aria-label="Early access summary">
         <div className={kit.bandCell} title="Counts below reflect the leads currently in view (this page), not the full pipeline total shown in the toolbar.">

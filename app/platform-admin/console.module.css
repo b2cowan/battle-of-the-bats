@@ -215,6 +215,25 @@ button.bandCell:focus-visible { outline: 2px solid var(--home-olive); outline-of
 .chipInfo { color: var(--info); background: color-mix(in srgb, var(--info) 9%, transparent); border-color: color-mix(in srgb, var(--info) 30%, transparent); }
 .chipQuiet { background: transparent; color: var(--text-tertiary); }
 
+/* ── A waiting count: the amber pill (owner ruling 2026-10-01 — a count of things waiting is the rail's amber pill, never
+   words appended to a name). Every queue count on Today and every menu count wear it. ── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 18px;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  font-family: var(--font-data); /* type-ok: count pill */
+  font-size: var(--type-token);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--home-amber);
+  background: rgba(var(--home-amber-rgb), 0.11);
+  border: 1px solid rgba(var(--home-amber-rgb), 0.32);
+}
+
 /* ── Tabs: an underline on the current one, sentence case ── */
 .tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--home-line); overflow-x: auto; }
 .tab {

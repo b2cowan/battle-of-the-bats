@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getEffectiveTournamentLimit, PLAN_CONFIG } from '@/lib/plan-config';
-import { archiveOverCapTournamentsForPlanChange, isLowerPlan } from '@/lib/billing-retention';
-import { hasPlatformPermission, requireAnyPlatformPermission } from '@/lib/platform-auth';
+import { PLAN_CONFIG } from '@/lib/plan-config';
+import { applyOperatorPlanChange } from '@/lib/operator-plan-change';
+import { isClubPlan } from '@/lib/module-entitlements';
+import { getPlanConfigOverride } from '@/lib/plan-config-db';
+import { hasPlatformPower, requireAnyPlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
@@ -48,6 +50,9 @@ const ADDON_MODULE_LABELS: Record<string, string> = {
 };
 const VALID_ADDON_MODULES = new Set(Object.keys(ADDON_MODULE_LABELS));
 const MAX_TARGETS = 100;
+// A plan change runs the full operator rule per org (Club trial check incl. a Stripe history read,
+// side effects, restore, archive, audit) one org at a time — far more than the old bare UPDATE.
+export const maxDuration = 300;
 
 function cleanString(value: unknown, maxLength: number): string {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
@@ -80,7 +85,7 @@ function operationStatus(successCount: number, failureCount: number) {
 }
 
 export const POST = withObservability(async (req: Request) => {
-  const auth = await requireAnyPlatformPermission(['manage_billing', 'manage_product']);
+  const auth = await requireAnyPlatformPower(['bulk_plan_status', 'bulk_sections']);
   if (auth.response) return auth.response;
 
   const body = await req.json() as Record<string, unknown>;
@@ -98,8 +103,8 @@ export const POST = withObservability(async (req: Request) => {
   }
   const requiresProduct = actionType === 'module_addon_enablement';
   const hasRequiredPermission = requiresProduct
-    ? hasPlatformPermission(auth.role, 'manage_product')
-    : hasPlatformPermission(auth.role, 'manage_billing');
+    ? hasPlatformPower(auth.role, 'bulk_sections')
+    : hasPlatformPower(auth.role, 'bulk_plan_status');
   if (!hasRequiredPermission) {
     return NextResponse.json({ error: 'Insufficient platform role for this bulk operation' }, { status: 403 });
   }
@@ -169,6 +174,10 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const results: BulkResult[] = [];
+  // One read of the target plan's trial length for the whole batch, not one per org.
+  const batchTrialDays = actionType === 'plan_change' && isClubPlan(targetPlan)
+    ? (await getPlanConfigOverride(targetPlan as OrgPlan)).trialDays
+    : undefined;
 
   for (const org of (orgs as OrgRow[])) {
     try {
@@ -219,74 +228,34 @@ export const POST = withObservability(async (req: Request) => {
       }
 
       if (actionType === 'plan_change') {
+        // The SAME rule as one org's Plan and Limits save (lib/operator-plan-change.ts): the Club trial,
+        // the Founding comp revoke, the stale team-limit clear, the reactivation restore and the over-cap
+        // archive all run per org. This path once kept its own copy and skipped all but the archive.
+        // A failure after the plan lands is reported in this org's result row, never as a failed batch.
         const planId = targetPlan as OrgPlan;
-        const nextLimit = getEffectiveTournamentLimit(planId, PLAN_CONFIG[planId].tournamentLimit);
-        const updatePayload: {
-          plan_id: OrgPlan;
-          tournament_limit: number;
-          subscription_status?: 'active';
-          stripe_subscription_id?: null;
-          subscription_period?: null;
-          current_period_end?: null;
-        } = {
-          plan_id: planId,
-          tournament_limit: nextLimit,
-        };
-
-        if (planId === 'tournament') {
-          updatePayload.subscription_status = 'active';
-          updatePayload.stripe_subscription_id = null;
-          updatePayload.subscription_period = null;
-          updatePayload.current_period_end = null;
-        }
-
-        const { error } = await supabaseAdmin
-          .from('organizations')
-          .update(updatePayload)
-          .eq('id', org.id);
-        if (error) throw error;
-
-        await writePlatformAuditLog(auth.user.email!, org.id, 'bulk_update_org_plan_and_limit', 'plan_and_limit', {
-          plan_id: org.plan_id,
-          tournament_limit: getEffectiveTournamentLimit(org.plan_id as OrgPlan, org.tournament_limit),
-          subscription_status: org.subscription_status,
-          stripe_subscription_id: org.stripe_subscription_id,
-          subscription_period: org.subscription_period,
-          current_period_end: org.current_period_end,
-        }, {
-          bulk_operation_id: operation.id,
-          plan_id: planId,
-          tournament_limit: nextLimit,
+        const change = await applyOperatorPlanChange({
+          orgId: org.id,
+          planId,
+          tournamentLimit: PLAN_CONFIG[planId].tournamentLimit,
           reason,
-          free_plan_billing_reset: planId === 'tournament',
+          actor: auth.user.email!,
+          trialDays: batchTrialDays,
+          audit: { action: 'bulk_update_org_plan_and_limit', extra: { bulk_operation_id: operation.id } },
         });
-
-        // Apply the new cap to tournaments that ALREADY exist (audit 2026-08-06) — the same gap
-        // the single-org plan route had, except this one repeats it across every org in the batch.
-        // Retained + restorable, never destroyed. A failure here is reported per-org in the result
-        // row rather than failing the whole batch: the plan change itself already landed.
-        let archivedNote = '';
-        if (isLowerPlan(org.plan_id as OrgPlan, planId)) {
-          try {
-            const archived = await archiveOverCapTournamentsForPlanChange({
-              orgId: org.id,
-              fromPlan: org.plan_id as OrgPlan,
-              targetPlan: planId,
-              actorEmail: auth.user.email ?? null,
-              reason,
-            });
-            if (archived.length > 0) {
-              archivedNote = ` — ${archived.length} over-cap tournament${archived.length === 1 ? '' : 's'} archived`;
-              await writePlatformAuditLog(auth.user.email!, org.id, 'bulk_update_org_plan_and_limit',
-                'archived_over_cap_tournaments', null,
-                { bulk_operation_id: operation.id, count: archived.length, tournaments: archived.map(t => ({ id: t.id, name: t.name })) });
-            }
-          } catch (archiveErr) {
-            console.error('[platform-admin bulk] over-cap archive failed:', org.slug, archiveErr);
-            archivedNote = ' — ⚠ over-cap tournaments could NOT be archived; this org is over its limit';
-          }
-        }
-        results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: true, message: `Plan changed to ${PLAN_CONFIG[planId].label}${archivedNote}` });
+        const notes: string[] = [];
+        if (change.clubTrialDays > 0) notes.push(`${change.clubTrialDays}-day Club trial started`);
+        if (change.revokedComps > 0) notes.push('Founding Season comp ended');
+        // Name the old value, so a deliberate custom deal can be put back from this line.
+        if (change.clearedTeamLimit) notes.push(`custom team limit of ${change.current?.team_limit ?? '?'} cleared`);
+        if (change.reactivated) notes.push('restored from cancellation');
+        const archived = change.archivedTournaments.length;
+        if (archived > 0) notes.push(`${archived} over-cap tournament${archived === 1 ? '' : 's'} archived`);
+        if (change.archiveWarning) notes.push('⚠ over-cap tournaments could NOT be archived; this org is over its limit');
+        for (const warning of change.warnings) notes.push(`⚠ ${warning}`);
+        results.push({
+          orgId: org.id, name: org.name, slug: org.slug, ok: true,
+          message: `Plan changed to ${PLAN_CONFIG[planId].label}${notes.length ? ` — ${notes.join(' · ')}` : ''}`,
+        });
       }
 
       if (actionType === 'module_addon_enablement') {

@@ -14,7 +14,7 @@ import {
 } from '@/lib/platform-catalog-approval';
 import { sanitizePlatformChangeNote } from '@/lib/platform-change-note';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { Capability } from '@/lib/roles';
 import { withObservability } from '@/lib/observability';
@@ -60,7 +60,7 @@ function diffMatrix(current: PlanModuleEntitlementMatrix, proposed: PlanModuleEn
 }
 
 export const POST = withObservability(async (req: Request) => {
-  const auth = await requirePlatformPermission('manage_product');
+  const auth = await requirePlatformPower('catalog');
   if (auth.response) return auth.response;
 
   const body = await req.json() as Record<string, unknown>;

@@ -1,6 +1,6 @@
-/* The Overview's own boxes. The column, the page title, the tabs and the buttons come from the console kit
-   (console.module.css) and the global .btn classes; this file keeps only the tiles, queue boxes and panels this
-   screen draws. A colour pass only (Support console Stage 1): the structure is the same, rebuilt later by Stage 2. */
+/* Business numbers' own panels — Overview's four tabs, moved whole (Support console Stage 2). The column, the page
+   title, the tabs and the buttons come from the console kit (console.module.css) and the global .btn classes. Overview's
+   tiles and Action queue boxes went when Today replaced it (`today.module.css`). */
 
 /* A status read from a code ("past due") starts with a capital. */
 .matrixHeader::first-letter,
@@ -14,105 +14,6 @@
   font-weight: 700;
   line-height: 1.3;
   margin: 0.15rem 0 0;
-}
-
-.metricGrid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.8rem;
-}
-
-.alertLabel {
-  font-size: var(--type-support);
-  color: var(--text-secondary);
-}
-
-.alertStrip {
-  display: grid;
-  gap: 0.55rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-  background: var(--card-bg);
-}
-
-.alertGrid {
-  /* Pack tiles left and let each size to its content, so a group with one or two items
-     shows small chips instead of stretching a single number across the whole row. */
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-/* ── Grouped Action Queue ──────────────────────────────────────────────────── */
-.alertGroup {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.alertGroupHead {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-}
-
-.alertGroupLabel {
-  font-size: var(--type-support);
-  font-weight: 650;
-  color: var(--text-secondary);
-}
-
-.alertGroupCount {
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-
-.alertGroupCountUrgent {
-  color: var(--warning);
-}
-
-.alertRoleNote {
-  margin: 0;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-
-.alertItem {
-  display: inline-grid;
-  grid-template-columns: auto auto;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.7rem;
-  min-height: 2rem;
-  flex: 0 0 auto;
-  border: 1px solid var(--home-line);
-  border-radius: 6px;
-  color: var(--text-primary);
-  text-decoration: none;
-  background: var(--card-bg);
-}
-
-a.alertItem:hover {
-  border-color: var(--home-olive);
-}
-
-.alertWarn {
-  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
-  background: color-mix(in srgb, var(--warning) 6%, transparent);
-}
-
-.alertValue {
-  font-size: var(--type-heading);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-  line-height: 1;
-  min-width: 1rem;
-  text-align: center;
-}
-
-.alertWarn .alertValue {
-  color: var(--warning);
 }
 
 .tabsShell {
@@ -415,40 +316,23 @@ a.alertItem:hover {
 }
 
 @media (max-width: 1180px) {
-  .metricGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .alertGrid,
   .usageGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 900px) {
-  .alertStrip {
-    display: block;
-  }
-
-  .alertGrid {
-    margin-top: 0.9rem;
-  }
-
   .dashboardGrid,
   .moduleGrid {
     grid-template-columns: 1fr;
   }
 
-  .metricGrid,
-  .alertGrid,
   .usageGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 620px) {
-  .metricGrid,
-  .alertGrid,
   .usageGrid,
   .statusGrid,
   .statRow {

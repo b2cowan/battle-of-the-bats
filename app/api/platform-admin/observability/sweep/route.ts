@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireSuperAdmin } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -7,14 +7,14 @@ import { withObservability } from '@/lib/observability';
 /**
  * Manual observability sweep — the pg_cron fallback (Phase 4). Runs the exact same fold +
  * retention functions the scheduled jobs run; both are idempotent, so this is safe to fire any
- * time (e.g. when the dashboard freshness chip goes stale/amber). super_admin only — stricter
- * than the status route's manage_product because the sweep deletes data.
+ * time (e.g. when the dashboard freshness chip goes stale/amber). super_admin only (the run_jobs
+ * power) — stricter than the status route's errors_triage because the sweep deletes data.
  *
  * The functions never raise: failures come back as { status: 'error', error } jsonb and are also
  * written to observability_cron_heartbeat, so rpc .error here means transport/permission only.
  */
 export const POST = withObservability(async () => {
-  const auth = await requireSuperAdmin();
+  const auth = await requirePlatformPower('run_jobs');
   if (auth.response) return auth.response;
 
   const fold = await supabaseAdmin.rpc('obs_fold_metrics');

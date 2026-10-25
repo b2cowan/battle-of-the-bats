@@ -1,8 +1,8 @@
-import { getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
+import { getPlatformAdminContext, hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import BulkOperationsClient from './BulkOperationsClient';
 
-export const metadata = { title: 'Bulk Operations - Platform Admin' };
+export const metadata = { title: 'Bulk changes — Support console' };
 
 export type BulkOrgRow = {
   id: string;
@@ -72,8 +72,8 @@ export default async function BulkOperationsPage() {
     <BulkOperationsClient
       orgs={orgs}
       recentOperations={recentOperations}
-      canManageBilling={auth ? hasPlatformPermission(auth.role, 'manage_billing') : false}
-      canManageProduct={auth ? hasPlatformPermission(auth.role, 'manage_product') : false}
+      canManageBilling={auth ? hasPlatformPower(auth.role, 'bulk_plan_status') : false}
+      canManageProduct={auth ? hasPlatformPower(auth.role, 'bulk_sections') : false}
     />
   );
 }

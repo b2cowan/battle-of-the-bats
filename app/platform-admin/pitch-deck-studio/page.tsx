@@ -116,7 +116,7 @@ export default async function PitchDeckStudioPage() {
 
   return (
     <div className={styles.page}>
-      <AdminPageHeader title="Pitch deck studio" />
+      <AdminPageHeader title="Pitch decks" />
 
       <p className={styles.desc}>
         Every pitch slide we own, every deck we compose them into, and where each one is actually

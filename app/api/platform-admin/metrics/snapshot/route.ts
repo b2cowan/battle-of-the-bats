@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { writeTodayPlatformMetricSnapshot } from '@/lib/platform-metrics';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
@@ -7,7 +7,7 @@ import { withObservability } from '@/lib/observability';
 export const POST = withObservability(async () => {
   // Writing a metric snapshot is a product action — gate it so view-only roles
   // (read_only, support, billing, growth) can't trigger the write.
-  const auth = await requirePlatformPermission('manage_product');
+  const auth = await requirePlatformPower('metric_snapshot');
   if (auth.response) return auth.response;
 
   try {

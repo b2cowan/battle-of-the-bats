@@ -7,7 +7,7 @@ import EmailDashboardClient from './EmailDashboardClient';
 import { tournamentToday } from '@/lib/timezone';
 
 export const metadata: Metadata = {
-  title: 'Email Dashboard — Platform Admin',
+  title: 'Campaigns — Support console',
 };
 
 

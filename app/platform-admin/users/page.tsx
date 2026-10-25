@@ -1,5 +1,5 @@
 import { getPlatformUsers } from '@/lib/db';
-import { getBootstrapAdminEmails, getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
+import { getBootstrapAdminEmails, getPlatformAdminContext, hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import type { PlatformUser } from '@/lib/types';
 import CompanyUsersClient from './CompanyUsersClient';
 
@@ -26,7 +26,7 @@ export default async function CompanyUsersPage() {
     <CompanyUsersClient
       users={[...users, ...bootstrapRows]}
       bootstrapEmails={bootstrapEmails}
-      canManageUsers={auth ? hasPlatformPermission(auth.role, 'manage_platform_users') : false}
+      canManageUsers={auth ? hasPlatformPower(auth.role, 'staff') : false}
     />
   );
 }

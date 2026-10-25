@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlatformAuthContext, requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { getPlatformUsers, createPlatformUser } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 
 export const GET = withObservability(async () => {
-  const user = await getPlatformAuthContext();
-  if (!user) return new NextResponse('Forbidden', { status: 403 });
+  // The staff list is Super admin's (the Staff page is theirs alone, Support console Stage 2): it answered any console
+  // account before, while the menu showed Staff to a super admin only.
+  const auth = await requirePlatformPower('staff');
+  if (auth.response) return auth.response;
 
   const users = await getPlatformUsers();
   return NextResponse.json(users);
 }, { route: '/api/platform-admin/company-users' });
 
 export const POST = withObservability(async (req: NextRequest) => {
-  const auth = await requirePlatformPermission('manage_platform_users');
+  const auth = await requirePlatformPower('staff');
   if (auth.response) return auth.response;
 
   const { email, displayName, role } = await req.json();

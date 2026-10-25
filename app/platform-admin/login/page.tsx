@@ -1,11 +1,12 @@
 'use client';
-import { useState, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { signIn } from '@/lib/auth';
 import { signInErrorCopy } from '@/lib/auth-errors';
 import styles from './platform-login.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
+import { clearConsoleRecent } from '@/lib/console-recent';
 
 
 function LoginForm() {
@@ -25,6 +26,9 @@ function LoginForm() {
   const [resetLoading,  setResetLoading]  = useState(false);
   const [resetSent,     setResetSent]     = useState(false);
   const [resetError,    setResetError]    = useState('');
+
+  // Find's Recent never outlives a sign-out, however the session ended (Support console Stage 2, threat T8).
+  useEffect(() => { clearConsoleRecent(); }, []);
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();

@@ -1,618 +1,173 @@
-import { Suspense } from 'react';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from '@/lib/plan-config';
-import { hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
-import { fmtAbsoluteDate } from '@/lib/format-date';
+import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import type { OrgPlan } from '@/lib/types';
-import HelpTooltip from '@/components/help/HelpTooltip';
-import OrgDetailClient from './OrgDetailClient';
-import { holdsSlot } from '@/lib/tournament-slot';
 import { clubDomainStore } from '@/lib/club-domain-store';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import kit from '../../console.module.css';
-import { subscriptionStatusChip, subscriptionStatusLabel } from '../../chips';
-import styles from './orgDetail.module.css';
-
-type OverrideRow = {
-  id: string;
-  type: string;
-  value: string | null;
-  target: { addons?: string[] } | null;
-  expires_at: string | null;
-  reason: string;
-  created_by: string;
-  created_at: string;
-  revoked_at: string | null;
-  revoked_by: string | null;
-};
-
-type AuditEventRow = {
-  id: string;
-  actor_email: string;
-  action: string;
-  field: string | null;
-  old_value: unknown;
-  new_value: unknown;
-  created_at: string;
-};
-
-type InternalNoteRow = {
-  id: string;
-  body: string;
-  created_by_email: string;
-  updated_by_email: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-type OwnershipTransferRow = {
-  id: string;
-  team_workspace_id: string;
-  rep_team_id: string;
-  linked_org_id: string;
-  status: string;
-  approved_by_team_user_id: string | null;
-  approved_by_org_user_id: string | null;
-  updated_at: string;
-};
-
-async function getOrgDetail(id: string) {
-  const { data: org, error } = await supabaseAdmin
-    .from('organizations')
-    .select(
-      'id, name, slug, plan_id, tournament_limit, team_limit, subscription_status, subscription_period, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, free_floor'
-    )
-    .eq('id', id)
-    .single();
-
-  if (error || !org) return null;
-  return org;
-}
-
-/** Lifetime scope-wall-hit count for one org (League Starter cap-wall upgrade signal). */
-async function getScopeWallHitCount(orgId: string): Promise<number> {
-  const { count } = await supabaseAdmin
-    .from('platform_events')
-    .select('id', { count: 'exact', head: true })
-    .eq('org_id', orgId)
-    .eq('event_type', 'scope_wall_hit');
-  return count ?? 0;
-}
-
-async function getMembers(orgId: string) {
-  const { data: rows } = await supabaseAdmin
-    .from('organization_members')
-    .select('user_id, role, status')
-    .eq('organization_id', orgId);
-
-  if (!rows || rows.length === 0) return [];
-
-  const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
-
-  const userMap = new Map<string, { email: string; displayName: string; lastSignInAt: string | null }>();
-  for (const u of usersData?.users ?? []) {
-    userMap.set(u.id, {
-      email:        u.email ?? '(no email)',
-      displayName:  (u.user_metadata?.display_name as string) ?? '',
-      lastSignInAt: u.last_sign_in_at ?? null,
-    });
-  }
-
-  return rows.map(m => {
-    const info = userMap.get(m.user_id as string);
-    return {
-      userId:      m.user_id as string,
-      role:        m.role as string,
-      status:      (m.status ?? 'active') as string,
-      email:       info?.email ?? '(unknown)',
-      displayName: info?.displayName ?? '',
-      lastSignIn:  info?.lastSignInAt ?? null,
-    };
-  });
-}
-
-async function getTournaments(orgId: string) {
-  const { data } = await supabaseAdmin
-    .from('tournaments')
-    .select('id, name, status, start_date, end_date')
-    .eq('org_id', orgId)
-    .neq('status', 'archived')
-    .order('start_date', { ascending: false });
-
-  return (data ?? []).map(t => ({
-    id:        t.id as string,
-    name:      t.name as string,
-    status:    t.status as string,
-    startDate: t.start_date as string | null,
-    endDate:   t.end_date as string | null,
-  }));
-}
-
-// Non-archived rep-team count — the figure a Club band's team cap is measured against
-// (mirrors the customer-facing "X of N teams" readout; rep_teams is the only team type that counts).
-async function getRepTeamCount(orgId: string) {
-  const { count } = await supabaseAdmin
-    .from('rep_teams')
-    .select('*', { count: 'exact', head: true })
-    .eq('org_id', orgId)
-    .eq('is_archived', false);
-  return count ?? 0;
-}
-
-async function getOverrides(orgId: string) {
-  const { data } = await supabaseAdmin
-    .from('org_overrides')
-    .select('*')
-    .eq('org_id', orgId)
-    .order('created_at', { ascending: false });
-
-  return ((data ?? []) as OverrideRow[]).map(r => ({
-    id:         r.id as string,
-    type:       r.type as string,
-    value:      r.value as string | null,
-    target:     (r.target as { addons?: string[] } | null) ?? null,
-    expiresAt:  r.expires_at as string | null,
-    reason:     r.reason as string,
-    createdBy:  r.created_by as string,
-    createdAt:  r.created_at as string,
-    revokedAt:  r.revoked_at as string | null,
-    revokedBy:  r.revoked_by as string | null,
-  }));
-}
-
-async function getRecentAuditEvents(orgId: string) {
-  const { data } = await supabaseAdmin
-    .from('platform_audit_log')
-    .select('id, actor_email, action, field, old_value, new_value, created_at')
-    .eq('org_id', orgId)
-    .order('created_at', { ascending: false })
-    .limit(8);
-
-  return ((data ?? []) as AuditEventRow[]).map(row => ({
-    id: row.id,
-    actorEmail: row.actor_email,
-    action: row.action,
-    field: row.field,
-    oldValue: row.old_value,
-    newValue: row.new_value,
-    createdAt: row.created_at,
-  }));
-}
-
-async function getInternalNotes(orgId: string) {
-  const { data, error } = await supabaseAdmin
-    .from('org_internal_notes')
-    .select('id, body, created_by_email, updated_by_email, created_at, updated_at')
-    .eq('org_id', orgId)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .limit(50);
-
-  if (error) {
-    console.warn('[platform-admin] internal notes read failed', error);
-    return [];
-  }
-
-  return ((data ?? []) as InternalNoteRow[]).map(row => ({
-    id: row.id,
-    body: row.body,
-    createdByEmail: row.created_by_email,
-    updatedByEmail: row.updated_by_email,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  }));
-}
+import { peopleByIds } from '@/lib/platform-people-lookup';
+import { buildClubStory } from '@/lib/platform-story';
+import { recordOpened } from '@/lib/platform-record-opens';
+import { planLabel } from '@/lib/platform-metrics';
+import { subscriptionStatusLabel } from '@/lib/platform-labels';
+import { CLUB_SECTIONS } from '@/lib/club-record-changes';
+import { holdsSlot } from '@/lib/tournament-slot';
+import ClubRecord, { type ClubRecordProps } from './ClubRecord';
 
 /**
- * The org's team moves — a coach's own team brought into this club (Club Tier Stage 2, B04). A READ-ONLY
- * record: the second side's yes moves the team (`move_team_into_club`, mig 313), so there is no operator
- * step left to take. Open requests and finished moves; a failed Stripe cancel after a move shows on the
- * error dashboard, not here.
+ * A club's record (Support console Stage 2, owner rulings A4 + A6 + R2 + R6, 2026-10-25; drawings Ub7fXLh29SC34Zp4oqKUx1,
+ * "The customer record reads first"). A club, a tournament host and a coaches portal are all this record; the band's
+ * figures follow the plan.
+ *
+ * It READS FIRST: title + plan and state chips + a caption (owner · web name · created), a four-figure band, and four tabs —
+ * Story · Money · Access · People & tournaments — opening on the Story. One pencil turns the whole record into its form;
+ * the check mark confirms in one sentence and asks why. A read-only role (R6) sees the same record with no pencil, no Put
+ * it back, no rare doors, no Add a note and no Email the owner, and no banner: the menu's eye already said so.
+ *
+ * Opening it writes one row to the trail of records opened (A3) — who, when, which, via Find or not; never the words.
  */
-async function getTeamMoves(orgId: string) {
-  const { data: links, error } = await supabaseAdmin
+export const metadata = { title: 'Club record — Support console' };
+
+const STORY_PAGE = 50;
+
+function stripeBase() {
+  // The mode comes from the secret key's prefix, not the id (a `sub_…` looks the same in both modes).
+  return `https://dashboard.stripe.com${(process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_live_') ? '' : '/test'}`;
+}
+
+/** The coach's own teams brought into this club (Club Tier Stage 2, B04): finished moves and open requests. Read only. */
+async function getTeamMoves(orgId: string): Promise<ClubRecordProps['teamMoves']> {
+  const { data: links } = await supabaseAdmin
     .from('team_org_links')
-    .select('id, team_workspace_id, rep_team_id, linked_org_id, status, approved_by_team_user_id, approved_by_org_user_id, updated_at')
+    .select('id, rep_team_id, status, approved_by_org_user_id, updated_at')
     .eq('linked_org_id', orgId)
     .in('status', ['ownership_pending', 'org_owned'])
     .eq('link_type', 'ownership')
     .order('updated_at', { ascending: false });
-
-  if (error) {
-    console.warn('[platform-admin] team move read failed', error);
-    return [];
-  }
-
-  const rows = (links ?? []) as OwnershipTransferRow[];
+  const rows = (links ?? []) as Array<{ id: string; rep_team_id: string; status: string; approved_by_org_user_id: string | null; updated_at: string }>;
   if (rows.length === 0) return [];
-
-  const workspaceIds = [...new Set(rows.map(row => row.team_workspace_id))];
-  const teamIds = [...new Set(rows.map(row => row.rep_team_id))];
-
-  const [workspacesRes, teamsRes] = await Promise.all([
-    supabaseAdmin
-      .from('team_workspaces')
-      .select('id, workspace_org_id, workspace_state, billing_mode')
-      .in('id', workspaceIds),
-    supabaseAdmin
-      .from('rep_teams')
-      .select('id, name, slug')
-      .in('id', teamIds),
-  ]);
-
-  const workspaceRows = (workspacesRes.data ?? []) as Array<{
-    id: string;
-    workspace_org_id: string;
-    workspace_state: string | null;
-    billing_mode: string | null;
-  }>;
-  const workspaceOrgIds = [...new Set(workspaceRows.map(row => row.workspace_org_id))];
-  const orgsRes = workspaceOrgIds.length
-    ? await supabaseAdmin
-        .from('organizations')
-        .select('id, name, slug')
-        .in('id', workspaceOrgIds)
-    : { data: [] };
-
-  const workspaceMap = new Map(workspaceRows.map(row => [row.id, row]));
-  const orgMap = new Map(((orgsRes.data ?? []) as Array<{ id: string; name: string; slug: string }>).map(row => [row.id, row]));
-  const teamMap = new Map(((teamsRes.data ?? []) as Array<{ id: string; name: string; slug: string | null }>).map(row => [row.id, row]));
-
-  return rows.map(row => {
-    const workspace = workspaceMap.get(row.team_workspace_id);
-    const workspaceOrg = workspace ? orgMap.get(workspace.workspace_org_id) : null;
-    const team = teamMap.get(row.rep_team_id);
-    return {
-      linkId: row.id,
-      teamWorkspaceId: row.team_workspace_id,
-      repTeamId: row.rep_team_id,
-      teamName: team?.name ?? 'Team workspace',
-      teamSlug: team?.slug ?? null,
-      workspaceOrgId: workspace?.workspace_org_id ?? null,
-      workspaceOrgName: workspaceOrg?.name ?? 'Team workspace',
-      workspaceOrgSlug: workspaceOrg?.slug ?? null,
-      billingMode: workspace?.billing_mode ?? null,
-      updatedAt: row.updated_at,
-      // Where it stands: moved, or waiting on whichever side has not said yes.
-      state: row.status === 'org_owned'
-        ? 'moved' as const
-        : row.approved_by_org_user_id ? 'waiting_on_coach' as const : 'waiting_on_club' as const,
-    };
-  });
+  const { data: teams } = await supabaseAdmin.from('rep_teams').select('id, name').in('id', [...new Set(rows.map(r => r.rep_team_id))]);
+  const names = new Map(((teams ?? []) as Array<{ id: string; name: string }>).map(t => [t.id, t.name]));
+  return rows.map(r => ({
+    id: r.id,
+    teamName: names.get(r.rep_team_id) ?? 'A team',
+    at: r.updated_at,
+    state: r.status === 'org_owned' ? 'moved' : r.approved_by_org_user_id ? 'waiting_on_coach' : 'waiting_on_club',
+  }));
 }
 
-const fmtDate = (iso: string) => fmtAbsoluteDate(iso);
-const fmtNullableDate = (iso: string | null) => fmtAbsoluteDate(iso, 'Not set');
-
-function stripeIsTestMode() {
-  // Match stripeCustomerUrl: derive mode from the secret-key prefix, not the ID
-  // (subscription IDs are `sub_...` in both modes).
-  return !(process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_live_');
-}
-
-function stripeCustomerUrl(customerId: string | null) {
-  if (!customerId) return null;
-  const modePath = stripeIsTestMode() ? '/test' : '';
-  return `https://dashboard.stripe.com${modePath}/customers/${customerId}`;
-}
-
-function stripeSubscriptionUrl(subscriptionId: string | null) {
-  if (!subscriptionId) return null;
-  const modePath = stripeIsTestMode() ? '/test' : '';
-  return `https://dashboard.stripe.com${modePath}/subscriptions/${subscriptionId}`;
-}
-
-function isExpiredOverride(expiresAt: string | null) {
-  if (!expiresAt) return false;
-  return new Date(expiresAt) < new Date();
-}
-
-// Expiring within the next 14 days but not yet lapsed — the actionable "extend or let lapse" window.
-function isExpiringSoonOverride(expiresAt: string | null) {
-  if (!expiresAt) return false;
-  const exp = new Date(expiresAt).getTime();
-  const now = Date.now();
-  return exp > now && exp <= now + 14 * 86_400_000;
-}
-
-const MODULE_LABELS: Record<string, string> = {
-  module_tournaments:    'Tournaments',
-  module_communications: 'Communications',
-  module_members:        'Members',
-  module_public_site:    'Public site',
-  module_house_league:   'House league',
-  module_accounting:     'Accounting',
-  module_rep_teams:      'Rep teams',
+type OverrideRow = {
+  id: string; type: string; value: string | null; target: { addons?: string[] } | null; starts_at: string | null; expires_at: string | null;
+  reason: string | null; created_by: string | null; created_at: string; revoked_at: string | null; revoked_by: string | null;
 };
 
-export default async function OrgDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  // Defensive area guard — `organizations` is currently visible to every platform role
-  // (the layout already enforces the platform-admin session), so this is a no-op today. It
-  // also yields the auth context used for the permission props below.
-  const [auth, org, members, tournaments, overrides, auditEvents, internalNotes, teamMoves, ownAddressRow] = await Promise.all([
-    requirePlatformAreaView('organizations'),
-    getOrgDetail(id),
-    getMembers(id),
-    getTournaments(id),
-    getOverrides(id),
-    getRecentAuditEvents(id),
-    getInternalNotes(id),
-    getTeamMoves(id),
-    // A club's own web address (Club Tier Stage 4e). Never blocks this page: a table that is not there yet reads as none.
-    clubDomainStore.getByOrg(id).catch(() => null),
-  ]);
+/** Overrides as the record reads them: running now, or when each ended (revoked, or ran out). */
+function overrideRows(rows: OverrideRow[], nowMs = Date.now()): ClubRecordProps['overrides'] {
+  return rows.map(o => ({
+    id: o.id,
+    type: o.type,
+    value: o.value,
+    addons: o.target?.addons ?? [],
+    expiresAt: o.expires_at,
+    reason: o.reason,
+    createdBy: o.created_by,
+    createdAt: o.created_at,
+    endedAt: o.revoked_at ?? (o.expires_at && Date.parse(o.expires_at) <= nowMs ? o.expires_at : null),
+    running: !o.revoked_at && (!o.starts_at || Date.parse(o.starts_at) <= nowMs) && (!o.expires_at || Date.parse(o.expires_at) > nowMs),
+  }));
+}
 
+export default async function ClubRecordPage({ params, searchParams }: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string; via?: string }>;
+}) {
+  const auth = await requirePlatformAreaView('organizations');
+  const { id } = await params;
+  const { via } = await searchParams;
+
+  const { data: org } = await supabaseAdmin
+    .from('organizations')
+    .select('id, name, slug, plan_id, tournament_limit, team_limit, subscription_status, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, account_kind')
+    .eq('id', id)
+    .maybeSingle();
   if (!org) notFound();
 
-  const isFreeFloor = (org.free_floor as string | null) === 'league_starter';
-  // Only pay for the scope-wall count query when the org is actually a free floor.
-  const scopeWallHitCount = isFreeFloor ? await getScopeWallHitCount(id) : 0;
-  const enabledAddons = (org.enabled_addons as string[]) ?? [];
-  const planCfg = PLAN_CONFIG[org.plan_id as keyof typeof PLAN_CONFIG];
-  const planOptions = Object.entries(PLAN_CONFIG).map(([planId, config]) => ({
-    id: planId,
-    label: config.label,
-    defaultTournamentLimit: config.tournamentLimit,
-  }));
-  const planModules = planCfg?.moduleEntitlements ?? [];
-  const ownerMembers = members.filter(member => member.role === 'owner');
-  const ownerSummary = ownerMembers.map(member => member.email).join(', ') || 'No owner found';
-  const activeModules = [...new Set([...planModules, ...enabledAddons])];
-  const stripeUrl = stripeCustomerUrl((org.stripe_customer_id as string | null) ?? null);
-  const stripeSubUrl = stripeSubscriptionUrl((org.stripe_subscription_id as string | null) ?? null);
-  const stripeTestMode = stripeIsTestMode();
-  const subscriptionStatus = (org.subscription_status as string | null) ?? 'active';
-  const effectiveTournamentLimit = planCfg
-    ? getEffectiveTournamentLimit(org.plan_id as OrgPlan, org.tournament_limit as number | null)
-    : null;
-  // Team-capacity readout — only the Club bands have a finite team cap, so only pay for the
-  // count query for those orgs (mirrors the scope-wall-count guard above).
-  const currentIsClubBand = org.plan_id === 'club' || org.plan_id === 'club_large';
-  const teamCount = currentIsClubBand ? await getRepTeamCount(id) : 0;
-  const effectiveTeamLimit = currentIsClubBand
-    ? getEffectiveTeamLimit(org.plan_id as OrgPlan, (org.team_limit as number | null) ?? null)
-    : null;
-  // "(custom)" only when the stored per-org cap actually RAISES the band default — a stored value
-  // at/below the default is ignored by getEffectiveTeamLimit (Math.max), so it isn't a real custom deal.
-  const teamLimitIsCustom = currentIsClubBand && effectiveTeamLimit !== null &&
-    effectiveTeamLimit !== (planCfg?.teamLimit ?? null);
-  const hasOverCapTeams = currentIsClubBand && effectiveTeamLimit !== null &&
-    effectiveTeamLimit < 9999 && teamCount > effectiveTeamLimit;
-  // Expired overrides auto-drop out of "Active" (they stop granting access on their own), so the
-  // snapshot count below matches the client's Active list + tab badge, which also exclude expired.
-  const activeOverrides = overrides.filter(o => !o.revokedAt && !isExpiredOverride(o.expiresAt));
-  // The actionable attention item is now overrides expiring within the next 14 days.
-  const expiringSoonOverrides = activeOverrides.filter(o => isExpiringSoonOverride(o.expiresAt));
-  const hasFreePlanBillingMismatch = org.plan_id === 'tournament' && (
-    subscriptionStatus === 'trialing' ||
-    Boolean(org.stripe_subscription_id) ||
-    Boolean(org.subscription_period) ||
-    Boolean(org.current_period_end)
-  );
-  // One at a time (A23): only Draft and Active events hold a slot — a finished one is never "over the limit".
-  const slotHeldCount = tournaments.filter(t => holdsSlot(t.status)).length;
-  const hasOverLimitTournaments = effectiveTournamentLimit !== null &&
-    effectiveTournamentLimit < 9999 &&
-    slotHeldCount > effectiveTournamentLimit;
-  const attentionItems = [
-    ...(ownerMembers.length === 0 ? ['No owner is assigned to this organization.'] : []),
-    ...(subscriptionStatus === 'past_due' ? ['Subscription is past due. Review billing and owner contact before support-sensitive changes.'] : []),
-    ...(subscriptionStatus === 'canceled' ? ['Subscription is canceled. Confirm access expectations before making support changes.'] : []),
-    ...(hasFreePlanBillingMismatch ? ['Free Tournament billing state is inconsistent. The plan should be active with no Stripe subscription.'] : []),
-    ...(expiringSoonOverrides.length > 0 ? [`${expiringSoonOverrides.length} active override${expiringSoonOverrides.length === 1 ? '' : 's'} expiring within 14 days — extend or let lapse.`] : []),
-    ...(hasOverLimitTournaments ? [`This org has ${slotHeldCount} draft and active tournaments against a limit of ${effectiveTournamentLimit}.`] : []),
-    ...(hasOverCapTeams ? [`This org has ${teamCount} teams against its cap of ${effectiveTeamLimit}.`] : []),
-  ];
+  const [membersRes, tournamentsRes, teamCountRes, overridesRes, ownAddress, teamMoves, story] = await Promise.all([
+    supabaseAdmin.from('organization_members').select('user_id, role, status, accepted_at').eq('organization_id', id).limit(2000),
+    supabaseAdmin.from('tournaments').select('id, name, status, start_date, end_date').eq('org_id', id).neq('status', 'archived').order('start_date', { ascending: false }),
+    supabaseAdmin.from('rep_teams').select('id', { count: 'exact', head: true }).eq('org_id', id).eq('is_archived', false),
+    supabaseAdmin.from('org_overrides').select('id, type, value, target, starts_at, expires_at, reason, created_by, created_at, revoked_at, revoked_by').eq('org_id', id).order('created_at', { ascending: false }),
+    clubDomainStore.getByOrg(id).catch(() => null),
+    getTeamMoves(id),
+    buildClubStory(id),
+  ]);
 
-  return (
-    <div className={kit.page}>
-      <AdminPageHeader
-        title={org.name as string}
-        backTo={{ href: '/platform-admin/orgs', label: 'Organizations' }}
-        titleChips={
-          <>
-            <span className={kit.chip}>{planCfg?.label ?? (org.plan_id as string)}</span>
-            <span className={`${kit.chip} ${subscriptionStatusChip(subscriptionStatus)}`}>
-              {subscriptionStatusLabel(subscriptionStatus)}
-            </span>
-            {isFreeFloor && (
-              <span className={`${kit.chip} ${kit.chipOk}`} title="Free League Starter floor (plan_id stays 'tournament')">
-                League Starter
-              </span>
-            )}
-          </>
-        }
-      />
-      <p className={`${kit.caption} ${kit.captionTight}`}>
-        <span className={kit.code}>/{org.slug}</span> · Created {fmtDate(org.created_at as string)}
-      </p>
+  // Opening the record is the read that matters after a complaint (A3); best effort, never a gate.
+  await recordOpened({ actorUserId: auth.user.id, actorEmail: auth.user.email, kind: 'club', recordId: id, viaFind: via === 'find' });
 
-      {attentionItems.length > 0 && (
-        <section className={styles.attentionPanel} aria-label="Needs attention">
-          <h2 className={styles.sectionTitle}>Needs attention</h2>
-          <ul className={styles.attentionList}>
-            {attentionItems.map(item => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
-      )}
+  const memberRows = (membersRes.data ?? []) as Array<{ user_id: string; role: string; status: string | null; accepted_at: string | null }>;
+  const people = await peopleByIds(memberRows.map(m => m.user_id)).catch(() => new Map());
+  const members = memberRows.map(m => {
+    const p = people.get(m.user_id);
+    return {
+      userId: m.user_id,
+      email: p?.email ?? '(no email)',
+      name: p?.displayName ?? null,
+      role: m.role,
+      status: m.status ?? 'active',
+      lastSignInAt: p?.lastSignInAt ?? null,
+    };
+  });
+  const owners = members.filter(m => m.role === 'owner');
+  const ownerLastSignIn = owners.map(o => o.lastSignInAt).filter((v): v is string => !!v).sort().at(-1) ?? null;
 
-      <section className={kit.band} aria-label="Account snapshot">
-        <div className={kit.bandCell}>
-          <span className={kit.bandLabel}>Owner</span>
-          <span className={kit.bandValueText}>{ownerSummary}</span>
-        </div>
-        <div className={kit.bandCell}>
-          <span className={kit.bandLabel}>Members</span>
-          <span className={kit.bandValue}>{members.length}</span>
-        </div>
-        <div className={kit.bandCell}>
-          <span className={kit.bandLabel}>Tournaments</span>
-          <span className={kit.bandValue}>
-            {tournaments.length}{effectiveTournamentLimit !== null && effectiveTournamentLimit < 9999 ? ` / ${effectiveTournamentLimit}` : ''}
-          </span>
-        </div>
-        {currentIsClubBand && (
-          <div className={kit.bandCell}>
-            <span className={kit.bandLabel}>Teams</span>
-            <span className={kit.bandValue}>
-              {teamCount}{effectiveTeamLimit !== null && effectiveTeamLimit < 9999 ? ` / ${effectiveTeamLimit}` : ''}{teamLimitIsCustom ? ' (custom)' : ''}
-            </span>
-          </div>
-        )}
-        <div className={kit.bandCell}>
-          <span className={kit.bandLabel}>Billing period</span>
-          <span className={kit.bandValueText}>{(org.subscription_period as string | null) ?? 'Not set'}</span>
-        </div>
-        <div className={kit.bandCell}>
-          <span className={kit.bandLabel}>Current period end</span>
-          <span className={kit.bandValueText}>{fmtNullableDate((org.current_period_end as string | null) ?? null)}</span>
-        </div>
-        <div className={kit.bandCell}>
-          <span className={kit.bandLabel}>
-            Active overrides
-            <HelpTooltip
-              title="Active overrides"
-              body="Counts active comps and timed grants (subscription-status holds and feature-access trials). Plan and limit changes — including a custom team cap — are NOT counted here; those edit the account directly. All grants are audit-logged."
-            />
-          </span>
-          <span className={kit.bandValue}>{activeOverrides.length}</span>
-        </div>
-      </section>
+  const plan = (org.plan_id ?? 'tournament') as OrgPlan;
+  const isClubBand = plan === 'club' || plan === 'club_large';
+  const tournaments = ((tournamentsRes.data ?? []) as Array<{ id: string; name: string; status: string; start_date: string | null; end_date: string | null }>)
+    .map(t => ({ id: t.id, name: t.name, status: t.status, startDate: t.start_date, endDate: t.end_date }));
+  const overrides = overrideRows((overridesRes.data ?? []) as OverrideRow[]);
 
-      <section className={styles.quickActions} aria-label="Primary account actions">
-        <div className={styles.quickActionIntro}>
-          <h2 className={styles.sectionTitle}>Primary actions</h2>
-          <p className={styles.emptyNote}>Start with owner contact, billing context, then review the grouped workflow below.</p>
-        </div>
-        <div className={styles.actionRow}>
-          {ownerMembers.map(member => (
-            <a
-              key={member.userId}
-              href={`mailto:${member.email}`}
-              className="btn btn-secondary btn-sm"
-            >
-              Email {member.displayName || member.email}
-            </a>
-          ))}
-          {stripeUrl && (
-            <a href={stripeUrl} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
-              Open Stripe
-            </a>
-          )}
-          <Link href={`/platform-admin/audit?q=${encodeURIComponent(org.name as string)}`} className="btn btn-secondary btn-sm">
-            Audit log
-          </Link>
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Account context</h2>
-          <span className={styles.sectionHint}>Quick reference only. Use the workflow tabs below for edits and investigation.</span>
-        </div>
-        <div className={styles.contextGrid}>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Name</span>
-            <span className={styles.fieldValue}>{org.name}</span>
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Slug</span>
-            <span className={`${styles.fieldValue} ${styles.mono}`}>{org.slug}</span>
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Plan</span>
-            <span className={styles.fieldValue}>{planCfg?.label ?? org.plan_id}</span>
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Stripe subscription</span>
-            {stripeSubUrl ? (
-              <span className={styles.mono}>
-                <a href={stripeSubUrl} target="_blank" rel="noreferrer" className={styles.inlineLink}>
-                  {org.stripe_subscription_id as string}
-                </a>
-                {stripeTestMode && <span className={styles.sandboxTag}> (Sandbox)</span>}
-              </span>
-            ) : (
-              <span className={styles.mono}>Not set</span>
-            )}
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Stripe customer</span>
-            <span className={styles.mono}>{(org.stripe_customer_id as string | null) ?? 'Not set'}</span>
-          </div>
-          {planCfg && (
-            <div className={styles.field}>
-              <span className={styles.fieldLabel}>Staff seat limit</span>
-              <span className={styles.fieldValue}>
-                {planCfg.seatLimit >= 9999 ? 'Unlimited' : planCfg.seatLimit}
-              </span>
-            </div>
-          )}
-          {planCfg && (
-            <div className={styles.field}>
-              <span className={styles.fieldLabel}>Officials free seats</span>
-              <span className={styles.fieldValue}>{planCfg.officialsFreeSeats ? 'Yes' : 'No'}</span>
-            </div>
-          )}
-          <div className={`${styles.field} ${styles.fieldFull}`}>
-            <span className={styles.fieldLabel}>Active modules</span>
-            <div className={styles.moduleTagRow}>
-              {activeModules.map(m => (
-                <span key={m} className={styles.moduleTagIncluded}>
-                  {MODULE_LABELS[m] ?? m}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Suspense boundary required: OrgDetailClient reads ?tab via useSearchParams. */}
-      <Suspense fallback={null}>
-      <OrgDetailClient
-        orgId={id}
-        orgName={org.name as string}
-        orgSlug={org.slug as string}
-        currentPlanId={org.plan_id as string}
-        currentTournamentLimit={effectiveTournamentLimit ?? ((org.tournament_limit as number | null) ?? 1)}
-        currentTeamLimit={(org.team_limit as number | null) ?? null}
-        teamCount={teamCount}
-        effectiveTeamLimit={effectiveTeamLimit}
-        currentIsClubBand={currentIsClubBand}
-        teamLimitIsCustom={teamLimitIsCustom}
-        planOptions={planOptions}
-        canManageSupport={auth ? hasPlatformPermission(auth.role, 'manage_support') : false}
-        canManageBilling={auth ? hasPlatformPermission(auth.role, 'manage_billing') : false}
-        canManageProduct={auth ? hasPlatformPermission(auth.role, 'manage_product') : false}
-        planModules={planModules}
-        enabledAddons={enabledAddons}
-        internalNotes={internalNotes}
-        overrides={overrides}
-        members={members}
-        ownAddress={ownAddressRow ? { address: ownAddressRow.full_name, status: ownAddressRow.status } : null}
-        tournaments={tournaments}
-        auditEvents={auditEvents}
-        auditHref={`/platform-admin/audit?q=${encodeURIComponent(org.name as string)}`}
-        teamMoves={teamMoves}
-        stripeSubscriptionId={(org.stripe_subscription_id as string | null) ?? null}
-        subscriptionStatus={subscriptionStatus}
-        isSuperAdmin={auth?.role === 'super_admin'}
-        isFreeFloor={isFreeFloor}
-        scopeWallHitCount={scopeWallHitCount}
-      />
-      </Suspense>
-    </div>
-  );
+  const status = org.subscription_status ?? 'active';
+  const props: ClubRecordProps = {
+    org: {
+      id: org.id,
+      name: org.name,
+      slug: org.slug,
+      planId: plan,
+      planLabel: planLabel(plan),
+      status,
+      statusLabel: subscriptionStatusLabel(status),
+      createdAt: org.created_at,
+      currentPeriodEnd: org.current_period_end,
+      stripeCustomerId: org.stripe_customer_id,
+      stripeSubscriptionId: org.stripe_subscription_id,
+      tournamentLimit: getEffectiveTournamentLimit(plan, org.tournament_limit),
+      teamLimit: isClubBand ? getEffectiveTeamLimit(plan, org.team_limit) : null,
+      storedTeamLimit: org.team_limit,
+      isClubBand,
+      enabledAddons: org.enabled_addons ?? [],
+      planSections: (PLAN_CONFIG[plan]?.moduleEntitlements ?? []) as string[],
+    },
+    stripeBase: stripeBase(),
+    ownerEmail: owners[0]?.email ?? null,
+    ownerLastSignIn,
+    teamCount: teamCountRes.count ?? 0,
+    // The limit counts the tournaments that hold a slot (draft or active), the one rule in lib/tournament-slot.
+    slotsHeld: tournaments.filter(t => holdsSlot(t.status)).length,
+    members,
+    tournaments,
+    overrides,
+    ownAddress: ownAddress ? { address: ownAddress.full_name, status: ownAddress.status } : null,
+    teamMoves,
+    story: { entries: story.slice(0, STORY_PAGE), total: story.length },
+    planOptions: Object.entries(PLAN_CONFIG).map(([key, c]) => ({ id: key, label: c.label, tournamentLimit: c.tournamentLimit, teamLimit: c.teamLimit })),
+    sections: [...CLUB_SECTIONS],
+    can: {
+      support: hasPlatformPower(auth.role, 'club_support'),
+      billing: hasPlatformPower(auth.role, 'club_billing'),
+      sections: hasPlatformPower(auth.role, 'club_sections'),
+      delete: hasPlatformPower(auth.role, 'delete_records'),
+      emailOwner: hasPlatformPower(auth.role, 'email_owner'),
+    },
+  };
+  return <ClubRecord {...props} />;
 }

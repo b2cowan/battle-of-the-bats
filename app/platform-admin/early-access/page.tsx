@@ -1,6 +1,6 @@
 import EarlyAccessClient from './EarlyAccessClient';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
+import { getPlatformAdminContext, hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 
 async function getOrganizationOptions() {
   const { data, error } = await supabaseAdmin
@@ -29,7 +29,7 @@ export default async function EarlyAccessPage() {
   return (
     <EarlyAccessClient
       organizations={organizations}
-      canManageGrowth={auth ? hasPlatformPermission(auth.role, 'manage_growth') : false}
+      canManageGrowth={auth ? hasPlatformPower(auth.role, 'growth') : false}
     />
   );
 }

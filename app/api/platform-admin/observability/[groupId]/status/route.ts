@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -18,8 +18,8 @@ function clampSnoozeHours(value: unknown): number {
 type GroupRow = { id: string; status: string };
 
 export const POST = withObservability(async (req: Request, ctx: { params: Promise<{ groupId: string }> }) => {
-  // Write gate: super_admin + product only (manage_product). support is view-only → 403.
-  const auth = await requirePlatformPermission('manage_product');
+  // Write gate: the errors_triage power (super_admin + product). support reads Errors → 403 here.
+  const auth = await requirePlatformPower('errors_triage');
   if (auth.response) return auth.response;
 
   const { groupId } = await ctx.params;

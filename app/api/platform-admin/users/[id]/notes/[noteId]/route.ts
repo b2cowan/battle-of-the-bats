@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 
 export const DELETE = withObservability(async (_req: NextRequest,
   { params }: { params: Promise<{ id: string; noteId: string }> }) => {
-  const auth = await requirePlatformPermission('manage_support');
+  const auth = await requirePlatformPower('person_support');
   if (auth.response) return auth.response;
 
   const { id, noteId } = await params;

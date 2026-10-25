@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { recordCatalogChangeApplication } from '@/lib/platform-catalog-approval';
 import { sanitizePlatformChangeNote } from '@/lib/platform-change-note';
 import { upsertPlanConfigOverride } from '@/lib/plan-config-db';
@@ -598,7 +598,7 @@ async function applyPlanConfigUpdateProposal(
 }
 
 export const POST = withObservability(async (req: Request) => {
-  const auth = await requirePlatformPermission('manage_product');
+  const auth = await requirePlatformPower('catalog');
   if (auth.response) return auth.response;
 
   const body = await req.json() as Record<string, unknown>;
@@ -659,7 +659,7 @@ export const POST = withObservability(async (req: Request) => {
 }, { route: '/api/platform-admin/product-catalog/change-requests' });
 
 export const PATCH = withObservability(async (req: Request) => {
-  const auth = await requirePlatformPermission('manage_product');
+  const auth = await requirePlatformPower('catalog');
   if (auth.response) return auth.response;
 
   const body = await req.json() as Record<string, unknown>;

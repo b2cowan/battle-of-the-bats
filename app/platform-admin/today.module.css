@@ -1,0 +1,98 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   TODAY — the console's front door (Support console Stage 2; drawings Ub7fXLh29SC34Zp4oqKUx1, "Today").
+   The health line, the "Waiting on us" table grouped by job (the phone: one framed list per group, F-41), and the quiet
+   totals line with the Business numbers door. Tokens only; plain rules.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── The health line: a grey dot (no verdict), a plain count, and the door to Errors ── */
+.health {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  padding: 0.8rem 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+}
+.dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--text-tertiary);
+}
+.healthText { flex: 1; min-width: 12rem; }
+.healthText strong { color: var(--text-primary); font-weight: 650; }
+.healthQuiet { font-size: var(--type-support); color: var(--text-tertiary); }
+.healthDoor { margin-left: auto; white-space: nowrap; }
+
+/* ── The table ── */
+.table { width: 100%; }
+.colQueue { width: 240px; }
+.colCount { width: 110px; }
+.colDoor { width: 40px; }
+
+/* A group's band: the olive tint, the display face's small capitals (the table standard's group row). */
+.band td {
+  background: color-mix(in srgb, var(--home-olive) 10%, transparent);
+  font-family: var(--font-display); /* type-ok: table group band */
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase; /* type-ok: table group band */
+  color: var(--text-secondary);
+  padding: 0.45rem 0.9rem;
+}
+
+/* The quiet line naming a group's empty queues. */
+.clear td {
+  padding: 0.35rem 0.9rem 0.6rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
+/* ── The totals line, with the door to Business numbers at its end ── */
+.numbers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1.1rem;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+}
+.numbers strong { color: var(--text-primary); font-weight: 700; font-variant-numeric: tabular-nums; }
+.numbersDoor { margin-left: auto; }
+
+/* ── The phone: one framed list per group ── */
+.phone { display: none; }
+.phoneGroup { display: grid; gap: 0.45rem; }
+.plist {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.prow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 52px;
+  padding: 0.55rem 0.9rem;
+  color: inherit;
+  text-decoration: none;
+}
+.prow + .prow { border-top: 1px solid var(--home-line); }
+.ptext { flex: 1; min-width: 0; display: grid; gap: 0.1rem; }
+.ptext strong { font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.ptext span { font-size: var(--type-support); color: var(--text-tertiary); }
+.pchev { flex-shrink: 0; color: var(--home-olive); }
+
+@media (max-width: 640px) {
+  .desk { display: none; }
+  .phone { display: grid; gap: 1rem; }
+  .numbers { display: grid; gap: 0.35rem; }
+  .numbersDoor { margin-left: 0; }
+}

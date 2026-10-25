@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
@@ -15,7 +15,7 @@ function cleanNoteBody(value: unknown) {
 
 export const PATCH = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string; noteId: string }> }) => {
-  const auth = await requirePlatformPermission('manage_support');
+  const auth = await requirePlatformPower('club_support');
   if (auth.response) return auth.response;
 
   const { id, noteId } = await params;
@@ -69,7 +69,7 @@ export const PATCH = withObservability(async (req: NextRequest,
 
 export const DELETE = withObservability(async (_req: NextRequest,
   { params }: { params: Promise<{ id: string; noteId: string }> }) => {
-  const auth = await requirePlatformPermission('manage_support');
+  const auth = await requirePlatformPower('club_support');
   if (auth.response) return auth.response;
 
   const { id, noteId } = await params;

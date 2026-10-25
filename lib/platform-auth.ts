@@ -5,17 +5,9 @@ import { NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from './supabase-admin';
 import { getAuthenticatedUser } from './api-auth';
-import { canViewPlatformArea, canWritePlatformArea, type PlatformArea } from './platform-areas';
+import { canViewPlatformArea, canWritePlatformArea, hasPlatformPower, type PlatformArea, type PlatformPower } from './platform-areas';
 
 export type PlatformRole = 'super_admin' | 'support' | 'billing' | 'product' | 'growth' | 'read_only';
-
-export type PlatformPermission =
-  | 'manage_platform_users'
-  | 'manage_billing'
-  | 'manage_growth'
-  | 'manage_product'
-  | 'manage_support'
-  | 'view_platform_admin';
 
 export type PlatformAuthContext = {
   user: User;
@@ -23,14 +15,11 @@ export type PlatformAuthContext = {
   isBootstrapAdmin: boolean;
 };
 
-const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
-  super_admin: ['manage_platform_users', 'manage_billing', 'manage_growth', 'manage_product', 'manage_support', 'view_platform_admin'],
-  support: ['manage_support', 'view_platform_admin'],
-  billing: ['manage_billing', 'manage_support', 'view_platform_admin'],
-  product: ['manage_growth', 'manage_product', 'view_platform_admin'],
-  growth: ['manage_growth', 'view_platform_admin'],
-  read_only: ['view_platform_admin'],
-};
+// ⚖ WHO MAY DO WHAT lives in ONE table, by power: `PLATFORM_POWERS` in `lib/platform-areas.ts` (Support console Stage 2,
+// owner 2026-10-25). The by-permission table that stood here (`ROLE_PERMISSIONS`) was the second rulebook and is gone;
+// `hasPlatformPower` is re-exported below so a server file needs one import.
+export { hasPlatformPower };
+export type { PlatformPower };
 
 export function getBootstrapAdminEmails(): string[] {
   return (process.env.PLATFORM_ADMIN_EMAILS ?? '')
@@ -67,10 +56,6 @@ export async function isPlatformAdminEmail(email: string): Promise<boolean> {
   return (await getDbPlatformRole(email)) !== null;
 }
 
-export function hasPlatformPermission(role: PlatformRole, permission: PlatformPermission): boolean {
-  return ROLE_PERMISSIONS[role].includes(permission);
-}
-
 export async function getPlatformAdminContext(): Promise<PlatformAuthContext | null> {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -85,6 +70,12 @@ export async function getPlatformAdminContext(): Promise<PlatformAuthContext | n
   );
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return null;
+  // ⚖ A STAFF ACCOUNT MUST HAVE A CONFIRMED EMAIL (Support console Stage 2; found by the Find security review). The
+  // check below trusts the session's email, so an account created with a staff address and never confirmed would pass as
+  // staff if the hosted sign-in ever let it sign in. It runs BEFORE the bootstrap branch, which would otherwise return
+  // super admin without reading anything. Every staff account on dev and prod was confirmed before this shipped
+  // (2026-10-25).
+  if (!user.email_confirmed_at) return null;
 
   if (isBootstrapAdmin(user.email)) {
     return { user, role: 'super_admin', isBootstrapAdmin: true };
@@ -92,11 +83,6 @@ export async function getPlatformAdminContext(): Promise<PlatformAuthContext | n
 
   const role = await getDbPlatformRole(user.email);
   return role ? { user, role, isBootstrapAdmin: false } : null;
-}
-
-export async function getPlatformAuthContext(): Promise<User | null> {
-  const auth = await getPlatformAdminContext();
-  return auth?.user ?? null;
 }
 
 /**
@@ -127,7 +113,7 @@ export async function requirePlatformAdmin(): Promise<
  * route checked only "is there a platform session" and silently bypassed least-privilege.
  *
  *   access: 'view'  -> caller's role must be able to VIEW the area  (PLATFORM_AREAS[area].viewRoles)
- *   access: 'write' -> caller's role must be able to WRITE the area (PLATFORM_AREAS[area].writeRoles)
+ *   access: 'write' -> caller's role must hold a power the area's page uses (PLATFORM_AREAS[area].powers)
  *
  * super_admin always passes (both predicates short-circuit on it). Returns the standard guard
  * shape — `if (auth.response) return auth.response;` then use `auth.user` / `auth.role`.
@@ -147,42 +133,29 @@ export async function requirePlatformAreaApi(area: PlatformArea, access: 'view' 
 }
 
 /**
- * Hard super_admin-only API gate — for destructive / data-deleting operations where even the
- * widest functional permission (manage_product etc.) is not enough. Promoted from the local
- * helper in app/api/platform-admin/orgs/[id]/delete/route.ts so there is one source of truth.
+ * THE API GATE BY POWER — every console route's first step (Support console Stage 2; the powers are `PLATFORM_POWERS` in
+ * `lib/platform-areas.ts`). A signed-out caller, a customer session or a disabled staff account gets 403 before anything
+ * is read; a staff role without the power gets 403 "Insufficient platform role". The role is read fresh on every call.
+ * Returns the standard guard shape — `if (auth.response) return auth.response;` then use `auth.user` / `auth.role`.
  */
-export async function requireSuperAdmin(): Promise<
+export async function requirePlatformPower(power: PlatformPower): Promise<
   { user: User; role: PlatformRole; response: null } | { user: null; role: null; response: NextResponse }
 > {
   const auth = await requirePlatformAdmin();
   if (auth.response) return auth;
-  if (auth.role !== 'super_admin') {
-    return {
-      user: null,
-      role: null,
-      response: NextResponse.json({ error: 'Requires super admin access.' }, { status: 403 }),
-    };
-  }
-  return auth;
-}
-
-export async function requirePlatformPermission(permission: PlatformPermission): Promise<
-  { user: User; role: PlatformRole; response: null } | { user: null; role: null; response: NextResponse }
-> {
-  const auth = await requirePlatformAdmin();
-  if (auth.response) return auth;
-  if (!hasPlatformPermission(auth.role, permission)) {
+  if (!hasPlatformPower(auth.role, power)) {
     return { user: null, role: null, response: NextResponse.json({ error: 'Insufficient platform role' }, { status: 403 }) };
   }
   return auth;
 }
 
-export async function requireAnyPlatformPermission(permissions: PlatformPermission[]): Promise<
+/** As `requirePlatformPower`, for a route one of several powers may use (each action inside checks its own). */
+export async function requireAnyPlatformPower(powers: PlatformPower[]): Promise<
   { user: User; role: PlatformRole; response: null } | { user: null; role: null; response: NextResponse }
 > {
   const auth = await requirePlatformAdmin();
   if (auth.response) return auth;
-  if (!permissions.some(permission => hasPlatformPermission(auth.role, permission))) {
+  if (!powers.some(power => hasPlatformPower(auth.role, power))) {
     return { user: null, role: null, response: NextResponse.json({ error: 'Insufficient platform role' }, { status: 403 }) };
   }
   return auth;
@@ -207,8 +180,8 @@ export async function requireDevToolPlatformAdmin(): Promise<
       response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
     };
   }
-  // dev_tools is super_admin-only in the access matrix.
-  if (auth.role !== 'super_admin') {
+  // The dev_tools power (super admin only, PLATFORM_POWERS).
+  if (!hasPlatformPower(auth.role, 'dev_tools')) {
     return {
       user: null,
       role: null,

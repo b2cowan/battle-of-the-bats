@@ -3,7 +3,7 @@ import { getAllStripePrices } from '@/lib/stripe-prices';
 import { getAllPlanConfigOverrideRows } from '@/lib/plan-config-db';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { getFeatureMatrixRows, getPlanModuleEntitlementDrift, PLAN_ORDER } from '@/lib/plan-module-entitlements';
-import { getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
+import { getPlatformAdminContext, hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import PlansPricingClient from './PlansPricingClient';
 
 export type { FeatureMatrixRow } from '@/lib/plan-module-entitlements';
@@ -224,7 +224,7 @@ export default async function PlansPricingPage() {
       featureMatrixDrift={featureMatrixDrift}
       changeRequests={changeRequests}
       campaigns={campaigns}
-      canManageProduct={auth ? hasPlatformPermission(auth.role, 'manage_product') : false}
+      canManageProduct={auth ? hasPlatformPower(auth.role, 'catalog') : false}
     />
   );
 }

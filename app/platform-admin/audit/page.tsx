@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requirePlatformAreaView } from '@/lib/platform-auth';
+import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import kit from '../console.module.css';
 import { humanize } from '../chips';
@@ -8,6 +8,7 @@ import styles from './audit.module.css';
 import HelpCallout from '@/components/help/HelpCallout';
 import AuditExportClient from './AuditExportClient';
 import DateInput from '@/components/shared/DateInput';
+import RecordsOpened, { RECORDS_OPENED } from './RecordsOpened';
 
 const PAGE_SIZE = 100;
 
@@ -167,7 +168,9 @@ export default async function AuditLogPage({
   // Defensive area guard — `audit` is currently visible to every platform role (the layout
   // already enforces the platform-admin session), so this is a no-op today. It future-proofs
   // the page so a later tightening of the access matrix can't silently leave it ungated.
-  await requirePlatformAreaView('audit');
+  const auth = await requirePlatformAreaView('audit');
+  // The trail of records opened (Support console Stage 2, A3) is Super admin's: the `records_opened` power.
+  const readsTrail = hasPlatformPower(auth.role, 'records_opened');
   const sp = await searchParams;
   const offset = Math.max(0, parseInt(sp.offset ?? '0', 10));
   const filters: Filters = {
@@ -178,6 +181,18 @@ export default async function AuditLogPage({
     orgId: sp.orgId ?? '',
     offset,
   };
+
+  if (readsTrail && filters.action === RECORDS_OPENED) {
+    return (
+      <div className={kit.page}>
+        <AdminPageHeader title="Audit log" />
+        <div className={kit.toolbar}>
+          <Link href="/platform-admin/audit" className={kit.door}>‹ All changes</Link>
+        </div>
+        <RecordsOpened offset={offset} pageHref={o => buildAuditHref({ ...filters, q: '', from: '', to: '', orgId: '' }, { offset: o })} />
+      </div>
+    );
+  }
 
   const [rows, actions] = await Promise.all([
     getAuditLog(filters),
@@ -229,6 +244,7 @@ export default async function AuditLogPage({
             />
             <select name="action" defaultValue={filters.action} className={kit.select} aria-label="Action">
               <option value="">All actions</option>
+              {readsTrail && <option value={RECORDS_OPENED}>Records opened</option>}
               {[...actions]
                 .sort((a, b) => actionLabel(a).localeCompare(actionLabel(b)))
                 .map(a => (

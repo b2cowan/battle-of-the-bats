@@ -7,7 +7,7 @@ import {
   isEarlyAccessStatus,
 } from '@/lib/early-access-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
-import { requireAnyPlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
@@ -28,7 +28,7 @@ type EarlyAccessLeadRow = {
 
 export const PATCH = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ leadId: string }> }) => {
-  const auth = await requireAnyPlatformPermission(['manage_growth', 'manage_product']);
+  const auth = await requirePlatformPower('growth');
   if (auth.response) return auth.response;
 
   const { leadId } = await params;

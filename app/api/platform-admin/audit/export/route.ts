@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformAdmin } from '@/lib/platform-auth';
+import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
 import { withObservability } from '@/lib/observability';
@@ -34,7 +34,7 @@ function csvValue(value: unknown) {
 }
 
 export const GET = withObservability(async (req: NextRequest) => {
-  const auth = await requirePlatformAdmin();
+  const auth = await requirePlatformAreaApi('audit', 'view');
   if (auth.response) return auth.response;
 
   const sp = req.nextUrl.searchParams;

@@ -1,118 +1,87 @@
 'use client';
 /**
- * The support console's menu (Support console Stage 1, owner 2026-10-24; `docs/agents/design/NAV_STANDARD.md`).
+ * The support console's menu — BY JOB (Support console Stage 2, owner rulings Q1 + A7 + A11, 2026-10-25; drawings
+ * Ub7fXLh29SC34Zp4oqKUx1 "The menu by job"; `docs/agents/design/NAV_STANDARD.md`).
  *
  * The product's rail, worn by the console: the SAME skin as the club admin's (`AdminKitFrame.module.css` and the shared
- * sidebar-strip parts), so a fix to either lands in both. What is the console's own is the list. ⚠ **No screen moved:**
- * every entry keeps its place under today's group names (sentence case here, capitals by the kit's heading rule), in
- * today's order, behind today's rules —
- *   • a role sees only the areas it can view (`canViewPlatformArea`), and a group left empty is dropped;
- *   • an entry a role can read but not edit carries the small eye (`isPlatformAreaReadOnly`);
- *   • Dev tools appears only where `NEXT_PUBLIC_ENABLE_DEV_TOOLS` is on (and the role can view it);
- *   • Bookkeeping is its own last group behind `canBookkeep` (the owner's email allowlist), never a role.
- * What moved by ruling: Help left the System group for the foot (N4) and opens in place; Sign out left for the account
- * menu (N4); the "PLATFORM ADMIN" badge and the "ACTIVE SESSION" block are gone (the strip carries the name and the person).
- *
- * The same list draws the desktop rail and the narrow-width panel (`variant`): a panel has no Collapse row.
+ * sidebar-strip parts), so a fix to either lands in both. What is the console's own is the list:
+ *   • Today alone at the top (a tray, not the house — the house is Home's in the icon dictionary);
+ *   • five groups named for the work: Customers · Health · Growth · Product · Records; then System (dev only) and the
+ *     owner's Private finance, last and unchanged;
+ *   • nine entries renamed with their page titles (A7): Today, Clubs & portals, People, Errors, Leads, Campaigns,
+ *     Pitch decks, Bulk changes, Staff. No page changed what it does by being renamed.
+ * Behind the same rules as before, now read from the ONE rulebook (`lib/platform-areas.ts`):
+ *   • a role sees only the pages it can open (`canViewPlatformArea`), and a group left empty is dropped;
+ *   • the eye marks a page the role can open but holds none of the powers its controls use (`isPlatformAreaReadOnly`) —
+ *     it now tells the truth: Growth and Read only see it on Clubs & portals and People;
+ *   • the amber count sits beside the entry that clears it (Today's queues, `lib/platform-waiting.ts`), the eye then the
+ *     count, in fixed places; a FOLDED group's heading carries one pill, the sum of its rows, and loses it when opened
+ *     (A11);
+ *   • Dev tools appears only where `NEXT_PUBLIC_ENABLE_DEV_TOOLS` is on; Bookkeeping follows `canBookkeep` (the owner's
+ *     email allowlist), never a role.
+ * Help and Collapse stay at the foot (N4). The same list draws the desktop rail and the narrow-width panel (`variant`).
  */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  LayoutGrid, Building2, Search, ArchiveRestore, Mail, Send, Presentation, Sparkles, ClipboardCheck, SlidersHorizontal,
-  ListChecks, FileText, Table2, AlertTriangle, MessageSquare, Users, ScrollText, Terminal, HelpCircle, Wallet, Eye,
-  ChevronRight,
+  Inbox, Building2, Users, Sparkles, ArchiveRestore, AlertTriangle, MessageSquare, Target, Send, Presentation, Tag,
+  ClipboardCheck, Layers, FileText, Download, ShieldCheck, ScrollText, Terminal, HelpCircle, Wallet, Eye, ChevronRight,
 } from 'lucide-react';
 import { CollapseSidebarRow, SidebarStripTip } from '@/components/shared/SidebarStrip';
 import strip from '@/components/shared/SidebarStrip.module.css';
 import frame from '@/components/admin/kit/AdminKitFrame.module.css';
-import { canViewPlatformArea, isPlatformAreaReadOnly, type PlatformArea } from '@/lib/platform-areas';
+import { isPlatformAreaReadOnly, type PlatformArea } from '@/lib/platform-areas';
 import type { PlatformRole } from '@/lib/platform-auth';
+import {
+  TODAY_ITEM, BOOKKEEPING_ITEM, visibleMenuGroups, entryCount, foldedGroupCount, type MenuIcon, type MenuItem,
+} from './console-menu';
 import styles from './platform-admin.module.css';
-
-type NavItem = { href: string; label: string; Icon: typeof LayoutGrid; area: PlatformArea };
-type NavGroup = { label: string; items: NavItem[] };
 
 const HELP_HREF = '/platform-admin/help';
 
-const DEV_TOOLS_ITEM: NavItem = { href: '/platform-admin/dev-tools', label: 'Dev tools', Icon: Terminal, area: 'dev_tools' };
-const BOOKKEEPING_ITEM: NavItem = { href: '/platform-admin/bookkeeping', label: 'Bookkeeping', Icon: Wallet, area: 'overview' };
+/** The icon dictionary's glyph for each entry (NAV_STANDARD N5): the tray is Today's; the house stays Home's. */
+const ICONS: Record<MenuIcon, typeof Inbox> = {
+  today: Inbox, clubs: Building2, people: Users, founding: Sparkles, retention: ArchiveRestore, errors: AlertTriangle,
+  feedback: MessageSquare, leads: Target, campaigns: Send, decks: Presentation, plans: Tag, approval: ClipboardCheck,
+  bulk: Layers, templates: FileText, export: Download, staff: ShieldCheck, audit: ScrollText, terminal: Terminal, wallet: Wallet,
+};
 
-const BASE_NAV_GROUPS: NavGroup[] = [
-  {
-    label: 'Command center',
-    items: [
-      // The product's one Overview icon (nav standard N5, dictionary #1).
-      { href: '/platform-admin', label: 'Overview', Icon: LayoutGrid, area: 'overview' },
-    ],
-  },
-  {
-    label: 'Customers',
-    items: [
-      { href: '/platform-admin/orgs', label: 'Organizations', Icon: Building2, area: 'organizations' },
-      { href: '/platform-admin/customer-users', label: 'Customer users', Icon: Search, area: 'customer_users' },
-      { href: '/platform-admin/retention', label: 'Retention', Icon: ArchiveRestore, area: 'retention' },
-    ],
-  },
-  {
-    label: 'Growth',
-    items: [
-      { href: '/platform-admin/early-access', label: 'Early access', Icon: Mail, area: 'early_access' },
-      { href: '/platform-admin/email', label: 'Email campaigns', Icon: Send, area: 'email' },
-      // Company-owned pitch material aimed at people who are not customers yet — the same
-      // reasoning that puts Early access and Email campaigns in this group.
-      { href: '/platform-admin/pitch-deck-studio', label: 'Pitch deck studio', Icon: Presentation, area: 'pitch_deck_studio' },
-    ],
-  },
-  {
-    label: 'Billing & product',
-    items: [
-      // The free cohort and what it has done about the season ending. Sits with Billing rather
-      // than Growth: it is read on the day money is decided, not on the day someone is sold to.
-      { href: '/platform-admin/founding-season', label: 'Founding season', Icon: Sparkles, area: 'founding_season' },
-      { href: '/platform-admin/change-requests', label: 'Approval queue', Icon: ClipboardCheck, area: 'change_requests' },
-      { href: '/platform-admin/plans-pricing', label: 'Plans & pricing', Icon: SlidersHorizontal, area: 'plans_pricing' },
-      { href: '/platform-admin/bulk-operations', label: 'Bulk operations', Icon: ListChecks, area: 'bulk_operations' },
-      { href: '/platform-admin/email-templates', label: 'Email templates', Icon: FileText, area: 'email_templates' },
-      { href: '/platform-admin/exports', label: 'Export registry', Icon: Table2, area: 'export_registry' },
-    ],
-  },
-  {
-    label: 'Support & diagnostics',
-    items: [
-      { href: '/platform-admin/observability', label: 'Observability', Icon: AlertTriangle, area: 'observability' },
-      { href: '/platform-admin/feedback', label: 'Feedback', Icon: MessageSquare, area: 'feedback' },
-    ],
-  },
-  {
-    label: 'Governance',
-    items: [
-      { href: '/platform-admin/users', label: 'Platform users', Icon: Users, area: 'platform_users' },
-      { href: '/platform-admin/audit', label: 'Audit log', Icon: ScrollText, area: 'audit' },
-    ],
-  },
-  // Help left this group for the foot (N4); what remains is the seed console, which exists only where the flag is on.
-  {
-    label: 'System',
-    items: process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true' ? [DEV_TOOLS_ITEM] : [],
-  },
-];
-
-/** The groups a person sees: today's seven, the role's areas only, a group left empty dropped, Bookkeeping last. */
-function visibleGroups(role: PlatformRole, canBookkeep: boolean): NavGroup[] {
-  const groups = BASE_NAV_GROUPS
-    // Drop areas this role cannot view, then drop any group left empty.
-    .map(group => ({ ...group, items: group.items.filter(item => canViewPlatformArea(role, item.area)) }))
-    .filter(group => group.items.length > 0);
-  // Bookkeeping is the owner's, by email allowlist (`canAccessBookkeeping`), never by role: no area filter applies.
-  return canBookkeep ? [...groups, { label: 'Private finance', items: [BOOKKEEPING_ITEM] }] : groups;
-}
+const DEV_TOOLS_ON = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true';
 
 function isActive(pathname: string, href: string) {
   if (href === '/platform-admin') return pathname === '/platform-admin';
   // Match on a path boundary so a shorter route isn't also flagged active on a sibling
   // (e.g. `/platform-admin/email` must NOT light up on `/platform-admin/email-templates`).
   return pathname === href || pathname.startsWith(href + '/');
+}
+
+function pillText(count: number) {
+  return count > 99 ? '99+' : String(count);
+}
+
+const COUNTS_FRESH_MS = 30_000;
+
+/** The waiting counts, read when the menu mounts and again on a move to another page (at most every 30 seconds). */
+function useWaitingCounts(): Partial<Record<PlatformArea, number>> {
+  const pathname = usePathname();
+  const [counts, setCounts] = useState<Partial<Record<PlatformArea, number>>>({});
+  const lastRead = useRef(0);
+  useEffect(() => {
+    if (Date.now() - lastRead.current < COUNTS_FRESH_MS) return;
+    // The read time is kept only once an answer lands: an effect run twice (React's dev check) must not skip the read.
+    let live = true;
+    fetch('/api/platform-admin/waiting', { cache: 'no-store' })
+      .then(res => (res.ok ? res.json() : null))
+      .then(body => {
+        if (!body?.counts) return;
+        lastRead.current = Date.now();
+        if (live) setCounts(body.counts);
+      })
+      .catch(() => { /* no counts beats a broken menu */ });
+    return () => { live = false; };
+  }, [pathname]);
+  return counts;
 }
 
 /** The groups and the foot — what the rail and the narrow-width panel both draw. */
@@ -123,7 +92,8 @@ export function PlatformNavBody({ role, canBookkeep, variant, onNavigate }: {
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const groups = useMemo(() => visibleGroups(role, canBookkeep), [role, canBookkeep]);
+  const groups = useMemo(() => visibleMenuGroups(role, canBookkeep, DEV_TOOLS_ON), [role, canBookkeep]);
+  const counts = useWaitingCounts();
   // A phone's rows are for thumbs (nav standard N1): 44px tall, 16px type, 17px icons.
   const drawer = variant === 'drawer';
   const rowCls = drawer ? ` ${styles.drawerRow}` : '';
@@ -136,10 +106,13 @@ export function PlatformNavBody({ role, canBookkeep, variant, onNavigate }: {
   });
   const helpActive = isActive(pathname, HELP_HREF);
 
-  const rows = (items: NavItem[]) => items.map(({ href, label, Icon, area }) => {
+  const row = (item: MenuItem) => {
+    const { href, label, area } = item;
+    const Icon = ICONS[item.icon];
     const active = isActive(pathname, href);
-    // Bookkeeping has no role area, so it is never marked view-only.
+    // Bookkeeping has no role area, so it is never marked view-only and carries no count.
     const viewOnly = href !== BOOKKEEPING_ITEM.href && isPlatformAreaReadOnly(role, area);
+    const count = entryCount(item, counts);
     return (
       <Link
         key={href}
@@ -156,15 +129,21 @@ export function PlatformNavBody({ role, canBookkeep, variant, onNavigate }: {
             <Eye size={11} aria-hidden />
           </span>
         )}
+        {count > 0 && (
+          <span className={`${frame.count} ${styles.navCount}`} aria-label={`${count} waiting`}>{pillText(count)}</span>
+        )}
       </Link>
     );
-  });
+  };
 
   return (
     <>
+      {/* Today sits alone at the top, under no heading. */}
+      {row(TODAY_ITEM)}
       {groups.map(group => {
         const hasActive = group.items.some(item => isActive(pathname, item.href));
         const open = openGroups.has(group.label) || hasActive;
+        const folded = open ? 0 : foldedGroupCount(group, counts);
         return (
           <div key={group.label}>
             <button
@@ -174,10 +153,13 @@ export function PlatformNavBody({ role, canBookkeep, variant, onNavigate }: {
               aria-expanded={open}
             >
               <span className={frame.groupHeaderText}>{group.label}</span>
+              {folded > 0 && (
+                <span className={`${frame.count} ${styles.navCount}`} aria-label={`${folded} waiting`}>{pillText(folded)}</span>
+              )}
               <ChevronRight size={12} className={`${frame.chevron}${open ? ` ${frame.chevronOpen}` : ''}`} aria-hidden />
             </button>
             <div className={strip.stripRule} aria-hidden />
-            {open ? rows(group.items) : <div className={strip.foldedGroup}>{rows(group.items)}</div>}
+            {open ? group.items.map(row) : <div className={strip.foldedGroup}>{group.items.map(row)}</div>}
           </div>
         );
       })}

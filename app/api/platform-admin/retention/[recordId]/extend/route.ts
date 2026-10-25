@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -20,7 +20,7 @@ function clampDays(value: unknown): number | null {
 }
 
 export const POST = withObservability(async (req: Request, ctx: { params: Promise<{ recordId: string }> }) => {
-  const auth = await requirePlatformPermission('manage_billing');
+  const auth = await requirePlatformPower('retention');
   if (auth.response) return auth.response;
 
   const { recordId } = await ctx.params;

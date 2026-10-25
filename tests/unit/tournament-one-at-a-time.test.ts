@@ -113,7 +113,6 @@ describe('one at a time — every limit check reads the one rule', () => {
     'app/[orgSlug]/admin/org/billing/page.tsx',
     'app/api/coaches/[orgSlug]/teams/[teamId]/hosted-tournaments/route.ts',
     'app/platform-admin/orgs/[id]/page.tsx',
-    'app/platform-admin/orgs/[id]/OrgDetailClient.tsx',
   ];
   for (const file of READERS) {
     it(`${file} reads lib/tournament-slot`, () => {

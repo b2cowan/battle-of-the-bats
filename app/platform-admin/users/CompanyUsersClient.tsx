@@ -132,7 +132,7 @@ export default function CompanyUsersClient({ users: initial, bootstrapEmails, ca
   return (
     <div className={kit.page}>
       <AdminPageHeader
-        title="Platform users"
+        title="Staff"
         actions={canManageUsers ? (
           <button
             type="button"

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { clubDomainDeps } from '@/lib/club-domain-deps';
 import { clubDomainStore } from '@/lib/club-domain-store';
@@ -14,7 +14,7 @@ import { withObservability } from '@/lib/observability';
  */
 export const POST = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformPermission('manage_support');
+  const auth = await requirePlatformPower('club_support');
   if (auth.response) return auth.response;
 
   const { id } = await params;

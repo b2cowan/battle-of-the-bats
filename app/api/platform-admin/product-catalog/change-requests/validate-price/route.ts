@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAnyPlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { validateStripePriceForSlot } from '@/lib/stripe-price-validation';
 import { withObservability } from '@/lib/observability';
@@ -10,7 +10,7 @@ import { withObservability } from '@/lib/observability';
  * so an operator sees the Catalog-vs-Stripe checks (and any warnings) BEFORE approving.
  */
 export const POST = withObservability(async (req: Request) => {
-  const auth = await requireAnyPlatformPermission(['manage_billing', 'manage_product']);
+  const auth = await requirePlatformAreaApi('plans_pricing', 'view');
   if (auth.response) return auth.response;
 
   const { id } = (await req.json()) as { id?: string };

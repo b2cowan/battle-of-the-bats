@@ -432,7 +432,7 @@ export default function EmailDashboardClient({
 
   return (
     <div className={kit.page}>
-      <AdminPageHeader title="Email dashboard" />
+      <AdminPageHeader title="Campaigns" />
 
       {/* Result banner */}
       {lastResult && (

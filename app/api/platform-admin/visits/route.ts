@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformAdmin } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { recordPlatformAdminVisit } from '@/lib/platform-admin-visits';
 import { withObservability } from '@/lib/observability';
 
 export const POST = withObservability(async (req: NextRequest) => {
-  const auth = await requirePlatformAdmin();
+  const auth = await requirePlatformPower('view_console');
   if (auth.response) return auth.response;
 
   const body = await req.json().catch(() => ({})) as { path?: string };

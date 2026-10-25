@@ -91,28 +91,29 @@ describe('the support console wears the house look (Stage 1)', () => {
   });
 
   it('who sees what did not move: the role filter and Bookkeeping\'s email allowlist are the ones they were', () => {
+    // Stage 2 moved the list into `console-menu.ts` (the menu by job, owner 2026-10-25) — the rules did not move.
+    const menu = stripComments(read('app/platform-admin/console-menu.ts'));
     const nav = stripComments(read('app/platform-admin/PlatformAdminNav.tsx'));
-    assert.match(nav, /group\.items\.filter\(item => canViewPlatformArea\(role, item\.area\)\)/, 'every entry follows canViewPlatformArea');
+    assert.match(menu, /group\.items\.filter\(item => canViewPlatformArea\(role, item\.area\)\)/, 'every entry follows canViewPlatformArea');
     assert.match(nav, /isPlatformAreaReadOnly\(role, area\)/, 'a read-only area keeps its eye marker');
-    assert.match(nav, /canBookkeep \? \[\.\.\.groups, \{ label: 'Private finance'/, 'Bookkeeping appears only behind canBookkeep');
+    assert.match(menu, /canBookkeep \? \[\.\.\.groups, \{ label: 'Private finance'/, 'Bookkeeping appears only behind canBookkeep');
     assert.match(nav, /NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true'/, 'Dev tools stays behind its flag');
     const layout = stripComments(read('app/platform-admin/layout.tsx'));
     assert.match(layout, /canBookkeep=\{canAccessBookkeeping\(auth\)\}/, 'the layout still decides Bookkeeping by the allowlist, never by a role');
     assert.equal(typeof canAccessBookkeeping, 'function');
-    // The menu's entries are exactly today's: seven groups plus Private finance, 19 routes (Help moved to the foot, so it is not
-    // among them). Dev tools and Bookkeeping are declared as constants beside the groups, so they are checked as a pair apart
-    // from the seventeen listed in today's order.
+    // Stage 2's menu by job: the same 19 routes, regrouped (Help is at the foot, so it is not among them). Dev tools and
+    // Bookkeeping are declared as constants beside the groups, so they are checked as a pair apart from the seventeen.
     const extras = ['/platform-admin/dev-tools', '/platform-admin/bookkeeping'];
-    const all = [...nav.matchAll(/href: '(\/platform-admin[^']*)'/g)].map(m => m[1]);
+    const all = [...menu.matchAll(/href: '(\/platform-admin[^']*)'/g)].map(m => m[1]);
     assert.deepEqual(all.filter(h => extras.includes(h)).sort(), [...extras].sort(), 'Dev tools and Bookkeeping are still the two flagged entries');
     const hrefs = all.filter(h => !extras.includes(h));
     assert.deepEqual(hrefs, [
-      '/platform-admin', '/platform-admin/orgs', '/platform-admin/customer-users', '/platform-admin/retention',
+      '/platform-admin', '/platform-admin/orgs', '/platform-admin/customer-users', '/platform-admin/founding-season',
+      '/platform-admin/retention', '/platform-admin/observability', '/platform-admin/feedback',
       '/platform-admin/early-access', '/platform-admin/email', '/platform-admin/pitch-deck-studio',
-      '/platform-admin/founding-season', '/platform-admin/change-requests', '/platform-admin/plans-pricing',
-      '/platform-admin/bulk-operations', '/platform-admin/email-templates', '/platform-admin/exports',
-      '/platform-admin/observability', '/platform-admin/feedback', '/platform-admin/users', '/platform-admin/audit',
-    ], 'no menu entry moved, was added or was dropped — Stage 1 changes no screen\'s job');
+      '/platform-admin/plans-pricing', '/platform-admin/change-requests', '/platform-admin/bulk-operations',
+      '/platform-admin/email-templates', '/platform-admin/exports', '/platform-admin/users', '/platform-admin/audit',
+    ], 'the same pages, in the menu by job — no entry added or dropped');
   });
 
   it('the portal\'s name is one word, read from one place', () => {

@@ -1,29 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { staffTargetRefusal } from '@/lib/platform-staff-guard';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { platformPasswordResetHtml } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { withObservability, captureAndJson } from '@/lib/observability';
+import { personAuditValue, personForAction, readReason, reasonRequired } from '@/lib/platform-person-action';
 
+/**
+ * Send a person a password reset link (the person record's everyday action). It reaches an inbox, so its window says it
+ * cannot be taken back. ⚖ The email is the ACCOUNT's, read by its number (Support console Stage 2) — before, the route
+ * ignored the account and mailed whatever email the request carried.
+ */
 export const POST = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformPermission('manage_support');
+  const auth = await requirePlatformPower('person_support');
   if (auth.response) return auth.response;
 
-  // id param is present but unused — email is the key for generateLink
-  await params;
-
-  const body = await req.json() as { email?: string };
-  const { email } = body;
-
-  if (!email) {
-    return NextResponse.json({ error: 'Email required' }, { status: 400 });
-  }
-  // Support and billing reset customers' passwords, never a staff account's (2026-10-16).
-  const staffRefused = await staffTargetRefusal(auth.role, { emails: [email] });
+  const { id } = await params;
+  const body = await req.json().catch(() => ({}));
+  const found = await personForAction(id);
+  if (found.response) return found.response;
+  const { person } = found;
+  const email = person.email;
+  // Support resets customers' passwords, never a staff account's (2026-10-16).
+  const staffRefused = await staffTargetRefusal(auth.role, { userId: id, emails: [email] });
   if (staffRefused) return staffRefused;
+  const reason = readReason(body);
+  if (!reason) return reasonRequired();
 
   // SECURITY: build the reset destination from a trusted server-side constant, NOT the request
   // Origin header. This route emails the link to the CUSTOMER, but the request is made by a support
@@ -48,7 +53,7 @@ export const POST = withObservability(async (req: NextRequest,
     console.error('[platform-admin] generateLink error:', error);
     return captureAndJson(
       error ?? new Error('generateLink returned no action_link for password reset'),
-      { error: 'Failed to send reset email' },
+      { error: 'The reset link could not be sent.' },
       500,
     );
   }
@@ -70,12 +75,11 @@ export const POST = withObservability(async (req: NextRequest,
     console.error('[platform-admin] reset email send error:', emailErr);
     return captureAndJson(
       emailErr instanceof Error ? emailErr : new Error('reset email send failed'),
-      { error: 'Failed to send reset email' },
+      { error: 'The reset link could not be sent.' },
       500,
     );
   }
 
-  await writePlatformAuditLog(auth.user.email!, null, 'generate_reset_link', 'email', null, email);
-
+  await writePlatformAuditLog(auth.user.email!, null, 'generate_reset_link', 'email', null, personAuditValue(person, reason));
   return NextResponse.json({ ok: true });
 }, { route: '/api/platform-admin/users/[id]/reset' });

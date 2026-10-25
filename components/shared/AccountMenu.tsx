@@ -50,6 +50,7 @@ import Link from 'next/link';
 import { usePublicPathname } from '@/lib/use-public-pathname';
 import { User, Bell, Settings, MessageSquarePlus, LogOut, Check } from 'lucide-react';
 import { getSession, signOut } from '@/lib/auth';
+import { clearConsoleRecent } from '@/lib/console-recent';
 import { useDismissable } from '@/lib/overlay-hooks';
 import {
   applyTheme,
@@ -151,6 +152,9 @@ export default function AccountMenu({
   async function handleSignOut() {
     if (signingOut) return;
     setSigningOut(true);
+    // The support console's Find keeps the last records opened in this browser; a shared computer must not show them to
+    // the next person (Support console Stage 2, threat T8).
+    if (signOutTo === 'platform') clearConsoleRecent();
     try {
       await signOut();
     } finally {

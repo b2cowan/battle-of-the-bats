@@ -108,6 +108,13 @@
   color: var(--text-tertiary);
   opacity: 0.7;
 }
+/* The amber waiting count (the kit's `.count`, Stage 2): beside the entry that clears it, AFTER the eye — the eye and the
+   count in fixed places (design pass). Two classes, so it out-ranks the kit count's own `margin-left: auto`. */
+.navViewOnly + .navCount { margin-left: 0.5rem; }
+@media (min-width: 901px) {
+  /* The collapsed strip is a column of icon tiles: no room for a count beside an icon (the eye goes the same way). */
+  :global(html[data-sidebar='strip']) .navCount { display: none; }
+}
 
 /* ── The narrow-width panel ── The same menu as a panel over the page (a menu sits on top of the page it opens over —
    the drawer-layer ruling). Below 900 only; a scrim dims the page, which keeps its place. */

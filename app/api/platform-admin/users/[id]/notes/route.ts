@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformAdmin, requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower, requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
@@ -8,7 +8,7 @@ const MAX_NOTE_LENGTH = 4000;
 
 export const GET = withObservability(async (_req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformAdmin();
+  const auth = await requirePlatformAreaApi('customer_users', 'view');
   if (auth.response) return auth.response;
 
   const { id } = await params;
@@ -30,7 +30,7 @@ export const GET = withObservability(async (_req: NextRequest,
 
 export const POST = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformPermission('manage_support');
+  const auth = await requirePlatformPower('person_support');
   if (auth.response) return auth.response;
 
   const { id } = await params;

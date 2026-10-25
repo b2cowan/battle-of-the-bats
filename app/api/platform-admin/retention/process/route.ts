@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { processBillingRetentionExpiry } from '@/lib/billing-retention';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { withObservability } from '@/lib/observability';
 
 export const POST = withObservability(async () => {
-  const auth = await requirePlatformPermission('manage_billing');
+  const auth = await requirePlatformPower('retention');
   if (auth.response) return auth.response;
 
   try {
