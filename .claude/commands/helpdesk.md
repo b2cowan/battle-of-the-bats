@@ -27,17 +27,17 @@ The operator's toolbox lives under `app/platform-admin/`. Know what each does an
 
 | Surface | Route | Resolves |
 |---|---|---|
-| Orgs | `/platform-admin/orgs`, `/orgs/[id]` | plan/status overrides, addon toggles, stale limits, org-level config |
-| Users | `/platform-admin/users` | platform-admin operators |
-| Customer users | `/platform-admin/customer-users` | end-user accounts: invited/unconfirmed state, role, org membership |
+| Clubs & portals | `/platform-admin/orgs`, `/orgs/[id]` (the club record: Story · Money · Access · People & tournaments) | plan/status overrides, section toggles, stale limits, Put it back, org-level config |
+| Staff | `/platform-admin/users` | platform-admin operators |
+| People | `/platform-admin/customer-users`, `/customer-users/[id]` (the person record) | end-user accounts: invited/unconfirmed state, role, org membership; reset link, confirm email, sign out everywhere, ban |
 | Audit | `/platform-admin/audit` | who-did-what trail (`org_audit_log`, `platform_events`) |
-| Observability | `/platform-admin/observability` | server errors, swallowed 500s, error groups |
+| Errors | `/platform-admin/observability` | server errors, swallowed 500s, error groups |
 | Feedback | `/platform-admin/feedback` | in-app feedback submissions |
-| Change requests | `/platform-admin/change-requests` | customer-requested changes queue |
+| Approval queue | `/platform-admin/change-requests` | customer-requested changes queue |
 | Retention | `/platform-admin/retention` | churn/at-risk |
 | Plans / Stripe | `/platform-admin/plans`, `/stripe-prices` | billing/plan config |
-| Email / templates | `/platform-admin/email`, `/email-templates` | transactional email, re-sends |
-| Bulk ops | `/platform-admin/bulk-operations` | batch actions |
+| Campaigns / Email templates | `/platform-admin/email`, `/email-templates` | transactional email, re-sends |
+| Bulk changes | `/platform-admin/bulk-operations` | batch actions |
 | Dev tools | `/platform-admin/dev-tools` | operator-only escape hatches |
 | Help KB | `/platform-admin/help/*` | the in-app SOP/runbook knowledge base |
 

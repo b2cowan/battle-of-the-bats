@@ -75,10 +75,10 @@ export default function PlatformAdminHelpPage() {
   const internalCards: HelpHubCard[] = [
     {
       title: 'Platform Admin Operations',
-      desc: 'Employee SOPs for password resets, module overrides, comp periods, plan changes, audit review, retention, feedback triage, observability, the approval queue, email templates, batch email, and the early-access pipeline.',
+      desc: 'Employee SOPs for the menu, Today and Find, the club and person records (one pencil, Put it back, the Story), password resets, overrides, plan changes, audit review, retention, feedback triage, errors, the approval queue, email templates, campaigns, and leads.',
       href: '/platform-admin/help/platform-admin',
-      topicCount: 14,
-      keywords: ['password reset', 'override', 'billing', 'module access', 'comp period', 'audit', 'bulk operation', 'feedback triage', 'observability', 'change requests', 'email templates', 'early-access pipeline'],
+      topicCount: 25,
+      keywords: ['find', 'today', 'club record', 'person record', 'put it back', 'story', 'password reset', 'override', 'billing', 'module access', 'comp period', 'audit', 'records opened', 'bulk changes', 'feedback triage', 'errors', 'approval queue', 'email templates', 'campaigns', 'leads'],
     },
   ];
 
@@ -86,6 +86,7 @@ export default function PlatformAdminHelpPage() {
     {
       title: 'Platform Support',
       steps: [
+        { label: 'Find a club or a person, and read the club record', href: '/platform-admin/help/platform-admin#club-record' },
         { label: 'Reset a customer password', href: '/platform-admin/help/platform-admin#reset-password' },
         { label: 'Help a customer manage members and roles', href: '/platform-admin/help/org#recipe-fix-member-access' },
         { label: 'Document support work', href: '/platform-admin/help/platform-admin#support-notes' },
@@ -107,7 +108,7 @@ export default function PlatformAdminHelpPage() {
       steps: [
         { label: 'Manage the early-access lead pipeline', href: '/platform-admin/help/platform-admin#early-access-pipeline' },
         { label: 'Send a batch marketing email', href: '/platform-admin/help/platform-admin#email-batch-send' },
-        { label: 'Review growth signals on the Overview', href: '/platform-admin' },
+        { label: 'Review growth signals in Business numbers', href: '/platform-admin/business-numbers' },
       ],
     },
     {
