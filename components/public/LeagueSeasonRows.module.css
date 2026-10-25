@@ -28,6 +28,8 @@
 .name:focus-visible { outline: none; }
 .row:has(.name:focus-visible) { outline: 2px solid var(--club-text); outline-offset: 2px; }
 .chevron { flex: none; color: var(--club-dim); }
+/* The early bird, one quiet line under the name: coloured, not a second pill (owner 2026-10-25). */
+.early { margin: 0; font: 600 0.875rem/1.4 var(--club-text-face); color: var(--club-ok); }
 
 .links { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 0 1.25rem; }
 .link {

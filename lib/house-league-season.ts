@@ -1,7 +1,7 @@
 import { formatStoredDate, tournamentToday } from './timezone';
 import { pluralize } from './utils';
 import { isFinishedLeagueSeason, type HouseLeagueAccess } from './house-league-access';
-import { seasonCharges, seasonPriceRange } from './league-price';
+import { seasonCharges, seasonPriceRange, type EarlyBirdOffer } from './league-price';
 import { clubDay, clubWallClock, registrationChip, registrationState, type RegDated } from './league-registration-state';
 import type { LeagueSeasonStatus } from './types';
 
@@ -262,6 +262,27 @@ export function seasonFactsLine(f: SeasonFacts): string {
 export function dollarsLine(n: number): string {
   if (n === 0) return 'Free';
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`;
+}
+
+/** "Save $20" — or "Save up to $20" when the saving differs by division or some division has no early amount. */
+export function saveWords(offer: Pick<EarlyBirdOffer, 'saveLow' | 'saveHigh' | 'partial'>): string {
+  return offer.partial || offer.saveLow !== offer.saveHigh ? `Save up to ${dollarsLine(offer.saveHigh)}` : `Save ${dollarsLine(offer.saveHigh)}`;
+}
+
+/** Whole days from `today` to `until` (both YYYY-MM-DD). */
+function daysUntil(until: string, today: string): number {
+  const ms = (v: string) => Date.UTC(+v.slice(0, 4), +v.slice(5, 7) - 1, +v.slice(8, 10));
+  return Math.round((ms(until) - ms(today)) / 86_400_000);
+}
+
+/**
+ * The line a public season row carries while the early bird runs: "Save $20 · early bird through Oct 31", and in its last
+ * week "Save $20 · early bird ends in 6 days". The date is the club's day, never re-zoned.
+ */
+export function earlyBirdLine(offer: EarlyBirdOffer, today: string = tournamentToday()): string {
+  const left = daysUntil(offer.until, today);
+  const tail = left <= 0 ? 'ends today' : left === 1 ? 'ends tomorrow' : left <= 7 ? `ends in ${left} days` : `through ${clubDay(offer.until, today)}`;
+  return `${saveWords(offer)} · early bird ${tail}`;
 }
 
 /** What the checklist reads off one division. */

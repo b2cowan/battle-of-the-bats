@@ -51,6 +51,31 @@ export function leaguePrice(division: PricedDivision, season: PricedSeason, sign
   };
 }
 
+/** The early bird as families are offered it while it runs (the season page's cards and the public rows' "Save…" line). */
+export interface EarlyBirdOffer {
+  /** The last day the early amount applies (YYYY-MM-DD). */
+  until: string;
+  /** The smallest and largest saving among the divisions that have an early amount. */
+  saveLow: number;
+  saveHigh: number;
+  /** Some priced division has no early amount, so the saving is "up to". */
+  partial: boolean;
+}
+
+/** The early bird running for a sign-up on `today`, or null when none is (no early amounts, no date, or the day has passed). */
+export function earlyBirdOffer(
+  divisions: readonly PricedDivision[],
+  season: PricedSeason,
+  today: string,
+): EarlyBirdOffer | null {
+  const until = day(season.earlyBirdUntil);
+  if (!until || today.slice(0, 10) > until) return null;
+  const prices = divisions.map(d => leaguePrice(d, season, today)).filter((p): p is LeaguePrice => p != null);
+  const saves = prices.filter(p => p.early && p.regular > p.amount).map(p => Math.round((p.regular - p.amount) * 100) / 100);
+  if (saves.length === 0) return null;
+  return { until, saveLow: Math.min(...saves), saveHigh: Math.max(...saves), partial: prices.some(p => !p.early || p.regular <= p.amount) };
+}
+
 /** A price a convenor typed, as the routes accept it: dollars, 0 or more, at most two decimals. undefined = not sent. */
 export function priceFromBody(v: unknown): { value: number | null } | { error: string } | undefined {
   if (v === undefined) return undefined;

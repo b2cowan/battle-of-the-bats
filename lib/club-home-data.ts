@@ -14,6 +14,7 @@ import { clubTeamsAddress } from '@/lib/public-club-access';
 import { clubHomeTournaments, clubTeamBands, orderOpenNow, tournamentHomeStatus } from '@/lib/club-site-home';
 import { liveLeagueSeasons, registrationDay } from '@/lib/house-league-season';
 import { takesSignups } from '@/lib/league-registration-state';
+import { withEarlyBird } from '@/lib/league-early-bird';
 import { isSectionShown } from '@/lib/club-site-sections';
 import { siteSectionCarries } from '@/lib/public-site-editor-facts';
 import { clubAboutPageShows } from '@/lib/club-about';
@@ -85,9 +86,10 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
     href: href('/league'),
     title: 'House league',
     sub: 'Past seasons and results',
-    seasons: liveLeagueSeasons(publicLeagueSeasons).map(s => ({
+    seasons: (await withEarlyBird(liveLeagueSeasons(publicLeagueSeasons), today)).map(s => ({
       id: s.id, name: s.name, status: s.status, seasonStartDate: s.seasonStartDate, seasonEndDate: s.seasonEndDate,
       registrationOpenAt: s.registrationOpenAt, registrationCloseAt: s.registrationCloseAt, registrationClosedAt: s.registrationClosedAt,
+      earlyBird: s.earlyBird,
       href: href(`/league/${s.slug}`),
     })),
     today,

@@ -9,10 +9,10 @@ import { orgLinks } from '@/lib/org-links';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { LeagueDivision } from '@/lib/types';
 import { bornFactsOf } from '@/lib/club-born-public';
-import { formatStoredDate } from '@/lib/timezone';
-import { clubDay, publicRegistrationLine, registrationChip, takesSignups } from '@/lib/league-registration-state';
-import { dollarsLine } from '@/lib/house-league-season';
-import { seasonPriceRange } from '@/lib/league-price';
+import { formatStoredDate, tournamentToday } from '@/lib/timezone';
+import { clubDay, promotesEarlyBird, publicRegistrationLine, registrationChip, takesSignups } from '@/lib/league-registration-state';
+import { dollarsLine, saveWords } from '@/lib/house-league-season';
+import { earlyBirdOffer, leaguePrice, seasonPriceRange } from '@/lib/league-price';
 import column from '../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 
@@ -46,6 +46,9 @@ function formatDate(iso: string | null): string {
 interface DivisionWithCount extends LeagueDivision {
   activeCount: number;
 }
+
+/** "$165" or "$165 – $175". */
+const rangeLine = (r: { low: number; high: number }) => r.low === r.high ? dollarsLine(r.low) : `${dollarsLine(r.low)} – ${dollarsLine(r.high)}`;
 
 /** A key-date or fee block: its band label over its value. */
 const factValue: React.CSSProperties = { fontSize: '0.875rem', color: 'var(--club-text)', fontWeight: 600 };
@@ -87,6 +90,11 @@ export default async function LeagueSeasonPage({
   const registrationOpen = takesSignups(season);
   const regLine = publicRegistrationLine(season);
   const priceRange = seasonPriceRange(divisions, season);
+  // The early bird while it runs (owner 2026-10-25): the price a family pays today leads, with what it saves and until when.
+  const today = tournamentToday();
+  const offer = promotesEarlyBird(season) ? earlyBirdOffer(divisions, season, today) : null;
+  const priceToday = (d: LeagueDivision) => leaguePrice(d, season, today);
+  const earlyRange = offer ? seasonPriceRange(divisions.map(d => ({ price: priceToday(d)?.amount ?? null, earlyPrice: null })), { registrationFee: null }) : null;
   const finished = season.status === 'completed' || season.status === 'archived';
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
@@ -130,10 +138,10 @@ export default async function LeagueSeasonPage({
               <div>
                 <div className={kit.band} style={factBand}>Price</div>
                 <div style={{ ...factValue, fontWeight: 700 }}>
-                  {priceRange.low === priceRange.high ? dollarsLine(priceRange.low) : `${dollarsLine(priceRange.low)} – ${dollarsLine(priceRange.high)}`}
+                  {rangeLine(offer && earlyRange ? earlyRange : priceRange)}
                 </div>
-                {season.earlyBirdUntil && divisions.some(d => d.earlyPrice != null) && (
-                  <span className={kit.rowSub}>Early bird through {clubDay(season.earlyBirdUntil)}</span>
+                {offer && (
+                  <span className={kit.rowSub}>{saveWords(offer)} through {clubDay(offer.until)}, then {rangeLine(priceRange)}</span>
                 )}
               </div>
             )}
@@ -156,6 +164,10 @@ export default async function LeagueSeasonPage({
                 const isFull = d.capacity != null && d.activeCount >= d.capacity;
                 // The division's birth years as families read them (Stage 4c-2), under the season's sport's cut-off.
                 const born = bornFactsOf({ from: d.bornFromYear, to: d.bornToYear }, org.birthdayCutoffs, season.sport).line;
+                const cardPrice = priceToday(d);
+                // A saving only when the early amount is really lower, in whole cents (an early amount equal to or above the
+                // price is not a discount; 165.55 − 125.55 is not 40.000000000000014).
+                const cardSave = cardPrice?.early ? Math.max(0, Math.round((cardPrice.regular - cardPrice.amount) * 100) / 100) : 0;
                 return (
                   <div key={d.id} className={kit.card} style={{ padding: '1rem 1.25rem' }}>
                     <div style={{ marginBottom: '0.6rem' }}>
@@ -170,6 +182,14 @@ export default async function LeagueSeasonPage({
                       </div>
                       {born && <span className={kit.rowSub}>{born}</span>}
                       {d.note && <span className={kit.rowSub}>{d.note}</span>}
+                      {offer && cardPrice && (
+                        <div style={{ marginTop: '0.4rem' }}>
+                          <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: cardSave > 0 ? 'var(--club-ok)' : 'var(--club-text)' }}>
+                            {dollarsLine(cardPrice.amount)}{cardSave > 0 && ` · Save ${dollarsLine(cardSave)}`}
+                          </div>
+                          {cardSave > 0 && <span className={kit.rowSub}>Early bird through {clubDay(offer.until)}, then {dollarsLine(cardPrice.regular)}</span>}
+                        </div>
+                      )}
                     </div>
                     {d.capacity != null ? (
                       <>

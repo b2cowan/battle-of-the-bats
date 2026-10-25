@@ -8,6 +8,7 @@ import { orgLinks } from '@/lib/org-links';
 import { liveLeagueSeasons, orderSeasons } from '@/lib/house-league-season';
 import { tournamentToday } from '@/lib/timezone';
 import LeagueSeasonRows from '@/components/public/LeagueSeasonRows';
+import { withEarlyBird } from '@/lib/league-early-bird';
 import column from './league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 
@@ -43,7 +44,7 @@ export default async function LeagueIndexPage({
 
   const today = tournamentToday();
   const withHref = <T extends { slug: string }>(list: T[]) => list.map(s => ({ ...s, href: orgHref(`/league/${s.slug}`) }));
-  const running = withHref(liveLeagueSeasons(visibleSeasons));
+  const running = withHref(await withEarlyBird(liveLeagueSeasons(visibleSeasons), today));
   const past = withHref(orderSeasons(visibleSeasons.filter(s => s.status === 'completed' || s.status === 'archived')));
 
   // The light ground and the club's bar and footer come from the club's frame (Club Tier Stage 4b-1); the page only

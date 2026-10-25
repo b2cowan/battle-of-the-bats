@@ -60,6 +60,19 @@ export function takesSignups(season: RegDated, nowWall: string = clubWallClock()
   return registrationState(season, nowWall) === 'open';
 }
 
+/**
+ * Does the public side promote the early bird for this season? While the form takes sign-ups, and while it is still
+ * ahead of opening (families see the discount before the door opens: that is when it entices), but not once registration
+ * is closed, and not when the form would open only after the early-bird day (nobody could sign up at that price).
+ */
+export function promotesEarlyBird(season: RegDated & { earlyBirdUntil: string | null }, nowWall: string = clubWallClock()): boolean {
+  if (!season.earlyBirdUntil) return false;
+  const state = registrationState(season, nowWall);
+  if (state === 'open') return true;
+  return state === 'opensAhead' && season.registrationOpenAt != null
+    && season.registrationOpenAt.slice(0, 10) <= season.earlyBirdUntil.slice(0, 10);
+}
+
 /** A stored day as the club reads it (copy §0): "Jun 1", and "Jun 1, 2028" only when the year is not this year. */
 export function clubDay(v: string, today: string = tournamentToday()): string {
   const d = v.slice(0, 10);

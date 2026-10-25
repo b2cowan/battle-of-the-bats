@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { publicSeasonLinks, publicSeasonState } from '@/lib/house-league-season';
+import { earlyBirdLine, publicSeasonLinks, publicSeasonState } from '@/lib/house-league-season';
+import type { EarlyBirdOffer } from '@/lib/league-price';
 import type { LeagueSeasonStatus } from '@/lib/types';
 import kit from './ClubKit.module.css';
 import s from './LeagueSeasonRows.module.css';
@@ -22,6 +23,8 @@ export type PublicLeagueSeason = {
   registrationOpenAt: string | null;
   registrationCloseAt: string | null;
   registrationClosedAt: string | null;
+  /** The early bird while it runs (lib/league-early-bird.ts): the row carries one "Save $20 · early bird through Oct 31" line. */
+  earlyBird?: EarlyBirdOffer | null;
   /** The season's public page, spelled for the address the visitor is on (`/league/{slug}`, or the club's own host's). */
   href: string;
 };
@@ -43,6 +46,7 @@ export default function LeagueSeasonRows({ seasons, today, label }: {
               {state && <span className={`${kit.chip} ${state.tone === 'ok' ? kit.chipOk : kit.chipNeutral}`}>{state.label}</span>}
               <ChevronRight size={18} className={s.chevron} aria-hidden />
             </div>
+            {season.earlyBird && <p className={s.early}>{earlyBirdLine(season.earlyBird, today)}</p>}
             <div className={s.links}>
               {publicSeasonLinks(season, href).map(l => (
                 <Link key={l.label} href={l.href} className={`${s.link}${l.primary ? ` ${s.linkPrimary}` : ''}`} aria-label={`${l.label}, ${season.name}`}>
