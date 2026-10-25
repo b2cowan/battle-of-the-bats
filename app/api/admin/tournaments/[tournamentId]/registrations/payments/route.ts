@@ -10,8 +10,10 @@ import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { tournamentToday } from '@/lib/timezone';
 import { PAYMENT_METHODS, draftIssue, type PaymentLabel, type PaymentMethod } from '@/lib/team-payments';
 import {
-  changeTeamPayment, listTeamPayments, paymentErrorResponse, paymentsPostToBook, recordTeamPayment, removeTeamPayment,
+  changeTeamPayment, listTeamPaymentsForRecord, paymentErrorResponse, paymentsPostToBook, recordTeamPayment, removeTeamPayment,
 } from '@/lib/team-payments-server';
+import { loadTeamPayFacts } from '@/lib/team-pay-facts';
+import { canRefundOnline } from '@/lib/online-payment-access';
 import { announceTeamPaid } from '@/lib/team-payment-notices';
 
 /**
@@ -83,8 +85,21 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
   if ('error' in g) return g.error;
   const teamId = new URL(req.url).searchParams.get('teamId');
   if (!(await teamInTournament(teamId, tournamentId))) return json({ error: 'That team couldn’t be found.' }, 404);
-  const [payments, postsToBook] = await Promise.all([listTeamPayments(teamId as string), paymentsPostToBook(tournamentId)]);
-  return json({ payments, postsToBook });
+  const [payments, postsToBook, facts, { data: team }] = await Promise.all([
+    listTeamPaymentsForRecord(teamId as string),
+    paymentsPostToBook(tournamentId),
+    loadTeamPayFacts(teamId as string),
+    supabaseAdmin.from('teams').select('pay_link_sent_at').eq('id', teamId as string).maybeSingle(),
+  ]);
+  // Online payments on this record (Club Tier Stage 12a): the pay link goes out only while the team can pay online now;
+  // a refund to the card only while the club's account is still connected (after Disconnect, refunds are made in Stripe).
+  const member = { role: g.ctx.role, capabilities: g.ctx.capabilities };
+  const online = {
+    payLink: facts?.refusal === null && canRefundOnline(member, g.ctx.org),
+    payLinkSentAt: (team?.pay_link_sent_at as string | null) ?? null,
+    refunds: facts?.refusal !== 'switch_off' && !!facts?.account && !facts.account.disconnectedAt && canRefundOnline(member, g.ctx.org),
+  };
+  return json({ payments, postsToBook, online });
 }, { route: '/api/admin/tournaments/[tournamentId]/registrations/payments' });
 
 export const POST = withObservability(async (req: Request, { params }: { params: Promise<{ tournamentId: string }> }) => {

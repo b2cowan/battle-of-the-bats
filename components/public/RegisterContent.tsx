@@ -144,16 +144,19 @@ function resolveFeeSchedule(tournament: Tournament | null, group: Division | und
  * step and the review step. `instructions` is only passed when the organizer chose
  * to surface their how-to-pay text on the public form (default: email-only).
  */
-function PaymentPanel({ feeSchedule, instructions, style }: {
+function PaymentPanel({ feeSchedule, instructions, style, online = false }: {
   feeSchedule: FeeSchedule | null;
   instructions: string;
   style?: React.CSSProperties;
+  /** Club Tier Stage 12a (copy §10): the club takes payments online, so the box says what happens once the team is
+   *  accepted. False → today's box, word for word (A6). Only the review step passes it. */
+  online?: boolean;
 }) {
   return (
     <div className={styles.paymentNotice} style={style}>
       <div className={styles.paymentNoticeHeader}>
         <CreditCard size={18} />
-        <span>Payment handled by organizer</span>
+        <span>{online ? 'Payment' : 'Payment handled by organizer'}</span>
       </div>
       {feeSchedule?.totalFeeAmount ? (
         <div className={styles.paymentDetails}>
@@ -177,13 +180,17 @@ function PaymentPanel({ feeSchedule, instructions, style }: {
       ) : (
         <p>The organizer has not published a fee schedule for this division yet.</p>
       )}
-      {instructions && (
+      {instructions && !online && (
         <div className={styles.paymentInstructions}>
           <span className={styles.paymentInstructionsLabel}>How to pay</span>
           <p>{instructions}</p>
         </div>
       )}
-      <p>Payments are made directly to the organizer, outside the platform.</p>
+      <p>{!online
+        ? 'Payments are made directly to the organizer, outside the platform.'
+        : instructions
+          ? `Once the organizer accepts your team, we’ll email you a link to pay online by card. You can also pay another way: ${instructions}`
+          : 'Once the organizer accepts your team, we’ll email you a link to pay online by card. You can also pay the organizer directly.'}</p>
     </div>
   );
 }
@@ -260,6 +267,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
 
   const [divisions, setDivisions]   = useState<Division[]>([]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
+  // Club Tier Stage 12a: does this tournament take payments online? Any doubt is no (today's box).
+  const [takesOnline, setTakesOnline] = useState(false);
   const [registrationFields, setRegistrationFields] = useState<TournamentRegistrationField[]>([]);
   const [contactEmail, setContactEmail] = useState<string | null>(null);
   const [stats, setStats]           = useState<Record<string, number>>({});
@@ -877,6 +886,16 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const count = selectedGroup ? stats[selectedGroup.id] || 0 : 0;
   const isWaitlist = Boolean(selectedGroup?.capacity && count >= selectedGroup.capacity);
   const selectedFeeSchedule = resolveFeeSchedule(tournament, selectedGroup);
+  const tournamentId = tournament?.id ?? null;
+  useEffect(() => {
+    if (!tournamentId || isPreview) return;
+    let stale = false;
+    fetch(`/api/pay/tournament/${encodeURIComponent(tournamentId)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: { online?: boolean } | null) => { if (!stale) setTakesOnline(d?.online === true); })
+      .catch(() => {});
+    return () => { stale = true; };
+  }, [tournamentId, isPreview]);
   // Organizer payment-display controls (settings JSONB; no migration). Default = show. An event that doesn't track
   // payments ("Not tracked here") has no payment panel at all — no fee, no how-to-pay, whatever was typed before.
   const showFees = tournamentTracksPayments(tournament?.settings) && tournament?.settings?.show_fees_on_register !== false;
@@ -1444,6 +1463,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                   <PaymentPanel
                     feeSchedule={selectedFeeSchedule}
                     instructions={formInstructions}
+                    online={takesOnline}
                     style={{ marginTop: '1.5rem' }}
                   />
                 )}

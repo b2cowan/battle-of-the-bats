@@ -199,7 +199,7 @@ export const TEAM_PAYMENT_WORDS = {
   paidOn: 'Paid on',
   how: 'How it arrived',
   howNone: 'Not recorded',
-  methods: { etransfer: 'E-transfer', cash: 'Cash', cheque: 'Cheque', card: 'Card', other: 'Other' },
+  methods: { etransfer: 'E-transfer', cash: 'Cash', cheque: 'Cheque', card: 'Card', other: 'Other', online_card: 'Online, card' },
   /** Under the Record form. The date range is the rule; the second sentence says where the money goes. */
   hintBook: 'Any date up to today. Posts one line to the tournament’s book, dated the day you pick.',
   hintTeamOnly: 'Any date up to today. Kept on the team; this club has no Accounting, so nothing posts to a ledger.',

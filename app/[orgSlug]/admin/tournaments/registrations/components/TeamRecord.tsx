@@ -396,6 +396,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
           onChanged={props.onPaymentsChanged}
           busy={props.busy}
           onFormOpen={setPaymentFormOpen}
+          teamName={t.name}
         />
       )}
       {/* R2: what was recorded stays readable; recording more is Tournament Plus. */}

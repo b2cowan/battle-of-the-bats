@@ -36,6 +36,7 @@
  *     locked figures, in the drawing's order, with one line in place of the teams' cash; on an open year it is
  *     3b's board report, its title carrying the year's name and its two days.
  */
+import PayoutsStatusLine from '@/components/admin/kit/club/PayoutsStatusLine';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -237,6 +238,8 @@ export default function AccountingOverviewPage() {
       </CoachListToolbar>
       {read.endedOpen && <EndedYearLine year={read.endedOpen} onClose={() => setWin('close')} />}
       <YearLine year={read.year} onReopen={() => setWin('reopen')} />
+      {/* The treasurer's Payouts line (Club Tier Stage 12a, A1); the owner's quiet line while not set up (A6). */}
+      {currentOrg && <PayoutsStatusLine orgSlug={currentOrg.slug} planId={currentOrg.planId} home="club" />}
 
       {/* ── Where the club stands · today ── */}
       <p className={cr.recordSectionTitle}>{SUMMARY_WORDS.standsHeading(summary.today)}</p>

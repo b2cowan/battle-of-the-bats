@@ -97,7 +97,6 @@ export function factsFromRow(r: PayoutsAccountRow | null | undefined): PayoutsAc
 /** Stripe's account object → the stored facts. Kept beside the rule so a new Stripe field is read in one place. */
 export interface StripeAccountLike {
   id: string;
-  livemode?: boolean;
   charges_enabled?: boolean;
   payouts_enabled?: boolean;
   details_submitted?: boolean;
@@ -114,7 +113,6 @@ export function factsFromStripe(acct: StripeAccountLike) {
   const deadline = acct.requirements?.current_deadline;
   return {
     stripe_account_id: acct.id,
-    livemode: !!acct.livemode,
     charges_enabled: !!acct.charges_enabled,
     payouts_enabled: !!acct.payouts_enabled,
     details_submitted: !!acct.details_submitted,
@@ -122,4 +120,12 @@ export function factsFromStripe(acct: StripeAccountLike) {
     disabled_reason: acct.requirements?.disabled_reason ?? null,
     requirements_deadline: deadline ? new Date(deadline * 1000).toISOString() : null,
   };
+}
+
+/** Where the Payouts card lives (A8): the club's Settings on League and Club, its own page under tournament Settings &
+ *  access on a Tournament plan. One home for the path, read by links in the browser and by the server's notices. */
+export function payoutsPath(org: { slug: string; planId: string }): string {
+  return org.planId === 'tournament' || org.planId === 'tournament_plus'
+    ? `/${org.slug}/admin/tournaments/settings/payouts`
+    : `/${org.slug}/admin/org/settings#payouts`;
 }

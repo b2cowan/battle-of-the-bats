@@ -6,9 +6,9 @@
  * window and anyone else sees it dimmed with "Owner only" (as Plan & billing). League and Club keep the address in
  * the organization's Settings, so the door is absent there.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Bell, CreditCard, Globe, Lock, Users2, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Bell, CreditCard, Globe, Landmark, Lock, Users2, type LucideIcon } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -19,6 +19,8 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import WebAddressWindow from './WebAddressWindow';
+import { loadPayouts, type PayoutsView } from '@/components/admin/kit/club/PayoutsCard';
+import { PAYOUTS_WORDS as PW } from '@/lib/online-payment-words';
 import styles from './settings-access.module.css';
 
 /** The settings hub's "?" (Tournament admin redesign Stage 5, E6: otherwise unchanged). */
@@ -41,6 +43,16 @@ export default function TournamentSettingsAccessPage() {
   const { currentTournament } = useTournament();
   usePageTitle('Settings');
   const [addressOpen, setAddressOpen] = useState(false);
+  // Payouts (Club Tier Stage 12a, A8): Tournament Plus's home for the card. The read answers null while online payments
+  // aren't offered (switch, plan) or the viewer is neither the owner nor the treasurer, and the tile then stays away.
+  const [payouts, setPayouts] = useState<PayoutsView | null>(null);
+  const tournamentTier = isTournamentTier(currentOrg?.planId);
+  useEffect(() => {
+    if (!tournamentTier || !currentOrg?.slug) return;
+    let stale = false;
+    void loadPayouts(currentOrg.slug).then(v => { if (!stale) setPayouts(v); });
+    return () => { stale = true; };
+  }, [tournamentTier, currentOrg?.slug]);
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
   const subscriptionHref = `${base}/settings/subscription`;
   const isOwner = userRole === 'owner';
@@ -85,6 +97,15 @@ export default function TournamentSettingsAccessPage() {
       description: WA.doorLine(currentOrg?.slug ?? ''),
       meta: isOwner ? WA.doorAction : WA.ownerOnly,
       enabled: isOwner,
+    }] : []),
+    // Payouts — Tournament Plus only, at the end (A8). League and Club keep it in the organization's Settings.
+    ...(tournamentTier && payouts ? [{
+      href: `${base}/settings/payouts`,
+      icon: Landmark,
+      title: PW.tile.title,
+      description: PW.tile.sub[payouts.state],
+      meta: payouts.isOwner ? PW.button[payouts.state] : PW.pill[payouts.state],
+      enabled: true,
     }] : []),
   ];
 

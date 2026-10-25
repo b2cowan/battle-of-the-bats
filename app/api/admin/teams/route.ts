@@ -1,3 +1,4 @@
+import { teamPayNowLink } from '@/lib/online-payment-receipt';
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, manualTeamRegistrationHtml, teamInvitationHtml,
@@ -668,7 +669,9 @@ export const POST = withObservability(async (req: Request) => {
             tournament: bulkTournamentFee,
             division: div ? { depositAmount: div.deposit_amount, depositDueDate: div.deposit_due_date, totalFeeAmount: div.total_fee_amount, totalFeeDueDate: div.total_fee_due_date } : null,
           });
-          await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions, feeLine, paymentsTracked }));
+          // Club Tier Stage 12a: Pay now while the club takes payments online (the team is accepted by now; absent → today's email).
+          const pay = paymentsTracked && !willBePaid ? await teamPayNowLink(current.id) : null;
+          await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions, feeLine, paymentsTracked, payUrl: pay?.url ?? null }));
         }
         // Notify other org admins of the status change (fire-and-forget)
         notify({

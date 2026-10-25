@@ -1,3 +1,4 @@
+import { teamPayNowLink } from '@/lib/online-payment-receipt';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   acceptanceHtml,
@@ -166,7 +167,9 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
         to: recipient,
         vars: { coachName: payload.coachName, teamName: payload.teamName, ageGroupName: payload.divisionName, tournamentName: payload.tournamentName, profileUrl: coachPortalUrl({ registrationId: payload.teamId, email: payload.coachEmail }) },
         defaultSubject: `Your Team Has Been Accepted - ${team.name}`,
-        defaultHtml: acceptanceHtml({ ...payload, paymentInstructions, feeLine, paymentsTracked }),
+        // Club Tier Stage 12a: Pay now while the club takes payments online (absent → today's email).
+        defaultHtml: acceptanceHtml({ ...payload, paymentInstructions, feeLine, paymentsTracked,
+          payUrl: feeLine ? (await teamPayNowLink(team.id))?.url ?? null : null }),
       });
     }
     if (action === 'reject' && team.status !== 'rejected') {

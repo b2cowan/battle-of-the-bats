@@ -14,14 +14,17 @@
  * line. The summary line and "Mark paid" are the record's own, above this; the paid figures are never typed.
  */
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import { TEAM_ROW_WORDS as OW, REFUND_WORDS as RW, money, receiptLabel } from '@/lib/online-payment-words';
+import { PaymentViewWindow, RefundWindow } from './OnlinePaymentWindows';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { TEAM_PAYMENT_WORDS as W } from '@/lib/registration-words';
 import {
   PAYMENT_METHODS, draftIssue, formatPaymentMoney, labelForDue, paymentDay, receivedOrder, stillDue,
-  type DueRow, type PaymentMethod, type TeamPayment,
+  type DueRow, type PaymentMethod, type TeamOnlinePayment, type TeamPayment,
 } from '@/lib/team-payments';
 import { formatStoredDate } from '@/lib/timezone';
 import type { FeeSchedule } from '@/lib/tournament-teams';
@@ -44,7 +47,15 @@ interface Props {
   busy?: boolean;
   /** A Record or change form is open: the window asks before it closes over typed work (KitDialog `dirty`). */
   onFormOpen?: (open: boolean) => void;
+  /** The team's name, for the refund window's title (Club Tier Stage 12a). */
+  teamName?: string;
 }
+
+/** Online payments on this record (Club Tier Stage 12a): may the pay link go out, when it last did, may a card be refunded. */
+type OnlineInfo = { payLink: boolean; payLinkSentAt: string | null; refunds: boolean };
+
+/** What a team has paid: posted rows only — a row refunded to the card stays on the record but never counts. */
+const sumPaid = (list: TeamPayment[]) => list.reduce((s, p) => s + (p.status === 'refunded' ? 0 : p.amount), 0);
 
 type Draft = { amount: string; paidOn: string; how: '' | PaymentMethod; error: string; saving: boolean };
 type RecordForm = Draft & { key: DueRow['key'] | 'other' };
@@ -53,7 +64,7 @@ const toMethod = (v: string): '' | PaymentMethod => ((PAYMENT_METHODS as readonl
 const amountText = (n: number) => String(Math.round(n * 100) / 100);
 
 export default function TeamPayments(props: Props) {
-  const { teamId, tournamentId, orgQuery, fee, today, canRecord, paidTotal, onChanged, busy = false, onFormOpen } = props;
+  const { teamId, tournamentId, orgQuery, fee, today, canRecord, paidTotal, onChanged, busy = false, onFormOpen, teamName = '' } = props;
   const uid = useId();
   const [payments, setPayments] = useState<TeamPayment[] | null>(null);
   const [postsToBook, setPostsToBook] = useState(false);
@@ -62,6 +73,10 @@ export default function TeamPayments(props: Props) {
   const [editId, setEditId] = useState<string | null>(null);
   const [edit, setEdit] = useState<Draft | null>(null);
   const [asking, setAsking] = useState(false);
+  const [online, setOnline] = useState<OnlineInfo | null>(null);
+  const [viewing, setViewing] = useState<TeamOnlinePayment | null>(null);
+  const [refunding, setRefunding] = useState<{ p: TeamOnlinePayment; anotherWay: boolean } | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
 
   const base = `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registrations/payments`;
   const orgParam = orgQuery ? orgQuery.replace(/^\?/, '&') : '';
@@ -74,6 +89,7 @@ export default function TeamPayments(props: Props) {
       if (!res.ok) throw new Error(data.error ?? 'load');
       setPayments(data.payments as TeamPayment[]);
       setPostsToBook(data.postsToBook === true);
+      setOnline((data.online as OnlineInfo | undefined) ?? null);
     } catch {
       setLoadFailed(true);
     }
@@ -81,14 +97,14 @@ export default function TeamPayments(props: Props) {
 
   useEffect(() => { void load(); }, [load]);
 
-  const paid = useMemo(() => (payments ? payments.reduce((s, p) => s + p.amount, 0) : paidTotal), [payments, paidTotal]);
+  const paid = useMemo(() => (payments ? sumPaid(payments) : paidTotal), [payments, paidTotal]);
   const due = useMemo(() => stillDue(fee, paid), [fee, paid]);
 
   // The team's cached total moved without this list's own write (Mark paid, a bulk action, another screen): the list is
   // stale, and its Still due rows would offer to record money already received. The cache is the sum of the posted
   // payments, so any gap means "read again" — and once read, the two agree and this stops.
   useEffect(() => {
-    if (payments && Math.abs(payments.reduce((s, p) => s + p.amount, 0) - paidTotal) > 0.004) void load();
+    if (payments && Math.abs(sumPaid(payments) - paidTotal) > 0.004) void load();
   }, [paidTotal, payments, load]);
 
   // The window asks before it closes over a form with typed work in it.
@@ -164,6 +180,38 @@ export default function TeamPayments(props: Props) {
     await send('DELETE', { paymentId: p.id },
       message => setEdit(e => (e ? { ...e, error: message, saving: false } : e)),
       () => { setEditId(null); setEdit(null); setAsking(false); });
+  }
+
+  const onlineBase = `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registrations/online-payments${orgQuery}`;
+  /** An online door (Club Tier Stage 12a): the refusal's words, or null when it went through. */
+  async function onlineSend(body: Record<string, unknown>): Promise<{ error: string | null; data: Record<string, unknown> }> {
+    try {
+      const res = await fetch(onlineBase, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { error: typeof data.error === 'string' ? data.error : RW.failed, data };
+      return { error: null, data };
+    } catch {
+      return { error: RW.failed, data: {} };
+    }
+  }
+
+  async function emailPayLink() {
+    setFlash(null);
+    const { error, data } = await onlineSend({ action: 'email_pay_link', teamId });
+    setFlash(error ? OW.linkFailedToast : OW.linkSentToast(String(data.sentTo ?? '')));
+    if (!error) setOnline(o => (o ? { ...o, payLinkSentAt: String(data.sentAt ?? new Date().toISOString()) } : o));
+  }
+
+  async function refund(body: { feeIncluded: boolean; reason: 'organizer_ended' | 'team_left' | null; note: string | null }): Promise<string | null> {
+    if (!refunding) return null;
+    const { p, anotherWay } = refunding;
+    const { error, data } = await onlineSend({ action: anotherWay ? 'refund_another_way' : 'refund', onlinePaymentId: p.id, ...body });
+    if (error) return error;
+    const back = body.feeIncluded ? p.totalCents : p.baseCents;
+    setRefunding(null);
+    setFlash(anotherWay ? RW.recordedToast : data.state === 'pending' ? RW.pendingToast : RW.doneToast(money(back / 100), p.payerEmail));
+    await Promise.all([load(), onChanged()]);
+    return null;
   }
 
   const hint = postsToBook ? W.hintBook : W.hintTeamOnly;
@@ -249,15 +297,31 @@ export default function TeamPayments(props: Props) {
           <h4 className={styles.paySub}>{W.received}</h4>
           <div className={styles.payRows}>
             {rows.map(p => (editId === p.id ? <div key={p.id}>{editBlock(p)}</div> : (
-              <div key={p.id} className={styles.payRow}>
+              <div key={p.id} className={`${styles.payRow}${p.status === 'refunded' ? ` ${styles.payRefunded}` : ''}`}>
                 <span className={styles.payDate}>{paymentDay(p.paidOn, W.earlier)}</span>
                 <span>
                   {p.label}
-                  {p.method && <span className={styles.payHow}> · {W.methods[p.method]}</span>}
-                  {p.inLedger && <span className={styles.payChip}><RepChip tone="good">{W.inLedger}</RepChip></span>}
+                  {p.online
+                    ? <span className={styles.payHow}> · {OW.method(receiptLabel(p.online.receiptNo ?? ''))}</span>
+                    : p.method && <span className={styles.payHow}> · {W.methods[p.method]}</span>}
+                  {p.inLedger && p.status !== 'refunded' && <span className={styles.payChip}><RepChip tone="good">{W.inLedger}</RepChip></span>}
+                  {p.online?.test && <span className={styles.payTag}>{OW.test}</span>}
+                  {p.online && p.status === 'refunded' && p.online.refundedOn && <span className={styles.payTag}>{OW.refunded(formatStoredDate(p.online.refundedOn, { withYear: false }))}</span>}
+                  {p.online?.refund === 'pending' && <span className={styles.payTag}>{OW.refundPending}</span>}
+                  {p.online?.refund === 'failed' && p.status !== 'refunded' && <span className={styles.payChip}><RepChip tone="warn">{OW.refundFailed}</RepChip></span>}
                 </span>
                 <span className={styles.payAmt}>{formatPaymentMoney(p.amount)}</span>
-                {canRecord
+                {p.online ? (
+                  <CoachToolbarMenu variant="glyph" overWindow label={OW.menuLabel} icon={<MoreHorizontal size={16} aria-hidden />} disabled={locked}>
+                    <CoachToolbarMenuItem label={OW.menuView} onSelect={() => setViewing(p.online!)} />
+                    {online?.refunds && p.status !== 'refunded' && p.online.refund !== 'pending' && (
+                      <CoachToolbarMenuItem label={OW.menuRefund} onSelect={() => setRefunding({ p: p.online!, anotherWay: false })} />
+                    )}
+                    {online?.refunds && p.status !== 'refunded' && p.online.refund === 'failed' && (
+                      <CoachToolbarMenuItem label={OW.menuAnotherWay} onSelect={() => setRefunding({ p: p.online!, anotherWay: true })} />
+                    )}
+                  </CoachToolbarMenu>
+                ) : canRecord
                   ? <button type="button" className={styles.payPen} onClick={() => openEdit(p)} disabled={locked} aria-label={W.changeAria(formatPaymentMoney(p.amount), paymentDay(p.paidOn, W.earlier))}><Pencil size={15} aria-hidden /></button>
                   : <span />}
               </div>
@@ -274,17 +338,31 @@ export default function TeamPayments(props: Props) {
               <div key={d.key} className={`${styles.payRow} ${styles.payDueRow}`}>
                 <span>{d.label} <span className={styles.payAmt}>{formatPaymentMoney(d.amount)}</span></span>
                 <span className={styles.payHow}>{d.dueDate ? W.dueOn(formatStoredDate(d.dueDate, { withYear: false })) : ''}</span>
-                {canRecord && (
-                  <button type="button" className={screenParts.plainButton} onClick={() => openRecord(d.key)} disabled={locked} aria-label={`${W.record} ${d.label.toLowerCase()}`}>{W.record}</button>
-                )}
+                <span className={styles.payDueActs}>
+                  {canRecord && (
+                    <button type="button" className={screenParts.plainButton} onClick={() => openRecord(d.key)} disabled={locked} aria-label={`${W.record} ${d.label.toLowerCase()}`}>{W.record}</button>
+                  )}
+                  {online?.payLink && d === due[due.length - 1] && (
+                    <CoachToolbarMenu variant="glyph" overWindow label={OW.dueMenuLabel} icon={<MoreHorizontal size={16} aria-hidden />} disabled={locked}>
+                      <CoachToolbarMenuItem label={OW.menuEmailLink} onSelect={() => void emailPayLink()} />
+                    </CoachToolbarMenu>
+                  )}
+                </span>
               </div>
             )))}
           </div>
+          {online?.payLink && online.payLinkSentAt && <p className={styles.paySent}>{OW.linkSent(formatStoredDate(online.payLinkSentAt, { withYear: false }))}</p>}
           {canRecord && form?.key === 'other' && recordForm}
           {canRecord && !form && (
             <button type="button" className={styles.payLink} onClick={() => openRecord('other')} disabled={locked}>{W.recordOther}</button>
           )}
         </>
+      )}
+
+      {flash && <p className={styles.paySent} role="status">{flash}</p>}
+      {viewing && <PaymentViewWindow p={viewing} onClose={() => setViewing(null)} />}
+      {refunding && (
+        <RefundWindow p={refunding.p} teamName={teamName} anotherWay={refunding.anotherWay} send={refund} onClose={() => setRefunding(null)} />
       )}
     </>
   );

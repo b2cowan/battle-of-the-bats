@@ -80,6 +80,8 @@ import { hasCapability } from '@/lib/roles';
 import HealthButton from '@/components/admin/tournament/HealthButton';
 import RegistrationHealthWindow from '@/components/admin/tournament/RegistrationHealthWindow';
 import PaymentsLine, { type PaymentSummary } from './components/PaymentsLine';
+import PayoutsStatusLine from '@/components/admin/kit/club/PayoutsStatusLine';
+import { isTournamentTier } from '@/lib/billing-urls';
 import RegistrationChip from './components/RegistrationChip';
 import TeamList, { type ListMode, type RowFacts } from './components/TeamList';
 import TeamRecordWindow, { type TeamRecordUpdates } from './components/TeamRecord';
@@ -1998,6 +2000,11 @@ export default function UnifiedTeamsPage() {
       )}
       {listMode === 'normal' && showViewTools && searchField.row}
       {listMode === 'normal' && showViewTools && !cleanInvite && <FilterLine picks={filterPicks} label={TEAMS_WORDS.filter} />}
+
+      {/* ── Payouts (Club Tier Stage 12a): a tournament-only club's treasurer line, the owner's quiet line (A1, A6) ── */}
+      {currentOrg && currentTournament && listMode === 'normal' && !cleanInvite && paymentToolsAvailable && (
+        <PayoutsStatusLine orgSlug={currentOrg.slug} planId={currentOrg.planId} home={isTournamentTier(currentOrg.planId) ? 'tournament' : 'club'} />
+      )}
 
       {/* ── Payments, one slim line (owner 2026-10-21) — this division's money; absent where there is none to say ── */}
       {currentTournament && listMode === 'normal' && !cleanInvite && paymentToolsAvailable && selectedGroup && !isLocked && paymentSummary.scheduled > 0 && (

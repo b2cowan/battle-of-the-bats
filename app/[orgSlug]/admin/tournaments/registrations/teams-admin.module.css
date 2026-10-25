@@ -675,3 +675,19 @@
 .ourTeamTag { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
 .aotHeaderGlyph { display: none; }
 @media (max-width: 760px) { .aotHeaderGlyph { display: inline-block; } }
+
+/* ── Online payments on a team's record (Club Tier Stage 12a) ── */
+.payRefunded .payAmt { text-decoration: line-through; color: var(--text-tertiary); }
+.payTag { margin-left: 0.4rem; white-space: nowrap; font-size: var(--type-support); color: var(--text-tertiary); }
+.paySent { margin: 0.25rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.payViewList { margin: 0; }
+.payViewList > div { display: grid; grid-template-columns: minmax(8rem, 14rem) 1fr; gap: 0.2rem 1rem; padding: 0.3rem 0; border-bottom: 1px solid var(--home-line); }
+.payViewList dt { color: var(--text-tertiary); }
+.payViewList dd { margin: 0; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.refundChoice { border: 0; padding: 0; margin: 0.75rem 0 0.5rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.refundChoice label, .refundFee { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-primary); }
+@media (max-width: 640px) {
+  .payViewList > div { grid-template-columns: 1fr; }
+  .refundChoice label, .refundFee { min-height: 44px; }
+}
+.payDueActs { display: inline-flex; align-items: center; gap: 0.25rem; }

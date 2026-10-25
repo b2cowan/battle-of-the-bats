@@ -1,0 +1,30 @@
+/* A tournament team's pay page (Club Tier Stage 12a). Inside the tournament's public layout and theme; the outer card
+   and today's "Payment handled by organizer" panel are the register page's own classes (register.module.css). */
+.page { max-width: 40rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+.eyebrow { margin: 0 0 0.25rem; font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); } /* type-ok: eyebrow */
+.title { margin: 0 0 0.75rem; font-size: var(--type-heading); color: var(--text-primary); }
+.test { margin: 0 0 0.75rem; font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); }
+.state { margin: 0 0 1rem; }
+.state h2, .receipt h2, .owing h2 { margin: 0 0 0.35rem; font-size: var(--type-heading); color: var(--text-primary); }
+.state p { margin: 0; color: var(--text-secondary); }
+.note { margin: 0.2rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+.receipts { margin: 0 0 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.receipt { padding: 0.9rem 1rem; border: 1px solid var(--border-2); border-radius: var(--radius-sm); }
+.receiptTo { margin: 0; color: var(--text-primary); font-weight: 600; }
+.lines { margin: 0.75rem 0 0; }
+.lines > div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.2rem 0; color: var(--text-secondary); }
+.lines dd { margin: 0; font-variant-numeric: tabular-nums; }
+.total { border-top: 1px solid var(--border-2); margin-top: 0.3rem; padding-top: 0.4rem !important; color: var(--text-primary) !important; font-weight: 700; }
+.owing { display: flex; flex-direction: column; gap: 0.9rem; }
+.choices { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.legend { font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); }
+.choice { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.7rem 0.8rem; border: 1px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; min-height: 44px; }
+.choice input { margin-top: 0.25rem; }
+.choice > span { display: flex; flex-direction: column; gap: 0.1rem; color: var(--text-primary); }
+.field { display: flex; flex-direction: column; gap: 0.3rem; }
+.input { height: 44px; padding: 0 0.75rem; border: 1px solid var(--border-2); border-radius: var(--radius-sm); background: transparent; color: var(--text-primary); font: inherit; }
+.payRow { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+.payButton { min-height: 48px; display: inline-flex; align-items: center; gap: 0.5rem; }
+.error { margin: 0; color: rgb(var(--danger-rgb)); }
+.link { align-self: flex-start; padding: 0; border: 0; background: none; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; font-size: var(--type-support); }
+@media (max-width: 640px) { .payButton { width: 100%; justify-content: center; } }

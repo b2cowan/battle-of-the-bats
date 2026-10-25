@@ -414,6 +414,8 @@ export function acceptanceHtml(p: {
   /** False for "Not tracked here" (lib/tournament-payments-tracked): no Payment panel — no amount, no how-to-pay,
    *  no "if payment is required" — only the organizer contact, on its own line. */
   paymentsTracked?: boolean;
+  /** Club Tier Stage 12a: the team's pay link while the club takes payments online. Absent → today's email exactly. */
+  payUrl?: string | null;
 }) {
   // Claim-aware portal link: carries the registration (teamId) so the coach lands on this team
   // (or creates an account and it links). dashboardUrl override kept for back-compat.
@@ -423,6 +425,11 @@ export function acceptanceHtml(p: {
   const paymentBody = instructions
     ? escapeHtml(instructions)
     : 'If payment is required, the tournament organizer will follow up with instructions for paying outside FieldLogicHQ.';
+  // Online (copy §11): a line under the amount, the organizer's text under "Other ways to pay", and Pay now as the
+  // primary button. Today's fallback sentence goes: it would be false beside a Pay button.
+  const online = p.payUrl ? `
+      <p style="margin:0 0 0.75rem;color:${WARM_EMAIL.ink};">${instructions ? 'Pay online by card, or pay another way below.' : 'Pay online by card.'}</p>
+      ${instructions ? `<p style="${WARM_EMAIL_STYLE.panelLabel}">Other ways to pay</p><p style="margin:0 0 0.75rem;color:${WARM_EMAIL.ink};">${escapeHtml(instructions)}</p>` : ''}` : '';
   return wrap(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">🎉 Team Accepted!</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
@@ -432,9 +439,10 @@ export function acceptanceHtml(p: {
     <div style="${warmPanelStyle('secondary', { padding: '1.5rem' })}">
       <p style="${WARM_EMAIL_STYLE.panelLabel}">Payment</p>
       ${p.feeLine ? `<p style="margin:0 0 0.75rem;color:${WARM_EMAIL.ink};font-size:0.98rem;"><strong>Amount due:</strong> ${p.feeLine}</p>` : ''}
-      <p style="margin:0 0 0.75rem;color:${WARM_EMAIL.ink};">${paymentBody}</p>
+      ${p.payUrl ? online : `<p style="margin:0 0 0.75rem;color:${WARM_EMAIL.ink};">${paymentBody}</p>`}
       <p style="margin:1rem 0 0;color:${WARM_EMAIL.secondary};font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a>.</p>
     </div>`}
+    ${p.payUrl && p.paymentsTracked !== false ? warmEmailButton('Pay now', p.payUrl) : ''}
     ${warmEmailButton('View Your Registration Dashboard', dashboardUrl)}
   `);
 }
@@ -557,6 +565,10 @@ export function paymentReminderHtml(p: {
   contactEmail?: string;
   registrationId?: string;
   coachEmail?: string;
+  /** Club Tier Stage 12a: the team's pay link while the club takes payments online. Absent → today's email exactly. */
+  payUrl?: string | null;
+  /** Something is already paid: the button says "Pay the balance", else "Pay now". */
+  paidSome?: boolean;
 }) {
   const instructions = escapeEmailHtml(p.paymentInstructions)
     .split('\n')
@@ -576,8 +588,11 @@ export function paymentReminderHtml(p: {
         Division: <strong>${escapeEmailHtml(p.divisionName)}</strong>
       </p>
     </div>
+    ${p.payUrl ? warmEmailButton(p.paidSome ? 'Pay the balance' : 'Pay now', p.payUrl) : ''}
     <div style="color:${WARM_EMAIL.ink};">${instructions}</div>
-    <p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;">FieldLogicHQ records payment status for the organizer but does not process tournament payments online.</p>
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.86rem;">${p.payUrl
+      ? 'Paid by another way already? Tell the organizer and they’ll update your record.'
+      : 'FieldLogicHQ records payment status for the organizer but does not process tournament payments online.'}</p>
     ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
 }

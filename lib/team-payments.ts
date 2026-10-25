@@ -13,7 +13,9 @@
 import { formatStoredDate } from './timezone';
 import { formatMoney, hasDepositStep, type FeeSchedule } from './tournament-teams';
 
-export type PaymentMethod = 'etransfer' | 'cash' | 'cheque' | 'card' | 'other';
+/** `online_card` is a payment a team made online (Club Tier Stage 12a): only the landing writes it, so it is never a choice
+ *  in a form — PAYMENT_METHODS is the hand-recorded list. */
+export type PaymentMethod = 'etransfer' | 'cash' | 'cheque' | 'card' | 'other' | 'online_card';
 export const PAYMENT_METHODS: readonly PaymentMethod[] = ['etransfer', 'cash', 'cheque', 'card', 'other'];
 
 /** A label names a row. "Earlier payment" is the backfilled, undated one; "Imported payment" comes from a spreadsheet. */
@@ -28,6 +30,28 @@ export interface TeamPayment {
   method: PaymentMethod | null;
   /** On a plan with Accounting: this payment is one line in the tournament's book. */
   inLedger: boolean;
+  /** 'refunded' = an online payment refunded in full (Stage 12a): shown, never counted in what was paid. */
+  status?: 'posted' | 'refunded';
+  /** The online payment behind the row (Stage 12a), when there is one. */
+  online?: TeamOnlinePayment | null;
+}
+
+/** What the team's record shows of an online payment (Club Tier Stage 12a). */
+export interface TeamOnlinePayment {
+  id: string;
+  receiptNo: number | null;
+  brand: string | null;
+  last4: string | null;
+  baseCents: number;
+  feeCents: number;
+  totalCents: number;
+  feePaidByPayer: boolean;
+  payerEmail: string | null;
+  paidAt: string | null;
+  test: boolean;
+  /** The latest refund's state; 'none' when it was never refunded. */
+  refund: 'none' | 'pending' | 'failed' | 'succeeded';
+  refundedOn: string | null;
 }
 
 /** A payment row's money: "$100", "$109.50" (cents show only when there are some). */

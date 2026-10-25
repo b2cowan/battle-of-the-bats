@@ -21,6 +21,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { stepOf } from '@/components/coaches/backStep';
 import KitDialog from './KitDialog';
 import BirthdayCutoffCard, { loadBirthdayCutoffs, type CardData } from './BirthdayCutoffCard';
+import PayoutsCard, { loadPayouts, type PayoutsView } from './PayoutsCard';
 import PageNotice, { useNotice } from './PageNotice';
 import ck from './ClubKit.module.css';
 import styles from './Settings.module.css';
@@ -43,6 +44,8 @@ export default function SettingsKit() {
 
   const [settings, setSettings] = useState<OrgSettings | null>(null);
   const [cutoffData, setCutoffData] = useState<CardData | null>(null);
+  // Payouts (Club Tier Stage 12a): null while online payments aren't offered here — the card then stays away.
+  const [payouts, setPayouts] = useState<PayoutsView | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [name, setName] = useState('');
   const [urlSlug, setUrlSlug] = useState('');
@@ -67,15 +70,18 @@ export default function SettingsKit() {
   useEffect(() => {
     if (!orgQuery) return;
     let stale = false;
-    // The birthdays card reads with the settings and the page waits for both, so every card shows at once.
+    // The birthdays and Payouts cards read with the settings and the page waits for all three, so every card shows at once.
     Promise.all([
       fetch(`/api/admin/org-settings${orgQuery}`).then(r => (r.ok ? r.json() : Promise.reject(new Error()))),
       loadBirthdayCutoffs(orgQuery),
+      loadPayouts(slug),
     ])
-      .then(([d, cutoffs]: [OrgSettings, CardData | null]) => { if (!stale) { adopt(d); setCutoffData(cutoffs); } })
+      .then(([d, cutoffs, payoutsView]: [OrgSettings, CardData | null, PayoutsView | null]) => {
+        if (!stale) { adopt(d); setCutoffData(cutoffs); setPayouts(payoutsView); }
+      })
       .catch(() => { if (!stale) setLoadFailed(true); });
     return () => { stale = true; };
-  }, [orgQuery]);
+  }, [orgQuery, slug]);
 
   useEffect(() => {
     if (!orgQuery) return;
@@ -284,6 +290,9 @@ export default function SettingsKit() {
             </div>
             <Link href={`/${slug}/admin/public-site`} className="btn btn-outline">Open Public site</Link>
           </section>
+
+          {/* ── Payouts: the club's own Stripe account (Club Tier Stage 12a) — after the public-site door, before Delete ── */}
+          {payouts && <PayoutsCard orgSlug={slug} clubName={currentOrg?.name ?? ''} home="club" initial={payouts} />}
 
           {/* ── Delete the organization ────────────────────────────────────────────────────── */}
           <section className={`${styles.card} ${styles.danger}`} aria-labelledby="settings-delete">

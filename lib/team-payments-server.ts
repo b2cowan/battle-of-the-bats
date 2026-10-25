@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { closedYearFromError, isClosedYearError } from './club-fiscal-year-server';
 import { moveRefused } from './club-money-route';
 import { supabaseAdmin } from './supabase-admin';
-import type { PaymentLabel, PaymentMethod, TeamPayment } from './team-payments';
+import type { PaymentLabel, PaymentMethod, TeamOnlinePayment, TeamPayment } from './team-payments';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -47,6 +47,9 @@ const KNOWN_REFUSALS = [
   'Every payment amount must be positive',
   'A selected team is not in this tournament',
   'This tournament does not record fees in Accounting',
+  // Club Tier Stage 12a: the database's backstop on an online row (mig 358's trigger).
+  'An online payment is changed by refunding it to the card.',
+  'An online payment is recorded by the payment itself.',
 ];
 
 function outcomeOf(data: unknown): PaymentOutcome {
@@ -160,4 +163,61 @@ export async function paymentsPostToBook(tournamentId: string): Promise<boolean>
   const { data, error } = await supabaseAdmin.rpc('tournament_fee_book_on', { p_tournament: tournamentId });
   if (error) throw error;
   return data === true;
+}
+
+/**
+ * A team's payments as its RECORD shows them (Club Tier Stage 12a): the posted ones, plus online payments refunded in full
+ * (they stay on the record to read "Refunded to card", never counted in what was paid), each online row with its receipt,
+ * card and latest refund. `listTeamPayments` stays the posted-only reading every other caller sums.
+ */
+export async function listTeamPaymentsForRecord(teamId: string): Promise<TeamPayment[]> {
+  const { data, error } = await supabaseAdmin
+    .from('tournament_team_payments')
+    .select('id, team_id, amount, paid_on, label, method, entry_id, status, online_payment_id')
+    .eq('team_id', teamId)
+    .or('status.eq.posted,and(status.eq.refunded,online_payment_id.not.is.null)')
+    .order('paid_on', { ascending: true, nullsFirst: true }).order('ordinal', { ascending: true });
+  if (error) throw error;
+  const rows = (data ?? []) as (PaymentRow & { status: 'posted' | 'refunded'; online_payment_id: string | null })[];
+  const onlineIds = rows.map(r => r.online_payment_id).filter((id): id is string => !!id);
+  const online = new Map<string, TeamOnlinePayment>();
+  if (onlineIds.length) {
+    const [{ data: ops, error: opError }, { data: refunds, error: refundError }] = await Promise.all([
+      supabaseAdmin.from('online_payments')
+        .select('id, receipt_no, card_brand, card_last4, base_amount, fee_amount, total_amount, fee_payer, payer_email, paid_at, livemode')
+        .in('id', onlineIds),
+      supabaseAdmin.from('online_payment_refunds')
+        .select('online_payment_id, status, succeeded_at, created_at')
+        .in('online_payment_id', onlineIds)
+        .order('created_at', { ascending: false }),
+    ]);
+    if (opError) throw opError;
+    if (refundError) throw refundError;
+    const latest = new Map<string, { status: string; succeeded_at: string | null }>();
+    for (const r of refunds ?? []) if (!latest.has(r.online_payment_id as string)) latest.set(r.online_payment_id as string, r as never);
+    const cents = (v: unknown) => Math.round(Number(v) * 100);
+    for (const p of ops ?? []) {
+      const r = latest.get(p.id as string);
+      online.set(p.id as string, {
+        id: p.id as string,
+        receiptNo: (p.receipt_no as number | null) ?? null,
+        brand: (p.card_brand as string | null) ?? null,
+        last4: (p.card_last4 as string | null) ?? null,
+        baseCents: cents(p.base_amount),
+        feeCents: cents(p.fee_amount),
+        totalCents: cents(p.total_amount),
+        feePaidByPayer: p.fee_payer === 'family',
+        payerEmail: (p.payer_email as string | null) ?? null,
+        paidAt: (p.paid_at as string | null) ?? null,
+        test: !p.livemode,
+        refund: !r ? 'none' : r.status === 'succeeded' ? 'succeeded' : r.status === 'pending' ? 'pending' : r.status === 'failed' ? 'failed' : 'none',
+        refundedOn: r?.succeeded_at ?? null,
+      });
+    }
+  }
+  return rows.map(r => ({
+    ...toPayment(r),
+    status: r.status,
+    online: r.online_payment_id ? online.get(r.online_payment_id) ?? null : null,
+  }));
 }

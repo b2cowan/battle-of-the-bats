@@ -1,3 +1,4 @@
+import { teamPayNowLink } from '@/lib/online-payment-receipt';
 import { NextRequest, NextResponse } from 'next/server';
 import { paymentReminderHtml, sendEmail, resolveCoachRecipient } from '@/lib/email';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
@@ -204,6 +205,8 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     }
 
     const divisionName = divisions.get(team.division_id)?.name ?? 'Division';
+    // Club Tier Stage 12a: Pay the balance (or Pay now) while the club takes payments online; absent → today's email.
+    const pay = await teamPayNowLink(team.id);
     await sendEmail(
       recipient,
       `Payment Reminder - ${tournament.name}`,
@@ -218,6 +221,8 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
         contactEmail,
         registrationId: team.id,
         coachEmail: team.email ?? undefined,
+        payUrl: pay?.url ?? null,
+        paidSome: pay?.paidSome ?? false,
       }),
     );
     emailsSent++;
