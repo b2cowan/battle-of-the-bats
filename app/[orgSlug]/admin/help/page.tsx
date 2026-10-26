@@ -144,7 +144,8 @@ export default function AdminHelpHubPage() {
         steps: [
           { label: 'Launch a house league season', href: `${helpBase}/house-league#recipe-launch-season` },
           { label: 'Open, pause, or close registration', href: `${helpBase}/house-league#recipe-open-close-registration` },
-          { label: 'Build teams from approved players', href: `${helpBase}/house-league#recipe-build-teams` },
+          { label: 'Rate, draft and publish teams', href: `${helpBase}/house-league#recipe-build-teams` },
+          { label: 'How coaches get their team page', href: `${helpBase}/house-league#coach-team-page` },
           { label: 'Generate a house league schedule', href: `${helpBase}/house-league#recipe-generate-house-league-schedule` },
           { label: 'Record scores and update standings', href: `${helpBase}/house-league#recipe-record-house-league-scores` },
         ],

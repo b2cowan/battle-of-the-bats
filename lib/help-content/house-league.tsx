@@ -268,31 +268,193 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'recipe-build-teams',
       group: 'How-to recipes',
       heading: 'How to build teams and run a draft',
-      summary: 'Create team slots in bulk, assign players manually or by draft, and finalize once everyone is picked.',
-      keywords: ['build teams', 'create teams', 'draft', 'assign players', 'randomize', 'finalize'],
-      searchText: 'build teams create teams bulk count names team colour coach edit team player pool approved active draft randomize confirm finalize resume draft clear all assignments unassigned',
+      summary: 'Make the teams, rate the players, run a balanced draft, adjust by hand, then publish one division at a time. Each family gets one email and each coach an invite.',
+      keywords: ['build teams', 'create teams', 'teams and draft', 'draft', 'run the draft', 'draft again', 'assign players', 'rating', 'rate players', 'rated', 'not rated', 'lock', 'lock a player', 'locked', 'moved by you', 'put back', 'move to', 'not on a team', 'take all players off teams', 'publish teams', 'publish a division', 'placement email', 'coach invite', 'move after publishing', 'send the emails again', 'team colour', 'team coaches'],
+      searchText: 'build teams create teams bulk count names team colour coach email edit team window teams and draft step rate players rating 1 to 5 only owner club admin league admin see ratings registrar never sees ratings erased when a registration ends or the season finishes not rated counts as a 3 lock to this team locked unlock coach child run the draft balanced strongest first order reverses each round locked players stay and count toward the average sizes kept even ties drawn at random draft again replaces the current teams to review waitlisted not drafted not on a team drag a player move to phone sheet more menu moved by you put back on tools take all players off teams before publishing publish teams one division at a time one email per family names every child in that division sent even to families who unsubscribed from club news service message status page shows team and coach coach invited to team page no unpublish send the emails again some emails could not be sent move after publishing asks first emails the family accepted later appears under not on a team placing emails the family ending a registration takes the child off the team',
       content: (
         <>
-          <p>Build teams after most registrations are reviewed and the division player pool is clean. Only <strong>Active</strong> registrations appear in the pool — pending, declined, waitlisted, and withdrawn players are excluded.</p>
-          <ol>
-            <li>Open the season, go to <strong>Teams &amp; draft</strong>, and select a division.</li>
-            <li>Click <strong>Create teams</strong>. You choose how many teams to create and type their names in one step (on the free League plan you can create up to eight). Set each team&apos;s <strong>colour</strong> and <strong>coach name</strong> afterward with <strong>Edit team</strong>.</li>
-            <li>Assign players from the pool by dragging them onto a team — or use <strong>Randomize</strong> to spread all unassigned players evenly (it asks you to confirm first, and won&apos;t move already-assigned players).</li>
-            <li>For a structured draft, click <strong>Start draft</strong>. Teams take turns picking from the pool; picks can be undone one at a time. If you leave mid-draft, a <strong>Resume draft</strong> button picks it back up.</li>
-            <li>Click <strong>Finalize draft</strong> to apply the assignments. Finalize stays disabled until every player has been picked.</li>
-          </ol>
-          <p>You can re-assign players any time by dragging them to a different team or back to the pool, and <strong>Clear all assignments</strong> wipes assignments (and any in-progress draft) to start over.</p>
+          <p>A division&apos;s teams are made in five moves on <strong>Teams &amp; draft</strong>: make the teams, rate the players, run the draft, adjust by hand, then publish. Nothing reaches a family until you publish.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'build-teams-make',
+          title: 'Make the teams and add coaches',
+          content: (
+            <>
+              <HelpSteps>
+                <li>Open the season, go to <strong>Teams &amp; draft</strong>, and pick a division.</li>
+                <li>Click <strong>Create teams</strong>, choose how many, and click <strong>Create</strong> (on the free League plan you can make up to eight).</li>
+                <li>Click a team to open its window. It reads first; click the pencil to change it and the tick to go back.</li>
+                <li>Set the team&apos;s <strong>Name</strong> and <strong>Colour</strong>, and add each <strong>Coach</strong> with a name and an email address. <strong>+ Add another coach</strong> adds a second.</li>
+              </HelpSteps>
+              <p>You can name the teams now and add coaches any time before you publish. A team with no coach shows an amber <strong>No coach yet</strong>; click it to open the team window at the coach fields. A coach is invited to their team page when you publish (see <em>How coaches get their team page</em>).</p>
+            </>
+          ),
+        },
+        {
+          id: 'build-teams-rate',
+          title: 'Rate players 1 to 5',
+          content: (
+            <>
+              <p>Click <strong>Rate players</strong> (on a phone, <strong>Rate</strong>) to rate every accepted player in the division. <strong>1</strong> is newest to the sport and <strong>5</strong> is among the strongest in the age group. On a keyboard, type 1 to 5 to rate a player and move to the next; tap a chosen number again to clear it. To rate several at once, tick them and pick one number.</p>
+              <ul>
+                <li><strong>Only the owner, club admins and league admins see ratings.</strong> The league registrar never does, and neither do coaches or families. The registrar&apos;s board has no rating, average, lock or Moved by you, and their export has no rating column.</li>
+                <li><strong>A player who is not rated counts as a 3</strong> in the draft. The chip shows a dashed dash, and the Ratings step says how many are not rated.</li>
+                <li><strong>Ratings are erased</strong> when a player&apos;s registration ends and when the season finishes.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'build-teams-draft',
+          title: 'Lock a coach’s child, then run the draft',
+          content: (
+            <>
+              <p>If a coach&apos;s own child should be on their team, lock the child first. On a player on a team, open the <strong>&hellip;</strong> menu and choose <strong>Lock to this team</strong>; <strong>Unlock</strong> takes it back. A locked player stays on that team when you run the draft and still counts toward its average. Locks end when you publish.</p>
+              <HelpSteps>
+                <li>Click <strong>Run the draft</strong> (on a phone, <strong>Run</strong>). The window lists the players, the teams and their sizes, how many are locked, and how many are rated.</li>
+                <li>Click <strong>Run the draft</strong> in the window. Nothing is sent.</li>
+              </HelpSteps>
+              <HelpDefs>
+                <HelpDef term="How it deals">Strongest first, and the order reverses each round, so the teams come out balanced. Ties and the first pick are drawn at random. Team sizes are kept even.</HelpDef>
+                <HelpDef term="Who is drafted">Every accepted player holds their spot. A player still to review, or on the waitlist, is not drafted; the window names them and links to Registrations.</HelpDef>
+                <HelpDef term="Nobody rated">The draft still runs and deals the players at random, evenly.</HelpDef>
+                <HelpDef term="Draft again">Deals every player again and replaces the current teams, including any move you made by hand. Locked players stay where they are. It is offered until you publish.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'build-teams-adjust',
+          title: 'Adjust by hand before you publish',
+          content: (
+            <>
+              <p>On a desk, drag a player onto another team, or back to <strong>Not on a team</strong>. On a phone, or from a desk, open the <strong>&hellip;</strong> on a player and choose <strong>Move to&hellip;</strong>; the sheet shows each team&apos;s size and what its average would become. A move before you publish is immediate and tells nobody.</p>
+              <ul>
+                <li><strong>Moved by you</strong> marks a player placed by hand after a draft. Click it to <strong>Put back</strong> on the team the draft chose. It is offered until you publish.</li>
+                <li>The line under the board shows each team&apos;s average rating, the sizes, and how many were moved by hand.</li>
+                <li><strong>Take all players off teams</strong> is in <strong>Tools</strong> (the &hellip; button), before you publish. It asks first, and it clears locks and moves by hand too. Nothing is sent.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'build-teams-publish',
+          title: 'Publish a division’s teams',
+          content: (
+            <>
+              <p>Click <strong>Publish teams</strong> to tell families. You publish one division at a time. The window warns, but does not block, if accepted players are not on a team, a team has no coach, or a player is still to review.</p>
+              <ul>
+                <li><strong>Each family gets one email</strong> naming every child of theirs in that division, with each team and coach. You can preview it first. It is sent even to a family who unsubscribed from club news, because it is about their own child.</li>
+                <li><strong>Each child&apos;s team shows</strong> on the family&apos;s status page.</li>
+                <li><strong>Each coach is invited</strong> to their team page.</li>
+                <li><strong>There is no unpublish.</strong> Families already have the email.</li>
+              </ul>
+              <p>If some emails could not be sent, the division says so, for example <em>2 of 3 emails couldn&apos;t be sent</em>. The teams are published and the status pages show them; click <strong>Send the 2 again</strong> to retry just those. An email that bounced names the family and links to the child&apos;s registration.</p>
+            </>
+          ),
+        },
+        {
+          id: 'build-teams-after',
+          title: 'After you publish: moves and late arrivals',
+          content: (
+            <>
+              <ul>
+                <li><strong>A move now asks first.</strong> Moving a player to another team opens a window saying the family will be emailed the new team and coach. Choose <strong>Move and email</strong>. Taking a player off a team emails nobody; they go back to <strong>Not on a team</strong> until you place them.</li>
+                <li><strong>A child accepted later</strong> appears under <strong>Not on a team</strong>, with an amber count. Place them, and the family is emailed their team and coach (<strong>Place and email</strong>).</li>
+                <li><strong>Ending a registration</strong> on Registrations takes the child off their team. The team card keeps one quiet line saying who left and when.</li>
+                <li><strong>Locks, Draft again and Moved by you</strong> are gone once a division is published.</li>
+              </ul>
+              <HelpNote variant="info" title="Once a season is finished, teams are locked">Teams, drafts and moves can no longer be changed.</HelpNote>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-player-missing-from-house-league-team-pool',
           question: 'Why is a player missing from the team builder?',
-          answerText: 'Only Active registrations appear in the team assignment pool. Pending, waitlisted, declined, and withdrawn players are excluded — move the player to Active first.',
-          keywords: ['missing player', 'team builder', 'active registration'],
+          answerText: 'Only accepted players are on the board and in the draft. A player still to review, on the waitlist, declined or withdrawn is not drafted. The line under the steps says how many are still to review or on the waitlist, with a link to Registrations. A player who gets a spot after you publish appears under Not on a team.',
+          keywords: ['missing player', 'team builder', 'accepted', 'to review', 'waitlist', 'not on a team', 'not drafted'],
           popular: true,
           answer: (
-            <p>Check the player&apos;s registration status. Only <strong>Active</strong> registrations appear in the team assignment pool — move the player to Active first.</p>
+            <p>Only <strong>accepted</strong> players are on the board and in the draft. A player still to review, on the waitlist, declined or withdrawn is not drafted. The line under the steps says how many are waiting and links to <strong>Registrations</strong>. A player who gets a spot after you publish appears under <strong>Not on a team</strong>.</p>
+          ),
+        },
+        {
+          id: 'faq-house-league-team-ratings-who-sees',
+          question: 'Who can see player ratings?',
+          answerText: 'Only the owner, club admins and league admins. The league registrar, coaches and families never see ratings. Ratings are erased when a player’s registration ends or the season finishes, and a player who is not rated counts as a 3 in the draft.',
+          keywords: ['ratings', 'who sees ratings', 'rating privacy', 'registrar ratings', 'not rated'],
+          answer: (
+            <p>Only the owner, club admins and league admins. The league registrar, coaches and families never see them. Ratings are erased when a player&apos;s registration ends or the season finishes, and a player who is not rated counts as a 3 in the draft.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'coach-team-page',
+      group: 'How-to recipes',
+      heading: 'How coaches get their team page',
+      summary: 'A coach is added in a team’s window with their email, invited when you publish, and sees one page: their players and each family’s contact details.',
+      keywords: ['coach', 'house league coach', 'coach invite', 'invite coach', 'team page', 'coach team page', 'send again', 'invite expired', 'invite didn’t send', 'remove a coach', 'coach email', 'copy emails', 'coach sign in', 'coach access'],
+      searchText: 'how coaches get their team page house league coach added in a team window with an email invited when you publish or at once after you confirm if added later invite link works 7 days signs in only with that email one page their players each family name email and phone copy emails link to the season schedule the club enters scores never ratings fees or other teams never the coaches portal invited when you publish invited signed in invite expired invite didn’t send fix the email send again removing a coach takes the page away at once families are not told coach who is a registrar or admin keeps their club role page stays 30 days after the season finishes',
+      content: (
+        <>
+          <p>A house league coach never needs the Coaches Portal. They get one page for their team, by an emailed link, and it shows only what they need to reach their families.</p>
+        </>
+      ),
+      subtopics: [
+        {
+          id: 'coach-page-invite',
+          title: 'Add a coach and send the invite',
+          content: (
+            <>
+              <HelpSteps>
+                <li>On <strong>Teams &amp; draft</strong>, open the team&apos;s window and click the pencil.</li>
+                <li>Under <strong>Coach</strong>, type the name and the <strong>Coach&apos;s email</strong>. <strong>+ Add another coach</strong> adds a second. A team can have more than one.</li>
+                <li>Click the tick. Before you publish, the coach reads <strong>Invited when you publish</strong>.</li>
+                <li>Publish the division. Each coach is emailed a link, <strong>Accept and open your team</strong>.</li>
+              </HelpSteps>
+              <ul>
+                <li><strong>A coach added after you publish</strong> is held until you confirm: <strong>Send invite</strong> sends the email at once.</li>
+                <li><strong>The link works for 7 days</strong> and signs in only with the email address you gave. A coach without a FieldLogicHQ account sets one up first.</li>
+                <li><strong>A coach of a team who is also a registrar or admin</strong> keeps their club role. Coaching does not change it.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'coach-page-sees',
+          title: 'What a coach sees',
+          content: (
+            <>
+              <ul>
+                <li>The team&apos;s name, division and coaches.</li>
+                <li><strong>Players</strong>, each with the family&apos;s name, email and phone (a missing phone is left out), and <strong>Copy emails</strong> to copy every family&apos;s address at once.</li>
+                <li>A link to <strong>the season&apos;s schedule</strong>. Games aren&apos;t listed on the page itself. A line says the club enters scores.</li>
+                <li>A coach of two teams switches between them.</li>
+              </ul>
+              <p>They never see ratings, fees or other teams, and never the Coaches Portal. The sign-up form tells families that their child&apos;s coach sees their name, email and phone.</p>
+              <p>The page stays for 30 days after the season finishes, then it is gone.</p>
+            </>
+          ),
+        },
+        {
+          id: 'coach-page-states',
+          title: 'A coach’s state, and removing a coach',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="Invited when you publish">Added, and the division isn&apos;t published yet.</HelpDef>
+                <HelpDef term="Invited Oct 25">The email went out on that date.</HelpDef>
+                <HelpDef term="Signed in">The coach has opened their page.</HelpDef>
+                <HelpDef term="Invite expired · Send again">The 7 days passed. Click <strong>Send again</strong> for a fresh link.</HelpDef>
+                <HelpDef term="Invite didn’t send · Send again">The email didn&apos;t arrive. Click <strong>Fix the email</strong> if the address is wrong, or <strong>Send again</strong>.</HelpDef>
+              </HelpDefs>
+              <p>To remove a coach, click the &times; on their row in the team window. After you publish it asks first. They lose the team page at once, and families aren&apos;t told. They see a line saying they are no longer a coach of the team.</p>
+            </>
           ),
         },
       ],
@@ -358,8 +520,8 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Running the season',
       heading: 'What families see when they sign up',
       summary: 'Families sign up one child or several in one go, see each child’s outcome before they send, get one reference and one email, and check their status with their email and reference.',
-      keywords: ['sign up several children', 'sign up more than one child', 'siblings', 'reference', 'accepted', 'received', 'waitlist', 'status page', 'check your registration', 'date of birth', 'no division fits', 'family email', 'how to pay', 'early bird', 'ask to withdraw', 'ask to withdraw a child', 'family wants to withdraw', 'refund on the status page', 'kept by the club', 'withdrawn', 'declined', 'price to pay', 'pay by card', 'pay now', 'pay link', 'processing fee', 'pay online', 'card payment', 'receipt', 'one checkout', 'waitlist nothing to pay'],
-      searchText: 'family sign up form sign up several children in one go siblings add another child up to eight children date of birth picks the division born in birth year club cut-off each child outcome before sign up spot and price early bird applied early bird ended waitlist nothing to pay unless a spot opens two divisions for one age group family picks note for families no division fits contact the club child left out others still sign up one reference for the sign-up one email lists every child total to pay how to pay accepted received waitlist 1st status page check your registration email and reference find everything pay by card pay now pay link one checkout processing fee waitlist nothing to pay parent or guardian email waiver email consent unticked payable separately the form does not take payment approve means accepted pending review means received status page declined withdrawn spot released reads withdrawn refunded on kept by the club reason the club is keeping to pay part of the price still to pay price rose ask to withdraw a child request sent the child keeps their place until the club acts you asked to withdraw the club will confirm by email note for the club 300 characters asked once too many tries needs attention house league withdrawal request clears itself when the registration ends',
+      keywords: ['sign up several children', 'sign up more than one child', 'siblings', 'reference', 'accepted', 'received', 'waitlist', 'status page', 'check your registration', 'date of birth', 'no division fits', 'family email', 'how to pay', 'early bird', 'ask to withdraw', 'ask to withdraw a child', 'family wants to withdraw', 'refund on the status page', 'kept by the club', 'withdrawn', 'declined', 'team', 'coach', 'not set yet', 'to be announced', 'moved from', 'coach sees my phone', 'price to pay', 'pay by card', 'pay now', 'pay link', 'processing fee', 'pay online', 'card payment', 'receipt', 'one checkout', 'waitlist nothing to pay'],
+      searchText: 'family sign up form sign up several children in one go siblings add another child up to eight children date of birth picks the division born in birth year club cut-off each child outcome before sign up spot and price early bird applied early bird ended waitlist nothing to pay unless a spot opens two divisions for one age group family picks note for families no division fits contact the club child left out others still sign up one reference for the sign-up one email lists every child total to pay how to pay accepted received waitlist 1st status page team row coach row not set yet to be announced moved from the coach sees your name email and phone check your registration email and reference find everything pay by card pay now pay link one checkout processing fee waitlist nothing to pay parent or guardian email waiver email consent unticked payable separately the form does not take payment approve means accepted pending review means received status page declined withdrawn spot released reads withdrawn refunded on kept by the club reason the club is keeping to pay part of the price still to pay price rose ask to withdraw a child request sent the child keeps their place until the club acts you asked to withdraw the club will confirm by email note for the club 300 characters asked once too many tries needs attention house league withdrawal request clears itself when the registration ends',
       content: (
         <>
           <p>This is what a family sees on your season&apos;s sign-up form, after it and in their email. Knowing it helps when a parent phones to ask what a screen meant.</p>
@@ -377,6 +539,7 @@ const houseLeagueHelp: HelpPageContent = {
                 <li><strong>A spot one child takes counts against the next</strong> child in the same sign-up. A child never jumps an existing waitlist: if the division has a waitlist, the child joins it.</li>
                 <li><strong>Two divisions for one age group</strong> — the family picks, seeing each division&apos;s <strong>Note for families</strong> and how much room it has.</li>
                 <li><strong>A season that doesn&apos;t sort by age</strong> shows a Division list instead, with the spots left in each.</li>
+                <li>Under the parent or guardian fields, a short note tells families that their child&apos;s coach will see their name, email and phone to reach them about the team.</li>
                 <li>The waiver, if you set one, and the unticked email-consent line sit before the button. The button reads <strong>Sign up 2 children</strong> when there are several.</li>
               </ul>
             </>
@@ -418,6 +581,21 @@ const houseLeagueHelp: HelpPageContent = {
                 <li><strong>A receipt</strong> shows on the status page once the payment is recorded.</li>
               </ul>
               <HelpNote variant="info" title="Money paid by hand still works">A family who pays by cheque, cash or e-transfer is marked received as before; <strong>Pay now</strong> is an extra door, not a replacement.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'family-signup-status-team',
+          title: 'Their child’s team and coach',
+          content: (
+            <>
+              <p>For an accepted child, the status page has a <strong>Team</strong> row and, once the division&apos;s teams are published, a <strong>Coach</strong> row.</p>
+              <ul>
+                <li><strong>Before you publish</strong> — Team reads <strong>Not set yet</strong>, with a line saying the club will email when the teams are set.</li>
+                <li><strong>After you publish</strong> — Team shows the team and Coach shows the coach, or <strong>To be announced</strong> when the team has none.</li>
+                <li><strong>After a move</strong> — a line under the rows reads <em>Moved from Jays on Nov 2</em>.</li>
+              </ul>
+              <p>A child to review, on the waitlist, declined or withdrawn has no Team or Coach row. The family is also emailed when the teams are published (see <em>How to build teams and run a draft</em>).</p>
             </>
           ),
         },
