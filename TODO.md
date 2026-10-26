@@ -223,7 +223,7 @@ This file is the **index** of open work for the FieldLogicHQ platform. AI models
 ## 🚀 Active Tasks (Priority Order)
 
 - [ ] 🔎 House-league Registrations Filter: Team + Flags groups and a count on every option (owner ruled 2026-10-26, asks 1–6 as recommended; built 2026-10-26, browser check + commit owed — drawing docs/projects/active/HOUSE_LEAGUE_REGISTRATIONS_FILTER_DRAWINGS.html)
-- [ ] 🧮 Draft board follow-ups (owner asks 2026-10-26, after walk §387 passed 29/29): Sort arrow with Family = siblings first, Rating column at chip width with no heading, wider Filter menu, 14px "Show steps" — built, uncommitted; /review, a look at the tournament schedule's Filter, and a short walk owed (see docs/projects/active/HOUSE_LEAGUE_DRAFT_BOARD_AT_SCALE_PLAN.md)
+- [ ] 🧮 Draft board follow-ups (owner asks 2026-10-26, after walk §387 passed 29/29): Sort arrow with Family = siblings first, Rating column at chip width with no heading, wider Filter menu, 14px "Show steps" — committed 584490003 2026-10-26, reviewed; a look at the tournament schedule's Filter and a short walk owed (see docs/projects/active/HOUSE_LEAGUE_DRAFT_BOARD_AT_SCALE_PLAN.md)
 - [ ] Themed date picker — our calendar and time list on a desk, the device picker on touch (owner ruled 2026-10-25, all four asks as…
 - [ ] Owner bookkeeping: accountant review accepted 2026-10-25; the fixes are next, then the outside accountant
 - [ ] Public tournament sites — review, calmer phone pages, sponsors, the club link (LOGGED 2026-10-24, not drawn)
