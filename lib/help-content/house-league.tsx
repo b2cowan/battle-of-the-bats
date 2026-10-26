@@ -269,11 +269,12 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to build teams and run a draft',
       summary: 'Make the teams, rate the players, run a balanced draft, adjust by hand, then publish one division at a time. Each family gets one email and each coach an invite.',
-      keywords: ['build teams', 'create teams', 'teams and draft', 'draft', 'run the draft', 'draft again', 'assign players', 'rating', 'rate players', 'rated', 'not rated', 'lock', 'lock a player', 'locked', 'moved by you', 'put back', 'move to', 'not on a team', 'take all players off teams', 'publish teams', 'publish a division', 'placement email', 'coach invite', 'move after publishing', 'send the emails again', 'team colour', 'team coaches'],
-      searchText: 'build teams create teams bulk count names team colour coach email edit team window teams and draft step rate players rating 1 to 5 only owner club admin league admin see ratings registrar never sees ratings erased when a registration ends or the season finishes not rated counts as a 3 lock to this team locked unlock coach child run the draft balanced strongest first order reverses each round locked players stay and count toward the average sizes kept even ties drawn at random draft again replaces the current teams to review waitlisted not drafted not on a team drag a player move to phone sheet more menu moved by you put back on tools take all players off teams before publishing publish teams one division at a time one email per family names every child in that division sent even to families who unsubscribed from club news service message status page shows team and coach coach invited to team page no unpublish send the emails again some emails could not be sent move after publishing asks first emails the family accepted later appears under not on a team placing emails the family ending a registration takes the child off the team',
+      keywords: ['build teams', 'create teams', 'teams and draft', 'draft', 'run the draft', 'draft again', 'assign players', 'rating', 'rate players', 'rated', 'not rated', 'lock', 'lock a player', 'locked', 'moved by you', 'put back', 'move to', 'not on a team', 'take all players off teams', 'publish teams', 'publish a division', 'placement email', 'coach invite', 'move after publishing', 'send the emails again', 'team colour', 'team coaches', 'search players', 'filter', 'sort', 'family', 'siblings', 'brothers and sisters', 'keep families together', 'player notes', 'allergy', 'owing', 'hide steps', 'show steps'],
+      searchText: 'build teams create teams bulk count names team colour coach email edit team window teams and draft step rate players rating 1 to 5 only owner club admin league admin see ratings registrar never sees ratings erased when a registration ends or the season finishes not rated counts as a 3 lock to this team locked unlock coach child run the draft balanced strongest first order reverses each round locked players stay and count toward the average sizes kept even ties drawn at random draft again replaces the current teams to review waitlisted not drafted not on a team drag a player move to phone sheet more menu moved by you put back on tools take all players off teams before publishing publish teams one division at a time one email per family names every child in that division sent even to families who unsubscribed from club news service message status page shows team and coach coach invited to team page no unpublish send the emails again some emails could not be sent move after publishing asks first emails the family accepted later appears under not on a team placing emails the family ending a registration takes the child off the team search players or parents filter show only has player notes owing has a sibling in this division sort last name rating strongest first age youngest first family family mark brothers and sisters one parent email lights up go to a name note from the family sign-up note allergy medical owing amount record a payment on registrations everyone is on a team pool folds hide steps show steps next step steps drawer keep families together families first evens out the averages 120 players large division',
       content: (
         <>
           <p>A division&apos;s teams are made in five moves on <strong>Teams &amp; draft</strong>: make the teams, rate the players, run the draft, adjust by hand, then publish. Nothing reaches a family until you publish.</p>
+          <p>The board is built for a full division: the players not yet on a team stay in view while you work through the teams, and you can search, filter and sort them.</p>
         </>
       ),
       subtopics: [
@@ -293,13 +294,32 @@ const houseLeagueHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'build-teams-board',
+          title: 'Find players on the board',
+          content: (
+            <>
+              <p>On a desk, <strong>Not on a team</strong> is its own column on the left. Once you scroll past the steps it stays in view, its list scrolls inside it, and every team beside it is a place to drop a player. On a phone, open <strong>Not on a team</strong> from the list of groups.</p>
+              <HelpDefs>
+                <HelpDef term="A player's line">Rating, name, marks, age and the <strong>&hellip;</strong> menu. <strong>Locked</strong>, <strong>Moved by you</strong> and <strong>Asked to withdraw</strong> sit on a second line under the name.</HelpDef>
+                <HelpDef term="Search">Finds a player, or a family by a parent&apos;s name (<em>Search players or parents</em>).</HelpDef>
+                <HelpDef term="Filter">Show only <strong>Not rated</strong>, <strong>Has player notes</strong>, <strong>Owing</strong> or <strong>Has a sibling in this division</strong>, each with its count.</HelpDef>
+                <HelpDef term="Sort">Last name, Rating (strongest first), Age (youngest first) or Family (brothers and sisters together).</HelpDef>
+                <HelpDef term="Family mark">Shows how many brothers and sisters are in this division. A family is one parent email, not a last name. Click it to see where each child is; they light up on the board, and clicking a name goes to it.</HelpDef>
+                <HelpDef term="Note mark">Opens what the family wrote at sign-up, such as an allergy. Anyone who can open Registrations sees it, the registrar too.</HelpDef>
+                <HelpDef term="Amber $">The amount still owing. Payments are recorded on Registrations.</HelpDef>
+              </HelpDefs>
+              <p>Each team&apos;s card says how many players it has, and, for people who see ratings, its average (<em>12 players · avg 3.1</em>). <strong>Hide steps</strong> folds the steps into one line that keeps the progress and the next step, with <strong>Rate players</strong> or <strong>Create teams</strong> when that is next. It stays closed for that division in that browser until you click <strong>Show steps</strong>.</p>
+            </>
+          ),
+        },
+        {
           id: 'build-teams-rate',
           title: 'Rate players 1 to 5',
           content: (
             <>
               <p>Click <strong>Rate players</strong> (on a phone, <strong>Rate</strong>) to rate every accepted player in the division. <strong>1</strong> is newest to the sport and <strong>5</strong> is among the strongest in the age group. On a keyboard, type 1 to 5 to rate a player and move to the next; tap a chosen number again to clear it. To rate several at once, tick them and pick one number.</p>
               <ul>
-                <li><strong>Only the owner, club admins and league admins see ratings.</strong> The league registrar never does, and neither do coaches or families. The registrar&apos;s board has no rating, average, lock or Moved by you, and their export has no rating column.</li>
+                <li><strong>Only the owner, club admins and league admins see ratings.</strong> The league registrar never does, and neither do coaches or families. The registrar&apos;s board has no Rating column, Rating sort, average, lock or Moved by you, and their export has no rating column.</li>
                 <li><strong>A player who is not rated counts as a 3</strong> in the draft. The chip shows a dashed dash, and the Ratings step says how many are not rated.</li>
                 <li><strong>Ratings are erased</strong> when a player&apos;s registration ends and when the season finishes.</li>
               </ul>
@@ -314,10 +334,12 @@ const houseLeagueHelp: HelpPageContent = {
               <p>If a coach&apos;s own child should be on their team, lock the child first. On a player on a team, open the <strong>&hellip;</strong> menu and choose <strong>Lock to this team</strong>; <strong>Unlock</strong> takes it back. A locked player stays on that team when you run the draft and still counts toward its average. Locks end when you publish.</p>
               <HelpSteps>
                 <li>Click <strong>Run the draft</strong> (on a phone, <strong>Run</strong>). The window lists the players, the teams and their sizes, how many are locked, and how many are rated.</li>
+                <li>Leave <strong>Keep families together</strong> on, or turn it off (it shows when the division has brothers and sisters).</li>
                 <li>Click <strong>Run the draft</strong> in the window. Nothing is sent.</li>
               </HelpSteps>
               <HelpDefs>
                 <HelpDef term="How it deals">Strongest first, and the order reverses each round, so the teams come out balanced. Ties and the first pick are drawn at random. Team sizes are kept even.</HelpDef>
+                <HelpDef term="Keep families together">Brothers and sisters signed up under one parent email go to the same team. Families are dealt first, then everyone else; then single players swap teams where that evens out the averages. A locked child&apos;s brothers and sisters follow onto that team. Off, each child is dealt on their own. Your choice holds for the visit, so Draft again uses it too.</HelpDef>
                 <HelpDef term="Who is drafted">Every accepted player holds their spot. A player still to review, or on the waitlist, is not drafted; the window names them and links to Registrations.</HelpDef>
                 <HelpDef term="Nobody rated">The draft still runs and deals the players at random, evenly.</HelpDef>
                 <HelpDef term="Draft again">Deals every player again and replaces the current teams, including any move you made by hand. Locked players stay where they are. It is offered until you publish.</HelpDef>
@@ -333,7 +355,8 @@ const houseLeagueHelp: HelpPageContent = {
               <p>On a desk, drag a player onto another team, or back to <strong>Not on a team</strong>. On a phone, or from a desk, open the <strong>&hellip;</strong> on a player and choose <strong>Move to&hellip;</strong>; the sheet shows each team&apos;s size and what its average would become. A move before you publish is immediate and tells nobody.</p>
               <ul>
                 <li><strong>Moved by you</strong> marks a player placed by hand after a draft. Click it to <strong>Put back</strong> on the team the draft chose. It is offered until you publish.</li>
-                <li>The line under the board shows each team&apos;s average rating, the sizes, and how many were moved by hand.</li>
+                <li>Each team card&apos;s head shows its size and average; the line above the board counts how many were <strong>Moved by hand</strong>. Moving a child by hand never moves a brother or sister with them.</li>
+                <li>When everyone is on a team, <strong>Not on a team</strong> folds to one line, <em>Everyone is on a team</em>, that stays at the top as you scroll. Drop a player on it to take them off a team.</li>
                 <li><strong>Take all players off teams</strong> is in <strong>Tools</strong> (the &hellip; button), before you publish. It asks first, and it clears locks and moves by hand too. Nothing is sent.</li>
               </ul>
             </>
@@ -389,6 +412,24 @@ const houseLeagueHelp: HelpPageContent = {
           keywords: ['ratings', 'who sees ratings', 'rating privacy', 'registrar ratings', 'not rated'],
           answer: (
             <p>Only the owner, club admins and league admins. The league registrar, coaches and families never see them. Ratings are erased when a player&apos;s registration ends or the season finishes, and a player who is not rated counts as a 3 in the draft.</p>
+          ),
+        },
+        {
+          id: 'faq-house-league-draft-siblings-together',
+          question: 'Why did the draft put brothers and sisters on the same team?',
+          answerText: 'Keep families together is on by default in the Run the draft window. Brothers and sisters signed up under one parent email go to the same team; a family is one parent email, not a last name. Turn the switch off to deal each child on their own, then Draft again. Moving a child by hand never moves a sibling.',
+          keywords: ['siblings', 'brothers and sisters', 'same team', 'keep families together', 'family', 'draft'],
+          answer: (
+            <p><strong>Keep families together</strong> is on by default in the <strong>Run the draft</strong> window. Brothers and sisters signed up under one parent email go to the same team; a family is one parent email, not a last name. Turn the switch off to deal each child on their own, then <strong>Draft again</strong>. Moving a child by hand never moves a sibling.</p>
+          ),
+        },
+        {
+          id: 'faq-house-league-board-notes-who-sees',
+          question: 'Who sees the notes families wrote at sign-up on the board?',
+          answerText: 'Anyone who can open Registrations: the owner, club admins, league admins and the league registrar. The note mark on a player opens the note, for example an allergy. Coaches and families never see it on this board.',
+          keywords: ['notes', 'player notes', 'allergy', 'note mark', 'who sees notes', 'medical'],
+          answer: (
+            <p>Anyone who can open <strong>Registrations</strong>: the owner, club admins, league admins and the league registrar. The note mark on a player opens the note, for example an allergy. Coaches and families never see it on this board.</p>
           ),
         },
       ],

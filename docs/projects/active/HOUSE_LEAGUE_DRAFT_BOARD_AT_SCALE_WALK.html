@@ -1,0 +1,232 @@
+<title>Draft Board Walk</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House league · the draft board at real size · §387</span>
+    <h1>Draft a 120-player division</h1>
+    <p class="sub">Written 2026-10-26. One purpose: a convenor drafts a real division (120 players, 10 teams) on one screen — the players waiting for a team stay in view, any child is found in one step, brothers and sisters show as a family and the draft keeps them together, the families' notes are one click away, and the steps fold away.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Built to <a href="https://claude.ai/artifact/D8WBeMERFDdBpVNHcdUQMz">the drawing</a>, your rulings A1–A12 and the steps drawer (2026-10-26), with the words from /marketing. Two things the drawing left open were settled when you said yes: the families switch sits in both the Run the draft and Draft again windows and holds for the visit; Search reads "Search players or parents", Registrations' own words.</p>
+    <p><strong>It passes when</strong> the pool stays in the window while you scroll, a player drags from it to the 10th team, Search / Filter / Sort find what you ask, a family's children light up together, the draft keeps every family on one team with the switch on (and may split them with it off), the folded line takes a player back, and the drawer stays closed after a reload.</p>
+    <p><strong>Not in this walk:</strong> Publish and its emails (§381, unchanged), the coach's team page, ratings following a returning player. <strong>Who sees a note:</strong> every person who opens this board can also open Registrations (the registrar too), so the note mark shows for them all; nobody reads this board without Registrations. A team's coach never reaches this screen.</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> · <code>/dev-league-org/admin/house-league</code></dd>
+      <dt>Owner</dt><dd><code>league-owner@dev.local</code> · <code>devpass123</code> (sign in only, never reset)</dd>
+      <dt>Registrar</dt><dd><code>league-registrar@dev.local</code> · <code>devpass123</code></dd>
+      <dt>Big season</dt><dd><strong>Draft Test 2027</strong>, U12 Division: 120 accepted players in 101 families (17 with two or three children), 10 teams, nobody placed, nobody rated, 80 paid and 40 owing, about half with a sign-up note.</dd>
+      <dt>Small season</dt><dd><strong>Dev House League 2027</strong>, U10 Division A (the §381 season, about six players).</dd>
+      <dt>Re-seed first</dt><dd>Ask Claude to run <code>node --env-file=.env.local scripts/seed-draft-scale-fixture.mjs</code> (dev only; the season's address changes each time). For step F3, ask Claude to mark one Draft Test player as asked to withdraw.</dd>
+      <dt>Restart</dt><dd>Restart the dev server before you start (new files and shared modules): stop it, then <code>npm run dev</code>.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'house-league-draft-board-walk-v1';
+  var O = 'Owner, computer (1440 wide)', T = 'Owner, tablet or a 768 px window', P = 'Owner, phone', R = 'Registrar, computer';
+  var PARTS = [
+    { id: 'A', title: 'At 120: the pool stays put', steps: [
+      { who: O, do: 'Open Draft Test 2027 › Teams & draft (U12 Division).', see: 'The steps under a "Steps · 1 of 4 done" head with Hide steps. Below them "Not on a team" is its own column on the left (count 120), with Search, Filter, Sort: Last name and the headings RATING · PLAYER · AGE; the ten team cards sit two across beside it, each "0 players" with "Drag players here, or run the draft".' },
+      { who: O, do: 'Scroll the page down to the last teams.', see: 'Once past the steps the pool stops at the top of the window and stays there, full window tall; its own list scrolls inside it. The teams scroll past beside it.' },
+      { who: O, do: 'Read a few pool rows.', see: 'One line each, about 40 px: a dashed "–" rating, the name, any marks, the age on the right, ⋯. No "counts as a 3" or "owes $165" sentence on the row. A long name wraps rather than cutting off.' },
+      { who: O, do: 'Drag a player from the pool to the 10th team (Rays), dragging down to the bottom edge of the window.', see: 'The page scrolls while you hold near the bottom; the player drops on Rays. Its head reads "1 player".' }
+    ]},
+    { id: 'B', title: 'Search, Filter and Sort', steps: [
+      { who: O, do: 'Type part of a child’s name in Search. Then type a parent’s first name instead.', see: 'Only the matches stay; the count reads "{shown} of 119". A parent’s name finds their children.' },
+      { who: O, do: 'Clear Search. Open Filter.', see: 'A menu headed "Show only": Not rated 119 · Has player notes ~60 · Owing 40 · Has a sibling in this division ~37, counts at the row ends (your numbers may differ by the one you placed).' },
+      { who: O, do: 'Tick Owing.', see: 'The pool shows the 40 owing (39 if you placed an owing child); the Filter button marks itself on. Each row has an amber $.' },
+      { who: O, do: 'Untick it. Sort › Family.', see: 'Brothers and sisters sit side by side. Sort › Age puts the youngest first.' }
+    ]},
+    { id: 'C', title: 'Families and notes', steps: [
+      { who: O, do: 'Click a family mark (the people icon with a 2 or 3).', see: 'A small window "The {Last} family · 2 children in U12 Division" listing each child with "Not on a team" (or their team), and "Highlighted on the board · click a name to go to it". The children light up in olive with a dark olive bar.' },
+      { who: O, do: 'Place one of that family’s children on a team, open the mark again and click that child’s name.', see: 'The window closes and the page goes to the child on their team card, still lit. Click elsewhere and press the mark again to clear it.' },
+      { who: O, do: 'Click a note mark (the page icon).', see: '"{Name} · note from the family", the note in quotes (e.g. “Peanut allergy (EpiPen)”), and "Written at sign-up · anyone who can open Registrations sees it".' },
+      { who: O, do: 'Click an amber $.', see: '"$165 owing. Record a payment on Registrations." — Registrations is a link to the Active tab.' },
+      { who: R, do: 'As the registrar, open the same board.', see: 'No Rating column, no Rating sort, no Not rated filter, no averages on the cards, no ⋯ or drag. The family, note and $ marks are there (the registrar can open Registrations).' }
+    ]},
+    { id: 'D', title: 'The drawer', steps: [
+      { who: O, do: 'Press Hide steps.', see: 'The steps fold to one line: "Steps · 1 of 4 done · Next: rate the players" with Rate players beside it, and Show steps.' },
+      { who: O, do: 'Reload the page.', see: 'Still closed.' },
+      { who: O, do: 'Open another division’s Teams & draft (the small season, or another tab).', see: 'Its steps are open: the closed drawer was this division’s only. Go back: Draft Test is still closed. Press Show steps.' }
+    ]},
+    { id: 'E', title: 'Families together in the draft', steps: [
+      { who: O, do: 'Rate a handful of players (Rate players), then press Run the draft.', see: 'The window has a "Keep families together" switch, on, with "Brothers and sisters signed up under one parent email go to the same team. Locked players stay where they are." How it deals reads "Families first, then everyone else, strongest first…". Teams "Cardinals 12 · … · Rays 12".' },
+      { who: O, do: 'Press Run the draft.', see: 'Every team has 12. Use Filter › Has a sibling in this division and click a few family marks: each family’s children are on ONE team. The cards’ "12 players · avg x.x" sit close together.' },
+      { who: O, do: 'Press Draft again, turn the switch off, press Draft again.', see: 'The teams are re-dealt; now some brothers and sisters land on different teams. Open Draft again once more: the switch remembers off for this visit.' },
+      { who: O, do: 'Lock one family child to their team (⋯ › Lock to this team), turn the switch back on and Draft again.', see: 'That child stays; their brother or sister follows onto the same team.' },
+      { who: O, do: 'Move one family child to another team by hand (drag or ⋯ › Move to…).', see: 'Only that child moves ("Moved by you" on its own line); the sibling stays. The Move sheet’s "avg x → y" reads true.' }
+    ]},
+    { id: 'F', title: 'States and the folded pool', steps: [
+      { who: O, do: 'With everyone drafted, scroll the board.', see: 'The pool is one line at the top, "Everyone is on a team · 120 of 120", that stays as you scroll; the teams go 3 across (4 on a very wide window). The line above the board shows only "Moved by hand" when you have moved anyone.' },
+      { who: O, do: 'Drag a player from a low team up onto that line.', see: 'They go back to Not on a team; the pool opens again as a column with 1 player.' },
+      { who: O, do: 'Find the player Claude marked as asked to withdraw, a locked player, and a moved one.', see: '"Asked to withdraw Oct {day}", "Locked" (lock icon) and the "Moved by you" tag each sit on a second line under the name, only on that row.' }
+    ]},
+    { id: 'G', title: 'Other views', steps: [
+      { who: P, do: 'On your phone open Teams & draft › Not on a team.', see: 'The list of groups as before; the opened pool has Search on its own row, then the Filter square and the Sort pill; rows are 52 px with a 44 px ⋯ (Move to…). Filter and Sort open as bottom sheets; a mark opens a sheet too.' },
+      { who: T, do: 'At about 768 px wide, open the board and drag a player (hold a finger first on a touch screen).', see: 'The desk board with the pool beside one column of teams; rows about 44 px; a quick swipe on the pool scrolls it, a hold then drag moves a player.' },
+      { who: O, do: 'Open the small season (Dev House League 2027 › U10 Division A).', see: 'The same row and toolbar; the pool is only as tall as its players.' },
+      { who: O, do: 'Switch to the dark theme and look over the board and a mark’s window.', see: 'Everything readable; the olive light and the amber $ read on dark.' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['House league draft board at real size walk §387 (2026-10-26)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

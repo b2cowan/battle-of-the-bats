@@ -1,0 +1,641 @@
+<title>Draft Board at Scale</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a cool-grey review document; every product frame inside it is drawn TRUE SIZE on the Warm admin kit, in its own
+   sideways-scrolling well. The frames SCROLL like the real page (the pool's stickiness is real CSS, not a picture). */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --flag:#A8361F; --flag-soft:#F7E2DC; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --f-app:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  /* the product's Warm kit (the admin's real values) */
+  --p-paper:#F8F4ED; --p-card:#FFFFFF; --p-ink:#241E15; --p-soft:#4A4235; --p-dim:#615A54;
+  --p-line:rgba(70,55,30,.12); --p-line2:rgba(70,55,30,.20); --p-olive:#57651E; --p-olive-rgb:87,101,30; --p-olive-soft:rgba(87,101,30,.10);
+  --p-warn-ink:#8A5300; --p-warn-soft:rgba(176,112,0,.10); --p-ok-ink:#2F6B2A; --p-ok-soft:rgba(47,107,42,.14);
+  --p-info-ink:#1D4A6E; --p-info-soft:rgba(29,74,110,.10); --p-thumb:rgba(70,55,30,.28);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --flag:#F0907A; --flag-soft:#3A221D; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3);
+  --p-paper:#0A0A0A; --p-card:#141A22; --p-ink:#F1F5F9; --p-soft:rgba(255,255,255,.72); --p-dim:rgba(255,255,255,.55);
+  --p-line:rgba(255,255,255,.09); --p-line2:rgba(255,255,255,.18); --p-olive:#B5C77A; --p-olive-rgb:181,199,122; --p-olive-soft:rgba(181,199,122,.14);
+  --p-warn-ink:#E8B75A; --p-warn-soft:rgba(232,183,90,.14); --p-ok-ink:#93CF8B; --p-ok-soft:rgba(147,207,139,.14);
+  --p-info-ink:#8FC2E7; --p-info-soft:rgba(143,194,231,.14); --p-thumb:rgba(255,255,255,.22);
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --flag:#F0907A; --flag-soft:#3A221D; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3);
+  --p-paper:#0A0A0A; --p-card:#141A22; --p-ink:#F1F5F9; --p-soft:rgba(255,255,255,.72); --p-dim:rgba(255,255,255,.55);
+  --p-line:rgba(255,255,255,.09); --p-line2:rgba(255,255,255,.18); --p-olive:#B5C77A; --p-olive-rgb:181,199,122; --p-olive-soft:rgba(181,199,122,.14);
+  --p-warn-ink:#E8B75A; --p-warn-soft:rgba(232,183,90,.14); --p-ok-ink:#93CF8B; --p-ok-soft:rgba(147,207,139,.14);
+  --p-info-ink:#8FC2E7; --p-info-soft:rgba(143,194,231,.14); --p-thumb:rgba(255,255,255,.22);
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1180px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+h1{font:700 30px/1.15 var(--f-doc);margin:0;text-wrap:balance}
+h2{font:700 21px/1.25 var(--f-doc);margin:0;text-wrap:balance}
+h3{font:600 16px/1.3 var(--f-doc);margin:0}
+p{margin:0;max-width:74ch}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:17px;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:var(--shadow)}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.tag{display:inline-block;font:600 11px/1 var(--f-mono);letter-spacing:.06em;padding:4px 7px;border-radius:5px;border:1px solid currentColor;vertical-align:2px;margin-right:6px;white-space:nowrap}
+.tag.new{color:var(--t-new)} .tag.res{color:var(--t-res)} .tag.unc{color:var(--t-unc)} .tag.bad{color:var(--flag)}
+.cap{display:flex;flex-direction:column;gap:6px}
+.cap .meta{font:500 12.5px/1.45 var(--f-mono);color:var(--muted);max-width:none}
+.well{overflow-x:auto;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);padding:16px;width:min(1474px,calc(100vw - 32px));margin-left:50%;transform:translateX(-50%);display:flex;gap:24px;align-items:flex-start}
+ul.facts{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:82ch}
+ol.notes{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:8px 20px}
+ol.notes li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;font-size:14px;line-height:1.45}
+ol.notes .n{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--surface);font:600 11px/1 var(--f-mono)}
+.callout{border-left:3px solid var(--flag);background:var(--flag-soft);padding:12px 16px;border-radius:0 8px 8px 0}
+.callout.ask{border-color:var(--ask);background:var(--ask-soft)}
+.asks{display:flex;flex-direction:column;gap:12px}
+.ask{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;grid-template-columns:52px minmax(0,1fr);gap:6px 14px}
+.ask .id{font:600 14px/1.4 var(--f-mono);color:var(--ask);grid-row:span 4}
+.ask .q{font-weight:600}
+.ask .rec b{color:var(--accent)}
+.ask .alt{color:var(--muted);font-size:14px}
+.ask .pick{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ask .pick label{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:999px;font-size:14px;cursor:pointer}
+.ask .pick label:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.ask .pick input[type=text]{flex:1;min-width:200px;min-height:36px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px}
+.copybar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.copybtn{min-height:40px;padding:0 16px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);font:600 14px var(--f-doc);cursor:pointer}
+.copybtn:focus-visible,.anno:focus-visible,.ask input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#out{width:100%;min-height:120px;font:13px/1.5 var(--f-mono);border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);color:var(--ink)}
+.map svg text{font:500 11px var(--f-mono);fill:var(--muted)}
+.map svg .lbl{fill:var(--ink);font-weight:600}
+.mapwrap{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+
+/* annotation dots: every one opens its note on click */
+.anno{position:absolute;z-index:6;width:22px;height:22px;border-radius:50%;border:2px solid var(--surface);background:var(--ink);color:var(--surface);font:600 11px/1 var(--f-mono);cursor:pointer;display:grid;place-items:center;padding:0;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.anno .bub{display:none;position:absolute;left:28px;top:-6px;width:280px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:400 13px/1.45 var(--f-doc);text-align:left;box-shadow:var(--shadow);cursor:default}
+.anno.open .bub{display:block}
+.anno.left .bub{left:auto;right:28px}
+.ak .anno{color:var(--surface);font:600 11px/1 var(--f-mono)} .ak .anno .bub{color:var(--ink);font:400 13px/1.45 var(--f-doc)}
+
+/* ── PRODUCT FRAMES (true size) ─────────────────────────────────────────────── */
+.ak{font-family:var(--f-app);color:var(--p-ink);background:var(--p-paper);position:relative;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--p-line2);flex:none;font-size:14px}
+.ak *{font-family:inherit}
+.ak button{font:inherit;color:inherit}
+.desk{width:1440px;height:900px;display:grid;grid-template-columns:280px minmax(0,1fr);grid-template-rows:62px minmax(0,1fr)}
+.ak .tb{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:0 24px;background:var(--p-card);border-bottom:1px solid var(--p-line)}
+.ak .logo{font:700 17px/1 var(--f-app);color:var(--p-olive)} .ak .logo span{color:var(--p-ink)}
+.ak .area{font:600 11px/1 var(--f-app);letter-spacing:.12em;color:var(--p-soft);padding-left:16px;border-left:1px solid var(--p-line)}
+.ak .sb{background:var(--p-card);border-right:1px solid var(--p-line);padding:16px 12px;display:flex;flex-direction:column;gap:2px;font-size:14px;overflow:hidden}
+.ak .sb .it{padding:9px 12px;border-radius:8px;color:var(--p-soft)}
+.ak .sb .sec{font:600 11px/1 var(--f-app);letter-spacing:.12em;color:var(--p-dim);padding:16px 12px 6px}
+.ak .sb .sub{margin-left:12px;padding:8px 12px;color:var(--p-soft);border-left:1px solid var(--p-line)}
+.ak .sb .sub.on{background:var(--p-olive-soft);color:var(--p-olive);font-weight:600}
+.ak .sb .sel{margin:4px 0 6px 12px;border:1px solid var(--p-line2);border-radius:8px;padding:9px 12px;font-weight:600;color:var(--p-ink);display:flex;justify-content:space-between}
+.ak .main{overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:thin;scrollbar-color:var(--p-thumb) transparent}
+.ak .main::-webkit-scrollbar{width:6px} .ak .main::-webkit-scrollbar-thumb{background:var(--p-thumb);border-radius:9px}
+.ak .page{max-width:1200px;margin:0 auto;padding:0 40px 40px}
+.ak .ph{padding:22px 0 0} .ak .ph h1{font:700 24px/1.2 var(--f-app);margin:0;color:var(--p-ink)}
+.ak .sub1{font-size:12px;color:var(--p-soft);margin:4px 0 10px}
+.ak .tabs{display:flex;gap:6px;border-bottom:1px solid var(--p-line)}
+.ak .tabs span{padding:10px 14px;font:600 14px/1 var(--f-app);color:var(--p-soft);border-bottom:2px solid transparent}
+.ak .tabs span.on{color:var(--p-ink);border-color:var(--p-olive)}
+.ak .tabs b{font-weight:500;font-size:12px;color:var(--p-dim);margin-left:6px;font-variant-numeric:tabular-nums}
+.ak .panel{display:flex;flex-direction:column;gap:16px;margin-top:16px;padding:20px;border:1px solid var(--p-line);border-radius:12px;background:var(--p-card)}
+.ak .divhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ak .divhead h2{margin:0;font:700 16px/1.2 var(--f-app);color:var(--p-ink)}
+.ak .divhead .sp{flex:1}
+.ak .pill{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;border:1px solid var(--p-line2);border-radius:999px;font:600 12px/1 var(--f-app);color:var(--p-soft)}
+.ak .pill.drafted{color:var(--p-warn-ink);background:var(--p-warn-soft);border-color:transparent}
+.ak .pill.drafted::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--p-line2);background:var(--p-card);font:600 14px/1 var(--f-app);color:var(--p-ink);white-space:nowrap}
+.ak .btn.pri{background:var(--p-olive);border-color:var(--p-olive);color:var(--p-card)}
+.ak .btn.ic{width:36px;padding:0;justify-content:center}
+.ak .steps{list-style:none;margin:0;padding:0;border-top:1px solid var(--p-line)}
+.ak .step{display:flex;align-items:center;gap:12px;min-height:60px;padding:9px 0;border-bottom:1px solid var(--p-line)}
+.ak .smark{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--p-line2);display:grid;place-items:center;font:700 12px/1 var(--f-app);color:var(--p-dim);flex:none}
+.ak .smark.ok{background:var(--p-ok-soft);border-color:transparent;color:var(--p-ok-ink)}
+.ak .stext{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.ak .stext b{font-size:14px;font-weight:700} .ak .stext span{font-size:12px;color:var(--p-soft)}
+.ak .quiet{margin:0;font-size:12px;color:var(--p-dim)}
+.ak .drawer{border-top:1px solid var(--p-line);position:relative}
+.ak .dh{display:flex;align-items:center;gap:10px;min-height:48px;padding:4px 0}
+.ak .dh .dt{display:flex;align-items:baseline;gap:10px;flex:1;min-width:0;flex-wrap:wrap}
+.ak .dh .dt b{font-size:14px;font-weight:700}
+.ak .dh .prog{font-size:12px;color:var(--p-soft);font-variant-numeric:tabular-nums}
+.ak .dh .next{font-size:12px;color:var(--p-soft)} .ak .drawer:not(.closed) .next, .ak .drawer:not(.closed) .nextbtn{display:none}
+.ak .tog{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;border:0;background:transparent;border-radius:8px;font:600 14px/1 var(--f-app);color:var(--p-olive);cursor:pointer}
+.ak .tog:hover{background:var(--p-olive-soft)} .ak .tog:focus-visible{outline:2px solid var(--p-olive);outline-offset:2px}
+.ak .tog svg{transition:transform .15s} .ak .drawer.closed .tog svg{transform:rotate(180deg)}
+.ak .drawer.closed .steps{display:none}
+.ak .drawer .steps{border-top:1px solid var(--p-line)}
+@media (prefers-reduced-motion: reduce){ .ak .tog svg{transition:none} }
+.specpanel{width:1080px}
+.ak .balance{margin:0;font-size:12px;color:var(--p-soft);display:flex;flex-wrap:wrap;gap:4px 18px}
+.ak .balance b{color:var(--p-ink);font-weight:650;font-variant-numeric:tabular-nums}
+
+/* today's board, as built */
+.ak .oldboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;align-items:start}
+.ak .ocard{background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ak .ocard.opool{background:var(--p-paper)}
+.ak .ohead{display:flex;align-items:flex-start;gap:8px;font:700 14px/1.3 var(--f-app)}
+.ak .ohead .t{flex:1;display:flex;flex-direction:column;gap:2px}
+.ak .orow{display:grid;grid-template-columns:32px minmax(0,1fr) 54px;gap:10px;align-items:center;min-height:86px}
+.ak .odash{width:32px;height:32px;border:1px dashed var(--p-line2);border-radius:7px;display:grid;place-items:center;color:var(--p-dim)}
+.ak .orow b{display:block;font:650 16px/1.3 var(--f-app)} .ak .orow small{display:block;font-size:14.5px;line-height:1.65;color:var(--p-dim)}
+.ak .omore{width:54px;height:54px;border:1px solid var(--p-line2);border-radius:8px;display:grid;place-items:center;font-weight:700;letter-spacing:1px;background:var(--p-card)}
+.ak .odrop{border:1px dashed var(--p-line2);border-radius:8px;padding:20px 10px;text-align:center;color:var(--p-dim);font-size:14px}
+
+/* proposed board */
+.ak .board{display:flex;gap:16px;align-items:flex-start}
+.ak .pool{width:344px;flex:none;position:sticky;top:12px;height:814px;max-height:814px;background:var(--p-paper);border:1px solid var(--p-line);border-radius:10px;display:flex;flex-direction:column;min-height:0}
+.ak .pool.fit{position:static;height:auto;max-height:none}
+.ak .poolhead{padding:12px 12px 10px 14px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--p-line);position:relative}
+.ak .ttl{display:flex;align-items:center;gap:8px;font:700 14px/1.2 var(--f-app)}
+.ak .cnt{font:600 12px/1 var(--f-app);padding:4px 8px;border-radius:999px;background:var(--p-card);border:1px solid var(--p-line2);color:var(--p-soft);font-variant-numeric:tabular-nums}
+.ak .tools{display:flex;gap:8px;align-items:center}
+.ak .search{display:flex;align-items:center;gap:8px;height:36px;padding:0 14px;border:1px solid var(--p-line2);border-radius:999px;background:var(--p-card);color:var(--p-dim);font-size:14px;flex:1;min-width:0}
+.ak .search svg{flex:none}
+.ak .filt{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:1px solid var(--p-line2);border-radius:8px;background:var(--p-card);font:600 14px/1 var(--f-app)}
+.ak .filt.on{border-color:var(--p-olive);color:var(--p-olive);background:var(--p-olive-soft)}
+.ak .sortp{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;background:var(--p-olive-soft);color:var(--p-olive);font:600 14px/1 var(--f-app)}
+.ak .menu{position:absolute;z-index:5;top:100%;margin-top:-6px;left:14px;width:300px;background:var(--p-card);border:1px solid var(--p-line2);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);padding:6px 0}
+.ak .menu .mh{font:700 12px/1 var(--f-app);letter-spacing:.05em;text-transform:uppercase;color:var(--p-soft);padding:10px 14px 6px}
+.ak .menu .mi{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;min-height:40px;padding:0 14px;font-size:14px}
+.ak .menu .mi .ck{width:18px;height:18px;border:1.5px solid var(--p-line2);border-radius:4px;display:grid;place-items:center;font:700 11px/1 var(--f-app);color:var(--p-card)}
+.ak .menu .mi .ck.on{background:var(--p-olive);border-color:var(--p-olive)}
+.ak .menu .mi .c{color:var(--p-dim);font-variant-numeric:tabular-nums}
+.ak .colh{display:grid;grid-template-columns:var(--cols);gap:8px;align-items:center;height:32px;padding:0 4px 0 14px;font:700 12px/1 var(--f-app);color:var(--p-soft);letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--p-line)}
+.ak .colh .r{text-align:right}
+.ak .list{overflow-y:auto;flex:1;min-height:0;background:var(--p-card);border-radius:0 0 10px 10px;scrollbar-width:thin;scrollbar-color:var(--p-thumb) transparent}
+.ak .list::-webkit-scrollbar{width:6px} .ak .list::-webkit-scrollbar-thumb{background:var(--p-thumb);border-radius:9px}
+.ak{--cols:52px minmax(0,1fr) auto 34px 36px}
+.ak .row{display:grid;grid-template-columns:var(--cols);gap:8px;align-items:center;min-height:40px;padding:0 4px 0 14px;border-bottom:1px solid var(--p-line);font-size:14px;background:var(--p-card);position:relative}
+.ak .row:last-child{border-bottom:0}
+.ak .rc{width:26px;height:24px;border-radius:6px;display:grid;place-items:center;font:700 12px/1 var(--f-app);background:var(--p-olive-soft);color:var(--p-olive);font-variant-numeric:tabular-nums}
+.ak .rc.un{background:transparent;border:1px dashed var(--p-line2);color:var(--p-dim)}
+.ak .who{display:flex;flex-direction:column;min-width:0;padding:4px 0}
+.ak .nm{overflow-wrap:anywhere;font-weight:600;line-height:1.3}
+.ak .states{grid-column:2/-1;grid-row:2;display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 8px}
+.ak .st{display:inline-flex;align-items:center;gap:4px;font:600 12px/1 var(--f-app);border-radius:999px;padding:4px 8px;white-space:nowrap}
+.ak .st.moved{color:var(--p-info-ink);background:var(--p-info-soft)}
+.ak .st.lock{color:var(--p-soft);background:var(--p-olive-soft)}
+.ak .st.wd{color:var(--p-warn-ink);background:var(--p-warn-soft)}
+.ak .mk{display:flex;gap:2px;align-items:center}
+.ak .m{display:inline-flex;align-items:center;justify-content:center;gap:2px;min-width:24px;height:24px;padding:0 4px;border-radius:6px;color:var(--p-soft);font:600 12px/1 var(--f-app);border:0;background:transparent}
+.ak .m svg{width:14px;height:14px}
+.ak .m.owe{color:var(--p-warn-ink);background:var(--p-warn-soft)}
+.ak .m.press{background:var(--p-olive-soft);color:var(--p-ink);box-shadow:0 0 0 1.5px var(--p-olive)}
+.ak .age{text-align:right;color:var(--p-soft);font-variant-numeric:tabular-nums}
+.ak .more{height:36px;display:grid;place-items:center;color:var(--p-soft);font-weight:700;letter-spacing:1px}
+.ak .row.hl{background:color-mix(in srgb,var(--p-olive-soft) 100%,var(--p-card));box-shadow:inset 3px 0 0 var(--p-olive)}
+.ak .row.lift{opacity:.4}
+.ak .teams{flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(264px,1fr));gap:12px;align-items:start}
+.ak .tcard{background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.ak .tcard.over{border-color:var(--p-olive);box-shadow:0 0 0 2px rgba(var(--p-olive-rgb),.18)}
+.ak .thead{padding:4px 4px 10px 14px;display:flex;gap:6px;align-items:flex-start}
+.ak .thead .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding-top:10px}
+.ak .tline{display:flex;align-items:center;gap:8px;font:700 14px/1.2 var(--f-app)}
+.ak .dot{width:12px;height:12px;border-radius:50%;flex:none}
+.ak .ib{width:44px;height:44px;display:grid;place-items:center;color:var(--p-soft);border-radius:8px;flex:none} .ak .ib svg{width:16px;height:16px}
+.ak .coach{font-size:12px;color:var(--p-soft)} .ak .coach.none{color:var(--p-warn-ink);text-decoration:underline;text-underline-offset:2px}
+.ak .tstat{font-size:12px;color:var(--p-soft);font-variant-numeric:tabular-nums} .ak .tstat b{color:var(--p-ink);font-weight:650}
+.ak .tcard .colh{border-top:1px solid var(--p-line);height:28px}
+.ak .tdrop{margin:0 12px 12px;border:1px dashed var(--p-line2);border-radius:8px;padding:12px 8px;text-align:center;color:var(--p-dim);font-size:12px}
+.ak .poolbar{position:sticky;top:12px;z-index:3;display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--p-line);border-radius:10px;background:var(--p-paper);font-size:14px;color:var(--p-soft);box-shadow:0 6px 16px rgba(0,0,0,.06)}
+.ak .poolbar b{color:var(--p-ink)}
+.ak .pop{position:absolute;z-index:7;width:290px;background:var(--p-card);border:1px solid var(--p-line2);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.ak .pop .h{font:700 14px/1.3 var(--f-app)} .ak .pop .q{color:var(--p-soft);line-height:1.45} .ak .pop .s{font-size:12px;color:var(--p-dim)}
+.ak .pop .fl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:14px} .ak .pop .fl span:nth-child(even){color:var(--p-soft)}
+.ak .ghost{position:absolute;z-index:8;pointer-events:none;transform:rotate(-1.5deg);box-shadow:0 12px 26px rgba(0,0,0,.2);border-radius:8px;width:320px;overflow:hidden;border:1px solid var(--p-olive)}
+
+/* phone */
+.phone{width:390px;height:800px;display:flex;flex-direction:column}
+.phone{--cols:40px minmax(0,1fr) auto 30px 44px}
+.phone .ptb{height:56px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--p-card);border-bottom:1px solid var(--p-line)}
+.phone .pmain{padding:12px 16px 0;display:flex;flex-direction:column;gap:10px;min-height:0;flex:1}
+.phone .back{font:600 14px/1 var(--f-app);color:var(--p-olive);display:flex;align-items:center;gap:6px;min-height:44px}
+.phone .search{height:44px;flex:none}
+.phone .filt,.phone .sortp{height:44px}
+.phone .plist{border:1px solid var(--p-line);border-radius:10px;overflow-y:auto;flex:1;min-height:0;background:var(--p-card)}
+.phone .row{min-height:52px;padding:0 0 0 14px}
+.phone .more{height:52px;width:44px}
+
+.spec{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.measure{font:500 12px/1.3 var(--f-mono);color:var(--muted);margin-top:8px}
+</style>
+
+<div class="doc">
+
+<header style="display:flex;flex-direction:column;gap:12px">
+  <span class="eyebrow">House league · Teams &amp; draft · drawing round 3 · A1–A11 ruled yes · the steps become a drawer · 2026-10-26</span>
+  <h1>The draft board at 120 players</h1>
+  <p class="lede">The 9c board was drawn with five players in the pool, and with five it works. At a real division of 120 players and 10 teams, "Not on a team" becomes a column about 12,000 px tall. Three teams sit beside it and the other seven start under its last row. This drawing keeps every job the board does and changes its shape, so it behaves the same at 6 players and at 150.</p>
+  <p style="color:var(--muted);font-size:14px">Every frame is <b>true size</b> (desk 1440 × 900, phone 390 × 800) and uses the real players from the Draft Test 2027 seed. Ratings are examples, because the seed has none. <b>The frames scroll like the real page:</b> scroll inside one to feel today's 13,000 px of page, or to watch the proposed pool stay put. The numbered dots open their notes. Each note is tagged <span class="tag new">NEW</span><span class="tag res">RESTYLED</span><span class="tag unc">UNCHANGED</span>.</p>
+</header>
+
+<section>
+  <h2>What goes wrong today</h2>
+  <div class="grid3">
+    <div class="card cap"><h3>The pool is one card in the teams' grid</h3><p>The pool is simply the first card in the same wrapping grid as the teams, and as narrow as one. Its height becomes the height of the first row, so teams 4 to 10 start only after its last player.</p></div>
+    <div class="card cap"><h3>A player is about 96 px tall</h3><p>Each player has a name and then a sentence that wraps, "Age 10 · counts as a 3 · owes $165", plus a 54 px ⋯ button. The steps list above already says "the other 83 count as a 3", so each row repeats it.</p></div>
+    <div class="card cap"><h3>Nothing helps you find anyone</h3><p>There is no search, filter or sort. Families with more than one child, and the notes families wrote at sign-up, are not on the board at all.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="cap"><h3><span class="tag unc">TODAY, AS BUILT</span>Before the draft, 120 players</h3><span class="meta">1440 × 900 · scroll inside the frame: after the steps, the pool runs for about 12,000 px, and the Orioles card only appears near the bottom (about 12,500 px down)</span></div>
+  <div class="well"><div class="ak desk" id="f-today"></div></div>
+</section>
+
+<section>
+  <h2>The proposal</h2>
+  <ul class="facts">
+    <li><b>The pool becomes its own column</b>, 344 px wide, on the left of the board. Once you scroll past the steps it stays at the top of the window, and its list scrolls inside it. Any team is in reach to drag onto.</li>
+    <li><b>The teams get the rest of the width</b> in a grid of their own. This screen stops growing at 1200 px, so that is <b>2 across beside the pool at every window size</b>. When everyone is placed, the pool folds to one line and the teams go 3 across (4 on a window wider than about 1,500 px).</li>
+    <li><b>One line per player</b>, the same row in the pool and on a team: rating, name, small marks (family, note, owing), age, ⋯. It is 40 px on a desk, 44 px on a tablet and 52 px on a phone. A player's state (Locked, Moved by you, Asked to withdraw) drops to a second line under the name, only on the rows that have one.</li>
+    <li><b>The pool's toolbar matches the rest of the admin</b>: Search, then Filter (a menu with ticks and counts), then a Sort pick. There is no row of chips.</li>
+    <li><b>Averages have one home</b>, the top of each team card: "12 players · avg 3.1". The balance line keeps only "Moved by hand".</li>
+    <li><b>The steps become a drawer</b> (your request, round 3). It starts open, and Hide steps folds it into one line ("Steps · 3 of 4 done · Next: publish the teams") with the next step's button. That saves about 240 px above the board. The steps themselves are unchanged.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="cap"><h3><span class="tag res">PROPOSED</span>Before the draft, top of the page, Filter open</h3><span class="meta">1440 × 900 · the steps are unchanged and still take about 260 px · scroll the frame: the pool reaches the top and stays there, and the ten teams scroll past it</span></div>
+  <div class="well"><div class="ak desk" id="f-before"></div></div>
+  <ol class="notes" id="n-before"></ol>
+</section>
+
+<section>
+  <div class="cap"><h3><span class="tag res">PROPOSED</span>Placing players by hand, scrolled down to the teams</h3><span class="meta">1440 × 900 · sorted by rating · one family's mark is clicked: its children light up wherever they are, and a list says where each one is · a player is being dragged onto the Orioles</span></div>
+  <div class="well"><div class="ak desk" id="f-mid"></div></div>
+  <ol class="notes" id="n-mid"></ol>
+</section>
+
+<section>
+  <div class="cap"><h3><span class="tag new">NEW</span>After the draft: everyone is on a team, and the pool folds into one line</h3><span class="meta">1440 × 900 · a snake draft of the 120 (example ratings) · scrolled down: the folded line stays at the top, so a player can still be dragged off a team from any row · one note mark is open</span></div>
+  <div class="well"><div class="ak desk" id="f-after"></div></div>
+  <ol class="notes" id="n-after"></ol>
+</section>
+
+<section>
+  <div class="cap"><h3><span class="tag res">PROPOSED</span>A small season: 6 players, 2 teams</h3><span class="meta">1440 × 900 · the pool is only as tall as its players · the same row and toolbar, so nothing changes shape as a league grows</span></div>
+  <div class="well"><div class="ak desk" id="f-small"></div></div>
+</section>
+
+<section>
+  <div class="cap"><h3><span class="tag res">PROPOSED</span>Phone: the "Not on a team" group opened, and the list of groups</h3><span class="meta">390 × 800 · the phone keeps today's list of groups and has no drag (⋯ → Move to…) · the open pool gets Search on its own row, then Filter and Sort · rows are 52 px, the ⋯ is 44 px</span></div>
+  <div class="well"><div class="ak phone" id="f-phone"></div><div class="ak phone" id="f-phone2"></div></div>
+</section>
+
+<section>
+  <div class="cap"><h3><span class="tag new">NEW</span>The steps drawer, open and closed</h3><span class="meta">1080 px wide, the division card as on a 1440 window · the buttons work: open and close either one · open is the steps as built under one header row · closed is one 48 px line with the progress, the next step and that step's button</span></div>
+  <div class="well" style="flex-direction:column"><div class="ak specpanel" id="s-drawer-open"></div><div class="ak specpanel" id="s-drawer-closed"></div></div>
+</section>
+
+<section>
+  <h2>One player, today and proposed</h2>
+  <div class="spec">
+    <div><div class="ak" style="padding:12px;width:300px" id="s-old"></div><div class="measure">Today: about 96 px · a sentence that wraps · a 54 px ⋯</div></div>
+    <div><div class="ak" style="width:344px" id="s-new"></div><div class="measure">Proposed: 40 px desk · 44 px tablet · 52 px phone<br>a state drops to its own line (56 px)</div></div>
+  </div>
+  <ul class="facts" style="font-size:14px">
+    <li><b>Rating</b>: a filled number when rated, the built dashed "–" when not. The steps already say once that unrated players count as a 3.</li>
+    <li><b>Family</b> (two figures and a count): opens a list of the family's children and where each one is, and lights them up on the board. A family is one household, meaning the same guardian email, not a shared last name.</li>
+    <li><b>Note</b>: opens what the family wrote at sign-up. <b>Owing</b>: an amber $ that opens the amount. These are new words, so they go to /marketing before the build.</li>
+    <li><b>If you can't see ratings</b> (the registrar, anyone without that access): no Rating column, no Rating sort and no averages, the same as today.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>How much page there is, to scale</h2>
+  <p style="color:var(--muted)">Measured from the frames above at 1 : 25, so they cannot drift from the drawing. The amber band is one window.</p>
+  <div class="card map"><div class="mapwrap" id="map"></div></div>
+</section>
+
+<section>
+  <h2>What 120 real players brought up beyond the layout</h2>
+  <div class="callout"><p><b>The draft separates brothers and sisters.</b> In this seed, 17 households have two or three children in the same division. The draft ignores family, so it splits most of them. Keeping siblings together is the request a house-league convenor hears most (one practice night, one carpool). Locking each child before the draft works today, but at 36 children that is 36 locks spread over a 120-row list. See ask A7. That one changes how the draft deals players, so it is a build of its own.</p></div>
+  <div class="callout ask"><p><b>Family notes aren't on the board.</b> Notes like "wants to play with a friend from school" and "can only make Tuesdays in June" are the other thing a convenor drafts with, and an allergy note matters to the coach who gets the player. Today you'd leave the board to read them. See ask A8.</p></div>
+</section>
+
+<section>
+  <h2>Your calls</h2>
+  <div class="callout" style="border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)"><p><b>Ruled 2026-10-26: A1 to A12, yes as recommended</b>, plus the steps drawer. A closed drawer stays closed for that person on that division. The build prompt is written; the owing words go through /marketing first.</p></div>
+  <div class="asks" id="asks"></div>
+  <div class="copybar"><button class="copybtn" id="copy" type="button">Copy my answers</button><span id="copied" style="color:var(--muted);font-size:14px"></span></div>
+  <textarea id="out" readonly aria-label="Your answers, ready to paste"></textarea>
+  <p style="color:var(--muted);font-size:14px">Fixed separately, already done: the page's own scrollbar had disappeared on the Warm admin, coaches portal and guest pages (its colour was white on cream). It shows again now.</p>
+</section>
+</div>
+
+<script>window.__PLAYERS=[["Hazel","Ali",10,51,1,"Played rep last year",1],["Santiago","Ali",11,47,1,null,0],["Stella","Ali",10,75,1,"Can only make Tuesdays in June",0],["Yuki","Anderson",10,71,1,null,1],["Lucas","Bell",11,7,1,null,0],["Sofia","Bell",10,43,1,null,0],["Clara","Bergeron",10,62,1,"Can only make Tuesdays in June",1],["Hana","Bergeron",11,52,2,"Wants to play with a friend from school",1],["Stella","Bergeron",11,52,2,null,1],["Quinn","Brown",10,53,2,"Peanut allergy (EpiPen)",1],["Wei","Brown",11,53,2,null,1],["Noah","Campbell",10,21,3,"Asthma — inhaler in bag",1],["Riley","Campbell",10,21,3,null,1],["Theo","Campbell",9,21,3,null,1],["Jack","Chen",10,44,2,"First year playing",1],["Oliver","Chen",11,44,2,"Peanut allergy (EpiPen)",1],["Declan","Clark",10,22,1,"First year playing",0],["Theo","Clark",10,99,1,"Can only make Tuesdays in June",1],["Felix","Cote",10,31,1,null,1],["Caleb","DeVries",10,1,2,null,1],["Hazel","DeVries",10,100,1,"Can only make Tuesdays in June",0],["Hudson","DeVries",11,1,2,null,1],["Camila","Fernandes",11,49,1,null,1],["Abigail","Fortin",10,2,1,null,1],["Gabriel","Fraser",11,76,1,"Played rep last year",0],["Leo","Fraser",10,54,1,"Peanut allergy (EpiPen)",1],["Sophia","Fraser",11,89,1,"Can only make Tuesdays in June",1],["Henry","Gagnon",10,84,1,"Asthma — inhaler in bag",1],["Mia","Gill",11,90,2,null,1],["Priya","Gill",10,90,2,null,1],["Theo","Gill",10,66,1,null,1],["Ivy","Graham",10,72,1,null,1],["Stella","Kelly",11,17,1,"Wants to play with a friend from school",1],["Rowan","Khan",11,11,1,null,0],["Finn","Kim",10,85,1,null,1],["Harper","Kim",10,95,2,null,0],["Priya","Kim",10,63,1,"Asthma — inhaler in bag",1],["Rohan","Kim",11,73,1,"Can only make Tuesdays in June",1],["Sophia","Kim",10,95,2,"Can only make Tuesdays in June",0],["Theo","Kim",10,20,1,"Peanut allergy (EpiPen)",0],["Isaac","Kowalski",11,23,1,"Played rep last year",1],["Lily","Kowalski",10,8,1,"Asthma — inhaler in bag",1],["Santiago","Kowalski",11,59,1,"Asthma — inhaler in bag",1],["Oliver","Lavoie",10,83,1,null,0],["Aanya","Leblanc",10,3,1,null,1],["Amelia","Leblanc",11,77,1,null,1],["Ruby","Lee",11,37,1,null,1],["Aria","MacDonald",10,67,1,"Asthma — inhaler in bag",0],["Ethan","MacDonald",11,35,1,null,1],["Hana","MacDonald",11,38,2,null,0],["Hazel","MacDonald",11,64,1,"Wants to play with a friend from school",1],["Maya","MacDonald",10,38,2,null,0],["Violet","MacDonald",10,91,2,"Peanut allergy (EpiPen)",0],["Zoe","MacDonald",11,91,2,null,0],["Clara","Martin",11,50,1,"Wants to play with a friend from school",0],["Ethan","Martin",11,18,1,"Can only make Tuesdays in June",0],["Kai","Martin",10,12,2,"Can only make Tuesdays in June",1],["Riley","Martin",10,12,2,"First year playing",1],["Aiden","Mensah",11,60,1,null,1],["Amelia","Mensah",9,13,1,null,1],["Benjamin","Muller",11,45,2,"First year playing",1],["Caleb","Muller",11,86,3,null,1],["Elijah","Muller",10,86,3,"Left-handed",1],["Hudson","Muller",11,86,3,null,1],["Isaac","Muller",10,96,1,"First year playing",1],["Wei","Muller",9,45,2,null,1],["Oliver","Nguyen",10,92,1,"Can only make Tuesdays in June",0],["Mason","Novak",10,56,1,null,0],["Wyatt","Novak",10,65,1,null,1],["Kai","O'Brien",9,14,1,"Played rep last year",0],["Noah","O'Brien",10,39,2,null,1],["Quinn","O'Brien",11,39,2,"Played rep last year",1],["Wei","O'Brien",10,48,1,null,1],["Jun","Park",11,78,1,null,0],["Samuel","Park",10,15,1,"Left-handed",1],["Arjun","Patel",9,32,1,"Peanut allergy (EpiPen)",0],["Henry","Patel",10,87,1,null,0],["Lucas","Pelletier",10,40,1,null,1],["Maya","Reid",10,57,1,"Left-handed",1],["Jack","Ross",11,27,2,null,0],["Noah","Ross",11,93,1,null,1],["Quinn","Ross",9,27,2,null,0],["Yuki","Rossi",11,97,1,"Asthma — inhaler in bag",1],["Hazel","Roy",11,33,1,"Can only make Tuesdays in June",1],["Rohan","Roy",10,79,1,"Asthma — inhaler in bag",0],["Santiago","Roy",11,4,1,"Asthma — inhaler in bag",1],["Aria","Russo",10,55,1,null,1],["Aanya","Santos",11,68,2,"First year playing",0],["Ethan","Santos",11,98,1,"Peanut allergy (EpiPen)",1],["Hudson","Santos",10,68,2,"Left-handed",0],["Benjamin","Sato",10,9,1,"Wants to play with a friend from school",1],["Clara","Sato",11,80,1,"Wants to play with a friend from school",1],["Jordan","Sato",10,41,1,null,1],["Zoe","Schmidt",10,10,1,"First year playing",0],["Aanya","Scott",10,19,2,null,1],["Finn","Scott",11,19,2,null,1],["Maya","Scott",11,28,1,"Wants to play with a friend from school",1],["Rowan","Scott",11,24,1,null,1],["Sienna","Scott",10,5,1,null,1],["Ethan","Silva",10,82,1,null,1],["Nora","Singh",11,25,1,"Played rep last year",1],["Charlotte","Smith",9,58,1,"First year playing",1],["Evelyn","Smith",9,36,1,"Wants to play with a friend from school",0],["Hana","Smith",10,6,1,"Wants to play with a friend from school",0],["Jordan","Stewart",11,61,1,null,0],["Zoe","Stewart",11,101,1,"Peanut allergy (EpiPen)",0],["Aria","Taylor",11,26,1,"Can only make Tuesdays in June",1],["Elliot","Thompson",11,88,2,"Peanut allergy (EpiPen)",1],["Henry","Thompson",11,88,2,"First year playing",1],["Lucas","Thompson",10,16,1,"Left-handed",0],["Rowan","Thompson",9,94,1,"Asthma — inhaler in bag",1],["Aiden","White",10,34,1,null,1],["Elijah","White",11,74,1,"Left-handed",0],["Jack","White",10,42,1,"Left-handed",0],["Gabriel","Wilson",10,29,1,"First year playing",1],["Ava","Wong",10,69,1,null,1],["Miles","Yilmaz",10,70,1,null,0],["Noah","Yilmaz",11,46,1,"Peanut allergy (EpiPen)",1],["Rohan","Yilmaz",11,81,1,"Left-handed",0],["Rowan","Yilmaz",9,30,1,"Peanut allergy (EpiPen)",1]];</script>
+<script>
+(function(){
+// [first, last, age, household, children in household, note, paid]
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const I = {
+  fam:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5.5" cy="5" r="2.2"/><circle cx="11" cy="6" r="1.8"/><path d="M1.8 13.5c.4-2.4 1.9-3.7 3.7-3.7s3.3 1.3 3.7 3.7M8.8 13.5c.3-1.9 1.2-2.9 2.4-2.9s2.1 1 2.4 2.9"/></svg>',
+  note:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3.5 2.5h6l3 3v8h-9z"/><path d="M6 8h4.5M6 10.8h4.5"/></svg>',
+  pen:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10.8 2.7l2.5 2.5-7.6 7.6-3 .5.5-3z"/></svg>',
+  trash:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.8 4.3h10.4M6.3 4.3V2.8h3.4v1.5M4.3 4.3l.6 9h6.2l.6-9"/></svg>',
+  search:'<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="7" r="4.6"/><path d="M10.5 10.5l3.3 3.3"/></svg>',
+  filter:'<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.5 3.5h11l-4.2 5v4l-2.6 1.2V8.5z"/></svg>',
+  plus:'<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v10M3 8h10"/></svg>',
+  lock:'<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>'
+};
+const TEAMS = [["Cardinals","#c8102e"],["Blue Jays","#134a8e"],["Tigers","#fa4616"],["Orioles","#df4601"],["Red Sox","#bd3039"],["Mariners","#005c5c"],["Twins","#002b5c"],["Royals","#004687"],["Astros","#eb6e1f"],["Rays","#8fbce6"]];
+const COACHES = ["Dana Fortin",null,"Marc Leblanc","Priya Shah",null,"Kevin O'Brien","Ana Costa",null,"Tom Reid","Mei Chen"];
+const NOCOACH = TEAMS.filter((t, k) => !COACHES[k]).map(t => t[0]);
+const listNames = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+
+let seed = 7; const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+const players = window.__PLAYERS.map((p, i) => { const r = rnd(); return { i, first:p[0], last:p[1], age:p[2], hh:p[3], fam:p[4], note:p[5], paid:!!p[6],
+  rating: r < .1 ? 5 : r < .32 ? 4 : r < .7 ? 3 : r < .9 ? 2 : 1, early: rnd() < .3 }; });
+const N = players.length, EARLY = players.filter(p => p.early).length;
+const FAMS = new Map(); players.forEach(p => { if (!FAMS.has(p.hh)) FAMS.set(p.hh, []); FAMS.get(p.hh).push(p); });
+
+// ── one row, everywhere ────────────────────────
+function row(p, o){
+  o = o || {};
+  const rated = o.rated === 'all' || (o.rated === 'early' && p.early);
+  const chip = rated ? `<span class="rc">${p.rating}</span>` : `<span class="rc un">–</span>`;
+  let mk = '';
+  if (p.fam > 1) mk += `<button class="m${o.pressFam ? ' press' : ''}" aria-label="${p.fam} children in this family">${I.fam}${p.fam}</button>`;
+  if (p.note) mk += `<button class="m${o.pressNote ? ' press' : ''}" aria-label="Note from the family">${I.note}</button>`;
+  if (!p.paid) mk += `<button class="m owe" aria-label="Owing $165">$</button>`;
+  const states = (o.states || []).map(s => s === 'lock' ? `<span class="st lock">${I.lock}Locked</span>` : s === 'moved' ? `<span class="st moved">Moved by you</span>` : `<span class="st wd">Asked to withdraw Oct 20</span>`).join('');
+  return `<div class="row${o.hl ? ' hl' : ''}" data-i="${p.i}">${chip}<span class="who"><span class="nm">${esc(p.first)} ${esc(p.last)}</span></span><span class="mk">${mk}</span><span class="age">${p.age}</span><span class="more">⋯</span>${states ? `<span class="states">${states}</span>` : ''}</div>`;
+}
+const colh = () => `<div class="colh"><span>Rating</span><span>Player</span><span></span><span class="r">Age</span><span></span></div>`;
+
+// ── page chrome, as built ──────────────────────
+const tb = `<div class="tb"><span class="logo">FieldLogic<span>HQ</span></span><span class="area">ADMIN AREA</span><span style="flex:1"></span><span class="btn" style="border-radius:999px">Public site</span></div>`;
+const sb = `<aside class="sb"><div class="it">Overview</div><div class="it">Calendar</div><div class="sec">PROGRAMS</div><div class="it" style="color:var(--p-ink);font-weight:600">House league</div><div class="sub">Seasons</div><div class="sec" style="padding-left:24px">SEASON</div><div class="sel">Draft Test 2027 <span>▾</span></div><div class="sub">Overview</div><div class="sub">Registrations</div><div class="sub on">Teams &amp; draft</div><div class="sub">Schedule</div><div class="sub">Standings</div><div class="sub">Money</div><div class="sub">Email families</div><div class="it">Families</div><div class="it">Public site</div></aside>`;
+function pageTop(o){
+  const teams = o.teams || TEAMS.map(t => t[0]);
+  const nTeams = teams.length, n = o.n || N, rated = o.ratedN, drafted = !!o.drafted;
+  const noCoach = o.noCoach || NOCOACH;
+  const step = (done, k, title, line, btn) => `<li class="step"><span class="smark${done ? ' ok' : ''}">${done ? '✓' : k}</span><span class="stext"><b>${title}</b><span>${line}</span></span>${btn || ''}</li>`;
+  return `<div class="ph"><h1>Teams &amp; draft</h1></div><p class="sub1">${o.season || 'Draft Test 2027'} · 1 division · not published</p>
+    <div class="tabs"><span class="on">${o.div || 'U12 Division'}<b>${n}</b></span></div>
+    <section class="panel"><div class="divhead"><h2>${o.div || 'U12 Division'}</h2><span class="pill${drafted ? ' drafted' : ''}">${drafted ? 'Drafted · not published' : 'Not drafted'}</span><span class="sp"></span>
+      ${drafted ? '<span class="btn">Draft again</span><span class="btn pri">Publish teams</span>' : '<span class="btn pri">Run the draft</span>'}<span class="btn ic">⋯</span></div>
+      ${o.asBuilt ? '' : drawerHead(o, n, rated, drafted)}<ol class="steps">
+        ${step(true, 1, 'Teams', `${nTeams} teams: ${listNames(teams)} · ${noCoach.length ? 'no coach yet for ' + listNames(noCoach) : 'every team has a coach'}`, `<span class="btn">${I.plus}Add teams</span>`)}
+        ${step(rated === n, 2, 'Ratings', rated === n ? `All ${n} rated` : `${rated} of ${n} rated · the other ${n - rated} count as a 3`, '<span class="btn">Rate players</span>')}
+        ${step(drafted, 3, 'Draft', `Deals the ${n} players across the ${nTeams} teams by rating, strongest first. Nothing is sent.`)}
+        ${step(false, 4, 'Publish', `Tells ${o.families || 101} families their child’s team and invites each coach to their team page.`)}
+      </ol>${o.asBuilt ? '' : '</div>'}`;
+}
+function drawerHead(o, n, rated, drafted){
+  const done = 1 + (rated === n ? 1 : 0) + (drafted ? 1 : 0);
+  const next = rated !== n && !drafted ? ['rate the players', '<span class="btn nextbtn">Rate players</span>'] : !drafted ? ['run the draft', ''] : ['publish the teams', ''];
+  const chev = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10l4-4 4 4"/></svg>';
+  return `<div class="drawer${o.closed ? ' closed' : ''}"><div class="dh"><span class="dt"><b>Steps</b><span class="prog">${done} of 4 done</span><span class="next">· Next: ${next[0]}</span></span>${next[1]}<button type="button" class="tog" aria-expanded="${o.closed ? 'false' : 'true'}">${chev}<span>${o.closed ? 'Show steps' : 'Hide steps'}</span></button></div>`;
+}
+const frame = (inner) => tb + sb + `<div class="main"><div class="page">${inner}</div></div>`;
+
+function poolPanel(list, o){
+  o = o || {};
+  const notes = list.filter(p => p.note).length, owes = list.filter(p => !p.paid).length, fams = list.filter(p => p.fam > 1).length;
+  const unr = o.rated === 'all' ? 0 : o.rated === 'early' ? list.filter(p => !p.early).length : list.length;
+  const menu = o.menu ? `<div class="menu"><div class="mh">Show only</div>
+      <div class="mi"><span class="ck on">✓</span><span>Not rated</span><span class="c">${unr}</span></div>
+      <div class="mi"><span class="ck"></span><span>Has player notes</span><span class="c">${notes}</span></div>
+      <div class="mi"><span class="ck"></span><span>Owing</span><span class="c">${owes}</span></div>
+      <div class="mi"><span class="ck"></span><span>Has a sibling here</span><span class="c">${fams}</span></div></div>` : '';
+  const shown = o.menu ? list.filter(p => !p.early) : list;
+  return `<section class="pool${o.fit ? ' fit' : ''}"><div class="poolhead"><div class="ttl">Not on a team <span class="cnt">${o.menu ? shown.length + ' of ' + list.length : list.length}</span></div>
+    <div class="search">${I.search}<span>Search players or families</span></div>
+    <div class="tools"><span class="filt${o.menu ? ' on' : ''}">${I.filter}Filter${o.menu ? ' · 1' : ''}</span><span class="sortp">Sort: ${o.sort || 'Last name'} ▾</span></div>${menu}</div>
+    ${colh()}<div class="list">${shown.map(p => row(p, Object.assign({}, o, { hl: o.hlFam === p.hh, pressFam: o.hlFam === p.hh && o.pressAt === p.i }))).join('')}</div></section>`;
+}
+function teamCard(t, idx, members, o){
+  o = o || {};
+  const [name, color] = t;
+  const coach = COACHES[idx];
+  const r = members.map(p => (o.rated === 'all' || (o.rated === 'early' && p.early)) ? p.rating : 3);
+  const avg = members.length ? (r.reduce((a, b) => a + b, 0) / members.length).toFixed(1) : null;
+  const stat = members.length ? `<b>${members.length}</b> players · avg <b>${avg}</b>` : '0 players';
+  const states = o.states || {};
+  const body = members.length
+    ? colh() + members.map(p => row(p, Object.assign({}, o, { hl: o.hlFam === p.hh, states: states[p.i], pressNote: o.noteAt === p.i }))).join('')
+    : `<div class="tdrop">Drag players here, or run the draft</div>`;
+  return `<div class="tcard${o.over === idx ? ' over' : ''}" data-team="${idx}"><div class="thead"><span class="t"><span class="tline"><span class="dot" style="background:${color}"></span>${name}</span>
+    <span class="coach${coach ? '' : ' none'}">${coach || 'No coach yet'}</span><span class="tstat">${stat}</span></span><span class="ib">${I.pen}</span>${members.length ? '' : `<span class="ib">${I.trash}</span>`}</div>${body}</div>`;
+}
+
+// annotation dots: placed on a target inside the frame, scroll with it, open on click
+function annotate(frameEl, listId, notes){
+  const ol = document.getElementById(listId);
+  notes.forEach(([sel, tag, text, dx, dy, left], k) => {
+    const t = frameEl.querySelector(sel); if (!t) return;
+    if (getComputedStyle(t).position === 'static') t.style.position = 'relative';
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'anno' + (left ? ' left' : ''); b.style.left = (dx || 0) + 'px'; b.style.top = (dy || 0) + 'px';
+    b.setAttribute('aria-label', 'Note ' + (k + 1));
+    const tg = tag === 'NEW' ? 'new' : tag === 'RESTYLED' ? 'res' : 'unc';
+    b.innerHTML = `${k + 1}<span class="bub"><span class="tag ${tg}">${tag}</span>${text}</span>`;
+    b.addEventListener('click', e => { e.stopPropagation(); b.classList.toggle('open'); });
+    t.appendChild(b);
+    if (ol) ol.insertAdjacentHTML('beforeend', `<li><span class="n">${k + 1}</span><span><span class="tag ${tg}">${tag}</span>${text}</span></li>`);
+  });
+}
+
+// ── TODAY, as built ───────────────────────────
+(function(){
+  const pool = players.map(p => `<div class="orow"><span class="odash">–</span><span><b>${esc(p.first)} ${esc(p.last)}</b><small>Age ${p.age} · counts as a 3${p.paid ? '' : ' · owes $165'}</small></span><span class="omore">⋯</span></div>`).join('');
+  const t = (k) => `<div class="ocard"><div class="ohead"><span class="dot" style="background:${TEAMS[k][1]};margin-top:3px"></span><span class="t">${TEAMS[k][0]}<span class="coach${COACHES[k] ? '' : ' none'}" style="font-weight:400">${COACHES[k] || 'No coach yet'}</span></span><span class="ib" style="width:36px;height:36px">${I.pen}</span><span class="ib" style="width:36px;height:36px">${I.trash}</span></div><div class="odrop">Drag players here, or run the draft</div><span style="color:var(--p-dim);font-size:14px">0 players</span></div>`;
+  document.getElementById('f-today').innerHTML = frame(pageTop({ ratedN: 0, asBuilt: true }) +
+    `<div class="oldboard"><div class="ocard opool"><div class="ohead">Not on a team <span class="cnt">120</span></div>${pool}</div>${TEAMS.map((x, k) => t(k)).join('')}</div></section>`);
+})();
+
+// ── PROPOSED: before the draft ────────────────
+(function(){
+  const el = document.getElementById('f-before');
+  el.innerHTML = frame(pageTop({ ratedN: EARLY }) +
+    `<div class="board">${poolPanel(players, { rated:'early', menu:true })}<div class="teams">${TEAMS.map((t, k) => teamCard(t, k, [], {})).join('')}</div></div></section>`);
+  annotate(el, 'n-before', [
+    ['.drawer .tog', 'NEW', 'The steps are a drawer. It starts open; Hide steps folds it into one line that keeps the progress and the next step, saving about 240 px. Try it in any frame.', -30, 7],
+    ['.pool .ttl', 'RESTYLED', 'The pool leaves the teams’ grid and becomes its own 344 px column. Once you scroll past the steps it stays at the top of the window, and its list scrolls inside it.', 300, -4, true],
+    ['.pool .search', 'NEW', 'Search, the admin’s one rounded search. It finds a player, or a family by guardian name.', 322, 6, true],
+    ['.pool .filt', 'NEW', 'Filter is a menu with ticks and counts at the row ends, the same as the house league’s Registrations filter. The button marks itself on and shows how many are ticked. No chips.', 84, -12],
+    ['.pool .sortp', 'NEW', 'Sort is a pick-one: Last name, Rating (strongest first), Age, or Family (keeps households together).', 160, 7, true],
+    ['.pool .colh', 'NEW', 'Column headings in the table recipe (uppercase, 12 px, bold). Rating and age sit in the same place on every row.', 150, 5, true],
+    ['.pool .list .row', 'RESTYLED', 'One player is one 40 px line. An unrated player keeps the built dashed “–”; the steps say once that it counts as a 3.', 318, -11, true],
+    ['.teams .tcard', 'RESTYLED', 'The team card, as built (12 px coach line, 44 px pencil and trash, the dashed drop box). Its count moves from the foot to under the coach, and the average joins it once players are placed.', 200, 40],
+  ]);
+})();
+
+// ── PROPOSED: halfway, scrolled to the teams ──
+(function(){
+  const fam3 = [...FAMS.values()].find(f => f.length === 3);
+  const famHH = fam3[0].hh;
+  const others = players.filter(p => p.hh !== famHH);
+  const placed = others.slice(0, 58), left = others.slice(58);
+  const rosters = TEAMS.map(() => []);
+  placed.forEach((p, j) => rosters[j % 10].push(p));
+  rosters[1].push(fam3[0]); rosters[6].push(fam3[1]); fam3[2].rating = 5; left.push(fam3[2]);
+  rosters.forEach(r => r.sort((a, b) => b.rating - a.rating || a.last.localeCompare(b.last)));
+  const poolList = left.slice().sort((a, b) => b.rating - a.rating || a.last.localeCompare(b.last));
+  const dragged = poolList.find(p => p.hh !== famHH && !p.note) || poolList[1];
+  const states = {}; states[rosters[0][1].i] = ['lock']; states[rosters[2][0].i] = ['lock'];
+  const el = document.getElementById('f-mid');
+  el.innerHTML = frame(pageTop({ ratedN: N, drafted: true, closed: true }) +
+        `<div class="board">${poolPanel(poolList, { rated:'all', sort:'Rating', hlFam: famHH, pressAt: fam3[2].i })}<div class="teams">${TEAMS.map((t, k) => teamCard(t, k, rosters[k], { rated:'all', hlFam: famHH, over: 3, states })).join('')}</div></div></section>`);
+  const main = el.querySelector('.main');
+  main.scrollTop = el.querySelector('.board').getBoundingClientRect().top - main.getBoundingClientRect().top - 12;
+  const box = el.getBoundingClientRect();
+  el.querySelector(`.pool .row[data-i="${dragged.i}"]`).classList.add('lift');
+  const tg = el.querySelector('.tcard.over').getBoundingClientRect();
+  el.insertAdjacentHTML('beforeend', `<div class="ghost" style="left:${tg.left - box.left + 30}px;top:${Math.min(tg.top - box.top + 130, 820)}px">${row(dragged, { rated:'all' })}</div>`);
+  const fr = el.querySelector(`.pool .row[data-i="${fam3[2].i}"] .m.press`).getBoundingClientRect();
+  const where = fam3.map(p => { const k = rosters.findIndex(r => r.includes(p)); return `<span>${esc(p.first)} ${esc(p.last)}</span><span>${k < 0 ? 'Not on a team' : TEAMS[k][0]}</span>`; }).join('');
+  el.insertAdjacentHTML('beforeend', `<div class="pop" style="left:${fr.left - box.left - 120}px;top:${fr.bottom - box.top + 8}px"><span class="h">The ${esc(fam3[0].last)} family · 3 children</span><span class="fl">${where}</span><span class="s">Highlighted on the board · click a name to go to it</span></div>`);
+  annotate(el, 'n-mid', [
+    ['.pool .ttl', 'NEW', 'Scrolled down past the steps, the pool has stopped at the top of the window. It is the full window tall, with 60 players to drag from.', 300, -4, true],
+    ['.pool .sortp', 'NEW', 'Sorted by rating: the way a convenor drafts by hand, taking the best player left.', 150, 6, true],
+    ['.pool .row.hl', 'NEW', 'A family’s mark is clicked. Its children light up in the pool and on every team (olive, the board’s own colour), and a short list says where each one is.', 318, -11, true],
+    ['.tcard.over', 'UNCHANGED', 'Dragging onto a team, as built. With the pool beside the grid, every team is a drop target without scrolling the pool away.', 200, 50],
+    ['.tcard .st.lock', 'UNCHANGED', 'Locked, as built: a state, so it drops to its own line under the name.', 86, -4],
+    ['.tcard .tstat', 'RESTYLED', '“12 players · avg 3.1” sits at the top of the card, where you look while placing a player. It is the one home for averages; the balance line above keeps only “Moved by hand”.', 160, -4],
+  ]);
+})();
+
+// ── PROPOSED: after the draft ─────────────────
+(function(){
+  const order = players.slice().sort((a, b) => b.rating - a.rating || a.i - b.i);
+  const rosters = TEAMS.map(() => []);
+  order.forEach((p, j) => { const round = Math.floor(j / 10), pos = j % 10; rosters[round % 2 ? 9 - pos : pos].push(p); });
+  rosters.forEach(r => r.sort((a, b) => b.rating - a.rating || a.last.localeCompare(b.last)));
+  const states = {};
+  states[rosters[3][4].i] = ['moved']; states[rosters[4][6].i] = ['moved']; states[rosters[5][9].i] = ['wd'];
+  const noted = rosters[4].find(p => p.note && !states[p.i]);
+  const el = document.getElementById('f-after');
+  el.innerHTML = frame(pageTop({ ratedN: N, drafted: true, closed: true }) +
+    `<p class="balance"><span>Moved by hand <b>2</b></span></p>` +
+    `<div class="poolbar"><b>Everyone is on a team</b> · 120 of 120</div>` +
+    `<div class="teams">${TEAMS.map((t, k) => teamCard(t, k, rosters[k], { rated:'all', states, noteAt: noted.i })).join('')}</div></section>`);
+  const main = el.querySelector('.main');
+  main.scrollTop = el.querySelector('.tcard[data-team="3"]').getBoundingClientRect().top - main.getBoundingClientRect().top - 110;
+  const box = el.getBoundingClientRect();
+  const nr = el.querySelector(`.tcard .row .m.press`).getBoundingClientRect();
+  el.insertAdjacentHTML('beforeend', `<div class="pop" style="left:${Math.min(nr.left - box.left - 140, 1130)}px;top:${nr.bottom - box.top + 8}px"><span class="h">${esc(noted.first)} ${esc(noted.last)} · note from the family</span><span class="q">“${esc(noted.note)}”</span><span class="s">Written at sign-up · seen by whoever can open registrations</span></div>`);
+  annotate(el, 'n-after', [
+    ['.poolbar', 'NEW', 'With nobody left, the pool folds into one line that stays at the top as you scroll. Drop a player on it to take them off a team. It opens again as soon as anyone is off a team.', 330, 8],
+    ['.st.moved', 'UNCHANGED', '“Moved by you”, the built tag and its menu (Put back on …), on its own line under the name.', 106, -6],
+    ['.st.wd', 'UNCHANGED', '“Asked to withdraw Oct 20”, as built, on its own line.', 182, -4],
+    ['.teams', 'RESTYLED', 'With the pool folded, the teams take the full width: 3 across in a 1440 window, 4 in a wider one.', 520, -18],
+  ]);
+})();
+
+// ── PROPOSED: a small season ──────────────────
+(function(){
+  const six = [players[7], players[3], players[20], players[41], players[66], players[90]].map(p => Object.assign({}, p, { early: p === players[7] || p === players[41] }));
+  document.getElementById('f-small').innerHTML = frame(pageTop({ ratedN: 2, n: 6, teams: ['Cardinals', 'Blue Jays'], noCoach: ['Blue Jays'], season: 'Spring Rookies', div: 'Rookies', families: 6 }) +
+    `<div class="board">${poolPanel(six, { rated:'early', fit:true })}<div class="teams">${teamCard(TEAMS[0], 0, [], {})}${teamCard(TEAMS[1], 1, [], {})}</div></div></section>`);
+})();
+
+// ── PHONE ─────────────────────────────────────
+(function(){
+  const ptb = `<div class="ptb"><span class="logo">FieldLogic<span>HQ</span></span><span style="flex:1"></span><span style="font-size:20px;color:var(--p-soft)">☰</span></div>`;
+  document.getElementById('f-phone').innerHTML = ptb + `<div class="pmain"><span class="back">‹ All teams</span>
+    <div class="ttl" style="font-size:16px">Not on a team <span class="cnt">120</span></div>
+    <div class="search">${I.search}<span>Search players or families</span></div>
+    <div class="tools"><span class="filt">${I.filter}Filter</span><span class="sortp">Sort: Last name ▾</span></div>
+    <div class="plist">${players.map(p => row(p, { rated:'early' })).join('')}</div></div>`;
+  const groups = [['Not on a team', '', '120 players']].concat(TEAMS.map((t, k) => [t[0], t[1], (COACHES[k] || 'No coach yet') + ' · 0 players']));
+  document.getElementById('f-phone2').innerHTML = ptb + `<div class="pmain"><div style="font:700 21px/1.2 var(--f-app)">Teams &amp; draft</div><div style="font-size:12px;color:var(--p-soft)">Draft Test 2027 · U12 Division · Not drafted</div>
+    <span class="btn pri" style="justify-content:center;min-height:44px">Run the draft</span>
+    <div class="plist">${groups.map(g => `<div class="row" style="grid-template-columns:16px minmax(0,1fr) 24px;min-height:60px;padding:0 14px"><span class="dot" style="background:${g[1] || 'transparent'};${g[1] ? '' : 'border:1.5px dashed var(--p-line2)'}"></span><span class="who"><span class="nm">${g[0]}</span><span style="font-size:12px;color:var(--p-soft)">${g[2]}</span></span><span class="more">›</span></div>`).join('')}</div></div>`;
+})();
+
+// ── drawer specimens ──────────────────────────
+(function(){
+  const crop = (o) => { const w = document.createElement('div'); w.innerHTML = pageTop(o) + '</section>'; return w.querySelector('.panel').outerHTML; };
+  document.getElementById('s-drawer-open').innerHTML = crop({ ratedN: EARLY });
+  document.getElementById('s-drawer-closed').innerHTML = crop({ ratedN: EARLY, closed: true });
+  document.querySelectorAll('.specpanel .panel').forEach(p => { p.style.margin = '0'; });
+})();
+// the drawer toggles in every frame
+document.addEventListener('click', e => {
+  const b = e.target.closest('.ak .tog'); if (!b) return;
+  const d = b.closest('.drawer'); const closed = d.classList.toggle('closed');
+  b.setAttribute('aria-expanded', String(!closed)); b.querySelector('span').textContent = closed ? 'Show steps' : 'Hide steps';
+});
+
+// ── row specimens ─────────────────────────────
+(function(){
+  const p = players.find(x => x.fam > 1 && x.note && !x.paid) || players[7];
+  document.getElementById('s-old').innerHTML = `<div class="orow"><span class="odash">–</span><span><b>${esc(p.first)} ${esc(p.last)}</b><small>Age ${p.age} · counts as a 3 · owes $165</small></span><span class="omore">⋯</span></div>`;
+  document.getElementById('s-new').innerHTML = `<div style="border:1px solid var(--p-line);border-radius:10px;overflow:hidden">${colh()}${row(p, {})}${row(p, { rated:'all' })}${row(p, { rated:'all', states:['moved'] })}</div>`;
+})();
+
+// ── page map, measured ────────────────────────
+(function(){
+  const S = 25, W = 150, VH = 900;
+  const cols = [{ id:'f-today', t:'Today' }, { id:'f-before', t:'Proposed · before the draft', sticky:true }, { id:'f-after', t:'Proposed · after the draft' }].map(c => {
+    const el = document.getElementById(c.id), main = el.querySelector('.main'), mr = main.getBoundingClientRect(), pr = el.querySelector('.panel').getBoundingClientRect();
+    const sx = W / pr.width, y0 = 62 + main.scrollTop - mr.top;
+    const items = [...el.querySelectorAll('.ocard, .pool, .tcard, .poolbar')].map(n => { const r = n.getBoundingClientRect();
+      return { x:(r.left - pr.left) * sx, w:r.width * sx, y:r.top + y0, h:(c.sticky && n.matches('.pool')) ? VH - 62 - 24 : r.height, pool:n.matches('.opool, .pool, .poolbar') }; });
+    return Object.assign(c, { items, total: main.scrollHeight + 62 });
+  });
+  const H = Math.ceil(Math.max(...cols.map(c => c.total)) / S) + 44;
+  document.getElementById('map').innerHTML = cols.map(c => {
+    let g = `<rect x="0" y="0" width="${W}" height="${c.total / S}" fill="var(--surface-2)" stroke="var(--line)"/><rect x="0" y="0" width="${W}" height="${VH / S}" fill="var(--ask-soft)"/>`;
+    c.items.forEach(i => { g += `<rect x="${i.x}" y="${i.y / S}" width="${i.w}" height="${Math.max(1.5, i.h / S)}" rx="1" fill="var(--accent)" opacity="${i.pool ? .85 : .45}"${c.sticky && i.pool ? ' stroke="var(--accent)" stroke-dasharray="3 2" fill-opacity=".25"' : ''}/>`; });
+    const pool = c.items.find(i => i.pool), teams = c.items.filter(i => !i.pool);
+    const late = teams.filter(i => i.y > pool.y + 400).map(i => i.y);
+    const lines = c.id === 'f-today'
+      ? [[pool.y, `pool · ${Math.round(pool.h).toLocaleString()} px`]].concat(late.length ? [[Math.min(...late), `teams 4–10 start at ${Math.round(Math.min(...late)).toLocaleString()} px`]] : [])
+      : c.sticky ? [[pool.y, 'pool stays in the window;'], [pool.y + 350, 'its rows scroll inside it']] : [[pool.y, 'everyone placed: one line'], [Math.max(...teams.map(i => i.y)), 'last row of teams']];
+    lines.forEach(([y, l]) => { g += `<text x="${W + 8}" y="${y / S + 9}">${l}</text>`; });
+    return `<div><svg width="${W + 175}" height="${H}" viewBox="0 0 ${W + 175} ${H}" role="img" aria-label="${c.t}: ${Math.round(c.total)} px of page"><g>${g}</g><text class="lbl" x="0" y="${H - 24}">${c.t}</text><text x="0" y="${H - 9}">${Math.round(c.total).toLocaleString()} px of page</text></svg></div>`;
+  }).join('');
+})();
+
+// ── asks (paste-back) ─────────────────────────
+const ASKS = [
+  ['A1', 'Take the pool out of the teams’ grid: its own 344 px column on the left that stays in the window as you scroll, with the teams in their own grid beside it.', 'Recommend yes. This is the change that fixes the screen: the pool never pushes the teams down, and every team is a drop target.', 'Dropped: the pool as a band across the top (still a wall at 120), and one big table with a Team column (quick, but hides how each team is made up).'],
+  ['A2', 'One line per player, the same row in the pool and on a team: 40 px desk, 44 px tablet, 52 px phone. A state (Locked, Moved by you, Asked to withdraw) drops to a second line on that row only.', 'Recommend yes. 40 px is the house compact row, not a new density.', 'Or claim the tighter register density (about 28 px) for the team cards. Not recommended: there are only five columns.'],
+  ['A3', 'Search in the pool (players, or a family by guardian name).', 'Recommend yes.', '—'],
+  ['A4', 'A Filter menu in the pool: Not rated · Has player notes · Owing · Has a sibling here, with counts, the same as the Registrations filter.', 'Recommend yes. These are the questions people ask on draft day.', 'Or Search and Sort only, no Filter.'],
+  ['A5', 'A Sort pick in the pool: Last name · Rating · Age · Family.', 'Recommend yes. Sort by rating is how a convenor drafts by hand.', 'Or sort by clicking a column heading. The admin has no sortable headings today, so that would be a new pattern.'],
+  ['A6', 'A family mark on every child who has a brother or sister in the division. It opens where each one is and lights them up on the board.', 'Recommend yes. Display only; nothing about the draft changes.', '—'],
+  ['A7', 'Make the draft keep a family’s children in the same division together, on by default, with a switch by Run the draft to turn it off.', 'Recommend yes, as its own build after the layout. It changes how players are dealt.', 'Or leave it to locking each child before the draft (what works today).'],
+  ['A8', 'A note mark that opens the family’s sign-up note, for people who can already open that player’s registration.', 'Recommend yes. Anyone who can’t open registrations doesn’t see the mark.', 'This is also a “who sees what” call, so it needs your yes.'],
+  ['A9', 'Owing becomes a small amber $ that opens the amount, instead of “owes $165” written on the row.', 'Recommend yes. The words go to /marketing before the build.', 'Or take money off the board entirely and leave it to Money.'],
+  ['A10', 'One home for averages: “12 players · avg 3.1” at the top of each team card. The balance line keeps only “Moved by hand”.', 'Recommend yes. Today the line and the card foot both say it.', 'Or keep the line as the one home (all ten averages in a row) and drop the average from the card.'],
+  ['A11', 'When everyone is on a team, the pool folds into one line that stays at the top as you scroll, and the teams take the full width.', 'Recommend yes. After the draft, the work is swapping players between teams.', 'It opens again as soon as anyone is off a team.'],
+  ['A12', 'The steps drawer: once you close it, it stays closed for you on that division (on that computer) until you open it again.', 'Recommend yes. Draft day is many visits to one screen, and reopening it each time gives back the 240 px you just took away. The one-line closed bar keeps the progress and the next step in view, so nothing is hidden.', 'Or it opens again on every visit.'],
+];
+const RULED = { A1:1, A2:1, A3:1, A4:1, A5:1, A6:1, A7:1, A8:1, A9:1, A10:1, A11:1, A12:1 };
+const KEY = 'draftboard-asks-v2';
+let saved = {}; try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+document.getElementById('asks').innerHTML = ASKS.map(([id, q, rec, alt]) => `<div class="ask"><span class="id">${id}</span><span class="q">${q}</span><span class="rec"><b>${rec.split('.')[0]}.</b>${rec.slice(rec.indexOf('.') + 1)}</span><span class="alt">${alt}</span>
+  <span class="pick">${RULED[id] ? '<b style="color:var(--accent)">Ruled: yes</b>' : ''}${['Yes', 'No', 'Change it'].map(v => `<label><input type="radio" name="${id}" value="${v}"${(saved[id] && saved[id].v === v) || (RULED[id] && !saved[id] && v === 'Yes') ? ' checked' : ''}> ${v}</label>`).join('')}<input type="text" id="note-${id}" aria-label="${id} note" placeholder="Note (optional)" value="${esc((saved[id] && saved[id].n) || '')}"></span></div>`).join('');
+function collect(){
+  const out = {}; ASKS.forEach(([id]) => { const c = document.querySelector(`input[name="${id}"]:checked`); out[id] = { v: c ? c.value : '', n: document.getElementById('note-' + id).value.trim() }; });
+  try { localStorage.setItem(KEY, JSON.stringify(out)); } catch (e) {}
+  document.getElementById('out').value = 'Draft board at scale, round 3: my answers\n' + ASKS.map(([id]) => `${id}: ${out[id].v || '(no answer)'}${out[id].n ? ' — ' + out[id].n : ''}`).join('\n');
+}
+document.getElementById('asks').addEventListener('input', collect);
+collect();
+document.getElementById('copy').addEventListener('click', () => {
+  collect(); const t = document.getElementById('out');
+  const done = ok => { document.getElementById('copied').textContent = ok ? 'Copied. Paste it into the chat.' : 'Select the text below and copy it.'; if (!ok) { t.focus(); t.select(); } };
+  try { navigator.clipboard.writeText(t.value).then(() => done(true), () => done(false)); } catch (e) { done(false); }
+});
+document.addEventListener('click', () => document.querySelectorAll('.anno.open').forEach(a => a.classList.remove('open')));
+})();
+</script>
