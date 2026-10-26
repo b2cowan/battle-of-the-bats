@@ -24,7 +24,7 @@ export async function recordDebitFee(p: { orgId: string; onlinePaymentId: string
       if (error.code === '23505') return; // recorded already (a replayed event)
       throw error;
     }
-    if (row) await billDebitFee(row.id as string, p.orgId, row.created_at as string);
+    if (row) await billDebitFee(row.id as string, p.orgId, row.created_at as string, p.livemode);
   } catch (err) {
     console.error('[platform-debit-fee] not recorded:', err instanceof Error ? err.message : String(err));
   }
@@ -35,10 +35,12 @@ export async function recordDebitFee(p: { orgId: string; onlinePaymentId: string
  * Founding Season comp, or free time running — never the stored columns); whether a subscription is live is Stripe's own
  * answer, read at billing time.
  */
-async function billDebitFee(feeId: string, orgId: string, createdAt: string): Promise<void> {
-  const exempt = async (why: 'comped' | 'no_subscription') => {
+async function billDebitFee(feeId: string, orgId: string, createdAt: string, livemode: boolean): Promise<void> {
+  const exempt = async (why: 'comped' | 'no_subscription' | 'test_mode') => {
     await supabaseAdmin.from('platform_debit_fees').update({ exempt_reason: why }).eq('id', feeId);
   };
+  // A debit in the other mode than this server's key bills nothing (a test return never reaches a live invoice).
+  if (livemode !== (process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_live_')) return exempt('test_mode');
   const facts = await effectiveOrgFactsForId(orgId).catch(() => null);
   if (facts?.freeTime || (await workspaceHoldsFoundingComp(orgId).catch(() => false))) return exempt('comped');
   const { data: org } = await supabaseAdmin.from('organizations').select('stripe_customer_id, stripe_subscription_id').eq('id', orgId).maybeSingle();

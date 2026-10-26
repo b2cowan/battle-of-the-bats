@@ -135,8 +135,10 @@ describe('the webhook and the landing (§0k)', () => {
     const land = readCode('lib/online-payment-landing.ts');
     const rev = /export async function reverseDebit[\s\S]*?\n}\n/.exec(land)?.[0] ?? '';
     assert.match(rev, /op\.rail !== 'bank_debit'/, 'a card dispute is 12d\'s');
-    assert.match(rev, /if \(\(res as \{ already\?: boolean \} \| null\)\?\.already\) return;/, 'a replayed dispute tells no one twice');
-    assert.match(rev, /sendDebitReversedEmail[\s\S]*afterDebitBack\(op\.id as string, 'reversed'\)/);
+    // A redelivery never emails the family twice, but still owes the desk's notice and the fee (each once-only).
+    assert.match(rev, /if \(!\(res as \{ already\?: boolean \} \| null\)\?\.already\) await sendDebitReversedEmail\(op\.id as string\);\s*await afterDebitBack\(op\.id as string, 'reversed'\);/);
+    // A dispute before its debit landed is retried, never consumed.
+    assert.match(rev, /if \(!op\.landed_at\) throw new Error/);
     // A return while clearing: the notice, the fee, and any decision stamped returned (nothing was taken).
     assert.match(land, /await sendDebitReturnedEmail\(opId\);\s*await afterDebitBack\(opId, 'returned'\)/);
     const after = /async function afterDebitBack[\s\S]*?\n}\n/.exec(land)?.[0] ?? '';

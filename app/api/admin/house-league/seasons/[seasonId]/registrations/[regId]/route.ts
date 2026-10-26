@@ -622,9 +622,23 @@ export const PATCH = withObservability(async (req: Request,
         if (!(await clubTakesCards(ctx!.org))) return NextResponse.json({ error: END_WORDS.clear.disconnected, code: 'clear_disconnected' }, { status: 409 });
       }
     }
+    // 12c Part 6 (review of the whole): the answer for the clearing debit is stored FIRST — a debit that lands in between
+    // then finds it — and taken back if the ending is refused, so the family is never emailed an answer that isn't stored.
+    let decisionId: string | null = null;
+    if (clearDebit && clearAsk) {
+      const { data: stored, error: decisionError } = await supabaseAdmin.from('online_payment_clear_decisions').insert({
+        org_id: ctx!.org.id, online_payment_id: clearDebit.onlinePaymentId, online_payment_item_id: clearDebit.itemId,
+        choice: clearAsk.choice, fee_back: clearAsk.feeBack, reason: clearAsk.reason, decided_by: ctx!.user.id,
+      }).select('id').maybeSingle();
+      if (decisionError) return NextResponse.json({ error: 'Couldn’t save what happens when the debit clears. Try again.', code: 'clear_save' }, { status: 500 });
+      decisionId = (stored?.id as string | undefined) ?? null;
+    }
     const ended = await endLeagueRegistration(ctx!, { seasonId, regId }, {
       status: newStatus, notes: adminNotes ?? null, promote: season.autoPromoteWaitlist, released, money: money ?? null,
     });
+    if (decisionId && ('refused' in ended || 'refusal' in ended)) {
+      await supabaseAdmin.from('online_payment_clear_decisions').delete().eq('id', decisionId).is('outcome', null);
+    }
     if (cardMail && ('refused' in ended || 'refusal' in ended)) {
       return NextResponse.json({
         error: `Refunded ${formatLeagueMoney(cardRefundedCents / 100)} to the card, but the registration changed meanwhile and didn’t end. Open it again to finish.`,
@@ -635,14 +649,6 @@ export const PATCH = withObservability(async (req: Request,
     if ('refusal' in ended) return moneyRefusal(ended.refusal, reg, season, true);
     // A family's ask to withdraw this child is answered: its Needs-attention notice clears now (it also clears on read).
     await clearSettled({ orgIds: [ctx!.org.id], kinds: ['house_league_withdraw_request'] });
-    // 12c Part 6: the answer for the clearing debit, carried out by the landing when it clears (or stamped returned).
-    if (clearDebit && clearAsk) {
-      const { error: decisionError } = await supabaseAdmin.from('online_payment_clear_decisions').insert({
-        org_id: ctx!.org.id, online_payment_id: clearDebit.onlinePaymentId, online_payment_item_id: clearDebit.itemId,
-        choice: clearAsk.choice, fee_back: clearAsk.feeBack, reason: clearAsk.reason, decided_by: ctx!.user.id,
-      });
-      if (decisionError && decisionError.code !== '23505') console.error('[house-league] the clearing decision was not stored:', decisionError.message);
-    }
 
     // What the family is told about their money: the refund line just written, or the fee the club keeps.
     let mailMoney: EndedMoneyLine | null = cardMail;

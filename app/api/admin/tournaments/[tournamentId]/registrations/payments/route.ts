@@ -15,6 +15,7 @@ import {
 import { loadTeamPayFacts } from '@/lib/team-pay-facts';
 import { canRefundOnline } from '@/lib/online-payment-access';
 import { announceTeamPaid } from '@/lib/team-payment-notices';
+import { TEAM_RECORD_WORDS } from '@/lib/registration-words';
 
 /**
  * A TEAM'S PAYMENTS — the Teams record's Payment section (mig 345; TEAM_PAYMENTS_LIST_PLAN.md).
@@ -111,6 +112,8 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
     payments, postsToBook, online, adjustments, debit, teamStatus: (team?.status as string | null) ?? null,
     decision: decision ? { choice: decision.choice as 'send_back' | 'keep', feeBack: !!decision.fee_back, reason: (decision.reason as string | null) ?? null } : null,
     payoutsOn: !!facts?.account && !facts.account.disconnectedAt,
+    // Who may answer it: whoever runs tournaments (sending it back is a refund; never the treasurer, §0f).
+    canDecide: canRefundOnline(member, g.ctx.org),
   });
 }, { route: '/api/admin/tournaments/[tournamentId]/registrations/payments' });
 
@@ -126,6 +129,12 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   if ('error' in draft) return draft.error;
   // The club's own team owes no fee (Stage 7a). The database refuses too; this says it before a line could be considered.
   if (await isOurTournamentTeam(ctx.org.id, teamId)) return json({ error: 'Our team has no entry fee' }, 409);
+  // 12c Part 6 (words §3.2): while a bank debit clears, a second payment can't be recorded (a stale window).
+  const { count: clearing } = await supabaseAdmin.from('online_payments').select('id', { count: 'exact', head: true }).eq('team_id', teamId).eq('status', 'clearing');
+  if ((clearing ?? 0) > 0) {
+    const { data: t } = await supabaseAdmin.from('teams').select('name').eq('id', teamId).maybeSingle();
+    return json({ error: TEAM_RECORD_WORDS.clearingMarkPaid(String(t?.name ?? 'this team')) }, 409);
+  }
   const label = (LABELS as readonly string[]).includes(String(body.label)) ? body.label as PaymentLabel : 'Payment';
   const result = await recordTeamPayment({ teamId, amount: draft.amount, paidOn: draft.paidOn, label, method: readMethod(body.method), actorId: ctx.user.id });
   if ('error' in result) return paymentErrorResponse(result.error, ctx.org.id, [draft.paidOn]);

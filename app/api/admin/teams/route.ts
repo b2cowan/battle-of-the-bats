@@ -550,13 +550,19 @@ export const POST = withObservability(async (req: Request) => {
     // as the sum of the team's payments (tests/unit/team-payments-guard.test.ts).
     const paidNow = new Map<string, number>();
     const markedByPayment = new Set<string>();
+    // 12c Part 6 (words §3.2): a bank debit on its way is the payment; it goes in the record when it clears. Checked for
+    // the whole batch FIRST, so a refusal never leaves the teams before it already paid (review 2026-10-26).
+    const toMark = items.filter(i => i.updates.payment_status === 'paid').map(i => i.id);
+    if (toMark.length) {
+      const { data: clearingRows } = await supabaseAdmin.from('online_payments').select('team_id').in('team_id', toMark).eq('status', 'clearing');
+      const clearingTeam = (clearingRows ?? [])[0]?.team_id as string | undefined;
+      if (clearingTeam) {
+        return Response.json({ error: TEAM_RECORD_WORDS.clearingMarkPaid(String(currentById.get(clearingTeam)?.name ?? 'this team')) }, { status: 409 });
+      }
+    }
     for (const item of items) {
       const current = currentById.get(item.id);
       if (item.updates.payment_status === 'paid') {
-        // 12c Part 6 (words §3.2): a bank debit on its way is the payment; it goes in the record when it clears.
-        const { count: clearing } = await supabaseAdmin.from('online_payments').select('id', { count: 'exact', head: true })
-          .eq('team_id', item.id).eq('status', 'clearing');
-        if ((clearing ?? 0) > 0) return Response.json({ error: TEAM_RECORD_WORDS.clearingMarkPaid(String(current?.name ?? 'this team')) }, { status: 409 });
         const paid = await payTeamDue({ teamId: item.id, actorId: ctx.user.id, scope: 'all' });
         if ('error' in paid) return paymentErrorResponse(paid.error, ctx.org.id);
         // Only a payment that was actually recorded moved the status. Nothing due (the fee was lowered after it was paid in

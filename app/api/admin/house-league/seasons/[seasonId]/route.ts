@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { loadRegistrationDebits } from '@/lib/league-pay-facts';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import {
@@ -83,6 +84,9 @@ export const GET = withObservability(async (_req: Request,
   const deletable = season.status === 'draft'
     && await getLeagueSeasonAttachments(seasonId, ctx!.org.id).then(a => !a.any, () => false);
 
+  // 12c Part 6: each accepted child's fee on a bank debit on its way.
+  const seasonDebits = await loadRegistrationDebits(ctx!.org.id, regs.filter(r => r.status === 'active').map(r => r.id));
+  const clearingCents = new Map(Object.entries(seasonDebits).filter(([, d]) => d.state === 'clearing').map(([id, d]) => [id, d.shareCents]));
   return NextResponse.json({
     season,
     deletable,
@@ -97,8 +101,9 @@ export const GET = withObservability(async (_req: Request,
       unplacedCount:           regs.filter(r => r.status === 'active' && !r.teamId).length,
       unpaidFeeCount:          regs.filter(r => r.status === 'active' && !r.registrationFeePaid && (registrationOwes(r, season) ?? 0) > 0).length,
     },
-    // The Overview's Owed · Still owing tiles (9b-2): the same band the Money page reads, from the frozen prices and the book.
-    money: seasonMoney(regs, season, moneyLines),
+    // The Overview's Owed · Still owing tiles (9b-2): the same band the Money page reads, from the frozen prices and the book —
+    // what is clearing too (12c Part 6), so Still owing matches the Money page while a bank debit is on its way.
+    money: seasonMoney(regs, season, moneyLines, clearingCents),
   });
 }, { route: '/api/admin/house-league/seasons/[seasonId]' });
 

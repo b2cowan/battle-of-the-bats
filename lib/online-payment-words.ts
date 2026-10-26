@@ -57,9 +57,10 @@ export const ONLINE_NOTICE_WORDS = {
     `${description}: ${amount} was paid by card, but it couldn’t be added to the team’s record (${reason}). Refund it to the card from the team’s record or in Stripe.`,
   refundFailedTitle: 'A refund didn’t reach the card',
   // 12c words §1.6: a team can have a part refund and a later one, so the item names which.
-  refundFailedBody: (amount: string, card: string, team: string) =>
-    `${amount} to ${card} was returned, for example because the card was closed. Send ${team} the money another way, then record the refund.`,
-  refundFailedTitleTeam: (team: string) => `${possessive(team)} refund didn’t reach the card`,
+  // 12c words §3.6/§3.9: a refund to a bank account says the account (`card` is then "the account ending 1234").
+  refundFailedBody: (amount: string, card: string, team: string, bank = false) =>
+    `${amount} to ${card} was returned, for example because the ${bank ? 'account' : 'card'} was closed. Send ${team} the money another way, then record the refund.`,
+  refundFailedTitleTeam: (team: string, bank = false) => `${possessive(team)} refund didn’t reach the ${bank ? 'bank account' : 'card'}`,
 } as const;
 
 /**
@@ -104,9 +105,9 @@ export const LEAGUE_ONLINE_NOTICE_WORDS = {
   unrecordedSignupBody: (description: string, amount: string, reason: string) =>
     `${description}: ${amount} was paid by card, but it couldn’t go on the registrations (${reason}). The money is in the club’s Stripe balance. Refund it to the card.`,
   // 12b copy §7: a child's card refund Stripe returned (it was booked when Stripe accepted it).
-  refundFailedTitle: (child: string) => `${possessive(child)} refund didn’t reach the card`,
-  refundFailedBody: (amount: string, card: string) =>
-    `${amount} to ${card} was returned, for example because the card was closed. Send the family the money another way, then record the refund.`,
+  refundFailedTitle: (child: string, bank = false) => `${possessive(child)} refund didn’t reach the ${bank ? 'bank account' : 'card'}`,
+  refundFailedBody: (amount: string, card: string, bank = false) =>
+    `${amount} to ${card} was returned, for example because the ${bank ? 'account' : 'card'} was closed. Send the family the money another way, then record the refund.`,
   // 12c words §5 (a refund made in Stripe records itself; a person is asked only these). The 12b
   // `refundedInStripeBody` ("record the refund by hand") is retired: it had no door on an ended row (F4).
   whoseTitle: (amount: string, guardian: string | null) =>
@@ -359,13 +360,14 @@ export const PAY_WORDS = {
   otherWays: (how: string) => `Or pay another way: ${how}`,
   opening: 'Opening the secure payment page…',
   confirmingTitle: 'Confirming your payment',
-  confirmingBody: 'Stripe has your payment; we’re waiting for it to confirm. This usually takes a few seconds and the page updates by itself. Don’t pay again.',
+  // 12c words §6 decision 16: a family's words never name the processor (two 12a lines did).
+  confirmingBody: 'We have your payment and are waiting for it to confirm. This usually takes a few seconds and the page updates by itself. Don’t pay again.',
   confirmingSlow: (email: string | null) =>
     email
       ? `This is taking longer than usual. You don’t need to pay again: we’ll email your receipt to ${email} as soon as it confirms.`
       : 'This is taking longer than usual. You don’t need to pay again: your receipt shows here as soon as it confirms.',
   notFinishedTitle: 'Payment not finished',
-  notFinishedBody: 'You left Stripe’s page before paying. Nothing was charged.',
+  notFinishedBody: 'You left the secure payment page before paying. Nothing was charged.',
   paidTitle: 'Paid, thank you',
   paidTo: (total: string, club: string) => `${total} to ${club}`,
   paidLine: (card: string, when: string, receiptNo: string) => `${card} · ${when} · receipt ${receiptNo}`,
@@ -444,6 +446,7 @@ export const TEAM_ROW_WORDS = {
     feeBox: (fee: string, total: string) => `Include the ${fee} processing fee · ${total} back`,
     feeOnWhy: 'With the processing fee, because the club is declining.',
     feeOffWhy: 'Without the processing fee, because the team asked to leave.',
+    feeOffPlain: 'Without the processing fee.',
     keep: 'Keep it',
     keepSub: 'Say why. It goes in the book as kept by the club.',
     keepReason: 'Reason',
@@ -613,7 +616,7 @@ export const DEBIT_NOTICE_WORDS = {
   reversedTitleMany: (children: string) => `A bank payment for ${children} was returned after it cleared`,
   reversedTitleTeam: (teamPossessive: string) => `${teamPossessive} bank payment was returned after it cleared`,
   reversedBody: (receiptNo: string, total: string, day: string, book: 'season' | 'tournament', owesAgain: string, emailed: boolean) =>
-    `The bank reversed receipt ${receiptNo} (${total}) on ${day}. It’s out of the ${book}’s book, and ${owesAgain}. ${emailed ? 'We emailed the family a way to pay.' : 'There’s no email address on file, so tell the family yourself.'}`,
+    `The bank reversed receipt ${receiptNo} (${total}) on ${day}. It’s out of the ${book === 'season' ? 'season’s' : 'tournament’s'} book, and ${owesAgain}. ${emailed ? 'We emailed the family a way to pay.' : 'There’s no email address on file, so tell the family yourself.'}`,
   owesAgain: (who: string, amount: string, many: boolean) => `${who} ${many ? 'owe' : 'owes'} ${amount} again`,
   /** The family's own sentence (§2.2 reversedBody's `{owesAgain}`). */
   owingAgain: (amount: string) => `${amount} is owing again`,

@@ -130,6 +130,16 @@ export const GET = withObservability(async (_req: Request,
   const debits = await loadRegistrationDebits(ctx!.org.id, regs.map(r => r.id));
   const activeIds = new Set(regs.filter(r => r.status === 'active').map(r => r.id));
   const clearingCents = new Map(Object.entries(debits).filter(([id, d]) => d.state === 'clearing' && activeIds.has(id)).map(([id, d]) => [id, d.shareCents]));
+  const { data: reversedRows } = await supabaseAdmin.from('online_payment_items')
+    .select('registration_id, online_payments!inner(receipt_no, return_reason, reversed_at, status)')
+    .in('registration_id', regs.map(r => r.id)).eq('online_payments.status', 'reversed');
+  const reversedOf = new Map<string, { receiptNo: number | null; reason: string | null; at: string }>();
+  for (const x of (reversedRows ?? []) as Array<Record<string, unknown>>) {
+    const op = (Array.isArray(x.online_payments) ? x.online_payments[0] : x.online_payments) as Record<string, unknown>;
+    const prev = reversedOf.get(x.registration_id as string);
+    if (prev && prev.at >= String(op.reversed_at)) continue;
+    reversedOf.set(x.registration_id as string, { receiptNo: op.receipt_no != null ? Number(op.receipt_no) : null, reason: (op.return_reason as string | null) ?? null, at: String(op.reversed_at) });
+  }
   const onlineOf = (method: string) => Math.round([...lines.values()].flat()
     .filter(l => l.status === 'posted' && l.method === method)
     .reduce((sum, l) => sum + (l.dir === 'in' ? l.amount : -l.amount), 0) * 100) / 100;
@@ -144,9 +154,10 @@ export const GET = withObservability(async (_req: Request,
     // returned lines) — the band's note.
     byCard: onlineOf('online_card'),
     byBank: onlineOf('online_bank'),
-    // 12c Part 6: a returned line names the receipt the bank took back, and the bank's reason (words §3.5).
+    // 12c Part 6: a returned line names the receipt the bank took back, and the bank's reason (words §3.5) — read from the
+    // reversed payments themselves, not the child's newest payment (review: a later payment hid it).
     lines: bookAll.map(l => (l.kind === 'returned'
-      ? { ...l, receiptNo: debits[l.regId]?.receiptNo ?? null, returnReason: debits[l.regId]?.reason ?? null } : l)),
+      ? { ...l, receiptNo: reversedOf.get(l.regId)?.receiptNo ?? null, returnReason: reversedOf.get(l.regId)?.reason ?? null } : l)),
     neverBooked: cardRefunds.filter(r => !r.entryId && !r.inBook && r.regId).map(r => ({
       regId: r.regId as string, player: name(r.regId as string) ?? '—', amount: r.amount, base: refundBase(r), feeBack: r.feeBack,
       day: orgDayKey(r.succeededAt ?? r.createdAt),

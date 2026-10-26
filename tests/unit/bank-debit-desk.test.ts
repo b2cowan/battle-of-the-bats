@@ -115,11 +115,15 @@ describe('ending while it clears (words §3.3)', () => {
     assert.match(w, /canSendBack = !!clearing && payoutsOn/);
     assert.match(w, /useState\(clubEnding\)[\s\S]*clearFeeOn/, 'A2\'s box defaults as the card window does');
   });
-  it('the route stores the answer after the ending, and refuses a send-back without the fee right or payouts', () => {
+  it('the route stores the answer before the ending, and refuses a send-back without the fee right or payouts', () => {
     const route = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
     assert.match(route, /if \(!clearAsk\) return NextResponse\.json\(\{ error: END_WORDS\.clear\.footChoose/);
     assert.match(route, /clearAsk\.choice === 'send_back'\) \{\s*if \(!canMarkLeagueFeePaid\(ctx!\)\) return forbidden\(\);\s*if \(!\(await clubTakesCards/);
-    assert.ok(route.indexOf("from('online_payment_clear_decisions').insert") > route.indexOf('const ended = await endLeagueRegistration'));
+    // Stored BEFORE the ending (review of the whole): a debit landing in between finds it, a failed save tells the desk,
+    // and a refused ending takes the answer back — the family is never emailed an answer that isn't stored.
+    assert.ok(route.indexOf("from('online_payment_clear_decisions').insert") < route.indexOf('const ended = await endLeagueRegistration'));
+    assert.match(route, /if \(decisionError\) return NextResponse\.json/);
+    assert.match(route, /if \(decisionId && \('refused' in ended \|\| 'refusal' in ended\)\) \{\s*await supabaseAdmin\.from\('online_payment_clear_decisions'\)\.delete\(\)/);
   });
 });
 
@@ -137,7 +141,10 @@ describe('a tournament team while its bank debit clears (words §3.7)', () => {
   });
   it('Mark paid waits (absent, and refused for a stale window); reminders skip the team; Record waits', () => {
     assert.match(readCode('app/[orgSlug]/admin/tournaments/registrations/components/TeamRecord.tsx'), /recordsPayments && !clearingNow &&/);
-    assert.match(readCode('app/api/admin/teams/route.ts'), /\.eq\('status', 'clearing'\);\s*if \(\(clearing \?\? 0\) > 0\) return Response\.json\(\{ error: TEAM_RECORD_WORDS\.clearingMarkPaid/);
+    // Checked for the whole batch before any team pays (review of the whole); Record refuses too.
+    const teams = readCode('app/api/admin/teams/route.ts');
+    assert.ok(teams.indexOf("in('team_id', toMark).eq('status', 'clearing')") < teams.indexOf('for (const item of items) {', teams.indexOf('const toMark')));
+    assert.match(readCode('app/api/admin/tournaments/[tournamentId]/registrations/payments/route.ts'), /\.eq\('team_id', teamId\)\.eq\('status', 'clearing'\);\s*if \(\(clearing \?\? 0\) > 0\)/);
     assert.match(readCode('app/api/admin/tournaments/[tournamentId]/registrations/payment-reminders/route.ts'), /&& !clearingTeams\.has\(team\.id\)/);
     assert.match(readCode('app/[orgSlug]/admin/tournaments/registrations/components/TeamPayments.tsx'), /canRecord && !clearing && \(/);
   });
@@ -195,5 +202,41 @@ describe('Part 7: the Families record and "View the payment" (12b b3, b4)', () =
     const read = readCode('lib/families-read.ts');
     assert.match(read, /async function leagueOnlinePaid/);
     assert.match(read, /op\.status === 'reversed'\) continue;/, 'a payment the bank took back is not "paid online"');
+  });
+});
+
+describe('the /review of the whole (2026-10-26)', () => {
+  it('a decision is carried out only while the registration or team is still ended; a failed send-back tells the desk', () => {
+    const land = readCode('lib/online-payment-landing.ts');
+    const carry = /async function carryOutDecisions[\s\S]*?\n}\n/.exec(land)?.[0] ?? '';
+    assert.match(carry, /reg\.status !== 'declined' && reg\.status !== 'withdrawn'\) \{[\s\S]*?outcome: 'void'/);
+    assert.match(carry, /t\?\.status === 'accepted'\) \{[\s\S]*?outcome: 'void'/);
+    assert.match(carry, /r\.state === 'failed'\) throw/);
+    assert.match(carry, /raiseSendBackFailed\(onlinePaymentId, d\.online_payment_item_id, refundId\)/);
+  });
+  it('a cleared bank debit refunds to the bank account from the ending window; a reversed one offers nothing', () => {
+    const land = readCode('lib/online-payment-landing.ts');
+    assert.match(land, /\.filter\(i => opOf\(i\)\.status !== 'reversed'\)/);
+    const w = readCode('components/admin/kit/club/league/registrations/EndWindow.tsx');
+    assert.match(w, /l\.method === 'online_card' \|\| l\.method === 'online_bank'/);
+    assert.match(w, /toBank \? END_WORDS\.bankFull/);
+  });
+  it('the treasurer never answers a clearing debit; the registrar never sends one back', () => {
+    assert.match(readCode('app/[orgSlug]/admin/tournaments/registrations/components/TeamPayments.tsx'), /&& !decision && canDecide/);
+    assert.match(readCode('app/api/admin/tournaments/[tournamentId]/registrations/payments/route.ts'), /canDecide: canRefundOnline\(member, g\.ctx\.org\)/);
+    assert.match(readCode('components/admin/kit/club/league/registrations/EndWindow.tsx'), /canSendBack = !!clearing && payoutsOn && canRefund/);
+  });
+  it('the filters know a clearing row; the figures elsewhere agree with the Money page', () => {
+    assert.ok(!feeCell(reg(), SEASON, [], TODAY, [], [], null, debit()).primary);
+    const S = readCode('lib/house-league-registrations.ts');
+    assert.match(S, /if \(!clearing && fee\.kind === 'owing' && fee\.late\) f\.add\('late'\)/);
+    assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/route.ts'), /seasonMoney\(regs, season, moneyLines, clearingCents\)/);
+    assert.match(readCode('app/api/admin/tournament-dashboard/route.ts'), /!clearingNow && totDue && today > totDue/);
+    assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/ledger/route.ts'), /reversedOf\.get\(l\.regId\)\?\.receiptNo/);
+  });
+  it('a test-mode return is never billed on a live invoice; the returned line has its category word', async () => {
+    assert.match(readCode('lib/platform-debit-fee.ts'), /if \(livemode !== \(process\.env\.STRIPE_SECRET_KEY \?\? ''\)\.startsWith\('sk_live_'\)\) return exempt\('test_mode'\)/);
+    const { categoryWord } = await import('../../lib/club-money-words.ts');
+    assert.equal(categoryWord('registration_returned'), 'Returned by the bank');
   });
 });

@@ -576,6 +576,10 @@ export const GET = withObservability(async (req: Request) => {
     divPayMap.set(div.id, { paid: 0, depositPaid: 0, pending: 0, pastDue: 0, total: 0 });
   }
 
+  // 12c Part 6: teams with a bank debit on its way (never past due while it clears).
+  const { data: clearingRows } = await supabaseAdmin.from('online_payments').select('team_id').eq('status', 'clearing')
+    .in('team_id', acceptedTeams.map(t => t.id as string));
+  const clearingTeams = new Set(((clearingRows ?? []) as Array<{ team_id: string | null }>).map(r => r.team_id).filter(Boolean) as string[]);
   for (const tm of acceptedTeams) {
     const ag = divisions.find(g => g.id === tm.division_id);
     // 12c: the team's entry, lowered by its part refunds.
@@ -601,11 +605,13 @@ export const GET = withObservability(async (req: Request) => {
     totalCollected += totalPaid;
 
     let bucket: 'paid' | 'depositPaid' | 'pending' | 'pastDue';
+    // 12c Part 6 (words §3.7): a team whose bank debit is clearing is never past due — the same rule as the Teams list.
+    const clearingNow = clearingTeams.has(tm.id as string);
     if (totalPaid >= totalFee) {
       bucket = 'paid';
-    } else if (totDue && today > totDue) {
+    } else if (!clearingNow && totDue && today > totDue) {
       bucket = 'pastDue';
-    } else if (depositAmt && depDue && today > depDue && depositPaid < depositAmt) {
+    } else if (!clearingNow && depositAmt && depDue && today > depDue && depositPaid < depositAmt) {
       bucket = 'pastDue';
     } else if (depositAmt && depositPaid >= depositAmt) {
       bucket = 'depositPaid';

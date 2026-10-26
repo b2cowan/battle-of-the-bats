@@ -113,6 +113,8 @@ const CATEGORY_WORD: Record<string, string> = {
   registration_fee: 'Registration fees',
   // A house-league refund (Club Tier 9b-2, mig 368): its own line out beside the payment it returns.
   registration_refund: 'Registration refunds',
+  // 12c Part 6 (mig 387): a bank debit the bank reversed after it cleared — the bank's line, never a refund.
+  registration_returned: 'Returned by the bank',
 };
 
 /** A line's category, in words. A club's own free-text category reads as typed. */

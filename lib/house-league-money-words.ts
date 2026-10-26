@@ -452,6 +452,11 @@ export const END_WORDS = {
   hintCard: (mode: EndMode, name: string, amount: string) =>
     `The family is emailed that ${name} was ${mode === 'declined' ? 'not accepted' : 'withdrawn'} and that ${amount} is on its way back to the card.`,
   doneCard: (amount: string) => `Refunded ${amount} to the card.`,
+  // 12c words §3.9: the same choice for a cleared bank debit — to the bank account.
+  bankFull: (last4: string) => `Refund to the bank account ending ${last4}`,
+  hintBank: (mode: EndMode, name: string, amount: string) =>
+    `The family is emailed that ${name} was ${mode === 'declined' ? 'not accepted' : 'withdrawn'} and that ${amount} is on its way back to the bank account.`,
+  doneBank: (amount: string) => `Refunded ${amount} to the bank account.`,
   cardPartAmountError: (left: string) => `Enter an amount above $0 and up to ${left}.`,
   cardPartReasonError: 'Say why only part is refunded.',
   // 12c Part 6, words §3.3: the ending happens now and asks up front what happens to the money WHEN a bank debit clears.
@@ -465,6 +470,7 @@ export const END_WORDS = {
     sendBackSubClubPays: (base: string) => `The ${base} goes back by itself when it clears, in your name.`,
     feeOnWhy: 'With the processing fee, because the club is declining.',
     feeOffWhy: 'Without the processing fee, because the family asked to leave.',
+    feeOffPlain: 'Without the processing fee.',
     keep: 'Keep it',
     keepSub: 'Say why. It goes in the book as kept by the club.',
     disconnected: 'Payouts are disconnected. Refund it in Stripe when it clears.',

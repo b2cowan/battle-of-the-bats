@@ -404,9 +404,9 @@ export function matchesSearch(r: LeagueRegistration, query: string): boolean {
 }
 
 /** The Fee filter: several picks widen it (any of them). */
-export function matchesFee(fee: FeeState, picks: ReadonlySet<string>): boolean {
+export function matchesFee(fee: FeeState, picks: ReadonlySet<string>, clearing = false): boolean {
   if (picks.size === 0) return true;
-  return (picks.has('owing') && isOwing(fee))
+  return (picks.has('owing') && isOwing(fee) && !clearing)
     || (picks.has('received') && fee.kind === 'received')
     || (picks.has('refunded') && fee.kind === 'refunded');
 }
@@ -439,41 +439,44 @@ export function regFilterOffer(tab: RegTab, o: { charges: boolean; payLinks: boo
 }
 
 /** A row's flags. "Late" is the row's own amber (owing, past the season's days); a pay link counts once it was ever sent. */
-export function regFlags(r: LeagueRegistration, fee: FeeState): Set<RegFlag> {
+export function regFlags(r: LeagueRegistration, fee: FeeState, clearing = false): Set<RegFlag> {
   const f = new Set<RegFlag>();
   if (isOpenReg(r) && r.withdrawRequestedAt) f.add('asked');
-  if (fee.kind === 'owing' && fee.late) f.add('late');
-  if (isOwing(fee) && !r.payLinkSentAt) f.add('noPayLink');
+  // 12c Part 6: a bank debit on its way is never late, and needs no pay link (the row offers neither).
+  if (!clearing && fee.kind === 'owing' && fee.late) f.add('late');
+  if (!clearing && isOwing(fee) && !r.payLinkSentAt) f.add('noPayLink');
   if (r.playerNotes?.trim()) f.add('notes');
   return f;
 }
 
 /** One group's test on one row. Several picks in a group widen it (any of them); no picks admit everything. */
-export function matchesGroup(group: RegFilterGroup, picks: ReadonlySet<string>, r: LeagueRegistration, fee: FeeState): boolean {
+export function matchesGroup(group: RegFilterGroup, picks: ReadonlySet<string>, r: LeagueRegistration, fee: FeeState, clearing = false): boolean {
   if (picks.size === 0) return true;
-  if (group === 'fee') return matchesFee(fee, picks);
+  if (group === 'fee') return matchesFee(fee, picks, clearing);
   if (group === 'team') return picks.has(r.teamId ?? NOT_PLACED);
-  const flags = regFlags(r, fee);
+  const flags = regFlags(r, fee, clearing);
   return [...picks].some(k => flags.has(k as RegFlag));
 }
 
 /** Every group but `except` (the counts' base: what ticking a choice would list, given the OTHER groups' ticks). */
-export function matchesPicks(picks: RegFilterPicks, r: LeagueRegistration, fee: FeeState, except?: RegFilterGroup): boolean {
-  return (['team', 'fee', 'flags'] as const).every(g => g === except || matchesGroup(g, picks[g], r, fee));
+export function matchesPicks(picks: RegFilterPicks, r: LeagueRegistration, fee: FeeState, except?: RegFilterGroup, clearing = false): boolean {
+  return (['team', 'fee', 'flags'] as const).every(g => g === except || matchesGroup(g, picks[g], r, fee, clearing));
 }
 
 /** Each offered choice's count: the rows ticking it would list, given the other groups' ticks (Filter Counts D5). */
 export function regFilterCounts(
   rows: readonly LeagueRegistration[], stateOf: (r: LeagueRegistration) => FeeState, picks: RegFilterPicks,
   offer: Record<RegFilterGroup, readonly string[]>,
+  clearingOf: (r: LeagueRegistration) => boolean = () => false,
 ): Record<RegFilterGroup, Map<string, number>> {
   const out = { team: new Map<string, number>(), fee: new Map<string, number>(), flags: new Map<string, number>() };
   for (const g of ['team', 'fee', 'flags'] as const) {
     for (const k of offer[g]) out[g].set(k, 0);
     for (const r of rows) {
       const fee = stateOf(r);
-      if (!matchesPicks(picks, r, fee, g)) continue;
-      for (const k of offer[g]) if (matchesGroup(g, new Set([k]), r, fee)) out[g].set(k, out[g].get(k)! + 1);
+      const clearing = clearingOf(r);
+      if (!matchesPicks(picks, r, fee, g, clearing)) continue;
+      for (const k of offer[g]) if (matchesGroup(g, new Set([k]), r, fee, clearing)) out[g].set(k, out[g].get(k)! + 1);
     }
   }
   return out;

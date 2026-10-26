@@ -432,5 +432,43 @@ BEGIN
   EXCEPTION WHEN check_violation THEN v_ok := true; END;
   IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T27: an exempt fee billed'; END IF;
 
+  -- ── /review of the whole (mig 388) ──
+  -- T28 · a child the desk put back before its debit cleared has simply paid: the send-back is void, never handed out.
+  INSERT INTO league_registrations(org_id, season_id, player_first_name, player_last_name, guardian_first_name, guardian_last_name,
+    guardian_email, status, fee_amount, signup_ref)
+  VALUES (v_org, v_season, 'Kai', 'Lee', 'P', 'L', 'l@example.invalid', 'active', 150, 'KAILEE01') RETURNING id INTO v_reg;
+  v_lop := gen_random_uuid();
+  PERFORM online_payment_league_open(v_lop, v_org, 'acct_check12c', v_season, 'KAILEE01', 'Kai', 'l@example.invalid',
+    4.75, 'family', 0.025, 1.00, false, 'cs_check12c_' || gen_random_uuid(),
+    jsonb_build_array(jsonb_build_object('registrationId', v_reg, 'description', 'Kai Lee · U9', 'amount', 150, 'feeShare', 4.75)),
+    'bank_debit');
+  PERFORM online_payment_clearing(v_lop, 'pi_c12_kai', '4321');
+  SELECT id INTO v_item FROM online_payment_items WHERE online_payment_id = v_lop;
+  INSERT INTO online_payment_clear_decisions(org_id, online_payment_id, online_payment_item_id, choice, fee_back)
+  VALUES (v_org, v_lop, v_item, 'send_back', true);  -- decided while ended, then the child was put back (still active here)
+  v_res := online_payment_league_land(v_lop, now(), 'pi_c12_kai', 'ch_c12_kai', NULL, NULL);
+  IF league_reg_received(v_reg) <> 150 OR jsonb_array_length(v_res -> 'sendBack') <> 0
+     OR (SELECT outcome FROM online_payment_clear_decisions WHERE online_payment_id = v_lop) <> 'void' THEN
+    RAISE EXCEPTION 'FAIL T28: a reinstated child''s send-back (%)', v_res; END IF;
+
+  -- T29 · a reversal takes back only what is still received: a $40 booked refund leaves $110 to return.
+  v_ref := online_payment_refund_open(v_lop, false, 'price_corrected', NULL, NULL, 'app', v_item, 40, 'Sibling price');
+  PERFORM online_payment_league_refund_book(v_ref, 're_c12_kai', true);
+  IF league_reg_received(v_reg) <> 110 THEN RAISE EXCEPTION 'FAIL T29: the refund did not book'; END IF;
+  v_res := online_payment_reverse(v_lop, 'dp_c12_kai', NULL, NULL);
+  IF league_reg_received(v_reg) <> 0
+     OR (SELECT sum(amount) FROM accounting_entries WHERE source_entity_id = v_reg AND category = 'registration_returned') <> 110 THEN
+    RAISE EXCEPTION 'FAIL T29: the reversal took back more than was received (%)', league_reg_received(v_reg); END IF;
+
+  -- T30 · reversed is sticky: a refund finishing later can't move it back; the same dispute never reverses twice.
+  PERFORM set_config('flhq.online_payment_write', 'on', true);
+  UPDATE online_payments SET status = 'partly_refunded' WHERE id = v_lop;
+  PERFORM set_config('flhq.online_payment_write', 'off', true);
+  IF (SELECT status FROM online_payments WHERE id = v_lop) <> 'reversed' THEN RAISE EXCEPTION 'FAIL T30: reversed came undone'; END IF;
+  v_res := online_payment_reverse(v_lop, 'dp_c12_kai', NULL, NULL);
+  IF NOT (v_res ->> 'already')::boolean
+     OR (SELECT count(*) FROM accounting_entries WHERE source_entity_id = v_reg AND category = 'registration_returned') <> 1 THEN
+    RAISE EXCEPTION 'FAIL T30: reversed twice'; END IF;
+
   RAISE EXCEPTION 'ONLINE_PAYMENTS_12C_PASSED';
 END $op12c$;

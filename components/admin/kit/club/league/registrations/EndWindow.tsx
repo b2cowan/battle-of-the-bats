@@ -29,7 +29,7 @@ import { END_WORDS, MONEY_REFUSAL, methodInBrackets, type EndMode } from '@/lib/
 import { formatLeagueMoney, lastPayment, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
 import { endWaitlistLine, guardianName, refundDayError, regDay } from '@/lib/house-league-registrations';
 import type { DuesPaymentMethod, LeagueRegistration } from '@/lib/types';
-import { cardLabel } from '@/lib/online-payment-words';
+import { REFUND_WORDS, cardLabel } from '@/lib/online-payment-words';
 import { isClearing, type RegDebit } from '@/lib/league-debits';
 import { childList } from '@/lib/league-pay-words';
 import { possessive } from '@/lib/utils';
@@ -44,7 +44,7 @@ export interface EndedResult {
 
 export default function EndWindow({
   reg, name, mode, division, regs, lines, autoPromote, today, orgQuery, seasonId, raised, onClose, onChanged, onDone, stripeRefundIds,
-  debit = null, payoutsOn = true,
+  debit = null, payoutsOn = true, canRefund = true,
 }: {
   reg: LeagueRegistration;
   name: string;
@@ -63,6 +63,8 @@ export default function EndWindow({
   debit?: RegDebit | null;
   /** 12c Part 6: the club's payouts are connected (else only "Keep it" for a clearing debit, §7.7). */
   payoutsOn?: boolean;
+  /** 12c (review of the whole): the member takes fees — sending money back is a refund (never the treasurer's). */
+  canRefund?: boolean;
   onClose: () => void;
   onChanged: () => void;
   onDone: (result: EndedResult, ended: LeagueRegistration, promoted: LeagueRegistration | undefined) => void;
@@ -74,8 +76,12 @@ export default function EndWindow({
   const amount = formatLeagueMoney(received);
   // 12b: every payment for this child came by card (only the card landing writes 'online_card'), so the money goes back
   // to the card. The shares still refundable are read from the server (card, fee share, what is left).
-  const allCard = hasMoney && lines.filter(l => l.status === 'posted' && l.dir === 'in').every(l => l.method === 'online_card');
-  type Share = { itemId: string; leftCents: number; feeShareCents: number; untouched: boolean; familyPaidFee: boolean; brand: string | null; last4: string | null };
+  // 12c: a cleared bank debit is online too — it goes back to the bank account the same way (words §3.9).
+  const allCard = hasMoney && lines.filter(l => l.status === 'posted' && l.dir === 'in').every(l => l.method === 'online_card' || l.method === 'online_bank');
+  type Share = {
+    itemId: string; leftCents: number; feeShareCents: number; untouched: boolean; familyPaidFee: boolean; brand: string | null; last4: string | null;
+    rail?: 'card' | 'bank_debit'; bankLast4?: string | null;
+  };
   const [shares, setShares] = useState<Share[] | null>(null);
   useEffect(() => {
     if (!allCard) return;
@@ -87,6 +93,7 @@ export default function EndWindow({
   const card = allCard && shares && shares.length > 0 ? shares : null;
   const cardLeftCents = card ? card.reduce((sum, x) => sum + x.leftCents, 0) : 0;
   const newest = card?.[0] ?? null;
+  const toBank = newest?.rail === 'bank_debit';
   // A2's box: a FULL refund, every share untouched, while the family paid the fee (owner §0e).
   const feeCents = card && card.every(x => x.untouched && x.familyPaidFee) ? card.reduce((sum, x) => sum + x.feeShareCents, 0) : 0;
   const clubEnding = mode !== 'withdrawn';
@@ -106,7 +113,7 @@ export default function EndWindow({
   const clearing = isClearing(debit) ? debit : null;
   const clearBase = clearing ? formatLeagueMoney(clearing.shareCents / 100) : '';
   const clearFeeCents = clearing && clearing.familyPaysFee ? clearing.feeShareCents : 0;
-  const canSendBack = !!clearing && payoutsOn;
+  const canSendBack = !!clearing && payoutsOn && canRefund;
   const [clearAnswer, setClearAnswer] = useState<'send_back' | 'keep' | null>(null);
   const [clearFeeOn, setClearFeeOn] = useState(clubEnding);
   const [clearReason, setClearReason] = useState('');
@@ -120,7 +127,7 @@ export default function EndWindow({
   const hint = !hasMoney || !answer
     ? END_WORDS.hintPlain[mode]
     : answer === 'card' || answer === 'cardPart'
-      ? END_WORDS.hintCard(mode, name, formatLeagueMoney(cardBackCents / 100))
+      ? (toBank ? END_WORDS.hintBank : END_WORDS.hintCard)(mode, name, formatLeagueMoney(cardBackCents / 100))
     : answer === 'refunded'
       ? END_WORDS.hintRefunded(mode, name, amount, regDay(day, today), refundedHow)
       : END_WORDS.hintKept(mode, name, amount);
@@ -181,7 +188,7 @@ export default function EndWindow({
     const parts = [END_WORDS.done[mode](name)];
     if (hasMoney && answer === 'refunded') parts.push(END_WORDS.done.refunded(amount));
     if (hasMoney && answer === 'kept') parts.push(END_WORDS.done.kept(amount));
-    if (answer === 'card' || answer === 'cardPart') parts.push(END_WORDS.doneCard(formatLeagueMoney(cardBackCents / 100)));
+    if (answer === 'card' || answer === 'cardPart') parts.push((toBank ? END_WORDS.doneBank : END_WORDS.doneCard)(formatLeagueMoney(cardBackCents / 100)));
     if (r.promoted) parts.push(END_WORDS.done.moved(r.promoted.playerFirstName));
     onDone({ mode, said: parts.join(' ') }, r.registration, r.promoted);
   }
@@ -248,7 +255,7 @@ export default function EndWindow({
                   <span>
                     <span className={css.choiceName}>{END_WORDS.feeBox(formatLeagueMoney(clearFeeCents / 100), formatLeagueMoney((clearing.shareCents + clearFeeCents) / 100))}</span>
                     <span className={ck.hint}>
-                      {clearFeeOn ? (clubEnding ? C.feeOnWhy : END_WORDS.feeOnChanged(formatLeagueMoney(clearFeeCents / 100))) : C.feeOffWhy}
+                      {clearFeeOn ? (clubEnding ? C.feeOnWhy : END_WORDS.feeOnChanged(formatLeagueMoney(clearFeeCents / 100))) : clubEnding ? C.feeOffPlain : C.feeOffWhy}
                     </span>
                   </span>
                 </label>
@@ -268,7 +275,7 @@ export default function EndWindow({
               </div>
             )}
           </fieldset>
-          {!canSendBack && <p className={ck.hint}>{C.disconnected}</p>}
+          {!payoutsOn && canRefund && <p className={ck.hint}>{C.disconnected}</p>}
         </>
       )}
 
@@ -277,8 +284,8 @@ export default function EndWindow({
           <label className={css.choice}>
             <input type="radio" name="regs-end-money" checked={answer === 'card'} onChange={() => setAnswer('card')} />
             <span>
-              <span className={css.choiceName}>{END_WORDS.cardFull(cardLabel(newest.brand, newest.last4))}</span>
-              <span className={ck.hint}>{END_WORDS.cardArrives}</span>
+              <span className={css.choiceName}>{toBank ? END_WORDS.bankFull(newest.bankLast4 ?? '') : END_WORDS.cardFull(cardLabel(newest.brand, newest.last4))}</span>
+              <span className={ck.hint}>{toBank ? REFUND_WORDS.arrivesBank : END_WORDS.cardArrives}</span>
             </span>
           </label>
           {answer === 'card' && feeCents > 0 && (

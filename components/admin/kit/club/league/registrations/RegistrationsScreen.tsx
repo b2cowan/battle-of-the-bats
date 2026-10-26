@@ -244,7 +244,7 @@ export default function RegistrationsScreen() {
   const filterOn = activePicks.team.size + activePicks.fee.size + activePicks.flags.size > 0;
   const searchedTab = useMemo(() => scoped.filter(r => regTab(r.status) === tab && matchesSearch(r, query)), [scoped, tab, query]);
   const tabRegs = useMemo(() => {
-    const list = searchedTab.filter(r => !filterOn || matchesPicks(activePicks, r, fees.get(r.id)!.state));
+    const list = searchedTab.filter(r => !filterOn || matchesPicks(activePicks, r, fees.get(r.id)!.state, undefined, !!fees.get(r.id)!.chip));
     if (tab === 'waitlist') return list.sort((a, b) => (a.waitlistPosition ?? 9999) - (b.waitlistPosition ?? 9999));
     if (tab === 'ended') return list.sort((a, b) => Date.parse(b.endedAt ?? b.updatedAt) - Date.parse(a.endedAt ?? a.updatedAt));
     return list;
@@ -311,7 +311,7 @@ export default function RegistrationsScreen() {
       busy: busyIds.has(reg.id),
       menu: sheet.filter(i => i.key !== actions.primary),
       sheet,
-      sheetSub: REGS_WORDS.sheetSub(division ?? REGS_WORDS.noDivision, fee.primary),
+      sheetSub: REGS_WORDS.sheetSub(division ?? REGS_WORDS.noDivision, fee.alert?.text ?? fee.chip?.text ?? fee.primary),
       note: notes[reg.id] ?? null,
     };
   }, [fees, divisionName, teamName, today, linesOf, rights, itemFor, busyIds, notes, read]);
@@ -552,7 +552,10 @@ export default function RegistrationsScreen() {
   } : null;
 
   // ── Export ─────────────────────────────────────────────────────────────────────────────────────
-  const exportRows: ExportRow[] = tabRegs.map(reg => ({ reg, division: divisionName(reg.divisionId) ?? '', fee: fees.get(reg.id)?.primary ?? '' }));
+  const exportRows: ExportRow[] = tabRegs.map(reg => {
+    const f = fees.get(reg.id);
+    return { reg, division: divisionName(reg.divisionId) ?? '', fee: f?.alert?.text ?? f?.chip?.text ?? f?.primary ?? '' };
+  });
   const freeFloor = !!currentOrg && isFreeFloorLeague(currentOrg);
 
   // ── The header ─────────────────────────────────────────────────────────────────────────────────
@@ -595,7 +598,7 @@ export default function RegistrationsScreen() {
   }));
 
   // ── The Filter: Team · Fee · Flags, each choice counted given the other groups' ticks ──────────────────
-  const filterCounts = regFilterCounts(searchedTab, r => fees.get(r.id)!.state, activePicks, offer);
+  const filterCounts = regFilterCounts(searchedTab, r => fees.get(r.id)!.state, activePicks, offer, r => !!fees.get(r.id)?.chip);
   const W = REGS_WORDS;
   const optionWord: Record<RegFilterGroup, (k: string) => string> = {
     team: k => (k === NOT_PLACED ? W.notPlaced : scopeTeams.find(t => t.id === k)?.name ?? k),
@@ -750,7 +753,7 @@ export default function RegistrationsScreen() {
           steps={recordSteps}
           onPick={key => pickRow(openReg, key)}
           onNote={key => void statusOne(openReg, key)}
-          onClose={() => setOpenId(null)}
+          onClose={() => { setOpenId(null); setFeeFocus(null); }}
           cardRefunds={refundsOf(openReg.id)}
           canDesk={rights.takeFees}
           isPhone={isPhone}
@@ -789,6 +792,7 @@ export default function RegistrationsScreen() {
           stripeRefundIds={act.stripeRefundIds}
           debit={read?.debits?.[act.id] ?? null}
           payoutsOn={!!read?.payLinks}
+          canRefund={rights.takeFees}
           onClose={() => setAct(null)}
           onChanged={() => void load()}
           onDone={(done) => { setAct(null); afterWrite(true); say(done.said); setSelected(prev => { const n = new Set(prev); n.delete(act.id); return n; }); }}

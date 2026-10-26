@@ -103,6 +103,7 @@ export default function TeamPayments(props: Props) {
   const [teamStatus, setTeamStatus] = useState<string | null>(null);
   const [decision, setDecision] = useState<{ choice: 'send_back' | 'keep'; feeBack: boolean; reason: string | null } | null>(null);
   const [payoutsOn, setPayoutsOn] = useState(false);
+  const [canDecide, setCanDecide] = useState(false);
   const [clearChoice, setClearChoice] = useState<'send_back' | 'keep' | null>(null);
   const [clearFeeOn, setClearFeeOn] = useState(true);
   const [clearReason, setClearReason] = useState('');
@@ -126,6 +127,9 @@ export default function TeamPayments(props: Props) {
       setTeamStatus((data.teamStatus as string | null | undefined) ?? null);
       setDecision(data.decision ?? null);
       setPayoutsOn(data.payoutsOn === true);
+      setCanDecide(data.canDecide === true);
+      // A2's box: on when the club declined the team, off when the team withdrew (ruled §7.5).
+      setClearFeeOn(data.teamStatus !== 'withdrawn');
     } catch {
       setLoadFailed(true);
     }
@@ -327,7 +331,7 @@ export default function TeamPayments(props: Props) {
   const clearing = debit?.state === 'clearing' ? debit : null;
   const day = (iso: string | null) => (iso ? formatStoredDate(iso, { withYear: false }) : '');
   // A declined or withdrawn team's clearing debit: what happens when it clears (asked here, ask 7).
-  const askClear = !!clearing && teamStatus !== 'accepted' && !decision;
+  const askClear = !!clearing && teamStatus !== 'accepted' && !decision && canDecide;
   const C = OW.clear;
   const clearFee = clearing && clearing.familyPaysFee ? clearing.feeCents : 0;
 
@@ -381,7 +385,7 @@ export default function TeamPayments(props: Props) {
           {payoutsOn && clearChoice === 'send_back' && clearFee > 0 && (
             <label className={styles.payChoice}>
               <input type="checkbox" checked={clearFeeOn} onChange={e => setClearFeeOn(e.target.checked)} />
-              <span><strong>{C.feeBox(money(clearFee / 100), money((clearing.baseCents + clearFee) / 100))}</strong> <span className={styles.payHow}>{clearFeeOn ? C.feeOnWhy : C.feeOffWhy}</span></span>
+              <span><strong>{C.feeBox(money(clearFee / 100), money((clearing.baseCents + clearFee) / 100))}</strong> <span className={styles.payHow}>{clearFeeOn ? C.feeOnWhy : teamStatus === 'withdrawn' ? C.feeOffWhy : C.feeOffPlain}</span></span>
             </label>
           )}
           <label className={styles.payChoice}>

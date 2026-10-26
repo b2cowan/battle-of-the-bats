@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useRef } from 'react';
 /**
  * A REGISTRATION'S RECORD (Club Tier Stage 9b-2, Part 3): the whole row opens it, on a phone and at a desk. It READS first
  * (design decisions: "a record reads first, edits whole") — and nothing on a registration is typed here, so it has no
@@ -83,6 +84,11 @@ export default function RegistrationRecordWindow({
     fee.kind === 'kept' && fee.refunded ? [F.refunded, money(fee.refunded)] as const : null,
   ];
 
+  // 12c Part 7: "View the payment" opens the record at its Fee; the record never offers it to itself.
+  const feeRef = useRef<HTMLElement | null>(null);
+  useEffect(() => { if (focus === 'fee') feeRef.current?.scrollIntoView({ block: 'start' }); }, [focus]);
+  const actions = model.sheet.filter(item => item.key !== 'viewPayment');
+
   return (
     <KitDialog
       kind="form"
@@ -102,7 +108,7 @@ export default function RegistrationRecordWindow({
       </section>
 
       {showFee && (
-        <section className={css.recordSection}>
+        <section className={css.recordSection} ref={feeRef}>
           <h3 className={css.recordHead}>{W.fee}</h3>
           <div className={css.recordFee}><FeeCell parts={model.fee} onAlert={door} /></div>
           <Facts rows={feeRows} />
@@ -127,11 +133,11 @@ export default function RegistrationRecordWindow({
         )}
       </section>
 
-      {model.sheet.length > 0 && (
+      {actions.length > 0 && (
         <section className={css.recordSection}>
           <h3 className={css.recordHead}>{W.actions}</h3>
           <ul className={css.doList}>
-            {model.sheet.map(item => (
+            {actions.map(item => (
               <li key={item.key}>
                 <button type="button" className={css.doRow} onClick={() => onPick(item.key)}>
                   <span className={css.doName}>{item.label}</span>
