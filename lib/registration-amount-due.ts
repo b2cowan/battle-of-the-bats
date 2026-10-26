@@ -3,8 +3,9 @@
  * reminder notification clears by (Needs attention clears itself, 2026-10-16: "Paid in full" — part-payment keeps it).
  * Lifted out of the payment-reminders route so the two cannot drift. Pure: no server imports.
  */
+import { lowerEntry } from './tournament-teams';
 
-export interface DueTeam { division_id: string; deposit_paid: number | null; total_paid: number | null }
+export interface DueTeam { division_id: string; deposit_paid: number | null; total_paid: number | null; entry_lowered?: number | string | null }
 
 export interface DueTournament {
   fee_schedule_mode: string | null;
@@ -26,21 +27,22 @@ export type FeeDetails = {
 /** The fee a registration answers to: its division's when the tournament prices by division, else the tournament's. */
 export function registrationFee(team: DueTeam, tournament: DueTournament, divisions: Map<string, DueDivision>): FeeDetails {
   const group = divisions.get(team.division_id);
+  // 12c: the team's entry, lowered by its part refunds (lowerEntry, lib/tournament-teams.ts).
   if (tournament.fee_schedule_mode === 'division' && group?.total_fee_amount != null) {
-    return {
+    return lowerEntry({
       depositAmount: group.deposit_amount ?? null,
       depositDueDate: group.deposit_due_date ?? null,
       totalFeeAmount: group.total_fee_amount ?? null,
       totalFeeDueDate: group.total_fee_due_date ?? null,
-    };
+    }, team.entry_lowered);
   }
 
-  return {
+  return lowerEntry({
     depositAmount: tournament.deposit_amount ?? null,
     depositDueDate: tournament.deposit_due_date ?? null,
     totalFeeAmount: tournament.total_fee_amount ?? null,
     totalFeeDueDate: tournament.total_fee_due_date ?? null,
-  };
+  }, team.entry_lowered);
 }
 
 /** What is due next — the deposit until it is paid, then the rest — or null once the whole fee is paid (or none is set). */

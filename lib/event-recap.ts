@@ -95,6 +95,8 @@ export interface EventRecap {
 
 /** The money a team row carries (the raw `teams` row: the domain `Team` has no payments). */
 export interface RecapPayment {
+  /** 12c (mig 382): the entry lowered by part refunds. */
+  entryLowered?: number | null;
   divisionId: string | null;
   status: string | null;
   totalPaid: number | null;
@@ -254,7 +256,7 @@ export function computeEventRecap(input: RecapInput): EventRecap {
     if (p.status !== 'accepted') continue;
     const totalPaid = Number(p.totalPaid ?? 0);
     money.collected += totalPaid;
-    const fee = getEffectiveFee({ division_id: p.divisionId ?? '' }, input.divisions, feeMode, input.tournament.fee);
+    const fee = getEffectiveFee({ division_id: p.divisionId ?? '', entryLowered: p.entryLowered ?? 0 }, input.divisions, feeMode, input.tournament.fee);
     if (!fee.totalFeeAmount) continue;
     money.charged = true;
     const owed = owedAmount({ totalPaid }, fee);

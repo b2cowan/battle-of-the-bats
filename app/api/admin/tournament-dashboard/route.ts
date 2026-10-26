@@ -34,6 +34,7 @@ import { normalizeTieBreakers } from '@/lib/tie-breakers';
 import { normalizeHiddenPublicPages, visiblePublicPages, PUBLIC_PAGE_OPTIONS } from '@/lib/public-pages';
 import { DEFAULT_SPORT } from '@/lib/sports';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { lowerEntry } from '@/lib/tournament-teams';
 
 type GameRow = {
   id: string;
@@ -77,6 +78,8 @@ type DivisionRow = {
 
 type TeamPaymentRow = {
   id: string;
+  /** 12c (mig 382): the entry lowered by part refunds. */
+  entry_lowered: number | null;
   name: string | null;
   email: string | null;
   division_id: string;
@@ -183,7 +186,7 @@ export const GET = withObservability(async (req: Request) => {
       .is('deleted_at', null),
     supabaseAdmin
       .from('teams')
-      .select('id, name, email, division_id, status, deposit_paid, total_paid, slot_id, waitlist_position, registered_at, check_in_status, seed')
+      .select('id, name, email, division_id, status, deposit_paid, total_paid, entry_lowered, slot_id, waitlist_position, registered_at, check_in_status, seed')
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('pool_slots')
@@ -575,9 +578,10 @@ export const GET = withObservability(async (req: Request) => {
 
   for (const tm of acceptedTeams) {
     const ag = divisions.find(g => g.id === tm.division_id);
-    const fee = feeMode === 'division' && ag?.total_fee_amount != null
+    // 12c: the team's entry, lowered by its part refunds.
+    const fee = lowerEntry(feeMode === 'division' && ag?.total_fee_amount != null
       ? { depositAmount: ag.deposit_amount, depositDueDate: ag.deposit_due_date, totalFeeAmount: ag.total_fee_amount, totalFeeDueDate: ag.total_fee_due_date }
-      : { depositAmount: t.deposit_amount, depositDueDate: t.deposit_due_date, totalFeeAmount: t.total_fee_amount, totalFeeDueDate: t.total_fee_due_date };
+      : { depositAmount: t.deposit_amount, depositDueDate: t.deposit_due_date, totalFeeAmount: t.total_fee_amount, totalFeeDueDate: t.total_fee_due_date }, tm.entry_lowered);
 
     const totalFee   = fee.totalFeeAmount ?? 0;
     const depositAmt = fee.depositAmount ?? 0;
@@ -655,6 +659,7 @@ export const GET = withObservability(async (req: Request) => {
       status: team.status,
       depositPaid: team.deposit_paid,
       totalPaid: team.total_paid,
+      entryLowered: team.entry_lowered,
       slotId: team.slot_id,
       waitlistPosition: team.waitlist_position,
       customAnswers: answersByRegistration.get(team.id) ?? [],

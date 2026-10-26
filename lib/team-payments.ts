@@ -15,7 +15,7 @@ import { formatMoney, hasDepositStep, type FeeSchedule } from './tournament-team
 
 /** `online_card` is a payment a team made online (Club Tier Stage 12a): only the landing writes it, so it is never a choice
  *  in a form — PAYMENT_METHODS is the hand-recorded list. */
-export type PaymentMethod = 'etransfer' | 'cash' | 'cheque' | 'card' | 'other' | 'online_card';
+export type PaymentMethod = 'etransfer' | 'cash' | 'cheque' | 'card' | 'other' | 'online_card' | 'online_bank';
 export const PAYMENT_METHODS: readonly PaymentMethod[] = ['etransfer', 'cash', 'cheque', 'card', 'other'];
 
 /** A label names a row. "Earlier payment" is the backfilled, undated one; "Imported payment" comes from a spreadsheet. */
@@ -34,7 +34,32 @@ export interface TeamPayment {
   status?: 'posted' | 'refunded';
   /** The online payment behind the row (Stage 12a), when there is one. */
   online?: TeamOnlinePayment | null;
+  /** 12c: what part refunds have taken back from this row (never the fee). A posted row counts `amount − refundedAmount`. */
+  refundedAmount?: number;
 }
+
+/** One refund of a team's online payment, as the record and "View the payment" read it (12c words §1.2, §1.4). */
+export interface TeamRefund {
+  id: string;
+  amountCents: number;
+  feeBackCents: number;
+  state: 'refunded' | 'pending' | 'failed' | 'anotherWay';
+  part: boolean;
+  /** Made in the club's Stripe dashboard and recorded by itself. */
+  stripe: boolean;
+  reason: string | null;
+  createdAt: string;
+  succeededAt: string | null;
+  failedAt: string | null;
+  reference: string | null;
+  by: string | null;
+  resolvedBy: string | null;
+  emailedAt: string | null;
+  emailFailedAt: string | null;
+}
+
+/** 12c words §1.3: one lowering of a team's entry (a part refund's own). */
+export interface EntryAdjustment { amountCents: number; reason: string | null; stripe: boolean; at: string }
 
 /** What the team's record shows of an online payment (Club Tier Stage 12a). */
 export interface TeamOnlinePayment {
@@ -52,6 +77,12 @@ export interface TeamOnlinePayment {
   /** The latest refund's state; 'none' when it was never refunded. */
   refund: 'none' | 'pending' | 'failed' | 'succeeded';
   refundedOn: string | null;
+  /** 12c: what it paid for, how, what is still refundable of its base, and each refund (newest first). */
+  scope: 'deposit' | 'balance' | 'full';
+  rail: 'card' | 'bank_debit';
+  bankLast4: string | null;
+  leftCents: number;
+  refunds: TeamRefund[];
 }
 
 /** A payment row's money: "$100", "$109.50" (cents show only when there are some). */

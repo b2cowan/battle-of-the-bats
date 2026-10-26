@@ -16,8 +16,8 @@
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { TEAM_ROW_WORDS as OW, REFUND_WORDS as RW, money, receiptLabel } from '@/lib/online-payment-words';
-import { PaymentViewWindow, RefundWindow } from './OnlinePaymentWindows';
+import { TEAM_ENTRY_WORDS as EW, TEAM_ROW_WORDS as OW, REFUND_WORDS as RW, SCOPE_WORDS, money, receiptLabel } from '@/lib/online-payment-words';
+import { PaymentViewWindow, RefundWindow, type RefundSend } from './OnlinePaymentWindows';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import DateInput from '@/components/shared/DateInput';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -25,7 +25,7 @@ import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { TEAM_PAYMENT_WORDS as W } from '@/lib/registration-words';
 import {
   PAYMENT_METHODS, draftIssue, formatPaymentMoney, labelForDue, paymentDay, receivedOrder, stillDue,
-  type DueRow, type PaymentMethod, type TeamOnlinePayment, type TeamPayment,
+  type DueRow, type EntryAdjustment, type PaymentMethod, type TeamOnlinePayment, type TeamPayment,
 } from '@/lib/team-payments';
 import { formatStoredDate } from '@/lib/timezone';
 import type { FeeSchedule } from '@/lib/tournament-teams';
@@ -55,8 +55,25 @@ interface Props {
 /** Online payments on this record (Club Tier Stage 12a): may the pay link go out, when it last did, may a card be refunded. */
 type OnlineInfo = { payLink: boolean; payLinkSentAt: string | null; refunds: boolean };
 
-/** What a team has paid: posted rows only — a row refunded to the card stays on the record but never counts. */
-const sumPaid = (list: TeamPayment[]) => list.reduce((s, p) => s + (p.status === 'refunded' ? 0 : p.amount), 0);
+/** What a team has paid: posted rows only, each net of its part refunds (12c) — a row refunded in full stays on the record
+ *  but never counts. */
+const sumPaid = (list: TeamPayment[]) => list.reduce((s, p) => s + (p.status === 'refunded' ? 0 : p.amount - (p.refundedAmount ?? 0)), 0);
+
+/** 12c words §1.2: what a row with part refunds says (a part refund never strikes it through). */
+function partTag(o: TeamOnlinePayment): { text: string; warn: boolean; sub: string | null } | null {
+  const parts = o.refunds.filter(r => r.part);
+  if (!parts.length) return null;
+  const day = (iso: string | null) => (iso ? formatStoredDate(iso, { withYear: false }) : '');
+  const failed = parts.find(r => r.state === 'failed');
+  if (failed) return { text: OW.refundFailed, warn: true, sub: OW.refundFailedSub(money(failed.amountCents / 100), day(failed.failedAt)) };
+  const pending = parts.find(r => r.state === 'pending');
+  if (pending) return { text: OW.refundPendingPart(money(pending.amountCents / 100)), warn: false, sub: null };
+  const done = parts.filter(r => r.state === 'refunded' || r.state === 'anotherWay');
+  const sum = money(done.reduce((n, r) => n + r.amountCents, 0) / 100);
+  const last = done[0];
+  if (done.length > 1) return { text: OW.refundedPartMore(sum, day(last.succeededAt ?? last.createdAt)), warn: false, sub: null };
+  return { text: last.stripe ? OW.refundedPartStripe(sum, day(last.succeededAt ?? last.createdAt)) : OW.refundedPart(sum, day(last.succeededAt ?? last.createdAt)), warn: false, sub: null };
+}
 
 type Draft = { amount: string; paidOn: string; how: '' | PaymentMethod; error: string; saving: boolean };
 type RecordForm = Draft & { key: DueRow['key'] | 'other' };
@@ -78,6 +95,7 @@ export default function TeamPayments(props: Props) {
   const [viewing, setViewing] = useState<TeamOnlinePayment | null>(null);
   const [refunding, setRefunding] = useState<{ p: TeamOnlinePayment; anotherWay: boolean } | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  const [adjustments, setAdjustments] = useState<EntryAdjustment[]>([]);
 
   const base = `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registrations/payments`;
   const orgParam = orgQuery ? orgQuery.replace(/^\?/, '&') : '';
@@ -91,6 +109,7 @@ export default function TeamPayments(props: Props) {
       setPayments(data.payments as TeamPayment[]);
       setPostsToBook(data.postsToBook === true);
       setOnline((data.online as OnlineInfo | undefined) ?? null);
+      setAdjustments((data.adjustments as EntryAdjustment[] | undefined) ?? []);
     } catch {
       setLoadFailed(true);
     }
@@ -203,14 +222,20 @@ export default function TeamPayments(props: Props) {
     if (!error) setOnline(o => (o ? { ...o, payLinkSentAt: String(data.sentAt ?? new Date().toISOString()) } : o));
   }
 
-  async function refund(body: { feeIncluded: boolean; reason: 'organizer_ended' | 'team_left' | null; note: string | null }): Promise<string | null> {
+  async function refund(body: RefundSend): Promise<string | null> {
     if (!refunding) return null;
-    const { p, anotherWay } = refunding;
-    const { error, data } = await onlineSend({ action: anotherWay ? 'refund_another_way' : 'refund', onlinePaymentId: p.id, ...body });
+    const { p } = refunding;
+    const request = body.kind === 'part'
+      ? { action: 'refund', onlinePaymentId: p.id, amount: body.amount, partialReason: body.partialReason, note: body.note }
+      : { action: body.kind === 'anotherWay' ? 'refund_another_way' : 'refund', onlinePaymentId: p.id, feeIncluded: body.feeIncluded, reason: body.reason, note: body.note };
+    const { error, data } = await onlineSend(request);
     if (error) return error;
-    const back = body.feeIncluded ? p.totalCents : p.baseCents;
+    if (data.state === 'failed') return RW.failed;
     setRefunding(null);
-    setFlash(anotherWay ? RW.recordedToast : data.state === 'pending' ? RW.pendingToast : RW.doneToast(money(back / 100), p.payerEmail));
+    if (body.kind === 'anotherWay') setFlash(RW.recordedToast);
+    else if (data.state === 'pending') setFlash(RW.pendingToast);
+    else if (body.kind === 'part') setFlash(RW.partDoneToast(money(body.amount), money((p.leftCents - Math.round(body.amount * 100)) / 100), p.payerEmail));
+    else setFlash(RW.doneToast(money((body.feeIncluded ? p.totalCents : p.baseCents) / 100), p.payerEmail));
     await Promise.all([load(), onChanged()]);
     return null;
   }
@@ -293,6 +318,18 @@ export default function TeamPayments(props: Props) {
         </p>
       )}
 
+      {adjustments.length > 0 && fee.totalFeeAmount != null && (() => {
+        const entry = formatPaymentMoney(fee.totalFeeAmount);
+        const lowered = (a: EntryAdjustment) => [formatPaymentMoney(a.amountCents / 100), formatStoredDate(a.at, { withYear: false }), a.stripe ? EW.stripe : (a.reason ?? '')] as const;
+        return (
+          <div className={styles.payEntry}>
+            {adjustments.length === 1
+              ? <p>{EW.one(entry, ...lowered(adjustments[0]))}</p>
+              : <><p>{EW.head(entry)}</p>{adjustments.map((a, i) => <p key={i}>{EW.lowered(...lowered(a))}</p>)}</>}
+          </div>
+        );
+      })()}
+
       {rows.length > 0 && (
         <>
           <h4 className={styles.paySub}>{W.received}</h4>
@@ -307,18 +344,30 @@ export default function TeamPayments(props: Props) {
                     : p.method && <span className={styles.payHow}> · {W.methods[p.method]}</span>}
                   {p.inLedger && p.status !== 'refunded' && <span className={styles.payChip}><RepChip tone="good">{W.inLedger}</RepChip></span>}
                   {p.online?.test && <span className={styles.payTag}>{OW.test}</span>}
-                  {p.online && p.status === 'refunded' && p.online.refundedOn && <span className={styles.payTag}>{OW.refunded(formatStoredDate(p.online.refundedOn, { withYear: false }))}</span>}
-                  {p.online?.refund === 'pending' && <span className={styles.payTag}>{OW.refundPending}</span>}
-                  {p.online?.refund === 'failed' && p.status !== 'refunded' && <span className={styles.payChip}><RepChip tone="warn">{OW.refundFailed}</RepChip></span>}
+                  {p.online && p.status === 'refunded' && (p.online.refundedOn || p.online.refunds[0]) && (
+                    <span className={styles.payTag}>{OW.refunded(formatStoredDate((p.online.refundedOn ?? p.online.refunds[0].succeededAt ?? p.online.refunds[0].createdAt), { withYear: false }))}</span>
+                  )}
+                  {p.online && p.status !== 'refunded' && (() => {
+                    // 12c: part refunds read their own tags; a refund in full keeps 12a's.
+                    const part = partTag(p.online);
+                    if (part) {
+                      return part.warn
+                        ? <span className={styles.payChip}><RepChip tone="warn">{part.text}</RepChip>{part.sub && <span className={styles.payTagSub}>{part.sub}</span>}</span>
+                        : <span className={styles.payTag}>{part.text}</span>;
+                    }
+                    if (p.online.refund === 'pending') return <span className={styles.payTag}>{OW.refundPending}</span>;
+                    if (p.online.refund === 'failed') return <span className={styles.payChip}><RepChip tone="warn">{OW.refundFailed}</RepChip></span>;
+                    return null;
+                  })()}
                 </span>
                 <span className={styles.payAmt}>{formatPaymentMoney(p.amount)}</span>
                 {p.online ? (
                   <CoachToolbarMenu variant="glyph" overWindow label={OW.menuLabel} icon={<MoreHorizontal size={16} aria-hidden />} disabled={locked}>
                     <CoachToolbarMenuItem label={OW.menuView} onSelect={() => setViewing(p.online!)} />
-                    {online?.refunds && p.status !== 'refunded' && p.online.refund !== 'pending' && (
+                    {online?.refunds && p.status !== 'refunded' && p.online.leftCents > 0 && p.online.refund !== 'pending' && (
                       <CoachToolbarMenuItem label={OW.menuRefund} onSelect={() => setRefunding({ p: p.online!, anotherWay: false })} />
                     )}
-                    {online?.refunds && p.status !== 'refunded' && p.online.refund === 'failed' && (
+                    {online?.refunds && p.online.refund === 'failed' && (
                       <CoachToolbarMenuItem label={OW.menuAnotherWay} onSelect={() => setRefunding({ p: p.online!, anotherWay: true })} />
                     )}
                   </CoachToolbarMenu>
@@ -361,10 +410,18 @@ export default function TeamPayments(props: Props) {
       )}
 
       {flash && <p className={styles.paySent} role="status">{flash}</p>}
-      {viewing && <PaymentViewWindow p={viewing} onClose={() => setViewing(null)} />}
-      {refunding && (
-        <RefundWindow p={refunding.p} teamName={teamName} anotherWay={refunding.anotherWay} send={refund} onClose={() => setRefunding(null)} />
+      {viewing && (
+        <PaymentViewWindow p={viewing} onClose={() => setViewing(null)} entryNow={fee.totalFeeAmount ?? null} canDesk={!!online?.refunds}
+          onAnotherWay={() => { const v = viewing; setViewing(null); setRefunding({ p: v, anotherWay: true }); }} />
       )}
+      {refunding && (() => {
+        // "Refund the rest from the balance’s ⋯" names the team's other card payment when there is one.
+        const other = rows.find(r => r.online && r.online.id !== refunding.p.id && r.status !== 'refunded' && r.online.leftCents > 0)?.online;
+        return (
+          <RefundWindow p={refunding.p} teamName={teamName} anotherWay={refunding.anotherWay} send={refund} onClose={() => setRefunding(null)}
+            otherLabel={other ? SCOPE_WORDS.scope[other.scope] : null} />
+        );
+      })()}
     </>
   );
 }

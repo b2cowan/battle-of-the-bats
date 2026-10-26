@@ -25,6 +25,8 @@ export type CoachTournamentStatusInput = {
     paymentStatus: string | null;
     depositPaid: number | null;
     totalPaid: number | null;
+    /** 12c (mig 382): the entry lowered by part refunds. */
+    entryLowered?: number | null;
     checkInStatus: string | null;
     checkedInAt: string | null;
     rosterSubmittedAt: string | null;
@@ -107,6 +109,7 @@ export function buildCoachTournamentStatus(input: CoachTournamentStatusInput): C
     paymentStatus,
     depositPaid: input.team.depositPaid,
     totalPaid: input.team.totalPaid,
+    entryLowered: input.team.entryLowered ?? 0,
   };
 
   const tracksPayments = input.tournament?.tracksPayments !== false;

@@ -148,7 +148,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
       .maybeSingle<TournamentRow>(),
     supabaseAdmin
       .from('teams')
-      .select('id, tournament_id, division_id, name, coach, email, coach_email, status, deposit_paid, total_paid')
+      .select('id, tournament_id, division_id, name, coach, email, coach_email, status, deposit_paid, total_paid, entry_lowered')
       .in('id', ids),
     supabaseAdmin
       .from('divisions')

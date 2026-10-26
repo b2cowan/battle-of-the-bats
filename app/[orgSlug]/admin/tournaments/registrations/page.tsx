@@ -328,6 +328,7 @@ export default function UnifiedTeamsPage() {
           paymentStatus: r.payment_status ?? 'pending',
           depositPaid: Number(r.deposit_paid ?? 0),
           totalPaid: Number(r.total_paid ?? 0),
+          entryLowered: Number(r.entry_lowered ?? 0),
           adminNotes: r.admin_notes,
           slotId: admin.slotId ?? null,
           waitlistPosition: admin.waitlistPosition ?? null,
@@ -1258,7 +1259,7 @@ export default function UnifiedTeamsPage() {
   }, [hasLoadedInitial, currentTournament?.id, divisions, reviewByDivision, searchParams]);
 
   const divRegs = useMemo(() => regs.filter(r => r.division_id === selectedDivisionId), [regs, selectedDivisionId]);
-  const feeOf = useCallback((team: Pick<TeamRecord, 'division_id'>) => (tracksPayments ? getEffectiveFee(team, divisions, feeMode, feeSchedule) : NO_FEE), [divisions, feeMode, feeSchedule, tracksPayments]);
+  const feeOf = useCallback((team: Pick<TeamRecord, 'division_id' | 'entryLowered'>) => (tracksPayments ? getEffectiveFee(team, divisions, feeMode, feeSchedule) : NO_FEE), [divisions, feeMode, feeSchedule, tracksPayments]);
 
   const paymentSummary = useMemo<PaymentSummary & { accepted: number }>(() => {
     const accepted = divRegs.filter(team => team.status === 'accepted');
@@ -1334,6 +1335,7 @@ export default function UnifiedTeamsPage() {
       paymentStatus: team.paymentStatus,
       depositPaid: team.depositPaid,
       totalPaid: team.totalPaid,
+      entryLowered: team.entryLowered ?? 0,
       slotId: team.slotId,
       waitlistPosition: team.waitlistPosition,
       customAnswers: team.customAnswers,
@@ -1385,6 +1387,7 @@ export default function UnifiedTeamsPage() {
       paymentStatus: r.paymentStatus,
       depositPaid: r.depositPaid,
       totalPaid: r.totalPaid,
+      entryLowered: r.entryLowered ?? 0,
       slotId: r.slotId,
       waitlistPosition: r.waitlistPosition,
       customAnswers: r.customAnswers,

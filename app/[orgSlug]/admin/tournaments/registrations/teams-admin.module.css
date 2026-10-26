@@ -686,6 +686,19 @@
 .payViewList dd { margin: 0; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .refundChoice { border: 0; padding: 0; margin: 0.75rem 0 0.5rem; display: flex; flex-direction: column; gap: 0.35rem; }
 .refundChoice label, .refundFee { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-primary); }
+/* 12c: View the payment's refund blocks, and the part refund's entry lines in the record. */
+.payRefund { margin: 0.9rem 0 0; padding: 0.75rem 0 0; border-top: 1px solid var(--home-line); }
+.payRefundHead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 0 0.4rem; font-size: var(--type-body); font-weight: 650; }
+.payRefundButton { margin-top: 0.5rem; }
+.refLine { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.refValue { font-family: var(--font-data); overflow-wrap: anywhere; } /* type-ok: code — Stripe's refund reference */
+/* Copy in a smaller window is the symbol alone, 44px, no border or fill. */
+.refCopy { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: var(--text-secondary); cursor: pointer; }
+.refCopy:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.payEntry { margin: 0.25rem 0 0.5rem; font-size: var(--type-support); color: var(--text-secondary); }
+.payEntry p { margin: 0; }
+.payTagSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+@media (max-width: 640px) { .payRefundButton { width: 100%; min-height: 44px; } }
 @media (max-width: 640px) {
   .payViewList > div { grid-template-columns: 1fr; }
   .refundChoice label, .refundFee { min-height: 44px; }

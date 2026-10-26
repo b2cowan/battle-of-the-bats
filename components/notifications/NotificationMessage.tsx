@@ -85,7 +85,7 @@ export default function NotificationMessage({
   const refundLabel = !waiting ? null
     : lead.eventType === 'card_refund_whose' ? REFUND_NOTICE_ACTIONS.whose
       : enrolled ? REFUND_NOTICE_ACTIONS.withdraw(childFirst)
-        : lead.eventType === 'card_refund_failed' && typeof lead.metadata?.refundId === 'string' ? REFUND_NOTICE_ACTIONS.anotherWay : null;
+        : lead.eventType === 'card_refund_failed' ? REFUND_NOTICE_ACTIONS.anotherWay : null;
   const goLabel = handoff ? HANDOFF_ACTIONS.recordIt : refundLabel ?? notificationDestination(link, portal);
   const goLink = enrolled ? withAnswer(enrolled, 'withdraw') : link;
   const kind = NOTIFICATION_EVENT_LABELS[lead.eventType as NotificationEventType] ?? 'Notification';

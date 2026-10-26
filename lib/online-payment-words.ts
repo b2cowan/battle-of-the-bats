@@ -56,8 +56,10 @@ export const ONLINE_NOTICE_WORDS = {
   notRecordedBody: (description: string, amount: string, reason: string) =>
     `${description}: ${amount} was paid by card, but it couldn’t be added to the team’s record (${reason}). Refund it to the card from the team’s record or in Stripe.`,
   refundFailedTitle: 'A refund didn’t reach the card',
-  refundFailedBody: (description: string) =>
-    `${description}: the refund to the card was returned, for example because the card was closed. Send the team the money another way, then record the refund.`,
+  // 12c words §1.6: a team can have a part refund and a later one, so the item names which.
+  refundFailedBody: (amount: string, card: string, team: string) =>
+    `${amount} to ${card} was returned, for example because the card was closed. Send ${team} the money another way, then record the refund.`,
+  refundFailedTitleTeam: (team: string) => `${possessive(team)} refund didn’t reach the card`,
 } as const;
 
 /**
@@ -144,6 +146,12 @@ export const ONLINE_EMAIL_WORDS = {
   refundQuestions: (contact: string | null) => (contact ? `Questions: ${contact}.` : ''),
   // 12c words §4 (refund visibility): without a club contact the line names the club instead of going silent.
   refundQuestionsClub: (clubName: string) => `Questions go to ${clubName}.`,
+  // 12c words §1.5: a team's part refund names what changed and what is left.
+  refundLeadPart: (amount: string, team: string, scope: string, tournament: string) => `${amount} of ${possessive(team)} ${scope} for ${tournament} was refunded.`,
+  refundReason: (club: string, why: string) => `${possessive(club)} reason: ${why}`,
+  refundEntryNow: (entry: string) => `The entry fee is now ${entry}.`,
+  refundBalanceNow: (balance: string, date: string | null) => (date ? `The balance is now ${balance}, due ${date}.` : `A ${balance} balance is still to pay.`),
+  refundPaidInFull: (team: string) => `${team} is paid in full.`,
   // "Email the pay link" (copy §15, derived)
   linkSubject: (team: string, tournament: string) => `Pay for ${team} in ${tournament}`,
   linkBody: (club: string, team: string, division: string | null) =>
@@ -389,12 +397,19 @@ export const TEAM_ROW_WORDS = {
   refunded: (date: string) => `Refunded to card, ${date}`,
   refundPending: 'Refunding to card…',
   refundFailed: 'Refund didn’t reach the card',
+  // 12c words §1.2: a part refund never strikes the row through; the reason is in View the payment.
+  refundedPart: (amount: string, day: string) => `${amount} refunded to card, ${day}`,
+  refundedPartMore: (amount: string, day: string) => `${amount} refunded to card · last ${day}`,
+  refundPendingPart: (amount: string) => `Refunding ${amount} to card…`,
+  refundedPartStripe: (amount: string, day: string) => `${amount} refunded to card, ${day} · made in Stripe`,
+  refundFailedSub: (amount: string, day: string) => `${amount} sent back ${day}`,
   test: 'Test, no money moved',
   menuLabel: 'More for this payment',
   dueMenuLabel: 'More for what is due',
   menuView: 'View the payment',
   menuRefund: 'Refund to the card',
-  menuAnotherWay: 'Record a refund made another way',
+  // F6 (12c): one name for one act, in both flows.
+  menuAnotherWay: 'Record the refund sent another way',
   menuEmailLink: 'Email the pay link',
   linkSent: (date: string) => `Pay link sent ${date}`,
   linkSentToast: (email: string) => `Pay link sent to ${email}.`,
@@ -411,16 +426,47 @@ export const PAY_VIEW_WORDS = {
   total: 'Total',
   from: 'From',
   close: 'Close',
+  // 12c words §1.4: each refund below the payment's facts (the house-league record's block, with the team's nouns).
+  amountPart: (scopeNoun: string) => `Part of the ${scopeNoun}. A part refund never includes the processing fee.`,
+  entry: 'Entry',
+  entryValue: (lowered: string, entry: string) => `Lowered ${lowered} to ${entry}`,
+  emailed: 'Team emailed',
+  emailedNone: 'No email address on file. Tell the team yourself.',
+  emailedNotFailed: 'Not emailed. Contact the team to arrange another way.',
 } as const;
 
 export const REFUND_WORDS = {
-  title: (team: string) => `Refund ${possessive(team)} payment?`,
-  titleAnotherWay: 'Record a refund made another way',
-  paidTeams: (team: string, total: string, date: string, base: string, fee: string) =>
-    `${team} paid ${total} online on ${date}: the ${base} entry fee and a ${fee} processing fee.`,
-  paidClub: (team: string, base: string, date: string) => `${team} paid ${base} online on ${date}.`,
+  // 12c words §1.1: titled for the payment ("Refund Riverside Rockets 12U’s deposit?").
+  title: (team: string, scope: string) => `Refund ${possessive(team)} ${scope}?`,
+  titleAnotherWay: 'Record the refund sent another way',
+  paidTeams: (total: string, date: string, receiptNo: string, base: string, scopeNoun: string, fee: string) =>
+    `Paid ${total} on ${date} (receipt ${receiptNo}): the ${base} ${scopeNoun} and a ${fee} processing fee.`,
+  paidClub: (base: string, date: string, receiptNo: string, scopeNoun: string) => `Paid ${base} on ${date} (receipt ${receiptNo}): the ${scopeNoun}.`,
+  choiceAll: (card: string) => `All of it to the card, ${card}`,
+  choiceAllBank: (last4: string) => `All of it to the bank account ending ${last4}`,
+  choicePart: 'Part of it',
+  choicePartSub: (left: string) => `An amount up to ${left}, with a reason`,
+  footChoose: 'Choose how much to refund.',
+  partAmount: 'Amount to refund',
+  partRest: (rest: string) => `${rest} stays paid`,
+  partLimit: (left: string) => `Up to ${left}.`,
+  partFeeNote: 'The processing fee isn’t part of a part refund.',
+  partReason: 'Reason',
+  partReasonHint: 'The team reads this in the refund email.',
+  errAmount: (left: string) => `Enter an amount above $0 and up to ${left}.`,
+  errReason: 'Say why only part is refunded.',
+  partAlready: (refunded: string, day: string, left: string) => `${refunded} already refunded on ${day}. Up to ${left}.`,
+  partAlreadyMany: (refunded: string, n: number, left: string) => `${refunded} already refunded in ${n} refunds. Up to ${left}.`,
+  partBigger: (left: string, otherPossessive: string) => `Up to ${left} on this payment. Refund the rest from the ${otherPossessive} ⋯.`,
+  partButton: (amount: string) => `Refund ${amount} and email`,
+  foot: 'The team’s contact is emailed.',
+  footNoEmail: 'No email address on file. Tell the team yourself.',
+  partDoneToast: (amount: string, rest: string, email: string | null) =>
+    (email ? `Refunded ${amount} to the card. ${rest} stays paid. We emailed ${email}.` : `Refunded ${amount} to the card. ${rest} stays paid.`),
   target: (card: string) => `Refund to the card, ${card}`,
   arrives: 'Arrives in 5 to 10 business days',
+  // {bankDays}: Stripe's refund to a bank account takes about 3 business days (plan §0k).
+  arrivesBank: 'Arrives in about 3 business days',
   anotherWayLead: 'The refund to the card came back. Record the money you sent the team another way, so the team’s record and the books match.',
   whoLabel: 'Who is ending this?',
   whoOrganizer: 'The organizer is ending it',
@@ -441,4 +487,20 @@ export const REFUND_WORDS = {
   pendingToast: 'The refund is on its way to the card.',
   recordedToast: 'Refund recorded.',
   failed: 'The refund didn’t go through. Nothing was refunded. Try again.',
+  alreadyRefunded: 'This payment was already refunded.',
+} as const;
+
+/** A payment's label in a sentence (words `{scope}` / `{scopeNoun}`): "deposit", "balance", "payment" / "entry fee". */
+export const SCOPE_WORDS = {
+  scope: { deposit: 'deposit', balance: 'balance', full: 'payment' } as Record<'deposit' | 'balance' | 'full', string>,
+  noun: { deposit: 'deposit', balance: 'balance', full: 'entry fee' } as Record<'deposit' | 'balance' | 'full', string>,
+} as const;
+
+/** 12c words §1.3: the team's record shows its entry lowered by part refunds, with the reason. */
+export const TEAM_ENTRY_WORDS = {
+  one: (entry: string, lowered: string, day: string, reason: string) => `Entry ${entry} for this team, lowered ${lowered} on ${day} · ${reason}`,
+  head: (entry: string) => `Entry ${entry} for this team`,
+  lowered: (lowered: string, day: string, reason: string) => `Lowered ${lowered} on ${day} · ${reason}`,
+  stripe: 'made in Stripe',
+  owesFailed: (owes: string, amount: string) => `Owes ${owes} · ${amount} refund didn’t reach the card`,
 } as const;

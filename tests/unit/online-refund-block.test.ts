@@ -46,7 +46,7 @@ describe('the refund block (12c words §4)', () => {
   it('no refund email dates the refund by the send (the F3 class): the tournament email reads the refund row', () => {
     const src = readCode('lib/online-payment-receipt.ts');
     const fn = /export async function sendRefundEmail[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
-    assert.ok(fn.includes('refundedAt: r.created_at'), 'the block is dated by the refund row');
+    assert.ok(/refundedAt: \(\(r\.stripe_created_at as string \| null\) \?\? r\.created_at\)/.test(fn), 'the block is dated by the refund (Stripe’s moment, else the row)');
     assert.ok(!/new Date\(\)/.test(fn), 'no "now" inside the refund email');
   });
 });

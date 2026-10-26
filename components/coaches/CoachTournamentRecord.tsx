@@ -131,7 +131,7 @@ export default async function CoachTournamentRecord({
 
   const { data: team, error: teamError } = await supabaseAdmin
     .from('teams')
-    .select('id, name, coach, email, coach_email, status, registered_at, tournament_id, division_id, payment_status, deposit_paid, total_paid, payment_collected_at, check_in_status, checked_in_at, roster_submitted_at, roster_confirmed_at')
+    .select('id, name, coach, email, coach_email, status, registered_at, tournament_id, division_id, payment_status, deposit_paid, total_paid, entry_lowered, payment_collected_at, check_in_status, checked_in_at, roster_submitted_at, roster_confirmed_at')
     .eq('id', teamId)
     .maybeSingle();
 
@@ -304,6 +304,7 @@ export default async function CoachTournamentRecord({
           paymentStatus: team.payment_status ?? null,
           depositPaid: team.deposit_paid ?? null,
           totalPaid: team.total_paid ?? null,
+          entryLowered: team.entry_lowered ?? null,
           checkInStatus: team.check_in_status ?? null,
           checkedInAt: team.checked_in_at ?? null,
           rosterSubmittedAt: team.roster_submitted_at ?? null,

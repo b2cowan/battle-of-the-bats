@@ -2,6 +2,7 @@
 // probe/sweep scripts can import THIS module — the registration-week moment is verified with the
 // app's real attention engine, not a hand-copied rule (the same reason public-pages.ts moved).
 import { tournamentToday } from './timezone.ts';
+import { lowerEntry } from './tournament-teams';
 export type RegistrationAttentionKey =
   | 'pending_review'
   | 'waitlist'
@@ -31,6 +32,8 @@ export type RegistrationAttentionAnswer = {
 export type RegistrationAttentionTeam = {
   id: string;
   divisionId: string | null;
+  /** 12c (mig 382): the entry lowered by part refunds. */
+  entryLowered?: number | null;
   status: string | null;
   paymentStatus?: string | null;
   depositPaid?: number | null;
@@ -188,14 +191,14 @@ export function getRegistrationAttentionFee(
   if (context.tracksPayments === false) return {};
   const division = context.divisions.find(group => group.id === team.divisionId);
   if (context.feeMode === 'division' && division?.totalFeeAmount != null) {
-    return {
+    return lowerEntry({
       depositAmount: division.depositAmount ?? null,
       depositDueDate: division.depositDueDate ?? null,
       totalFeeAmount: division.totalFeeAmount ?? null,
       totalFeeDueDate: division.totalFeeDueDate ?? null,
-    };
+    }, team.entryLowered);
   }
-  return context.feeSchedule ?? {};
+  return lowerEntry(context.feeSchedule ?? {}, team.entryLowered);
 }
 
 export function computeRegistrationAttentionPaymentStatus(

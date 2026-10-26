@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import { canMarkLeagueFeePaid } from '@/lib/league-fee-paid';
 import { getLeagueSeasonById } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -63,21 +62,21 @@ async function load({ orgId, seasonId, unassignedId }: Ctx) {
   return { u, op, children, guardianEmail: [...regById.values()][0]?.guardian_email?.trim() ?? '' };
 }
 
-async function gate(req: Request, params: Promise<{ seasonId: string; unassignedId: string }>) {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = houseLeagueRefusal(ctx, 'read');
-  if (err) return { err };
-  if (!canMarkLeagueFeePaid(ctx!)) return { err: forbidden() };
+/** The season, read inside the club; null when it isn't this club's. */
+async function seasonOf(ctx: NonNullable<Awaited<ReturnType<typeof getAuthContextWithRole>>>, params: Promise<{ seasonId: string; unassignedId: string }>) {
   const { seasonId, unassignedId } = await params;
-  const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
-  if (!season) return { err: NextResponse.json({ error: 'Season not found' }, { status: 404 }) };
-  return { ctx: ctx!, seasonId, unassignedId };
+  const season = await getLeagueSeasonById(seasonId, ctx.org.id);
+  return season ? { season, seasonId, unassignedId } : null;
 }
 
 export const GET = withObservability(async (req: Request, { params }: { params: Promise<{ seasonId: string; unassignedId: string }> }) => {
-  const g = await gate(req, params);
-  if ('err' in g) return g.err as Response;
+  const ctx = await getAuthContextWithRole({ orgSlug: new URL(req.url).searchParams.get('orgSlug') ?? undefined, requireOrgSlug: true });
+  // The desk only (takeFees; the treasurer never refunds, §0f). Reading it is still the desk's: it is a money question.
+  const refused = houseLeagueRefusal(ctx, 'takeFees');
+  if (refused) return refused;
+  const s = await seasonOf(ctx!, params);
+  if (!s) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+  const g = { ctx: ctx!, seasonId: s.seasonId, unassignedId: s.unassignedId };
   const read = await load({ orgId: g.ctx.org.id, seasonId: g.seasonId, unassignedId: g.unassignedId });
   if (!read) return NextResponse.json({ error: 'That refund is no longer waiting.' }, { status: 404 });
   const at = (read.u.stripe_created_at as string | null) ?? (read.u.created_at as string);
@@ -92,8 +91,16 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
 }, { route: '/api/admin/house-league/seasons/[seasonId]/card-refunds/whose/[unassignedId]' });
 
 export const POST = withObservability(async (req: Request, { params }: { params: Promise<{ seasonId: string; unassignedId: string }> }) => {
-  const g = await gate(req, params);
-  if ('err' in g) return g.err as Response;
+  const ctx = await getAuthContextWithRole({ orgSlug: new URL(req.url).searchParams.get('orgSlug') ?? undefined, requireOrgSlug: true });
+  const first = houseLeagueRefusal(ctx, 'takeFees');
+  if (first) return first;
+  const s = await seasonOf(ctx!, params);
+  if (!s) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+  // Money stays open on a finished season (Q16): the gate decides, given the season.
+  const { season } = s;
+  const refused = houseLeagueRefusal(ctx, 'takeFees', season);
+  if (refused) return refused;
+  const g = { ctx: ctx!, seasonId: s.seasonId, unassignedId: s.unassignedId };
   const read = await load({ orgId: g.ctx.org.id, seasonId: g.seasonId, unassignedId: g.unassignedId });
   if (!read) return NextResponse.json({ error: 'That refund is no longer waiting.' }, { status: 404 });
   if (read.u.assigned_at) return NextResponse.json({ error: 'Someone already said whose it was.', code: 'answered' }, { status: 409 });

@@ -14,6 +14,7 @@ import { tournamentToday } from '@/lib/timezone';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { listPaymentsByTournament } from '@/lib/team-payments-server';
 import { ourTournamentTeamIds } from '@/lib/club-own-tournament-team';
+import { lowerEntryRow } from '@/lib/tournament-teams';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -29,6 +30,8 @@ type TeamExportRow = {
   registered_at: string | null;
   waitlist_position: number | null;
   division_id: string | null;
+  /** 12c (mig 382): the entry lowered by part refunds. */
+  entry_lowered: number | null;
 };
 
 type FeeRow = {
@@ -68,10 +71,11 @@ function answerValue(answer: Awaited<ReturnType<typeof getTournamentRegistration
 
 function effectiveFee(team: TeamExportRow, tournament: TournamentExportRow, divisions: Map<string, DivisionExportRow>): FeeRow {
   const group = team.division_id ? divisions.get(team.division_id) : null;
+  // 12c: the team's entry, lowered by its part refunds.
   if (tournament.fee_schedule_mode === 'division' && group?.total_fee_amount != null) {
-    return group;
+    return lowerEntryRow(group, team.entry_lowered);
   }
-  return tournament;
+  return lowerEntryRow(tournament, team.entry_lowered);
 }
 
 function paymentReadinessStatus(team: TeamExportRow, fee: FeeRow, today: string) {
@@ -137,7 +141,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
   const [{ data: teams, error: teamsError }, { data: divisions, error: groupsError }, fields] = await Promise.all([
     supabaseAdmin
       .from('teams')
-      .select('id, name, coach, email, status, payment_status, deposit_paid, total_paid, registered_at, waitlist_position, division_id')
+      .select('id, name, coach, email, status, payment_status, deposit_paid, total_paid, registered_at, waitlist_position, division_id, entry_lowered')
       .eq('tournament_id', tournamentId)
       .order('registered_at', { ascending: true }),
     supabaseAdmin

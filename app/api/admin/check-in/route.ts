@@ -89,7 +89,7 @@ export const GET = withObservability(async (req: Request) => {
   const [{ data: teamRows, error }, { data: tourn, error: tournError }, { data: divFees, error: divError }] = await Promise.all([
     supabaseAdmin
       .from('teams')
-      .select('id, name, division_id, status, payment_status, deposit_paid, total_paid, check_in_status, checked_in_at, checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes')
+      .select('id, name, division_id, status, payment_status, deposit_paid, total_paid, entry_lowered, check_in_status, checked_in_at, checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes')
       .eq('tournament_id', tournamentId)
       .eq('status', 'accepted')
       .order('name', { ascending: true }),
@@ -107,7 +107,7 @@ export const GET = withObservability(async (req: Request) => {
   // shows nothing (owner 2026-10-13), whatever amount was typed before the switch.
   const tracksPayments = tournamentTracksPayments(tourn?.settings);
   const divFeeById = new Map((divFees ?? []).map(d => [d.id, d]));
-  const owedOf = (t: { division_id: string | null; deposit_paid: number | null; total_paid: number | null }): number | null => {
+  const owedOf = (t: { division_id: string | null; deposit_paid: number | null; total_paid: number | null; entry_lowered?: number | null }): number | null => {
     if (!tracksPayments || !tourn) return null;
     const fee = effectiveFee(t, tourn, t.division_id ? divFeeById.get(t.division_id) : null);
     if (!fee.totalFeeAmount) return null;

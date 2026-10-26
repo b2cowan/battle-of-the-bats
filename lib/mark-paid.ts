@@ -6,12 +6,15 @@
  * payment, written by the database (`lib/team-payments-server.ts` `payTeamDue`), which keeps the figures as the sum of the
  * team's payments. What stays here is the fee that applies to a team, read by the check-in board's "owes".
  */
+import { lowerEntry } from './tournament-teams';
 
 /** Minimal team shape needed to compute the paid stamp. */
 export interface MarkPaidTeam {
   division_id: string | null;
   deposit_paid: number | string | null;
   total_paid: number | string | null;
+  /** 12c (mig 382): the entry lowered by part refunds. */
+  entry_lowered?: number | string | null;
 }
 
 /** Tournament-level fee fields. */
@@ -48,7 +51,7 @@ export function effectiveFee(
   division: MarkPaidDivisionFee | null | undefined,
 ): EffectiveFee {
   if (tournament.fee_schedule_mode === 'division' && division?.total_fee_amount != null) {
-    return { depositAmount: num(division.deposit_amount), totalFeeAmount: num(division.total_fee_amount) };
+    return lowerEntry({ depositAmount: num(division.deposit_amount), totalFeeAmount: num(division.total_fee_amount) }, team.entry_lowered);
   }
-  return { depositAmount: num(tournament.deposit_amount), totalFeeAmount: num(tournament.total_fee_amount) };
+  return lowerEntry({ depositAmount: num(tournament.deposit_amount), totalFeeAmount: num(tournament.total_fee_amount) }, team.entry_lowered);
 }

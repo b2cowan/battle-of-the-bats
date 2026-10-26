@@ -161,6 +161,8 @@ function parseActivatedFeatures(value: unknown): string[] {
 
 type TournamentTeamRow = {
   id: string;
+  /** 12c (mig 382): the entry lowered by part refunds. */
+  entry_lowered?: number | null;
   name: string;
   coach: string | null;
   email: string | null;
@@ -943,7 +945,7 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
 
   const { data: registrations, error: registrationError } = await supabaseAdmin
     .from('teams')
-    .select('id, name, coach, email, status, registered_at, tournament_id, division_id, payment_status, deposit_paid, total_paid')
+    .select('id, name, coach, email, status, registered_at, tournament_id, division_id, payment_status, deposit_paid, total_paid, entry_lowered')
     .in('id', registrationIds);
 
   if (registrationError) throw registrationError;
@@ -1017,6 +1019,7 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
             paymentStatus: row.payment_status ?? null,
             depositPaid: row.deposit_paid ?? null,
             totalPaid: row.total_paid ?? null,
+            entryLowered: row.entry_lowered ?? null,
             checkInStatus: null,
             checkedInAt: null,
             rosterSubmittedAt: null,

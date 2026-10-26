@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server';
 import { closedYearFromError, isClosedYearError } from './club-fiscal-year-server';
 import { moveRefused } from './club-money-route';
 import { supabaseAdmin } from './supabase-admin';
-import type { PaymentLabel, PaymentMethod, TeamOnlinePayment, TeamPayment } from './team-payments';
+import type { EntryAdjustment, PaymentLabel, PaymentMethod, TeamOnlinePayment, TeamPayment, TeamRefund } from './team-payments';
+import { resolvePersonNamer } from './db';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -173,26 +174,49 @@ export async function paymentsPostToBook(tournamentId: string): Promise<boolean>
 export async function listTeamPaymentsForRecord(teamId: string): Promise<TeamPayment[]> {
   const { data, error } = await supabaseAdmin
     .from('tournament_team_payments')
-    .select('id, team_id, amount, paid_on, label, method, entry_id, status, online_payment_id')
+    .select('id, team_id, amount, paid_on, label, method, entry_id, status, online_payment_id, refunded_amount')
     .eq('team_id', teamId)
     .or('status.eq.posted,and(status.eq.refunded,online_payment_id.not.is.null)')
     .order('paid_on', { ascending: true, nullsFirst: true }).order('ordinal', { ascending: true });
   if (error) throw error;
-  const rows = (data ?? []) as (PaymentRow & { status: 'posted' | 'refunded'; online_payment_id: string | null })[];
+  const rows = (data ?? []) as (PaymentRow & { status: 'posted' | 'refunded'; online_payment_id: string | null; refunded_amount: number | null })[];
   const onlineIds = rows.map(r => r.online_payment_id).filter((id): id is string => !!id);
   const online = new Map<string, TeamOnlinePayment>();
   if (onlineIds.length) {
     const [{ data: ops, error: opError }, { data: refunds, error: refundError }] = await Promise.all([
       supabaseAdmin.from('online_payments')
-        .select('id, receipt_no, card_brand, card_last4, base_amount, fee_amount, total_amount, fee_payer, payer_email, paid_at, livemode')
+        .select('id, receipt_no, card_brand, card_last4, base_amount, fee_amount, total_amount, fee_payer, payer_email, paid_at, livemode, scope, rail, bank_last4')
         .in('id', onlineIds),
       supabaseAdmin.from('online_payment_refunds')
-        .select('online_payment_id, status, succeeded_at, created_at')
+        .select('id, online_payment_id, status, succeeded_at, created_at, amount, fee_refunded, origin, part_refund, partial_reason, failed_at, failure_reason, stripe_refund_id, created_by, resolved_by, booked_at, family_emailed_at, family_email_failed_at')
         .in('online_payment_id', onlineIds)
         .order('created_at', { ascending: false }),
     ]);
     if (opError) throw opError;
     if (refundError) throw refundError;
+    // 12c: each refund as the record reads it; one refused before Stripe took it changed nothing and is on no screen.
+    const orgOf = await supabaseAdmin.from('teams').select('tournaments(org_id)').eq('id', teamId).maybeSingle();
+    const orgId = ((orgOf.data as { tournaments?: { org_id?: string } | null } | null)?.tournaments?.org_id) ?? null;
+    const nameOf = orgId
+      ? await resolvePersonNamer(orgId, (refunds ?? []).flatMap(r => [r.created_by as string | null, r.resolved_by as string | null]))
+      : () => null;
+    const byPayment = new Map<string, TeamRefund[]>();
+    const usedCents = new Map<string, number>();
+    for (const r of (refunds ?? []) as Array<Record<string, unknown>>) {
+      const pid = r.online_payment_id as string;
+      const live = r.status === 'pending' || r.status === 'succeeded' || !!r.booked_at;
+      if (live) usedCents.set(pid, (usedCents.get(pid) ?? 0) + Math.round((Number(r.amount) - Number(r.fee_refunded)) * 100));
+      if (!live && !(r.status === 'failed' && r.stripe_refund_id)) continue;
+      const sentAnotherWay = r.status === 'succeeded' && !!r.failure_reason;
+      byPayment.set(pid, [...(byPayment.get(pid) ?? []), {
+        id: r.id as string, amountCents: Math.round(Number(r.amount) * 100), feeBackCents: Math.round(Number(r.fee_refunded) * 100),
+        state: sentAnotherWay ? 'anotherWay' : r.status === 'failed' ? 'failed' : r.status === 'pending' ? 'pending' : 'refunded',
+        part: !!r.part_refund, stripe: r.origin === 'stripe_dashboard', reason: (r.partial_reason as string | null) ?? null,
+        createdAt: r.created_at as string, succeededAt: (r.succeeded_at as string | null) ?? null, failedAt: (r.failed_at as string | null) ?? null,
+        reference: (r.stripe_refund_id as string | null) ?? null, by: nameOf(r.created_by as string | null), resolvedBy: nameOf(r.resolved_by as string | null),
+        emailedAt: (r.family_emailed_at as string | null) ?? null, emailFailedAt: (r.family_email_failed_at as string | null) ?? null,
+      }]);
+    }
     const latest = new Map<string, { status: string; succeeded_at: string | null }>();
     for (const r of refunds ?? []) if (!latest.has(r.online_payment_id as string)) latest.set(r.online_payment_id as string, r as never);
     const cents = (v: unknown) => Math.round(Number(v) * 100);
@@ -212,6 +236,11 @@ export async function listTeamPaymentsForRecord(teamId: string): Promise<TeamPay
         test: !p.livemode,
         refund: !r ? 'none' : r.status === 'succeeded' ? 'succeeded' : r.status === 'pending' ? 'pending' : r.status === 'failed' ? 'failed' : 'none',
         refundedOn: r?.succeeded_at ?? null,
+        scope: (p.scope as 'deposit' | 'balance' | 'full') ?? 'full',
+        rail: p.rail === 'bank_debit' ? 'bank_debit' : 'card',
+        bankLast4: (p.bank_last4 as string | null) ?? null,
+        leftCents: cents(p.base_amount) - (usedCents.get(p.id as string) ?? 0),
+        refunds: byPayment.get(p.id as string) ?? [],
       });
     }
   }
@@ -219,5 +248,16 @@ export async function listTeamPaymentsForRecord(teamId: string): Promise<TeamPay
     ...toPayment(r),
     status: r.status,
     online: r.online_payment_id ? online.get(r.online_payment_id) ?? null : null,
+    refundedAmount: Number(r.refunded_amount ?? 0),
+  }));
+}
+
+/** 12c words §1.3: a team's entry lowered by part refunds — each lowering, oldest first. */
+export async function listEntryAdjustments(teamId: string): Promise<EntryAdjustment[]> {
+  const { data, error } = await supabaseAdmin.from('tournament_team_entry_adjustments')
+    .select('amount, reason, origin, created_at').eq('team_id', teamId).order('created_at', { ascending: true });
+  if (error) throw error;
+  return ((data ?? []) as Array<{ amount: number; reason: string | null; origin: string; created_at: string }>).map(a => ({
+    amountCents: Math.round(Number(a.amount) * 100), reason: a.reason, stripe: a.origin === 'stripe_dashboard', at: a.created_at,
   }));
 }

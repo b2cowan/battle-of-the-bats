@@ -340,16 +340,32 @@ export async function expireCheckoutSession(sessionId: string): Promise<void> {
 
 type RefundOutcome = { state: 'succeeded' | 'pending' | 'failed'; refundId: string };
 
+/** The returned-refund item's words for a team (12c words §1.6): which refund, to which card, whose team. */
+async function teamRefundFailedWords(refundId: string, onlinePaymentId: string): Promise<{ org_id: string; tournament_id: string | null; title: string; body: string } | null> {
+  const [{ data: op }, { data: r }] = await Promise.all([
+    supabaseAdmin.from('online_payments').select('org_id, tournament_id, team_id, description, card_brand, card_last4, bank_last4, rail').eq('id', onlinePaymentId).maybeSingle(),
+    supabaseAdmin.from('online_payment_refunds').select('amount').eq('id', refundId).maybeSingle(),
+  ]);
+  if (!op) return null;
+  const { data: team } = op.team_id ? await supabaseAdmin.from('teams').select('name').eq('id', op.team_id as string).maybeSingle() : { data: null };
+  const name = (team?.name as string | undefined) ?? (op.description as string).split(' · ')[0];
+  const card = op.rail === 'bank_debit' ? `the account ending ${op.bank_last4 ?? ''}` : cardLabel(op.card_brand as string | null, op.card_last4 as string | null);
+  return {
+    org_id: op.org_id as string, tournament_id: (op.tournament_id as string | null) ?? null,
+    title: W.refundFailedTitleTeam(name), body: W.refundFailedBody(formatMoney(Number(r?.amount ?? 0)), card, name),
+  };
+}
+
 async function refundFailed(refundId: string, stripeRefundId: string | null, reason: string, onlinePaymentId: string): Promise<void> {
   await supabaseAdmin.rpc('online_payment_refund_failed', { p_refund: refundId, p_stripe_refund: stripeRefundId, p_reason: reason });
-  const { data } = await supabaseAdmin.from('online_payments').select('org_id, description, tournament_id').eq('id', onlinePaymentId).maybeSingle();
-  const org = data ? await orgById(data.org_id as string) : null;
+  const data = await teamRefundFailedWords(refundId, onlinePaymentId);
+  const org = data ? await orgById(data.org_id) : null;
   if (!org || !data) return;
   await raiseOnce({
     org, userIds: await refundPeople(org), eventType: 'card_refund_failed',
     subjectKey: 'onlinePaymentId', subjectId: onlinePaymentId,
-    title: W.refundFailedTitle,
-    body: W.refundFailedBody(data.description as string),
+    title: data.title,
+    body: data.body,
     link: data.tournament_id ? `/${org.slug}/admin/tournaments/registrations?tournament=${data.tournament_id}` : `/${org.slug}/admin`,
   });
 }
@@ -395,6 +411,38 @@ export async function refundOnlinePayment(p: {
     const type = (e as { type?: string } | null)?.type;
     if (type === 'StripeConnectionError' || type === 'StripeAPIError') return { state: 'pending', refundId: id };
     await refundFailed(id, null, e instanceof Error ? e.message : 'Stripe refused the refund', p.onlinePaymentId);
+    return { state: 'failed', refundId: id };
+  }
+  await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id, stripe_created_at: stripeMoment(refund), updated_at: new Date().toISOString() }).eq('id', id);
+  return applyStripeRefund(refund, id, p.onlinePaymentId);
+}
+
+/**
+ * A team's PART refund to the card (12c, §0j 1–2): opened with its amount and reason (never the processing fee), asked of
+ * Stripe, booked the moment Stripe accepts it — the payment row, the "Refunds" line and the team's lowered entry, so the
+ * refund is never owed back — and the team's contact emailed once. A refusal changes nothing; a lost connection is pending
+ * and its event books it.
+ */
+export async function refundTeamPart(p: {
+  onlinePaymentId: string; amount: number; partialReason: string; note: string | null; actorId: string;
+}): Promise<RefundOutcome> {
+  const { data: refundId, error } = await supabaseAdmin.rpc('online_payment_refund_open', {
+    p_online_payment: p.onlinePaymentId, p_fee_included: false, p_reason: null, p_note: p.note, p_actor: p.actorId, p_origin: 'app',
+    p_item: null, p_amount: p.amount, p_partial_reason: p.partialReason,
+  });
+  if (error) throw new Error(error.message);
+  const id = refundId as string;
+  const { data: op } = await supabaseAdmin.from('online_payments').select('stripe_account_id, stripe_payment_intent_id').eq('id', p.onlinePaymentId).single();
+  let refund: Stripe.Refund;
+  try {
+    refund = await refundToCard({
+      accountId: op!.stripe_account_id as string, paymentIntentId: op!.stripe_payment_intent_id as string,
+      amountCents: Math.round(p.amount * 100), refundId: id, metadata: { online_payment_id: p.onlinePaymentId, refund_id: id },
+    });
+  } catch (e) {
+    const type = (e as { type?: string } | null)?.type;
+    if (type === 'StripeConnectionError' || type === 'StripeAPIError') return { state: 'pending', refundId: id };
+    await teamPartRefundFailed(id, null, e instanceof Error ? e.message : 'Stripe refused the refund', p.onlinePaymentId);
     return { state: 'failed', refundId: id };
   }
   await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id, stripe_created_at: stripeMoment(refund), updated_at: new Date().toISOString() }).eq('id', id);
@@ -580,17 +628,17 @@ async function bookTeamRefund(refundId: string, stripeRefundId: string | null, s
  *  another way (`online_payment_league_refund_resolve`, flow-blind). */
 async function teamPartRefundFailed(refundId: string, stripeRefundId: string | null, reason: string, onlinePaymentId: string): Promise<void> {
   await supabaseAdmin.rpc('online_payment_refund_failed', { p_refund: refundId, p_stripe_refund: stripeRefundId, p_reason: reason });
-  const [{ data: r }, { data: op }] = await Promise.all([
+  const [{ data: r }, op] = await Promise.all([
     supabaseAdmin.from('online_payment_refunds').select('booked_at').eq('id', refundId).maybeSingle(),
-    supabaseAdmin.from('online_payments').select('org_id, description, tournament_id').eq('id', onlinePaymentId).maybeSingle(),
+    teamRefundFailedWords(refundId, onlinePaymentId),
   ]);
   if (!r?.booked_at || !op) return; // refused before it was booked: nothing changed, and the window said so
-  const org = await orgById(op.org_id as string);
+  const org = await orgById(op.org_id);
   if (!org) return;
   await raiseOnce({
     org, userIds: await refundPeople(org), eventType: 'card_refund_failed',
     subjectKey: 'onlinePaymentId', subjectId: onlinePaymentId,
-    title: W.refundFailedTitle, body: W.refundFailedBody(op.description as string),
+    title: op.title, body: op.body,
     link: op.tournament_id ? `/${org.slug}/admin/tournaments/registrations?tournament=${op.tournament_id}` : `/${org.slug}/admin`,
     extra: { refundId },
   });

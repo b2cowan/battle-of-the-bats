@@ -8,8 +8,9 @@ import { loadTeamPayFacts } from './team-pay-facts';
 import { refusalMessage } from './team-pay-view';
 import { teamPayUrl } from './team-pay-link';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
-import { ONLINE_EMAIL_WORDS as E, REFUND_BLOCK_WORDS, SCOPE_LINE, cardLabel, money, receiptLabel } from './online-payment-words';
+import { ONLINE_EMAIL_WORDS as E, REFUND_BLOCK_WORDS, SCOPE_LINE, SCOPE_WORDS, cardLabel, money, receiptLabel } from './online-payment-words';
 import { refundBlockHtml, type RefundBlockInput } from './online-refund-block';
+import { registrationReference } from './utils';
 import { stampRefundEmailed } from './online-refund-email';
 import { loadLeaguePayFacts } from './league-pay-facts';
 import { transactionalFamilyFooterHtml } from './family-mail-footer';
@@ -133,7 +134,7 @@ async function sendReceipt(op: OnlineForEmail): Promise<void> {
 export async function sendRefundEmail(refundId: string, extra?: { lead?: string; lines?: string[] }): Promise<void> {
   try {
     const { data: r } = await supabaseAdmin.from('online_payment_refunds')
-      .select('online_payment_id, amount, fee_refunded, note, created_at, stripe_refund_id').eq('id', refundId).maybeSingle();
+      .select('online_payment_id, amount, fee_refunded, note, created_at, stripe_created_at, stripe_refund_id, part_refund, partial_reason').eq('id', refundId).maybeSingle();
     if (!r) return;
     const { data } = await supabaseAdmin.from('online_payments').select(ONLINE_EMAIL_COLUMNS).eq('id', r.online_payment_id as string).maybeSingle();
     const op = data as OnlineForEmail | null;
@@ -147,15 +148,34 @@ export async function sendRefundEmail(refundId: string, extra?: { lead?: string;
     const test = !op.livemode;
     const block: RefundBlockInput = {
       refundCents: Math.round(Number(r.amount) * 100), bank: op.rail === 'bank_debit', cardBrand: op.card_brand, cardLast4: op.card_last4,
-      bankLast4: op.bank_last4, refundedAt: r.created_at as string, reference: (r.stripe_refund_id as string | null) ?? null,
+      bankLast4: op.bank_last4, refundedAt: ((r.stripe_created_at as string | null) ?? r.created_at) as string, reference: (r.stripe_refund_id as string | null) ?? null,
       receiptNo: op.receipt_no, paidOn: op.paid_on, feeBackCents: Math.round(Number(r.fee_refunded) * 100),
       feeKeptCents: op.fee_payer === 'family' && Number(r.fee_refunded) === 0 ? Math.round(Number(op.fee_amount) * 100) : 0,
     };
+    // 12c words §1.5: a team's PART refund names what changed (its reason, the entry now) and what is left to pay. The
+    // team's figures are read after the booking, so the entry is already lowered (lowerEntry) and the balance unmoved.
+    const part = !!r.part_refund;
+    const partLines: string[] = [];
+    if (part) {
+      if (r.partial_reason) partLines.push(E.refundReason(facts.org.name, r.partial_reason as string));
+    }
+    const after: string[] = [];
+    if (part && facts.fee.totalFeeAmount != null) {
+      after.push(E.refundEntryNow(money(Number(facts.fee.totalFeeAmount))));
+      const balance = Math.round((Number(facts.fee.totalFeeAmount) - facts.totalPaid) * 100) / 100;
+      after.push(balance > 0
+        ? E.refundBalanceNow(money(balance), facts.fee.totalFeeDueDate ? formatStoredDate(facts.fee.totalFeeDueDate) : null)
+        : E.refundPaidInFull(facts.teamName));
+    }
+    const lead = extra?.lead ?? (part
+      ? E.refundLeadPart(money(Number(r.amount)), facts.teamName, SCOPE_WORDS.scope[op.scope], facts.tournament.name)
+      : E.refundLead(facts.teamName, facts.tournament.name));
     const lines = [
       `<div style="display:none;max-height:0;overflow:hidden;">${escapeHtml(REFUND_BLOCK_WORDS.preheader(money(Number(r.amount)), block.bank))}</div>`,
-      warmEmailHeading(escapeHtml(extra?.lead ?? E.refundLead(facts.teamName, facts.tournament.name))),
-      ...(extra?.lines ?? []).map(l => warmEmailParagraph(escapeHtml(l))),
+      warmEmailHeading(escapeHtml(lead)),
+      ...[...partLines, ...(extra?.lines ?? [])].map(l => warmEmailParagraph(escapeHtml(l))),
       refundBlockHtml(block),
+      ...after.map(l => warmEmailParagraph(escapeHtml(l))),
     ];
     if (r.note) lines.push(warmEmailParagraph(escapeHtml(r.note as string)));
     lines.push(warmEmailSmall(escapeHtml(E.refundQuestions(face?.contact ?? null) || E.refundQuestionsClub(facts.org.name))));
@@ -223,7 +243,7 @@ export async function sendLeaguePayLink(
   const L = LW.linkEmail;
   const names = childList(facts.shares.map(s => s.description.split(' · ')[0].split(' ')[0]));
   const { data: anchor } = await supabaseAdmin.from('league_registrations').select('signup_ref').eq('id', registrationId).maybeSingle();
-  const reference = (anchor?.signup_ref as string | null) ?? registrationId.replace(/-/g, '').slice(0, 8).toUpperCase();
+  const reference = (anchor?.signup_ref as string | null) ?? registrationReference(registrationId);
   const how = facts.season.howToPay?.trim() || null;
   const html = warmEmailDocument([
     warmEmailParagraph(escapeHtml(refunded ? LW.linkEmailRefunded(facts.org.name, refunded.child, facts.season.name, refunded.childFirst, refunded.owing)

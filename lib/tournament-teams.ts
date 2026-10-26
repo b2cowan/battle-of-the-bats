@@ -32,6 +32,8 @@ export interface TeamRecord {
   waitlistPosition?: number | null;
   seed?: number | null;
   customAnswers?: Array<{ fieldId: string; label: string; fieldType: string; value: string }>;
+  /** 12c (mig 382): how much this team's entry is lowered by part refunds (`teams.entry_lowered`). */
+  entryLowered?: number;
 }
 
 export interface PoolSlot {
@@ -59,17 +61,37 @@ export function formatMoney(value: number): string {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
 }
 
-export function getEffectiveFee(team: Pick<TeamRecord, 'division_id'>, divisions: Division[], feeMode: FeeMode, feeSchedule: FeeSchedule): FeeSchedule {
+/**
+ * THE LOWERED ENTRY (Club Tier Stage 12c, owner ruling §0j 3; mig 382): a part refund lowers that team's entry by the same
+ * amount, so the refund is never owed back. Every reader of a team's fee applies it — the fee less `teams.entry_lowered`,
+ * never below zero, the deposit never above the entry — exactly as the database's `tournament_team_fee` does.
+ */
+export function lowerEntry<T extends { totalFeeAmount?: number | null; depositAmount?: number | null }>(fee: T, lowered: number | string | null | undefined): T {
+  const by = Number(lowered ?? 0);
+  if (!by || fee.totalFeeAmount == null) return fee;
+  const total = Math.max(0, Math.round((Number(fee.totalFeeAmount) - by) * 100) / 100);
+  return { ...fee, totalFeeAmount: total, depositAmount: fee.depositAmount == null ? fee.depositAmount : Math.min(Number(fee.depositAmount), total) };
+}
+
+/** The same rule on a fee row in the database's own names (an export, a dashboard). */
+export function lowerEntryRow<T extends { total_fee_amount: number | null; deposit_amount: number | null }>(fee: T, lowered: number | string | null | undefined): T {
+  const by = Number(lowered ?? 0);
+  if (!by || fee.total_fee_amount == null) return fee;
+  const total = Math.max(0, Math.round((Number(fee.total_fee_amount) - by) * 100) / 100);
+  return { ...fee, total_fee_amount: total, deposit_amount: fee.deposit_amount == null ? null : Math.min(Number(fee.deposit_amount), total) };
+}
+
+export function getEffectiveFee(team: Pick<TeamRecord, 'division_id'> & { entryLowered?: number | null }, divisions: Division[], feeMode: FeeMode, feeSchedule: FeeSchedule): FeeSchedule {
   const agFee = divisions.find(g => g.id === team.division_id);
   if (feeMode === 'division' && agFee?.totalFeeAmount != null) {
-    return {
+    return lowerEntry({
       depositAmount: agFee.depositAmount ?? null,
       depositDueDate: agFee.depositDueDate ?? null,
       totalFeeAmount: agFee.totalFeeAmount ?? null,
       totalFeeDueDate: agFee.totalFeeDueDate ?? null,
-    };
+    }, team.entryLowered);
   }
-  return feeSchedule;
+  return lowerEntry(feeSchedule, team.entryLowered);
 }
 
 export function hasDepositStep(fee: FeeSchedule): boolean {

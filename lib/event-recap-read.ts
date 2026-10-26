@@ -28,7 +28,7 @@ type RecapTournamentRow = {
   total_fee_due_date: string | null;
 };
 
-type RecapPaymentRow = { id: string; division_id: string | null; status: string | null; total_paid: number | null };
+type RecapPaymentRow = { id: string; division_id: string | null; status: string | null; total_paid: number | null; entry_lowered: number | null };
 
 const num = (value: unknown) => (value == null ? null : Number(value));
 
@@ -41,7 +41,7 @@ export async function loadEventRecap(tournamentId: string, orgSlug: string): Pro
       .maybeSingle<RecapTournamentRow>(),
     supabaseAdmin
       .from('teams')
-      .select('id, division_id, status, total_paid')
+      .select('id, division_id, status, total_paid, entry_lowered')
       .eq('tournament_id', tournamentId),
     getTeams(tournamentId, { admin: true }),
     getGames(tournamentId, { admin: true }),
@@ -74,6 +74,7 @@ export async function loadEventRecap(tournamentId: string, orgSlug: string): Pro
       divisionId: p.division_id,
       status: p.status,
       totalPaid: num(p.total_paid),
+      entryLowered: num(p.entry_lowered),
     })),
     publicBase: t.slug ? `/${orgSlug}/${t.slug}` : null,
   });

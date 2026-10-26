@@ -5,7 +5,7 @@ import { withObservability } from '@/lib/observability';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { onlinePaymentsOn, ONLINE_PAYMENTS_OFF_ERROR } from '@/lib/online-payments-switch';
 import { canRefundOnline } from '@/lib/online-payment-access';
-import { recordRefundAnotherWay, refundOnlinePayment } from '@/lib/online-payment-landing';
+import { recordRefundAnotherWay, refundOnlinePayment, refundTeamPart, resolveLeagueRefundAnotherWay } from '@/lib/online-payment-landing';
 import { sendTeamPayLink } from '@/lib/online-payment-receipt';
 
 export const runtime = 'nodejs';
@@ -15,6 +15,7 @@ export const dynamic = 'force-dynamic';
  * A team record's online-payment doors (Club Tier Stage 12a, build prompt Parts 4–5):
  *
  *   POST { action: 'refund', onlinePaymentId, feeIncluded, reason, note }          refund to the card, in full (A12)
+ *   POST { action: 'refund', onlinePaymentId, amount, partialReason, note }       12c: part of it (never the fee; lowers the entry)
  *   POST { action: 'refund_another_way', onlinePaymentId, feeIncluded, reason, note }  after a refund to the card came back
  *   POST { action: 'email_pay_link', teamId }                                      "Email the pay link" → "Pay link sent"
  *
@@ -56,20 +57,36 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     if (body.action === 'refund' && (!acct || acct.disconnected_at)) return json({ error: 'Payouts are disconnected: refund this payment in Stripe.' }, 409);
     if (body.action === 'refund_another_way') {
       // Only after a refund to the card came back (review 2026-10-25, M3): otherwise Stripe still holds the money.
-      const { data: last } = await supabaseAdmin.from('online_payment_refunds').select('status')
+      const { data: last } = await supabaseAdmin.from('online_payment_refunds').select('id, status, part_refund, booked_at')
         .eq('online_payment_id', body.onlinePaymentId).order('created_at', { ascending: false }).limit(1).maybeSingle();
-      if (last?.status !== 'failed') return json({ error: 'Refund it to the card first. Record a refund made another way only when that refund came back.' }, 409);
+      if (last?.status !== 'failed') return json({ error: 'Refund it to the card first. Record the refund sent another way only when that refund came back.' }, 409);
+      // 12c: a part refund that came back is already in the record and the books (it lowered the entry): marked done.
+      if (last.part_refund && last.booked_at) {
+        await resolveLeagueRefundAnotherWay(last.id as string, ctx.user.id);
+        return json({ state: 'succeeded', refundId: last.id });
+      }
     }
     const reason = body.reason === 'organizer_ended' || body.reason === 'team_left' ? body.reason : null;
     const note = typeof body.note === 'string' ? body.note.trim().slice(0, 1000) || null : null;
     const args = { onlinePaymentId: body.onlinePaymentId, feeIncluded: body.feeIncluded === true, reason, note, actorId: ctx.user.id } as const;
+    // 12c: part of it — an amount and a reason; the database caps it at what is left and never adds the fee.
+    const amount = typeof body.amount === 'number' && Number.isFinite(body.amount) ? Math.round(body.amount * 100) / 100 : null;
+    const partialReason = typeof body.partialReason === 'string' ? body.partialReason.trim().slice(0, 500) : '';
+    if (body.action === 'refund' && amount != null && !partialReason) return json({ error: 'Say why only part is refunded.' }, 400);
     try {
-      const outcome = body.action === 'refund' ? await refundOnlinePayment(args) : await recordRefundAnotherWay(args);
+      const outcome = body.action === 'refund'
+        ? (amount != null ? await refundTeamPart({ onlinePaymentId: body.onlinePaymentId, amount, partialReason, note, actorId: ctx.user.id }) : await refundOnlinePayment(args))
+        : await recordRefundAnotherWay(args);
       return json(outcome, outcome.state === 'failed' ? 502 : 200);
     } catch (e) {
       const message = e instanceof Error ? e.message : '';
       if (message.includes('already being refunded')) return json({ error: 'This payment is already being refunded.' }, 409);
-      if (message.includes('can no longer be refunded')) return json({ error: 'This payment was already refunded.' }, 409);
+      if (message.includes('can no longer be refunded') || message.includes('already refunded')) return json({ error: 'This payment was already refunded.' }, 409);
+      // 12c: the database's own refusals, in the window's words.
+      const left = /no more than what is left: ([0-9.]+)/.exec(message);
+      if (left) return json({ error: `Enter an amount above $0 and up to $${Number(left[1]).toFixed(2)}.` }, 409);
+      if (message.includes('needs a reason')) return json({ error: 'Say why only part is refunded.' }, 400);
+      if (message.includes('isn\u2019t in the team\u2019s record') || message.includes("isn't in the team's record")) return json({ error: 'This payment isn’t in the team’s record yet. Refund all of it instead.' }, 409);
       throw e;
     }
   }

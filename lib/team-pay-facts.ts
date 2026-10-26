@@ -35,7 +35,7 @@ export interface TeamPayFacts {
 export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | null> {
   const { data: team } = await supabaseAdmin
     .from('teams')
-    .select('id, name, email, coach_email, status, division_id, tournament_id, total_paid, deposit_paid')
+    .select('id, name, email, coach_email, status, division_id, tournament_id, total_paid, deposit_paid, entry_lowered')
     .eq('id', teamId)
     .maybeSingle();
   if (!team) return null;

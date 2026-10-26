@@ -364,8 +364,8 @@ const paymentReminder: Resolver = async rows => {
   const out = new Map<string, Verdict>();
   const ids = uniq(rows.map(r => meta(r, 'registrationId')));
   if (!ids.length) return out;
-  type T = { id: string; status: string | null; tournament_id: string; division_id: string; deposit_paid: number | null; total_paid: number | null };
-  const teams = await rowsIn<T>('teams', 'id, status, tournament_id, division_id, deposit_paid, total_paid', 'id', ids);
+  type T = { id: string; status: string | null; tournament_id: string; division_id: string; deposit_paid: number | null; total_paid: number | null; entry_lowered: number | null };
+  const teams = await rowsIn<T>('teams', 'id, status, tournament_id, division_id, deposit_paid, total_paid, entry_lowered', 'id', ids);
   const [tournaments, divisions] = await Promise.all([
     rowsIn<DueTournament & { id: string; settings: unknown }>('tournaments', 'id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings', 'id', uniq(teams.map(t => t.tournament_id))),
     rowsIn<DueDivision & { id: string }>('divisions', 'id, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date', 'id', uniq(teams.map(t => t.division_id))),
