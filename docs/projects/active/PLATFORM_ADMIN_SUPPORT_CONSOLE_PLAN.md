@@ -170,7 +170,7 @@ belongs to the bookkeeping session.
 | S6 Club release jobs | Club web addresses list + quota, set up a club from a lead, H03 | Rides the Club release |
 | S7 Growth & product | Leads, Campaigns, Pitch decks list, Plans & pricing, Approval queue, Templates, Export registry. H1 | — |
 | S8 Records | Staff + roles (Q1, M3), audit search server-side (M4), Help | A role change is a security change, drawn first |
-| S9 Company accounting review | The two walks over Bookkeeping: record a purchase, find a receipt, correct an entry, a period's spending, the accountant's package | Trigger: `BOOKKEEPING_OWNER_EXPERIENCE_PLAN.md` complete |
+| S9 Company accounting review | The two walks over Bookkeeping: record a purchase, find a receipt, correct an entry, a period's spending, the accountant's package | Trigger (owner, 2026-10-25, R9 in `BOOKKEEPING_OWNER_EXPERIENCE_PLAN.md` §11): **S9a** after the first real expense-and-owner close has been handed to the outside accountant; **S9b** after the first full month with live Stripe income has been closed |
 
 Open TODO lines:
 - **In:** timed grants (S4, with the tier trial), and observability and feedback screens (S5).
