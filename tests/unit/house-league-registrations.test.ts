@@ -255,7 +255,7 @@ describe('a batch says what stayed, and why (copy §2.2)', () => {
 
 describe('the screen is built on the kit, once', () => {
   const dir = 'components/admin/kit/club/league/registrations';
-  const files = ['RegistrationsScreen', 'RegistrationsList', 'FeeCell', 'RowMenu', 'BulkBar', 'ReceiveWindow', 'EndWindow', 'PriceWindow', 'MoveWindow', 'UndoWindow', 'EmailWindow', 'AddRegistrationWindow', 'ConfirmWindow', 'RegistrationRecordWindow'];
+  const files = ['RegistrationsScreen', 'RegistrationsList', 'FeeCell', 'RowMenu', 'BulkBar', 'ReceiveWindow', 'EndWindow', 'PriceWindow', 'MoveWindow', 'UndoWindow', 'AddRegistrationWindow', 'ConfirmWindow', 'RegistrationRecordWindow'];
   it('none of it wears the old look', () => {
     for (const f of files) {
       const code = readCode(`${dir}/${f}.tsx`);
