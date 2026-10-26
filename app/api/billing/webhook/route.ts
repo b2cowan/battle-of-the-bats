@@ -33,6 +33,7 @@ import { clearSettled } from '@/lib/needs-attention';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
 import { withObservability } from '@/lib/observability';
+import { isTheRecordsSubscription, recordFollowsSubscription, subscriptionIsPaying } from '@/lib/stripe-billing-state';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,6 +63,11 @@ async function cancelPriorTeamSubscription(subscriptionId: string | null | undef
   } catch (error) {
     console.error('[billing webhook] could not cancel prior Coaches Portal subscription:', error);
   }
+}
+
+/** The subscription an invoice bills, when it bills one (a one-off invoice made in Stripe's dashboard bills none). */
+function invoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  return stripeId(invoice.parent?.subscription_details?.subscription ?? null);
 }
 
 export const POST = withObservability(async (req: Request) => {
@@ -370,6 +376,16 @@ export const POST = withObservability(async (req: Request) => {
           .select('id, plan_id, subscription_status, stripe_subscription_id')
           .eq('stripe_customer_id', customerId)
           .maybeSingle();
+
+        // ⚠⚠ A SECOND SUBSCRIPTION DOES NOT TAKE THE RECORD OVER (see recordFollowsSubscription). Asked of Stripe
+        // only when a different one is on file; a failed ask throws, so Stripe retries rather than guessing.
+        const onFileId = currentOrg?.stripe_subscription_id ?? null;
+        if (onFileId && onFileId !== sub.id && !onFileId.startsWith('mock_')
+          && !recordFollowsSubscription({ onFileId, incomingId: sub.id, onFileIsPaying: await subscriptionIsPaying(onFileId, currentOrg?.subscription_status ?? null, id => stripe.subscriptions.retrieve(id)) })) {
+          console.warn(`[billing webhook] ignored ${sub.id}: ${currentOrg?.id} already follows live subscription ${onFileId}`);
+          break;
+        }
+
         const { data: updatedOrg } = await supabaseAdmin
           .from('organizations')
           .update({
@@ -589,9 +605,17 @@ export const POST = withObservability(async (req: Request) => {
 
       const { data: org } = await supabaseAdmin
         .from('organizations')
-        .select('id, name, plan_id, subscription_status')
+        .select('id, name, plan_id, subscription_status, stripe_subscription_id')
         .eq('stripe_customer_id', customerId)
         .maybeSingle();
+
+      // ⚠⚠ ONLY THE SUBSCRIPTION ON FILE CAN END THE CLUB'S PLAN. A stray one deleted in Stripe's dashboard (or the old
+      // one after a new one took over) used to run everything below: blank the record, and with no cancellation on
+      // file archive the tournaments and suspend a club that was still paying.
+      if (org && !isTheRecordsSubscription(org.stripe_subscription_id, sub.id)) {
+        console.warn(`[billing webhook] ignored deletion of ${sub.id}: ${org.id} follows ${org.stripe_subscription_id}`);
+        break;
+      }
 
       if (org) {
         // Check whether an in-app confirm route (cancel or downgrade-to-free) already
@@ -743,6 +767,8 @@ export const POST = withObservability(async (req: Request) => {
         .select('id, plan_id, subscription_status, stripe_subscription_id')
         .eq('stripe_customer_id', customerId)
         .maybeSingle();
+      // A stray subscription's payment (or a Coaches Portal's) says nothing about the club's own.
+      if (currentOrg && !isTheRecordsSubscription(currentOrg.stripe_subscription_id, invoiceSubscriptionId(invoice))) break;
       await supabaseAdmin
         .from('organizations')
         .update({
@@ -791,11 +817,13 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     case 'invoice.payment_failed': {
+      const failedInvoice = event.data.object as Stripe.Invoice;
       const { data: currentOrg } = await supabaseAdmin
         .from('organizations')
-        .select('id, slug, plan_id, subscription_status')
+        .select('id, slug, plan_id, subscription_status, stripe_subscription_id')
         .eq('stripe_customer_id', customerId)
         .maybeSingle();
+      if (currentOrg && !isTheRecordsSubscription(currentOrg.stripe_subscription_id, invoiceSubscriptionId(failedInvoice))) break;
       await supabaseAdmin
         .from('organizations')
         .update({ subscription_status: 'past_due' })
@@ -837,10 +865,10 @@ export const POST = withObservability(async (req: Request) => {
       const sub = event.data.object as Stripe.Subscription;
       const { data: org } = await supabaseAdmin
         .from('organizations')
-        .select('id, name, slug, plan_id')
+        .select('id, name, slug, plan_id, stripe_subscription_id')
         .eq('stripe_customer_id', customerId)
         .maybeSingle();
-      if (!org) break;
+      if (!org || !isTheRecordsSubscription(org.stripe_subscription_id, sub.id)) break;
 
       const ownerEmail = await getOrgOwnerEmail(org.id);
       if (!ownerEmail) break;

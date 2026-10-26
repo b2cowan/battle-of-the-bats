@@ -8,6 +8,7 @@ import { writeGrowthEvent } from './platform-events';
 import { MOVE_METADATA_KEY } from './plan-growth';
 import type { OrgPlan } from './types';
 import { ownPlanOf } from './entitlement-grants';
+import { PAYING_STATUSES } from './stripe-billing-state';
 
 /**
  * MOVING A PAYING ORGANIZATION BETWEEN PLANS — ONE SUBSCRIPTION, NEVER A SECOND CHECKOUT
@@ -88,7 +89,7 @@ export type MovePreview =
 
 export type ScheduledMove = { toPlan: OrgPlan; effectiveAt: string | null; scheduleId: string };
 
-const LIVE_STATUSES = new Set(['active', 'trialing', 'past_due']);
+const LIVE_STATUSES = PAYING_STATUSES;
 
 type LiveSub = { sub: Stripe.Subscription; item: Stripe.SubscriptionItem; billingCycle: BillingCycle };
 
