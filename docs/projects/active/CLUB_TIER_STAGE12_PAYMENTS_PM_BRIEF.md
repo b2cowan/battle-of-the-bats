@@ -37,8 +37,11 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
 2. **One checkout for everything.** Every program uses the same pay block. Card is the main button and bank debit sits
    beside it, and each shows its fee and total before paying. Stripe's own secure page takes the payment, then a receipt
    arrives in the club's name. Paying by e-Transfer is still offered underneath.
-3. **12b · House league.** Pay now appears on the sign-up confirmation, the status page, and the acceptance and
-   waitlist emails. Convenors see "paid online" beside "paid by hand". Ending a registration refunds the card.
+3. **12b · House league — built 2026-10-25, walk owed.** Pay now appears on the sign-up confirmation, the status page,
+   and the sign-up, approval and waitlist emails; brothers and sisters pay in one checkout, and the pay link opens the
+   family's page without a password. Convenors see "Online, card" beside "by hand", email the pay link, and refund to
+   the card from the ending or the price correction, all of it or part. Still to decide: where the treasurer refunds
+   (they can't open Registrations today), and part-refunds for tournament teams.
 4. **Tournaments, built with 12a** (moved forward 2026-10-25 so 12a can be tried end to end). Once the organizer
    accepts a team, it pays its deposit or full entry by card from the acceptance email, and pays the balance from the
    reminder email.

@@ -1,0 +1,249 @@
+<title>12b Card Payments Walk</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 12b · §380</span>
+    <h1>Families pay by card</h1>
+    <p class="sub">Written 2026-10-25. One purpose: a family pays house-league fees by card, and the desk sees it, emails pay links and refunds.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>You walk the family’s side on a phone (sign-up, the secure payment page, the receipt) and the desk’s side on a desktop (the pay link, a payment that couldn’t be recorded, refunds, a corrected price, the books). Then two quick re-checks: the tournament pay page, and League Plus.</p>
+    <p><strong>It passes when</strong> the family never sees "Paid" before the payment is confirmed, every card payment shows the same receipt number everywhere it appears, every refund says in words where the money went, the processing fee is always shown before the family pays, and the books agree with the rows.</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked.</p>
+    <dl class="facts">
+      <dt>Where</dt><dd>Dev on Amplify, or local at <code>http://localhost:3000</code>, with online payments switched on and a pay-link secret set.</dd>
+      <dt>Payouts</dt><dd>The test Stripe account from the 12a walks is connected on the Club-plan club. Settings › Payouts reads "Families and teams can pay online".</dd>
+      <dt>Webhooks</dt><dd>Both Stripe listen windows are running locally (or the staging webhook is on).</dd>
+      <dt>Season</dt><dd>A house-league season with a price of $150, How to pay text written, and registration open.</dd>
+      <dt>Sign in as</dt><dd>Owner, registrar and treasurer. Plus a family on a phone, using any email you can read.</dd>
+      <dt>Test card</dt><dd><code>4242 4242 4242 4242</code>, any future date, any three digits.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <p class="sub">The email checks deferred from the 12a walks belong to the one final end-to-end pass on Amplify dev, not this walk.</p>
+  </section>
+</main>
+
+<script>
+(function () {
+  var KEY = 'club-tier-12b-card-payments-walk-v1';
+  var F = 'A family, phone', O = 'Owner, computer', R = 'Registrar, computer', RP = 'Registrar, phone', T = 'Treasurer, computer', L = 'Owner, League Plus club';
+  var PARTS = [
+    { id: 'A', title: 'One child', steps: [
+      { who: F, do: 'Sign up one child into a division that has room and accepts on its own.', see: 'The confirmation shows "To pay now" with the child’s line and a "Pay $X by card" button. Under the button: "includes a $Y processing fee". The refund policy link shows if the club wrote one. Below that, "Or pay another way" with the club’s How to pay text.' },
+      { who: F, do: 'Press the pay button.', see: 'The button reads "Opening the secure payment page…". Then Stripe opens in the club’s name, with a "Processing fee" line and your email already filled in.' },
+      { who: F, do: 'Pay with the test card.', see: 'You land back on the status page, which reads "Confirming your payment". Then it shows the receipt: "Paid, thank you", the card’s last four digits and a receipt number. It never says "Paid" before the payment is confirmed.' },
+      { who: F, do: 'Open the receipt email.', see: 'It arrives in the club’s name. It shows the child’s line, the processing fee, the total and a "View your receipt" button.' },
+      { who: F, do: 'Press "View your receipt".', see: 'The status page opens straight away. It does not ask for an email or a reference.' }
+    ]},
+    { id: 'B', title: 'Siblings in one checkout', steps: [
+      { who: F, do: 'Sign up two children together, then press the pay button.', see: 'One button for both children’s total. Stripe shows two child lines and one processing fee line.' },
+      { who: R, do: 'Pay with the test card, then open Registrations.', see: 'Both rows read "received · Online, card · receipt N", with the same receipt number.' }
+    ]},
+    { id: 'C', title: 'Approval and promotion emails', steps: [
+      { who: R, do: 'Use a season that reviews first. Sign a child up as a family, then approve that child as the registrar. Open the family’s email.', see: 'It has a Pay now button, the line "Pay online by card, or pay another way below" and the line "The processing fee is shown before you pay". The club’s How to pay text sits under "Other ways to pay".' },
+      { who: F, do: 'Press Pay now in that email.', see: 'The status page opens unlocked, with no email or reference asked. Pay with the test card and the receipt shows.' },
+      { who: R, do: 'Fill a division. Put one child on the waitlist. Then withdraw a placed child so the first waiting child moves up. Open the family’s email.', see: 'The promotion email has a Pay now button.' }
+    ]},
+    { id: 'D', title: 'Not taking payments', steps: [
+      { who: O, do: 'Disconnect payouts, or switch online payments off. Then sign a child up as a family and open the status page.', see: 'The confirmation and the status page both show today’s "To pay" card, with the How to pay text and "Payable separately to {club}". There is no pay button anywhere.' },
+      { who: R, do: 'Approve a child and open the family’s email.', see: 'No Pay now button. The email uses today’s words.' },
+      { who: O, do: 'Reconnect payouts and switch online payments back on.', see: 'Settings › Payouts reads "Families and teams can pay online" again. Keep it this way for the rest of the walk.' }
+    ]},
+    { id: 'E', title: 'The desk', steps: [
+      { who: R, do: 'On a computer, open Registrations. On an owing row, open ⋯ and press "Email the pay link".', see: 'The hint reads "Opens their status page to pay by card". A toast says "Pay link sent to {email}". The row now reads "Pay link sent" with today’s date.' },
+      { who: F, do: 'Open the pay link email.', see: 'It shows "Amount due" and a Pay now button.' },
+      { who: R, do: 'Select two siblings who both owe. In the bulk bar press "Email the pay link".', see: 'One email goes to the family, and the toast reads "1 pay link sent."' },
+      { who: RP, do: 'On a phone, open ⋯ on a row that was paid by card.', see: 'There is no "Undo: marked received by mistake". A card payment is a real payment.' },
+      { who: R, do: 'Mark a different, owing row received by hand.', see: 'It works exactly as before: date, how, and the row reads received. Undo is still there on this one.' }
+    ]},
+    { id: 'F', title: 'A payment that couldn’t be recorded', steps: [
+      { who: F, do: 'Open Stripe’s payment page for a child, but don’t pay yet. Then, as the registrar in another window, decline that child. Then go back and finish paying.', see: 'The payment goes through at Stripe. Needs attention shows "A card payment for {child} couldn’t be recorded". The owner, the registrar and the treasurer all see it.' },
+      { who: R, do: 'On the declined row open ⋯ and press "Refund the card payment".', see: 'A confirm window says the money goes back to the card, and that the processing fee goes back too because the club declined. Confirm. The notice clears itself from Needs attention.' }
+    ]},
+    { id: 'G', title: 'Refunds', steps: [
+      { who: R, do: 'Decline a child who paid by card.', see: 'The window offers "Refund to the card, Visa •••• 4242", "Refund part of it" and "Kept by the club". Nothing is picked, and there is no button until you choose.' },
+      { who: R, do: 'Choose "Refund to the card".', see: 'An "Include the $Y processing fee" box is on. It says the club is ending the registration, and that the fee shows in your books as Payment processing. Press "Decline, refund and email". A toast says it was refunded to the card. The family’s email says the refund.' },
+      { who: R, do: 'Withdraw another child who paid by card.', see: 'The fee box starts off, with the words "Off because the family asked to leave".' },
+      { who: R, do: 'Withdraw that child with "Refund part of it". Enter $50 and a reason.', see: 'The rest reads "The club keeps $100". The Money page shows the $50 refund and the kept line. The family’s email names $50.' },
+      { who: R, do: 'Try "Refund part of it" with no reason. Then try an amount above what was paid.', see: 'Each is refused in plain words. Nothing moves.' }
+    ]},
+    { id: 'H', title: 'Correct the price of a card-paid child', steps: [
+      { who: R, do: 'On a child who paid by card, open ⋯ › Correct the price and lower the price. Give a reason.', see: '"Refund $X to the card" is chosen, with "Refunded another way" beside it. Press "Save and refund". The family gets a refund email with the old price, the new price and your reason.' },
+      { who: R, do: 'On another card-paid child, raise the price.', see: 'The window says the family will owe $X more, and "We’ll email them a pay link for it." Press "Save and email". The family gets a pay link for the difference.' }
+    ]},
+    { id: 'I', title: 'The books', steps: [
+      { who: T, do: 'On the Club plan, open the season’s Money page.', see: 'The Received caption ends "{amount} of it by card". Card lines read "Online, card · receipt N". The treasurer sees the payouts status line.' },
+      { who: O, do: 'On a club where payouts are not set up, open the season’s Money page.', see: 'You see "Families and teams pay you directly, outside FieldLogicHQ." with a link, "Let them pay online · Settings › Payouts".' },
+      { who: O, do: 'In Settings › Payouts choose "The club pays it". Then have a family pay a new registration by card. Open the Money page, then the Statement.', see: 'The family is charged only the price. The Money page shows a line "Payment processing · {child}". The Statement shows a Payment processing cost, and the fees income is the price only.' },
+      { who: T, do: 'Refund a card payment with the fee box on, then open the Money page and the Statement.', see: 'A line "Payment processing · fee given back" appears. Fees income nets the refund. It is never counted under spending.' }
+    ]},
+    { id: 'J', title: 'Tournament pay page re-check', steps: [
+      { who: F, do: 'Open a tournament team’s pay link and pay a deposit or the full amount.', see: 'It shows deposit or full, pays, confirms and shows the receipt exactly as in the 12a walk.' }
+    ]},
+    { id: 'K', title: 'League Plus', steps: [
+      { who: L, do: 'On the League Plus club, have a family pay a house-league fee by card. Then open the season’s Money page.', see: 'The same family payment works. The season’s Money page is the book. There is no treasurer view, because League Plus has no Accounting.' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['12b card payments walk §380 (2026-10-25)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

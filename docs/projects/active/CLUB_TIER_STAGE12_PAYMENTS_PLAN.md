@@ -18,6 +18,16 @@
   2026-10-25: `CLUB_TIER_STAGE12A_BUILD_PROMPT.md`.** The owner moved the tournament card flow into 12a so it can be walked
   end to end; 12c is now bank debit for both flows. 9b-2 walked and closed 2026-10-25 (ledger §378), so 12b is
   unblocked: **12b build prompt written 2026-10-25, `CLUB_TIER_STAGE12B_BUILD_PROMPT.md`** (census at `9c1545220`).
+- **12b BUILT 2026-10-25** (owner rulings §0e; words `CLUB_TIER_STAGE12B_COPY.md`), committed `aba98a7e6` (Part 1, mig 374,
+  /dba + /review) · `40f7c5731` (Part 2) · `87cf762eb` (Part 3) · `7c69367b2` (Part 4) · `3ae979ef6` (Part 5, mig 375) ·
+  `b3cb15e2b` (Part 6) · `1a2ca5bd4` (/review of Parts 2–6, mig 376, help). Migrations 374–376 applied to dev 2026-10-25
+  (declared prod-pending, after 361–363 and 368–372); scripts/house-league-money-check.sql 34/34 on dev. Walk §380 owed.
+  **Named for the owner, not built:** (1) A13 says the treasurer may refund a house-league card payment, but every refund
+  door is on Registrations, which the treasurer cannot open — recommendation: a refund door on the season Money page's
+  card lines for whoever may refund; (2) a PARTIAL refund of a tournament team's card payment (L1, A12 row ⋯) — the
+  team's paid figure counts whole payment rows only, so it needs a team-writer change (a "refunded so far" amount);
+  12a's full refund is unchanged; (3) the Families record's "Paid online · card · receipt" line (b4) — the record window
+  had another session's edit in flight; (4) "View the payment" in the row ⋯ (b3) — the receipt number is on the row.
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
@@ -298,7 +308,7 @@ registration (house league) or from the payment's row (tournaments, A12), card f
 | Stage | Covers | Migrations | Size |
 |---|---|---|---|
 | **12a** foundation + the tournament card flow | **Proves itself on a tournament team paying by card (owner, 2026-10-25)**: the team pay page with deposit or full (A7), Pay in the acceptance email and the balance reminder, online rows and a full refund from the row (A12), landing through the tournament writer with a new online method value. Payouts card, five states, both homes, with the A14 who-pays choice and the A9 refund-policy sentence; the "Before you set up payouts" window; onboarding via Account Links + return; the gate + launch switch; pay block; Checkout for card; receipt page + email; online-payment record; Connect webhook (own secret, idempotent); full refund; test mode | `org_payment_accounts` (org, Stripe account id, state, charges/payouts enabled, requirements due, connected/disconnected by/at); `online_payments` (org, flow, payer email, base, fee, total, rail, state, processor ids, receipt no., timestamps); `online_payment_items` (payment → registration or team, amount); `online_payment_refunds` (amount, fee included, reason, by, processor id, state); `stripe_connect_events` (idempotency log) | 7–9 d |
-| **12b** house league | every Stage 9 ghost; Pay now in approval and promotion emails; Email the pay link; no longer payable; refund in the end window; partial refund (L1); Families lines | none beyond 12a once 9b-2 has the writer's amount/date/method | 5–7 d |
+| **12b** house league | every Stage 9 ghost; Pay now in approval and promotion emails; Email the pay link; no longer payable; refund in the end window; partial refund (L1); Families lines — **BUILT 2026-10-25 (§0 state; Families lines and the tournament partial refund named, not built)** | migs 374 (items, the league landing), 375 (refunds in part), 376 (refund cap) — dev only | 5–7 d |
 | **12c** bank debit | bank debit for both flows at once (L2): the debit agreement, Processing until it clears with the spot held (A4), a fourth "Processing" figure on the Money band while clearing (A11), a returned debit's fresh Pay and self-clearing item. ⚖ The tournament card flow moved into 12a (owner, 2026-10-25) | a way-of-paying value for bank debit | 3–5 d |
 | **12d** hardening | disputes and negative balance, paid twice, a payouts list for matching the bank, "+ GST/HST" rider, international cards, platform-admin oversight, offboarding with registrations still to pay, help, the terms | disputes, payouts | 10–15 d |
 
