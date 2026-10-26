@@ -2,21 +2,24 @@
 
 **Generated:** 2026-10-26 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 478 divergence(s)** across dev/prod.
+**⚠️ 557 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 16 | 0 | — |
-| Columns | 248 | 1 | 0 |
-| Indexes | 71 | 0 | 2 |
-| Constraints | 69 | 0 | — |
-| RLS / CHECK | 71 | 0 | 0 (RLS state) |
+| Tables | 19 | 0 | — |
+| Columns | 291 | 1 | 0 |
+| Indexes | 81 | 0 | 2 |
+| Constraints | 85 | 0 | — |
+| RLS / CHECK | 78 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (16)
+### Only in DEV (19)
 - `family_email_sends`
+- `league_placement_emails`
+- `league_player_ratings`
 - `league_registration_price_changes`
 - `league_season_fee_words`
+- `league_team_coaches`
 - `online_payment_items`
 - `online_payment_refunds`
 - `online_payments`
@@ -35,7 +38,7 @@
 _none_
 
 ## Columns
-### Only in DEV (248)
+### Only in DEV (291)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -57,6 +60,28 @@ _none_
 - `league_divisions.early_price`
 - `league_divisions.note`
 - `league_divisions.price`
+- `league_divisions.teams_published_at`
+- `league_divisions.teams_published_by`
+- `league_placement_emails.attempts`
+- `league_placement_emails.created_at`
+- `league_placement_emails.created_by`
+- `league_placement_emails.division_id`
+- `league_placement_emails.from_team_id`
+- `league_placement_emails.guardian_email`
+- `league_placement_emails.id`
+- `league_placement_emails.kind`
+- `league_placement_emails.org_id`
+- `league_placement_emails.registration_ids`
+- `league_placement_emails.season_id`
+- `league_placement_emails.sent_at`
+- `league_placement_emails.status`
+- `league_placement_emails.updated_at`
+- `league_player_ratings.org_id`
+- `league_player_ratings.rated_at`
+- `league_player_ratings.rated_by`
+- `league_player_ratings.rating`
+- `league_player_ratings.registration_id`
+- `league_player_ratings.season_id`
 - `league_registration_price_changes.changed_at`
 - `league_registration_price_changes.changed_by`
 - `league_registration_price_changes.id`
@@ -69,14 +94,18 @@ _none_
 - `league_registration_price_changes.registration_id`
 - `league_registration_price_changes.season_id`
 - `league_registrations.accepted_at`
+- `league_registrations.draft_team_id`
 - `league_registrations.end_money`
 - `league_registrations.end_money_reason`
 - `league_registrations.ended_at`
 - `league_registrations.fee_amount`
 - `league_registrations.pay_link_sent_at`
+- `league_registrations.previous_team_id`
 - `league_registrations.signup_position`
 - `league_registrations.signup_ref`
 - `league_registrations.spot_released`
+- `league_registrations.team_changed_at`
+- `league_registrations.team_locked_at`
 - `league_registrations.withdraw_request_note`
 - `league_registrations.withdraw_requested_at`
 - `league_season_fee_words.category_id`
@@ -86,9 +115,26 @@ _none_
 - `league_season_fee_words.season_id`
 - `league_seasons.ask_email_consent`
 - `league_seasons.early_bird_until`
+- `league_seasons.finished_at`
 - `league_seasons.how_to_pay`
 - `league_seasons.owing_amber_days`
 - `league_seasons.registration_closed_at`
+- `league_team_coaches.accepted_at`
+- `league_team_coaches.created_at`
+- `league_team_coaches.created_by`
+- `league_team_coaches.email`
+- `league_team_coaches.expires_at`
+- `league_team_coaches.id`
+- `league_team_coaches.invited_at`
+- `league_team_coaches.invited_by`
+- `league_team_coaches.name`
+- `league_team_coaches.org_id`
+- `league_team_coaches.removed_at`
+- `league_team_coaches.season_id`
+- `league_team_coaches.team_id`
+- `league_team_coaches.token_hash`
+- `league_team_coaches.updated_at`
+- `league_team_coaches.user_id`
 - `online_payment_items.amount`
 - `online_payment_items.created_at`
 - `online_payment_items.description`
@@ -292,12 +338,17 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (71)
+### Only in DEV (81)
 - `accounting_entries_league_registration_idx`
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
 - `idx_rep_team_tryout_contacts_org`
 - `idx_rep_team_tryout_contacts_setter`
+- `league_placement_emails_division_idx`
+- `league_placement_emails_pkey`
+- `league_placement_emails_season_idx`
+- `league_player_ratings_pkey`
+- `league_player_ratings_season_idx`
 - `league_registration_price_changes_org_idx`
 - `league_registration_price_changes_pkey`
 - `league_registration_price_changes_refund_idx`
@@ -308,6 +359,11 @@ _none_
 - `league_season_fee_words_item_uniq`
 - `league_season_fee_words_org_idx`
 - `league_season_fee_words_pkey`
+- `league_team_coaches_one_per_team`
+- `league_team_coaches_pkey`
+- `league_team_coaches_season_idx`
+- `league_team_coaches_token`
+- `league_team_coaches_user_idx`
 - `notifications_one_open_online_payments_notice`
 - `online_payment_items_entry_key`
 - `online_payment_items_one_per_child`
@@ -377,21 +433,37 @@ _none_
   - prod: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (69)
+### Only in DEV (85)
 - `family_email_sends.family_email_sends_org_id_fkey`
 - `family_email_sends.family_email_sends_pkey`
 - `family_email_sends.family_email_sends_sent_by_fkey`
+- `league_placement_emails.league_placement_emails_division_id_fkey`
+- `league_placement_emails.league_placement_emails_from_team_id_fkey`
+- `league_placement_emails.league_placement_emails_org_id_fkey`
+- `league_placement_emails.league_placement_emails_pkey`
+- `league_placement_emails.league_placement_emails_season_id_fkey`
+- `league_player_ratings.league_player_ratings_org_id_fkey`
+- `league_player_ratings.league_player_ratings_pkey`
+- `league_player_ratings.league_player_ratings_registration_id_fkey`
+- `league_player_ratings.league_player_ratings_season_id_fkey`
 - `league_registration_price_changes.league_registration_price_changes_changed_by_fkey`
 - `league_registration_price_changes.league_registration_price_changes_org_id_fkey`
 - `league_registration_price_changes.league_registration_price_changes_pkey`
 - `league_registration_price_changes.league_registration_price_changes_refund_entry_id_fkey`
 - `league_registration_price_changes.league_registration_price_changes_registration_id_fkey`
 - `league_registration_price_changes.league_registration_price_changes_season_id_fkey`
+- `league_registrations.league_registrations_draft_team_id_fkey`
+- `league_registrations.league_registrations_previous_team_id_fkey`
 - `league_season_fee_words.league_season_fee_words_category_id_fkey`
 - `league_season_fee_words.league_season_fee_words_item_id_fkey`
 - `league_season_fee_words.league_season_fee_words_org_id_fkey`
 - `league_season_fee_words.league_season_fee_words_pkey`
 - `league_season_fee_words.league_season_fee_words_season_id_fkey`
+- `league_team_coaches.league_team_coaches_org_id_fkey`
+- `league_team_coaches.league_team_coaches_pkey`
+- `league_team_coaches.league_team_coaches_season_id_fkey`
+- `league_team_coaches.league_team_coaches_team_id_fkey`
+- `league_team_coaches.league_team_coaches_user_id_fkey`
 - `online_payment_items.online_payment_items_entry_fk`
 - `online_payment_items.online_payment_items_org_fk`
 - `online_payment_items.online_payment_items_payment_fk`
@@ -455,7 +527,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (71)
+### CHECK only in DEV (78)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -468,6 +540,11 @@ _none_
 - `family_email_sends.family_email_sends_subject_check`
 - `league_divisions.league_divisions_born_years_check`
 - `league_divisions.league_divisions_price_check`
+- `league_placement_emails.league_placement_emails_guardian_email_check`
+- `league_placement_emails.league_placement_emails_kind_check`
+- `league_placement_emails.league_placement_emails_registration_ids_check`
+- `league_placement_emails.league_placement_emails_status_check`
+- `league_player_ratings.league_player_ratings_rating_check`
 - `league_registration_price_changes.league_registration_price_changes_amount_chk`
 - `league_registration_price_changes.league_registration_price_changes_kind_chk`
 - `league_registration_price_changes.league_registration_price_changes_reason_chk`
@@ -476,6 +553,8 @@ _none_
 - `league_registrations.league_registrations_withdraw_note_check`
 - `league_seasons.league_seasons_how_to_pay_check`
 - `league_seasons.league_seasons_owing_amber_days_check`
+- `league_team_coaches.league_team_coaches_email_check`
+- `league_team_coaches.league_team_coaches_name_check`
 - `online_payment_items.online_payment_items_amount_chk`
 - `online_payment_items.online_payment_items_description_chk`
 - `online_payment_items.online_payment_items_land_error_chk`

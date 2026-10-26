@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-26",
-  "total": 478,
+  "total": 557,
   "counts": {
-    "tables": 16,
-    "columns": 249,
-    "indexes": 73,
-    "constraints": 69,
-    "rls": 71
+    "tables": 19,
+    "columns": 292,
+    "indexes": 83,
+    "constraints": 85,
+    "rls": 78
   },
   "items": [
     {
@@ -58,6 +58,26 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:league_placement_emails.league_placement_emails_guardian_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_placement_emails.league_placement_emails_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_placement_emails.league_placement_emails_registration_ids_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_placement_emails.league_placement_emails_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_player_ratings.league_player_ratings_rating_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:league_registration_price_changes.league_registration_price_changes_amount_chk",
       "sig": ""
     },
@@ -87,6 +107,14 @@
     },
     {
       "key": "check:only-dev:league_seasons.league_seasons_owing_amber_days_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_team_coaches.league_team_coaches_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_team_coaches.league_team_coaches_name_check",
       "sig": ""
     },
     {
@@ -378,6 +406,94 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_divisions.teams_published_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_divisions.teams_published_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.attempts",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.division_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.from_team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.guardian_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.registration_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_player_ratings.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_player_ratings.rated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_player_ratings.rated_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_player_ratings.rating",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_player_ratings.registration_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_player_ratings.season_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_registration_price_changes.changed_at",
       "sig": ""
     },
@@ -426,6 +542,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_registrations.draft_team_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_registrations.end_money",
       "sig": ""
     },
@@ -446,6 +566,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_registrations.previous_team_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_registrations.signup_position",
       "sig": ""
     },
@@ -455,6 +579,14 @@
     },
     {
       "key": "column:only-dev:league_registrations.spot_released",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.team_changed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.team_locked_at",
       "sig": ""
     },
     {
@@ -494,6 +626,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_seasons.finished_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_seasons.how_to_pay",
       "sig": ""
     },
@@ -503,6 +639,70 @@
     },
     {
       "key": "column:only-dev:league_seasons.registration_closed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.accepted_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.expires_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.invited_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.invited_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.removed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.token_hash",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.user_id",
       "sig": ""
     },
     {
@@ -1302,6 +1502,42 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_placement_emails.league_placement_emails_division_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_placement_emails.league_placement_emails_from_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_placement_emails.league_placement_emails_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_placement_emails.league_placement_emails_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_placement_emails.league_placement_emails_season_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_player_ratings.league_player_ratings_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_player_ratings.league_player_ratings_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_player_ratings.league_player_ratings_registration_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_player_ratings.league_player_ratings_season_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:league_registration_price_changes.league_registration_price_changes_changed_by_fkey",
       "sig": ""
     },
@@ -1326,6 +1562,14 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_registrations.league_registrations_draft_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_registrations.league_registrations_previous_team_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:league_season_fee_words.league_season_fee_words_category_id_fkey",
       "sig": ""
     },
@@ -1343,6 +1587,26 @@
     },
     {
       "key": "constraint:only-dev:league_season_fee_words.league_season_fee_words_season_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_team_coaches.league_team_coaches_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_team_coaches.league_team_coaches_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_team_coaches.league_team_coaches_season_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_team_coaches.league_team_coaches_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_team_coaches.league_team_coaches_user_id_fkey",
       "sig": ""
     },
     {
@@ -1594,6 +1858,26 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_placement_emails_division_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_placement_emails_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_placement_emails_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_player_ratings_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_player_ratings_season_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:league_registration_price_changes_org_idx",
       "sig": ""
     },
@@ -1631,6 +1915,26 @@
     },
     {
       "key": "index:only-dev:league_season_fee_words_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_team_coaches_one_per_team",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_team_coaches_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_team_coaches_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_team_coaches_token",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_team_coaches_user_idx",
       "sig": ""
     },
     {
@@ -1862,11 +2166,23 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:league_placement_emails",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:league_player_ratings",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:league_registration_price_changes",
       "sig": ""
     },
     {
       "key": "table:only-dev:league_season_fee_words",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:league_team_coaches",
       "sig": ""
     },
     {

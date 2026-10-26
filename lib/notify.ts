@@ -9,6 +9,7 @@
  */
 
 import { supabaseAdmin } from './supabase-admin';
+import { effectiveOrgFactsForId } from './entitlement-grants';
 import { sendEmail, escapeHtml } from './email';
 import { warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagraph } from './email-envelope-warm';
 import { sendWebPush, isPushConfigured } from './web-push';
@@ -17,7 +18,7 @@ import { hasPlanFeature, type PlanFeature } from './plan-features';
 import { PUSH_DEFAULT_ON_EVENTS, NOTIFICATION_CATEGORY } from './notification-labels';
 import { PAUSE_EXEMPT_EVENTS, filterUnpausedUsers } from './notification-pause';
 import { isDemoOrgId } from './demo-org-server';
-import type { NotificationEventType, OrgPlan } from './types';
+import type { NotificationEventType } from './types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -135,12 +136,8 @@ export async function notify(opts: NotifyOptions): Promise<void> {
   try {
     // ── 0. Optional plan-feature guard (defense-in-depth) ───────────────────────
     if (opts.requiredFeature) {
-      const { data: orgRow } = await supabaseAdmin
-        .from('organizations')
-        .select('plan_id')
-        .eq('id', opts.orgId)
-        .maybeSingle();
-      if (!orgRow || !hasPlanFeature(orgRow.plan_id as OrgPlan, opts.requiredFeature)) {
+      const facts = await effectiveOrgFactsForId(opts.orgId);
+      if (!facts || !hasPlanFeature(facts.planId, opts.requiredFeature)) {
         return;
       }
     }

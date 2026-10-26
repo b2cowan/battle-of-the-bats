@@ -1,5 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { effectiveOrgFactsOf } from './entitlement-grants';
+import { DOOR_COLUMNS, type DoorRow } from './free-time';
 import { generateNoLoginToken, hashNoLoginToken } from './no-login-token';
 import { normalizeGuardianEmail } from './guardian-email';
 import { getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from './team-workspace-entitlements';
@@ -151,27 +153,26 @@ export async function getOrgForGate(
 ): Promise<Pick<Organization, 'id' | 'accountKind' | 'planId'> & { name: string; slug: string; logoUrl: string | null } | null> {
   const { data, error } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, slug, logo_url, account_kind, plan_id, subscription_status')
+    .select(`${DOOR_COLUMNS}, name, slug, logo_url, account_kind`)
     .eq('id', orgId)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  const row = data as {
-    id: string; name: string; slug: string; logo_url: string | null;
-    account_kind: Organization['accountKind']; plan_id: Organization['planId'];
-    subscription_status: Organization['subscriptionStatus'] | null;
+  const row = data as DoorRow & {
+    name: string; slug: string; logo_url: string | null;
+    account_kind: Organization['accountKind'];
   };
-  // `?? 'active'` matches how every other org mapper reads this column: a null status is a
-  // pre-billing org, not a cancelled one. Only a literal 'canceled' closes the door — past_due
-  // keeps working, exactly as it does everywhere else on the rail.
-  if (isOrgBillingSuspended({ subscriptionStatus: row.subscription_status ?? 'active' })) return null;
+  // The door's answer (free time included): a null status is a pre-billing org, not a cancelled one. Only
+  // 'canceled' closes the door — past_due keeps working, exactly as it does everywhere else on the rail.
+  const facts = await effectiveOrgFactsOf(row);
+  if (isOrgBillingSuspended({ subscriptionStatus: facts.subscriptionStatus })) return null;
   return {
     id: row.id,
     name: row.name,
     slug: row.slug,
     logoUrl: row.logo_url,
     accountKind: row.account_kind,
-    planId: row.plan_id,
+    planId: facts.planId,
   };
 }
 

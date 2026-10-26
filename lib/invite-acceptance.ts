@@ -1,6 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { getDestinationForMembership, type MemberRow } from './user-contexts';
+import { getDestinationForMembership, withEffectiveOrgs, type MemberRow } from './user-contexts';
 
 /**
  * Where a person lands after accepting an invitation (J10-011): the SAME resolver sign-in uses, for
@@ -22,7 +22,9 @@ export async function destinationAfterAccept(userId: string, orgSlug: string | n
     .maybeSingle();
   if (!data) return '/discover';
   try {
-    return await getDestinationForMembership(data as unknown as MemberRow);
+    // The door's plan, so a club on free time lands where its plan today sends it.
+    const [member] = await withEffectiveOrgs([data as unknown as MemberRow]);
+    return await getDestinationForMembership(member);
   } catch (error) {
     console.error('[invite-acceptance] destination resolve failed:', error);
     return `/${orgSlug}/admin`;

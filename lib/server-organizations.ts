@@ -84,5 +84,8 @@ export async function getOrganizationBySlugForServer(slug: string): Promise<Orga
     .maybeSingle<OrganizationRow>();
 
   if (error || !data) return null;
-  return applyEntitlementGrants(mapOrganization(data));
+  return applyEntitlementGrants(mapOrganization(data), {
+    tournamentLimit: data.tournament_limit,
+    teamLimit: data.team_limit,
+  });
 }

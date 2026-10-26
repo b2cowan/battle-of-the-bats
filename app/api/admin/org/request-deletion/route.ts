@@ -4,6 +4,7 @@ import { sendEmail, orgDeletionRequestHtml } from '@/lib/email';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { ownPlanOf } from '@/lib/entitlement-grants';
 
 export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -16,7 +17,7 @@ export const POST = withObservability(async (req: Request) => {
 
   const ownerEmail = ctx.user.email ?? '(unknown)';
   const supportEmail = 'fieldlogichq@gmail.com';
-  const planLabel = PLAN_CONFIG[ctx.org.planId as OrgPlan]?.label ?? ctx.org.planId;
+  const planLabel = PLAN_CONFIG[ownPlanOf(ctx.org) as OrgPlan]?.label ?? ownPlanOf(ctx.org);
 
   await sendEmail(
     supportEmail,

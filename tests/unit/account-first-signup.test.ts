@@ -145,7 +145,7 @@ describe('the Founding Season offer at a creation', () => {
   it('the plan step after the close: $0 Tournament Plus while an organization holding the comp makes its FIRST-RUN plan choice', () => {
     const lib = readCode('lib/founding-season.ts');
     const rule = lib.slice(lib.indexOf('export async function foundingSeasonOfferOnPlanChoice('));
-    assert.match(rule, /if \(!foundingCompAppliesToPlan\(org\.planId\)\) return false;\s*if \(isFoundingSeasonSignupOpen\(\)\) return true;/, 'Club never (2026-09-25), even in the window');
+    assert.match(rule, /if \(!foundingCompAppliesToPlan\(org\.ownPlanId \?\? org\.planId\)\) return false;\s*if \(isFoundingSeasonSignupOpen\(\)\) return true;/, 'Club never (2026-09-25), even in the window');
     assert.match(rule, /\.is\('revoked_at', null\)/);
     assert.match(rule, /if \(comp\.error \|\| tournaments\.error \|\| row\.error \|\| !row\.data\) return false;/, 'fails closed: a read error is the list price');
     // server facts only — the first run ends when setup starts, as the free-plan route's own lock reads it
@@ -153,7 +153,7 @@ describe('the Founding Season offer at a creation', () => {
     // ⚠ never the browser-written plan task: every first-run plan change wipes it, so an abandoned checkout reopened $0 (/review)
     assert.doesNotMatch(rule, /\.plan\b|planTask/);
     assert.match(readCode('app/api/admin/org/onboarding-plan/route.ts'), /hasSavedSetupWork\(startupRead\.data\?\.startup_tasks\)/, 'one rule for when the first run ends');
-    assert.match(readCode('app/api/billing/create-checkout/route.ts'), /auth\.org\.planId === 'tournament' &&\s*\(await foundingSeasonOfferOnPlanChoice\(auth\.org\)\);/);
+    assert.match(readCode('app/api/billing/create-checkout/route.ts'), /ownPlanOf\(auth\.org\) === 'tournament' &&\s*\(await foundingSeasonOfferOnPlanChoice\(auth\.org\)\);/);
     // the card shows what the checkout will charge
     assert.match(readCode('app/api/admin/org/founding-season-status/route.ts'), /return NextResponse\.json\(\{ offerOnPlanChoice: await foundingSeasonOfferOnPlanChoice\(ctx\.org\) \}\);/);
     // ONE $0 rule (The first look G5, 2026-10-20): the pricing cards and the plan step both ask it

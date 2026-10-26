@@ -1280,6 +1280,31 @@
     "indexdef": "CREATE INDEX league_notification_log_season_id_idx ON public.league_notification_log USING btree (season_id)"
   },
   {
+    "tablename": "league_placement_emails",
+    "indexname": "league_placement_emails_division_idx",
+    "indexdef": "CREATE INDEX league_placement_emails_division_idx ON public.league_placement_emails USING btree (division_id, status)"
+  },
+  {
+    "tablename": "league_placement_emails",
+    "indexname": "league_placement_emails_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_placement_emails_pkey ON public.league_placement_emails USING btree (id)"
+  },
+  {
+    "tablename": "league_placement_emails",
+    "indexname": "league_placement_emails_season_idx",
+    "indexdef": "CREATE INDEX league_placement_emails_season_idx ON public.league_placement_emails USING btree (season_id)"
+  },
+  {
+    "tablename": "league_player_ratings",
+    "indexname": "league_player_ratings_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_player_ratings_pkey ON public.league_player_ratings USING btree (registration_id)"
+  },
+  {
+    "tablename": "league_player_ratings",
+    "indexname": "league_player_ratings_season_idx",
+    "indexdef": "CREATE INDEX league_player_ratings_season_idx ON public.league_player_ratings USING btree (season_id)"
+  },
+  {
     "tablename": "league_practices",
     "indexname": "idx_league_practices_org_venue",
     "indexdef": "CREATE INDEX idx_league_practices_org_venue ON public.league_practices USING btree (org_venue_id)"
@@ -1423,6 +1448,31 @@
     "tablename": "league_seasons",
     "indexname": "league_seasons_pkey",
     "indexdef": "CREATE UNIQUE INDEX league_seasons_pkey ON public.league_seasons USING btree (id)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_one_per_team",
+    "indexdef": "CREATE UNIQUE INDEX league_team_coaches_one_per_team ON public.league_team_coaches USING btree (team_id, email) WHERE (removed_at IS NULL)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_team_coaches_pkey ON public.league_team_coaches USING btree (id)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_season_idx",
+    "indexdef": "CREATE INDEX league_team_coaches_season_idx ON public.league_team_coaches USING btree (season_id)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_token",
+    "indexdef": "CREATE UNIQUE INDEX league_team_coaches_token ON public.league_team_coaches USING btree (token_hash) WHERE (token_hash IS NOT NULL)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_user_idx",
+    "indexdef": "CREATE INDEX league_team_coaches_user_idx ON public.league_team_coaches USING btree (user_id) WHERE (user_id IS NOT NULL)"
   },
   {
     "tablename": "league_teams",

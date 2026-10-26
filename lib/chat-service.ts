@@ -28,6 +28,7 @@ import { hasCapability } from './roles';
 import type { OrgPlan, OrgRole } from './types';
 import { hasPlanFeature, type PlanFeature } from './plan-features';
 import { getActiveTeamEntitlement } from './team-workspace-entitlements';
+import { effectiveOrgFactsForId, effectiveOrgFactsById } from './entitlement-grants';
 
 /**
  * lib/chat-service.ts — server-side service layer for Tournament Chat.
@@ -891,13 +892,8 @@ async function staffRoomQualifies(org: { id: string; plan: OrgPlan }, repTeamId:
 }
 
 async function getOrgPlanForStaffRoom(orgId: string): Promise<{ id: string; plan: OrgPlan } | null> {
-  const { data, error } = await supabaseAdmin
-    .from('organizations')
-    .select('id, plan_id')
-    .eq('id', orgId)
-    .maybeSingle<{ id: string; plan_id: OrgPlan }>();
-  if (error) throw error;
-  return data ? { id: data.id, plan: data.plan_id } : null;
+  const facts = await effectiveOrgFactsForId(orgId);
+  return facts ? { id: orgId, plan: facts.planId } : null;
 }
 
 /** Create the team's staff room if absent AND the team qualifies (idempotent; race-tolerant). */
@@ -1511,9 +1507,8 @@ export async function getRoomMessages(
 
 /** Does the room's organization still carry Tournament Chat? Read per post: a plan can change under an open room. */
 async function orgHasTournamentChat(orgId: string): Promise<boolean> {
-  const { data, error } = await supabaseAdmin.from('organizations').select('plan_id').eq('id', orgId).maybeSingle<{ plan_id: OrgPlan }>();
-  if (error) throw error;
-  return Boolean(data && hasPlanFeature(data.plan_id, 'tournament_chat'));
+  const facts = await effectiveOrgFactsForId(orgId);
+  return Boolean(facts && hasPlanFeature(facts.planId, 'tournament_chat'));
 }
 
 /** Post a message (service role) with archived / removed / mute enforcement, then notify the room. */
@@ -2527,10 +2522,11 @@ export async function getCoachChatEvents(userId: string): Promise<CoachChatEvent
   const orgIds = [...new Set(tournaments.map(t => t.org_id as string))];
   const { data: orgs, error: orgErr } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, plan_id')
+    .select('id, name')
     .in('id', orgIds);
   if (orgErr) throw orgErr;
-  const orgById = new Map((orgs ?? []).map(o => [o.id as string, o as { id: string; name: string | null; plan_id: OrgPlan }]));
+  const orgById = new Map((orgs ?? []).map(o => [o.id as string, o as { id: string; name: string | null }]));
+  const factsById = await effectiveOrgFactsById(orgIds);
 
   return tournaments.map(t => {
     const org = orgById.get(t.org_id as string);
@@ -2538,7 +2534,7 @@ export async function getCoachChatEvents(userId: string): Promise<CoachChatEvent
       tournamentId: t.id as string,
       tournamentName: (t.name as string | null) ?? 'Your tournament',
       hostName: org?.name ?? null,
-      chatOffered: org ? hasPlanFeature(org.plan_id, 'tournament_chat') : false,
+      chatOffered: org ? hasPlanFeature(factsById.get(org.id)?.planId ?? 'tournament', 'tournament_chat') : false,
     };
   });
 }

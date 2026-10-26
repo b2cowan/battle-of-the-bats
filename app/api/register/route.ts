@@ -6,6 +6,8 @@ import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { getTournamentRegistrationFields, saveTournamentRegistrationFieldAnswers } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { effectiveOrgFactsOf } from '@/lib/entitlement-grants';
+import { DOOR_COLUMNS, type DoorRow } from '@/lib/free-time';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { linkTournamentRegistrationToBasicCoachTeam } from '@/lib/basic-coach-teams';
 import { getEntryHeadCoachIdentity, getRegistrableTeamsForUser } from '@/lib/registrable-teams-server';
@@ -68,13 +70,13 @@ type DivisionRow = {
   contact_member_id: string | null;
 };
 
-type OrganizationRow = {
-  id: string;
+type OrganizationRow = DoorRow & {
   slug: string;
   is_public: boolean | null;
-  plan_id: OrgPlan;
-  subscription_status: string | null;
 };
+
+/** The hosting club as the door reads it right now (free time included). */
+type HostOrg = { id: string; slug: string; planId: OrgPlan; ownPlanId: OrgPlan; subscriptionStatus: string };
 
 type WaitlistRow = {
   waitlist_position: number | null;
@@ -369,11 +371,11 @@ export const POST = withObservability(async (req: NextRequest) => {
       }, { status: 409 });
     }
 
-    let organization: OrganizationRow | null = null;
+    let organization: HostOrg | null = null;
     if (tournament.org_id) {
       const { data: orgData, error: orgError } = await supabaseAdmin
         .from('organizations')
-        .select('id, slug, is_public, plan_id, subscription_status')
+        .select(`${DOOR_COLUMNS}, slug, is_public`)
         .eq('id', tournament.org_id)
         .maybeSingle<OrganizationRow>();
 
@@ -382,19 +384,28 @@ export const POST = withObservability(async (req: NextRequest) => {
         return captureAndJson(orgError, { error: 'Unable to confirm tournament availability. Please try again.' }, 500);
       }
 
-      organization = orgData;
+      if (orgData) {
+        const facts = await effectiveOrgFactsOf(orgData);
+        organization = {
+          id: orgData.id,
+          slug: orgData.slug,
+          planId: facts.planId,
+          ownPlanId: facts.ownPlanId,
+          subscriptionStatus: facts.subscriptionStatus,
+        };
+      }
     }
 
     // Registration does NOT depend on the org's public-profile (is_public) flag — that gates only
     // the org home/league pages (League/Club). Tournament Plus orgs have no org profile
     // (is_public=false) yet their tournaments + registration must work. Mirror the read-path gate
     // in lib/public-tournament-data.ts getPublicContext: org must exist and not be canceled.
-    if (!organization || organization.subscription_status === 'canceled') {
+    if (!organization || organization.subscriptionStatus === 'canceled') {
       return NextResponse.json({ error: 'Tournament registration is not open.' }, { status: 403 });
     }
     // An invite-only event takes no registrations: its host adds every team (the free tournament tier, R3, B2,
     // 2026-10-16). Its Register page is absent; this holds a stale link or a direct post.
-    if (runsInviteOnlyEvents(organization.plan_id)) {
+    if (runsInviteOnlyEvents(organization.planId)) {
       return NextResponse.json({ error: INVITE_REFUSALS.registration }, { status: 403 });
     }
 
@@ -405,7 +416,7 @@ export const POST = withObservability(async (req: NextRequest) => {
     const sandboxBlocked = assertNotDemoOrg(organization.slug);
     if (sandboxBlocked) return sandboxBlocked;
 
-    const registrationFields = organization && hasPlanFeature(organization.plan_id, 'custom_registration_fields')
+    const registrationFields = organization && hasPlanFeature(organization.planId, 'custom_registration_fields')
       ? await getTournamentRegistrationFields(tournamentId)
       : [];
     const customAnswerResult = validateCustomAnswers(registrationFields, formData, body);
@@ -568,7 +579,7 @@ export const POST = withObservability(async (req: NextRequest) => {
         eventType: 'tournament_registration_operation_used',
         source: 'app',
         orgId: tournament.org_id,
-        planId: organization.plan_id,
+        planId: organization.ownPlanId,
         metadata: {
           feature: 'waitlist_collection',
           action: 'waitlist_join',

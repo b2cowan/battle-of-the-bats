@@ -16,6 +16,7 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
 import type { OrgPlan } from '@/lib/types';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
+import { ownPlanOf } from '@/lib/entitlement-grants';
 
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org the caller is acting on (multi-org owners), NOT their home org — fail closed
@@ -42,7 +43,7 @@ export const POST = withObservability(async (req: Request) => {
       org_id: ctx.org.id,
       intent_type: 'cancellation',
       status: 'applied',
-      from_plan: ctx.org.planId,
+      from_plan: ownPlanOf(ctx.org),
       target_plan: null,
       keep_tournament_ids: [],
       retention_until: retentionUntil,
@@ -101,7 +102,7 @@ export const POST = withObservability(async (req: Request) => {
             startDate: t.startDate,
             endDate: t.endDate,
             retentionReason: 'coaches_portal_cancellation',
-            fromPlan: ctx.org.planId,
+            fromPlan: ownPlanOf(ctx.org),
           },
         })));
       if (tournamentRecordError) return captureAndJson(tournamentRecordError, { error: tournamentRecordError.message }, 500);
@@ -119,7 +120,7 @@ export const POST = withObservability(async (req: Request) => {
         retention_until: retentionUntil,
         metadata: {
           retentionReason: 'coaches_portal_cancellation',
-          fromPlan: ctx.org.planId,
+          fromPlan: ownPlanOf(ctx.org),
           teamWorkspaceId: workspace.id,
           premiumToolsInactive: preflight.shutsDown,
           basicTournamentRecordsRemainAvailable: true,
@@ -151,7 +152,7 @@ export const POST = withObservability(async (req: Request) => {
     if (orgError) return captureAndJson(orgError, { error: orgError.message }, 500);
 
     await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'coaches_portal_cancellation_confirmed', {
-      fromPlan: ctx.org.planId,
+      fromPlan: ownPlanOf(ctx.org),
       teamWorkspaceId: workspace.id,
       retainedTournamentIds: preflight.tournaments.map(t => t.id),
       retentionUntil,
@@ -163,8 +164,8 @@ export const POST = withObservability(async (req: Request) => {
       orgId: ctx.org.id,
       actorUserId: ctx.user.id,
       actorEmail,
-      previousPlanId: ctx.org.planId,
-      planId: ctx.org.planId,
+      previousPlanId: ownPlanOf(ctx.org),
+      planId: ownPlanOf(ctx.org),
       previousSubscriptionStatus: ctx.org.subscriptionStatus,
       subscriptionStatus: 'canceled',
       metadata: {
@@ -264,7 +265,7 @@ export const POST = withObservability(async (req: Request) => {
           startDate: t.startDate,
           endDate: t.endDate,
           retentionReason: 'account_cancellation',
-          fromPlan: ctx.org.planId,
+          fromPlan: ownPlanOf(ctx.org),
         },
       })));
     if (recordError) return captureAndJson(recordError, { error: recordError.message }, 500);
@@ -282,7 +283,7 @@ export const POST = withObservability(async (req: Request) => {
       retention_until: retentionUntil,
       metadata: {
         retentionReason: 'account_cancellation',
-        fromPlan: ctx.org.planId,
+        fromPlan: ownPlanOf(ctx.org),
         moduleShutdown: preflight.shutsDown,
       },
     });
@@ -300,7 +301,7 @@ export const POST = withObservability(async (req: Request) => {
   if (orgError) return captureAndJson(orgError, { error: orgError.message }, 500);
 
   await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_cancellation_confirmed', {
-    fromPlan: ctx.org.planId,
+    fromPlan: ownPlanOf(ctx.org),
     retainedTournamentIds: preflight.tournaments.map(t => t.id),
     retentionUntil,
   });
@@ -311,8 +312,8 @@ export const POST = withObservability(async (req: Request) => {
     orgId: ctx.org.id,
     actorUserId: ctx.user.id,
     actorEmail,
-    previousPlanId: ctx.org.planId,
-    planId: ctx.org.planId,
+    previousPlanId: ownPlanOf(ctx.org),
+    planId: ownPlanOf(ctx.org),
     previousSubscriptionStatus: ctx.org.subscriptionStatus,
     subscriptionStatus: 'canceled',
     metadata: {
@@ -355,7 +356,7 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   if (actorEmail) {
-    const planLabel = PLAN_CONFIG[ctx.org.planId as OrgPlan]?.label ?? ctx.org.planId;
+    const planLabel = PLAN_CONFIG[ownPlanOf(ctx.org) as OrgPlan]?.label ?? ownPlanOf(ctx.org);
     const retentionDate = new Date(retentionUntil).toLocaleDateString('en-CA', {
       year: 'numeric', month: 'long', day: 'numeric',
     });

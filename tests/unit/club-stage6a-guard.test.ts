@@ -332,8 +332,9 @@ describe('the permit\'s answer rides every check and every form that asks where 
   });
   it('the clash check is the Venue library\'s and checks the plan itself — every caller, the save replies included', () => {
     const body = functionBody(readCode('lib/venue-clash-lookup.ts'), 'checkClubClashes');
-    assert.match(body, /from\('organizations'\)\.select\('plan_id'\)\.eq\('id', orgId\)/);
-    assert.match(body, /if \(!hasOrgVenueLibrary\(\(plan\.data\?\.plan_id as OrgPlan \| null\) \?\? null\)\) return new Map\(\);/);
+    // The plan right now, through the door (Support console Stage 4): free Club time opens the library too.
+    assert.match(body, /effectiveOrgFactsForId\(orgId\)/);
+    assert.match(body, /if \(!hasOrgVenueLibrary\(plan\?\.planId \?\? null\)\) return new Map\(\);/);
   });
   it('the three live checks answer it as their own field, beside the findings', () => {
     for (const f of [

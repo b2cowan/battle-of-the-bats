@@ -21,6 +21,7 @@
  * can never enter the comparison set. Nothing here writes.
  */
 import { supabaseAdmin } from './supabase-admin';
+import { effectiveOrgFactsForId } from './entitlement-grants';
 import { fetchAll, fetchAllIn } from './supabase-paging';
 import { hasOrgVenueLibrary } from './plan-features';
 import { orgDayKey, addCalendarDays } from './timezone';
@@ -382,11 +383,10 @@ export async function checkClubClashes(orgId: string, proposed: readonly ClubBoo
   // the library keeps its old bookings but reads no finding from them. Checked HERE, so no caller can miss it — the save
   // replies and house league's check had no plan check of their own (/billing, 2026-10-11; the permit read does the same).
   const [plan, { bookings: pool }] = await Promise.all([
-    supabaseAdmin.from('organizations').select('plan_id').eq('id', orgId).maybeSingle(),
+    effectiveOrgFactsForId(orgId),
     readClubPool(orgId, ...windowOf(placed)),
   ]);
-  if (plan.error) throw plan.error;
-  if (!hasOrgVenueLibrary((plan.data?.plan_id as OrgPlan | null) ?? null)) return new Map();
+  if (!hasOrgVenueLibrary(plan?.planId ?? null)) return new Map();
   return findClubClashesFor(placed, pool);
 }
 

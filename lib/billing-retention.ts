@@ -10,6 +10,7 @@ import { orderByKeepPriority } from './billing-downgrade-order';
 import { SLOT_STATUSES, withinFreeSlots } from './tournament-slot';
 import type { Organization, OrgPlan } from './types';
 import type { Capability } from './roles';
+import { ownPlanOf } from './entitlement-grants';
 
 export const BILLING_RETENTION_DAYS = 90;
 export const BILLING_RETENTION_WARNING_DAYS = 14;
@@ -183,7 +184,7 @@ export async function buildDowngradePreflight(
     : Math.min(targetTournamentLimit, activeTournamentCount);
 
   return {
-    currentPlan: org.planId,
+    currentPlan: ownPlanOf(org),
     targetPlan,
     targetPlanLabel: targetCfg.label,
     targetTournamentLimit,
@@ -311,7 +312,7 @@ export async function buildCancellationPreflight(org: Organization): Promise<Can
   const tournaments = await getNonArchivedTournaments(org.id);
   if (isTeamWorkspaceOrg(org)) {
     return {
-      currentPlan: org.planId,
+      currentPlan: ownPlanOf(org),
       activeTournamentCount: tournaments.length,
       tournaments,
       retentionDays: COACHES_PORTAL_RETENTION_DAYS,
@@ -323,7 +324,7 @@ export async function buildCancellationPreflight(org: Organization): Promise<Can
     };
   }
 
-  const planEntitlements = PLAN_CONFIG[org.planId]?.moduleEntitlements ?? [];
+  const planEntitlements = PLAN_CONFIG[ownPlanOf(org)]?.moduleEntitlements ?? [];
   const enabledModules = new Set<Capability>([
     ...planEntitlements,
     ...org.enabledAddons.filter((cap): cap is Capability => PREMIUM_MODULES.includes(cap as Capability)),
@@ -334,7 +335,7 @@ export async function buildCancellationPreflight(org: Organization): Promise<Can
     .filter((item): item is string => Boolean(item));
 
   return {
-    currentPlan: org.planId,
+    currentPlan: ownPlanOf(org),
     activeTournamentCount: tournaments.length,
     tournaments,
     retentionDays: BILLING_RETENTION_DAYS,

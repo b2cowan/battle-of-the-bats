@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { effectiveStatuses } from './entitlement-grants';
 import { getOrganizationBySlug, getPublicTournamentBySlug } from './db';
 import { resolveFollowableOrgsByIds, type OrgDirectoryResult } from './directory';
 
@@ -310,6 +311,7 @@ export async function getFollowedTeamsForUser(userId: string): Promise<FollowedT
     : { data: [], error: null };
   if (orgErr) throw orgErr;
   const orgById = new Map((orgRows ?? []).map(o => [o.id, o]));
+  const statusById = await effectiveStatuses(orgRows ?? []);
 
   // Preserve follow order (newest first) from teamFollows.
   const teamById = new Map(teams.map(t => [t.id, t]));
@@ -320,7 +322,7 @@ export async function getFollowedTeamsForUser(userId: string): Promise<FollowedT
     const tourn = tournById.get(team.tournament_id);
     if (!tourn) continue;
     const org = orgById.get(tourn.org_id);
-    if (!org || org.subscription_status === 'canceled') continue;
+    if (!org || statusById.get(org.id) === 'canceled') continue;
     out.push({
       followId: f.id,
       teamId: team.id,
@@ -372,6 +374,7 @@ export async function getFollowedRepTeamsForUser(userId: string): Promise<Follow
     : { data: [], error: null };
   if (orgErr) throw orgErr;
   const orgById = new Map((orgRows ?? []).map(o => [o.id, o]));
+  const statusById = await effectiveStatuses(orgRows ?? []);
 
   const teamById = new Map(teams.map(t => [t.id, t]));
   const out: FollowedRepTeamAccount[] = [];
@@ -379,7 +382,7 @@ export async function getFollowedRepTeamsForUser(userId: string): Promise<Follow
     const team = teamById.get(f.entityId);
     if (!team) continue;
     const org = orgById.get(team.org_id);
-    if (!org || org.subscription_status === 'canceled') continue;
+    if (!org || statusById.get(org.id) === 'canceled') continue;
     out.push({
       followId: f.id,
       repTeamId: team.id,
@@ -441,13 +444,14 @@ export async function getFollowedTournamentsForUser(userId: string): Promise<Fol
     : { data: [], error: null };
   if (oErr) throw oErr;
   const orgById = new Map(((orgRows ?? []) as Array<{ id: string; slug: string; subscription_status: string | null }>).map(o => [o.id, o]));
+  const statusById = await effectiveStatuses((orgRows ?? []) as Array<{ id: string; subscription_status: string | null }>);
 
   const out: FollowedTournamentAccount[] = [];
   for (const f of follows) {
     const tourn = tournById.get(f.entityId);
     if (!tourn) continue;
     const org = orgById.get(tourn.org_id);
-    if (!org || org.subscription_status === 'canceled') continue;
+    if (!org || statusById.get(org.id) === 'canceled') continue;
     out.push({ followId: f.id, orgSlug: org.slug, tournamentSlug: tourn.slug, tournamentName: tourn.name });
   }
   return out;

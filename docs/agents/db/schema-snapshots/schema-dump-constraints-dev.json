@@ -2390,6 +2390,96 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "league_placement_emails",
+    "constraint_name": "league_placement_emails_division_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "division_id",
+    "foreign_table": "league_divisions",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_placement_emails",
+    "constraint_name": "league_placement_emails_from_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "from_team_id",
+    "foreign_table": "league_teams",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_placement_emails",
+    "constraint_name": "league_placement_emails_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_placement_emails",
+    "constraint_name": "league_placement_emails_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_placement_emails",
+    "constraint_name": "league_placement_emails_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_player_ratings",
+    "constraint_name": "league_player_ratings_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_player_ratings",
+    "constraint_name": "league_player_ratings_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "registration_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_player_ratings",
+    "constraint_name": "league_player_ratings_registration_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "registration_id",
+    "foreign_table": "league_registrations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_player_ratings",
+    "constraint_name": "league_player_ratings_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "league_practices",
     "constraint_name": "league_practices_division_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -2531,6 +2621,16 @@
   },
   {
     "table_name": "league_registrations",
+    "constraint_name": "league_registrations_draft_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "draft_team_id",
+    "foreign_table": "league_teams",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_registrations",
     "constraint_name": "league_registrations_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
@@ -2558,6 +2658,16 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
+  },
+  {
+    "table_name": "league_registrations",
+    "constraint_name": "league_registrations_previous_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "previous_team_id",
+    "foreign_table": "league_teams",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
   },
   {
     "table_name": "league_registrations",
@@ -2668,6 +2778,56 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
+  },
+  {
+    "table_name": "league_team_coaches",
+    "constraint_name": "league_team_coaches_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_team_coaches",
+    "constraint_name": "league_team_coaches_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_team_coaches",
+    "constraint_name": "league_team_coaches_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_team_coaches",
+    "constraint_name": "league_team_coaches_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "league_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_team_coaches",
+    "constraint_name": "league_team_coaches_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
   },
   {
     "table_name": "league_teams",

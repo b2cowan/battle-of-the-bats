@@ -80,8 +80,9 @@ describe('permits ride the Venue library\'s plans, checked on the server (Ask 4)
   });
   it('the quiet line\'s permit read checks the plan itself — every check and every save reply, whoever calls it', () => {
     const body = functionBody(readCode('lib/permit-lookup.ts'), 'checkClubPermits');
-    assert.match(body, /from\('organizations'\)\.select\('plan_id'\)\.eq\('id', orgId\)/);
-    assert.match(body, /if \(!hasOrgVenueLibrary\(\(plan\.data\?\.plan_id as OrgPlan \| null\) \?\? null\)\) return out;/);
+    // The plan right now, through the door (Support console Stage 4): free Club time opens the library too.
+    assert.match(body, /effectiveOrgFactsForId\(orgId\)/);
+    assert.match(body, /if \(!hasOrgVenueLibrary\(plan\?\.planId \?\? null\)\) return out;/);
   });
   it('the venue window\'s permits come only through the library\'s own gated read', () => {
     assert.match(readCode('app/api/admin/org/venues/route.ts'), /readVenuePermits\(ctx\.org\.id, venues\.map\(v => v\.id\), tournamentToday\(\)\)/);

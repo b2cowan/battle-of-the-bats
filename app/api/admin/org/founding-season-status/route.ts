@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getOrgBillingFacts } from '@/lib/billing-setup';
 import { isFoundingSeasonCompExpiry } from '@/lib/plan-config';
 import { withObservability } from '@/lib/observability';
+import { ownPlanOf } from '@/lib/entitlement-grants';
 
 /**
  * GET /api/admin/org/founding-season-status
@@ -73,7 +74,7 @@ export const GET = withObservability(async (req: Request) => {
   const compUntil = (data?.expires_at as string | undefined) ?? null;
   // ⚖ D6: no Founding Season offer is ever computed for a Club, whatever comp rows the org still
   // carries (an operator's move to Club revokes them; this holds even if one was missed).
-  const planTakesComp = foundingCompAppliesToPlan(ctx.org.planId);
+  const planTakesComp = foundingCompAppliesToPlan(ownPlanOf(ctx.org));
   return NextResponse.json({
     isFoundingSeason: planTakesComp && compUntil ? isFoundingSeasonCompExpiry(compUntil) : false,
     compUntil,

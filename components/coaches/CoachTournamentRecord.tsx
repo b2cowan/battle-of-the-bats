@@ -197,11 +197,11 @@ export default async function CoachTournamentRecord({
   ]);
   const canEditHeadCoach = canEditEventHeadCoach(headCoachAccess);
 
-  let org: { slug: string; name: string; logo_url: string | null; plan_id: string | null } | null = null;
+  let org: { slug: string; name: string; logo_url: string | null } | null = null;
   if (tournament?.org_id) {
     const { data: orgData } = await supabaseAdmin
       .from('organizations')
-      .select('slug, name, logo_url, plan_id')
+      .select('slug, name, logo_url')
       .eq('id', tournament.org_id)
       .maybeSingle();
     org = orgData;

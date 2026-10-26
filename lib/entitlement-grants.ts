@@ -1,120 +1,173 @@
 import { supabaseAdmin } from './supabase-admin';
-import type { Organization, SubscriptionStatus } from './types';
+import {
+  DOOR_COLUMNS,
+  foldGrants,
+  ownPlanOf,
+  isGrantRunning,
+  ownFactsOf,
+  customerFreeTime,
+  type CustomerFreeTime,
+  type DoorRow,
+  type EffectiveFacts,
+  type GrantRow,
+  type GrantTarget,
+} from './free-time';
+import type { Organization } from './types';
 
 /**
- * Timed entitlement grants (H8 — Scenario B + A1).
+ * THE DOOR: what plan, limits, status and sections a club has right now (Support console Stage 4, owner ruling Q1).
  *
- * Grants live in `org_overrides` (extended in migration 109). They turn access on for a
- * window and **auto-revert at expiry** — revert is implicit: once a grant stops being
- * active, the effective entitlement falls back to the org's base plan/addons. No cron.
+ * Every access decision reads a club through here: the three org builders (`getAuthContext`, `getOrganizationBySlug`,
+ * `getOrganizationBySlugForServer`) call `applyEntitlementGrants`, and a reader that starts from raw columns calls
+ * `effectiveOrgFacts`. `tests/unit/plan-reader-door-guard.test.ts` fails the build when new code reads the stored plan,
+ * limits, status or sections around it. The rules themselves are in `lib/free-time.ts`.
  *
- * This slice enforces two grant types:
- *   - `module_addon`        — union `target.addons` into the org's effective enabledAddons
- *   - `subscription_status` — force the org's effective subscriptionStatus for the window
+ * Grants live in `org_overrides`: a whole plan (`plan_tier`), sections (`module_addon`), a billing status
+ * (`subscription_status`). Each ends by itself: nothing is scheduled, the end is compared with the moment of reading.
+ * `comp_period` (Founding Season's cohort mark) gives no access.
  *
- * Deferred to a follow-up (needs an effective plan-rank threaded through hasPlanFeature):
- *   - `plan_tier`           — trial a higher tier's rank-gated features
- *   - `comp_period`         — billing-only; ignored for access (founding-season uses it)
+ * ⚠ Two things deliberately keep reading what the club HOLDS (its own plan), never this door's answer: every billing
+ * action (checkout, move, downgrade, cancel, the next-season choice: `ownPlanOf(org)`), and revenue and customer counts
+ * (`lib/platform-metrics.ts`). A grant is never revenue, and never something a club can be billed out of.
  *
- * Enforcement is gated by the ENTITLEMENT_GRANTS_ENABLED env flag (default off) so this
- * can merge before the rollout is switched on.
+ * The database has one copy of this rule, for the fee book only: `org_effective_plan` (migration 373), which the
+ * tournament fee-book checks call. Keep the two in step.
+ *
+ * Enforcement is gated by ENTITLEMENT_GRANTS_ENABLED ("the switch"; on in dev and production). With it off every club
+ * reads exactly what it holds, and the console refuses to give free time (owner ruling Q9).
  */
 
-const GRANTS_ENABLED = process.env.ENTITLEMENT_GRANTS_ENABLED === 'true';
-
-export type OverrideTarget = {
-  addons?: string[];
-  plan?: string;
-  status?: string;
-} | null;
-
-export type ActiveOverrideRow = {
-  type: string;
-  value: string | null;
-  target: OverrideTarget;
-  starts_at: string | null;
-  expires_at: string | null;
-  revoked_at: string | null;
-};
-
-/** An override is active when it is not revoked, has started, and has not expired. */
-export function isOverrideActive(
-  row: Pick<ActiveOverrideRow, 'starts_at' | 'expires_at' | 'revoked_at'>,
-  now: Date = new Date(),
-): boolean {
-  if (row.revoked_at) return false;
-  if (row.starts_at && new Date(row.starts_at) > now) return false;
-  if (row.expires_at && new Date(row.expires_at) <= now) return false;
-  return true;
+export function grantsEnabled(): boolean {
+  return process.env.ENTITLEMENT_GRANTS_ENABLED === 'true';
 }
 
-type EffectiveInput = {
-  subscriptionStatus: SubscriptionStatus;
-  enabledAddons: string[];
-};
+export type OverrideTarget = GrantTarget;
+export type ActiveOverrideRow = GrantRow;
 
-/**
- * Pure: fold active overrides onto a base org's entitlements.
- * `overrides` should be ordered newest-first so the latest active status grant wins.
- */
-export function computeEffectiveEntitlements(
-  base: EffectiveInput,
-  overrides: ActiveOverrideRow[],
-  now: Date = new Date(),
-): EffectiveInput {
-  const active = overrides.filter(o => isOverrideActive(o, now));
-  if (active.length === 0) return base;
+/** An override is active when it is not revoked, has started, and has not reached its end. */
+export const isOverrideActive = isGrantRunning;
 
-  // module_addon grants → union into enabledAddons
-  const addonSet = new Set(base.enabledAddons);
-  for (const o of active) {
-    if (o.type === 'module_addon' && o.target?.addons) {
-      for (const addon of o.target.addons) addonSet.add(addon);
-    }
+const GRANT_COLUMNS = 'org_id, type, value, target, starts_at, expires_at, revoked_at';
+
+type GrantRowWithOrg = GrantRow & { org_id: string };
+
+/** The club's own plan (lib/free-time.ts, so a browser screen can read it too). */
+export { ownPlanOf };
+
+async function runningGrantsFor(orgIds: string[]): Promise<Map<string, GrantRow[]>> {
+  const byOrg = new Map<string, GrantRow[]>();
+  if (orgIds.length === 0) return byOrg;
+  const { data } = await supabaseAdmin
+    .from('org_overrides')
+    .select(GRANT_COLUMNS)
+    .in('org_id', orgIds)
+    .is('revoked_at', null)
+    .neq('type', 'comp_period')
+    .order('created_at', { ascending: false });
+  for (const row of (data ?? []) as GrantRowWithOrg[]) {
+    const list = byOrg.get(row.org_id) ?? [];
+    list.push(row);
+    byOrg.set(row.org_id, list);
   }
-
-  // subscription_status grants → newest active wins (target.status, or legacy value column)
-  let subscriptionStatus = base.subscriptionStatus;
-  const statusGrant = active.find(o => o.type === 'subscription_status');
-  if (statusGrant) {
-    const next = statusGrant.target?.status ?? statusGrant.value;
-    if (next === 'active' || next === 'trialing' || next === 'past_due' || next === 'canceled') {
-      subscriptionStatus = next;
-    }
-  }
-
-  return { subscriptionStatus, enabledAddons: [...addonSet] };
+  return byOrg;
 }
 
 /**
- * Returns the org with active timed grants applied to its effective entitlements.
- * No-op (returns the same object) when the feature flag is off or the org has no grants.
- * Apply this wherever an Organization is built for entitlement gating.
+ * The org with its running grants folded in. `stored` is the raw limit columns (the builders have them; the org's
+ * own `tournamentLimit`/`teamLimit` are already computed from the stored plan and cannot be un-computed).
+ * Sets `ownPlanId` always, so billing actions can read the plan the club holds.
  */
-export async function applyEntitlementGrants(org: Organization): Promise<Organization> {
-  if (!GRANTS_ENABLED) return org;
+export async function applyEntitlementGrants(
+  org: Organization,
+  stored: { tournamentLimit: number | null; teamLimit: number | null },
+): Promise<Organization> {
+  const withOwn: Organization = { ...org, ownPlanId: org.planId };
+  if (!grantsEnabled()) return withOwn;
 
+  const rows = (await runningGrantsFor([org.id])).get(org.id) ?? [];
+  if (rows.length === 0) return withOwn;
+
+  const effective = foldGrants(
+    {
+      planId: org.planId,
+      subscriptionStatus: org.subscriptionStatus,
+      enabledAddons: org.enabledAddons,
+      storedTournamentLimit: stored.tournamentLimit,
+      storedTeamLimit: stored.teamLimit,
+    },
+    rows,
+  );
+  return {
+    ...withOwn,
+    planId: effective.planId,
+    tournamentLimit: effective.planId === org.planId ? org.tournamentLimit : effective.tournamentLimit,
+    teamLimit: effective.planId === org.planId ? org.teamLimit : effective.teamLimit,
+    subscriptionStatus: effective.subscriptionStatus,
+    enabledAddons: effective.enabledAddons,
+  };
+}
+
+/**
+ * The door for a reader that starts from raw columns (select `DOOR_COLUMNS`). One grants query for any number of
+ * clubs. Returns a map by org id; a row whose id is missing from it was not passed in.
+ */
+export async function effectiveOrgFacts(rows: DoorRow[]): Promise<Map<string, EffectiveFacts>> {
+  const out = new Map<string, EffectiveFacts>();
+  if (rows.length === 0) return out;
+  const enabled = grantsEnabled();
+  const grants = enabled ? await runningGrantsFor([...new Set(rows.map(r => r.id))]) : new Map<string, GrantRow[]>();
+  const now = new Date();
+  for (const row of rows) out.set(row.id, foldGrants(ownFactsOf(row), grants.get(row.id) ?? [], now, enabled));
+  return out;
+}
+
+/** One club's door answer from its raw columns. */
+export async function effectiveOrgFactsOf(row: DoorRow): Promise<EffectiveFacts> {
+  return (await effectiveOrgFacts([row])).get(row.id)!;
+}
+
+/**
+ * The door by club id, for a reader that holds only the id. Reads the clubs and their grants (two queries for any
+ * number). A club that does not exist is absent from the map. Throws on a read error, so a gate fails closed.
+ */
+export async function effectiveOrgFactsById(orgIds: string[]): Promise<Map<string, EffectiveFacts>> {
+  const ids = [...new Set(orgIds.filter(Boolean))];
+  if (ids.length === 0) return new Map();
+  const { data, error } = await supabaseAdmin.from('organizations').select(DOOR_COLUMNS).in('id', ids);
+  if (error) throw error;
+  return effectiveOrgFacts((data ?? []) as DoorRow[]);
+}
+
+/**
+ * The billing status the door reads right now, for readers that hold only `id` + `subscription_status` (the
+ * "is this club cancelled?" filters). A billing-status grant keeps a club open while unpaid. One grants read.
+ */
+export async function effectiveStatuses(
+  rows: { id: string; subscription_status: string | null }[],
+): Promise<Map<string, EffectiveFacts['subscriptionStatus']>> {
+  const facts = await effectiveOrgFacts(
+    rows.map(r => ({ id: r.id, plan_id: null, subscription_status: r.subscription_status, enabled_addons: null })),
+  );
+  return new Map([...facts].map(([id, f]) => [id, f.subscriptionStatus]));
+}
+
+/** One club's door answer by id, or null when there is no such club. */
+export async function effectiveOrgFactsForId(orgId: string): Promise<EffectiveFacts | null> {
+  return (await effectiveOrgFactsById([orgId])).get(orgId) ?? null;
+}
+
+/**
+ * The customer's billing-page free time (running, ending, or ended within 30 days), or null. Reads ended grants too,
+ * so it is its own query. Never returns the reason, the giver or the grant (T15).
+ */
+export async function getCustomerFreeTime(row: DoorRow): Promise<CustomerFreeTime | null> {
+  if (!grantsEnabled()) return null;
   const { data } = await supabaseAdmin
     .from('org_overrides')
     .select('type, value, target, starts_at, expires_at, revoked_at')
-    .eq('org_id', org.id)
-    .is('revoked_at', null)
-    .order('created_at', { ascending: false });
-
-  const rows = (data ?? []) as ActiveOverrideRow[];
-  if (rows.length === 0) return org;
-
-  const effective = computeEffectiveEntitlements(
-    { subscriptionStatus: org.subscriptionStatus, enabledAddons: org.enabledAddons },
-    rows,
-  );
-
-  if (
-    effective.subscriptionStatus === org.subscriptionStatus &&
-    effective.enabledAddons.length === org.enabledAddons.length
-  ) {
-    return org;
-  }
-
-  return { ...org, subscriptionStatus: effective.subscriptionStatus, enabledAddons: effective.enabledAddons };
+    .eq('org_id', row.id)
+    .eq('type', 'plan_tier')
+    .order('created_at', { ascending: false })
+    .limit(20);
+  return customerFreeTime(ownFactsOf(row), (data ?? []) as GrantRow[]);
 }

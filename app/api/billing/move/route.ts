@@ -5,6 +5,7 @@ import { authorizeMove, parseTargetPlan, refuseIfGated, refusalResponse } from '
 import { writeOrgBillingAudit } from '@/lib/billing-retention';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
+import { ownPlanOf } from '@/lib/entitlement-grants';
 
 /**
  * The move between plans — one subscription, never a second checkout (Ask 4, D7; A06).
@@ -28,14 +29,14 @@ export const GET = withObservability(async (req: Request) => {
   const { org } = authorized;
 
   const moves = ALL_PLANS
-    .map(planKey => ({ planKey, direction: moveDirection(org.planId, planKey) }))
+    .map(planKey => ({ planKey, direction: moveDirection(ownPlanOf(org), planKey) }))
     .filter((m): m is { planKey: OrgPlan; direction: 'up' | 'down' } => m.direction !== null)
     .map(m => ({ ...m, label: PLAN_CONFIG[m.planKey].label, teamLimit: PLAN_CONFIG[m.planKey].teamLimit }));
   const scheduledMove = moves.length > 0 ? await getScheduledMove(org) : null;
   // `live` (added by Club Tier Stage 1's screens session, additively): is this org paying on a live
   // Stripe subscription — the one fact that decides whether a band change is a MOVE (this route) or a
   // purchase at checkout. The screen asks the server rather than restating `hasLiveSubscription`.
-  return NextResponse.json({ planKey: org.planId, moves, scheduledMove, live: hasLiveSubscription(org) });
+  return NextResponse.json({ planKey: ownPlanOf(org), moves, scheduledMove, live: hasLiveSubscription(org) });
 }, { route: '/api/billing/move' });
 
 export const POST = withObservability(async (req: Request) => {
@@ -56,7 +57,7 @@ export const POST = withObservability(async (req: Request) => {
   await writeOrgBillingAudit(org.id, authorized.actorId,
     result.direction === 'up' ? 'plan_moved_up' : 'plan_move_scheduled',
     {
-      from: org.planId,
+      from: ownPlanOf(org),
       to: toPlan,
       actor,
       ...(result.direction === 'down' ? { effectiveAt: result.scheduled.effectiveAt } : {}),

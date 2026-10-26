@@ -18,6 +18,7 @@
  * covers the scorekeeper, official, and admin score paths in one place.
  */
 import { supabaseAdmin } from './supabase-admin';
+import { effectiveOrgFactsForId } from './entitlement-grants';
 import { sendWebPush } from './web-push';
 import { hasPlanFeature } from './plan-features';
 import { filterUsersWithCategoryOn } from './fan-alert-prefs';
@@ -25,7 +26,7 @@ import { filterUnpausedUsers } from './notification-pause';
 import { captureError } from './observability';
 import { isDemoOrgId } from './demo-org-server';
 import { PLAYOFFS_SET_WORDS } from './schedule-words';
-import type { GameStatus, OrgPlan } from './types';
+import type { GameStatus } from './types';
 
 interface FanPushTarget {
   id: string;
@@ -234,7 +235,7 @@ async function fanPushContext(tournamentId: string): Promise<{
 
   const { data: org } = await supabaseAdmin
     .from('organizations')
-    .select('slug, plan_id, logo_url')
+    .select('slug, logo_url')
     .eq('id', tournament.org_id)
     .maybeSingle();
   if (!org) return null;
@@ -252,7 +253,8 @@ async function fanPushContext(tournamentId: string): Promise<{
   }
 
   // Plan gate — the signature halo feature is Tournament Plus+.
-  if (!hasPlanFeature(org.plan_id as OrgPlan, 'fan_score_alerts')) return null;
+  const facts = await effectiveOrgFactsForId(tournament.org_id as string);
+  if (!facts || !hasPlanFeature(facts.planId, 'fan_score_alerts')) return null;
 
   // Brand the notification with the event/org logo when present (J6-051). Only an
   // absolute http(s) URL (an uploaded logo on Supabase storage) is usable: the SW

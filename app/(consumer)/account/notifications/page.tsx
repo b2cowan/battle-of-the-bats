@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { effectiveOrgFactsOf } from '@/lib/entitlement-grants';
+import { DOOR_COLUMNS, type DoorRow } from '@/lib/free-time';
 import { getUserAccessContexts } from '@/lib/user-contexts';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getFanAlertOverview } from '@/lib/fan-alert-prefs';
@@ -32,16 +34,18 @@ const RESERVED_MODULES: Capability[] = ['module_rep_teams', 'module_house_league
 async function resolveOrgModules(orgId: string): Promise<string[]> {
   const { data } = await supabaseAdmin
     .from('organizations')
-    .select('plan_id, enabled_addons, subscription_status, free_floor')
+    .select(`${DOOR_COLUMNS}, free_floor`)
     .eq('id', orgId)
     .maybeSingle();
   if (!data) return [];
-  // hasModuleEntitlement only reads these four fields — build the minimal shape it needs.
+  // hasModuleEntitlement only reads these four fields — build the minimal shape it needs, from the door's answer
+  // (free time included).
+  const facts = await effectiveOrgFactsOf(data as DoorRow);
   const orgLike = {
-    subscriptionStatus: data.subscription_status,
-    planId:             data.plan_id,
-    enabledAddons:      (data.enabled_addons ?? []) as string[],
-    freeFloor:          data.free_floor ?? undefined,
+    subscriptionStatus: facts.subscriptionStatus,
+    planId:             facts.planId,
+    enabledAddons:      facts.enabledAddons,
+    freeFloor:          (data as { free_floor?: Organization['freeFloor'] }).free_floor ?? undefined,
   } as Organization;
   return RESERVED_MODULES.filter(cap => hasModuleEntitlement(orgLike, cap));
 }

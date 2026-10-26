@@ -9,7 +9,7 @@ import { accountedCellKeys, scopeCompleteness } from './development-session-view
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
-import { applyEntitlementGrants } from './entitlement-grants';
+import { applyEntitlementGrants, effectiveStatuses } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
 import { isDemoOrgSlug } from './demo-org';
 import { moneyInEntryDescription } from './coach-money-in';
@@ -1620,7 +1620,7 @@ export async function getOrganizationBySlug(slug: string): Promise<Organization 
     .eq('slug', slug)
     .single();
   if (error || !data) return null;
-  return applyEntitlementGrants(mapOrg(data));
+  return applyEntitlementGrants(mapOrg(data), { tournamentLimit: data.tournament_limit ?? null, teamLimit: data.team_limit ?? null });
 }
 
 /** `strict`: a failed read throws rather than reading as "no tournaments" — for a page that would otherwise tell
@@ -3559,7 +3559,7 @@ export async function getInsightsDigestTeams(filter?: { orgId?: string; teamId?:
   if (tErr) throw tErr;
   const teamById = new Map((teams ?? []).map(t => [t.id as string, t]));
 
-  // ⚠ `.neq('subscription_status', 'canceled')` is load-bearing, not tidying. This enumerator
+  // ⚠ The cancelled filter below is load-bearing, not tidying. This enumerator
   // feeds the SCHEDULED sweeps (dues reminders, insights digest) — automated mail sent on a club's
   // behalf, to guardians, about money. Those run from pg_cron with no session, so the billing rail
   // on getAuthContext never sees them. Without this filter a cancelled club keeps sending payment
@@ -3567,11 +3567,13 @@ export async function getInsightsDigestTeams(filter?: { orgId?: string; teamId?:
   // `if (!o) continue` below, so the sweep simply passes it over. (/review 2026-08-06.)
   const orgIds = [...new Set((teams ?? []).map(t => t.org_id as string))];
   const { data: orgs, error: oErr } = orgIds.length
-    ? await supabaseAdmin.from('organizations').select('id, slug, name, logo_url, theme_preset, theme_primary, theme_accent')
-        .in('id', orgIds).neq('subscription_status', 'canceled')
+    ? await supabaseAdmin.from('organizations').select('id, slug, name, logo_url, theme_preset, theme_primary, theme_accent, subscription_status')
+        .in('id', orgIds)
     : { data: [], error: null };
   if (oErr) throw oErr;
-  const orgById = new Map((orgs ?? []).map(o => [o.id as string, o]));
+  // Cancelled = the door's answer (a billing-status grant keeps a club open while unpaid), not the stored column.
+  const statusById = await effectiveStatuses((orgs ?? []) as { id: string; subscription_status: string | null }[]);
+  const orgById = new Map((orgs ?? []).filter(o => statusById.get(o.id as string) !== 'canceled').map(o => [o.id as string, o]));
 
   const out: InsightsDigestTeam[] = [];
   for (const y of years) {

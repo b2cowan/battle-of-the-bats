@@ -6275,6 +6275,24 @@
         "column_default": null
       },
       {
+        "table_name": "league_divisions",
+        "pos": 12,
+        "column_name": "teams_published_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_divisions",
+        "pos": 13,
+        "column_name": "teams_published_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_email_log",
         "pos": 1,
         "column_name": "id",
@@ -6584,6 +6602,186 @@
         "table_name": "league_notification_log",
         "pos": 8,
         "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 4,
+        "column_name": "division_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 5,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 6,
+        "column_name": "guardian_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 7,
+        "column_name": "registration_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 8,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 9,
+        "column_name": "attempts",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 10,
+        "column_name": "from_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 11,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 12,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 13,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 14,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_player_ratings",
+        "pos": 1,
+        "column_name": "registration_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_player_ratings",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_player_ratings",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_player_ratings",
+        "pos": 4,
+        "column_name": "rating",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_player_ratings",
+        "pos": 5,
+        "column_name": "rated_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_player_ratings",
+        "pos": 6,
+        "column_name": "rated_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -7148,6 +7346,42 @@
         "column_default": null
       },
       {
+        "table_name": "league_registrations",
+        "pos": 37,
+        "column_name": "team_locked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 38,
+        "column_name": "draft_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 39,
+        "column_name": "previous_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 40,
+        "column_name": "team_changed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_season_fee_words",
         "pos": 1,
         "column_name": "season_id",
@@ -7407,6 +7641,159 @@
         "udt_name": "int2",
         "is_nullable": "NO",
         "column_default": "14"
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 26,
+        "column_name": "finished_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 4,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 5,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 6,
+        "column_name": "email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 7,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 8,
+        "column_name": "token_hash",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 9,
+        "column_name": "invited_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 10,
+        "column_name": "expires_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 11,
+        "column_name": "accepted_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 12,
+        "column_name": "removed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 13,
+        "column_name": "invited_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 14,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 15,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 16,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "league_teams",
@@ -25495,6 +25882,55 @@
         "constraint_name": "league_notification_log_sent_by_fkey"
       },
       {
+        "table_name": "league_placement_emails",
+        "column_name": "division_id",
+        "foreign_table": "league_divisions",
+        "foreign_column": "id",
+        "constraint_name": "league_placement_emails_division_id_fkey"
+      },
+      {
+        "table_name": "league_placement_emails",
+        "column_name": "from_team_id",
+        "foreign_table": "league_teams",
+        "foreign_column": "id",
+        "constraint_name": "league_placement_emails_from_team_id_fkey"
+      },
+      {
+        "table_name": "league_placement_emails",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_placement_emails_org_id_fkey"
+      },
+      {
+        "table_name": "league_placement_emails",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_placement_emails_season_id_fkey"
+      },
+      {
+        "table_name": "league_player_ratings",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_player_ratings_org_id_fkey"
+      },
+      {
+        "table_name": "league_player_ratings",
+        "column_name": "registration_id",
+        "foreign_table": "league_registrations",
+        "foreign_column": "id",
+        "constraint_name": "league_player_ratings_registration_id_fkey"
+      },
+      {
+        "table_name": "league_player_ratings",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_player_ratings_season_id_fkey"
+      },
+      {
         "table_name": "league_practices",
         "column_name": "division_id",
         "foreign_table": "league_divisions",
@@ -25580,6 +26016,13 @@
       },
       {
         "table_name": "league_registrations",
+        "column_name": "draft_team_id",
+        "foreign_table": "league_teams",
+        "foreign_column": "id",
+        "constraint_name": "league_registrations_draft_team_id_fkey"
+      },
+      {
+        "table_name": "league_registrations",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -25591,6 +26034,13 @@
         "foreign_table": "org_people",
         "foreign_column": "id",
         "constraint_name": "league_registrations_person_id_fkey"
+      },
+      {
+        "table_name": "league_registrations",
+        "column_name": "previous_team_id",
+        "foreign_table": "league_teams",
+        "foreign_column": "id",
+        "constraint_name": "league_registrations_previous_team_id_fkey"
       },
       {
         "table_name": "league_registrations",
@@ -25640,6 +26090,34 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "league_seasons_org_id_fkey"
+      },
+      {
+        "table_name": "league_team_coaches",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_team_coaches_org_id_fkey"
+      },
+      {
+        "table_name": "league_team_coaches",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_team_coaches_season_id_fkey"
+      },
+      {
+        "table_name": "league_team_coaches",
+        "column_name": "team_id",
+        "foreign_table": "league_teams",
+        "foreign_column": "id",
+        "constraint_name": "league_team_coaches_team_id_fkey"
+      },
+      {
+        "table_name": "league_team_coaches",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_team_coaches_user_id_fkey"
       },
       {
         "table_name": "league_teams",
@@ -30697,6 +31175,31 @@
         "indexdef": "CREATE INDEX league_notification_log_season_id_idx ON public.league_notification_log USING btree (season_id)"
       },
       {
+        "tablename": "league_placement_emails",
+        "indexname": "league_placement_emails_division_idx",
+        "indexdef": "CREATE INDEX league_placement_emails_division_idx ON public.league_placement_emails USING btree (division_id, status)"
+      },
+      {
+        "tablename": "league_placement_emails",
+        "indexname": "league_placement_emails_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_placement_emails_pkey ON public.league_placement_emails USING btree (id)"
+      },
+      {
+        "tablename": "league_placement_emails",
+        "indexname": "league_placement_emails_season_idx",
+        "indexdef": "CREATE INDEX league_placement_emails_season_idx ON public.league_placement_emails USING btree (season_id)"
+      },
+      {
+        "tablename": "league_player_ratings",
+        "indexname": "league_player_ratings_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_player_ratings_pkey ON public.league_player_ratings USING btree (registration_id)"
+      },
+      {
+        "tablename": "league_player_ratings",
+        "indexname": "league_player_ratings_season_idx",
+        "indexdef": "CREATE INDEX league_player_ratings_season_idx ON public.league_player_ratings USING btree (season_id)"
+      },
+      {
         "tablename": "league_practices",
         "indexname": "idx_league_practices_org_venue",
         "indexdef": "CREATE INDEX idx_league_practices_org_venue ON public.league_practices USING btree (org_venue_id)"
@@ -30840,6 +31343,31 @@
         "tablename": "league_seasons",
         "indexname": "league_seasons_pkey",
         "indexdef": "CREATE UNIQUE INDEX league_seasons_pkey ON public.league_seasons USING btree (id)"
+      },
+      {
+        "tablename": "league_team_coaches",
+        "indexname": "league_team_coaches_one_per_team",
+        "indexdef": "CREATE UNIQUE INDEX league_team_coaches_one_per_team ON public.league_team_coaches USING btree (team_id, email) WHERE (removed_at IS NULL)"
+      },
+      {
+        "tablename": "league_team_coaches",
+        "indexname": "league_team_coaches_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_team_coaches_pkey ON public.league_team_coaches USING btree (id)"
+      },
+      {
+        "tablename": "league_team_coaches",
+        "indexname": "league_team_coaches_season_idx",
+        "indexdef": "CREATE INDEX league_team_coaches_season_idx ON public.league_team_coaches USING btree (season_id)"
+      },
+      {
+        "tablename": "league_team_coaches",
+        "indexname": "league_team_coaches_token",
+        "indexdef": "CREATE UNIQUE INDEX league_team_coaches_token ON public.league_team_coaches USING btree (token_hash) WHERE (token_hash IS NOT NULL)"
+      },
+      {
+        "tablename": "league_team_coaches",
+        "indexname": "league_team_coaches_user_idx",
+        "indexdef": "CREATE INDEX league_team_coaches_user_idx ON public.league_team_coaches USING btree (user_id) WHERE (user_id IS NOT NULL)"
       },
       {
         "tablename": "league_teams",
@@ -35394,6 +35922,48 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "league_placement_emails",
+        "detail": "league_placement_emails_guardian_email_check",
+        "check_clause": "(guardian_email = lower(btrim(guardian_email)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_placement_emails",
+        "detail": "league_placement_emails_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['placed'::text, 'moved'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_placement_emails",
+        "detail": "league_placement_emails_registration_ids_check",
+        "check_clause": "(cardinality(registration_ids) > 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_placement_emails",
+        "detail": "league_placement_emails_status_check",
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'sent'::text, 'failed'::text, 'skipped'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_placement_emails",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_player_ratings",
+        "detail": "league_player_ratings_rating_check",
+        "check_clause": "((rating >= 1) AND (rating <= 5))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_player_ratings",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "league_practices",
         "detail": "league_practices_status_check",
         "check_clause": "(status = ANY (ARRAY['scheduled'::text, 'cancelled'::text]))"
@@ -35491,6 +36061,24 @@
       {
         "kind": "RLS",
         "table_name": "league_seasons",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_team_coaches",
+        "detail": "league_team_coaches_email_check",
+        "check_clause": "((email = lower(btrim(email))) AND ((length(email) >= 3) AND (length(email) <= 254)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_team_coaches",
+        "detail": "league_team_coaches_name_check",
+        "check_clause": "((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 120))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_team_coaches",
         "detail": "ENABLED",
         "check_clause": null
       },

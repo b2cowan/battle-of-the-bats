@@ -141,8 +141,8 @@ describe('D6 / A08 — no Founding Season offer for Club', () => {
   });
 
   it('the status endpoint, the next-season choice and the operator\'s move all apply it', () => {
-    assert.match(read('app/api/admin/org/founding-season-status/route.ts'), /foundingCompAppliesToPlan\(ctx\.org\.planId\)/);
-    assert.match(read('app/api/billing/choose-next-season/route.ts'), /foundingCompAppliesToPlan\(auth\.org\.planId\)/);
+    assert.match(read('app/api/admin/org/founding-season-status/route.ts'), /foundingCompAppliesToPlan\(ownPlanOf\(ctx\.org\)\)/);
+    assert.match(read('app/api/billing/choose-next-season/route.ts'), /foundingCompAppliesToPlan\(ownPlanOf\(auth\.org\)\)/);
     // The operator's move runs the SAME database half of a plan change as a Stripe move and the
     // webhook — never its own copy (it had one, and it drifted from the shared rule).
     const operatorRule = read('lib/operator-plan-change.ts');

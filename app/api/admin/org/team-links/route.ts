@@ -57,7 +57,7 @@ export const GET = withObservability(async (req: NextRequest) => {
 
   const [links, places] = await Promise.all([
     listTeamOrgLinksForLinkedOrg(ctx.org.id),
-    clubTeamPlaces({ id: ctx.org.id, plan_id: ctx.org.planId ?? null, team_limit: ctx.org.teamLimit ?? null }),
+    clubTeamPlaces({ id: ctx.org.id, planId: ctx.org.planId, teamLimit: ctx.org.teamLimit }),
   ]);
   return NextResponse.json({
     links,

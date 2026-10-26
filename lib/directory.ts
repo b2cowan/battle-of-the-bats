@@ -1,5 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { effectiveOrgFacts, effectiveStatuses } from '@/lib/entitlement-grants';
+import type { DoorRow } from '@/lib/free-time';
 import { getSportPack } from '@/lib/sports';
 import { provinceName, isProvinceCode } from '@/lib/canadian-provinces';
 import { tournamentToday } from '@/lib/timezone';
@@ -111,14 +113,16 @@ export function computeTimeframe(status: string, startDate: string | null, endDa
   return 'completed';
 }
 
-/** Ids of orgs whose public pages are blocked (canceled) — never link to them. */
+/** Ids of orgs whose public pages are blocked (canceled) — never link to them. Cancelled as the door reads it: a
+ *  billing-status grant keeps a stored-cancelled club open while it runs (lib/entitlement-grants.ts). */
 async function getCanceledOrgIds(): Promise<string[]> {
   const { data, error } = await supabaseAdmin
     .from('organizations')
-    .select('id')
+    .select('id, subscription_status')
     .eq('subscription_status', 'canceled');
   if (error) throw error;
-  return (data ?? []).map(o => o.id);
+  const statusById = await effectiveStatuses(data ?? []);
+  return (data ?? []).filter(o => statusById.get(o.id) === 'canceled').map(o => o.id);
 }
 
 // Minimal fluent shape used to apply the shared filter — kept separate from the (deeply generic)
@@ -432,13 +436,18 @@ export async function getOrgSitemapEntries(): Promise<{ href: string }[]> {
   // scopeFollowableOrgs already filters `.eq('is_public', true)`, so every row reaching this
   // point answers `true` — the field is threaded so the shared predicate can be the one that
   // says so, not so this file starts filtering differently.
-  const entitlementOf = (o: (typeof orgs)[number]) => ({
-    isPublic: o.is_public === true,
-    planId: o.plan_id,
-    subscriptionStatus: o.subscription_status,
-    enabledAddons: o.enabled_addons ?? [],
-    freeFloor: o.free_floor ?? null,
-  });
+  // The door's answer (free time included): a club on free Club time has its Club pages crawled while it runs.
+  const factsById = await effectiveOrgFacts(orgs as DoorRow[]);
+  const entitlementOf = (o: (typeof orgs)[number]) => {
+    const f = factsById.get(o.id)!;
+    return {
+      isPublic: o.is_public === true,
+      planId: f.planId,
+      subscriptionStatus: f.subscriptionStatus,
+      enabledAddons: f.enabledAddons,
+      freeFloor: o.free_floor ?? null,
+    };
+  };
 
   // Drop rows whose entitlements can't be resolved at all, ONCE, before either pass below. The
   // lookup indexes PLAN_CONFIG by the row's plan_id, so a single row carrying an unrecognized plan
@@ -498,13 +507,15 @@ export async function getClubPageSitemapEntries(): Promise<{ href: string }[]> {
       .select('id, slug, is_public, plan_id, subscription_status, enabled_addons, free_floor, account_kind'),
   ).limit(SCAN_CEILING);
   if (error) throw error;
+  const factsById = await effectiveOrgFacts((orgRows ?? []) as DoorRow[]);
   const clubs = (orgRows ?? []).filter(o => {
     try {
+      const f = factsById.get(o.id)!;
       return clubTeamsAddress({
         isPublic: o.is_public === true,
-        planId: o.plan_id,
-        subscriptionStatus: o.subscription_status,
-        enabledAddons: o.enabled_addons ?? [],
+        planId: f.planId,
+        subscriptionStatus: f.subscriptionStatus,
+        enabledAddons: f.enabledAddons,
         freeFloor: o.free_floor ?? null,
         accountKind: o.account_kind,
       } as Parameters<typeof clubTeamsAddress>[0]) === 'teams-page';

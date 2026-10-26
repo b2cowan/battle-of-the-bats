@@ -16,6 +16,7 @@ import { planDowngradedHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import type { OrgPlan } from '@/lib/types';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
+import { ownPlanOf } from '@/lib/entitlement-grants';
 
 type ConfirmBody = {
   targetPlan?: unknown;
@@ -44,7 +45,7 @@ export const POST = withObservability(async (req: Request) => {
   if (!isOrganizationDowngradeTarget(targetPlan)) {
     return Response.json({ error: 'Team is a standalone product, not an organization downgrade target.' }, { status: 400 });
   }
-  if (!isLowerPlan(ctx.org.planId, targetPlan)) {
+  if (!isLowerPlan(ownPlanOf(ctx.org), targetPlan)) {
     return Response.json({ error: 'You can only confirm a downgrade to a lower plan.' }, { status: 400 });
   }
 
@@ -81,7 +82,7 @@ export const POST = withObservability(async (req: Request) => {
       org_id: ctx.org.id,
       intent_type: 'downgrade',
       status: 'applied',
-      from_plan: ctx.org.planId,
+      from_plan: ownPlanOf(ctx.org),
       target_plan: targetPlan,
       keep_tournament_ids: keepTournamentIds,
       retention_until: retentionUntil,
@@ -122,7 +123,7 @@ export const POST = withObservability(async (req: Request) => {
           startDate: t.startDate,
           endDate: t.endDate,
           retentionReason: 'plan_downgrade',
-          fromPlan: ctx.org.planId,
+          fromPlan: ownPlanOf(ctx.org),
           targetPlan,
         },
       })));
@@ -140,7 +141,7 @@ export const POST = withObservability(async (req: Request) => {
   if (orgError) return captureAndJson(orgError, { error: orgError.message }, 500);
 
   await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_downgrade_confirmed', {
-    fromPlan: ctx.org.planId,
+    fromPlan: ownPlanOf(ctx.org),
     targetPlan,
     retainedTournamentIds: retainedTournaments.map(t => t.id),
     keepTournamentIds,
@@ -153,7 +154,7 @@ export const POST = withObservability(async (req: Request) => {
     orgId: ctx.org.id,
     actorUserId: ctx.user.id,
     actorEmail,
-    previousPlanId: ctx.org.planId,
+    previousPlanId: ownPlanOf(ctx.org),
     planId: targetPlan,
     previousSubscriptionStatus: ctx.org.subscriptionStatus,
     subscriptionStatus: 'active',
@@ -225,7 +226,7 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   if (actorEmail) {
-    const fromPlanLabel = PLAN_CONFIG[ctx.org.planId as OrgPlan]?.label ?? ctx.org.planId;
+    const fromPlanLabel = PLAN_CONFIG[ownPlanOf(ctx.org) as OrgPlan]?.label ?? ownPlanOf(ctx.org);
     const toPlanLabel = PLAN_CONFIG[targetPlan]?.label ?? targetPlan;
     const retentionDate = new Date(retentionUntil).toLocaleDateString('en-CA', {
       year: 'numeric', month: 'long', day: 'numeric',

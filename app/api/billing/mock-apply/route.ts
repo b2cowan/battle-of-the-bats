@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import { PLAN_RANK } from '@/lib/plan-features';
 import { withObservability } from '@/lib/observability';
+import { ownPlanOf } from '@/lib/entitlement-grants';
 
 export const POST = withObservability(async (req: Request) => {
   if (!isBillingMockEnabled()) {
@@ -29,7 +30,7 @@ export const POST = withObservability(async (req: Request) => {
 
   const normalizedStatus = plan === 'tournament' && status === 'trialing' ? 'active' : status;
   const subId = plan === 'tournament' ? null : `mock_sub_${plan}_${Date.now()}`;
-  const previousPlan = auth.org.planId;
+  const previousPlan = ownPlanOf(auth.org);
   const previousStatus = auth.org.subscriptionStatus;
 
   await supabaseAdmin

@@ -15,7 +15,9 @@ import {
   type TeamOrgLinkSummary,
 } from './team-org-links';
 import { askedByOf } from './team-move-state';
-import { PLAN_CONFIG, getEffectiveTeamLimit } from './plan-config';
+import { PLAN_CONFIG } from './plan-config';
+import { effectiveOrgFactsOf } from './entitlement-grants';
+import { DOOR_COLUMNS, type DoorRow } from './free-time';
 import { getNonArchivedRepTeamCount, getOrgMemberDisplayNames } from './db';
 import { listActiveStaffUserIds } from './coach-membership';
 import { notify } from './notify';
@@ -31,7 +33,8 @@ import {
   bellMovedForStaff,
   teamNameConfirmed,
 } from './team-move-words';
-import type { OrgPlan } from './types';
+import type { OrgPlan, Organization } from './types';
+import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import type { TeamWorkspace } from './team-workspace-entitlements';
 
 /**
@@ -107,14 +110,18 @@ export type TeamMoveApproveResult =
     }
   | TeamMoveRefusal;
 
+/** The receiving club, as the door reads it right now (free time included): plan, sections and team cap. */
 type ClubOrgRow = {
   id: string;
   name: string;
   slug: string;
-  plan_id: string | null;
-  enabled_addons: unknown;
   account_kind: string | null;
-  team_limit: number | null;
+  /** The plan the club holds: the Coaches Portal stub's identity reads this, never the given plan. */
+  ownPlanId: OrgPlan;
+  planId: OrgPlan;
+  enabledAddons: string[];
+  /** The effective team cap (9999 = uncapped). */
+  teamLimit: number;
 };
 
 type WorkspaceRow = {
@@ -130,11 +137,23 @@ type WorkspaceRow = {
 async function fetchClubOrg(orgId: string): Promise<ClubOrgRow | null> {
   const { data, error } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, slug, plan_id, enabled_addons, account_kind, team_limit')
+    .select(`${DOOR_COLUMNS}, name, slug, account_kind`)
     .eq('id', orgId)
     .maybeSingle();
   if (error) throw error;
-  return (data as ClubOrgRow | null) ?? null;
+  if (!data) return null;
+  const row = data as DoorRow & { name: string; slug: string; account_kind: string | null };
+  const facts = await effectiveOrgFactsOf(row);
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    account_kind: row.account_kind,
+    ownPlanId: facts.ownPlanId,
+    planId: facts.planId,
+    enabledAddons: facts.enabledAddons,
+    teamLimit: facts.teamLimit,
+  };
 }
 
 async function fetchWorkspaceRow(workspaceId: string): Promise<WorkspaceRow | null> {
@@ -153,23 +172,22 @@ async function fetchNamed(table: 'organizations' | 'rep_teams', id: string): Pro
   return (data as { name: string; slug: string | null } | null) ?? null;
 }
 
-function clubHasRepTeams(org: Pick<ClubOrgRow, 'plan_id' | 'enabled_addons'>): boolean {
+function clubHasRepTeams(org: Pick<ClubOrgRow, 'planId' | 'enabledAddons'>): boolean {
   // Plan-config-driven (Club Repackaging): any plan whose tier carries module_rep_teams qualifies —
   // both Club bands and any future one — with the per-org add-on as the non-tier grant.
-  const planModules = PLAN_CONFIG[org.plan_id as OrgPlan]?.moduleEntitlements ?? [];
-  return planModules.includes('module_rep_teams')
-    || (Array.isArray(org.enabled_addons) && org.enabled_addons.includes('module_rep_teams'));
+  const planModules = PLAN_CONFIG[org.planId]?.moduleEntitlements ?? [];
+  return planModules.includes('module_rep_teams') || org.enabledAddons.includes('module_rep_teams');
 }
 
 /** The club's team places: its effective cap (null = uncapped) and the teams using them now. */
-export async function clubTeamPlaces(org: Pick<ClubOrgRow, 'id' | 'plan_id' | 'team_limit'>): Promise<{
+export async function clubTeamPlaces(org: Pick<ClubOrgRow, 'id' | 'planId' | 'teamLimit'>): Promise<{
   planId: OrgPlan;
   limit: number | null;
   used: number;
 }> {
-  const planId = (org.plan_id ?? 'tournament') as OrgPlan;
-  const cap = getEffectiveTeamLimit(planId, org.team_limit);
-  return { planId, limit: cap < 9999 ? cap : null, used: await getNonArchivedRepTeamCount(org.id) };
+  // `teamLimit` is already the effective cap (the door, or an org built by it): never re-derived from a stored column.
+  const cap = org.teamLimit;
+  return { planId: org.planId, limit: cap < 9999 ? cap : null, used: await getNonArchivedRepTeamCount(org.id) };
 }
 
 async function atCapRefusal(org: ClubOrgRow): Promise<TeamMoveRefusal | null> {
@@ -349,7 +367,7 @@ export async function askCoachToBringTeam(input: {
 }): Promise<TeamMoveAskResult> {
   const club = await fetchClubOrg(input.clubOrgId);
   if (!club) return { ok: false, status: 404, error: 'Organization not found.' };
-  if (isTeamWorkspaceOrgRow(club)) return { ok: false, status: 409, error: REFUSAL.notAClub };
+  if (isTeamWorkspaceOrg({ accountKind: club.account_kind as Organization['accountKind'], planId: club.ownPlanId })) return { ok: false, status: 409, error: REFUSAL.notAClub };
   if (!clubHasRepTeams(club)) return { ok: false, status: 409, error: REFUSAL.noRepTeams };
 
   const email = input.coachEmail.trim();
@@ -558,7 +576,7 @@ export async function approveTeamMove(input: {
     };
   }
   if (askedByOf(link) !== otherSide(side)) return NOT_WAITING;
-  if (isTeamWorkspaceOrgRow(club)) return { ok: false, status: 409, error: REFUSAL.notAClub };
+  if (isTeamWorkspaceOrg({ accountKind: club.account_kind as Organization['accountKind'], planId: club.ownPlanId })) return { ok: false, status: 409, error: REFUSAL.notAClub };
   if (!clubHasRepTeams(club)) return { ok: false, status: 409, error: REFUSAL.noRepTeams };
 
   // Room first: it does not depend on what was typed, and at the cap the club's Approve opens the

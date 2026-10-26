@@ -6,6 +6,7 @@ import {
   normalizePlan,
 } from '@/lib/billing-retention';
 import { withObservability } from '@/lib/observability';
+import { ownPlanOf } from '@/lib/entitlement-grants';
 
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org the caller is viewing (multi-org owners), NOT their home org — fail closed.
@@ -22,7 +23,7 @@ export const POST = withObservability(async (req: Request) => {
   if (!isOrganizationDowngradeTarget(targetPlan)) {
     return Response.json({ error: 'Team is a standalone product, not an organization downgrade target.' }, { status: 400 });
   }
-  if (!isLowerPlan(ctx.org.planId, targetPlan)) {
+  if (!isLowerPlan(ownPlanOf(ctx.org), targetPlan)) {
     return Response.json({ error: 'Downgrade review only applies when moving to a lower plan.' }, { status: 400 });
   }
 

@@ -224,7 +224,10 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
 
   // Grants are applied FIRST so a platform-admin `subscription_status: 'active'` override can still
   // rescue an account — that is the intended way to reinstate someone without touching Stripe.
-  const effectiveOrg = await applyEntitlementGrants(org);
+  const effectiveOrg = await applyEntitlementGrants(org, {
+    tournamentLimit: orgRow.tournament_limit,
+    teamLimit: orgRow.team_limit,
+  });
 
   // ── Billing rail (owner ruling 2026-08-06) ───────────────────────────────────────────────────
   // A cancelled subscription stops working immediately. Fails CLOSED: every route is gated unless

@@ -4,6 +4,7 @@ import { getPlanGatingMap } from './plan-gating-server';
 import { PLAN_CONFIG } from './plan-config';
 import type { MoveOrg, MoveRefusal } from './plan-move';
 import type { OrgPlan } from './types';
+import { ownPlanOf } from './entitlement-grants';
 
 /**
  * The shared front half of the three move routes (preview, move, cancel-the-scheduled-move): the
@@ -28,7 +29,7 @@ export async function authorizeMove(orgSlug: string | undefined): Promise<
       id: auth.org.id,
       name: auth.org.name,
       slug: auth.org.slug,
-      planId: auth.org.planId,
+      planId: ownPlanOf(auth.org),
       stripeCustomerId: auth.org.stripeCustomerId ?? null,
       stripeSubscriptionId: auth.org.stripeSubscriptionId ?? null,
       subscriptionStatus: auth.org.subscriptionStatus ?? null,

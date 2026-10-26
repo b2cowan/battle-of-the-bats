@@ -240,7 +240,12 @@ export interface Organization {
   name: string;
   slug: string;
   logoUrl?: string;
+  /** The plan every ACCESS decision reads: the club's own, or the plan its running free time gives it (the door,
+   *  `lib/entitlement-grants.ts`). A billing action reads `ownPlanOf(org)` instead. */
   planId: OrgPlan;
+  /** The plan the club holds and is billed for (`organizations.plan_id`). Set by the door; absent on an org built
+   *  without it, where it equals `planId`. Read it through `ownPlanOf()`. */
+  ownPlanId?: OrgPlan;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   subscriptionStatus: SubscriptionStatus;

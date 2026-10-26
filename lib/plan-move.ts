@@ -7,6 +7,7 @@ import { foundingCompAppliesToPlan, revokeFoundingSeasonComp } from './founding-
 import { writeGrowthEvent } from './platform-events';
 import { MOVE_METADATA_KEY } from './plan-growth';
 import type { OrgPlan } from './types';
+import { ownPlanOf } from './entitlement-grants';
 
 /**
  * MOVING A PAYING ORGANIZATION BETWEEN PLANS — ONE SUBSCRIPTION, NEVER A SECOND CHECKOUT
@@ -138,7 +139,7 @@ async function validateMove(org: MoveOrg, toPlan: OrgPlan): Promise<
   | { ok: true; direction: MoveDirection; live: LiveSub; priceId: string }
   | { ok: false; refusal: MoveRefusal }
 > {
-  const direction = moveDirection(org.planId, toPlan);
+  const direction = moveDirection(ownPlanOf(org), toPlan);
   if (!direction) {
     return { ok: false, refusal: { code: 'not_a_move', error: 'That plan change isn’t a move between plans.' } };
   }
@@ -297,7 +298,7 @@ export async function applyMove(
         source: 'app',
         sourceEventId: `${live.sub.id}:move_up:${toPlan}:${prorationDate}`,
         orgId: org.id,
-        previousPlanId: org.planId,
+        previousPlanId: ownPlanOf(org),
         previousStatus: org.subscriptionStatus ?? null,
         previousSubscriptionId: org.stripeSubscriptionId ?? null,
         planId: toPlan,
@@ -312,7 +313,7 @@ export async function applyMove(
         .update({ plan_id: toPlan, tournament_limit: PLAN_CONFIG[toPlan].tournamentLimit })
         .eq('id', org.id);
       if (error) throw error;
-      await applyPlanChangeSideEffects({ orgId: org.id, fromPlan: org.planId, toPlan, actor: opts.actor });
+      await applyPlanChangeSideEffects({ orgId: org.id, fromPlan: ownPlanOf(org), toPlan, actor: opts.actor });
       return { direction, toPlan, movedAt: new Date().toISOString() };
     }
 

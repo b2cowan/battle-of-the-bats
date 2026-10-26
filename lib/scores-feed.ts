@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { effectiveStatuses } from './entitlement-grants';
 import { getTournamentsByOrg } from './db';
 import { getPublicTournamentPageData } from './public-tournament-data';
 import { getFollowedTeamsForUser, getFollowedTournamentsForUser, getFollowedOrgsForUser } from './fan-follows';
@@ -118,11 +119,9 @@ async function resolveTournamentSlugs(
   const { data: orgRows } = orgIds.length > 0
     ? await supabaseAdmin.from('organizations').select('id, slug, subscription_status').in('id', orgIds)
     : { data: [] };
-  const orgById = new Map(
-    ((orgRows ?? []) as Array<{ id: string; slug: string; subscription_status: string | null }>)
-      .filter(o => o.subscription_status !== 'canceled')
-      .map(o => [o.id, o] as const),
-  );
+  const orgList = (orgRows ?? []) as Array<{ id: string; slug: string; subscription_status: string | null }>;
+  const statusById = await effectiveStatuses(orgList);
+  const orgById = new Map(orgList.filter(o => statusById.get(o.id) !== 'canceled').map(o => [o.id, o] as const));
 
   for (const t of publicTourns) {
     const org = orgById.get(t.org_id);

@@ -2,7 +2,6 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { assertSafeSupabaseServerEnvironment } from './lib/supabase-safety';
-import { isTournamentTier } from './lib/billing-urls';
 import { demoOrgSlugForBlockedWrite, sandboxRejectionResponse } from './lib/demo-guard';
 import { getDemoOrgBySlug } from './lib/demo-org';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH } from './lib/sandbox-door';
@@ -264,24 +263,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Tournament / Tournament Plus tiers have no org-admin concept — redirect them out
-  // of /[orgSlug]/admin/org/* before the page renders. The org-admin layout is the
-  // authoritative guard (and APIs gate themselves); this is the earliest-possible bounce.
-  const isOrgAdminSection =
-    segments[0] !== 'api' && segments[1] === 'admin' && segments[2] === 'org';
-  if (isOrgAdminSection && user) {
-    const { data: orgRow } = await supabase
-      .from('organizations')
-      .select('plan_id')
-      .eq('slug', segments[0])
-      .maybeSingle();
-    if (orgRow && isTournamentTier(orgRow.plan_id as string)) {
-      const url = request.nextUrl.clone();
-      url.pathname = `/${segments[0]}/admin/tournaments`;
-      url.search = '';
-      return NextResponse.redirect(url);
-    }
-  }
+  // No Tournament-tier bounce here (Support console Stage 4, owner 2026-10-25): which plan a club is on right now is
+  // free time's question, answered by the door on the server (lib/entitlement-grants.ts). The org-admin layout asks
+  // it and is the boundary; a proxy-side copy read the stored plan and would bounce a club on free Club time.
 
   // Protect /platform-admin/* with an optimistic session check.
   // Full platform-admin authorization happens in the layout and API routes.

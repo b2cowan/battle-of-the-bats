@@ -74,8 +74,9 @@ export function foundingSeasonOfferFor(user: { created_at?: string | null; app_m
  * by starting a checkout and walking away (/review 2026-10-19). Read by the checkout (which applies it) and the plan
  * step's cards (which show $0). Fails closed: a read error is the list price.
  */
-export async function foundingSeasonOfferOnPlanChoice(org: { id: string; planId?: string | null }): Promise<boolean> {
-  if (!foundingCompAppliesToPlan(org.planId)) return false;
+export async function foundingSeasonOfferOnPlanChoice(org: { id: string; planId?: string | null; ownPlanId?: string | null }): Promise<boolean> {
+  // The plan the club HOLDS (Support console Stage 4): free Club time must not switch a billing offer off.
+  if (!foundingCompAppliesToPlan(org.ownPlanId ?? org.planId)) return false;
   if (isFoundingSeasonSignupOpen()) return true;
   if (!isFoundingSeasonActive()) return false;
   const [comp, tournaments, row] = await Promise.all([

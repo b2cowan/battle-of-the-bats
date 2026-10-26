@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { getCoachingAssignmentsForUser, type CoachingAssignment } from './db';
 import { supabaseAdmin } from './supabase-admin';
+import { effectiveOrgFacts } from './entitlement-grants';
 import { getBasicCoachTournamentSummary, countClaimableRegistrationsForUser } from './basic-coach-teams';
 import { getFanFollowSummary } from './fan-follows';
 import { COACHES_CLAIMABLE_CONTEXT_ID, COACHES_HOME_PATH, COACHES_TOURNAMENTS_PATH, coachTeamPath } from './coaches-portal-routes';
@@ -96,6 +97,29 @@ function normalizeOrg(member: MemberRow) {
   return Array.isArray(relation) ? relation[0] : relation;
 }
 
+/**
+ * Every membership's club as the door reads it right now (free time included, lib/entitlement-grants.ts): the
+ * relation's plan, status and sections are REPLACED with the door's answer at fetch, one grants read for all of them,
+ * so every card, landing and lapsed-workspace decision below reads the plan the club is on today. A club on free Club
+ * time lands on its club hub, not the tournament dashboard. Call it on every membership read this file decides from.
+ */
+export async function withEffectiveOrgs<T extends MemberRow>(rows: T[]): Promise<T[]> {
+  const doorRows = rows
+    .map(normalizeOrg)
+    .filter((o): o is NonNullable<OrgRelation> => !!o?.id)
+    .map(o => ({ id: o.id!, plan_id: o.plan_id ?? null, subscription_status: o.subscription_status ?? null, enabled_addons: o.enabled_addons ?? null }));
+  if (doorRows.length === 0) return rows;
+  const facts = await effectiveOrgFacts(doorRows);
+  const fold = (o: OrgRelation): OrgRelation => {
+    const f = o?.id ? facts.get(o.id) : undefined;
+    return f && o ? { ...o, plan_id: f.planId, subscription_status: f.subscriptionStatus, enabled_addons: f.enabledAddons } : o;
+  };
+  return rows.map(r => ({
+    ...r,
+    organizations: Array.isArray(r.organizations) ? r.organizations.map(fold) : fold(r.organizations),
+  }));
+}
+
 function formatRole(role: string) {
   return ROLE_LABELS[role] ?? role;
 }
@@ -174,7 +198,7 @@ const getActiveMembershipRows = cache(async (userId: string): Promise<ActiveMemb
     .eq('user_id', userId)
     .eq('status', 'active');
 
-  return (data ?? []) as ActiveMemberRow[];
+  return withEffectiveOrgs((data ?? []) as ActiveMemberRow[]);
 });
 
 function buildMembershipContext(member: ActiveMemberRow): UserAccessContext | null {

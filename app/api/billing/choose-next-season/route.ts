@@ -19,6 +19,7 @@ import {
 } from '@/lib/next-season-choice';
 import { withObservability } from '@/lib/observability';
 import type { OrgPlan } from '@/lib/types';
+import { ownPlanOf } from '@/lib/entitlement-grants';
 
 /**
  * POST /api/billing/choose-next-season
@@ -72,14 +73,14 @@ export const POST = withObservability(async (req: Request) => {
     .limit(1)
     .maybeSingle();
   // ⚖ D6: a Club is never on the Founding Season, even with a comp row an operator's move missed.
-  if (!comp || !foundingCompAppliesToPlan(auth.org.planId)) {
+  if (!comp || !foundingCompAppliesToPlan(ownPlanOf(auth.org))) {
     return json({ error: 'This account is not on a Founding Season plan.' }, 403);
   }
 
   // ── 3. The plan is one this account may choose ────────────────────────────
   const planKey = typeof body.planKey === 'string' ? body.planKey : '';
   const billingCycle = normalizeBillingCycle(body.billingCycle);
-  const options = nextSeasonPlanOptions(auth.org.planId);
+  const options = nextSeasonPlanOptions(ownPlanOf(auth.org));
   // Two tests, not one: the account's own plan must be on the Founding Season promo AND be what was
   // asked for. An account whose plan_id drifted away from its comp cannot widen its own menu.
   if (!options.includes(planKey as OrgPlan) || !isFoundingSeasonPromoPlan(planKey)) {

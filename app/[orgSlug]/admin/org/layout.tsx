@@ -8,8 +8,9 @@ import { isTournamentTier } from '@/lib/billing-urls';
  * Tournament and Tournament Plus are standalone tournament-operator subscriptions
  * with no concept of an "org" — they live entirely within /admin/tournaments/ and
  * must never reach any /admin/org/ page (billing, members, venues, settings, etc.).
- * This server-side guard is the authoritative boundary; proxy.ts adds an earlier
- * redirect, and the admin rail (`AdminKitRail`) hides the section in the nav.
+ * This server-side guard is the only boundary (proxy.ts's earlier copy read the stored plan and went in Support
+ * console Stage 4): `authCtx.org.planId` is the door's answer, so a club on free Club time is let in and is bounced
+ * again the moment it ends. The admin rail (`AdminKitRail`) hides the section in the nav.
  */
 export default async function OrgAdminLayout({
   params,

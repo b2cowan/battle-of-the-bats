@@ -18,6 +18,7 @@ import { sendMarketingEmail, cancelScheduledEmail } from '@/lib/email-sender';
 import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
+import { ownPlanOf } from '@/lib/entitlement-grants';
 
 /** Welcome email fires this many days after a user selects Tournament Plus at onboarding. */
 const PLUS_WELCOME_DELAY_DAYS = 1;
@@ -109,12 +110,12 @@ export const POST = withObservability(async (req: Request) => {
   // subscription is not a Stripe one (hasLiveSubscription says so) and keeps the mock checkout working.
   const liveSubscription = hasLiveSubscription({
     id: auth.org.id,
-    planId: auth.org.planId,
+    planId: ownPlanOf(auth.org),
     stripeSubscriptionId: auth.org.stripeSubscriptionId ?? null,
     subscriptionStatus: auth.org.subscriptionStatus ?? null,
   });
   if (liveSubscription) {
-    const direction = moveDirection(auth.org.planId, planKey);
+    const direction = moveDirection(ownPlanOf(auth.org), planKey);
     return new Response(JSON.stringify({
       error: 'This organization already has a subscription. Change its plan instead of starting a second one.',
       code: 'subscription_exists',
@@ -126,7 +127,7 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const fallbackReturnTo = getBillingHref(auth.org.slug, auth.org.planId);
+  const fallbackReturnTo = getBillingHref(auth.org.slug, ownPlanOf(auth.org));
   const safeReturnTo = returnTo?.startsWith(`/${auth.org.slug}/admin/`)
     ? returnTo
     : fallbackReturnTo;
@@ -166,7 +167,7 @@ export const POST = withObservability(async (req: Request) => {
       orgId: auth.org.id,
       actorUserId: auth.user.id,
       actorEmail: auth.user.email,
-      previousPlanId: auth.org.planId,
+      previousPlanId: ownPlanOf(auth.org),
       previousStatus: auth.org.subscriptionStatus,
       previousSubscriptionId: auth.org.stripeSubscriptionId ?? null,
       planId: planKey,
@@ -181,7 +182,7 @@ export const POST = withObservability(async (req: Request) => {
         orgId: auth.org.id,
         actorUserId: auth.user.id,
         actorEmail: auth.user.email,
-        previousPlanId: auth.org.planId,
+        previousPlanId: ownPlanOf(auth.org),
         planId: planKey,
         previousSubscriptionStatus: auth.org.subscriptionStatus,
         subscriptionStatus: 'trialing',
@@ -226,7 +227,7 @@ export const POST = withObservability(async (req: Request) => {
   const isFoundingSeasonTournamentUpgrade =
     !shouldApplyDirectly &&
     planKey === 'tournament_plus' &&
-    auth.org.planId === 'tournament' &&
+    ownPlanOf(auth.org) === 'tournament' &&
     (await foundingSeasonOfferOnPlanChoice(auth.org));
 
   if (isFoundingSeasonTournamentUpgrade) {
@@ -286,7 +287,7 @@ export const POST = withObservability(async (req: Request) => {
         orgId: auth.org.id,
         actorUserId: auth.user.id,
         actorEmail: auth.user.email,
-        previousPlanId: auth.org.planId,
+        previousPlanId: ownPlanOf(auth.org),
         planId: 'tournament_plus',
         previousSubscriptionStatus: auth.org.subscriptionStatus,
         subscriptionStatus: 'active',
