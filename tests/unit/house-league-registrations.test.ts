@@ -3,10 +3,10 @@ import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import {
   bulkActions, bulkResult, feeCell, parsePrice, receiveDayError, refundDayError, rowActions, tallyWhy, whyOf, matchesFee, regTab,
-  registrationHistory,
+  registrationHistory, regFilterOffer, regFlags, matchesPicks, regFilterCounts, NO_PICKS, NOT_PLACED,
 } from '../../lib/house-league-registrations.ts';
 import type { CardRefund } from '../../lib/league-card-refunds.ts';
-import { MONEY_REFUSAL } from '../../lib/house-league-money-words.ts';
+import { MONEY_REFUSAL, REGS_WORDS } from '../../lib/house-league-money-words.ts';
 import { feeState, type LeagueMoneyLine } from '../../lib/league-money.ts';
 import type { LeagueRegistration } from '../../lib/types.ts';
 
@@ -171,6 +171,51 @@ describe('who sees which action (copy §1.4, §1.5, §2)', () => {
     assert.deepEqual(['pending_review', 'active', 'waitlisted', 'declined', 'withdrawn'].map(s => regTab(s as LeagueRegistration['status'])), ['review', 'active', 'waitlist', 'ended', 'ended']);
     const owing = feeState(reg(), SEASON, [], TODAY);
     assert.ok(matchesFee(owing, new Set(['owing'])) && !matchesFee(owing, new Set(['received'])) && matchesFee(owing, new Set()));
+  });
+});
+
+describe('the Filter: Team · Fee · Flags (owner, 2026-10-26)', () => {
+  const fee = (r: LeagueRegistration, lines: LeagueMoneyLine[] = []) => feeState(r, SEASON, lines, TODAY);
+  it('what each tab offers: Team on Active only, money only when the season charges, the pay link only with cards', () => {
+    const o = { charges: true, payLinks: true, teamIds: ['t1', 't2'] };
+    assert.deepEqual(regFilterOffer('active', o), { team: [NOT_PLACED, 't1', 't2'], fee: ['owing', 'received'], flags: ['asked', 'late', 'noPayLink', 'notes'] });
+    assert.deepEqual(regFilterOffer('review', o), { team: [], fee: ['owing', 'received'], flags: ['asked', 'notes'] });
+    assert.deepEqual(regFilterOffer('ended', o), { team: [], fee: ['owing', 'received', 'refunded'], flags: [] });
+    assert.deepEqual(regFilterOffer('active', { charges: false, payLinks: true, teamIds: [] }), { team: [NOT_PLACED], fee: [], flags: ['asked', 'notes'] });
+    assert.deepEqual(regFilterOffer('active', { ...o, payLinks: false }).flags, ['asked', 'late', 'notes']);
+  });
+  it('a row’s flags: late is the row’s own amber; a sent pay link and an ended child drop theirs', () => {
+    const late = reg({ withdrawRequestedAt: '2026-10-20T15:00:00Z', playerNotes: ' Peanut allergy ' });
+    assert.deepEqual([...regFlags(late, fee(late))].sort(), ['asked', 'late', 'noPayLink', 'notes']);
+    const fresh = reg({ acceptedAt: '2026-10-20T15:00:00Z', payLinkSentAt: '2026-10-21T15:00:00Z', playerNotes: '  ' });
+    assert.deepEqual([...regFlags(fresh, fee(fresh))], []);
+    const ended = reg({ status: 'withdrawn', withdrawRequestedAt: '2026-10-20T15:00:00Z' });
+    assert.ok(!regFlags(ended, fee(ended)).has('asked'));
+    const paid = reg();
+    assert.ok(!regFlags(paid, fee(paid, [line()])).has('noPayLink'), 'nothing owing, nothing to send');
+    const part = reg();
+    const partFlags = regFlags(part, fee(part, [line({ amount: 50 })]));
+    assert.ok(partFlags.has('noPayLink') && !partFlags.has('late'), 'part received still owes a link; only a plain owing row turns amber');
+  });
+  it('ticks widen within a group and narrow across groups', () => {
+    const placed = reg({ teamId: 't1' });
+    const picks = { ...NO_PICKS, team: new Set([NOT_PLACED, 't2']) };
+    assert.ok(!matchesPicks(picks, placed, fee(placed)));
+    assert.ok(matchesPicks({ ...picks, team: new Set([NOT_PLACED, 't1']) }, placed, fee(placed)));
+    assert.ok(!matchesPicks({ ...NO_PICKS, team: new Set(['t1']), fee: new Set(['received']) }, placed, fee(placed)));
+  });
+  it('each count is what ticking it would list, given the OTHER groups’ ticks; a zero stays', () => {
+    const rows = [reg({ id: 'a' }), reg({ id: 'b', teamId: 't1' }), reg({ id: 'c', withdrawRequestedAt: '2026-10-20T15:00:00Z' })];
+    const offer = regFilterOffer('active', { charges: true, payLinks: false, teamIds: ['t1'] });
+    const picks = { ...NO_PICKS, team: new Set([NOT_PLACED]), flags: new Set(['asked']) };
+    const c = regFilterCounts(rows, r => fee(r), picks, offer);
+    assert.deepEqual([...c.team], [[NOT_PLACED, 1], ['t1', 0]], 'Team counted over the Flags tick only');
+    assert.deepEqual([...c.fee], [['owing', 1], ['received', 0]]);
+    assert.deepEqual([...c.flags], [['asked', 1], ['late', 2], ['notes', 0]], 'Flags counted over the Team tick only');
+  });
+  it('the late option says the season’s own days', () => {
+    assert.equal(REGS_WORDS.filterLate(14), 'Owing 14 days or more');
+    assert.equal(REGS_WORDS.filterLate(1), 'Owing 1 day or more');
   });
 });
 

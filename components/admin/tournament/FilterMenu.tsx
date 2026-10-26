@@ -29,6 +29,8 @@ export type FilterGroupDef = {
   options: readonly FilterOption[];
   selected: readonly string[];
   onToggle: (key: string) => void;
+  /** A few quiet words at the header's right end — where the group's other choices went ("Pick a division"). Never a row. */
+  note?: string;
 };
 
 const ITEM = '[role^="menuitem"]';
@@ -81,7 +83,7 @@ export default function FilterMenu({
     <>
       {shown.map(g => (
         <Fragment key={g.key}>
-          <div className={tb.regFilterHeader}><span>{g.label}</span></div>
+          <div className={tb.regFilterHeader}><span>{g.label}</span>{g.note && <span className={tb.regFilterNote}>{g.note}</span>}</div>
           <div className={tb.regFilterList}>
             {g.options.map(o => {
               const checked = g.selected.includes(o.key);

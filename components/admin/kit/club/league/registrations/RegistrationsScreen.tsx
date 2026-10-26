@@ -46,9 +46,10 @@ import {
 import { formatLeagueMoney, isOwing, lastPayment, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
 import { orgDayKey } from '@/lib/timezone';
 import {
-  bulkActions, bulkResult, endedKind, feeCell, isOpenReg, matchesFee, matchesSearch, owesNow, phoneDetail, playerName, guardianName,
-  priceOn, REG_TABS, regDay, regTab, rowActions, seasonHasFees, tallyWhy, whyOf, isRegTab,
-  type BulkKey, type PriceChange, type RegRights, type RegTab, type RegsDivision, type RegsRead, type RegsSeason,
+  bulkActions, bulkResult, endedKind, feeCell, isOpenReg, matchesPicks, matchesSearch, owesNow, phoneDetail, playerName, guardianName,
+  priceOn, REG_TABS, regDay, regTab, regFilterCounts, regFilterOffer, rowActions, seasonHasFees, tallyWhy, whyOf, isRegTab,
+  NO_PICKS, NOT_PLACED,
+  type BulkKey, type PriceChange, type RegFilterGroup, type RegFilterPicks, type RegRights, type RegTab, type RegsDivision, type RegsRead, type RegsSeason,
   type RowActionKey, type Why,
 } from '@/lib/house-league-registrations';
 import type { LeagueRegistration } from '@/lib/types';
@@ -84,7 +85,7 @@ type Act =
   | { kind: 'confirm'; verb: 'approve' | 'promote' | 'waitlist'; ids: string[] }
   | { kind: 'add' };
 
-interface TeamLite { id: string; name: string }
+interface TeamLite { id: string; name: string; divisionId: string }
 
 /** The row action that opens the ending window, and which ending it is. */
 const END_MODE = { release: 'released', withdraw: 'withdrawn', decline: 'declined' } as const;
@@ -116,7 +117,7 @@ export default function RegistrationsScreen() {
 
   const [scope, setScope] = useState('');
   const [query, setQuery] = useState('');
-  const [picks, setPicks] = useState<ReadonlySet<string>>(new Set());
+  const [picks, setPicks] = useState<RegFilterPicks>(NO_PICKS);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [shown, setShown] = useState(PAGE);
   const [act, setAct] = useState<Act | null>(null);
@@ -152,7 +153,7 @@ export default function RegistrationsScreen() {
         heldCount: d.heldCount ?? 0, waitlistCount: d.waitlistCount ?? 0,
       })));
     }
-    if (withTeams) setTeams((teamsRes?.ok ? teamsRes.data.teams ?? [] : []).map(t => ({ id: t.id, name: t.name })));
+    if (withTeams) setTeams((teamsRes?.ok ? teamsRes.data.teams ?? [] : []).map(t => ({ id: t.id, name: t.name, divisionId: t.divisionId })));
     setRead({
       registrations: regsRes.data.registrations ?? [], money: regsRes.data.money ?? {},
       priceChanges: regsRes.data.priceChanges ?? [], today: regsRes.data.today, payLinks: !!regsRes.data.payLinks,
@@ -218,21 +219,25 @@ export default function RegistrationsScreen() {
     return m;
   }, [regs, season, read, linesOf, changesByReg, refundsOf]);
 
-  // A pick belongs to the tab whose menu offers it (Refunded is the Ended tab's): a hidden pick filters nothing.
-  const feeOptions = [
-    { key: 'owing', label: REGS_WORDS.filterOwing },
-    { key: 'received', label: REGS_WORDS.filterReceived },
-    ...(tab === 'ended' ? [{ key: 'refunded', label: REGS_WORDS.filterRefunded }] : []),
-  ];
-  const activePicks = useMemo(() => new Set([...picks].filter(k => (tab === 'ended' || k !== 'refunded'))), [picks, tab]);
-  const feeFilterOn = charges && activePicks.size > 0;
+  // The Filter (Team · Fee · Flags). A pick belongs to the tab whose menu offers it (Refunded is the Ended tab's, Team the
+  // Active tab's): a hidden pick filters nothing.
+  const scopeTeams = useMemo(() => (scope ? teams.filter(t => t.divisionId === scope) : []), [teams, scope]);
+  const offer = useMemo(
+    () => regFilterOffer(tab, { charges, payLinks: !!read?.payLinks, teamIds: scopeTeams.map(t => t.id) }),
+    [tab, charges, read?.payLinks, scopeTeams],
+  );
+  const activePicks: RegFilterPicks = useMemo(() => {
+    const only = (g: RegFilterGroup) => new Set([...picks[g]].filter(k => offer[g].includes(k)));
+    return { team: only('team'), fee: only('fee'), flags: only('flags') };
+  }, [picks, offer]);
+  const filterOn = activePicks.team.size + activePicks.fee.size + activePicks.flags.size > 0;
+  const searchedTab = useMemo(() => scoped.filter(r => regTab(r.status) === tab && matchesSearch(r, query)), [scoped, tab, query]);
   const tabRegs = useMemo(() => {
-    const list = scoped.filter(r => regTab(r.status) === tab && matchesSearch(r, query)
-      && (!feeFilterOn || matchesFee(fees.get(r.id)!.state, activePicks)));
+    const list = searchedTab.filter(r => !filterOn || matchesPicks(activePicks, r, fees.get(r.id)!.state));
     if (tab === 'waitlist') return list.sort((a, b) => (a.waitlistPosition ?? 9999) - (b.waitlistPosition ?? 9999));
     if (tab === 'ended') return list.sort((a, b) => Date.parse(b.endedAt ?? b.updatedAt) - Date.parse(a.endedAt ?? a.updatedAt));
     return list;
-  }, [scoped, tab, query, feeFilterOn, fees, activePicks]);
+  }, [searchedTab, tab, filterOn, fees, activePicks]);
 
   const bulkKeys = useMemo(() => bulkActions(tab, rights, charges), [tab, rights, charges]);
   const selectable = bulkKeys.length > 0;
@@ -545,20 +550,39 @@ export default function RegistrationsScreen() {
       : undefined,
   }));
 
-  // ── The Fee filter ─────────────────────────────────────────────────────────────────────────────
-  const groups = charges ? [{
-    key: 'fee', label: REGS_WORDS.filterFee, options: feeOptions,
-    selected: [...activePicks],
-    onToggle: (k: string) => { setPicks(prev => { const next = new Set(prev); if (next.has(k)) next.delete(k); else next.add(k); return next; }); setShown(PAGE); clearSelection(); },
-  }] : [];
-  const resetFilter = () => { setPicks(new Set()); setShown(PAGE); };
+  // ── The Filter: Team · Fee · Flags, each choice counted given the other groups' ticks ──────────────────
+  const filterCounts = regFilterCounts(searchedTab, r => fees.get(r.id)!.state, activePicks, offer);
+  const W = REGS_WORDS;
+  const optionWord: Record<RegFilterGroup, (k: string) => string> = {
+    team: k => (k === NOT_PLACED ? W.notPlaced : scopeTeams.find(t => t.id === k)?.name ?? k),
+    fee: k => (k === 'owing' ? W.filterOwing : k === 'received' ? W.filterReceived : W.filterRefunded),
+    flags: k => (k === 'asked' ? W.filterAsked : k === 'late' ? W.filterLate(season.owingAmberDays)
+      : k === 'noPayLink' ? W.filterNoPayLink : W.filterNotes),
+  };
+  const toggle = (g: RegFilterGroup, k: string) => {
+    setPicks(prev => {
+      const next = new Set(prev[g]);
+      if (next.has(k)) next.delete(k); else next.add(k);
+      return { ...prev, [g]: next };
+    });
+    setShown(PAGE); clearSelection();
+  };
+  const groups = (['team', 'fee', 'flags'] as const).map(g => ({
+    key: g,
+    label: g === 'team' ? W.filterTeam : g === 'fee' ? W.filterFee : W.filterFlags,
+    note: g === 'team' && !scope ? W.filterPickDivision : undefined,
+    options: offer[g].map(k => ({ key: k, label: optionWord[g](k), count: filterCounts[g].get(k) ?? 0 })),
+    selected: [...activePicks[g]],
+    onToggle: (k: string) => toggle(g, k),
+  })).filter(g => g.options.length > 0);
+  const resetFilter = () => { setPicks(NO_PICKS); setShown(PAGE); };
 
   // ── The empty states ───────────────────────────────────────────────────────────────────────────
   const E = REGS_WORDS.empty;
   const emptyCard = (() => {
     if (regs.length === 0) return <EmptyCard title={E.all.title}>{E.all.body}</EmptyCard>;
     if (query.trim()) return <EmptyCard title={E.search} />;
-    if (feeFilterOn) return <EmptyCard title={E.filter} action={<button type="button" className="btn btn-outline" onClick={resetFilter}>{REGS_WORDS.filterClear}</button>} />;
+    if (filterOn) return <EmptyCard title={E.filter} action={<button type="button" className="btn btn-outline" onClick={resetFilter}>{REGS_WORDS.filterClear}</button>} />;
     const e = tab === 'review' ? (season.autoApproveUnderCapacity ? E.reviewAuto : E.review) : tab === 'active' ? E.active : tab === 'waitlist' ? E.waitlist : E.ended;
     return <EmptyCard title={e.title}>{e.body}</EmptyCard>;
   })();
@@ -575,7 +599,8 @@ export default function RegistrationsScreen() {
         <DivisionPicker
           divisions={[{ id: '', name: REGS_WORDS.scopeAll, waiting: 0 }, ...divisions.map(d => ({ id: d.id, name: d.name, waiting: reviewByDivision.get(d.id) ?? 0 }))]}
           value={scope}
-          onChange={id => { setScope(id); setShown(PAGE); clearSelection(); }}
+          // Another division's teams are not this one's: a team tick goes, "Not placed" stays (a tick never hides out of reach).
+          onChange={id => { setScope(id); setPicks(prev => ({ ...prev, team: new Set([...prev.team].filter(k => k === NOT_PLACED)) })); setShown(PAGE); clearSelection(); }}
           words={{ waiting: REGS_WORDS.scopeToReview, waitingElsewhere: REGS_WORDS.scopeElsewhere }}
         />
         <span className={tb.toolbarSpacer} aria-hidden />

@@ -375,6 +375,74 @@ export function matchesFee(fee: FeeState, picks: ReadonlySet<string>): boolean {
     || (picks.has('refunded') && fee.kind === 'refunded');
 }
 
+// ── The Filter's three groups (owner, 2026-10-26: Team · Fee · Flags) ─────────────────────────────
+
+export type RegFilterGroup = 'team' | 'fee' | 'flags';
+export type RegFilterPicks = Readonly<Record<RegFilterGroup, ReadonlySet<string>>>;
+export type RegFlag = 'asked' | 'late' | 'noPayLink' | 'notes';
+/** The Team group's first row: a child on no team. Any other Team key is a team's id. */
+export const NOT_PLACED = 'notPlaced';
+export const NO_PICKS: RegFilterPicks = { team: new Set(), fee: new Set(), flags: new Set() };
+
+/**
+ * What the Filter offers on a tab. Team is the Active tab's (nobody in review or waiting is on a team), and lists the teams
+ * only once a division is picked — every age group has its own Blue Jays. Fee and the two money flags need a season that
+ * charges; "Pay link not sent" also needs the club to take cards. A group with no options is absent.
+ */
+export function regFilterOffer(tab: RegTab, o: { charges: boolean; payLinks: boolean; teamIds: readonly string[] }): Record<RegFilterGroup, string[]> {
+  return {
+    team: tab === 'active' ? [NOT_PLACED, ...o.teamIds] : [],
+    fee: o.charges ? ['owing', 'received', ...(tab === 'ended' ? ['refunded'] : [])] : [],
+    flags: [
+      ...(tab !== 'ended' ? ['asked'] : []),
+      ...(tab === 'active' && o.charges ? ['late'] : []),
+      ...(tab === 'active' && o.charges && o.payLinks ? ['noPayLink'] : []),
+      ...(tab !== 'ended' ? ['notes'] : []),
+    ],
+  };
+}
+
+/** A row's flags. "Late" is the row's own amber (owing, past the season's days); a pay link counts once it was ever sent. */
+export function regFlags(r: LeagueRegistration, fee: FeeState): Set<RegFlag> {
+  const f = new Set<RegFlag>();
+  if (isOpenReg(r) && r.withdrawRequestedAt) f.add('asked');
+  if (fee.kind === 'owing' && fee.late) f.add('late');
+  if (isOwing(fee) && !r.payLinkSentAt) f.add('noPayLink');
+  if (r.playerNotes?.trim()) f.add('notes');
+  return f;
+}
+
+/** One group's test on one row. Several picks in a group widen it (any of them); no picks admit everything. */
+export function matchesGroup(group: RegFilterGroup, picks: ReadonlySet<string>, r: LeagueRegistration, fee: FeeState): boolean {
+  if (picks.size === 0) return true;
+  if (group === 'fee') return matchesFee(fee, picks);
+  if (group === 'team') return picks.has(r.teamId ?? NOT_PLACED);
+  const flags = regFlags(r, fee);
+  return [...picks].some(k => flags.has(k as RegFlag));
+}
+
+/** Every group but `except` (the counts' base: what ticking a choice would list, given the OTHER groups' ticks). */
+export function matchesPicks(picks: RegFilterPicks, r: LeagueRegistration, fee: FeeState, except?: RegFilterGroup): boolean {
+  return (['team', 'fee', 'flags'] as const).every(g => g === except || matchesGroup(g, picks[g], r, fee));
+}
+
+/** Each offered choice's count: the rows ticking it would list, given the other groups' ticks (Filter Counts D5). */
+export function regFilterCounts(
+  rows: readonly LeagueRegistration[], stateOf: (r: LeagueRegistration) => FeeState, picks: RegFilterPicks,
+  offer: Record<RegFilterGroup, readonly string[]>,
+): Record<RegFilterGroup, Map<string, number>> {
+  const out = { team: new Map<string, number>(), fee: new Map<string, number>(), flags: new Map<string, number>() };
+  for (const g of ['team', 'fee', 'flags'] as const) {
+    for (const k of offer[g]) out[g].set(k, 0);
+    for (const r of rows) {
+      const fee = stateOf(r);
+      if (!matchesPicks(picks, r, fee, g)) continue;
+      for (const k of offer[g]) if (matchesGroup(g, new Set([k]), r, fee)) out[g].set(k, out[g].get(k)! + 1);
+    }
+  }
+  return out;
+}
+
 /** The first child waiting in a division (the one an ended spot moves up), by their place in line. */
 export function firstWaiting(regs: readonly LeagueRegistration[], divisionId: string | null, exceptId?: string): LeagueRegistration | null {
   if (!divisionId) return null;

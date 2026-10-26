@@ -1,0 +1,591 @@
+<title>Registrations Filter Menu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<style>
+/* Layout: a cool-grey document that holds warm product frames as specimens — desk frames fit the window (true size on
+   demand), phone frames are drawn at 390 so they can be judged on a real phone. Product colours are the warm portal's. */
+:root {
+  --doc-bg: #E7EAED; --doc-card: #F6F7F8; --doc-ink: #1D2227; --doc-dim: #56606B; --doc-line: rgba(29, 34, 39, 0.14);
+  --tag-new: #134FD3; --tag-res: #835006; --tag-unc: #56606B;
+  --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink-soft: #4A4235; --dim: #615A54;
+  --line: rgba(70, 55, 30, 0.12); --line-strong: rgba(70, 55, 30, 0.20);
+  --olive: #57651E; --olive-soft: rgba(87, 101, 30, 0.10); --amber: #835006; --lime: #D9F99D; --lime-ink: #1F2A0A;
+  --sheet-dim: rgba(36, 30, 21, 0.28); --shadow: 0 1px 2px rgba(70, 55, 30, 0.05), 0 6px 18px rgba(70, 55, 30, 0.07);
+  --f-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-cond: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-data: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #15171A; --doc-card: #1D2024; --doc-ink: #E6E8EB; --doc-dim: #9AA3AD; --doc-line: rgba(255, 255, 255, 0.12);
+  --tag-new: #8DB2FF; --tag-res: #F2B456; --tag-unc: #9AA3AD;
+  --paper: #0A0A0A; --card: #151515; --ink: #F1F5F9; --ink-soft: rgba(255, 255, 255, 0.7); --dim: rgba(255, 255, 255, 0.5);
+  --line: rgba(255, 255, 255, 0.08); --line-strong: rgba(217, 249, 157, 0.25);
+  --olive: #D9F99D; --olive-soft: rgba(217, 249, 157, 0.14); --amber: #F2B456; --lime: #D9F99D; --lime-ink: #1F2A0A;
+  --sheet-dim: rgba(0, 0, 0, 0.55); --shadow: 0 6px 22px rgba(0, 0, 0, 0.5); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --doc-bg: #15171A; --doc-card: #1D2024; --doc-ink: #E6E8EB; --doc-dim: #9AA3AD; --doc-line: rgba(255, 255, 255, 0.12);
+  --tag-new: #8DB2FF; --tag-res: #F2B456; --tag-unc: #9AA3AD;
+  --paper: #0A0A0A; --card: #151515; --ink: #F1F5F9; --ink-soft: rgba(255, 255, 255, 0.7); --dim: rgba(255, 255, 255, 0.5);
+  --line: rgba(255, 255, 255, 0.08); --line-strong: rgba(217, 249, 157, 0.25);
+  --olive: #D9F99D; --olive-soft: rgba(217, 249, 157, 0.14); --amber: #F2B456; --lime: #D9F99D; --lime-ink: #1F2A0A;
+  --sheet-dim: rgba(0, 0, 0, 0.55); --shadow: 0 6px 22px rgba(0, 0, 0, 0.5); color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.doc { max-width: 1240px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 48px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.01em; }
+h2 { font-size: 21px; line-height: 1.25; }
+h3 { font-size: 15px; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-family: var(--f-data); font-size: 11.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--doc-dim); }
+.intro { display: grid; gap: 14px; }
+.intro ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 72ch; }
+section { display: grid; gap: 18px; }
+.lede { color: var(--doc-dim); }
+.pair { display: grid; gap: 20px; }
+.col { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.cap { font-family: var(--f-data); font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.cap button { font: inherit; letter-spacing: 0.04em; text-transform: none; font-weight: 600; color: var(--doc-ink); background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.cap button:focus-visible, .mk:focus-visible, .copy:focus-visible { outline: 2px solid var(--tag-new); outline-offset: 2px; }
+.phones { display: flex; flex-wrap: wrap; gap: 28px; }
+.phones .col { flex: 0 1 390px; }
+
+/* tags */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mk { font-family: var(--f-data); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; border: 1px solid currentColor; background: transparent; cursor: pointer; }
+.mk.new { color: var(--tag-new); } .mk.res { color: var(--tag-res); } .mk.unc { color: var(--tag-unc); }
+.mk[aria-expanded="true"] { background: var(--doc-card); }
+.note { font-size: 14px; color: var(--doc-ink); background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 8px; padding: 10px 14px; max-width: 72ch; }
+
+/* stage: a fixed-width frame scaled to fit */
+.stage { position: relative; overflow: hidden; border-radius: 10px; border: 1px solid var(--doc-line); }
+.stage.true { overflow-x: auto; }
+.stage > .fit { transform-origin: 0 0; }
+
+/* ── the product: warm portal ── */
+.app { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.desk { width: 1200px; padding: 26px 40px 30px; }
+.hd { display: flex; align-items: center; gap: 22px; }
+.back { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--ink-soft); padding-right: 22px; border-right: 1px solid var(--line-strong); height: 46px; }
+.ttl { flex: 1; }
+.ttl .ey { font-family: var(--f-data); font-size: 11.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
+.ttl .h { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+.add { background: var(--lime); color: var(--lime-ink); font-weight: 700; font-size: 15px; border-radius: 8px; padding: 10px 18px; display: flex; gap: 8px; align-items: center; }
+.tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line-strong); margin-top: 22px; }
+.tabs span { padding: 10px 16px 12px; font-size: 16px; font-weight: 500; color: var(--ink-soft); }
+.tabs .on { color: var(--olive); font-weight: 600; border-bottom: 2px solid var(--olive); margin-bottom: -1px; }
+.tabs .on i { font-style: normal; font-family: var(--f-data); font-size: 13px; color: var(--ink-soft); margin-left: 8px; }
+.tb { display: flex; align-items: center; gap: 10px; margin-top: 28px; position: relative; }
+.ctl { height: 42px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); display: flex; align-items: center; gap: 8px; padding: 0 14px; font-size: 15px; font-weight: 650; color: var(--ink-soft); white-space: nowrap; }
+.ctl.div { width: 322px; border-radius: 999px; justify-content: space-between; color: var(--ink); font-weight: 600; }
+.ctl.search { width: 318px; border-radius: 999px; font-weight: 400; color: var(--dim); margin-left: auto; }
+.ctl.lit { border-color: var(--olive); background: var(--olive-soft); color: var(--olive); }
+.ctl .n { font-family: var(--f-data); font-weight: 700; }
+.fline { margin: 8px 0 0; font-size: 12px; font-weight: 600; color: var(--ink); }
+svg.i { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.tbl { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.tr { display: grid; grid-template-columns: 66px 1.15fr 0.85fr 1.45fr 1fr 170px 54px; align-items: center; min-height: 84px; border-top: 1px solid var(--line); }
+.tr.th { min-height: 46px; border-top: 0; font-family: var(--f-cond); font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.box { width: 26px; height: 26px; border: 1px solid var(--line-strong); border-radius: 6px; margin-left: 20px; background: var(--card); }
+.c b { display: block; font-size: 16px; font-weight: 650; color: var(--ink); }
+.c span { display: block; font-size: 14.5px; color: var(--ink-soft); margin-top: 2px; }
+.c span.amb, .c b.amb { color: var(--amber); }
+.c .ask { color: var(--amber); font-weight: 600; }
+.mr { justify-self: start; border: 1px solid var(--line-strong); border-radius: 8px; padding: 9px 15px; font-size: 16px; font-weight: 650; color: var(--olive); background: var(--card); }
+.dots { justify-self: center; font-weight: 800; letter-spacing: 2px; color: var(--ink-soft); }
+
+/* the filter menu */
+.menu { position: absolute; top: 50px; z-index: 5; width: 256px; padding: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+.menu.r { right: 236px; }
+.menu.cap { max-height: 544px; overflow: hidden; }
+.menu.cap::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 56px; background: linear-gradient(to bottom, transparent, var(--card)); border-radius: 0 0 8px 8px; }
+.mh { padding: 6px 7px 7px; font-family: var(--f-data); font-size: 11.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-soft); display: flex; justify-content: space-between; align-items: baseline; }
+.mh .hint { font-family: var(--f-body); font-size: 12px; font-weight: 650; letter-spacing: normal; text-transform: none; color: var(--dim); }
+.mh + .ml { margin-top: 0; }
+.ml + .mh { margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+.sub { padding: 6px 8px 2px 32px; font-size: 12px; font-weight: 600; color: var(--dim); }
+.ml { display: grid; gap: 3px; }
+.mo { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 36px; padding: 5px 8px; border: 1px solid transparent; border-radius: 6px; font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+.mo.on { border-color: var(--olive); background: var(--olive-soft); color: var(--ink); }
+.mo .ck { color: var(--olive); font-weight: 800; font-size: 12px; text-align: center; }
+.mo .ct { font-family: var(--f-data); font-size: 12px; font-weight: 500; color: var(--dim); }
+.mo.new { outline: 1.5px dashed var(--tag-new); outline-offset: -1.5px; cursor: pointer; }
+.mo.res { outline: 1.5px dotted var(--tag-res); outline-offset: -1.5px; cursor: pointer; }
+.mo.z { color: var(--dim); }
+.reset { margin-top: 6px; border-top: 1px solid var(--line); padding: 10px 8px 6px; font-size: 12px; font-weight: 650; color: var(--dim); }
+.menu.scroll { max-height: 390px; overflow: hidden; }
+.menu.scroll::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 56px; background: linear-gradient(to bottom, transparent, var(--card)); border-radius: 0 0 8px 8px; }
+.sbar { position: absolute; right: 3px; top: 10px; width: 4px; height: 120px; border-radius: 4px; background: var(--line-strong); }
+.mini { width: 340px; padding: 18px; position: relative; min-height: 470px; }
+.mini .menu { position: relative; top: 0; right: auto; }
+.mini .menu + .after { margin-top: 10px; font-size: 12px; color: var(--dim); }
+
+/* phone */
+.ph { width: 390px; height: 844px; position: relative; overflow: hidden; }
+.ph .in { padding: 14px 16px; }
+.ph .back { border: 0; padding: 0; height: auto; font-size: 14px; }
+.ph .ttl { margin-top: 12px; }
+.ph .ttl .h { font-size: 22px; }
+.ph .hrow { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.ph .add { width: 44px; height: 44px; padding: 0; justify-content: center; font-size: 22px; }
+.ph .tabs { margin-top: 12px; gap: 0; overflow: hidden; }
+.ph .tabs span { font-size: 14.5px; padding: 10px 11px 11px; white-space: nowrap; }
+.ph .tb { margin-top: 14px; gap: 6px; }
+.ph .ctl { height: 44px; font-size: 14px; }
+.ph .ctl.div { width: auto; flex: 1; }
+.ph .ctl.sq { width: 44px; padding: 0; justify-content: center; }
+.ph .ctl.sq svg.i { width: 18px; height: 18px; }
+.ph .ctl.sq.lit { width: auto; padding: 0 11px; gap: 5px; }
+.pbar { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; z-index: 6; background: var(--card); border-top: 1px solid var(--line-strong); display: flex; justify-content: space-around; align-items: center; font-size: 11px; font-weight: 600; color: var(--dim); }
+.pbar span { display: grid; justify-items: center; gap: 3px; }
+.pbar i { width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid currentColor; display: block; }
+.pbar .on { color: var(--olive); }
+.ph .fline { margin-top: 10px; }
+.pcards { margin-top: 12px; display: grid; gap: 8px; }
+.pc { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; }
+.pc b { font-size: 15.5px; } .pc span { font-size: 13.5px; color: var(--ink-soft); }
+.pc .fee { font-weight: 650; color: var(--ink); } .pc .amb { color: var(--amber); font-weight: 650; } .pc .ask { color: var(--amber); font-weight: 600; }
+.pc .dots { grid-row: 1 / span 3; grid-column: 2; align-self: start; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+.dim { position: absolute; left: 0; right: 0; top: 0; bottom: 64px; background: var(--sheet-dim); z-index: 4; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 64px; z-index: 5; background: var(--card); border-radius: 16px 16px 0 0; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.18); }
+.sheet .grab { width: 38px; height: 4px; border-radius: 4px; background: var(--line-strong); margin: 8px auto 4px; }
+.sheet .slab { padding: 6px 20px 8px; font-family: var(--f-data); font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.sheet .body { padding: 0 12px 12px; }
+.sheet .mo { min-height: 44px; font-size: 15px; }
+.sheet.tall { top: 190px; overflow: hidden; }
+.sheet.tall::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 70px; background: linear-gradient(to bottom, transparent, var(--card)); }
+
+/* notes, table and asks */
+.cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+.card { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; }
+.card p, .card li { font-size: 14px; }
+.card ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; }
+.tw { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-card); }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-top: 1px solid var(--doc-line); vertical-align: top; }
+thead th { border-top: 0; font-family: var(--f-data); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); font-weight: 600; }
+td.y { color: var(--doc-ink); } td.n { color: var(--doc-dim); }
+.asks { display: grid; gap: 14px; }
+fieldset { margin: 0; border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-card); padding: 14px 18px 16px; display: grid; gap: 8px; }
+legend { font-weight: 700; padding: 0 6px; margin-left: -6px; }
+fieldset p { font-size: 14px; color: var(--doc-dim); }
+fieldset label { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; cursor: pointer; padding: 4px 0; }
+fieldset input { margin-top: 3px; accent-color: var(--tag-new); }
+.rec::after { content: "Recommended"; font-family: var(--f-data); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tag-new); margin-left: 8px; white-space: nowrap; }
+.copyrow { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.copy { font: inherit; font-weight: 650; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--doc-ink); background: var(--doc-ink); color: var(--doc-bg); cursor: pointer; }
+#out { width: 100%; min-height: 90px; font: 13px/1.5 var(--f-data); border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-card); color: var(--doc-ink); padding: 10px; }
+@media (min-width: 900px) { .pair.two { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="doc">
+
+<header class="intro">
+  <p class="eyebrow">House league · Registrations · Filter menu</p>
+  <h1>What a registrar can filter by</h1>
+  <p class="lede">Today the Filter has one group, Fee. This drawing adds two more: <b>Team</b>, for placing children, and <b>Flags</b>, for the few registrations that need someone to act. Fee keeps its two options. Each option shows how many registrations ticking it would list, given whatever else is ticked, so a zero says "nobody" before you tap.</p>
+  <ul>
+    <li>Tags: <button type="button" class="mk new" data-note="NEW marks something the product doesn't have today. Inside a menu, a new option has a dashed blue outline.">New</button> <button type="button" class="mk res" data-note="RESTYLED marks something that exists today and is drawn differently.">Restyled</button> <button type="button" class="mk unc" data-note="UNCHANGED marks something kept exactly as it is.">Unchanged</button>. Click a tag to read what it means.</li>
+    <li>Desk drawings shrink to fit your window. Use "Show at true size" to see them at 1200 px wide. Phone drawings are 390 px wide, so open this page on your phone to judge them.</li>
+    <li>The sample division (U12, 48 children, four teams, 12 not yet placed) is made up for the drawing. Its counts are worked out from what else is ticked in each frame. The season in the drawing turns owing amber after 14 days, the setting's default.</li>
+    <li>Click a dashed row in any menu, or a tag under a drawing, to read what it does.</li>
+  </ul>
+  <div class="note" hidden></div>
+</header>
+
+<!-- ───────── 1. Whole screen ───────── -->
+<section>
+  <p class="eyebrow">1 · The whole screen at a desk</p>
+  <h2>Filtering to "Not placed" in U12</h2>
+  <p class="lede">The registrar has picked U12 and ticked "Not placed". The list shows only the children who still need a team, and the line under the toolbar says what's on.</p>
+
+  <div class="pair">
+    <div class="col">
+      <p class="cap"><span>Before · today, as in your screenshot</span><button type="button" data-true>Show at true size</button></p>
+      <div class="stage" data-w="1200"><div class="fit">
+        <div class="app desk">
+          <div class="hd"><span class="back"><svg class="i" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Draft Test 2027</span>
+            <div class="ttl"><div class="ey">House league · Draft Test 2027</div><div class="h">Registrations</div></div>
+            <span class="add">+ Add registration</span></div>
+          <div class="tabs"><span>To review</span><span class="on">Active<i>120</i></span><span>Waitlist</span><span>Ended</span></div>
+          <div class="tb">
+            <span class="ctl div">All divisions <svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="ctl search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search players or parents…</span>
+            <span class="ctl"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Filter <svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="ctl"><svg class="i" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Export</span>
+            <span class="ctl">Tools <svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+            <div class="menu r">
+              <div class="mh">Fee</div>
+              <div class="ml"><div class="mo"><span class="ck"></span>Owing</div><div class="mo"><span class="ck"></span>Received</div></div>
+            </div>
+          </div>
+          <div class="tbl">
+            <div class="tr th"><span class="box"></span><span>Player</span><span>Division</span><span>Guardian</span><span>Fee</span><span></span><span></span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Kai O'Brien</b><span>Signed up Jul 12</span></div><div class="c"><span>U12 Division</span><span>Not placed</span></div><div class="c"><span style="color:var(--ink)">Anita O'Brien</span><span>anita.obrien@dev.local</span></div><div class="c"><b>$165 owing</b><span>Accepted today</span></div><span class="mr">Mark received</span><span class="dots">···</span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Jack Chen</b><span>Signed up Jul 12</span></div><div class="c"><span>U12 Division</span><span>Not placed</span></div><div class="c"><span style="color:var(--ink)">Jessica Chen</span><span>jessica.chen@dev.local</span></div><div class="c"><b>$165 owing</b><span>Accepted today</span></div><span class="mr">Mark received</span><span class="dots">···</span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Oliver Chen</b><span>Signed up Jul 12</span></div><div class="c"><span>U12 Division</span><span>Not placed</span></div><div class="c"><span style="color:var(--ink)">Jessica Chen</span><span>jessica.chen@dev.local</span></div><div class="c"><b>$165 owing</b><span>Accepted today</span></div><span class="mr">Mark received</span><span class="dots">···</span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Finn Scott</b><span>Signed up Jul 12</span></div><div class="c"><span>U12 Division</span><span>Not placed</span></div><div class="c"><span style="color:var(--ink)">Brian Scott</span><span>brian.scott@dev.local</span></div><div class="c"><b>$165 owing</b><span>Accepted today</span></div><span class="mr">Mark received</span><span class="dots">···</span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Noah Patel</b><span>Signed up Jul 11</span></div><div class="c"><span>U10 Division</span><span>Blue Jays</span></div><div class="c"><span style="color:var(--ink)">Ravi Patel</span><span>ravi.patel@dev.local</span></div><div class="c"><b>$150 received</b><span>Jul 13 · E-Transfer</span></div><span></span><span class="dots">···</span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Emma Lewis</b><span>Signed up Jul 10</span></div><div class="c"><span>U10 Division</span><span>Cardinals</span></div><div class="c"><span style="color:var(--ink)">Kate Lewis</span><span>kate.lewis@dev.local</span></div><div class="c"><b>$150 owing</b><span>Accepted Oct 24</span></div><span class="mr">Mark received</span><span class="dots">···</span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="col">
+      <p class="cap"><span>After · U12 picked, "Not placed" ticked</span><button type="button" data-true>Show at true size</button></p>
+      <div class="stage" data-w="1200"><div class="fit">
+        <div class="app desk">
+          <div class="hd"><span class="back"><svg class="i" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Draft Test 2027</span>
+            <div class="ttl"><div class="ey">House league · Draft Test 2027</div><div class="h">Registrations</div></div>
+            <span class="add">+ Add registration</span></div>
+          <div class="tabs"><span>To review</span><span class="on">Active<i>120</i></span><span>Waitlist</span><span>Ended</span></div>
+          <div class="tb">
+            <span class="ctl div">U12 Division <svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="ctl search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search players or parents…</span>
+            <span class="ctl lit"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Filter <span class="n">1</span> <svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="ctl"><svg class="i" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Export</span>
+            <span class="ctl">Tools <svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+            <div class="menu r cap">
+              <div class="sbar"></div>
+              <div class="mh">Team</div>
+              <div class="ml" data-ref="team">
+                <div class="mo on new"><span class="ck">✓</span>Not placed<span class="ct">12</span></div>
+                <div class="mo new"><span class="ck"></span>Blue Jays<span class="ct">9</span></div>
+                <div class="mo new"><span class="ck"></span>Cardinals<span class="ct">9</span></div>
+                <div class="mo new"><span class="ck"></span>Orioles<span class="ct">9</span></div>
+                <div class="mo new"><span class="ck"></span>Rays<span class="ct">9</span></div>
+              </div>
+              <div class="mh">Fee</div>
+              <div class="ml" data-ref="counts"><div class="mo res"><span class="ck"></span>Owing<span class="ct">8</span></div><div class="mo res"><span class="ck"></span>Received<span class="ct">4</span></div></div>
+              <div class="mh">Flags</div>
+              <div class="ml" data-ref="flags">
+                <div class="mo new"><span class="ck"></span>Asked to withdraw<span class="ct">1</span></div>
+                <div class="mo new"><span class="ck"></span>Owing 14 days or more<span class="ct">3</span></div>
+                <div class="mo new"><span class="ck"></span>Pay link not sent<span class="ct">4</span></div>
+                <div class="mo new"><span class="ck"></span>Has player notes<span class="ct">2</span></div>
+              </div>
+              <div class="reset">× Clear filter</div>
+            </div>
+          </div>
+          <p class="fline">Not placed</p>
+          <div class="tbl">
+            <div class="tr th"><span class="box"></span><span>Player</span><span>Division</span><span>Guardian</span><span>Fee</span><span></span><span></span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Kai O'Brien</b><span>Signed up Jul 12</span></div><div class="c"><span>U12 Division</span><span>Not placed</span></div><div class="c"><span style="color:var(--ink)">Anita O'Brien</span><span>anita.obrien@dev.local</span></div><div class="c"><b>$165 owing</b><span>Accepted today</span></div><span class="mr">Mark received</span><span class="dots">···</span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Maya Singh</b><span>Signed up Jul 3 · Asked to withdraw Oct 20</span></div><div class="c"><span>U12 Division</span><span>Not placed</span></div><div class="c"><span style="color:var(--ink)">Priya Singh</span><span>priya.singh@dev.local</span></div><div class="c"><b class="amb">$165 owing · 34 days</b><span>Pay link sent Sep 30</span></div><span class="mr">Mark received</span><span class="dots">···</span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Jack Chen</b><span>Signed up Jul 12</span></div><div class="c"><span>U12 Division</span><span>Not placed</span></div><div class="c"><span style="color:var(--ink)">Jessica Chen</span><span>jessica.chen@dev.local</span></div><div class="c"><b>$165 owing</b><span>Accepted today</span></div><span class="mr">Mark received</span><span class="dots">···</span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Leo Martin</b><span>Signed up Jul 9</span></div><div class="c"><span>U12 Division</span><span>Not placed</span></div><div class="c"><span style="color:var(--ink)">Sam Martin</span><span>sam.martin@dev.local</span></div><div class="c"><b>$165 received</b><span>Jul 14 · E-Transfer</span></div><span></span><span class="dots">···</span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Ava Brooks</b><span>Signed up Jul 2</span></div><div class="c"><span>U12 Division</span><span>Not placed</span></div><div class="c"><span style="color:var(--ink)">Dana Brooks</span><span>dana.brooks@dev.local</span></div><div class="c"><b class="amb">$165 owing · 16 days</b><span>Accepted Oct 10</span></div><span class="mr">Mark received</span><span class="dots">···</span></div>
+            <div class="tr"><span class="box"></span><div class="c"><b>Oliver Chen</b><span>Signed up Jul 12</span></div><div class="c"><span>U12 Division</span><span>Not placed</span></div><div class="c"><span style="color:var(--ink)">Jessica Chen</span><span>jessica.chen@dev.local</span></div><div class="c"><b>$165 owing</b><span>Accepted today</span></div><span class="mr">Mark received</span><span class="dots">···</span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+  <div class="chips">
+    <button type="button" class="mk new" data-key="team" data-note="NEW · Team group. 'Not placed' first, because placing children is the job; then the division's teams in their own order. Shown on the Active tab only: nobody in To review or on the Waitlist is on a team yet. Picking another division (or All divisions) drops any team ticks and keeps 'Not placed', so a tick never hides where you can't untick it.">New · Team</button>
+    <button type="button" class="mk new" data-key="flags" data-note="NEW · Flags group, four options. Asked to withdraw: the family asked from their status page and nobody has acted yet. Owing 14 days or more: the same rule that turns the row amber, so its words come from the season's 'Owing turns amber' setting (14 days is the default; a season set to 30 reads 'Owing 30 days or more'). Pay link not sent: owing, and nobody has emailed the family the pay link; it only appears while the club takes card payments. Has player notes: the family wrote something in the notes box when signing up (allergies, medical, a friend request).">New · Flags</button>
+    <button type="button" class="mk res" data-key="counts" data-note="RESTYLED · counts, Fee included (today Fee shows none). Each count is how many registrations ticking that option would list, given everything else that's ticked. Here 'Not placed' is ticked, so Owing reads 8 and Received 4: the 12 children who still need a team. An option whose count is 0 stays on the menu, greyed by its zero, so the menu doesn't change shape as you tick.">Restyled · counts</button>
+    <button type="button" class="mk new" data-note="NEW · the desk menu scrolls. With three groups it's about 580 px tall. The menu stops at the room left in the window (544 px at most), so 'Clear filter' and the last Flags row sit below the fold until you scroll. A shorter Flags group (ask 3) or option B (section 2) keeps it shorter.">New · desk menu scrolls</button>
+    <button type="button" class="mk unc" data-note="UNCHANGED · how ticks combine. Ticks within one group widen the list (Blue Jays or Cardinals); ticks in different groups narrow it (Not placed and Owing). That's how the menu works today, and every Filter menu in the admin portal works the same way.">Unchanged · how ticks combine</button>
+    <button type="button" class="mk unc" data-note="UNCHANGED · the Filter button turns olive with the number of groups that have something ticked (not the number of ticks), the line under the toolbar names every tick, and 'Clear filter' appears at the foot only while something is ticked.">Unchanged · button, line, Clear</button>
+  </div>
+  <div class="note" hidden></div>
+</section>
+
+<!-- ───────── 2. All divisions ───────── -->
+<section>
+  <p class="eyebrow">2 · The Team group with "All divisions" chosen</p>
+  <h2>Two ways to handle every team in every division</h2>
+  <p class="lede">With four divisions of four teams, listing every team makes the menu 17 rows long before Fee and Flags. That's the cost of option A. Option B keeps "Not placed" (it's useful across the whole season) and shows the teams once a division is picked. Nothing is ticked in either frame, so the counts cover all 120 active registrations.</p>
+  <div class="pair two">
+    <div class="col">
+      <p class="cap"><span>Option A · every team, under its division</span></p>
+      <div class="stage" data-w="340"><div class="fit"><div class="app mini">
+        <div class="menu scroll">
+          <div class="sbar"></div>
+          <div class="mh">Team</div>
+          <div class="ml" data-ref="teamA"><div class="mo new"><span class="ck"></span>Not placed<span class="ct">31</span></div></div>
+          <div class="sub">U8 Division</div>
+          <div class="ml" data-ref="teamA"><div class="mo new"><span class="ck"></span>Blue Jays<span class="ct">8</span></div><div class="mo new"><span class="ck"></span>Cardinals<span class="ct">7</span></div><div class="mo new"><span class="ck"></span>Orioles<span class="ct">8</span></div><div class="mo new"><span class="ck"></span>Rays<span class="ct">7</span></div></div>
+          <div class="sub">U10 Division</div>
+          <div class="ml" data-ref="teamA"><div class="mo new"><span class="ck"></span>Blue Jays<span class="ct">9</span></div><div class="mo new"><span class="ck"></span>Cardinals<span class="ct">8</span></div><div class="mo new"><span class="ck"></span>Orioles<span class="ct">9</span></div></div>
+        </div>
+        <p class="after">…U10's last team, then U12 and U14, then Fee and Flags further down.</p>
+      </div></div></div>
+    </div>
+    <div class="col">
+      <p class="cap"><span>Option B · "Not placed" only, until a division is picked</span></p>
+      <div class="stage" data-w="340"><div class="fit"><div class="app mini">
+        <div class="menu">
+          <div class="mh">Team<span class="hint">Pick a division</span></div>
+          <div class="ml" data-ref="teamB"><div class="mo new"><span class="ck"></span>Not placed<span class="ct">31</span></div></div>
+          <div class="mh">Fee</div>
+          <div class="ml" data-ref="counts"><div class="mo res"><span class="ck"></span>Owing<span class="ct">74</span></div><div class="mo res"><span class="ck"></span>Received<span class="ct">46</span></div></div>
+          <div class="mh">Flags</div>
+          <div class="ml" data-ref="flags">
+            <div class="mo new"><span class="ck"></span>Asked to withdraw<span class="ct">2</span></div>
+            <div class="mo new"><span class="ck"></span>Owing 14 days or more<span class="ct">15</span></div>
+            <div class="mo new"><span class="ck"></span>Pay link not sent<span class="ct">19</span></div>
+            <div class="mo new"><span class="ck"></span>Has player notes<span class="ct">16</span></div>
+          </div>
+        </div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="chips">
+    <button type="button" class="mk new" data-key="teamA" data-note="Option A · every team under its division name. Seventeen rows before Fee and Flags; the menu scrolls well before the money options. The division names are a new kind of row inside the menu, which no other Filter has.">New · option A</button>
+    <button type="button" class="mk new" data-key="teamB" data-note="Recommended: B. Team names repeat across divisions in a house league (every age group has its Blue Jays), so a long list of them is hard to scan, and the division picker is right beside the Filter. 'Pick a division' sits at the right of the Team heading, in the slot the menu already has for a short word, so the menu gains no new kind of row. Switching division drops any team ticks and keeps 'Not placed', so no tick is ever out of reach.">New · why B</button>
+  </div>
+  <div class="note" hidden></div>
+</section>
+
+<!-- ───────── 3. Phone ───────── -->
+<section>
+  <p class="eyebrow">3 · On a phone (390 px)</p>
+  <h2>The same menu as a sheet</h2>
+  <p class="lede">On a phone the Filter is the sliders symbol, a 44 px square beside Search and Tools. It opens the same options as a sheet above the portal's bar, labelled FILTER, with no close button: a tap on the page or the bar closes it. With three groups the sheet is taller than its three-quarter cap, so it scrolls; every row is 44 px tall. The phone "before" is drawn from the screen's stylesheet, not a screenshot, and the bar is simplified.</p>
+  <div class="phones">
+    <div class="col">
+      <p class="cap"><span>Before · today</span></p>
+      <div class="stage" data-w="390"><div class="fit"><div class="app ph">
+        <div class="in">
+          <span class="back"><svg class="i" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Draft Test 2027</span>
+          <div class="hrow"><div class="ttl"><div class="ey">House league · Draft Test 2027</div><div class="h">Registrations</div></div><span class="add">+</span></div>
+          <div class="tabs"><span>To review</span><span class="on">Active<i>120</i></span><span>Waitlist</span><span>Ended</span></div>
+          <div class="tb"><span class="ctl div">All divisions <svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="ctl sq"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+            <span class="ctl sq"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>
+            <span class="ctl sq"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span></div>
+          <div class="pcards">
+            <div class="pc"><b>Kai O'Brien</b><span class="dots">···</span><span>U12 Division · Not placed</span><span class="fee">$165 owing</span></div>
+            <div class="pc"><b>Jack Chen</b><span class="dots">···</span><span>U12 Division · Not placed</span><span class="fee">$165 owing</span></div>
+            <div class="pc"><b>Oliver Chen</b><span class="dots">···</span><span>U12 Division · Not placed</span><span class="fee">$165 owing</span></div>
+          </div>
+        </div>
+        <div class="dim"></div>
+        <div class="sheet"><div class="grab"></div><div class="slab">Filter</div>
+          <div class="body"><div class="mh">Fee</div><div class="ml"><div class="mo"><span class="ck"></span>Owing</div><div class="mo"><span class="ck"></span>Received</div></div></div></div>
+        <div class="pbar"><span class="on"><i></i>League</span><span><i></i>Money</span><span><i></i>Families</span><span><i></i>More</span></div>
+      </div></div></div>
+    </div>
+
+    <div class="col">
+      <p class="cap"><span>After · the sheet, U12, two groups on</span></p>
+      <div class="stage" data-w="390"><div class="fit"><div class="app ph">
+        <div class="in">
+          <span class="back"><svg class="i" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Draft Test 2027</span>
+          <div class="hrow"><div class="ttl"><div class="ey">House league · Draft Test 2027</div><div class="h">Registrations</div></div><span class="add">+</span></div>
+          <div class="tabs"><span>To review</span><span class="on">Active<i>120</i></span><span>Waitlist</span><span>Ended</span></div>
+        </div>
+        <div class="dim"></div>
+        <div class="sheet tall"><div class="grab"></div><div class="slab">Filter</div>
+          <div class="body">
+            <div class="mh">Team</div>
+            <div class="ml" data-ref="team">
+              <div class="mo on new"><span class="ck">✓</span>Not placed<span class="ct">1</span></div>
+              <div class="mo new z"><span class="ck"></span>Blue Jays<span class="ct">0</span></div>
+              <div class="mo new z"><span class="ck"></span>Cardinals<span class="ct">0</span></div>
+              <div class="mo new z"><span class="ck"></span>Orioles<span class="ct">0</span></div>
+              <div class="mo new z"><span class="ck"></span>Rays<span class="ct">0</span></div>
+            </div>
+            <div class="mh">Fee</div>
+            <div class="ml" data-ref="counts"><div class="mo res"><span class="ck"></span>Owing<span class="ct">1</span></div><div class="mo res z"><span class="ck"></span>Received<span class="ct">0</span></div></div>
+            <div class="mh">Flags</div>
+            <div class="ml" data-ref="flags">
+              <div class="mo on new"><span class="ck">✓</span>Asked to withdraw<span class="ct">1</span></div>
+              <div class="mo new"><span class="ck"></span>Owing 14 days or more<span class="ct">3</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="pbar"><span class="on"><i></i>League</span><span><i></i>Money</span><span><i></i>Families</span><span><i></i>More</span></div>
+      </div></div></div>
+    </div>
+
+    <div class="col">
+      <p class="cap"><span>After · the sheet closed, two groups on</span></p>
+      <div class="stage" data-w="390"><div class="fit"><div class="app ph">
+        <div class="in">
+          <span class="back"><svg class="i" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Draft Test 2027</span>
+          <div class="hrow"><div class="ttl"><div class="ey">House league · Draft Test 2027</div><div class="h">Registrations</div></div><span class="add">+</span></div>
+          <div class="tabs"><span>To review</span><span class="on">Active<i>120</i></span><span>Waitlist</span><span>Ended</span></div>
+          <div class="tb"><span class="ctl div">U12 Division <svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="ctl sq"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+            <span class="ctl sq lit"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="n">2</span></span>
+            <span class="ctl sq"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span></div>
+          <p class="fline">Not placed · Asked to withdraw</p>
+          <div class="pcards">
+            <div class="pc"><b>Maya Singh</b><span class="dots">···</span><span>Signed up Jul 3 · Asked to withdraw Oct 20</span><span>U12 Division · Not placed</span><span class="amb">$165 owing · 34 days</span></div>
+          </div>
+        </div>
+        <div class="pbar"><span class="on"><i></i>League</span><span><i></i>Money</span><span><i></i>Families</span><span><i></i>More</span></div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="chips">
+    <button type="button" class="mk unc" data-note="UNCHANGED · the phone pattern. The sliders symbol alone, a 44 px square beside Search and Tools; olive with the number of groups that have a tick; the sheet opens above the portal's bar, labelled FILTER in small capitals, with the grab line and no close button. A tap on the page or the bar closes it and loses nothing. Same as the schedule's and Teams' Filter.">Unchanged · phone pattern</button>
+    <button type="button" class="mk res" data-key="counts" data-note="RESTYLED · counts with zeros. With 'Not placed' and 'Asked to withdraw' ticked, every team reads 0 and Received reads 0: only Maya Singh matches, and she's owing. The zero rows stay on the sheet, so it doesn't change shape as you tick, and the zero itself says 'nobody'.">Restyled · counts with zeros</button>
+    <button type="button" class="mk new" data-note="NEW · the sheet scrolls. With all three groups the options are about 600 px tall; the sheet stops at three-quarters of the screen and leaves the top of the page visible, so the registrar knows which screen they're on. 'Pay link not sent', 'Has player notes' and 'Clear filter' are below the fold here. Option B in section 2 and a shorter Flags group (ask 3) are the two ways to shorten it.">New · sheet scrolls</button>
+  </div>
+  <div class="note" hidden></div>
+</section>
+
+<!-- ───────── 4. Which tab shows what ───────── -->
+<section>
+  <p class="eyebrow">4 · Which tab shows which options</p>
+  <h2>A group with nothing to filter on a tab doesn't appear there</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Option</th><th>To review</th><th>Active</th><th>Waitlist</th><th>Ended</th></tr></thead>
+    <tbody>
+      <tr><th>Team: Not placed, each team</th><td class="n">No: not on a team yet</td><td class="y">Yes</td><td class="n">No</td><td class="n">No: they've left their team</td></tr>
+      <tr><th>Fee: Owing, Received</th><td class="y">Yes (today)</td><td class="y">Yes (today)</td><td class="y">Yes (today)</td><td class="y">Yes, plus Refunded (today)</td></tr>
+      <tr><th>Asked to withdraw</th><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">No: handled</td></tr>
+      <tr><th>Owing 14 days or more</th><td class="n">No</td><td class="y">Yes</td><td class="n">No</td><td class="n">No</td></tr>
+      <tr><th>Pay link not sent</th><td class="n">No</td><td class="y">Yes, while the club takes cards</td><td class="n">No</td><td class="n">No</td></tr>
+      <tr><th>Has player notes</th><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">No</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lede"><b>A free season.</b> Today a season that charges nothing has no Filter button at all, because Fee was its only group. After this change the button shows whenever the tab has something to offer: Team, Asked to withdraw and Has player notes, with Fee and the two money flags left out.</p>
+</section>
+
+<!-- ───────── 5. Left out ───────── -->
+<section>
+  <p class="eyebrow">5 · Considered and left out</p>
+  <div class="cards">
+    <div class="card"><h3>No waiver on record</h3><p>The registration record doesn't show whether the family accepted the waiver, so this filter would find children without saying why. It would also catch every child the desk added by hand and every sign-up from before the waiver was recorded. If it's wanted, the record shows the waiver first and the filter follows.</p></div>
+    <div class="card"><h3>Part received</h3><p>Today "Owing" includes children who have paid part of their fee, and the row says "$80 received · $85 owing". A separate option would change what "Owing" means. Few families pay in parts, so leave it until it comes up.</p></div>
+    <div class="card"><h3>Signed up with a sibling, jersey, position, sign-up date</h3><p>These help when building teams, not when finding a registration. The export already has them, and sign-up date suits a sort better than a filter.</p></div>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Design review · what changed in this round</p>
+  <div class="card"><ul>
+    <li>Counts now follow the other ticks (Owing 8 and Received 4 once "Not placed" is ticked), and a zero stays on the menu.</li>
+    <li>"Owing over 30 days" became "Owing 14 days or more": the words come from the season's own amber setting and match its rule. The amber dot is gone, since the row already carries the amber.</li>
+    <li>Switching division drops team ticks, so a tick can never be hidden where you can't untick it.</li>
+    <li>Option B's hint moved into the Team heading's right-hand slot instead of adding a new kind of row.</li>
+    <li>The desk menu is drawn at its real width and cap, so it shows that it scrolls too.</li>
+    <li>The phone sheet is the real one: FILTER label, grab line, no close button, sitting above the portal's bar. Search on a phone is a 44 px square, not an open box.</li>
+    <li>Rows use the product's real lines: "Signed up Jul 3 · Asked to withdraw Oct 20", "Jul 14 · E-Transfer".</li>
+    <li>Fee's table row was wrong: Fee is offered on every tab today. A free season's Filter is described. "Flags" became ask 6.</li>
+  </ul></div>
+</section>
+
+<!-- ───────── 6. Asks ───────── -->
+<section>
+  <p class="eyebrow">6 · Your calls</p>
+  <h2>Six asks · ruled Oct 26, all as recommended</h2>
+  <p class="lede">Ruled Oct 26, 2026: all six as recommended (Team on Active only; option B; all four flags; counts on every option; no waiver filter; "Flags"). Built the same day.</p>
+  <form class="asks" id="asks">
+    <fieldset><legend>1 · A Team group</legend>
+      <label><input type="radio" name="A1" id="a1a" value="Yes, Active tab only" checked><span class="rec">Yes, on the Active tab only, "Not placed" first</span></label>
+      <label><input type="radio" name="A1" id="a1b" value="Not placed only, no team names"><span>Only "Not placed" and "Placed", never team names</span></label>
+      <label><input type="radio" name="A1" id="a1c" value="No Team group"><span>No Team group</span></label>
+    </fieldset>
+    <fieldset><legend>2 · Teams when "All divisions" is chosen</legend>
+      <label><input type="radio" name="A2" id="a2b" value="B: Not placed only, teams after a division is picked" checked><span class="rec">B: "Not placed" only; teams appear once a division is picked</span></label>
+      <label><input type="radio" name="A2" id="a2a" value="A: every team under its division"><span>A: every team, listed under its division (the menu scrolls)</span></label>
+    </fieldset>
+    <fieldset><legend>3 · The Flags group</legend>
+      <label><input type="radio" name="A3" id="a3a" value="All four flags" checked><span class="rec">All four: Asked to withdraw, Owing 14 days or more, Pay link not sent, Has player notes</span></label>
+      <label><input type="radio" name="A3" id="a3b" value="Withdraw + the two money flags"><span>Three: drop "Has player notes"</span></label>
+      <label><input type="radio" name="A3" id="a3c" value="Asked to withdraw only"><span>Only "Asked to withdraw"</span></label>
+    </fieldset>
+    <fieldset><legend>4 · Counts beside each option</legend>
+      <label><input type="radio" name="A4" id="a4a" value="Counts on every option, Fee included" checked><span class="rec">On every option, Fee included</span></label>
+      <label><input type="radio" name="A4" id="a4b" value="No counts"><span>No counts, as today</span></label>
+    </fieldset>
+    <fieldset><legend>5 · No waiver on record</legend>
+      <p>The record window doesn't show the waiver today (section 5).</p>
+      <label><input type="radio" name="A5" id="a5a" value="Leave it out" checked><span class="rec">Leave it out</span></label>
+      <label><input type="radio" name="A5" id="a5b" value="Show the waiver on the record, then add the filter"><span>Show the waiver on the record, then add the filter</span></label>
+    </fieldset>
+    <fieldset><legend>6 · What to call the third group</legend>
+      <p>"Flags" would be a new word in the product. The group holds a request to act on, a late payment, a missing pay link and a note to read, so the name has to cover all four.</p>
+      <label><input type="radio" name="A6" id="a6a" value="Flags" checked><span class="rec">Flags</span></label>
+      <label><input type="radio" name="A6" id="a6b" value="Worth a look"><span>Worth a look</span></label>
+      <label><input type="radio" name="A6" id="a6c" value="Other (I'll say)"><span>Something else (say which in the chat)</span></label>
+    </fieldset>
+    <div class="copyrow"><button type="button" class="copy" id="copy">Copy my answers</button><span id="copied" class="lede" aria-live="polite"></span></div>
+    <textarea id="out" aria-label="Your answers" readonly hidden></textarea>
+  </form>
+</section>
+
+</div>
+
+<script>
+(function () {
+  // Fit each fixed-width frame into its column; "Show at true size" lets a desk frame scroll at full width instead.
+  function fit() {
+    document.querySelectorAll('.stage').forEach(function (st) {
+      var w = +st.dataset.w, f = st.firstElementChild, s = st.classList.contains('true') ? 1 : Math.min(1, st.clientWidth / w);
+      f.style.transform = 'scale(' + s + ')';
+      f.style.width = w + 'px';
+      st.style.height = (f.firstElementChild.offsetHeight * s) + 'px';
+    });
+  }
+  document.querySelectorAll('[data-true]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var st = b.closest('.col').querySelector('.stage');
+      var on = st.classList.toggle('true');
+      b.textContent = on ? 'Fit to window' : 'Show at true size';
+      fit();
+    });
+  });
+  window.addEventListener('resize', fit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  fit();
+
+  // Every tag opens its note: one open note per block, under its own chips.
+  document.querySelectorAll('.mk').forEach(function (b) {
+    b.setAttribute('aria-expanded', 'false');
+    b.addEventListener('click', function () {
+      var host = b.closest('section, header');
+      var note = host.querySelector(':scope > .note');
+      var open = b.getAttribute('aria-expanded') === 'true';
+      host.querySelectorAll('.mk').forEach(function (o) { o.setAttribute('aria-expanded', 'false'); });
+      if (open) { note.hidden = true; return; }
+      b.setAttribute('aria-expanded', 'true');
+      note.textContent = b.dataset.note;
+      note.hidden = false;
+    });
+  });
+
+  // A dashed or dotted row in a drawn menu opens its group's note (every highlight is clickable).
+  document.querySelectorAll('.ml[data-ref] .mo.new, .ml[data-ref] .mo.res').forEach(function (row) {
+    row.setAttribute('role', 'button');
+    row.tabIndex = 0;
+    function open() {
+      var ref = row.closest('.ml').dataset.ref, host = row.closest('section, header');
+      var chip = host.querySelector('.mk[data-key="' + ref + '"]') || document.querySelector('.mk[data-key="' + ref + '"]');
+      var note = host.querySelector(':scope > .note');
+      if (!chip || !note) return;
+      host.querySelectorAll('.mk').forEach(function (o) { o.setAttribute('aria-expanded', o === chip ? 'true' : 'false'); });
+      note.textContent = chip.dataset.note;
+      note.hidden = false;
+    }
+    row.addEventListener('click', open);
+    row.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+  });
+
+  // Paste-back answers.
+  document.getElementById('copy').addEventListener('click', function () {
+    var form = document.getElementById('asks'), lines = ['Registrations filter drawing, my answers:'];
+    ['A1', 'A2', 'A3', 'A4', 'A5', 'A6'].forEach(function (n, i) {
+      var v = form.querySelector('input[name="' + n + '"]:checked');
+      lines.push((i + 1) + '. ' + (v ? v.value : '(no answer)'));
+    });
+    var text = lines.join('\n'), out = document.getElementById('out'), msg = document.getElementById('copied');
+    out.value = text;
+    function fallback() { out.hidden = false; out.focus(); out.select(); msg.textContent = 'Select all and copy the text below.'; }
+    try {
+      navigator.clipboard.writeText(text).then(function () { msg.textContent = 'Copied. Paste it into the chat.'; out.hidden = true; }, fallback);
+    } catch (e) { fallback(); }
+  });
+})();
+</script>

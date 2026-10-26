@@ -156,6 +156,8 @@
   cursor: pointer;
 }
 .regFilterHeader button:hover { color: var(--home-olive); }
+/* A group's note sits in the same right-hand slot, in its plain words (Registrations' "Pick a division", 2026-10-26). */
+.regFilterNote { font-family: var(--font-sans, system-ui, sans-serif); font-size: var(--type-support); font-weight: 650; letter-spacing: normal; text-transform: none; color: var(--text-tertiary); }
 .regFilterList { display: grid; gap: 0.2rem; }
 .regFilterOption {
   display: grid;
