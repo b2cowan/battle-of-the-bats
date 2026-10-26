@@ -15,7 +15,7 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'Where to work first',
       summary: 'Know the menu, Today and Find before you change an account.',
       keywords: ['overview', 'today', 'organizations', 'clubs & portals', 'customer users', 'people', 'plans pricing', 'plans & pricing', 'bulk operations', 'bulk changes', 'audit', 'audit log', 'support console', 'menu', 'menu by job', 'sidebar', 'collapse sidebar', 'account menu', 'sign out', 'appearance', 'warm', 'dark', 'help', 'private finance', 'business numbers', 'find', 'search', 'recent', 'slash', 'old names', 'renamed', 'observability', 'errors', 'early access', 'leads', 'email campaigns', 'campaigns', 'platform users', 'staff', 'reason', 'why', 'every change keeps its reason', 'waiting', 'amber count', 'view-only', 'eye'],
-      searchText: 'where to work first support console menu by job groups customers health growth product records system private finance bookkeeping owner only today what is waiting on us amber count queue waiting since your last visit totals line business numbers subscription growth usage metric notes find box top strip press slash recent last five records opened cleared at sign-out all in clubs and portals all in people stripe numbers cus sub pi ch card digits are not searched every change keeps its reason why window one sentence confirm eye view-only for your role old names overview organizations customer users observability early access email campaigns bulk operations platform users command center billing & product support & diagnostics governance help at the foot of the menu opens in place collapse sidebar menu button top strip account menu appearance warm dark sign out staff access',
+      searchText: 'where to work first support console menu by job groups customers health growth product records system private finance bookkeeping owner only today what is waiting on us amber count queue waiting since your last visit totals line business numbers subscription growth usage metric notes find box top strip press slash recent last five records opened cleared at sign-out all in clubs and portals all in people stripe numbers cus sub pi ch py in_ invoice number printed invoice number charge number payment number enter opens the money tab on that charge nothing matches test-mode number card digits are not searched every change keeps its reason why window one sentence confirm eye view-only for your role old names overview organizations customer users observability early access email campaigns bulk operations platform users command center billing & product support & diagnostics governance help at the foot of the menu opens in place collapse sidebar menu button top strip account menu appearance warm dark sign out staff access',
       links: [
         { label: 'Today', href: '/platform-admin' },
         { label: 'Clubs & portals', href: '/platform-admin/orgs' },
@@ -76,7 +76,7 @@ const platformAdminHelp: HelpPageContent = {
                 <li>Use the arrow keys to move, <strong>Enter</strong> to open, <strong>Esc</strong> to close.</li>
                 <li>When a group has more than it shows, its last row (<strong>All N in Clubs &amp; portals</strong> or <strong>All N in People</strong>) opens that list with your words already in its search box. The words are handed over inside the tab and never put in the address.</li>
               </HelpSteps>
-              <p>Super admin, Billing and Support also get a <strong>Stripe</strong> group for a customer (<code>cus_</code>), subscription (<code>sub_</code>) or family payment (<code>pi_</code>, <code>ch_</code>) number; Enter opens the club&rsquo;s Money tab. Card digits are not searched &mdash; ask for the email on the receipt. Charges on a club&rsquo;s own subscription are kept in Stripe only, so search the customer number instead. Staff accounts are not customers and Find leaves them out. On a narrow screen the box is a magnifying glass in the strip; tap it and the strip turns into the box.</p>
+              <p>Super admin, Billing and Support also get a <strong>Stripe</strong> group for a customer (<code>cus_</code>), subscription (<code>sub_</code>) or family payment (<code>pi_</code>, <code>ch_</code>) number. It also takes a whole Stripe charge or payment number (<code>ch_</code>, <code>py_</code>, <code>pi_</code>), an invoice number (<code>in_</code>) and an invoice&rsquo;s printed number (like A1B2C3D4-0007). The result reads <em>Stripe charge ch_&hellip; &middot; $X &middot; date &middot; plan</em> or <em>Stripe invoice &hellip;</em>, and Enter opens the club&rsquo;s Money tab on that charge. <em>Nothing matches</em> also covers a number that is neither a family payment nor one of our clubs&rsquo; (a test-mode number is never found on the live site, or the reverse). Card digits are not searched &mdash; ask for the email on the receipt. Staff accounts are not customers and Find leaves them out. On a narrow screen the box is a magnifying glass in the strip; tap it and the strip turns into the box.</p>
             </>
           ),
         },
@@ -139,8 +139,8 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Support SOP',
       heading: 'How to read and change a club\'s record',
       summary: 'The four tabs of a club\'s record, the one pencil, the confirm window, and Put it back.',
-      keywords: ['club record', 'organization record', 'org detail', 'story', 'money tab', 'access tab', 'people & tournaments', 'pencil', 'edit club', 'check mark', 'confirm window', 'why', 'reason', 'put it back', 'undo', 'web name', 'rename club', 'change plan', 'tournament limit', 'team limit', 'sections', 'billing', 'entitlements', 'support tab', 'activity', 'band'],
-      searchText: 'club record organization detail story money access people and tournaments tabs one pencil edits the whole record check mark opens confirm window states every change in one sentence asks why reason required kept put it back undo plan change limits section turned on off running override end early never anything that reached stripe or an inbox newest plan entry still in force trial writes a new entry marked put back editing nothing changes until you press the check mark changes held name web name plan tournament limit team limit sections in the plan show more search the story type staff changes billing notes emails people feedback not recorded teams brought in add a note email the owner make owner release this address add an override cancel the subscription delete the club old record billing entitlements support activity',
+      keywords: ['club record', 'organization record', 'org detail', 'story', 'money tab', 'access tab', 'people & tournaments', 'pencil', 'edit club', 'check mark', 'confirm window', 'why', 'reason', 'put it back', 'undo', 'web name', 'rename club', 'change plan', 'tournament limit', 'team limit', 'sections', 'billing', 'entitlements', 'support tab', 'activity', 'band', 'pays through stripe', 'plan changes in stripe', 'first purchase', 'made outside the console'],
+      searchText: 'club pays through stripe so its plan changes there stripe still bills subscription not cancelled in stripe plan field replaced by one line bought a plan charged refunds in the story made outside the console club record organization detail story money access people and tournaments tabs one pencil edits the whole record check mark opens confirm window states every change in one sentence asks why reason required kept put it back undo plan change limits section turned on off running override end early never anything that reached stripe or an inbox newest plan entry still in force trial writes a new entry marked put back editing nothing changes until you press the check mark changes held name web name plan tournament limit team limit sections in the plan show more search the story type staff changes billing notes emails people feedback not recorded teams brought in add a note email the owner make owner release this address add an override cancel the subscription delete the club old record billing entitlements support activity',
       links: [
         { label: 'Clubs & portals', href: '/platform-admin/orgs' },
         { label: 'Audit log', href: '/platform-admin/audit' },
@@ -157,7 +157,7 @@ const platformAdminHelp: HelpPageContent = {
               <p>Open a club from <strong>Find</strong>, from the <strong>Clubs &amp; portals</strong> list (search name, web name or web address, filter by plan or status, click a row), or from a queue on Today. Under the club&rsquo;s name a band shows <strong>Members</strong>, then <strong>Teams</strong> (Club plans) or <strong>Tournaments</strong>, the <strong>Free time</strong> running now, and when it <strong>Renews</strong> (or when its trial ends, or when it ended).</p>
               <HelpDefs>
                 <HelpDef term="Story">Everything that happened to the club, newest first.</HelpDef>
-                <HelpDef term="Money">Plan, state, renewal date, and the Stripe customer and subscription with an <strong>Open in Stripe</strong> door each. Charges, refunds and invoices are not shown here yet.</HelpDef>
+                <HelpDef term="Money">Our record beside Stripe&rsquo;s live reading, the charges, and refunds for Billing and Super admin (see <em>How to read a club&rsquo;s Money tab and refund a charge</em>).</HelpDef>
                 <HelpDef term="Access">Plan and limits, sections, free time and the club&rsquo;s own web address. <strong>Cancel the subscription</strong> and <strong>Delete the club</strong> end the tab.</HelpDef>
                 <HelpDef term="People &amp; tournaments">Members (each opens that person&rsquo;s record), tournaments that are not archived, and <strong>Teams brought in</strong> when there are any.</HelpDef>
               </HelpDefs>
@@ -171,7 +171,8 @@ const platformAdminHelp: HelpPageContent = {
           content: (
             <>
               <p>The Story is one table with <strong>When</strong>, <strong>What happened</strong>, <strong>Who</strong> and <strong>Why</strong>. It joins staff changes, billing, notes, emails, people and feedback. Search its words, or narrow with the type dropdown: <strong>All types</strong>, <strong>Staff changes</strong>, <strong>Billing</strong>, <strong>Notes</strong>, <strong>Emails</strong>, <strong>People</strong>, <strong>Feedback</strong>. It opens on the newest 50 entries and <strong>Show more</strong> adds 50 each time.</p>
-              <p>Not in the Story yet: Stripe&rsquo;s charges and refunds, purchases the customer makes in Stripe, and account emails such as password resets. The trail of records staff have opened is never shown on a customer&rsquo;s Story (see <em>How to investigate account changes</em>).</p>
+              <p>Billing entries also show first purchases (<em>Bought</em> a plan, with <em>Charged</em> the amount), Stripe&rsquo;s charges (<em>Charged</em> the amount for a plan and period, from Stripe, or <em>an invoice made in Stripe</em>, from Stripe&rsquo;s dashboard), refunds made in the console (who, why, <em>To the card it came from</em> and that the plan did not change) and refunds made in Stripe&rsquo;s dashboard (<em>Made outside the console</em>). Missed and recovered payments carry their detail. None of these has a Put it back. Money entries are shown to Super admin, Billing and Support only; if Stripe cannot be read, a line says so and our own entries, console refunds included, still show.</p>
+              <p>Not in the Story yet: account emails such as password resets. The trail of records staff have opened is never shown on a customer&rsquo;s Story (see <em>How to investigate account changes</em>).</p>
             </>
           ),
         },
@@ -188,6 +189,7 @@ const platformAdminHelp: HelpPageContent = {
                 <li>Type the reason in <strong>Why</strong>.</li>
                 <li>Click <strong>Save changes</strong>.</li>
               </HelpSteps>
+              <p>A club that Stripe still bills (a subscription not cancelled in Stripe, whatever its billing status) shows one line in place of the <strong>Plan</strong> and <strong>Tournament limit</strong> fields: <em>This club pays through Stripe, so its plan changes there. The owner moves plan on their Plan &amp; billing page, or cancel the subscription first. Changing it here would leave Stripe charging the old price.</em> A custom team limit still saves. If our record says live but Stripe has already ended the subscription (a missed update), the console asks Stripe and lets the change through.</p>
               <HelpNote variant="warning" title="A web name change moves the club's addresses">
                 A link the customer already shared can stop working. Name and web name changes have no Put it back; change them back with another edit.
               </HelpNote>
@@ -201,7 +203,7 @@ const platformAdminHelp: HelpPageContent = {
             <>
               <p><strong>Put it back</strong> sits at the right end of a Story entry and undoes it by writing a new entry (marked <em>Put back</em>) with its own reason; the original entry then reads <em>Put back at</em> the time. It is offered only where it puts the club back exactly:</p>
               <HelpDefs>
-                <HelpDef term="A plan or limit change">Only the newest plan entry that is still in force, and never when a Stripe subscription or a trial is involved. Super admin and Billing.</HelpDef>
+                <HelpDef term="A plan or limit change">Only the newest plan entry that is still in force, and never when a Stripe subscription or a trial is involved (it refuses with the same sentence as the pencil). Super admin and Billing.</HelpDef>
                 <HelpDef term="A section turned on or off">Only the newest entry for that section, while the club is still as that entry left it. Super admin and Product.</HelpDef>
                 <HelpDef term="Free time given or changed">Reads <strong>Put it back</strong> and ends the free time now (or restores the earlier last day, after a change of end date). Super admin and Billing.</HelpDef>
               </HelpDefs>
@@ -221,6 +223,141 @@ const platformAdminHelp: HelpPageContent = {
               <HelpDef term="Cancel the subscription, Delete the club">The end of <strong>Access</strong> (see <em>How to cancel a customer subscription</em> and <em>How to delete an organization</em>).</HelpDef>
             </HelpDefs>
           ),
+        },
+      ],
+    },
+    {
+      id: 'club-money',
+      group: 'Support SOP',
+      heading: 'How to read a club\'s Money tab and refund a charge',
+      summary: 'What Stripe says next to our record, how to tell a double charge from a look-alike, and how to refund a charge.',
+      keywords: ['money tab', 'stripe', 'charge', 'charges', 'refund', 'refund a charge', 'charged twice', 'double charge', 'duplicate charge', 'duplicate', 'differs', 'stripe and our record', 'read again', 'open in stripe', 'next charge', 'paid last 12 months', 'show older charges', 'card on file', 'receipt', 'test mode', 'cannot refund', 'refused', 'no answer from stripe', 'disputed', 'two subscriptions', 'invoice', 'plan move', 'retry', 'coaches portal', 'billing status', 'cancelled', 'trial'],
+      searchText: 'money tab read from stripe live when the tab opens nothing is kept super admin billing support see stripe product growth read only see our record only plan billing status renewal date stripe and our record agree charged twice two paid charges cover the same month minutes apart two live subscriptions cancel it in stripe then refund its charges here open it in stripe disagree on things read again read from stripe at paid last 12 months refunded next charge stripe preview the subscription our record stripe plan billing status renews trial ends ended free through founding season stripe subscription stripe customer email card on file not kept here visa ending 4242 differs clears at stripe next update tell the product team charges table when what it paid for card stripe says amount show older charges families payments club own money own stripe account never shown or refunded here charged twice the same month as the first of the two not a duplicate plan move part month then the renewal stripe tried again after the failure and it paid not the subscription one-off invoice made in stripe dashboard a charge made in stripe not by an invoice a coaches portal this club pays for bills on the clubs own stripe customer second live subscription patterns come from stripe invoices and periods never from amounts and times alone never paid us by card stripe could not be read another club shares this stripe customer test mode chip test payment no money moves refund this charge only super admin and billing support hands the charge on with its number charge window amount paid for card stripe says refunded so far stripe charge all of it all that is left part of it still refundable why required 500 characters never a card number this cannot be undone plan does not change subscription keeps running next charge is still card shows it in 5 to 10 business days stripe emails a receipt customer email no email no receipt is sent red refund button goes to stripe at once you belong to this club member pending invite coach on one of its teams owner or billing owner of a coaches portal the club pays for your email is the owners or the stripe customers email another billing or super admin can public demo club disputed not paid fully refunded older than 6 months a super admin can refund it sixth refund in 24 hours someone else refunding this charge right now stripe refuses already refunded more than is left no money moved the attempt is in the audit log it changed since you opened it only can still be refunded no answer from stripe may or may not have gone through opening the charge checks with stripe never offers a second refund until it knows our record could not be written not sent to stripe money only goes back to the card it came from credits and other refunds stay in stripe dashboard customers get stripes own receipt email we send none',
+      links: [
+        { label: 'Clubs & portals', href: '/platform-admin/orgs' },
+        { label: 'Audit log', href: '/platform-admin/audit' },
+      ],
+      content: (
+        <p>The <strong>Money</strong> tab of a club&rsquo;s record reads Stripe live, sets it beside our record, and, for Billing and Super admin, lets you refund a charge. Nothing it reads from Stripe is kept.</p>
+      ),
+      subtopics: [
+        {
+          id: 'club-money-reads',
+          title: 'What the Money tab shows',
+          content: (
+            <>
+              <p>The tab reads Stripe each time it opens and says <em>Read from Stripe at</em> the time. <strong>Super admin</strong>, <strong>Billing</strong> and <strong>Support</strong> see Stripe&rsquo;s side. <strong>Product</strong>, <strong>Growth</strong> and <strong>Read only</strong> see our record only (plan, billing status and renewal date) and one line saying so.</p>
+              <HelpDefs>
+                <HelpDef term="The first line">One sentence about the whole picture: <em>Stripe and our record agree</em>; <em>Charged twice for</em> a month; <em>Stripe has two live subscriptions for this club</em> (with <strong>Open it in Stripe</strong>); or <em>Stripe and our record disagree on N things</em>, naming them. <strong>Read again</strong> reads Stripe once more.</HelpDef>
+                <HelpDef term="The band"><strong>Paid, last 12 months</strong>, <strong>Refunded</strong> and <strong>Next charge</strong> (Stripe&rsquo;s own preview of it).</HelpDef>
+                <HelpDef term="The subscription">Two columns, <strong>Our record</strong> and <strong>Stripe</strong>: Plan, Billing status, Renews (or Trial ends, or Ended), <strong>Free through</strong> (ours only, while free time or a Founding Season runs), Stripe subscription, Stripe customer with the email and <strong>Open in Stripe</strong>, and Card on file (<em>Not kept here</em> on our side).</HelpDef>
+                <HelpDef term="Charges">When, What it paid for, Card, Stripe says, Amount, and a <strong>&rsaquo;</strong> that opens the charge. <strong>Show older charges</strong> reads the 12 months before. A line under the table says families&rsquo; payments are the club&rsquo;s own money on its own Stripe account and are never shown or refunded here.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'club-money-differs',
+          title: 'When Stripe and our record differ',
+          content: (
+            <>
+              <p>A row where the two columns disagree is marked <strong>Differs</strong>. Click it for what it means: nothing here changes our record, and it usually clears at Stripe&rsquo;s next update. If it is still there the next day, tell the product team.</p>
+              <HelpDefs>
+                <HelpDef term="Never paid by card">The tab says <em>This club has never paid us by card</em> and shows our record only.</HelpDef>
+                <HelpDef term="Stripe could not be read">Our record shows, with one line saying so and <strong>Read again</strong>.</HelpDef>
+                <HelpDef term="Another club shares the Stripe customer">Nothing is shown and nothing can be refunded. Tell the product team.</HelpDef>
+                <HelpDef term="Test mode">On a development or staging server a <strong>Test mode</strong> chip says <em>Test payment: no money moves</em>.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'club-money-patterns',
+          title: 'Charged twice? The five patterns',
+          content: (
+            <>
+              <p>Two charges close together are not always a double charge. The tab names what it finds under each charge, working from Stripe&rsquo;s invoices and billing periods, never from amounts and times alone.</p>
+              <HelpDefs>
+                <HelpDef term="Charged twice">Two paid charges cover the same month. The later one reads <em>Charged twice: the same month as the</em> earlier charge, with <strong>Refund the later one</strong> for Billing and Super admin; the earlier reads <em>The first of the two</em>.</HelpDef>
+                <HelpDef term="A plan move">Reads <em>Not a duplicate: a plan move&rsquo;s part month, then the</em> renewal.</HelpDef>
+                <HelpDef term="A retry that paid">Reads <em>Not a duplicate: Stripe tried again after the</em> failure <em>and it paid</em>.</HelpDef>
+                <HelpDef term="Not the subscription&rsquo;s">Reads <em>a one-off invoice made in Stripe&rsquo;s dashboard</em> or <em>a charge made in Stripe, not by an invoice</em>.</HelpDef>
+                <HelpDef term="A Coaches Portal the club pays for">Reads <em>Not a duplicate: a Coaches Portal this club pays for</em>. Such a portal bills on the club&rsquo;s own Stripe customer.</HelpDef>
+              </HelpDefs>
+              <HelpNote variant="warning" title="Two live subscriptions">
+                A charge from a second live subscription is named too. Cancel the extra subscription in Stripe first (the first line has the door), then refund its charges here.
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'club-money-refund',
+          title: 'Refunding a charge',
+          content: (
+            <>
+              <HelpSteps>
+                <li>Click the charge&rsquo;s row. The charge window reads first: Amount, Paid for, Card, Stripe says, <strong>Refunded so far</strong> (who and when), and the Stripe charge with <strong>Open in Stripe</strong>.</li>
+                <li>Click <strong>Refund this charge</strong>. Only Super admin and Billing see it. Support sees <em>Refunds are made by Billing or a Super admin. Hand this charge on with its number.</em></li>
+                <li>Choose <strong>All of it</strong> (or <strong>All that is left</strong>), or <strong>Part of it</strong> and type the amount; the window says how much is still refundable.</li>
+                <li>Type <strong>Why</strong>. It is required, up to 500 characters, and must never hold a card number; the server refuses one.</li>
+                <li>Read the sentence: the amount, the card it goes to (such as <em>the Visa ending 4242</em>), <em>This cannot be undone</em>, that the plan does not change and the subscription keeps running, that the next charge is still on its date, that the card usually shows it in 5 to 10 business days, and that Stripe emails a receipt to the customer (or has no email, so none is sent).</li>
+                <li>Click the red <strong>Refund</strong> button. It goes to Stripe at once.</li>
+              </HelpSteps>
+              <p>Money only goes back to the card it came from. Credits and other refunds stay in Stripe&rsquo;s dashboard. The customer gets Stripe&rsquo;s own receipt email; we send none. The refund lands on the club&rsquo;s Story and in the Audit log.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-money-refused',
+          title: 'When a refund can\'t be made',
+          content: (
+            <>
+              <p>Before you click, the button is absent and one line says why:</p>
+              <HelpDefs>
+                <HelpDef term="Your own club"><em>You belong to this club, so you cannot refund its charges. Another Billing or Super admin can.</em> Belonging is wide: a member, a pending invite, a coach on one of its teams, an owner or billing owner of a Coaches Portal the club pays for, or your email is the owner&rsquo;s or the Stripe customer&rsquo;s email.</HelpDef>
+                <HelpDef term="The charge itself">A public demo club; a disputed charge; a charge that is not paid; a charge already fully refunded.</HelpDef>
+                <HelpDef term="Billing only">A charge older than 6 months (<em>A Super admin can refund it</em>), or a sixth refund by you in 24 hours.</HelpDef>
+                <HelpDef term="Someone else is refunding">The line names who and when. Wait, then open the charge again.</HelpDef>
+              </HelpDefs>
+              <p>After the click, the window tells you what happened:</p>
+              <HelpDefs>
+                <HelpDef term="Stripe refuses">Already refunded, disputed, or more than is left. It reads <em>No money moved</em>, and the attempt is in the Audit log.</HelpDef>
+                <HelpDef term="The amount changed">It reads <em>Only $X can still be refunded: it changed since you opened it</em>. Read the charge again.</HelpDef>
+                <HelpDef term="No answer from Stripe"><em>The refund may or may not have gone through.</em> Opening the charge checks with Stripe, and it never offers a second refund until it knows.</HelpDef>
+                <HelpDef term="Our record could not be written"><em>Not sent to Stripe. No money moved.</em> Try again.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-charged-twice',
+          question: 'A customer says they were charged twice. What do I do?',
+          answer: (
+            <p>Open the club&rsquo;s <strong>Money</strong> tab and read the first line and the note under each charge. If it says <em>Charged twice</em>, Billing or a Super admin can use <strong>Refund the later one</strong>; Support hands the charge number on. If the notes say <em>Not a duplicate</em> (a plan move, a retry that paid, a one-off invoice or a Coaches Portal), explain which and do not refund.</p>
+          ),
+          answerText: 'Open the club Money tab and read the first line and the note under each charge. If it says Charged twice, Billing or a Super admin can use Refund the later one; Support hands the charge number on. If the notes say Not a duplicate (a plan move, a retry that paid, a one-off invoice or a Coaches Portal), explain which and do not refund.',
+          keywords: ['double charge', 'duplicate', 'charged twice', 'refund the later one'],
+          popular: true,
+        },
+        {
+          id: 'faq-cannot-refund',
+          question: 'Why can\'t I refund this charge?',
+          answer: (
+            <p>The button is absent and a line says why: the role (Support cannot refund), your own club (you belong to it in any way), a demo club, a disputed, unpaid or fully refunded charge, a charge older than 6 months (Billing; a Super admin can), your sixth refund in 24 hours (Billing), or someone else refunding it right now. See <em>When a refund can&rsquo;t be made</em>.</p>
+          ),
+          answerText: 'The button is absent and a line says why: the role (Support cannot refund), your own club (you belong to it in any way), a demo club, a disputed, unpaid or fully refunded charge, a charge older than 6 months (Billing; a Super admin can), your sixth refund in 24 hours (Billing), or someone else refunding it right now.',
+          keywords: ['refund button missing', 'cannot refund', 'refused', 'you belong to this club'],
+        },
+        {
+          id: 'faq-refund-no-answer',
+          question: 'The refund window said Stripe did not answer. Did the money move?',
+          answer: (
+            <p>It may or may not have. Do not try again from memory: open the charge. That checks with Stripe, and the console never offers a second refund until it knows. The check is kept in the Audit log as <em>Refund checked with Stripe</em>.</p>
+          ),
+          answerText: 'It may or may not have. Do not try again from memory: open the charge. That checks with Stripe, and the console never offers a second refund until it knows. The check is kept in the Audit log as Refund checked with Stripe.',
+          keywords: ['no answer from stripe', 'refund may or may not have gone through', 'timeout'],
         },
       ],
     },
@@ -356,7 +493,7 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'How to temporarily override billing access',
       summary: 'Give a club free time: a whole plan, sections or a billing status, free through a last day you choose.',
       keywords: ['free time', 'give free time', 'free through', 'change the end date', 'end it now', 'billing', 'override', 'subscription status', 'grace period', 'past due', 'active', 'access tab', 'comped', 'trial exception', 'money', 'end early', 'put it back', 'free time ending'],
-      searchText: 'how do i give a club free time free through last free day a whole plan tournament plus club club association sections billing status reads active while unpaid grace period support window override billing requirements customer unsubscribed expired trial access tab free time block give free time change the end date end it now reason why put it back story free time list everyone founding season given by staff today free time ending 14 days super admin twelve months billing six months longer needs a super admin refused switched off on this server you are a member of the club coaches portal public demo club comp period no longer given paying through stripe already has free time',
+      searchText: 'how do i give a club free time free through last free day a whole plan tournament plus club club association sections billing status reads active while unpaid grace period support window override billing requirements customer unsubscribed expired trial access tab free time block give free time change the end date end it now reason why put it back story free time list everyone founding season given by staff today free time ending 14 days super admin twelve months billing six months longer needs a super admin refused switched off on this server you belong to the club coaches portal public demo club comp period no longer given paying through stripe already has free time',
       links: [
         { label: 'Clubs & portals', href: '/platform-admin/orgs' },
         { label: 'Bulk changes', href: '/platform-admin/bulk-operations' },
@@ -383,7 +520,7 @@ const platformAdminHelp: HelpPageContent = {
             <HelpDef term="End it now">On the same row. The club goes back to its own plan at once, with a reason. Put it back on the Story opens the same window.</HelpDef>
           </HelpDefs>
           <p>Ended free time stays in the Story, not on the Access tab. Free time that is about to run out appears on Today under <strong>Free time ending</strong> (the last 14 days, counted by club), and <strong>Free time</strong> in the menu lists every club with free time running in three views: <strong>Everyone</strong>, <strong>Founding Season</strong> and <strong>Given by staff</strong>. The list only reads; changes are made on the club&rsquo;s record.</p>
-          <HelpNote variant="info" title="When the door is a sentence instead of a button">Free time can&rsquo;t be given when it is switched off on this server, when you are a member of that club (another staff member can), when the club is a Coaches Portal, or when it is a public demo club. A plan can&rsquo;t be given while Stripe charges the club for a plan, when the club already has a plan given as free time (change its end date instead), or when it is already on the top plan; sections and billing status can still be given. A comp period is no longer given from the console: it never gave a club anything.</HelpNote>
+          <HelpNote variant="info" title="When the door is a sentence instead of a button">Free time can&rsquo;t be given when it is switched off on this server, when you belong to that club in any way (a member, an invite, a team coach, a Coaches Portal it pays for, or your email is its owner&rsquo;s or Stripe customer&rsquo;s; another staff member can), when the club is a Coaches Portal, or when it is a public demo club. A plan can&rsquo;t be given while Stripe charges the club for a plan, when the club already has a plan given as free time (change its end date instead), or when it is already on the top plan; sections and billing status can still be given. A comp period is no longer given from the console: it never gave a club anything.</HelpNote>
           <p>Changing the base plan or tournament limit is a separate flow: the pencil on the record, confirmed with a reason (see <em>How to read and change a club&rsquo;s record</em>). Use it only when the customer&apos;s actual package should change.</p>
         </>
       ),
@@ -688,7 +825,8 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Billing & Product SOP',
       heading: 'How to run guarded bulk changes',
       summary: 'Apply billing or product exceptions to multiple accounts with preview, reason, confirmation, and audit logging.',
-      keywords: ['bulk changes', 'bulk operations', 'bulk', 'comp period', 'plan change', 'module addon', 'subscription status', 'select filtered', 'review bulk operation', 'confirm bulk operation'],
+      keywords: ['bulk changes', 'bulk operations', 'bulk', 'comp period', 'plan change', 'module addon', 'subscription status', 'select filtered', 'review bulk operation', 'confirm bulk operation', 'billing status override', 'free through', 'skipped', 'succeeded', 'failed', 'you belong to this club', 'pays through stripe'],
+      searchText: 'guarded bulk changes billing status override free through last day billing up to 6 months super admin 12 months skipped you belong to this club succeeded failed skipped results plan change skips a club stripe still bills this club pays through stripe so its plan changes there',
       links: [
         { label: 'Bulk changes', href: '/platform-admin/bulk-operations' },
         { label: 'Audit log', href: '/platform-admin/audit' },
@@ -699,12 +837,13 @@ const platformAdminHelp: HelpPageContent = {
           <ol>
             <li>Go to <strong>Bulk changes</strong> and filter by account name, slug, plan, or subscription status.</li>
             <li>Select individual accounts or use <strong>Select filtered</strong> after reviewing the filtered list.</li>
-            <li>Choose the action &mdash; Subscription status override, Comp period grant, Plan change, or Module add-on &mdash; and set the target value. Comp periods require an expiration date. Module add-ons require enable or remove.</li>
+            <li>Choose the action &mdash; Billing status override, Comp period grant, Plan change, or Module add-on &mdash; and set the target value. A billing status override needs <strong>Free through</strong>, the last day (Billing up to 6 months, Super admin up to 12). Comp periods require an expiration date. Module add-ons require enable or remove.</li>
             <li>Enter a clear reason. This reason appears in the batch record and audit log.</li>
             <li>Review the preview panel, click <strong>Review bulk operation</strong>, then click <strong>Confirm bulk operation</strong>.</li>
             <li>Review the result list and recent bulk operation table for failures or skipped accounts.</li>
           </ol>
           <p>Billing actions require billing access. Module add-on actions require product access. A super admin can perform both. On each club&rsquo;s Story a change from here reads <em>From Bulk changes</em>.</p>
+          <p>The result list shows each club as succeeded, failed or skipped. A club you belong to is skipped (<em>Skipped: you belong to this club&hellip;</em>). A plan change skips a club that Stripe still bills, with the same sentence the pencil shows: <em>This club pays through Stripe, so its plan changes there.</em></p>
         </>
       ),
     },
@@ -735,7 +874,7 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'How to investigate account changes',
       summary: 'Use a record\'s Story and the global audit log to answer who changed what and when.',
       keywords: ['audit', 'audit log', 'investigate', 'actor', 'before after', 'json', 'filter', 'story', 'records opened', 'who opened', 'trail'],
-      searchText: 'investigate account changes club record story when what happened who why search the story type dropdown audit log search org or email action from to dates old value new value export records opened trail of club and person records staff opened super admin only how found from find from a list or a link 90 days never on a customers story',
+      searchText: 'investigate account changes club record story when what happened who why search the story type dropdown audit log search org or email action from to dates old value new value export adds reason table timestamp superuser org action reason entry window field not recorded refunded a charge refund refused by stripe refund no answer from stripe refund checked with stripe shown to super admin billing and support records opened trail of club and person records staff opened super admin only how found from find from a list or a link 90 days never on a customers story',
       links: [
         { label: 'Audit log', href: '/platform-admin/audit' },
       ],
@@ -762,9 +901,10 @@ const platformAdminHelp: HelpPageContent = {
               <HelpSteps>
                 <li>Open <strong>Audit log</strong>.</li>
                 <li>Search by organization name or actor email, then filter by <strong>Action</strong> and the <strong>From</strong> and <strong>To</strong> dates. A club&rsquo;s <strong>Filter</strong> link on a row narrows the log to that club.</li>
-                <li>Open a row&apos;s <strong>Old value</strong> or <strong>New value</strong> to see the full JSON when you need before/after details for plan changes, module add-ons, catalog applications, or bulk changes.</li>
-                <li>Export the result if you need to attach a concise account history to an internal ticket.</li>
+                <li>The table reads <strong>Timestamp</strong>, <strong>Superuser</strong>, <strong>Org</strong>, <strong>Action</strong>, <strong>Reason</strong> and a <strong>&rsaquo;</strong>. Open a row to see its entry window, which holds the <strong>Field</strong>, <strong>Old value</strong> and <strong>New value</strong> (the full JSON when you need before/after details for plan changes, module add-ons, catalog applications, or bulk changes) and the Reason.</li>
+                <li>Export the result if you need to attach a concise account history to an internal ticket. The export keeps every column and adds Reason.</li>
               </HelpSteps>
+              <p>A staff change made without a reason reads <em>Not recorded</em>; the product&rsquo;s own jobs and work tools (notes, decks, triage) show &ldquo;-&rdquo;. Refund entries (<em>Refunded a charge</em>, <em>Refund refused by Stripe</em>, <em>Refund: no answer from Stripe</em>, <em>Refund checked with Stripe</em>) show their reason only to Super admin, Billing and Support; other roles see <em>Shown to Super admin, Billing and Support</em>.</p>
               <p>The log records platform-admin actions such as password reset emails, overrides, plan and limit changes, section changes, notes, staff changes, pricing and config changes, and bulk change runs.</p>
             </>
           ),
@@ -827,7 +967,7 @@ const platformAdminHelp: HelpPageContent = {
           <p>The <strong>Approval queue</strong> is the single review queue for product, pricing, entitlement, campaign, and approval changes. Requests are <strong>created from the Plans &amp; pricing catalog flow</strong> (and billing-initiated catalog actions), not from this page — here you review and move them forward. The queue opens on <strong>Action needed</strong> (items in needs review or approved).</p>
           <ol>
             <li>Open a request to read its summary, the human-readable proposal, the raw proposal payload, and the stage history (created / submitted / reviewed / applied).</li>
-            <li>Move it through the lifecycle: <strong>Draft → Needs review → Approved → Implemented</strong> (or <strong>Rejected / Canceled</strong>). The detail footer shows only the actions valid for the current status.</li>
+            <li>Move it through the lifecycle: <strong>Draft → Needs review → Approved → Implemented</strong> (or <strong>Rejected / Cancelled</strong>). The detail footer shows only the actions valid for the current status.</li>
             <li>For a <strong>generated</strong> proposal (a Stripe price change, plan availability/gating change, or plan config/limit change), approval <strong>auto-applies</strong>: the button reads <strong>Approve &amp; apply</strong> and on click the change is written and the request jumps straight to <strong>Implemented</strong>. There is no separate manual step.</li>
             <li>For a <strong>manual</strong> request (e.g. a feature-matrix publish), approval sets it to <strong>Approved</strong> and leaves a separate <strong>Mark implemented</strong> step for the implementer to take after doing the manual work.</li>
           </ol>
@@ -1103,7 +1243,7 @@ const platformAdminHelp: HelpPageContent = {
           content: (
             <HelpSteps>
               <li>Open the customer&rsquo;s club (press <strong>/</strong> and find it).</li>
-              <li>On the <strong>Money</strong> tab, confirm the <strong>State</strong> is not already <em>Canceled</em>.</li>
+              <li>On the <strong>Money</strong> tab, confirm the <strong>Billing status</strong> is not already <em>Cancelled</em>.</li>
               <li>Open the <strong>Access</strong> tab and scroll to the end. <strong>Cancel the subscription</strong> is a red door there. It is absent when the club is already cancelled, or is on the free Tournament plan with no Stripe subscription.</li>
               <li>Click <strong>Cancel the subscription</strong>.</li>
             </HelpSteps>
@@ -1162,14 +1302,14 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-cancel-no-stripe-id',
           question: 'The Cancel the subscription door is not showing. Why?',
           answer: (
-            <p>It is at the very end of the <strong>Access</strong> tab and only Super admin and Billing see it. It is also absent when the club is already cancelled, or is on the free Tournament plan with no Stripe subscription on file. If the subscription was already canceled in Stripe but the FieldLogicHQ status was not updated, add a <strong>Subscription status</strong> override reading as Canceled, or change the base plan to the free Tournament tier with the pencil.</p>
+            <p>It is at the very end of the <strong>Access</strong> tab and only Super admin and Billing see it. It is also absent when the club is already cancelled, or is on the free Tournament plan with no Stripe subscription on file. If the subscription was already cancelled in Stripe but the FieldLogicHQ status was not updated, add a <strong>Billing status</strong> override reading as Cancelled. The pencil will not change the plan of a club whose subscription still reads as live: Stripe would put it back.</p>
           ),
           answerText: 'It is at the end of the Access tab and only Super admin and Billing see it. It is absent when the club is already cancelled or is on the free Tournament plan with no Stripe subscription. Use a subscription status override or a plan change if the subscription was already ended in Stripe.',
           keywords: ['cancel section missing', 'no stripe id', 'already canceled', 'door missing'],
         },
         {
           id: 'faq-cancel-vs-override',
-          question: 'Should I cancel the subscription or just add a canceled status override?',
+          question: 'Should I cancel the subscription or just add a cancelled billing status override?',
           answer: (
             <>
               <p>If the customer wants their billing to stop and the account closed, use <strong>Cancel the subscription</strong>. That cancels the Stripe subscription so no further charges occur. A status override does <strong>not</strong> stop Stripe from billing.</p>

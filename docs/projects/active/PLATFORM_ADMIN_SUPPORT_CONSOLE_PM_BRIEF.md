@@ -9,7 +9,33 @@ Runs in parallel with Club Tier (owner, 2026-10-24). **Stage 2 walked 2026-10-25
 the build prompt is written. Free time on a Premium Coaches Portal is proposed as a follow-on (S4b), done together with
 moving Founding Season's access, and is not yet ruled. **Stage 4 built 2026-10-25 on dev and committed** (walk ledger §379); the owner's
 walk is next, and its one database change (tournament fees post to the club's book during free time) goes to production
-with the release.
+with the release. **Stage 3 (money) drawn 2026-10-26** (https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX) **and ruled the same day, all
+twelve as recommended**; the build prompt is written. The owner also moved the audit log's raw values into its entry window
+and asked that a window's foot sentence never ship unformatted again. **Stage 3 built 2026-10-26 on dev** (not committed; the
+owner's OK is owed): two owner walks wait, a double charge found and refunded (ledger §384,
+https://claude.ai/artifact/CBCDtZjmsd9pFr5o8toUUV) and the guard rails (§385, https://claude.ai/artifact/QNSBdd8xbeqGysxH7mTw5y).
+Two things changed from the drawings, both found while building: a Coaches Portal a club pays for is billed on the club's own
+Stripe account, so the Money tab names it as the club's rather than as a second subscription; and the plan refusal covers the
+plan and the tournament limit (what Stripe puts back), so a custom team limit on a paying Club · Association club still saves.
+Its one database change goes to production with the release.
+
+**What Stage 3 delivers (as ruled).** Support answers "was this customer charged twice, and can you fix it?" from
+the club's record, without opening Stripe. The Money tab reads Stripe when it opens and sets the subscription beside our own
+record, with one line saying whether they agree. Five "charged twice" patterns are named for the person, including the common
+false alarm (two charges on one day for different months). Billing and Super admin refund all or part of a charge to the
+card it came from, with a reason and a one-sentence warning that it cannot be undone and the plan does not change. Purchases,
+charges and refunds join the club's Story as facts. The audit log gets a Reason column. Find takes a charge or invoice
+number. Nothing changes on the customer's screens; whether Stripe's own receipt email reaches them is a setting the owner
+checks.
+
+**Why it matters.** Today a double charge takes about 14 clicks and a trip to Stripe's dashboard, and a refund made there leaves
+no trace in the console. The drawings also found a live money bug: a staff plan change on a club that pays through Stripe
+leaves Stripe charging the old price, and Stripe's next renewal silently puts the old plan back. The recommendation is to
+refuse that change and send the owner to their own billing page, the same rule Stage 4 set for free time.
+
+**Success for Stage 3:** a duplicate charge found and refunded from the record in a few clicks; no refund ever missing on our
+side or made twice; every staff change in the audit log shows why; no staff plan change can leave a paying club charged for a
+plan it no longer has.
 
 **What the Stage 4 build added to the drawings (owner calls at the build gate, 2026-10-25).** Billing actions never see
 free time: buying, moving, downgrading, cancelling and the next-season choice all read the plan the club pays for, so free

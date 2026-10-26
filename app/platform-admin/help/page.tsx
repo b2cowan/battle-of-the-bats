@@ -114,6 +114,7 @@ export default function PlatformAdminHelpPage() {
     {
       title: 'Billing Specialist',
       steps: [
+        { label: 'Read a club\'s Money tab and refund a charge', href: '/platform-admin/help/platform-admin#club-money' },
         { label: 'Temporarily override billing access', href: '/platform-admin/help/platform-admin#billing-overrides' },
         { label: 'Cancel a customer subscription', href: '/platform-admin/help/platform-admin#cancel-subscription' },
         { label: 'Handle retained or at-risk accounts', href: '/platform-admin/help/platform-admin#retention' },

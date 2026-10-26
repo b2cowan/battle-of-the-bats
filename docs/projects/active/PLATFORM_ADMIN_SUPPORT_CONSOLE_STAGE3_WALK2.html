@@ -1,0 +1,193 @@
+<title>Support Console Guard Rails Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: the guard rails Stage 3 added hold, and the console's words and windows read right.
+   Checkable walk with a paste-back; the console walks' look, so it reads the same as Stages 1, 2 and 4. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ol, .card ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.role { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.role b { font-size: 14px; }
+.role span { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.as { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 240px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Support console · stage 3 · guard rails · owner walk 2 of 2 · 2026-10-26 · ledger §385</p>
+  <h1>Support Console Guard Rails Walk</h1>
+  <p>One question: <b>do the console’s new guard rails hold, and do its words and windows read right?</b> A club Stripe still bills keeps its plan in Stripe; Bulk changes’ billing status follows free time’s rules; “your own club” is wider; one spelling; the audit log and every window’s foot. Tick what holds, and write what does not. Walk 1 (§384, the money) comes first: section 1 here uses the Tournament Plus subscription it made on <code>UAT Test Org</code>.</p>
+</header>
+
+<div class="card signin">
+  <h2>Sign in first</h2>
+  <p>The console at <code>http://localhost:3000/platform-admin/login</code>; the club owner in a private window at <code>http://localhost:3000/auth/login</code>. Walk as <b>Super admin</b> unless a section says otherwise.</p>
+  <div class="roles">
+    <div class="role"><b>Super admin</b><span>your own account, or uat-platform@fieldlogichq.ca</span></div>
+    <div class="role"><b>Billing</b><span>billing@dev.local</span></div>
+    <div class="role"><b>Read only</b><span>readonly@dev.local</span></div>
+    <div class="role"><b>Club owner</b><span>uat-owner@uat-test-org.local</span></div>
+  </div>
+  <p class="hint">⚠ Section 2 gives a billing status to a few dev clubs through Bulk changes; each ends by itself on the day you choose, so pick a day a week out. Nothing here charges a card or emails anyone. The drawings: <a href="https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX">Support Console Stage 3</a> (drawing G and the labels census).</p>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <button class="btn-doc" type="button" id="make">Copy my answers</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  var S = [
+    ["paying", "A paying club's plan changes in Stripe", "Clubs & portals › UAT Test Org (paying since walk 1)", "Super admin", [
+      "The pencil: Plan and Tournament limit read as plain values (no dropdown, no box), and under them one line with a flag: \"This club pays through Stripe, so its plan changes there. The owner moves plan on their Plan & billing page, or cancel the subscription first. Changing it here would leave Stripe charging the old price.\" Name, web name and sections still edit.",
+      "Change only the name, with a reason, and save: it saves. Nothing about the plan is refused.",
+      "Optional, if the Story holds a plan entry with Put it back: Put it back refuses in its window with the same sentence; nothing changes.",
+      "Bulk changes › Plan change, with UAT Test Org and one free club selected: the free club changes; UAT Test Org's result is a plain grey box, \"Skipped: This club pays through Stripe, so its plan changes there. …\". The summary reads \"1 succeeded / 0 failed / 1 skipped\". Put the free club back afterwards."
+    ]],
+    ["bulk", "Bulk changes' billing status follows free time's rules", "the menu › Bulk changes", "Super admin · Billing", [
+      "The action is now called \"Billing status override\" (no \"Subscription status\" anywhere on the page), and its status field is \"Billing status\", offering Active, Trial, Past due, Cancelled.",
+      "\"Optional expiry\" is gone. A required \"Free through\" date field takes its place, with today and earlier greyed out and days past 12 months greyed out (6 as Billing). Its hint: \"The last day it applies; it ends that midnight, Eastern. A club you belong to is skipped.\"",
+      "The preview reads \"Billing status reads Active through {day}. The club's real billing is unchanged.\" Reviewing with no day says \"Choose the last free day.\"",
+      "As Billing, type a day 8 months out: the field says \"You can give up to 6 months, through {day}. Longer needs a super admin.\" and the server refuses it the same way if it arrives.",
+      "Apply to two dev clubs with a day a week out: each result reads \"Billing status reads Active through {Month d, yyyy}\". On each club's Access tab the free-time row reads \"Billing status: Active\" with that day.",
+      "Optional, if your staff account belongs to a dev club (as a member, an invite, a coach or the owner's email): including it gives a grey \"Skipped: you belong to this club, so you can't give it a billing status. Another staff member can.\""
+    ]],
+    ["own", "\"Your own club\" is wider", "a club you belong to", "Super admin · Billing", [
+      "On a club you belong to in any way, Access says \"You belong to {club}, so you can't give it free time. Another staff member can.\" in red, with no Give free time.",
+      "On the same club's Money tab (walk 1's setup on it, or any club with charges), a charge window has no Refund this charge and says \"You belong to this club, so you cannot refund its charges. Another Billing or Super admin can.\""
+    ]],
+    ["words", "One spelling", "the console and the owner's Plan & billing", "Super admin · Club owner", [
+      "Clubs & portals: the attention bar's button reads \"Cancelled (n)\" when any club is cancelled; status chips read Active, Trial, Past due, Cancelled. No \"Canceled\" or \"Trialing\" anywhere in the console.",
+      "A club record's Money tab: the subscription table's row is \"Billing status\", and the renewal row is one of Renews, Trial ends or Ended (Free through when free time runs).",
+      "The owner's Plan & billing: the badge reads Trial on a club in its trial and Cancelled on a cancelled club; the cancelled notice says \"has been cancelled\".",
+      "Help: search the console's help for \"canceled\" and \"cancelled\": both find the articles, and every article reads \"Cancelled\"."
+    ]],
+    ["audit", "The audit log reads who, when, what and why", "the menu › Audit log", "Super admin · Read only", [
+      "The table has five columns: Timestamp · Superuser · Org · Action · Reason · ›. Field, Old value and New value are gone from the table.",
+      "A staff change made today shows its reason. An older staff change with none reads \"Not recorded\" in the quiet ink. A scheduled job (a tick or a sweep) reads \"-\".",
+      "Opening a row: Superuser, Org, then Reason across the width, then Field and Action key, then What changed with Old value and New value side by side (the differing lines tinted), Copy and Same moment as before. Copy's text includes a Reason line.",
+      "Export (CSV and Excel): every column is still there, with reason after action.",
+      "As Read only: a refund's row reads \"Shown to Super admin, Billing and Support\" and its window shows no values; every other row reads as for Super admin."
+    ]],
+    ["foot", "Every window's foot sentence", "open each window, then Cancel", "Super admin", [
+      "The pencil's Save changes window: the foot's sentence at the left (\"N Story entries…\") is small grey text, the same size as the audit window's foot sentence, never the body size.",
+      "Give free time, Change the end date and End it now: the same small grey foot sentence at the left, buttons at the right.",
+      "Cancel the subscription (Access, a club with a subscription; Cancel out of it): \"Invoice history stays in Stripe.\" is small grey text at the left.",
+      "The charge window (walk 1) and the refund window: \"Read from Stripe at {time}\" and \"Goes to Stripe at once.\" are the same small grey text.",
+      "Dark appearance (your account menu): the foot sentences stay legible on the dark ground."
+    ]]
+  ];
+  var CALLS = [
+    ["The refusal covers the plan and the tournament limit (what Stripe writes back); a custom team limit on a paying Club · Association club still saves."],
+    ["When our record says Stripe still bills but Stripe has already ended the subscription (a missed update), Put it back and Bulk changes ask Stripe and let the change through. The pencil still shows the one line on such a club, because it reads our record when the page opens."],
+    ["The free plan clears a club's link to a subscription only when Stripe has ended it; a link to one Stripe still bills is never dropped."],
+    ["Bulk changes asks \"your own club\" once for the whole batch, before it starts: a membership added while a long batch runs is not seen by that batch."],
+    ["The help keeps \"canceled\" as a hidden search word, so a search with the US spelling still finds the article; no visible text carries it."],
+    ["Bulk changes' billing status override follows the cap and the own-club skip; it does not refuse a public demo club (free time does). Your Q7 named the three rules only."]
+  ];
+  var KEY = 'pas3-rails-walk';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[4].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = (i + 1) + ' ' + s[1].split(',')[0].split("'s ")[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card"><div class="sec-head"><span class="n">G' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="route">' + esc(s[2]) + '</span></div><span class="as">As ' + esc(s[3]) + '</span>';
+    s[4].forEach(function (t, k) { h += '<label class="chk"><input type="checkbox" id="c-' + id + '-' + k + '" data-k="' + id + '.' + k + '"> <span>' + esc(t) + '</span></label>'; });
+    h += '<textarea id="n-' + id + '" aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" id="c-call-' + k + '" data-k="call.' + k + '"> <span>' + esc(c[0]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea id="n-calls" aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function progress() {
+    var done = document.querySelectorAll('.sec input[type=checkbox]:checked').length - document.querySelectorAll('#rule input:checked').length;
+    document.getElementById('prog').textContent = done + ' of ' + total + ' ticked';
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Support console stage 3 guard rails walk (§385): my results'];
+    S.forEach(function (s, i) {
+      var miss = [], ok = 0;
+      s[4].forEach(function (t, k) { if (state[s[0] + '.' + k]) ok++; else miss.push(k + 1); });
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', 'G' + (i + 1) + ' ' + s[1] + ': ' + ok + '/' + s[4].length + ' ticked' + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (state['call.' + k] ? '[accepted] ' : '[not ticked] ') + c[0]); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Copy my answers'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>

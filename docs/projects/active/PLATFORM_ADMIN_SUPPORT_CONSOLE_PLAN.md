@@ -46,6 +46,18 @@ Stage 2 leads re-verified against the code before drawing; what changed the Stag
 - The console's staff check (`getPlatformAdminContext`) never checks that the session's email is confirmed; whether the
   hosted sign-in allows unconfirmed sign-in was not verified. The drawings carry "a staff account must have a confirmed
   email" as a Stage 2 guard.
+**Stage 3 DRAWN 2026-10-26** (from `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_DRAWINGS_PROMPT.md`): drawings
+https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX, after a design pass (18 defects fixed, 2 rule meetings asked as question
+11) and a security review of the refund design (15 findings folded in). **Owner ruled all twelve as recommended 2026-10-26**
+(see "Owner rulings 2026-10-26 (Stage 3 drawings)"); **build prompt written 2026-10-26:**
+`PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_BUILD_PROMPT.md`. See "Stage 3 findings" below.
+**Stage 3 BUILT 2026-10-26 on dev, not committed (the owner's OK is owed)**, from the build prompt: migration 380 applied to dev
+(the audit log's `reason` column with old reasons copied in, `platform_refunds`, `btree_gist` + one running plan grant per club;
+prod is a release step with 365, 367 and 373); the Money tab, the five patterns, the charge and refund windows, recovery, the
+Story's money, the audit log's Reason column and entry window, Find by charge / invoice / invoice number, Q9 in the shared
+plan rule, Q7 on Bulk changes, Q10's words (gated), the window foot face. Gate calls, threats and the finish review are in
+"Stage 3 build gate", "Stage 3 threats → guards" and "Stage 3 finish review" below. Walks owed: ledger §384 (https://claude.ai/artifact/CBCDtZjmsd9pFr5o8toUUV, a double
+charge, found and refunded) and §385 (https://claude.ai/artifact/QNSBdd8xbeqGysxH7mTw5y, the guard rails).
 **Project index:** https://claude.ai/artifact/TLP8d5Zec4xVkTSYrQU8tp (source `PLATFORM_ADMIN_SUPPORT_CONSOLE_INDEX.html`,
 db-backed: news is a data write, never a republish).
 **Kickoff artifacts:**
@@ -163,7 +175,7 @@ belongs to the bookkeeping session.
 |---|---|---|
 | S1 Warm foundation — **BUILT 2026-10-24, walk §371 owed** | Kit, Warm / Dark, `NAV_STANDARD` in full, the 1200 frame, type ladder, words. No job changes | F1 + D1–D5. Shared: `admin-kit-switch-guard` must allow the platform shell. `NAV_STANDARD.md` drops its platform line. K-10 and the "operator shells stay dark" log line retired. Console CSS written as plain rules, so the old-look gate stays at 0 |
 | S2 Find, menu, Today, record — **BUILT 2026-10-25 on dev, walked 2026-10-25 (§377, 60 of 60, all calls accepted)** (drawings Ub7fXLh29SC34Zp4oqKUx1, walk GqozHVh1Bg2FLqSKEM78Xs) | Global Find (server-side, no 1,000 cap), menu by job, one rulebook (matrix = APIs), Today, a record with Story; a person record (new) | Find is a new read surface: drawn and reviewed as a security change. No proxy change. One migration: the read-only lookup over sign-in records |
-| S3 Money | Stripe read on the Money tab, duplicate labels, refund (Q7), reason column in the audit log, bulk = single plan change, M6 | Migration (audit reason). Adversarial review on the refund write |
+| S3 Money — **BUILT 2026-10-26 on dev, not committed; walks §384 + §385 owed; mig 380 prod at release** (DRAWN + RULED 2026-10-26, all 12 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_BUILD_PROMPT.md`) (drawings FdTWB58ne1jgsBXSwutdLX, source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_DRAWINGS.html`, captures `.probe/pasc/cap-s3/` via `capture-s3b.mjs`, render check `render-s3.mjs`; see "Stage 3 findings") | Stripe read on the Money tab, duplicate labels, refund (Q7), reason column in the audit log, bulk = single plan change (closed; the shared rule carries M6), M6 (widened: every staff plan change on a paying club) | Migration (audit reason + a refunds record + one running plan grant per club if ask 8). Adversarial review on the refund write. No webhook change unless ask 4 = B |
 | S4b Coaches Portal free time — **PROPOSED 2026-10-25, not ruled** | A Premium Coaches Portal reads free time from the same door S4 builds (liveness today reads the portal's own record, which grants never touch), the door shown on a portal record, and the coach Founding comp moved with the Founding access step. Sequenced by dependency: after S4 is built and walked, and together with the Founding access move (Q4), because both change the portal's own billing record and the coach Founding audience (which today ends with no warning) | /billing (coach billing). Drawn first |
 | S4 Free time — **BUILT + COMMITTED 2026-10-25 (`6c8f8fb89` · `5353f2cf3` · `e9bb0b059` · `a26ec5165`; finish pass `4071179f0` · `48205738a` · `7bc6b5441`), walk §379 owed** (drawings 5eawvGUPwQVPoWiAV7vQY5, all 11 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4_BUILD_PROMPT.md`; mig 373 prod at release) | `plan_tier` grant (read-time revert, no cron) read through ONE effective-plan door with a build guard (Q1), one Give free time window, Founding as a group in a Free time list (view now, access at the Founding turn-off: Q4), customer billing page shows "Free through" (Q8), `comp_period` no longer offered (Q5), server-side past-expiry check | Prod `ENTITLEMENT_GRANTS_ENABLED=true` confirmed by the owner 2026-10-25. /billing for the customer pages and the effective-plan door. `proxy.ts` is one of the plan readers (its Tournament-tier redirect) |
 | S5 Health | Status (reads on open), Errors restyled with a person link, Feedback reply, Sent email log + delivery callback | Read-only AWS + Supabase keys on prod (owner step). Q6: the stack-health summary, a shared automation change, own commit, only on the owner's word |
@@ -218,6 +230,26 @@ All eleven asks as recommended; the full wording is in `memory/design_decisions.
 **Still open:** the Bookkeeping page items for that session (unchanged from 2026-10-24). The prod
 `ENTITLEMENT_GRANTS_ENABLED` check is done: `true` on AWS, confirmed by the owner 2026-10-25.
 
+## Owner rulings 2026-10-26 (Stage 3 drawings; paste-back, every recommended box ticked)
+
+All twelve as recommended; the full wording is in `memory/design_decisions.md` 2026-10-26 "SUPPORT CONSOLE STAGE 3".
+- **Q1:** Super admin + Billing refund; never own club (wide check, free time too); no dollar cap; older than 6 months or a
+  6th refund in 24h needs Super admin; Support reads.
+- **Q2:** all or part; original card only; several parts up to the charge.
+- **Q3:** Stripe receipt only; owner confirms the Refunds switch is on in prod; no email from us.
+- **Q4:** A: read Stripe live; our own entries always show.
+- **Q5:** Stripe numbers + invoice number; no card digits; one line says so.
+- **Q6:** reason required on every staff change; product jobs none; copy old reasons into the column; "Not recorded".
+- **Q7:** the bulk Subscription status override follows free time's rules (end required, 6/12-month cap, never own club,
+  server-enforced).
+- **Q8:** the double plan grant fix rides Stage 3's migration.
+- **Q9:** refuse a staff plan change while a live Stripe subscription runs; one line says why.
+- **Q10:** Cancelled + Trial everywhere a person reads them; one renewal label set; Billing status; gated.
+- **Q11:** D-1 and D-2 as recommended.
+- **Q12:** Field moves into the audit entry window with the values.
+
+**Build prompt written 2026-10-26:** `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_BUILD_PROMPT.md`.
+
 ## Owner rulings 2026-10-25 (Stage 4 drawings; paste-back, every recommended box ticked)
 
 All eleven as recommended; the full wording is in `memory/design_decisions.md` 2026-10-25 "SUPPORT CONSOLE STAGE 4".
@@ -235,6 +267,90 @@ All eleven as recommended; the full wording is in `memory/design_decisions.md` 2
 
 **Asked with the rulings, answered as a recommendation (not ruled):** when free time for a Premium Coaches Portal comes.
 See the ladder row "S4b".
+
+## Owner ruling 2026-10-26 (S4b, conversation; recorded as said)
+
+- **Sequence:** agreed as recommended: Stage 3, then Stage 5, with S4b slotted ahead of the Founding turn-off deadline.
+- **Support WILL be able to give a coach free time.** The main use the owner expects: a coach who came in by being
+  claimed onto a tournament team, got the free (Basic) Coaches Portal, and wants to try the Premium one. Support says
+  "I'll convert your free portal to Premium for 30, 60, 90 days" and it goes back on its own.
+- **The owner's requirement:** the two portals are built differently in the back end, so going from Basic to Premium
+  and back must be efficient **without compromising the coach's data**.
+- Not yet ruled: the shape of the lengths (fixed 30/60/90 or any date), who may give it and the cap, what the coach is
+  told, what "back" looks like when the coach has built things on Premium. These are the S4b drawings' asks.
+
+**S4b findings (helper census 2026-10-26; the lines marked ✔ were reopened by hand, the rest are leads to re-verify
+before drawing):**
+- ✔ **Basic → Premium today is a one-way COPY.** The Basic team's rows stay; a Premium workspace is made and the roster,
+  schedule and fees are copied in once (`provisionStandaloneTeamWorkspace` → `migrateBasicTeamIntoWorkspace`,
+  `lib/coach-upgrade-migration.ts`). An atomic claim (`basic_coach_teams.team_workspace_id IS NULL`) makes exactly one
+  copy happen per Basic team, ever. Announcements are not copied.
+- ✔ **While Premium is live, the Basic pages redirect to Premium** (`lib/coach-team-page.ts`); when the workspace is
+  `canceled` the Basic team is usable again.
+- **There is NO reverse copy.** Work done on Premium during a trial never returns to Basic. Basic's rows are the
+  pre-upgrade ones. (helper; re-verify)
+- **The only existing "back" is the cancel path**, which archives hosted tournaments and tags records for retention:
+  wrong for a trial. Staff cancel updates only the org row, not the workspace or entitlement (an existing inconsistency).
+- **Three liveness sources must agree** (org status, workspace status, team entitlement + `ends_at`); nothing enforces
+  `ends_at`/`current_period_end`, and nothing runs at an end date.
+- **Basic write APIs may not refuse while Premium is live** (only the pages redirect): re-verify.
+- The first trial would use the existing copy; a SECOND trial or a later real upgrade must reuse the same workspace
+  (the claim guard prevents a second copy, and one live portal per owner).
+
+## Stage 3 build gate (2026-10-26)
+
+The build prompt's §6 gate, run before any code: §4 re-verified (all rows held; "Not recorded" and the "not in it yet" line
+live in the record screen, not the Story builder), five censuses (audit writers and readers, the plan rule's callers, every
+status/renewal label, every window foot), Stripe's current docs, `/billing` and `/marketing`, then four owner calls.
+- **Owner calls (2026-10-26):** (1) **Reason required on customer changes only** — every change to a customer's club, person,
+  plan, money or retention, and refunds; the console's work tools (notes, decks, campaigns, triage, lead edits) write none and
+  read "-"; staff roles get a reason when Stage 8 draws Staff; catalog approvals' change note fills the column. Q6's premise
+  ("every staff route since Stage 2 asks") held for customer changes only — ~25 staff writes never asked. (2) **Q8 as an
+  exclusion rule** (`btree_gist`), not a unique index (a grant that ran out by itself keeps `revoked_at` null). (3) The
+  read-only overlap check on dev **and prod**: none on either; prod holds no `plan_tier` rows at all. (4) **Stripe's Refunds
+  email is ON in production** (Q3), so the sentence names the receipt.
+- **The console key:** Stripe grants refunds only with charge writes (one "Charges and Refunds" permission), and the console
+  already cancels subscriptions and deletes customers: the full key stays (T23); no Amplify env var.
+- **`/billing`:** refund the charge directly (no credit note); the invoice stays paid and nothing else moves (Stripe states it
+  for neither — the walk checks it in test mode); the 6-month rule on Stripe's `created`; G 10's sentence as drawn; ours-vs-Stripe
+  compares the plan the club PAYS for, free time named on our side only.
+- **`/marketing`:** Cancelled / Trial approved; the receipt clause names the address ("Stripe emails a receipt to …"); help's
+  hidden search synonym `canceled` stays (Q10 is "where a person reads"), gate case-sensitive.
+- **Found on the way:** a Coaches Portal the club pays for bills on the club's OWN Stripe customer as a second subscription —
+  named as the club's (never "two live subscriptions", never "shared"); Q9 narrowed to what Stripe overwrites (plan and
+  tournament limit) so a Club · Association custom team limit still saves.
+
+## Stage 3 threats → guards (the build, 2026-10-26)
+
+All 23 of drawing H, each in `tests/unit/support-console-stage3-guard.test.ts` ("13 · the 23 threats" holds the map):
+T1 the power before any read · T2 the wide own-club check (`lib/staff-own-club.ts`, free time and Bulk adopt it) · T3 seen on
+the Story and the audit Reason · T4 Billing's 6 months and sixth-in-24 h · T5/T6 ownership on every read (`ownsObject`: exactly
+this club's non-shared customer, same mode) · T7 one key = our record id · T8 recovery lists, never re-sends · T9 one unfinished
+refund per charge (partial unique index) · T10 our record first or Stripe is never asked · T11 unknown is never done · T12 no
+refund messages (Q4 A); the Story de-duplicates on the refund number · T13 reason required, Luhn refused · T14 metadata holds no
+words · T15 no card data written · T16 Stripe's text never kept · T17 never `fraudulent` · T18 no webhook change · T19 Q9 in the
+one plan rule · T20 Find shape-checks before Stripe · T21 no Stripe call for a role without the power · T22 mode on every read ·
+T23 the full key stays (above). Proven on dev in rolled-back transactions: the refunds guard (frozen request, forward-only,
+one open per charge, released by not made, never `fraudulent`) and the plan-grant rule (overlap refused; after a ran-out grant
+allowed).
+
+## Stage 3 finish review (2026-10-26: simplify, high-risk review, help, strategy)
+
+`/simplify` (four lenses): one refund-door rule for the table, the window and the server; the paying-club rule and sentence in a
+plain module; the own-club check batched for Bulk; one Stripe read per visit; house helpers reused. `/review` (five lenses,
+high-risk, money lens). **Fixed:** a cancelled club moved to the free plan kept its dead subscription link as "active" and was
+refused every later plan change (and a missed webhook did the same) — Stripe is now asked before refusing, and the free plan
+drops only an ended link; a lost answer read "Nothing was sent to Stripe" — now "may or may not have gone through"; refund
+reasons reached Product/Growth/Read only in the audit log and export — hidden for them; the refund's time budget could outlast
+the route; a refund finished since the person's read could pass the "it changed" check — Stripe's remainder is read again
+after our record holds the charge; a gateway's 4xx counted as Stripe's no; Find failed whole when Stripe did; two openings
+recovered one refund twice; smaller screen fixes. **Reported, not changed (owner calls, none urgent):** two refunds by one
+Billing person at the same instant can make six in 24 h; a refund Stripe accepts and later fails is recorded done (the charge
+window reads Stripe's status); zero-decimal currencies would display wrongly (clubs bill in CAD); the card-number check can
+refuse a 20+ digit order number; Stripe down skips the customer-email part of the own-club check for free time and Bulk
+(documented; the owner email still runs); pre-existing — the console's cancel marks the club cancelled before Stripe confirms;
+the pencil hides the plan field on a club our record says Stripe bills even when Stripe already ended it (Bulk and Put it back
+ask Stripe). `/strategy`: refund authority logged Decided; `PLAN_PRICING_FACTS.md` needs nothing. `/billing` drift: none.
 
 ## Stage 4 build gate (2026-10-25)
 
@@ -313,6 +429,62 @@ already-ended grant "ended early".
   status override takes an optional end with no cap (walk call 14 asks the owner).
 - Help: the Bulk changes guide still lists Comp period (the product no longer offers it); the line sits beside another
   session's uncommitted rename of that section, so it is left for that session.
+
+## Stage 3 findings (verified against the code and Stripe's docs 2026-10-26, before drawing)
+
+Four helpers read the code and one read Stripe's current docs (stripe-node 22.1.0, API `2026-04-22.dahlia`); the lines each
+drawing turns on were opened by hand.
+- **M6 found and widened.** Origin: `docs/projects/archive/PLATFORM_ADMIN_WALKTHROUGHS.md:49` ("Setting a plan to Coaches
+  Portal doesn't clear the old Stripe link"); the UX eval's M6 (contextual help) is unrelated. `applyOperatorPlanChange`
+  (`lib/operator-plan-change.ts`, callers: plan, bulk-operations, put-back, record routes) writes `organizations` only and
+  never calls Stripe; only a move to `tournament` clears `stripe_subscription_id` (and leaves the Stripe subscription
+  charging). The webhook (`app/api/billing/webhook/route.ts` ~364-384) overwrites `plan_id`, `tournament_limit`, status and
+  the subscription id by `stripe_customer_id` on every subscription event, so the staff change is silently reverted at the
+  next renewal. Nothing refuses a staff plan change on a club with a live subscription. → **ask 9** (refuse inside the shared
+  rule, any uncancelled subscription id regardless of status; Bulk skips with a reason line).
+- **We keep no charge, invoice or payment of a club's subscription** (only `cus_`/`sub_`, plan, status, period end).
+  `online_payments` (family rail, dev only) keeps its own `pi_`/`ch_`. The end state's "We recorded" column cannot be
+  honest; the R7 comparison is at the subscription.
+- **Purchases are already recorded:** `subscription_started` and `plan_upgraded` are written to `platform_events`
+  (`writeGrowthEvent`); the Story filters them out (`lib/platform-story.ts` ~76-78 reads only downgrade, cancel, past due,
+  recovered). Purchases join the Story with no migration and no webhook change.
+- **The webhook handles no refund event** (`charge.refunded`, `refund.*` fall through to `ok`); a refund changes no plan.
+  No event-id idempotency table for this webhook. → ask 4.
+- **Audit log:** no `reason` column (both snapshots); 70 writer calls + 1 direct insert; 21 keep a reason in `new_value`.
+  `writePlatformAuditLog` swallows its own errors. **The prompt's "override revoke and add-on toggle record none" is out of
+  date:** both require and keep a reason since Stage 2 (`lib/club-record-changes.ts` 123, 148); only pre-Stage 2 rows lack
+  one. The Story already shows "Not recorded". → ask 6.
+- **Powers:** no refund power; `find_stripe` (super_admin, billing, support) already gates Stripe reading (A2).
+- **Own-club check is narrow:** `staffBelongsTo` (`lib/free-time-writes.ts:91`) reads `organization_members` only; misses team
+  staff, Coaches Portal owners/billing owners, pending invites, a staff email equal to the owner/customer email. Free time
+  (Stage 4) has the same gap. → ask 1 (one wider check, free time adopts it).
+- **Double plan grant race confirmed:** no unique index on running `plan_tier` rows in `org_overrides`. → ask 8.
+- **Bulk Subscription status override:** "Optional expiry", no cap, past dates accepted, no own-club refusal, up to 100
+  clubs. → ask 7.
+- **Facilitated Payments** = families paying a club on its Connect account; a club's subscription never runs on it.
+- **Labels:** "Canceled"/"Cancelled" split on the record and on the two customer billing pages and emails; six renewal
+  labels; five names for billing status; "Trialing" vs "Trial". → ask 10.
+- **Stripe docs (2026-10-26):** refunds only to the original payment method; partials until fully refunded; no card age
+  limit stated; idempotency keys pruned after ≥24 h (so recovery must list refunds, never re-POST); refund receipt emails
+  only if the dashboard's Refunds switch is on (owner must check prod); Search can match `payment_method_details.card.last4`
+  (the end state said it could not), ~1 min behind, 20 req/s; restricted keys exist (whether refunds can be granted
+  without charges is unverified).
+- **Captures:** the probe session had expired and the dev server sat at ~4 GB; captures were retaken Warm only, one page at
+  a time, with a wait for the sign-in page to hydrate (`capture-s3b.mjs`).
+
+**Asks (owner, owed):** 1 who refunds + cap + wider own-club check · 2 all or part · 3 does the customer hear (Stripe's
+receipt; prod switch to confirm) · 4 Story source (live read vs keep events) · 5 Find and card digits · 6 reason column
+required + old rows · 7 bulk status override follows free time's rules · 8 the double grant rides this migration · 9 M6
+widened: refuse · 10 one spelling (Cancelled, Trial, Billing status, renewal labels) · 11 D-1 red for refusals, D-2 heading
+rule · 12 Field leaves the audit table too. **Owner direction 2026-10-26 (in the session, before the paste-back):** the audit
+log's Old value and New value leave the table for the entry window (raw data, a "more details" item, never filtered or
+searched); the export keeps every column. **Owner direction 2026-10-26: a window's foot sentence must not ship unformatted
+again** (the 2026-10-25 defect, fixed in `9c1545220` for a CLASSLESS span/p in KitDialog's `footerStart` only). Found:
+the console's `RecordWindow` passes its `footNote` with `record.module.css .footNote` = `--type-body` (14px) tertiary,
+not the kit's `--type-support` (12px, as `RepKit .footNote` and the 10-25 rule); every console confirm/free-time window,
+and so the refund windows, inherit it. The build owes: `.footNote` onto the kit face, and a guard that every text in a
+console window's `footerStart` is classless or wears a foot-note class at the support size (the 10-25 fix has no test).
+Kickoff Q6 (Status shows the morning check) does not bear on Stage 3; it stays for S5.
 
 ## Stage 4 findings (verified against the code 2026-10-25, before drawing)
 

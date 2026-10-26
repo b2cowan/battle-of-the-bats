@@ -1,0 +1,229 @@
+<title>Support Console Money Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: a club charged twice is found on its record and refunded, without leaving the console.
+   Checkable walk with a paste-back; the console walks' look, so it reads the same as Stages 1, 2 and 4. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ol, .card ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.role { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.role b { font-size: 14px; }
+.role span { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.as { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 240px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Support console · stage 3 · money · owner walk 1 of 2 · 2026-10-26 · ledger §384</p>
+  <h1>Support Console Money Walk</h1>
+  <p>One question: <b>can support find a double charge on a club’s record, and refund it, without leaving the console?</b> Tick what holds, and write what does not. Your ticks stay in this browser; the paste-back at the foot gathers them for the chat. Everything runs on the dev server, in Stripe’s <b>test mode</b>: no real money moves. The guard rails (a paying club’s plan, Bulk changes, the words) are walk 2 (§385).</p>
+</header>
+
+<div class="card signin">
+  <h2>Before you start (about 10 minutes, once)</h2>
+  <p>The Money tab reads Stripe, so the club needs a test-mode subscription with a few charges. Dev’s UAT clubs have none yet. Use <b>UAT Test Org</b> (the free Tournament plan; its owner is <code>uat-owner@uat-test-org.local</code>).</p>
+  <ol>
+    <li>As the club owner (a private window, <code>http://localhost:3000/auth/login</code>), open Settings › Plan &amp; billing and choose <b>Tournament Plus, monthly</b>. Pay with Stripe’s test card <code>4242 4242 4242 4242</code>, any future expiry, any CVC.</li>
+    <li>In Stripe’s test dashboard (<code>https://dashboard.stripe.com/test/customers</code>), open that customer. Create a <b>one-off invoice</b> of <code>$25.00</code> with the line “Extra tournament setup”, and charge it to the card on file. This is a charge that is not the subscription’s.</li>
+    <li>For the double charge: on the same customer, create a <b>second subscription</b> on the Tournament Plus price and charge it now. The Money tab should name two live subscriptions; its charge is the one to refund. Cancel that second subscription in Stripe once section 6 is done.</li>
+  </ol>
+  <p class="hint">If Plan &amp; billing does not show Tournament Plus a minute after paying, the dev server is not receiving Stripe’s messages: run <code>stripe listen --forward-to localhost:3000/api/billing/webhook</code> and pay again (or press Read again on the Money tab, which reads Stripe directly either way).</p>
+  <p>Then sign in to the console at <code>http://localhost:3000/platform-admin/login</code>.</p>
+  <div class="roles">
+    <div class="role"><b>Super admin</b><span>your own account, or uat-platform@fieldlogichq.ca</span></div>
+    <div class="role"><b>Billing</b><span>billing@dev.local</span></div>
+    <div class="role"><b>Support</b><span>support@dev.local</span></div>
+    <div class="role"><b>Read only</b><span>readonly@dev.local</span></div>
+  </div>
+  <p class="hint">⚠ Nothing in this walk emails a real address: Stripe’s test mode sends no receipts to customers. The refunds are test-mode refunds. The drawings this walk checks against: <a href="https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX">Support Console Stage 3</a>.</p>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed. The first four were yours at the build gate and are listed so the walk has them in one place.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <button class="btn-doc" type="button" id="make">Copy my answers</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  var S = [
+    ["tab", "The Money tab reads Stripe", "Clubs & portals › UAT Test Org › Money", "Super admin", [
+      "The tab says \"Reading Stripe…\" for a moment, then a first line with a Test mode chip, the line itself, \"Test payment: no money moves.\", and at its right \"Read from Stripe at {time}\" and Read again.",
+      "Under it a joined band: Paid, last 12 months (the total, \"N paid charges since {day}\"), Refunded ($0.00, \"none in 12 months\"), Next charge (Stripe's own figure, \"on {day}\").",
+      "\"The subscription\" heading and a table with Our record and Stripe side by side: Plan (Tournament Plus · monthly on Stripe's side), Billing status, Renews, Stripe subscription, Stripe customer (with its email and Open in Stripe), Card on file (\"Not kept here\" beside \"Visa ending 4242 · expires …\").",
+      "A count line (\"N charges in the last 12 months, newest first\" with \"From Stripe at {time}\"), then the charges: When · What it paid for · Card · Stripe says · Amount · ›. The first purchase reads \"Tournament Plus, monthly · first charge\" with its period under it.",
+      "Under the table: \"Families’ payments to this club are the club’s own money, on its own Stripe account. They are never shown or refunded here.\"",
+      "Read again re-reads (the time changes). Moving to the Story tab and back does not read Stripe again until you press Read again."
+    ]],
+    ["patterns", "The patterns are named", "UAT Test Org › Money", "Super admin", [
+      "The first line is red and names two live subscriptions: \"Stripe has two live subscriptions for this club. We know {sub}. {other} also charges $X each month, since {day}. Cancel it in Stripe, then refund its charges here.\" with Open it in Stripe.",
+      "The second subscription's charge carries a red line under it: \"From a second subscription, {sub_…}\".",
+      "The $25.00 invoice reads \"Invoice made in Stripe “Extra tournament setup”\" with \"Not the subscription’s: a one-off invoice made in Stripe’s dashboard\" under it in the quiet ink.",
+      "Optional, if your data has one: a charge from a plan move reads \"Moved up: … to …\" with \"… part month\" and \"Not a duplicate: a plan move’s part month, then the {day} renewal\"; a retried payment reads \"Not a duplicate: Stripe tried again after the {day} failure and it paid\".",
+      "Every row opens its charge; nothing on the tab writes anything until you refund."
+    ]],
+    ["charge", "The charge reads first", "the second subscription's charge", "Super admin", [
+      "Clicking the row opens a window titled \"{what it paid for} · {when}\" that reads first: the flag line, then Amount, Paid for, Card (Visa ending 4242), Stripe says (Paid), Refunded so far (Nothing), Stripe charge (its number, Open in Stripe).",
+      "Its foot: \"Read from Stripe at {time}\" at the left in small grey text, Close and an outlined Refund this charge at the right.",
+      "The address does not change with the window; Close returns to the tab as it was."
+    ]],
+    ["part", "Refund part of it, as Billing", "billing@dev.local · the $25.00 invoice's charge", "Billing", [
+      "Refund this charge opens \"Refund the {when} charge\": All of it ($25.00 back to the Visa ending 4242) and Part of it (Up to $25.00) as two rows, Why, then the sentence, then the foot (\"Goes to Stripe at once.\" at the left, Cancel and a red Refund $X at the right).",
+      "Pick Part of it and type 10: the hint reads \"of $25.00 still refundable\". Type 30: the field says only $25.00 can still be refunded, and the button waits. Type 12,50: the field asks for dollars and cents.",
+      "With $10.00: the sentence reads \"Refund $10.00 of the $25.00 charge to the Visa ending 4242. This cannot be undone. With this refund, $15.00 stays paid. UAT Test Org’s plan does not change …\", the card timing (5 to 10 business days) and \"Test payment: no money moves.\"",
+      "Type a reason holding 4242 4242 4242 4242 and refund: refused in the window, \"The reason looks like it holds a card number. Leave card details out.\", and the foot says \"Nothing was sent to Stripe.\" Replace it with a plain reason and refund.",
+      "The window closes; the charge window shows an olive \"Refunded $10.00 to the Visa ending 4242. Stripe says it is on its way. It is in the club’s Story with your reason.\" and Refunded so far reads \"$10.00 · {when} · billing@dev.local\". The row reads \"Part refunded · $10.00 back\", and the band's Refunded figure shows $10.00, \"1 refund, {day}\"."
+    ]],
+    ["full", "Refund the double charge in full, as Super admin", "the second subscription's charge", "Super admin", [
+      "Refund this charge, All of it: the sentence names the whole amount, the card, \"This cannot be undone.\", that the plan does not change, the subscription keeps running and the next charge is still {day}.",
+      "After refunding, the charge window shows Stripe says Refunded, and the refund line \"Fully refunded. There is nothing left to refund.\" with no Refund this charge.",
+      "Open the $25.00 charge again: the door offers \"All that is left\" ($15.00, with \"$10.00 was refunded before\"). Refund it. The row reads Refunded.",
+      "Now cancel the second subscription in Stripe's test dashboard and press Read again: the first line goes back to \"Stripe and our record agree.\" (or names what still differs)."
+    ]],
+    ["refused", "When it cannot be refunded", "sign in as each", "Support · Read only · Billing", [
+      "Support: the tab reads Stripe in full. A charge window has no Refund this charge; one line says \"Refunds are made by Billing or a Super admin. Hand this charge on with its number.\"",
+      "Read only (or Product, Growth): the tab shows one line, \"Stripe’s side is read by Super admin, Billing and Support. Your role sees our record: plan, billing status and renewal date.\", and our record only. Nothing is read from Stripe.",
+      "A fully refunded charge: no door, \"Fully refunded. There is nothing left to refund.\"",
+      "Optional: two windows on one charge as Billing and Super admin; refund part in one, then refund \"all\" in the other without reopening: refused, \"it changed since you opened it\", nothing sent to Stripe."
+    ]],
+    ["story", "The Story has its money", "UAT Test Org › Story", "Super admin · Read only", [
+      "\"Bought Tournament Plus\" with \"Charged $X\" under it, the owner as Who.",
+      "Each subscription charge: \"Charged $X: Tournament Plus, monthly, {period}\", Who Stripe. The invoice: \"Charged $25.00: an invoice made in Stripe “Extra tournament setup”\", Who \"In Stripe’s dashboard\".",
+      "Each console refund: \"Refunded $X of the {when} charge\", \"To the card it came from · the plan did not change\", Who the staff member, Why their reason. No money entry offers Put it back.",
+      "The line at the foot reads \"Not in the Story yet: account emails such as password resets.\"",
+      "As Read only: none of the money entries, and the foot line adds \"Money entries (charges, refunds and their reasons) are shown to Super admin, Billing and Support.\""
+    ]],
+    ["audit", "The audit log keeps the reason", "the menu › Audit log", "Super admin · Read only", [
+      "The refunds read \"Refunded a charge\" with your typed reason in the Reason column.",
+      "Opening one shows Reason, then Field (charge), What changed with the refund's record, charge, amount and outcome; no card number, expiry or name anywhere.",
+      "As Read only: the same rows read \"Shown to Super admin, Billing and Support\" in the Reason column, and the window shows no values.",
+      "Export (CSV): the file has a reason column after action."
+    ]],
+    ["find", "Find a charge and an invoice", "the strip's Find box", "Super admin · Support", [
+      "Paste a refunded charge's number (ch_… from its window): one row under \"Stripe · 1\", \"Stripe charge ch_… · $X · {date} · Tournament Plus\". The foot: \"Enter opens the club. Its Money tab opens on this charge.\"",
+      "Enter: the club opens on the Money tab with that charge's window open.",
+      "Paste the $25.00 invoice's printed number from Stripe (like ABCD1234-0001): \"Stripe invoice ABCD1234-0001 · $25.00 · …\"; Enter opens its charge.",
+      "Type 4242: \"Nothing matches “4242”.\" and the foot \"Card digits are not searched. Ask for the email on the receipt instead.\"",
+      "Paste a made-up ch_ number: \"Nothing matches …\" with \"Not a family payment and not one of our clubs’ Stripe numbers. A test-mode number is never found on the live site, or the reverse.\""
+    ]],
+    ["stripe", "What Stripe holds", "Stripe's test dashboard", "Super admin", [
+      "Each refund's metadata has platform_refund_id, org_id and staff_email only; your typed reason is not in Stripe.",
+      "The refunded invoices still read Paid, and the first subscription is unchanged (status, price, next invoice). The /billing gate expected this; Stripe's docs do not say it, so this tick is the check.",
+      "Each refund's reason in Stripe is \"Requested by customer\", or \"Duplicate\" for a charge the tab had flagged as charged twice; never Fraudulent."
+    ]]
+  ];
+  var CALLS = [
+    ["Gate call (yours): a reason is required on every change to a customer's club, person, plan, money or retention and on refunds; the console's own work tools (notes, decks, campaigns, triage, lead edits) and staff roles (until Stage 8) write none."],
+    ["Gate call (yours): one running plan grant per club is a database rule over the grants' dates, so a grant that ran out by itself never blocks a new one."],
+    ["Gate call (yours): Stripe's Refunds email is on in production, so the refund sentence names the receipt and the address it goes to."],
+    ["Gate call (mine, for you to overrule): the console keeps the full Stripe key. Stripe grants refunds only together with creating and changing charges, and the console already cancels subscriptions and deletes customers, so a restricted key would not narrow much."],
+    ["A Coaches Portal the club pays for bills on the club's own Stripe customer as a second subscription: the tab names it as the club's (\"Not a duplicate: a Coaches Portal this club pays for\"), never as two live subscriptions."],
+    ["The refund is re-checked against Stripe after our record is written: a refund someone else finished in the meantime is caught there, before anything is sent."],
+    ["If Stripe never answers, the window says the refund may or may not have gone through; opening the charge after five minutes checks Stripe and never sends a second refund."],
+    ["Billing's two limits (a charge older than 6 months, a sixth refund in 24 hours) hide the door before the click, with one line saying a Super admin can."],
+    ["A Stripe refund that Stripe later reports as failed is still recorded as made; the charge window reads Stripe's own status for it."]
+  ];
+  var KEY = 'pas3-money-walk';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[4].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = (i + 1) + ' ' + s[1].split(',')[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card"><div class="sec-head"><span class="n">M' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="route">' + esc(s[2]) + '</span></div><span class="as">As ' + esc(s[3]) + '</span>';
+    s[4].forEach(function (t, k) { h += '<label class="chk"><input type="checkbox" id="c-' + id + '-' + k + '" data-k="' + id + '.' + k + '"> <span>' + esc(t) + '</span></label>'; });
+    h += '<textarea id="n-' + id + '" aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" id="c-call-' + k + '" data-k="call.' + k + '"> <span>' + esc(c[0]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea id="n-calls" aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function progress() {
+    var done = document.querySelectorAll('.sec input[type=checkbox]:checked').length - document.querySelectorAll('#rule input:checked').length;
+    document.getElementById('prog').textContent = done + ' of ' + total + ' ticked';
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Support console stage 3 money walk (§384): my results'];
+    S.forEach(function (s, i) {
+      var miss = [], ok = 0;
+      s[4].forEach(function (t, k) { if (state[s[0] + '.' + k]) ok++; else miss.push(k + 1); });
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', 'M' + (i + 1) + ' ' + s[1] + ': ' + ok + '/' + s[4].length + ' ticked' + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (state['call.' + k] ? '[accepted] ' : '[not ticked] ') + c[0]); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Copy my answers'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>

@@ -1,0 +1,1451 @@
+<title>Support Console Stage 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: a 920 reading column for the words and asks; each drawing breaks out to a true-size 1440 frame inside its own
+   horizontal scroller. The document chrome is cool stone; the frames wear FieldLogicHQ's real warm (or dark) tokens. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8; --red: #9c321d; --red-soft: #f6e2dc;
+  --tag: #1d4f8a; --tag-soft: #dde8f5;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); }
+.wrap { max-width: 920px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 90px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; letter-spacing: -.4px; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 21px; line-height: 1.3; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0 0 4px; }
+p { margin: 0; max-width: 72ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.lede { display: grid; gap: 12px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 10px; margin-block: 18px 26px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bar a.jump { font: 600 13px/1 var(--font-body); padding: 9px 11px; min-height: 36px; display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.bar .sw { margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.bar .sw button { font: 600 13px/1 var(--font-body); min-height: 36px; padding: 8px 12px; border: 0; background: var(--card); color: var(--ink); cursor: pointer; }
+.bar .sw button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); }
+.screen { display: grid; gap: 14px; margin-bottom: 46px; scroll-margin-top: 80px; }
+.screen-head { display: grid; gap: 6px; }
+.screen-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); letter-spacing: .08em; }
+.ba { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.before { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 14px; align-items: start; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+@media (max-width: 640px) { .before { grid-template-columns: minmax(0, 1fr); } }
+.before button.shot { padding: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; cursor: zoom-in; background: #0a0a0a; max-height: 170px; display: block; width: 100%; }
+.before img { display: block; width: 100%; height: auto; }
+.lbl { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.scroller { overflow-x: auto; margin-inline: calc(50% - 50vw + 16px); padding-inline: max(16px, calc(50vw - 736px)); padding-block: 4px 10px; }
+.scroller > .fx { width: 1440px; }
+.scroller > .fx.win { width: 600px; }
+.scroller > .fx.wide-note { width: 1440px; }
+.hint { font-size: 12.5px; color: var(--dim); }
+button.tag { font: 700 11px/1 var(--font-data); letter-spacing: .04em; padding: 5px 7px; border-radius: 6px; border: 1px solid var(--tag); background: var(--tag-soft); color: var(--tag); cursor: pointer; white-space: nowrap; }
+.tagrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+/* asks */
+.ask { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+.ask .q { font-weight: 700; }
+.ask .rec { font-size: 14px; color: var(--soft); }
+.ask .rec b { color: var(--ink); }
+.ask .opts { display: grid; gap: 4px; }
+.ask label { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+.ask input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+.ask textarea { width: 100%; min-height: 56px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+table.doc { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.doc th { text-align: left; font: 600 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.doc td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.doc tr:last-child td { border-bottom: 0; }
+.paste { display: grid; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.paste textarea { width: 100%; min-height: 220px; font: 13px/1.5 var(--font-data); padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); max-width: min(560px, calc(100vw - 32px)); padding: 18px 18px 14px; }
+dialog::backdrop { background: rgba(20, 24, 18, .45); }
+dialog .foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+dialog button.close { font: 600 14px/1 var(--font-body); min-height: 40px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+dialog.zoom { max-width: calc(100vw - 32px); width: 1200px; padding: 10px; }
+dialog.zoom .z { max-height: 80vh; overflow: auto; } dialog.zoom img { width: 100%; display: block; }
+
+/* ═════ The product frames — FieldLogicHQ warm tokens, dark on the switch. Type stays on the ladder: 10 · 11 · 12 · 14 · 16 · 20 · 24 ═════ */
+.fx { --p: #F8F4ED; --c: #FFFFFF; --ln: rgba(70,55,30,.12); --ln2: rgba(70,55,30,.20); --fill: rgba(70,55,30,.05); --fieldbg: #F8F4ED;
+  --i: #241E15; --i2: #4A4235; --i3: #615A54; --ol: #57651E; --ols: rgba(87,101,30,.10); --lime: #D9F99D; --limei: #241E15; --tabon: #57651E;
+  --am: #835006; --rd: #B03A22; --gr: #34662A; --scrim: rgba(36,30,21,.34);
+  background: var(--p); color: var(--i); font: 14px/1.45 var(--font-body); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative; }
+.fx.dark { --p: #0A0A0A; --c: #111827; --ln: rgba(255,255,255,.08); --ln2: rgba(255,255,255,.14); --fill: rgba(255,255,255,.03); --fieldbg: rgba(255,255,255,.05);
+  --i: #F1F5F9; --i2: rgba(255,255,255,.70); --i3: rgba(255,255,255,.50); --ol: #D9F99D; --ols: rgba(30,58,138,.18); --lime: #D9F99D; --limei: #0A0A0A; --tabon: #F1F5F9;
+  --am: #F59E0B; --rd: #EF4444; --gr: #22C55E; --scrim: rgba(13,17,26,.55); }
+.fx * { box-sizing: border-box; }
+.fx svg.ic { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.strip { height: 48px; display: grid; grid-template-columns: 240px 1fr auto; align-items: center; background: var(--c); border-bottom: 1px solid var(--ln); }
+.strip .lock { display: flex; align-items: center; gap: 8px; padding-left: 20px; font: 700 16px/1 var(--font-body); }
+.strip .lock .mk { width: 20px; height: 20px; border-radius: 5px; background: var(--ol); }
+.strip .lock em { font-style: normal; color: var(--ol); }
+.strip .mid { display: flex; align-items: center; gap: 16px; padding-left: 20px; }
+.strip .portal { font: 600 14px/1 var(--font-body); color: var(--i2); }
+.strip .find { margin: 0 auto; width: 440px; display: flex; align-items: center; gap: 8px; height: 34px; border: 1px solid var(--ln2); border-radius: 999px; padding: 0 12px; color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+.strip .find .k { margin-left: auto; font: 700 10px/1 var(--font-data); border: 1px solid var(--ln2); border-radius: 4px; padding: 2px 5px; }
+.strip .find.typed { color: var(--i); border-color: var(--ol); }
+.strip .end { display: flex; align-items: center; gap: 6px; padding-right: 16px; }
+.strip .end .b { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.strip .end .b svg.ic { width: 18px; height: 18px; }
+.strip .end .av { width: 30px; height: 30px; border-radius: 999px; background: var(--ols); color: var(--ol); display: inline-flex; align-items: center; justify-content: center; font: 700 12px/1 var(--font-body); }
+.app { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 840px; }
+.side { background: var(--c); border-right: 1px solid var(--ln); padding: 12px 0 16px; display: flex; flex-direction: column; }
+.grp { display: grid; }
+.gl { display: flex; align-items: center; gap: 8px; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); padding: 12px 20px 6px; }
+.gl .cv { margin-left: auto; opacity: .55; display: inline-flex; }
+.gl.folded .cv { transform: rotate(-90deg); }
+.it { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 20px; color: var(--i2); font-size: 14px; }
+.it.on { background: var(--ols); color: var(--ol); font-weight: 600; }
+.it .pill { margin-left: auto; }
+.side .foot { margin-top: auto; border-top: 1px solid var(--ln); padding-top: 8px; }
+.main { padding: 28px 40px 48px; min-width: 0; }
+.page { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px; }
+.ph { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 34px; }
+.ph .back { color: var(--i2); font-weight: 600; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; padding: 6px 8px; margin-left: -8px; }
+.ph .rule { width: 1px; align-self: stretch; margin: 2px 0; background: var(--ln2); }
+.ph h1 { font: 700 20px/1.3 var(--font-body); margin: 0; letter-spacing: 0; color: var(--i); }
+.ph .end { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.ph .help { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.ph .help svg.ic { width: 18px; height: 18px; }
+.ph .quiet { font-size: 12px; color: var(--i3); }
+.chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font: 700 10px/1.3 var(--font-data); letter-spacing: .05em; border: 1px solid var(--ln2); background: var(--ols); color: var(--i2); white-space: nowrap; }
+.chip.ok { color: var(--ol); background: color-mix(in srgb, var(--ol) 7%, transparent); border-color: color-mix(in srgb, var(--ol) 25%, transparent); }
+.chip.warn { color: var(--am); background: color-mix(in srgb, var(--am) 8%, transparent); border-color: color-mix(in srgb, var(--am) 30%, transparent); }
+.chip.bad { color: var(--rd); background: color-mix(in srgb, var(--rd) 8%, transparent); border-color: color-mix(in srgb, var(--rd) 30%, transparent); }
+.pill { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; font: 700 10px/1 var(--font-data); color: var(--am); background: color-mix(in srgb, var(--am) 11%, transparent); border: 1px solid color-mix(in srgb, var(--am) 32%, transparent); }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; font: 600 14px/1 var(--font-body); border: 1px solid var(--ln2); background: var(--c); color: var(--i); white-space: nowrap; }
+.btn.lime { background: var(--lime); border-color: var(--lime); color: var(--limei); }
+.btn.door { border: 0; background: none; color: var(--ol); padding: 0 4px; }
+.band { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.band > div { padding: 14px 16px; border-right: 1px solid var(--ln); min-width: 0; display: grid; gap: 4px; }
+.band > div:last-child { border-right: 0; }
+.band .k { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.band .v { font: 700 24px/1.1 var(--font-body); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.band .v.warn { color: var(--am); }
+.band .s { font-size: 12px; color: var(--i3); }
+.sec { font: 700 16px/1.3 var(--font-body); margin: 0 0 -8px; }
+.card { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; }
+.tb { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--ln); }
+.tb .count { font-size: 14px; color: var(--i2); }
+.tb .gap { flex: 1; }
+.tb .note { font-size: 12px; color: var(--i3); }
+.view { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--ol); background: var(--ols); color: var(--ol); font: 600 14px/1 var(--font-body); }
+.view .n { font: 700 11px/1 var(--font-data); opacity: .65; }
+.fpill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--ln2); color: var(--i2); font: 600 12px/1 var(--font-body); background: var(--c); }
+.search { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; width: 256px; border-radius: 999px; border: 1px solid var(--ln2); color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+table.t { width: 100%; border-collapse: collapse; }
+table.t th { font: 700 12px/1.2 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--i2); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--ln); white-space: nowrap; }
+table.t td { padding: 7px 14px; border-bottom: 1px solid var(--ln); vertical-align: middle; font-variant-numeric: tabular-nums; }
+table.t tr.cmf td { padding: 11px 14px; }
+table.t tr:last-child td { border-bottom: 0; }
+table.t .r { text-align: right; }
+table.t .nm { color: var(--i); font-weight: 600; text-decoration: underline; text-decoration-color: var(--ln2); text-underline-offset: 3px; }
+table.t .sub { display: block; font-size: 12px; color: var(--i3); font-weight: 400; }
+table.t .cv { width: 40px; text-align: right; color: var(--ol); }
+table.t .ts { color: var(--i2); white-space: nowrap; }
+table.t .none { color: var(--i3); }
+.code { font: 400 12px/1.3 var(--font-data); }
+table.t tr.band-row td { background: color-mix(in srgb, var(--ol) 10%, transparent); font: 700 12px/1.2 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--i2); padding: 8px 14px; }
+.flagline { display: block; font-size: 12px; color: var(--am); font-weight: 600; margin-top: 2px; }
+.callout { display: flex; gap: 10px; align-items: flex-start; background: var(--c); border: 1px solid var(--ln); border-left: 3px solid var(--ol); border-radius: 8px; padding: 12px 14px; font-size: 14px; color: var(--i2); }
+.callout svg.ic { width: 16px; height: 16px; color: var(--ol); margin-top: 2px; }
+.callout.warn { border-left-color: var(--am); } .callout.warn svg.ic { color: var(--am); }
+.callout .go { margin-left: auto; color: var(--ol); font-weight: 600; white-space: nowrap; }
+.subnav { display: flex; gap: 4px; border-bottom: 1px solid var(--ln); }
+.subnav span { padding: 10px 14px; font-weight: 600; font-size: 14px; color: var(--i2); border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; gap: 6px; align-items: baseline; }
+.subnav span.on { color: var(--tabon); border-bottom-color: var(--ol); }
+.subnav .n { font: 700 11px/1 var(--font-data); opacity: .65; }
+.ex { position: absolute; right: 14px; bottom: 10px; font: 700 10px/1 var(--font-data); color: var(--i3); letter-spacing: .06em; text-transform: uppercase; }
+/* a window (the kit window: tinted edge, no shadow) */
+.win { background: var(--scrim); padding: 28px; }
+.dlg { background: var(--c); border-radius: 12px; border: 1px solid color-mix(in srgb, var(--ol) 30%, transparent); }
+.dlg .dh { display: flex; align-items: center; padding: 18px 24px 6px; }
+.dlg .dh h2 { font: 700 16px/1.3 var(--font-body); margin: 0; }
+.dlg .dh .x { margin-left: auto; width: 44px; height: 44px; margin-right: -12px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: var(--i2); }
+.dlg .db { padding: 10px 24px 16px; display: grid; gap: 14px; }
+.lines { display: grid; grid-template-columns: 140px 1fr; gap: 8px 14px; font-size: 14px; }
+.lines dt { color: var(--i3); } .lines dd { margin: 0; }
+.fld { display: grid; gap: 6px; }
+.fld .fl { font-size: 12px; font-weight: 650; color: var(--i2); }
+.fld .fl .req { color: inherit; margin-left: 2px; }
+.inp { height: 36px; border: 1px solid var(--ln2); border-radius: 6px; padding: 0 10px; display: flex; align-items: center; color: var(--i); background: var(--fieldbg); font-size: 14px; }
+.inp.area { height: 80px; align-items: flex-start; padding-top: 8px; }
+.inp .chev { margin-left: auto; color: var(--i3); display: inline-flex; }
+.radio { display: grid; gap: 2px; border: 1px solid var(--ln2); border-radius: 8px; padding: 10px 12px; }
+.radio.on { border-color: var(--ol); background: var(--ols); }
+.radio b { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+.radio b::before { content: ""; width: 14px; height: 14px; border-radius: 999px; border: 2px solid var(--ln2); }
+.radio.on b::before { border: 4px solid var(--ol); }
+.radio span { font-size: 12px; color: var(--i3); padding-left: 22px; }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.quick span { height: 34px; display: inline-flex; align-items: center; padding: 0 12px; font-size: 14px; border-radius: 999px; border: 1px solid var(--ln2); color: var(--i2); }
+.quick span.on { border-color: var(--ol); color: var(--ol); background: var(--ols); }
+.df { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-top: 1px solid var(--ln); }
+.df .sent { font-size: 14px; color: var(--i2); flex: 1; }
+.df .bts { display: flex; gap: 8px; }
+/* the Find panel, under the strip */
+.fpanel { position: absolute; left: 50%; transform: translateX(-30px); top: 50px; width: 520px; background: var(--c); border: 1px solid var(--ln2); border-radius: 10px; z-index: 4; }
+.fpanel .fh { padding: 10px 14px; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); border-top: 1px solid var(--ln); }
+.fpanel .fh:first-child { border-top: 0; }
+.fpanel .fr { display: flex; align-items: center; gap: 10px; padding: 8px 14px; }
+.fpanel .fr.on { background: var(--ols); }
+.fpanel .fr b { font-weight: 600; } .fpanel .fr .sub { font-size: 12px; color: var(--i3); }
+.fpanel .fr .cv { margin-left: auto; color: var(--ol); }
+.fpanel .ft { padding: 9px 14px; border-top: 1px solid var(--ln); font-size: 12px; color: var(--i3); }
+/* ═════ Stage 1 additions ═════ */
+.fx .fold { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--am); z-index: 3; pointer-events: none; }
+.fx .fold span { position: absolute; right: 12px; top: -9px; background: var(--p); color: var(--am); font: 700 10px/1 var(--font-data); padding: 0 6px; letter-spacing: .06em; text-transform: uppercase; }
+.fx .app.auto { min-height: 0; }
+.band.c6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.band.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.band.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.band .v.sm { font-size: 20px; }
+.chk { width: 16px; height: 16px; border: 1.5px solid var(--ln2); border-radius: 4px; display: inline-block; vertical-align: middle; background: var(--fieldbg); }
+.chk.on { background: var(--ol); border-color: var(--ol); box-shadow: inset 0 0 0 2px var(--c); }
+.cols2 { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; }
+.tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tools .gap { flex: 1; }
+.chkl { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--i2); }
+.sel { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px 0 12px; border: 1px solid var(--ln2); border-radius: 8px; background: var(--fieldbg); color: var(--i); font-size: 14px; white-space: nowrap; }
+.sel .chev { color: var(--i3); display: inline-flex; }
+.sel.w { width: 100%; height: 36px; border-radius: 6px; justify-content: space-between; }
+.acct { position: absolute; right: 12px; top: 50px; width: 288px; background: var(--c); border: 1px solid var(--ln2); border-radius: 12px; padding: 8px; z-index: 6; display: grid; gap: 2px; }
+.acct .id { display: flex; gap: 10px; padding: 10px; align-items: center; }
+.acct .id .av { width: 32px; height: 32px; border-radius: 999px; background: var(--ols); color: var(--ol); display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 var(--font-body); }
+.acct .cap { font: 700 10px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); }
+.acct .val { font-size: 14px; color: var(--i); }
+.acct .ap { padding: 6px 10px 10px; display: grid; gap: 6px; }
+.acct .seg { display: flex; gap: 4px; border: 1px solid var(--ln2); border-radius: 8px; padding: 3px; }
+.acct .seg span { flex: 1; height: 28px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; border-radius: 6px; color: var(--i2); }
+.acct .seg span.on { background: var(--ols); color: var(--ol); }
+.acct .r { display: flex; gap: 10px; height: 36px; align-items: center; padding: 0 10px; border-radius: 8px; color: var(--i2); font-size: 14px; }
+.acct .r.out { color: var(--rd); }
+.acct .r.ghost { opacity: .45; text-decoration: line-through; }
+.acct .sep { height: 1px; background: var(--ln); margin: 4px 0; }
+.rails { display: flex; gap: 28px; padding: 24px; align-items: flex-start; background: var(--p); }
+.rails .col { display: grid; gap: 8px; }
+.rails .col .side { height: 1060px; border: 1px solid var(--ln); border-radius: 8px; width: 240px; }
+.rails .col .side.slim { width: 64px; }
+.side.slim .it { padding: 0; justify-content: center; }
+.side.slim .it .eye { display: none; }
+.rails .col .lbl2 { max-width: 240px; }
+.nw { white-space: nowrap; }
+/* the kit eyebrow: 11 px, .09em, in the typewriter face with the chips (admin lettering ruling 2026-10-19); D3 covers cell content */
+.fx .lbl2, .fx .band .k, .fx .aq .gl2, .fx .tile5 .k, .fx .acct .cap { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; }
+.fx .cap12 { font-size: 12px; line-height: 1.4; color: var(--i3); margin: 0; max-width: none; }
+.fx .inp, .fx .sel.w { height: 34px; }
+.fx .nm0 { color: var(--i); font-weight: 600; }
+.fx .lk { display: inline-flex; align-items: center; gap: .45em; line-height: 1; }
+.fx .lk .mk2 { width: 1.1em; height: 1.1em; fill: var(--ol); flex: none; }
+.fx .lk .nm2 { font-weight: 700; color: var(--i); }
+.fx .lk .hq { font-weight: 600; color: var(--ol); }
+.fx .lk.big .hq { font-weight: 500; }
+.fx.dark .lk .mk2 { fill: var(--i); }
+.fx.dark .lk .hq { color: var(--i2); }
+.fx .strip .lock { padding-left: 20px; font: 16px/1 var(--font-body); }
+.fx .tile5 .v, .fx .band .v { font-variant-numeric: tabular-nums; }
+.fx .band .v.quiet { font-size: 14px; font-weight: 400; color: var(--i3); letter-spacing: 0; }
+.fx .band .v.txt { font-size: 14px; font-weight: 600; letter-spacing: 0; word-break: break-all; }
+.fx .subnav .n { font: 600 12px/1 var(--font-body); }
+.phone .drawer .side .it { height: 44px; font-size: 16px; padding: 0 16px; }
+.phone .drawer .side .it svg.ic { width: 17px; height: 17px; }
+.phone .drawer .side .gl { padding: 14px 16px 6px; }
+.phone .cardrow { background: var(--c); border: 1px solid var(--ln); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+.phone .cardrow .top { display: flex; align-items: center; gap: 8px; }
+.phone .cardrow .top .nm { flex: 1; }
+.phone .cardrow .meta { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--i3); flex-wrap: wrap; }
+.phone .six { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.phone .six > div { padding: 10px 12px; border-right: 1px solid var(--ln); border-bottom: 1px solid var(--ln); display: grid; gap: 2px; }
+.phone .six > div:nth-child(3n) { border-right: 0; } .phone .six > div:nth-child(n+4) { border-bottom: 0; }
+.phone .six .k { font: 700 10px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); }
+.phone .six .v { font: 700 20px/1.1 var(--font-body); }
+.tb.tools { gap: 8px; flex-wrap: nowrap; }
+.side.slim .it .t, .side.slim .gl, .side.slim .it .pill { display: none; }
+.side.slim .grp + .grp { border-top: 1px solid var(--ln); margin-top: 6px; padding-top: 6px; }
+.side .it .eye { margin-left: auto; opacity: .6; display: inline-flex; }
+.side .it .eye svg.ic { width: 12px; height: 12px; }
+.side .gl.cur { color: var(--i2); }
+.lbl2 { font: 700 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--i3); }
+.chart { width: 100%; height: 220px; display: block; }
+.bars { display: grid; gap: 10px; padding: 14px 16px; }
+.bars .b { display: grid; gap: 4px; font-size: 12px; }
+.bars .b .h { display: flex; justify-content: space-between; color: var(--i2); }
+.bars .b .tr { height: 6px; border-radius: 999px; background: var(--fill); overflow: hidden; }
+.bars .b .tr i { display: block; height: 100%; background: var(--ol); border-radius: 999px; }
+.pad { padding: 14px 16px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.tabsl { display: flex; gap: 4px; }
+.sign { display: grid; place-items: center; min-height: 720px; background: var(--p); }
+.sign .card2 { width: 400px; background: var(--c); border: 1px solid var(--ln); border-radius: 12px; padding: 32px 40px 36px; display: grid; gap: 18px; }
+.sign .lock2 { display: flex; align-items: center; justify-content: center; font: 20px/1 var(--font-body); }
+.sign h1 { font: 700 20px/1.3 var(--font-body); text-align: center; margin: 0; }
+.sign .sub { text-align: center; font-size: 12px; color: var(--i3); }
+.sign .btn.full { width: 100%; justify-content: center; height: 42px; }
+.sign .lr { display: flex; justify-content: space-between; align-items: baseline; }
+.sign .lr .door { color: var(--ol); font-size: 12px; font-weight: 600; }
+.phones { display: flex; gap: 28px; padding: 24px; background: var(--p); align-items: flex-start; }
+.phone { width: 390px; height: 720px; border: 1px solid var(--ln2); border-radius: 18px; overflow: hidden; position: relative; background: var(--p); }
+.phone .pstrip { height: 48px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 4px; background: var(--c); border-bottom: 1px solid var(--ln); }
+.phone .pstrip .mb { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.phone .pstrip .mb svg.ic { width: 20px; height: 20px; }
+.phone .pstrip .grow { flex: 1; font: 700 16px/1 var(--font-body); }
+.phone .pstrip .grow em { font-style: normal; color: var(--ol); }
+.phone .pbody { padding: 16px; display: grid; gap: 14px; }
+.phone .sc { overflow-x: auto; border: 1px solid var(--ln); border-radius: 8px; background: var(--c); }
+.phone .sc table { min-width: 560px; }
+.phone .scrim { position: absolute; inset: 0; background: var(--scrim); }
+.phone .drawer { position: absolute; left: 0; top: 0; bottom: 0; width: 290px; background: var(--c); border-right: 1px solid var(--ln); display: flex; flex-direction: column; overflow: hidden; }
+.phone .drawer .dh { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px 0 16px; border-bottom: 1px solid var(--ln); font: 700 16px/1 var(--font-body); }
+.phone .drawer .dh em { font-style: normal; color: var(--ol); }
+.phone .drawer .dh .mb { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); font-size: 20px; }
+.phone .drawer .side { border: 0; flex: 1; overflow: hidden; }
+.tags-inline { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+.box.find { border-left: 3px solid var(--amber); }
+.box h3 { margin: 0; }
+.box ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.stepn { font: 700 16px/1.3 var(--font-body); color: var(--ol); margin-right: 8px; font-variant-numeric: tabular-nums; }
+.ph .sub { font-size: 12px; color: var(--i3); }
+.tile5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.tile5 > div { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; }
+.tile5 .k { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.tile5 .v { font: 700 24px/1.1 var(--font-body); }
+.aq { display: grid; gap: 10px; padding: 14px 16px; }
+.aq .g { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.aq .gl2 { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); width: 100%; }
+.aq .q { display: inline-flex; gap: 8px; align-items: baseline; padding: 6px 10px; border: 1px solid var(--ln2); border-radius: 6px; font-size: 12px; color: var(--i2); }
+.aq .q b { font: 700 14px/1 var(--font-body); color: var(--i); }
+.aq .q.hot { border-color: color-mix(in srgb, var(--am) 40%, transparent); background: color-mix(in srgb, var(--am) 8%, transparent); }
+.aq .q.hot b { color: var(--am); }
+.ta { height: 88px; border: 1px solid var(--ln2); border-radius: 6px; background: var(--fieldbg); padding: 8px 10px; color: var(--i3); font-size: 14px; }
+/* ═════ Stage 2 additions ═════ */
+/* the strip as Stage 1 built it: lockup, a hairline, the portal name in small capitals, the account glyph */
+.fx .strip .mid { padding-left: 0; gap: 0; }
+.fx .strip .portal2 { font: 700 11px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i2); padding-left: 14px; border-left: 1px solid var(--ln2); height: 18px; display: inline-flex; align-items: center; white-space: nowrap; }
+.fx .strip .acc { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.fx .strip .acc svg.ic { width: 18px; height: 18px; }
+.fx .strip .find { width: 440px; }
+.fx .strip .find.focus { border-color: var(--ol); box-shadow: 0 0 0 3px var(--ols); color: var(--i3); }
+.fx .strip .find .caret { width: 1px; height: 16px; background: var(--i); margin-left: -6px; }
+.fx .strip.withfind { grid-template-columns: 240px minmax(0, 1fr) 440px minmax(0, 1fr) auto; }
+.fx .strip.withfind .mid { grid-column: 2; }
+.fx .strip.withfind .fslot { grid-column: 3; }
+.fx .strip.withfind .end { grid-column: 5; }
+/* Find panel: hangs from the box, same width plus 80 */
+.fx .fpanel { left: auto; transform: none; width: 520px; top: 48px; }
+.fx .fpanel .fr { min-height: 44px; }
+.fx .fpanel .fr .ic2 { width: 28px; height: 28px; border-radius: 6px; background: var(--fill); color: var(--i2); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.fx .fpanel .fr .ic2 svg.ic { width: 15px; height: 15px; }
+.fx .fpanel .fr .tx { display: grid; gap: 1px; min-width: 0; }
+.fx .fpanel .fr .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fx .fpanel .fr.kid { padding-left: 52px; min-height: 34px; }
+.fx .fpanel .fr.kid .tx { font-size: 12px; color: var(--i2); }
+.fx .fpanel .fr.kid .tx b { font-weight: 600; color: var(--i); }
+.fx .fpanel .fr .kbd, .fx .kbd { font: 700 10px/1 var(--font-data); border: 1px solid var(--ln2); border-radius: 4px; padding: 2px 5px; color: var(--i3); }
+.fx .fpanel .msg { padding: 14px; display: grid; gap: 6px; font-size: 14px; color: var(--i2); }
+.fx .fpanel .msg b { color: var(--i); }
+.fx .fpanel .more { padding: 8px 14px 10px; font-size: 12px; color: var(--i3); display: flex; gap: 10px; align-items: center; }
+.fx .fpanel .more .door { margin-left: auto; color: var(--ol); font-weight: 600; }
+.fx .fpanel .hint2 { display: grid; gap: 4px; padding: 4px 14px 12px; font-size: 12px; color: var(--i2); }
+.fx .fpanel .hint2 .code { color: var(--i); }
+.fx .panels { display: grid; grid-template-columns: repeat(2, 520px); gap: 28px 40px; padding: 28px 40px 36px; justify-content: center; background: var(--p); }
+.fx .panels .pcol { display: grid; gap: 10px; align-content: start; }
+.fx .panels .fpanel { position: static; }
+.fx .panels .fbox { width: 440px; display: flex; align-items: center; gap: 8px; height: 34px; border: 1px solid var(--ln2); border-radius: 999px; padding: 0 12px; color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+.fx .panels .fbox.typed { color: var(--i); border-color: var(--ol); box-shadow: 0 0 0 3px var(--ols); }
+.fx .panels .fbox .kbd { margin-left: auto; }
+.fx .stlbl { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); }
+.fx .dim { opacity: .4; }
+/* Today */
+.fx .health { display: flex; gap: 10px; align-items: center; background: var(--c); border: 1px solid var(--ln); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--i2); }
+.fx .health .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--gr); flex: none; }
+.fx .health b { color: var(--i); }
+.fx .health .go { margin-left: auto; color: var(--ol); font-weight: 600; white-space: nowrap; }
+.fx .health .later { font-size: 12px; color: var(--i3); }
+.fx table.t tr.clear td { color: var(--i3); font-size: 12px; padding: 6px 14px 10px; }
+.fx table.t tr.quiet td { color: var(--i3); }
+.fx .numbers { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; font-size: 14px; color: var(--i2); padding: 2px 2px; }
+.fx .numbers b { color: var(--i); font-variant-numeric: tabular-nums; }
+.fx .numbers .door { margin-left: auto; color: var(--ol); font-weight: 600; }
+/* the record */
+.fx .ph .meta { flex-basis: 100%; font-size: 12px; color: var(--i3); display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; }
+.fx .ph .meta .code { color: var(--i2); }
+.fx .pencil { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--ln2); border-radius: 8px; color: var(--i2); background: var(--c); }
+.fx .pencil svg.ic { width: 15px; height: 15px; }
+.fx .pb { color: var(--ol); font-weight: 600; font-size: 12px; white-space: nowrap; }
+.fx .pbdone { display: block; font-size: 12px; color: var(--i3); margin-top: 2px; }
+.fx .why0 { color: var(--i3); font-style: normal; }
+.fx .tline { font-size: 12px; color: var(--i3); padding: 10px 16px; border-top: 1px solid var(--ln); }
+.fx .lbox { border: 1px dashed var(--ln2); border-radius: 8px; padding: 14px 16px; display: grid; gap: 6px; color: var(--i2); font-size: 14px; background: var(--c); }
+.fx .lbox .stg { font: 700 10px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--am); }
+.fx .lbox ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.fx .lbox.s2 .stg { color: var(--ol); }
+.fx .tabcols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; padding: 24px 40px 32px; background: var(--p); }
+.fx .rare { display: flex; gap: 22px; flex-wrap: wrap; padding: 2px 2px; }
+.fx .rare span { color: var(--ol); font-weight: 600; font-size: 14px; }
+.fx .rare span.red { color: var(--rd); }
+.fx .rows2 { display: grid; gap: 0; }
+.fx .kv { display: grid; grid-template-columns: 200px minmax(0, 1fr) auto; gap: 14px; padding: 11px 16px; border-bottom: 1px solid var(--ln); align-items: baseline; font-size: 14px; }
+.fx .kv:last-child { border-bottom: 0; }
+.fx .kv .k2 { color: var(--i3); }
+.fx .secrow { display: flex; align-items: center; gap: 10px; }
+.fx .secrow .sec { margin: 0; }
+.fx .secrow .end2 { margin-left: auto; }
+.fx .wins { display: flex; gap: 28px; padding: 28px; background: var(--scrim); align-items: flex-start; }
+.fx .wins .dlg { width: 560px; flex: none; }
+.fx .dlg .db .sentence { font-size: 14px; color: var(--i); background: var(--fill); border-radius: 8px; padding: 12px 14px; }
+.fx .chkrow { display: flex; gap: 10px; align-items: center; font-size: 14px; min-height: 30px; }
+.fx .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fx .subnav { align-items: flex-end; }
+.fx .subnav span { align-items: center; }
+.fx .subnav span { height: 42px; padding-top: 0; padding-bottom: 0; box-sizing: border-box; }
+.fx .side .it .eye { margin-left: auto; }
+.fx .side .it .eye + .pill { margin-left: 8px; }
+.fx .btn.red { background: var(--rd); border-color: var(--rd); color: #fff; }
+.fx .pencil.on { color: var(--ol); border-color: var(--ol); }
+.fx table.t td.who { white-space: nowrap; }
+.fx .plist { background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.fx .plist .pr { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--ln); min-height: 52px; }
+.fx .plist .pr:last-child { border-bottom: 0; }
+.fx .plist .pr .tx { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.fx .plist .pr .tx b { font-weight: 600; }
+.fx .plist .pr .tx span { font-size: 12px; color: var(--i3); }
+.fx .plist .pr .cv { color: var(--ol); }
+.fx .health .dot.n { background: var(--i3); }
+/* the document */
+.wrap .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 720px) { .wrap .split { grid-template-columns: minmax(0, 1fr); } }
+.k-new, .k-res, .k-unc, .k-lat, .k-out { display: inline-block; font: 700 10px/1.3 var(--font-data); letter-spacing: .05em; padding: 2px 6px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.k-new { color: var(--olive); background: var(--olive-soft); border-color: var(--olive); }
+.k-res { color: var(--tag); background: var(--tag-soft); border-color: var(--tag); }
+.k-unc { color: var(--dim); border-color: var(--line); }
+.k-lat { color: var(--amber); background: var(--amber-soft); border-color: var(--amber); }
+.k-out { color: var(--red); background: var(--red-soft); border-color: var(--red); }
+table.doc td .code2 { font: 500 12.5px/1.4 var(--font-data); }
+.box.sec2 { border-left: 3px solid var(--tag); }
+.ok-y { color: var(--olive); font-weight: 700; } .ok-n { color: var(--red); font-weight: 700; } .ok-l { color: var(--amber); font-weight: 700; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-today" viewBox="0 0 24 24"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-clubs" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.5c3 0 5 1.8 5 4.5"/></symbol>
+  <symbol id="i-free" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4"/><rect x="5" y="12" width="14" height="9"/><path d="M12 8v13M12 8c-2-4-6-4-6-1s6 1 6 1c2-4 6-4 6-1s-6 1-6 1"/></symbol>
+  <symbol id="i-retention" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></symbol>
+  <symbol id="i-status" viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></symbol>
+  <symbol id="i-errors" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 9v4M12 16.5v.01"/></symbol>
+  <symbol id="i-feedback" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+  <symbol id="i-leads" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/></symbol>
+  <symbol id="i-campaigns" viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></symbol>
+  <symbol id="i-decks" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/></symbol>
+  <symbol id="i-plans" viewBox="0 0 24 24"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-approval" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/></symbol>
+  <symbol id="i-bulk" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></symbol>
+  <symbol id="i-templates" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-staff" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/></symbol>
+  <symbol id="i-audit" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-sent" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17v.01"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 3v18"/></symbol>
+  <symbol id="i-collapse" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="M4 17l6-6-6-6M12 19h8"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h13v4"/><path d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z"/><path d="M16 14h.01"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-bellc" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></symbol>
+</svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+</svg>
+<style>
+/* ═════ Stage 4 additions ═════ */
+.fx .chip.ft { color: var(--ol); background: color-mix(in srgb, var(--ol) 7%, transparent); border-color: var(--ol); }
+.fx .chip.ft.btnish { cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--ol) 40%, transparent); text-underline-offset: 2px; }
+.fx .band .v.free { color: var(--ol); }
+.fx .gl0 { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); }
+.fx .glist { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; }
+.fx .grow2 { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; padding: 12px 16px; border-bottom: 1px solid var(--ln); align-items: baseline; }
+.fx .grow2:last-child { border-bottom: 0; }
+.fx .grow2 b { font-weight: 600; }
+.fx .grow2 .sub { grid-column: 1; font-size: 12px; color: var(--i3); }
+.fx .grow2 .doors { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 16px; align-self: center; }
+.fx .grow2 .doors span { color: var(--ol); font-weight: 600; font-size: 14px; white-space: nowrap; }
+.fx .left { font-variant-numeric: tabular-nums; color: var(--i2); }
+.fx .left.soon { color: var(--am); font-weight: 600; }
+.fx .refuse { display: flex; gap: 10px; align-items: flex-start; border-radius: 8px; padding: 12px 14px; font-size: 14px; color: var(--i); background: color-mix(in srgb, var(--am) 9%, transparent); border: 1px solid color-mix(in srgb, var(--am) 30%, transparent); }
+.fx .refuse svg.ic { color: var(--am); width: 16px; height: 16px; margin-top: 2px; }
+.fx .refuse.bad { background: color-mix(in srgb, var(--rd) 8%, transparent); border-color: color-mix(in srgb, var(--rd) 30%, transparent); }
+.fx .refuse.bad svg.ic { color: var(--rd); }
+.fx .wins.cols3 .dlg { width: 420px; }
+.fx .seg2 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.fx .datef { height: 34px; border: 1px solid var(--ol); border-radius: 6px; padding: 0 10px; display: flex; align-items: center; gap: 8px; background: var(--fieldbg); font-size: 14px; }
+.fx .datef .cal { margin-left: auto; color: var(--i3); display: inline-flex; }
+.fx .hintl { font-size: 12px; color: var(--i3); }
+/* the customer's admin portal (tournament tier and Club), drawn on the same warm/dark tokens */
+.fx .cstrip { height: 48px; display: grid; grid-template-columns: 240px 1fr auto; align-items: center; background: var(--c); border-bottom: 1px solid var(--ln); }
+.fx .cstrip .lock { display: flex; align-items: center; gap: 8px; padding-left: 20px; }
+.fx .cstrip .portal2 { font: 700 11px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i2); padding-left: 14px; border-left: 1px solid var(--ln2); height: 18px; display: inline-flex; align-items: center; margin-left: 14px; }
+.fx .cstrip .end { display: flex; gap: 10px; align-items: center; padding-right: 16px; }
+.fx .cstrip .ws { height: 32px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid var(--ol); border-radius: 999px; font: 600 12px/1 var(--font-body); color: var(--ol); }
+.fx .cside { background: var(--c); border-right: 1px solid var(--ln); padding: 12px 0; }
+.fx .cside .pick { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 2px 14px 10px; height: 36px; border: 1px solid var(--ln2); border-radius: 6px; display: flex; align-items: center; padding: 0 10px; font-size: 14px; font-weight: 600; }
+.fx .cpage { max-width: 960px; margin: 0 auto; display: grid; gap: 16px; }
+.fx .ceyebrow { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); }
+.fx .ch1 { font: 700 20px/1.3 var(--font-body); margin: 0; }
+.fx .ccard { background: var(--c); border: 1px solid var(--ln); border-radius: 10px; padding: 20px 24px; display: grid; gap: 6px; }
+.fx .ccard h3 { font: 700 16px/1.3 var(--font-body); margin: 0; display: flex; gap: 10px; align-items: center; }
+.fx .ccard .ln { font-size: 14px; color: var(--i2); }
+.fx .ccard .ln b { color: var(--i); }
+.fx .ccard .free { font-size: 14px; font-weight: 600; color: var(--ol); }
+.fx .ccard .small { font-size: 12px; color: var(--i3); }
+.fx .fband { display: flex; gap: 12px; align-items: flex-start; border-radius: 10px; padding: 14px 18px; background: color-mix(in srgb, var(--ol) 10%, transparent); border: 1px solid color-mix(in srgb, var(--ol) 35%, transparent); }
+.fx .fband .ico { width: 32px; height: 32px; border: 1px solid color-mix(in srgb, var(--ol) 45%, transparent); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: var(--ol); flex: none; }
+.fx .fband .ico svg.ic { width: 16px; height: 16px; }
+.fx .fband .t { display: grid; gap: 4px; font-size: 14px; color: var(--i2); }
+.fx .fband .t b { color: var(--i); font-size: 14px; }
+.fx .fband.amber { background: color-mix(in srgb, var(--am) 9%, transparent); border-color: color-mix(in srgb, var(--am) 35%, transparent); }
+.fx .fband.amber .ico { color: var(--am); border-color: color-mix(in srgb, var(--am) 45%, transparent); }
+.fx .fband.plain { background: var(--c); border-color: var(--ln); }
+.fx .fband.plain .ico { color: var(--i2); border-color: var(--ln2); }
+.fx .capbar { height: 8px; border-radius: 999px; background: var(--fill); overflow: hidden; } .fx .capbar i { display: block; height: 100%; background: var(--ol); }
+.fx .cgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+.phone .cphone { padding: 16px; display: grid; gap: 12px; }
+.phone .cphone .ccard { padding: 16px; }
+.phone .ptabs { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: var(--c); border-top: 1px solid var(--ln); display: grid; grid-template-columns: repeat(5, 1fr); font-size: 10px; color: var(--i3); text-align: center; align-items: center; }
+.phone .ptabs span { display: grid; gap: 4px; justify-items: center; }
+.phone .ptabs span.on { color: var(--ol); font-weight: 700; }
+.phone .ptabs svg.ic { width: 18px; height: 18px; }
+.fx .lbox.s4 .stg { color: var(--ol); }
+.wrap .gridb { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 720px) { .wrap .gridb { grid-template-columns: minmax(0, 1fr); } }
+.box.warnb { border-left: 3px solid var(--red); }
+.box.okb { border-left: 3px solid var(--olive); }
+.reach { font-variant-numeric: tabular-nums; }
+.fx .cbadge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font: 700 10px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--ol); border: 1px solid color-mix(in srgb, var(--ol) 35%, transparent); background: color-mix(in srgb, var(--ol) 8%, transparent); vertical-align: middle; white-space: nowrap; }
+.phone .phead { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 16px; background: var(--c); border-bottom: 1px solid var(--ln); }
+.phone .phead .pt { font: 700 16px/1.3 var(--font-body); }
+.phone .phead svg.ic { width: 20px; height: 20px; color: var(--i); }
+.fx .wins .stlbl { background: var(--c); padding: 4px 8px; border-radius: 6px; justify-self: start; color: var(--i2); }
+.fx .btn.sm { height: 30px; padding: 0 10px; font-size: 12px; }
+.fx .grow2 .doors .btn { color: var(--i); }
+.fx .ftdate { font-size: 12px; color: var(--i2); }
+</style>
+<style>
+/* ═════ Stage 3 additions ═════ */
+.fx .cmp { display: grid; grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1fr); }
+.fx .cmp > div { padding: 10px 16px; border-bottom: 1px solid var(--ln); font-size: 14px; min-width: 0; }
+.fx .cmp > .h { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); padding-top: 12px; }
+.fx .cmp > .k3 { color: var(--i3); }
+.fx .cmp > .last { border-bottom: 0; }
+.fx .cmp .diff { color: var(--am); font-weight: 600; }
+.fx .cmp .diff::before { content: "≠ "; }
+.fx .callout.bad { border-left-color: var(--rd); } .fx .callout.bad svg.ic { color: var(--rd); }
+/* the foot note's face, as the kit window gives it (owner fix 2026-10-25): support size, tertiary ink, never the body's */
+.fx .df .sent { font-size: 12px; line-height: 1.4; color: var(--i3); }
+.fx .callout .chip { margin-right: 4px; }
+.fx .ferr { font-size: 12px; color: var(--rd); margin: 0; }
+.fx .btn.red { background: color-mix(in srgb, var(--rd) 15%, transparent); color: var(--rd); border-color: color-mix(in srgb, var(--rd) 30%, transparent); }
+.fx .dlg .db .sentence, .fx .sentence { background: var(--ols); }
+.fx .agree { display: flex; gap: 10px; align-items: center; background: var(--c); border: 1px solid var(--ln); border-left: 3px solid var(--gr); border-radius: 8px; padding: 12px 14px; font-size: 14px; color: var(--i2); }
+.fx .agree svg.ic { width: 16px; height: 16px; color: var(--gr); }
+.fx .agree b { color: var(--i); }
+.fx .agree .when { margin-left: auto; font-size: 12px; color: var(--i3); white-space: nowrap; }
+.fx .agree .go { color: var(--ol); font-weight: 600; white-space: nowrap; font-size: 14px; }
+.fx .agree.warn { border-left-color: var(--am); } .fx .agree.warn svg.ic { color: var(--am); }
+.fx .agree.bad { border-left-color: var(--rd); } .fx .agree.bad svg.ic { color: var(--rd); }
+.fx .agree.none { border-left-color: var(--ln2); } .fx .agree.none svg.ic { color: var(--i3); }
+.fx .flag { display: block; font-size: 12px; font-weight: 600; margin-top: 2px; }
+.fx .flag.am { color: var(--am); } .fx .flag.ok { color: var(--i3); font-weight: 400; }
+.fx table.t tr.hot td { background: color-mix(in srgb, var(--am) 6%, transparent); }
+.fx .says { white-space: nowrap; }
+.fx .says.bad { color: var(--rd); font-weight: 600; }
+.fx .says.back { color: var(--am); font-weight: 600; }
+.fx .tmode { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font: 700 10px/1.3 var(--font-data); letter-spacing: .05em; color: var(--am); border: 1px dashed var(--am); white-space: nowrap; }
+.fx .amt { display: flex; align-items: center; gap: 8px; }
+.fx .amt .inp { width: 140px; }
+.fx .noread { border: 1px dashed var(--ln2); border-radius: 8px; padding: 14px 16px; color: var(--i2); font-size: 14px; background: var(--c); display: grid; gap: 4px; }
+.fx .noread b { color: var(--i); }
+.fx .fx-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding: 24px 40px 32px; background: var(--p); }
+.fx .fx-cols .stack { gap: 10px; align-content: start; }
+.fx .done { display: flex; gap: 10px; align-items: flex-start; border-radius: 8px; padding: 12px 14px; font-size: 14px; color: var(--ol); background: color-mix(in srgb, var(--ol) 6%, transparent); border: 1px solid color-mix(in srgb, var(--ol) 35%, transparent); }
+.fx .done b { color: var(--i); }
+.fx .done svg.ic { color: var(--ol); width: 16px; height: 16px; margin-top: 2px; }
+.fx table.t td.reason { color: var(--i); }
+.fx table.t td.reason.old { color: var(--i3); font-style: normal; }
+.fx .jsonv { font: 400 12px/1.3 var(--font-data); color: var(--i2); }
+.wrap .lbls td:first-child { white-space: nowrap; }
+</style>
+
+<div class="wrap">
+<header class="lede">
+  <p class="eyebrow">Support console, stage 3 · money · drawn 2026-10-26</p>
+  <h1>Support Console Stage 3</h1>
+  <p>Stage 3 is the owner's first job from the kickoff: <b>"was this customer charged twice, and can you fix it?"</b>, answered inside the console, from the club's record, with no trip to Stripe's dashboard. The rule it builds to is R7: <b>the money truth is shown, never remembered.</b> Every drawing is at true size, 1440 pixels wide (the console is desktop only). On a narrower window each one scrolls sideways inside its own box. <b>Before</b> is a capture from today's dev server, in the look you walked on Oct 25. <b>After</b> is drawn on that same shell, in the product's real warm and dark colours. Blue tags say what changes and why; each one opens when you click it. The <b>Warm / Dark</b> switch at the top flips every drawing. Your questions sit beside the drawing each one decides, each with my recommendation.</p>
+  <p><b>Every amount, card and Stripe number on this page is an example, not a price.</b> Prices live in the pricing facts and are /strategy's; nothing here states or changes one. The club names are dev's test clubs; no real customer's name or card digits appear. Anything marked <b>Stage 5 or 6</b> is not part of this stage and is not drawn as if it were built.</p>
+</header>
+
+<section class="screen" id="headline" style="margin-top:22px">
+  <div class="screen-head"><span class="n">READ THIS FIRST</span><h2>Three places where the code says something different from the prompt</h2></div>
+  <div class="box warnb">
+    <h3>1 · M6 is not about the Coaches Portal. Any staff plan change on a paying club leaves Stripe charging the old price, and Stripe then puts the old plan back.</h3>
+    <p>M6 comes from the archived operator walkthrough: <i>"Setting a plan to Coaches Portal doesn't clear the old Stripe link (only the free Tournament downgrade does), could leave a paid sub attached to a near-free plan."</i> The code today is wider than that line. When staff change a club's plan with the pencil, only our record changes; <b>nothing is said to Stripe</b>. The subscription keeps billing the old price. On its next renewal (or any change in Stripe), Stripe tells us the subscription's plan, and we write it back over the staff change, <b>silently</b>, while the Story and the audit log still say staff changed it. A move to the free Tournament plan clears our link, but the subscription in Stripe <b>keeps charging</b>, and the next renewal links it again.</p>
+    <p>Stage 4 already ruled the same thing for free time: <b>no plan grant while Stripe charges</b> (your Q3, Oct 25). The pencil was never brought under that rule. <b>What I recommend:</b> the pencil does not change the plan of a club with a live Stripe subscription. In its place, one line says why and what to do: the customer moves plan on their own billing page (which moves Stripe properly), or staff cancel the subscription first. Moving a customer's Stripe subscription from the console is a second money write (it bills or credits the difference), so I have not drawn it as the default. <b>Question 9.</b></p>
+  </div>
+  <div class="box warnb">
+    <h3>2 · We record no charges, so "what we recorded" beside each charge cannot be shown honestly</h3>
+    <p>The end-state drawing put a <i>We recorded</i> column beside every Stripe charge. The code keeps <b>no charge, invoice or payment of a club's subscription anywhere</b>: only the customer and subscription numbers, the plan, the billing status and the renewal date. So the honest comparison (R7) is at the <b>subscription</b>: Stripe's plan, status, renewal date and subscription number beside ours, with every difference named. The charges are Stripe's alone, read when the tab opens, and the "charged twice" help works from Stripe's own invoices and periods (drawing B), not from a column that would always read "nothing".</p>
+    <p>And a refund is the console's <b>first money write to Stripe</b>. Today the audit writer does not stop a change when its own entry fails to save (it notes the failure in the server log and carries on). That is tolerable for a note. It is not for a refund. The design writes the refund's own record <b>before</b> Stripe is asked, so a refund can never exist in Stripe without a line on our side (drawing G).</p>
+  </div>
+  <div class="box warnb">
+    <h3>3 · Two of the prompt's leads are already out of date, in the good direction</h3>
+    <ul>
+      <li><b>"Override revoke and the add-on toggle record no reason."</b> They do now. Stage 2 made both ask why, and the reason is kept inside the entry. Only entries written <i>before</i> Stage 2 have none. The reason column is still worth its migration (the audit log screen shows reasons only as text inside raw values, and 49 of the 70 places that write the log keep none), but no action is missing one.</li>
+      <li><b>"No purchase or upgrade event exists."</b> It does. Stripe's messages already record <i>subscription started</i> and <i>moved up a plan</i> for every club; the Story simply leaves them out. So <b>purchases can join the Story with no database change and no change to how we receive Stripe's messages.</b> Only the charges and refunds themselves are not kept on our side (question 4).</li>
+    </ul>
+  </div>
+</section>
+
+<section class="screen" id="staff">
+  <div class="screen-head"><span class="n">WHAT STAFF AND CUSTOMERS WILL SEE</span><h2>Seven changes, in plain words</h2></div>
+  <div class="box">
+    <ul>
+      <li><b>The Money tab reads Stripe.</b> When it opens, it reads the club's subscription, card and charges from Stripe and sets the subscription beside our record. One line says <b>"Stripe and our record agree"</b>, or names each difference. Nothing Stripe says is stored.</li>
+      <li><b>"Charged twice" is named for you.</b> Two paid charges for the same month, two live subscriptions, a failed payment that Stripe tried again, a charge that is not the subscription's: each gets a plain line under the charge, with the evidence. Two charges on one day for <i>different</i> months is said to be fine.</li>
+      <li><b>Refund from the console.</b> Open a charge, refund all or part of it, to the card it came from, with a reason. The window says in one sentence what will happen, that it cannot be undone, and that the club's plan does not change.</li>
+      <li><b>The Story gains its money.</b> Purchases, plan moves, charges and refunds become Story entries. They are facts: never a Put it back.</li>
+      <li><b>A reason column in the audit log.</b> Every staff change shows its reason in its own column; older entries say "Not recorded".</li>
+      <li><b>Find learns invoices and charges.</b> A Stripe charge, invoice or payment number, or an invoice's own number, finds its club. Card digits are not searched (question 5).</li>
+      <li><b>The customer:</b> nothing new on their screens. A refund reaches their card in Stripe's usual 5 to 10 business days, and whether they get a receipt email is question 3.</li>
+    </ul>
+    <p class="hint"><b>Deliberately not in Stage 3:</b> credits and account balances (they stay in Stripe, Q7); moving a paying club's Stripe subscription to another plan from the console (question 9); families' payments to a club (that is the club's own money, on the club's own Stripe account); Status, the sent-email log and Feedback reply (Stage 5); club web addresses (Stage 6).</p>
+  </div>
+</section>
+
+<section class="screen" id="found">
+  <div class="screen-head"><span class="n">BEFORE THE DRAWINGS</span><h2>What the code and Stripe's docs showed, checked against every lead in the prompt</h2><p>Four helpers read the code and one read Stripe's current documentation (Oct 26). I opened the lines each drawing turns on myself before drawing on them.</p></div>
+  <div class="tbl"><table class="doc"><thead><tr><th style="width:26%">The prompt's lead</th><th>What the code (or Stripe) does</th><th style="width:15%">Drawing</th></tr></thead><tbody>
+    <tr><td>The console makes no Stripe read anywhere</td><td><span class="ok-n">Not quite.</span> It already <i>writes</i> to Stripe in two places (cancel the subscription; delete a club's customer) and reads it in two (a price check; the Club trial's "had a subscription before"). It never reads <b>charges, invoices or the card</b>. One Stripe connection serves the whole product; dev holds a <b>test</b> key, production the live one, chosen only by which key each site holds.</td><td>A · G</td></tr>
+    <tr><td>Subscription charge numbers are stored nowhere</td><td><span class="ok-y">True.</span> We keep the customer and subscription numbers, the plan, status and renewal date. No charge, invoice or payment number of a club's subscription is kept. (Family payments do keep theirs, on dev only so far: a different money, see the Facilitated Payments row.)</td><td>A · F · headline 2</td></tr>
+    <tr><td>No purchase or upgrade event</td><td><span class="ok-n">Out of date.</span> "Subscription started" and "moved up a plan" are recorded from Stripe's messages already. The Story reads only downgrades, cancels, missed and recovered payments.</td><td>D · headline 3</td></tr>
+    <tr><td>A refund leaves no trace on our side</td><td><span class="ok-y">True.</span> We receive Stripe's messages about subscriptions, invoices paid or failed, and cards. <b>Refund messages are not received</b>; if Stripe sent one it would be ignored. A refund changes nothing about the plan today, and Stripe's docs agree a refund does not change or cancel a subscription.</td><td>C · D · G</td></tr>
+    <tr><td>The audit log has no reason column</td><td><span class="ok-y">True</span> in both databases. 70 places write the log; 21 keep a reason, always inside the new value. The audit log screen shows raw values cut at 80 characters, so a reason is readable only as <span class="code2">"reason":"…"</span>. The Story already reads it out.</td><td>E · headline 3</td></tr>
+    <tr><td>Bulk plan change drifted from the single path</td><td><span class="ok-y">Closed.</span> Bulk changes still go through the one shared plan-change rule, and the guard that fails if they stop still matches. Nothing more owed here, <b>except</b> that the shared rule itself has M6's gap (headline 1).</td><td>Question 9</td></tr>
+    <tr><td>Refund rules (Stripe's docs)</td><td>Full or partial, several partials up to the charge; <b>only to the original card</b>; Stripe keeps its processing fee; 5 to 10 business days to the card (sooner as a reversal if very recent). Reasons Stripe accepts: duplicate, fraudulent (which also blocks the card in Stripe's fraud lists: never offered here), requested by customer. A retry with the same key is answered from Stripe's first reply for at least 24 hours. Stripe names <b>no age limit</b> for a card refund in its docs; we must handle a refusal either way.</td><td>C · G · H</td></tr>
+    <tr><td>Who may do what</td><td>No refund power exists. Reading Stripe numbers already has its own power (Super admin, Billing, Support: your A2). Changing plans and giving free time is Super admin and Billing. Stripe itself can issue a <b>read-only key</b> and a separate key that may only refund, and recommends it.</td><td>H · question 1</td></tr>
+    <tr><td>Facilitated Payments (what is it?)</td><td>Families paying a <b>club</b> (Club Tier Stage 12), on the club's own Stripe account. A club's subscription to us never runs on it. The Money tab is the subscription; family payments are the club's money and never appear or get refunded here.</td><td>A</td></tr>
+    <tr><td>M6 (defined nowhere you could find)</td><td>Found: the archived operator walkthrough, line M6 (quoted in headline 1). A second "M6" in the archived UX review means contextual help and is unrelated.</td><td>Question 9</td></tr>
+    <tr><td>(not in the prompt) The bulk Subscription status override</td><td>It writes a billing-status grant to up to 100 clubs with <b>"Optional expiry"</b>: no end required, no cap, a past date accepted, and none of free time's rules (your own club, the cap). Billing is held to 6 months for free time one club at a time, and to nothing here.</td><td>Question 7</td></tr>
+    <tr><td>(not in the prompt) The double plan grant</td><td><span class="ok-y">Confirmed.</span> Free time refuses a second running plan grant in code, by reading first; the database does not, so two staff at the same instant can both write one.</td><td>Question 8</td></tr>
+    <tr><td>(not in the prompt) Card digits in Find</td><td>The end state said Stripe cannot search the last four. <span class="ok-n">It can</span> (Stripe's search, about a minute behind, 20 searches a second). Whether we <i>should</i> is question 5.</td><td>F · question 5</td></tr>
+  </tbody></table></div>
+</section>
+
+<section class="screen" id="labels">
+  <div class="screen-head"><span class="n">DUPLICATE LABELS</span><h2>The same money idea, named more than one way</h2><p>A census of the console's words (and the customer's billing pages, for comparison). "Period end", "Next billing" and "Customer ID" are not used anywhere; the duplicates are the ones below.</p></div>
+  <div class="tbl lbls"><table class="doc"><thead><tr><th>Idea</th><th>Today</th><th>Drawn</th></tr></thead><tbody>
+    <tr><td><b>Cancelled</b></td><td>The club record says <b>"Canceled"</b> in its chip and Money tab, and <b>"cancelled"</b> in the Story and the cancel window. The customer's tournament billing page says <b>Canceled</b>; the Club billing page and the cancellation emails say <b>Cancelled</b>.</td><td><b>Cancelled</b> everywhere a person reads it (question 10). The stored value stays as it is.</td></tr>
+    <tr><td><b>When it next bills</b></td><td>Six labels on one record: "Renews" (band), "Renews or ends" (Money), "Trial ends" (band only), "Ended", "Billing" (Founding), "Not set".</td><td>One set, the same on the band and the Money tab: <b>Renews</b>, <b>Trial ends</b>, <b>Ended</b>, and Founding's <b>Free through</b>.</td></tr>
+    <tr><td><b>The billing status</b></td><td>"State" (Money), "Status" (Clubs list), "Billing status" (free time), "Subscription status" and "Target status" (Bulk changes).</td><td><b>Billing status</b> everywhere in the console.</td></tr>
+    <tr><td><b>Trialing</b></td><td>"Trialing" (console chip and the tournament billing page) vs "Trial" (Club billing page, plans screen).</td><td><b>Trial</b> as a status a person reads (question 10).</td></tr>
+    <tr><td><b>Free time vs comp</b></td><td>Free time is consistent since Stage 4, except old comp-period rows in the Story ("Override applied: Comp period") and the bulk "Optional expiry".</td><td>Old comp rows keep their words (they are history); the bulk window follows question 7.</td></tr>
+    <tr><td><b>Stripe numbers</b></td><td>Consistent: "Stripe customer", "Stripe subscription".</td><td>Kept; the new ones read "Stripe invoice", "Stripe charge".</td></tr>
+  </tbody></table></div>
+  <div class="ask" data-q="A10"><div class="q">Question 10 · One spelling for the money words</div>
+    <p class="rec">"Canceled" and "Cancelled" both reach customers today, on two billing pages and in emails. The one-spelling rule makes that a product bug, and the spelling gate does not catch it yet. Canadian usage (the product's house language) is <b>cancelled</b>, like <i>cheque</i> and <i>colour</i>.</p>
+    <p class="rec"><b>Recommended: "Cancelled" and "Trial" wherever a person reads them, console and customer pages and emails; one set of renewal labels and "Billing status" in the console; the gate learns "Canceled" so it cannot come back.</b> The customer-facing half goes through /marketing at the build. Stored values do not change.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Cancelled + Trial everywhere a person reads them; one renewal label set; Billing status; gated (recommended)"> "Cancelled" and "Trial" everywhere a person reads them; one renewal label set; "Billing status"; the gate learns it (recommended)</label>
+      <label><input type="checkbox" data-o="Console only; leave the customer pages for later"> Console only; leave the customer pages for later</label>
+      <label><input type="checkbox" data-o="Canceled (one L) instead"> "Canceled" (one L) instead</label>
+    </div><textarea aria-label="Notes on question 10" placeholder="Notes"></textarea></div>
+</section>
+
+<div class="bar" role="navigation" aria-label="Drawings">
+  <a class="jump" href="#a">A · Money tab</a><a class="jump" href="#b">B · Charged twice?</a><a class="jump" href="#c">C · Refund</a><a class="jump" href="#d">D · Story</a><a class="jump" href="#e">E · Reason</a><a class="jump" href="#f">F · Find</a><a class="jump" href="#g">G · Can't</a><a class="jump" href="#h">H · Safety</a><a class="jump" href="#i">I · Boundary</a><a class="jump" href="#fmt">Formatting</a><a class="jump" href="#paste">Paste-back</a>
+  <span class="sw" role="group" aria-label="Frames theme"><button type="button" id="sw-warm" aria-pressed="true">Warm</button><button type="button" id="sw-dark" aria-pressed="false">Dark</button></span>
+</div>
+
+<!-- ═══════════ A · THE MONEY TAB, READ ═══════════ -->
+<section class="screen" id="a">
+  <div class="screen-head"><span class="n">DRAWING A</span><h2>The Money tab: Stripe beside our record</h2>
+  <p>The tab reads Stripe when it opens, and only then: the subscription, the card on file and the last twelve months of charges for this club's Stripe customer. Nothing it reads is stored. The first line says whether Stripe and our record agree. Below it, the subscription is set out twice, ours and Stripe's, and a difference is marked on the row where it is. This club's history is clean; drawing B is a club where it is not.</p></div>
+    <div class="before"><button class="shot" data-src="cap-s3/money.jpg" aria-label="The Money tab today at full size"><img src="cap-s3/money.jpg" alt="UAT Club Org's Money tab today: Plan, State, Renews or ends, Stripe customer, Stripe subscription, and a line saying charges are not shown yet"></button><div><div class="lbl">Before · the Money tab, captured from dev Oct 26</div><p>Five facts from our record: Plan, State, Renews or ends, Stripe customer and Stripe subscription, each Stripe number with an "Open in Stripe" link. Then one line: "Charges, refunds and invoices are not shown here yet." To see what Stripe holds, support leaves the console. This dev club has a Stripe customer and no subscription, and its band says "Renews · Not set".</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="One line, first on the tab, answers R7: 'Stripe and our record agree', or 'They disagree on 2 things', naming them. It compares the subscription: number, plan, billing status, renewal date. It never compares charges against our side, because we keep none (headline 2). 'Read again' reads Stripe again. It is the kit's callout (olive rail when they agree, amber when they do not), not a new part.">S3 · NEW · agree line</button>
+    <button class="tag" data-n="The subscription, ours and Stripe's side by side, as a table (a column answers the question: 'what does Stripe say?'). Our column is today's five facts plus nothing new; Stripe's is read live. A difference carries a 'Differs' chip beside Stripe's value, on its row. The card on file is Stripe's alone (brand, last four, expiry): shown to Super admin, Billing and Support only (A2), never stored. Today's five facts become this table, so the tag is NEW, not a restyle.">S3 · NEW · ours and Stripe's</button>
+    <button class="tag" data-n="Stripe's money for this club as one joined band (the money-figures rule): paid in the last 12 months, refunded in the same window, and the next charge. Worked out from what Stripe returns on this read. The next charge is Stripe's own 'upcoming' figure, so it includes any credit Stripe will apply; we never compute it from a price.">S3 · NEW · money band</button>
+    <button class="tag" data-n="The charges, newest first, read from Stripe: when, what the charge paid for (from its invoice: the plan and the period), card, what Stripe says (Paid, Refunded, Part refunded, Failed, Disputed) and the amount. A flag line sits under a charge only when drawing B's patterns find something. Each row opens the charge window (drawing C). 12 months by default; 'Show older charges' reads further back.">S3 · NEW · charges</button>
+    <button class="tag" data-n="The band at the top of the record keeps reading our record, so the record opens without waiting on Stripe. Its last figure is worded the same as the Money tab (question 10): Renews / Trial ends / Ended / Free through, with 'from our record' beneath.">S3 · LABELS · band</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app auto">
+      <aside class="side" data-role="billing" data-active="clubs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Clubs &amp; portals</span><span class="rule"></span><h1>UAT Rep Club</h1><span class="chip">Tournament Plus</span><span class="chip ok">Active</span><div class="end"><span class="pencil" aria-hidden="true"><svg class="ic"><use href="#i-pencil"/></svg></span><span class="btn"><svg class="ic"><use href="#i-mail"/></svg>Email the owner</span><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div>
+          <div class="meta"><span>Owner uat-rep-owner@uat-test-org.local</span><span>·</span><span class="code">uat-rep-club</span><span>·</span><span>Created Jun 1, 2026</span></div></div>
+        <div class="band c5"><div><span class="k">Members</span><span class="v">3</span><span class="s">owner signed in Oct 24</span></div><div><span class="k">Teams</span><span class="v">4</span><span class="s">on Tournament Plus</span></div><div><span class="k">Tournaments</span><span class="v">2</span><span class="s">this season</span></div><div><span class="k">Free time</span><span class="v">0</span><span class="s">none running</span></div><div><span class="k">Renews</span><span class="v sm">Nov 1, 2026</span><span class="s">from our record</span></div></div>
+        <div class="subnav"><span>Story <span class="n">7</span></span><span class="on">Money</span><span>Access</span><span>People &amp; tournaments <span class="n">6</span></span></div>
+        <div class="callout"><svg class="ic"><use href="#i-check"/></svg><span><b>Stripe and our record agree.</b> Read from Stripe at 3:05 p.m.</span><span class="go">Read again</span></div>
+        <div class="band c3"><div><span class="k">Paid, last 12 months</span><span class="v">$300.00</span><span class="s">5 charges since Jun 1</span></div><div><span class="k">Refunded</span><span class="v">$0.00</span><span class="s">none in 12 months</span></div><div><span class="k">Next charge</span><span class="v">$60.00</span><span class="s">on Nov 1, 2026</span></div></div>
+        <h2 class="sec" style="margin-bottom:-10px">The subscription</h2>
+        <div class="card">
+          <table class="t">
+            <thead><tr><th style="width:220px"></th><th>Our record</th><th>Stripe</th></tr></thead>
+            <tbody>
+              <tr class="cmf"><td class="none">Plan</td><td>Tournament Plus</td><td>Tournament Plus · monthly</td></tr>
+              <tr class="cmf"><td class="none">Billing status</td><td>Active</td><td>Active</td></tr>
+              <tr class="cmf"><td class="none">Renews</td><td>Nov 1, 2026</td><td>Nov 1, 2026</td></tr>
+              <tr class="cmf"><td class="none">Stripe subscription</td><td><span class="code">sub_1QhT6YpWn2Fd5Ja</span></td><td><span class="code">sub_1QhT6YpWn2Fd5Ja</span> · the only live one</td></tr>
+              <tr class="cmf"><td class="none">Stripe customer</td><td><span class="code">cus_Qa7Rk2Lm9Vt3Xy</span></td><td><span class="code">cus_Qa7Rk2Lm9Vt3Xy</span> · uat-rep-owner@uat-test-org.local · <span class="pb">Open in Stripe</span></td></tr>
+              <tr class="cmf"><td class="none">Card on file</td><td class="none">Not kept here</td><td>Visa ending 4242 · expires 08/2028</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="tb"><span class="count">5 charges in the last 12 months, newest first</span><span class="gap"></span><span class="note">From Stripe at 3:05 p.m.</span></div>
+          <table class="t">
+            <thead><tr><th style="width:160px">When</th><th>What it paid for</th><th style="width:160px">Card</th><th style="width:180px">Stripe says</th><th class="r" style="width:110px">Amount</th><th class="cv"></th></tr></thead>
+            <tbody>
+              <tr><td class="ts">Oct 1, 9:00 a.m.</td><td><span class="nm0">Tournament Plus, monthly</span><span class="sub">Oct 1 to Nov 1, 2026</span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$60.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Sep 1, 9:00 a.m.</td><td><span class="nm0">Tournament Plus, monthly</span><span class="sub">Sep 1 to Oct 1, 2026</span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$60.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Aug 1, 9:00 a.m.</td><td><span class="nm0">Tournament Plus, monthly</span><span class="sub">Aug 1 to Sep 1, 2026</span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$60.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Jul 1, 9:00 a.m.</td><td><span class="nm0">Tournament Plus, monthly</span><span class="sub">Jul 1 to Aug 1, 2026</span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$60.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Jun 1, 2:12 p.m.</td><td><span class="nm0">Tournament Plus, monthly · first charge</span><span class="sub">Jun 1 to Jul 1, 2026</span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$60.00</td><td class="cv">›</td></tr>
+            </tbody>
+          </table>
+          <div class="more" style="padding:10px 16px;border-top:1px solid var(--ln)"><span class="btn sm">Show older charges</span></div>
+        </div>
+        <p class="cap12">Families' payments to this club are the club's own money, on its own Stripe account. They are never shown or refunded here.</p>
+      </div></main>
+    </div>
+    <span class="ex">Example club, charges and amounts</span>
+  </div></div>
+
+  <h3 style="margin-top:8px">When there is nothing to read, or it cannot be read</h3>
+  <p class="hint">Four states, each replacing only the part it changes. The record above them, the band and our column, always shows. On dev and staging the site holds Stripe's test key, and the tab says so (state 4); production never shows it.</p>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="No Stripe customer: the free plan, free time, Founding Season. One plain callout; the Stripe column reads 'No Stripe customer' once. No charges table, no band of zeros.">S3 · NEW · nothing to read</button>
+    <button class="tag" data-n="Stripe cannot be reached: a red-railed callout with Read again; our column still shows, Stripe's says 'Not read'. The record never becomes an error page.">S3 · NEW · Stripe down</button>
+    <button class="tag" data-n="A role that does not read Stripe (Product, Growth, Read only): our record only, and one line. The card and charges are not sent to the browser at all for these roles.">S3 · NEW · roles</button>
+    <button class="tag" data-n="Test mode: the product's existing 'Test mode' chip and its existing words, 'Test payment: no money moves.' (the family payments rail already uses both). Not a new badge.">S3 · UNCHANGED part · Test mode</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="fx-cols">
+      <div class="stack"><span class="stlbl">1 · No Stripe customer (the free plan, free time, Founding Season)</span>
+        <div class="callout"><svg class="ic"><use href="#i-check"/></svg><span><b>This club has never paid us by card.</b> There is no Stripe customer, so there is nothing to compare or refund.</span></div>
+        <div class="card"><table class="t"><thead><tr><th style="width:160px"></th><th>Our record</th><th>Stripe</th></tr></thead><tbody>
+          <tr class="cmf"><td class="none">Plan</td><td>Tournament Plus</td><td class="none">No Stripe customer</td></tr>
+          <tr class="cmf"><td class="none">Billing status</td><td>Active</td><td></td></tr>
+          <tr class="cmf"><td class="none">Free through</td><td>Sep 30, 2027 · Founding Season</td><td></td></tr>
+        </tbody></table></div></div>
+      <div class="stack"><span class="stlbl">2 · Stripe cannot be reached</span>
+        <div class="callout bad"><svg class="ic"><use href="#i-errors"/></svg><span><b>Stripe could not be read at 3:05 p.m.</b> Our record is below; Stripe's side, the charges and refunds wait until it answers.</span><span class="go">Read again</span></div>
+        <div class="card"><table class="t"><thead><tr><th style="width:160px"></th><th>Our record</th><th>Stripe</th></tr></thead><tbody>
+          <tr class="cmf"><td class="none">Plan</td><td>Tournament Plus</td><td class="none">Not read</td></tr>
+          <tr class="cmf"><td class="none">Billing status</td><td>Active</td><td class="none">Not read</td></tr>
+        </tbody></table></div></div>
+      <div class="stack"><span class="stlbl">3 · A role that does not read Stripe (Product, Growth, Read only)</span>
+        <div class="callout"><svg class="ic"><use href="#i-eye"/></svg><span><b>Stripe's side is read by Super admin, Billing and Support.</b> Your role sees our record: plan, billing status and renewal date.</span></div></div>
+      <div class="stack"><span class="stlbl">4 · Dev and staging</span>
+        <div class="callout"><svg class="ic"><use href="#i-check"/></svg><span><span class="chip warn">Test mode</span> <b>Stripe and our record agree.</b> Test payment: no money moves.</span><span class="go">Read again</span></div></div>
+    </div>
+    <span class="ex">States · example</span>
+  </div></div>
+</section>
+
+<!-- ═══════════ B · CHARGED TWICE ═══════════ -->
+<section class="screen" id="b">
+  <div class="screen-head"><span class="n">DRAWING B</span><h2>"Was this charged twice?" The patterns, named</h2>
+  <p>The tab looks for five patterns in what Stripe returns, and says what it found once, in the first line, and again under the charge it concerns. Each says the evidence and the next step. Two charges on one day for <i>different</i> periods is the common false alarm, so it is named as fine. This club (used in drawings B to D) bought Tournament Plus on Jun 1, missed and recovered a payment in September, moved up to Club on Sep 14, and was charged twice on Oct 1.</p></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Charged twice for one period: two paid charges whose invoices cover the same subscription period. This is the one true duplicate, and the only pattern that offers the refund straight from the line ('Refund the later one', a door that opens drawing C's window; absent for Support). Worked out from Stripe's invoice periods, never from amounts and times alone.">S3 · NEW · the real duplicate</button>
+    <button class="tag" data-n="Two live subscriptions on one customer: the customer checked out twice. Stripe bills both every month; our record knows one. The line names the one we do not know, and the next step is to cancel it in Stripe and refund its charges. Cancelling a second subscription from the console is not in Stage 3 (it would be a new money write).">S3 · NEW · two subscriptions</button>
+    <button class="tag" data-n="Not a duplicate: two charges close together for different periods (a plan move's part month, then the renewal). Named as fine, so nobody refunds a real charge.">S3 · NEW · looks like one</button>
+    <button class="tag" data-n="Not a duplicate: a failed payment that Stripe tried again and then took. One period, one paid charge; the failed one moved no money.">S3 · NEW · failed then paid</button>
+    <button class="tag" data-n="A charge not tied to the subscription: a one-off invoice made in Stripe's dashboard. Not wrong in itself; the line says it is not the subscription's, so staff ask before refunding.">S3 · NEW · not the subscription's</button>
+    <button class="tag" data-n="They disagree: each difference carries a 'Differs' chip on its own row, and the first line counts and names them. The tab never corrects our record by itself.">S3 · NEW · disagree</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app auto">
+      <aside class="side" data-role="billing" data-active="clubs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Clubs &amp; portals</span><span class="rule"></span><h1>UAT Club Org</h1><span class="chip">Club</span><span class="chip ok">Active</span></div>
+        <div class="subnav"><span>Story <span class="n">12</span></span><span class="on">Money</span><span>Access</span><span>People &amp; tournaments <span class="n">6</span></span></div>
+        <div class="callout warn"><svg class="ic"><use href="#i-flag"/></svg><span><b>Charged twice for Oct 1 to Nov 1.</b> Two paid charges of $100.00 cover the same month, 3 minutes apart. Otherwise Stripe and our record agree.</span><span class="go">Read again</span></div>
+        <div class="band c3"><div><span class="k">Paid, last 12 months</span><span class="v">$506.94</span><span class="s">8 paid charges since Jun 1</span></div><div><span class="k">Refunded</span><span class="v">$20.00</span><span class="s">1 refund, Sep 20</span></div><div><span class="k">Next charge</span><span class="v">$100.00</span><span class="s">on Nov 1, 2026</span></div></div>
+        <div class="card">
+          <div class="tb"><span class="count">9 charges in the last 12 months, newest first</span><span class="gap"></span><span class="note">From Stripe at 3:05 p.m.</span></div>
+          <table class="t">
+            <thead><tr><th style="width:160px">When</th><th>What it paid for</th><th style="width:160px">Card</th><th style="width:190px">Stripe says</th><th class="r" style="width:110px">Amount</th><th class="cv"></th></tr></thead>
+            <tbody>
+              <tr class="hot"><td class="ts">Oct 1, 9:03 a.m.</td><td><span class="nm0">Club, monthly</span><span class="sub">Oct 1 to Nov 1, 2026</span><span class="flag am"><svg class="ic" style="width:12px;height:12px;vertical-align:-2px"><use href="#i-flag"/></svg> Charged twice: the same month as the 9:00 a.m. charge · <span class="pb">Refund the later one</span></span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$100.00</td><td class="cv">›</td></tr>
+              <tr class="hot"><td class="ts">Oct 1, 9:00 a.m.</td><td><span class="nm0">Club, monthly</span><span class="sub">Oct 1 to Nov 1, 2026</span><span class="flag am"><svg class="ic" style="width:12px;height:12px;vertical-align:-2px"><use href="#i-flag"/></svg> The first of the two</span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$100.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Sep 14, 2:20 p.m.</td><td><span class="nm0">Moved up: Tournament Plus to Club</span><span class="sub">Sep 14 to Oct 1, 2026, part month</span><span class="flag ok">Not a duplicate: a plan move's part month, then the Oct 1 renewal</span></td><td>Visa 4242</td><td class="says back">Part refunded · $20.00 back</td><td class="r">$41.94</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Sep 4, 9:00 a.m.</td><td><span class="nm0">Tournament Plus, monthly</span><span class="sub">Sep 1 to Oct 1, 2026</span><span class="flag ok">Not a duplicate: Stripe tried again after the Sep 1 failure and it paid</span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$60.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Sep 1, 9:00 a.m.</td><td><span class="nm0">Tournament Plus, monthly</span><span class="sub">Sep 1 to Oct 1, 2026</span></td><td>Visa 4242</td><td class="says bad">Failed · card declined</td><td class="r" style="color:var(--i3)">$60.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Aug 12, 4:41 p.m.</td><td><span class="nm0">Invoice made in Stripe</span><span class="sub">"Extra tournament setup"</span><span class="flag ok">Not the subscription's: a one-off invoice made in Stripe's dashboard</span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$25.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Aug 1, 9:00 a.m.</td><td><span class="nm0">Tournament Plus, monthly</span><span class="sub">Aug 1 to Sep 1, 2026</span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$60.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Jul 1, 9:00 a.m.</td><td><span class="nm0">Tournament Plus, monthly</span><span class="sub">Jul 1 to Aug 1, 2026</span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$60.00</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Jun 1, 2:12 p.m.</td><td><span class="nm0">Tournament Plus, monthly · first charge</span><span class="sub">Jun 1 to Jul 1, 2026</span></td><td>Visa 4242</td><td class="says">Paid</td><td class="r">$60.00</td><td class="cv">›</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Club real (dev) · its payment history example</span>
+  </div></div>
+  <h3 style="margin-top:8px">Two live subscriptions, and what a disagreement looks like</h3>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="fx-cols">
+      <div class="stack"><span class="stlbl">Two subscriptions: Stripe bills both</span>
+        <div class="callout bad"><svg class="ic"><use href="#i-flag"/></svg><span><b>Stripe has two live subscriptions for this club.</b> We know <span class="code">sub_1QexR4LkZ0aB8Kq</span>. <span class="code">sub_1QfaM7TzQ9cD2Rt</span> also charges $100.00 each month, since Oct 2. Cancel it in Stripe, then refund its charges here.</span><span class="go">Open it in Stripe</span></div></div>
+      <div class="stack"><span class="stlbl">They disagree: two things, each on its row</span>
+        <div class="callout warn"><svg class="ic"><use href="#i-flag"/></svg><span><b>Stripe and our record disagree on 2 things:</b> the billing status and the renewal date.</span><span class="go">Read again</span></div>
+        <div class="card"><table class="t"><thead><tr><th style="width:160px"></th><th>Our record</th><th>Stripe</th></tr></thead><tbody>
+          <tr class="cmf"><td class="none">Plan</td><td>Club</td><td>Club · monthly</td></tr>
+          <tr class="cmf"><td class="none">Billing status</td><td>Active</td><td>Past due since Oct 1 <span class="chip warn">Differs</span></td></tr>
+          <tr class="cmf"><td class="none">Renews</td><td>Oct 1, 2026</td><td>Nov 1, 2026 <span class="chip warn">Differs</span></td></tr>
+        </tbody></table></div>
+        <p class="cap12">Nothing here changes our record. A difference usually clears when Stripe's next update arrives. If it is still there tomorrow, tell the product team.</p></div>
+    </div>
+    <span class="ex">Example</span>
+  </div></div>
+</section>
+
+
+<!-- ═══════════ C · THE REFUND WINDOW ═══════════ -->
+<section class="screen" id="c">
+  <div class="screen-head"><span class="n">DRAWING C</span><h2>The refund: open the charge, refund all or part, say why</h2>
+  <p>A charge row opens the charge as a record that reads first (R2): what it paid for, the card, what Stripe says, its refunds so far. "Refund this charge" is a door on that window for the roles that may refund (question 1). The refund window asks two things, how much and why, and then says the whole consequence in one sentence before anything happens (R3). The button is the kit's danger button (a red tint, not solid red): it cannot be undone (the console's June 26 rule).</p></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The charge window reads first: when, what it paid for, the card, Stripe's status, refunded so far, the Stripe charge number, and the flag line if drawing B found one. Read from Stripe again as it opens, so the amount still refundable is current. 'Refund this charge' is an outlined door (a door that opens a window, your Oct 1 rule), absent for roles that do not refund. The window is the kit's record window, reading first.">S3 · NEW · the charge</button>
+    <button class="tag" data-n="All of it, or part: two radio rows. 'Part of it' takes an amount up to what is still refundable on this charge (the server checks again against Stripe; the browser's amount is never trusted). The card is always the one it came from: Stripe's rule, and the only choice. No 'to a different card', no credit to the account (credits stay in Stripe, Q7).">S3 · NEW · amount</button>
+    <button class="tag" data-n="Why is required (R4). It goes into the audit log's new reason column and the Story, and stays on our side: Stripe is told only our refund's number, the club and the staff member, never the words (a reason can hold a customer's details, and Stripe would keep them for good). A reason that contains what looks like a card number is refused. Stripe's 'reason' field is set to 'duplicate' when drawing B flagged this charge, otherwise 'requested by customer'. 'Fraudulent' is never sent: it adds the card to Stripe's block lists.">S3 · NEW · why</button>
+    <button class="tag" data-n="The sentence names the amount, the card, that it cannot be undone, and what does NOT change: the plan, the subscription, the next charge. Stripe's docs agree a refund does not touch the subscription. Whether the last clause says 'Stripe emails them a receipt' is question 3.">S3 · NEW · the sentence</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="wins">
+      <div class="dlg"><div class="dh"><h2>Club, monthly · Oct 1, 9:03 a.m.</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <span class="flag am" style="font-size:14px"><svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-flag"/></svg> Charged twice: the same month as the 9:00 a.m. charge</span>
+          <dl class="lines"><dt>Amount</dt><dd>$100.00</dd><dt>Paid for</dt><dd>Club, monthly, Oct 1 to Nov 1, 2026</dd><dt>Card</dt><dd>Visa ending 4242</dd><dt>Stripe says</dt><dd>Paid</dd><dt>Refunded so far</dt><dd>Nothing</dd><dt>Stripe charge</dt><dd><span class="code">ch_3Q8xL2Tz9Kq04Lk</span> <span class="pb">Open in Stripe</span></dd></dl>
+        </div>
+        <div class="df"><span class="sent">Read from Stripe at 3:06 p.m.</span><div class="bts"><span class="btn">Close</span><span class="btn">Refund this charge</span></div></div></div>
+      <div class="dlg"><div class="dh"><h2>Refund the Oct 1, 9:03 a.m. charge</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <div class="radio on"><b>All of it</b><span>$100.00 back to the Visa ending 4242</span></div>
+          <div class="radio"><b>Part of it</b><span>Up to $100.00</span></div>
+          <div class="fld"><span class="fl">Why<span class="req">*</span></span><span class="inp area">Charged twice on the Oct 1 renewal. The owner emailed Oct 24.</span></div>
+          <div class="sentence">Refund <b>$100.00</b> to the <b>Visa ending 4242</b>. <b>This cannot be undone.</b> UAT Club Org's plan does not change, the subscription keeps running, and the next charge is still Nov 1. The card usually shows it in 5 to 10 business days.</div>
+        </div>
+        <div class="df"><span class="sent">Goes to Stripe at once.</span><div class="bts"><span class="btn">Cancel</span><span class="btn red">Refund $100.00</span></div></div></div>
+    </div>
+    <span class="ex">Windows at true size · example</span>
+  </div></div>
+  <h3 style="margin-top:8px">Part of it, and what the person sees after</h3>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="wins">
+      <div class="dlg"><div class="dh"><h2>Refund the Sep 14, 2:20 p.m. charge</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <div class="radio"><b>All that is left</b><span>$21.94 back to the Visa ending 4242 ($20.00 was refunded on Sep 20)</span></div>
+          <div class="radio on"><b>Part of it</b><span>Up to $21.94</span></div>
+          <div class="fld"><span class="fl">Amount<span class="req">*</span></span><span class="amt"><span class="inp">$10.00</span><span class="hintl">of $21.94 still refundable</span></span></div>
+          <div class="fld"><span class="fl">Why<span class="req">*</span></span><span class="inp area">The rest of the part month they were promised back.</span></div>
+          <div class="sentence">Refund <b>$10.00</b> of the <b>$41.94</b> charge to the <b>Visa ending 4242</b>. <b>This cannot be undone.</b> With the $20.00 already refunded, $11.94 stays paid. UAT Club Org's plan does not change.</div>
+        </div>
+        <div class="df"><span class="sent">Goes to Stripe at once.</span><div class="bts"><span class="btn">Cancel</span><span class="btn red">Refund $10.00</span></div></div></div>
+      <div class="dlg"><div class="dh"><h2>Club, monthly · Oct 1, 9:03 a.m.</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <div class="done"><svg class="ic"><use href="#i-tick"/></svg><span><b>Refunded $100.00 to the Visa ending 4242.</b> Stripe says it is on its way. It is in the club's Story with your reason.</span></div>
+          <dl class="lines"><dt>Amount</dt><dd>$100.00</dd><dt>Stripe says</dt><dd>Refunded</dd><dt>Refunded so far</dt><dd>$100.00 · Oct 26, 3:07 p.m. · billing@fieldlogichq.ca</dd><dt>Stripe refund</dt><dd><span class="code">re_3Q8xL2Tz9Kq09Vb</span></dd></dl>
+        </div>
+        <div class="df"><span class="sent">The charge row now reads Refunded.</span><div class="bts"><span class="btn">Close</span></div></div></div>
+    </div>
+    <span class="ex">Windows at true size · example</span>
+  </div></div>
+
+  <div class="ask" data-q="A1"><div class="q">Question 1 · Who may refund, and is there a cap? Who reads Stripe's side?</div>
+    <p class="rec">A refund can only return a customer's own money to the card it came from, and never more than they paid. So the risk is revenue given back without cause, not money taken. That makes the useful limits <i>who</i>, <i>never your own club</i>, and <i>being seen</i>, more than a dollar cap. Stage 4's caps were by time because free time has no natural ceiling; a refund's ceiling is the charge itself.</p>
+    <p class="rec"><b>Recommended: Super admin and Billing refund; never a club you belong to in any way; no dollar cap per refund; a charge older than 6 months, or a sixth refund by one person in 24 hours, needs a Super admin</b> (the Stage 4 shape: Billing limited, Super admin not). The daily brake is for a stolen or misused account: without it, one Billing login could refund every charge one at a time. <b>"Belong to"</b> is wider than Stage 4 checks today: a club member, a coach on one of its teams, an owner or billing owner of a Coaches Portal it pays for, a pending invite, or a staff email equal to the club's owner or Stripe customer email. Stage 4's free time adopts the same check. <b>Reading</b> Stripe's side (charges, card, refunds, and money entries in the Story) follows your A2: Super admin, Billing and Support. Support reads and hands a refund to Billing. Product, Growth and Read only see our record only.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Super admin + Billing refund; never own club (wide check, free time too); no dollar cap; older than 6 months or a 6th refund in 24h needs Super admin; Support reads (recommended)"> Super admin and Billing refund; never your own club (the wider check, free time too); no dollar cap; older than 6 months or a sixth refund in 24 hours needs a Super admin; Support reads (recommended)</label>
+      <label><input type="checkbox" data-o="Support may refund too"> Support may refund too</label>
+      <label><input type="checkbox" data-o="A dollar cap for Billing (say the amount in the notes)"> A dollar cap for Billing (say the amount in the notes)</label>
+      <label><input type="checkbox" data-o="Super admin only"> Super admin only</label>
+    </div><textarea aria-label="Notes on question 1" placeholder="Notes"></textarea></div>
+  <div class="ask" data-q="A2"><div class="q">Question 2 · Full only, or part too? To the original card only?</div>
+    <p class="rec">Stripe refunds only to the card a charge came from; there is no other destination to choose. Part refunds are the common case for a plan moved by mistake mid-month.</p>
+    <p class="rec"><b>Recommended: all or part, as drawn; always to the original card (the only choice, stated in the sentence); several part refunds allowed up to the charge.</b></p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="All or part; original card only; several parts up to the charge (recommended)"> All or part; original card only; several parts up to the charge (recommended)</label>
+      <label><input type="checkbox" data-o="Full refunds only"> Full refunds only</label>
+    </div><textarea aria-label="Notes on question 2" placeholder="Notes"></textarea></div>
+  <div class="ask" data-q="A3"><div class="q">Question 3 · Does the customer hear about the refund?</div>
+    <p class="rec">Stripe emails a refund receipt <b>only if</b> a switch in our Stripe account's settings is on (Customer emails → Refunds), the customer has an email, and the charge was on a Stripe customer. It applies to refunds made from the console the same way. <b>Whether that switch is on in production is not something the code can tell: it needs you to look.</b> A notice from us would be a new customer-facing send, and account emails are not logged until Stage 5.</p>
+    <p class="rec"><b>Recommended: Stripe's own receipt only, with the switch confirmed on in production before Stage 3 ships; no email from us.</b> The sentence then ends "Stripe emails them a receipt." If the switch is off, the sentence says "The customer is not emailed."</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Stripe receipt only; owner confirms the Refunds switch is on in prod; no email from us (recommended)"> Stripe's receipt only; I confirm the Refunds switch is on in production; no email from us (recommended)</label>
+      <label><input type="checkbox" data-o="Also a notice from us (its own ruling, after Stage 5's sent-email log)"> Also a notice from us (its own ruling, after Stage 5's sent-email log)</label>
+      <label><input type="checkbox" data-o="Nothing: switch Stripe's receipts off"> Nothing: Stripe's receipts off</label>
+    </div><textarea aria-label="Notes on question 3" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ D · THE STORY WITH PURCHASES ═══════════ -->
+<section class="screen" id="d">
+  <div class="screen-head"><span class="n">DRAWING D</span><h2>The Story with its money</h2>
+  <p>Purchases, plan moves, charges and refunds join the Story. All of them are facts: none is offered a Put it back, ever (R5), because each reached Stripe. A refund made from the console names its staff member and reason; a refund made in Stripe's dashboard says so. The "not in it yet" line shrinks to what is still missing.</p></div>
+    <div class="before"><button class="shot" data-src="cap-s3/story.jpg" aria-label="The Story today at full size"><img src="cap-s3/story.jpg" alt="UAT Club Org's Story today: two entries and the Not in the Story yet line"></button><div><div class="lbl">Before · the Story, captured from dev Oct 26</div><p>Two entries for this club: "Club created on the Club plan" and "Subscription ended in Stripe". Under them: "Not in the Story yet: Stripe's charges and refunds, purchases the customer makes in Stripe, and account emails such as password resets." The drawing below adds an example payment history to the same club.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Bought and moved up come from what we already keep from Stripe's messages ('subscription started', 'moved up a plan'), today filtered out of the Story. No database change and no change to how we receive Stripe's messages.">S3 · NEW · purchases</button>
+    <button class="tag" data-n="Charges come from the same read as the Money tab, made when the Story opens. If Stripe cannot be read, the Story says so in one line and every entry we keep still shows. Question 4 is whether to keep charges on our side instead.">S3 · NEW · charges</button>
+    <button class="tag" data-n="A refund made here is ours: written by the console before Stripe is asked (drawing G), so it shows even when Stripe is down, with the staff member and the reason. A refund made in Stripe's dashboard comes from the live read, with 'In Stripe's dashboard' as who. A console refund keeps no card details on our side, so it reads 'to the card it came from'. Money entries (charges, refunds, amounts and their reasons) are shown to the roles that read Stripe's side (Super admin, Billing, Support); other roles see the rest of the Story and one line saying money entries are not shown to them.">S3 · NEW · refunds</button>
+    <button class="tag" data-n="No Put it back on any money entry. The column stays empty on those rows; it is not a disabled button (absent beats disabled).">S3 · facts</button>
+    <button class="tag" data-n="'Not in the Story yet: account emails such as password resets.' Charges, refunds and purchases leave the line. Account emails arrive with Stage 5's sent-email log (no stage number on screen; the Stage 2 walk's call).">S3 · RESTYLED · the line</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app auto">
+      <aside class="side" data-role="billing" data-active="clubs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Clubs &amp; portals</span><span class="rule"></span><h1>UAT Club Org</h1><span class="chip">Club</span><span class="chip ok">Active</span></div>
+        <div class="subnav"><span class="on">Story <span class="n">12</span></span><span>Money</span><span>Access</span><span>People &amp; tournaments <span class="n">6</span></span></div>
+        <div class="card">
+          <div class="tb tools"><span class="count">12 entries, newest first</span><span class="gap"></span><span class="search"><svg class="ic"><use href="#i-search"/></svg>Search the story</span><span class="sel">All types <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+          <table class="t">
+            <thead><tr><th style="width:150px">When</th><th>What happened</th><th style="width:290px">Who</th><th style="width:230px">Why</th><th style="width:110px"></th></tr></thead>
+            <tbody>
+              <tr class="cmf"><td class="ts">Oct 26, 3:07 p.m.</td><td><span class="nm0">Refunded $100.00 of the Oct 1, 9:03 a.m. charge</span><span class="sub">To the card it came from · the plan did not change</span></td><td class="who">billing@fieldlogichq.ca</td><td>Charged twice on the Oct 1 renewal. The owner emailed Oct 24.</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Oct 1, 9:03 a.m.</td><td><span class="nm0">Charged $100.00: Club, monthly, Oct 1 to Nov 1</span></td><td class="who">Stripe</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Oct 1, 9:00 a.m.</td><td><span class="nm0">Charged $100.00: Club, monthly, Oct 1 to Nov 1</span></td><td class="who">Stripe</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Sep 20, 11:15 a.m.</td><td><span class="nm0">Refunded $20.00 of the Sep 14 charge</span><span class="sub">To the card it came from</span></td><td class="who">In Stripe's dashboard</td><td class="none">Made outside the console</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Sep 14, 2:20 p.m.</td><td><span class="nm0">Moved up: Tournament Plus to Club</span><span class="sub">Charged $41.94 for the part month</span></td><td class="who">uat-owner@uat-test-org.local</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Sep 4, 9:00 a.m.</td><td><span class="nm0">Payment recovered</span><span class="sub">Stripe tried again: $60.00 paid</span></td><td class="who">Stripe</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Sep 1, 9:00 a.m.</td><td><span class="nm0">A payment was missed</span><span class="sub">Card declined</span></td><td class="who">Stripe</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Aug 12, 4:41 p.m.</td><td><span class="nm0">Charged $25.00: an invoice made in Stripe</span><span class="sub">"Extra tournament setup"</span></td><td class="who">In Stripe's dashboard</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Aug 1, 9:00 a.m.</td><td><span class="nm0">Charged $60.00: Tournament Plus, monthly, Aug 1 to Sep 1</span></td><td class="who">Stripe</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Jul 1, 9:00 a.m.</td><td><span class="nm0">Charged $60.00: Tournament Plus, monthly, Jul 1 to Aug 1</span></td><td class="who">Stripe</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Jun 1, 2:12 p.m.</td><td><span class="nm0">Bought Tournament Plus, monthly</span><span class="sub">Charged $60.00</span></td><td class="who">uat-owner@uat-test-org.local</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Jun 1, 2:02 p.m.</td><td><span class="nm0">Club created on the Tournament plan</span></td><td class="who">uat-owner@uat-test-org.local</td><td class="none">—</td><td></td></tr>
+            </tbody>
+          </table>
+          <div class="tline">Not in the Story yet: account emails such as password resets.</div>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Club real (dev) · its payment history example</span>
+  </div></div>
+  <h3 style="margin-top:8px">When Stripe cannot be read, and for a role that does not read Stripe</h3>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="fx-cols">
+      <div class="stack"><span class="stlbl">Stripe cannot be read: our own entries all show</span>
+        <div class="callout bad"><svg class="ic"><use href="#i-errors"/></svg><span><b>Stripe's charges could not be read at 3:05 p.m.</b> Everything we keep is below, including refunds made in this console.</span><span class="go">Read again</span></div>
+        <div class="card"><table class="t"><tbody>
+          <tr class="cmf"><td class="ts">Oct 26, 3:07 p.m.</td><td><span class="nm0">Refunded $100.00 of the Oct 1, 9:03 a.m. charge</span></td><td class="who">billing@fieldlogichq.ca</td></tr>
+          <tr class="cmf"><td class="ts">Sep 14, 2:20 p.m.</td><td><span class="nm0">Moved up: Tournament Plus to Club</span></td><td class="who">uat-owner@uat-test-org.local</td></tr>
+          <tr class="cmf"><td class="ts">Sep 4, 9:00 a.m.</td><td><span class="nm0">Payment recovered</span></td><td class="who">Stripe</td></tr>
+        </tbody></table></div></div>
+      <div class="stack"><span class="stlbl">Product, Growth and Read only</span>
+        <div class="card"><table class="t"><tbody>
+          <tr class="cmf"><td class="ts">Sep 14, 2:20 p.m.</td><td><span class="nm0">Moved up: Tournament Plus to Club</span></td><td class="who">uat-owner@uat-test-org.local</td></tr>
+          <tr class="cmf"><td class="ts">Jun 1, 2:02 p.m.</td><td><span class="nm0">Club created on the Tournament plan</span></td><td class="who">uat-owner@uat-test-org.local</td></tr>
+        </tbody></table><div class="tline">Money entries (charges, refunds and their reasons) are shown to Super admin, Billing and Support.</div></div></div>
+    </div>
+    <span class="ex">States · example</span>
+  </div></div>
+  <div class="ask" data-q="A4"><div class="q">Question 4 · Where do charges and refunds in the Story come from?</div>
+    <p class="rec"><b>A · Read Stripe live when the Story opens</b> (drawn). No database change, no change to how we receive Stripe's messages. Purchases, plan moves and console refunds come from what we keep, so they show even when Stripe is down; only charges, and refunds made in Stripe's dashboard, wait for Stripe. Cost: a Stripe read each time a Story opens (well inside Stripe's limits).</p>
+    <p class="rec"><b>B · Keep them:</b> Stripe sends us a message for every paid invoice and refund, and we keep each as an event. The Story then works fully with Stripe down. Cost: a migration, a change to how production receives Stripe's messages (a release step with /release), <b>and</b> subscribing production's Stripe connection to the refund messages in Stripe's settings (an owner step); history before the switch-on is missing unless back-filled.</p>
+    <p class="rec"><b>Recommended: A now.</b> The Story's own entries already cover what staff did; what waits on Stripe is only what Stripe did, which is also exactly what the Money tab cannot show without Stripe. B can follow if a Stripe outage ever costs a support call.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="A: read Stripe live; our own entries always show (recommended)"> A: read Stripe live; our own entries always show (recommended)</label>
+      <label><input type="checkbox" data-o="B: keep charges and refunds from Stripe's messages (migration + prod release step + Stripe setting)"> B: keep charges and refunds from Stripe's messages (migration, a production release step, a Stripe setting)</label>
+    </div><textarea aria-label="Notes on question 4" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ E · THE REASON COLUMN ═══════════ -->
+<section class="screen" id="e">
+  <div class="screen-head"><span class="n">DRAWING E</span><h2>A reason in the audit log, in its own column</h2>
+  <p>The audit log gains a Reason column after Action, and the raw details leave the table: Field, Old value and New value move into the entry window that already opens on every row, where they have room. The table reads who, when, which club, what and why. Every staff change written from now on fills it. Entries the product writes by itself (the nightly jobs) need none and say who wrote them. Older staff entries that kept their reason inside the value get it moved into the column once; older entries that never had one say so plainly.</p></div>
+    <div class="before"><button class="shot" data-src="cap-s3/audit.jpg" aria-label="The audit log today at full size"><img src="cap-s3/audit.jpg" alt="The audit log today: Timestamp, Superuser, Org, Action, Field, Old value, New value"></button><div><div class="lbl">Before · the audit log, captured from dev Oct 26</div><p>Seven columns: Timestamp, Superuser, Org, Action, Field, Old value, New value. A reason, where one was kept, is readable only as text inside the raw new value, cut at 80 characters. The search box covers the 100 rows on the page.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Reason: its own column (the stage's one migration). The writer takes a reason; every staff route passes the one the person typed. The old and new values stop carrying it. The export gains the column too.">S3 · NEW · Reason</button>
+    <button class="tag" data-n="Older entries: 21 of the 70 places that write the log have kept a reason inside the value since Stage 2. The migration copies those into the column once, so most history reads properly. A staff entry with none says 'Not recorded' in grey: the Story's own words for the same thing.">S3 · NEW · old rows</button>
+    <button class="tag" data-n="Entries the product writes by itself (retention sweeps, nightly jobs) show 'The product' as who and a plain dash as reason: they never had a person to ask.">S3 · the product</button>
+    <button class="tag" data-n="The prompt's two 'no reason' actions (ending an override, switching sections) both ask why since Stage 2 and are drawn with their reasons. Only their pre-Stage 2 entries read 'Not recorded'.">S3 · corrected lead</button>
+    <button class="tag" data-n="Your call (Oct 26): the old and new values are raw stored data, a 'more details' item, not something anyone scans, filters or searches on (search covers the club and the email only). They leave the table for the entry window, which already shows them side by side with the differences tinted. Field goes with them (question 12): it repeats the Action in raw words like 'enabled_addons'. The export keeps every column, values included, for an accountant or an audit.">S3 · RESTYLED · values in the window</button>
+    <button class="tag" data-n="The entry window that opens from a row (built Oct 25) gains a Reason line under Action. Its 'What changed' panes, Copy and 'Same moment' stay as built.">S3 · RESTYLED · entry window</button>
+    <button class="tag" data-n="Searching the audit log still covers only the 100 rows on screen. That is M4, ruled into Stage 8; not changed here.">LATER · S8 search</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app auto">
+      <aside class="side" data-role="super" data-active="audit" data-open="Records"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Audit log</h1></div>
+        <div class="card">
+          <div class="tb tools"><span class="search" style="width:240px"><svg class="ic"><use href="#i-search"/></svg>Search org or email...</span><span class="sel">From date <span class="chev"><svg class="ic"><use href="#i-cal"/></svg></span></span><span class="sel">To date <span class="chev"><svg class="ic"><use href="#i-cal"/></svg></span></span><span class="btn sm">Filter</span><span class="gap"></span><span class="count">100 entries</span><span class="btn">Export</span></div>
+          <table class="t">
+            <thead><tr><th style="width:150px">Timestamp</th><th style="width:250px">Superuser</th><th style="width:190px">Org</th><th style="width:220px">Action</th><th>Reason</th><th class="cv"></th></tr></thead>
+            <tbody>
+              <tr><td class="ts">Oct 26, 2026<span class="sub">3:07:12 p.m.</span></td><td class="who">billing@fieldlogichq.ca</td><td><span class="nm">UAT Club Org</span></td><td>Refunded a charge</td><td class="reason">Charged twice on the Oct 1 renewal. The owner emailed Oct 24.</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Oct 25, 2026<span class="sub">11:02:40 a.m.</span></td><td class="who">billing@fieldlogichq.ca</td><td><span class="nm">UAT Plus Org</span></td><td>Changed a free time end</td><td class="reason">Their spring draft moved to April</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Oct 25, 2026<span class="sub">4:15:03 p.m.</span></td><td class="who">product@fieldlogichq.ca</td><td><span class="nm">UAT Rep Club</span></td><td>Changed sections</td><td class="reason">Turning on Accounting for their fall close</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Oct 24, 2026<span class="sub">2:00:01 a.m.</span></td><td class="who">The product</td><td><span class="nm">UAT Test Org</span></td><td>Retention sweep</td><td class="reason old">—</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Oct 19, 2026<span class="sub">9:41:55 a.m.</span></td><td class="who">support@fieldlogichq.ca</td><td><span class="nm">UAT Plus Org</span></td><td>Ended an override</td><td class="reason old">Not recorded</td><td class="cv">›</td></tr>
+              <tr><td class="ts">Oct 12, 2026<span class="sub">1:30:18 p.m.</span></td><td class="who">support@fieldlogichq.ca</td><td><span class="nm">UAT Test Org</span></td><td>Changed sections</td><td class="reason old">Not recorded</td><td class="cv">›</td></tr>
+            </tbody>
+          </table>
+          <div class="tline">Showing 1–100 · Previous · Next</div>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Audit log · example entries</span>
+  </div></div>
+  <h3 style="margin-top:8px">The entry window: the details live here</h3>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="wins">
+      <div class="dlg" style="width:720px"><div class="dh"><h2>Audit entry</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <dl class="lines"><dt>When</dt><dd>Oct 25, 2026, 4:15:03 p.m.</dd><dt>Superuser</dt><dd>product@fieldlogichq.ca</dd><dt>Org</dt><dd><span class="pb">UAT Rep Club</span></dd><dt>Action</dt><dd>Changed sections</dd><dt>Reason</dt><dd>Turning on Accounting for their fall close</dd><dt>Field</dt><dd><span class="code">enabled_addons</span></dd></dl>
+          <span class="lbl2">What changed</span>
+          <div class="grid2">
+            <div class="card" style="padding:10px 12px"><span class="stlbl">Old value</span><pre class="code" style="margin:6px 0 0;white-space:pre-wrap">["teams"]</pre></div>
+            <div class="card" style="padding:10px 12px;border-color:color-mix(in srgb,var(--ol) 35%,transparent)"><span class="stlbl">New value</span><pre class="code" style="margin:6px 0 0;white-space:pre-wrap">["teams", <span style="background:var(--ols);color:var(--ol)">"accounting"</span>]</pre></div>
+          </div>
+        </div>
+        <div class="df"><span class="sent">Same moment: no other entries.</span><div class="bts"><span class="btn">Copy</span><span class="btn">Close</span></div></div></div>
+    </div>
+    <span class="ex">The window as built Oct 25, with Reason added · example</span>
+  </div></div>
+  <div class="ask" data-q="A12"><div class="q">Question 12 · Field leaves the table with the values?</div>
+    <p class="rec">You asked for the old and new values to move into the entry window. Field is the same kind of thing: a stored name ("enabled_addons", "expires_at") that repeats what the Action column already says in words, and nobody filters on it.</p>
+    <p class="rec"><b>Recommended: Field moves into the window too (drawn).</b> The table reads Timestamp, Superuser, Org, Action, Reason. The export keeps every column.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Field moves into the window with the values (recommended)"> Field moves into the window with the values (recommended)</label>
+      <label><input type="checkbox" data-o="Keep Field in the table"> Keep Field in the table</label>
+    </div><textarea aria-label="Notes on question 12" placeholder="Notes"></textarea></div>
+  <div class="ask" data-q="A6"><div class="q">Question 6 · The reason column: required, and what do old rows show?</div>
+    <p class="rec">Your Q2 (Oct 24) already rules "confirm and reason on every live change", and every staff route built since Stage 2 asks. The column makes it enforceable: the writer can refuse a staff change without one.</p>
+    <p class="rec"><b>Recommended: required on every staff change (the server refuses a blank one); the product's own jobs write none and read "The product"; the migration copies the reasons already kept inside old entries into the column; a staff entry that never had one reads "Not recorded", as the Story already says.</b></p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Required on every staff change; product jobs none; copy old reasons into the column; 'Not recorded' (recommended)"> Required on every staff change; the product's jobs write none; copy old reasons into the column; "Not recorded" (recommended)</label>
+      <label><input type="checkbox" data-o="Optional, with the window asking"> Optional, with the window asking</label>
+      <label><input type="checkbox" data-o="Do not copy old reasons; old rows read as they are"> Do not copy old reasons; old rows read as they are</label>
+    </div><textarea aria-label="Notes on question 6" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ F · FIND ═══════════ -->
+<section class="screen" id="f">
+  <div class="screen-head"><span class="n">DRAWING F</span><h2>Find: a charge, an invoice, or an invoice's number</h2>
+  <p>Find already takes a whole Stripe customer or subscription number, and a family payment's number. Stage 3 adds a subscription's charge, payment and invoice numbers, and the number printed on an invoice, by asking Stripe for that one item and then finding its club. A Stripe result opens the club's Money tab with that charge (or invoice) open. Who may search them: Super admin, Billing, Support (A2). The access trail records the record opened, never the words typed (A3), as today.</p></div>
+    <div class="split">
+    <div class="before"><button class="shot" data-src="cap-s3/find-cus.jpg" aria-label="Find with a Stripe customer number, at full size"><img src="cap-s3/find-cus.jpg" alt="Find showing Stripe · 1, UAT Club Org, Stripe customer"></button><div><div class="lbl">Before · a Stripe customer number</div><p>"Stripe · 1", the club, "Stripe customer cus_… · Club". "Enter opens the club. Its Money tab holds the Stripe numbers."</p></div></div>
+    <div class="before"><button class="shot" data-src="cap-s3/find-digits.jpg" aria-label="Find with four card digits, at full size"><img src="cap-s3/find-digits.jpg" alt="Find showing Nothing matches 4242"></button><div><div class="lbl">Before · four card digits</div><p>"Nothing matches “4242”. Find looks at emails, names, clubs, web names, owners and Stripe numbers." A charge or invoice number from a club's subscription finds nothing today.</p></div></div>
+  </div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="A whole ch_, pi_ or in_ number: Find checks our family payments first (as today), then asks Stripe for that one item on our own account, and finds the club by its Stripe customer. One exact lookup, not a search; Stripe answers it at once.">S3 · NEW · charge and invoice numbers</button>
+    <button class="tag" data-n="An invoice's printed number (the one on the customer's receipt, like 'A1B2C3D4-0007'): Stripe's search finds it. It can lag about a minute behind a brand-new invoice; the panel says so if nothing comes back. What is typed must look exactly like an invoice number or a whole Stripe number before Stripe is asked anything, so the box cannot be used to search Stripe freely; 'not found' and 'found on another account' read the same.">S3 · NEW · invoice number</button>
+    <button class="tag" data-n="The honest limit on card digits: drawn as one line in the panel when four digits are typed. Question 5.">S3 · card digits</button>
+    <button class="tag" data-n="The trail: opening a club from a Stripe result writes the same 'record opened, from Find' row as any other Find result. The number typed is never written down. Unchanged from Stage 2.">S2 · UNCHANGED · trail</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="panels">
+      <div class="pcol"><span class="stlbl">A subscription charge number</span>
+        <div class="fbox typed"><svg class="ic"><use href="#i-search"/></svg><span style="color:var(--i)">ch_3Q8xL2Tz9Kq04Lk</span></div>
+        <div class="fpanel">
+          <div class="fh">Stripe · 1</div>
+          <div class="fr on"><span class="ic2"><svg class="ic"><use href="#i-card"/></svg></span><span class="tx"><b>UAT Club Org</b><span class="sub">Stripe charge ch_3Q8xL2Tz9Kq04Lk · $100.00 · Oct 1, 2026 · Club</span></span><span class="cv">›</span></div>
+          <div class="more">Enter opens the club. Its Money tab opens on this charge.</div>
+        </div></div>
+      <div class="pcol"><span class="stlbl">An invoice's printed number</span>
+        <div class="fbox typed"><svg class="ic"><use href="#i-search"/></svg><span style="color:var(--i)">A1B2C3D4-0007</span></div>
+        <div class="fpanel">
+          <div class="fh">Stripe · 1</div>
+          <div class="fr on"><span class="ic2"><svg class="ic"><use href="#i-card"/></svg></span><span class="tx"><b>UAT Club Org</b><span class="sub">Stripe invoice A1B2C3D4-0007 · $100.00 · Oct 1, 2026 · Club</span></span><span class="cv">›</span></div>
+          <div class="more">Enter opens the club. Its Money tab opens on this invoice's charge.</div>
+        </div></div>
+      <div class="pcol"><span class="stlbl">Four digits typed: the foot Find already has</span>
+        <div class="fbox typed"><svg class="ic"><use href="#i-search"/></svg><span style="color:var(--i)">4242</span></div>
+        <div class="fpanel">
+          <div class="msg"><b>Nothing matches “4242”.</b><span>Find looks at emails, names, clubs, web names, owners and Stripe numbers.</span></div>
+          <div class="ft">Card digits are not searched. Ask for the email on the receipt instead.</div>
+        </div></div>
+      <div class="pcol"><span class="stlbl">A number that is not ours</span>
+        <div class="fbox typed"><svg class="ic"><use href="#i-search"/></svg><span style="color:var(--i)">in_1Qz9Wb3Lm7Hs0Xp</span></div>
+        <div class="fpanel">
+          <div class="msg"><b>Nothing matches “in_1Qz9Wb3Lm7Hs0Xp”.</b><span>Not a family payment and not one of our clubs' Stripe numbers. A test-mode number is never found on the live site, or the reverse.</span></div>
+        </div></div>
+    </div>
+    <span class="ex">Find panels at true size · example</span>
+  </div></div>
+  <div class="ask" data-q="A5"><div class="q">Question 5 · Find and card digits</div>
+    <p class="rec">Stripe <i>can</i> search charges by a card's last four (the end state said it could not). But the last four are shared by many customers; a search for them across every customer is a card-data search whose results need a second clue anyway; it runs about a minute behind; and it would put card digits in the console's search box, which A3 says is never recorded but is still typed and sent. Every real "charged twice" call starts with an email, a club name or a receipt, all of which Find already takes or takes now.</p>
+    <p class="rec"><b>Recommended: whole Stripe charge, payment and invoice numbers and an invoice's printed number; no card-digit search; the panel says so in one line.</b></p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Stripe numbers + invoice number; no card digits; one line says so (recommended)"> Stripe numbers and invoice numbers; no card digits; one line says so (recommended)</label>
+      <label><input type="checkbox" data-o="Also card last four (Stripe search; results across customers)"> Also a card's last four (Stripe's search; results across customers)</label>
+    </div><textarea aria-label="Notes on question 5" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ G · WHEN IT CANNOT WORK ═══════════ -->
+<section class="screen" id="g">
+  <div class="screen-head"><span class="n">DRAWING G</span><h2>When it cannot work</h2>
+  <p>Where the console knows before the click, the door is absent and one line says why. Where it cannot know (Stripe's answer, someone else at the same moment), the window says it in a sentence and nothing moves. The order of a refund is fixed: <b>our record of it first, then Stripe, then our record completed</b>, so a refund can never exist in Stripe without a line here.</p></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Before the click (states 5, 8, 9, 10, 11): the door is absent and one line says why, using the refusal line the console already has (Stage 4's free time uses it). Nothing new as a part.">S4 part · UNCHANGED · refusal line</button>
+    <button class="tag" data-n="After the click (states 2, 3, 6, 7): Stripe's answer, or ours, is said inside the refund window as the kit's red field error above the foot, and nothing moves. The window stays open so the person can change the amount or close it. The words are fixed sentences chosen from Stripe's error code, never Stripe's own text.">S3 · NEW · answers in the window</button>
+    <button class="tag" data-n="The busy state is the kit window's own: 'Working…' on the button, every button stopped, after the first click.">UNCHANGED · Working…</button>
+    <button class="tag" data-n="Test mode is the product's existing chip and sentence ('Test mode', 'Test payment: no money moves.'), shown in the refund sentence whenever the site holds Stripe's test key.">UNCHANGED part · Test mode</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="fx-cols">
+      <div class="stack"><span class="stlbl">1 · Already refunded</span>
+        <div class="dlg"><div class="dh"><h2>Club, monthly · Oct 1, 9:03 a.m.</h2><span class="x" aria-hidden="true">×</span></div><div class="db"><dl class="lines"><dt>Stripe says</dt><dd>Refunded</dd><dt>Refunded so far</dt><dd>$100.00 · Oct 26, 3:07 p.m. · billing@fieldlogichq.ca</dd></dl><p class="cap12">Fully refunded. There is nothing left to refund.</p></div><div class="df"><span class="sent"></span><div class="bts"><span class="btn">Close</span></div></div></div></div>
+      <div class="stack"><span class="stlbl">2 · Stripe refuses (after the click)</span>
+        <div class="dlg"><div class="dh"><h2>Refund the Oct 1, 9:03 a.m. charge</h2><span class="x" aria-hidden="true">×</span></div><div class="db"><div class="sentence">Refund <b>$100.00</b> to the <b>Visa ending 4242</b>. <b>This cannot be undone.</b></div><p class="ferr">Stripe did not refund it: this charge is disputed. A disputed charge is answered in Stripe, not refunded. No money moved.</p></div><div class="df"><span class="sent">The attempt is in the audit log.</span><div class="bts"><span class="btn">Close</span></div></div></div></div>
+      <div class="stack"><span class="stlbl">3 · More than is left (after the click)</span>
+        <div class="dlg"><div class="dh"><h2>Refund the Sep 14, 2:20 p.m. charge</h2><span class="x" aria-hidden="true">×</span></div><div class="db"><div class="fld"><span class="fl">Amount<span class="req">*</span></span><span class="amt"><span class="inp">$21.94</span></span></div><p class="ferr">Only $11.94 of this charge can still be refunded: $10.00 more was refunded at 3:04 p.m. Change the amount and try again.</p></div><div class="df"><span class="sent">Nothing was sent to Stripe.</span><div class="bts"><span class="btn">Cancel</span><span class="btn red">Refund $21.94</span></div></div></div></div>
+      <div class="stack"><span class="stlbl">4 · The first click stops the window</span>
+        <div class="dlg"><div class="dh"><h2>Refund the Oct 1, 9:03 a.m. charge</h2></div><div class="db"><div class="sentence">Refund <b>$100.00</b> to the <b>Visa ending 4242</b>. <b>This cannot be undone.</b></div></div><div class="df"><span class="sent">Goes to Stripe at once.</span><div class="bts"><span class="btn" style="opacity:.5">Cancel</span><span class="btn red" style="opacity:.5">Working…</span></div></div></div>
+        <p class="cap12">A second click does nothing. If the request is retried, Stripe recognises it and answers with the first refund instead of making another.</p></div>
+      <div class="stack"><span class="stlbl">5 · Someone else is refunding this charge</span>
+        <div class="refuse"><svg class="ic"><use href="#i-flag"/></svg><span><b>billing-lead@fieldlogichq.ca started a refund of this charge at 3:06 p.m.</b> Open the charge again in a moment to see what is left.</span></div></div>
+      <div class="stack"><span class="stlbl">6 · Stripe's answer did not reach us (after the click)</span>
+        <div class="dlg"><div class="dh"><h2>Refund the Oct 1, 9:03 a.m. charge</h2><span class="x" aria-hidden="true">×</span></div><div class="db"><p class="ferr">Stripe did not answer. The refund may or may not have gone through. Opening the charge checks with Stripe; it never offers a second refund until it knows.</p></div><div class="df"><span class="sent"></span><div class="bts"><span class="btn">Close</span></div></div></div></div>
+      <div class="stack"><span class="stlbl">7 · Our record could not be written first (after the click)</span>
+        <div class="dlg"><div class="dh"><h2>Refund the Oct 1, 9:03 a.m. charge</h2><span class="x" aria-hidden="true">×</span></div><div class="db"><div class="sentence">Refund <b>$100.00</b> to the <b>Visa ending 4242</b>. <b>This cannot be undone.</b></div><p class="ferr">The refund could not be recorded, so it was not sent to Stripe. No money moved. Try again in a moment.</p></div><div class="df"><span class="sent">Goes to Stripe at once.</span><div class="bts"><span class="btn">Cancel</span><span class="btn red">Refund $100.00</span></div></div></div></div>
+      <div class="stack"><span class="stlbl">8 · A role that reads but does not refund (Support)</span>
+        <div class="dlg"><div class="dh"><h2>Club, monthly · Oct 1, 9:03 a.m.</h2><span class="x" aria-hidden="true">×</span></div><div class="db"><dl class="lines"><dt>Stripe says</dt><dd>Paid</dd><dt>Stripe charge</dt><dd><span class="code">ch_3Q8xL2Tz9Kq04Lk</span></dd></dl><p class="cap12">Refunds are made by Billing or a Super admin. Hand this charge on with its number.</p></div><div class="df"><span class="sent"></span><div class="bts"><span class="btn">Close</span></div></div></div></div>
+      <div class="stack"><span class="stlbl">9 · Your own club</span>
+        <div class="refuse bad"><svg class="ic"><use href="#i-lock"/></svg><span><b>You belong to this club, so you cannot refund its charges.</b> Another Billing or Super admin can.</span></div></div>
+      <div class="stack"><span class="stlbl">10 · A paying club's plan, from the pencil, Bulk changes or Put it back (question 9)</span>
+        <div class="refuse"><svg class="ic"><use href="#i-card"/></svg><span><b>This club pays through Stripe, so its plan changes there.</b> The owner moves plan on their Plan &amp; billing page, or cancel the subscription first. Changing it here would leave Stripe charging the old price.</span></div></div>
+      <div class="stack"><span class="stlbl">11 · Billing, a charge older than 6 months, or a sixth refund today (question 1)</span>
+        <div class="refuse"><svg class="ic"><use href="#i-flag"/></svg><span><b>This charge is from March, more than 6 months ago.</b> A Super admin can refund it.</span></div>
+        <div class="refuse"><svg class="ic"><use href="#i-flag"/></svg><span><b>You have made 5 refunds in the last 24 hours.</b> A Super admin can make this one.</span></div></div>
+      <div class="stack"><span class="stlbl">12 · Dev and staging, in the refund sentence</span>
+        <div class="sentence" style="border-radius:8px;padding:12px 14px;font-size:14px"><span class="chip warn">Test mode</span> Refund <b>$100.00</b> to the <b>Visa ending 4242</b>. Test payment: no money moves.</div></div>
+    </div>
+    <span class="ex">States · example</span>
+  </div></div>
+
+  <div class="ask" data-q="A9"><div class="q">Question 9 · M6, widened: a staff plan change on a club that pays through Stripe</div>
+    <p class="rec">Today the pencil changes our record and says nothing to Stripe. Stripe keeps charging the old price and, on its next message, writes the old plan back, silently (headline 1). Three ways out:</p>
+    <p class="rec"><b>Recommended: refuse it.</b> No staff plan change (the pencil, Bulk changes, Put it back: they share one rule) changes the plan of a club that holds a Stripe subscription not yet cancelled in Stripe, whatever its billing status; one line says why (drawn, G 10), and Bulk changes skips that club with the reason in its result line rather than stopping the batch. The owner moves plan on their own billing page, which moves Stripe properly, or staff cancel the subscription first. This is the same rule you ruled for free time (Stage 4 Q3). The move to the free Tournament plan stops quietly dropping our link to a subscription that is still charging.</p>
+    <p class="rec">Moving the Stripe subscription from the console is a second money write (it charges or credits the difference) and needs its own drawing and review: a later stage, if ever. A warning without a refusal leaves the silent revert in place.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Refuse a staff plan change while a live Stripe subscription runs; one line says why (recommended)"> Refuse a staff plan change while a live Stripe subscription runs; one line says why (recommended)</label>
+      <label><input type="checkbox" data-o="Draw moving the Stripe subscription from the console (a later stage)"> Draw moving the Stripe subscription from the console (a later stage)</label>
+      <label><input type="checkbox" data-o="Warn only"> Warn only</label>
+    </div><textarea aria-label="Notes on question 9" placeholder="Notes"></textarea></div>
+  <div class="ask" data-q="A7"><div class="q">Question 7 · Bulk changes' Subscription status override (Stage 4 walk, call 14)</div>
+    <p class="rec">It gives up to 100 clubs a billing status (Active, say) with an "Optional expiry": no end needed, no cap, past dates accepted, a staff member's own club allowed. It is a bulk way to keep clubs open for free without an end, which is what Stage 4 ruled out for one club at a time.</p>
+    <p class="rec"><b>Recommended: follow free time's rules: an end is required ("Free through", the shared date field); Billing up to 6 months, Super admin 12; never a club the staff member belongs to; the server enforces all three.</b></p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Free time's rules: end required, 6/12-month cap, never own club, server-enforced (recommended)"> Free time's rules: an end required, the 6 and 12 month cap, never your own club, enforced on the server (recommended)</label>
+      <label><input type="checkbox" data-o="Remove the bulk status override"> Remove the bulk status override altogether</label>
+      <label><input type="checkbox" data-o="Leave it as it is"> Leave it as it is</label>
+    </div><textarea aria-label="Notes on question 7" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ H · MONEY AND SAFETY ═══════════ -->
+<section class="screen" id="h">
+  <div class="screen-head"><span class="n">DRAWING H</span><h2>The refund's threat list, and the tests the build must carry</h2>
+  <p>A refund is a money write: designed, reviewed and tested as one. The threat list below is over the <i>design</i>, before any code; the build's own review runs over the code.</p></div>
+  <div class="gridb">
+    <div class="box okb"><h3>Who, how much, what is kept</h3><ul>
+      <li><b>Who refunds:</b> Super admin and Billing (question 1), through a new refund power in the one rulebook. Support reads.</li>
+      <li><b>How much:</b> never more than is still refundable on the charge, read from Stripe on the server at the moment of refunding. The browser sends a charge number and an amount; the server trusts neither until Stripe confirms both.</li>
+      <li><b>What is kept:</b> who, when, the club, the charge number, the amount, the reason, Stripe's refund number and Stripe's answer, in the audit log (reason in its own column) and the Story. <b>Never</b> the card's number, expiry or name: the last four and brand are read from Stripe each time they are shown.</li>
+    </ul></div>
+    <div class="box warnb"><h3>The order that stops a refund going missing</h3><ul>
+      <li><b>1.</b> Write our record of the refund as <i>started</i>, in a refunds record of its own (the audit log cannot hold a state or refuse a second start). Its number is the refund key. If this write fails, stop: nothing goes to Stripe (G 7).</li>
+      <li><b>2.</b> Ask Stripe once, with that key, the exact amount in cents and the remaining amount the person saw. "All of it" is sent as an amount, never left blank, so a refund made meanwhile in Stripe cannot change what this one does.</li>
+      <li><b>3.</b> Complete our record with Stripe's answer: <i>done</i>; <i>refused</i> only on Stripe's definite no; <i>unknown</i> on a timeout or a Stripe fault.</li>
+      <li><b>Recovery never asks Stripe to refund again.</b> It lists the charge's refunds in Stripe and looks for our number: found, done; not found once the first request cannot still be running, closed as not made (G 6). Stripe forgets a refund key after about a day, so sending it again later could make a second refund.</li>
+      <li><b>One refund at a time per charge</b>, enforced by the database, not by reading first (G 5). A start that is closed as not made releases the charge.</li>
+    </ul></div>
+  </div>
+  <div class="tbl"><table class="doc"><thead><tr><th style="width:44px">#</th><th style="width:34%">Threat</th><th>What the design does</th></tr></thead><tbody data-fill="threats"></tbody></table></div>
+  <div class="box sec2"><h3>The tests the build must carry</h3><ul>
+    <li><b>A mocked-Stripe suite</b> (no network): a retry with the same key makes one refund; a double submit makes one refund; Stripe's "already refunded", "disputed" and "more than the charge" each leave no money moved and a refused record; a lost answer more than a day old is recovered by listing the charge's refunds and sends <b>no</b> second refund request; a start still in flight keeps its hold, an abandoned one releases it; two starts for one charge at once, the database refuses the second.</li>
+    <li><b>Server rules:</b> a role without the refund power is refused before anything is read; "your own club" refuses a club member, a team coach, a Coaches Portal owner or billing owner the club pays for, a pending invite, and a staff email equal to the owner's or the Stripe customer's; a demo club is refused; an amount above the refundable remainder is refused from Stripe's figure, not the browser's; "all of it" with a changed remainder is refused; amounts that are not whole cents (20.1, "20.10", empty, huge) are refused; a blank reason, or one holding what looks like a card number, is refused; the sixth refund by one person in 24 hours and a charge older than 6 months need a Super admin, judged from Stripe's own charge date.</li>
+    <li><b>Charge ownership on every read, not only on refund:</b> a charge with no customer on a club with none is refused; a Stripe customer shared by two clubs is refused; a charge number for another club opened in this club's Money tab shows nothing; a test-mode charge on a live key (and the reverse) is refused.</li>
+    <li><b>Words that leave us:</b> Stripe receives only our refund number, the club and the staff member, never the typed reason; Stripe's error text never reaches the browser or our records whole (fixed sentences from Stripe's error code; only its code and request number kept).</li>
+    <li><b>Find:</b> a quote, OR, or anything not shaped like a Stripe or invoice number never builds a Stripe search.</li>
+    <li><b>Order:</b> if our first write fails, Stripe is never called; the audit entry exists whether Stripe accepts or refuses.</li>
+    <li><b>No card data kept:</b> a guard that fails if a refund or audit write carries a card number, expiry or holder name.</li>
+    <li><b>Reads:</b> the Money tab and Story send Stripe's side only to roles with the Stripe-reading power; a Stripe outage renders our record and one line, not an error page; nothing Stripe returns is stored.</li>
+    <li><b>Test mode:</b> the test-mode mark shows whenever the site holds a test key and never with a live one.</li>
+    <li><b>A window's foot sentence:</b> a build check that every sentence in a console window's foot (the charge, refund, confirm and free time windows, and any new one) wears the kit's foot-note face, 12 px in the quiet ink, whether it arrives bare or with a class of its own; the console's own foot-note style is brought onto that face. The Oct 25 fix covered only a bare sentence.</li>
+    <li><b>Question 9:</b> the shared plan-change rule refuses a club holding an uncancelled Stripe subscription, whatever its billing status (unpaid and incomplete included), through the pencil, Bulk changes, Put it back and the record; Bulk skips it with a reason line.</li>
+    <li><b>Reason column:</b> every staff write passes one; the product's jobs pass none; old reasons are copied once and read back.</li>
+  </ul></div>
+  <div class="ask" data-q="A8"><div class="q">Question 8 · The double plan grant: fix it in this stage's migration?</div>
+    <p class="rec">Two staff giving a club a plan at the same instant can both succeed (Stage 4's finish review, Medium). Access stays sane (the newest wins), but the Story would show two. The fix is one database rule: at most one running plan grant per club. It costs one line in a migration Stage 3 is writing anyway, plus a check that no club already holds two (none should).</p>
+    <p class="rec"><b>Recommended: ride this stage's migration.</b></p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Ride Stage 3's migration (recommended)"> Ride Stage 3's migration (recommended)</label>
+      <label><input type="checkbox" data-o="Wait"> Wait</label>
+    </div><textarea aria-label="Notes on question 8" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ I · THE BOUNDARY ═══════════ -->
+<section class="screen" id="i">
+  <div class="screen-head"><span class="n">DRAWING I</span><h2>The boundary: what Stage 3 delivers, and what it does not</h2>
+  <p>Drawn with the recommended answers. A different answer to a question moves its row.</p></div>
+  <div class="tbl"><table class="doc"><thead><tr><th style="width:110px">Mark</th><th>Part</th><th>Notes</th></tr></thead><tbody>
+    <tr><td><span class="k-new">NEW</span></td><td>Stripe beside our record on the Money tab, with the agree line, the money band, the card and the charges</td><td>Read on open, never stored. Super admin, Billing, Support.</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>The five "charged twice" patterns</td><td>From Stripe's invoices and periods.</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>The charge window and the refund window</td><td>All or part, original card, reason required, red button (questions 1–3).</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>Purchases, charges and refunds in the Story, all facts</td><td>Question 4.</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>The audit log's Reason column, and old reasons copied in; the raw values (and Field) move into the entry window</td><td>The stage's migration (question 6); your call Oct 26 and question 12. The export keeps every column.</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>Find: charge, payment and invoice numbers; an invoice's printed number</td><td>No card digits (question 5).</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>Refusals: a paying club's plan from the pencil; your own club; the age limit; the bulk status override's rules</td><td>Questions 9, 1, 7.</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>A refunds record of its own: started, done, refused, unknown, not made</td><td>So a refund can never be missing on our side, and one charge has one refund in progress. In the same migration as the reason column.</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>One running plan grant per club, as a database rule</td><td>Question 8, in the same migration.</td></tr>
+    <tr><td><span class="k-res">RESTYLED</span></td><td>The Money tab's five facts; the band's renewal label; the "not in the Story yet" line</td><td>One set of money words (question 10).</td></tr>
+    <tr><td><span class="k-res">RESTYLED</span></td><td>Cancelled, Trial and Billing status, said one way</td><td>Customer pages through /marketing (question 10).</td></tr>
+    <tr><td><span class="k-unc">UNCHANGED</span></td><td>The shell, Find's frame, the menu, Today, the Story's frame, the one pencil, Put it back's rules, free time</td><td>Stages 1, 2 and 4, as walked.</td></tr>
+    <tr><td><span class="k-unc">UNCHANGED</span></td><td>How we receive Stripe's messages</td><td>No webhook change in Stage 3 with question 4's A. With B, it becomes a production release step.</td></tr>
+    <tr><td><span class="k-lat">LATER</span></td><td>Status (and whether it shows the morning check: your Q6, still open), the sent-email log, Feedback reply</td><td>Stage 5. Question 6 from the kickoff does not bear on Stage 3.</td></tr>
+    <tr><td><span class="k-lat">LATER</span></td><td>Club web addresses and the quota</td><td>Stage 6.</td></tr>
+    <tr><td><span class="k-lat">LATER</span></td><td>Audit search across every page (M4)</td><td>Stage 8.</td></tr>
+    <tr><td><span class="k-out">NOT BUILT</span></td><td>Credits and account balances; refunds to another card; moving a paying club's Stripe subscription; cancelling a second subscription from the console; card-digit search; family payments</td><td>Q7; Stripe's rule; question 9; drawing B; question 5; the club's own money.</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ═══════════ FORMATTING CHECK ═══════════ -->
+<section class="screen" id="fmt">
+  <div class="screen-head"><span class="n">FORMATTING CHECK</span><h2>The written rules, checked against the drawings</h2></div>
+  <div class="tbl"><table class="doc"><thead><tr><th>Rule</th><th>In these drawings</th></tr></thead><tbody>
+    <tr><td>Type ladder 10 · 11 · 12 · 14 · 16 · 20 · 24</td><td>Titles 20, section and window titles 16, body 14, captions 12, eyebrows and band labels 11, chips 10, figures 24 (20 for a date or a card).</td></tr>
+    <tr><td>Money figures are one joined band</td><td>Paid, Refunded and Next charge share one band; the card moved into the subscription table (it is not a money figure).</td></tr>
+    <tr><td>A list is a table when a column answers the question</td><td>Ours beside Stripe's is a table with an "Our record" and a "Stripe" column; a difference is a "Differs" chip, a word, not a symbol.</td></tr>
+    <tr><td>One lime per screen; red only for what cannot be undone</td><td>No lime on the Money tab. The refund button is the kit's danger button (red tint, not solid): a refund cannot be put back.</td></tr>
+    <tr><td>Absent beats disabled</td><td>Refund this charge is absent for Support; a refusal known before the click replaces the door with one line (drawing G).</td></tr>
+    <tr><td>Every highlight is clickable</td><td>Charge rows and flag lines open the charge; "Refund the later one" opens the refund window; chips sit beside words that say the same.</td></tr>
+    <tr><td>A window's foot: sentence left, buttons right</td><td>Every window. The busy label is the kit's "Working…".</td></tr>
+    <tr><td>A foot's sentence wears the foot note's face (the Oct 25 fix)</td><td>12 px in the quiet ink, smaller and lighter than the window's body, in every window here ("Goes to Stripe at once.", "Nothing was sent to Stripe.", "The attempt is in the audit log."). <b>Found while checking:</b> the console's own windows (the confirm window, free time's, and so the refund windows) style their foot sentence at 14 px, not the kit's 12; only a sentence passed in bare got the Oct 25 fix. Stage 3's build brings the console's foot note onto the kit's face and adds a build check (drawing H).</td></tr>
+    <tr><td>Mark required, not optional</td><td>Amount and Why carry the star.</td></tr>
+    <tr><td>A door that opens a window is an outlined button (Oct 1)</td><td>Refund this charge, Show older charges. Olive text stays for doors that go somewhere (Open in Stripe, Read again).</td></tr>
+    <tr><td>Times read 9:03 a.m.; the console's date-and-time form</td><td>"Oct 1, 9:03 a.m." everywhere, as the console builds it; the audit log keeps its seconds.</td></tr>
+    <tr><td>One spelling</td><td>Cancelled, Trial, Billing status, Renews (question 10); "Not recorded" as the Story already says it.</td></tr>
+    <tr><td>Stripe numbers in full</td><td>Shown whole in the data face, as the console does today; never shortened with "…".</td></tr>
+  </tbody></table></div>
+  <div class="box" id="design-pass"><h3>The design pass</h3><p>The design pass compared every frame with the real console's code and the written standards. It found eighteen defects. All are fixed above; the two places where written rules meet are listed below.</p>
+    <ul>
+      <li><b>The audit log was drawn from memory.</b> It had lost the Field, Old value and New value columns and invented a "Changed" one. It is redrawn from the real table, with Reason added after Action, and the real toolbar. Then, on your call (Oct 26), the raw values moved into the entry window, and Field with them (question 12).</li>
+      <li><b>One club told three histories.</b> The Money tab, the duplicate drawing and the Story disagreed about what the club bought and when, and a refund in the Story was missing from the band. Drawings B to D now share one example payment history, with totals that add up. Drawing A is a second club with a clean history.</li>
+      <li><b>Invented parts were replaced with the kit's own.</b> The agree line is the kit's callout, the refund's success line is the kit's good notice, "Test mode" is the product's existing chip and sentence, the danger button is the kit's tint and the window's sentence is the kit's olive box.</li>
+      <li><b>Answers after a click belong in the window</b> (Stripe refused, more than is left, our record failed, no answer), as the kit's field error. Lines before a click stay as the refusal line the console already has.</li>
+      <li><b>Find was redrawn on its real words</b>: "Stripe · 1", "Nothing matches “…”", and the foot "Card digits are not searched. Ask for the email on the receipt instead."</li>
+      <li><b>Small ones</b>: "Refund this charge", not "Refund…"; whole Stripe numbers; the kit's flag icon, not a text glyph; Billing's frames no longer show "Add a note" (Billing lost it in Stage 2); "Refund the later one" is a door; the band says "from our record"; engineer words ("key", "a message we missed") rewritten.</li>
+    </ul>
+    <h3 style="margin-top:6px">Where two written rules meet (for you to rule, recommendation first)</h3>
+    <ul>
+      <li><b>D-1 · Red for refusals.</b> The console's June 26 rule keeps red for what cannot be undone; Stage 4's D-3 made a refusal red when nobody here can get past it, and the kit's field error is red text. Refusals like "Stripe did not refund it" undo nothing. <b>Recommended: the June 26 rule governs buttons and doors only; refusals and errors may be red lines.</b> One sentence in the design log.</li>
+      <li><b>D-2 · A heading above every card, or the toolbar's count as its heading.</b> <b>Recommended: a table's toolbar count is enough for a card that holds one table; a card without a table (like the subscription comparison) gets a heading.</b> Drawn that way.</li>
+    </ul></div>
+  <div class="ask" data-q="A11"><div class="q">Question 11 · Where two written rules meet (D-1 and D-2 above)</div>
+    <p class="rec"><b>Recommended: both as drawn</b>: red is for buttons and doors that cannot be undone, and refusal lines may be red; a single-table card needs no heading above it, any other card does.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="D-1 and D-2 as recommended"> D-1 and D-2 as recommended</label>
+      <label><input type="checkbox" data-o="D-1: refusals stay amber, never red"> D-1: refusals stay amber, never red</label>
+    </div><textarea aria-label="Notes on question 11" placeholder="Notes"></textarea></div>
+</section>
+
+<section class="screen" id="paste">
+  <div class="screen-head"><span class="n">PASTE-BACK</span><h2>Your answers, ready to paste into the chat</h2><p>Tick and type above. Your answers stay in this browser only. Copy them here when you are done.</p></div>
+  <div class="paste"><button class="btn-doc" type="button" id="make">Copy my answers</button><textarea id="out" aria-label="Your answers" readonly></textarea></div>
+</section>
+</div>
+
+<dialog id="note" aria-labelledby="note-h"><h3 id="note-h">Detail</h3><p id="note-b"></p><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+<dialog id="zoom" class="zoom" aria-label="Capture at full size"><div class="z"><img id="zoom-img" alt=""></div><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+<script>
+/* core: the menu per role from one rulebook, the strip with Find, the threat list; the theme switch; tags; captures. */
+(function () {
+  var LOCK = '<span class="lk" style="font-size:16px"><svg class="mk2" viewBox="10 10 44 44" aria-hidden="true"><path d="M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z"/></svg><span class="nm2">FieldLogic<span class="hq">HQ</span></span></span>';
+  /* entry: [key, label, icon, area, waiting count (example)] — Stage 4 renames Founding season to Free time */
+  var MENU = [
+    { g: "", items: [["today", "Today", "inbox", "overview"]] },
+    { g: "Customers", items: [["clubs", "Clubs & portals", "clubs", "clubs", 10], ["people", "People", "people", "people"], ["free", "Free time", "free", "founding", 2], ["retention", "Retention", "retention", "retention", 9]] },
+    { g: "Health", items: [["errors", "Errors", "errors", "errors"], ["feedback", "Feedback", "feedback", "feedback", 3]] },
+    { g: "Growth", items: [["leads", "Leads", "leads", "leads"], ["campaigns", "Campaigns", "campaigns", "growth", 6], ["decks", "Pitch decks", "decks", "growth"]] },
+    { g: "Product", items: [["plans", "Plans & pricing", "plans", "plans"], ["approval", "Approval queue", "approval", "plans"], ["bulk", "Bulk changes", "bulk", "bulk"], ["templates", "Email templates", "templates", "templates"], ["export", "Export registry", "export", "export"]] },
+    { g: "Records", items: [["staff", "Staff", "staff", "staff"], ["audit", "Audit log", "audit", "audit"]] },
+    { g: "System", extra: true, items: [["dev", "Dev tools", "terminal", "staff"]] },
+    { g: "Private finance", owner: true, items: [["book", "Bookkeeping", "wallet", "book"]] }
+  ];
+  var VIEW = {
+    overview: "*", clubs: "*", people: "*", audit: "*",
+    founding: "billing product support", retention: "billing support", errors: "product support", feedback: "product support billing",
+    leads: "product growth", growth: "product growth", plans: "product billing", bulk: "billing product", templates: "product",
+    export: "product billing support", staff: "", book: ""
+  };
+  var WRITE = {
+    clubs: "support billing product", people: "support billing", founding: "billing", retention: "billing", errors: "product", feedback: "product support billing",
+    leads: "product growth", growth: "product growth", plans: "product", bulk: "billing product", templates: "product", staff: ""
+  };
+  function has(list, role) { return list === "*" || (" " + list + " ").indexOf(" " + role + " ") >= 0; }
+  function canView(role, area) { return role === "super" || has(VIEW[area] || "", role); }
+  function isRead(role, area) { return role !== "super" && area in WRITE && WRITE[area] !== "" && !has(WRITE[area], role); }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+  function ic(id) { return '<svg class="ic" aria-hidden="true"><use href="#i-' + id + '"/></svg>'; }
+  document.querySelectorAll("aside.side").forEach(function (side) {
+    var role = side.getAttribute("data-role") || "super";
+    var active = side.getAttribute("data-active"), open = side.getAttribute("data-open") || "";
+    var extras = side.getAttribute("data-extras"), h = "";
+    MENU.forEach(function (grp) {
+      if (grp.extra && !extras) return;
+      if (grp.owner && role !== "super") return;
+      var items = grp.items.filter(function (it) { return grp.owner || canView(role, it[3]); });
+      if (!items.length) return;
+      var hasActive = items.some(function (it) { return it[0] === active; });
+      var isOpen = !grp.g || open === "all" || open === grp.g || (hasActive && open !== "none");
+      var sum = items.reduce(function (n, it) { return n + (it[4] || 0); }, 0);
+      h += '<div class="grp">';
+      if (grp.g) h += '<div class="gl' + (isOpen ? "" : " folded") + (hasActive ? " cur" : "") + '">' + esc(grp.g) + (!isOpen && sum ? '<span class="pill" style="margin-left:auto">' + sum + "</span>" : "") + '<span class="cv"' + (!isOpen && sum ? ' style="margin-left:8px"' : "") + ">" + ic("down") + "</span></div>";
+      if (isOpen) items.forEach(function (it) {
+        var ro = isRead(role, it[3]);
+        h += '<div class="it' + (it[0] === active ? " on" : "") + '">' + ic(it[2]) + '<span class="t">' + esc(it[1]) + "</span>" + (ro ? '<span class="eye" title="Read only">' + ic("eye") + "</span>" : "") + (it[4] ? '<span class="pill">' + it[4] + "</span>" : "") + "</div>";
+      });
+      h += "</div>";
+    });
+    h += '<div class="foot"><div class="it">' + ic("help") + '<span class="t">Help</span></div><div class="it">' + ic("collapse") + '<span class="t">Collapse sidebar</span></div></div>';
+    side.innerHTML = h;
+  });
+  document.querySelectorAll("[data-strip]").forEach(function (st) {
+    var q = st.getAttribute("data-find");
+    st.className = "strip withfind";
+    var box = q ? '<span class="find typed focus">' + ic("search") + '<span style="color:var(--i)">' + esc(q) + '</span><span class="caret"></span></span>'
+                : '<span class="find">' + ic("search") + 'Find a club, person or Stripe number<span class="k">/</span></span>';
+    st.innerHTML = '<span class="lock">' + LOCK + '</span><div class="mid"><span class="portal2">Support console</span></div><div class="fslot">' + box + '</div><span></span><div class="end"><span class="acc">' + ic("user") + "</span></div>";
+  });
+  document.querySelectorAll("[data-lockup]").forEach(function (n) { n.innerHTML = LOCK; });
+
+  var THREATS = [
+    ["A role without the refund power calls the refund route directly", "The route checks a new refund power (Super admin, Billing) before it reads anything, from the same rulebook as the menu. Every other role is refused. Support's window has no Refund door, and the server refuses it anyway."],
+    ["A staff member refunds their own club", "Refused on the server before Stripe is asked. 'Own' is wider than Stage 4 checks today: a club member, a coach on one of its teams, an owner or billing owner of a Coaches Portal the club pays for, a pending invite, or a staff email equal to the club owner's or the Stripe customer's. Free time adopts the same check. A demo club is refused too."],
+    ["A staff member refunds a friend's club without cause", "Nothing can know who a friend is, so every refund is seen: the club's Story with the staff member's name and reason, and the audit log's Reason column. The money can only go back to the card it came from, so nobody but the customer can receive it."],
+    ["A stolen or misused Billing login refunds everything, one charge at a time", "A sixth refund by one person in 24 hours, and any charge older than 6 months, needs a Super admin (question 1). The count is read from our refunds record on the server, not from one machine's memory."],
+    ["The browser sends a bigger amount, another club's charge, or a bad number", "The club comes from the record's address, never the body. The server reads the charge from Stripe and checks it belongs to exactly this club's Stripe customer (not empty, not shared with another club), is in the same mode as the site's key, has paid and is not disputed. The amount is whole cents, above zero, and no more than Stripe says is left; the browser also sends the remainder it saw, and a changed remainder is refused. 'All of it' is sent as an amount, never left blank."],
+    ["Another club's charge shown on this club's Money tab", "The same ownership check runs on every read, not only on refund: a charge or invoice number opened from Find, or typed into the address, shows nothing unless it belongs to this club's customer."],
+    ["A retry or double click refunds twice", "The first click stops the window. Every refund carries one key (our refund record's number); a retry within the same request reuses it, and Stripe answers a repeated key with its first refund."],
+    ["A lost answer is retried after Stripe has forgotten the key", "Stripe keeps a refund key for about a day; after that the same key would make a second refund. So recovery never sends the refund again: it lists the charge's refunds in Stripe and looks for ours by its number. Found, done; not found once the first request cannot still be running, closed as 'not made', which releases the charge."],
+    ["Two staff refund the same charge at once", "Our refunds record allows one unfinished refund per charge, enforced by the database, not by reading first. The second start is refused, naming who started the first (G 5). Each also checks Stripe's remaining amount, so even a race past the hold cannot exceed the charge."],
+    ["A refund happens in Stripe and we have no record", "Our record is written first, by a writer that stops on failure (unlike the console's other audit writes). If it cannot be written, Stripe is never asked (G 7)."],
+    ["We record a refund that Stripe never made", "Our record starts as 'started', not 'refunded'. Only Stripe's definite answer completes it: done, or refused. A timeout or a Stripe fault is 'unknown' until recovery finds out."],
+    ["Stripe's own message about the refund is counted twice", "With question 4's A, refund messages are not received, so there is nothing to double. With B, our record and Stripe's message are matched on Stripe's refund number, so the second is ignored. The Story matches console refunds and Stripe's list the same way."],
+    ["The reason is empty, or holds a card number", "Required on the server and kept in our records only (question 6). A reason containing what looks like a card number is refused. Its quality cannot be enforced; being seen is the check."],
+    ["Our words end up in Stripe for good", "Stripe is told only our refund's number, the club and the staff member, plus Stripe's own reason (duplicate, or requested by customer). Never the typed reason, which can hold a customer's details."],
+    ["Card data is stored or logged", "Nothing card-related is kept: the brand and last four are read from Stripe when shown, and a console refund's Story entry says 'to the card it came from'. A build guard fails if a refund or audit write carries a card number, expiry, holder name, billing details or card fingerprint."],
+    ["Stripe's error text leaks to the browser or our records", "The person sees fixed sentences chosen from Stripe's error code (already refunded, disputed, too much, failed). Our record keeps Stripe's error code and request number only, never its raw reply, which can name an account or a key."],
+    ["'Fraudulent' sent as the reason", "Never: it adds the card and email to Stripe's block lists. The console sends 'duplicate' when drawing B flagged the charge, otherwise 'requested by customer'."],
+    ["A refund changes the plan by surprise", "A refund does not touch the subscription in Stripe, and we do not receive refund messages, so nothing writes the plan. The sentence says the plan does not change. (Question 9 closes the separate way the plan changes by surprise today.)"],
+    ["The plan-change refusal is walked around", "The refusal lives in the one shared plan-change rule that the pencil, Bulk changes, Put it back and the record all use, and triggers on any subscription not yet cancelled in Stripe, whatever its billing status. Bulk skips that club with a reason line."],
+    ["Find used to search Stripe freely", "What is typed must be shaped exactly like a Stripe number or an invoice number before any Stripe call is built; quotes and OR never reach Stripe. 'Not found' and 'found on another account' read the same. Each lookup has a time limit."],
+    ["Stripe's side shown to a role that may not read it", "The Money tab and the Story ask the server for Stripe's side, and money entries, only for roles with the Stripe-reading power (A2); others get our record and one line. The card is never sent to them."],
+    ["A test refund on production, or a real one on dev", "Each site holds only its own key. Dev and staging show the 'Test mode' chip on the tab and in the sentence. A number from one mode is not found in the other, and a charge whose mode differs from the key is refused."],
+    ["The console's key can do anything in Stripe", "To check at the build: whether Stripe lets a restricted key read customers, subscriptions, invoices and charges and create refunds without creating charges. If it does, the console gets its own key with a time limit on every call; production's key is an owner step at the release. If not, the full key stays and the guards above carry the weight."]
+  ];
+
+  var tb = document.querySelector('[data-fill="threats"]');
+  if (tb) tb.innerHTML = THREATS.map(function (t, i) { return "<tr><td>T" + (i + 1) + "</td><td>" + esc(t[0]) + "</td><td>" + esc(t[1]) + "</td></tr>"; }).join("");
+
+  var frames = document.querySelectorAll("[data-frame]");
+  function theme(dark) {
+    frames.forEach(function (f) { f.classList.toggle("dark", dark); });
+    document.getElementById("sw-warm").setAttribute("aria-pressed", dark ? "false" : "true");
+    document.getElementById("sw-dark").setAttribute("aria-pressed", dark ? "true" : "false");
+    try { localStorage.setItem("pas3-frames", dark ? "dark" : "warm"); } catch (e) {}
+  }
+  document.getElementById("sw-warm").addEventListener("click", function () { theme(false); });
+  document.getElementById("sw-dark").addEventListener("click", function () { theme(true); });
+  try { if (localStorage.getItem("pas3-frames") === "dark") theme(true); } catch (e) {}
+  var note = document.getElementById("note"), zoom = document.getElementById("zoom");
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("button.tag");
+    if (t) { document.getElementById("note-h").textContent = t.textContent; document.getElementById("note-b").textContent = t.getAttribute("data-n"); note.showModal(); return; }
+    var s = e.target.closest("button.shot");
+    if (s) { var i = document.getElementById("zoom-img"); i.src = s.getAttribute("data-src"); i.alt = s.getAttribute("aria-label"); zoom.showModal(); return; }
+    if (e.target.closest("button.close")) { var d = e.target.closest("dialog"); if (d) d.close(); }
+  });
+  [note, zoom].forEach(function (d) { d.addEventListener("click", function (e) { if (e.target === d) d.close(); }); });
+})();
+</script>
+<script>
+/* answers: checkboxes + notes kept in this browser, and the paste-back */
+(function () {
+  var KEY = "pas3-answers-v1", state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var asks = Array.prototype.slice.call(document.querySelectorAll(".ask")).sort(function (a, b) {
+    return parseInt(a.getAttribute("data-q").slice(1), 10) - parseInt(b.getAttribute("data-q").slice(1), 10);
+  });
+  asks.forEach(function (a) {
+    var q = a.getAttribute("data-q"), s = state[q] || { o: [], n: "" };
+    a.querySelectorAll('input[type="checkbox"]').forEach(function (c) {
+      c.checked = s.o.indexOf(c.getAttribute("data-o")) >= 0;
+      c.addEventListener("change", function () {
+        var cur = state[q] || { o: [], n: "" }, v = c.getAttribute("data-o");
+        cur.o = cur.o.filter(function (x) { return x !== v; }); if (c.checked) cur.o.push(v);
+        state[q] = cur; save();
+      });
+    });
+    var ta = a.querySelector("textarea");
+    if (ta) { ta.value = s.n || ""; ta.addEventListener("input", function () { var cur = state[q] || { o: [], n: "" }; cur.n = ta.value; state[q] = cur; save(); }); }
+  });
+  document.getElementById("make").addEventListener("click", function () {
+    var lines = ["Support console stage 3 drawings: my answers"];
+    asks.forEach(function (a) {
+      var title = a.querySelector(".q").textContent;
+      var picked = []; a.querySelectorAll('input[type="checkbox"]').forEach(function (c) { if (c.checked) picked.push(c.getAttribute("data-o")); });
+      var n = (a.querySelector("textarea") || {}).value || "";
+      lines.push("", title, picked.length ? "  Picked: " + picked.join(" | ") : "  Picked: (nothing)");
+      if (n.trim()) lines.push("  Notes: " + n.trim());
+    });
+    var out = document.getElementById("out"); out.value = lines.join("\n");
+    var done = function () { document.getElementById("make").textContent = "Copied"; setTimeout(function () { document.getElementById("make").textContent = "Copy my answers"; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>
+

@@ -7,6 +7,25 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-26 — SUPPORT CONSOLE STAGE 3 (MONEY), TWELVE ASKS RULED AS RECOMMENDED (owner, paste-back from the drawings https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX, every recommended box ticked)
+
+**Decision (as ruled, the paste-back's words):**
+- **Q1:** Super admin + Billing refund; never own club (wide check, free time too); no dollar cap; older than 6 months or a 6th refund in 24h needs Super admin; Support reads.
+- **Q2:** All or part; original card only; several parts up to the charge.
+- **Q3:** Stripe receipt only; owner confirms the Refunds switch is on in prod; no email from us.
+- **Q4:** A: read Stripe live; our own entries always show.
+- **Q5:** Stripe numbers + invoice number; no card digits; one line says so.
+- **Q6:** Required on every staff change; product jobs none; copy old reasons into the column; "Not recorded".
+- **Q7:** Bulk changes' Subscription status override follows free time's rules: end required, 6/12-month cap, never own club, server-enforced.
+- **Q8:** The double plan grant fix rides Stage 3's migration.
+- **Q9:** Refuse a staff plan change while a live Stripe subscription runs; one line says why.
+- **Q10:** Cancelled + Trial everywhere a person reads them; one renewal label set; Billing status; gated.
+- **Q11:** D-1 and D-2 as recommended (D-1: the June 26 red rule governs buttons and doors; refusal and error lines may be red. D-2: a card holding one table needs no heading above it; any other card gets one).
+- **Q12:** Field moves into the audit entry window with the values.
+
+**Also directed in the session (2026-10-26, before the paste-back):** the audit log's Old value and New value leave the table for the entry window (raw data, a "more details" item, not filtered or searched); the export keeps every column. A window's foot sentence must never ship unformatted again (the 2026-10-25 defect).
+**Rationale:** the drawings' reasons beside each question; the code facts are in the plan's "Stage 3 findings".
+
 ### 2026-10-25 — SUPPORT CONSOLE STAGE 4 (FREE TIME), ELEVEN ASKS RULED AS RECOMMENDED (owner, paste-back from the drawings https://claude.ai/artifact/5eawvGUPwQVPoWiAV7vQY5, every recommended box ticked)
 
 **Decision (as ruled):**

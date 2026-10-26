@@ -8,6 +8,30 @@
 
 ---
 
+### 2026-10-26 — Refunds of a club's FieldLogicHQ subscription charges are made from the support console, by Super admin and Billing, back to the card only
+**Status:** **Decided** (owner, 2026-10-26: Support console Stage 3 drawings, Q1–Q3, every recommended box ticked —
+https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX; recorded in `memory/design_decisions.md` 2026-10-26 and the plan
+`PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` "Owner rulings 2026-10-26"). The owner confirmed at the build gate that Stripe's
+**Refunds** customer email is **on in production**. **Built on dev 2026-10-26; not committed, not released.**
+**Decision:**
+1. **Who:** Super admin and Billing refund a club's subscription charge from its Money tab. Support reads Stripe's side and
+   hands a refund on. No other role refunds.
+2. **Never your own club** (the wide check: a member, a pending invite, a coach on one of its teams, an owner or billing
+   owner of a Coaches Portal it pays for, or the staff email is the club owner's or the Stripe customer's). Free time
+   adopts the same check.
+3. **No dollar cap.** A charge **older than 6 months**, or a **sixth refund by one person in 24 hours**, needs a Super admin.
+4. **All or part**, several parts up to the charge; **only to the original card** (the only destination Stripe offers).
+5. **The customer hears through Stripe's own refund receipt; no email from us.**
+6. **Credits and balances stay in Stripe** (kickoff Q7, 2026-10-24).
+**Rationale:** a refund can only return a customer's own money to the card it came from, never more than they paid, so the
+risk is revenue given back without cause, not money taken: the useful limits are who, never your own club, and being seen
+(every refund is on the club's Story with the staff member's reason, and in the audit log), plus a daily brake for a stolen
+or misused Billing login. The drawings' reasons beside Q1–Q3.
+**Affects:** support console only (Money tab, refund window, Story, audit log). **No price, plan, packaging or gate moves;
+`PLAN_PRICING_FACTS.md` needs nothing.**
+**Handoff:** none to `/marketing` or `/billing` (no customer-facing promise changes; the customer's only new touchpoint is
+Stripe's own receipt). Release step: the owner's Stripe Refunds email stays on in production.
+
 ### 2026-10-25 — Operator free time: staff may give a club a plan, sections or a billing status for a while, with no price and no card
 **Status:** **Decided** (owner, 2026-10-25: the eleven Stage 4 drawing rulings, every recommended box ticked, and the four
 build-gate calls; plan `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` "Owner rulings … (Stage 4 drawings)" and "Stage 4 build
