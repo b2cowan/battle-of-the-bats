@@ -26616,5 +26616,5 @@ republished; tick positions unchanged).
 
 **Proven by the builder:** the draft tests (old cases unchanged; switch off byte-identical to deals recorded before the change; families whole at every seed; 120 / 10 sizes 12 each, averages within 0.2) and a review fuzz of 6,000 divisions with no family split; a note-gate guard that fails when the board's note gate and the registrations read come apart (mutation-tested); the pool's search / filter / sort tests; /review three lenses on the board and one on the dealing, every confirmed finding fixed.
 
-**Not proven:** the rendered layout check could not run — the UAT fixture's house-league season is gone, so every house-league screen lands on "Page not found" (Registrations too); re-seeding it signs every session out, so it was left for the owner's word. Drag from the stuck pool to the 10th team, the tablet hold-to-drag, and dark mode are walk steps only.
+**Not proven:** the rendered layout check can't measure house league: in the sweep's session the UAT club's admin pages land on "Page not found" (Registrations too — the club forwards to its own web address, a known Stage 9 gap, not this change). Drag from the stuck pool to the 10th team, the tablet hold-to-drag, and dark mode are walk steps only.
 <!-- /§387 -->

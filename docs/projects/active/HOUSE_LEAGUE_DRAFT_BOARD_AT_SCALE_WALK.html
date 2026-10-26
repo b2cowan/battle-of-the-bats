@@ -84,6 +84,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       <dt>Where</dt><dd><code>http://localhost:3000</code> · <code>/dev-league-org/admin/house-league</code></dd>
       <dt>Owner</dt><dd><code>league-owner@dev.local</code> · <code>devpass123</code> (sign in only, never reset)</dd>
       <dt>Registrar</dt><dd><code>league-registrar@dev.local</code> · <code>devpass123</code></dd>
+      <dt>Treasurer</dt><dd><code>league-treasurer@dev.local</code> · <code>devpass123</code> (holds Accounting, not House league)</dd>
       <dt>Big season</dt><dd><strong>Draft Test 2027</strong>, U12 Division: 120 accepted players in 101 families (17 with two or three children), 10 teams, nobody placed, nobody rated, 80 paid and 40 owing, about half with a sign-up note.</dd>
       <dt>Small season</dt><dd><strong>Dev House League 2027</strong>, U10 Division A (the §381 season, about six players).</dd>
       <dt>Re-seed first</dt><dd>Ask Claude to run <code>node --env-file=.env.local scripts/seed-draft-scale-fixture.mjs</code> (dev only; the season's address changes each time). For step F3, ask Claude to mark one Draft Test player as asked to withdraw.</dd>
@@ -104,7 +105,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
 <script>
 (function () {
   var KEY = 'house-league-draft-board-walk-v1';
-  var O = 'Owner, computer (1440 wide)', T = 'Owner, tablet or a 768 px window', P = 'Owner, phone', R = 'Registrar, computer';
+  var O = 'Owner, computer (1440 wide)', T = 'Owner, tablet or a 768 px window', P = 'Owner, phone', R = 'Registrar, computer', TR = 'Treasurer, computer';
   var PARTS = [
     { id: 'A', title: 'At 120: the pool stays put', steps: [
       { who: O, do: 'Open Draft Test 2027 › Teams & draft (U12 Division).', see: 'The steps under a "Steps · 1 of 4 done" head with Hide steps. Below them "Not on a team" is its own column on the left (count 120), with Search, Filter, Sort: Last name and the headings RATING · PLAYER · AGE; the ten team cards sit two across beside it, each "0 players" with "Drag players here, or run the draft".' },
@@ -123,7 +124,8 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       { who: O, do: 'Place one of that family’s children on a team, open the mark again and click that child’s name.', see: 'The window closes and the page goes to the child on their team card, still lit. Click elsewhere and press the mark again to clear it.' },
       { who: O, do: 'Click a note mark (the page icon).', see: '"{Name} · note from the family", the note in quotes (e.g. “Peanut allergy (EpiPen)”), and "Written at sign-up · anyone who can open Registrations sees it".' },
       { who: O, do: 'Click an amber $.', see: '"$165 owing. Record a payment on Registrations." — Registrations is a link to the Active tab.' },
-      { who: R, do: 'As the registrar, open the same board.', see: 'No Rating column, no Rating sort, no Not rated filter, no averages on the cards, no ⋯ or drag. The family, note and $ marks are there (the registrar can open Registrations).' }
+      { who: R, do: 'As the registrar, open the same board.', see: 'No Rating column, no Rating sort, no Not rated filter, no averages on the cards, no ⋯ or drag. The family, note and $ marks are there (the registrar can open Registrations).' },
+      { who: TR, do: 'As the treasurer, paste the Teams & draft address from the owner’s window.', see: '"You don’t have access to house league teams." The treasurer holds the books, not House league: no board, no notes.' }
     ]},
     { id: 'D', title: 'The drawer', steps: [
       { who: O, do: 'Press Hide steps.', see: 'The steps fold to one line: "Steps · 1 of 4 done · Next: rate the players" with Rate players beside it, and Show steps.' },

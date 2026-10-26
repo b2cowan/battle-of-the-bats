@@ -70,9 +70,9 @@ list of groups. Anyone without ratings access sees no Rating column, sort or ave
 - A QA walk (checkable Artifact) after the build: 120-player pool scroll/stick, filter + sort + search, family popover,
   drag from the stuck pool to a low team, fold-when-empty, drawer open/close, phone group view, the 6-player case.
   → §387, https://claude.ai/artifact/F3P4GoqonbFY9fjh2NPPn3.
-- ⚠ `check:layout --only=admin-hl-teams` could not run on 2026-10-26: the UAT fixture's house-league season is gone, so
-  every house-league screen (Registrations too) lands on "Page not found". Re-seeding the UAT fixture signs every
-  session out — run it on the owner's word, then the check.
+- ⚠ `check:layout --only=admin-hl-teams` can't measure house league (2026-10-26): in the sweep's session the UAT club's
+  admin pages land on "Page not found" (Registrations too) — the club forwards to its own web address, the known Stage 9
+  gap. Not this change; the walk carries the layout.
 
 ## 6. Status log
 
