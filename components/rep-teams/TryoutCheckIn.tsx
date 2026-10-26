@@ -16,6 +16,7 @@ import SearchField from '@/components/shared/SearchField';
 import TryoutNamesSwitch from './TryoutNamesSwitch';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './TryoutCheckIn.module.css';
+import PhoneInput from '@/components/shared/PhoneInput';
 
 /**
  * ⚠ THE BUTTON SAYS "Add player", NOT "Add walk-up" (owner ruling 2026-08-26). Many coaches — the
@@ -665,7 +666,7 @@ export default function TryoutCheckIn({
                   on file to "reach them by phone", and until now there was nowhere to have
                   written the number down. */}
               <label className={styles.label} htmlFor="walkup-phone">Phone</label>
-              <input id="walkup-phone" className={styles.input} type="tel" value={walkup.phone} maxLength={30} placeholder="Add now or later" onChange={e => setWalkup(w => ({ ...w, phone: e.target.value }))} />
+              <PhoneInput id="walkup-phone" className={styles.input} value={walkup.phone} maxLength={30} placeholder="Add now or later" onChange={v => setWalkup(w => ({ ...w, phone: v }))} />
             </div>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="walkup-email">Email</label>

@@ -12,6 +12,7 @@ import formKit from '@/components/public/ClubForm.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 import LeaguePayBlock from '@/components/public/LeaguePayBlock';
 import type { LeaguePayView } from '@/lib/league-pay-view';
+import PhoneInput from '@/components/shared/PhoneInput';
 
 /**
  * THE FAMILY'S SIGN-UP FORM (Club Tier Stage 9b-1, Part 5; drawing §4, words HOUSE_LEAGUE_STAGE9B1_COPY.md §7–§8; owner Q5,
@@ -305,8 +306,8 @@ export default function RegisterForm({
           </div>
           <div>
             <label className={formKit.label} htmlFor="g-phone">Phone</label>
-            <input id="g-phone" className={formKit.input} type="tel" value={guardian.phone}
-              onChange={e => setGuardian(g => ({ ...g, phone: e.target.value }))} maxLength={30} autoComplete="tel" />
+            <PhoneInput id="g-phone" className={formKit.input} value={guardian.phone}
+              onChange={v => setGuardian(g => ({ ...g, phone: v }))} maxLength={30} autoComplete="tel" />
           </div>
         </div>
         {/* Club Tier 9c, ruling 9c·9 (copy §12): the coach sees these three, so the form says so, every season. */}

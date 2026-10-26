@@ -6,6 +6,7 @@ import { CheckCircle } from 'lucide-react';
 import { possessive, registrationReference } from '@/lib/utils';
 import styles from './register.module.css';
 import formKit from '@/components/public/ClubForm.module.css';
+import PhoneInput from '@/components/shared/PhoneInput';
 
 interface Props {
   orgSlug: string;
@@ -280,11 +281,10 @@ export default function TryoutRegisterForm({
           </div>
           <div>
             <label className={formKit.label}>Phone number</label>
-            <input
+            <PhoneInput
               className={formKit.input}
-              type="tel"
               value={form.guardianPhone}
-              onChange={set('guardianPhone')}
+              onChange={v => setForm(f => ({ ...f, guardianPhone: v }))}
               maxLength={30}
               autoComplete="tel"
               placeholder="Optional"

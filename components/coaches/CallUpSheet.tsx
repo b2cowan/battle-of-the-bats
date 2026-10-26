@@ -6,6 +6,7 @@ import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import s from './CallUpSheet.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import PhoneInput from '@/components/shared/PhoneInput';
 
 /**
  * "CALL UP A PLAYER" — the contents of the lineup builder's one call-up control (mig 309; owner
@@ -185,8 +186,8 @@ export default function CallUpSheet({
             </label>
             <label className={coach.field}>
               <span className={coach.label}>Contact phone</span>
-              <input className={coach.input} value={phone} type="tel"
-                onChange={e => setPhone(e.target.value)} maxLength={30} />
+              <PhoneInput className={coach.input} value={phone}
+                onChange={setPhone} maxLength={30} />
             </label>
           </div>
           {/* R6, said out loud rather than left to be discovered. */}

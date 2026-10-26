@@ -41,6 +41,7 @@ import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../coaches.module.css';
 import { CoachListToolbar, ViewSwitch } from '@/components/coaches/kit';
 import type { RepRosterPlayer, RepProgramYear } from '@/lib/types';
+import PhoneInput from '@/components/shared/PhoneInput';
 
 /** List ⇄ Depth chart — two views of the same roster. */
 const ROSTER_VIEWS = [{ id: 'list', label: 'List' }, { id: 'depth', label: 'Depth chart' }] as const;
@@ -1061,9 +1062,9 @@ export default function RosterPage({
                 </div>
                 <div className={styles.field}>
                   <label className={styles.label} htmlFor="add-gph">Guardian phone</label>
-                  <input id="add-gph" className={styles.input} type="tel"
+                  <PhoneInput id="add-gph" className={styles.input}
                     value={addForm.guardianPhone}
-                    onChange={e => setAddForm(f => ({ ...f, guardianPhone: e.target.value }))}
+                    onChange={v => setAddForm(f => ({ ...f, guardianPhone: v }))}
                     maxLength={20} />
                 </div>
               </div>

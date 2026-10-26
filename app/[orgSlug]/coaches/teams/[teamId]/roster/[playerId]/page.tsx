@@ -42,6 +42,7 @@ import type { RepRosterPlayer } from '@/lib/types';
 import type { CoachCapabilities } from '@/lib/coach-capabilities';
 import type { RepPlayerAttendanceSummary, RepPlayerDuesSummary, RepPlayerAwardsSummary } from '@/lib/db';
 import type { FairPlayRow } from '@/lib/lineup-season-analytics';
+import PhoneInput from '@/components/shared/PhoneInput';
 
 const ATTN_CHIP: Record<string, string> = {
   attending: styles.badgeActive,
@@ -1191,9 +1192,9 @@ export default function PlayerDetailPage({
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="gph">Phone</label>
-            <input id="gph" className={styles.input} type="tel"
+            <PhoneInput id="gph" className={styles.input}
               value={form.guardianPhone}
-              onChange={e => edit(f => ({ ...f, guardianPhone: e.target.value }))}
+              onChange={v => edit(f => ({ ...f, guardianPhone: v }))}
               maxLength={20} />
             {form.guardianPhone.trim() && (
               <a className={styles.contactLink} href={telHref(form.guardianPhone)}>Call or text</a>
@@ -1243,9 +1244,9 @@ export default function PlayerDetailPage({
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="ecp">Emergency contact phone</label>
-            <input id="ecp" className={styles.input} type="tel"
+            <PhoneInput id="ecp" className={styles.input}
               value={form.emergencyContactPhone}
-              onChange={e => edit(f => ({ ...f, emergencyContactPhone: e.target.value }))}
+              onChange={v => edit(f => ({ ...f, emergencyContactPhone: v }))}
               maxLength={20} />
             {form.emergencyContactPhone.trim() && (
               <a className={styles.contactLink} href={telHref(form.emergencyContactPhone)}>Call</a>

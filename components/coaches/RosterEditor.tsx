@@ -10,6 +10,7 @@ import CoachEmptyState from './CoachEmptyState';
 import FeedbackModal from '@/components/FeedbackModal';
 import editorRow from './EditorRow.module.css';
 import styles from './RosterEditor.module.css';
+import PhoneInput from '@/components/shared/PhoneInput';
 
 type Props = {
   basicTeamId: string;
@@ -452,13 +453,12 @@ function PlayerForm({
               Enter a valid email (e.g. name@example.com), or leave it blank.
             </p>
           )}
-          <input
+          <PhoneInput
             className={styles.input}
-            type="tel"
             placeholder="Contact phone"
             maxLength={40}
             value={form.contactPhone}
-            onChange={e => set({ contactPhone: e.target.value })}
+            onChange={v => set({ contactPhone: v })}
             aria-label="Contact phone"
           />
           <textarea
