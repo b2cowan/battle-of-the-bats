@@ -9,7 +9,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
-type BulkActionType = 'subscription_status_override' | 'comp_period' | 'plan_change' | 'module_addon_enablement';
+type BulkActionType = 'subscription_status_override' | 'plan_change' | 'module_addon_enablement';
 type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
 type ModuleOperation = 'enable' | 'disable';
 
@@ -36,7 +36,6 @@ type BulkResult = {
 
 const VALID_ACTIONS = new Set<BulkActionType>([
   'subscription_status_override',
-  'comp_period',
   'plan_change',
   'module_addon_enablement',
 ]);
@@ -98,6 +97,11 @@ export const POST = withObservability(async (req: Request) => {
   const moduleOperation = cleanString(body.module_operation, 40) as ModuleOperation;
   const expiresAt = cleanString(body.expires_at, 80);
 
+  // Comp period is no longer given (Support console Stage 4, owner ruling Q5): it never gave a club anything, and offering
+  // it beside things that do is how a club ends up "comped" and charged. Founding Season's own rows are written at sign-up.
+  if ((actionType as string) === 'comp_period') {
+    return NextResponse.json({ error: 'Comp period is no longer given from the console. It never gave a club anything.' }, { status: 400 });
+  }
   if (!VALID_ACTIONS.has(actionType)) {
     return NextResponse.json({ error: 'Invalid bulk operation type' }, { status: 400 });
   }
@@ -119,9 +123,6 @@ export const POST = withObservability(async (req: Request) => {
   }
   if (actionType === 'subscription_status_override' && !VALID_STATUSES.has(targetStatus)) {
     return NextResponse.json({ error: 'Choose a valid subscription status' }, { status: 400 });
-  }
-  if (actionType === 'comp_period' && !expiresAt) {
-    return NextResponse.json({ error: 'Comp period bulk grants require an expiration date' }, { status: 400 });
   }
   if (actionType === 'plan_change' && !isOrgPlan(targetPlan)) {
     return NextResponse.json({ error: 'Choose a valid target plan' }, { status: 400 });
@@ -202,29 +203,6 @@ export const POST = withObservability(async (req: Request) => {
           reason,
         });
         results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: true, message: `Status override set to ${targetStatus}` });
-      }
-
-      if (actionType === 'comp_period') {
-        const { error } = await supabaseAdmin
-          .from('org_overrides')
-          .insert({
-            org_id: org.id,
-            type: 'comp_period',
-            value: 'granted',
-            expires_at: expiresAt,
-            reason,
-            created_by: auth.user.email!,
-          });
-        if (error) throw error;
-
-        await writePlatformAuditLog(auth.user.email!, org.id, 'bulk_create_override', 'comp_period', null, {
-          bulk_operation_id: operation.id,
-          type: 'comp_period',
-          value: 'granted',
-          expires_at: expiresAt,
-          reason,
-        });
-        results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: true, message: `Comp period granted through ${expiresAt}` });
       }
 
       if (actionType === 'plan_change') {

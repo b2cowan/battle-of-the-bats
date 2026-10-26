@@ -5,6 +5,8 @@ import type { OrgPlan } from '@/lib/types';
 import { buildClubStory } from '@/lib/platform-story';
 import { applyClubSections, endClubOverride } from '@/lib/club-record-changes';
 import { applyOperatorPlanChange } from '@/lib/operator-plan-change';
+import { changeFreeTimeEnd } from '@/lib/free-time-writes';
+import { earliestLastDay } from '@/lib/free-time';
 
 /**
  * Put it back (Support console Stage 2, rule R5; kickoff Q2): undo a plan or limit, a section, or a running override from
@@ -37,6 +39,20 @@ export const POST = withObservability(async (req: Request, { params }: { params:
 
   if (target.kind === 'override') {
     const r = await endClubOverride({ orgId: id, overrideId: target.overrideId, reason, actorEmail: actor, extra });
+    return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: r.error }, { status: r.status });
+  }
+
+  // Free time's newest change, undone (Support console Stage 4, T10): the earlier last day again, under the same cap and
+  // compare-and-set as any change; if that day has passed, the grant ends now.
+  if (target.kind === 'override_end') {
+    if (target.lastDay < earliestLastDay()) {
+      const r = await endClubOverride({ orgId: id, overrideId: target.overrideId, reason, actorEmail: actor, extra });
+      return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: r.error }, { status: r.status });
+    }
+    const r = await changeFreeTimeEnd({
+      orgId: id, overrideId: target.overrideId, expectedExpiresAt: target.expectedExpiresAt, lastDay: target.lastDay, reason,
+      actor: { id: auth.user.id, email: actor, role: auth.role }, extra,
+    });
     return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: r.error }, { status: r.status });
   }
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { giveFreeTime } from '@/lib/free-time-writes';
 import { withObservability } from '@/lib/observability';
 
 export const GET = withObservability(async (_req: NextRequest,
@@ -25,79 +25,30 @@ export const GET = withObservability(async (_req: NextRequest,
   return NextResponse.json({ overrides: data ?? [] });
 }, { route: '/api/platform-admin/orgs/[id]/overrides' });
 
+/**
+ * Give free time (Support console Stage 4): a whole plan, sections or a billing status, through a last free day, with a
+ * reason. The rules and every refusal are `giveFreeTime` (lib/free-time-writes.ts). The body carries the last free day as
+ * `YYYY-MM-DD`: the server turns it into the end of that day in Eastern time and refuses an instant. The club is the
+ * address's `[id]`, never the body.
+ */
 export const POST = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requirePlatformPower('club_billing');
   if (auth.response) return auth.response;
 
   const { id } = await params;
-  const body = await req.json() as {
-    type?: string;
-    value?: string;
-    target?: { addons?: string[] } | null;
-    expires_at?: string;
-    suppress_billing?: boolean;
-    reason?: string;
+  const body = (await req.json().catch(() => ({}))) as {
+    kind?: unknown; plan?: unknown; addons?: unknown; last_day?: unknown; reason?: unknown;
   };
-
-  const { type, value, target, expires_at, suppress_billing, reason } = body;
-
-  // plan_tier is schema-valid but not yet enforced (needs effective plan-rank) — block creation.
-  if (!type || !['subscription_status', 'comp_period', 'module_addon'].includes(type)) {
-    return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
-  }
-  if (type === 'subscription_status' && !value) {
-    return NextResponse.json({ error: 'value required for subscription_status' }, { status: 400 });
-  }
-  if (type === 'subscription_status' && !['active', 'trialing', 'past_due', 'canceled'].includes(value!)) {
-    return NextResponse.json({ error: 'Invalid status value' }, { status: 400 });
-  }
-
-  const ADDON_KEYS = ['module_public_site', 'module_house_league', 'module_accounting', 'module_rep_teams'];
-  let normalizedTarget: Record<string, unknown> | null = null;
-  if (type === 'module_addon') {
-    const addons = target?.addons ?? [];
-    if (!Array.isArray(addons) || addons.length === 0) {
-      return NextResponse.json({ error: 'Select at least one module to grant' }, { status: 400 });
-    }
-    if (addons.some(a => !ADDON_KEYS.includes(a))) {
-      return NextResponse.json({ error: 'Invalid module key' }, { status: 400 });
-    }
-    normalizedTarget = { addons };
-  }
-
-  if (!reason?.trim()) {
-    return NextResponse.json({ error: 'reason is required' }, { status: 400 });
-  }
-
-  const { data: created, error } = await supabaseAdmin
-    .from('org_overrides')
-    .insert({
-      org_id:     id,
-      type,
-      value:      value ?? null,
-      target:     normalizedTarget,
-      expires_at: expires_at ?? null,
-      suppress_billing: suppress_billing ?? false,
-      reason,
-      created_by: auth.user.email!,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error('[platform-admin] override insert error:', error);
-    return NextResponse.json({ error: 'Insert failed' }, { status: 500 });
-  }
-
-  await writePlatformAuditLog(
-    auth.user.email!,
-    id,
-    'create_override',
-    'type',
-    null,
-    { type, value, target: normalizedTarget, expires_at, suppress_billing, reason },
-  );
-
-  return NextResponse.json({ override: created });
+  const result = await giveFreeTime({
+    orgId: id,
+    kind: body.kind,
+    plan: body.plan,
+    addons: body.addons,
+    lastDay: body.last_day,
+    reason: body.reason,
+    actor: { id: auth.user.id, email: auth.user.email!, role: auth.role },
+  });
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+  return NextResponse.json({ override: result.override });
 }, { route: '/api/platform-admin/orgs/[id]/overrides' });

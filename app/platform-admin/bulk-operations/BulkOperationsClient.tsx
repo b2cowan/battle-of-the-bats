@@ -11,7 +11,7 @@ import { SUBSCRIPTION_STATUS_LABELS, humanize } from '../chips';
 import styles from './bulk-operations.module.css';
 import DateInput from '@/components/shared/DateInput';
 
-type BulkActionType = 'subscription_status_override' | 'comp_period' | 'plan_change' | 'module_addon_enablement';
+type BulkActionType = 'subscription_status_override' | 'plan_change' | 'module_addon_enablement';
 type ModuleOperation = 'enable' | 'disable';
 
 type ApplyResult = {
@@ -33,7 +33,6 @@ const PLAN_LABELS: Record<string, string> = {
 
 const ACTION_LABELS: Record<BulkActionType, string> = {
   subscription_status_override: 'Subscription status override',
-  comp_period: 'Comp period grant',
   plan_change: 'Plan change',
   module_addon_enablement: 'Module add-on',
 };
@@ -112,13 +111,9 @@ export default function BulkOperationsClient({
 
   const previewCopy = actionType === 'subscription_status_override'
     ? `Create a subscription status override set to ${SUBSCRIPTION_STATUS_LABELS[targetStatus] ?? targetStatus}.`
-    : actionType === 'comp_period'
-      // "Grant" alone read as "gives them something" — the single-org screen warns explicitly that
-      // it does not. Same action, opposite impression (audit 2026-08-06). Say what it is.
-      ? `Tag these orgs as comped through ${expiresAt || 'the selected expiry date'} — a billing/founding-season label only, no access granted.`
-      : actionType === 'module_addon_enablement'
-        ? `${MODULE_OPERATION_LABELS[moduleOperation]} ${moduleLabel} as an organization-specific module override.`
-        : `Change base plan to ${PLAN_LABELS[targetPlan] ?? targetPlan}.`;
+    : actionType === 'module_addon_enablement'
+      ? `${MODULE_OPERATION_LABELS[moduleOperation]} ${moduleLabel} as an extra feature for these organizations only.`
+      : `Change base plan to ${PLAN_LABELS[targetPlan] ?? targetPlan}.`;
 
   function toggleOrg(id: string) {
     setSelectedIds(ids => ids.includes(id)
@@ -160,10 +155,6 @@ export default function BulkOperationsClient({
     }
     if (!reason.trim()) {
       setError('Reason is required.');
-      return;
-    }
-    if (actionType === 'comp_period' && !expiresAt) {
-      setError('Comp period grants require an expiration date.');
       return;
     }
     if (actionType === 'module_addon_enablement' && !targetModule) {
@@ -328,7 +319,6 @@ export default function BulkOperationsClient({
                 }}
               >
                 <option value="subscription_status_override">Subscription status override</option>
-                <option value="comp_period">Comp period grant</option>
                 <option value="plan_change">Plan change</option>
                 <option value="module_addon_enablement" disabled={!canManageProduct}>
                   Module add-on enablement{canManageProduct ? '' : ' (requires product access)'}
@@ -412,24 +402,9 @@ export default function BulkOperationsClient({
               </>
             )}
 
-            {actionType === 'comp_period' && (
-              // Carried over from the single-org override form, which has warned about this for a
-              // while. This screen said only "Grant a comp period", which invites exactly the
-              // mistake the other screen works to prevent (audit 2026-08-06).
-              <div className={styles.note}>
-                <p>
-                  ⚠ Comp period is a <strong>billing/founding-season tag only — it grants no section or
-                  plan access.</strong> It marks these accounts as comped (e.g. for the Founding cohort
-                  badge) but unlocks nothing. To actually give orgs access, use{' '}
-                  <strong>Module add-on enablement</strong> for specific sections, or a{' '}
-                  <strong>Subscription status override</strong> to change their access state.
-                </p>
-              </div>
-            )}
-
-            {(actionType === 'subscription_status_override' || actionType === 'comp_period') && (
+            {actionType === 'subscription_status_override' && (
               <label className={kit.fieldGroup}>
-                <span className={kit.label}>{actionType === 'comp_period' ? 'Expires at' : 'Optional expiry'}</span>
+                <span className={kit.label}>Optional expiry</span>
                 <DateInput
                   className={`${kit.field} ${kit.wide}`}
                   value={expiresAt}
