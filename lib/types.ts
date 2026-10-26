@@ -1058,6 +1058,8 @@ export interface LeagueRegistration {
   /** The family asked, from the status page, to withdraw this child (mig 370); the note they wrote. */
   withdrawRequestedAt: string | null;
   withdrawRequestNote: string | null;
+  /** When the desk last emailed the family the pay link (Stage 12b, mig 374): "Pay link sent" on the row. */
+  payLinkSentAt?: string | null;
   registeredAt: string;
   updatedAt: string;
 }

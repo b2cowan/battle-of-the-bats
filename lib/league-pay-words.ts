@@ -45,6 +45,17 @@ export const LEAGUE_PAY_WORDS = {
     unrecorded: (club: string, contact: string | null) =>
       contact ? `A payment for this sign-up is being checked by ${club}. Contact them before paying again: ${contact}.` : `A payment for this sign-up is being checked by ${club}. Contact them before paying again.`,
   },
+  // §4 · the pay-link email ("Email the pay link"; a price raise sends it too)
+  linkEmail: {
+    subject: (children: string, season: string) => `Pay for ${children} in ${season}`,
+    body: (club: string, children: string, season: string) => `${club} sent you a link to pay for ${children} in ${season}.`,
+    bodyRaised: (child: string, season: string, from: string, to: string, diff: string) =>
+      `${possessive(child)} price for ${season} changed from ${from} to ${to}. ${diff} is left to pay.`,
+    amount: (owing: string) => `Amount due: ${owing}`,
+    button: 'Pay now',
+    otherWays: (how: string) => `Or pay another way: ${how}`,
+    reference: (ref: string) => `Reference ${ref}`,
+  },
   // §3 · the emails' Pay now (while the club takes payments)
   mail: {
     payButton: 'Pay now',

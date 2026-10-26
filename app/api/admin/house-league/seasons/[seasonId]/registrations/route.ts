@@ -10,6 +10,7 @@ import { notify } from '@/lib/notify';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { loadSeasonMoneyLines } from '@/lib/league-money-read';
+import { clubTakesCards } from '@/lib/league-pay-facts';
 
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
@@ -42,13 +43,15 @@ export const GET = withObservability(async (req: Request,
   // The money on every row (Club Tier 9b-2): each registration's book lines and its price history, read one way — the
   // screen turns them into the Fee cell through lib/league-money.ts. Readers of the season read the fee as before.
   // Read beside the season check; nothing is returned until it passes.
-  const [season, { data, error }, lines, changes] = await Promise.all([
+  const [season, { data, error }, lines, changes, payLinks] = await Promise.all([
     getLeagueSeasonById(seasonId, ctx!.org.id),
     q,
     loadSeasonMoneyLines(ctx!.org.id, seasonId),
     supabaseAdmin.from('league_registration_price_changes')
       .select('registration_id, kind, old_amount, new_amount, reason, changed_by, changed_at')
       .eq('org_id', ctx!.org.id).eq('season_id', seasonId).order('changed_at', { ascending: true }),
+    // 12b: the club takes card payments, so an owing row offers "Email the pay link".
+    clubTakesCards(ctx!.org),
   ]);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -63,7 +66,7 @@ export const GET = withObservability(async (req: Request,
     reason: (c.reason as string | null) ?? null, changedBy: (c.changed_by as string | null) ?? null, changedAt: c.changed_at as string,
   }));
 
-  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday() });
+  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday(), payLinks });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations' });
 
 

@@ -61,6 +61,8 @@ export interface RegsRead {
   priceChanges: PriceChange[];
   /** The club's day. */
   today: string;
+  /** 12b: the club takes card payments, so owing rows can be emailed their pay link. */
+  payLinks?: boolean;
 }
 
 // ── Words about a person and a day ──────────────────────────────────────────────────────────────
@@ -86,6 +88,11 @@ export function clip(text: string, max: number): string {
 
 /** A method as a short word on a staff line: the label, or nothing when it was not recorded. */
 const how = (m: string | null | undefined) => (m ? paymentMethodWord(m) : null);
+/** How a payment arrived, and a card payment's receipt after it (12b copy §5: "Online, card · receipt 1043"). */
+const howOf = (l: { method: string | null; receiptNo?: number | null }) => {
+  const word = how(l.method);
+  return word && l.receiptNo ? `${word} · ${REGS_WORDS.fee.receipt(l.receiptNo)}` : word;
+};
 
 // ── The tabs ────────────────────────────────────────────────────────────────────────────────────
 
@@ -151,16 +158,16 @@ export function feeCell(
       break;
     case 'part':
       primary = F.part(money(state.received), money(state.owing));
-      sub = F.lastReceived(regDay(state.last.day, today), how(state.last.method));
+      sub = F.lastReceived(regDay(state.last.day, today), howOf(state.last));
       break;
     case 'received':
       primary = F.received(money(state.received));
-      sub = state.last ? F.on(regDay(state.last.day, today), how(state.last.method)) : null;
+      sub = state.last ? F.on(regDay(state.last.day, today), howOf(state.last)) : null;
       tone = 'good';
       break;
     case 'refunded':
       primary = F.refunded(money(state.refunded));
-      sub = F.on(regDay(state.last.day, today), how(state.last.method));
+      sub = F.on(regDay(state.last.day, today), howOf(state.last));
       break;
     case 'kept':
       primary = F.kept(money(state.kept));
@@ -168,6 +175,8 @@ export function feeCell(
       break;
     case 'endedNone': break;
   }
+  // 12b copy §5: an owing row the desk emailed the pay link reads when it was sent.
+  if ((state.kind === 'owing' || state.kind === 'part') && reg.payLinkSentAt) sub = F.linkSent(regDay(reg.payLinkSentAt.slice(0, 10), today));
 
   const latest = changes
     .filter(c => c.kind === 'corrected')
@@ -198,14 +207,17 @@ export interface RegRights {
   /** Move a child to another division (the runner roles; the registrar does not see it). */
   run: boolean;
   email: boolean;
+  /** 12b: the club takes card payments, so an owing row can be emailed its pay link (the desk's, with takeFees). */
+  payLinks?: boolean;
 }
 
 export type RowActionKey =
-  | 'approve' | 'markReceived' | 'promote' | 'move' | 'correct' | 'release' | 'withdraw' | 'decline' | 'email' | 'undo' | 'waitlist';
+  | 'approve' | 'markReceived' | 'promote' | 'move' | 'correct' | 'release' | 'withdraw' | 'decline' | 'email' | 'undo' | 'waitlist'
+  | 'payLink';
 
 /** The ⋯ menu's order (copy §1.5). */
 const MENU_ORDER: readonly RowActionKey[] = [
-  'approve', 'markReceived', 'move', 'correct', 'release', 'withdraw', 'decline', 'email', 'undo', 'waitlist', 'promote',
+  'approve', 'markReceived', 'payLink', 'move', 'correct', 'release', 'withdraw', 'decline', 'email', 'undo', 'waitlist', 'promote',
 ];
 
 /**
@@ -221,17 +233,20 @@ export function rowActions(
 ): { primary: RowActionKey | null; all: RowActionKey[] } {
   const has = new Set<RowActionKey>();
   const owing = isOwing(fee);
-  const paidSomething = lastPayment(lines) != null;
+  const latest = lastPayment(lines);
+  const paidSomething = latest != null;
   if (reg.status === 'pending_review') {
     if (rights.register) { has.add('approve'); has.add('decline'); has.add('waitlist'); }
     if (rights.run) has.add('move');
   } else if (reg.status === 'active') {
     if (rights.takeFees && owing) has.add('markReceived');
+    if (rights.takeFees && owing && rights.payLinks) has.add('payLink');
     if (rights.run) has.add('move');
     if (rights.takeFees && (owing || fee.kind === 'received')) has.add('correct');
     if (rights.register && owing) has.add('release');
     if (rights.register) { has.add('withdraw'); has.add('decline'); has.add('waitlist'); }
-    if (rights.takeFees && paidSomething) has.add('undo');
+    // A card payment really arrived: it comes off only by a refund, never Undo (12b, drawings m4; the writer refuses it too).
+    if (rights.takeFees && paidSomething && latest.method !== 'online_card') has.add('undo');
   } else if (reg.status === 'waitlisted') {
     if (rights.register) { has.add('promote'); has.add('decline'); }
     if (rights.run) has.add('move');
@@ -244,7 +259,7 @@ export function rowActions(
   return { primary, all: MENU_ORDER.filter(k => has.has(k)) };
 }
 
-export type BulkKey = 'approve' | 'promote' | 'waitlist' | 'markReceived' | 'move' | 'email';
+export type BulkKey = 'approve' | 'promote' | 'waitlist' | 'markReceived' | 'move' | 'email' | 'payLink';
 
 /** The bulk actions a tab can use, in the bar's order (copy §2). Decline and Withdraw are one at a time. */
 export function bulkActions(tab: RegTab, rights: RegRights, charges: boolean): BulkKey[] {
@@ -253,6 +268,8 @@ export function bulkActions(tab: RegTab, rights: RegRights, charges: boolean): B
   if (tab === 'waitlist' && rights.register) out.push('promote');
   // On Active the lead — the worded action on a phone's dock, the first button on a desk's bar — is Mark received.
   if (tab === 'active' && rights.takeFees && charges) out.push('markReceived');
+  // 12b: owing families emailed their pay link, one email per family, while the club takes card payments.
+  if (tab === 'active' && rights.takeFees && charges && rights.payLinks) out.push('payLink');
   if ((tab === 'review' || tab === 'active') && rights.register) out.push('waitlist');
   if (tab !== 'ended' && rights.run) out.push('move');
   if (rights.email) out.push('email');

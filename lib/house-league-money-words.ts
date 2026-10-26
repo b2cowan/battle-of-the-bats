@@ -70,6 +70,8 @@ export const MONEY_PAGE_WORDS = {
     owed: 'Owed', received: 'Received', owing: 'Still owing',
     players: (n: number) => pluralize(n, 'player'),
     afterRefunds: (amount: string) => `after ${amount} refunded`,
+    // 12b copy §8 `money.band.online`.
+    byCard: (amount: string) => `${amount} of it by card`,
     aria: (owed: string, received: string, owing: string) => `Owed ${owed}. Received ${received}. Still owing ${owing}.`,
   },
   finished: 'This season is finished. You can still mark fees received and record refunds.',
@@ -190,6 +192,9 @@ export const REGS_WORDS = {
     received: (amount: string) => `${amount} received`,
     part: (got: string, owing: string) => `${got} received · ${owing} owing`,
     lastReceived: (day: string, how: string | null) => `Last received ${day}${how ? ` · ${how}` : ''}`,
+    // 12b copy §5: a card payment's receipt after its method, and the trace of a pay link on an owing row.
+    receipt: (n: number) => `receipt ${n}`,
+    linkSent: (day: string) => `Pay link sent ${day}`,
     on: (day: string, how: string | null) => `${day}${how ? ` · ${how}` : ''}`,
     refunded: (amount: string) => `${amount} refunded`,
     kept: (amount: string) => `${amount} kept by the club`,
@@ -210,6 +215,17 @@ export const REGS_WORDS = {
     undo: { label: 'Undo: marked received by mistake', hint: 'For a fee marked received that never arrived. Not a refund' },
     waitlist: { label: 'Waitlist', hint: (name: string) => `Moves ${name} to the waitlist and emails the family` },
     promote: { label: 'Promote', hint: (name: string, division: string) => `Accepts ${name} into ${division} and emails the family` },
+    // 12b copy §5: owing rows only, while the club takes card payments.
+    payLink: { label: 'Email the pay link', hint: 'Opens their status page to pay by card', hintSent: (day: string) => `Last sent ${day}` },
+  },
+  // 12b copy §5: the pay link's toasts and the bulk bar.
+  payLink: {
+    sent: (email: string) => `Pay link sent to ${email}.`,
+    failed: 'Couldn’t send the pay link. Try again.',
+    nothingOwed: 'There’s nothing owing to send a pay link for.',
+    bulk: 'Email the pay link',
+    bulkDone: (n: number) => `${pluralize(n, 'pay link')} sent.`,
+    bulkPartial: (n: number, m: number, why: string) => `${pluralize(n, 'pay link')} sent; ${m} skipped: ${why}.`,
   },
   sheetSub: (division: string, fee: string | null) => [division, fee].filter(Boolean).join(' · '),
   empty: {
@@ -235,6 +251,8 @@ export const BULK_WORDS = {
   markReceived: 'Mark received',
   move: 'Move division',
   email: 'Email',
+  // 12b copy §5: the bulk bar's pay link (one email per family).
+  payLink: 'Email the pay link',
   clear: 'Clear',
   moreAria: 'More for the selected',
   barAria: 'Actions for the selected registrations',

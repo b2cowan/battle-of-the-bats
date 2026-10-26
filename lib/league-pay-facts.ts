@@ -10,6 +10,7 @@ import { registrationOwes } from './league-price';
 import { loadRegistrationMoneyLines } from './league-money-read';
 import { receivedOf } from './league-money';
 import { PAY_WORDS as W } from './online-payment-words';
+import { payLinkSecret } from './league-pay-link';
 import { LEAGUE_PAY_WORDS as LW } from './league-pay-words';
 import type { LeagueSeason, Organization } from './types';
 
@@ -93,6 +94,14 @@ async function hasUnrecorded(regIds: string[]): Promise<boolean> {
     back.set(f.online_payment_item_id, (back.get(f.online_payment_item_id) ?? 0) + toCents(f.amount) - toCents(f.fee_refunded));
   }
   return stuck.some(i => (back.get(i.id) ?? 0) < toCents(i.amount));
+}
+
+/** Does this club take card payments now (the switch, the plan, a link secret, an account taking payments)? The desk's
+ *  "Email the pay link" shows only then. */
+export async function clubTakesCards(org: Pick<Organization, 'id' | 'planId'>): Promise<boolean> {
+  if (!onlinePaymentsOn() || !hasPlanFeature(org.planId, 'online_payments') || !payLinkSecret()) return false;
+  const { data } = await supabaseAdmin.from('org_payment_accounts').select(PAYOUTS_ACCOUNT_COLUMNS).eq('org_id', org.id).maybeSingle();
+  return takesPayments(factsFromRow(data as PayoutsAccountRow | null));
 }
 
 /** Why the family cannot pay online right now, in words (copy §11): the pay route's JSON and the page say the same. */

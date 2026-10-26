@@ -30,6 +30,22 @@ function toLine(r: Record<string, unknown>): LeagueMoneyLine | null {
   };
 }
 
+/** Stage 12b: a card payment's line carries its receipt number — the line is the one an online payment's child
+ *  became (`online_payment_items.entry_id`). One read for every card line in the map, none when there are none. */
+async function withReceipts(map: Map<string, LeagueMoneyLine[]>): Promise<Map<string, LeagueMoneyLine[]>> {
+  const card = [...map.values()].flat().filter(l => l.method === 'online_card');
+  if (!card.length) return map;
+  const items = await fetchAllIn<Record<string, unknown>>(card.map(l => l.id), (chunk, from, to) =>
+    supabaseAdmin.from('online_payment_items').select('id, entry_id, online_payments(receipt_no)').in('entry_id', chunk).order('id').range(from, to));
+  const receipt = new Map<string, number | null>();
+  for (const i of items) {
+    const op = i.online_payments as { receipt_no: number | null } | { receipt_no: number | null }[] | null;
+    receipt.set(i.entry_id as string, (Array.isArray(op) ? op[0]?.receipt_no : op?.receipt_no) ?? null);
+  }
+  for (const l of card) l.receiptNo = receipt.get(l.id) ?? null;
+  return map;
+}
+
 function group(rows: Record<string, unknown>[]): Map<string, LeagueMoneyLine[]> {
   const out = new Map<string, LeagueMoneyLine[]>();
   for (const r of rows) {
@@ -47,9 +63,9 @@ export async function loadSeasonMoneyLines(orgId: string, seasonId: string): Pro
     .eq('org_id', orgId).eq('entity_type', 'league_season').eq('entity_id', seasonId).maybeSingle();
   if (bookError) throw bookError;
   if (!book) return new Map();
-  return group(await fetchAll<Record<string, unknown>>((from, to) => supabaseAdmin.from('accounting_entries').select(SELECT)
+  return withReceipts(group(await fetchAll<Record<string, unknown>>((from, to) => supabaseAdmin.from('accounting_entries').select(SELECT)
     .eq('ledger_id', book.id).eq('source_module', 'league_registration')
-    .order('entry_date', { ascending: true }).order('created_at', { ascending: true }).order('id').range(from, to)));
+    .order('entry_date', { ascending: true }).order('created_at', { ascending: true }).order('id').range(from, to))));
 }
 
 /** What each of an org's house-league registrations has received (posted in − posted out), in cents — for readers that
@@ -73,8 +89,8 @@ export async function loadOrgLeagueReceivedCents(orgId: string): Promise<Map<str
 /** The lines of some registrations (any seasons), by registration. A registration's lines all ride in one chunk, so each
  *  list keeps the read's order. */
 export async function loadRegistrationMoneyLines(regIds: readonly string[]): Promise<Map<string, LeagueMoneyLine[]>> {
-  return group(await fetchAllIn<Record<string, unknown>>(regIds, (chunk, from, to) =>
+  return withReceipts(group(await fetchAllIn<Record<string, unknown>>(regIds, (chunk, from, to) =>
     supabaseAdmin.from('accounting_entries').select(SELECT)
       .eq('source_module', 'league_registration').in('source_entity_id', chunk)
-      .order('entry_date', { ascending: true }).order('created_at', { ascending: true }).order('id').range(from, to)));
+      .order('entry_date', { ascending: true }).order('created_at', { ascending: true }).order('id').range(from, to))));
 }

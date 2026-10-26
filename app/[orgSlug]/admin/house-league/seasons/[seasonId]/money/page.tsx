@@ -23,12 +23,13 @@ import { EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/c
 import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import s from '@/components/admin/kit/club/league/SeasonMoney.module.css';
 import { formatLeagueMoney, type SeasonMoney } from '@/lib/league-money';
-import { MONEY_PAGE_WORDS as W, paymentMethodWord } from '@/lib/house-league-money-words';
+import { MONEY_PAGE_WORDS as W, REGS_WORDS, paymentMethodWord } from '@/lib/house-league-money-words';
+import PayoutsStatusLine from '@/components/admin/kit/club/PayoutsStatusLine';
 import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import { buildFilename, downloadCSVBlob, downloadXLSX, generateCSV } from '@/lib/export';
 
 interface BookLine {
-  id: string; regId: string; player: string | null; day: string; amount: number; method: string | null;
+  id: string; regId: string; player: string | null; day: string; amount: number; method: string | null; receiptNo?: number | null;
   kind: 'fee' | 'refund' | 'voided'; refundWhy: string | null; priceKind: 'regular' | 'corrected' | null; note: string | null;
 }
 interface HistoryLine { kind: 'corrected' | 'kept'; regId: string; player: string | null; at: string; oldAmount: number | null; newAmount: number; reason: string }
@@ -36,6 +37,8 @@ interface OwingRow { regId: string; player: string; division: string | null; owi
 interface MoneyRead {
   season: { id: string; name: string; status: string; owingAmberDays: number };
   free: boolean; filesToStatement: boolean; band: SeasonMoney;
+  /** 12b: how much of Received came by card. */
+  byCard?: number;
   lines: BookLine[]; history: HistoryLine[]; owing: OwingRow[]; today: string;
 }
 
@@ -94,7 +97,8 @@ export default function MoneyPage() {
     ...read.lines.map((l): Row => ({
       key: l.id, day: l.day, player: l.player ?? '—',
       what: l.kind === 'voided' ? W.what.voided : l.kind === 'refund' ? W.what.refund(l.refundWhy) : W.what.fee(l.priceKind),
-      how: paymentMethodWord(l.method),
+      // 12b copy §5: a card payment's receipt after its method ("Online, card · receipt 1043").
+      how: l.receiptNo ? `${paymentMethodWord(l.method)} · ${REGS_WORDS.fee.receipt(l.receiptNo)}` : paymentMethodWord(l.method),
       amount: l.kind === 'refund' ? money(-l.amount) : money(l.amount),
       // The export's number: a refund negative, a voided line counted nowhere (its What says so).
       value: l.kind === 'voided' ? null : l.kind === 'refund' ? -l.amount : l.amount,
@@ -141,13 +145,20 @@ export default function MoneyPage() {
   return (
     <div className={repKit.page}>
       {header(exportButton)}
+      {/* 12b: the owner's quiet "Let them pay online" while payouts aren't set up, and the treasurer's payouts status (A6, A1);
+          nothing for anyone else, or while online payments aren't offered. */}
+      {currentOrg && <PayoutsStatusLine orgSlug={currentOrg.slug} planId={currentOrg.planId} home="club" />}
       <MoneySummaryBand
         ariaLabel={W.band.aria(money(band.owed), money(band.received), money(band.owing))}
         tiles={[
           { key: 'owed', label: W.band.owed, figure: money(band.owed), caption: W.band.players(band.owedPlayers) },
           {
             key: 'received', label: W.band.received, figure: money(band.received),
-            caption: band.refunded > 0 ? `${W.band.players(band.receivedPlayers)} · ${W.band.afterRefunds(money(band.refunded))}` : W.band.players(band.receivedPlayers),
+            caption: [
+              W.band.players(band.receivedPlayers),
+              band.refunded > 0 ? W.band.afterRefunds(money(band.refunded)) : null,
+              read.byCard ? W.band.byCard(money(read.byCard)) : null,
+            ].filter(Boolean).join(' · '),
           },
           { key: 'owing', label: W.band.owing, figure: money(band.owing), tone: band.owing > 0 ? 'warn' : 'plain', caption: W.band.players(band.owingPlayers) },
         ]}

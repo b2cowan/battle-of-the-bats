@@ -57,7 +57,7 @@ export const GET = withObservability(async (_req: Request,
         : 'corrected'
       : null;
     return {
-      id: l.id, regId: l.regId, player: name(l.regId), day: l.day, amount: l.amount, method: l.method,
+      id: l.id, regId: l.regId, player: name(l.regId), day: l.day, amount: l.amount, method: l.method, receiptNo: l.receiptNo ?? null,
       kind: l.status === 'void' ? 'voided' as const : l.dir === 'out' ? 'refund' as const : 'fee' as const,
       refundWhy: why,
       priceKind: l.dir === 'in' ? (correctedRegs.has(l.regId) ? 'corrected' : 'regular') : null,
@@ -100,6 +100,10 @@ export const GET = withObservability(async (_req: Request,
     // Club plan: fees also file on the club's Budget vs. Actual; League Plus: this page is the book (Q15).
     filesToStatement: filesToClubStatement(ctx!.org),
     band: seasonMoney(regs, season, lines),
+    // 12b copy §8: how much of Received came by card (posted card receipts less card refunds).
+    byCard: Math.round([...lines.values()].flat()
+      .filter(l => l.status === 'posted' && l.method === 'online_card')
+      .reduce((sum, l) => sum + (l.dir === 'in' ? l.amount : -l.amount), 0) * 100) / 100,
     lines: book,
     history,
     owing,

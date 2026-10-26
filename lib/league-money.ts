@@ -32,6 +32,8 @@ export interface LeagueMoneyLine {
   /** A refund's reason, a void's reason. */
   note: string | null;
   createdAt: string;
+  /** A card payment's receipt number (Stage 12b: `method` 'online_card', the line an online payment's child became). */
+  receiptNo?: number | null;
 }
 
 export interface LeagueMoneyReg {

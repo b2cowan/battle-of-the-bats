@@ -43,7 +43,7 @@ import {
   BULK_WORDS, FULL_WORDS, MOVE_WORDS, RECV_WORDS, REGS_WORDS,
   type EndMode,
 } from '@/lib/house-league-money-words';
-import { formatLeagueMoney, lastPayment, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
+import { formatLeagueMoney, isOwing, lastPayment, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
 import { orgDayKey } from '@/lib/timezone';
 import {
   bulkActions, bulkResult, endedKind, feeCell, isOpenReg, matchesFee, matchesSearch, owesNow, phoneDetail, playerName, guardianName,
@@ -155,7 +155,7 @@ export default function RegistrationsScreen() {
     if (withTeams) setTeams((teamsRes?.ok ? teamsRes.data.teams ?? [] : []).map(t => ({ id: t.id, name: t.name })));
     setRead({
       registrations: regsRes.data.registrations ?? [], money: regsRes.data.money ?? {},
-      priceChanges: regsRes.data.priceChanges ?? [], today: regsRes.data.today,
+      priceChanges: regsRes.data.priceChanges ?? [], today: regsRes.data.today, payLinks: !!regsRes.data.payLinks,
     });
     setFailed(null);
   }, [orgSlug, seasonId, orgQuery, beginRead]);
@@ -167,7 +167,8 @@ export default function RegistrationsScreen() {
   const today = read?.today ?? '';
   const rights: RegRights = useMemo(() => ({
     register: !!access?.register, takeFees: !!access?.takeFees, run: !!access?.run, email: !!access?.email,
-  }), [access]);
+    payLinks: !!read?.payLinks,
+  }), [access, read?.payLinks]);
   const charges = season ? seasonHasFees(season, divisions) : false;
 
   const linesOf = useCallback((id: string): LeagueMoneyLine[] => read?.money[id] ?? [], [read]);
@@ -240,6 +241,7 @@ export default function RegistrationsScreen() {
       }
       case 'waitlist': return { key, label: M.waitlist.label, hint: M.waitlist.hint(playerName(reg)) };
       case 'promote': return { key, label: M.promote.label, hint: M.promote.hint(playerName(reg), division ?? REGS_WORDS.noDivision) };
+      case 'payLink': return { key, label: M.payLink.label, hint: reg.payLinkSentAt ? M.payLink.hintSent(regDay(reg.payLinkSentAt.slice(0, 10), today)) : M.payLink.hint };
       default: return { key, label: M[key].label, hint: M[key].hint };
     }
   }, []);
@@ -400,7 +402,43 @@ export default function RegistrationsScreen() {
       case 'release': case 'withdraw': case 'decline': setAct({ kind: 'end', id: reg.id, mode: END_MODE[key] }); break;
       case 'email': setAct({ kind: 'email', ids: [reg.id] }); break;
       case 'undo': { const payment = lastPayment(linesOf(reg.id)); if (payment) setAct({ kind: 'undo', id: reg.id, payment }); break; }
+      case 'payLink': void payLinkOne(reg); break;
     }
+  }
+
+  // ── The pay link (12b copy §5) ─────────────────────────────────────────────────────────────────
+  async function payLinkOne(reg: LeagueRegistration) {
+    markBusy([reg.id], true);
+    const r = await patchRegistration(orgQuery, seasonId, reg.id, { payLink: true });
+    markBusy([reg.id], false);
+    if (!r.ok) { setNotes(n => ({ ...n, [reg.id]: { text: r.error } })); return; }
+    afterWrite(false);
+    say(REGS_WORDS.payLink.sent(reg.guardianEmail));
+  }
+
+  /** One email per family: a sign-up's siblings share one pay link. */
+  async function runBulkPayLink(ids: readonly string[]) {
+    const families = new Map<string, LeagueRegistration>();
+    const skipped: string[] = [];
+    for (const id of ids) {
+      const reg = regById.get(id);
+      if (!reg) continue;
+      if (!isOwing(fees.get(id)!.state)) { skipped.push(id); continue; }
+      const key = reg.signupRef ?? reg.id;
+      if (!families.has(key)) families.set(key, reg);
+    }
+    markBusy(ids, true);
+    let sent = 0;
+    const stayed: string[] = [...skipped];
+    for (const reg of families.values()) {
+      const r = await patchRegistration(orgQuery, seasonId, reg.id, { payLink: true });
+      if (r.ok) sent += 1; else stayed.push(reg.id);
+    }
+    markBusy(ids, false);
+    const P = REGS_WORDS.payLink;
+    present(stayed.length
+      ? { text: P.bulkPartial(sent, stayed.length, skipped.length ? P.nothingOwed : P.failed), partial: true }
+      : { text: P.bulkDone(sent), partial: false }, stayed, false);
   }
 
   function runBulk(key: BulkKey) {
@@ -408,6 +446,7 @@ export default function RegistrationsScreen() {
     if (ids.length === 0) return;
     if (key === 'approve' || key === 'promote' || key === 'waitlist') { setAct({ kind: 'confirm', verb: key, ids }); return; }
     if (key === 'email') { setAct({ kind: 'email', ids }); return; }
+    if (key === 'payLink') { void runBulkPayLink(ids); return; }
     if (key === 'move') { setAct({ kind: 'move', ids, targets: moveTargets(ids) }); return; }
     // Mark received: only the owing ones go to the window; the rest are said in the result.
     if (receiveTargets(ids).length === 0) { finishReceive({ done: [], refused: [] }, ids); return; }

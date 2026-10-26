@@ -11,7 +11,7 @@ import { tournamentTracksPayments } from './tournament-payments-tracked';
 import { ONLINE_EMAIL_WORDS as E, SCOPE_LINE, cardLabel, money, receiptLabel } from './online-payment-words';
 import { loadLeaguePayFacts } from './league-pay-facts';
 import { leaguePayUrl } from './league-pay-link';
-import { LEAGUE_PAY_WORDS as LW } from './league-pay-words';
+import { LEAGUE_PAY_WORDS as LW, childList } from './league-pay-words';
 
 /**
  * The payer's emails (Club Tier Stage 12a, copy §14 and §17): one receipt per payment and one email per refund, from our
@@ -184,6 +184,41 @@ export async function sendTeamPayLink(teamId: string): Promise<{ sentTo: string;
   const sentAt = new Date().toISOString();
   await supabaseAdmin.from('teams').update({ pay_link_sent_at: sentAt }).eq('id', teamId);
   return { sentTo: facts.teamEmail, sentAt };
+}
+
+/**
+ * "Email the pay link", house league (Stage 12b, copy §4): the sign-up's link, to the family, in the club's name — one
+ * email for every child still owing. Only while the family can pay online now; stamps "Pay link sent" on each owing
+ * child. `raised` words it as a price raise (Part 5). The amount is what is owing, never the processing fee.
+ */
+export async function sendLeaguePayLink(registrationId: string, raised?: { child: string; from: string; to: string; diff: string } | null): Promise<{ sentTo: string; sentAt: string } | { error: string }> {
+  const facts = await loadLeaguePayFacts(registrationId);
+  if (!facts) return { error: 'That registration couldn’t be found.' };
+  if (facts.refusal) return { error: facts.refusal === 'switch_off' || facts.refusal === 'not_taking_payments' ? 'The club isn’t taking card payments right now.' : 'There’s nothing owing to send a pay link for.' };
+  if (!facts.guardianEmail) return { error: 'This family has no email address.' };
+  const payLink = leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId });
+  if (!payLink) return { error: 'Pay links aren’t set up on this server.' };
+  const face = await systemMailFace({
+    id: facts.org.id, name: facts.org.name, logoUrl: facts.org.logoUrl ?? null,
+    themePreset: facts.org.themePreset ?? null, themePrimary: facts.org.themePrimary ?? null, themeAccent: facts.org.themeAccent ?? null,
+  });
+  const L = LW.linkEmail;
+  const names = childList(facts.shares.map(s => s.description.split(' · ')[0].split(' ')[0]));
+  const { data: anchor } = await supabaseAdmin.from('league_registrations').select('signup_ref').eq('id', registrationId).maybeSingle();
+  const reference = (anchor?.signup_ref as string | null) ?? registrationId.replace(/-/g, '').slice(0, 8).toUpperCase();
+  const how = facts.season.howToPay?.trim() || null;
+  const html = warmEmailDocument([
+    warmEmailParagraph(escapeHtml(raised ? L.bodyRaised(raised.child, facts.season.name, raised.from, raised.to, raised.diff) : L.body(facts.org.name, names, facts.season.name))),
+    warmEmailParagraph(escapeHtml(L.amount(money(facts.owingCents / 100)))),
+    warmEmailButton(L.button, payLink),
+    how ? warmEmailParagraph(escapeHtml(L.otherWays(how))) : '',
+    warmEmailSmall(escapeHtml(L.reference(reference))),
+  ].filter(Boolean).join('\n'), face?.club ?? null);
+  const result = await sendEmail(facts.guardianEmail, L.subject(names, facts.season.name), html, face?.sendOpts ?? {});
+  if (result.status === 'provider_error') return { error: 'Couldn’t send the pay link. Try again.' };
+  const sentAt = new Date().toISOString();
+  await supabaseAdmin.from('league_registrations').update({ pay_link_sent_at: sentAt }).in('id', facts.shares.map(s => s.registrationId));
+  return { sentTo: facts.guardianEmail, sentAt };
 }
 
 /**

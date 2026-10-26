@@ -83,6 +83,23 @@ describe('who sees which action (copy §1.4, §1.5, §2)', () => {
     assert.deepEqual(bulkActions('waitlist', RIGHTS, true), ['promote', 'move', 'email']);
     assert.deepEqual(bulkActions('ended', RIGHTS, true), ['email']);
   });
+  it('12b: Email the pay link on an owing row only while the club takes card payments; a card payment has no Undo', () => {
+    const cards = { ...RIGHTS, payLinks: true };
+    assert.deepEqual(actions(reg(), [], cards).all, ['markReceived', 'payLink', 'move', 'correct', 'release', 'withdraw', 'decline', 'email', 'waitlist']);
+    assert.ok(!actions(reg(), []).all.includes('payLink'), 'not while the club isn’t taking card payments');
+    assert.ok(!actions(reg(), [line()], cards).all.includes('payLink'), 'not on a paid row');
+    assert.ok(!actions(reg(), [], { ...cards, takeFees: false }).all.includes('payLink'), 'the desk’s, with takeFees');
+    // A card payment really arrived: it comes off only by a refund (drawings m4).
+    assert.ok(!actions(reg(), [line({ method: 'online_card' })], cards).all.includes('undo'));
+    assert.ok(actions(reg(), [line({ method: 'etransfer' })], cards).all.includes('undo'));
+    assert.deepEqual(bulkActions('active', cards, true), ['markReceived', 'payLink', 'waitlist', 'move', 'email']);
+  });
+  it('12b: the Fee cell reads a card payment’s receipt, and when an owing row was sent its pay link', () => {
+    const card = feeCell(reg(), SEASON, [line({ method: 'online_card', receiptNo: 1043 })], TODAY, []);
+    assert.equal(card.sub, 'Oct 24 · Online, card · receipt 1043');
+    const sent = feeCell(reg({ payLinkSentAt: '2026-10-20T15:00:00Z' }), SEASON, [], TODAY, []);
+    assert.equal(sent.sub, 'Pay link sent Oct 20');
+  });
   it('tabs and the Fee filter', () => {
     assert.deepEqual(['pending_review', 'active', 'waitlisted', 'declined', 'withdrawn'].map(s => regTab(s as LeagueRegistration['status'])), ['review', 'active', 'waitlist', 'ended', 'ended']);
     const owing = feeState(reg(), SEASON, [], TODAY);

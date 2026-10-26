@@ -28,6 +28,7 @@ import type { LeagueRegistrationStatus } from '@/lib/types';
 import { orgDayKey } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
 import { leagueMailPay } from '@/lib/league-pay-view';
+import { sendLeaguePayLink } from '@/lib/online-payment-receipt';
 
 
 async function fetchReg(regId: string, seasonId: string) {
@@ -198,6 +199,17 @@ export const PATCH = withObservability(async (req: Request,
   if (!reg) return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
 
   const body = await req.json();
+
+  // ── the pay link (12b copy §5) ─────────────────────────────────────────────────
+  // "Email the pay link": the desk (A13's house-league variant — whoever takes fees). One email for the sign-up's owing
+  // children; refused, in words, when the club isn't taking card payments or nothing is owing.
+  if (body.payLink === true) {
+    if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
+    const sent = await sendLeaguePayLink(regId);
+    if ('error' in sent) return NextResponse.json({ error: sent.error, code: 'pay_link' }, { status: 409 });
+    const updated = await fetchReg(regId, seasonId);
+    return NextResponse.json({ registration: updated, sentTo: sent.sentTo });
+  }
 
   // ── money ────────────────────────────────────────────────────────────────────
   // ONE write, shared with the family record's Record a payment (Club Tier Stage 5c Part A; rebuilt 9b-2 — lib/league-fee-paid.ts):
