@@ -16,7 +16,22 @@
 > desk and phone, with bulk actions that say plainly what didn't happen. The season's Money page is its book; Families and
 > the family's status page read the same money; families can ask to withdraw a child; on the Club plan the fees show as one
 > row on Budget vs. Actual with each season under it and a starting budget of size × price. Seven owner rulings in its
-> build session (plan §0e). Owner walk §378 owed. Unblocks Stage 12b (online payment lands through the same money writer).
+> build session (plan §0e). Owner walk §378 passed 2026-10-25 (51 of 51). Unblocks Stage 12b (online payment lands through the same money writer).
+>
+> **9c drawn 2026-10-25, asks open (teams and people).** Drawings: https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk.
+> The convenor rates each child from 1 to 5, runs a balanced draft per division, adjusts it, then publishes. Publishing
+> tells every family their child's team and coach in one email per household, and gives each coach their own team page.
+> The recommended coach page is one screen: the roster with family contacts, then the schedule and scores once those stages
+> land. It is not the Coaches Portal. The family status page gains the team. **Ruled 2026-10-26, all fourteen asks as
+> recommended**: the coach's own page; ratings seen only by those who run the league and erased when the season finishes;
+> a coach's own child can be locked to their team before the draft; one email per family per division, sent now rather
+> than waiting for 9d. The words are settled and the build prompt is written.
+>
+> **9c built 2026-10-26.** Teams & draft is rebuilt: rate players, lock a coach's child, run a balanced draft, adjust,
+> publish one division at a time. Each family gets one email (even if they unsubscribed from club news, because it is about
+> their own child), sees the team and coach on their status page, and each coach is invited to a page of their own with
+> their players and how to reach each family, never the Coaches Portal. The registrar reads the board but never a rating.
+> Draft mode and Randomize are gone. Owner walk §381 is owed.
 
 ## What this is
 
@@ -51,7 +66,10 @@ gets sign-ups and money ready for online payment, which is the stage after this 
 3. **9b-2 · Money.** Each child's price is fixed when they sign up, so a later change to the fee doesn't change it. Ending
    a paid registration asks whether the money was refunded. The money page's figures are right, and fees show on the
    club's statement. The places where a "Pay now" button will go are drawn in, ready for online payment.
-4. **9c · Teams and people.** A simple player rating for balanced drafts, and, if approved, light accounts for coaches.
+4. **9c · Teams and people.** A simple player rating for balanced drafts; light accounts for coaches (ruled Q7), recommended
+   as a one-screen team page of their own; Publish teams tells families their child's team and coach; the status page shows
+   the team. Success: a convenor can build and publish a division's teams from a phone, every family hears once per
+   publish, and no coach sees another team, a rating or a fee.
 5. **9d · The schedule.** A real schedule generator. An honest public schedule. Families told about changes.
 6. **9e · Game day.** Standings that follow the sport's scoring rules, and scores entered by coaches.
 7. **9f · Season end.** Finishing a season, looking back at past seasons, and starting next season from this one.

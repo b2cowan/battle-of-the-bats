@@ -124,6 +124,36 @@ All 15 round-2 asks ruled as recommended (§6a). 9a and 9b are fully ruled.
   when money moved** (a refund, or a kept fee with its reason), silent otherwise; a refund line carries **no typed reason**
   ("Refund · declined" etc.); a raised price **tells nobody** this stage (the window says so).
 
+## 0f · Owner rulings 2026-10-26, the 9c drawings (all fourteen as recommended, by paste-back)
+
+Drawings https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk (source `HOUSE_LEAGUE_STAGE9C_DRAWINGS.html`).
+
+- **9c·1** A house-league coach gets **a team page of its own**: one screen with the roster and contacts, then schedule (9d)
+  and scores (9e). The coach's sign-in card opens it directly. **The Coaches Portal is untouched.**
+- **9c·2a** The registrar **does not see ratings**: absent from every screen and export a registrar opens. They see the
+  teams, not the ratings.
+- **9c·2b** A rating lives with **this season's registration only**, erased automatically when the season finishes. Next
+  year starts fresh; carrying ratings forward is Stage 14's question.
+- **9c·2c** A rating is **a number from 1 to 5 with no comment box**, never shown on a family screen; if a parent asks, the
+  club reads it from the child's record and answers them.
+- **9c·3** **Lock a child to a team before the draft, in 9c.** On the board, "Lock to this team" on a child; the draft deals
+  everyone else around locked children and counts their ratings.
+- **9c·4** Placement notices go **in 9c, through the club's existing batched sender**: one email per household, never
+  counted toward a cap. A family who unsubscribed from club news still gets it.
+- **9c·5** **Retire "Draft mode", and Randomize with it.** The balanced draft and dragging cover both.
+- **9c·6** **Publish one division at a time.** U8 can be told while U14 is still being drafted.
+- **9c·7** A child **still to review is not drafted**. The setup window and Publish name them with a link to Registrations;
+  once accepted, they appear under "Not on a team".
+- **9c·8** Unrated children in a partly rated division **count as a 3**; the setup window says how many.
+- **9c·9** A coach sees each family's **guardian name, email and phone**, plus one line on the sign-up form: "Your child's
+  coach will see your name, email and phone to reach you about the team."
+- **9c·10** The coach's invite goes **at Publish**, so a coach never sees a roster the families haven't been told. A coach
+  added after publishing is invited when the convenor confirms.
+- **9c·11** The family's status page **names the coach**. The club's "Coaches on team pages" setting keeps governing public
+  pages.
+- **9c·12** Moving a child after publishing **asks first, then emails the family the new team**; both coaches' pages change at
+  once.
+
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
 - The trust list re-verified (§3); the coupling check for a standalone League Plus club; the ledger seam under D1 (C18);
@@ -208,8 +238,8 @@ check the snapshot before touching it); the org home's empty-tournaments hero (S
 |---|---|---|---|
 | **9a** The frame and who can do what — **BUILT 2026-10-24** (§9; walk §372 ✅ 2026-10-25) | Home (Running now · Getting ready · Past seasons shelf); season block with Overview, Money, Email families and a working switcher; phone season header + tab strip inside house league's frame; two live seasons (admin, index, club home); every status change asks (rare door + window); one write gate matched to D8 + registrar/treasurer; dead fee switch removed; old look retired on home and overview | Q12 Q14 Q16 Q17 Q18 S1·b 9a·1–4 | M |
 | **9b-1** Sign-up, payments-ready — **BUILT 2026-10-25** (§0d, §9; walk §375 owed) | Create reshaped (Setup = the Overview's Divisions and Registration blocks, extended); price per division + early bird, one resolver; real dates; atomic capacity + waitlist constraint; no duplicate child; approve respects capacity; several children; CASL; DOB picks division; staff notice on every public sign-up. Server and public form only — the Registrations screen is rebuilt once, in 9b-2 | Q5 S1·a S2·b | L |
-| **9b-2** Money, honest — **BUILT 2026-10-25** (§0e, §9; walk §378 owed) | Frozen price (per-registration correction with a reason; Move division asks to re-price); one ending path with refunds as money out; Money band; Money stays open after Complete; Registrations on the kit (Withdraw, Move division, Release the spot, bulk, Paid/Owing filter, phone rows); the club's own payment instructions until 12b; "Ask to withdraw" on the status page; Statement filing + Walk 7a 7.6; ghost pay spots; Families balance from the frozen price. **12b drawn right after this is ruled.** | Q1 Q2 Q3 Q4 Q6 Q10 Q15 | L |
-| **9c** Teams and people | Ratings (convenor-only) + balanced snake draft; draft per division; coach accounts (if Q7) as a column of 9a's gate; Publish teams with placement notices; the status page shows the team | Q7 Q8 Q9 | M–L |
+| **9b-2** Money, honest — **BUILT 2026-10-25** (§0e, §9; walk §378 ✅ 2026-10-25, 51 of 51) | Frozen price (per-registration correction with a reason; Move division asks to re-price); one ending path with refunds as money out; Money band; Money stays open after Complete; Registrations on the kit (Withdraw, Move division, Release the spot, bulk, Paid/Owing filter, phone rows); the club's own payment instructions until 12b; "Ask to withdraw" on the status page; Statement filing + Walk 7a 7.6; ghost pay spots; Families balance from the frozen price. **12b drawn right after this is ruled.** | Q1 Q2 Q3 Q4 Q6 Q10 Q15 | L |
+| **9c** Teams and people — **RULED 2026-10-26 · BUILT 2026-10-26** (commits in the status log; walk §381 owed) (§0f; drawings https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk, source `HOUSE_LEAGUE_STAGE9C_DRAWINGS.html`; §9) | Ratings (convenor-only) + balanced snake draft; draft per division; coach accounts (if Q7) as a column of 9a's gate; Publish teams with placement notices; the status page shows the team | Q7 Q8 Q9 | M–L |
 | **9d** The schedule | Generator rebuilt; C1–C12 admin + public; health (Q11); 11b; venue/permit links; Publish schedule + change notices; season email onto the batched sender | Q11 | L |
 | **9e** Game day | Standings by sport pack; score entry (coaches if Q7); rainout as one action | — | S–M |
 | **9f** Season end | Archive; the finished-season record (Q16); Start next season copies forward. Returning families with a pre-filled form wait on Stage 14 | — | M |
@@ -356,3 +386,49 @@ open it, and the menu's top level is Stage 13's.
   door and the plan checks come free). Known gaps: a child holding a spot can't move into a FULL division to join its
   waitlist; the Statement's season sub-row has no link to Money; `check:layout` could not measure (the UAT club's admin
   pages render "Page not found" in its browser session). Walk §378.
+
+- **2026-10-25 — 9c DRAWN, asks open (Teams and people).** From `HOUSE_LEAGUE_STAGE9C_DRAWING_PROMPT.md`. Drawings
+  https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk (source `HOUSE_LEAGUE_STAGE9C_DRAWINGS.html`, built by
+  `.probe/hl/build9c.mjs` from `.probe/hl/src9c/`; captures by `.probe/hl/cap9c.mjs`). Frames (a)–(i) drawn at desk and
+  phone; /ux and /design ran and their changes are listed on the page's asks tab. **Push-backs on the page:** (1) a
+  house-league coach gets a team page of its own, not the Coaches Portal (a `coach` member today lands on the portal's
+  "No team assignments yet", or on nothing without an active subscription; the volunteer-official card is the precedent);
+  (2) Q8 "convenor-only" vs Q17 "registrar reads the rest" collide on ratings — recommended absent for the registrar;
+  ratings erased at season end; a 1–5 number with no comment box; (3) the balanced draft ignores the coach's own child —
+  "lock a child before the draft" put as an ask, not drawn; (4) placement notices go through the existing batched sender
+  (`lib/family-email.ts`, built in 7c) in 9c — they need not wait for 9d, and never count toward a cap (Q12c). **Asks
+  9c·1–12** (2 split a/b/c; 14 boxes), all with recommendations. **Findings that change the plan:** T01 today's draft is a
+  rotation, not a snake (`draft/route.ts` `advance`); T02 already-placed children re-enter the draft list after the first
+  pick (start filters `teamId`, `getRemainingPlayers` does not); T08 an ended registration keeps its `team_id` (fixture:
+  Avery Macdonald, declined, still on the Cardinals); T09 a received (to-review) child holds a spot but is invisible on
+  Teams; the draft lives on `league_seasons.draft_state`, so one division at a time. **Build notes, not asks:** seasons
+  whose teams pre-date 9c count as published with no emails; confirm the batched sender's suppression list does not drop a
+  service message to a family who unsubscribed from club news; the season phone header is drawn in the body face (D1).
+
+- **2026-10-26 — 9c RULED; words and build prompt written.** The owner ruled all fourteen 9c asks as recommended (§0f, by
+  paste-back). `/marketing` wrote `HOUSE_LEAGUE_STAGE9C_COPY.md`: staff counts say "players", families "child"; the Publish
+  foot no longer mentions a daily cap (it arrives with 9d); the coach page's Schedule slot links to the season's public
+  schedule and Scores says "The club enters scores for now"; the coach invite mirrors the rep invite (7-day link); lock words
+  added (9c·3, ruled, not drawn). Two open word questions (§15: warn or block when publishing with unplaced players; no "the"
+  before a team name in templates) go to the owner in the build's UX-summary step. Build prompt:
+  `HOUSE_LEAGUE_STAGE9C_BUILD_PROMPT.md` (seven parts; argues the coach link as its own table separate from the club role,
+  ratings in their own table so no registrar read leaks one, the draft as a tested pure function with locks, Publish as a fact
+  before an email, and the published-at backfill for seasons already on teams).
+
+- **2026-10-26 — 9c BUILT and committed** (`6405c1d66` (data + gate, mig 377) · `c4a4080de` (draft, screen, publish, mig 378) · `f34507180` (coach's door) · `1670dbe7d` (family side) · `758f4036b` (review fixes, mig 379) · `b2123aad5` (help)). Build-session rulings (owner, 2026-10-25, recorded as ruled): the
+  batched sender gains a SERVICE mode for the placement and move emails (they reach a family who unsubscribed from club news;
+  no unsubscribe link; the club's footnote says why); no bounced line (the product cannot see a bounce); unplaced players at
+  Publish warn, never block; no "the" before a team name. Built as argued: a team–coach row (`league_team_coaches`) is the
+  coach's access truth and accepting creates NO club membership (a `coach` member would get a Coaches Portal card); its own
+  token on the row, hashed as the rep invite's (the rep invite table's team is a NOT NULL FK to rep teams); ratings in their
+  own table, erased by the season-finish trigger (and, from the review, when a registration ends); the draft a tested pure
+  function (sizes first: a team skips its turn while bigger than the smallest); Publish one transaction then the send, each
+  family's email a row with its outcome and a claim against double-sends; the backfill marked every division already on teams
+  published with no email and took ended children off their teams. Found while building and fixed: the registration's own
+  save could change a team silently after publishing; "Email a team" could email a draft team before Publish. Migrations
+  377–379 (dev, prod-pending; 377 renumbered from 376, a peer took 376). /review (high-risk, 5 lenses) fixed in `758f4036b`;
+  recorded, not fixed: a coach keeps their page while the club is suspended; a timed-out provider batch could be resent; an
+  unsendable address stays failed; an unverified guardian email gets service notices it can't suppress; the board JSON
+  carries lock/move flags the registrar's screen hides; a twice-moved child's unsent move email names the latest team.
+  Walk §381 owed (https://claude.ai/artifact/KbRNQVwYV4tzbp5xTMaTHh); `check:layout` on Teams & draft not run (UAT fixture
+  stale for every house-league screen).

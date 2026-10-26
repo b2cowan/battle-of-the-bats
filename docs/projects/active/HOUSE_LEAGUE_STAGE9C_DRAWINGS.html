@@ -1,0 +1,1282 @@
+<title>House League 9c Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700;800&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) that holds captures of today's product and true-size
+   specimens of the club admin kit. Chrome and specimens deliberately do not share a ground.
+   Source of truth: docs/projects/active/HOUSE_LEAGUE_STAGE9_HUB.html ({{IMG:…}} placeholders);
+   the build (.probe/hl/build.mjs) inlines the captures. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:16px 90px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em;scroll-margin-top:70px}
+.doc h3{font-size:18px;margin:24px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)} .mo{font-family:var(--f-mono)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px;max-width:82ch}
+/* top tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+.thm{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.thm button{border-radius:0;min-height:36px;font-size:13px}
+.thm button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+section.pane[hidden]{display:none}
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+/* station */
+.st{border-top:2px solid var(--line);padding-top:8px;margin-top:40px}
+.st>h2{margin-top:6px}
+.st .who{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start;margin:10px 0}
+@media (max-width:1000px){.cols{grid-template-columns:minmax(0,1fr)}}
+.cols>*{min-width:0}
+.shot{border-radius:10px;outline:1px solid var(--line);box-shadow:var(--shadow);background:var(--surface);overflow:hidden;position:relative}
+.shot .sc{max-height:520px;overflow:auto}
+.shot.open .sc{max-height:none}
+.shot img{display:block;width:100%;height:auto;max-width:none}
+.shot.desk img{min-width:0}
+.shot .bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 10px;border-top:1px solid var(--line);font:600 12px/1.3 var(--f-mono);color:var(--muted);background:var(--surface-2)}
+.shot .bar button{font:600 12px/1 var(--f-doc);min-height:30px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+.ph-shot{width:390px;max-width:100%}
+.meas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px;margin:10px 0}
+.meas div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.meas b{display:block;font:700 18px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.meas span{font-size:12.5px;color:var(--muted)}
+.meas .bad b{color:var(--flag)} .meas .ok b{color:var(--fix)}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+/* flags + tags */
+.fl{font:700 11px/1 var(--f-mono);letter-spacing:.03em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid var(--flag);color:var(--flag);background:var(--flag-soft);min-height:24px;vertical-align:1px;white-space:nowrap}
+.fl.fix{border-color:var(--fix);color:var(--fix);background:var(--fix-soft)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:22px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.mk.s{color:var(--ask)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);max-width:90ch;margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{color:var(--ink);padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700}
+/* paste */
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:260px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* dialog */
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px;display:flex;flex-direction:column;gap:10px}
+dialog.note .nb h4{margin:0;font:700 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+dialog.note .nb p{margin:0}
+
+/* ===== the product kit, for specimens (Warm default; .dk = Dark) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--amber:#835006;--amber-soft:#FBEFD9;--green:#34662A;--green-soft:#E6F0E2;--blue:#1D4A8A;--blue-soft:#E3ECF8;--grid:rgba(70,55,30,.06);--dimbg:rgba(36,30,21,.28);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak.dk{--paper:#0A0A0A;--card:#141A22;--ink:#F1F5F9;--soft:rgba(255,255,255,.72);--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
+  --olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#F08A74;--amber:#F2B55A;--amber-soft:rgba(242,181,90,.14);--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--blue:#9CC2F5;--blue-soft:rgba(156,194,245,.13);--grid:rgba(255,255,255,.03);--dimbg:rgba(0,0,0,.6)}
+.ak *{box-sizing:border-box}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%;margin:8px 0}
+.dt{width:1440px}
+.ph{width:390px;max-width:100%;flex:none;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.ak .tb{display:flex;align-items:center;gap:10px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .tb .lg{width:18px;height:18px;background:var(--olive);border-radius:4px}
+.ak .tb .ar{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .tb .sp{flex:1}
+.ak .tb .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2)}
+.ak .shell{display:flex;min-height:760px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px;display:flex;align-items:center;gap:8px;min-height:38px}
+.ak .sb .it.sub{padding-left:26px;font-size:13.5px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .sb .sw{margin:4px 10px 6px 26px;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;font:600 13px/1.2 'Inter';display:flex;justify-content:space-between;align-items:center;background:var(--paper)}
+.ak .chev{width:8px;height:8px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-4px;flex:none}
+.ak .mn{flex:1;min-width:0;padding:22px 0 60px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.ak .pg{width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.ak .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .ph1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ak .ph1 h1{font:700 28px/1.1 'Barlow Condensed',sans-serif;margin:2px 0 0;letter-spacing:.005em}
+.ak .ph1 .sp{flex:1}
+.ak .sub{color:var(--soft);font-size:14px;margin:4px 0 0}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .btn.pri{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .btn.dng{color:var(--red)}
+.ak .btn.ic{width:44px;padding:0;justify-content:center}
+.ak .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 'Inter';border-radius:999px;padding:5px 10px;border:1px solid var(--line2);color:var(--soft);white-space:nowrap}
+.ak .pill.live{color:var(--green);background:var(--green-soft);border-color:transparent}
+.ak .pill.reg{color:var(--blue);background:var(--blue-soft);border-color:transparent}
+.ak .pill.wait{color:var(--amber);background:var(--amber-soft);border-color:transparent}
+.ak .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.ak .panel{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.ak .panel>.hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ak .panel>.hd h2{font:700 16px/1.2 'Inter';margin:0;flex:1}
+.ak .rows .r{display:flex;align-items:center;gap:14px;padding:12px 16px;min-height:64px;border-top:1px solid var(--line)}
+.ak .rows .r:first-child{border-top:0}
+.ak .rows .r .m{flex:1;min-width:0}
+.ak .rows .r b{font:650 15px/1.3 'Inter';display:block}
+.ak .rows .r .d{font-size:13px;color:var(--soft);margin-top:2px}
+.ak .rows .r .u{font:500 12px/1.3 'IBM Plex Mono',monospace;color:var(--dim);margin-top:3px}
+.ak .band{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{padding:12px 16px;border-left:1px solid var(--line);min-width:0}
+.ak .band>div:first-child{border-left:0}
+.ak .band .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .band .v{font:700 22px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .band .v.am{color:var(--amber)}
+.ak .band .h{font-size:12px;color:var(--soft)}
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink)}
+.ak table.kt td{color:var(--ink)}
+.ak table.kt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 16px;border-bottom:1px solid var(--line)}
+.ak table.kt td{padding:12px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.ak table.kt tr:last-child td{border-bottom:0}
+.ak .meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden;width:110px;display:inline-block;vertical-align:middle;margin-right:8px}
+.ak .meter i{display:block;height:100%;background:var(--olive)}
+.ak .rare{font-size:13.5px;color:var(--soft);display:flex;gap:10px;align-items:center;padding:6px 2px}
+.ak .rare a{color:var(--soft);text-decoration:underline;font-weight:600}
+.ak .fold{display:flex;align-items:center;gap:10px;padding:14px 16px;min-height:56px}
+.ak .fold b{flex:1;font:650 15px/1.2 'Inter'}
+.ak .amb{display:inline-flex;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--amber-soft);color:var(--amber);font:700 12px/22px 'Inter';justify-content:center}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+/* phone frame */
+.ak .pbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .pbar .sp{flex:1}
+.ak .pin{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.ak .ptabs{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;background:var(--card)}
+.ak .pswitch{display:flex;align-items:center;gap:8px;padding:12px 16px 10px;background:var(--card)}
+.ak .pswitch .t{flex:1;min-width:0}
+.ak .pswitch .t b{font:700 22px/1.1 'Barlow Condensed',sans-serif;display:block}
+.ak .bnav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card);height:62px}
+.ak .bnav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/1 'Inter';color:var(--soft)}
+.ak .bnav span i{width:20px;height:20px;border-radius:5px;border:1.5px solid currentColor;display:block}
+.ak .bnav span.on{color:var(--olive)}
+/* window */
+.ak.win{padding:40px 28px;background:var(--dimbg)}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);max-width:480px;margin:0 auto;display:flex;flex-direction:column}
+.ak .dlg .dh{display:flex;align-items:center;padding:16px 18px 6px}
+.ak .dlg .dh h4{font:700 17px/1.3 'Inter';margin:0;flex:1}
+.ak .dlg .dh .xx{font-size:22px;color:var(--dim);width:44px;text-align:center}
+.ak .dlg .db{padding:4px 18px 16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:14px}
+.ak .dlg .db ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .df{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line)}
+.ak .dlg .df .s{flex:1;font-size:13px;color:var(--dim)}
+/* public face (club site), fixed light like the product */
+.pub{background:#F5F4F0;color:#1B1B1B;font:15px/1.5 'Inter',system-ui,sans-serif}
+.pub .nv{background:#1F3A8A;color:#fff;display:flex;align-items:center;gap:22px;padding:0 24px;height:64px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .nv span{font:600 15px/1 'Inter'} .pub .nv .on{border-bottom:2px solid #fff;padding-bottom:6px}
+.pub .in{max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:14px}
+.pub h3{font:700 17px/1.2 'Inter';margin:6px 0 0}
+.pub .rw{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:12px;min-height:64px}
+.pub .rw .m{flex:1;min-width:0} .pub .rw b{display:block;font:650 16px/1.3 'Inter'} .pub .rw .d{font-size:13.5px;color:#555}
+.pub .tag{font:600 12px/1 'Inter';padding:5px 9px;border-radius:999px;background:#E3ECF8;color:#1D4A8A}
+.pub .tag.g{background:#E6F0E2;color:#34662A}
+.pub .lk{font:600 14px/1 'Inter';color:#1F3A8A}
+/* design-review additions (2026-10-24) */
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ak .ptabs>span{flex:none;font:600 14px/1 'Inter';color:var(--soft);padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:999px;border:1px solid var(--line2)}
+.ak .ptabs>span.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ak .ptabs .on .amb{background:var(--amber);color:var(--paper)}
+.ak.ph-in .btn,.ak.ph-in .btn.ic{min-height:44px}
+.ak.ph-in .btn.ic{border-color:transparent;background:none}
+.ak .utabs{display:flex;gap:18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.ak .utabs span{flex:none;min-height:44px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 'Inter';color:var(--soft);border-bottom:2px solid transparent}
+.ak .utabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .utabs .c{font:700 11px/1 'Inter';background:var(--olive-soft);border-radius:999px;padding:3px 7px}
+.ak .ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ak .band .mk,.ak th .mk,.ak .sb .it .mk{position:absolute;top:3px;right:3px}
+.ak .band>div,.ak th,.ak .sb .it{position:relative}
+.ak .sb .blk{margin-left:18px;border-left:2px solid var(--line2);padding-left:4px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .blk .it.sub{padding-left:14px}
+.ak .sb .it i{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;opacity:.6;flex:none}
+.ak .sb .it .mk{top:8px}
+.ak .fsw{display:flex;flex-direction:column;min-height:700px;background:var(--card)}
+.ak .fsw .fh{display:flex;align-items:center;gap:6px;height:56px;padding:0 6px;border-bottom:1px solid var(--line);font:700 16px/1.2 'Inter'}
+.ak .fsw .fb{padding:16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:15px;flex:1}
+.ak .fsw .fb ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.ak .fsw .ff{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .fsw .ff .s{font-size:13px;color:var(--dim)}
+.ak .fsw .ff .bb{display:flex;gap:10px;justify-content:flex-end}
+.pub .rw .lk{min-height:44px;display:inline-flex;align-items:center}
+.pub .hdr{display:flex;align-items:center;gap:12px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .mono{width:40px;height:40px;border-radius:8px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 14px/1 'Inter'}
+.pub .si{margin-left:auto;font:600 15px/1 'Inter'}
+.pub .cols2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px}
+.pub .chev{width:9px;height:9px;border:solid #555;border-width:0 2px 2px 0;transform:rotate(-45deg);flex:none}
+.pub .rw2{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.pub .rw2 .top{display:flex;align-items:center;gap:10px;min-height:44px}
+.pub .rw2 .top b{flex:1;font:650 16px/1.3 'Inter'}
+.pub .rw2 .ln{display:flex;gap:18px}
+table.t.stick td:first-child,table.t.stick th:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
+table.t td.no{color:var(--muted)}
+.spec{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:10px 0}
+.spec>.col{min-width:0;display:flex;flex-direction:column;gap:8px;max-width:100%}
+.sp-cap{font:600 12px/1.35 var(--f-mono);letter-spacing:.04em;color:var(--muted);margin:0}
+.ann{position:absolute;z-index:3}
+</style>
+<style>
+/* 9c round additions (2026-10-25) */
+.ghostx{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border:1.5px dashed var(--ask);border-radius:8px;color:var(--ask);font:600 13px/1 'Inter',sans-serif;background:transparent}
+.ak .ghostx{border-color:var(--amber);color:var(--amber)}
+.ak .chipk{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);font:600 14px/1 'Inter';color:var(--soft);background:var(--card)}
+.ak .chipk.on{background:var(--olive-soft);border-color:var(--olive);color:var(--ink)}
+.ak .sb .it i{border:0;background:currentColor;opacity:.28;width:14px;height:14px;border-radius:4px}
+.ak .tb .ic{display:grid;place-items:center;font:700 11px/1 'Inter';color:var(--soft)}
+.ak .fld{display:inline-flex;align-items:center;min-height:40px;padding:0 10px;border:1px solid var(--line2);border-radius:8px;background:var(--card);font:500 14px/1.3 'Inter';color:var(--ink);min-width:72px}
+.ak .fld.wide{flex:1;min-width:0;display:flex}
+.ak .fld.empty{color:var(--dim)}
+.ak .hint{font-size:12.5px;color:var(--dim);margin:0;line-height:1.45}
+.ak .frow{display:flex;align-items:center;gap:12px}
+.ak .fl2{width:110px;flex:none;font:600 13px/1.3 'Inter';color:var(--soft)}
+.ak .dim,.ak .d2{color:var(--dim);font-size:12.5px}
+.ak .facts2{padding:14px 16px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px 20px;font-size:14px;align-items:baseline}
+.ak .facts2>span:nth-child(odd){color:var(--dim)}
+.ak .ck{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line2);font:700 13px/1 'Inter';color:var(--dim);flex:none}
+.ak .ck.ok{background:var(--green-soft);border-color:transparent;color:var(--green)}
+.ak .btn.ic.on{background:var(--olive);border-color:var(--olive);color:var(--card)}
+.ak .bulk{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--ink);color:var(--paper)}
+.ak .bulk .btn{background:transparent;color:var(--paper);border-color:rgba(255,255,255,.35)}
+.ak.dk .bulk{background:var(--olive-soft);color:var(--ink)}
+.ak.dk .bulk .btn{color:var(--ink);border-color:var(--line2)}
+.ak .bulk .sp{flex:1}
+.ak .cbx{display:inline-grid;place-items:center;width:20px;height:20px;border:1.5px solid var(--line2);border-radius:5px;font:700 12px/1 'Inter';color:var(--card);flex:none}
+.ak .cbx.on{background:var(--olive);border-color:var(--olive)}
+.ak .owe{font-weight:650;color:var(--ink)} .ak .owe.late{color:var(--amber)} .ak .paid{font-weight:650;color:var(--green)}
+.ak .sheet{background:var(--card);border-radius:16px 16px 0 0;padding:8px 0 14px}
+.ak .sheet .sh-h{padding:12px 18px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--line)}
+.ak .sheet .sh-i{min-height:56px;padding:8px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line)}
+.ak .sheet .sh-i .m{flex:1;min-width:0;display:flex;flex-direction:column}
+.ak .sheet .sh-i b{font:600 15px/1.3 'Inter'}
+.ak .sheet .sh-i span.d2{font-size:12.5px;color:var(--dim)}
+.ak .sheet .sh-i.on{background:var(--olive-soft)}
+.mail{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;max-width:560px}
+.mail .mh{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);font-size:14px;display:flex;flex-direction:column;gap:2px}
+.mail .mb{padding:14px 16px;font-size:14px;line-height:1.55;display:flex;flex-direction:column;gap:10px}
+.mail .mb p{margin:0}
+.mail .mb .btnm{align-self:flex-start;background:var(--accent);color:var(--surface);border-radius:8px;padding:10px 14px;font-weight:600}
+.cap{font-size:13.5px;color:var(--muted);max-width:92ch;margin:6px 0 0}
+h4.sub-h{font-size:15px;margin:22px 0 6px}
+.ak .panel,.ak .dlg .db{overflow-x:auto}
+.ak .dlg,.ak .panel{min-width:0;max-width:100%}
+.ak.win{max-width:100%}
+/* rating */
+.ak .seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;flex:none;background:var(--card)}
+.ak .seg span{width:36px;height:36px;display:grid;place-items:center;font:650 14px/1 'Inter';color:var(--soft);border-left:1px solid var(--line2)}
+.ak .seg span:first-child{border-left:0}
+.ak .seg span.on{background:var(--olive);color:var(--card)}
+.ak.ph-in .seg span{width:44px;height:44px}
+.ak .rt{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 6px;border-radius:6px;background:var(--olive-soft);color:var(--ink);font:700 12.5px/1 'Inter';flex:none}
+.ak .rt.none{background:transparent;border:1.5px dashed var(--line2);color:var(--dim)}
+/* board */
+.ak .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;align-items:start}
+.ak .tcard{background:var(--card);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-width:0}
+.ak .tcard .th{padding:12px 12px 10px 14px;display:flex;align-items:flex-start;gap:8px}
+.ak .tcard .th .m{flex:1;min-width:0}
+.ak .tcard .th .n{display:flex;align-items:center;gap:8px;font:700 15px/1.25 'Inter'}
+.ak .tcard .th .dotc{width:10px;height:10px;border-radius:50%;flex:none}
+.ak .tcard .th .s{font-size:12.5px;color:var(--dim);margin-top:3px}
+.ak .tcard .th .s.amber{color:var(--amber)}
+.ak .tcard .bal{display:flex;justify-content:space-between;padding:6px 14px;border-top:1px solid var(--line);font:600 12px/1.3 'IBM Plex Mono',monospace;color:var(--dim);font-variant-numeric:tabular-nums}
+.ak .kid{display:flex;align-items:center;gap:10px;padding:6px 12px 6px 14px;border-top:1px solid var(--line);min-height:48px;font-size:14px}
+.ak .kid .nm{flex:1;min-width:0;font-weight:600}
+.ak .kid .nm small{display:block;color:var(--dim);font-size:12px;font-weight:400}
+.ak .kid.mv{background:var(--blue-soft)}
+.ak .tcard .empty{padding:18px 14px;color:var(--dim);font-size:13px;text-align:center;border-top:1px dashed var(--line2)}
+.ak .moved{font:600 11px/1 'Inter';color:var(--blue);white-space:nowrap}
+.ak .pill.drf{color:var(--amber);background:var(--amber-soft);border-color:transparent}
+.ak .pill.pubd{color:var(--green);background:var(--green-soft);border-color:transparent}
+.ak .split{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start}
+.ak .steps .r{min-height:60px}
+.ak .note{background:var(--amber-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.45}
+.ak .note.blue{background:var(--blue-soft)}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+.ak.dk .lnk{color:var(--olive)}
+.ak .ctc{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--soft)}
+.ak .rowact{display:flex;gap:2px}
+.ak.ph-in .btn.ic{border-color:transparent;background:none}
+.ak .grip{width:18px;color:var(--dim);flex:none;text-align:center;font:700 14px/1 'Inter';letter-spacing:-2px}
+/* coach page */
+.ak .cpage{display:flex;flex-direction:column;gap:14px}
+.ak .cmast{display:flex;align-items:center;gap:12px}
+.ak .cmast .badge{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font:700 16px/1 'Barlow Condensed',sans-serif;color:#fff;flex:none}
+.ak .cmast b{font:700 26px/1.05 'Barlow Condensed',sans-serif;display:block}
+.ak .later{border:1.5px dashed var(--line2);border-radius:10px;padding:14px 16px;color:var(--soft);font-size:14px;display:flex;flex-direction:column;gap:4px}
+.ak .later b{color:var(--ink);font:650 15px/1.3 'Inter'}
+/* chooser card */
+.ak .chooser{display:flex;flex-direction:column;gap:10px;padding:16px}
+.ak .ccard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;min-height:72px}
+.ak .ccard .m{flex:1;min-width:0}
+.ak .ccard b{font:650 16px/1.3 'Inter';display:block}
+.ak .ccard .d{font-size:13px;color:var(--soft)}
+.ak .ccard .tag{font:700 11px/1 'Inter';border-radius:999px;padding:5px 9px;background:var(--olive-soft);color:var(--ink)}
+/* public status card */
+.pub .scard{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.pub .scard .top{display:flex;align-items:center;gap:10px}
+.pub .scard .top b{flex:1;font:650 17px/1.3 'Inter'}
+.pub .srow{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;font-size:14px;line-height:1.45}
+.pub .srow>span:first-child{color:#666}
+.pub .srow .newv{background:#FFF6DB;border-radius:4px;padding:0 4px;margin-left:-4px}
+.pub .chg{font-size:12.5px;color:#666}
+.pub .eyb{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#666}
+.pub .tag.a{background:#E6F0E2;color:#34662A}
+/* gate table */
+table.t.gate td:not(:first-child),table.t.gate th:not(:first-child){text-align:center}
+table.t.gate td.co,table.t.gate th.co{background:var(--fix-soft)}
+.edges{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:14px;margin:12px 0}
+.edges>.card{margin:0;min-width:0}
+.edges .card h3{font-size:16px}
+.edges .card .chips{margin-top:8px}
+.rec-line{font-size:14px;margin:8px 0 0}
+.rec-line b{color:var(--fix)}
+</style>
+<style>
+.ak .utabs span.c{min-height:0;display:inline-block;border-bottom:0}
+.ak .tcard .th .s.amber{font-weight:600}
+.ak .dlg .df{flex-wrap:wrap}
+</style>
+<style>
+/* /design pass 2026-10-25: D1 every mixed-case heading in the body face; D2 the chosen look; A1 numbers in the body face */
+.ak .ph1 h1{font:700 26px/1.15 'Inter',system-ui,sans-serif;letter-spacing:0}
+.ak .pswitch .t b{font:700 18px/1.2 'Inter',system-ui,sans-serif}
+.ak .cmast b{font:700 24px/1.15 'Inter',system-ui,sans-serif}
+.ak .ttl{font:700 20px/1.2 'Inter',system-ui,sans-serif;display:block}
+.ak .seg span.on{background:var(--olive-soft);color:var(--olive);box-shadow:inset 0 0 0 1.5px var(--olive)}
+.ak .tcard .bal,.ak .bal{font:600 12.5px/1.3 'Inter',system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.ak .kid .nm .ctc{font-weight:400}
+.pub .srow{display:flex;justify-content:space-between;gap:12px}
+.pub .srow>span:last-child{text-align:right}
+.pub .sline{font-size:13px;color:#555}
+.mail .club{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#1F3A8A;color:#fff;font:700 15px/1 'Inter',sans-serif}
+.mail .club .mono{width:30px;height:30px;border-radius:6px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 12px/1 'Inter',sans-serif}
+.mail .mb .btnm.cl{background:#1F3A8A;color:#fff}
+</style>
+
+
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · Club Tier · Stage 9 · house league · round 3 · 9c · 2026-10-25</p>
+<h1>9c drawn: teams, ratings, coaches, and telling families</h1>
+<p class="lede">The third drawing round. It turns Teams &amp; draft into the place where a division's children become teams: rate them, run a balanced draft, adjust it, then publish, which tells every family and gives each coach their team. It also draws the coach's own page and the family status page with the team on it. Four push-backs come first, because two of them change what you are being asked.</p>
+<div class="card">
+  <h3>How to read this</h3>
+  <ul>
+    <li>Each screen has today's capture (before) and the drawing (after), a desk and a phone. Tags: <button class="mk new" data-note="NEW marks something the product does not have today.">NEW</button> <button class="mk res" data-note="RESTYLED marks something that exists today and is redrawn.">RESTYLED</button> <button class="mk unc" data-note="UNCHANGED marks something kept as it is.">UNCHANGED</button>. A dashed <span class="ghostx">Scores</span> box is a slot a later stage fills (9d schedule, 9e scores), drawn now so the page never reshapes.</li>
+    <li>Red flags open a finding about today's code; green chips name the finding a drawing fixes. Every tag and flag opens an explanation when clicked.</li>
+    <li>Everything already ruled (Q7, Q8, Q9, Q17, Q19, Q3, 9a's frame, Q12b/Q12c) is drawn as ruled and not reopened. The asks are only what this round raises.</li>
+    <li><b>All words are provisional.</b> Final words go through /marketing after you rule, before any code.</li>
+    <li>Desk drawings fit your screen; "Show at true size" shows them at 1440. Open this page on a phone to judge the phone drawings.</li>
+  </ul>
+  <p class="muted" style="margin:10px 0 0;font-size:13.5px">Drawn on the dev fixture (Dev League Org, League plan). <b>2027</b> is the season getting ready: U10 Division A has 5 accepted children from 3 families (Priya Test has three children there) and no teams yet. <b>2026</b> is the season being played: its Division A has 7 children on the Cardinals, Jays and Orioles, each coached by "Pat Volunteer". Ratings, the 2027 team names and coach email addresses do not exist in the fixture; where drawn they are marked as examples.</p>
+</div>
+<p class="muted" style="font-size:13.5px">Earlier rounds: <a href="https://claude.ai/artifact/UtrYHLaqbkfQQC2kBbGEQ7">the deep dive (walk, ladder, 9a)</a> · <a href="https://claude.ai/artifact/Ru3aDgVoyBTJb8XivYPLgT">9b drawings (sign-up and money)</a>.</p>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="why" aria-selected="true">Push-backs</button>
+  <button role="tab" data-pane="board" aria-selected="false">Teams &amp; draft</button>
+  <button role="tab" data-pane="coach" aria-selected="false">Coaches &amp; who sees what</button>
+  <button role="tab" data-pane="pub" aria-selected="false">Publish &amp; families</button>
+  <button role="tab" data-pane="edge" aria-selected="false">Edge states</button>
+  <button role="tab" data-pane="asks" aria-selected="false">Asks &amp; paste-back</button>
+  <span class="sp"></span>
+  <span class="thm" role="group" aria-label="Drawing theme"><button type="button" data-thm="warm" aria-pressed="true">Warm</button><button type="button" data-thm="dark" aria-pressed="false">Dark</button></span>
+</nav>
+<div class="dt-tools"><button type="button" class="btn-d" data-fit>Show at true size</button><span class="zl">Scaled to fit; use the button for true size.</span></div>
+
+<!-- ======================= PUSH-BACKS ======================= -->
+<section class="pane" id="why" data-pane="why">
+<h2 style="margin-top:16px">Four push-backs, before the drawings</h2>
+
+<div class="verdict push"><h3>1 · A "light" coach isn't light if it's the Coaches Portal. Give them a team page of their own.</h3>
+<ul>
+  <li><b>What a house-league coach would land in today.</b> Nothing links a house-league team to a person: the coach is a typed name <button class="fl" data-f="T04">T04</button>. If a club added that volunteer as a "coach" member, their sign-in card opens the Coaches Portal, which says "No team assignments yet" and nothing else, forever. At a club without an active subscription, there is no card at all.</li>
+  <li><b>The portal is the heavy product.</b> A head coach there has about 16 menu entries: schedule, practice plans, lineups, tournaments, skills, insights, money, chat, email, roster, tryouts, staff, documents, settings and Season's End. It also has rules a house-league team doesn't fit, like the one-door closed-season gate.</li>
+  <li><b>A · A team page of its own (recommended).</b>
+    <ul>
+      <li>One screen, built for a phone: the roster with each family's contacts, then the schedule (9d), then scores (9e).</li>
+      <li>The coach opens it from the invite email, or from their sign-in card. The card opens the page directly, the way a scorekeeper's card opens straight into the scorekeeper today.</li>
+      <li>It uses the same account as the rest of FieldLogicHQ. A parent who also coaches a rep team sees two cards.</li>
+      <li><b>What it costs.</b> The coach has nothing to learn. The convenor types an email address on the team. We build one new screen and one column of the gate, and the portal is untouched.</li>
+    </ul></li>
+  <li><b>B · The portal, with a house-league workspace.</b> The coach gets the portal's frame with most of it hidden. Every portal screen and rule would have to learn "this is a house-league team" and hide itself: the season gate, tryouts, money, the closed-season page and the billing card. Each one missed is a door showing a write button the server refuses, which the portal's own one-door rule warns against.
+    <ul>
+      <li>It does make later features cheap: practice plans, and chat when it returns.</li>
+      <li>If house-league coaches ever need those, that's a decision to make then. Q7's list doesn't include them.</li>
+    </ul></li>
+</ul>
+<p class="rec-line">Ask 1. Drawn as A on the "Coaches &amp; who sees what" tab.</p></div>
+
+<div class="verdict push"><h3>2 · A rating is data about a child. "Convenor-only" is ruled; three things around it are not.</h3>
+<ul>
+  <li><b>Does the registrar see ratings?</b> Q17 says the registrar "reads the rest", and Q8 says ratings are convenor-only. They collide here, and the narrower ruling should win: a registrar sees the teams but never a rating. Ratings are absent from every screen they open, including the export. <b>Ask 2a.</b></li>
+  <li><b>How long is a rating kept?</b> A rating has done its job once the teams are published.
+    <ul>
+      <li>I recommend it belongs to this season's registration and is erased when the season finishes.</li>
+      <li>Carrying it into next year's draft is a returning-player question, and that belongs to Stage 14 (one player across seasons), not here.</li>
+      <li>Keeping ratings forever "in case" is the option that ages worst. <b>Ask 2b.</b></li>
+    </ul></li>
+  <li><b>Can a guardian ask to see it?</b> Canadian privacy law generally lets a parent ask a club what it holds about their child. So a rating should be <b>a number from 1 to 5 with no comment box</b>: nothing written about a child that the club couldn't show the parent.
+    <ul>
+      <li>No family screen shows it.</li>
+      <li>If a parent asks, the club reads it from the child's record and answers them. <b>Ask 2c.</b></li>
+    </ul></li>
+</ul></div>
+
+<div class="verdict push"><h3>3 · The balanced draft is honest about balance. It ignores the first thing every convenor fixes.</h3>
+<ul>
+  <li><b>What it does well.</b> It deals children strongest first and reverses the order each round (1-2-3-4, then 4-3-2-1), so no team gets all the top players. Each team's average rating is shown, so you can see the balance rather than trust it. Today's draft does neither: it repeats the same order every round and reads no skill at all <button class="fl" data-f="T01">T01</button> <button class="fl" data-f="T03">T03</button>.</li>
+  <li><b>What it doesn't know.</b> In a house league, the coach is usually a parent who volunteered because their child plays. Siblings, and "put her with her friend", come next.
+    <ul>
+      <li>None of these is ruled, and none is drawn.</li>
+      <li>Without any of them, the convenor's first move after every draft is to put each coach's child on that coach's team by hand. Each such move undoes some of the balance, and "Draft again" would throw it away.</li>
+    </ul></li>
+  <li><b>The smallest fix, as an ask:</b> let the convenor lock a child to a team before the draft runs, and have the draft deal everyone else around them. That covers the coach's own child. Siblings and friends are a bigger feature, because both children float; they're noted, not asked. <b>Ask 3.</b></li>
+</ul></div>
+
+<div class="verdict push"><h3>4 · Placement notices don't need to wait for 9d. The batched sender already exists.</h3>
+<ul>
+  <li><b>What the code has today.</b> The club's batched sender, built for Families › Email families in Stage 7c, already:
+    <ul>
+      <li>sends one email per household;</li>
+      <li>works through a large list in batches of 100;</li>
+      <li>adds the family unsubscribe footer and honours the club's suppression list.</li>
+    </ul>
+    9d's job is to move the season's <i>typed</i> email onto it, which is a different thing.</li>
+  <li><b>So in 9c, Publish teams sends through it.</b>
+    <ul>
+      <li>A family with three children in the division gets one email naming all three teams.</li>
+      <li>A season of 400 families is 4 batches of 100, sent within a minute or so.</li>
+      <li>Q12c (ruled) says an automatic notice never counts toward a cap. A placement notice is written by the product, not typed, so Publish teams never uses up the season's 3 sends a day.</li>
+    </ul></li>
+  <li><b>What not to copy.</b> Today's other automatic house-league emails (approval, waitlist, decline) go one at a time through a separate path, with no batching <button class="fl" data-f="T05">T05</button>. Publish teams shouldn't use that path.</li>
+  <li><b>One thing to check at build.</b> A family that unsubscribed from club news must still be told their child's team, because it's a service message. The batched sender's suppression list must not drop them. If it would, the build splits "unsubscribed" from "bounced".</li>
+</ul>
+<p class="rec-line">Ask 4. The alternatives (wait for 9d, or publish with no email) are on the asks tab.</p></div>
+
+<div class="card"><h3>What the code does today on these screens</h3>
+<p class="muted" style="margin:0 0 6px;font-size:13.5px">Each flag opens what the code does, where it is, and what this round proposes.</p>
+<div class="chips">
+  <button class="fl" data-f="T01">T01 Draft order repeats</button>
+  <button class="fl" data-f="T02">T02 Placed children come back</button>
+  <button class="fl" data-f="T03">T03 No ratings</button>
+  <button class="fl" data-f="T04">T04 Coach is a typed name</button>
+  <button class="fl" data-f="T05">T05 Nobody is told</button>
+  <button class="fl" data-f="T06">T06 Phone shows one team</button>
+  <button class="fl" data-f="T07">T07 Old look, one draft per season</button>
+  <button class="fl" data-f="T08">T08 Ended child keeps a team</button>
+  <button class="fl" data-f="T09">T09 "To review" is invisible</button>
+</div></div>
+</section>
+
+
+<!-- ======================= TEAMS & DRAFT ======================= -->
+<section class="pane" id="board" data-pane="board" hidden>
+<h2 style="margin-top:16px">Teams &amp; draft</h2>
+<p>One division at a time, in four steps that read top to bottom: <b>teams</b>, <b>ratings</b>, <b>draft</b>, <b>publish</b>. Nothing here tells a family anything until Publish. Until then, everything autosaves and can be redone.</p>
+
+<!-- (a) -->
+<h3 id="a1">(a) Today, then after, with nothing drafted yet</h3>
+<div class="chips"><button class="fl fix" data-f="T06">fixes T06</button><button class="fl fix" data-f="T07">fixes T07</button><button class="fl fix" data-f="T09">fixes T09</button></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · 2026, Division A, 1440</p><div class="shot"><div class="sc" style="max-height:440px"><img src="{{IMG:c-teams26-desk-warm}}" alt="Today's Teams and draft page: a toolbar, an empty player pool, three team columns"></div><div class="bar"><span>Pool on the left, team columns to the right · coach not shown</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col"><p class="sp-cap">BEFORE · same page, 390</p><div class="shot ph-shot"><div class="sc" style="max-height:440px"><img src="{{IMG:c-teams26-phone-warm}}" alt="Today's Teams and draft on a phone: the pool beside a team column cut off at the edge"></div><div class="bar"><span>Teams cut off at the edge · drag only</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · 2027, U10 Division A, no teams yet, 1440</p><div class="shot"><div class="sc" style="max-height:320px"><img src="{{IMG:c-teams27-desk-warm}}" alt="Today's 2027 Teams and draft: five unassigned players and a No teams yet callout"></div><div class="bar"><span>"No teams yet" · 5 in the pool</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+
+<p class="sp-cap" style="margin-top:14px">AFTER · 2027, U10 Division A: two teams made, nothing drafted · desk</p>
+<div class="dt-wrap"><div class="ak dt">
+  <div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic">4</span></div>
+  <div class="shell">
+    <div class="sb">
+      <span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span>
+      <span class="grp">Programs</span>
+      <span class="it" style="font-weight:650;color:var(--ink)"><i></i>House league<span class="chev" style="margin-left:auto"></span></span>
+      <div class="blk">
+        <span class="it sub">Seasons</span>
+        <span class="grp" style="padding-left:14px">Season</span>
+        <span class="sw" style="margin-left:14px">Dev House League 2027<span class="chev"></span></span>
+        <span class="it sub">Overview</span><span class="it sub">Registrations</span><span class="it sub on">Teams &amp; draft</span><span class="it sub">Schedule</span><span class="it sub">Standings</span><span class="it sub">Money</span><span class="it sub">Email families</span>
+      </div>
+      <span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span>
+    </div>
+    <div class="mn"><div class="pg">
+      <div class="ph1"><div><div class="ey">House league · season</div><h1>Teams &amp; draft</h1><p class="sub">Dev House League 2027 · 3 divisions · nothing published yet</p></div></div>
+      <div class="utabs"><span class="on">U10 Division A <span class="c">5</span></span><span>U10 Division B <span class="c">0</span></span><span>U12 Division <span class="c">0</span></span></div>
+      <div class="panel">
+        <div class="hd"><h2>U10 Division A</h2><span class="pill">Not drafted</span><button class="mk new" data-note="NEW: each division carries its own state: Not drafted, Drafted (not published), Published on a date. The state is the division's, because a club drafts and publishes one age group at a time (ask 6).">NEW</button><span class="btn pri">Run the draft</span><span class="btn ic" aria-label="Tools for U10 Division A"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+        <div class="rows steps">
+          <div class="r"><span class="ck ok">✓</span><div class="m"><b>Teams</b><div class="d">2 teams: Cardinals and Jays · the Jays have no coach yet</div></div><span class="btn">+ Add teams</span></div>
+          <div class="r"><span class="ck">2</span><div class="m"><b>Ratings</b><div class="d">3 of 5 rated · the other 2 are dealt as a 3</div></div><span class="btn">Rate players</span></div>
+          <div class="r"><span class="ck">3</span><div class="m"><b>Draft</b><div class="d">Deals the 5 children across the 2 teams by rating, strongest first. Nothing is sent.</div></div></div>
+          <div class="r"><span class="ck">4</span><div class="m"><b>Publish</b><div class="d">Tells 3 families their child's team and gives each coach their team page. Comes after the draft.</div></div></div>
+        </div>
+      </div>
+      <div class="split">
+        <div class="panel"><div class="hd"><h2>Not on a team</h2><span class="amb">5</span></div>
+          <div class="kid"><span class="rt">4</span><div class="nm">Nora Test<small>Age 9 · Shortstop</small></div></div>
+          <div class="kid"><span class="rt">4</span><div class="nm">Avery Macdonald<small>Age not given</small></div></div>
+          <div class="kid"><span class="rt">2</span><div class="nm">Jaya Test<small>Age 9</small></div></div>
+          <div class="kid"><span class="rt none">–</span><div class="nm">Liam Chen<small>Age not given</small></div></div>
+          <div class="kid"><span class="rt none">–</span><div class="nm">Jaya Test-Sharma<small>Age 9</small></div></div>
+        </div>
+        <div class="board">
+          <div class="tcard"><div class="th"><div class="m"><div class="n"><span class="dotc" style="background:#C8412B"></span>Cardinals</div><div class="s">Coach Pat Volunteer</div></div><span class="btn ic" aria-label="Edit Cardinals"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></div><div class="empty">Drag children here, or run the draft</div></div>
+          <div class="tcard"><div class="th"><div class="m"><div class="n"><span class="dotc" style="background:#2E6BC6"></span>Jays</div><div class="s amber">No coach yet</div></div><span class="btn ic" aria-label="Edit Jays"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></div><div class="empty">Drag children here, or run the draft</div></div>
+        </div>
+      </div>
+      <p class="hint">Also in this division, not on the board: nobody to review, nobody on the waitlist. When there are, this line says how many and links to Registrations.</p>
+</div></div>
+  </div>
+</div></div>
+<div class="chips"><button class="mk res" data-note="RESTYLED: the same page in the season frame, rebuilt on the kit. Divisions become tabs with their child counts instead of a select. The toolbar becomes the division's own header: its state, the one next step as the primary button, and the rare tools (Export, Clear all) behind ⋯. The red Clear all assignments is no longer a peer of Add teams.">RESTYLED · the page</button><button class="mk new" data-note="NEW: the four steps. Each reads its own state (2 teams, 3 of 5 rated). A step's button is absent until it can be pressed: Publish has no button until the division is drafted.">NEW · the steps</button><button class="mk res" data-note="RESTYLED: teams wrap into a grid instead of scrolling sideways, and each card names its coach, which today shows only inside the Edit window and the export. A team with no coach says so in amber, because Publish will mention it.">RESTYLED · team cards</button><button class="mk new" data-note="NEW: each child carries their rating (convenor-only). A dashed dash means not rated. Clicking a rating opens the rating window at that child.">NEW · rating chips</button><button class="mk unc" data-note="UNCHANGED: drag a child onto a team (desk). The board still works with no draft at all; see (d).">UNCHANGED · drag</button></div>
+<p class="cap">The 2027 fixture has no teams; Cardinals and Jays are drawn as if the convenor had just made them, and the ratings are examples. Ages come from the date of birth where the family gave one. Today's "Randomize" button is gone: running the draft with no ratings deals the children at random, evenly, which is what Randomize did.</p>
+
+<div class="spec">
+  <div class="col"><p class="sp-cap">AFTER · same, 390</p>
+  <div class="ph"><div class="ak ph-in" style="display:flex;flex-direction:column;min-height:760px">
+    <div class="pswitch"><div class="t"><span class="ey">Season</span><b>Dev House League 2027</b></div><span class="pill">Closed Aug 1</span><span class="btn ic" aria-label="Switch season"><svg class="ico" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span></div>
+    <div class="ptabs"><span>Overview</span><span>Registrations</span><span class="on">Teams &amp; draft</span><span>Schedule</span><span>Standings</span><span>Money</span><span>Email families</span></div>
+    <div class="pin" style="flex:1">
+      <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;min-width:0"><div class="ey">Teams &amp; draft</div><b class="ttl">U10 Division A</b></div><span class="btn ic" aria-label="Choose a division"><svg class="ico" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span><span class="btn ic" aria-label="Tools"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+      <div class="panel"><div class="rows steps">
+        <div class="r"><span class="ck ok">✓</span><div class="m"><b>Teams</b><div class="d">2 · the Jays have no coach</div></div></div>
+        <div class="r"><span class="ck">2</span><div class="m"><b>Ratings</b><div class="d">3 of 5 rated</div></div><span class="btn">Rate</span></div>
+        <div class="r"><span class="ck">3</span><div class="m"><b>Draft</b><div class="d">Nothing is sent</div></div><span class="btn pri">Run</span></div>
+      </div></div>
+      <div class="panel"><div class="rows">
+        <div class="r"><div class="m"><b>Not on a team</b></div><span class="amb">5</span><span class="chev" style="transform:rotate(-45deg)"></span></div>
+        <div class="r"><span class="dotc" style="width:10px;height:10px;border-radius:50%;background:#C8412B"></span><div class="m"><b>Cardinals</b><div class="d">Coach Pat Volunteer · 0 children</div></div><span class="chev" style="transform:rotate(-45deg)"></span></div>
+        <div class="r"><span class="dotc" style="width:10px;height:10px;border-radius:50%;background:#2E6BC6"></span><div class="m"><b>Jays</b><div class="d"><span style="color:var(--amber)">No coach yet</span> · 0 children</div></div><span class="chev" style="transform:rotate(-45deg)"></span></div>
+      </div></div>
+  </div>
+    <div class="bnav"><span><i></i>Overview</span><span><i></i>Calendar</span><span class="on"><i></i>House league</span><span><i></i>Families</span><span><i></i>More</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: on a phone the board becomes a list: 'Not on a team' first, then each team with its coach and count. Tapping one opens its children. A child is moved with 'Move to…' (see (c)), not dragged: a drag across a list taller than the screen is guesswork. The division picker is the chevron next to the title; there are rarely more than six divisions.">NEW · phone list</button></div></div>
+  <div class="col"><p class="sp-cap">AFTER · a division with no teams yet (desk panel)</p>
+  <div class="ak" style="padding:16px;border-radius:12px"><div class="panel">
+    <div class="hd"><h2>U10 Division B</h2><span class="pill">No teams</span></div>
+    <div class="rows steps">
+      <div class="r"><span class="ck">1</span><div class="m"><b>Teams</b><div class="d">Make the teams first. You can name them now and add coaches any time before you publish.</div></div><span class="btn pri">+ Create teams</span></div>
+      <div class="r"><span class="ck">2</span><div class="m"><b>Ratings</b><div class="d">No children yet · 10 spots</div></div></div>
+    </div></div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: today's 'No teams yet' callout becomes step 1 with its button. The Create teams window is unchanged in what it asks (how many, their names) and moves onto the kit window. The free plan's team limit stays exactly as it is; see PLAN_PRICING_FACTS.md for the number.">RESTYLED · first step</button></div></div>
+</div>
+
+<!-- (b) -->
+<h3 id="b1">(b) Rating a division's children</h3>
+<div class="chips"><button class="fl fix" data-f="T03">fixes T03</button></div>
+<p><b>Where it lives:</b> step 2 on Teams &amp; draft, opening a window for the division. It's not a column on Registrations, because the registrar works there and doesn't see ratings (ask 2a). A rating is a number from 1 to 5 with no comment box. It autosaves as you tap, and it belongs to this season's registration (ask 2b).</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 640px"><p class="sp-cap">AFTER · desk window, two selected for a bulk rating</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:700px">
+    <div class="dh"><h4>Rate U10 Division A</h4><span class="xx">×</span></div>
+    <div class="db">
+      <p style="margin:0">1 is newest to the sport, 5 is among the strongest in the age group. The draft uses these to balance the teams. Only league admins see ratings; families and coaches never do.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="chipk on">All 5</span><span class="chipk">Not rated <span class="amb" style="margin-left:6px">2</span></span></div>
+      <div class="bulk"><b>2 selected</b><span class="sp"></span><span style="font-size:13px">Rate them</span><span class="seg"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></span></div>
+      <table class="kt"><thead><tr><th style="width:36px"></th><th>Child</th><th>Age</th><th>Rating</th></tr></thead><tbody>
+        <tr><td><span class="cbx"></span></td><td><b>Nora Test</b></td><td>9</td><td><span class="seg"><span>1</span><span>2</span><span>3</span><span class="on">4</span><span>5</span></span></td></tr>
+        <tr><td><span class="cbx"></span></td><td><b>Avery Macdonald</b></td><td class="dim">not given</td><td><span class="seg"><span>1</span><span>2</span><span>3</span><span class="on">4</span><span>5</span></span></td></tr>
+        <tr><td><span class="cbx"></span></td><td><b>Jaya Test</b></td><td>9</td><td><span class="seg"><span>1</span><span class="on">2</span><span>3</span><span>4</span><span>5</span></span></td></tr>
+        <tr><td><span class="cbx on">✓</span></td><td><b>Liam Chen</b></td><td class="dim">not given</td><td><span class="seg"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></span> <span class="dim">not rated</span></td></tr>
+        <tr><td><span class="cbx on">✓</span></td><td><b>Jaya Test-Sharma</b></td><td>9</td><td><span class="seg"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></span> <span class="dim">not rated</span></td></tr>
+      </tbody></table>
+      <p class="hint">On a keyboard: type 1 to 5 and it moves to the next child. Tap the chosen number again to clear it.</p>
+    </div>
+    <div class="df"><span class="s">3 of 5 rated · erased when the season finishes</span><span class="btn">Done</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: one window per division. It autosaves as you tap (an edit, not a create); the foot says the count, not 'Saved'. Bulk: select children, then tap a number in the dark bar. The filter 'Not rated' with its amber count is how a convenor finishes the job. The window lists only children who'd be in the draft: accepted, in this division.">NEW · rating window</button><button class="mk s" data-note="Ask 2b: erased when the season finishes is the recommendation, so the foot says it.">ask 2b</button></div></div>
+  <div class="col"><p class="sp-cap">AFTER · phone, full-screen window</p>
+  <div class="ph"><div class="ak ph-in"><div class="fsw">
+    <div class="fh"><span class="btn ic" aria-label="Back"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>Rate U10 Division A</div>
+    <div class="fb" style="gap:0;padding:0">
+      <div style="padding:12px 16px;display:flex;gap:6px"><span class="chipk on">All 5</span><span class="chipk">Not rated <span class="amb" style="margin-left:6px">2</span></span></div>
+      <div class="kid" style="flex-wrap:wrap;padding:10px 16px"><div class="nm" style="flex-basis:100%">Nora Test <small>Age 9</small></div><span class="seg"><span>1</span><span>2</span><span>3</span><span class="on">4</span><span>5</span></span></div>
+      <div class="kid" style="flex-wrap:wrap;padding:10px 16px"><div class="nm" style="flex-basis:100%">Avery Macdonald</div><span class="seg"><span>1</span><span>2</span><span>3</span><span class="on">4</span><span>5</span></span></div>
+      <div class="kid" style="flex-wrap:wrap;padding:10px 16px"><div class="nm" style="flex-basis:100%">Jaya Test <small>Age 9</small></div><span class="seg"><span>1</span><span class="on">2</span><span>3</span><span>4</span><span>5</span></span></div>
+      <div class="kid" style="flex-wrap:wrap;padding:10px 16px"><div class="nm" style="flex-basis:100%">Liam Chen <small>Not rated</small></div><span class="seg"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></span></div>
+    </div>
+    <div class="ff"><span class="s">3 of 5 rated</span><div class="bb"><span class="btn">Done</span></div></div>
+  </div></div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: on a phone each child is a row with five 44px buttons, so a convenor can rate at the field. Bulk rating is desk-only; a phone rates one child per tap anyway.">NEW · phone</button></div></div>
+</div>
+<h4 class="sub-h">A division where nobody is rated</h4>
+<div class="ak" style="padding:16px;border-radius:12px;max-width:760px"><div class="panel"><div class="rows steps">
+  <div class="r"><span class="ck">2</span><div class="m"><b>Ratings</b><div class="d">Nobody is rated. The draft still runs: it deals the children at random, evenly. Rate them first if you want balanced teams.</div></div><span class="btn">Rate players</span></div>
+</div></div></div>
+<p class="cap">Changing a rating after the draft never re-deals the teams: the averages update, and Draft again is the convenor's choice. Ratings are optional by design. A first-year club with no idea who's strong can still make even teams. Partly rated: unrated children count as a 3, the middle, so they spread across teams instead of piling onto one (ask 8).</p>
+
+<!-- (c) -->
+<h3 id="c1">(c) The balanced draft: setup, result, adjusting, locking</h3>
+<div class="chips"><button class="fl fix" data-f="T01">fixes T01</button><button class="fl fix" data-f="T02">fixes T02</button><button class="fl fix" data-f="T09">fixes T09</button></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">AFTER · Run the draft (desk window)</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:560px">
+    <div class="dh"><h4>Run the draft for U10 Division A</h4><span class="xx">×</span></div>
+    <div class="db">
+      <div class="facts2" style="padding:0;grid-template-columns:120px minmax(0,1fr)">
+        <span>Children</span><span><b>5 accepted</b>, including any who still owe. Every accepted child holds their spot (Q3).</span>
+        <span>Not drafted</span><span>Nobody to review and nobody on the waitlist in this division.</span>
+        <span>Teams</span><span>Cardinals 3 · Jays 2 (5 children don't divide evenly by 2)</span>
+        <span>Ratings</span><span>3 of 5 rated · the other 2 count as a 3</span>
+        <span>How it deals</span><span>Strongest first, and the order reverses each round: Cardinals, Jays, then Jays, Cardinals. Ties and the first pick are drawn at random.</span>
+      </div>
+    </div>
+    <div class="df"><span class="s">Nothing is sent. Families hear only when you publish.</span><span class="btn">Cancel</span><span class="btn pri">Run the draft</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the window states the pool before it runs: who is in, who is not and why, how the numbers divide, and how ratings are used. There is no pick order to set: the order reverses each round and the first pick is random, so it stops mattering.">NEW · setup window</button></div></div>
+  <div class="col" style="flex:1 1 420px"><p class="sp-cap">AFTER · Draft again, when children are already on teams</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:480px">
+    <div class="dh"><h4>Draft U10 Division A again?</h4><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">This deals all 5 children again and replaces the current teams, including the 1 move you made by hand (Jaya Test to the Jays).</p></div>
+    <div class="df"><span class="s">Nothing is sent.</span><span class="btn">Cancel</span><span class="btn pri">Draft again</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: drafting again before publishing asks only when it would undo something: the current teams, and any hand moves (named). After publishing, Draft again is absent: the teams are locked to the draft, and changes are moves, each one told to its family.">NEW · Draft again</button></div></div>
+</div>
+
+<p class="sp-cap" style="margin-top:14px">AFTER · the result, with one child moved by hand · desk</p>
+<div class="dt-wrap"><div class="ak dt">
+  <div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic">4</span></div>
+  <div class="shell">
+    <div class="sb">
+      <span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span>
+      <span class="grp">Programs</span>
+      <span class="it" style="font-weight:650;color:var(--ink)"><i></i>House league<span class="chev" style="margin-left:auto"></span></span>
+      <div class="blk">
+        <span class="it sub">Seasons</span>
+        <span class="grp" style="padding-left:14px">Season</span>
+        <span class="sw" style="margin-left:14px">Dev House League 2027<span class="chev"></span></span>
+        <span class="it sub">Overview</span><span class="it sub">Registrations</span><span class="it sub on">Teams &amp; draft</span><span class="it sub">Schedule</span><span class="it sub">Standings</span><span class="it sub">Money</span><span class="it sub">Email families</span>
+      </div>
+      <span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span>
+    </div>
+    <div class="mn"><div class="pg">
+      <div class="ph1"><div><div class="ey">House league · season</div><h1>Teams &amp; draft</h1><p class="sub">Dev House League 2027 · 3 divisions · nothing published yet</p></div></div>
+      <div class="utabs"><span class="on">U10 Division A <span class="c">5</span></span><span>U10 Division B <span class="c">0</span></span><span>U12 Division <span class="c">0</span></span></div>
+      <div class="panel">
+        <div class="hd"><h2>U10 Division A</h2><span class="pill drf"><span class="dot"></span>Drafted · not published</span><span class="btn">Draft again</span><span class="btn pri">Publish teams</span><span class="btn ic" aria-label="Tools for U10 Division A"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+        <div style="padding:12px 16px;display:flex;gap:28px;font-size:14px;flex-wrap:wrap"><span><span class="dim">Average rating</span> <b>Cardinals 3.5 · Jays 3.0</b></span><span><span class="dim">Sizes</span> <b>2 and 3</b></span><span><span class="dim">Moved by hand</span> <b>1</b></span></div>
+      </div>
+      <div class="board" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="tcard"><div class="th"><div class="m"><div class="n"><span class="dotc" style="background:#C8412B"></span>Cardinals</div><div class="s">Coach Pat Volunteer</div></div><span class="btn ic" aria-label="Edit Cardinals"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></div>
+          <div class="kid"><span class="rt">4</span><div class="nm">Nora Test<small>Age 9 · Shortstop</small></div></div>
+          <div class="kid"><span class="rt none">–</span><div class="nm">Jaya Test-Sharma<small>Age 9 · counts as a 3</small></div></div>
+          <div class="bal"><span>2 children</span><span>avg 3.5</span></div></div>
+        <div class="tcard"><div class="th"><div class="m"><div class="n"><span class="dotc" style="background:#2E6BC6"></span>Jays</div><div class="s amber">No coach yet</div></div><span class="btn ic" aria-label="Edit Jays"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></div>
+          <div class="kid"><span class="rt">4</span><div class="nm">Avery Macdonald<small>Paid</small></div></div>
+          <div class="kid"><span class="rt none">–</span><div class="nm">Liam Chen<small>counts as a 3 · owes $165</small></div></div>
+          <div class="kid mv"><span class="rt">2</span><div class="nm">Jaya Test<small>Age 9</small></div><span class="moved">Moved by you</span></div>
+          <div class="bal"><span>3 children</span><span>avg 3.0</span></div></div>
+        <div class="panel" style="padding:14px;font-size:13.5px;color:var(--soft);display:flex;flex-direction:column;gap:8px"><b style="color:var(--ink)">Not on a team</b>Everyone in this division is on a team.<span class="dim">A child accepted after publishing appears here with an amber count.</span></div>
+      </div>
+</div></div>
+  </div>
+</div></div>
+<div class="chips"><button class="mk new" data-note="NEW: the draft's result is the ordinary board, plus a balance line (average rating per team, sizes, moves by hand) so the convenor can see the balance rather than trust it. Averages update as children are moved.">NEW · balance line</button><button class="mk new" data-note="NEW: a child moved by hand after the draft is marked 'Moved by you' until the teams are published, so Draft again can name what it would undo. Clicking it offers 'Put back on the Cardinals'.">NEW · moved by you</button><button class="mk new" data-note="NEW: the division's state: 'Drafted · not published' in amber. Publish teams becomes the primary button; Run the draft becomes Draft again. Clicking the pill says what is left (here: publish, which tells 3 families). Clicking an amber 'No coach yet' opens the team window at the coach's fields.">NEW · state</button><button class="mk s" data-note="Unpaid accepted children are drafted like everyone else (Q3: they hold their spot). The board shows 'Owes $165' in small type to the convenor only; nothing about money reaches the coach.">Q3</button></div>
+<p class="cap">The draft dealt Nora (4) to the Cardinals, Avery (4) and Liam (unrated, as 3) to the Jays, then Jaya Test-Sharma (unrated, as 3) and Jaya Test (2) to the Cardinals. The convenor then moved Jaya Test to the Jays. Nora, Jaya and Jaya are three children of one family; the draft didn't keep them together and wouldn't have split them on purpose either (push-back 3). Ratings are examples.</p>
+
+<div class="spec">
+  <div class="col"><p class="sp-cap">AFTER · a team on a phone</p>
+  <div class="ph"><div class="ak ph-in" style="display:flex;flex-direction:column;min-height:760px">
+    <div class="pswitch"><div class="t"><span class="ey">Season</span><b>Dev House League 2027</b></div><span class="pill">Closed Aug 1</span><span class="btn ic" aria-label="Switch season"><svg class="ico" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span></div>
+    <div class="ptabs"><span>Overview</span><span>Registrations</span><span class="on">Teams &amp; draft</span><span>Schedule</span><span>Standings</span><span>Money</span><span>Email families</span></div>
+    <div class="pin" style="flex:1">
+      <div style="display:flex;align-items:center;gap:8px"><span class="btn ic" aria-label="Back to U10 Division A"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span><div style="flex:1;min-width:0"><div class="ey">U10 Division A · drafted</div><b class="ttl">Jays</b></div><span class="btn ic" aria-label="Edit Jays"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span></div>
+      <div class="note">No coach yet. Publish will tell these families "Coach to be announced".</div>
+      <div class="panel">
+        <div class="kid" style="border-top:0"><span class="rt">4</span><div class="nm">Avery Macdonald</div><span class="btn ic" aria-label="Move Avery Macdonald"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+        <div class="kid"><span class="rt none">–</span><div class="nm">Liam Chen<small>Owes $165</small></div><span class="btn ic" aria-label="Move Liam Chen"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+        <div class="kid mv"><span class="rt">2</span><div class="nm">Jaya Test<small>Moved by you</small></div><span class="btn ic" aria-label="Move Jaya Test"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+        <div class="bal" style="display:flex;justify-content:space-between;padding:8px 14px;border-top:1px solid var(--line);color:var(--dim)"><span>3 children</span><span>avg 3.0</span></div>
+      </div>
+  </div>
+    <div class="bnav"><span><i></i>Overview</span><span><i></i>Calendar</span><span class="on"><i></i>House league</span><span><i></i>Families</span><span><i></i>More</span></div>
+  </div></div></div>
+  <div class="col"><p class="sp-cap">AFTER · ⋯ on Jaya Test: move to another team</p>
+  <div class="ph"><div class="ak ph-in" style="background:var(--dimbg);min-height:640px;display:flex;flex-direction:column;justify-content:flex-end">
+    <div class="sheet">
+      <div class="sh-h"><b>Move Jaya Test to…</b><span class="d2">Rated 2 · U10 Division A</span></div>
+      <div class="sh-i"><span class="dotc" style="width:10px;height:10px;border-radius:50%;background:#C8412B;flex:none"></span><div class="m"><b>Cardinals</b><span class="d2">2 children · avg 3.5 → 3.0 with Jaya</span></div></div>
+      <div class="sh-i on"><span class="dotc" style="width:10px;height:10px;border-radius:50%;background:#2E6BC6;flex:none"></span><div class="m"><b>Jays</b><span class="d2">Now here</span></div><span>✓</span></div>
+      <div class="sh-i"><div class="m"><b>Not on a team</b><span class="d2">Take Jaya off the team</span></div></div>
+    </div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: on a phone a child moves through a sheet that shows each team's count and what the move does to its average. Before publishing the move is immediate. After publishing it asks first, because it emails the family (see Publish & families).">NEW · Move to…</button></div></div>
+</div>
+
+<!-- (d) -->
+<h3 id="d1">(d) The manual path</h3>
+<div class="verdict"><h3>Keep dragging; retire today's "Draft mode" overlay</h3>
+<ul>
+  <li><b>Today there are three ways to fill teams:</b> drag, Randomize, and a full-screen Draft mode. In Draft mode, someone clicks "Pick" for each team in turn, the same order every round, and can't finish until every child is picked <button class="fl" data-f="T01">T01</button> <button class="fl" data-f="T02">T02</button>.</li>
+  <li><b>After:</b> the balanced draft replaces both Randomize and Draft mode. Dragging stays: it's how the convenor adjusts a draft, and how a convenor who wants no draft at all builds teams by hand. The board works without the draft ever running, and Publish works the same either way.</li>
+  <li><b>What retiring Draft mode loses:</b> a "draft night" where coaches sit in a room and pick in turn. Some house leagues do run one. Q8 ruled a balanced draft from ratings, which is a different thing. If a club wants a draft night, it's a request to weigh then, not a mode to keep alive now. <b>Ask 5.</b></li>
+</ul></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">BEFORE · today's Draft mode, drawn from the code (not captured: starting it writes to the season)</p>
+  <div class="ak" style="border-radius:12px;padding:18px;background:var(--paper)"><div class="panel" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:10px"><div style="flex:1"><b style="font:700 18px/1.2 'Inter'">Draft mode</b><div class="dim">Round 1 · Pick 2 · Jays' turn</div></div><span class="btn">Exit draft</span></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill">Cardinals</span><span class="pill" style="background:var(--cta);color:var(--cta-ink);border-color:var(--cta)">Jays</span><span class="pill">Orioles</span></div>
+    <div class="kid" style="border:1px solid var(--line);border-radius:8px"><div class="nm">Emma Tremblay<small>Age 10</small></div><span class="btn">Pick</span></div>
+    <div class="kid" style="border:1px solid var(--line);border-radius:8px"><div class="nm">Jack Osei<small>#12 · Age 10</small></div><span class="btn">Pick</span></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end"><span class="btn">↩ Undo last pick</span><span class="btn pri" style="opacity:.5">Finalize draft</span></div>
+  </div></div>
+  <p class="cap">Finalize stays faded until every child is picked. Picks are kept on the season, so only one division can be mid-draft at a time.</p></div>
+</div>
+</section>
+
+
+<!-- ======================= COACHES & GATE ======================= -->
+<section class="pane" id="coach" data-pane="coach" hidden>
+<h2 style="margin-top:16px">(e) A coach's door</h2>
+<div class="chips"><button class="fl fix" data-f="T04">fixes T04</button></div>
+<p>Drawn as ask 1's recommendation: <b>a team page of its own</b>, not the Coaches Portal. The convenor types the coach's email address on the team. The coach gets an invite when the teams are published, signs in with that address, and lands on one page: their team.</p>
+
+<h3>The invite: on the team</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 480px"><p class="sp-cap">AFTER · the Jays, being edited (desk window)</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:520px">
+    <div class="dh"><h4>Jays</h4><span class="btn ic on" aria-label="Done"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span><span class="xx">×</span></div>
+    <div class="db">
+      <div class="frow"><span class="fl2">Name</span><span class="fld wide">Jays</span></div>
+      <div class="frow"><span class="fl2">Colour</span><span class="fld"><span style="width:16px;height:16px;border-radius:4px;background:#2E6BC6;margin-right:8px"></span>Blue</span></div>
+      <div class="frow"><span class="fl2">Coach</span><span class="fld wide">Pat Volunteer</span></div>
+      <div class="frow"><span class="fl2">Coach's email</span><span class="fld wide">pat.volunteer@example.com</span></div>
+      <p class="hint" style="margin-left:122px">Pat gets an invite to the team page when you publish U10 Division A. The page shows this team's children and each family's name, email and phone. <a class="lnk">+ Add another coach</a></p>
+    </div>
+  </div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: today's Edit team window (name, colour, coach name) on the kit. It reads first and edits whole: the pencil on the team card opens it, ✓ saves. The colour is chosen from a short list rather than the browser's colour picker.">RESTYLED · team window</button><button class="mk new" data-note="NEW: the coach's email address. It is what links a person to the team. Typed before publishing, it waits; typed after publishing, ✓ asks 'Send Pat the invite?' because it tells someone (the edit-autosaves/create-asks exception).">NEW · coach's email</button><button class="mk s" data-note="Ask 10: the invite goes at Publish (recommended), so a coach never sees a roster the families haven't been told about.">ask 10</button></div></div>
+  <div class="col" style="flex:1 1 440px"><p class="sp-cap">AFTER · the email Pat receives</p>
+  <div class="mail">
+    <div class="mh"><b>You're coaching the Jays in Dev House League 2026</b><span class="muted">From Dev League Org via FieldLogicHQ · reply goes to the club</span></div>
+    <div class="club"><span class="mono">DL</span>Dev League Org</div>
+    <div class="mb">
+      <p>Hi Pat,</p>
+      <p>Dev League Org has added you as coach of the <b>Jays</b> (Division A, Dev House League 2026).</p>
+      <p>Your team page lists your 3 players and how to reach their families. Your games appear there once the club publishes the schedule.</p>
+      <span class="btnm cl">Open your team page</span>
+      <p class="muted" style="font-size:13px">You'll sign in with pat.volunteer@example.com. No FieldLogicHQ account yet? You'll make one in a minute. Not expecting this? Reply and it reaches the club.</p>
+    </div>
+  </div>
+  <div class="chips"><button class="mk new" data-note="NEW: a coach invite for a house-league team. It names the club, the team, the division and the season, says what the page holds, and says the schedule comes later. The link signs in with the invited address only, like today's rep coach invites.">NEW · invite email</button></div></div>
+</div>
+<p class="cap">The fixture names "Pat Volunteer" as coach of all six 2026 teams; the email address is an example. The drawings show Pat on the Jays only.</p>
+
+<h3>The coach's own team page</h3>
+<div class="spec">
+  <div class="col"><p class="sp-cap">AFTER · signing in: the card that opens the team</p>
+  <div class="ph"><div class="ak ph-in" style="min-height:420px">
+    <div class="pbar"><span>FieldLogicHQ</span><span class="sp"></span><span class="btn ic" aria-label="Account"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span></div>
+    <div class="chooser">
+      <div class="ey">Where to?</div>
+      <div class="ccard"><span class="badge" style="width:40px;height:40px;border-radius:8px;background:#2E6BC6;color:#fff;display:grid;place-items:center;font:700 15px/1 'Inter'">J</span><div class="m"><b>Jays</b><div class="d">Dev League Org · Division A</div></div><span class="tag">Coach</span></div>
+      <div class="ccard"><span class="badge" style="width:40px;height:40px;border-radius:8px;background:var(--olive-soft);display:grid;place-items:center;font:700 15px/1 'Inter'">N</span><div class="m"><b>Northside Rep (example)</b><div class="d">Coaches Portal</div></div><span class="tag">Coach</span></div>
+    </div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: a house-league coach's card opens their team page directly, the same way a tournament volunteer's card opens the one job they hold today. One card per team. A person who only coaches house league never sees the Coaches Portal. Drawn with a second, example card to show a parent who also coaches a rep team.">NEW · sign-in card</button></div></div>
+  <div class="col"><p class="sp-cap">AFTER · the team page, 390</p>
+  <div class="ph"><div class="ak ph-in" style="min-height:760px">
+    <div class="pbar"><span>Dev League Org</span><span class="sp"></span><span class="btn ic" aria-label="Account"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span></div>
+    <div class="pin cpage">
+      <div class="cmast"><span class="badge" style="background:#2E6BC6">J</span><div style="min-width:0"><span class="ey">Division A · Dev House League 2026</span><b>Jays</b><span class="dim">Coach Pat Volunteer</span></div></div>
+      <div class="panel">
+        <div class="hd"><h2>Players <span class="dim" style="font-weight:500">3</span></h2><span class="btn"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg> Copy emails</span></div>
+        <div class="kid" style="align-items:flex-start;padding:10px 6px 10px 14px;border-top:0"><div class="nm">Noah Patel<small>Catcher</small><span class="ctc" style="margin-top:4px"><span>Parent Patel</span><span>noah.patel@dev.local</span><span>905-555-0142</span></span></div><span class="rowact"><span class="btn ic" aria-label="Email Parent Patel"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><span class="btn ic" aria-label="Call Parent Patel"><svg class="ico" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></span></span></div>
+        <div class="kid" style="align-items:flex-start;padding:10px 6px 10px 14px"><div class="nm">Emma Tremblay<span class="ctc" style="margin-top:4px"><span>Parent Tremblay</span><span>emma.tremblay@dev.local</span><span>905-555-0142</span></span></div><span class="rowact"><span class="btn ic" aria-label="Email Parent Tremblay"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><span class="btn ic" aria-label="Call Parent Tremblay"><svg class="ico" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></span></span></div>
+        <div class="kid" style="align-items:flex-start;padding:10px 6px 10px 14px"><div class="nm">Jack Osei<small>#12</small><span class="ctc" style="margin-top:4px"><span>Parent Osei</span><span>jack.osei@dev.local</span><span>905-555-0142</span></span></div><span class="rowact"><span class="btn ic" aria-label="Email Parent Osei"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><span class="btn ic" aria-label="Call Parent Osei"><svg class="ico" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></span></span></div>
+      </div>
+      <div class="later"><b>Schedule</b>The club hasn't published the schedule yet. Your games will be listed here, with where and when.</div>
+      <div class="later"><b>Scores</b>After each game, you'll enter the score here.</div>
+      <p class="hint">Fees, ratings and other teams aren't on a coach's page. Questions about the team? Email the club at league@devleague.ca.</p>
+    </div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the whole of a house-league coach's product. Players with each family's name, email and phone (Q7 'roster contacts'), a Copy emails button so the coach can write to the team from their own mail, then two slots: Schedule (9d) and Scores (9e), drawn dashed and said in plain words. Phone-first: a coach reads this at the field.">NEW · team page</button><button class="mk s" data-note="9d fills Schedule (this team's games, read-only). 9e fills Scores (the coach enters this team's results). Neither is built in 9c; the slots say so plainly.">9d · 9e slots</button><button class="mk s" data-note="Ask 9: what a coach sees of each family. Recommended: guardian name, email and phone, plus one line on the sign-up form saying the coach will see them. The family's sign-up note (where allergies get written) is not shown in this drawing.">ask 9</button></div></div>
+</div>
+<p class="sp-cap" style="margin-top:14px">AFTER · the same page on a desk (no admin rail: a coach has no admin area)</p>
+<div class="dt-wrap"><div class="ak dt">
+  <div class="tb"><span class="lg"></span>Dev League Org<span class="sp"></span><span class="ic">PV</span></div>
+  <div class="mn" style="min-height:560px"><div class="pg cpage">
+    <div class="cmast"><span class="badge" style="background:#2E6BC6">J</span><div><span class="ey">Division A · Dev House League 2026</span><b style="font-size:32px">Jays</b><span class="dim">Coach Pat Volunteer</span></div></div>
+    <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start">
+      <div class="panel"><div class="hd"><h2>Players <span class="dim" style="font-weight:500">3</span></h2><span class="btn"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg> Copy emails</span></div>
+        <table class="kt"><thead><tr><th>Player</th><th>Family</th><th>Email</th><th>Phone</th></tr></thead><tbody>
+          <tr><td><b>Noah Patel</b><div class="dim">Catcher</div></td><td>Parent Patel</td><td>noah.patel@dev.local</td><td>905-555-0142</td></tr>
+          <tr><td><b>Emma Tremblay</b></td><td>Parent Tremblay</td><td>emma.tremblay@dev.local</td><td>905-555-0142</td></tr>
+          <tr><td><b>Jack Osei</b><div class="dim">#12</div></td><td>Parent Osei</td><td>jack.osei@dev.local</td><td>905-555-0142</td></tr>
+        </tbody></table></div>
+      <div style="display:flex;flex-direction:column;gap:12px"><div class="later"><b>Schedule</b>The club hasn't published the schedule yet. Your games will be listed here.</div><div class="later"><b>Scores</b>After each game, you'll enter the score here.</div></div>
+    </div>
+  </div></div>
+</div></div>
+<p class="cap">The fixture gives every family the same phone number. A coach of two teams gets a team switcher beside the name, the same one the Coaches Portal uses. When the season finishes, the page says "This season has finished" and keeps the roster for 30 days, then the card goes (an assumption for the build prompt, not an ask). A coach removed from the team loses the page at once; an old link then says "You're no longer the Jays' coach. Questions? Email the club at league@devleague.ca." rather than a blank page. A team with no children yet says "No players yet. The club will add them when the teams are set." An invite opened while signed in as someone else says which address it was sent to, as rep coach invites do today.</p>
+
+<!-- (h) -->
+<h2>(h) The gate: the coach column</h2>
+<p>9a's who-can-do-what table, with the coach added as a column of the same gate (Q17) and the new 9c rows. A control a person can't use is absent, not greyed. The coach column is <b>their own team only</b>, always.</p>
+<div class="tw"><table class="t gate"><thead><tr><th>Who can</th><th>Owner · club admin · league admin</th><th>Registrar</th><th>Treasurer</th><th class="co">Coach <button class="mk new" data-note="NEW column. A house-league coach is a member of the club with the coach role, linked to one or more teams. They have no admin area at all; every row below is answered on their team page or nowhere.">NEW</button></th></tr></thead><tbody>
+  <tr><td>Seasons, divisions, teams, schedule</td><td>edit</td><td>read</td><td class="no">no access</td><td class="co">their team, read</td></tr>
+  <tr><td>Ratings <button class="mk new" data-note="NEW row (Q8 convenor-only). Ask 2a: the registrar is recommended absent, though Q17 has them 'reading the rest'.">NEW</button></td><td>rate and see</td><td class="no">absent (ask 2a)</td><td class="no">no access</td><td class="co">never</td></tr>
+  <tr><td>Run the draft, move a child, publish teams <button class="mk new" data-note="NEW row. Teams are 'run' in 9a's gate: league runners only.">NEW</button></td><td>yes</td><td class="no">no</td><td class="no">no</td><td class="co">no</td></tr>
+  <tr><td>Add, invite and remove a team's coaches <button class="mk new" data-note="NEW row.">NEW</button></td><td>yes</td><td class="no">no</td><td class="no">no</td><td class="co">no</td></tr>
+  <tr><td>Approve, decline, withdraw, mark received, refund, add by hand</td><td>yes</td><td>yes</td><td class="no">no</td><td class="co">no</td></tr>
+  <tr><td>Email families</td><td>yes</td><td>yes</td><td class="no">no</td><td class="co">no; copies their families' emails</td></tr>
+  <tr><td>Family contacts</td><td>every family</td><td>every family</td><td class="no">no</td><td class="co">their team's families (ask 9)</td></tr>
+  <tr><td>Money page</td><td>read</td><td>read</td><td>read, with Accounting</td><td class="co">never</td></tr>
+  <tr><td>Scores (9e)</td><td>enter</td><td>read</td><td class="no">no</td><td class="co">their team's games</td></tr>
+</tbody></table></div>
+
+<h3>What each role sees on these screens</h3>
+<div class="read">
+  <div class="w"><h4>League runners</h4><ul><li>Everything drawn on the Teams &amp; draft tab: steps, ratings, the draft, moves, Publish, Tools.</li><li>The team window, including the coach's email.</li></ul></div>
+  <div class="c"><h4>Registrar</h4><ul><li>The board as a reader: teams, coaches, children, the division's state ("Published Oct 25").</li><li>No ratings, no rating chips, no balance line, no export column of ratings.</li><li>No Run, Draft again, Publish, Move, pencil or Tools: absent.</li></ul></div>
+  <div class="g"><h4>Treasurer · Coach</h4><ul><li>Treasurer: no Teams &amp; draft row in the season block, as today (9a).</li><li>Coach: no admin area. Their card opens their team page; an admin address typed by hand says "You don't have access to this page."</li></ul></div>
+</div>
+</section>
+
+
+<!-- ======================= PUBLISH & FAMILIES ======================= -->
+<section class="pane" id="pub" data-pane="pub" hidden>
+<h2 style="margin-top:16px">(f) Publish teams</h2>
+<div class="chips"><button class="fl fix" data-f="T05">fixes T05</button><button class="fl fix" data-f="T08">fixes T08</button></div>
+<p>Publish is the one moment families are told, so it's held and asks first, like every change that tells families. It's done per division (ask 6) and sends through the club's batched sender: one email per household, never counted toward a cap (push-back 4, ask 4).</p>
+
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">AFTER · the held window (desk)</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:580px">
+    <div class="dh"><h4>Publish the U10 Division A teams</h4><span class="xx">×</span></div>
+    <div class="db">
+      <p style="margin:0">Each family gets one email naming their children's teams and coaches. Each child's team shows on the family's status page. Pat Volunteer gets their team page for the Cardinals.</p>
+      <div class="panel"><div class="rows">
+        <div class="r" style="min-height:52px"><span class="ck ok">✓</span><div class="m"><b>All 5 accepted children are on a team</b></div></div>
+        <div class="r" style="min-height:52px"><span class="ck" style="color:var(--amber);border-color:var(--amber)">!</span><div class="m"><b>The Jays have no coach</b><div class="d">Their families read "Coach to be announced". Add one any time; they're invited then.</div></div></div>
+      </div></div>
+      <a class="lnk">Preview the email to the Test family (3 children)</a>
+    </div>
+    <div class="df"><span class="s">3 emails · automatic, so it doesn't count toward the season's 3 sends a day</span><span class="btn">Cancel</span><span class="btn pri">Publish and email 3 families</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: Publish teams. It says what happens and who hears, then checks the division: everyone placed, and each team's coach. A team with no coach is a warning, not a block. The button names the count of families, not children: 5 children, 3 households.">NEW · Publish window</button><button class="mk s" data-note="Ask 4: through the club's existing batched sender, in 9c. Ask 6: per division.">asks 4 · 6</button></div></div>
+  <div class="col"><p class="sp-cap">AFTER · the same, phone (full-screen window)</p>
+  <div class="ph"><div class="ak ph-in"><div class="fsw" style="min-height:640px">
+    <div class="fh"><span class="btn ic" aria-label="Back"><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>Publish U10 Division A</div>
+    <div class="fb">
+      <p style="margin:0">Each family gets one email naming their children's teams and coaches. Pat Volunteer gets the Cardinals' team page.</p>
+      <div class="panel"><div class="rows">
+        <div class="r"><span class="ck ok">✓</span><div class="m"><b>All 5 children on a team</b></div></div>
+        <div class="r"><span class="ck" style="color:var(--amber);border-color:var(--amber)">!</span><div class="m"><b>The Jays have no coach</b><div class="d">"Coach to be announced"</div></div></div>
+      </div></div>
+      <a class="lnk">Preview the email</a>
+    </div>
+    <div class="ff"><span class="s">3 emails · doesn't count toward the 3 a day</span><div class="bb"><span class="btn">Cancel</span><span class="btn pri">Publish · email 3</span></div></div>
+  </div></div></div></div>
+</div>
+
+<h3>What families read</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 480px">
+  <div class="mail">
+    <div class="mh"><b>The teams are set: Dev House League 2027</b><span class="muted">From Dev League Org via FieldLogicHQ · to j7-test@dev.local</span></div>
+    <div class="club"><span class="mono">DL</span>Dev League Org</div>
+    <div class="mb">
+      <p>Hi Priya,</p>
+      <p>The teams for U10 Division A are set.</p>
+      <p><b>Nora Test</b>: Cardinals, coach Pat Volunteer<br><b>Jaya Test-Sharma</b>: Cardinals, coach Pat Volunteer<br><b>Jaya Test</b>: Jays, coach to be announced</p>
+      <p>Your child's coach will be in touch. Games appear on the season's schedule once the club publishes it.</p>
+      <span class="btnm cl">See your registration</span>
+      <p class="muted" style="font-size:13px">Reply to this email to reach Dev League Org.</p>
+    </div>
+  </div>
+  <div class="chips"><button class="mk new" data-note="NEW: the placement notice. One per household, listing every child of that family in the division. It names the coach, or says 'coach to be announced'. It is a service message, so a family who unsubscribed from club news still gets it. The link opens the status page.">NEW · placement email</button></div></div>
+  <div class="col" style="flex:1 1 380px"><div class="card" style="margin:0"><h3>A large season</h3><ul>
+    <li>A division of 120 children from 100 families is one press and 100 emails, in one batch.</li>
+    <li>Publishing six divisions in one evening is six presses, and none of them uses up the season's 3 typed sends.</li>
+    <li>A bounced address is listed after publishing ("1 email didn't arrive: Macdonald"). That family's status page still shows the team.</li>
+  </ul></div></div>
+</div>
+
+<h3>After publishing</h3>
+<p class="sp-cap">AFTER · the division, published, one email that didn't arrive · desk panel</p>
+<div class="ak" style="padding:16px;border-radius:12px;max-width:980px"><div class="panel">
+  <div class="hd"><h2>U10 Division A</h2><span class="pill pubd"><span class="dot"></span>Published Oct 25</span><span class="btn ic" aria-label="Tools for U10 Division A"><svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+  <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px">
+    <div class="note blue">Published Oct 25 · 3 families emailed · Pat Volunteer invited to the Cardinals.</div>
+    <div class="note">1 email didn't arrive: the Macdonald family (the address bounced). Avery's team shows on their status page. <a class="lnk">Open Avery's registration</a></div>
+    <span class="dim">Moving a child now emails their family. Draft again is gone: these teams are published. There is no unpublish, because families already have the email; a mistake is fixed by moving children, and each family hears about their own child.</span>
+  </div>
+</div></div>
+<div class="spec" style="margin-top:10px">
+  <div class="col" style="flex:1 1 300px"><p class="sp-cap">While sending</p><div class="ak" style="padding:12px;border-radius:12px"><div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="s">Sending to 3 families…</span><span class="btn pri" style="opacity:.5">Publishing…</span></div></div></div></div>
+  <div class="col" style="flex:1 1 420px"><p class="sp-cap">If the sender fails partway</p><div class="ak" style="padding:12px;border-radius:12px"><div class="note">The teams are published, but 2 of 3 emails couldn't be sent. Their status pages show the team. <a class="lnk">Send the 2 again</a></div></div></div>
+  <div class="col" style="flex:1 1 360px"><p class="sp-cap">A coach's state on the team card</p><div class="ak" style="padding:12px;border-radius:12px;display:flex;flex-direction:column;gap:6px;font-size:13px">
+    <span><b>Coach Pat Volunteer</b> <span class="dim">· invited Oct 25</span></span>
+    <span><b>Coach Pat Volunteer</b> <span class="dim">· signed in</span></span>
+    <span><b>Coach Pat Volunteer</b> <span style="color:var(--amber);font-weight:600">· invite didn't arrive</span> <a class="lnk">Fix the email</a></span></div></div>
+</div>
+<div class="chips"><button class="mk new" data-note="NEW (from /ux): Publish shows it is sending and can't be pressed twice; it ends with one result line naming what happened. A partial failure keeps the teams published (the status page is the fallback) and offers to send the failed ones again. The team card says where each coach's invite stands, so a typo in an address is seen rather than silent.">NEW · sending, result, coach state</button><button class="mk new" data-note="NEW: a published division. Draft again and Publish are absent. The state pill keeps the date. A delivery failure is said once, in amber, with a door to the family; it's never a green '0 delivered'.">NEW · published state</button></div>
+
+<div class="spec" style="margin-top:14px">
+  <div class="col" style="flex:1 1 440px"><p class="sp-cap">A child moved after publishing (held)</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:480px">
+    <div class="dh"><h4>Move Liam Chen to the Cardinals?</h4><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">The Chen family gets an email saying Liam is now on the Cardinals, coach Pat Volunteer. Both teams' pages change for their coaches.</p></div>
+    <div class="df"><span class="s">1 email</span><span class="btn">Cancel</span><span class="btn pri">Move and email</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: after publishing, a drag or 'Move to…' asks first, because it tells a family. The family gets a short email; the coaches' pages change at once. Ask 12.">NEW · held move</button></div></div>
+  <div class="col" style="flex:1 1 440px"><p class="sp-cap">A child withdrawn after publishing</p>
+  <div class="ak" style="padding:16px;border-radius:12px"><div class="tcard">
+    <div class="th"><div class="m"><div class="n"><span class="dotc" style="background:#2E6BC6"></span>Jays</div><div class="s">Coach to be announced</div></div></div>
+    <div class="kid"><span class="rt none">–</span><div class="nm">Liam Chen<small>owes $165</small></div></div>
+    <div class="kid"><span class="rt">2</span><div class="nm">Jaya Test</div></div>
+    <div class="kid" style="color:var(--dim);font-size:13px"><span style="width:26px"></span><div class="nm" style="font-weight:400">Avery Macdonald withdrew Nov 1</div></div>
+    <div class="bal"><span>2 children</span><span>avg 2.5</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: ending a registration (9b-2's window, on Registrations) takes the child off their team; the team card keeps one quiet line saying who left and when. The family's withdrawal email covers it, so no team email goes. The coach's page drops the child at once. Today an ended child keeps their team (T08).">NEW · leaves the team</button></div></div>
+</div>
+<p class="cap">A child accepted after publishing (a waitlisted child who gets a spot, or one added by hand) appears under "Not on a team" with the amber count. Placing them asks first and sends their family the same placement email. In the 2026 fixture this case already exists: Ava Kim is accepted in Division B and on no team, while her brother Henry is on the Tigers.</p>
+
+<!-- (g) -->
+<h2>(g) The family status page</h2>
+<div class="chips"><button class="fl fix" data-f="T05">fixes T05</button></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px"><p class="sp-cap">BEFORE · today, Henry Kim (2026), 1440</p><div class="shot"><div class="sc" style="max-height:440px"><img src="{{IMG:c-status-desk-warm}}" alt="Today's status page: Henry Kim, Accepted, Division B, fee paid; no team"></div><div class="bar"><span>Division and fee · no team, though Henry is on the Tigers</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col"><p class="sp-cap">BEFORE · same, 390</p><div class="shot ph-shot"><div class="sc" style="max-height:440px"><img src="{{IMG:c-status-phone-warm}}" alt="Today's status page on a phone"></div><div class="bar"><span>390</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+
+<div class="spec" style="margin-top:12px">
+  <div class="col"><p class="sp-cap">AFTER · before the teams are published</p>
+  <div class="ph"><div class="pub" style="padding:16px;display:flex;flex-direction:column;gap:12px;min-height:420px">
+    <span class="eyb">Your registrations · 3 children</span>
+    <div class="scard"><div class="top"><b>Nora Test</b><span class="tag a">Accepted</span></div>
+      <div class="srow"><span>Division</span><span>U10 Division A</span></div>
+      <div class="srow"><span>Team</span><span>Not set yet</span></div>
+      <div class="srow"><span>Fee</span><span>$165 to pay</span></div>
+      <span class="sline">We'll email you when the teams are made.</span></div>
+    <span class="chg">Jaya Test-Sharma and Jaya Test below, the same way.</span>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: a Team row on every accepted child. Before publishing it says plainly that it isn't set, and that the family will be emailed. It is never blank, and it never shows a draft the convenor is still adjusting.">NEW · Team row</button></div></div>
+  <div class="col"><p class="sp-cap">AFTER · published</p>
+  <div class="ph"><div class="pub" style="padding:16px;display:flex;flex-direction:column;gap:12px;min-height:420px">
+    <span class="eyb">Your registrations · 3 children</span>
+    <div class="scard"><div class="top"><b>Nora Test</b><span class="tag a">Accepted</span></div>
+      <div class="srow"><span>Division</span><span>U10 Division A</span></div>
+      <div class="srow"><span>Team</span><span><b>Cardinals</b></span></div>
+      <div class="srow"><span>Coach</span><span>Pat Volunteer</span></div>
+      <div class="srow"><span>Fee</span><span>$165 to pay</span></div></div>
+    <div class="scard"><div class="top"><b>Jaya Test</b><span class="tag a">Accepted</span></div>
+      <div class="srow"><span>Division</span><span>U10 Division A</span></div>
+      <div class="srow"><span>Team</span><span><b>Jays</b></span></div>
+      <div class="srow"><span>Coach</span><span>To be announced</span></div>
+      <div class="srow"><span>Fee</span><span>$165 to pay</span></div></div>
+  </div></div>
+  <div class="chips"><button class="mk s" data-note="Ask 11: the coach's name on the family's own status page. Recommended yes: it's the family's private page, reached with their email and reference, and the placement email names the coach anyway. The club's 'Coaches on team pages' setting governs PUBLIC pages and is untouched.">ask 11</button></div></div>
+  <div class="col"><p class="sp-cap">AFTER · after a move</p>
+  <div class="ph"><div class="pub" style="padding:16px;display:flex;flex-direction:column;gap:12px;min-height:420px">
+    <span class="eyb">Your registration</span>
+    <div class="scard"><div class="top"><b>Liam Chen</b><span class="tag a">Accepted</span></div>
+      <div class="srow"><span>Division</span><span>U10 Division A</span></div>
+      <div class="srow"><span>Team</span><span><b>Cardinals</b></span></div>
+      <div class="srow"><span>Coach</span><span>Pat Volunteer</span></div>
+      <div class="srow"><span>Fee</span><span>$165 to pay</span></div>
+      <span class="sline">Moved from the Jays on Nov 2.</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: after a move, the Team row shows the new team with one line saying where from and when, so a family who missed the email isn't confused by a different team name. A withdrawn child shows Withdrawn, as 9b-2 already does, with no Team row.">NEW · after a move</button></div></div>
+</div>
+<p class="cap">Drawn with the Test family (three children in 2027's U10 Division A) and Liam Chen. The dates are examples. Henry Kim's page, published, would read Team: Tigers, Coach: Pat Volunteer. Rows keep today's shape: the label on the left, the value on the right.</p>
+</section>
+
+
+<!-- ======================= EDGE STATES ======================= -->
+<section class="pane" id="edge" data-pane="edge" hidden>
+<h2 style="margin-top:16px">(i) Edge states</h2>
+<p>Who is in a draft is decided by one rule: <b>accepted children in this division</b>. Paid or not doesn't matter (Q3). Everyone else is named in the setup window with the reason, so nobody vanishes without a word.</p>
+
+<div class="spec">
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">Fewer children than teams</p>
+  <div class="ak win" style="border-radius:12px"><div class="dlg" style="max-width:500px">
+    <div class="dh"><h4>Run the draft for U10 Division A</h4><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">U10 Division A has 5 children and 6 teams, so one team would have nobody. Remove a team, or wait for more children to be accepted.</p></div>
+    <div class="df"><span class="s"></span><span class="btn">Close</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the draft won't run when a team would be empty; the window says why and what to do, with no Run button (absent beats disabled). Dragging still works. Six teams is an example; the fixture has none.">NEW</button></div></div>
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">Children still to review, and a waitlist (setup window lines)</p>
+  <div class="ak" style="padding:16px;border-radius:12px"><div class="panel"><div class="facts2" style="grid-template-columns:120px minmax(0,1fr)">
+    <span>Children</span><span><b>7 accepted</b>, including Sofia Rossi and Lucas Nguyen, who still owe</span>
+    <span>Not drafted</span><span><b>1 still to review</b> (Maya Singh): she holds her spot but isn't accepted yet. <a class="lnk">Review on Registrations</a><br><b>Waitlist:</b> nobody. A waitlisted child is never drafted; if they get a spot later, they appear under "Not on a team".</span>
+  </div></div></div>
+  <div class="chips"><button class="fl fix" data-f="T09">fixes T09</button><button class="mk s" data-note="Ask 7: a child still to review isn't drafted (recommended); Publish repeats the line.">ask 7</button></div>
+  <p class="cap">From 2026's Division A in the fixture: 7 accepted (two still owe), Maya Singh received and waiting for review.</p></div>
+</div>
+
+<div class="edges">
+  <div class="card"><h3>An odd number</h3><p>5 children in 2 teams make 3 and 2. The extra child goes where the order lands; the balance line shows sizes and averages, so the convenor can see it and move a child if they want. No rule tries to "fix" an odd number.</p></div>
+  <div class="card"><h3>An unpaid accepted child</h3><p>Drafted like everyone else (Q3). The convenor sees "owes $165" in small type on the board. The coach's page and the family's team row never mention money. Publish isn't blocked by anything owed.</p><div class="chips"><button class="mk s" data-note="Q3, ruled: an accepted unpaid registration holds its spot.">Q3</button></div></div>
+  <div class="card"><h3>A family asks to withdraw (9b-2)</h3><p>Asking changes nothing until the club ends the registration, so the child stays in the draft. The board shows a quiet "Asked to withdraw" under their name, so the convenor isn't surprised. Once ended, see below.</p></div>
+  <div class="card"><h3>A withdrawn child</h3><p><b>Before publishing:</b> they leave the board and their rating goes with the registration.<br><b>After publishing:</b> they leave their team with one quiet line on the team card; the coach's page drops them; no team email goes (their withdrawal email covers it). Today an ended child keeps their team <button class="fl" data-f="T08">T08</button>.</p></div>
+  <div class="card"><h3>Two divisions for one age group</h3><p>U10 Division A and U10 Division B are two tabs and two separate drafts. Children aren't balanced across them: the family chose the division by its note (9b·13, for example "Tuesday nights"), so moving them would undo their choice. A child moves between divisions on Registrations, not here.</p></div>
+  <div class="card"><h3>A division with no children</h3><p>Step 2 says "No children yet · 10 spots" and there is no Run button. Teams can still be made and coaches added ahead of time.</p></div>
+  <div class="card"><h3>A child accepted after publishing</h3><p>Under "Not on a team" with the amber count. Placing them asks first and emails their family the placement notice. The division stays published.</p></div>
+  <div class="card"><h3>Teams made before this change</h3><p>A season whose children are already on teams (2026 in the fixture) counts as published, with no emails sent, so turning this on never emails every family of a season being played. A note for the build, not an ask.</p></div>
+</div>
+</section>
+
+<!-- ======================= ASKS ======================= -->
+<section class="pane" id="asks" data-pane="asks" hidden>
+<h2 style="margin-top:16px">Asks &amp; paste-back</h2>
+
+<div class="card"><h3>Ruled, and how it's drawn</h3>
+<ul>
+  <li><b>Q7 light coach accounts:</b> invited by email, their own team only, roster contacts, schedule and scores. Drawn as the coach's team page. Scores (9e) and the schedule (9d) are dashed slots that say plainly they aren't there yet.</li>
+  <li><b>Q8 a 1–5 rating feeding a balanced snake draft, convenor-only:</b> the rating window and the draft.</li>
+  <li><b>Q9 volunteers are their own project:</b> not drawn.</li>
+  <li><b>Q17 one gate, a coach as its column:</b> the table on the Coaches tab.</li>
+  <li><b>Q19 age groups as divisions:</b> a draft per division, one tab each.</li>
+  <li><b>Q3 an accepted unpaid child holds the spot:</b> they're drafted.</li>
+  <li><b>9a·2 the season frame:</b> drawn inside it, unchanged.</li>
+  <li><b>Q12b / Q12c:</b> untouched. A placement notice is automatic, so it never counts toward a cap.</li>
+</ul></div>
+
+<div class="card" id="reviews"><h3>What the /ux and /design reviews changed before you saw this</h3>
+<ul style="margin:6px 0 0">
+  <li><b>Flows (/ux):</b>
+    <ul>
+      <li>Publish now shows it is sending and can't be pressed twice.</li>
+      <li>It ends with one result line. If the sender fails partway, the teams stay published and the failed emails can be sent again.</li>
+      <li>Each coach's invite state is on the team card (invited, signed in, didn't arrive), so a mistyped address is visible.</li>
+      <li>A coach who is removed, or opens an old link, reads a sentence with the club's contact instead of a blank page.</li>
+      <li>There's no unpublish, and the drawing says so: the fix is moving children.</li>
+      <li>Changing a rating after the draft never re-deals the teams.</li>
+      <li>Ask 6 now says that per-division publishing can mean two emails for one family. The season's Overview counts published divisions.</li>
+    </ul></li>
+  <li><b>Drawings (/design):</b>
+    <ul>
+      <li>Every mixed-case title (the page title, the season name on a phone, team names, the coach page's heading) moved to the body face, per the 2026-10-19 heading ruling.</li>
+      <li>The chosen rating wears the shared chosen look (olive tint, edge and word) rather than a solid fill.</li>
+      <li>Counts and averages moved out of the typewriter face.</li>
+      <li>Both emails wear the club's colours and mark, per the family-emails ruling.</li>
+      <li>Family contacts on the coach page dropped to regular weight, so the child's name leads.</li>
+      <li>The status page's new rows keep today's shape: label left, value right, with the coach on its own row.</li>
+      <li>The state pill, "Moved by you" and "No coach yet" each open something when clicked.</li>
+      <li>A desk window's footer wraps on a narrow screen.</li>
+    </ul></li>
+  <li><b>Kept on purpose:</b> "Copy emails" on the coach's phone page keeps its word. It's the roster's one action, not a secondary one, and a bare copy symbol in that header wouldn't say what it copies.</li>
+</ul></div>
+
+<div class="ask" data-ask="C1"><h3><span class="no">9c·1</span>The coach's door</h3>
+  <p class="rides">Push-back 1. Rides on it: what a coach can be given later (practice plans, chat) and how much of the Coaches Portal has to learn about house league.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C1" value="A">A: a team page of its own. One screen with the roster and contacts, then schedule (9d) and scores (9e). The coach's sign-in card opens it directly. The portal is untouched.</label>
+    <label><input type="checkbox" name="C1" value="B">B: the Coaches Portal with a house-league workspace. Every portal screen hides itself for a house-league team.</label>
+  </div><textarea aria-label="Notes for 9c·1" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C2a"><h3><span class="no">9c·2a</span>Does the registrar see ratings?</h3>
+  <p class="rides">Q8 says convenor-only; Q17 says the registrar "reads the rest". They collide here.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C2a" value="No">No. Ratings are absent from every screen and export a registrar opens. They see the teams, not the ratings.</label>
+    <label><input type="checkbox" name="C2a" value="Read only">They see ratings but can't change them.</label>
+  </div><textarea aria-label="Notes for 9c·2a" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C2b"><h3><span class="no">9c·2b</span>How long is a rating kept?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C2b" value="Erased at season end">With this season's registration only, erased automatically when the season finishes. Next year starts fresh; carrying ratings forward is Stage 14's question.</label>
+    <label><input type="checkbox" name="C2b" value="Kept with the record">Kept with the finished season's record.</label>
+    <label><input type="checkbox" name="C2b" value="Carried forward">Carried into next year's draft for returning children.</label>
+  </div><textarea aria-label="Notes for 9c·2b" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C2c"><h3><span class="no">9c·2c</span>Can a family see their child's rating?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C2c" value="Number only, on request">A number from 1 to 5 with no comment box. It's never shown on a family screen; if a parent asks, the club reads it from the child's record and answers them.</label>
+    <label><input type="checkbox" name="C2c" value="With a note">A number plus a private note for the convenor.</label>
+    <label><input type="checkbox" name="C2c" value="Shown to family">Shown to the family on the status page.</label>
+  </div><textarea aria-label="Notes for 9c·2c" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C3"><h3><span class="no">9c·3</span>Lock a child to a team before the draft runs?</h3>
+  <p class="rides">Push-back 3. Not drawn. The coach's own child is the common case; siblings and friends are a bigger feature and are not asked here.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C3" value="Yes, in 9c">Yes, in 9c. On the board, "Lock to this team" on a child; the draft deals everyone else around locked children and counts their ratings.</label>
+    <label><input type="checkbox" name="C3" value="Later">Not now. The convenor moves those children by hand after the draft.</label>
+  </div><textarea aria-label="Notes for 9c·3" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C4"><h3><span class="no">9c·4</span>How placement notices are sent</h3>
+  <p class="rides">Push-back 4. 9d still moves the season's typed email onto the same sender.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C4" value="Batched sender in 9c">In 9c, through the club's existing batched sender: one email per household, never counted toward a cap. A family who unsubscribed from club news still gets it.</label>
+    <label><input type="checkbox" name="C4" value="Wait for 9d">Publish teams waits until 9d.</label>
+    <label><input type="checkbox" name="C4" value="No email in 9c">Publish in 9c with no email; families see the team on the status page only.</label>
+  </div><textarea aria-label="Notes for 9c·4" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C5"><h3><span class="no">9c·5</span>Today's "Draft mode" overlay</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C5" value="Retire">Retire it, and Randomize with it. The balanced draft and dragging cover both.</label>
+    <label><input type="checkbox" name="C5" value="Keep as live draft">Keep it as "Run a live draft" for clubs that hold a draft night, fixed to reverse each round.</label>
+  </div><textarea aria-label="Notes for 9c·5" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C6"><h3><span class="no">9c·6</span>What is published at once?</h3>
+  <p class="rides">Per division means a family with children in two divisions can get two placement emails on different days, each naming only the newly placed child. The season's Overview says how many divisions are published ("Teams: 1 of 3 divisions published").</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C6" value="Per division">One division at a time. U8 can be told while U14 is still being drafted.</label>
+    <label><input type="checkbox" name="C6" value="Whole season">The whole season at once, when every division is ready.</label>
+  </div><textarea aria-label="Notes for 9c·6" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C7"><h3><span class="no">9c·7</span>A child still to review when the draft runs</h3>
+  <p class="rides">They hold a spot but aren't accepted.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C7" value="Not drafted, named">Not drafted. The setup window and Publish name them with a link to Registrations; once accepted, they appear under "Not on a team".</label>
+    <label><input type="checkbox" name="C7" value="Drafted">Drafted with everyone else; if declined, they leave their team.</label>
+  </div><textarea aria-label="Notes for 9c·7" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C8"><h3><span class="no">9c·8</span>Unrated children in a partly rated division</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C8" value="Count as 3">They count as a 3, so they spread across teams. The setup window says how many.</label>
+    <label><input type="checkbox" name="C8" value="Rate all first">The draft won't run until every child is rated (a division with no ratings still deals at random).</label>
+  </div><textarea aria-label="Notes for 9c·8" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C9"><h3><span class="no">9c·9</span>What a coach sees of each family</h3>
+  <p class="rides">Q7 says "roster contacts". The club holds the details and the coach is its volunteer, the same footing a rep head coach has today with their own team's guardians. Families aren't told this on the sign-up form today.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C9" value="Contacts + form line">Guardian name, email and phone, plus one line on the sign-up form: "Your child's coach will see your name, email and phone to reach you about the team."</label>
+    <label><input type="checkbox" name="C9" value="Contacts + form line + note">The same, plus the family's sign-up note (where allergies tend to be written).</label>
+    <label><input type="checkbox" name="C9" value="Names only">Names only; a coach reaches families through the club.</label>
+  </div><textarea aria-label="Notes for 9c·9" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C10"><h3><span class="no">9c·10</span>When the coach's invite goes</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C10" value="At publish">At Publish, so a coach never sees a roster the families haven't been told. A coach added after publishing is invited when the convenor confirms.</label>
+    <label><input type="checkbox" name="C10" value="On save">As soon as the email address is saved; the page says "Teams aren't published yet" until they are.</label>
+  </div><textarea aria-label="Notes for 9c·10" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C11"><h3><span class="no">9c·11</span>Does the family's status page name the coach?</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C11" value="Yes">Yes. It's the family's private page and the placement email names the coach anyway. The club's "Coaches on team pages" setting keeps governing public pages.</label>
+    <label><input type="checkbox" name="C11" value="Follow the setting">Follow the club's "Coaches on team pages" setting here too.</label>
+  </div><textarea aria-label="Notes for 9c·11" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="C12"><h3><span class="no">9c·12</span>Moving a child after publishing</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="C12" value="Ask, then email">Asks first, then emails the family the new team; both coaches' pages change at once.</label>
+    <label><input type="checkbox" name="C12" value="Silent">Moves quietly; the status page shows the new team and nobody is emailed.</label>
+  </div><textarea aria-label="Notes for 9c·12" placeholder="Notes"></textarea></div>
+
+<div class="tw"><table class="t" id="askIndex"><thead><tr><th>Ask</th><th>Where</th><th>Your answer so far</th></tr></thead><tbody></tbody></table></div>
+<div class="paste">
+  <div class="row"><button type="button" class="btn-d pri" id="build">Build the summary</button><button type="button" class="btn-d" id="copy">Copy</button><span class="muted" id="copied" style="font-size:13px"></span></div>
+  <label for="out" class="eyebrow">Paste this back</label>
+  <textarea id="out" readonly></textarea>
+</div>
+</section>
+</div>
+
+<dialog class="note" id="dlg" aria-labelledby="dlgT"><div class="nh"><h3 id="dlgT">Note</h3><button type="button" class="x" aria-label="Close" id="dlgX">×</button></div><div class="nb" id="dlgB"></div></dialog>
+
+<script>
+(function(){
+var FINDINGS = {
+ T01:{t:'The draft repeats the same order every round, and the order can\'t be set', today:'"Start draft" takes the teams in their list order as the pick order, with no editor and no shuffle. Every round repeats that order (Cardinals, Jays, Orioles, then Cardinals again), so the first team gets the first pick every round. It is called a draft but it is a rotation.', fix:'A balanced draft: strongest first, the order reversing each round, ties and the first pick drawn at random. The convenor never sets an order.', st:'9c'},
+ T02:{t:'Children already on a team come back into the draft list', today:'Starting a draft leaves out children who already have a team, but every later step (each pick, undo, a reload) rebuilds the list from all accepted children minus those picked in this draft. After the first pick, children who were already placed reappear and can be picked onto a second team.', fix:'The draft deals the whole division and replaces its teams, saying so first when that undoes anything ("Draft again"). There is no half-drafted state to rebuild.', st:'9c'},
+ T03:{t:'No ratings; Randomize ignores skill', today:'Nothing in house league records how strong a child is. Randomize deals children at random; the draft has no information to balance with.', fix:'A 1–5 rating per child, convenor-only (Q8), set in one window per division, used by the draft and shown as each team\'s average.', st:'9c'},
+ T04:{t:'A coach is a typed name, and has nowhere to sign in', today:'The coach is free text on the team ("Pat Volunteer" on every 2026 team in the fixture), with no email and no link to a person. It shows only in the Edit team window and the export, not on the team column. If a club made the volunteer a "coach" member, their sign-in card opens the Coaches Portal, which says "No team assignments yet" forever; at a club without an active subscription there is no card at all.', fix:'A coach\'s email on the team links a person; the invite goes at Publish; their sign-in card opens their own team page (Q7).', st:'9c'},
+ T05:{t:'Nobody is told: no publish step, and the status page omits the team', today:'Dragging a child writes their team at once, mid-adjustment, and no family or coach is ever told. The family status page reads the division and fee but never the team. The other automatic house-league emails go one at a time through a separate path with no batching.', fix:'Publish teams per division: held, through the club\'s batched sender, one email per household; the status page gets a Team row.', st:'9c'},
+ T06:{t:'On a phone the page shows the pool and one team, cut off', today:'There is no phone layout: the 260 px player pool and the team columns sit side by side, so at 390 px the first team is cut off at the edge and the rest are off-screen. Children move only by dragging.', fix:'On a phone the board is a list: Not on a team, then each team. A child moves with "Move to…".', st:'9c'},
+ T07:{t:'The old look, and one draft at a time per season', today:'Hand-rolled windows and a toolbar where the red "Clear all assignments" sits beside "Add teams". Divisions are a dropdown. The draft is stored on the season, so only one division can be mid-draft at a time.', fix:'Kit windows, division tabs, the division\'s next step as its one primary button, rare tools behind ⋯. Each division has its own state.', st:'9c'},
+ T08:{t:'An ended registration keeps its team', today:'In the 2026 fixture Avery Macdonald is declined and still assigned to the Cardinals. Ending a registration doesn\'t take the child off their team; the board hides them only because it lists accepted children. Anything that reads the team (a coach roster, an export, the status page) would still count them.', fix:'Ending a registration takes the child off the team, and the team card keeps one quiet line saying who left and when.', st:'9c'},
+ T09:{t:'Children still to review hold a spot, and the Teams page never says so', today:'A child received but not yet reviewed holds a spot in the division (Maya Singh in 2026\'s Division A), but the pool lists only accepted children, and nothing on the page mentions her.', fix:'The setup window and Publish name every child who isn\'t drafted, and why, with a link to Registrations.', st:'9c'}
+};
+function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+var dlg=$('#dlg'), dT=$('#dlgT'), dB=$('#dlgB');
+function esc(t){return String(t).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function open(title, parts){ dT.textContent=title; dB.innerHTML=parts.map(function(p){return '<div><h4>'+esc(p[0])+'</h4><p>'+esc(p[1])+'</p></div>'}).join(''); if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); }
+$('#dlgX').addEventListener('click',function(){dlg.close()});
+dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
+document.addEventListener('click',function(e){
+  var f=e.target.closest('.fl'); if(f){ e.preventDefault(); e.stopPropagation(); var k=f.getAttribute('data-f'), F=FINDINGS[k]; if(!F) return;
+    var parts=[['What the code does today',F.today]]; var h=f.getAttribute('data-here'); if(h) parts.push(['Where you are looking',h]); parts.push(['What the proposal does',F.fix]); parts.push(['Stage',F.st]);
+    open(k+' · '+F.t, parts); return; }
+  var m=e.target.closest('.mk'); if(m){ e.preventDefault(); e.stopPropagation(); var kind=m.classList.contains('new')?'NEW':m.classList.contains('res')?'RESTYLED':m.classList.contains('unc')?'UNCHANGED':'Later stage';
+    open(m.textContent.trim(), [[kind, m.getAttribute('data-note')||'']]); return; }
+  var o=e.target.closest('.shot .op'); if(o){ var s=o.closest('.shot'); s.classList.toggle('open'); o.textContent=s.classList.contains('open')?'Fold':'Full size'; }
+}, true);
+// tabs
+var tabs=$$('.tabs [role=tab]');
+function show(p, scrollTo){ tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p}); if(p==='asks') buildIndex(); try{localStorage.setItem('hl9c-tab',p)}catch(e){}
+  if(scrollTo){ var el=document.getElementById(scrollTo); if(el) el.scrollIntoView({block:'start'}); } else window.scrollTo(0, $('.tabs').offsetTop - 4); }
+tabs.forEach(function(t){ t.addEventListener('click',function(){ show(t.getAttribute('data-pane')) }) });
+// theme for specimens
+function thm(v){ $$('.ak').forEach(function(a){ a.classList.toggle('dk', v==='dark') }); $$('[data-thm]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-thm')===v)) }); try{localStorage.setItem('hl9-thm',v)}catch(e){} }
+$$('[data-thm]').forEach(function(b){ b.addEventListener('click',function(){ thm(b.getAttribute('data-thm')) }) });
+// asks: persist
+var KEY='hl9c-asks';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}') }catch(e){ return {} } }
+function save(){ var st={}; $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'); st[id]={c:$$('input[type=checkbox]',a).filter(function(i){return i.checked}).map(function(i){return i.value}), n:($('textarea',a)||{}).value||''} }); try{ localStorage.setItem(KEY, JSON.stringify(st)) }catch(e){} }
+(function restore(){ var st=load(); $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'), v=st[id]; if(!v) return; $$('input[type=checkbox]',a).forEach(function(i){ i.checked = v.c.indexOf(i.value)>=0 }); var ta=$('textarea',a); if(ta) ta.value=v.n||''; }) })();
+document.addEventListener('change',function(e){ if(e.target.closest('.ask')) save() });
+document.addEventListener('input',function(e){ if(e.target.closest('.ask')) save() });
+function askTitle(a){ var h=$('h3',a); var no=$('.no',h); return {no:no?no.textContent.trim():a.getAttribute('data-ask'), t:h.textContent.replace(no?no.textContent:'','').trim()} }
+function buildIndex(){ var tb=$('#askIndex tbody'); tb.innerHTML=''; $$('.ask').forEach(function(a){ var T=askTitle(a), pane=a.closest('section.pane').getAttribute('data-pane'); var ch=$$('input:checked',a).map(function(i){return i.closest('label').textContent.trim()}); var tr=document.createElement('tr');
+  if(!a.id) a.id='ask-'+a.getAttribute('data-ask');
+  tr.innerHTML='<td><b>'+esc(T.no)+'</b> '+esc(T.t)+'</td><td><a href="#'+a.id+'" data-go="'+pane+'">'+(($('.tabs [data-pane='+pane+']')||{}).textContent||pane)+'</a></td><td>'+(ch.length?esc(ch.join(' + ')):'<span class="muted">not answered</span>')+'</td>'; tb.appendChild(tr); });
+  $$('[data-go]',tb).forEach(function(l){ l.addEventListener('click',function(e){ e.preventDefault(); show(l.getAttribute('data-go'), l.getAttribute('href').slice(1)) }) }); }
+$('#build').addEventListener('click',function(){ var L=['House league · Stage 9 · 9c round · rulings ('+new Date().toISOString().slice(0,10)+')','']; $$('.ask').forEach(function(a){ var T=askTitle(a); var ch=$$('input:checked',a).map(function(i){return i.closest('label').textContent.trim()}); var n=(($('textarea',a)||{}).value||'').trim(); L.push(T.no+' '+T.t); L.push('  → '+(ch.length?ch.join(' + '):'(no answer)')); if(n) L.push('  note: '+n.replace(/\n+/g,' / ')); }); $('#out').value=L.join('\n'); buildIndex(); });
+$('#copy').addEventListener('click',function(){ var t=$('#out'); if(!t.value) $('#build').click(); var done=function(){ $('#copied').textContent='Copied' }; try{ navigator.clipboard.writeText(t.value).then(done, function(){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' }) }catch(e){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' } });
+// desk drawings: scaled to fit, or true size
+var trueSize=false;
+function fitAll(){ $$('.dt-wrap').forEach(function(w){ var avail=w.parentElement.clientWidth||w.clientWidth; var z=trueSize?1:Math.min(1,avail/1440); w.style.setProperty('--z',z); w.classList.toggle('fit',!trueSize); }) }
+$$('[data-fit]').forEach(function(b){ b.addEventListener('click',function(){ trueSize=!trueSize; fitAll(); $$('[data-fit]').forEach(function(x){ x.textContent=trueSize?'Fit to width':'Show at true size' }); $$('.zl').forEach(function(z){ z.textContent=trueSize?'True size (1440 wide). Scroll sideways.':'Scaled to fit; use the button for true size.' }) }) });
+window.addEventListener('resize',fitAll);
+tabs.forEach(function(t){ t.addEventListener('click',function(){ setTimeout(fitAll,0) }) });
+// restore
+var p0='why', t0='warm'; try{ p0=localStorage.getItem('hl9c-tab')||'why'; t0=localStorage.getItem('hl9-thm')||'warm' }catch(e){}
+var h=(location.hash||'').slice(1); if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(h)>=0) p0=h;
+thm(t0); tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p0))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p0}); if(p0==='asks') buildIndex();
+fitAll();
+})();
+</script>

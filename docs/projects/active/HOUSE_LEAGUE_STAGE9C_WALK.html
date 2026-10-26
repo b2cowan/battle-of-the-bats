@@ -1,0 +1,259 @@
+<title>House League Teams Walk</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 9c · §381</span>
+    <h1>Teams and people</h1>
+    <p class="sub">Written 2026-10-26. One purpose: a convenor makes a division's teams in one place — rates, locks a coach's child, runs a balanced draft, adjusts, publishes — and each family is told once, each coach gets a team page of their own, and nobody but the people who run the league ever sees a rating.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Drawn on <a href="https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk">the 9c drawings</a>; words in HOUSE_LEAGUE_STAGE9C_COPY.md. Your rulings apply (plan §0f): ratings are the runners' alone and erased when the season finishes (and, since the review, when a child's registration ends); a still-to-review child isn't drafted; not rated counts as a 3; publish one division at a time; each family gets ONE email, even if they unsubscribed from club news; a coach is invited at Publish and sees their own team only; a move after publishing asks, then emails.</p>
+    <p><strong>It passes when</strong> the draft deals evenly and fairly, Publish tells each family once and invites each coach, the family's status page shows the team only after Publish, a coach reads their own team and nothing else, and the registrar never sees a rating anywhere.</p>
+    <p><strong>Not in this walk:</strong> the coach page's schedule and scores (9d, 9e), the season email's daily cap (9d), siblings or friends kept together (not ruled). <strong>Dev sends no email</strong> (no provider key): the walk reads the Publish window's preview and the result line instead of an inbox, and you get a coach's invite link from Claude (step J1). <strong>Two things changed from the drawings, by your rulings 2026-10-25:</strong> there is no "email didn't arrive (bounced)" line (the product can't see a bounce), and a coach invite that couldn't be sent reads "Invite didn't send · Send again".</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> · <code>/dev-league-org/admin/house-league</code> · public <code>/dev-league-org/league</code></dd>
+      <dt>Owner</dt><dd><code>league-owner@dev.local</code> · <code>devpass123</code> (sign in only, never reset)</dd>
+      <dt>Registrar</dt><dd><code>league-registrar@dev.local</code> · <code>devpass123</code></dd>
+      <dt>A coach</dt><dd>You make this person in part E: any new address, e.g. <code>pat.walk@dev.local</code>. They set a password when they accept.</dd>
+      <dt>A family</dt><dd>A private window, nobody signed in. The Test family is <code>j7-test@dev.local</code> (three children in 2027 U10 Division A); their reference is on any of their registrations (Registrations › open the child).</dd>
+      <dt>Seasons</dt><dd><strong>Dev House League 2027</strong>, U10 Division A: 5 accepted, no teams yet (the draft is walked here). <strong>Dev House League 2026</strong>: already being played, so it counts as published with no email; Division B's Ava Kim is accepted with no team.</dd>
+      <dt>Restart</dt><dd>Restart the dev server before you start (new files and shared modules were added): stop it, then <code>npm run dev</code>.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'house-league-teams-walk-v1';
+  var O = 'Owner, computer', P = 'Owner, phone', R = 'Registrar, computer', F = 'A family, private window', C = 'The coach, phone', CD = 'The coach, computer';
+  var PARTS = [
+    { id: 'A', title: 'The page, before anything', steps: [
+      { who: O, do: 'Open House league › Dev House League 2027 › Teams & draft.', see: 'Title "Teams & draft", the sub line "Dev House League 2027 · 3 divisions · nothing published yet", a tab a division with its accepted count (U10 Division A 5). No Randomize, no Draft mode anywhere.' },
+      { who: O, do: 'On U10 Division A, click the "No teams" pill.', see: '"Make the teams first." Steps: Teams ("Make the teams first…" with + Create teams), Ratings ("Nobody is rated…" with Rate players), Draft ("Make the teams first."), Publish. No Run the draft button yet (absent until it can be pressed).' },
+      { who: O, do: 'Read the line under the steps, and open Tools (⋯).', see: 'No "Not on the board" line unless someone is to review or waiting. Tools holds Export only (Take all players off teams appears once anyone is on a team).' }
+    ]},
+    { id: 'B', title: 'Rate the division', steps: [
+      { who: O, do: 'Press Rate players.', see: 'A wide window "Rate U10 Division A", the intro (only the people who run the league see ratings), All 5 and Not rated 5 (amber), a table Player · Age · Rating with five buttons a row, the keyboard hint, and the foot "0 of 5 rated · erased when the season finishes" with Done.' },
+      { who: O, do: 'Rate one player 4 with the mouse. Click the 4 again.', see: 'It saves on the tap (no Save button, nothing says "Saved"). Clicking the chosen number again clears it.' },
+      { who: O, do: 'Tick two players and use "2 selected · Rate them" → 5. Then click a row and type 3 on the keyboard.', see: 'Both become 5. Typing 3 rates that row and moves to the next. The foot counts up. "Not rated" filters to the rest.' },
+      { who: P, do: 'On your phone, open the same division and press Rate.', see: 'Rows of five large buttons (thumb-sized), no ticks; the same filter; Done at the foot. Leave at least one player not rated.' },
+      { who: O, do: 'Close the window and read the Ratings step.', see: '"3 of 5 rated · the other 2 count as a 3" (or your numbers).' }
+    ]},
+    { id: 'C', title: 'Make two teams', steps: [
+      { who: O, do: 'Press + Create teams, Number of teams 2, Create 2 teams.', see: 'Two cards (Team 1, Team 2) beside "Not on a team" with its amber 5. Each card says "No coach yet" in amber and "Drag players here, or run the draft". The pill reads "Not drafted"; Run the draft is now in the head.' },
+      { who: O, do: 'Press the pencil on Team 1. Rename it Cardinals, pick a colour, and press ✓. Rename Team 2 Jays.', see: 'The window opened to READ; the pencil turned it into an edit of the whole team and ✓ saved it.' }
+    ]},
+    { id: 'D', title: 'Lock, draft, draft again, move and put back', steps: [
+      { who: O, do: 'Drag one player onto Cardinals. Open their ⋯ › Lock to this team.', see: '"Locked" with a lock beside their name (only you see it). The draft will keep them there.' },
+      { who: O, do: 'Press Run the draft.', see: 'The setup window: Players "5 accepted…", Not drafted "Nobody to review and nobody on the waitlist.", Teams "Cardinals 3 · Jays 2 (5 players don’t divide evenly by 2)", Locked "1 locked…", Ratings, How it deals "Strongest first, and the order reverses each round…", foot "Nothing is sent. Families hear when you publish."' },
+      { who: O, do: 'Press Run the draft.', see: 'Cardinals 3, Jays 2; the locked player still on Cardinals; the two strongest on different teams. The balance line "Average rating Cardinals x · Jays y · Sizes 3 and 2". The pill "Drafted · not published"; Draft again and Publish teams in the head.' },
+      { who: O, do: 'Drag a player from Jays to Cardinals.', see: 'They move at once, silently, on a pale blue row with a "Moved by you" tag; the balance line adds "Moved by hand 1".' },
+      { who: O, do: 'Click "Moved by you".', see: 'It OFFERS "Put back on Jays" (doesn’t do it on its own). Pick it: back on Jays, the tag gone.' },
+      { who: O, do: 'Press Draft again.', see: '"Draft U10 Division A again?" — deals all 5 again, the locked player stays. Draft again: the teams are re-dealt, still 3 and 2.' },
+      { who: P, do: 'On the phone, read the board and open Jays; on a player open ⋯ › Move to….', see: 'A list of the teams (name, coach, count) and Not on a team, each opening that team’s players. The Move to… sheet lists Cardinals with "2 players · avg x → y with {name}", Jays "Now here", Not on a team, and the lock. Close it without moving.' }
+    ]},
+    { id: 'E', title: 'Coaches', steps: [
+      { who: O, do: 'Click "No coach yet" on Cardinals.', see: 'The team window opens straight to editing with a coach row. Type Pat Walk and pat.walk@dev.local. The hint: "Pat gets an invite to the team page when you publish U10 Division A…". Press ✓.' },
+      { who: O, do: 'Read the Cardinals card and its window.', see: 'Card: "Coach Pat Walk". Window: Pat Walk · pat.walk@dev.local · "Invited when you publish". Jays still "No coach yet".' }
+    ]},
+    { id: 'F', title: 'The family before Publish', steps: [
+      { who: F, do: 'Open /dev-league-org/league › the 2027 season › Check your registration, with j7-test@dev.local and their reference.', see: 'Each accepted child: Team "Not set yet" and "We’ll email you when the teams are set." No Coach row.' }
+    ]},
+    { id: 'G', title: 'Publish', steps: [
+      { who: O, do: 'Press Publish teams.', see: '"Publish the U10 Division A teams": the lead, "Pat Walk is invited to the Cardinals team page"; checks "✓ All 5 accepted players are on a team" and "! No coach for Jays yet · …Coach to be announced…"; "Preview the email to the Test family (3 children)"; foot "3 emails, one per family" (or your count); button "Publish and email 3 families".' },
+      { who: O, do: 'Open the preview.', see: '"The teams are set — Dev House League 2027", each Test child with their team and "coach Pat Walk" or "coach to be announced". ONE email names all three.' },
+      { who: O, do: 'Press Publish and email.', see: 'The button reads "Publishing…" and can’t be pressed twice. Then a blue line "Published Oct 26 · 3 families emailed · Pat Walk invited to coach Cardinals." and "Moving a player now emails their family. There is no unpublish…". The pill "Published Oct 26". No Draft again, no locks, no "Moved by you" any more.' },
+      { who: O, do: 'Open Cardinals’ window.', see: 'Pat Walk "Invited Oct 26".' }
+    ]},
+    { id: 'H', title: 'The family after Publish, and a move', steps: [
+      { who: F, do: 'Look the family up again.', see: 'Each accepted child: Team (bold) and Coach "Pat Walk" (or "To be announced" on Jays). A child still to review or waitlisted keeps their old card.' },
+      { who: O, do: 'Drag a Test child from Cardinals to Jays (or ⋯ › Move to… › Jays).', see: 'Held: "Move {name} to Jays?" — the {Test} family gets an email…, both teams’ pages change; foot "1 email"; button "Move and email". Press it.' },
+      { who: F, do: 'Look the family up again.', see: 'That child: Team Jays, Coach "To be announced", and "Moved from Cardinals on Oct 26."' }
+    ]},
+    { id: 'I', title: 'A late acceptance, and an ending', steps: [
+      { who: O, do: 'Open Dev House League 2026 › Teams & draft › Division B.', see: 'Published (it was being played: no one was emailed when 9c turned on). Ava Kim under "Not on a team" with amber 1 and "A player accepted after you publish appears here."' },
+      { who: O, do: 'Drag Ava Kim onto Tigers.', see: 'Held: "Put Ava Kim on Tigers?" — "The Kim family gets an email with Ava’s team and coach." "Place and email". Press it.' },
+      { who: O, do: 'On Registrations, decline or withdraw a child who is on a published 2027 team (Cardinals).', see: 'Back on Teams & draft the child is gone from Cardinals and the card’s foot reads "{name} left the team on Oct 26".' }
+    ]},
+    { id: 'J', title: 'The coach’s door', steps: [
+      { who: O, do: 'Ask Claude for Pat’s invite link (dev sends no email): "give me the 9c invite link for pat.walk@dev.local".', see: 'A link /auth/accept-league-coach?token=… (it makes a fresh 7-day invite).' },
+      { who: C, do: 'In a private window on the phone, open the link.', see: '"Coach Cardinals" · "{the club} added you as a coach." — set a name and password, "Create account and open your team". You land on the team page, never the Coaches Portal.' },
+      { who: C, do: 'Read the team page.', see: 'Eyebrow "U10 Division A · Dev House League 2027", title Cardinals, "Coach Pat Walk", Players {n} with Copy emails; each player with the guardian’s name, email and phone (tap to email or call; no "—" for a missing phone); Schedule "Your games aren’t listed on this page yet. See the season’s schedule"; Scores "The club enters scores for now."; the foot "Fees, ratings and other teams aren’t shown here…". The child you ended in I3 is not listed.' },
+      { who: C, do: 'Press Copy emails.', see: '"Copied {n} emails." (or a box to select them by hand).' },
+      { who: CD, do: 'Sign in as Pat on a computer from the sign-in page.', see: 'A card "Cardinals · {the club} · U10 Division A" with a Coach badge opens the page. No Coaches Portal card.' },
+      { who: CD, do: 'Change the address’s team id to Jays’ (copy it from the owner’s Jays window URL or ask Claude).', see: '"Page not found" — not even Jays’ name.' },
+      { who: O, do: 'Remove Pat as coach (Cardinals’ window, pencil, ×, ✓ → "Remove Pat Walk as coach?" → Remove). Then reload Pat’s page.', see: 'Pat’s page reads "You’re no longer a coach of Cardinals." Families weren’t told.' }
+    ]},
+    { id: 'K', title: 'The registrar reads, and sees no rating', steps: [
+      { who: R, do: 'Open Teams & draft on 2027 U10 Division A.', see: 'The same board and pill, but no rating chips, no averages, no balance line, no lock, no "Moved by you", no buttons (no Rate, Run, Draft again, Publish, pencils, ⋯ on players). No Ratings step.' },
+      { who: R, do: 'Tools › Export.', see: 'The Excel file has Player · Age · Division · Team · Coach and NO Rating column. (As the owner the same export has Rating.)' }
+    ]},
+    { id: 'L', title: 'Email a team waits for Publish', steps: [
+      { who: O, do: 'On 2027 Registrations, Tools › Email families › a team of an UNPUBLISHED division (draft another division first, or use one you haven’t published).', see: 'Refused: "{team} isn’t published yet. Families hear their teams when you publish on Teams & draft." A published team’s families can be emailed as before.' }
+    ]},
+    { id: 'M', title: 'Finishing a season erases its ratings', steps: [
+      { who: O, do: 'On 2026 Teams & draft, rate one player in Division A. Then on the season’s Overview, complete the season (Finish). Open Teams & draft again.', see: 'No Ratings step, no chips, no averages: the ratings are gone, and the board is read-only (a finished season).' },
+      { who: O, do: 'Reopen the 2026 season.', see: 'Live again, and the ratings did NOT come back (as ruled).' }
+    ]}
+  ];
+
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['House league teams walk §381 (2026-10-26)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
