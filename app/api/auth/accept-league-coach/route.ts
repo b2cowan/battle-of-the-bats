@@ -23,6 +23,7 @@ export const GET = withObservability(async (req: Request) => {
   return NextResponse.json({
     invite: {
       status: invite.status, expired: invite.expired, invitedEmail: invite.invitedEmail,
+      firstName: invite.firstName, lastName: invite.lastName,
       teamName: invite.teamName, orgName: invite.orgName,
     },
     signedIn: !!user,

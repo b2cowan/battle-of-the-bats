@@ -16,6 +16,8 @@ interface InviteInfo {
   status: 'pending' | 'accepted' | 'removed';
   expired: boolean;
   invitedEmail: string;
+  firstName: string;
+  lastName: string;
   teamName: string;
   orgName: string;
 }
@@ -45,6 +47,9 @@ function AcceptForm() {
         if (cancelled) return;
         if (!res.ok) { setFatal(json.error ?? 'This invite link is not valid.'); return; }
         setInvite(json.invite);
+        // What the convenor typed fills the form; the coach can change it.
+        setFirstName(json.invite?.firstName ?? '');
+        setLastName(json.invite?.lastName ?? '');
         setSignedIn(!!json.signedIn);
         setSignedInEmail(json.signedInEmail ?? null);
         setAccountExists(!!json.accountExists);

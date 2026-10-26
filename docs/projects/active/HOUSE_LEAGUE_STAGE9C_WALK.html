@@ -120,7 +120,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
     ]},
     { id: 'C', title: 'Make two teams', steps: [
       { who: O, do: 'Press + Create teams, Number of teams 2, Create 2 teams.', see: 'Two cards (Team 1, Team 2) beside "Not on a team" with its amber 5. Each card says "No coach yet" in amber and "Drag players here, or run the draft". The pill reads "Not drafted"; Run the draft is now in the head.' },
-      { who: O, do: 'Press the pencil on Team 1. Rename it Cardinals, pick a colour, and press ✓. Rename Team 2 Jays.', see: 'The window opened to READ; the pencil turned it into an edit of the whole team and ✓ saved it.' }
+      { who: O, do: 'Press the pencil on Team 1. Rename it Cardinals, pick a colour, and press ✓. Rename Team 2 Jays.', see: 'The window opened already editing the whole team (no read-only step first); ✓ saved it and the window then showed the team as it reads.' }
     ]},
     { id: 'D', title: 'Lock, draft, draft again, move and put back', steps: [
       { who: O, do: 'Drag one player onto Cardinals. Open their ⋯ › Lock to this team.', see: '"Locked" with a lock beside their name (only you see it). The draft will keep them there.' },
@@ -161,7 +161,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       { who: C, do: 'Press Copy emails.', see: '"Copied {n} emails." (or a box to select them by hand).' },
       { who: CD, do: 'Sign in as Pat on a computer from the sign-in page.', see: 'A card "Cardinals · {the club} · U10 Division A" with a Coach badge opens the page. No Coaches Portal card.' },
       { who: CD, do: 'Change the address’s team id to Jays’ (copy it from the owner’s Jays window URL or ask Claude).', see: '"Page not found" — not even Jays’ name.' },
-      { who: O, do: 'Remove Pat as coach (Cardinals’ window, pencil, ×, ✓ → "Remove Pat Walk as coach?" → Remove). Then reload Pat’s page.', see: 'Pat’s page reads "You’re no longer a coach of Cardinals." Families weren’t told.' }
+      { who: O, do: 'Remove Pat as coach (Cardinals’ pencil, ×, ✓ → "Remove Pat Walk as coach?" → Remove). Then reload Pat’s page.', see: 'Pat’s page reads "You’re no longer a coach of Cardinals." Families weren’t told.' }
     ]},
     { id: 'K', title: 'The registrar reads, and sees no rating', steps: [
       { who: R, do: 'Open Teams & draft on 2027 U10 Division A.', see: 'The same board and pill, but no rating chips, no averages, no balance line, no lock, no "Moved by you", no buttons (no Rate, Run, Draft again, Publish, pencils, ⋯ on players). No Ratings step.' },

@@ -7805,6 +7805,24 @@
         "column_default": null
       },
       {
+        "table_name": "league_team_coaches",
+        "pos": 18,
+        "column_name": "first_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_team_coaches",
+        "pos": 19,
+        "column_name": "last_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_teams",
         "pos": 1,
         "column_name": "id",
@@ -36306,6 +36324,18 @@
         "table_name": "league_team_coaches",
         "detail": "league_team_coaches_email_check",
         "check_clause": "((email = lower(btrim(email))) AND ((length(email) >= 3) AND (length(email) <= 254)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_team_coaches",
+        "detail": "league_team_coaches_first_name_check",
+        "check_clause": "((first_name IS NULL) OR ((length(btrim(first_name)) >= 1) AND (length(btrim(first_name)) <= 120)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_team_coaches",
+        "detail": "league_team_coaches_last_name_check",
+        "check_clause": "((last_name IS NULL) OR ((length(btrim(last_name)) >= 1) AND (length(btrim(last_name)) <= 120)))"
       },
       {
         "kind": "CHECK",

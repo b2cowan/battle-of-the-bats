@@ -2,15 +2,15 @@
 
 **Generated:** 2026-10-26 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 601 divergence(s)** across dev/prod.
+**⚠️ 605 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 20 | 0 | — |
-| Columns | 311 | 1 | 0 |
+| Columns | 313 | 1 | 0 |
 | Indexes | 91 | 0 | 2 |
 | Constraints | 88 | 0 | — |
-| RLS / CHECK | 88 | 0 | 0 (RLS state) |
+| RLS / CHECK | 90 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (20)
@@ -39,7 +39,7 @@
 _none_
 
 ## Columns
-### Only in DEV (311)
+### Only in DEV (313)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -125,10 +125,12 @@ _none_
 - `league_team_coaches.created_by`
 - `league_team_coaches.email`
 - `league_team_coaches.expires_at`
+- `league_team_coaches.first_name`
 - `league_team_coaches.id`
 - `league_team_coaches.invite_failed_at`
 - `league_team_coaches.invited_at`
 - `league_team_coaches.invited_by`
+- `league_team_coaches.last_name`
 - `league_team_coaches.name`
 - `league_team_coaches.org_id`
 - `league_team_coaches.removed_at`
@@ -561,7 +563,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (88)
+### CHECK only in DEV (90)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -588,6 +590,8 @@ _none_
 - `league_seasons.league_seasons_how_to_pay_check`
 - `league_seasons.league_seasons_owing_amber_days_check`
 - `league_team_coaches.league_team_coaches_email_check`
+- `league_team_coaches.league_team_coaches_first_name_check`
+- `league_team_coaches.league_team_coaches_last_name_check`
 - `league_team_coaches.league_team_coaches_name_check`
 - `online_payment_items.online_payment_items_amount_chk`
 - `online_payment_items.online_payment_items_description_chk`

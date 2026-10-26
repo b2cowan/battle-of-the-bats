@@ -285,8 +285,8 @@ const houseLeagueHelp: HelpPageContent = {
               <HelpSteps>
                 <li>Open the season, go to <strong>Teams &amp; draft</strong>, and pick a division.</li>
                 <li>Click <strong>Create teams</strong>, choose how many, and click <strong>Create</strong> (on the free League plan you can make up to eight).</li>
-                <li>Click a team to open its window. It reads first; click the pencil to change it and the tick to go back.</li>
-                <li>Set the team&apos;s <strong>Name</strong> and <strong>Colour</strong>, and add each <strong>Coach</strong> with a name and an email address. <strong>+ Add another coach</strong> adds a second.</li>
+                <li>Click the pencil on a team&apos;s card to change it. The tick saves your changes and shows the team as it now reads.</li>
+                <li>Set the team&apos;s <strong>Name</strong> and <strong>Colour</strong>, and add each <strong>Coach</strong> with a first name, a last name and an email address. <strong>+ Add another coach</strong> adds a second.</li>
               </HelpSteps>
               <p>You can name the teams now and add coaches any time before you publish. A team with no coach shows an amber <strong>No coach yet</strong>; click it to open the team window at the coach fields. A coach is invited to their team page when you publish (see <em>How coaches get their team page</em>).</p>
             </>
@@ -412,8 +412,8 @@ const houseLeagueHelp: HelpPageContent = {
           content: (
             <>
               <HelpSteps>
-                <li>On <strong>Teams &amp; draft</strong>, open the team&apos;s window and click the pencil.</li>
-                <li>Under <strong>Coach</strong>, type the name and the <strong>Coach&apos;s email</strong>. <strong>+ Add another coach</strong> adds a second. A team can have more than one.</li>
+                <li>On <strong>Teams &amp; draft</strong>, click the pencil on the team&apos;s card.</li>
+                <li>Under <strong>Coach</strong>, type their <strong>First name</strong>, <strong>Last name</strong> and the <strong>Coach&apos;s email</strong>. The invite&apos;s sign-up page opens with the names filled in, and they can change them. <strong>+ Add another coach</strong> adds a second. A team can have more than one.</li>
                 <li>Click the tick. Before you publish, the coach reads <strong>Invited when you publish</strong>.</li>
                 <li>Publish the division. Each coach is emailed a link, <strong>Accept and open your team</strong>.</li>
               </HelpSteps>

@@ -6768,6 +6768,9 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_team_coaches.name -->
 <!-- dict:col:league_team_coaches.email -->
 **`name` / `email`** (text, NOT NULL; email stored lowercase, CHECK) — who the convenor typed. One live row per (team, email) (`league_team_coaches_one_per_team`, where not removed). The invite signs in only with this address.
+<!-- dict:col:league_team_coaches.first_name -->
+<!-- dict:col:league_team_coaches.last_name -->
+**`first_name` / `last_name`** (text, NULL, 1–120 characters; mig 381) — the two parts of what the convenor typed; `name` is always the two joined ("First Last", the one route that writes a coach keeps them in step) and is what every reader displays. They exist so the invite's sign-up page opens with its First name / Last name filled in (the coach can edit). `last_name` is NULL when only a first name was typed. A row from before mig 381 has both NULL: the sign-up page then splits `name` at the first space for the pre-fill only (`coachNameParts`, `lib/house-league-coach-invites.ts`) — nothing is backfilled.
 <!-- dict:col:league_team_coaches.user_id -->
 **`user_id`** (FK → `auth.users` ON DELETE SET NULL, nullable) — the person, set when they accept with the invited address. **Access reads this, never the email.**
 <!-- dict:col:league_team_coaches.token_hash -->

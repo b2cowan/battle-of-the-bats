@@ -50,7 +50,7 @@ type Act =
   | { kind: 'draft'; again: boolean }
   | { kind: 'publish' }
   | { kind: 'create' }
-  | { kind: 'team'; teamId: string; how?: 'coach' | 'delete' }
+  | { kind: 'team'; teamId: string; how?: 'edit' | 'coach' | 'delete' }
   | { kind: 'move'; playerId: string }
   | { kind: 'held'; playerId: string; teamId: string | null }
   | { kind: 'clear' };
@@ -358,7 +358,7 @@ export default function TeamsScreen() {
       )}
       {act?.kind === 'team' && teamFor && (
         <TeamWindow team={teamFor} divisionName={division.name} published={published}
-          playerCount={players.filter(p => p.teamId === teamFor.id).length} routes={routes} startEditing={act.how === 'coach' && rights.run} startDeleting={act.how === 'delete' && rights.run}
+          playerCount={players.filter(p => p.teamId === teamFor.id).length} routes={routes} startEditing={(act.how === 'edit' || act.how === 'coach') && rights.run} blankCoach={act.how === 'coach'} startDeleting={act.how === 'delete' && rights.run}
           onChanged={reload} onClose={() => setAct(null)} />
       )}
       {act?.kind === 'move' && playerFor && (

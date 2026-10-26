@@ -155,7 +155,7 @@ export const TEAMS_WORDS = {
     create: (n: number) => `Create ${n} ${n === 1 ? 'team' : 'teams'}`,
     creating: 'Creating…',
     defaultName: (n: number) => `Team ${n}`,
-    name: 'Name', colour: 'Colour', coach: 'Coach', coachEmail: 'Coach’s email', coaches: 'Coaches',
+    name: 'Name', colour: 'Colour', coach: 'Coach', coachFirst: 'First name', coachLast: 'Last name', coachEmail: 'Coach’s email', coaches: 'Coaches',
     noColour: 'No colour',
     addCoach: 'Add a coach',
     addAnotherCoach: 'Add another coach',
@@ -165,7 +165,7 @@ export const TEAMS_WORDS = {
     hintAfter: (first: string) => `${first} is invited when you press ✓.`,
     noCoachRead: 'No coach yet',
     errEmail: 'Enter an email address, like name@example.com.',
-    errName: 'Enter the coach’s name.',
+    errName: 'Enter the coach’s first name.',
     errTeamName: 'Give the team a name.',
     confirmInviteTitle: (first: string) => `Send ${first} the invite?`,
     confirmInviteBody: (first: string, team: string) =>

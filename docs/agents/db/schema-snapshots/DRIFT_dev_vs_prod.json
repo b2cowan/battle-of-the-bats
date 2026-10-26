@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-26",
-  "total": 601,
+  "total": 605,
   "counts": {
     "tables": 20,
-    "columns": 312,
+    "columns": 314,
     "indexes": 93,
     "constraints": 88,
-    "rls": 88
+    "rls": 90
   },
   "items": [
     {
@@ -111,6 +111,14 @@
     },
     {
       "key": "check:only-dev:league_team_coaches.league_team_coaches_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_team_coaches.league_team_coaches_first_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_team_coaches.league_team_coaches_last_name_check",
       "sig": ""
     },
     {
@@ -702,6 +710,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_team_coaches.first_name",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_team_coaches.id",
       "sig": ""
     },
@@ -715,6 +727,10 @@
     },
     {
       "key": "column:only-dev:league_team_coaches.invited_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.last_name",
       "sig": ""
     },
     {

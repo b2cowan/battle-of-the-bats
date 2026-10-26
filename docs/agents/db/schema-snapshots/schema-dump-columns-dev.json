@@ -7803,6 +7803,24 @@
     "ordinal_position": 17
   },
   {
+    "table_name": "league_team_coaches",
+    "column_name": "first_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "league_team_coaches",
+    "column_name": "last_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
     "table_name": "league_teams",
     "column_name": "id",
     "data_type": "uuid",

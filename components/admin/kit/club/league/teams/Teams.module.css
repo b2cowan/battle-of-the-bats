@@ -262,6 +262,7 @@
 .coachEdit { display: flex; align-items: center; gap: 0.5rem; }
 .coachEditText { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .coachNew { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem; }
+.coachNewEmail { grid-column: 1 / -1; }
 .coachNewFields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; flex: 1 1 auto; min-width: 0; }
 .coachNew .iconBtn { margin: 0; }
 .addLink, .inlineLink {
@@ -318,4 +319,7 @@
   .pill, .noCoach, .inlineLink { min-height: 44px; }
   .movedTrigger { min-height: 44px; }
 }
-.movedTrigger { display: inline-flex; align-items: center; padding: 0; border: 0; background: none; cursor: pointer; }
+/* The tag sits on its own line under the player's facts: beside the name it was wider than the glyph trigger's fixed
+   44px box and spilled over the ⋯ button. The doubled class beats the glyph trigger's width/height whatever the bundle order. */
+.movedLine { align-self: flex-start; margin-top: 0.15rem; }
+.movedLine .movedTrigger { display: inline-flex; align-items: center; width: auto; height: auto; padding: 0; border: 0; background: none; cursor: pointer; }

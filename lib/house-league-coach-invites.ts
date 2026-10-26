@@ -20,6 +20,9 @@ export interface LeagueCoachInvite {
   status: 'pending' | 'accepted' | 'removed';
   expired: boolean;
   invitedEmail: string;
+  /** What the convenor typed, to fill the sign-up form (the coach can edit it). */
+  firstName: string;
+  lastName: string;
   teamId: string;
   teamName: string;
   orgName: string;
@@ -28,26 +31,36 @@ export interface LeagueCoachInvite {
 }
 
 type InviteRow = {
-  id: string; email: string; team_id: string; accepted_at: string | null; removed_at: string | null; expires_at: string | null;
+  id: string; name: string; first_name: string | null; last_name: string | null; email: string; team_id: string; accepted_at: string | null; removed_at: string | null; expires_at: string | null;
   league_teams: { name: string; league_seasons: { slug: string; organizations: { name: string; slug: string } | null } | null } | null;
 };
 
 async function rowByToken(token: string): Promise<InviteRow | null> {
   if (!token) return null;
   const { data, error } = await supabaseAdmin.from('league_team_coaches')
-    .select('id, email, team_id, accepted_at, removed_at, expires_at, league_teams(name, league_seasons(slug, organizations(name, slug)))')
+    .select('id, name, first_name, last_name, email, team_id, accepted_at, removed_at, expires_at, league_teams(name, league_seasons(slug, organizations(name, slug)))')
     .eq('token_hash', hashAssistantInviteToken(token)).maybeSingle();
   if (error) throw new Error(`Couldn't read the invite: ${error.message}`);
   return (data as unknown as InviteRow | null) ?? null;
 }
 
+/** A row from before mig 381 has only the one typed name: split it at the first space, for the pre-fill alone. */
+export function coachNameParts(row: { name: string; first_name: string | null; last_name: string | null }): { firstName: string; lastName: string } {
+  if (row.first_name) return { firstName: row.first_name, lastName: row.last_name ?? '' };
+  const [first = '', ...rest] = row.name.trim().split(/\s+/);
+  return { firstName: first, lastName: rest.join(' ') };
+}
+
 function toInvite(row: InviteRow, now: Date): LeagueCoachInvite {
   const season = row.league_teams?.league_seasons;
+  const { firstName, lastName } = coachNameParts(row);
   return {
     coachId: row.id,
     status: row.removed_at ? 'removed' : row.accepted_at ? 'accepted' : 'pending',
     expired: !row.expires_at || new Date(row.expires_at).getTime() <= now.getTime(),
     invitedEmail: row.email,
+    firstName,
+    lastName,
     teamId: row.team_id,
     teamName: row.league_teams?.name ?? '',
     orgName: season?.organizations?.name ?? '',

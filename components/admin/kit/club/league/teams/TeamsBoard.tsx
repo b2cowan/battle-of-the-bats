@@ -37,8 +37,8 @@ export interface BoardProps {
   teamName: (id: string | null) => string;
   onDrop: (playerId: string, teamId: string | null) => void;
   onMenu: (player: BoardPlayer, key: PlayerMenuItem['key']) => void;
-  /** `how`: "coach" opens at the coach fields; "delete" opens the delete question (the card's trash can). */
-  onOpenTeam: (teamId: string, how?: 'coach' | 'delete') => void;
+  /** `how`: "edit" opens straight to the form (the card's pencil); "coach" opens at the coach fields; "delete" opens the delete question (the card's trash can). */
+  onOpenTeam: (teamId: string, how?: 'edit' | 'coach' | 'delete') => void;
 }
 
 const isMoved = (p: BoardPlayer, published: boolean) => !published && !!p.draftTeamId && p.teamId !== p.draftTeamId;
@@ -84,20 +84,23 @@ function PlayerRow({ p, props, drag }: { p: BoardPlayer; props: BoardProps; drag
         </div>
         <div className={css.kidSub}>{sub}</div>
         {p.askedToWithdrawAt && <div className={css.kidSub}>{W.kid.asked(dayOf(p.askedToWithdrawAt))}</div>}
+        {moved && p.draftTeamId && (
+          <div className={css.movedLine}>
+            <CoachToolbarMenu
+              variant="glyph"
+              label={W.kid.moved}
+              icon={<span className={css.movedTag}>{W.kid.moved}</span>}
+              drawerOnPhone
+              drawerTitle={name}
+              align="start"
+              panelMinWidth={240}
+              triggerClassName={css.movedTrigger}
+            >
+              <CoachToolbarMenuItem label={W.kid.putBack(teamName(p.draftTeamId))} onSelect={() => props.onMenu(p, 'putBack')} />
+            </CoachToolbarMenu>
+          </div>
+        )}
       </div>
-      {moved && p.draftTeamId && (
-        <CoachToolbarMenu
-          variant="glyph"
-          label={W.kid.moved}
-          icon={<span className={css.movedTag}>{W.kid.moved}</span>}
-          drawerOnPhone
-          drawerTitle={name}
-          panelMinWidth={240}
-          triggerClassName={css.movedTrigger}
-        >
-          <CoachToolbarMenuItem label={W.kid.putBack(teamName(p.draftTeamId))} onSelect={() => props.onMenu(p, 'putBack')} />
-        </CoachToolbarMenu>
-      )}
       {items.length > 0 && (
         <CoachToolbarMenu
           variant="glyph"
@@ -141,7 +144,7 @@ function TeamHead({ team, props }: { team: BoardTeam; props: BoardProps }) {
             : <div className={`${css.cardCoach} ${css.amberText}`}>{W.card.noCoach}</div>}
       </div>
       {props.rights.run && (
-        <button type="button" className={css.iconBtn} aria-label={W.card.edit(team.name)} onClick={() => props.onOpenTeam(team.id)}>
+        <button type="button" className={css.iconBtn} aria-label={W.card.edit(team.name)} onClick={() => props.onOpenTeam(team.id, 'edit')}>
           <Pencil size={16} aria-hidden />
         </button>
       )}

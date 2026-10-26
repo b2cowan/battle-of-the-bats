@@ -8,7 +8,8 @@ import { issueCoachInvites } from '@/lib/house-league-coach-invite-mail';
 import { withObservability } from '@/lib/observability';
 
 /**
- * A house-league team's coaches (Club Tier 9c, copy §2; rulings 9c·1, 9c·10). A coach is a row with a name and an email.
+ * A house-league team's coaches (Club Tier 9c, copy §2; rulings 9c·1, 9c·10). A coach is a row with a first and last name
+ * (the last optional; `name` is the two joined) and an email.
  *   · POST — add a coach. Before the division is published they are "Invited when you publish". After it, the add is
  *     held (`confirmed`, copy §2.1 "Send {Pat} the invite?") and the invite goes at once.
  *   · DELETE ?coachId= — remove them: they lose the team page at once; families aren't told.
@@ -48,9 +49,15 @@ export const POST = withObservability(async (req: Request,
   if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
   const p: Scope = { ctx: ctx!, season, team, org: { ...ctx!.org, slug: ctx!.org.slug } };
   const body = await req.json().catch(() => ({}));
-  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  const firstName = typeof body.firstName === 'string' ? body.firstName.trim() : '';
+  const lastName = typeof body.lastName === 'string' ? body.lastName.trim() : '';
+  // `name` stays the combined "First Last" every reader uses; the two parts ride beside it for the invite's sign-up page.
+  const name = [firstName, lastName].filter(Boolean).join(' ');
   const email = normalizeGuardianEmail(typeof body.email === 'string' ? body.email : '');
-  if (!name) return NextResponse.json({ error: 'Enter the coach’s name.', field: 'name' }, { status: 400 });
+  if (!firstName) return NextResponse.json({ error: 'Enter the coach’s first name.', field: 'name' }, { status: 400 });
+  if (name.length > 120 || firstName.length > 120 || lastName.length > 120) {
+    return NextResponse.json({ error: 'That name is too long.', field: 'name' }, { status: 400 });
+  }
   if (!email || !isSendableGuardianEmail(email)) {
     return NextResponse.json({ error: 'Enter an email address, like name@example.com.', field: 'email' }, { status: 400 });
   }
@@ -59,10 +66,10 @@ export const POST = withObservability(async (req: Request,
   if (dupe) return NextResponse.json({ error: `${name} is already a coach of this team.`, field: 'email' }, { status: 409 });
   // After publishing an add tells someone: it is held until the convenor confirms (copy §2.1, house rule "create asks").
   if (p.team.published && body.confirmed !== true) {
-    return NextResponse.json({ code: 'confirm', error: `Send ${name.split(' ')[0]} the invite?` }, { status: 409 });
+    return NextResponse.json({ code: 'confirm', error: `Send ${firstName} the invite?` }, { status: 409 });
   }
   const { data: row, error } = await supabaseAdmin.from('league_team_coaches').insert({
-    team_id: p.team.id, org_id: p.ctx.org.id, season_id: p.season.id, name, email, created_by: p.ctx.user.id,
+    team_id: p.team.id, org_id: p.ctx.org.id, season_id: p.season.id, name, first_name: firstName, last_name: lastName || null, email, created_by: p.ctx.user.id,
   }).select('id').single();
   if (error || !row) return NextResponse.json({ error: 'That coach didn’t save. Try again.' }, { status: 500 });
   const invited = p.team.published ? await invite(p, [row.id]) : [];

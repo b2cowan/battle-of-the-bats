@@ -17,19 +17,23 @@ import css from './Teams.module.css';
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const first = (name: string) => name.trim().split(/\s+/)[0] ?? name;
 
-interface NewCoach { key: number; name: string; email: string }
+interface NewCoach { key: number; first: string; last: string; email: string }
+const coachName = (c: { first: string; last: string }) => [c.first.trim(), c.last.trim()].filter(Boolean).join(' ');
+const isFilled = (c: NewCoach) => !!(c.first.trim() || c.last.trim() || c.email.trim());
 type Ask =
   | { kind: 'invite'; coach: NewCoach }
   | { kind: 'remove'; id: string; name: string };
 
-export default function TeamWindow({ team, divisionName, published, playerCount, routes, startEditing, startDeleting, onChanged, onClose }: {
+export default function TeamWindow({ team, divisionName, published, playerCount, routes, startEditing, blankCoach, startDeleting, onChanged, onClose }: {
   team: BoardTeam;
   divisionName: string;
   published: boolean;
   playerCount: number;
   routes: TeamsRoutes;
-  /** Opened from "No coach yet": straight to the coach fields. */
+  /** Opened from a card's pencil or "No coach yet": straight to the form, with no read-only step first. */
   startEditing: boolean;
+  /** Opened from "No coach yet": an empty coach row is waiting. */
+  blankCoach: boolean;
   /** Opened from a card's trash can: straight to the delete question, with no team window behind it. */
   startDeleting: boolean;
   onChanged: () => void;
@@ -39,7 +43,7 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
   const [name, setName] = useState(team.name);
   const [colour, setColour] = useState<string | null>(team.color);
   const [removed, setRemoved] = useState<ReadonlySet<string>>(new Set());
-  const [adds, setAdds] = useState<NewCoach[]>(startEditing && team.coaches.length === 0 ? [{ key: 1, name: '', email: '' }] : []);
+  const [adds, setAdds] = useState<NewCoach[]>(startEditing && blankCoach && team.coaches.length === 0 ? [{ key: 1, first: '', last: '', email: '' }] : []);
   const [errors, setErrors] = useState<Record<number, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -47,13 +51,13 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
   const [deleting, setDeleting] = useState(startDeleting);
   const [resending, setResending] = useState<string | null>(null);
 
-  const dirty = name.trim() !== team.name || colour !== team.color || removed.size > 0 || adds.some(a => a.name.trim() || a.email.trim());
+  const dirty = name.trim() !== team.name || colour !== team.color || removed.size > 0 || adds.some(isFilled);
 
   function validate(): NewCoach[] | null {
-    const filled = adds.filter(a => a.name.trim() || a.email.trim());
+    const filled = adds.filter(isFilled);
     const next: Record<number, string> = {};
     for (const a of filled) {
-      if (!a.name.trim()) next[a.key] = W.team.errName;
+      if (!a.first.trim()) next[a.key] = W.team.errName;
       else if (!EMAIL.test(a.email.trim())) next[a.key] = W.team.errEmail;
     }
     setErrors(next);
@@ -64,7 +68,7 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
   const hasCoach = adds.length > 0 || team.coaches.some(c => !removed.has(c.id));
 
   async function addCoach(c: NewCoach): Promise<boolean> {
-    const r = await send(routes.coaches(team.id), 'POST', { name: c.name.trim(), email: c.email.trim(), confirmed: published });
+    const r = await send(routes.coaches(team.id), 'POST', { firstName: c.first.trim(), lastName: c.last.trim(), email: c.email.trim(), confirmed: published });
     if (!r.ok) { setError(r.error); return false; }
     setAdds(list => list.filter(x => x.key !== c.key));
     onChanged();
@@ -149,7 +153,7 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
     return W.coachState.invited(c.invitedAt ? dayOf(c.invitedAt) : '');
   };
 
-  const firstNew = adds.find(a => a.name.trim());
+  const firstNew = adds.find(a => a.first.trim());
   const ask = asks[0] ?? null;
   // From a card's trash can the question stands alone (no team window behind it), and cancelling leaves the board.
   const alone = startDeleting && deleting;
@@ -222,20 +226,22 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
               {adds.map(a => (
                 <div key={a.key} className={css.coachNew}>
                   <div className={css.coachNewFields}>
-                    <input className={ck.input} aria-label={W.team.coach} placeholder={W.team.coach} value={a.name} maxLength={120}
-                      onChange={e => setAdds(list => list.map(x => (x.key === a.key ? { ...x, name: e.target.value } : x)))} />
-                    <input className={ck.input} aria-label={W.team.coachEmail} placeholder={W.team.coachEmail} type="email" value={a.email} maxLength={254}
+                    <input className={ck.input} aria-label={W.team.coachFirst} placeholder={W.team.coachFirst} value={a.first} maxLength={120}
+                      onChange={e => setAdds(list => list.map(x => (x.key === a.key ? { ...x, first: e.target.value } : x)))} />
+                    <input className={ck.input} aria-label={W.team.coachLast} placeholder={W.team.coachLast} value={a.last} maxLength={120}
+                      onChange={e => setAdds(list => list.map(x => (x.key === a.key ? { ...x, last: e.target.value } : x)))} />
+                    <input className={`${ck.input} ${css.coachNewEmail}`} aria-label={W.team.coachEmail} placeholder={W.team.coachEmail} type="email" value={a.email} maxLength={254}
                       onChange={e => setAdds(list => list.map(x => (x.key === a.key ? { ...x, email: e.target.value } : x)))} />
                   </div>
-                  <button type="button" className={css.iconBtn} aria-label={W.team.removeCoach(a.name || W.team.coach)}
+                  <button type="button" className={css.iconBtn} aria-label={W.team.removeCoach(coachName(a) || W.team.coach)}
                     onClick={() => setAdds(list => list.filter(x => x.key !== a.key))}><X size={16} aria-hidden /></button>
                   {errors[a.key] && <p className={css.error} role="alert">{errors[a.key]}</p>}
                 </div>
               ))}
-              <button type="button" className={css.addLink} onClick={() => setAdds(list => [...list, { key: Date.now(), name: '', email: '' }])}>
+              <button type="button" className={css.addLink} onClick={() => setAdds(list => [...list, { key: Date.now(), first: '', last: '', email: '' }])}>
                 <Plus size={14} aria-hidden />{hasCoach ? W.team.addAnotherCoach : W.team.addCoach}
               </button>
-              {firstNew && <p className={ck.hint}>{published ? W.team.hintAfter(first(firstNew.name)) : W.team.hintBefore(first(firstNew.name), divisionName)}</p>}
+              {firstNew && <p className={ck.hint}>{published ? W.team.hintAfter(firstNew.first.trim()) : W.team.hintBefore(firstNew.first.trim(), divisionName)}</p>}
             </div>
             {error && <p className={css.error} role="alert">{error}</p>}
             {!published && playerCount === 0 && (
@@ -250,7 +256,7 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
 
       {ask && (
         <KitDialog kind="question" raised busy={busy} onClose={() => setAsks([])}
-          title={ask.kind === 'invite' ? W.team.confirmInviteTitle(first(ask.coach.name)) : W.team.confirmRemoveTitle(ask.name)}
+          title={ask.kind === 'invite' ? W.team.confirmInviteTitle(ask.coach.first.trim()) : W.team.confirmRemoveTitle(ask.name)}
           footer={(
             <>
               <DialogCancel />
@@ -260,7 +266,7 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
             </>
           )}>
           <p className={ck.hint}>
-            {ask.kind === 'invite' ? W.team.confirmInviteBody(first(ask.coach.name), team.name) : W.team.confirmRemoveBody(first(ask.name), team.name)}
+            {ask.kind === 'invite' ? W.team.confirmInviteBody(ask.coach.first.trim(), team.name) : W.team.confirmRemoveBody(first(ask.name), team.name)}
           </p>
         </KitDialog>
       )}
