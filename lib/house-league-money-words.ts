@@ -83,6 +83,8 @@ export const MONEY_PAGE_WORDS = {
     corrected: (from: string, to: string, reason: string) => `Price corrected ${from} → ${to} · ${reason}`,
     kept: (reason: string) => `Kept by the club · ${reason}`,
     voided: 'Voided · marked received by mistake',
+    // 12b copy §8 `money.line.processing`: a club-paid processing fee, or a fee the club gave back on a refund — a cost.
+    processing: (what: string) => `Payment processing · ${what}`,
   },
   since: (day: string, days: number | null) => (days == null ? `Accepted ${day}` : `Accepted ${day} · ${pluralize(days, 'day')}`),
   sinceUnknown: 'Not known',

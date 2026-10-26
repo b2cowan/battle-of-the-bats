@@ -30,7 +30,7 @@ import { buildFilename, downloadCSVBlob, downloadXLSX, generateCSV } from '@/lib
 
 interface BookLine {
   id: string; regId: string; player: string | null; day: string; amount: number; method: string | null; receiptNo?: number | null;
-  kind: 'fee' | 'refund' | 'voided'; refundWhy: string | null; priceKind: 'regular' | 'corrected' | null; note: string | null;
+  kind: 'fee' | 'refund' | 'voided' | 'processing'; refundWhy: string | null; priceKind: 'regular' | 'corrected' | null; note: string | null;
 }
 interface HistoryLine { kind: 'corrected' | 'kept'; regId: string; player: string | null; at: string; oldAmount: number | null; newAmount: number; reason: string }
 interface OwingRow { regId: string; player: string; division: string | null; owing: number; acceptedDay: string | null; days: number | null; late: boolean }
@@ -96,13 +96,14 @@ export default function MoneyPage() {
   const lineRows: Row[] = [
     ...read.lines.map((l): Row => ({
       key: l.id, day: l.day, player: l.player ?? '—',
-      what: l.kind === 'voided' ? W.what.voided : l.kind === 'refund' ? W.what.refund(l.refundWhy) : W.what.fee(l.priceKind),
+      what: l.kind === 'voided' ? W.what.voided : l.kind === 'refund' ? W.what.refund(l.refundWhy)
+        : l.kind === 'processing' ? W.what.processing((l.note ?? '').replace(/^(Payment processing|Processing fee refunded) · /, '')) : W.what.fee(l.priceKind),
       // 12b copy §5: a card payment's receipt after its method ("Online, card · receipt 1043").
       how: l.receiptNo ? `${paymentMethodWord(l.method)} · ${REGS_WORDS.fee.receipt(l.receiptNo)}` : paymentMethodWord(l.method),
-      amount: l.kind === 'refund' ? money(-l.amount) : money(l.amount),
+      amount: l.kind === 'refund' || l.kind === 'processing' ? money(-l.amount) : money(l.amount),
       // The export's number: a refund negative, a voided line counted nowhere (its What says so).
-      value: l.kind === 'voided' ? null : l.kind === 'refund' ? -l.amount : l.amount,
-      tone: l.kind === 'voided' ? 'voided' : l.kind === 'refund' ? 'out' : 'in',
+      value: l.kind === 'voided' ? null : l.kind === 'refund' || l.kind === 'processing' ? -l.amount : l.amount,
+      tone: l.kind === 'voided' ? 'voided' : l.kind === 'refund' || l.kind === 'processing' ? 'out' : 'in',
     })),
     ...read.history.map((h): Row => ({
       key: `${h.kind}-${h.regId}-${h.at}`, day: orgDayKey(h.at), player: h.player ?? '—',

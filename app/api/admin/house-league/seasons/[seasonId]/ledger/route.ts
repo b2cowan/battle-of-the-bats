@@ -7,6 +7,17 @@ import { seasonCharges } from '@/lib/league-price';
 import { feeState, isOwing, seasonMoney } from '@/lib/league-money';
 import { filesToClubStatement, loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+
+/** The season book's card costs (12b, mig 374: source 'online_payment'), newest first. */
+async function seasonProcessingLines(orgId: string, seasonId: string): Promise<Array<{ id: string; day: string; amount: number; description: string; createdAt: string }>> {
+  const { data: book } = await supabaseAdmin.from('accounting_ledgers').select('id')
+    .eq('org_id', orgId).eq('entity_type', 'league_season').eq('entity_id', seasonId).maybeSingle();
+  if (!book) return [];
+  const { data, error } = await supabaseAdmin.from('accounting_entries').select('id, entry_date, amount, description, created_at')
+    .eq('ledger_id', book.id as string).eq('source_module', 'online_payment').eq('status', 'posted').order('entry_date', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(r => ({ id: r.id as string, day: r.entry_date as string, amount: Number(r.amount), description: (r.description as string) ?? '', createdAt: r.created_at as string }));
+}
 import { daysBetweenDateStrings, orgDayKey, tournamentToday } from '@/lib/timezone';
 
 /**
@@ -29,13 +40,14 @@ export const GET = withObservability(async (_req: Request,
   const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
-  const [regs, divisions, lines, changes] = await Promise.all([
+  const [regs, divisions, lines, changes, processing] = await Promise.all([
     getRegistrationsForSeason(seasonId),
     getDivisionsForSeason(seasonId),
     loadSeasonMoneyLines(ctx!.org.id, seasonId),
     supabaseAdmin.from('league_registration_price_changes')
       .select('id, registration_id, kind, old_amount, new_amount, reason, refund_entry_id, changed_at')
       .eq('org_id', ctx!.org.id).eq('season_id', seasonId).order('changed_at', { ascending: false }),
+    seasonProcessingLines(ctx!.org.id, seasonId),
   ]);
   if (changes.error) throw changes.error;
 
@@ -63,7 +75,14 @@ export const GET = withObservability(async (_req: Request,
       priceKind: l.dir === 'in' ? (correctedRegs.has(l.regId) ? 'corrected' : 'regular') : null,
       note: l.note, createdAt: l.createdAt,
     };
-  }).sort((a, b) => (a.day === b.day ? b.createdAt.localeCompare(a.createdAt) : b.day.localeCompare(a.day)));
+  });
+  // 12b (drawn m1): the season's card costs — a club-paid processing fee, a fee given back on a refund. A cost on the
+  // book, never a fee or a refund (the Statement files them under Payment processing).
+  const costs = processing.map(p => ({
+    id: p.id, regId: '', player: null, day: p.day, amount: p.amount, method: 'online_card', receiptNo: null,
+    kind: 'processing' as const, refundWhy: null, priceKind: null, note: p.description, createdAt: p.createdAt,
+  }));
+  const bookAll = [...book, ...costs].sort((a, b) => (a.day === b.day ? b.createdAt.localeCompare(a.createdAt) : b.day.localeCompare(a.day)));
 
   // The history lines that move no money: corrections, and fees the club kept on an ending.
   const history = [
@@ -104,7 +123,7 @@ export const GET = withObservability(async (_req: Request,
     byCard: Math.round([...lines.values()].flat()
       .filter(l => l.status === 'posted' && l.method === 'online_card')
       .reduce((sum, l) => sum + (l.dir === 'in' ? l.amount : -l.amount), 0) * 100) / 100,
-    lines: book,
+    lines: bookAll,
     history,
     owing,
     today,
