@@ -1,0 +1,311 @@
+<title>12c · A refund you can see</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 12c · §389</span>
+    <h1>A refund you can see</h1>
+    <p class="sub">Written 2026-10-26. One purpose: a refund of a card payment is visible where the desk looks, a refund made in Stripe records itself, and a tournament can refund part of a team’s payment.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Until now a card refund was a line in the books and little else. You check that it is now seen in every place a person looks: the Fee cell on Registrations, the child’s record (a “To the card” block with Stripe’s reference you can copy), the history, the Money page and the family’s record in Families. Then you check the two ways a refund can start in Stripe instead of here (a part refund on two children’s payment, and a whole refund on a child who is still registered) and that the desk is asked only the one question it must answer. Last, you refund part of a tournament team’s deposit and check that the team’s entry is lowered by the same amount.</p>
+    <p>You use a family in a private window (no login), the registrar and the owner on a computer, and Stripe’s dashboard (or its command line) for the two refunds made in Stripe.</p>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>Every refund to a card reads the same wherever it appears: the amount the card got, where it stands (pending, reached, made in Stripe), and Stripe’s reference you can copy.</li>
+      <li>A refund made in Stripe is never lost and never asks more than it must: “Choose the child” for a part refund on two children, and three answers for a child who is still enrolled.</li>
+      <li>A team’s part refund lowers its entry by exactly the refund, shows its reason, and leaves the balance owed where it was (entry less net paid).</li>
+      <li>The family’s record and the registration row open the payment where it can be read with its refunds.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li>Bank debit in any form: it is walk §390.</li>
+      <li>Emails, beyond the held boxes. A step that sends an email has two boxes, “Did it” and “Held”. Tick “Held” and move on: localhost cannot send, so the emails get one end-to-end pass on Amplify dev.</li>
+      <li>The tournament side of “Record the refund sent another way”. That item appears on a team’s payment only after a refund has bounced, which a tournament card payment here cannot be made to do. It is walked on the house-league side in part G (optional); the tournament side is covered by unit tests and gets walked in the Amplify pass.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts">
+      <dt>Dev server</dt><dd>Freshly restarted (the owner restarts it), at <code>http://localhost:3000</code>. <code>PAY_LINK_SECRET</code> (32+ characters) is set in <code>.env.local</code>.</dd>
+      <dt>Stripe windows</dt><dd>Both <code>stripe listen</code> windows must be running, exactly as <code>docs/agents/ops/stripe-setup-guide.md</code> › “Local — two listen windows” says. Window 1 (payments and refunds; its list now includes <code>checkout.session.async_payment_failed</code> and <code>charge.dispute.created</code>):<pre>C:\tools\stripe\stripe.exe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook</pre>Window 2 (the club’s account):<pre>C:\tools\stripe\stripe.exe listen --events-from '@self' --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events</pre>Keep the quotes exactly; PowerShell drops an unquoted <code>@word</code>.</dd>
+      <dt>Test card</dt><dd><code>4242 4242 4242 4242</code>, any future date, any CVC. (Part G, optional, names two more Stripe test cards.)</dd>
+      <dt>A team’s pay link</dt><dd>A tournament team reaches its pay page only through an email. Localhost cannot send, so part E builds the same link yourself. From the project folder run (the team id is given in part E):<pre>node -e "const c=require('crypto'),fs=require('fs');const s=fs.readFileSync('.env.local','utf8').split(/\r?\n/).find(l=>l.startsWith('PAY_LINK_SECRET=')).slice(16).trim();const id=process.argv[1];console.log('http://localhost:3000/uat-rep-club/uat-rep-club-invitational-2026/pay/'+Buffer.from(id.replace(/-/g,''),'hex').toString('base64url')+'.'+c.createHmac('sha256',s).update('team-pay:'+id).digest().subarray(0,16).toString('base64url'))" TEAM-ID</pre></dd>
+      <dt>Refunds made in Stripe</dt><dd>Parts C and D need one refund each made outside the app. In Stripe’s dashboard (test mode) open Connect › Connected accounts › UAT Rep Club (<code>acct_1UUWAvFuSuqPawyy</code>) › Payments, find the payment by its amount and time, and press Refund. If the dashboard offers no Refund on a connected account’s payment, use the command line instead (the payment’s id <code>pi_…</code> is on its page in the dashboard):<pre>C:\tools\stripe\stripe.exe refunds create -d payment_intent=pi_XXXX -d amount=5000 --stripe-account acct_1UUWAvFuSuqPawyy</pre>Leave out <code>-d amount=…</code> to refund the whole payment. Either way, window 1 should print <code>refund.created</code> and then <code>[200]</code>.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <p>Sign out between logins, or keep one browser window per person. The family and the team use a private window with no login. Dev only, keep this page private.</p>
+    <dl class="facts">
+      <dt>Address</dt><dd><code>http://localhost:3000</code></dd>
+      <dt>Club (org slug)</dt><dd><code>uat-rep-club</code> (UAT Rep Club). If it looks wrong or empty, <code>node scripts/seed-club-fixture.mjs</code> rebuilds it, which resets the passwords below.</dd>
+      <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code> (parts B, C, D, G)</dd>
+      <dt>Owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (parts E and F; runs tournaments)</dd>
+      <dt>No login</dt><dd>A family (parts A, G) and a team’s contact (part E) in a private window. Use an email address you can read for the guardian, and the same one for every sign-up.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Where and on what</h2>
+    <dl class="facts">
+      <dt>Payouts</dt><dd>UAT Rep Club’s test Stripe account is connected and taking card payments; families pay the processing fee. (If the Payouts card in Settings does not read “Taking payments”, stop and tell Claude.)</dd>
+      <dt>House league</dt><dd><strong>2026 Fall House League</strong>, division <strong>U9 Rookie</strong> (born 2014 or 2015), price <strong>$150.00</strong>, accepts sign-ups on its own. Sign-up page: <code>/uat-rep-club/league/2026-fall-house-league/register</code>. Registrations: <code>/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/registrations</code>. Money: the same address ending <code>/money</code>.</dd>
+      <dt>Children this walk makes</dt><dd>The walk signs up its own children; earlier walks left others in the list, so find yours by name. Guardian names are yours to type. Rhea Refundwalk (A1), Wren Whosewalk and Wade Whosewalk (A3, brothers and sisters, one sign-up), Quill Enrolledwalk (A4). Part G optional: Pia Pendingwalk, Fay Failwalk.</dd>
+      <dt>Tournament</dt><dd><strong>UAT Rep Club Invitational 2026</strong>, division 15U, deposit <strong>$100.00</strong>, entry <strong>$300.00</strong>, at <code>/uat-rep-club/admin/tournaments/registrations</code>. The team is <strong>Walk Visitor 7b</strong> (team id <code>468b6409-5d75-44aa-87a9-4768b758d132</code>). It should read “Owes $300.00”. A struck-through deposit from the 12a walk may sit in its list, and is expected. If it shows anything else already paid, add a team the same way part F of walk §390 does and use that one.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 's12c-walk-refunds-v1';
+  var F = 'A family, private window, no login', R = 'Registrar, computer · uat-club-registrar@uat-rep-club.local', O = 'Owner, computer · uat-club-owner@uat-rep-club.local', S = 'Stripe, test mode', T = 'The team’s contact, private window, no login';
+  var HELD = ['Did it', 'Held'];
+  var PARTS = [
+    { id: 'A', title: 'Three families pay by card', steps: [
+      { who: F, do: 'Open <code>/uat-rep-club/league/2026-fall-house-league/register</code>. Sign up ONE child: first name <em>Rhea</em>, last name <em>Refundwalk</em>, a date of birth in 2014 or 2015, a guardian name of your choosing, your email, and tick the waiver if one shows. Press “Sign up”. Write down the reference.', see: '“You’re signed up”, “Your reference: … (one for this sign-up)”, Rhea with the tag “Accepted”, and a card headed “To pay now” with a line for Rhea ending “· U9 Rookie · $150.00”. Two buttons: “Pay $… by card” with “Includes a $… processing fee.” under it, and “Pay $… by bank debit” (not used in this walk).' },
+      { who: F, do: 'Press “Pay $… by card”. On Stripe’s page pay with the test card.', see: 'The button reads “Opening the secure payment page…”. After paying you land on the status page, which reads “Confirming your payment” and then shows the receipt: “Paid, thank you”, “$… to UAT Rep Club” and a line “Visa •••• 4242 · … · receipt N”. Write down N.' },
+      { who: F, do: 'Sign up TWO children in one sign-up: <em>Wren Whosewalk</em> and <em>Wade Whosewalk</em> (press “+ Add another child”; the button then reads “Sign up 2 children”), the guardian’s name <em>Gwen Whosewalk</em>. Press “Sign up 2 children”, then “Pay $… by card” once, and pay with the test card.', see: 'One pay button for both children. After paying, “Paid, thank you” shows one receipt for both, with one receipt number.' },
+      { who: F, do: 'Sign up ONE more child: <em>Quill Enrolledwalk</em>, guardian name <em>Gwen Enrolledwalk</em>. Pay by card as before.', see: 'The same receipt, “Paid, thank you”, with its own receipt number.' }
+    ]},
+    { id: 'B', title: 'The desk refunds a child to the card', steps: [
+      { who: R, do: 'Open Registrations (address above), tab “Active”, and search “Refundwalk” in “Search players or parents”.', see: 'Rhea Refundwalk’s Fee cell reads “$150.00 received” with the second line “… · Online, card · receipt N” (the N from A2).' },
+      { who: R, do: 'Open the row’s ⋯ (“More for Rhea Refundwalk”) and choose “Decline”.', see: 'A window “Decline Rhea Refundwalk?” that says “Rhea Refundwalk’s family paid $150.00 on … (Online, card). What happens to it?” with three choices: “Refund to the card, Visa •••• 4242” (“Arrives in 5 to 10 business days”), “Refund part of it” and “Kept by the club”. NOTHING is picked, the foot reads “Choose what happens to the $150.00.” and there is only Cancel: no Decline button yet.' },
+      { who: R, do: 'Choose “Refund to the card, Visa •••• 4242”. Leave the processing-fee box as it comes. Press “Decline, refund and email”.', see: 'The box “Include the $… processing fee · $… back” is ticked, with “On because the club is ending it. The $… comes from the club and shows in your books as Payment processing.” Foot: “The $150.00 stays in the season’s book with the refund beside it.” After pressing: “Declined Rhea Refundwalk. The family was emailed. Refunded $… to the card.” where the refunded amount is the $150.00 plus the processing fee.' },
+      { who: R, do: 'Open the “Ended” tab and look at Rhea’s Fee cell, now and again after a minute (window 1 prints <code>refund.updated</code>).', see: 'First line “$150.00 refunded”. Second line “(today’s date) · $… to the card” (the whole card total, fee included). It may end “· pending” until Stripe confirms, and loses “pending” once it has.' },
+      { who: R, do: 'Press Rhea’s row to open the record. Look at the Fee section.', see: 'A block headed “To the card” with a pill, “Pending” then “Refunded”. Rows: “Amount” (“$… to Visa •••• 4242”, under it “$150.00 fee + $… processing fee”); “Processing fee” (“Given back, because the club declined”, under it “In the season’s book as Payment processing”); “Refunded by” (your name, the day and time); “Reached the card” (once refunded; under it “It takes 5 to 10 business days to appear on the family’s statement.”); “Stripe reference” (an id starting <code>re_</code> and “Copy”); “Paid with” (“Receipt N, …”). The amount on the second line of the Fee cell equals the amount in the block.' },
+      { who: R, do: 'Press “Copy” beside the Stripe reference, then paste into any text box.', see: 'The word “Copy” becomes “Copied” for two seconds and returns. What you paste is the <code>re_…</code> id shown.' },
+      { who: R, do: 'In the same record read the History list.', see: 'A line “Refunded $150.00 · $… to Visa •••• 4242 · reached the card” (or “· pending” while Stripe works). The $150.00 first matches the Fee cell’s first line; the card total second matches its second line.' },
+      { who: R, do: 'Open Money (address above), tab “Refunds”.', see: 'Rhea’s refund line has How “To the card” (“To the card · pending” while pending). It sits in the book at $150.00, not at the card total.' },
+      { who: R, opts: HELD, do: 'The family’s email (check your inbox).', see: 'Held. When sent: the declined email says “We refunded your payment.”, then a block with “Refunded”, “To”, “On”, “Refund reference” and “Your receipt”, then “This includes the $… processing fee.” and “It takes 5 to 10 business days to appear.”' }
+    ]},
+    { id: 'C', title: 'A refund made in Stripe: whose was it?', steps: [
+      { who: S, do: 'Find the payment Wren and Wade made together (one payment, A3). Refund <strong>$50.00</strong> of it (a part refund). See “Before you start” for the dashboard route or the command.', see: 'Stripe accepts it. Window 1 prints <code>refund.created</code> then <code>[200]</code>.' },
+      { who: R, do: 'In the admin, open the bell and look under “Needs attention”.', see: 'An item “$50.00 was refunded in Stripe on Gwen Whosewalk’s payment”, body “It paid for Wren and Wade ($…, receipt N), so we can’t tell whose fee it was. Choose the child, and it goes on that registration. Until then it isn’t in the season’s book.” and a button “Choose the child”. There is no Done button: it clears only when answered.' },
+      { who: R, do: 'On Registrations look at Wren’s and Wade’s Fee cells.', see: 'Each carries a third line “$50.00 refunded in Stripe on this family’s payment · not matched yet”. Their first and second lines are unchanged (“$150.00 received”).' },
+      { who: R, do: 'Press “Choose the child”. Without picking anything, press “Save”.', see: 'A window “Whose fee was the $50.00 refund?” with “Refunded in Stripe on … to Visa •••• 4242, reference re_….”, the choices “Wren Whosewalk” and “Wade Whosewalk” (each “U9 Rookie · $150.00 received”) and “Split it between them” (“Amounts that add up to $50.00”), a required Reason (“The family reads this in their email.”) and the foot “The family is emailed once you save.” Nothing is picked. Saving says “Choose a child, or split it between them.”' },
+      { who: R, do: 'Choose Wren. Press “Save” with the Reason empty, then type <em>Walk: goodwill</em> and press “Save”.', see: 'First “Say why only part is refunded.” Then the window closes with “Recorded the $50.00 refund for Wren.” (not “We emailed…”: Wren is still enrolled, so the family’s email waits for part D). The item in Needs attention reads “Refund recorded”.' },
+      { who: R, do: 'Open Wren’s record (Active tab, Fee section).', see: 'A “To the card” block with the pill “Refunded” (or “Pending”) and the tag “Made in Stripe”. “Amount” is “$50.00 to Visa •••• 4242” and under it “Part of the $150.00 fee. A part refund never includes the processing fee.” “Processing fee” reads “Not refunded. A part refund never includes it.” “Refunded by” reads “Someone in the club’s Stripe dashboard, … at …” with “Recorded here by itself at …”. “Reason” reads “Walk: goodwill”. Wade’s record has no such block.' }
+    ]},
+    { id: 'D', title: 'A refund made in Stripe: the child is still enrolled', steps: [
+      { who: S, do: 'Refund the WHOLE payment Quill made (A4): in the dashboard press Refund and leave the amount as it is, or run the command without <code>-d amount=…</code>.', see: 'Window 1 prints <code>refund.created</code> then <code>[200]</code>.' },
+      { who: R, do: 'Open the bell › “Needs attention”.', see: 'An item “Quill Enrolledwalk’s fee was refunded in Stripe, and Quill is still enrolled”, body “$… went back to Visa •••• 4242 on …. It’s recorded, and Quill owes $150.00 again. Withdraw Quill, email the family the pay link, or keep Quill enrolled. The family is emailed once you choose.” and three buttons: “Withdraw Quill”, “Email the pay link” and “Keep Quill enrolled”. Wren’s item from part C is here too (“Wren Whosewalk’s fee was refunded in Stripe, and Wren is still enrolled”, “… Wren owes $50.00 again …”).' },
+      { who: R, do: 'Open Quill’s record, Fee section.', see: 'The “To the card” block carries the tag “Made in Stripe”. Under “Amount” it says “The whole payment, so the processing fee went back too.”; “Processing fee” reads “Given back with the whole payment”; “Family emailed” reads “Not yet. It goes when you answer on Needs attention.”' },
+      { who: R, opts: ['Withdraw Quill', 'Email the pay link', 'Keep Quill enrolled'], do: 'RULING, Quill’s item: press ONE of the three buttons, and tick the one you pressed. (“Email the pay link” and “Keep Quill enrolled” first ask in a window titled with the same words, whose button repeats them.)', see: 'Withdraw: the window “Withdraw Quill Enrolledwalk?” and its button “Withdraw”, then “Withdrew Quill Enrolledwalk.” and the item reads “The registration has ended.” Email the pay link: the window says “$… went back to Visa •••• 4242 on …. It’s recorded, and Quill owes $150.00 again.” and after confirming “Emailed (your guardian email) the refund and a pay link.”, item “You emailed the pay link”. Keep: after confirming “Quill stays enrolled. We emailed (your guardian email) about the refund.”, item “You kept Quill enrolled”.' },
+      { who: R, opts: ['Withdraw Wren', 'Email the pay link', 'Keep Wren enrolled'], do: 'RULING, Wren’s item: press a DIFFERENT one than you did for Quill, and tick the one you pressed.', see: 'The same wording as above with “Wren” and “$50.00”. The item then shows the answer you chose.' },
+      { who: R, opts: HELD, do: 'The family’s email after each answer (check your inbox).', see: 'Held. Keep: the refund email says “Quill is still registered and owes $150.00.” under its block. Email the pay link: “UAT Rep Club refunded Quill Enrolledwalk’s fee for 2026 Fall House League, and Quill is still registered, so $150.00 is due.” with the block and “Pay now”. Withdraw: the ending email says “We refunded your payment.” with the block.' }
+    ]},
+    { id: 'E', title: 'A tournament refunds part of a team’s deposit', steps: [
+      { who: O, do: 'Open <code>/uat-rep-club/admin/tournaments/registrations</code> with UAT Rep Club Invitational 2026 chosen, and open the record of Walk Visitor 7b. Read the Payment section.', see: 'The summary reads “Owes $300.00”. Under “Still due” a deposit and a balance. Nothing is paid.' },
+      { who: T, do: 'Run the pay-link command from “Before you start” with the team id <code>468b6409-5d75-44aa-87a9-4768b758d132</code> and open the address it prints. Choose the deposit, give an email you can read in “Email for the receipt”, press “Pay $… by card” and pay with the test card.', see: '“Pay the deposit, $100.00” is chosen, with “Pay in full, $300.00” beside it. After paying: “Confirming your payment” and then “Paid, thank you” with a line “Visa •••• 4242 · … · receipt N”.' },
+      { who: O, do: 'Reload the team’s record.', see: 'The summary reads “Owes $200.00 · paid $100.00 of $300.00”. Under “Received”, a row “Deposit · Online, card · receipt N” at $100.00. Write down “$200.00”.' },
+      { who: O, do: 'On that row open ⋯ (“More for this payment”) and choose “Refund to the card”.', see: 'A window “Refund Walk Visitor 7b’s deposit?” with “Paid $… on … (receipt N): the $100.00 deposit and a $… processing fee.” and two choices: “All of it to the card, Visa •••• 4242” (“Arrives in 5 to 10 business days”) and “Part of it” (“An amount up to $100.00, with a reason”). Nothing is picked; the foot reads “Choose how much to refund.” and there is no refund button.' },
+      { who: O, do: 'Choose “Part of it”.', see: 'Fields “Amount to refund” (hint “Up to $100.00. The processing fee isn’t part of a part refund.”), “Reason” (“The team reads this in the refund email.”) and “Note to the team” (“Goes in the refund email.”). The foot now reads “The team’s contact is emailed.” and the button is “Refund and email”.' },
+      { who: O, do: 'Press “Refund and email” with the amount empty. Then type 150 and press it again. Then type 40 and press it with the Reason empty.', see: 'First and second: “Enter an amount above $0 and up to $100.00.” Third: “Say why only part is refunded.” Nothing moves.' },
+      { who: O, do: 'Type 40 as the amount and <em>Walk: one game cancelled for weather</em> as the Reason. Press the button.', see: 'Under the amount: “$60.00 stays paid”. The button reads “Refund $40.00 and email”. After pressing: “Refunded $40.00 to the card. $60.00 stays paid. We emailed (your receipt email).” (or “The refund is on its way to the card.” if Stripe has not finished).' },
+      { who: O, do: 'Look at the deposit row.', see: 'The row is NOT struck through. Under its label a quiet tag “$40.00 refunded to card, (today’s date)” (“Refunding $40.00 to card…” while pending). Its amount still reads $100.00.' },
+      { who: O, do: 'Look at the Payment section above the list.', see: 'A line “Entry $260.00 for this team, lowered $40.00 on (today’s date) · Walk: one game cancelled for weather” and the summary “Owes $200.00 · paid $60.00 of $260.00”. Owes is the same $200.00 you wrote down: the balance did not move.' },
+      { who: O, do: 'Open the row’s ⋯ again and choose “Refund to the card”.', see: 'Only “Part of it” is offered (no “All of it”). Its hint reads “$40.00 already refunded on …. Up to $60.00. The processing fee isn’t part of a part refund.” Cancel.' },
+      { who: O, do: 'Open ⋯ › “View the payment” and read the refund block under the payment’s facts.', see: 'A block “To the card” with the pill “Refunded” (or “Pending”). Rows: “Amount” (“$40.00 to Visa •••• 4242”, “Part of the deposit. A part refund never includes the processing fee.”); “Processing fee” (“Not refunded. A part refund never includes it.”); “Reason” (“Walk: one game cancelled for weather”); “Entry” (“Lowered $40.00 to $260.00”); “Refunded by”; “Reached the card”; “Stripe reference” with a copy symbol and no word “Copy” (pressing it shows “Copied”); “Team emailed”.' },
+      { who: O, opts: HELD, do: 'The team’s refund email (check your receipt inbox).', see: 'Held. When sent: “$40.00 of Walk Visitor 7b’s deposit for UAT Rep Club Invitational 2026 was refunded.”, “UAT Rep Club’s reason: Walk: one game cancelled for weather”, the block, “The $… processing fee isn’t part of this refund.”, “It takes 5 to 10 business days to appear.”, “The entry fee is now $260.00.” and “A $200.00 balance is still to pay.”' }
+    ]},
+    { id: 'F', title: 'The family’s record and “View the payment”', steps: [
+      { who: O, do: 'Open <code>/uat-rep-club/admin/families</code>, search “Whosewalk”, and open the family.', see: 'In the family’s table, under Wade’s (and Wren’s) season and division, a line “Paid online (today’s date) · card · receipt N”, the receipt number from A3. The processing fee is not shown as dues or paid.' },
+      { who: O, do: 'Open Registrations (house league), tab “Active”, search “Whosewalk”. Open Wren’s row ⋯ (“More for Wren Whosewalk”) and choose “View the payment”.', see: 'The item sits between “Email the pay link”/“Mark received” and “Move to another division” where those apply, with the hint “(date) · Online, card · receipt N”. It opens Wren’s record already scrolled to its Fee section, which shows the “To the card” block from part C. The record’s own ⋯ does not offer “View the payment”.' }
+    ]},
+    { id: 'G', title: 'Optional: a refund still pending, and one that comes back', steps: [
+      { who: F, opts: HELD, do: 'Sign up <em>Pia Pendingwalk</em> (guardian <em>Gwen Pendingwalk</em>). Pay with Stripe’s test card <code>4000 0000 0000 7726</code> (its refund starts pending and settles later).', see: 'The same receipt as before, “Paid, thank you”.' },
+      { who: R, opts: HELD, do: 'Decline Pia, “Refund to the card”. Look at her Fee cell and record straight away.', see: 'Second line “(date) · $… to the card · pending”. In the record the pill “Pending” and “Status”: “Stripe accepted it (day) at (time) and is waiting on the card’s bank. It’s already in the season’s book. Nothing to do.” Later the pill reads “Refunded” and “pending” is gone.' },
+      { who: F, opts: HELD, do: 'Sign up <em>Fay Failwalk</em> (guardian <em>Gwen Failwalk</em>). Pay with Stripe’s test card <code>4000 0000 0000 5126</code> (its refund succeeds, then fails some time later).', see: 'The same receipt, “Paid, thank you”.' },
+      { who: R, opts: HELD, do: 'Decline Fay, “Refund to the card”. Wait for Stripe to fail the refund (window 1 prints <code>refund.failed</code>; it can take a while) and reload Registrations.', see: 'Fay’s Fee cell shows an amber button “Refund didn’t reach the card” with the second line “$… to the card · sent back (day)”. Needs attention has “Fay Failwalk’s refund didn’t reach the card” with the button “Record the refund sent another way”.' },
+      { who: R, opts: HELD, do: 'Press the amber button (or ⋯ › “Record the refund sent another way”).', see: 'A window “Record the refund for Fay Failwalk as sent another way?” with “The card refund of $… came back. Record that the club sent it to the family another way. The season’s book already shows it as refunded.” and the button “Record it”. After it: “Recorded the $… refund as sent another way.” and the second line reads “(date) · sent another way”. The one name, “Record the refund sent another way”, is the same on the row’s ⋯, the record’s button and the Needs-attention button.' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held", or the option you chose). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['12c refunds walk §389 (2026-10-26)'];
+    lines.push('Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps');
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

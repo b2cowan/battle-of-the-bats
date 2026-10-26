@@ -1,0 +1,299 @@
+<title>12c · Pay by bank debit</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 12c · §390</span>
+    <h1>Pay by bank debit</h1>
+    <p class="sub">Written 2026-10-26. One purpose: a family or a team pays by bank debit, the debit is seen as “clearing” everywhere until it clears, and the desk can end a registration while one clears.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>A bank debit takes days, so unlike a card it is neither paid nor owing while it travels. You check what each person sees in that time: the family (a “Bank debit clearing” block and no way to pay twice), the registrar (a “clearing” chip on the Fee cell, a Clearing figure on the Money page, no Mark received, and a question when ending a registration whose debit is still on its way), the owner (both processing-fee rates on the Payouts card, and the Disconnect window counting debits that are still clearing) and a tournament team’s record. Then Stripe’s sandbox settles the debits, and you check that the receipt, the Fee cell, the Money page and the send-back that was asked for all follow by themselves.</p>
+    <p>You use a family in a private window (no login), the registrar and the owner on a computer, and a team’s contact in a private window.</p>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>While a debit clears the family sees “Bank debit clearing” and cannot pay again; the desk sees “clearing” (never paid, never owing, never past due) and is not offered Mark received or the pay link.</li>
+      <li>On the Money page Owed equals Received plus Clearing plus Still owing, at every moment.</li>
+      <li>Ending a registration while its debit clears asks “When it clears:” first, and what you chose happens by itself when it clears.</li>
+      <li>When a debit clears, the receipt names the bank account and both dates, the Fee cell reads received, and the Clearing figure moves to Received.</li>
+      <li>Both processing-fee rates print from the screen’s own figures; nothing is typed in this page.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li>A debit that comes back and a debit the bank reverses after it cleared. Stripe’s test-bank sign-in for Canadian debits does not let you choose those outcomes, so they are covered by the database checks (<code>scripts/online-payments-12c-check.sql</code> T12–T16 and T22–T27) and the unit tests, and get walked in the Amplify end-to-end pass.</li>
+      <li>The club’s invoice line for a returned debit (same reason).</li>
+      <li>Refunds to a card, refunds made in Stripe and a tournament part refund: that is walk §389.</li>
+      <li>Emails, beyond the held boxes. A step that sends an email has two boxes, “Did it” and “Held”. Tick “Held” and move on: localhost cannot send, so the emails get one end-to-end pass on Amplify dev.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts">
+      <dt>Dev server</dt><dd>Freshly restarted (the owner restarts it), at <code>http://localhost:3000</code>. <code>PAY_LINK_SECRET</code> (32+ characters) is set in <code>.env.local</code>.</dd>
+      <dt>Stripe windows</dt><dd>Both <code>stripe listen</code> windows must be running, exactly as <code>docs/agents/ops/stripe-setup-guide.md</code> › “Local — two listen windows” says. Window 1 (payments and refunds; its list now includes <code>checkout.session.async_payment_failed</code> and <code>charge.dispute.created</code>; the debits clear through <code>checkout.session.async_payment_succeeded</code>):<pre>C:\tools\stripe\stripe.exe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook</pre>Window 2 (the club’s account):<pre>C:\tools\stripe\stripe.exe listen --events-from '@self' --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events</pre>Keep the quotes exactly; PowerShell drops an unquoted <code>@word</code>.</dd>
+      <dt>Test card</dt><dd><code>4242 4242 4242 4242</code>, any future date, any CVC. This walk pays by bank debit, not by card.</dd>
+      <dt>Stripe’s bank page</dt><dd>When Stripe’s page opens, choose the bank debit option, sign in with the test bank Stripe’s sandbox offers, pick an account, and accept the debit agreement. Stripe’s sandbox then settles the debit a few minutes later; the walk never needs you to hurry, but do the desk steps (parts B and C) soon after, while the debits are still on their way.</dd>
+      <dt>A team’s pay link</dt><dd>A tournament team reaches its pay page only through an email. Localhost cannot send, so part F builds the same link yourself. From the project folder run (the team id comes from the lookup in part F):<pre>node -e "const c=require('crypto'),fs=require('fs');const s=fs.readFileSync('.env.local','utf8').split(/\r?\n/).find(l=>l.startsWith('PAY_LINK_SECRET=')).slice(16).trim();const id=process.argv[1];console.log('http://localhost:3000/uat-rep-club/uat-rep-club-invitational-2026/pay/'+Buffer.from(id.replace(/-/g,''),'hex').toString('base64url')+'.'+c.createHmac('sha256',s).update('team-pay:'+id).digest().subarray(0,16).toString('base64url'))" TEAM-ID</pre></dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <p>Sign out between logins, or keep one browser window per person. The family and the team use a private window with no login. Dev only, keep this page private.</p>
+    <dl class="facts">
+      <dt>Address</dt><dd><code>http://localhost:3000</code></dd>
+      <dt>Club (org slug)</dt><dd><code>uat-rep-club</code> (UAT Rep Club). If it looks wrong or empty, <code>node scripts/seed-club-fixture.mjs</code> rebuilds it, which resets the passwords below.</dd>
+      <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code> (parts B, C, E)</dd>
+      <dt>Owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (parts D and F; the only account that opens Settings › Payouts, and the one that runs tournaments)</dd>
+      <dt>No login</dt><dd>Two families (parts A, C, E) and a team’s contact (part F) in a private window. Use an email address you can read for every guardian.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Where and on what</h2>
+    <dl class="facts">
+      <dt>Payouts</dt><dd>UAT Rep Club’s test Stripe account is connected, takes card payments and bank debit, and families and teams pay the processing fee. (If the Payouts card in Settings does not read “Taking payments”, stop and tell Claude.)</dd>
+      <dt>House league</dt><dd><strong>2026 Fall House League</strong>, division <strong>U9 Rookie</strong> (born 2014 or 2015), price <strong>$150.00</strong>, accepts sign-ups on its own. Sign-up page: <code>/uat-rep-club/league/2026-fall-house-league/register</code>; status page: <code>/uat-rep-club/league/2026-fall-house-league/status</code> (asks for an email and the 8-character reference). Registrations: <code>/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/registrations</code>. Money: the same address ending <code>/money</code>.</dd>
+      <dt>Children this walk makes</dt><dd>The walk signs up its own children; earlier walks left others in the list, so find yours by name. <em>Bo Debitwalk</em> (A1, first family, kept) and <em>Dax Sendbackwalk</em> (C1, second family, declined while his debit clears). Guardian names are yours to type.</dd>
+      <dt>Tournament</dt><dd><strong>UAT Rep Club Invitational 2026</strong>, division 15U, deposit <strong>$100.00</strong>, entry <strong>$300.00</strong>, at <code>/uat-rep-club/admin/tournaments/registrations</code>. The walk adds its own team, <strong>Walk Debit Team</strong> (part F).</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 's12c-walk-bankdebit-v1';
+  var F = 'A family, private window, no login', R = 'Registrar, computer · uat-club-registrar@uat-rep-club.local', O = 'Owner, computer · uat-club-owner@uat-rep-club.local', T = 'The team’s contact, private window, no login';
+  var HELD = ['Did it', 'Held'];
+  var PARTS = [
+    { id: 'A', title: 'A family pays by bank debit', steps: [
+      { who: F, do: 'Open <code>/uat-rep-club/league/2026-fall-house-league/register</code>. Sign up ONE child: first name <em>Bo</em>, last name <em>Debitwalk</em>, a date of birth in 2014 or 2015, a guardian name of your choosing, your email, and tick the waiver if one shows. Press “Sign up”. Write down the reference.', see: '“You’re signed up”, “Your reference: … (one for this sign-up)”, Bo with the tag “Accepted”, and a card headed “To pay now” with a line ending “· U9 Rookie · $150.00”. TWO buttons: “Pay $… by card” with “Includes a $… processing fee.” under it, and “Pay $… by bank debit” with “Includes a $… processing fee. Takes up to 5 business days.” under it. The bank button’s total is its own figure, not the card’s.' },
+      { who: F, do: 'Press “Pay $… by bank debit”. On Stripe’s page choose the bank debit option, sign in with the test bank, pick an account and accept the debit agreement.', see: 'Both buttons go dim and the pressed one reads “Opening the secure payment page…”. You land back on the status page.' },
+      { who: F, do: 'Look at the page you landed on.', see: 'It may read “Confirming your payment” for a few seconds, then a card headed “Bank debit clearing” with: “$… from the account ending NNNN, started (today’s date). Banks take up to 5 business days. We’ll email you when it clears.”, then “Bo’s spot is held.”, then “Wrong account, or a question? Contact UAT Rep Club at (the club’s contact email).” (without a contact email: “… Contact UAT Rep Club.”; without the account’s last digits the first sentence reads “$… by bank debit, started …”). There is NO “Pay” button and no “Or pay another way” line. Nothing says “Paid”.' },
+      { who: F, opts: HELD, do: 'The “started” email (check your inbox).', see: 'Held. When sent: subject “Your bank debit to UAT Rep Club has started”; “Your bank debit for Bo in 2026 Fall House League has started.”; Amount, From (“Account ending NNNN”) and Started; “This isn’t your receipt. We’ll send it when the debit clears.”; “Banks take up to 5 business days.”; “Bo’s spot is held.”' },
+      { who: F, do: 'Open <code>/uat-rep-club/league/2026-fall-house-league/status</code>, enter your email and the reference, and press “Look up”.', see: 'Bo is listed and the same “Bank debit clearing” card shows, with no Pay button. You cannot start a second payment while one clears.' }
+    ]},
+    { id: 'B', title: 'The desk while a debit clears', steps: [
+      { who: R, do: 'Open Registrations (address above), tab “Active”, and search “Debitwalk”.', see: 'Bo Debitwalk’s Fee cell has an info chip “$150.00 clearing” in place of the usual first line, and a second line “Bank debit · $… · started (today’s date)” (the total the bank is taking, fee included).' },
+      { who: R, do: 'Tap the chip.', see: 'Its detail opens: “A bank debit of $… started on (today’s date). The registration fee is $150.00; the rest is the processing fee. Banks take up to 5 business days. It goes in the season’s book when it clears.”' },
+      { who: R, do: 'Open the row’s ⋯ (“More for Bo Debitwalk”).', see: '“Mark received” and “Email the pay link” are NOT in the menu, and the row has no Mark received button. “Withdraw” and “Decline” are still there.' },
+      { who: R, do: 'Open Money (address above) and read the figures at the top.', see: 'Four figures: “Owed”, “Received”, “Clearing” and “Still owing”. “Clearing” reads $150.00 with the caption “1 player · bank debit”. Owed equals Received plus Clearing plus Still owing.' },
+      { who: R, do: 'Read the line under the figures.', see: 'It ends “Clearing counts the registration fees only, before processing fees. It moves to Received as each bank debit clears.” Before it, if some of what is received came in another way: “$… of what’s received came by card.” (card only).' }
+    ]},
+    { id: 'C', title: 'Ending a registration while its debit clears', steps: [
+      { who: F, do: 'Sign up a SECOND family, ONE child <em>Dax Sendbackwalk</em>, guardian <em>Gus Sendbackwalk</em>, and pay by bank debit exactly as in A1 and A2.', see: 'The same “Bank debit clearing” card, with “Dax’s spot is held.”' },
+      { who: R, do: 'On Registrations (tab “Active”) open Dax Sendbackwalk’s ⋯ and choose “Decline”.', see: 'A window “Decline Dax Sendbackwalk?” that says “A bank debit of $… is still clearing. It isn’t in the season’s book yet. When it clears:” and two choices: “Send it back to the bank account” (“It goes back by itself when it clears, in your name.”) and “Keep it” (“Say why. It goes in the book as kept by the club.”). NOTHING is picked, the foot reads “Choose what happens to the $150.00.” and there is only Cancel: no Decline button yet.' },
+      { who: R, do: 'Choose “Send it back to the bank account”.', see: 'A box “Include the $… processing fee · $… back” is ticked, with “With the processing fee, because the club is declining.” Unticking it changes the line to “Without the processing fee, because the family asked to leave.” Tick it again. The foot reads “The family is emailed that Dax Sendbackwalk was not accepted and that $… goes back to their account if the debit clears.” The button is “Decline, send it back and email”.' },
+      { who: R, do: 'Now choose “Keep it”. Do not press the button.', see: 'A required “Reason” field appears (“The family reads this in their email.”). The foot reads “The family is emailed that Dax Sendbackwalk was not accepted and that the club keeps the $150.00 if the debit clears.” The button reads “Decline and email”. Go back to “Send it back to the bank account”.' },
+      { who: R, do: 'Press “Decline, send it back and email”.', see: 'A confirmation “Declined Dax Sendbackwalk. $… goes back to the account if the debit clears. We emailed (the guardian’s email).” Dax moves to the “Ended” tab.' },
+      { who: R, opts: HELD, do: 'The ending email (check your inbox).', see: 'Held. When sent, the money sentence reads “Your $… bank debit is still clearing. If it clears, we’ll send $… back to the same account. It takes about 3 business days to appear.”' }
+    ]},
+    { id: 'D', title: 'Payouts: both rates, and Disconnect', steps: [
+      { who: O, do: 'Open <code>/uat-rep-club/admin/org/settings</code> and find the Payouts card.', see: 'The line “Processing fee: … per card payment, … per bank debit.” with both rates filled in by the screen. In the card’s record under “Processing fee”, “Families and teams pay it: it’s added to what they pay” followed by “· … per card payment · … per bank debit”. Neither rate is typed in this walk: read them off the screen.' },
+      { who: O, do: 'Press the quiet “Disconnect payouts” button. Read the window. Then press Cancel (NOT Disconnect).', see: 'A window “Disconnect payouts?” with “Families and teams stop seeing Pay now right away, and pay links already emailed show your “How to pay” text instead.”, a line about teams that still owe money (“n teams still owe money; they can pay you another way.” or “No team owes anything right now.”), then — because your debits are still on their way — “2 bank debits are still clearing. They’ll finish, and their money still reaches you.” (“1 bank debit is still clearing. It’ll finish, and its money still reaches you.” if one has already cleared), then “Payments already made stay in your books. Refunds of them are made in Stripe.” Buttons Cancel and Disconnect. Payouts stay connected.' }
+    ]},
+    { id: 'E', title: 'When the debits clear', steps: [
+      { who: R, do: 'Wait for Stripe’s sandbox to settle the debits (a few minutes after each agreement). Window 1 prints <code>checkout.session.async_payment_succeeded</code> and <code>[200]</code> for each. Reload Registrations.', see: 'Bo’s chip is gone. (If one debit is slow, carry on with the others and come back.)' },
+      { who: F, do: 'Reload Bo’s status page (look up with your email and reference if needed).', see: 'A receipt card “Paid, thank you”, “$… to UAT Rep Club”, and the line “Bank debit, account ending NNNN · started (day), cleared (day) · receipt N” (without the digits: “Bank debit · started …, cleared … · receipt N”), the child line with the processing fee, and “Paid”. The “Bank debit clearing” card is gone and the page says “Everything is paid. Thank you.”' },
+      { who: F, opts: HELD, do: 'The receipt email (check your inbox).', see: 'Held. When sent: subject “Receipt N from UAT Rep Club”; “Total paid · $… · Bank debit, account ending NNNN · (date)”; “Your bank debit started on (date) and cleared on (date).” The receipt number is the one on the page.' },
+      { who: R, do: 'On Registrations look at Bo’s Fee cell.', see: 'First line “$150.00 received”, second line “(date) · Online, bank debit · receipt N” (the same N as the family’s receipt). No chip.' },
+      { who: R, do: 'Open Money.', see: 'The “Clearing” figure is gone and Received now includes Bo’s $150.00. Under the figures: “$… of what’s received came by bank debit.” (or “$… of what’s received came by card and $… by bank debit.”). The “Clearing counts…” sentence is gone. Owed still equals Received plus Still owing.' },
+      { who: R, do: 'On Money open “Every line”.', see: 'Bo’s line reads “Registration fee · regular price”, How “Online, bank debit · receipt N”, amount $150.00.' },
+      { who: R, do: 'On Registrations open the “Ended” tab and look at Dax’s Fee cell (give it a minute after his debit clears: the send-back starts the moment it does, and window 1 prints <code>refund.created</code>).', see: 'First line “$150.00 refunded”, second line “(date) · $… to the bank account” (“· pending” until Stripe finishes). Nobody pressed anything: the choice you made in C happened by itself.' },
+      { who: R, do: 'Open Dax’s record, Fee section.', see: 'A block headed “To the bank account” with the pill “Pending” then “Refunded”. “Amount” reads “$… to the account ending NNNN” with “$150.00 fee + $… processing fee” under it; “Refunded by” names you (the registrar who declined); once refunded, “Reached the bank account” with “It takes about 3 business days to appear on the family’s statement.”; “Stripe reference” starts <code>re_</code>. On Money › “Refunds” his line has How “To the bank account”.' }
+    ]},
+    { id: 'F', title: 'A tournament team pays by bank debit', steps: [
+      { who: O, do: 'Open <code>/uat-rep-club/admin/tournaments/registrations</code> with UAT Rep Club Invitational 2026 chosen. Press “Add team”. In “Add team manually” enter the team name <em>Walk Debit Team</em>, choose the division 15U, give an email you can read, leave “Payment status” on “Unpaid”, and press “Save team”.', see: 'The team appears in the list. Open its record: the summary reads “Owes $300.00”.' },
+      { who: O, do: 'Find the team’s id with <code>node scripts/db-query.mjs --dev -q "select id from teams where name=\'Walk Debit Team\'"</code>, then run the pay-link command from “Before you start” with that id and note the address it prints.', see: 'An address ending in a long token.' },
+      { who: T, do: 'Open that address. Choose the deposit. Give an email you can read in “Email for the receipt”. Press “Pay $… by bank debit” and finish on Stripe’s page as in A2.', see: '“Pay the deposit, $100.00” is chosen, and two buttons show: “Pay $… by card” and “Pay $… by bank debit” (“Includes a $… processing fee. Takes up to 5 business days.”). Afterwards the page reads “Bank debit clearing”, “$… from the account ending NNNN, started (today’s date). Banks take up to 5 business days. We’ll email you when it clears.”, “Walk Debit Team’s place is held.” and the contact line. No Pay button.' },
+      { who: O, do: 'Reload the team’s record and read the Payment section.', see: 'The summary reads “Owes $300.00 · $100.00 clearing” in plain text, not amber. Under “Received” a row “(date)  Deposit · Online, bank debit” with a chip “Clearing” and “Started (date) · up to 5 business days”, at $100.00. “Mark paid” is NOT offered, and neither is “Record” on the due rows.' },
+      { who: O, do: 'Wait for the debit to clear (window 1 prints <code>checkout.session.async_payment_succeeded</code> then <code>[200]</code>), reload the record, then open the row’s ⋯ › “View the payment”.', see: 'The row reads “Deposit · Online, bank debit · receipt N”, the chip is gone and the summary reads “Owes $200.00 · paid $100.00 of $300.00”. The window lists “Started”, “Cleared”, “Bank account” (“Account ending NNNN”), the entry fee, the processing fee and the total.' },
+      { who: T, opts: HELD, do: 'The team’s “started” email (check your inbox).', see: 'Held. When sent: “Your bank debit to UAT Rep Club has started”, “Your bank debit for Walk Debit Team in UAT Rep Club Invitational 2026 has started.”, “This isn’t your receipt. We’ll send it when the debit clears.” and “Walk Debit Team’s place is held.”' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held", or the option you chose). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['12c bank debit walk §390 (2026-10-26)'];
+    lines.push('Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps');
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

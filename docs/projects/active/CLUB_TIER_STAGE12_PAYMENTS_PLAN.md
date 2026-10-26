@@ -26,6 +26,23 @@
   tournament team's card payment moves to **12c** (§4). **Not built, named:** the Families record's "Paid online · card ·
   receipt" line (b4) — the record window had another session's edit in flight; "View the payment" in the row ⋯ (b3) —
   the receipt number is on the row.
+- **12c BUILT 2026-10-26** (prompt `CLUB_TIER_STAGE12C_BUILD_PROMPT.md`; rulings §0g–§0k; words
+  `CLUB_TIER_STAGE12C_PARTREFUND_BANKDEBIT_COPY.md`), committed `293990174` (Part 1, mig 382, /review) · `855175d74`
+  (Part 2, mig 383) · `5f3af63d4` (Part 3, mig 384) · `171a4ea91` (Part 4) · `960f2fd77` (Part 5, mig 386, /review) ·
+  `906aeb420` `966fc11af` `b9eefac19` `3e2c5e8ad` (Part 6a–6d, mig 387) · `057a22f1c` (Part 7) · `164c6d885` (/review of
+  the whole, mig 388) · `795119498` (Part 8, help + the setup guide). Migrations 382–384 and 386–388 applied to dev
+  2026-10-26 and declared prod-pending in MANUAL_PROD_STEPS.json (385 is 9d-1's). `scripts/online-payments-12c-check.sql`
+  T1–T30 on dev; house-league-money-check and the stage 7 atomicity checks still pass. Sandbox: the UAT club's account has
+  `acss_debit_payments` active and a bank-debit Checkout opens on it as a direct charge with our fee; Stripe sends the
+  agreement and each debit's notice itself. **Walks owed: §389 (a refund you can see, a refund made in Stripe, a team's part
+  refund) and §390 (bank debit).** The returned CA$5 is `RETURNED_BANK_DEBIT_FEE_CENTS` (`lib/plan-config.ts`, Facts doc).
+  **Owner step:** the Connect destination on Amplify dev and prod also sends `checkout.session.async_payment_failed` and
+  `charge.dispute.created` (`docs/agents/ops/stripe-setup-guide.md`). **Named, not built (from /review):** a part deposit
+  clearing hides past due for the whole team; a mixed bulk pay-link skip names one reason; a returned-debit fee whose invoice
+  line failed is not retried by itself (the console's follow-up); a send-back is carried out in the decider's name without
+  re-checking their right days later. **Not run by the builder:** a debit paid, returned and reversed through Stripe's own
+  Checkout (a browser and a forwarded webhook; walk §390 drives them), and `check:layout` (the UAT club owner's session lands
+  on "Page not found" on every admin screen, the hub included).
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
@@ -242,6 +259,57 @@ Asked from `CLUB_TIER_STAGE12B_BUILD_PROMPT.md` "Before any code", after a censu
 - **A partial refund of a tournament team's card payment is built in 12c** (§4), with that stage's other change to how a
   team's payments move. Until then a team's card payment is refunded in full only (12a), as the help says.
 
+## 0k · The 12c build start: Stripe's bank-debit facts and the owner's four answers (2026-10-26)
+
+**Stripe facts, read on docs.stripe.com / stripe.com/en-ca on 2026-10-26** (pages: /payments/acss-debit,
+/payments/acss-debit/accept-a-payment?payment-ui=checkout, /api/checkout/sessions/create, /connect/direct-charges,
+/connect/disputes, /pricing/local-payment-methods). Pinned API `2026-04-22.dahlia`; the docs are not versioned.
+- **Checkout params:** `payment_method_types` includes `acss_debit`; line items in `cad`;
+  `payment_method_options.acss_debit.mandate_options.payment_schedule` (`sporadic` for a one-off fee) and `transaction_type`
+  (`personal`) are required; `verification_method` `automatic` | `instant` | `microdeposits`. The connected account needs the
+  `acss_debit_payments` capability (§0i). Direct charge + `application_fee_amount` with ACSS is implied by the two pages,
+  not shown together — the sandbox run confirms it.
+- **The agreement:** hosted Checkout collects the pre-authorized debit agreement itself. Payments Canada requires a
+  mandate-confirmation email and a notice for each debit; **Stripe sends both by default.** Not stated: whether that holds for a
+  connected account on a direct charge. **Settled in the sandbox in Part 5; if Stripe does not send them, stop and bring it to
+  the owner (and counsel's list), never build a substitute silently.**
+- **Clearing:** "up to 5 business days" (success at T+4, funds T+5; 5 p.m. Eastern cutoff). The ruled "Takes up to 5 business
+  days" stands as written.
+- **Events:** `checkout.session.completed` arrives with `payment_status: 'unpaid'`; the outcome is
+  `checkout.session.async_payment_succeeded` / `_failed`, on the Connect endpoint with the event's `account`.
+- **Failure reasons:** insufficient funds, invalid account, account closed, debit not authorized; the exact code strings are
+  not documented — map what the sandbox returns (`pm_acssDebit_*` tokens), unmapped prints no reason (words §2.3).
+- **After it cleared:** a bank return or a customer claim becomes a **dispute** (`charge.dispute.created`); personal accounts up
+  to 90 calendar days, no evidence, cannot be won.
+- **Refunds:** full and part, within 180 days, **about 3 business days** to the account; a refund on a pending debit waits for
+  it to succeed and is cancelled if it fails; `refund.updated` / `refund.failed`. → `{bankDays}` = "about 3".
+- **Stripe's price:** 1% + CA$0.40 (CA$5.00 cap) + CA$1.00 per instant verification; **CA$5.00 per failed payment or dispute.**
+  Our all-in `ONLINE_PAYMENT_RATES.bankDebit` (2.5% + $1.00) matches the Facts doc; no drift.
+
+**The four answers (owner, 2026-10-26):**
+1. **The per-team entry adjustment is a list:** one line per part refund (amount, date, reason or "made in Stripe"), stored as a
+   reduction so a later fee change still applies; only a part refund creates one (app or Stripe dashboard), never a full refund
+   and never a typed figure. It reaches every place a team's amount due is read (team list figures and filters, the record,
+   reminders, check-in, the dashboard, the pay page, the export with an "Entry lowered" column). Not public. Census correction:
+   a team's fee is computed in six places (the prompt's "one FeeSchedule" was wrong; `fee_schedule_mode='division'` exists), so
+   the build routes all six through one reading of the adjustment.
+2. **A returned or reversed debit's CA$5 is the club's.** Follow-through before Part 6: how FieldLogicHQ recovers it from the
+   club (Stripe charges the platform, the fee payer), `/billing` on the Facts doc, the figure as a constant (never typed),
+   words via `/marketing`, `/strategy` to log it. **How (owner, 2026-10-26, after the research):** Stripe puts both dispute
+   and payment-failure fees on the platform under `fees_collector = application` (docs.stripe.com/connect/direct-charges-fee-payer-behavior);
+   an account debit is not available while Stripe carries losses (/connect/account-debits); the fee payer can't be set per fee;
+   cost pass-through is a private preview that doesn't name the PAD failure fee. So **each return is recorded against the club
+   and billed as a "Returned bank debit" line on its next FieldLogicHQ invoice; a comped or free club (Founding Season 2027)
+   is not billed — FieldLogicHQ absorbs it until the club pays us.** Built with Part 6. Worth asking Stripe whether the PAD
+   failure fee is pass-through eligible (it would replace the invoice line).
+3. **Bank sign-in only** (`verification_method: 'instant'`): no micro-deposit wait; a family whose bank lacks it pays by card or
+   another way.
+4. **A debit reversed after it cleared is built in 12c**, as a dispute on a bank-debit charge only (returned line, family email,
+   desk item); card disputes stay 12d.
+Landing order (presented, not contested): Clearing at session completion (spot held, no book line, no receipt number); land
+through the flow's own writer at `async_payment_succeeded`; a failure before landing touches no book; a reversal after
+landing writes a returned line beside the receipt; every step a guarded transition, safe under replay and reorder.
+
 ## 1 · What it makes true
 
 A club's owner (A1) connects the club's own Stripe Express account once from the settings page (or, on Tournament Plus,
@@ -318,7 +386,7 @@ registration (house league) or from the payment's row (tournaments, A12), card f
 |---|---|---|---|
 | **12a** foundation + the tournament card flow | **Proves itself on a tournament team paying by card (owner, 2026-10-25)**: the team pay page with deposit or full (A7), Pay in the acceptance email and the balance reminder, online rows and a full refund from the row (A12), landing through the tournament writer with a new online method value. Payouts card, five states, both homes, with the A14 who-pays choice and the A9 refund-policy sentence; the "Before you set up payouts" window; onboarding via Account Links + return; the gate + launch switch; pay block; Checkout for card; receipt page + email; online-payment record; Connect webhook (own secret, idempotent); full refund; test mode | `org_payment_accounts` (org, Stripe account id, state, charges/payouts enabled, requirements due, connected/disconnected by/at); `online_payments` (org, flow, payer email, base, fee, total, rail, state, processor ids, receipt no., timestamps); `online_payment_items` (payment → registration or team, amount); `online_payment_refunds` (amount, fee included, reason, by, processor id, state); `stripe_connect_events` (idempotency log) | 7–9 d |
 | **12b** house league | every Stage 9 ghost; Pay now in approval and promotion emails; Email the pay link; no longer payable; refund in the end window; partial refund (L1); Families lines — **BUILT 2026-10-25 (§0 state; Families lines and the tournament partial refund named, not built)** | migs 374 (items, the league landing), 375 (refunds in part), 376 (refund cap) — dev only | 5–7 d |
-| **12c** bank debit | bank debit for both flows at once (L2): the debit agreement, Processing until it clears with the spot held (A4), a fourth "Processing" figure on the Money band while clearing (A11), a returned debit's fresh Pay and self-clearing item. ⚖ The tournament card flow moved into 12a (owner, 2026-10-25). **+ A partial refund of a tournament team's card payment (L1 for tournaments, owner 2026-10-26, §0f):** a team's paid figure counts whole payment rows today, so it needs a "refunded so far" amount on the team's payment row (the team payments refresh sums amount less it), the refund functions taking an amount, and an amount field in the team's refund window | a way-of-paying value for bank debit; a refunded-so-far amount on a team's payment row | 3–5 d (+1–2 d) |
+| **12c** bank debit | bank debit for both flows at once (L2): the debit agreement, Processing until it clears with the spot held (A4), a fourth "Processing" figure on the Money band while clearing (A11), a returned debit's fresh Pay and self-clearing item. ⚖ The tournament card flow moved into 12a (owner, 2026-10-25). **+ A partial refund of a tournament team's card payment (L1 for tournaments, owner 2026-10-26, §0f):** a team's paid figure counts whole payment rows today, so it needs a "refunded so far" amount on the team's payment row (the team payments refresh sums amount less it), the refund functions taking an amount, and an amount field in the team's refund window — **BUILT 2026-10-26 (§0 state)** | migs 382 (a team payment's refunded-so-far + entry-adjustment list, the clearing state), 383 (a refund remembers when it came back and who was told), 384 (a refund made in Stripe records itself), 386 (a club account takes bank debit), 387 (the desk: decisions, reversal, the returned-debit fee), 388 (a decision and a reversal hold their ground) | 3–5 d (+1–2 d) |
 | **12d** hardening | disputes and negative balance, paid twice, a payouts list for matching the bank, "+ GST/HST" rider, international cards, platform-admin oversight, offboarding with registrations still to pay, help, the terms | disputes, payouts | 10–15 d |
 
 The 12a–12c total of 16–22 days matches the scoping plan's first-build estimate (15–22). 12d matches its 10–15. Every

@@ -45,6 +45,19 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
    accepts a team, it pays its deposit or full entry by card from the acceptance email, and pays the balance from the
    reminder email.
 5. **12c · Bank debit,** for house league and tournaments at once.
+   **Built 2026-10-26, two walks owed (ledger §389 refunds, §390 bank debit).** What a person sees now: a **family**
+   can pay by bank debit as well as by card once the club's Stripe account is approved for it. The debit takes days to
+   clear, the child's spot is held meanwhile, and the family can't pay twice. If the bank sends it back, the family is
+   emailed a way to pay. The **registrar** sees "clearing" on the row, and a fourth figure, Clearing, on the Money band.
+   Mark received and the pay-link email stay away until the debit clears. Declining a child while a debit clears asks one
+   question: send it back or keep it when it clears. A debit the bank reverses after it cleared comes off the book beside its
+   receipt and raises an item that clears itself. A **tournament organizer** gets the same for a team, and can refund part
+   of a team's card payment: the entry is lowered by that amount everywhere it is read. The **treasurer** reads all of it
+   and gets no refund or collection button. **Every refund can be seen:** on the row, in the record with Stripe's
+   reference, and in a refund email to the family. A refund made in Stripe's own dashboard records itself. The family's
+   record shows "Paid online · card (or bank debit) · receipt", and "View the payment" opens the registration at its fee.
+   Each returned or reversed debit costs the club $5, billed on its next FieldLogicHQ invoice; a free or comped club is
+   not billed. Success: a walk where every debit state reads right without a phone call.
 6. **12d · Hardening.** Disputes, matching payouts to the bank, the tax display, and help articles.
 
 ## Who sees what
