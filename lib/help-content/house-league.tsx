@@ -398,7 +398,7 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How coaches get their team page',
       summary: 'A coach is added in a team’s window with their email, invited when you publish, and sees one page: their players and each family’s contact details.',
-      keywords: ['coach', 'house league coach', 'coach invite', 'invite coach', 'team page', 'coach team page', 'send again', 'invite expired', 'invite didn’t send', 'remove a coach', 'coach email', 'copy emails', 'coach sign in', 'coach access'],
+      keywords: ['coach', 'house league coach', 'coach invite', 'invite coach', 'team page', 'coach team page', 'send again', 'invite expired', 'invite didn’t send', 'remove a coach', 'coach email', 'fix a coach', 'edit a coach', 'change coach email', 'change coach name', 'coach typo', 'copy emails', 'coach sign in', 'coach access'],
       searchText: 'how coaches get their team page house league coach added in a team window with an email invited when you publish or at once after you confirm if added later invite link works 7 days signs in only with that email one page their players each family name email and phone copy emails link to the season schedule the club enters scores never ratings fees or other teams never the coaches portal invited when you publish invited signed in invite expired invite didn’t send fix the email send again removing a coach takes the page away at once families are not told coach who is a registrar or admin keeps their club role page stays 30 days after the season finishes',
       content: (
         <>
@@ -413,7 +413,7 @@ const houseLeagueHelp: HelpPageContent = {
             <>
               <HelpSteps>
                 <li>On <strong>Teams &amp; draft</strong>, click the pencil on the team&apos;s card.</li>
-                <li>Under <strong>Coach</strong>, type their <strong>First name</strong>, <strong>Last name</strong> and the <strong>Coach&apos;s email</strong>. The invite&apos;s sign-up page opens with the names filled in, and they can change them. <strong>+ Add another coach</strong> adds a second. A team can have more than one.</li>
+                <li>Under <strong>Coach</strong>, type their <strong>First name</strong>, <strong>Last name</strong> and the <strong>Coach&apos;s email</strong>. The invite&apos;s sign-up page opens with the names filled in, and they can change them. <strong>+ Add another coach</strong> adds a second. A team can have more than one. To fix a typo later, click the pencil on the team&apos;s card and change their names or email. A name fix saves at once. After you publish, a new email asks first, then sends a fresh invite, and the old link stops working.</li>
                 <li>Click the tick. Before you publish, the coach reads <strong>Invited when you publish</strong>.</li>
                 <li>Publish the division. Each coach is emailed a link, <strong>Accept and open your team</strong>.</li>
               </HelpSteps>
@@ -451,8 +451,9 @@ const houseLeagueHelp: HelpPageContent = {
                 <HelpDef term="Invited Oct 25">The email went out on that date.</HelpDef>
                 <HelpDef term="Signed in">The coach has opened their page.</HelpDef>
                 <HelpDef term="Invite expired · Send again">The 7 days passed. Click <strong>Send again</strong> for a fresh link.</HelpDef>
-                <HelpDef term="Invite didn’t send · Send again">The email didn&apos;t arrive. Click <strong>Fix the email</strong> if the address is wrong, or <strong>Send again</strong>.</HelpDef>
+                <HelpDef term="Invite didn’t send · Send again">The email didn&apos;t arrive. Click the pencil and correct the email if the address is wrong, or click <strong>Send again</strong>.</HelpDef>
               </HelpDefs>
+              <p>A coach who has signed in keeps their email. You can still fix their name, but to use another address, remove them and add them again.</p>
               <p>To remove a coach, click the &times; on their row in the team window. After you publish it asks first. They lose the team page at once, and families aren&apos;t told. They see a line saying they are no longer a coach of the team.</p>
             </>
           ),

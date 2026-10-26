@@ -5,6 +5,7 @@ import { loadRegistrationMoneyLines } from './league-money-read';
 import { receivedOf } from './league-money';
 import { registrationOwes } from './league-price';
 import { tournamentToday } from './timezone';
+import { coachNameParts } from './house-league-coach-invites';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -25,6 +26,9 @@ export type CoachState = 'waiting' | 'invited' | 'joined' | 'expired' | 'failed'
 export interface BoardCoach {
   id: string;
   name: string;
+  /** The two parts of the typed name, for the edit form (a coach from before mig 381 is split at the first space). */
+  firstName: string;
+  lastName: string;
   email: string;
   state: CoachState;
   invitedAt: string | null;
@@ -202,7 +206,7 @@ export async function readDivisionBoard(
     teams: teamRows.map(t => ({
       id: t.id, name: t.name, color: t.color,
       coaches: coachRows.filter(c => c.team_id === t.id).map(c => ({
-        id: c.id, name: c.name, email: c.email, state: coachState(c, now), invitedAt: c.invited_at,
+        id: c.id, name: c.name, ...coachNameParts(c), email: c.email, state: coachState(c, now), invitedAt: c.invited_at,
       })),
     })),
     players,
@@ -217,7 +221,7 @@ export async function readDivisionBoard(
 }
 
 interface CoachRow {
-  id: string; team_id: string; name: string; email: string;
+  id: string; team_id: string; name: string; first_name: string | null; last_name: string | null; email: string;
   invited_at: string | null; expires_at: string | null; accepted_at: string | null; invite_failed_at: string | null;
 }
 
@@ -225,7 +229,7 @@ async function readCoachRows(teamIds: readonly string[]): Promise<CoachRow[]> {
   const out: CoachRow[] = [];
   for (const chunk of chunked([...teamIds])) {
     const { data, error } = await supabaseAdmin.from('league_team_coaches')
-      .select('id, team_id, name, email, invited_at, expires_at, accepted_at, invite_failed_at')
+      .select('id, team_id, name, first_name, last_name, email, invited_at, expires_at, accepted_at, invite_failed_at')
       .in('team_id', chunk).is('removed_at', null).order('created_at');
     if (error) throw new Error(`Couldn't read coaches: ${error.message}`);
     out.push(...((data ?? []) as CoachRow[]));

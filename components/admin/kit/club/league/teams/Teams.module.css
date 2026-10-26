@@ -259,8 +259,6 @@
 .colourRow { display: flex; align-items: center; gap: 0.6rem; }
 .colour { width: 44px; height: 44px; padding: 0; border: 1px solid var(--home-line-strong); border-radius: 8px; background: none; }
 .coachList { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
-.coachEdit { display: flex; align-items: center; gap: 0.5rem; }
-.coachEditText { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .coachNew { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem; }
 .coachNewEmail { grid-column: 1 / -1; }
 .coachNewFields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; flex: 1 1 auto; min-width: 0; }

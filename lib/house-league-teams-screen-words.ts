@@ -171,6 +171,10 @@ export const TEAMS_WORDS = {
     confirmInviteBody: (first: string, team: string) =>
       `${first} gets an email with a link to the ${team} team page, which shows the team’s players and each family’s name, email and phone.`,
     confirmInviteButton: 'Send invite',
+    confirmEmailTitle: (first: string, email: string) => `Send ${first} the invite at ${email}?`,
+    confirmEmailBody: (first: string, team: string) =>
+      `${first} gets a new email with a link to the ${team} team page. The link sent to the old address stops working.`,
+    joinedEmail: 'Signed in. Their email can’t be changed here; to use another, remove them and add them again.',
     confirmRemoveTitle: (name: string) => `Remove ${name} as coach?`,
     confirmRemoveBody: (first: string, team: string) => `${first} loses the ${team} team page at once. Families aren’t told.`,
     confirmRemoveButton: 'Remove',

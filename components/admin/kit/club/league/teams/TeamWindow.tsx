@@ -11,7 +11,7 @@ import { Plus, X } from 'lucide-react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { TEAMS_WORDS as W } from '@/lib/house-league-teams-screen-words';
-import { dayOf, send, type BoardTeam, type TeamsRoutes } from './api';
+import { dayOf, send, type BoardCoach, type BoardTeam, type TeamsRoutes } from './api';
 import css from './Teams.module.css';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -20,8 +20,11 @@ const first = (name: string) => name.trim().split(/\s+/)[0] ?? name;
 interface NewCoach { key: number; first: string; last: string; email: string }
 const coachName = (c: { first: string; last: string }) => [c.first.trim(), c.last.trim()].filter(Boolean).join(' ');
 const isFilled = (c: NewCoach) => !!(c.first.trim() || c.last.trim() || c.email.trim());
+/** An existing coach's details as typed in the form (the same three fields as a new one). */
+interface Fix { id: string; first: string; last: string; email: string }
 type Ask =
   | { kind: 'invite'; coach: NewCoach }
+  | { kind: 'email'; fix: Fix }
   | { kind: 'remove'; id: string; name: string };
 
 export default function TeamWindow({ team, divisionName, published, playerCount, routes, startEditing, blankCoach, startDeleting, onChanged, onClose }: {
@@ -44,25 +47,40 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
   const [colour, setColour] = useState<string | null>(team.color);
   const [removed, setRemoved] = useState<ReadonlySet<string>>(new Set());
   const [adds, setAdds] = useState<NewCoach[]>(startEditing && blankCoach && team.coaches.length === 0 ? [{ key: 1, first: '', last: '', email: '' }] : []);
-  const [errors, setErrors] = useState<Record<number, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [edits, setEdits] = useState<Record<string, Fix>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [asks, setAsks] = useState<Ask[]>([]);
   const [deleting, setDeleting] = useState(startDeleting);
   const [resending, setResending] = useState<string | null>(null);
 
-  const dirty = name.trim() !== team.name || colour !== team.color || removed.size > 0 || adds.some(isFilled);
+  const baseOf = (c: BoardCoach): Fix => ({ id: c.id, first: c.firstName, last: c.lastName, email: c.email });
+  const draftOf = (c: BoardCoach): Fix => (edits[c.id] ? { ...edits[c.id], email: c.state === 'joined' ? c.email : edits[c.id].email } : baseOf(c));
+  const setDraft = (c: BoardCoach, patch: Partial<Fix>) => setEdits(prev => ({ ...prev, [c.id]: { ...(prev[c.id] ?? baseOf(c)), ...patch } }));
+  /** The coaches whose typed details differ from what is saved. */
+  const fixes = team.coaches.filter(c => !removed.has(c.id)).map(draftOf).filter(f => {
+    const c = team.coaches.find(x => x.id === f.id)!;
+    return f.first.trim() !== c.firstName || f.last.trim() !== c.lastName || f.email.trim().toLowerCase() !== c.email;
+  });
+  const emailChanged = (f: Fix) => f.email.trim().toLowerCase() !== team.coaches.find(c => c.id === f.id)?.email;
 
-  function validate(): NewCoach[] | null {
+  const dirty = name.trim() !== team.name || colour !== team.color || removed.size > 0 || adds.some(isFilled) || fixes.length > 0;
+
+  function validate(): { filled: NewCoach[]; fixes: Fix[] } | null {
     const filled = adds.filter(isFilled);
-    const next: Record<number, string> = {};
+    const next: Record<string, string> = {};
     for (const a of filled) {
       if (!a.first.trim()) next[a.key] = W.team.errName;
       else if (!EMAIL.test(a.email.trim())) next[a.key] = W.team.errEmail;
     }
+    for (const f of fixes) {
+      if (!f.first.trim()) next[f.id] = W.team.errName;
+      else if (emailChanged(f) && !EMAIL.test(f.email.trim())) next[f.id] = W.team.errEmail;
+    }
     setErrors(next);
     if (!name.trim()) { setError(W.team.errTeamName); return null; }
-    return Object.keys(next).length ? null : filled;
+    return Object.keys(next).length ? null : { filled, fixes };
   }
 
   const hasCoach = adds.length > 0 || team.coaches.some(c => !removed.has(c.id));
@@ -74,6 +92,12 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
     onChanged();
     return true;
   }
+  async function updateCoach(f: Fix, confirmed: boolean): Promise<boolean> {
+    const r = await send(routes.coaches(team.id), 'PATCH', { action: 'update', coachId: f.id, firstName: f.first.trim(), lastName: f.last.trim(), email: f.email.trim(), confirmed });
+    if (!r.ok) { setError(r.error); return false; }
+    onChanged();
+    return true;
+  }
   async function removeCoach(id: string): Promise<boolean> {
     const r = await send(routes.coaches(team.id, id), 'DELETE');
     if (!r.ok) { setError(r.error); return false; }
@@ -82,19 +106,26 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
     return true;
   }
 
-  /** ✓: the team's own fields, then the coaches. After publishing, every add and remove is asked first. */
+  /**
+   * ✓: the team's own fields, then the coaches. A name fix saves at once (nobody is told). After publishing, every add,
+   * remove and changed email is asked first.
+   */
   async function save() {
     setError(null);
-    const filled = validate();
-    if (!filled) return;
+    const valid = validate();
+    if (!valid) return;
+    const { filled } = valid;
     setBusy(true);
     if (name.trim() !== team.name || colour !== team.color) {
       const r = await send(routes.team(team.id), 'PATCH', { name: name.trim(), color: colour });
       if (!r.ok) { setError(r.error); setBusy(false); return; }
     }
+    for (const f of valid.fixes.filter(x => !emailChanged(x))) if (!(await updateCoach(f, false))) { setBusy(false); return; }
+    const emailFixes = valid.fixes.filter(emailChanged);
     if (published) {
       const queue: Ask[] = [
         ...[...removed].map(id => ({ kind: 'remove' as const, id, name: team.coaches.find(c => c.id === id)?.name ?? '' })),
+        ...emailFixes.map(fix => ({ kind: 'email' as const, fix })),
         ...filled.map(coach => ({ kind: 'invite' as const, coach })),
       ];
       setBusy(false);
@@ -103,17 +134,18 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
       return;
     }
     for (const id of removed) if (!(await removeCoach(id))) { setBusy(false); return; }
+    for (const f of emailFixes) if (!(await updateCoach(f, false))) { setBusy(false); return; }
     for (const c of filled) if (!(await addCoach(c))) { setBusy(false); return; }
     setBusy(false);
     finish();
   }
   function finish() {
-    setRemoved(new Set()); setAdds([]); setEditing(false); onChanged();
+    setRemoved(new Set()); setAdds([]); setEdits({}); setEditing(false); onChanged();
   }
 
   async function answer(ask: Ask) {
     setBusy(true);
-    const ok = ask.kind === 'invite' ? await addCoach(ask.coach) : await removeCoach(ask.id);
+    const ok = ask.kind === 'invite' ? await addCoach(ask.coach) : ask.kind === 'email' ? await updateCoach(ask.fix, true) : await removeCoach(ask.id);
     setBusy(false);
     // A refusal stops the questions; what already landed stays landed, and what didn't stays in the form to try again.
     if (!ok) { setAsks([]); return; }
@@ -155,6 +187,11 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
 
   const firstNew = adds.find(a => a.first.trim());
   const ask = asks[0] ?? null;
+  const asked = !ask ? null : ask.kind === 'invite'
+    ? { title: W.team.confirmInviteTitle(ask.coach.first.trim()), body: W.team.confirmInviteBody(ask.coach.first.trim(), team.name), button: W.team.confirmInviteButton }
+    : ask.kind === 'email'
+      ? { title: W.team.confirmEmailTitle(ask.fix.first.trim(), ask.fix.email.trim()), body: W.team.confirmEmailBody(ask.fix.first.trim(), team.name), button: W.team.confirmInviteButton }
+      : { title: W.team.confirmRemoveTitle(ask.name), body: W.team.confirmRemoveBody(first(ask.name), team.name), button: W.team.confirmRemoveButton };
   // From a card's trash can the question stands alone (no team window behind it), and cancelling leaves the board.
   const alone = startDeleting && deleting;
   const deleteQuestion = (
@@ -216,13 +253,28 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
             </div>
             <div className={ck.field}>
               <span className={ck.label}>{W.team.coaches}</span>
-              {team.coaches.filter(c => !removed.has(c.id)).map(c => (
-                <div key={c.id} className={css.coachEdit}>
-                  <span className={css.coachEditText}><span className={css.kidName}>{c.name}</span> · {c.email}</span>
-                  <button type="button" className={css.iconBtn} aria-label={W.team.removeCoach(c.name)}
-                    onClick={() => setRemoved(prev => new Set(prev).add(c.id))}><X size={16} aria-hidden /></button>
-                </div>
-              ))}
+              {team.coaches.filter(c => !removed.has(c.id)).map(c => {
+                const d = draftOf(c);
+                return (
+                  <div key={c.id} className={css.coachNew}>
+                    <div className={css.coachNewFields}>
+                      <input className={ck.input} aria-label={`${W.team.coachFirst} (${c.name})`} placeholder={W.team.coachFirst} value={d.first} maxLength={120}
+                        onChange={e => setDraft(c, { first: e.target.value })} />
+                      <input className={ck.input} aria-label={`${W.team.coachLast} (${c.name})`} placeholder={W.team.coachLast} value={d.last} maxLength={120}
+                        onChange={e => setDraft(c, { last: e.target.value })} />
+                      {c.state === 'joined'
+                        ? <p className={`${ck.hint} ${css.coachNewEmail}`}>{c.email} · {W.team.joinedEmail}</p>
+                        : (
+                          <input className={`${ck.input} ${css.coachNewEmail}`} aria-label={`${W.team.coachEmail} (${c.name})`} placeholder={W.team.coachEmail} type="email" value={d.email} maxLength={254}
+                            onChange={e => setDraft(c, { email: e.target.value })} />
+                        )}
+                    </div>
+                    <button type="button" className={css.iconBtn} aria-label={W.team.removeCoach(c.name)}
+                      onClick={() => setRemoved(prev => new Set(prev).add(c.id))}><X size={16} aria-hidden /></button>
+                    {errors[c.id] && <p className={css.error} role="alert">{errors[c.id]}</p>}
+                  </div>
+                );
+              })}
               {adds.map(a => (
                 <div key={a.key} className={css.coachNew}>
                   <div className={css.coachNewFields}>
@@ -254,19 +306,19 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
         {!editing && error && <p className={css.error} role="alert">{error}</p>}
       </KitDialog>
 
-      {ask && (
+      {ask && asked && (
         <KitDialog kind="question" raised busy={busy} onClose={() => setAsks([])}
-          title={ask.kind === 'invite' ? W.team.confirmInviteTitle(ask.coach.first.trim()) : W.team.confirmRemoveTitle(ask.name)}
+          title={asked.title}
           footer={(
             <>
               <DialogCancel />
               <button type="button" className="btn btn-lime" disabled={busy} onClick={() => void answer(ask)}>
-                {ask.kind === 'invite' ? W.team.confirmInviteButton : W.team.confirmRemoveButton}
+                {asked.button}
               </button>
             </>
           )}>
           <p className={ck.hint}>
-            {ask.kind === 'invite' ? W.team.confirmInviteBody(ask.coach.first.trim(), team.name) : W.team.confirmRemoveBody(first(ask.name), team.name)}
+            {asked.body}
           </p>
         </KitDialog>
       )}
