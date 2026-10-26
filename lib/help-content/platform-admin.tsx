@@ -54,7 +54,7 @@ const platformAdminHelp: HelpPageContent = {
             <>
               <p><strong>Today</strong> is the first page after sign-in: one table of what is waiting on us, grouped like the menu. Each row is a queue, why its items wait, and how many are waiting as an amber count. A row opens the list that clears it; a queue with nothing waiting folds into a quiet <em>Clear: &hellip;</em> line.</p>
               <ul>
-                <li><strong>Customers:</strong> owner inactive (30 days), retention, missing owner, past due, trials ending and overrides ending (both within 14 days).</li>
+                <li><strong>Customers:</strong> owner inactive (30 days), retention, missing owner, past due, trials ending and free time ending (both within 14 days).</li>
                 <li><strong>Health:</strong> new errors and new feedback.</li>
                 <li><strong>Growth:</strong> campaigns past due, campaigns due soon and new leads.</li>
                 <li><strong>Product:</strong> the approval queue.</li>
@@ -154,11 +154,11 @@ const platformAdminHelp: HelpPageContent = {
           title: 'Open a record and read its tabs',
           content: (
             <>
-              <p>Open a club from <strong>Find</strong>, from the <strong>Clubs &amp; portals</strong> list (search name, web name or web address, filter by plan or status, click a row), or from a queue on Today. Under the club&rsquo;s name a band shows <strong>Members</strong>, then <strong>Teams</strong> (Club plans) or <strong>Tournaments</strong>, the <strong>Overrides</strong> running now, and when it <strong>Renews</strong> (or when its trial ends, or when it ended).</p>
+              <p>Open a club from <strong>Find</strong>, from the <strong>Clubs &amp; portals</strong> list (search name, web name or web address, filter by plan or status, click a row), or from a queue on Today. Under the club&rsquo;s name a band shows <strong>Members</strong>, then <strong>Teams</strong> (Club plans) or <strong>Tournaments</strong>, the <strong>Free time</strong> running now, and when it <strong>Renews</strong> (or when its trial ends, or when it ended).</p>
               <HelpDefs>
                 <HelpDef term="Story">Everything that happened to the club, newest first.</HelpDef>
                 <HelpDef term="Money">Plan, state, renewal date, and the Stripe customer and subscription with an <strong>Open in Stripe</strong> door each. Charges, refunds and invoices are not shown here yet.</HelpDef>
-                <HelpDef term="Access">Plan and limits, sections, overrides and the club&rsquo;s own web address. <strong>Cancel the subscription</strong> and <strong>Delete the club</strong> end the tab.</HelpDef>
+                <HelpDef term="Access">Plan and limits, sections, free time and the club&rsquo;s own web address. <strong>Cancel the subscription</strong> and <strong>Delete the club</strong> end the tab.</HelpDef>
                 <HelpDef term="People &amp; tournaments">Members (each opens that person&rsquo;s record), tournaments that are not archived, and <strong>Teams brought in</strong> when there are any.</HelpDef>
               </HelpDefs>
               <p>A link written for the old record still lands on the right tab: Billing opens Money; Entitlements and Support open Access; Activity opens Story.</p>
@@ -203,7 +203,7 @@ const platformAdminHelp: HelpPageContent = {
               <HelpDefs>
                 <HelpDef term="A plan or limit change">Only the newest plan entry that is still in force, and never when a Stripe subscription or a trial is involved. Super admin and Billing.</HelpDef>
                 <HelpDef term="A section turned on or off">Only the newest entry for that section, while the club is still as that entry left it. Super admin and Product.</HelpDef>
-                <HelpDef term="A running override">Reads <strong>Put it back</strong> and ends the override now instead of at its end date. Super admin and Billing.</HelpDef>
+                <HelpDef term="Free time given or changed">Reads <strong>Put it back</strong> and ends the free time now (or restores the earlier last day, after a change of end date). Super admin and Billing.</HelpDef>
               </HelpDefs>
               <p>Nothing that reached Stripe or an inbox is ever put back &mdash; a cancelled subscription, an email, a released web address, a new owner. Where it cannot apply the button is absent, not greyed out.</p>
             </>
@@ -216,7 +216,7 @@ const platformAdminHelp: HelpPageContent = {
             <HelpDefs>
               <HelpDef term="Add a note, Email the owner">The head of the record. A note is staff-only and shows on the Story; Email the owner opens your own mail.</HelpDef>
               <HelpDef term="Make owner">The Members table on <strong>People &amp; tournaments</strong> (see <em>How to transfer organization ownership</em>).</HelpDef>
-              <HelpDef term="Add an override">The Overrides block of <strong>Access</strong> (see <em>How to temporarily override billing access</em>).</HelpDef>
+              <HelpDef term="Give free time">The Free time block of <strong>Access</strong> (see <em>How to temporarily override billing access</em>).</HelpDef>
               <HelpDef term="Release this address">The Own web address block of <strong>Access</strong>. It frees the name for anyone and cannot be put back.</HelpDef>
               <HelpDef term="Cancel the subscription, Delete the club">The end of <strong>Access</strong> (see <em>How to cancel a customer subscription</em> and <em>How to delete an organization</em>).</HelpDef>
             </HelpDefs>
@@ -354,30 +354,36 @@ const platformAdminHelp: HelpPageContent = {
       id: 'billing-overrides',
       group: 'Billing SOP',
       heading: 'How to temporarily override billing access',
-      summary: 'Use club overrides for support windows, grace periods and trial exceptions.',
-      keywords: ['billing', 'override', 'subscription status', 'comp period', 'grace period', 'past due', 'active', 'access tab', 'add an override', 'money', 'end early'],
-      searchText: 'how do i override billing requirements subscription status active comp period billing tag no access grace period customer unsubscribed expired trial active overrides add an override access tab overrides block kind feature access timed ends on end date reason put it back end early past overrides show hide club record story super admin billing',
+      summary: 'Give a club free time: a whole plan, sections or a billing status, free through a last day you choose.',
+      keywords: ['free time', 'give free time', 'free through', 'change the end date', 'end it now', 'billing', 'override', 'subscription status', 'grace period', 'past due', 'active', 'access tab', 'comped', 'trial exception', 'money', 'end early', 'put it back', 'free time ending'],
+      searchText: 'how do i give a club free time free through last free day a whole plan tournament plus club club association sections billing status reads active while unpaid grace period support window override billing requirements customer unsubscribed expired trial access tab free time block give free time change the end date end it now reason why put it back story free time list everyone founding season given by staff today free time ending 14 days super admin twelve months billing six months longer needs a super admin refused switched off on this server you are a member of the club coaches portal public demo club comp period no longer given paying through stripe already has free time',
       links: [
         { label: 'Clubs & portals', href: '/platform-admin/orgs' },
         { label: 'Bulk changes', href: '/platform-admin/bulk-operations' },
       ],
       content: (
         <>
-          <p>Use an override when the customer should keep access for a defined support reason without rewriting their base billing record. Overrides are different from plan changes: they sit on top of billing state, can expire, and can be ended early. Adding one is a Super admin and Billing action.</p>
+          <p>Free time lets the customer keep access, or use more of the product, for a defined support reason without rewriting their base billing record. The club is treated as being on what you give until the <strong>last free day</strong>, then goes back to its own plan by itself. Nothing is charged, nothing is deleted, and the owner is not emailed. Giving, changing and ending free time is a Super admin and Billing action.</p>
           <HelpSteps>
             <li>Open the club (press <strong>/</strong> and find it), then open the <strong>Access</strong> tab.</li>
-            <li>In the <strong>Overrides</strong> block, click <strong>Add an override</strong>.</li>
-            <li>Choose the <strong>Kind</strong> (below), and its sections or status.</li>
-            <li>Set <strong>Ends on</strong> whenever the exception is temporary; leave it empty for no end date. It ends at the end of that day. Use the shortest reasonable period.</li>
+            <li>In the <strong>Free time</strong> block, click <strong>Give free time</strong>.</li>
+            <li>Choose <strong>What</strong> to give (below), then its plan or sections.</li>
+            <li>Pick <strong>Free through</strong>, the last free day. It ends at the end of that day, Eastern time. Use the shortest reasonable period.</li>
             <li>Type a <strong>Why</strong> that would make sense to another employee reading the Story later.</li>
-            <li>Click <strong>Add the override</strong>. It shows on the Story, and a note there is the place for the customer-facing context and follow-up date.</li>
+            <li>Read the sentence above the buttons, then click <strong>Give free time</strong>. It shows on the Story, and a note there is the place for the customer-facing context and follow-up date.</li>
           </HelpSteps>
           <HelpDefs>
-            <HelpDef term="Subscription status">The subscription reads as Active, Trialing, Past due or Canceled for a temporary period. ⚠ <strong>This genuinely changes what the customer can reach</strong> &mdash; <code>active</code> reinstates a cut-off account without touching Stripe (the intended unblock), and <code>canceled</code> shuts them out of the whole product. It is not a display flag.</HelpDef>
-            <HelpDef term="Feature access (timed)">Turns chosen sections on for a limited time. Only sections the plan does not already include are offered.</HelpDef>
-            <HelpDef term="Comp period">A billing tag that the window states gives no access. It marks an account as comped for billing purposes; to let the customer in, use a status override or Feature access.</HelpDef>
+            <HelpDef term="A whole plan">Tournament Plus, Club or Club &middot; Association. Every part of the product treats the club as on that plan, and its Plan &amp; billing page says &ldquo;Free through&rdquo; the last day. It must be above the club&rsquo;s own plan.</HelpDef>
+            <HelpDef term="Sections">One or more sections the club&rsquo;s plan does not include. Only sections the plan does not already include are offered.</HelpDef>
+            <HelpDef term="Billing status">The club reads as active while unpaid, to keep it open. ⚠ <strong>This genuinely changes what the customer can reach</strong> &mdash; it is not a display flag.</HelpDef>
           </HelpDefs>
-          <p>A running override can be ended early from its entry on the Story (<strong>Put it back</strong>); past overrides stay under <strong>Show past overrides</strong> on the Access tab. An override that is about to run out appears on Today under <strong>Overrides ending</strong>.</p>
+          <HelpDefs>
+            <HelpDef term="How long you can give">A Super admin can give up to 12 months from today; Billing up to 6. The calendar greys out later days, and longer needs a Super admin.</HelpDef>
+            <HelpDef term="Change the end date">On a running row of the Free time block. Pick a new last free day. If someone else changed it while your window was open, you are told who and to what, and nothing is changed.</HelpDef>
+            <HelpDef term="End it now">On the same row. The club goes back to its own plan at once, with a reason. Put it back on the Story opens the same window.</HelpDef>
+          </HelpDefs>
+          <p>Ended free time stays in the Story, not on the Access tab. Free time that is about to run out appears on Today under <strong>Free time ending</strong> (the last 14 days, counted by club), and <strong>Free time</strong> in the menu lists every club with free time running in three views: <strong>Everyone</strong>, <strong>Founding Season</strong> and <strong>Given by staff</strong>. The list only reads; changes are made on the club&rsquo;s record.</p>
+          <HelpNote variant="info" title="When the door is a sentence instead of a button">Free time can&rsquo;t be given when it is switched off on this server, when you are a member of that club (another staff member can), when the club is a Coaches Portal, or when it is a public demo club. A plan can&rsquo;t be given while Stripe charges the club for a plan, when the club already has a plan given as free time (change its end date instead), or when it is already on the top plan; sections and billing status can still be given. A comp period is no longer given from the console: it never gave a club anything.</HelpNote>
           <p>Changing the base plan or tournament limit is a separate flow: the pencil on the record, confirmed with a reason (see <em>How to read and change a club&rsquo;s record</em>). Use it only when the customer&apos;s actual package should change.</p>
         </>
       ),

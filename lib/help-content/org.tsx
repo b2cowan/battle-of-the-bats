@@ -267,15 +267,26 @@ const orgHelp: HelpPageContent = {
       id: 'club-plan-and-billing',
       heading: 'Club plan & billing',
       summary: 'Teams on your plan, Club’s two sizes, moving between them, adding a team at the cap, and what cancelling takes offline.',
-      keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity'],
-      searchText: 'club plan and billing teams on your plan capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel and suspend goes offline ninety days retention reactivate everything comes back public site online coach portals reopen archived tournaments return',
+      keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity', 'free time', 'free through', 'free time ended'],
+      searchText: 'free through free time from fieldlogichq a plan given for a while goes back automatically free time ended last 14 days amber nothing is charged club plan and billing teams on your plan capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel and suspend goes offline ninety days retention reactivate everything comes back public site online coach portals reopen archived tournaments return',
       links: [
         { label: 'Plan & billing', href: '../org/billing' },
       ],
       content: (
-        <p>Plan &amp; billing for a Club shows how many teams you&rsquo;re using, both Club sizes with their prices, and what happens if you move up, move down, or cancel.</p>
+        <p>Plan &amp; billing for a Club shows how many teams you&rsquo;re using, both Club sizes with their prices, and what happens if you move up, move down, or cancel. If FieldLogicHQ has given your organization free time, it shows that too.</p>
       ),
       subtopics: [
+        {
+          id: 'club-plan-and-billing-t-free-time',
+          title: 'Free time from FieldLogicHQ',
+          content: (
+            <>
+              <p>Sometimes FieldLogicHQ gives an organization a plan for a while. Plan &amp; billing then shows a band reading <strong>Free through</strong> the last free day, and the plan card says the same instead of a price. Until that day your organization has that plan, with everything that comes with it.</p>
+              <p>On the next day it goes back to your own plan automatically. Nothing is charged for the free time, nothing you made is deleted, and there is nothing to do. In the last 14 days the band turns amber and says how many days are left; if the plan is open for sign-up, you can choose it there to keep it.</p>
+              <p>For 30 days after it ends, the band says <strong>Free time ended</strong>. Everything you made is kept, but tools that come only with the plan you were given stay closed until you choose it. While a Club plan is free, the page does not show Payment method, Move or Cancel, because there is nothing to pay.</p>
+            </>
+          ),
+        },
         {
           id: 'club-plan-and-billing-t-teams',
           title: 'Teams on your plan',
