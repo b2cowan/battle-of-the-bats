@@ -212,7 +212,7 @@ export function RefundWindow({ p, teamName, anotherWay, send, onClose, otherLabe
       <p>{teamPaidFee
         ? R.paidTeams(dollars(p.totalCents), paidDay, receipt, dollars(p.baseCents), scopeNoun, dollars(p.feeCents))
         : R.paidClub(dollars(p.baseCents), paidDay, receipt, scopeNoun)}</p>
-      {anotherWay && <p className={ck.hint}>{R.anotherWayLead}</p>}
+      {anotherWay && <p className={ck.hint}>{R.anotherWayLead(bank)}</p>}
       {!anotherWay && (
         <fieldset className={styles.refundChoice}>
           {untouched && (

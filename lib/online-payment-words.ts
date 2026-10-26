@@ -410,20 +410,21 @@ export const PAY_WORDS = {
 /** The team's record: an online row, its ⋯, the view and the refund windows (copy §15–§16). */
 export const TEAM_ROW_WORDS = {
   method: (receiptNo: string) => `Online, card · receipt ${receiptNo}`,
-  refunded: (date: string) => `Refunded to card, ${date}`,
-  refundPending: 'Refunding to card…',
-  refundFailed: 'Refund didn’t reach the card',
+  // 12c words §3.9: a payment made by bank debit is refunded to the bank account, and every line says so (`bank`).
+  refunded: (date: string, bank = false) => `Refunded to ${bank ? 'the bank account' : 'card'}, ${date}`,
+  refundPending: (bank = false) => (bank ? 'Refunding to the bank account…' : 'Refunding to card…'),
+  refundFailed: (bank = false) => `Refund didn’t reach the ${bank ? 'bank account' : 'card'}`,
   // 12c words §1.2: a part refund never strikes the row through; the reason is in View the payment.
-  refundedPart: (amount: string, day: string) => `${amount} refunded to card, ${day}`,
-  refundedPartMore: (amount: string, day: string) => `${amount} refunded to card · last ${day}`,
-  refundPendingPart: (amount: string) => `Refunding ${amount} to card…`,
-  refundedPartStripe: (amount: string, day: string) => `${amount} refunded to card, ${day} · made in Stripe`,
+  refundedPart: (amount: string, day: string, bank = false) => `${amount} refunded to ${bank ? 'the bank account' : 'card'}, ${day}`,
+  refundedPartMore: (amount: string, day: string, bank = false) => `${amount} refunded to ${bank ? 'the bank account' : 'card'} · last ${day}`,
+  refundPendingPart: (amount: string, bank = false) => `Refunding ${amount} to ${bank ? 'the bank account' : 'card'}…`,
+  refundedPartStripe: (amount: string, day: string, bank = false) => `${amount} refunded to ${bank ? 'the bank account' : 'card'}, ${day} · made in Stripe`,
   refundFailedSub: (amount: string, day: string) => `${amount} sent back ${day}`,
   test: 'Test, no money moved',
   menuLabel: 'More for this payment',
   dueMenuLabel: 'More for what is due',
   menuView: 'View the payment',
-  menuRefund: 'Refund to the card',
+  menuRefund: (bank = false) => (bank ? 'Refund to the bank account' : 'Refund to the card'),
   // F6 (12c): one name for one act, in both flows.
   menuAnotherWay: 'Record the refund sent another way',
   menuEmailLink: 'Email the pay link',
@@ -510,13 +511,13 @@ export const REFUND_WORDS = {
   partButton: (amount: string) => `Refund ${amount} and email`,
   foot: 'The team’s contact is emailed.',
   footNoEmail: 'No email address on file. Tell the team yourself.',
-  partDoneToast: (amount: string, rest: string, email: string | null) =>
-    (email ? `Refunded ${amount} to the card. ${rest} stays paid. We emailed ${email}.` : `Refunded ${amount} to the card. ${rest} stays paid.`),
+  partDoneToast: (amount: string, rest: string, email: string | null, bank = false) =>
+    `Refunded ${amount} to the ${bank ? 'bank account' : 'card'}. ${rest} stays paid.${email ? ` We emailed ${email}.` : ''}`,
   target: (card: string) => `Refund to the card, ${card}`,
   arrives: 'Arrives in 5 to 10 business days',
   // {bankDays}: Stripe's refund to a bank account takes about 3 business days (plan §0k).
   arrivesBank: 'Arrives in about 3 business days',
-  anotherWayLead: 'The refund to the card came back. Record the money you sent the team another way, so the team’s record and the books match.',
+  anotherWayLead: (bank = false) => `The refund to the ${bank ? 'bank account' : 'card'} came back. Record the money you sent the team another way, so the team’s record and the books match.`,
   whoLabel: 'Who is ending this?',
   whoOrganizer: 'The organizer is ending it',
   whoTeam: 'The team asked to leave',
@@ -532,8 +533,8 @@ export const REFUND_WORDS = {
   buttonAnotherWay: 'Record the refund',
   cancel: 'Cancel',
   working: 'Refunding…',
-  doneToast: (amount: string, email: string | null) => (email ? `Refunded ${amount} to the card. We emailed ${email}.` : `Refunded ${amount} to the card.`),
-  pendingToast: 'The refund is on its way to the card.',
+  doneToast: (amount: string, email: string | null, bank = false) => `Refunded ${amount} to the ${bank ? 'bank account' : 'card'}.${email ? ` We emailed ${email}.` : ''}`,
+  pendingToast: (bank = false) => `The refund is on its way to the ${bank ? 'bank account' : 'card'}.`,
   recordedToast: 'Refund recorded.',
   failed: 'The refund didn’t go through. Nothing was refunded. Try again.',
   alreadyRefunded: 'This payment was already refunded.',

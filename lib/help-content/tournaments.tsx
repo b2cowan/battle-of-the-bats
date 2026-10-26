@@ -1150,7 +1150,7 @@ const tournamentsHelp: HelpPageContent = {
             <>
               <p>You can refund all of a card payment or part of it. Whoever runs tournaments can make them; the treasurer reads the refund and doesn&rsquo;t make one.</p>
               <ol>
-                <li>Open the team&rsquo;s record. Under <strong>Received</strong>, press the <strong>&hellip;</strong> on the online payment and choose <strong>Refund to the card</strong>.</li>
+                <li>Open the team&rsquo;s record. Under <strong>Received</strong>, press the <strong>&hellip;</strong> on the online payment and choose <strong>Refund to the card</strong> (for a bank debit, <strong>Refund to the bank account</strong>).</li>
                 <li>The window, titled for the payment (for example <em>Refund Thunder&rsquo;s deposit?</em>), says what the team paid and the card it goes back to. It arrives in 5 to 10 business days. A payment made by bank debit goes back to the bank account, and the window says it arrives in about 3 business days.</li>
                 <li>Choose <strong>All of it</strong> or <strong>Part of it</strong>. For all of it, if the team paid the processing fee, answer <strong>Who is ending this?</strong> and decide the fee box (below). For part of it, type the amount and a reason: the processing fee is never part of a part refund.</li>
                 <li>Add a <strong>Note to the team</strong> if you like. It goes in the refund email.</li>
@@ -1176,7 +1176,7 @@ const tournamentsHelp: HelpPageContent = {
             <>
               <p>A refund can be slow, or the bank can send it back.</p>
               <p>While Stripe works on it, the row reads <em>Refunding to card&hellip;</em>. If the bank returns it, for example because the card was closed, the row is flagged <strong>Refund didn&rsquo;t reach the card</strong> and a Needs attention item is raised. Send the team the money another way, then choose <strong>Record the refund sent another way</strong> from the row&rsquo;s <strong>&hellip;</strong> and press <strong>Record the refund</strong>. The team&rsquo;s record and the books then match. A refund you make in the Stripe dashboard, whole or part, lands in the record by itself, tagged <em>made in Stripe</em>.</p>
-              <HelpNote variant="warning" title="After you disconnect">Once payouts are disconnected, <strong>Refund to the card</strong> isn&rsquo;t offered. Refund in Stripe instead. A refund made there, whole or part, is recorded here for you.</HelpNote>
+              <HelpNote variant="warning" title="After you disconnect">Once payouts are disconnected, <strong>Refund to the card</strong> (or <strong>to the bank account</strong>) isn&rsquo;t offered. Refund in Stripe instead. A refund made there, whole or part, is recorded here for you.</HelpNote>
             </>
           ),
         },

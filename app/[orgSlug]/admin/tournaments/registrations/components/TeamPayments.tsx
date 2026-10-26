@@ -65,16 +65,17 @@ const DEBIT_LABEL: Record<'deposit' | 'balance' | 'full', string> = { deposit: '
 function partTag(o: TeamOnlinePayment): { text: string; warn: boolean; sub: string | null } | null {
   const parts = o.refunds.filter(r => r.part);
   if (!parts.length) return null;
+  const bank = o.rail === 'bank_debit';
   const day = (iso: string | null) => (iso ? formatStoredDate(iso, { withYear: false }) : '');
   const failed = parts.find(r => r.state === 'failed');
-  if (failed) return { text: OW.refundFailed, warn: true, sub: OW.refundFailedSub(money(failed.amountCents / 100), day(failed.failedAt)) };
+  if (failed) return { text: OW.refundFailed(bank), warn: true, sub: OW.refundFailedSub(money(failed.amountCents / 100), day(failed.failedAt)) };
   const pending = parts.find(r => r.state === 'pending');
-  if (pending) return { text: OW.refundPendingPart(money(pending.amountCents / 100)), warn: false, sub: null };
+  if (pending) return { text: OW.refundPendingPart(money(pending.amountCents / 100), bank), warn: false, sub: null };
   const done = parts.filter(r => r.state === 'refunded' || r.state === 'anotherWay');
   const sum = money(done.reduce((n, r) => n + r.amountCents, 0) / 100);
   const last = done[0];
-  if (done.length > 1) return { text: OW.refundedPartMore(sum, day(last.succeededAt ?? last.createdAt)), warn: false, sub: null };
-  return { text: last.stripe ? OW.refundedPartStripe(sum, day(last.succeededAt ?? last.createdAt)) : OW.refundedPart(sum, day(last.succeededAt ?? last.createdAt)), warn: false, sub: null };
+  if (done.length > 1) return { text: OW.refundedPartMore(sum, day(last.succeededAt ?? last.createdAt), bank), warn: false, sub: null };
+  return { text: last.stripe ? OW.refundedPartStripe(sum, day(last.succeededAt ?? last.createdAt), bank) : OW.refundedPart(sum, day(last.succeededAt ?? last.createdAt), bank), warn: false, sub: null };
 }
 
 type Draft = { amount: string; paidOn: string; how: '' | PaymentMethod; error: string; saving: boolean };
@@ -245,6 +246,7 @@ export default function TeamPayments(props: Props) {
   async function refund(body: RefundSend): Promise<string | null> {
     if (!refunding) return null;
     const { p } = refunding;
+    const bank = p.rail === 'bank_debit';
     const request = body.kind === 'part'
       ? { action: 'refund', onlinePaymentId: p.id, amount: body.amount, partialReason: body.partialReason, note: body.note }
       : { action: body.kind === 'anotherWay' ? 'refund_another_way' : 'refund', onlinePaymentId: p.id, feeIncluded: body.feeIncluded, reason: body.reason, note: body.note };
@@ -253,9 +255,9 @@ export default function TeamPayments(props: Props) {
     if (data.state === 'failed') return RW.failed;
     setRefunding(null);
     if (body.kind === 'anotherWay') setFlash(RW.recordedToast);
-    else if (data.state === 'pending') setFlash(RW.pendingToast);
-    else if (body.kind === 'part') setFlash(RW.partDoneToast(money(body.amount), money((p.leftCents - Math.round(body.amount * 100)) / 100), p.payerEmail));
-    else setFlash(RW.doneToast(money((body.feeIncluded ? p.totalCents : p.baseCents) / 100), p.payerEmail));
+    else if (data.state === 'pending') setFlash(RW.pendingToast(bank));
+    else if (body.kind === 'part') setFlash(RW.partDoneToast(money(body.amount), money((p.leftCents - Math.round(body.amount * 100)) / 100), p.payerEmail, bank));
+    else setFlash(RW.doneToast(money((body.feeIncluded ? p.totalCents : p.baseCents) / 100), p.payerEmail, bank));
     await Promise.all([load(), onChanged()]);
     return null;
   }
@@ -442,7 +444,7 @@ export default function TeamPayments(props: Props) {
                   {p.status === 'reversed' && p.online && <span className={styles.payTag}>{OW.debitReversed(day(p.online.reversedAt ?? null))}</span>}
                   {p.online?.test && <span className={styles.payTag}>{OW.test}</span>}
                   {p.online && p.status === 'refunded' && (p.online.refundedOn || p.online.refunds[0]) && (
-                    <span className={styles.payTag}>{OW.refunded(formatStoredDate((p.online.refundedOn ?? p.online.refunds[0].succeededAt ?? p.online.refunds[0].createdAt), { withYear: false }))}</span>
+                    <span className={styles.payTag}>{OW.refunded(formatStoredDate((p.online.refundedOn ?? p.online.refunds[0].succeededAt ?? p.online.refunds[0].createdAt), { withYear: false }), p.online.rail === 'bank_debit')}</span>
                   )}
                   {p.online && p.status !== 'refunded' && p.status !== 'reversed' && (() => {
                     // 12c: part refunds read their own tags; a refund in full keeps 12a's.
@@ -452,8 +454,8 @@ export default function TeamPayments(props: Props) {
                         ? <span className={styles.payChip}><RepChip tone="warn">{part.text}</RepChip>{part.sub && <span className={styles.payTagSub}>{part.sub}</span>}</span>
                         : <span className={styles.payTag}>{part.text}</span>;
                     }
-                    if (p.online.refund === 'pending') return <span className={styles.payTag}>{OW.refundPending}</span>;
-                    if (p.online.refund === 'failed') return <span className={styles.payChip}><RepChip tone="warn">{OW.refundFailed}</RepChip></span>;
+                    if (p.online.refund === 'pending') return <span className={styles.payTag}>{OW.refundPending(p.online.rail === 'bank_debit')}</span>;
+                    if (p.online.refund === 'failed') return <span className={styles.payChip}><RepChip tone="warn">{OW.refundFailed(p.online.rail === 'bank_debit')}</RepChip></span>;
                     return null;
                   })()}
                 </span>
@@ -462,7 +464,7 @@ export default function TeamPayments(props: Props) {
                   <CoachToolbarMenu variant="glyph" overWindow label={OW.menuLabel} icon={<MoreHorizontal size={16} aria-hidden />} disabled={locked}>
                     <CoachToolbarMenuItem label={OW.menuView} onSelect={() => setViewing(p.online!)} />
                     {online?.refunds && p.status !== 'refunded' && p.status !== 'reversed' && p.online.leftCents > 0 && p.online.refund !== 'pending' && (
-                      <CoachToolbarMenuItem label={OW.menuRefund} onSelect={() => setRefunding({ p: p.online!, anotherWay: false })} />
+                      <CoachToolbarMenuItem label={OW.menuRefund(p.online.rail === 'bank_debit')} onSelect={() => setRefunding({ p: p.online!, anotherWay: false })} />
                     )}
                     {online?.refunds && p.online.refund === 'failed' && (
                       <CoachToolbarMenuItem label={OW.menuAnotherWay} onSelect={() => setRefunding({ p: p.online!, anotherWay: true })} />
