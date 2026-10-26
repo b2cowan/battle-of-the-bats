@@ -572,7 +572,8 @@ const debitOwedAgain: Resolver = async rows => {
   const regIds = uniq(rows.flatMap(r => (meta(r, 'registrationIds') ?? '').split(',').filter(Boolean)));
   const teamIds = uniq(rows.map(r => meta(r, 'teamId')));
   const [regs, teams] = await Promise.all([
-    regIds.length ? rowsIn<{ id: string; status: string; registration_fee_paid: boolean | null }>(
+    // Read only: the one writer keeps the paid flag (house-league money guard).
+    regIds.length ? rowsIn<{ id: string; status: string } & Record<string, unknown>>(
       'league_registrations', 'id, status, registration_fee_paid', 'id', regIds) : Promise.resolve([]),
     teamIds.length ? rowsIn<{ id: string; status: string; payment_status: string | null }>(
       'teams', 'id, status, payment_status', 'id', teamIds) : Promise.resolve([]),
@@ -591,7 +592,7 @@ const debitOwedAgain: Resolver = async rows => {
     if (!kids.length) continue;
     const live = kids.filter(k => k && k.status !== 'declined' && k.status !== 'withdrawn');
     if (!live.length) out.set(r.id, said(W.withdrawDone));
-    else if (live.every(k => k!.registration_fee_paid)) out.set(r.id, said(W.paidInFull));
+    else if (live.every(k => k!['registration_fee_paid'] === true)) out.set(r.id, said(W.paidInFull));
     else out.set(r.id, 'waiting');
   }
   return out;

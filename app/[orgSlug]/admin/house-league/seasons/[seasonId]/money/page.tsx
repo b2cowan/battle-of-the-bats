@@ -14,6 +14,7 @@
  * the Overview's tiles show.
  */
 import { useCallback, useState } from 'react';
+import { reasonShort } from '@/lib/online-payment-words';
 import { useParams } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -32,7 +33,7 @@ import { buildFilename, downloadCSVBlob, downloadXLSX, generateCSV } from '@/lib
 
 interface BookLine {
   id: string; regId: string; player: string | null; day: string; amount: number; method: string | null; receiptNo?: number | null;
-  kind: 'fee' | 'refund' | 'voided' | 'processing'; refundWhy: string | null; priceKind: 'regular' | 'corrected' | null; note: string | null;
+  kind: 'fee' | 'refund' | 'voided' | 'processing' | 'returned'; returnReason?: string | null; refundWhy: string | null; priceKind: 'regular' | 'corrected' | null; note: string | null;
   /** 12c: a refund line that went to the card, and how it stands. */
   card?: { state: CardRefundState; bank: boolean; stripe: boolean } | null;
 }
@@ -45,6 +46,8 @@ interface MoneyRead {
   free: boolean; filesToStatement: boolean; band: SeasonMoney;
   /** 12b: how much of Received came by card. */
   byCard?: number;
+  /** 12c Part 6: what of Received came by bank debit (the band's note). */
+  byBank?: number;
   lines: BookLine[]; history: HistoryLine[]; owing: OwingRow[]; today: string;
   neverBooked?: NeverBooked[];
 }
@@ -106,8 +109,10 @@ export default function MoneyPage() {
 
   const lineRows: Row[] = [
     ...read.lines.map((l): Row => ({
-      key: l.kind === 'processing' ? `cost:${l.id}` : l.id, day: l.day, player: l.player ?? '—',
-      what: l.kind === 'voided' ? W.what.voided : l.kind === 'refund' ? W.what.refund(l.card?.stripe ? CM.madeInStripe : l.refundWhy)
+      key: l.kind === 'processing' ? `cost:${l.id}` : l.kind === 'returned' ? `returned:${l.id}` : l.id, day: l.day, player: l.player ?? '—',
+      what: l.kind === 'voided' ? W.what.voided
+        : l.kind === 'returned' ? W.what.returned(l.receiptNo != null ? String(l.receiptNo) : '', reasonShort(l.returnReason ?? null))
+        : l.kind === 'refund' ? W.what.refund(l.card?.stripe ? CM.madeInStripe : l.refundWhy)
         : l.kind === 'processing'
           ? ((l.note ?? '').startsWith('Processing fee refunded · ')
             ? W.what.processingBack((l.note ?? '').replace(/^Processing fee refunded · /, ''))
@@ -116,12 +121,12 @@ export default function MoneyPage() {
       // 12b copy §5: a card payment's receipt after its method ("Online, card · receipt 1043").
       how: l.card ? cardHow(l.card)
         : l.receiptNo ? `${paymentMethodWord(l.method)} · ${REGS_WORDS.fee.receipt(l.receiptNo)}` : paymentMethodWord(l.method),
-      amount: l.kind === 'refund' || l.kind === 'processing' ? money(-l.amount) : money(l.amount),
+      amount: l.kind === 'refund' || l.kind === 'processing' || l.kind === 'returned' ? money(-l.amount) : money(l.amount),
       // The export's number: a refund negative, a voided line counted nowhere (its What says so).
-      value: l.kind === 'voided' ? null : l.kind === 'refund' || l.kind === 'processing' ? -l.amount : l.amount,
+      value: l.kind === 'voided' ? null : l.kind === 'refund' || l.kind === 'processing' || l.kind === 'returned' ? -l.amount : l.amount,
       // 12c: a refund the card sent back is amber text, no pill (a book line).
       howWarn: l.card?.state === 'failed',
-      tone: l.kind === 'voided' ? 'voided' : l.kind === 'refund' || l.kind === 'processing' ? 'out' : 'in',
+      tone: l.kind === 'voided' ? 'voided' : l.kind === 'refund' || l.kind === 'processing' || l.kind === 'returned' ? 'out' : 'in',
     })),
     ...read.history.map((h): Row => ({
       key: `${h.kind}-${h.regId}-${h.at}`, day: orgDayKey(h.at), player: h.player ?? '—',
@@ -130,7 +135,7 @@ export default function MoneyPage() {
     })),
   ].sort((a, b) => b.day.localeCompare(a.day));
   // A refund, never a card cost (a processing line is money out too, but not a refund — 12b /review).
-  const refundRows = lineRows.filter(r => r.tone === 'out' && !r.key.startsWith('cost:'));
+  const refundRows = lineRows.filter(r => r.tone === 'out' && !r.key.startsWith('cost:') && !r.key.startsWith('returned:'));
   const shown = tab === 'refunds' ? refundRows : lineRows;
   // On the Refunds tab every line is a refund, so the sign says nothing — show the plain amount (Every line keeps the minus).
   const amountOf = (r: Row) => (tab === 'refunds' && r.value != null ? money(Math.abs(r.value)) : r.amount);
@@ -163,6 +168,13 @@ export default function MoneyPage() {
   const toneClass = (t: Row['tone']) => (t === 'out' ? s.out : t === 'voided' ? s.voided : t === 'history' ? s.history : '');
   const counts: Record<Tab, number> = { all: lineRows.length, owing: read.owing.length, refunds: refundRows.length };
   const empty = W.empty[tab];
+  // 12c words §3.4: the band's note — what of Received came by card or bank debit, and what Clearing counts.
+  const byCard = read.byCard ?? 0;
+  const byBank = read.byBank ?? 0;
+  const bandNote = [
+    byCard && byBank ? W.band.noteBoth(money(byCard), money(byBank)) : byCard ? W.band.noteCard(money(byCard)) : byBank ? W.band.noteBank(money(byBank)) : null,
+    band.clearing > 0 ? W.band.noteClearing : null,
+  ].filter(Boolean).join(' ');
 
   return (
     <div className={repKit.page}>
@@ -171,7 +183,7 @@ export default function MoneyPage() {
           nothing for anyone else, or while online payments aren't offered. */}
       {currentOrg && <PayoutsStatusLine orgSlug={currentOrg.slug} planId={currentOrg.planId} home="club" />}
       <MoneySummaryBand
-        ariaLabel={W.band.aria(money(band.owed), money(band.received), money(band.owing))}
+        ariaLabel={W.band.aria(money(band.owed), money(band.received), money(band.owing), band.clearing > 0 ? money(band.clearing) : null)}
         tiles={[
           { key: 'owed', label: W.band.owed, figure: money(band.owed), caption: W.band.players(band.owedPlayers) },
           {
@@ -179,12 +191,14 @@ export default function MoneyPage() {
             caption: [
               W.band.players(band.receivedPlayers),
               band.refunded > 0 ? W.band.afterRefunds(money(band.refunded)) : null,
-              read.byCard ? W.band.byCard(money(read.byCard)) : null,
             ].filter(Boolean).join(' · '),
           },
+          // 12c Part 6: a fourth figure only while a bank debit is on its way, plain like every total (words §3.4).
+          ...(band.clearing > 0 ? [{ key: 'clearing', label: W.band.clearing, figure: money(band.clearing), caption: W.band.clearingCaption(band.clearingPlayers) }] : []),
           { key: 'owing', label: W.band.owing, figure: money(band.owing), tone: band.owing > 0 ? 'warn' : 'plain', caption: W.band.players(band.owingPlayers) },
         ]}
       />
+      {bandNote && <p className={s.hint}>{bandNote}</p>}
       {finished && <p className={s.hint}>{W.finished}</p>}
 
       <div className={s.tabs} role="group" aria-label={W.title}>

@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { stripe } from './stripe';
 import { RETURNED_BANK_DEBIT_FEE_CENTS } from './plan-config';
 import { workspaceHoldsFoundingComp } from './founding-season';
+import { effectiveOrgFactsForId } from './entitlement-grants';
 import { RETURNED_DEBIT_FEE_WORDS as W } from './online-payment-words';
 import { formatStoredDate } from './timezone';
 
@@ -29,24 +30,27 @@ export async function recordDebitFee(p: { orgId: string; onlinePaymentId: string
   }
 }
 
-/** Bill one recorded fee on the club's subscription, or stamp why it is not billed. */
+/**
+ * Bill one recorded fee on the club's subscription, or stamp why it is not billed. Free is read through the door (the
+ * Founding Season comp, or free time running — never the stored columns); whether a subscription is live is Stripe's own
+ * answer, read at billing time.
+ */
 async function billDebitFee(feeId: string, orgId: string, createdAt: string): Promise<void> {
-  const { data: org } = await supabaseAdmin.from('organizations')
-    .select('stripe_customer_id, stripe_subscription_id, subscription_status').eq('id', orgId).maybeSingle();
-  const live = org?.stripe_subscription_id && ['active', 'trialing', 'past_due'].includes(String(org.subscription_status ?? ''));
-  const exempt = (await workspaceHoldsFoundingComp(orgId).catch(() => false)) ? 'comped'
-    : !org?.stripe_customer_id || !live ? 'no_subscription' : null;
-  if (exempt) {
-    await supabaseAdmin.from('platform_debit_fees').update({ exempt_reason: exempt }).eq('id', feeId);
-    return;
-  }
+  const exempt = async (why: 'comped' | 'no_subscription') => {
+    await supabaseAdmin.from('platform_debit_fees').update({ exempt_reason: why }).eq('id', feeId);
+  };
+  const facts = await effectiveOrgFactsForId(orgId).catch(() => null);
+  if (facts?.freeTime || (await workspaceHoldsFoundingComp(orgId).catch(() => false))) return exempt('comped');
+  const { data: org } = await supabaseAdmin.from('organizations').select('stripe_customer_id, stripe_subscription_id').eq('id', orgId).maybeSingle();
+  if (!org?.stripe_customer_id || !org.stripe_subscription_id) return exempt('no_subscription');
   try {
-    const sub = await stripe.subscriptions.retrieve(org!.stripe_subscription_id as string);
+    const sub = await stripe.subscriptions.retrieve(org.stripe_subscription_id as string);
+    if (!['active', 'trialing', 'past_due'].includes(sub.status)) return exempt('no_subscription');
     // The line is in the subscription's own currency; FieldLogicHQ bills in Canadian dollars, and a fee in another
     // currency would be a wrong amount, so it is held for a person instead.
     if (sub.currency !== 'cad') throw new Error(`The subscription bills in ${sub.currency}, not CAD.`);
     const item = await stripe.invoiceItems.create({
-      customer: org!.stripe_customer_id as string,
+      customer: org.stripe_customer_id as string,
       subscription: sub.id,
       amount: RETURNED_BANK_DEBIT_FEE_CENTS,
       currency: 'cad',

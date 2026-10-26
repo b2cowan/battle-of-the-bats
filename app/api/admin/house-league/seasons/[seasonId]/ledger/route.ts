@@ -8,7 +8,7 @@ import { feeState, isOwing, seasonMoney } from '@/lib/league-money';
 import { filesToClubStatement, loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { fetchAll } from '@/lib/supabase-paging';
-import { loadCardRefunds } from '@/lib/league-pay-facts';
+import { loadCardRefunds, loadRegistrationDebits } from '@/lib/league-pay-facts';
 import { isBank, isShown, refundBase, refundState } from '@/lib/league-card-refunds';
 
 /** The season book's card costs (12b, mig 374: source 'online_payment'), newest first. */
@@ -79,7 +79,7 @@ export const GET = withObservability(async (_req: Request,
       : null;
     return {
       id: l.id, regId: l.regId, player: name(l.regId), day: l.day, amount: l.amount, method: l.method, receiptNo: l.receiptNo ?? null,
-      kind: l.status === 'void' ? 'voided' as const : l.dir === 'out' ? 'refund' as const : 'fee' as const,
+      kind: l.status === 'void' ? 'voided' as const : l.returned ? 'returned' as const : l.dir === 'out' ? 'refund' as const : 'fee' as const,
       refundWhy: why,
       priceKind: l.dir === 'in' ? (correctedRegs.has(l.regId) ? 'corrected' : 'regular') : null,
       note: l.note, createdAt: l.createdAt,
@@ -126,23 +126,37 @@ export const GET = withObservability(async (_req: Request,
     })
     .sort((a, b) => (b.days ?? -1) - (a.days ?? -1));
 
+  // 12c Part 6: each child's fee on a bank debit on its way (the band's Clearing), and Received by rail.
+  const debits = await loadRegistrationDebits(ctx!.org.id, regs.map(r => r.id));
+  const activeIds = new Set(regs.filter(r => r.status === 'active').map(r => r.id));
+  const clearingCents = new Map(Object.entries(debits).filter(([id, d]) => d.state === 'clearing' && activeIds.has(id)).map(([id, d]) => [id, d.shareCents]));
+  const onlineOf = (method: string) => Math.round([...lines.values()].flat()
+    .filter(l => l.status === 'posted' && l.method === method)
+    .reduce((sum, l) => sum + (l.dir === 'in' ? l.amount : -l.amount), 0) * 100) / 100;
+
   return NextResponse.json({
     season: { id: season.id, name: season.name, status: season.status, owingAmberDays: season.owingAmberDays },
     free: !seasonCharges(divisions, season),
     // Club plan: fees also file on the club's Budget vs. Actual; League Plus: this page is the book (Q15).
     filesToStatement: filesToClubStatement(ctx!.org),
-    band: seasonMoney(regs, season, lines),
-    // 12b copy §8: how much of Received came by card (posted card receipts less card refunds).
-    byCard: Math.round([...lines.values()].flat()
-      .filter(l => l.status === 'posted' && l.method === 'online_card')
-      .reduce((sum, l) => sum + (l.dir === 'in' ? l.amount : -l.amount), 0) * 100) / 100,
-    lines: bookAll,
+    band: seasonMoney(regs, season, lines, clearingCents),
+    // 12b copy §8 / 12c words §3.4: how much of Received came by card, and by bank debit (posted receipts less refunds and
+    // returned lines) — the band's note.
+    byCard: onlineOf('online_card'),
+    byBank: onlineOf('online_bank'),
+    // 12c Part 6: a returned line names the receipt the bank took back, and the bank's reason (words §3.5).
+    lines: bookAll.map(l => (l.kind === 'returned'
+      ? { ...l, receiptNo: debits[l.regId]?.receiptNo ?? null, returnReason: debits[l.regId]?.reason ?? null } : l)),
     neverBooked: cardRefunds.filter(r => !r.entryId && !r.inBook && r.regId).map(r => ({
       regId: r.regId as string, player: name(r.regId as string) ?? '—', amount: r.amount, base: refundBase(r), feeBack: r.feeBack,
       day: orgDayKey(r.succeededAt ?? r.createdAt),
     })),
     history,
-    owing,
+    // 12c Part 6: what is clearing is on its way, not owing (the band adds up the same way).
+    owing: owing.flatMap(o => {
+      const left = Math.round(o.owing * 100) - (clearingCents.get(o.regId) ?? 0);
+      return left > 0 ? [{ ...o, owing: left / 100 }] : [];
+    }),
     today,
   });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/ledger' });

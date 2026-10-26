@@ -14,6 +14,11 @@
  * processing fee while the family paid it — on when the club declines, off when the family leaves), "Refund part of it"
  * (an amount and a reason; never the fee) or "Kept by the club". The card refund and the ending are one act: Stripe
  * first, the book with it, then the ending; a refusal changes nothing. A child paid partly by hand keeps today's choices.
+ *
+ * 12c Part 6 (words §3.3, ask 7): a child whose BANK DEBIT is still clearing ends now, and the window asks up front what
+ * happens to the money when it clears — "Send it back to the bank account" (A2's box under it, ruled §7.5) or "Keep it"
+ * with a reason; nothing picked, the button absent until a choice. A sibling's share is named. After payouts are
+ * disconnected only "Keep it" is offered (§7.7). The answer is stored and carried out when the debit clears.
  */
 import { useEffect, useState } from 'react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
@@ -25,6 +30,9 @@ import { formatLeagueMoney, lastPayment, receivedOf, type LeagueMoneyLine } from
 import { endWaitlistLine, guardianName, refundDayError, regDay } from '@/lib/house-league-registrations';
 import type { DuesPaymentMethod, LeagueRegistration } from '@/lib/types';
 import { cardLabel } from '@/lib/online-payment-words';
+import { isClearing, type RegDebit } from '@/lib/league-debits';
+import { childList } from '@/lib/league-pay-words';
+import { possessive } from '@/lib/utils';
 import { patchRegistration } from './api';
 import css from './Registrations.module.css';
 
@@ -36,6 +44,7 @@ export interface EndedResult {
 
 export default function EndWindow({
   reg, name, mode, division, regs, lines, autoPromote, today, orgQuery, seasonId, raised, onClose, onChanged, onDone, stripeRefundIds,
+  debit = null, payoutsOn = true,
 }: {
   reg: LeagueRegistration;
   name: string;
@@ -50,6 +59,10 @@ export default function EndWindow({
   raised: boolean;
   /** 12c: "Withdraw {child}" from a refund made in Stripe — the ending's email carries that refund (one email). */
   stripeRefundIds?: string[];
+  /** 12c Part 6: the child's bank debit — asked about only while it is clearing. */
+  debit?: RegDebit | null;
+  /** 12c Part 6: the club's payouts are connected (else only "Keep it" for a clearing debit, §7.7). */
+  payoutsOn?: boolean;
   onClose: () => void;
   onChanged: () => void;
   onDone: (result: EndedResult, ended: LeagueRegistration, promoted: LeagueRegistration | undefined) => void;
@@ -89,6 +102,16 @@ export default function EndWindow({
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // 12c Part 6: a bank debit still clearing — its own question, nothing picked.
+  const clearing = isClearing(debit) ? debit : null;
+  const clearBase = clearing ? formatLeagueMoney(clearing.shareCents / 100) : '';
+  const clearFeeCents = clearing && clearing.familyPaysFee ? clearing.feeShareCents : 0;
+  const canSendBack = !!clearing && payoutsOn;
+  const [clearAnswer, setClearAnswer] = useState<'send_back' | 'keep' | null>(null);
+  const [clearFeeOn, setClearFeeOn] = useState(clubEnding);
+  const [clearReason, setClearReason] = useState('');
+  const clearBackCents = clearing ? clearing.shareCents + (clearFeeOn ? clearFeeCents : 0) : 0;
+  const C = END_WORDS.clear;
 
   const tellsFamily = mode !== 'withdrawn';
   const lastWords = last ? { day: regDay(last.day, today), how: methodInBrackets(last.method) } : { day: '', how: '' };
@@ -102,8 +125,11 @@ export default function EndWindow({
       ? END_WORDS.hintRefunded(mode, name, amount, regDay(day, today), refundedHow)
       : END_WORDS.hintKept(mode, name, amount);
   const waitlistLine = endWaitlistLine(reg, regs, autoPromote);
-  const needsChoice = hasMoney && !answer;
-  const foot = !hasMoney ? null
+  const needsChoice = (hasMoney && !answer) || (!!clearing && !clearAnswer);
+  const foot = clearing && !hasMoney
+    ? (clearAnswer === 'send_back' ? C.footBack(name, mode, formatLeagueMoney(clearBackCents / 100))
+      : clearAnswer === 'keep' ? C.footKept(name, mode, clearBase) : C.footChoose(clearBase))
+    : !hasMoney ? null
     : answer === 'refunded' || answer === 'card' ? END_WORDS.footRefunded(amount)
       : answer === 'kept' ? END_WORDS.footKept(amount)
         : answer === 'cardPart' ? null
@@ -116,6 +142,7 @@ export default function EndWindow({
       if (dayError) { setError(dayError); return; }
     }
     if (hasMoney && answer === 'kept' && !keptReason.trim()) { setError(MONEY_REFUSAL.keptReason(amount)); return; }
+    if (clearing && clearAnswer === 'keep' && !clearReason.trim()) { setError(C.keptReasonError(clearBase)); return; }
     if (answer === 'cardPart') {
       const cents = Math.round(Number(partAmount) * 100);
       const leftCents = newest?.leftCents ?? 0;
@@ -132,6 +159,9 @@ export default function EndWindow({
       ...(answer === 'card' ? { money: { answer: 'card', feeIncluded: feeCents > 0 && feeOn, note: note.trim() || null } } : {}),
       ...(answer === 'cardPart' ? { money: { answer: 'card', amount: Number(partAmount), partialReason: partReason.trim(), note: note.trim() || null } } : {}),
       ...(stripeRefundIds?.length ? { stripeRefundIds } : {}),
+      ...(clearing && clearAnswer ? {
+        clear: { choice: clearAnswer, feeBack: clearAnswer === 'send_back' && clearFeeCents > 0 && clearFeeOn, reason: clearAnswer === 'keep' ? clearReason.trim() : null },
+      } : {}),
     };
     const r = await patchRegistration(orgQuery, seasonId, reg.id, body);
     if (!r.ok) {
@@ -139,6 +169,13 @@ export default function EndWindow({
       setBusy(false);
       // The money (or the registration) moved under the window: read again behind it.
       if (r.status === 409) onChanged();
+      return;
+    }
+    if (clearing && clearAnswer) {
+      const said = clearAnswer === 'send_back'
+        ? C.doneBack(mode, name, formatLeagueMoney(clearBackCents / 100), reg.guardianEmail || null)
+        : C.doneKept(mode, name, clearBase, reg.guardianEmail || null);
+      onDone({ mode, said: r.promoted ? `${said} ${END_WORDS.done.moved(r.promoted.playerFirstName)}` : said }, r.registration, r.promoted);
       return;
     }
     const parts = [END_WORDS.done[mode](name)];
@@ -157,14 +194,16 @@ export default function EndWindow({
       title={END_WORDS.title(mode, name)}
       onClose={onClose}
       busy={busy}
-      dirty={note.trim() !== '' || keptReason.trim() !== '' || partReason.trim() !== ''}
+      dirty={note.trim() !== '' || keptReason.trim() !== '' || partReason.trim() !== '' || clearReason.trim() !== ''}
       footerStart={foot ? <span>{foot}</span> : undefined}
       footer={(
         <>
           <DialogCancel>{END_WORDS.cancel}</DialogCancel>
           {!needsChoice && (
             <button type="button" className="btn btn-lime" onClick={() => void go()} disabled={busy}>
-              {busy ? END_WORDS.working[mode] : answer === 'card' || answer === 'cardPart' ? END_WORDS.submitCard[mode] : END_WORDS.submit[mode]}
+              {busy ? END_WORDS.working[mode]
+                : clearAnswer === 'send_back' ? C.submit[mode]
+                  : answer === 'card' || answer === 'cardPart' ? END_WORDS.submitCard[mode] : END_WORDS.submit[mode]}
             </button>
           )}
         </>
@@ -175,12 +214,63 @@ export default function EndWindow({
           {END_WORDS.requested(guardianName(reg), name, regDay(reg.withdrawRequestedAt, today), reg.withdrawRequestNote?.trim() || null)}
         </p>
       )}
-      <p className={css.endLead}>
-        {hasMoney
-          ? (payments > 1 ? END_WORDS.bodyMoneyMany : END_WORDS.bodyMoney)(name, amount, lastWords.day, lastWords.how)
-          : END_WORDS.bodyPlain(mode, name, division)}
-      </p>
+      {(hasMoney || !clearing) && (
+        <p className={css.endLead}>
+          {hasMoney
+            ? (payments > 1 ? END_WORDS.bodyMoneyMany : END_WORDS.bodyMoney)(name, amount, lastWords.day, lastWords.how)
+            : END_WORDS.bodyPlain(mode, name, division)}
+        </p>
+      )}
       <FormError>{error}</FormError>
+
+      {clearing && (
+        <>
+          <p className={css.endLead}>
+            {clearing.siblings.length
+              ? C.leadSibling(possessive(reg.playerFirstName), clearBase, formatLeagueMoney(clearing.totalCents / 100), childList(clearing.siblings))
+              : C.lead(formatLeagueMoney(clearing.totalCents / 100))}
+          </p>
+          {clearing.siblings.length > 0 && <p className={ck.hint}>{C.siblingNote(childList(clearing.siblings))}</p>}
+          <fieldset className={css.choices}>
+            {canSendBack && (
+              <label className={css.choice}>
+                <input type="radio" name="regs-end-clear" checked={clearAnswer === 'send_back'} onChange={() => setClearAnswer('send_back')} />
+                <span>
+                  <span className={css.choiceName}>{C.sendBack}</span>
+                  <span className={ck.hint}>{clearFeeCents > 0 ? C.sendBackSub : C.sendBackSubClubPays(clearBase)}</span>
+                </span>
+              </label>
+            )}
+            {canSendBack && clearAnswer === 'send_back' && clearFeeCents > 0 && (
+              <div className={css.choiceFields}>
+                <label className={css.choice}>
+                  <input type="checkbox" checked={clearFeeOn} onChange={e => setClearFeeOn(e.target.checked)} />
+                  <span>
+                    <span className={css.choiceName}>{END_WORDS.feeBox(formatLeagueMoney(clearFeeCents / 100), formatLeagueMoney((clearing.shareCents + clearFeeCents) / 100))}</span>
+                    <span className={ck.hint}>
+                      {clearFeeOn ? (clubEnding ? C.feeOnWhy : END_WORDS.feeOnChanged(formatLeagueMoney(clearFeeCents / 100))) : C.feeOffWhy}
+                    </span>
+                  </span>
+                </label>
+              </div>
+            )}
+            <label className={css.choice}>
+              <input type="radio" name="regs-end-clear" checked={clearAnswer === 'keep'} onChange={() => setClearAnswer('keep')} />
+              <span>
+                <span className={css.choiceName}>{C.keep}</span>
+                <span className={ck.hint}>{C.keepSub}</span>
+              </span>
+            </label>
+            {clearAnswer === 'keep' && (
+              <div className={css.choiceFields}>
+                <TextField id="regs-end-clear-reason" label={END_WORDS.keptReason} value={clearReason} onChange={setClearReason}
+                  required maxLength={200} hint={END_WORDS.keptReasonHint} />
+              </div>
+            )}
+          </fieldset>
+          {!canSendBack && <p className={ck.hint}>{C.disconnected}</p>}
+        </>
+      )}
 
       {card && newest && (
         <fieldset className={css.choices}>
@@ -281,7 +371,7 @@ export default function EndWindow({
         </label>
       )}
 
-      <p className={ck.hint}>{hint}</p>
+      {!(clearing && !hasMoney) && <p className={ck.hint}>{hint}</p>}
       {waitlistLine && <p className={`${ck.hint} ${css.endWaitlist}`}>{waitlistLine}</p>}
     </KitDialog>
   );

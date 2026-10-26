@@ -18,6 +18,9 @@ import { leaguePrice, registrationOwes, type LeaguePrice } from './league-price'
 import { formatStoredDate, orgDayKey } from './timezone';
 import { BULK_WORDS, CARD_REFUND_WORDS, END_WORDS, REGS_WORDS, MONEY_REFUSAL, REG_RECORD_WORDS, paymentMethodWord } from './house-league-money-words';
 import { clockOf, isBank, isShown, newestFirst, refundBase, refundState, refundTarget, type CardRefund } from './league-card-refunds';
+import type { RegDebit } from './league-debits';
+import { childList } from './league-pay-words';
+import { reasonShort } from './online-payment-words';
 import { leagueUnrecordedWhy } from './online-payment-words';
 
 // ── What the screen reads ───────────────────────────────────────────────────────────────────────
@@ -75,6 +78,8 @@ export interface RegsRead {
   cardRefunds?: Record<string, CardRefund[]>;
   /** 12c: a part refund made in Stripe waiting for "whose was it?", on every child of that payment. */
   notMatched?: Record<string, { id: string; amount: number; children: string }>;
+  /** 12c Part 6: a child's bank debit — clearing, returned, or reversed (the Fee cell, the menu, the ending window). */
+  debits?: Record<string, RegDebit>;
 }
 
 // ── Words about a person and a day ──────────────────────────────────────────────────────────────
@@ -140,6 +145,8 @@ export interface FeeCellParts {
   /** 12c: a card refund the card's bank sent back — the amber pill in place of the primary line, and the desk's door
    *  ("Record the refund sent another way"). */
   alert: { text: string; aria: string; refundId: string } | null;
+  /** 12c Part 6: a bank debit on its way — an info chip in the primary line's place ("$150.00 clearing"), its detail on tap. */
+  chip: { text: string; tip: string } | null;
   /** The dotted third line: a price correction (its card refund when it went to the card), or a card refund that never
    *  entered the book. `refundId` makes a failed correction refund the same door as the pill. */
   third: { text: string; tip: string; tone: 'plain' | 'warn'; refundId: string | null } | null;
@@ -154,6 +161,7 @@ export function feeCell(
   changes: readonly PriceChange[],
   cardRefunds: readonly CardRefund[] = [],
   notMatched: { amount: number; children: string } | null = null,
+  debit: RegDebit | null = null,
 ): FeeCellParts {
   const state = feeState(reg, season, lines, today);
   const F = REGS_WORDS.fee;
@@ -247,6 +255,23 @@ export function feeCell(
     sub = F.on(cardDay(nb, null), cardHow(nb));
   }
 
+  // ── 12c Part 6: a bank debit (words §3.1). A clearing one is not received: the fee keeps the first line as a chip. ──
+  let chip: FeeCellParts['chip'] = null;
+  if (debit && !alert) {
+    const total = money(debit.totalCents / 100);
+    if (debit.state === 'clearing') {
+      const started = regDay(debit.startedAt, today);
+      chip = { text: F.clearing(money(debit.shareCents / 100)), tip: F.clearingTip(total, started, debit.familyPaysFee ? money(debit.shareCents / 100) : null) };
+      primary = null;
+      sub = debit.siblings.length ? F.clearingSubSibling(total, childList(debit.siblings), started) : F.clearingSub(total, started);
+      tone = 'plain';
+    } else if (debit.state === 'returned' && isOwing(state)) {
+      sub = F.returned(regDay(debit.returnedAt, today), reasonShort(debit.reason));
+    } else if (debit.state === 'reversed') {
+      sub = F.reversed(regDay(debit.reversedAt, today), debit.receiptNo != null ? String(debit.receiptNo) : '');
+    }
+  }
+
   let third: FeeCellParts['third'] = null;
   const CW = CARD_REFUND_WORDS.whose;
   if (notMatched) {
@@ -279,12 +304,12 @@ export function feeCell(
     };
   }
 
-  return { kind: state.kind, primary, sub, tone, alert, third, state };
+  return { kind: state.kind, primary, sub, tone, alert, chip, third, state };
 }
 
 /** The phone row's detail line: division · fee line · fee sub-line (copy §1.3). */
 export function phoneDetail(division: string | null, team: string | null, fee: FeeCellParts): string {
-  return [division, team, fee.alert?.text ?? fee.primary, fee.sub].filter(Boolean).join(' · ');
+  return [division, team, fee.alert?.text ?? fee.chip?.text ?? fee.primary, fee.sub].filter(Boolean).join(' · ');
 }
 
 // ── Who can do what to a row ────────────────────────────────────────────────────────────────────
@@ -320,9 +345,11 @@ export function rowActions(
   fee: FeeState,
   lines: readonly LeagueMoneyLine[],
   rights: RegRights,
+  clearing = false,
 ): { primary: RowActionKey | null; all: RowActionKey[] } {
   const has = new Set<RowActionKey>();
-  const owing = isOwing(fee);
+  // 12c Part 6: a bank debit on its way is the payment — nothing to mark received or link while it clears (absent, §3.2).
+  const owing = isOwing(fee) && !clearing;
   const latest = lastPayment(lines);
   const paidSomething = latest != null;
   if (reg.status === 'pending_review') {
@@ -336,7 +363,7 @@ export function rowActions(
     if (rights.register && owing) has.add('release');
     if (rights.register) { has.add('withdraw'); has.add('decline'); has.add('waitlist'); }
     // A card payment really arrived: it comes off only by a refund, never Undo (12b, drawings m4; the writer refuses it too).
-    if (rights.takeFees && paidSomething && latest.method !== 'online_card') has.add('undo');
+    if (rights.takeFees && paidSomething && latest.method !== 'online_card' && latest.method !== 'online_bank') has.add('undo');
   } else if (reg.status === 'waitlisted') {
     if (rights.register) { has.add('promote'); has.add('decline'); }
     if (rights.run) has.add('move');
@@ -494,7 +521,7 @@ export type BulkVerb = 'approve' | 'promote' | 'waitlist' | 'markReceived' | 'mo
 /** A refusal as the PATCH route answers it. */
 export interface Refusal { status: number; code: string | null; error: string }
 
-export type WhyKey = 'full' | 'received' | 'free' | 'notAccepted' | 'noDivision' | 'ended' | 'same' | 'other';
+export type WhyKey = 'full' | 'received' | 'free' | 'notAccepted' | 'noDivision' | 'ended' | 'same' | 'clearing' | 'other';
 export interface Why { key: WhyKey; /** The division named (full, same). */ division?: string; /** The server's own words (other). */ error?: string }
 
 /** Why one row stayed, from the route's refusal (copy §2.2). `free` says the fee had nothing to receive. */
@@ -504,6 +531,7 @@ export function whyOf(refusal: Refusal, ctx: { division: string | null; free: bo
     case 'ended': return { key: 'ended' };
     case 'not_accepted': return { key: 'notAccepted' };
     case 'already_received': return { key: ctx.free ? 'free' : 'received' };
+    case 'clearing': return { key: 'clearing' };
     default:
       if (refusal.status === 422) return { key: 'noDivision' };
       return { key: 'other', error: refusal.error };
@@ -538,6 +566,7 @@ export function reasonsLine(tally: readonly WhyTally[]): string {
       case 'notAccepted': return counted(t, W.notAccepted);
       case 'noDivision': return counted(t, W.noDivision);
       case 'ended': return counted(t, W.ended);
+      case 'clearing': return counted(t, W.clearing);
       case 'same': return counted(t, W.sameDivision(t.divisions[0] ?? 'that division'));
       default: {
         const said = (t.error ?? 'refused').replace(/\.$/, '');
@@ -601,6 +630,8 @@ export function registrationHistory(
   for (const l of lines) {
     if (l.status === 'void') { add(l.createdAt, H.voided(money(l.amount)), l.day); continue; }
     if (l.status !== 'posted') continue;
+    // 12c Part 6: a bank debit the bank took back after it cleared is the bank's line, not a refund.
+    if (l.returned) { add(l.createdAt, CH.returned(money(l.amount)), l.day); continue; }
     const card = l.dir === 'out' ? byEntry.get(l.id) : undefined;
     if (card) {
       const [booked, amount, to, bank] = [money(l.amount), money(card.amount), refundTarget(card), isBank(card)];

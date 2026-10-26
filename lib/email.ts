@@ -1,5 +1,6 @@
 ﻿import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import { joinWithAnd, possessive, registrationReference } from '@/lib/utils';
+import { REFUND_BLOCK_WORDS } from './online-payment-words';
 import { nameList, ordinal, signupHeadline, signupToPay, type PlacedChild } from './league-signup';
 import { dollarsLine } from './house-league-season';
 import { methodInBrackets } from './house-league-money-words';
@@ -1058,7 +1059,10 @@ export type EndedMoneyLine =
   | { answer: 'kept'; amount: number; reason: string }
   /** 12c words §4: a refund to the card rides as the one refund block — the lead, the club's reason, the block and what the
    *  club keeps of the rest, built by the caller (lib/online-refund-email.ts) and already escaped. */
-  | { answer: 'card'; html: string };
+  | { answer: 'card'; html: string }
+  /** 12c Part 6 (words §3.3 `endMail.clearBack` / `clearKept`): ended while a bank debit cleared — what happens if it clears. */
+  | { answer: 'clearBack'; total: number; back: number }
+  | { answer: 'clearKept'; base: number; reason: string; club: string };
 
 /** Who a house-league family email sends the family to: the club's own address when it has a public contact (or the caller
  *  passed one), otherwise the club by name — never the platform's inbox (S3b, copy item 9); with no club at all the old
@@ -1097,6 +1101,11 @@ function noteAndMoney(note: string | null, money: EndedMoneyLine | null): string
     out.push(money.html);
   } else if (money?.answer === 'kept') {
     out.push(`<p>The club is keeping the ${dollarsLine(money.amount)} you paid. The reason: ${escapeEmailHtml(money.reason)}.</p>`);
+  } else if (money?.answer === 'clearBack') {
+    // A bank account's refund time is the one the refund block prints (Stripe's, plan §0k), never typed here.
+    out.push(`<p>Your ${dollarsLine(money.total)} bank debit is still clearing. If it clears, we’ll send ${dollarsLine(money.back)} back to the same account. ${escapeEmailHtml(REFUND_BLOCK_WORDS.arrives(true))}</p>`);
+  } else if (money?.answer === 'clearKept') {
+    out.push(`<p>Your bank debit is still clearing. If it clears, ${escapeEmailHtml(money.club)} is keeping the ${dollarsLine(money.base)}. The reason: ${escapeEmailHtml(money.reason)}.</p>`);
   }
   return out.join('\n    ');
 }

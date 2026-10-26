@@ -10,7 +10,7 @@ import { notify } from '@/lib/notify';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { loadSeasonMoneyLines } from '@/lib/league-money-read';
-import { clubTakesCards, loadCardRefunds, loadUnassignedRefunds, returnedCardRefunds, unrecordedCardShares } from '@/lib/league-pay-facts';
+import { clubTakesCards, loadCardRefunds, loadRegistrationDebits, loadUnassignedRefunds, returnedCardRefunds, unrecordedCardShares } from '@/lib/league-pay-facts';
 
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
@@ -60,9 +60,9 @@ export const GET = withObservability(async (req: Request,
   const registrations = (data ?? []).map(mapLeagueRegistration);
   const shown = new Set(registrations.map(r => r.id));
   const money = Object.fromEntries([...lines].filter(([id]) => shown.has(id)));
-  const [unrecordedCard, returnedRefunds, cardRefunds, notMatched] = await Promise.all([
+  const [unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits] = await Promise.all([
     unrecordedCardShares([...shown]), returnedCardRefunds([...shown]), loadCardRefunds(ctx!.org.id, [...shown]),
-    loadUnassignedRefunds(ctx!.org.id, seasonId),
+    loadUnassignedRefunds(ctx!.org.id, seasonId), loadRegistrationDebits(ctx!.org.id, [...shown]),
   ]);
   const priceChanges = (changes.data ?? []).map(c => ({
     registrationId: c.registration_id as string, kind: c.kind as 'corrected' | 'moved',
@@ -71,7 +71,7 @@ export const GET = withObservability(async (req: Request,
     refundEntryId: (c.refund_entry_id as string | null) ?? null,
   }));
 
-  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday(), payLinks, unrecordedCard, returnedRefunds, cardRefunds, notMatched });
+  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday(), payLinks, unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations' });
 
 

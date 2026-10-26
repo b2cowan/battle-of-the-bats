@@ -15,6 +15,7 @@ import { LEAGUE_PAY_WORDS as LW, childList } from './league-pay-words';
 import type { LeagueSeason, Organization } from './types';
 import { fetchAllIn } from './supabase-paging';
 import type { CardRefund } from './league-card-refunds';
+import type { RegDebit } from './league-debits';
 
 /**
  * Everything a house-league sign-up's pay block, the pay route and the payment emails need, read once (Club Tier Stage
@@ -192,6 +193,69 @@ export async function loadCardRefunds(orgId: string, regIds: string[]): Promise<
       emailedAt: (r.family_emailed_at as string | null) ?? null, emailFailedAt: (r.family_email_failed_at as string | null) ?? null,
       familyAnswer: (r.family_answer as CardRefund['familyAnswer']) ?? null,
     });
+  }
+  return out;
+}
+
+/** 12c Part 6: is a bank debit for this child clearing now? (Mark received and the pay link refuse while it is, §3.2.) */
+export async function isRegClearing(regId: string): Promise<boolean> {
+  const { count } = await supabaseAdmin.from('online_payment_items').select('id, online_payments!inner(status)', { count: 'exact', head: true })
+    .eq('registration_id', regId).eq('online_payments.status', 'clearing');
+  return (count ?? 0) > 0;
+}
+
+/**
+ * Each registration's bank debit (12c Part 6, words §3.1): the newest payment that touched the child, when it is a bank
+ * debit clearing, returned, or reversed — with its siblings and any decision made while it cleared. Three reads for a
+ * whole season (the children's items with their payments, the siblings' items, the decisions), never one per row.
+ */
+export async function loadRegistrationDebits(orgId: string, regIds: string[]): Promise<Record<string, RegDebit>> {
+  if (!regIds.length) return {};
+  const items = await fetchAllIn<Record<string, unknown>>(regIds, (chunk, from, to) =>
+    supabaseAdmin.from('online_payment_items')
+      .select('id, registration_id, amount, fee_share, online_payment_id, online_payments!inner(id, status, rail, total_amount, fee_payer, bank_last4, clearing_at, returned_at, reversed_at, return_reason, receipt_no, created_at)')
+      .eq('org_id', orgId).in('registration_id', chunk).neq('online_payments.status', 'expired').order('id').range(from, to));
+  // The newest payment per child.
+  const newest = new Map<string, Record<string, unknown>>();
+  for (const i of items) {
+    const op = (Array.isArray(i.online_payments) ? i.online_payments[0] : i.online_payments) as Record<string, unknown>;
+    const reg = i.registration_id as string;
+    const prev = newest.get(reg);
+    const prevOp = prev ? ((Array.isArray(prev.online_payments) ? prev.online_payments[0] : prev.online_payments) as Record<string, unknown>) : null;
+    if (!prevOp || String(op.created_at) > String(prevOp.created_at)) newest.set(reg, i);
+  }
+  const debitItems = [...newest.values()].filter(i => {
+    const op = (Array.isArray(i.online_payments) ? i.online_payments[0] : i.online_payments) as Record<string, unknown>;
+    return op.rail === 'bank_debit' && ['clearing', 'returned', 'reversed'].includes(op.status as string);
+  });
+  if (!debitItems.length) return {};
+  const payIds = [...new Set(debitItems.map(i => i.online_payment_id as string))];
+  const [{ data: siblings }, { data: decisions }] = await Promise.all([
+    supabaseAdmin.from('online_payment_items').select('online_payment_id, registration_id, league_registrations(player_first_name)').in('online_payment_id', payIds),
+    supabaseAdmin.from('online_payment_clear_decisions').select('online_payment_item_id, choice, fee_back, reason').in('online_payment_id', payIds).is('outcome', null),
+  ]);
+  const kidsOf = new Map<string, Array<{ reg: string; first: string }>>();
+  for (const s of (siblings ?? []) as Array<Record<string, unknown>>) {
+    const r = (Array.isArray(s.league_registrations) ? s.league_registrations[0] : s.league_registrations) as { player_first_name?: string } | null;
+    kidsOf.set(s.online_payment_id as string, [...(kidsOf.get(s.online_payment_id as string) ?? []),
+      { reg: s.registration_id as string, first: r?.player_first_name ?? '' }]);
+  }
+  const decisionOf = new Map(((decisions ?? []) as Array<{ online_payment_item_id: string | null; choice: 'send_back' | 'keep'; fee_back: boolean; reason: string | null }>)
+    .filter(d => d.online_payment_item_id).map(d => [d.online_payment_item_id as string, { choice: d.choice, feeBack: d.fee_back, reason: d.reason }]));
+  const out: Record<string, RegDebit> = {};
+  for (const i of debitItems) {
+    const op = (Array.isArray(i.online_payments) ? i.online_payments[0] : i.online_payments) as Record<string, unknown>;
+    const reg = i.registration_id as string;
+    out[reg] = {
+      state: op.status as RegDebit['state'], onlinePaymentId: op.id as string, itemId: i.id as string,
+      totalCents: toCents(Number(op.total_amount)), shareCents: toCents(Number(i.amount)), feeShareCents: toCents(Number(i.fee_share ?? 0)),
+      familyPaysFee: op.fee_payer === 'family', last4: (op.bank_last4 as string | null) ?? null,
+      startedAt: (op.clearing_at as string | null) ?? null, returnedAt: (op.returned_at as string | null) ?? null,
+      reversedAt: (op.reversed_at as string | null) ?? null, reason: (op.return_reason as string | null) ?? null,
+      receiptNo: op.receipt_no != null ? Number(op.receipt_no) : null,
+      siblings: (kidsOf.get(op.id as string) ?? []).filter(k => k.reg !== reg).map(k => k.first).filter(Boolean),
+      decision: decisionOf.get(i.id as string) ?? null,
+    };
   }
   return out;
 }

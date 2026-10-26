@@ -72,9 +72,15 @@ export const MONEY_PAGE_WORDS = {
     owed: 'Owed', received: 'Received', owing: 'Still owing',
     players: (n: number) => pluralize(n, 'player'),
     afterRefunds: (amount: string) => `after ${amount} refunded`,
-    // 12b copy §8 `money.band.online`.
-    byCard: (amount: string) => `${amount} of it by card`,
-    aria: (owed: string, received: string, owing: string) => `Owed ${owed}. Received ${received}. Still owing ${owing}.`,
+    // 12c words §3.4: the card/bank split moves from Received's caption to the band's note; Clearing while there is some.
+    clearing: 'Clearing',
+    clearingCaption: (n: number) => (n === 1 ? '1 player · bank debit' : `${n} players · bank debits`),
+    noteCard: (card: string) => `${card} of what’s received came by card.`,
+    noteBank: (bank: string) => `${bank} of what’s received came by bank debit.`,
+    noteBoth: (card: string, bank: string) => `${card} of what’s received came by card and ${bank} by bank debit.`,
+    noteClearing: 'Clearing counts the registration fees only, before processing fees. It moves to Received as each bank debit clears.',
+    aria: (owed: string, received: string, owing: string, clearing: string | null) =>
+      `Owed ${owed}. Received ${received}.${clearing ? ` Clearing ${clearing}.` : ''} Still owing ${owing}.`,
   },
   finished: 'This season is finished. You can still mark fees received and record refunds.',
   tabs: { all: 'Every line', owing: 'Still owing', refunds: 'Refunds' },
@@ -85,6 +91,9 @@ export const MONEY_PAGE_WORDS = {
     corrected: (from: string, to: string, reason: string) => `Price corrected ${from} → ${to} · ${reason}`,
     kept: (reason: string) => `Kept by the club · ${reason}`,
     voided: 'Voided · marked received by mistake',
+    // 12c Part 6, words §3.5 `money.line.reversed`: a bank debit the bank took back after it cleared (not in Refunds).
+    returned: (receiptNo: string, reasonShort: string) => (reasonShort
+      ? `Returned by the bank · ${reasonShort} · receipt ${receiptNo}` : `Returned by the bank · receipt ${receiptNo}`),
     // 12b copy §8 `money.line.processing`: a club-paid processing fee, or a fee the club gave back on a refund — a cost.
     processing: (what: string) => `Payment processing · ${what}`,
     processingBack: (what: string) => `Payment processing · fee given back · ${what}`,
@@ -215,6 +224,14 @@ export const REGS_WORDS = {
     correctedTip: (was: string, now: string, day: string, reason: string) => `Was ${was}, now ${now}. Corrected on ${day}. ${reason}`,
     aria: (name: string, primary: string, sub: string | null) => `${name}: ${primary}.${sub ? ` ${sub}` : ''}`,
     foot: 'The fee shown is the price fixed on each registration when the family signed up.',
+    // 12c Part 6, words §3.1: a bank debit. The first line keeps the fee; the debit's total is on the second.
+    clearing: (fee: string) => `${fee} clearing`,
+    clearingSub: (total: string, started: string) => `Bank debit · ${total} · started ${started}`,
+    clearingSubSibling: (total: string, siblings: string, started: string) => `Part of one ${total} bank debit with ${siblings} · started ${started}`,
+    clearingTip: (total: string, started: string, fee: string | null) =>
+      `A bank debit of ${total} started on ${started}.${fee ? ` The registration fee is ${fee}; the rest is the processing fee.` : ''} Banks take up to 5 business days. It goes in the season’s book when it clears.`,
+    returned: (day: string, reasonShort: string) => (reasonShort ? `Bank debit returned ${day} · ${reasonShort}` : `Bank debit returned ${day}`),
+    reversed: (day: string, receiptNo: string) => `Returned by the bank ${day} · receipt ${receiptNo}`,
   },
   act: { approve: 'Approve', markReceived: 'Mark received', promote: 'Promote' },
   menu: {
@@ -256,6 +273,10 @@ export const REGS_WORDS = {
     sent: (email: string) => `Pay link sent to ${email}.`,
     failed: 'Couldn’t send the pay link. Try again.',
     nothingOwed: 'There’s nothing owing to send a pay link for.',
+    // 12c Part 6, words §3.2: the bulk's skipped reason, and the routes' refusals for a stale window.
+    clearingWhy: 'a bank debit is clearing',
+    clearingLink: (name: string) => `A bank debit for ${name} is clearing, so there’s no pay link to send yet.`,
+    clearingReceive: (name: string) => `A bank debit for ${name} is clearing, so there’s nothing to mark received yet. If the family also paid another way, record it after the debit clears or comes back.`,
     bulk: 'Email the pay link',
     bulkDone: (n: number) => `${pluralize(n, 'pay link')} sent.`,
     bulkPartial: (n: number, m: number, why: string) => `${pluralize(n, 'pay link')} sent; ${m} skipped: ${why}.`,
@@ -327,6 +348,8 @@ export const BULK_WORDS = {
     notAccepted: 'still in review',
     noDivision: 'no division yet',
     ended: 'the registration has ended',
+    // 12c Part 6, words §3.2.
+    clearing: 'a bank debit is clearing',
     sameDivision: (division: string) => `already in ${division}`,
     counted: (n: number, phrase: string) => `${n} ${phrase}`,
   },
@@ -422,6 +445,32 @@ export const END_WORDS = {
   doneCard: (amount: string) => `Refunded ${amount} to the card.`,
   cardPartAmountError: (left: string) => `Enter an amount above $0 and up to ${left}.`,
   cardPartReasonError: 'Say why only part is refunded.',
+  // 12c Part 6, words §3.3: the ending happens now and asks up front what happens to the money WHEN a bank debit clears.
+  clear: {
+    lead: (total: string) => `A bank debit of ${total} is still clearing. It isn’t in the season’s book yet. When it clears:`,
+    leadSibling: (childPossessive: string, base: string, total: string, siblings: string) =>
+      `${childPossessive} ${base} share of a ${total} bank debit with ${siblings} is still clearing. It isn’t in the season’s book yet. When it clears:`,
+    siblingNote: (siblings: string) => `The rest of the debit stays with ${siblings}.`,
+    sendBack: 'Send it back to the bank account',
+    sendBackSub: 'It goes back by itself when it clears, in your name.',
+    sendBackSubClubPays: (base: string) => `The ${base} goes back by itself when it clears, in your name.`,
+    feeOnWhy: 'With the processing fee, because the club is declining.',
+    feeOffWhy: 'Without the processing fee, because the family asked to leave.',
+    keep: 'Keep it',
+    keepSub: 'Say why. It goes in the book as kept by the club.',
+    disconnected: 'Payouts are disconnected. Refund it in Stripe when it clears.',
+    footChoose: (base: string) => `Choose what happens to the ${base}.`,
+    footBack: (name: string, mode: EndMode, back: string) =>
+      `The family is emailed that ${name} was ${mode === 'declined' ? 'not accepted' : 'withdrawn'} and that ${back} goes back to their account if the debit clears.`,
+    footKept: (name: string, mode: EndMode, base: string) =>
+      `The family is emailed that ${name} was ${mode === 'declined' ? 'not accepted' : 'withdrawn'} and that the club keeps the ${base} if the debit clears.`,
+    submit: { declined: 'Decline, send it back and email', withdrawn: 'Withdraw, send it back and email', released: 'Release, send it back and email' } as Record<EndMode, string>,
+    doneBack: (mode: EndMode, name: string, back: string, email: string | null) =>
+      `${mode === 'declined' ? 'Declined' : mode === 'released' ? 'Released' : 'Withdrew'} ${name}. ${back} goes back to the account if the debit clears. ${email ? `We emailed ${email}.` : 'There’s no email address on file, so tell the family yourself.'}`,
+    doneKept: (mode: EndMode, name: string, base: string, email: string | null) =>
+      `${mode === 'declined' ? 'Declined' : mode === 'released' ? 'Released' : 'Withdrew'} ${name}. The club keeps the ${base} if the debit clears. ${email ? `We emailed ${email}.` : 'There’s no email address on file, so tell the family yourself.'}`,
+    keptReasonError: (base: string) => `Say why the club keeps the ${base}.`,
+  },
   done: {
     declined: (name: string) => `Declined ${name}. The family was emailed.`,
     withdrawn: (name: string) => `Withdrew ${name}.`,
@@ -691,6 +740,8 @@ export const CARD_REFUND_WORDS = {
     failed: (amount: string, to: string, bank: boolean) => `Refund didn’t reach the ${target(bank)} · ${amount} to ${to}`,
     anotherWay: (amount: string) => `Refund sent another way · ${amount}`,
     neverBooked: (amount: string, to: string) => `Card refund ${amount} to ${to} · not on this registration`,
+    // 12c Part 6, words §3.5.
+    returned: (amount: string) => `Returned by the bank · ${amount}`,
   },
   // 12c words §5 `whose.*`: the window behind "Choose the child", and the Fee cell's line while it waits.
   whose: {

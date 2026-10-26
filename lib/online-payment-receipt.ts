@@ -16,6 +16,7 @@ import { loadLeaguePayFacts } from './league-pay-facts';
 import { transactionalFamilyFooterHtml } from './family-mail-footer';
 import { leaguePayUrl } from './league-pay-link';
 import { LEAGUE_PAY_WORDS as LW, childList } from './league-pay-words';
+import { REGS_WORDS } from './house-league-money-words';
 
 /**
  * The payer's emails (Club Tier Stage 12a, copy §14 and §17): one receipt per payment and one email per refund, from our
@@ -245,6 +246,10 @@ export async function sendLeaguePayLink(
 ): Promise<{ sentTo: string; sentAt: string } | { error: string }> {
   const facts = await loadLeaguePayFacts(registrationId);
   if (!facts) return { error: 'That registration couldn’t be found.' };
+  if (facts.refusal === 'clearing') {
+    // 12c Part 6 (words §3.2): every child still owing is on a bank debit on its way.
+    return { error: REGS_WORDS.payLink.clearingLink(childList(facts.children.filter(c => c.clearingCents > 0).map(c => `${c.firstName} ${c.lastName}`))) };
+  }
   if (facts.refusal) return { error: facts.refusal === 'switch_off' || facts.refusal === 'not_taking_payments' ? 'The club isn’t taking card payments right now.' : 'There’s nothing owing to send a pay link for.' };
   if (!facts.guardianEmail) return { error: 'This family has no email address.' };
   const payLink = leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId });

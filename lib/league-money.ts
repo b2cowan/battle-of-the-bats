@@ -34,6 +34,9 @@ export interface LeagueMoneyLine {
   createdAt: string;
   /** A card payment's receipt number (Stage 12b: `method` 'online_card', the line an online payment's child became). */
   receiptNo?: number | null;
+  /** 12c Part 6: an 'out' line the BANK wrote — a bank debit reversed after it cleared ("Returned by the bank"), never a
+   *  refund (the club's own act): it lowers received, and no refund figure or line counts it. */
+  returned?: boolean;
 }
 
 export interface LeagueMoneyReg {
@@ -82,12 +85,12 @@ export function receivedOf(lines: readonly LeagueMoneyLine[]): number {
 /** Posted money given back, in dollars (cent-exact). */
 export function refundedOf(lines: readonly LeagueMoneyLine[]): number {
   let c = 0;
-  for (const l of lines) if (l.status === 'posted' && l.dir === 'out') c += cents(l.amount);
+  for (const l of lines) if (l.status === 'posted' && l.dir === 'out' && !l.returned) c += cents(l.amount);
   return dollars(c);
 }
 
 const latest = (lines: readonly LeagueMoneyLine[], dir: 'in' | 'out') =>
-  lines.filter(l => l.status === 'posted' && l.dir === dir)
+  lines.filter(l => l.status === 'posted' && l.dir === dir && !l.returned)
     .sort((a, b) => (a.day === b.day ? a.createdAt.localeCompare(b.createdAt) : a.day.localeCompare(b.day)))
     .at(-1) ?? null;
 
@@ -141,18 +144,26 @@ export interface SeasonMoney {
   receivedPlayers: number;
   /** Money given back. */
   refunded: number;
-  /** What accepted registrations still owe, player by player. */
+  /** What accepted registrations still owe, player by player — less what is clearing. */
   owing: number;
   owingPlayers: number;
+  /** 12c Part 6: registration fees on a bank debit on its way (fees only, before processing fees; words §3.4). */
+  clearing: number;
+  clearingPlayers: number;
 }
 
-/** The season's band: Owed · Received (net of refunds) · Still owing. */
+/**
+ * The season's band: Owed · Received (net of refunds) · Clearing (12c, only while a bank debit is on its way) · Still
+ * owing. It still adds up: owed = received + clearing + still owing. `clearingCents` is each child's fee on a clearing debit.
+ */
 export function seasonMoney(
   regs: readonly LeagueMoneyReg[],
   season: LeagueMoneySeason,
   linesByReg: ReadonlyMap<string, readonly LeagueMoneyLine[]>,
+  clearingCents: ReadonlyMap<string, number> = new Map(),
 ): SeasonMoney {
   let owed = 0, owedPlayers = 0, received = 0, receivedPlayers = 0, refunded = 0, owing = 0, owingPlayers = 0;
+  let clearing = 0, clearingPlayers = 0;
   for (const reg of regs) {
     const lines = linesByReg.get(reg.id) ?? [];
     const got = cents(receivedOf(lines));
@@ -163,10 +174,13 @@ export function seasonMoney(
     const price = cents(registrationOwes(reg, season) ?? 0);
     if (price <= 0) continue;
     owed += price; owedPlayers += 1;
-    if (price - got > 0) { owing += price - got; owingPlayers += 1; }
+    if (price - got <= 0) continue;
+    const onTheWay = Math.min(clearingCents.get(reg.id) ?? 0, price - got);
+    if (onTheWay > 0) { clearing += onTheWay; clearingPlayers += 1; }
+    if (price - got - onTheWay > 0) { owing += price - got - onTheWay; owingPlayers += 1; }
   }
   return {
     owed: dollars(owed), owedPlayers, received: dollars(received), receivedPlayers,
-    refunded: dollars(refunded), owing: dollars(owing), owingPlayers,
+    refunded: dollars(refunded), owing: dollars(owing), owingPlayers, clearing: dollars(clearing), clearingPlayers,
   };
 }

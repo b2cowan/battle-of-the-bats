@@ -31,6 +31,8 @@
 }
 .feeGood { color: var(--badge-success-ink); background: rgba(var(--success-rgb), 0.08); border-color: rgba(var(--success-rgb), 0.28); }
 .feeWarn { color: var(--badge-warning-ink); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
+/* 12c Part 6: a bank debit on its way — the kit's info chip (RepKit .chipInfo's recipe). */
+.feeInfo { color: var(--info-light); background: rgba(var(--info-rgb), 0.08); border-color: rgba(var(--info-rgb), 0.3); }
 .feeSub { font-size: var(--type-support); color: var(--text-tertiary); }
 .feeCorrected {
   padding: 0;

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, forbidden } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { canMarkLeagueFeePaid, endLeagueRegistration, writeLeagueMoney, type EndMoney, type LeagueMoneyMove, type LeagueMoneyRefusal } from '@/lib/league-fee-paid';
-import { MONEY_REFUSAL } from '@/lib/house-league-money-words';
+import { END_WORDS, MONEY_REFUSAL, REGS_WORDS } from '@/lib/house-league-money-words';
 import { moveRefused } from '@/lib/club-money-route';
 import { getLeagueSeasonById, mapLeagueRegistration } from '@/lib/db';
 import { changeLeagueDivision, moveLeagueRegistration } from '@/lib/league-registration-place';
@@ -32,7 +32,7 @@ import { leagueMailPay } from '@/lib/league-pay-view';
 import { sendLeaguePayLink } from '@/lib/online-payment-receipt';
 import { answerStillEnrolled, leagueEndingRefundHtml, leagueRefundMail, sendLeagueRefundEmail, stampRefundEmailed, stillEnrolledRefund } from '@/lib/online-refund-email';
 import { leagueCardShares, refundLeagueToCard, resolveLeagueRefundAnotherWay } from '@/lib/online-payment-landing';
-import { returnedCardRefunds, unrecordedCardShares } from '@/lib/league-pay-facts';
+import { clubTakesCards, loadRegistrationDebits, returnedCardRefunds, unrecordedCardShares, isRegClearing } from '@/lib/league-pay-facts';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 
 
@@ -143,6 +143,16 @@ function readEndMoney(raw: unknown): EndMoney | null | undefined {
 
 /** 12b: an ending that refunds to the card — all of it (A2's box may give the fee share back) or part, with a reason. */
 type CardEnd = { amount: number | null; feeIncluded: boolean; partialReason: string | null; note: string | null };
+/** 12c Part 6: the ending window's answer for a bank debit still clearing (words §3.3). */
+type ClearAnswer = { choice: 'send_back' | 'keep'; feeBack: boolean; reason: string | null };
+function readClearAnswer(raw: unknown): ClearAnswer | null {
+  const m = (raw ?? {}) as Record<string, unknown>;
+  if (m.choice !== 'send_back' && m.choice !== 'keep') return null;
+  const reason = text(m.reason, 200);
+  if (m.choice === 'keep' && !reason) return null;
+  return { choice: m.choice, feeBack: m.choice === 'send_back' && m.feeBack === true, reason: m.choice === 'keep' ? reason : null };
+}
+
 function readCardEnd(raw: unknown): CardEnd | null {
   const m = (raw ?? {}) as Record<string, unknown>;
   if (m.answer !== 'card') return null;
@@ -333,6 +343,10 @@ export const PATCH = withObservability(async (req: Request,
     if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
     const move: LeagueMoneyMove | null = readMoneyMove(body.money);
     if (!move) return NextResponse.json({ error: MONEY_REFUSAL.changed, code: 'bad_money' }, { status: 400 });
+    // 12c Part 6 (words §3.2): a bank debit on its way is the payment; a stale window or a batch is told so.
+    if (move.kind === 'receive' && await isRegClearing(regId)) {
+      return NextResponse.json({ error: REGS_WORDS.payLink.clearingReceive(`${reg.playerFirstName} ${reg.playerLastName}`), code: 'clearing' }, { status: 409 });
+    }
     // 12b (drawn b6): a lower price on a card-paid child refunds the difference to the card FIRST (so the correction
     // then finds nothing over the new price to refund by hand); a higher one emails the family a pay link for the rest.
     const cardPrice = move.kind === 'price' && (body.money as Record<string, unknown>).card === true;
@@ -597,6 +611,17 @@ export const PATCH = withObservability(async (req: Request,
     if (money === null) return NextResponse.json({ error: MONEY_REFUSAL.changed, code: 'bad_money' }, { status: 400 });
     if (money?.answer === 'refunded' && !canMarkLeagueFeePaid(ctx!)) return forbidden();
     const familyNote = newStatus === 'withdrawn' && !released ? null : text(body.familyNote, 2000);
+    // 12c Part 6 (words §3.3): a bank debit still clearing — nothing is in the book yet, so the window's answer is stored
+    // and carried out when it clears. Sending it back is money: the fee right, and payouts still connected (§7.7).
+    const clearDebit = (await loadRegistrationDebits(ctx!.org.id, [regId]))[regId];
+    const clearAsk = clearDebit?.state === 'clearing' ? readClearAnswer(body.clear) : null;
+    if (clearDebit?.state === 'clearing') {
+      if (!clearAsk) return NextResponse.json({ error: END_WORDS.clear.footChoose(formatLeagueMoney(clearDebit.shareCents / 100)), code: 'clear_choice' }, { status: 409 });
+      if (clearAsk.choice === 'send_back') {
+        if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
+        if (!(await clubTakesCards(ctx!.org))) return NextResponse.json({ error: END_WORDS.clear.disconnected, code: 'clear_disconnected' }, { status: 409 });
+      }
+    }
     const ended = await endLeagueRegistration(ctx!, { seasonId, regId }, {
       status: newStatus, notes: adminNotes ?? null, promote: season.autoPromoteWaitlist, released, money: money ?? null,
     });
@@ -610,9 +635,22 @@ export const PATCH = withObservability(async (req: Request,
     if ('refusal' in ended) return moneyRefusal(ended.refusal, reg, season, true);
     // A family's ask to withdraw this child is answered: its Needs-attention notice clears now (it also clears on read).
     await clearSettled({ orgIds: [ctx!.org.id], kinds: ['house_league_withdraw_request'] });
+    // 12c Part 6: the answer for the clearing debit, carried out by the landing when it clears (or stamped returned).
+    if (clearDebit && clearAsk) {
+      const { error: decisionError } = await supabaseAdmin.from('online_payment_clear_decisions').insert({
+        org_id: ctx!.org.id, online_payment_id: clearDebit.onlinePaymentId, online_payment_item_id: clearDebit.itemId,
+        choice: clearAsk.choice, fee_back: clearAsk.feeBack, reason: clearAsk.reason, decided_by: ctx!.user.id,
+      });
+      if (decisionError && decisionError.code !== '23505') console.error('[house-league] the clearing decision was not stored:', decisionError.message);
+    }
 
     // What the family is told about their money: the refund line just written, or the fee the club keeps.
     let mailMoney: EndedMoneyLine | null = cardMail;
+    if (clearDebit && clearAsk) {
+      mailMoney = clearAsk.choice === 'send_back'
+        ? { answer: 'clearBack', total: clearDebit.totalCents / 100, back: (clearDebit.shareCents + (clearAsk.feeBack ? clearDebit.feeShareCents : 0)) / 100 }
+        : { answer: 'clearKept', base: clearDebit.shareCents / 100, reason: clearAsk.reason ?? '', club: ctx!.org.name };
+    }
     if (money && !cardMail) {
       const lines = (await loadRegistrationMoneyLines([regId])).get(regId) ?? [];
       const refund = ended.refundEntryId ? lines.find(l => l.id === ended.refundEntryId) : null;

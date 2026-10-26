@@ -13,7 +13,7 @@ export const filesToClubStatement = (org: EntitlementOrg): boolean => hasModuleE
  * source 'league_registration' + the registration id (mig 368); money in is 'income', money out (a refund) 'expense'.
  * The rules that turn lines into a fee and a band are lib/league-money.ts.
  */
-const SELECT = 'id, source_entity_id, entry_type, amount, entry_date, payment_method, status, notes, void_reason, created_at';
+const SELECT = 'id, source_entity_id, entry_type, amount, entry_date, payment_method, status, notes, void_reason, created_at, category';
 
 function toLine(r: Record<string, unknown>): LeagueMoneyLine | null {
   if (r.entry_type !== 'income' && r.entry_type !== 'expense') return null;
@@ -27,6 +27,8 @@ function toLine(r: Record<string, unknown>): LeagueMoneyLine | null {
     status: r.status as LeagueMoneyLine['status'],
     note: ((r.status === 'void' ? r.void_reason : r.notes) as string | null) ?? null,
     createdAt: r.created_at as string,
+    // 12c Part 6 (mig 387): a bank debit reversed after it cleared — the bank's line, not a refund.
+    ...(r.category === 'registration_returned' ? { returned: true } : {}),
   };
 }
 

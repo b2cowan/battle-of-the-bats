@@ -157,7 +157,8 @@ describe('the webhook and the landing (§0k)', () => {
     const fee = readCode('lib/platform-debit-fee.ts');
     assert.match(fee, /RETURNED_BANK_DEBIT_FEE_CENTS/);
     assert.doesNotMatch(fee, /amount: \d|\b5\.00\b/, 'the figure is printed from the constant');
-    assert.match(fee, /workspaceHoldsFoundingComp\(orgId\)[\s\S]*'comped'/);
+    assert.match(fee, /facts\?\.freeTime \|\| \(await workspaceHoldsFoundingComp\(orgId\)[\s\S]*?return exempt\('comped'\)/, 'free is read through the door');
+    assert.doesNotMatch(fee, /subscription_status/, 'never the stored status (plan-reader door guard)');
     assert.match(fee, /invoiceItems\.create\(\{[\s\S]*subscription: sub\.id/);
     assert.match(fee, /idempotencyKey: `debit-fee:\$\{feeId\}`/);
   });

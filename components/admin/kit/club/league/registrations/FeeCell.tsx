@@ -14,9 +14,10 @@ import css from './Registrations.module.css';
 
 export default function FeeCell({ parts, onAlert }: { parts: FeeCellParts; onAlert?: (refundId: string) => void }) {
   const [tipOpen, setTipOpen] = useState(false);
-  if (!parts.primary && !parts.alert && !parts.third) return <span className={css.feeNone}>—</span>;
+  const [chipOpen, setChipOpen] = useState(false);
+  if (!parts.primary && !parts.alert && !parts.chip && !parts.third) return <span className={css.feeNone}>—</span>;
   const pill = parts.tone === 'good' ? `${css.feePill} ${css.feeGood}` : parts.tone === 'warn' ? `${css.feePill} ${css.feeWarn}` : null;
-  const { alert, third } = parts;
+  const { alert, chip, third } = parts;
   const thirdDoor = third?.refundId && onAlert ? third.refundId : null;
   return (
     <span className={css.fee}>
@@ -28,8 +29,16 @@ export default function FeeCell({ parts, onAlert }: { parts: FeeCellParts; onAle
           </button>
         )
         : <span className={`${css.feePill} ${css.feeWarn}`}>{alert.text}</span>)}
-      {!alert && parts.primary && <span className={pill ?? css.feePlain}>{parts.primary}</span>}
+      {/* 12c Part 6: a bank debit on its way — the info chip, its detail on tap (words §3.1). */}
+      {chip && (
+        <button type="button" className={`${css.feePill} ${css.feeInfo} ${css.feeAlert}`} title={chip.tip} aria-expanded={chipOpen}
+          onClick={e => { e.stopPropagation(); setChipOpen(o => !o); }}>
+          {chip.text}
+        </button>
+      )}
+      {!alert && !chip && parts.primary && <span className={pill ?? css.feePlain}>{parts.primary}</span>}
       {parts.sub && <span className={css.feeSub}>{parts.sub}</span>}
+      {chip && chipOpen && <span className={css.feeTip}>{chip.tip}</span>}
       {third && (
         <button
           type="button"

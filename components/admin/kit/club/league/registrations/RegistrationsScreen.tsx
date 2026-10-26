@@ -160,7 +160,7 @@ export default function RegistrationsScreen() {
       registrations: regsRes.data.registrations ?? [], money: regsRes.data.money ?? {},
       priceChanges: regsRes.data.priceChanges ?? [], today: regsRes.data.today, payLinks: !!regsRes.data.payLinks,
       unrecordedCard: regsRes.data.unrecordedCard ?? {}, returnedRefunds: regsRes.data.returnedRefunds ?? {},
-      cardRefunds: regsRes.data.cardRefunds ?? {}, notMatched: regsRes.data.notMatched ?? {},
+      cardRefunds: regsRes.data.cardRefunds ?? {}, notMatched: regsRes.data.notMatched ?? {}, debits: regsRes.data.debits ?? {},
     });
     setFailed(null);
   }, [orgSlug, seasonId, orgQuery, beginRead]);
@@ -224,7 +224,7 @@ export default function RegistrationsScreen() {
   const fees = useMemo(() => {
     const m = new Map<string, ReturnType<typeof feeCell>>();
     if (!season || !read) return m;
-    for (const r of regs) m.set(r.id, feeCell(r, season, linesOf(r.id), read.today, changesByReg.get(r.id) ?? [], refundsOf(r.id), read.notMatched?.[r.id] ?? null));
+    for (const r of regs) m.set(r.id, feeCell(r, season, linesOf(r.id), read.today, changesByReg.get(r.id) ?? [], refundsOf(r.id), read.notMatched?.[r.id] ?? null, read.debits?.[r.id] ?? null));
     return m;
   }, [regs, season, read, linesOf, changesByReg, refundsOf]);
 
@@ -282,7 +282,7 @@ export default function RegistrationsScreen() {
       ? REGS_WORDS.player[kind](regDay(reg.endedAt, today))
       : reg.source === 'admin_manual' ? REGS_WORDS.player.byHand(regDay(reg.registeredAt, today)) : REGS_WORDS.player.signedUp(regDay(reg.registeredAt, today));
     const asked = !ended && reg.withdrawRequestedAt ? REGS_WORDS.player.asked(regDay(reg.withdrawRequestedAt, today)) : null;
-    const actions = rowActions(reg, fee.state, linesOf(reg.id), rights);
+    const actions = rowActions(reg, fee.state, linesOf(reg.id), rights, read?.debits?.[reg.id]?.state === 'clearing');
     // 12b: a card payment that couldn't go on this row, or a card refund that came back — the desk's doors (any tab).
     if (rights.takeFees && read?.unrecordedCard?.[reg.id]?.length) actions.all.push('refundCard');
     if (rights.takeFees && read?.returnedRefunds?.[reg.id]?.length) actions.all.push('refundAnotherWay');
@@ -308,7 +308,7 @@ export default function RegistrationsScreen() {
       sheetSub: REGS_WORDS.sheetSub(division ?? REGS_WORDS.noDivision, fee.primary),
       note: notes[reg.id] ?? null,
     };
-  }, [fees, divisionName, teamName, today, linesOf, rights, itemFor, busyIds, notes]);
+  }, [fees, divisionName, teamName, today, linesOf, rights, itemFor, busyIds, notes, read]);
 
   const rowModels = useMemo(() => tabRegs.slice(0, shown).map(modelFor), [tabRegs, shown, modelFor]);
 
@@ -377,6 +377,7 @@ export default function RegistrationsScreen() {
     const reg = regById.get(id);
     const fee = reg ? fees.get(reg.id) : undefined;
     if (!reg || !fee || (fee.state.kind !== 'owing' && fee.state.kind !== 'part')) return [];
+    if (fee.chip) return []; // 12c Part 6: a bank debit on its way is the payment (words §3.2)
     const last = lastPayment(linesOf(reg.id));
     return [{
       reg, name: playerName(reg), division: divisionName(reg.divisionId) ?? REGS_WORDS.noDivision, owing: fee.state.owing,
@@ -389,6 +390,7 @@ export default function RegistrationsScreen() {
   /** Why a ticked row was not part of a Mark received batch (copy §2.2). */
   function skipWhy(reg: LeagueRegistration): Why {
     const kind = fees.get(reg.id)?.state.kind;
+    if (fees.get(reg.id)?.chip) return { key: 'clearing' };
     return kind === 'received' ? { key: 'received' } : kind === 'free' ? { key: 'free' }
       : kind === 'review' || kind === 'waitlist' ? { key: 'notAccepted' } : { key: 'ended' };
   }
@@ -494,9 +496,12 @@ export default function RegistrationsScreen() {
   async function runBulkPayLink(ids: readonly string[]) {
     const families = new Map<string, LeagueRegistration>();
     const skipped: string[] = [];
+    let clearingSkipped = 0;
     for (const id of ids) {
       const reg = regById.get(id);
       if (!reg) continue;
+      // 12c Part 6: a family whose debit is clearing has nothing to pay yet (words §3.2's skipped reason).
+      if (fees.get(id)!.chip) { skipped.push(id); clearingSkipped += 1; continue; }
       if (!isOwing(fees.get(id)!.state)) { skipped.push(id); continue; }
       const key = reg.signupRef ?? reg.id;
       if (!families.has(key)) families.set(key, reg);
@@ -512,7 +517,7 @@ export default function RegistrationsScreen() {
     markBusy(ids, false);
     const P = REGS_WORDS.payLink;
     present(stayed.length
-      ? { text: P.bulkPartial(sent, stayed.length, failed ? P.failed : P.nothingOwed), partial: true }
+      ? { text: P.bulkPartial(sent, stayed.length, failed ? P.failed : clearingSkipped === stayed.length ? P.clearingWhy : P.nothingOwed), partial: true }
       : { text: P.bulkDone(sent), partial: false }, stayed, false);
   }
 
@@ -774,6 +779,8 @@ export default function RegistrationsScreen() {
           seasonId={seasonId}
           raised={raised}
           stripeRefundIds={act.stripeRefundIds}
+          debit={read?.debits?.[act.id] ?? null}
+          payoutsOn={!!read?.payLinks}
           onClose={() => setAct(null)}
           onChanged={() => void load()}
           onDone={(done) => { setAct(null); afterWrite(true); say(done.said); setSelected(prev => { const n = new Set(prev); n.delete(act.id); return n; }); }}
