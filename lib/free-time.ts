@@ -125,6 +125,17 @@ export function formatLongDay(day: string): string {
   });
 }
 
+/** "March 31": a last free day inside a sentence that already names the year. */
+export function monthDayOf(day: string): string {
+  return formatLongDay(day).replace(/, \d{4}$/, '');
+}
+
+/** "April 1" (or "January 1, 2027" when the year turns): the first day back on the club's own plan. */
+export function dayAfterWords(lastDay: string): string {
+  const next = addCalendarDays(lastDay, 1);
+  return next.slice(0, 4) === lastDay.slice(0, 4) ? monthDayOf(next) : formatLongDay(next);
+}
+
 /** "Mar 31, 2027" from a `YYYY-MM-DD` (the console's short face). */
 export function formatShortDay(day: string): string {
   const [y, m, d] = day.split('-').map(Number);

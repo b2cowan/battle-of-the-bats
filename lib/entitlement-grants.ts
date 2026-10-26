@@ -48,6 +48,8 @@ export type ActiveOverrideRow = GrantRow;
 export const isOverrideActive = isGrantRunning;
 
 const GRANT_COLUMNS = 'org_id, type, value, target, starts_at, expires_at, revoked_at';
+/** Club ids per grants read: well inside the request-address limit. */
+const GRANT_READ_CHUNK = 100;
 
 type GrantRowWithOrg = GrantRow & { org_id: string };
 
@@ -57,17 +59,24 @@ export { ownPlanOf };
 async function runningGrantsFor(orgIds: string[]): Promise<Map<string, GrantRow[]>> {
   const byOrg = new Map<string, GrantRow[]>();
   if (orgIds.length === 0) return byOrg;
-  const { data } = await supabaseAdmin
+  // A long id list overruns the request address (the directory passes up to 2,000 clubs), so read in chunks. A failed
+  // chunk leaves its clubs on their own plan, as before, but now says so in the log instead of dropping free time silently.
+  const chunks: string[][] = [];
+  for (let i = 0; i < orgIds.length; i += GRANT_READ_CHUNK) chunks.push(orgIds.slice(i, i + GRANT_READ_CHUNK));
+  const results = await Promise.all(chunks.map(ids => supabaseAdmin
     .from('org_overrides')
     .select(GRANT_COLUMNS)
-    .in('org_id', orgIds)
+    .in('org_id', ids)
     .is('revoked_at', null)
     .neq('type', 'comp_period')
-    .order('created_at', { ascending: false });
-  for (const row of (data ?? []) as GrantRowWithOrg[]) {
-    const list = byOrg.get(row.org_id) ?? [];
-    list.push(row);
-    byOrg.set(row.org_id, list);
+    .order('created_at', { ascending: false })));
+  for (const { data, error } of results) {
+    if (error) console.error('[entitlement-grants] running grants could not be read:', error.message);
+    for (const row of (data ?? []) as GrantRowWithOrg[]) {
+      const list = byOrg.get(row.org_id) ?? [];
+      list.push(row);
+      byOrg.set(row.org_id, list);
+    }
   }
   return byOrg;
 }

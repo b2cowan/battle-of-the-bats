@@ -60,7 +60,7 @@ export async function runningPlanGrant(orgId: string): Promise<{ id: string; pla
 }
 
 /** Read what the decisions need about a club (its OWN plan, its Stripe standing, its running plan grant). */
-export async function readClubFacts(orgId: string): Promise<ClubFacts | null> {
+export async function readClubFacts(orgId: string, opts: { withGrant?: boolean } = {}): Promise<ClubFacts | null> {
   const { data, error } = await supabaseAdmin
     .from('organizations')
     .select('id, name, plan_id, account_kind, subscription_status, stripe_subscription_id')
@@ -70,7 +70,8 @@ export async function readClubFacts(orgId: string): Promise<ClubFacts | null> {
   if (!data) return null;
   const club = data as ClubRow;
   const planId = (club.plan_id ?? 'tournament') as OrgPlan;
-  const running = await runningPlanGrant(club.id);
+  // Changing or ending a grant needs only the block (no plan grant read): the row it acts on is read on its own.
+  const running = opts.withGrant === false ? null : await runningPlanGrant(club.id);
   return {
     id: club.id,
     name: club.name,
@@ -104,9 +105,8 @@ export async function readGiveContext(orgId: string, staffUserId: string): Promi
 
 /** For the record: why the door is absent (one line), and why a whole plan cannot be given (in the window). */
 export async function freeTimeDoorFacts(orgId: string, staffUserId: string): Promise<{ block: GiveBlock | null; planBlock: PlanBlock | null; ownPlan: OrgPlan } | null> {
-  const club = await readClubFacts(orgId);
+  const [club, ctx] = await Promise.all([readClubFacts(orgId), readGiveContext(orgId, staffUserId)]);
   if (!club) return null;
-  const ctx = await readGiveContext(orgId, staffUserId);
   return { block: freeTimeBlockOf(club, ctx), planBlock: planGrantBlockOf(club), ownPlan: club.planId };
 }
 
@@ -160,9 +160,9 @@ export type ChangeInput = {
  */
 export async function changeFreeTimeEnd(input: ChangeInput): Promise<Refusal | { ok: true }> {
   const refuse = (status: number, error: string): Refusal => ({ ok: false, status, error });
-  const club = await readClubFacts(input.orgId);
+  const [club, ctx] = await Promise.all([readClubFacts(input.orgId, { withGrant: false }), readGiveContext(input.orgId, input.actor.id)]);
   if (!club) return refuse(404, 'Club not found.');
-  const block = freeTimeBlockOf(club, await readGiveContext(club.id, input.actor.id));
+  const block = freeTimeBlockOf(club, ctx);
   if (block) return refuse(block.kind === 'switch' ? 409 : 403, `${block.lead}${block.rest}`);
 
   const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
@@ -195,6 +195,7 @@ export async function changeFreeTimeEnd(input: ChangeInput): Promise<Refusal | {
     .eq('org_id', club.id)
     .is('revoked_at', null)
     .eq('expires_at', row.expires_at)
+    .gt('expires_at', new Date().toISOString()) // never revive a grant that ran out since it was read
     .select('id');
   if (error) return refuse(500, 'Nothing was changed. The server could not save it.');
   if (!written || written.length === 0) {
@@ -229,9 +230,11 @@ export async function endFreeTimeNow(input: { orgId: string; overrideId: string;
   if (!reason) return { ok: false, status: 400, error: "Say why you're ending it early." };
   // A comp period is a billing tag (Founding Season's cohort mark): it gives nothing to end, and Founding's access moves
   // only at its turn-off decision (owner ruling Q4).
-  const { data: row } = await supabaseAdmin.from('org_overrides').select('type').eq('id', input.overrideId).eq('org_id', input.orgId).maybeSingle();
+  const { data: row } = await supabaseAdmin.from('org_overrides').select('type, starts_at, expires_at, revoked_at').eq('id', input.overrideId).eq('org_id', input.orgId).maybeSingle();
   if (!row) return { ok: false, status: 404, error: 'That free time was not found.' };
   if (row.type === 'comp_period') return { ok: false, status: 409, error: "A comp period gives nothing to end. Founding Season's ends with its own turn-off." };
+  // One that ran out by itself is not "ended early": leave it as it is.
+  if (!isGrantRunning(row)) return { ok: false, status: 409, error: 'That free time has already ended. Nothing was changed.' };
   const result = await endClubOverride({ orgId: input.orgId, overrideId: input.overrideId, reason, actorEmail: input.actor.email, extra: input.extra });
   return result.ok ? { ok: true } : { ok: false, status: result.status, error: result.error };
 }

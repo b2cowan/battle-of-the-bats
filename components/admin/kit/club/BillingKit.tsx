@@ -178,7 +178,10 @@ export default function BillingKit() {
 
   // ── Cancelled: the reactivate card (A07) ─────────────────────────────────────────────────────
   if (cancelled) {
-    const since = preflight?.cancelled?.at ? formatStoredDate(preflight.cancelled.at, { withYear: false }) : null;
+    // Reactivating buys what the club paid for, never a plan it is only holding as free time.
+    const planKey = ownPlanKey;
+    const plan = PLAN_CONFIG[ownPlanKey];
+    const since =preflight?.cancelled?.at ? formatStoredDate(preflight.cancelled.at, { withYear: false }) : null;
     const until = preflight?.cancelled?.keptUntil ? formatStoredDate(preflight.cancelled.keptUntil, { longMonth: true }) : null;
 
     async function reactivate() {

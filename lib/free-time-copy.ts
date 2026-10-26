@@ -1,6 +1,5 @@
 import { PLAN_CONFIG } from './plan-config';
-import { addCalendarDays } from './timezone';
-import { formatLongDay, type CustomerFreeTime } from './free-time';
+import { dayAfterWords, formatLongDay, type CustomerFreeTime } from './free-time';
 import type { OrgPlan } from './types';
 
 /**
@@ -31,13 +30,6 @@ export type FreeTimeCopy = {
 };
 
 const label = (plan: OrgPlan) => PLAN_CONFIG[plan]?.label ?? plan;
-
-/** "April 1", or "January 1, 2027" when the year turns. */
-function dayAfterWords(lastDay: string): string {
-  const next = addCalendarDays(lastDay, 1);
-  const long = formatLongDay(next);
-  return next.slice(0, 4) === lastDay.slice(0, 4) ? long.replace(/, \d{4}$/, '') : long;
-}
 
 export function freeTimeCopy(input: FreeTimeCopyInput): FreeTimeCopy {
   const ft = input.freeTime;

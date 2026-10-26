@@ -636,6 +636,9 @@ function BillingPagePlans() {
 
   // ── Cancelled-state view: stripped page with reactivate CTA ──────────────
   if (status === 'canceled') {
+    // Reactivating buys what the club paid for, never a plan it is only holding as free time.
+    const currentPlanKey = ownPlanKey;
+    const currentPlan = PLAN_CONFIG[ownPlanKey];
     const isComingSoon = isGated(currentPlanKey);
     const canSelfServeReactivate =
       !isTeamWorkspaceBilling && !isComingSoon && currentPlanKey !== 'tournament';
