@@ -1,0 +1,203 @@
+<title>Bookkeeping Fixes Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: the owner ledger works end to end, and the six accountant-review fixes behave.
+   Checkable walk with a paste-back; the console walks' look, so it reads the same. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+h3 { font-size: 15px; margin: 6px 0 0; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.role { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.role b { font-size: 14px; }
+.role span { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.as { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 240px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Bookkeeping · accountant-review fixes · owner walk · 2026-10-26 · ledger §382</p>
+  <h1>Bookkeeping Fixes Walk</h1>
+  <p>One question: <b>does the owner ledger work end to end, and do the six fixes from the accountant's review behave?</b> Tick what holds, and write what does not. Your ticks stay in this browser; the paste-back at the foot gathers them for the chat. The build is on the dev server only.</p>
+  <p class="hint">This is not the five-journey walk (CAD, USD, missing receipt, payment date, correction). That one comes next, in its own sitting, once this one passes.</p>
+</header>
+
+<div class="card signin">
+  <h2>Sign in first</h2>
+  <p>Open <code>http://localhost:3000/platform-admin/login</code> and sign in with <b>your own owner account</b>. Bookkeeping opens only for the owner's address, never for a staff role, so the test staff accounts get "Forbidden". Then open <b>Private finance › Bookkeeping</b> in the console menu.</p>
+  <div class="roles">
+    <div class="role"><b>Owner</b><span>fieldlogichq@gmail.com (your own password)</span></div>
+    <div class="role"><b>Where</b><span>the development bookkeeping store only</span></div>
+  </div>
+  <p class="hint">⚠ Everything you enter here goes into the development books. Start every supplier and bank reference with <code>WALK</code> so it is easy to find. Section 7 voids every one of them. Nothing can be deleted any more, by design; a void keeps the history. Figures below are as of October 2026: the period names in section 6 move with the calendar, and nothing else here does.</p>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed. The last two are open questions: tick one box for each.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <button class="btn-doc" type="button" id="make">Copy my answers</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  var S = [
+    ["door", "The page, its tabs and its colours", "Private finance › Bookkeeping", "Owner", [
+      "The tab row reads Overview · Expenses · Needs attention · Reports · Ledger. There is no Sources tab.",
+      "The page sits on the console's own ground (no separate cream sheet behind it). + Add expense and the other main buttons are lime with dark lettering, the same as every other primary button in the product.",
+      "Switch to Dark from the account menu (top right). Bookkeeping turns dark with the rest of the console: no bright page left behind, and every label, figure and box edge still reads. Switch back to Warm."
+    ]],
+    ["mistakes", "A mistake is said beside Save, and the cursor goes there", "Bookkeeping › + Add expense", "Owner", [
+      "Fill the form (supplier WALK Zero, any category, what it was for, Paid personally) with 0 as the amount and press Save expense. Just above the Save button, in red: \"Enter an amount above $0.00.\" The cursor is in the amount box and its edge is red. Nothing is saved.",
+      "Change the amount to 12,50 and Save: \"Use numbers like 1200.00.\" Change it to $1,200.00: start typing in the box and the red message goes away.",
+      "Open More details, tick \"I know the purchase tax amount\" and enter 1300.00 as the tax. Save: \"Purchase tax can't be more than the amount.\" with the cursor in the tax box. Put the tax back to 0.00.",
+      "Switch the currency to USD. Before you type anything, a grey line under the conversion box says \"Say where the rate came from and its date, like 'Card statement 2026-10-16'.\" Type just rate there, fill the CAD amount, and Save: the same sentence comes back in red beside Save, with the cursor in the conversion box. Switch back to CAD.",
+      "Optional, if you have a PDF or photo over 10 MB: attach it and Save. \"Receipt must be a PDF, JPEG or PNG under 10 MB.\" appears at once, the cursor is on the receipt box, and the button never says Saving… (nothing was sent). Remove the file."
+    ]],
+    ["future", "A date in the future is noted, never blocked", "the same form", "Owner", [
+      "Set the expense date to tomorrow. Under it, in grey: \"This date is in the future. Check it before saving.\" Set it back to today and the note goes.",
+      "Tick \"Payment date is different from expense date\" and set the payment date to tomorrow: the same note appears under the payment date. Untick the box."
+    ]],
+    ["expense", "Save a purchase you paid personally", "the same form", "Owner", [
+      "Supplier WALK Personal hosting, category Other, amount $1,200.00, Paid personally, no receipt. Save expense. The record opens: Business amount $1,200.00, Paid from Paid personally.",
+      "The record's buttons are Correct expense and Void expense. There is no Permanently delete anywhere on the record, and no confirmation box for one."
+    ]],
+    ["ledger", "The owner ledger, end to end", "Bookkeeping › Ledger", "Owner", [
+      "+ Add owner transfer: \"Money put into the business\", today, 100.00, bank reference WALK contribution. Save transfer: \"Owner transfer saved.\" and the transfer opens below, with its Changes list (Rev. 1 · First entry).",
+      "Add another: \"Money taken out for personal use\", $50.00 (with the dollar sign), reference WALK draw. It saves.",
+      "Add another: \"Pay myself back for an expense\". The expense list offers WALK Personal hosting · today · $1,200.00. Enter 1,300.00 and Save: beside Save, \"Paying yourself back for this expense would exceed its recorded business amount.\" with the cursor in the amount box. Nothing is saved.",
+      "Change it to 500.00, reference WALK repay, and Save. It saves. On the transfer, Linked expense: WALK Personal hosting opens that expense's record.",
+      "Back on the Ledger, the list shows the three transfers and the WALK expense, newest first: the contribution as Money in, the draw and the repayment as Money out, the expense as Paid personally.",
+      "Open the draw › Correct transfer: change it to 55.00 and give a reason. Save correction: \"Correction saved with its history.\" Its Changes list now shows Rev. 2 with your reason above Rev. 1."
+    ]],
+    ["reports", "Last month, last quarter, last calendar year", "Bookkeeping › Reports", "Owner", [
+      "Reports opens on All confirmed dates, as before. The Period list now offers This month to date, This year to date, Last month, Last quarter, Last calendar year and Custom dates.",
+      "Last month: the heading line reads \"Last month · September 2026\", and From and To show September 1 to September 30. Export CSV and Accountant package both download without an error.",
+      "Last quarter: \"Last quarter · July to September 2026\", July 1 to September 30. Both downloads work.",
+      "Last calendar year: \"Last calendar year · 2025\", January 1 to December 31, 2025. Both downloads work.",
+      "This month to date, then Accountant package. Open owner-transfers.csv from the zip: one line per saved version, so the contribution and the repayment once each and the draw twice (50.00 marked superseded, 55.00 marked current), each with its WALK reference."
+    ]],
+    ["void", "Void everything, and nothing is lost", "Ledger, then Expenses", "Owner", [
+      "Try to void WALK Personal hosting first (Expenses › the record › Void expense, a reason, Confirm void). It is refused beside the button: void or correct the linked reimbursement first.",
+      "On the Ledger, open the repayment, the draw and the contribution in turn, give each a reason for voiding and press Void transfer. Each says \"Owner transfer voided; its history is retained.\" and leaves the Ledger list.",
+      "Now void WALK Personal hosting. The record says Voided with your reason, and its only button is Back to expenses: no Correct, no Void, no delete. Its Changes list keeps both versions.",
+      "The Expenses list still shows WALK Personal hosting, marked Voided. The Overview's spend figure does not count it."
+    ]],
+    ["phone", "On a phone width", "any phone, or a narrow window", "Owner", [
+      "Optional: on a phone, Save the expense form with 0 as the amount. The red message sits just above Save and the amount box is focused (the keyboard may open). The date boxes use the phone's own date picker."
+    ]]
+  ];
+  var CALLS = [
+    ["The main buttons are lime with dark lettering (the product's rule: olive is a text and border colour, never a button fill). In the drawings you reviewed they were olive."],
+    ["A mistake on a form shows just above Save, inside the form. A problem loading the page or making an export still shows at the top of the page."],
+    ["A red message clears as soon as you edit the field it named; a message about anything else stays until the next Save."],
+    ["The receipt limit leaves a little room for the rest of the form, so a file a hair under 10 MB can be refused with the same \"under 10 MB\" words. Anything up to about 9.9 MB goes through."],
+    ["Last quarter means calendar quarters (January to March, April to June, and so on), since your year is the calendar year."],
+    ["The future-date note sits under the expense and payment dates only, as the fix asked. A transfer dated in the future gets no note."],
+    ["The transfer amount box takes typed text, so $1,200.00 and 1,200.00 work there too (it was a number box with arrows)."],
+    ["Sources is out of the tab row; the preview behind it is kept for Stage 3."],
+    ["One file removal remains: when a save fails after its receipt uploaded, that receipt is removed so it is not left behind. It cannot remove a saved record or an older receipt."],
+    ["Open question A, voided entries: voiding accepts changed amounts or dates on the voided version (they never count, but the history can show odd values). Tick this box to fix it as a small follow-up."],
+    ["Open question A, voided entries: tick this box instead to leave it as it is."],
+    ["Open question B, lettering: Bookkeeping's tabs and buttons still use the typewriter-style data face the rest of the console moved away from. Tick this box to move it to the console's own lettering in a small session of its own."],
+    ["Open question B, lettering: tick this box instead to keep it as it is."]
+  ];
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem('bk-fixes-walk') || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem('bk-fixes-walk', JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[4].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = (i + 1) + ' ' + s[1].split(',')[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card"><div class="sec-head"><span class="n">W' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="route">' + esc(s[2]) + '</span></div><span class="as">As ' + esc(s[3]) + '</span>';
+    s[4].forEach(function (t, k) { h += '<label class="chk"><input type="checkbox" id="c-' + id + '-' + k + '" data-k="' + id + '.' + k + '"> <span>' + esc(t) + '</span></label>'; });
+    h += '<textarea id="n-' + id + '" aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" id="c-call-' + k + '" data-k="call.' + k + '"> <span>' + esc(c[0]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea id="n-calls" aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function progress() {
+    var done = document.querySelectorAll('.sec input[type=checkbox]:checked').length - document.querySelectorAll('#rule input:checked').length;
+    document.getElementById('prog').textContent = done + ' of ' + total + ' ticked';
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Bookkeeping fixes walk (§382): my results'];
+    S.forEach(function (s, i) {
+      var miss = [], ok = 0;
+      s[4].forEach(function (t, k) { if (state[s[0] + '.' + k]) ok++; else miss.push(k + 1); });
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', 'W' + (i + 1) + ' ' + s[1] + ': ' + ok + '/' + s[4].length + ' ticked' + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (state['call.' + k] ? '[ticked] ' : '[not ticked] ') + c[0]); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Copy my answers'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>
