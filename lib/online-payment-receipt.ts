@@ -10,6 +10,7 @@ import { teamPayUrl } from './team-pay-link';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
 import { ONLINE_EMAIL_WORDS as E, SCOPE_LINE, cardLabel, money, receiptLabel } from './online-payment-words';
 import { loadLeaguePayFacts } from './league-pay-facts';
+import { transactionalFamilyFooterHtml } from './family-mail-footer';
 import { leaguePayUrl } from './league-pay-link';
 import { LEAGUE_PAY_WORDS as LW, childList } from './league-pay-words';
 
@@ -213,6 +214,8 @@ export async function sendLeaguePayLink(registrationId: string, raised?: { child
     warmEmailButton(L.button, payLink),
     how ? warmEmailParagraph(escapeHtml(L.otherWays(how))) : '',
     warmEmailSmall(escapeHtml(L.reference(reference))),
+    // Transactional family mail (money owed): it names the club and says why it arrives after an unsubscribe.
+    transactionalFamilyFooterHtml({ orgName: facts.org.name, teamName: facts.season.name, noticeKind: 'Payment notices', about: 'a registration fee', replyLine: face?.contact ? `Questions: ${face.contact}.` : null }),
   ].filter(Boolean).join('\n'), face?.club ?? null);
   const result = await sendEmail(facts.guardianEmail, L.subject(names, facts.season.name), html, face?.sendOpts ?? {});
   if (result.status === 'provider_error') return { error: 'Couldn’t send the pay link. Try again.' };
@@ -241,6 +244,7 @@ export async function sendLeaguePriceRefundEmail(registrationId: string, p: { am
       warmEmailParagraph(escapeHtml(R.reason(facts.org.name, p.reason))),
       warmEmailParagraph(escapeHtml(R.amount(p.amount))),
       face?.contact ? warmEmailSmall(escapeHtml(R.questions(face.contact))) : '',
+      transactionalFamilyFooterHtml({ orgName: facts.org.name, teamName: facts.season.name, noticeKind: 'Payment notices', about: 'a refund of a registration fee', replyLine: null }),
     ].filter(Boolean).join('\n'), face?.club ?? null);
     await sendEmail(facts.guardianEmail, R.subject(facts.org.name), html, face?.sendOpts ?? {});
   } catch (err) {

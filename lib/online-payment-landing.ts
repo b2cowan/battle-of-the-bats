@@ -422,7 +422,9 @@ async function leagueRefundFailed(refundId: string, stripeRefundId: string | nul
   });
 }
 
-export type LeagueCardRefund = { state: 'succeeded' | 'pending' | 'failed'; refundId: string; amountCents: number; message?: string };
+/** `booked`: the refund's lines are in the season's book (Stripe accepted it). An unbooked refund is still in flight —
+ *  the act that follows (an ending, a price) must wait (/review 2026-10-25). */
+export type LeagueCardRefund = { state: 'succeeded' | 'pending' | 'failed'; refundId: string; amountCents: number; booked: boolean; message?: string };
 
 /**
  * Refund one child's card payment, in full or in part (12b, L1; owner §0e: the fee share only on a full refund, with
@@ -456,18 +458,25 @@ export async function refundLeagueToCard(p: {
     });
   } catch (e) {
     const type = (e as { type?: string } | null)?.type;
-    if (type === 'StripeConnectionError' || type === 'StripeAPIError') return { state: 'pending', refundId: id, amountCents };
+    if (type === 'StripeConnectionError' || type === 'StripeAPIError') return { state: 'pending', refundId: id, amountCents, booked: false };
     const message = e instanceof Error ? e.message : 'Stripe refused the refund';
     await leagueRefundFailed(id, null, message);
-    return { state: 'failed', refundId: id, amountCents, message };
+    return { state: 'failed', refundId: id, amountCents, booked: false, message };
   }
   await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id, updated_at: new Date().toISOString() }).eq('id', id);
   if (refund.status === 'failed' || refund.status === 'canceled') {
     await leagueRefundFailed(id, refund.id, refund.failure_reason ?? refund.status);
-    return { state: 'failed', refundId: id, amountCents, message: refund.failure_reason ?? refund.status };
+    return { state: 'failed', refundId: id, amountCents, booked: false, message: refund.failure_reason ?? refund.status };
   }
-  await bookLeagueRefund(id, refund.id, refund.status === 'succeeded');
-  return { state: refund.status === 'succeeded' ? 'succeeded' : 'pending', refundId: id, amountCents };
+  const state = refund.status === 'succeeded' ? 'succeeded' as const : 'pending' as const;
+  try {
+    await bookLeagueRefund(id, refund.id, refund.status === 'succeeded');
+  } catch (e) {
+    // Stripe has sent it; the book refused. Said to the desk (record it by hand), never swallowed (/review 2026-10-25).
+    console.error('[online-payment-landing] a card refund could not be booked:', e instanceof Error ? e.message : String(e));
+    return { state, refundId: id, amountCents, booked: false, message: `${formatMoney(amountCents / 100)} went back to the card, but it couldn’t go in the season’s book. Record the refund by hand.` };
+  }
+  return { state, refundId: id, amountCents, booked: true };
 }
 
 /** A house-league refund Stripe returned, sent another way by the club: the booked refund is marked done. */

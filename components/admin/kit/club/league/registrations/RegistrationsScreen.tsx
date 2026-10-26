@@ -28,7 +28,7 @@ import { isFreeFloorLeague } from '@/lib/free-floor';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { announceSeasonsChanged, useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
-import { type KitStep } from '../../KitDialog';
+import KitDialog, { DialogCancel, type KitStep } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { Callout, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead } from '../../RepKit';
 import { moneyFetch } from '../../money/MoneyKit';
@@ -156,6 +156,7 @@ export default function RegistrationsScreen() {
     setRead({
       registrations: regsRes.data.registrations ?? [], money: regsRes.data.money ?? {},
       priceChanges: regsRes.data.priceChanges ?? [], today: regsRes.data.today, payLinks: !!regsRes.data.payLinks,
+      unrecordedCard: regsRes.data.unrecordedCard ?? {}, returnedRefunds: regsRes.data.returnedRefunds ?? {},
     });
     setFailed(null);
   }, [orgSlug, seasonId, orgQuery, beginRead]);
@@ -242,9 +243,11 @@ export default function RegistrationsScreen() {
       case 'waitlist': return { key, label: M.waitlist.label, hint: M.waitlist.hint(playerName(reg)) };
       case 'promote': return { key, label: M.promote.label, hint: M.promote.hint(playerName(reg), division ?? REGS_WORDS.noDivision) };
       case 'payLink': return { key, label: M.payLink.label, hint: reg.payLinkSentAt ? M.payLink.hintSent(regDay(reg.payLinkSentAt.slice(0, 10), today)) : M.payLink.hint };
+      case 'refundCard': return { key, label: M.refundCard.label, hint: M.refundCard.hint(formatLeagueMoney(read?.unrecordedCard?.[reg.id]?.[0]?.amount ?? 0)) };
+      case 'refundAnotherWay': return { key, label: M.refundAnotherWay.label, hint: M.refundAnotherWay.hint(formatLeagueMoney(read?.returnedRefunds?.[reg.id]?.[0]?.amount ?? 0)) };
       default: return { key, label: M[key].label, hint: M[key].hint };
     }
-  }, []);
+  }, [read, today]);
 
   /** One registration as the list draws it. */
   const modelFor = useCallback((reg: LeagueRegistration): RegRowModel => {
@@ -258,6 +261,9 @@ export default function RegistrationsScreen() {
       : reg.source === 'admin_manual' ? REGS_WORDS.player.byHand(regDay(reg.registeredAt, today)) : REGS_WORDS.player.signedUp(regDay(reg.registeredAt, today));
     const asked = !ended && reg.withdrawRequestedAt ? REGS_WORDS.player.asked(regDay(reg.withdrawRequestedAt, today)) : null;
     const actions = rowActions(reg, fee.state, linesOf(reg.id), rights);
+    // 12b: a card payment that couldn't go on this row, or a card refund that came back — the desk's doors (any tab).
+    if (rights.takeFees && read?.unrecordedCard?.[reg.id]?.length) actions.all.push('refundCard');
+    if (rights.takeFees && read?.returnedRefunds?.[reg.id]?.length) actions.all.push('refundAnotherWay');
     const sheet = actions.all.map(k => itemFor(k, reg, fee, division));
     const primaryLabel = actions.primary === 'approve' ? REGS_WORDS.act.approve
       : actions.primary === 'markReceived' ? REGS_WORDS.act.markReceived
@@ -403,7 +409,25 @@ export default function RegistrationsScreen() {
       case 'email': setAct({ kind: 'email', ids: [reg.id] }); break;
       case 'undo': { const payment = lastPayment(linesOf(reg.id)); if (payment) setAct({ kind: 'undo', id: reg.id, payment }); break; }
       case 'payLink': void payLinkOne(reg); break;
+      case 'refundCard': { const s = read?.unrecordedCard?.[reg.id]?.[0]; if (s) setCardAct({ op: 'refundCard', reg, id: s.itemId, amount: s.amount }); break; }
+      case 'refundAnotherWay': { const r = read?.returnedRefunds?.[reg.id]?.[0]; if (r) setCardAct({ op: 'refundAnotherWay', reg, id: r.refundId, amount: r.amount }); break; }
     }
+  }
+
+  // ── A card payment's two desk doors (12b copy §7) ───────────────────────────────────────────────
+  const [cardAct, setCardAct] = useState<{ op: 'refundCard' | 'refundAnotherWay'; reg: LeagueRegistration; id: string; amount: number } | null>(null);
+  const [cardBusy, setCardBusy] = useState(false);
+  const [cardError, setCardError] = useState('');
+  async function runCardAct() {
+    if (!cardAct || cardBusy) return;
+    setCardBusy(true); setCardError('');
+    const r = await patchRegistration(orgQuery, seasonId, cardAct.reg.id, { [cardAct.op]: cardAct.id });
+    setCardBusy(false);
+    if (!r.ok) { setCardError(r.error); return; }
+    const amount = formatLeagueMoney(cardAct.amount);
+    setCardAct(null);
+    afterWrite(false);
+    say(cardAct.op === 'refundCard' ? REGS_WORDS.refundCard.done(amount) : REGS_WORDS.refundAnotherWay.done(amount));
   }
 
   // ── The pay link (12b copy §5) ─────────────────────────────────────────────────────────────────
@@ -430,14 +454,15 @@ export default function RegistrationsScreen() {
     markBusy(ids, true);
     let sent = 0;
     const stayed: string[] = [...skipped];
+    let failed = 0;
     for (const reg of families.values()) {
       const r = await patchRegistration(orgQuery, seasonId, reg.id, { payLink: true });
-      if (r.ok) sent += 1; else stayed.push(reg.id);
+      if (r.ok) sent += 1; else { stayed.push(reg.id); failed += 1; }
     }
     markBusy(ids, false);
     const P = REGS_WORDS.payLink;
     present(stayed.length
-      ? { text: P.bulkPartial(sent, stayed.length, skipped.length ? P.nothingOwed : P.failed), partial: true }
+      ? { text: P.bulkPartial(sent, stayed.length, failed ? P.failed : P.nothingOwed), partial: true }
       : { text: P.bulkDone(sent), partial: false }, stayed, false);
   }
 
@@ -716,6 +741,30 @@ export default function RegistrationsScreen() {
           onChanged={() => void load()}
           onDone={out => finishMove(out, act.ids)}
         />
+      )}
+      {cardAct && (
+        // 12b copy §7: a card payment that couldn't go on the row goes back to the card; a returned refund is recorded
+        // as sent another way. Money out, so the press is confirmed.
+        <KitDialog
+          kind="question"
+          title={cardAct.op === 'refundCard' ? REGS_WORDS.refundCard.title(playerName(cardAct.reg)) : REGS_WORDS.refundAnotherWay.title(playerName(cardAct.reg))}
+          onClose={() => { if (!cardBusy) { setCardAct(null); setCardError(''); } }}
+          busy={cardBusy}
+          footer={(
+            <>
+              <DialogCancel>Cancel</DialogCancel>
+              <button type="button" className="btn btn-lime" onClick={() => void runCardAct()} disabled={cardBusy}>
+                {cardBusy
+                  ? (cardAct.op === 'refundCard' ? REGS_WORDS.refundCard.working : REGS_WORDS.refundAnotherWay.working)
+                  : (cardAct.op === 'refundCard' ? REGS_WORDS.refundCard.submit(formatLeagueMoney(cardAct.amount)) : REGS_WORDS.refundAnotherWay.submit)}
+              </button>
+            </>
+          )}
+        >
+          <p>{cardAct.op === 'refundCard' ? REGS_WORDS.refundCard.body(formatLeagueMoney(cardAct.amount)) : REGS_WORDS.refundAnotherWay.body(formatLeagueMoney(cardAct.amount))}</p>
+          {cardAct.op === 'refundCard' && cardAct.reg.status === 'declined' && <p>{REGS_WORDS.refundCard.fee}</p>}
+          {cardError && <p role="alert">{cardError}</p>}
+        </KitDialog>
       )}
       {act?.kind === 'undo' && (
         <UndoWindow

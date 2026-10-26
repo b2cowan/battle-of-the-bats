@@ -95,6 +95,10 @@ const FAMILY_SENDERS: { file: string; posture: Posture; what: string }[] = [
     what: 'The org admin\'s dues wave' },
   { file: 'lib/dues-reminders.ts', posture: 'transactional',
     what: 'The nightly automatic dues sweep — unattended, so the least visible of the four' },
+  { file: 'lib/online-payment-receipt.ts', posture: 'transactional',
+    what: 'Club Tier Stage 12b: a house-league family\'s pay link ("Email the pay link", a raised price) and the refund ' +
+          'notice of a price correction refunded to the card — money owed and money returned, so like a dues reminder it ' +
+          'reaches a family who unsubscribed from announcements, and carries the shared footer saying why' },
   // NOTE (2026-08-26): `lib/tryout-notifications.ts` used to sit here — tryout offer, waitlist and
   // release emails, transactional and suppression-skipping on purpose. It is GONE, along with the
   // switch that fired it, on both the coach board and the club-admin screen: a rep offer is a
@@ -262,8 +266,9 @@ describe('Family email — every sender is accounted for', () => {
     assert.equal(
       // Was 4 until 2026-09-21, when the never-paid "Remind unpaid" route was retired and folded
       // into send-reminders/route.ts (one button, one installment, one sender) — a real shrink,
-      // re-audited, not a drifted count.
-      transactional.length, 3,
+      // re-audited, not a drifted count. 4 again from 2026-10-25: Stage 12b's house-league pay link and price
+      // refund notice (lib/online-payment-receipt.ts), audited as money mail with the shared footer.
+      transactional.length, 4,
       'The transactional set changed size — re-audit it. Each member skips the unsubscribe check, ' +
       'so each one owes a family an explanation of why it arrived anyway.',
     );

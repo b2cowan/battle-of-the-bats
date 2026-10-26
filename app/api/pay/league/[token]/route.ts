@@ -7,6 +7,7 @@ import { createCheckout, expireCheckout, retrieveCheckout } from '@/lib/stripe-c
 import { leagueRefusalMessage, loadLeaguePayFacts } from '@/lib/league-pay-facts';
 import { leaguePayPath, registrationFromPayToken } from '@/lib/league-pay-link';
 import { getClubSiteContent } from '@/lib/club-page-meta';
+import { throttlePublicForm } from '@/lib/public-form-throttle';
 import { toDollars } from '@/lib/online-payment-fee';
 import { PAY_WORDS as W } from '@/lib/online-payment-words';
 import { LEAGUE_PAY_WORDS as LW } from '@/lib/league-pay-words';
@@ -59,6 +60,9 @@ async function openSessionFor(seasonId: string, signupKey: string, totalCents: n
 export const POST = withObservability(async (req: Request, { params }: { params: Promise<{ token: string }> }) => {
   const { token } = await params;
   if (!onlinePaymentsOn()) return NextResponse.json({ error: W.error.switchOff }, { status: 404 });
+  // Public: throttled like every family form (/review: each press asks Stripe).
+  const throttled = throttlePublicForm(req);
+  if (throttled) return throttled;
   const regId = registrationFromPayToken(token);
   if (!regId) return NextResponse.json({ error: LW.error.linkInvalid(null) }, { status: 404 });
   const body = await req.json().catch(() => ({}));

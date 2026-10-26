@@ -1060,7 +1060,7 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Who pays the processing fee',
           content: (
             <>
-              <p>Every card payment has a processing fee, shown on your Payouts card as the processing fee per card payment. You choose who pays it. It is one setting for your whole organization, and the default is <strong>Teams pay it</strong>.</p>
+              <p>Every card payment has a processing fee, shown on your Payouts card as the processing fee per card payment. You choose who pays it. It is one setting for your whole organization, and the default is <strong>Teams pay it</strong>. On the League and Club plans the same choice also covers house-league families paying by card, and is worded <strong>Families and teams pay it</strong>.</p>
               <HelpDefs>
                 <HelpDef term="Teams pay it">The fee is added to what the team pays. The pay button shows the full amount, with a line under it, <em>includes a $X processing fee</em>. You receive the full entry fee.</HelpDef>
                 <HelpDef term="The club pays it">The team pays the entry fee alone, and the pay button shows exactly that. The fee comes out of each payment, so you receive the entry fee less the fee.</HelpDef>

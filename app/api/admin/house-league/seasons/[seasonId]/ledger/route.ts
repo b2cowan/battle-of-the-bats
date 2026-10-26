@@ -7,16 +7,19 @@ import { seasonCharges } from '@/lib/league-price';
 import { feeState, isOwing, seasonMoney } from '@/lib/league-money';
 import { filesToClubStatement, loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { fetchAll } from '@/lib/supabase-paging';
 
 /** The season book's card costs (12b, mig 374: source 'online_payment'), newest first. */
 async function seasonProcessingLines(orgId: string, seasonId: string): Promise<Array<{ id: string; day: string; amount: number; description: string; createdAt: string }>> {
   const { data: book } = await supabaseAdmin.from('accounting_ledgers').select('id')
     .eq('org_id', orgId).eq('entity_type', 'league_season').eq('entity_id', seasonId).maybeSingle();
   if (!book) return [];
-  const { data, error } = await supabaseAdmin.from('accounting_entries').select('id, entry_date, amount, description, created_at')
-    .eq('ledger_id', book.id as string).eq('source_module', 'online_payment').eq('status', 'posted').order('entry_date', { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(r => ({ id: r.id as string, day: r.entry_date as string, amount: Number(r.amount), description: (r.description as string) ?? '', createdAt: r.created_at as string }));
+  // Paged, as every book read here (/review: a large season passes the 1,000-row default).
+  const data = await fetchAll<Record<string, unknown>>((from, to) => supabaseAdmin.from('accounting_entries')
+    .select('id, entry_date, amount, description, created_at')
+    .eq('ledger_id', book.id as string).eq('source_module', 'online_payment').eq('status', 'posted')
+    .order('entry_date', { ascending: false }).order('id').range(from, to));
+  return data.map(r => ({ id: r.id as string, day: r.entry_date as string, amount: Number(r.amount), description: (r.description as string) ?? '', createdAt: r.created_at as string }));
 }
 import { daysBetweenDateStrings, orgDayKey, tournamentToday } from '@/lib/timezone';
 

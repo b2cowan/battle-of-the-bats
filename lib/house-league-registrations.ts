@@ -63,6 +63,10 @@ export interface RegsRead {
   today: string;
   /** 12b: the club takes card payments, so owing rows can be emailed their pay link. */
   payLinks?: boolean;
+  /** 12b: card payments that couldn't go on a registration, by registration (the refund door). */
+  unrecordedCard?: Record<string, { itemId: string; amount: number }[]>;
+  /** 12b: booked card refunds Stripe returned, by registration ("sent another way"). */
+  returnedRefunds?: Record<string, { refundId: string; amount: number }[]>;
 }
 
 // ── Words about a person and a day ──────────────────────────────────────────────────────────────
@@ -176,7 +180,7 @@ export function feeCell(
     case 'endedNone': break;
   }
   // 12b copy §5: an owing row the desk emailed the pay link reads when it was sent.
-  if ((state.kind === 'owing' || state.kind === 'part') && reg.payLinkSentAt) sub = F.linkSent(regDay(reg.payLinkSentAt.slice(0, 10), today));
+  if (state.kind === 'owing' && reg.payLinkSentAt) sub = F.linkSent(regDay(reg.payLinkSentAt.slice(0, 10), today));
 
   const latest = changes
     .filter(c => c.kind === 'corrected')
@@ -213,7 +217,7 @@ export interface RegRights {
 
 export type RowActionKey =
   | 'approve' | 'markReceived' | 'promote' | 'move' | 'correct' | 'release' | 'withdraw' | 'decline' | 'email' | 'undo' | 'waitlist'
-  | 'payLink';
+  | 'payLink' | 'refundCard' | 'refundAnotherWay';
 
 /** The ⋯ menu's order (copy §1.5). */
 const MENU_ORDER: readonly RowActionKey[] = [

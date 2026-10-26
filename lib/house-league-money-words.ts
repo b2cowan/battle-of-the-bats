@@ -85,6 +85,7 @@ export const MONEY_PAGE_WORDS = {
     voided: 'Voided · marked received by mistake',
     // 12b copy §8 `money.line.processing`: a club-paid processing fee, or a fee the club gave back on a refund — a cost.
     processing: (what: string) => `Payment processing · ${what}`,
+    processingBack: (what: string) => `Payment processing · fee given back · ${what}`,
   },
   since: (day: string, days: number | null) => (days == null ? `Accepted ${day}` : `Accepted ${day} · ${pluralize(days, 'day')}`),
   sinceUnknown: 'Not known',
@@ -219,6 +220,26 @@ export const REGS_WORDS = {
     promote: { label: 'Promote', hint: (name: string, division: string) => `Accepts ${name} into ${division} and emails the family` },
     // 12b copy §5: owing rows only, while the club takes card payments.
     payLink: { label: 'Email the pay link', hint: 'Opens their status page to pay by card', hintSent: (day: string) => `Last sent ${day}` },
+    // 12b copy §7: a card payment that couldn't go on this registration (the Needs-attention item's door).
+    refundCard: { label: 'Refund the card payment', hint: (amount: string) => `${amount} paid by card couldn’t go on this registration` },
+    // 12b copy §7: a card refund that came back, sent to the family another way.
+    refundAnotherWay: { label: 'Record the refund sent another way', hint: (amount: string) => `${amount} came back from the card` },
+  },
+  refundAnotherWay: {
+    title: (name: string) => `Record the refund for ${name} as sent another way?`,
+    body: (amount: string) => `The card refund of ${amount} came back. Record that the club sent it to the family another way. The season’s book already shows it as refunded.`,
+    submit: 'Record it',
+    working: 'Recording…',
+    done: (amount: string) => `Recorded the ${amount} refund as sent another way.`,
+  },
+  // 12b: the refund of a card payment that couldn't be recorded.
+  refundCard: {
+    title: (name: string) => `Refund the card payment for ${name}?`,
+    body: (amount: string) => `${amount} was paid by card but couldn’t go on this registration. It goes back to the card; nothing changes in the season’s book.`,
+    fee: 'The processing fee goes back too, because the club declined this registration.',
+    submit: (amount: string) => `Refund ${amount} to the card`,
+    working: 'Refunding…',
+    done: (amount: string) => `Refunded ${amount} to the card.`,
   },
   // 12b copy §5: the pay link's toasts and the bulk bar.
   payLink: {

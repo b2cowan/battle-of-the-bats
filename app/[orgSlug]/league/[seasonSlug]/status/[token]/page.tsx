@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
-import { getClubSeason, getClubSiteContent } from '@/lib/club-page-meta';
+import { clubPageMetadata, getClubSeason, getClubSiteContent } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
 import { registrationFromPayToken } from '@/lib/league-pay-link';
 import { buildSignupStatus, signupRowsForLink } from '@/lib/league-signup-status';
@@ -15,8 +15,12 @@ import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
 
-/** A pay link is a key: never indexed, never cached. */
-export const metadata: Metadata = { title: 'Check your registration', robots: { index: false, follow: false } };
+/** The tab names the page (the status page's own name); a pay link is a key: never indexed, never cached. */
+export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> }): Promise<Metadata> {
+  const { orgSlug, seasonSlug } = await params;
+  const meta = await clubPageMetadata(orgSlug, () => 'Check your registration', { path: `/league/${seasonSlug}/status` });
+  return { ...meta, robots: { index: false, follow: false } };
+}
 
 /**
  * A FAMILY'S PAY LINK OPENS THEIR STATUS PAGE, ALREADY UNLOCKED (Club Tier Stage 12b, owner §0e c; drawings b1, b2, b5).

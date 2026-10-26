@@ -55,14 +55,14 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'Who can do what in house league',
       summary: 'Owners, club admins and league admins run the season; the league registrar works registrations, fees and Email families and reads the rest.',
-      keywords: ['permissions', 'who can', 'club admin', 'league admin', 'league registrar', 'treasurer', 'read only', 'roles', 'access', 'move a child between divisions', 'who can take fees', 'who can end a registration'],
-      searchText: 'who can do what house league permissions owner admin club admin league admin league registrar registrar treasurer read only edit seasons divisions teams schedule approve decline withdraw release the spot add registration by hand fees received mark received undo correct the price refund move to another division email families money page read cannot see button absent not greyed registrar cannot move a child between divisions',
+      keywords: ['permissions', 'who can', 'club admin', 'league admin', 'league registrar', 'treasurer', 'read only', 'roles', 'access', 'move a child between divisions', 'who can take fees', 'who can end a registration', 'who can refund', 'refund to card', 'pay link'],
+      searchText: 'who can do what house league permissions owner admin club admin league admin league registrar registrar treasurer read only edit seasons divisions teams schedule approve decline withdraw release the spot add registration by hand fees received mark received undo correct the price refund move to another division email families money page read cannot see button absent not greyed registrar cannot move a child between divisions who can refund a card payment owner club admin league admin registrar treasurer email the pay link',
       content: (
         <>
           <ul>
             <li><strong>Owner, club admin and league admin</strong> — everything: create and edit seasons and divisions, build teams, run the schedule, move a season between states, work registrations and fees, move a child to another division, and email families.</li>
-            <li><strong>League registrar</strong> — works the registrations (approve, waitlist, decline, withdraw, release a spot, add one by hand), takes fees (<strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong>), and uses Email families. <strong>Move to another division</strong> is not theirs: only the owner, a club admin and a league admin see it. Reads the rest of the season, with no edit controls and no status buttons.</li>
-            <li><strong>Treasurer</strong> — reads a season&apos;s <strong>Money</strong> page, through the club&apos;s Accounting. Nothing else in house league.</li>
+            <li><strong>League registrar</strong> — works the registrations (approve, waitlist, decline, withdraw, release a spot, add one by hand), takes fees (<strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong>), refunds a card payment, emails a family their pay link, and uses Email families. <strong>Move to another division</strong> is not theirs: only the owner, a club admin and a league admin see it. Reads the rest of the season, with no edit controls and no status buttons.</li>
+            <li><strong>Treasurer</strong> — reads a season&apos;s <strong>Money</strong> page, through the club&apos;s Accounting, and sees where the club&apos;s payouts stand. May also refund a card payment. Nothing else in house league.</li>
           </ul>
           <p>A control you can&apos;t use is not shown at all, rather than shown greyed. A member whose House league access is switched off, or whose plan doesn&apos;t carry it, can&apos;t open any of it.</p>
         </>
@@ -214,7 +214,7 @@ const houseLeagueHelp: HelpPageContent = {
             <li>When the required lines are done, <strong>Open registration</strong> appears beside the checklist. Click it and read the window, then confirm. It does not email families.</li>
             <li>Click <strong>View public page</strong> and share its link from your website, email list or social media once the form is live.</li>
           </ol>
-          <p>The button isn&apos;t there until the required lines are done, so a season can&apos;t open half-built. <strong>How to pay</strong> appears on the checklist only when some price is above $0, and a free season skips it. A line that isn&apos;t done has a door to the place that fixes it, and the line under the checklist says what is still missing. Changing divisions or spots after families start registering can make the review queue harder to manage.</p>
+          <p>The button isn&apos;t there until the required lines are done, so a season can&apos;t open half-built. <strong>How to pay</strong> appears on the checklist only when some price is above $0, and a free season skips it. Write it even if your club takes card payments: families see it when card payment isn&apos;t on, and beside <strong>Pay now</strong> when it is. A line that isn&apos;t done has a door to the place that fixes it, and the line under the checklist says what is still missing. Changing divisions or spots after families start registering can make the review queue harder to manage.</p>
         </>
       ),
       faqs: [
@@ -358,8 +358,8 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Running the season',
       heading: 'What families see when they sign up',
       summary: 'Families sign up one child or several in one go, see each child’s outcome before they send, get one reference and one email, and check their status with their email and reference.',
-      keywords: ['sign up several children', 'sign up more than one child', 'siblings', 'reference', 'accepted', 'received', 'waitlist', 'status page', 'check your registration', 'date of birth', 'no division fits', 'family email', 'how to pay', 'early bird', 'ask to withdraw', 'ask to withdraw a child', 'family wants to withdraw', 'refund on the status page', 'kept by the club', 'withdrawn', 'declined', 'price to pay'],
-      searchText: 'family sign up form sign up several children in one go siblings add another child up to eight children date of birth picks the division born in birth year club cut-off each child outcome before sign up spot and price early bird applied early bird ended waitlist nothing to pay unless a spot opens two divisions for one age group family picks note for families no division fits contact the club child left out others still sign up one reference for the sign-up one email lists every child total to pay how to pay accepted received waitlist 1st status page check your registration email and reference find everything parent or guardian email waiver email consent unticked payable separately the form does not take payment approve means accepted pending review means received status page declined withdrawn spot released reads withdrawn refunded on kept by the club reason the club is keeping to pay part of the price still to pay price rose ask to withdraw a child request sent the child keeps their place until the club acts you asked to withdraw the club will confirm by email note for the club 300 characters asked once too many tries needs attention house league withdrawal request clears itself when the registration ends',
+      keywords: ['sign up several children', 'sign up more than one child', 'siblings', 'reference', 'accepted', 'received', 'waitlist', 'status page', 'check your registration', 'date of birth', 'no division fits', 'family email', 'how to pay', 'early bird', 'ask to withdraw', 'ask to withdraw a child', 'family wants to withdraw', 'refund on the status page', 'kept by the club', 'withdrawn', 'declined', 'price to pay', 'pay by card', 'pay now', 'pay link', 'processing fee', 'pay online', 'card payment', 'receipt', 'one checkout', 'waitlist nothing to pay'],
+      searchText: 'family sign up form sign up several children in one go siblings add another child up to eight children date of birth picks the division born in birth year club cut-off each child outcome before sign up spot and price early bird applied early bird ended waitlist nothing to pay unless a spot opens two divisions for one age group family picks note for families no division fits contact the club child left out others still sign up one reference for the sign-up one email lists every child total to pay how to pay accepted received waitlist 1st status page check your registration email and reference find everything pay by card pay now pay link one checkout processing fee waitlist nothing to pay parent or guardian email waiver email consent unticked payable separately the form does not take payment approve means accepted pending review means received status page declined withdrawn spot released reads withdrawn refunded on kept by the club reason the club is keeping to pay part of the price still to pay price rose ask to withdraw a child request sent the child keeps their place until the club acts you asked to withdraw the club will confirm by email note for the club 300 characters asked once too many tries needs attention house league withdrawal request clears itself when the registration ends',
       content: (
         <>
           <p>This is what a family sees on your season&apos;s sign-up form, after it and in their email. Knowing it helps when a parent phones to ask what a screen meant.</p>
@@ -394,13 +394,30 @@ const houseLeagueHelp: HelpPageContent = {
           title: 'The reference, the email and the status page',
           content: (
             <>
-              <p>One sign-up gets one <strong>reference</strong>, shown on the confirmation and in the one email the family receives. The email lists every child with their division, outcome and price, the total to pay, and, once a child is accepted, your <strong>How families pay</strong> words. The form doesn&apos;t take payment; families pay you the way you describe.</p>
+              <p>One sign-up gets one <strong>reference</strong>, shown on the confirmation and in the one email the family receives. The email lists every child with their division, outcome and price, the total to pay, and, once a child is accepted, your <strong>How families pay</strong> words. The sign-up form itself takes no payment. Families pay after a child is accepted, by card when your club takes card payments (see <em>Paying by card</em>) and the way you describe otherwise.</p>
               <ul>
                 <li><strong>Accepted</strong> — the child has a spot. This is what you set by clicking Approve, or what an automatic season does while a division has room.</li>
                 <li><strong>Received</strong> — the child is waiting for your review. Nothing is due yet. This is Pending review on your side.</li>
                 <li><strong>Waitlist</strong>, with their place, such as <em>Waitlist &middot; 1st</em>.</li>
               </ul>
-              <p>On the season&apos;s <strong>Check your registration</strong> page, a family enters their parent or guardian email and their reference to find every child in the sign-up, with each child&apos;s status, division, fee and how to pay. Both the email and the reference are needed.</p>
+              <p>On the season&apos;s <strong>Check your registration</strong> page, a family enters their parent or guardian email and their reference to find every child in the sign-up, with each child&apos;s status, division, fee and how to pay. Both the email and the reference are needed. A family who opens the status page from their pay link needs neither (see <em>Paying by card</em>).</p>
+            </>
+          ),
+        },
+        {
+          id: 'family-signup-pay-card',
+          title: 'Paying by card',
+          content: (
+            <>
+              <p>Once the club takes card payments, a child who has been accepted shows <strong>Pay now</strong> on the sign-up confirmation, on the status page, and in the sign-up, approval and waitlist-promotion emails. It applies only after the club owner has set up payouts (see <em>Settings and your web address</em>); until then families see your <strong>How to pay</strong> words and no button.</p>
+              <ul>
+                <li><strong>One checkout for the family.</strong> Brothers and sisters signed up together pay in a single checkout, for every child still owing.</li>
+                <li><strong>The processing fee is shown before they pay</strong> when families pay it. That is the club-wide choice on the Payouts card, <strong>Families and teams pay it</strong> or <strong>The club pays it</strong>.</li>
+                <li><strong>A child on the waitlist, or waiting for your review, has nothing to pay.</strong> The page says so; the child gets a button once accepted.</li>
+                <li><strong>The pay link</strong> is the family&apos;s own link to their status page, already unlocked. It never expires and covers one sign-up. <strong>Ask to withdraw a child</strong> works from it too.</li>
+                <li><strong>A receipt</strong> shows on the status page once the payment is recorded.</li>
+              </ul>
+              <HelpNote variant="info" title="Money paid by hand still works">A family who pays by cheque, cash or e-transfer is marked received as before; <strong>Pay now</strong> is an extra door, not a replacement.</HelpNote>
             </>
           ),
         },
@@ -412,7 +429,7 @@ const houseLeagueHelp: HelpPageContent = {
               <p>The status page follows the registration after the family signs up, so it also carries the money.</p>
               <ul>
                 <li><strong>Declined</strong> or <strong>Withdrawn</strong> — an ended child reads one of these two words. A spot the club released reads <strong>Withdrawn</strong> too. An ended child has no amount to pay, no pay card and no way to ask to withdraw.</li>
-                <li><strong>A refund</strong> — an ended child whose fee went back reads <em>$150 refunded on Oct 24 (E-Transfer)</em>. The brackets are left off when the way was <strong>Other</strong> or not recorded.</li>
+                <li><strong>A refund</strong> — an ended child whose fee went back reads <em>$150 refunded on Oct 24 (E-Transfer)</em>. A refund to the card reads the same and arrives in 5 to 10 business days. The brackets are left off when the way was <strong>Other</strong> or not recorded.</li>
                 <li><strong>A kept fee</strong> — when the club keeps the fee, the child reads <em>The club is keeping the $150</em> followed by the reason you gave, so write it for the family to read.</li>
                 <li><strong>A price that rose</strong> — a child who has part-paid reads the amount still to pay in amber, with a line saying what the price is now and what was received.</li>
               </ul>
@@ -457,8 +474,8 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Running the season',
       heading: 'Managing registrations day to day',
       summary: 'Four tabs (To review, Active, Waitlist, Ended) with the fee on every row, and the actions that approve, take a fee, end a registration, correct a price or move a child.',
-      keywords: ['registrations', 'to review', 'active', 'waitlist', 'ended', 'approve', 'promote', 'decline', 'withdraw', 'release the spot', 'mark received', 'undo', 'correct the price', 'move to another division', 'move division', 'fee column', 'owing', 'refunded', 'kept by the club', 'bulk', 'select several', 'email families', 'add registration', 'registrar', 'division full', 'add to the waitlist instead', 'needs attention', 'sign-up', 'reference', 'finished season'],
-      searchText: 'registrations screen tabs to review active waitlist ended declined withdrawn spot released amber count search players or parents filter fee owing received refunded tools export email families add registration by hand walk-in division full add to the waitlist instead approve refused hand-add refused moving a child into a full division nobody jumps the waitlist a child waiting for review holds a spot one needs attention notice per sign-up several children one reference accepted received no email address guardian fee column owing n days accepted today accepted amber after the club’s number of days 14 received date how e-transfer cash cheque card other not recorded received in part price rose refunded kept by the club price corrected nothing owed yet free mark received amount shown not typed no partial amount date received how undo marked received by mistake not a refund voided line closed fiscal year correct the price reason a lower price records a refund of the difference a higher price leaves the difference owing family not emailed move to another division move division full division joins the waitlist keep price use the new price a child who has paid keeps their price owner club admin league admin only the registrar cannot move a child decline withdraw release the spot one window what happened to the money refunded date how kept by the club reason the family reads note to the family withdraw emails only when money was refunded or kept the waitlist moves up in the same step decline and withdraw one at a time bulk bar approve promote waitlist mark received move division email clear partial result stays until dismissed rows that stayed are still selected finished season locked mark received undo correct the price stay open',
+      keywords: ['registrations', 'to review', 'active', 'waitlist', 'ended', 'approve', 'promote', 'decline', 'withdraw', 'release the spot', 'mark received', 'undo', 'correct the price', 'move to another division', 'move division', 'fee column', 'owing', 'refunded', 'kept by the club', 'bulk', 'select several', 'email families', 'add registration', 'registrar', 'division full', 'add to the waitlist instead', 'needs attention', 'sign-up', 'reference', 'finished season', 'pay by card', 'card payment', 'online, card', 'receipt', 'pay link', 'email the pay link', 'pay link sent', 'refund to the card', 'refund part of it', 'partial refund', 'processing fee', 'refunded another way', 'payment couldn’t be recorded', 'refund didn’t reach the card', 'who can refund'],
+      searchText: 'registrations screen card payment online card receipt pay link sent email the pay link owing row bulk bar one email per family undo not offered on a card payment comes off only by a refund refund to the card refund part of it kept by the club processing fee box declined family asked to leave payment processing refunded another way lower price refunds the difference higher price emails a pay link 5 to 10 business days a card payment couldn’t be recorded refund didn’t reach the card needs attention registrar treasurer may refund tabs to review active waitlist ended declined withdrawn spot released amber count search players or parents filter fee owing received refunded tools export email families add registration by hand walk-in division full add to the waitlist instead approve refused hand-add refused moving a child into a full division nobody jumps the waitlist a child waiting for review holds a spot one needs attention notice per sign-up several children one reference accepted received no email address guardian fee column owing n days accepted today accepted amber after the club’s number of days 14 received date how e-transfer cash cheque card other not recorded received in part price rose refunded kept by the club price corrected nothing owed yet free mark received amount shown not typed no partial amount date received how undo marked received by mistake not a refund voided line closed fiscal year correct the price reason a lower price records a refund of the difference a higher price leaves the difference owing family not emailed move to another division move division full division joins the waitlist keep price use the new price a child who has paid keeps their price owner club admin league admin only the registrar cannot move a child decline withdraw release the spot one window what happened to the money refunded date how kept by the club reason the family reads note to the family withdraw emails only when money was refunded or kept the waitlist moves up in the same step decline and withdraw one at a time bulk bar approve promote waitlist mark received move division email clear partial result stays until dismissed rows that stayed are still selected finished season locked mark received undo correct the price stay open',
       links: [
         { label: 'Registrations guide', href: '../help/registrations' },
       ],
@@ -509,12 +526,31 @@ const houseLeagueHelp: HelpPageContent = {
                 <HelpDef term="Nothing owed yet">A child under To review or on the waitlist. Nothing is due until they are accepted.</HelpDef>
                 <HelpDef term="$150 owing · 9 days">An accepted child who has not paid. The line under it says <em>Accepted Oct 16</em> or <em>Accepted today</em>, and the days are counted from that day. The pill turns amber after the number of days set on the season&apos;s <strong>Registration</strong> block (<em>Owing turns amber</em>, starting at 14). A child accepted before the day was recorded shows the amount owing with no day count and never turns amber.</HelpDef>
                 <HelpDef term="$150 received">Paid in full, with the date and how: <strong>E-Transfer</strong>, <strong>Cash</strong>, <strong>Cheque</strong>, <strong>Card</strong>, <strong>Other</strong>, or <strong>Not recorded</strong>.</HelpDef>
+                <HelpDef term="Online, card · receipt 1043">The family paid by card from their status page. The payment is recorded by itself, with its receipt number, and has no <strong>Undo</strong>.</HelpDef>
+                <HelpDef term="Pay link sent Oct 20">Under an owing row: you have emailed the family their pay link, and the day.</HelpDef>
                 <HelpDef term="$120 received · $30 owing">The price rose after the family paid. The row shows what came in and what is still owing, with no day count.</HelpDef>
                 <HelpDef term="$150 refunded">The fee went back to the family when the registration ended.</HelpDef>
                 <HelpDef term="$150 kept by the club">The club kept the fee when the registration ended. The row shows the reason you gave, shortened; the whole of it is in the child&apos;s record.</HelpDef>
                 <HelpDef term="Price corrected">A third line under the fee, with the reason. Hover or tap it to read what it was and what it is now.</HelpDef>
               </HelpDefs>
               <p>A free division reads <strong>Free</strong>. On a phone the same fee words sit in the row&apos;s detail line.</p>
+            </>
+          ),
+        },
+        {
+          id: 'registrations-card',
+          title: 'Card payments and the pay link',
+          content: (
+            <>
+              <p>When the club takes card payments, a family can pay from the confirmation or status page, so you often have nothing to record. A card payment appears in the <strong>Fee</strong> cell as <strong>Online, card &middot; receipt 1043</strong> and counts toward what the child has paid. <strong>Mark received</strong> works exactly as before for money that arrives another way.</p>
+              <HelpSteps>
+                <li>On an owing row, open the <strong>&hellip;</strong> menu and choose <strong>Email the pay link</strong>. The family gets an email with their link; the row then reads <strong>Pay link sent</strong> and the day.</li>
+                <li>To send several, tick the owing rows and press <strong>Email the pay link</strong> in the bar. Each family gets one email, however many of their children are ticked.</li>
+              </HelpSteps>
+              <ul>
+                <li><strong>Undo isn&apos;t offered on a card payment.</strong> The money is already in your bank account, so it comes off only by a refund (see <em>Refunding to the card</em>).</li>
+                <li><strong>Needs attention</strong> tells you when a card payment couldn&apos;t be recorded, for example one declined while the family was paying, so refund it to the card; and when a refund didn&apos;t reach the card, so send it another way.</li>
+              </ul>
             </>
           ),
         },
@@ -551,8 +587,25 @@ const houseLeagueHelp: HelpPageContent = {
                 <li><strong>Refunded</strong> — give the date and how. It is recorded as money going back, beside the payment, on the season&apos;s Money page.</li>
                 <li><strong>Kept by the club</strong> — give a reason. The family reads it in their email.</li>
               </ul>
+              <p>For a child who paid by card, the window offers different choices; see <em>Refunding to the card</em>.</p>
               <p><strong>Who is emailed:</strong> Decline and Release the spot always email the family, and carry your note and the money line. Withdraw emails only when money was refunded or kept; a withdrawal with no money moved sends nothing, and the window says so. If the season moves the waitlist up on its own, the next child moves up in the same step and the window names them; otherwise it says the spot stays open for you to fill.</p>
               <p>Decline and Withdraw are one at a time, because each asks what happened to that family&apos;s money. When the family asked to withdraw, the window leads with their request and note.</p>
+            </>
+          ),
+        },
+        {
+          id: 'registrations-refund-card',
+          title: 'Refunding to the card',
+          content: (
+            <>
+              <p>When you decline or withdraw a child who paid by card, the window offers three answers. The refund and the ending are one step: both happen when you press the button, or neither does.</p>
+              <HelpDefs>
+                <HelpDef term="Refund to the card">All of it goes back to the family&apos;s card. A box lets you include the processing fee: it is on when the club is declining and off when the family asked to leave. When it is ticked the club pays that fee back, and it shows on the Money page as <strong>Payment processing</strong>.</HelpDef>
+                <HelpDef term="Refund part of it">Enter an amount and a reason. A part refund never includes the processing fee.</HelpDef>
+                <HelpDef term="Kept by the club">Give a reason. The family reads it in their email.</HelpDef>
+              </HelpDefs>
+              <p><strong>Correct the price</strong> on a child who paid by card works the same way: a lower price refunds the difference to the card, or you can choose <strong>Refunded another way</strong>; a higher price emails the family a pay link for the rest.</p>
+              <p>A refund arrives on the family&apos;s card in 5 to 10 business days. FieldLogicHQ&apos;s own fee is never refunded. The owner, club admins, league admins and league registrars can refund, and so can the treasurer.</p>
             </>
           ),
         },
@@ -564,10 +617,10 @@ const houseLeagueHelp: HelpPageContent = {
               <p><strong>Correct the price</strong> is for an Active child, owing or received. The window shows what they signed up at, takes a <strong>New price</strong> and a required <strong>Reason</strong>, and says what will happen before you save:</p>
               <ul>
                 <li><strong>Not paid</strong> — the new price is what the family owes.</li>
-                <li><strong>Paid, and the price goes up</strong> — the difference shows as still owing.</li>
-                <li><strong>Paid, and the price goes down</strong> — the difference is recorded as a refund, and the window asks the date and how.</li>
+                <li><strong>Paid, and the price goes up</strong> — the difference shows as still owing. If they paid by card, the family is emailed a pay link for the rest.</li>
+                <li><strong>Paid, and the price goes down</strong> — the difference is recorded as a refund, and the window asks the date and how. If they paid by card, the difference can go back to the card (see <em>Refunding to the card</em>).</li>
               </ul>
-              <p>The family is not emailed. The correction is kept with the old price, the new price, your reason, who and when; it moves no money by itself.</p>
+              <p>The family is not emailed, except by a card refund or a pay link as above. The correction is kept with the old price, the new price, your reason, who and when; it moves no money by itself.</p>
               <p><strong>Move to another division</strong> is for the owner, club admins and league admins only. It checks the room first. A full division is not refused: the child joins its waitlist, and the window says their place in line. When the destination charges a different price and nothing has been received, it asks once whether to keep the child&apos;s price or use the new division&apos;s (an early bird still applies for the day they signed up). A child who has paid keeps their price, and the window says so and points to Correct the price. The family is not emailed.</p>
             </>
           ),
@@ -594,7 +647,7 @@ const houseLeagueHelp: HelpPageContent = {
           content: (
             <>
               <ul>
-                <li>The owner, club admins, league admins and league registrars take fees (<strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong>) and end registrations.</li>
+                <li>The owner, club admins, league admins and league registrars take fees (<strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong>) and end registrations, including refunding a card payment and emailing the pay link.</li>
                 <li>Only the owner, club admins and league admins move a child between divisions.</li>
                 <li>The treasurer reads the season&apos;s <strong>Money</strong> page and nothing else here.</li>
               </ul>
@@ -610,8 +663,8 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Running the season',
       heading: 'Money and Email families',
       summary: 'Money is the season’s page of registration fees owed, received and refunded. Email families sends season-wide email and logs what was sent.',
-      keywords: ['money', 'ledger', 'email families', 'notifications', 'email log', 'fees', 'accounting', 'owed', 'received', 'still owing', 'refunds', 'every line', 'overview tiles', 'budget vs actual', 'house league registration fees', 'starting budget', 'email the season', 'broadcast', 'unsubscribe', 'opted out'],
-      searchText: 'season money page season ledger renamed money season book owed received after refunds still owing every line still owing refunds tabs nobody types money on the page written only by marking a fee received recording a refund or correcting a price voided line struck through price corrected history line kept by the club history line owing since accepted days not known export finished season overview owed still owing tiles open money league plus the season’s book club plan fees also file on budget vs actual house league registration fees one row with each season under it a fee counts in the fiscal year it was received a refund lowers the row never counts as spending starting budget each division’s size times price planned once when registration opens in the fiscal year sign-ups open treasurer changes it or splits it across years on the budget page a line in the other year under the same word treasurer reads money email families notifications renamed email log sent emails approval waitlist decline confirmation history email the whole season broadcast message all registrants message registrants unsubscribe link opted out not sent skipped no email on file delivered count why did fewer families get it finished season stays open',
+      keywords: ['money', 'ledger', 'email families', 'notifications', 'email log', 'card payments', 'by card', 'payment processing', 'let them pay online', 'payouts status', 'fees', 'accounting', 'owed', 'received', 'still owing', 'refunds', 'every line', 'overview tiles', 'budget vs actual', 'house league registration fees', 'starting budget', 'email the season', 'broadcast', 'unsubscribe', 'opted out'],
+      searchText: 'season money page of it by card payment processing child cost let them pay online payouts status treasurer season ledger renamed money season book owed received after refunds still owing every line still owing refunds tabs nobody types money on the page written only by marking a fee received recording a refund or correcting a price voided line struck through price corrected history line kept by the club history line owing since accepted days not known export finished season overview owed still owing tiles open money league plus the season’s book club plan fees also file on budget vs actual house league registration fees one row with each season under it a fee counts in the fiscal year it was received a refund lowers the row never counts as spending starting budget each division’s size times price planned once when registration opens in the fiscal year sign-ups open treasurer changes it or splits it across years on the budget page a line in the other year under the same word treasurer reads money email families notifications renamed email log sent emails approval waitlist decline confirmation history email the whole season broadcast message all registrants message registrants unsubscribe link opted out not sent skipped no email on file delivered count why did fewer families get it finished season stays open',
       content: (
         <>
           <p>Two pages sit beside Registrations, Teams &amp; draft, Schedule and Standings in a season&apos;s menu: <strong>Money</strong>, the season&apos;s registration fees, and <strong>Email families</strong>. Both stay open on a finished season: fees still arrive after the last game, and families still need a late word.</p>
@@ -626,10 +679,11 @@ const houseLeagueHelp: HelpPageContent = {
               <p><strong>Money</strong> (it used to be called Ledger) is the season&apos;s fees: what is owed, what has come in and what is still to collect. Nobody types money onto this page. It is written only when you mark a fee received, record a refund while ending a registration, or correct a price, all on Registrations.</p>
               <HelpDefs>
                 <HelpDef term="Owed">The price fixed on each accepted registration, added up, with the number of players.</HelpDef>
-                <HelpDef term="Received">What has come in, after any refunds. The line under it says how much was refunded.</HelpDef>
+                <HelpDef term="Received">What has come in, after any refunds. The line under it says how much was refunded, and how much of it came by card (<em>$900 of it by card</em>).</HelpDef>
                 <HelpDef term="Still owing">Owed less received, amber while above zero.</HelpDef>
               </HelpDefs>
               <p>Three tabs sit under the figures. <strong>Every line</strong> lists fees in, refunds out in red, and the history lines that move no money (a corrected price, a fee the club kept); a payment taken back with Undo stays, struck through and never counted. <strong>Still owing</strong> lists players, with the day each was accepted and how many days since, and <strong>Not known</strong> where the day was never recorded. <strong>Refunds</strong> lists the money that went back. <strong>Export</strong> downloads the page. A free season has no figures and reads <em>This season is free</em>.</p>
+              <p>A processing fee the club pays, including one refunded with a child&apos;s payment, is a cost on <strong>Every line</strong> named <strong>Payment processing</strong> and the child. While payouts aren&apos;t set up, the owner sees a quiet line, <em>Let them pay online</em>, that opens the Payouts card; the treasurer sees where payouts stand.</p>
               <p>The season&apos;s Overview shows <strong>Owed</strong> and <strong>Still owing</strong> tiles that open this page. Everyone who opens house league can read Money, and so can the club&apos;s treasurer.</p>
               <p>On League Plus this page is the season&apos;s book. On the Club plan the fees also file on the club&apos;s Budget vs. Actual (see <em>Budget vs. Actual and house league fees</em>). The club&apos;s Cash on hand counts the book either way.</p>
             </>

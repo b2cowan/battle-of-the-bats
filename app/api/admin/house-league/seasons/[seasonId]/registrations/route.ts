@@ -10,7 +10,7 @@ import { notify } from '@/lib/notify';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { loadSeasonMoneyLines } from '@/lib/league-money-read';
-import { clubTakesCards } from '@/lib/league-pay-facts';
+import { clubTakesCards, returnedCardRefunds, unrecordedCardShares } from '@/lib/league-pay-facts';
 
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
@@ -60,13 +60,14 @@ export const GET = withObservability(async (req: Request,
   const registrations = (data ?? []).map(mapLeagueRegistration);
   const shown = new Set(registrations.map(r => r.id));
   const money = Object.fromEntries([...lines].filter(([id]) => shown.has(id)));
+  const [unrecordedCard, returnedRefunds] = await Promise.all([unrecordedCardShares([...shown]), returnedCardRefunds([...shown])]);
   const priceChanges = (changes.data ?? []).map(c => ({
     registrationId: c.registration_id as string, kind: c.kind as 'corrected' | 'moved',
     oldAmount: c.old_amount != null ? Number(c.old_amount) : null, newAmount: Number(c.new_amount),
     reason: (c.reason as string | null) ?? null, changedBy: (c.changed_by as string | null) ?? null, changedAt: c.changed_at as string,
   }));
 
-  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday(), payLinks });
+  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday(), payLinks, unrecordedCard, returnedRefunds });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations' });
 
 

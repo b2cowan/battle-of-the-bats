@@ -370,6 +370,18 @@ BEGIN
      OR (SELECT status FROM online_payments WHERE id = v_op) <> 'refunded' THEN
     RAISE EXCEPTION 'FAIL T31: an unrecorded share''s refund wrote a line, or the payment did not read refunded'; END IF;
 
+  -- T33 · (mig 376) a card refund never outruns the book: the price lowered and $50 refunded by hand, the whole card share
+  -- can only go back as what the book still shows received.
+  PERFORM 1 FROM club_league_money(v_org, v_season, v_s6, 'price', 100, v_today, 'cash', 'Hand discount', NULL);
+  SELECT i.id, i.online_payment_id INTO v_item, v_op FROM online_payment_items i WHERE i.registration_id = v_s6;
+  v_ref := online_payment_refund_open(v_op, false, 'family_left', NULL, NULL, 'app', v_item, NULL, NULL);
+  IF (SELECT amount FROM online_payment_refunds WHERE id = v_ref) <> 100 THEN
+    RAISE EXCEPTION 'FAIL T33: a card refund outran the book (%)', (SELECT amount FROM online_payment_refunds WHERE id = v_ref); END IF;
+  -- T34 · (mig 376) all of what is left of a share refunded in part before needs no reason (T30 left Sib One $100).
+  SELECT i.id INTO v_item FROM online_payment_items i WHERE i.registration_id = v_s1;
+  v_ref := online_payment_refund_open(v_sib, false, 'family_left', NULL, NULL, 'app', v_item, NULL, NULL);
+  IF (SELECT amount FROM online_payment_refunds WHERE id = v_ref) <> 100 THEN RAISE EXCEPTION 'FAIL T34: the rest of a share was not offered'; END IF;
+
   -- T32 · nobody books, marks or opens a house-league refund by hand: no child named, or another payment's child.
   BEGIN
     INSERT INTO online_payment_refunds(online_payment_id, org_id, amount) VALUES (v_sib, v_org, 10);

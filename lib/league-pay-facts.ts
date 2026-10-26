@@ -80,6 +80,44 @@ async function signupRows(anchor: RegRow): Promise<RegRow[]> {
   return (data ?? []) as RegRow[];
 }
 
+/** Each registration's card shares that couldn't land and aren't refunded yet (12b: the desk's refund door). */
+export async function unrecordedCardShares(regIds: string[]): Promise<Record<string, { itemId: string; amount: number }[]>> {
+  if (!regIds.length) return {};
+  const { data: items } = await supabaseAdmin.from('online_payment_items').select('id, registration_id, amount')
+    .in('registration_id', regIds).is('entry_id', null).not('land_error', 'is', null);
+  const stuck = (items ?? []) as Array<{ id: string; registration_id: string; amount: number }>;
+  if (!stuck.length) return {};
+  const { data: refunds } = await supabaseAdmin.from('online_payment_refunds').select('online_payment_item_id, amount, fee_refunded, status, booked_at')
+    .in('online_payment_item_id', stuck.map(i => i.id));
+  const back = new Map<string, number>();
+  for (const f of (refunds ?? []) as Array<{ online_payment_item_id: string; amount: number; fee_refunded: number; status: string; booked_at: string | null }>) {
+    if (f.status !== 'pending' && f.status !== 'succeeded' && !f.booked_at) continue;
+    back.set(f.online_payment_item_id, (back.get(f.online_payment_item_id) ?? 0) + toCents(f.amount) - toCents(f.fee_refunded));
+  }
+  const out: Record<string, { itemId: string; amount: number }[]> = {};
+  for (const i of stuck) {
+    const left = toCents(i.amount) - (back.get(i.id) ?? 0);
+    if (left > 0) (out[i.registration_id] ??= []).push({ itemId: i.id, amount: left / 100 });
+  }
+  return out;
+}
+
+/** Each registration's booked card refunds that Stripe returned (12b: the desk records them as sent another way). */
+export async function returnedCardRefunds(regIds: string[]): Promise<Record<string, { refundId: string; amount: number }[]>> {
+  if (!regIds.length) return {};
+  const { data: items } = await supabaseAdmin.from('online_payment_items').select('id, registration_id').in('registration_id', regIds);
+  const byItem = new Map(((items ?? []) as Array<{ id: string; registration_id: string }>).map(i => [i.id, i.registration_id]));
+  if (!byItem.size) return {};
+  const { data: refunds } = await supabaseAdmin.from('online_payment_refunds').select('id, online_payment_item_id, amount')
+    .in('online_payment_item_id', [...byItem.keys()]).eq('status', 'failed').not('booked_at', 'is', null);
+  const out: Record<string, { refundId: string; amount: number }[]> = {};
+  for (const f of (refunds ?? []) as Array<{ id: string; online_payment_item_id: string; amount: number }>) {
+    const reg = byItem.get(f.online_payment_item_id);
+    if (reg) (out[reg] ??= []).push({ refundId: f.id, amount: Number(f.amount) });
+  }
+  return out;
+}
+
 /** A child's share that couldn't land and is not refunded in full: the books say owing while the money is taken. */
 async function hasUnrecorded(regIds: string[]): Promise<boolean> {
   if (!regIds.length) return false;

@@ -31,7 +31,7 @@ const registrationsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to work the daily registration review queue',
       summary: 'Review pending players, confirm details, and keep the queue from backing up.',
-      keywords: ['daily review', 'to review', 'pending registrations', 'approve', 'decline', 'mark received', 'fee', 'review queue', 'division full', 'add to the waitlist instead', 'select several', 'bulk approve'],
+      keywords: ['daily review', 'to review', 'pending registrations', 'approve', 'decline', 'mark received', 'pay by card', 'pay link', 'fee', 'review queue', 'division full', 'add to the waitlist instead', 'select several', 'bulk approve'],
       searchText: 'division is full add to the waitlist instead one needs attention notice per sign-up several children one reference daily review queue to review pending registrations approve waitlist decline mark received fee owing payment search player name parent email status tabs duplicate confirm tick several rows approve promote waitlist mark received move division email one at a time decline withdraw',
       content: (
         <>
@@ -41,7 +41,7 @@ const registrationsHelp: HelpPageContent = {
             <li>Use the <strong>search box</strong> (player name or parent email) to find a specific family or spot duplicates.</li>
             <li>Check each row&apos;s player, guardian contact, and division before acting.</li>
             <li>Click <strong>Approve</strong>, <strong>Waitlist</strong>, or <strong>Decline</strong> on the row. If the division is full, Approve is refused with <em>Add to the waitlist instead</em>.</li>
-            <li>When a family pays, click <strong>Mark received</strong> on their Active row. Approving never creates a fee line; marking a fee received writes it into the season&apos;s book, and the Fee column shows what is owing and for how many days.</li>
+            <li>When a family pays by hand, click <strong>Mark received</strong> on their Active row. A card payment records itself; <strong>Email the pay link</strong> in the row menu (or the bar, for several) sends owing families their link. Approving never creates a fee line; marking a fee received writes it into the season&apos;s book, and the Fee column shows what is owing and for how many days.</li>
           </ol>
           <p>During peak registration, clear the pending list at least once a day so families know where they stand and the waitlist order stays clean.</p>
         </>
@@ -188,12 +188,12 @@ const registrationsHelp: HelpPageContent = {
       group: 'How registrations work',
       heading: 'Handling pending registrations day-to-day',
       summary: 'The page opens on To review; act on each row and take fees with Mark received.',
-      keywords: ['pending', 'to review', 'review', 'search', 'mark received', 'fee', 'add registration'],
-      searchText: 'to review pending review default tab search box player name parent email mark received fee owing days amber add registration walk-in row actions decline withdraw release the spot refunded kept by the club confirm finished season locked registrations locked mark received undo correct the price stay open',
+      keywords: ['pending', 'to review', 'review', 'search', 'mark received', 'fee', 'add registration', 'pay by card', 'pay link', 'email the pay link', 'online, card', 'refund to the card'],
+      searchText: 'pay by card card payment records itself email the pay link refund to the card to review pending review default tab search box player name parent email mark received fee owing days amber add registration walk-in row actions decline withdraw release the spot refunded kept by the club confirm finished season locked registrations locked mark received undo correct the price stay open',
       content: (
         <>
           <p>The Registrations page opens on the <strong>To review</strong> tab. Work the list by approving, waitlisting, or declining each row — declining opens a window that asks what happened to any money, and tells you whether the waitlist will move up on its own to fill the spot.</p>
-          <p>The <strong>search box</strong> finds a player or parent email across all tabs when a family contacts you directly. When a family pays, click <strong>Mark received</strong> on their row: it records the whole amount still owing, with the date and how. If you marked one by mistake, <strong>Undo: marked received by mistake</strong> takes it back; if the money is going back to the family, decline or withdraw the registration and choose <strong>Refunded</strong>. To add a player outside the public form, use <strong>Add registration</strong>.</p>
+          <p>The <strong>search box</strong> finds a player or parent email across all tabs when a family contacts you directly. When a family pays by hand, click <strong>Mark received</strong> on their row: it records the whole amount still owing, with the date and how. A family who pays by card from their status page needs nothing from you (the Fee cell reads <em>Online, card</em> with a receipt number), and <strong>Email the pay link</strong> in the row&rsquo;s menu sends a family who owes their link. If you marked one by mistake, <strong>Undo: marked received by mistake</strong> takes it back; if the money is going back to the family, decline or withdraw the registration and choose <strong>Refunded</strong>. To add a player outside the public form, use <strong>Add registration</strong>.</p>
           <p>When the season is finished (completed or archived), its registrations are locked: the row actions and <strong>Add registration</strong> are gone, and a line at the top says so. <strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong> and <strong>Email families</strong> stay, because fees still arrive after the last game.</p>
           <p>The full day-to-day workflow, including the Fee column, ending a registration, correcting a price and moving a child to another division, is in <em>Managing registrations day to day</em> in the House league guide.</p>
         </>

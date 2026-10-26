@@ -29,7 +29,8 @@ import { orgDayKey, tournamentToday } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
 import { leagueMailPay } from '@/lib/league-pay-view';
 import { sendLeaguePayLink, sendLeaguePriceRefundEmail } from '@/lib/online-payment-receipt';
-import { leagueCardShares, refundLeagueToCard } from '@/lib/online-payment-landing';
+import { leagueCardShares, refundLeagueToCard, resolveLeagueRefundAnotherWay } from '@/lib/online-payment-landing';
+import { returnedCardRefunds, unrecordedCardShares } from '@/lib/league-pay-facts';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 
 
@@ -165,21 +166,22 @@ async function refundChildToCard(
     return { refundedCents: 0, error: `A refund to the card is at most ${formatLeagueMoney(shares[0].leftCents / 100)}.`, pending: false };
   }
   let refundedCents = 0;
-  let pending = false;
+  const said = (why: string) => (refundedCents > 0 ? `Refunded ${formatLeagueMoney(refundedCents / 100)} to the card, then: ${why} Open it again to finish.` : why);
   for (const { share, amount } of plan) {
     try {
       const r = await refundLeagueToCard({
         itemId: share.itemId, amount, feeIncluded: end.feeIncluded && share.untouched, reason,
         partialReason: amount != null ? end.partialReason : null, note: end.note, actorId,
       });
-      if (r.state === 'failed') return { refundedCents, error: r.message ?? 'The refund didn’t go through, so nothing was changed. Try again.', pending };
-      if (r.state === 'pending') pending = true;
+      if (r.state === 'failed') return { refundedCents, error: said(r.message ?? 'The refund didn’t go through, so nothing was changed. Try again.'), pending: false };
+      // In flight (Stripe unreachable) or unbooked: the act that follows waits — it would read money still received.
+      if (!r.booked) return { refundedCents, error: said(r.message ?? 'The refund is on its way to the card. Finish once it shows on the row.'), pending: true };
       refundedCents += r.amountCents;
     } catch (e) {
-      return { refundedCents, error: e instanceof Error ? e.message : 'The refund didn’t go through. Try again.', pending };
+      return { refundedCents, error: said(e instanceof Error ? e.message : 'The refund didn’t go through. Try again.'), pending: false };
     }
   }
-  return { refundedCents, error: null, pending };
+  return { refundedCents, error: null, pending: false };
 }
 
 /** A refusal from the money writer or the ending, in the copy's words (§16). */
@@ -259,10 +261,44 @@ export const PATCH = withObservability(async (req: Request,
     return NextResponse.json({ registration: updated, sentTo: sent.sentTo });
   }
 
+  // ── a card payment that couldn't go on this registration (12b copy §7) ──────────
+  // The Needs-attention item's door: back to the card in full, the processing fee with it when the club declined (A2).
+  if (typeof body.refundCard === 'string') {
+    if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
+    if (!onlinePaymentsOn()) return NextResponse.json({ error: 'Online payments aren’t available right now. Refund it in Stripe.', code: 'card_refund' }, { status: 409 });
+    const stuck = (await unrecordedCardShares([regId]))[regId] ?? [];
+    const share = stuck.find(x => x.itemId === body.refundCard);
+    if (!share) return NextResponse.json({ error: 'That card payment is already refunded or recorded.', code: 'card_refund' }, { status: 409 });
+    try {
+      const r = await refundLeagueToCard({
+        itemId: share.itemId, amount: null, feeIncluded: reg.status === 'declined',
+        reason: reg.status === 'declined' ? 'club_ended' : 'family_left', partialReason: null, note: null, actorId: ctx!.user.id,
+      });
+      if (r.state === 'failed') return NextResponse.json({ error: r.message ?? 'The refund didn’t go through. Try again.', code: 'card_refund' }, { status: 409 });
+      const updated = await fetchReg(regId, seasonId);
+      return NextResponse.json({ registration: updated, refundedCents: r.amountCents });
+    } catch (e) {
+      return NextResponse.json({ error: e instanceof Error ? e.message : 'The refund didn’t go through. Try again.', code: 'card_refund' }, { status: 409 });
+    }
+  }
+
+  // ── a card refund that came back, sent another way (12b copy §7) ────────────────
+  if (typeof body.refundAnotherWay === 'string') {
+    if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
+    const returned = (await returnedCardRefunds([regId]))[regId] ?? [];
+    if (!returned.some(r => r.refundId === body.refundAnotherWay)) {
+      return NextResponse.json({ error: 'That refund is already recorded.', code: 'card_refund' }, { status: 409 });
+    }
+    await resolveLeagueRefundAnotherWay(body.refundAnotherWay, ctx!.user.id);
+    const updated = await fetchReg(regId, seasonId);
+    return NextResponse.json({ registration: updated });
+  }
+
   // ── money ────────────────────────────────────────────────────────────────────
   // ONE write, shared with the family record's Record a payment (Club Tier Stage 5c Part A; rebuilt 9b-2 — lib/league-fee-paid.ts):
   // received (a day and how), undo, a corrected price. The fiscal year's lock and the line live there. It stays open on a
   // finished season (Q16). An ending's money answer rides with its status (below); only a status-less body is a money press.
+  let priceRefundNotice: (() => void) | null = null;
   if ('money' in body && !('status' in body)) {
     if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
     const move: LeagueMoneyMove | null = readMoneyMove(body.money);
@@ -270,22 +306,33 @@ export const PATCH = withObservability(async (req: Request,
     // 12b (drawn b6): a lower price on a card-paid child refunds the difference to the card FIRST (so the correction
     // then finds nothing over the new price to refund by hand); a higher one emails the family a pay link for the rest.
     const cardPrice = move.kind === 'price' && (body.money as Record<string, unknown>).card === true;
+    let cardRefunded: string | null = null;
     if (cardPrice && move.kind === 'price') {
       const received = receivedOf((await loadRegistrationMoneyLines([regId])).get(regId) ?? []);
       const diff = Math.round((received - move.price) * 100) / 100;
       if (diff > 0) {
+        // The writer's own refusals, checked BEFORE the card is refunded (/review 2026-10-25): never money out for a
+        // correction that is then refused.
         if (!move.reason?.trim()) return moneyRefusal('reason', reg, season);
+        if (reg.status === 'declined' || reg.status === 'withdrawn') return moneyRefusal('ended', reg, season);
+        if (move.price < 0) return moneyRefusal('amount', reg, season);
+        if (move.price === registrationOwes(reg, season)) return moneyRefusal('same', reg, season);
         const refunded = await refundChildToCard(regId, ctx!.user.id, 'price_corrected', { amount: diff, feeIncluded: false, partialReason: move.reason, note: null });
         if (refunded.error) return NextResponse.json({ error: refunded.error, code: 'card_refund' }, { status: 409 });
-        void sendLeaguePriceRefundEmail(regId, {
-          amount: formatLeagueMoney(diff), from: formatLeagueMoney(registrationOwes(reg, season) ?? received), to: formatLeagueMoney(move.price), reason: move.reason,
-        });
+        cardRefunded = formatLeagueMoney(diff);
+        // Told only once the correction is written (below).
+        const notice = { amount: formatLeagueMoney(diff), from: formatLeagueMoney(registrationOwes(reg, season) ?? received), to: formatLeagueMoney(move.price), reason: move.reason };
+        priceRefundNotice = () => void sendLeaguePriceRefundEmail(regId, notice);
       }
     }
     const before = registrationOwes(reg, season);
     const wrote = await writeLeagueMoney(ctx!, { seasonId, regId }, move);
+    if (cardRefunded && ('refused' in wrote || 'refusal' in wrote)) {
+      return NextResponse.json({ error: `Refunded ${cardRefunded} to the card, but the price didn’t change. Open it again to finish.`, code: 'card_refund_then_changed' }, { status: 409 });
+    }
     if ('refused' in wrote) return moveRefused(wrote.refused);
     if ('refusal' in wrote) return moneyRefusal(wrote.refusal, reg, season);
+    priceRefundNotice?.();
     // A raised price while the club takes card payments: the family is emailed a pay link for the difference (b6).
     if (cardPrice && move.kind === 'price' && before != null && move.price > before) {
       await sendLeaguePayLink(regId, {
@@ -490,10 +537,8 @@ export const PATCH = withObservability(async (req: Request,
     if (cardEnd) {
       if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
       const refunded = await refundChildToCard(regId, ctx!.user.id, newStatus === 'declined' ? 'club_ended' : 'family_left', cardEnd);
-      if (refunded.error && refunded.refundedCents === 0) return NextResponse.json({ error: refunded.error, code: 'card_refund' }, { status: 409 });
-      if (refunded.pending && refunded.refundedCents === 0) {
-        return NextResponse.json({ error: 'The refund is on its way to the card. End the registration once it shows on the row.', code: 'card_refund_pending' }, { status: 409 });
-      }
+      // Any refusal, in flight or part-done: the ending waits, and the window says what already went back.
+      if (refunded.error) return NextResponse.json({ error: refunded.error, code: refunded.pending ? 'card_refund_pending' : 'card_refund' }, { status: 409 });
       cardMail = { answer: 'refunded', amount: refunded.refundedCents / 100, day: tournamentToday(), method: 'online_card' };
       const left = receivedOf((await loadRegistrationMoneyLines([regId])).get(regId) ?? []);
       body.money = left > 0 ? { answer: 'kept', reason: cardEnd.partialReason ?? 'Kept by the club' } : null;
@@ -505,6 +550,12 @@ export const PATCH = withObservability(async (req: Request,
     const ended = await endLeagueRegistration(ctx!, { seasonId, regId }, {
       status: newStatus, notes: adminNotes ?? null, promote: season.autoPromoteWaitlist, released, money: money ?? null,
     });
+    if (cardMail && ('refused' in ended || 'refusal' in ended)) {
+      return NextResponse.json({
+        error: `Refunded ${formatLeagueMoney(cardMail.amount)} to the card, but the registration changed meanwhile and didn’t end. Open it again to finish.`,
+        code: 'card_refund_then_changed',
+      }, { status: 409 });
+    }
     if ('refused' in ended) return moveRefused(ended.refused);
     if ('refusal' in ended) return moneyRefusal(ended.refusal, reg, season, true);
     // A family's ask to withdraw this child is answered: its Needs-attention notice clears now (it also clears on read).

@@ -95,9 +95,13 @@ export default function MoneyPage() {
 
   const lineRows: Row[] = [
     ...read.lines.map((l): Row => ({
-      key: l.id, day: l.day, player: l.player ?? '—',
+      key: l.kind === 'processing' ? `cost:${l.id}` : l.id, day: l.day, player: l.player ?? '—',
       what: l.kind === 'voided' ? W.what.voided : l.kind === 'refund' ? W.what.refund(l.refundWhy)
-        : l.kind === 'processing' ? W.what.processing((l.note ?? '').replace(/^(Payment processing|Processing fee refunded) · /, '')) : W.what.fee(l.priceKind),
+        : l.kind === 'processing'
+          ? ((l.note ?? '').startsWith('Processing fee refunded · ')
+            ? W.what.processingBack((l.note ?? '').replace(/^Processing fee refunded · /, ''))
+            : W.what.processing((l.note ?? '').replace(/^Payment processing · /, '')))
+          : W.what.fee(l.priceKind),
       // 12b copy §5: a card payment's receipt after its method ("Online, card · receipt 1043").
       how: l.receiptNo ? `${paymentMethodWord(l.method)} · ${REGS_WORDS.fee.receipt(l.receiptNo)}` : paymentMethodWord(l.method),
       amount: l.kind === 'refund' || l.kind === 'processing' ? money(-l.amount) : money(l.amount),
@@ -111,7 +115,8 @@ export default function MoneyPage() {
       how: '', amount: '—', value: null, tone: 'history',
     })),
   ].sort((a, b) => b.day.localeCompare(a.day));
-  const refundRows = lineRows.filter(r => r.tone === 'out');
+  // A refund, never a card cost (a processing line is money out too, but not a refund — 12b /review).
+  const refundRows = lineRows.filter(r => r.tone === 'out' && !r.key.startsWith('cost:'));
   const shown = tab === 'refunds' ? refundRows : lineRows;
 
   // The export is the tab you are on (copy §10), amounts as numbers so a treasurer can sum them.
