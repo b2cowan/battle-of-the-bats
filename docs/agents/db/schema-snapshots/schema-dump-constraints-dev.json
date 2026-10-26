@@ -10550,6 +10550,66 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "tournament_team_entry_adjustments",
+    "constraint_name": "tournament_team_entry_adjustments_created_by_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_team_entry_adjustments",
+    "constraint_name": "tournament_team_entry_adjustments_org_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_team_entry_adjustments",
+    "constraint_name": "tournament_team_entry_adjustments_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "tournament_team_entry_adjustments",
+    "constraint_name": "tournament_team_entry_adjustments_refund_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "refund_id",
+    "foreign_table": "online_payment_refunds",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_team_entry_adjustments",
+    "constraint_name": "tournament_team_entry_adjustments_team_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "tournament_team_entry_adjustments",
+    "constraint_name": "tournament_team_entry_adjustments_tournament_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "tournament_team_payments",
     "constraint_name": "tournament_team_payments_created_by_fk",
     "constraint_type": "FOREIGN KEY",

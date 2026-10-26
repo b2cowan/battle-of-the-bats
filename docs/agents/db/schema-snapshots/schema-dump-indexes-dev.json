@@ -1626,13 +1626,23 @@
   },
   {
     "tablename": "online_payment_refunds",
-    "indexname": "online_payment_refunds_stripe_key",
-    "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_stripe_key ON public.online_payment_refunds USING btree (stripe_refund_id) WHERE (stripe_refund_id IS NOT NULL)"
+    "indexname": "online_payment_refunds_stripe_child_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_stripe_child_key ON public.online_payment_refunds USING btree (stripe_refund_id, online_payment_item_id) NULLS NOT DISTINCT WHERE (stripe_refund_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_clearing_idx",
+    "indexdef": "CREATE INDEX online_payments_clearing_idx ON public.online_payments USING btree (org_id) WHERE (status = 'clearing'::text)"
   },
   {
     "tablename": "online_payments",
     "indexname": "online_payments_cost_entry_idx",
     "indexdef": "CREATE INDEX online_payments_cost_entry_idx ON public.online_payments USING btree (processing_cost_entry_id) WHERE (processing_cost_entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_dispute_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payments_dispute_key ON public.online_payments USING btree (stripe_dispute_id) WHERE (stripe_dispute_id IS NOT NULL)"
   },
   {
     "tablename": "online_payments",
@@ -1642,12 +1652,12 @@
   {
     "tablename": "online_payments",
     "indexname": "online_payments_one_open_per_signup",
-    "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_signup ON public.online_payments USING btree (season_id, signup_key) WHERE ((status = 'open'::text) AND (flow = 'league_signup'::text) AND (season_id IS NOT NULL))"
+    "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_signup ON public.online_payments USING btree (season_id, signup_key) WHERE ((status = ANY (ARRAY['open'::text, 'clearing'::text])) AND (flow = 'league_signup'::text) AND (season_id IS NOT NULL))"
   },
   {
     "tablename": "online_payments",
     "indexname": "online_payments_one_open_per_team",
-    "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_team ON public.online_payments USING btree (team_id) WHERE ((status = 'open'::text) AND (team_id IS NOT NULL))"
+    "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_team ON public.online_payments USING btree (team_id) WHERE ((status = ANY (ARRAY['open'::text, 'clearing'::text])) AND (team_id IS NOT NULL))"
   },
   {
     "tablename": "online_payments",
@@ -4988,6 +4998,36 @@
     "tablename": "tournament_roster_players",
     "indexname": "tournament_roster_players_source_player_id_idx",
     "indexdef": "CREATE INDEX tournament_roster_players_source_player_id_idx ON public.tournament_roster_players USING btree (source_player_id)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_created_by_idx",
+    "indexdef": "CREATE INDEX tournament_team_entry_adjustments_created_by_idx ON public.tournament_team_entry_adjustments USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_org_idx",
+    "indexdef": "CREATE INDEX tournament_team_entry_adjustments_org_idx ON public.tournament_team_entry_adjustments USING btree (org_id)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_team_entry_adjustments_pkey ON public.tournament_team_entry_adjustments USING btree (id)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_refund_key",
+    "indexdef": "CREATE UNIQUE INDEX tournament_team_entry_adjustments_refund_key ON public.tournament_team_entry_adjustments USING btree (refund_id)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_team_idx",
+    "indexdef": "CREATE INDEX tournament_team_entry_adjustments_team_idx ON public.tournament_team_entry_adjustments USING btree (team_id, created_at)"
+  },
+  {
+    "tablename": "tournament_team_entry_adjustments",
+    "indexname": "tournament_team_entry_adjustments_tournament_idx",
+    "indexdef": "CREATE INDEX tournament_team_entry_adjustments_tournament_idx ON public.tournament_team_entry_adjustments USING btree (tournament_id)"
   },
   {
     "tablename": "tournament_team_payments",

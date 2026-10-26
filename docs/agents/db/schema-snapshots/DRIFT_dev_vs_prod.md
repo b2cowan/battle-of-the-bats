@@ -2,18 +2,18 @@
 
 **Generated:** 2026-10-26 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 605 divergence(s)** across dev/prod.
+**⚠️ 648 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 20 | 0 | — |
-| Columns | 313 | 1 | 0 |
-| Indexes | 91 | 0 | 2 |
-| Constraints | 88 | 0 | — |
-| RLS / CHECK | 90 | 0 | 0 (RLS state) |
+| Tables | 21 | 0 | — |
+| Columns | 333 | 1 | 0 |
+| Indexes | 99 | 0 | 2 |
+| Constraints | 94 | 0 | — |
+| RLS / CHECK | 98 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (20)
+### Only in DEV (21)
 - `family_email_sends`
 - `league_placement_emails`
 - `league_player_ratings`
@@ -33,13 +33,14 @@
 - `tournament_fee_book_settings`
 - `tournament_fee_receipt_allocations`
 - `tournament_fee_receipts`
+- `tournament_team_entry_adjustments`
 - `tournament_team_payments`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (313)
+### Only in DEV (333)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -162,6 +163,7 @@ _none_
 - `online_payment_refunds.online_payment_item_id`
 - `online_payment_refunds.org_id`
 - `online_payment_refunds.origin`
+- `online_payment_refunds.part_refund`
 - `online_payment_refunds.partial_reason`
 - `online_payment_refunds.processing_cost_entry_id`
 - `online_payment_refunds.reason`
@@ -170,9 +172,11 @@ _none_
 - `online_payment_refunds.stripe_refund_id`
 - `online_payment_refunds.succeeded_at`
 - `online_payment_refunds.updated_at`
+- `online_payments.bank_last4`
 - `online_payments.base_amount`
 - `online_payments.card_brand`
 - `online_payments.card_last4`
+- `online_payments.clearing_at`
 - `online_payments.created_at`
 - `online_payments.currency`
 - `online_payments.description`
@@ -193,6 +197,10 @@ _none_
 - `online_payments.rail`
 - `online_payments.receipt_emailed_at`
 - `online_payments.receipt_no`
+- `online_payments.return_detail`
+- `online_payments.return_reason`
+- `online_payments.returned_at`
+- `online_payments.reversed_at`
 - `online_payments.scope`
 - `online_payments.season_id`
 - `online_payments.signup_key`
@@ -200,6 +208,7 @@ _none_
 - `online_payments.stripe_account_id`
 - `online_payments.stripe_charge_id`
 - `online_payments.stripe_checkout_session_id`
+- `online_payments.stripe_dispute_id`
 - `online_payments.stripe_payment_intent_id`
 - `online_payments.team_id`
 - `online_payments.total_amount`
@@ -320,6 +329,7 @@ _none_
 - `stripe_connect_events.processed_at`
 - `stripe_connect_events.received_at`
 - `stripe_connect_events.type`
+- `teams.entry_lowered`
 - `teams.fee_book_baseline`
 - `teams.fee_changed_by`
 - `teams.pay_link_sent_at`
@@ -336,6 +346,16 @@ _none_
 - `tournament_fee_receipts.id`
 - `tournament_fee_receipts.ordinal`
 - `tournament_fee_receipts.tournament_id`
+- `tournament_team_entry_adjustments.amount`
+- `tournament_team_entry_adjustments.created_at`
+- `tournament_team_entry_adjustments.created_by`
+- `tournament_team_entry_adjustments.id`
+- `tournament_team_entry_adjustments.org_id`
+- `tournament_team_entry_adjustments.origin`
+- `tournament_team_entry_adjustments.reason`
+- `tournament_team_entry_adjustments.refund_id`
+- `tournament_team_entry_adjustments.team_id`
+- `tournament_team_entry_adjustments.tournament_id`
 - `tournament_team_payments.amount`
 - `tournament_team_payments.created_at`
 - `tournament_team_payments.created_by`
@@ -347,6 +367,7 @@ _none_
 - `tournament_team_payments.ordinal`
 - `tournament_team_payments.org_id`
 - `tournament_team_payments.paid_on`
+- `tournament_team_payments.refunded_amount`
 - `tournament_team_payments.removed_at`
 - `tournament_team_payments.removed_by`
 - `tournament_team_payments.status`
@@ -361,7 +382,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (91)
+### Only in DEV (99)
 - `accounting_entries_league_registration_idx`
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
@@ -404,8 +425,10 @@ _none_
 - `online_payment_refunds_org_idx`
 - `online_payment_refunds_payment_idx`
 - `online_payment_refunds_pkey`
-- `online_payment_refunds_stripe_key`
+- `online_payment_refunds_stripe_child_key`
+- `online_payments_clearing_idx`
 - `online_payments_cost_entry_idx`
+- `online_payments_dispute_key`
 - `online_payments_intent_key`
 - `online_payments_one_open_per_signup`
 - `online_payments_one_open_per_team`
@@ -447,6 +470,12 @@ _none_
 - `tournament_fee_receipts_entry_id_key`
 - `tournament_fee_receipts_event_idx`
 - `tournament_fee_receipts_pkey`
+- `tournament_team_entry_adjustments_created_by_idx`
+- `tournament_team_entry_adjustments_org_idx`
+- `tournament_team_entry_adjustments_pkey`
+- `tournament_team_entry_adjustments_refund_key`
+- `tournament_team_entry_adjustments_team_idx`
+- `tournament_team_entry_adjustments_tournament_idx`
 - `tournament_team_payments_entry_idx`
 - `tournament_team_payments_online_payment_key`
 - `tournament_team_payments_org_idx`
@@ -466,7 +495,7 @@ _none_
   - prod: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (88)
+### Only in DEV (94)
 - `family_email_sends.family_email_sends_org_id_fkey`
 - `family_email_sends.family_email_sends_pkey`
 - `family_email_sends.family_email_sends_sent_by_fkey`
@@ -547,6 +576,12 @@ _none_
 - `tournament_fee_receipts.tournament_fee_receipts_entry_id_key`
 - `tournament_fee_receipts.tournament_fee_receipts_pkey`
 - `tournament_fee_receipts.tournament_fee_receipts_tournament_id_fkey`
+- `tournament_team_entry_adjustments.tournament_team_entry_adjustments_created_by_fk`
+- `tournament_team_entry_adjustments.tournament_team_entry_adjustments_org_fk`
+- `tournament_team_entry_adjustments.tournament_team_entry_adjustments_pkey`
+- `tournament_team_entry_adjustments.tournament_team_entry_adjustments_refund_fk`
+- `tournament_team_entry_adjustments.tournament_team_entry_adjustments_team_fk`
+- `tournament_team_entry_adjustments.tournament_team_entry_adjustments_tournament_fk`
 - `tournament_team_payments.tournament_team_payments_created_by_fk`
 - `tournament_team_payments.tournament_team_payments_entry_fk`
 - `tournament_team_payments.tournament_team_payments_online_payment_fk`
@@ -563,7 +598,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (90)
+### CHECK only in DEV (98)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -605,6 +640,7 @@ _none_
 - `online_payment_refunds.online_payment_refunds_status_chk`
 - `online_payment_refunds.online_payment_refunds_succeeded_chk`
 - `online_payments.online_payments_arithmetic_chk`
+- `online_payments.online_payments_bank_chk`
 - `online_payments.online_payments_base_chk`
 - `online_payments.online_payments_currency_chk`
 - `online_payments.online_payments_fee_chk`
@@ -613,7 +649,9 @@ _none_
 - `online_payments.online_payments_flow_shape_chk`
 - `online_payments.online_payments_paid_chk`
 - `online_payments.online_payments_rail_chk`
+- `online_payments.online_payments_return_reason_chk`
 - `online_payments.online_payments_scope_chk`
+- `online_payments.online_payments_state_chk`
 - `online_payments.online_payments_status_chk`
 - `online_payments.online_payments_total_chk`
 - `org_custom_domains.org_custom_domains_lowercase`
@@ -648,11 +686,16 @@ _none_
 - `rep_program_years.rep_program_years_born_years_check`
 - `rep_program_years.rep_program_years_tryout_description_length`
 - `rep_team_tryout_contacts.rep_team_tryout_contacts_email_check`
+- `teams.teams_entry_lowered_chk`
 - `tournament_fee_receipt_allocations.tournament_fee_receipt_allocations_amount_check`
+- `tournament_team_entry_adjustments.tournament_team_entry_adjustments_amount_chk`
+- `tournament_team_entry_adjustments.tournament_team_entry_adjustments_origin_chk`
+- `tournament_team_entry_adjustments.tournament_team_entry_adjustments_reason_chk`
 - `tournament_team_payments.tournament_team_payments_amount_chk`
 - `tournament_team_payments.tournament_team_payments_date_chk`
 - `tournament_team_payments.tournament_team_payments_label_chk`
 - `tournament_team_payments.tournament_team_payments_method_chk`
+- `tournament_team_payments.tournament_team_payments_refunded_amount_chk`
 - `tournament_team_payments.tournament_team_payments_status_chk`
 
 ### CHECK only in PROD (0)

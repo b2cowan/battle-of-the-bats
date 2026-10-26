@@ -31,7 +31,9 @@ const LAND_RPCS = ['online_payment_land', 'online_payment_league_land', 'online_
   // The house-league money-out line and its word are called from inside the landing's SQL only, never from app code.
   'online_payment_league_post_out', 'club_league_out_word',
   // 12b Part 5 (mig 375): a house-league refund's booking and its "sent another way".
-  'online_payment_league_refund_book', 'online_payment_league_refund_resolve'];
+  'online_payment_league_refund_book', 'online_payment_league_refund_resolve',
+  // 12c Part 1 (mig 382): a team's part refund, and a bank debit clearing or coming back.
+  'online_payment_team_refund_book', 'online_payment_clearing', 'online_payment_returned'];
 const MIG_12B_REFUNDS = 'supabase/migrations/375_a_house_league_refund_goes_back_to_the_card.sql';
 const fnBody = (sql: string, fn: string) => new RegExp(`FUNCTION public\\.${fn}\\([\\s\\S]*?\\nEND \\$\\$;`).exec(sql)?.[0] ?? '';
 

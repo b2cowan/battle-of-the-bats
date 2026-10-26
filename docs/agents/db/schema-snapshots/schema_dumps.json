@@ -8426,6 +8426,15 @@
         "column_default": null
       },
       {
+        "table_name": "online_payment_refunds",
+        "pos": 21,
+        "column_name": "part_refund",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
         "table_name": "online_payments",
         "pos": 1,
         "column_name": "id",
@@ -8735,6 +8744,69 @@
         "table_name": "online_payments",
         "pos": 35,
         "column_name": "signup_key",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 36,
+        "column_name": "bank_last4",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 37,
+        "column_name": "clearing_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 38,
+        "column_name": "returned_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 39,
+        "column_name": "return_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 40,
+        "column_name": "return_detail",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 41,
+        "column_name": "reversed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 42,
+        "column_name": "stripe_dispute_id",
         "data_type": "text",
         "udt_name": "text",
         "is_nullable": "YES",
@@ -23582,6 +23654,15 @@
         "column_default": null
       },
       {
+        "table_name": "teams",
+        "pos": 30,
+        "column_name": "entry_lowered",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "tournament_archives",
         "pos": 1,
         "column_name": "id",
@@ -24167,6 +24248,96 @@
         "column_default": null
       },
       {
+        "table_name": "tournament_team_entry_adjustments",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "pos": 2,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "pos": 3,
+        "column_name": "tournament_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "pos": 5,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "pos": 6,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "pos": 7,
+        "column_name": "origin",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'app'::text"
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "pos": 8,
+        "column_name": "refund_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "pos": 9,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "tournament_team_payments",
         "pos": 1,
         "column_name": "id",
@@ -24318,6 +24489,15 @@
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "tournament_team_payments",
+        "pos": 18,
+        "column_name": "refunded_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
       },
       {
         "table_name": "tournaments",
@@ -29986,6 +30166,41 @@
         "constraint_name": "tournament_roster_players_tournament_id_fkey"
       },
       {
+        "table_name": "tournament_team_entry_adjustments",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "tournament_team_entry_adjustments_created_by_fk"
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "tournament_team_entry_adjustments_org_fk"
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "column_name": "refund_id",
+        "foreign_table": "online_payment_refunds",
+        "foreign_column": "id",
+        "constraint_name": "tournament_team_entry_adjustments_refund_fk"
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "column_name": "team_id",
+        "foreign_table": "teams",
+        "foreign_column": "id",
+        "constraint_name": "tournament_team_entry_adjustments_team_fk"
+      },
+      {
+        "table_name": "tournament_team_entry_adjustments",
+        "column_name": "tournament_id",
+        "foreign_table": "tournaments",
+        "foreign_column": "id",
+        "constraint_name": "tournament_team_entry_adjustments_tournament_fk"
+      },
+      {
         "table_name": "tournament_team_payments",
         "column_name": "created_by",
         "foreign_table": null,
@@ -31726,13 +31941,23 @@
       },
       {
         "tablename": "online_payment_refunds",
-        "indexname": "online_payment_refunds_stripe_key",
-        "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_stripe_key ON public.online_payment_refunds USING btree (stripe_refund_id) WHERE (stripe_refund_id IS NOT NULL)"
+        "indexname": "online_payment_refunds_stripe_child_key",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_stripe_child_key ON public.online_payment_refunds USING btree (stripe_refund_id, online_payment_item_id) NULLS NOT DISTINCT WHERE (stripe_refund_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_clearing_idx",
+        "indexdef": "CREATE INDEX online_payments_clearing_idx ON public.online_payments USING btree (org_id) WHERE (status = 'clearing'::text)"
       },
       {
         "tablename": "online_payments",
         "indexname": "online_payments_cost_entry_idx",
         "indexdef": "CREATE INDEX online_payments_cost_entry_idx ON public.online_payments USING btree (processing_cost_entry_id) WHERE (processing_cost_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_dispute_key",
+        "indexdef": "CREATE UNIQUE INDEX online_payments_dispute_key ON public.online_payments USING btree (stripe_dispute_id) WHERE (stripe_dispute_id IS NOT NULL)"
       },
       {
         "tablename": "online_payments",
@@ -31742,12 +31967,12 @@
       {
         "tablename": "online_payments",
         "indexname": "online_payments_one_open_per_signup",
-        "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_signup ON public.online_payments USING btree (season_id, signup_key) WHERE ((status = 'open'::text) AND (flow = 'league_signup'::text) AND (season_id IS NOT NULL))"
+        "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_signup ON public.online_payments USING btree (season_id, signup_key) WHERE ((status = ANY (ARRAY['open'::text, 'clearing'::text])) AND (flow = 'league_signup'::text) AND (season_id IS NOT NULL))"
       },
       {
         "tablename": "online_payments",
         "indexname": "online_payments_one_open_per_team",
-        "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_team ON public.online_payments USING btree (team_id) WHERE ((status = 'open'::text) AND (team_id IS NOT NULL))"
+        "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_team ON public.online_payments USING btree (team_id) WHERE ((status = ANY (ARRAY['open'::text, 'clearing'::text])) AND (team_id IS NOT NULL))"
       },
       {
         "tablename": "online_payments",
@@ -35090,6 +35315,36 @@
         "indexdef": "CREATE INDEX tournament_roster_players_source_player_id_idx ON public.tournament_roster_players USING btree (source_player_id)"
       },
       {
+        "tablename": "tournament_team_entry_adjustments",
+        "indexname": "tournament_team_entry_adjustments_created_by_idx",
+        "indexdef": "CREATE INDEX tournament_team_entry_adjustments_created_by_idx ON public.tournament_team_entry_adjustments USING btree (created_by) WHERE (created_by IS NOT NULL)"
+      },
+      {
+        "tablename": "tournament_team_entry_adjustments",
+        "indexname": "tournament_team_entry_adjustments_org_idx",
+        "indexdef": "CREATE INDEX tournament_team_entry_adjustments_org_idx ON public.tournament_team_entry_adjustments USING btree (org_id)"
+      },
+      {
+        "tablename": "tournament_team_entry_adjustments",
+        "indexname": "tournament_team_entry_adjustments_pkey",
+        "indexdef": "CREATE UNIQUE INDEX tournament_team_entry_adjustments_pkey ON public.tournament_team_entry_adjustments USING btree (id)"
+      },
+      {
+        "tablename": "tournament_team_entry_adjustments",
+        "indexname": "tournament_team_entry_adjustments_refund_key",
+        "indexdef": "CREATE UNIQUE INDEX tournament_team_entry_adjustments_refund_key ON public.tournament_team_entry_adjustments USING btree (refund_id)"
+      },
+      {
+        "tablename": "tournament_team_entry_adjustments",
+        "indexname": "tournament_team_entry_adjustments_team_idx",
+        "indexdef": "CREATE INDEX tournament_team_entry_adjustments_team_idx ON public.tournament_team_entry_adjustments USING btree (team_id, created_at)"
+      },
+      {
+        "tablename": "tournament_team_entry_adjustments",
+        "indexname": "tournament_team_entry_adjustments_tournament_idx",
+        "indexdef": "CREATE INDEX tournament_team_entry_adjustments_tournament_idx ON public.tournament_team_entry_adjustments USING btree (tournament_id)"
+      },
+      {
         "tablename": "tournament_team_payments",
         "indexname": "tournament_team_payments_entry_idx",
         "indexdef": "CREATE INDEX tournament_team_payments_entry_idx ON public.tournament_team_payments USING btree (entry_id) WHERE (entry_id IS NOT NULL)"
@@ -36472,6 +36727,12 @@
       {
         "kind": "CHECK",
         "table_name": "online_payments",
+        "detail": "online_payments_bank_chk",
+        "check_clause": "(((rail = 'bank_debit'::text) OR ((bank_last4 IS NULL) AND (clearing_at IS NULL) AND (returned_at IS NULL) AND (stripe_dispute_id IS NULL))) AND ((bank_last4 IS NULL) OR (bank_last4 ~ '^[0-9]{3,4}$'::text)) AND ((return_detail IS NULL) OR (char_length(return_detail) <= 200)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
         "detail": "online_payments_base_chk",
         "check_clause": "((base_amount > (0)::numeric) AND (base_amount <= (1000000)::numeric))"
       },
@@ -36509,13 +36770,19 @@
         "kind": "CHECK",
         "table_name": "online_payments",
         "detail": "online_payments_paid_chk",
-        "check_clause": "((status <> ALL (ARRAY['paid'::text, 'partly_refunded'::text, 'refunded'::text])) OR ((paid_at IS NOT NULL) AND (stripe_payment_intent_id IS NOT NULL) AND (receipt_no IS NOT NULL)))"
+        "check_clause": "((status <> ALL (ARRAY['paid'::text, 'partly_refunded'::text, 'refunded'::text, 'reversed'::text])) OR ((paid_at IS NOT NULL) AND (stripe_payment_intent_id IS NOT NULL) AND (receipt_no IS NOT NULL)))"
       },
       {
         "kind": "CHECK",
         "table_name": "online_payments",
         "detail": "online_payments_rail_chk",
-        "check_clause": "(rail = 'card'::text)"
+        "check_clause": "(rail = ANY (ARRAY['card'::text, 'bank_debit'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_return_reason_chk",
+        "check_clause": "((return_reason IS NULL) OR (return_reason = ANY (ARRAY['insufficient_funds'::text, 'account_closed'::text, 'invalid_account'::text, 'not_authorized'::text])))"
       },
       {
         "kind": "CHECK",
@@ -36526,8 +36793,14 @@
       {
         "kind": "CHECK",
         "table_name": "online_payments",
+        "detail": "online_payments_state_chk",
+        "check_clause": "(((status <> 'clearing'::text) OR ((rail = 'bank_debit'::text) AND (clearing_at IS NOT NULL) AND (landed_at IS NULL))) AND ((status <> 'returned'::text) OR ((returned_at IS NOT NULL) AND (landed_at IS NULL))) AND ((status <> 'reversed'::text) OR (reversed_at IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
         "detail": "online_payments_status_chk",
-        "check_clause": "(status = ANY (ARRAY['open'::text, 'paid'::text, 'expired'::text, 'partly_refunded'::text, 'refunded'::text]))"
+        "check_clause": "(status = ANY (ARRAY['open'::text, 'clearing'::text, 'paid'::text, 'expired'::text, 'returned'::text, 'partly_refunded'::text, 'refunded'::text, 'reversed'::text]))"
       },
       {
         "kind": "CHECK",
@@ -39182,6 +39455,12 @@
         "check_clause": "(check_in_status = ANY (ARRAY['not_arrived'::text, 'checked_in'::text, 'no_show'::text]))"
       },
       {
+        "kind": "CHECK",
+        "table_name": "teams",
+        "detail": "teams_entry_lowered_chk",
+        "check_clause": "(entry_lowered >= (0)::numeric)"
+      },
+      {
         "kind": "RLS",
         "table_name": "teams",
         "detail": "ENABLED",
@@ -39255,6 +39534,30 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "tournament_team_entry_adjustments",
+        "detail": "tournament_team_entry_adjustments_amount_chk",
+        "check_clause": "((amount > (0)::numeric) AND (amount <= (1000000)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "tournament_team_entry_adjustments",
+        "detail": "tournament_team_entry_adjustments_origin_chk",
+        "check_clause": "(origin = ANY (ARRAY['app'::text, 'stripe_dashboard'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "tournament_team_entry_adjustments",
+        "detail": "tournament_team_entry_adjustments_reason_chk",
+        "check_clause": "(((reason IS NULL) OR ((char_length(reason) >= 1) AND (char_length(reason) <= 500))) AND ((origin <> 'app'::text) OR (reason IS NOT NULL)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "tournament_team_entry_adjustments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "tournament_team_payments",
         "detail": "tournament_team_payments_amount_chk",
         "check_clause": "((amount > (0)::numeric) AND (amount <= (1000000)::numeric))"
@@ -39275,7 +39578,13 @@
         "kind": "CHECK",
         "table_name": "tournament_team_payments",
         "detail": "tournament_team_payments_method_chk",
-        "check_clause": "((method IS NULL) OR (method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text, 'online_card'::text])))"
+        "check_clause": "((method IS NULL) OR (method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text, 'online_card'::text, 'online_bank'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "tournament_team_payments",
+        "detail": "tournament_team_payments_refunded_amount_chk",
+        "check_clause": "((refunded_amount >= (0)::numeric) AND (refunded_amount <= amount))"
       },
       {
         "kind": "CHECK",
