@@ -3,7 +3,7 @@ import type Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureError } from '@/lib/observability';
 import { connectWebhookSecret, constructConnectEvent } from '@/lib/stripe-connect';
-import { applyRefundEvent, expireCheckoutSession, landCheckoutSession } from '@/lib/online-payment-landing';
+import { applyRefundEvent, expireCheckoutSession, landCheckoutSession, returnDebit } from '@/lib/online-payment-landing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,8 +49,14 @@ export const POST = withObservability(async (req: Request) => {
     switch (event.type) {
       case 'checkout.session.completed':
       case 'checkout.session.async_payment_succeeded': {
-        const session = event.data.object as Stripe.Checkout.Session;
-        if (session.payment_status === 'paid') await landCheckoutSession(account, session.id);
+        // A card lands here (paid). 12c: a bank debit's "completed" arrives unpaid and records it clearing; its
+        // async_payment_succeeded lands it. The landing re-reads the session itself, so either order is one result.
+        await landCheckoutSession(account, (event.data.object as Stripe.Checkout.Session).id);
+        break;
+      }
+      case 'checkout.session.async_payment_failed': {
+        // 12c: the bank returned a debit before it settled: nothing taken, the family told.
+        await returnDebit(account, (event.data.object as Stripe.Checkout.Session).id);
         break;
       }
       case 'checkout.session.expired': {

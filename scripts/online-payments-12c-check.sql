@@ -256,6 +256,24 @@ BEGIN
   IF v_err IS DISTINCT FROM 'A payment for a child in this sign-up is already open' THEN
     RAISE EXCEPTION 'FAIL T16: a child on a clearing debit was put in a second payment (%)', v_err; END IF;
   IF league_reg_received(v_reg) <> 0 THEN RAISE EXCEPTION 'FAIL T16: clearing counted as received'; END IF;
+  -- T16b · (mig 386) a sister NOT on the clearing debit still pays, under the same sign-up key; a second OPEN page for the
+  -- sign-up is still refused.
+  INSERT INTO league_registrations(org_id, season_id, player_first_name, player_last_name, guardian_first_name, guardian_last_name,
+    guardian_email, status, fee_amount)
+  VALUES (v_org, v_season, 'Rose', 'Grant', 'P', 'G', 'g@example.invalid', 'active', 150) RETURNING id INTO v_op2;
+  v_op := gen_random_uuid();
+  PERFORM online_payment_league_open(v_op, v_org, 'acct_check12c', v_season, 'grant-signup', 'Rose', 'g@example.invalid',
+    5.25, 'family', 0.035, 1.50, false, 'cs_check12c_' || gen_random_uuid(),
+    jsonb_build_array(jsonb_build_object('registrationId', v_op2, 'description', 'Rose Grant · U7', 'amount', 150, 'feeShare', 5.25)));
+  IF (SELECT status FROM online_payments WHERE id = v_op) <> 'open' THEN RAISE EXCEPTION 'FAIL T16b: a sibling off the debit could not pay'; END IF;
+  v_ok := false;
+  BEGIN
+    PERFORM online_payment_league_open(gen_random_uuid(), v_org, 'acct_check12c', v_season, 'grant-signup', 'Rose', 'g@example.invalid',
+      5.25, 'family', 0.035, 1.50, false, 'cs_check12c_' || gen_random_uuid(),
+      jsonb_build_array(jsonb_build_object('registrationId', v_op2, 'description', 'Rose Grant · U7', 'amount', 150, 'feeShare', 5.25)));
+  EXCEPTION WHEN others THEN v_ok := true; END;
+  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T16b: two open pages for one sign-up'; END IF;
+  UPDATE online_payments SET status = 'expired' WHERE id = v_op;
   v_res := online_payment_league_land(v_lop, now(), 'pi_c12_lbank', 'ch_c12_lbank', NULL, NULL);
   IF league_reg_received(v_reg) <> 150 OR league_reg_received(v_reg2) <> 150
      OR (SELECT count(*) FROM accounting_entries e JOIN online_payment_items i ON i.entry_id = e.id

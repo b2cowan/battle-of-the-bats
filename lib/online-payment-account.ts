@@ -32,6 +32,8 @@ export interface PayoutsAccountFacts {
   feePayer: OnlineFeePayer;
   refundPolicy: string | null;
   disconnectedAt: string | null;
+  /** 12c (mig 386): Stripe's `acss_debit_payments` capability — a Canadian pre-authorized debit. `null` = not read yet. */
+  bankDebit?: CardPaymentsStatus | null;
 }
 
 /**
@@ -66,6 +68,11 @@ export function takesPayments(a: PayoutsAccountFacts | null): boolean {
   return !!a && !a.disconnectedAt && a.cardPayments === 'active';
 }
 
+/** 12c: the pay block offers bank debit beside the card only while the account takes payments AND bank debit is on. */
+export function takesBankDebit(a: PayoutsAccountFacts | null): boolean {
+  return takesPayments(a) && a!.bankDebit === 'active';
+}
+
 /** The Needs attention item is up exactly while the card says "needs attention"; it clears itself when that ends. */
 export function payoutsNeedAttention(a: PayoutsAccountFacts | null): boolean {
   return payoutsState(a) === 'needs_attention';
@@ -73,7 +80,7 @@ export function payoutsNeedAttention(a: PayoutsAccountFacts | null): boolean {
 
 /** The columns every reader of the account selects, and their mapping back to the facts the rule takes. */
 export const PAYOUTS_ACCOUNT_COLUMNS =
-  'org_id, stripe_account_id, livemode, card_payments_status, card_payments_reason, onboarding_finished_at, requirements_due, requirements_deadline, fee_payer, refund_policy, disconnected_at';
+  'org_id, stripe_account_id, livemode, card_payments_status, card_payments_reason, onboarding_finished_at, requirements_due, requirements_deadline, fee_payer, refund_policy, disconnected_at, bank_debit_status';
 
 export interface PayoutsAccountRow {
   org_id: string;
@@ -87,6 +94,7 @@ export interface PayoutsAccountRow {
   fee_payer: OnlineFeePayer;
   refund_policy: string | null;
   disconnected_at: string | null;
+  bank_debit_status?: CardPaymentsStatus | null;
 }
 
 export function factsFromRow(r: PayoutsAccountRow | null | undefined): PayoutsAccountFacts | null {
@@ -102,6 +110,7 @@ export function factsFromRow(r: PayoutsAccountRow | null | undefined): PayoutsAc
     feePayer: r.fee_payer,
     refundPolicy: r.refund_policy,
     disconnectedAt: r.disconnected_at,
+    bankDebit: r.bank_debit_status ?? null,
   };
 }
 
@@ -118,6 +127,7 @@ export interface StripeAccountLike {
     merchant?: {
       capabilities?: {
         card_payments?: { status: string; status_details?: { code: string }[] | null } | null;
+        acss_debit_payments?: { status: string; status_details?: { code: string }[] | null } | null;
       } | null;
     } | null;
   } | null;
@@ -149,6 +159,10 @@ export interface StripeAccountLike {
 export function factsFromStripe(acct: StripeAccountLike) {
   const card = acct.configuration?.merchant?.capabilities?.card_payments ?? null;
   const status = card && (CARD_PAYMENTS_STATUSES as readonly string[]).includes(card.status) ? card.status as CardPaymentsStatus : null;
+  // 12c: bank debit, read the same way (only when the merchant part came back, so a short read never switches it off).
+  const merchant = acct.configuration?.merchant ?? null;
+  const bank = merchant?.capabilities?.acss_debit_payments ?? null;
+  const bankStatus = bank && (CARD_PAYMENTS_STATUSES as readonly string[]).includes(bank.status) ? bank.status as CardPaymentsStatus : null;
   const requirements = acct.requirements ?? null;
   const fromClub = (requirements?.entries ?? []).filter(e => e.awaiting_action_from === 'user');
   const dueNow = fromClub.filter(e => e.minimum_deadline.status === 'currently_due' || e.minimum_deadline.status === 'past_due');
@@ -163,6 +177,7 @@ export function factsFromStripe(acct: StripeAccountLike) {
         card_payments_status: status,
         card_payments_reason: status === 'active' ? null : card.status_details?.[0]?.code ?? null,
       } : {}),
+      ...(merchant?.capabilities ? { bank_debit_status: bankStatus } : {}),
       ...(requirements ? {
         requirements_due: [...new Set(dueNow.map(e => e.description))].sort(),
         requirements_deadline: deadline?.status === 'currently_due' && deadline.time ? new Date(deadline.time).toISOString() : null,
@@ -170,6 +185,8 @@ export function factsFromStripe(acct: StripeAccountLike) {
     },
     onboardingFinished: status !== null && requirements !== null && !signUpOpen,
     closed: acct.closed === true,
+    /** Card payments are on and bank debit was never asked for: the sync asks Stripe for it (12c). */
+    bankDebitToRequest: status === 'active' && !!merchant?.capabilities && !bank,
   };
 }
 

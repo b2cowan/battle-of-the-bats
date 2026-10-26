@@ -12,7 +12,8 @@ import { toCents } from './online-payment-fee';
  * that sign-up. `null` = the club is not taking card payments: the page keeps today's words, word for word, and draws no
  * button (A6).
  */
-export type LeaguePayKind = 'owing' | 'paid' | 'ended' | 'nothing' | 'refused';
+/** 12c: 'clearing' — every child still owing is on a bank debit on its way: no Pay buttons, the spots held (ask 6). */
+export type LeaguePayKind = 'owing' | 'paid' | 'ended' | 'nothing' | 'refused' | 'clearing';
 
 export interface LeaguePayLine { childName: string; divisionName: string; owingCents: number; feeCents: number; part: boolean }
 
@@ -28,6 +29,22 @@ export interface LeaguePayReceipt {
   paidAt: string | null;
   refunded: boolean;
   test: boolean;
+  /** 12c: a bank debit's receipt reads the account and the two dates. */
+  bank: boolean;
+  bankLast4: string | null;
+  startedAt: string | null;
+}
+
+/** 12c: a bank debit as the family's block says it (clearing, or returned before it cleared). */
+export interface LeaguePayDebit {
+  id: string;
+  state: 'clearing' | 'returned';
+  totalCents: number;
+  last4: string | null;
+  startedAt: string | null;
+  returnedAt: string | null;
+  reason: string | null;
+  childFirsts: string[];
 }
 
 export interface LeaguePayView {
@@ -46,6 +63,14 @@ export interface LeaguePayView {
   baseCents: number;
   feeCents: number;
   totalCents: number;
+  /** 12c: the same total by bank debit, while the club takes it; null otherwise. */
+  bankFeeCents: number | null;
+  bankTotalCents: number | null;
+  /** 12c: the children on a clearing debit ("{child} · {division} · {fee} clearing"), the debits clearing, the one returned. */
+  clearingLines: { childName: string; divisionName: string; cents: number }[];
+  clearing: LeaguePayDebit[];
+  returned: LeaguePayDebit | null;
+  clubContact: string | null;
   receipts: LeaguePayReceipt[];
 }
 
@@ -57,7 +82,7 @@ async function receiptsFor(regIds: string[]): Promise<LeaguePayReceipt[]> {
   if (!ids.length) return [];
   const [{ data: pays }, { data: lines }] = await Promise.all([
     supabaseAdmin.from('online_payments')
-      .select('id, receipt_no, base_amount, fee_amount, total_amount, fee_payer, card_brand, card_last4, paid_at, status, livemode')
+      .select('id, receipt_no, base_amount, fee_amount, total_amount, fee_payer, card_brand, card_last4, paid_at, status, livemode, rail, bank_last4, clearing_at')
       .in('id', ids).in('status', ['paid', 'partly_refunded', 'refunded']).order('paid_at', { ascending: false }),
     supabaseAdmin.from('online_payment_items').select('online_payment_id, description, amount').in('online_payment_id', ids).order('created_at'),
   ]);
@@ -79,6 +104,9 @@ async function receiptsFor(regIds: string[]): Promise<LeaguePayReceipt[]> {
     paidAt: (p.paid_at as string | null) ?? null,
     refunded: p.status === 'refunded',
     test: !p.livemode,
+    bank: p.rail === 'bank_debit',
+    bankLast4: (p.bank_last4 as string | null) ?? null,
+    startedAt: (p.clearing_at as string | null) ?? null,
   }));
 }
 
@@ -92,6 +120,7 @@ function kindOf(f: LeaguePayFacts): LeaguePayKind | null {
     case 'already_paid': return 'paid';
     case 'not_accepted':
     case 'nothing_owed': return 'nothing';
+    case 'clearing': return 'clearing';
   }
 }
 
@@ -118,6 +147,13 @@ export function viewFromFacts(f: LeaguePayFacts, token: string, receipts: League
     baseCents: kind === 'owing' ? f.owingCents : 0,
     feeCents: kind === 'owing' && f.fee ? f.fee.feeCents : 0,
     totalCents: kind === 'owing' && f.fee ? f.fee.totalCents : 0,
+    bankFeeCents: kind === 'owing' && f.bankFee ? f.bankFee.feeCents : null,
+    bankTotalCents: kind === 'owing' && f.bankFee ? f.bankFee.totalCents : null,
+    clearingLines: f.children.filter(c => c.clearingCents > 0)
+      .map(c => ({ childName: `${c.firstName} ${c.lastName}`, divisionName: c.divisionName, cents: c.clearingCents })),
+    clearing: f.clearing,
+    returned: kind === 'owing' ? f.returned : null,
+    clubContact: contactEmail,
     receipts,
   };
 }
@@ -139,6 +175,8 @@ export async function leagueMailPay(registrationId: string): Promise<LeagueMailP
 export async function buildLeaguePayView(registrationId: string, contactEmail: string | null): Promise<LeaguePayView | null> {
   const token = leaguePayToken(registrationId);
   if (!token) return null;
+  // 12c: a bank debit still clearing past Stripe's window is asked of Stripe first (loaded late: the landing reads this file).
+  await (await import('./bank-debit-overdue')).settleOverdueDebits({ registrationId });
   const f = await loadLeaguePayFacts(registrationId);
   if (!f) return null;
   const receipts = await receiptsFor(f.children.map(c => c.registrationId));

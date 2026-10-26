@@ -59,14 +59,18 @@ export function refundBlockFoot(i: RefundBlockInput): string[] {
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/** The block as the warm envelope's panel (label column, value column), then its foot lines as paragraphs. */
-export function refundBlockHtml(i: RefundBlockInput): string {
+/** Label/value rows as the warm envelope's panel (label column, value column): the refund block's, and 12c's debit email. */
+export function emailFactsPanel(rows: ReadonlyArray<readonly [string, string]>): string {
   const W = WARM_EMAIL;
   const cell = `padding:3px 0;font-family:${W.font};font-size:15px;line-height:1.5;vertical-align:top;`;
-  const rows = refundBlockRows(i).map(([label, value]) =>
+  const trs = rows.map(([label, value]) =>
     `<tr><td style="${cell}color:${W.secondary};padding-right:16px;white-space:nowrap;">${esc(label)}</td>`
     + `<td style="${cell}color:${W.ink};font-weight:700;">${esc(value)}</td></tr>`).join('');
-  const table = `<div style="${warmPanelStyle('olive', { padding: '14px 18px', margin: '14px 0' })}">`
-    + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">${rows}</table></div>`;
-  return [table, ...refundBlockFoot(i).map(l => `<p style="${WARM_EMAIL_STYLE.paragraph}">${esc(l)}</p>`)].join('\n');
+  return `<div style="${warmPanelStyle('olive', { padding: '14px 18px', margin: '14px 0' })}">`
+    + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">${trs}</table></div>`;
+}
+
+/** The block as the warm envelope's panel, then its foot lines as paragraphs. */
+export function refundBlockHtml(i: RefundBlockInput): string {
+  return [emailFactsPanel(refundBlockRows(i)), ...refundBlockFoot(i).map(l => `<p style="${WARM_EMAIL_STYLE.paragraph}">${esc(l)}</p>`)].join('\n');
 }

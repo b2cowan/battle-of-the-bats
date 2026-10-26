@@ -18,6 +18,8 @@ export type PayScope = 'deposit' | 'balance' | 'full';
 export interface PayChoice {
   scope: PayScope;
   fee: OnlineFee;
+  /** 12c: the same part by bank debit (its own rate), while the club's account takes bank debit; null otherwise. */
+  bankFee: OnlineFee | null;
   /** When this part is due, from the fee schedule. */
   dueDate: string | null;
 }
@@ -28,33 +30,41 @@ export interface PayOptions {
   preselected: PayScope;
   /** How much less the payer pays in fees by paying in full rather than deposit + balance; null when not shown. */
   savingCents: number | null;
+  /** 12c: the same saving by bank debit (words §2.5); null when bank debit is not offered or not shown. */
+  savingBankCents: number | null;
 }
 
 export function payOptions(
   paid: { totalPaid: number | null; depositPaid: number | null },
   fee: FeeDetails,
   feePayer: OnlineFeePayer,
+  bank = false,
 ): PayOptions | null {
   const totalCents = fee.totalFeeAmount ? toCents(fee.totalFeeAmount) : 0;
   const paidCents = toCents(paid.totalPaid ?? 0);
   if (totalCents <= 0 || paidCents >= totalCents) return null;
   const left = totalCents - paidCents;
+  const choice = (scope: PayScope, cents: number, dueDate: string | null): PayChoice =>
+    ({ scope, fee: onlineFee(cents, feePayer), bankFee: bank ? onlineFee(cents, feePayer, 'bankDebit') : null, dueDate });
 
   if (paidCents > 0) {
-    return { choices: [{ scope: 'balance', fee: onlineFee(left, feePayer), dueDate: fee.totalFeeDueDate }], preselected: 'balance', savingCents: null };
+    return { choices: [choice('balance', left, fee.totalFeeDueDate)], preselected: 'balance', savingCents: null, savingBankCents: null };
   }
 
   const depositCents = fee.depositAmount ? toCents(fee.depositAmount) : 0;
-  const full: PayChoice = { scope: 'full', fee: onlineFee(totalCents, feePayer), dueDate: fee.totalFeeDueDate };
+  const full = choice('full', totalCents, fee.totalFeeDueDate);
   if (depositCents <= 0 || depositCents >= totalCents) {
-    return { choices: [full], preselected: 'full', savingCents: null };
+    return { choices: [full], preselected: 'full', savingCents: null, savingBankCents: null };
   }
-  const deposit: PayChoice = { scope: 'deposit', fee: onlineFee(depositCents, feePayer), dueDate: fee.depositDueDate };
+  const deposit = choice('deposit', depositCents, fee.depositDueDate);
   const later = onlineFee(totalCents - depositCents, feePayer);
   const saving = deposit.fee.feeCents + later.feeCents - full.fee.feeCents;
+  const laterBank = bank ? onlineFee(totalCents - depositCents, feePayer, 'bankDebit') : null;
+  const savingBank = deposit.bankFee && full.bankFee && laterBank ? deposit.bankFee.feeCents + laterBank.feeCents - full.bankFee.feeCents : 0;
   return {
     choices: [deposit, full],
     preselected: 'deposit',
     savingCents: feePayer === 'family' && saving > 0 ? saving : null,
+    savingBankCents: feePayer === 'family' && savingBank > 0 ? savingBank : null,
   };
 }

@@ -8,7 +8,7 @@ import { loadTeamPayFacts } from './team-pay-facts';
 import { refusalMessage } from './team-pay-view';
 import { teamPayUrl } from './team-pay-link';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
-import { ONLINE_EMAIL_WORDS as E, REFUND_BLOCK_WORDS, SCOPE_LINE, SCOPE_WORDS, cardLabel, money, receiptLabel } from './online-payment-words';
+import { BANK_DEBIT_EMAIL_WORDS as D, ONLINE_EMAIL_WORDS as E, REFUND_BLOCK_WORDS, SCOPE_LINE, SCOPE_WORDS, cardLabel, money, receiptLabel } from './online-payment-words';
 import { refundBlockHtml, type RefundBlockInput } from './online-refund-block';
 import { registrationReference } from './utils';
 import { stampRefundEmailed } from './online-refund-email';
@@ -29,10 +29,23 @@ type OnlineForEmail = {
   id: string; org_id: string; flow: 'tournament_team' | 'league_signup'; team_id: string | null; scope: 'deposit' | 'balance' | 'full'; payer_email: string | null;
   base_amount: number; fee_amount: number; total_amount: number; fee_payer: 'family' | 'club'; livemode: boolean;
   card_brand: string | null; card_last4: string | null; receipt_no: number | null; paid_on: string | null;
-  rail: 'card' | 'bank_debit'; bank_last4: string | null;
+  rail: 'card' | 'bank_debit'; bank_last4: string | null; clearing_at: string | null;
 };
 const ONLINE_EMAIL_COLUMNS =
-  'id, org_id, flow, team_id, scope, payer_email, base_amount, fee_amount, total_amount, fee_payer, livemode, card_brand, card_last4, receipt_no, paid_on, rail, bank_last4';
+  'id, org_id, flow, team_id, scope, payer_email, base_amount, fee_amount, total_amount, fee_payer, livemode, card_brand, card_last4, receipt_no, paid_on, rail, bank_last4, clearing_at';
+
+/**
+ * The receipt's total line: the card, or (12c) the bank debit's account and the day it cleared, then the two dates.
+ */
+function totalLines(op: OnlineForEmail): string[] {
+  const total = money(Number(op.total_amount));
+  const paidOn = formatStoredDate(op.paid_on);
+  if (op.rail !== 'bank_debit') return [warmEmailParagraph(escapeHtml(E.receiptTotal(total, cardLabel(op.card_brand, op.card_last4), paidOn)))];
+  return [
+    warmEmailParagraph(escapeHtml(D.receiptTotalBank(total, op.bank_last4, paidOn))),
+    op.clearing_at ? warmEmailParagraph(escapeHtml(D.receiptBankDates(formatStoredDate(op.clearing_at), paidOn))) : '',
+  ];
+}
 
 /** Claims the receipt (so two webhook deliveries send one), then sends it; a failed send releases the claim for a retry. */
 export async function sendOnlineReceiptOnce(onlinePaymentId: string): Promise<void> {
@@ -83,7 +96,7 @@ async function sendLeagueReceipt(op: OnlineForEmail): Promise<void> {
       return warmEmailParagraph(escapeHtml(LW.receiptEmailLine(child ?? r.description, facts.season.name, division ?? '', money(Number(r.amount)))));
     }),
     op.fee_payer === 'family' && Number(op.fee_amount) > 0 ? warmEmailParagraph(escapeHtml(E.receiptFee(money(Number(op.fee_amount))))) : '',
-    warmEmailParagraph(escapeHtml(E.receiptTotal(money(Number(op.total_amount)), cardLabel(op.card_brand, op.card_last4), formatStoredDate(op.paid_on)))),
+    ...totalLines(op),
     ...facts.children.filter(c => c.status === 'waitlisted').map(c => warmEmailParagraph(escapeHtml(LW.receiptWaitlisted(`${c.firstName} ${c.lastName}`)))),
     link ? warmEmailButton(E.viewReceipt, link) : '',
     warmEmailSmall(escapeHtml(E.questions(facts.org.name, face?.contact ?? null))),
@@ -109,7 +122,7 @@ async function sendReceipt(op: OnlineForEmail): Promise<void> {
     warmEmailParagraph(escapeHtml(E.receiptThanks(facts.org.name, null))),
     warmEmailParagraph(escapeHtml(E.receiptLine([facts.teamName, facts.tournament.name, facts.divisionName ?? '', SCOPE_LINE[op.scope]], money(Number(op.base_amount))))),
     op.fee_payer === 'family' && Number(op.fee_amount) > 0 ? warmEmailParagraph(escapeHtml(E.receiptFee(money(Number(op.fee_amount))))) : '',
-    warmEmailParagraph(escapeHtml(E.receiptTotal(money(Number(op.total_amount)), cardLabel(op.card_brand, op.card_last4), formatStoredDate(op.paid_on)))),
+    ...totalLines(op),
   ];
   // A payment can land after the organizer switched the event to "Not tracked here": the receipt then names no balance.
   const balance = tournamentTracksPayments(facts.tournament.settings) ? facts.options?.choices.find(c => c.scope === 'balance') : undefined;

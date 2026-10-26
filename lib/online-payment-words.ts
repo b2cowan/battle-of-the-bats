@@ -334,13 +334,19 @@ export const PAY_WORDS = {
   chooseDepositHint: (balance: string, date: string | null) => (date ? `The ${balance} balance is due ${date}.` : `The ${balance} balance is paid later.`),
   chooseFull: (total: string) => `Pay in full, ${total}`,
   savingLine: (saving: string) => `${saving} less in processing fees than paying the deposit and the balance separately.`,
+  // 12c words §2.5 (ask 10): both rails, both computed, one sentence; only the rails the page offers.
+  savingLineBoth: (card: string, bank: string) => `${card} less in processing fees by card, or ${bank} less by bank debit, than paying the deposit and the balance separately.`,
   noDepositHeading: (total: string) => `Pay the entry fee, ${total}`,
   balanceHeading: (balance: string) => `Pay the balance, ${balance}`,
   balanceDue: (date: string) => `Due ${date}.`,
   paidSoFar: (team: string, amount: string) => `${team} has paid ${amount} so far.`,
   emailLabel: 'Email for the receipt',
   button: (total: string) => `Pay ${total} by card`,
-  buttonFeeNote: (fee: string) => `includes a ${fee} processing fee`,
+  // 12c words §2.1: a note under a button is a sentence (the bank note beside it carries a second one).
+  buttonFeeNote: (fee: string) => `Includes a ${fee} processing fee.`,
+  buttonBank: (total: string) => `Pay ${total} by bank debit`,
+  buttonBankNote: (fee: string) => `Includes a ${fee} processing fee. Takes up to 5 business days.`,
+  buttonBankNoteClubPays: 'Takes up to 5 business days.',
   refundPolicyLink: 'Refund policy',
   otherWays: (how: string) => `Or pay another way: ${how}`,
   opening: 'Opening the secure payment page…',
@@ -503,4 +509,76 @@ export const TEAM_ENTRY_WORDS = {
   lowered: (lowered: string, day: string, reason: string) => `Lowered ${lowered} on ${day} · ${reason}`,
   stripe: 'made in Stripe',
   owesFailed: (owes: string, amount: string) => `Owes ${owes} · ${amount} refund didn’t reach the card`,
+} as const;
+
+/**
+ * A BANK DEBIT, AS THE PAYER SEES IT (Club Tier Stage 12c Part 5; words CLUB_TIER_STAGE12C_PARTREFUND_BANKDEBIT_COPY.md
+ * §2). "Clearing" is the one word for a debit on its way (ask 5). A family's words say "spot", a team's "place". "Up to 5
+ * business days" is Stripe's own figure (plan §0k). Family-facing words never name the processor or a bank.
+ */
+export const BANK_DEBIT_WORDS = {
+  clearingTitle: 'Bank debit clearing',
+  clearingBody: (total: string, last4: string, started: string) =>
+    `${total} from the account ending ${last4}, started ${started}. Banks take up to 5 business days. We’ll email you when it clears.`,
+  clearingBodyNoAccount: (total: string, started: string) =>
+    `${total} by bank debit, started ${started}. Banks take up to 5 business days. We’ll email you when it clears.`,
+  holdChild: (childPossessive: string) => `${childPossessive} spot is held.`,
+  holdChildren: (children: string) => `Spots are held for ${children}.`,
+  holdTeam: (teamPossessive: string) => `${teamPossessive} place is held.`,
+  contact: (club: string, email: string | null) => (email ? `Wrong account, or a question? Contact ${club} at ${email}.` : `Wrong account, or a question? Contact ${club}.`),
+  clearingBalance: (balance: string, date: string) => `The ${balance} balance is due ${date}.`,
+  methodBankNoAccount: (started: string, cleared: string, receiptNo: string) =>
+    `Bank debit · started ${started}, cleared ${cleared} · receipt ${receiptNo}`,
+  methodBank: (last4: string, started: string, cleared: string, receiptNo: string) =>
+    `Bank debit, account ending ${last4} · started ${started}, cleared ${cleared} · receipt ${receiptNo}`,
+  returnedTitle: 'The bank debit didn’t go through',
+  returnedBody: (day: string, reasonFull: string) => `Your bank returned it on ${day}${reasonFull}. Nothing was taken.`,
+  reversedTitle: 'A bank payment was returned',
+  reversedBody: (total: string, day: string, reasonFull: string, receiptNo: string, owesAgain: string) =>
+    `Your bank reversed the ${total} debit on ${day}${reasonFull}. Receipt ${receiptNo} no longer counts, so ${owesAgain}.`,
+  receiptReversedTitle: 'Returned by the bank',
+  receiptReversedLine: (day: string) => `Reversed ${day}. This receipt no longer counts.`,
+  // The pay route's refusal (words §2.6), page and JSON.
+  errorClearing: (who: string, club: string) => `A bank debit for ${who} is clearing. You don’t need to pay again: ${club} will email you when it clears.`,
+  // House league: a child on a clearing debit (words §2.2 `famPay.lineClearing`, `status.childClearing`).
+  lineClearing: (child: string, division: string, fee: string) => `${child} · ${division} · ${fee} clearing`,
+  childClearing: (fee: string) => `Fee ${fee} · clearing`,
+} as const;
+
+/** The bank's reason (words §2.3): mapped codes only; anything else prints no reason. */
+export const BANK_REASON_WORDS: Record<string, { full: string; short: string }> = {
+  insufficient_funds: { full: ': there wasn’t enough money in the account', short: 'not enough money' },
+  account_closed: { full: ': the account is closed', short: 'account closed' },
+  invalid_account: { full: ': the account details weren’t valid', short: 'invalid account' },
+  not_authorized: { full: ': the debit wasn’t authorized', short: 'not authorized' },
+};
+export const reasonFull = (code: string | null | undefined) => (code ? BANK_REASON_WORDS[code]?.full ?? '' : '');
+export const reasonShort = (code: string | null | undefined) => (code ? BANK_REASON_WORDS[code]?.short ?? '' : '');
+
+/** The four bank-debit emails (words §2.4). A team's version swaps the children for the team, "spot" for "place". */
+export const BANK_DEBIT_EMAIL_WORDS = {
+  startedSubject: (club: string) => `Your bank debit to ${club} has started`,
+  startedPreheader: (total: string, last4: string | null) =>
+    (last4 ? `${total} from the account ending ${last4}. It takes up to 5 business days.` : `${total} by bank debit. It takes up to 5 business days.`),
+  startedLead: (who: string, season: string) => `Your bank debit for ${who} in ${season} has started.`,
+  amount: 'Amount',
+  from: 'From',
+  fromValue: (last4: string) => `Account ending ${last4}`,
+  started: 'Started',
+  notReceipt: 'This isn’t your receipt. We’ll send it when the debit clears.',
+  takes: 'Banks take up to 5 business days.',
+  receiptTotalBank: (total: string, last4: string | null, cleared: string) =>
+    `Total paid · ${total} · Bank debit${last4 ? `, account ending ${last4}` : ''} · ${cleared}`,
+  receiptBankDates: (started: string, cleared: string) => `Your bank debit started on ${started} and cleared on ${cleared}.`,
+  returnedSubject: 'Your bank debit didn’t go through',
+  returnedLead: (total: string, who: string, day: string, reasonFull: string) => `Your bank returned your ${total} debit for ${who} on ${day}${reasonFull}.`,
+  returnedNothing: 'Nothing was taken from your account.',
+  returnedHeldChild: (childPossessive: string) => `${childPossessive} spot is still held.`,
+  returnedHeldChildren: (children: string) => `Spots are still held for ${children}.`,
+  returnedHeldTeam: (teamPossessive: string) => `${teamPossessive} place is still held.`,
+  payNow: 'Pay now',
+  reversedSubject: (club: string) => `A payment to ${club} was returned`,
+  reversedLead: (total: string, club: string, day: string) => `Your bank reversed a ${total} payment to ${club} on ${day}.`,
+  reversedReason: (reasonFull: string) => `Your bank’s reason${reasonFull}.`,
+  reversedOwes: (receiptNo: string, owesAgain: string) => `Receipt ${receiptNo} no longer counts, so ${owesAgain}.`,
 } as const;

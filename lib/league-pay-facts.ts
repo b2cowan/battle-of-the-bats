@@ -4,12 +4,12 @@ import { getOrganizationBySlugForServer } from './server-organizations';
 import { getDivisionsForSeason, getLeagueSeasonById, resolvePersonNamer } from './db';
 import { hasPlanFeature } from './plan-features';
 import { onlinePaymentsOn } from './online-payments-switch';
-import { factsFromRow, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountFacts, type PayoutsAccountRow } from './online-payment-account';
+import { factsFromRow, takesBankDebit, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountFacts, type PayoutsAccountRow } from './online-payment-account';
 import { onlineFee, splitFeeAcross, toCents, type OnlineFee } from './online-payment-fee';
 import { registrationOwes } from './league-price';
 import { loadRegistrationMoneyLines } from './league-money-read';
 import { receivedOf } from './league-money';
-import { PAY_WORDS as W } from './online-payment-words';
+import { BANK_DEBIT_WORDS as B, PAY_WORDS as W } from './online-payment-words';
 import { payLinkSecret } from './league-pay-link';
 import { LEAGUE_PAY_WORDS as LW, childList } from './league-pay-words';
 import type { LeagueSeason, Organization } from './types';
@@ -24,7 +24,9 @@ import type { CardRefund } from './league-card-refunds';
  */
 export type LeaguePayRefusal =
   | 'switch_off' | 'not_taking_payments' | 'unrecorded_payment'
-  | 'ended' | 'not_accepted' | 'already_paid' | 'nothing_owed' | null;
+  | 'ended' | 'not_accepted' | 'already_paid' | 'nothing_owed'
+  /** 12c: every child still owing is on a bank debit that is clearing; nothing more is offered until it clears (ask 6). */
+  | 'clearing' | null;
 
 export interface LeaguePayChild {
   registrationId: string;
@@ -35,8 +37,23 @@ export interface LeaguePayChild {
   /** The child's price (recorded at sign-up), or null when the season has none. */
   fee: number | null;
   receivedCents: number;
-  /** What this child owes right now: an accepted, live child's price less what was received. */
+  /** What this child owes right now: an accepted, live child's price less what was received (0 while a debit for it clears). */
   owingCents: number;
+  /** 12c: what the child owes while it is on a bank debit that is clearing: its spot is held and it is left out of any new payment. */
+  clearingCents: number;
+}
+
+/** 12c: a bank debit of this sign-up, on its way (clearing) or come back before it cleared (returned). */
+export interface LeagueDebit {
+  id: string;
+  state: 'clearing' | 'returned';
+  totalCents: number;
+  last4: string | null;
+  startedAt: string | null;
+  returnedAt: string | null;
+  reason: string | null;
+  /** The children it covers, by first name. */
+  childFirsts: string[];
 }
 
 export interface LeaguePayShare {
@@ -61,6 +78,13 @@ export interface LeaguePayFacts {
   fee: OnlineFee | null;
   /** Each owing child's part of that payment. */
   shares: LeaguePayShare[];
+  /** 12c: the club's account takes bank debit; the same total by bank debit (its own rate) and its split. */
+  bankDebit: boolean;
+  bankFee: OnlineFee | null;
+  bankShares: LeaguePayShare[];
+  /** 12c: the sign-up's bank debits clearing now, and the newest payment when it came back (returned) with nothing newer. */
+  clearing: LeagueDebit[];
+  returned: LeagueDebit | null;
   refusal: LeaguePayRefusal;
 }
 
@@ -228,7 +252,37 @@ export function leagueRefusalMessage(f: Pick<LeaguePayFacts, 'refusal' | 'childr
     case 'not_accepted': return LW.error.notAccepted(f.children.find(c => c.status === 'pending_review' || c.status === 'waitlisted')?.firstName ?? name);
     case 'already_paid': return f.children.length === 1 ? LW.error.alreadyPaid(name) : LW.error.nothingOwed;
     case 'nothing_owed': return LW.error.nothingOwed;
+    case 'clearing': return B.errorClearing(childList(f.children.filter(c => c.clearingCents > 0).map(c => c.firstName)) || name, f.org.name);
   }
+}
+
+/** 12c: the sign-up's payments (not expired) with the children each covers: the clearing debits, and the newest when returned. */
+async function signupDebits(regIds: string[], firstName: Map<string, string>): Promise<{ clearing: LeagueDebit[]; returned: LeagueDebit | null; clearingRegs: Set<string> }> {
+  if (!regIds.length) return { clearing: [], returned: null, clearingRegs: new Set() };
+  const { data } = await supabaseAdmin.from('online_payment_items')
+    .select('registration_id, description, online_payments!inner(id, status, rail, total_amount, bank_last4, clearing_at, returned_at, return_reason, created_at)')
+    .in('registration_id', regIds).neq('online_payments.status', 'expired');
+  const byPay = new Map<string, { op: Record<string, unknown>; regs: string[]; firsts: string[] }>();
+  for (const i of (data ?? []) as Array<Record<string, unknown>>) {
+    const op = (Array.isArray(i.online_payments) ? i.online_payments[0] : i.online_payments) as Record<string, unknown>;
+    const entry = byPay.get(op.id as string) ?? { op, regs: [], firsts: [] };
+    entry.regs.push(i.registration_id as string);
+    entry.firsts.push(firstName.get(i.registration_id as string) ?? String(i.description ?? '').split(' · ')[0]);
+    byPay.set(op.id as string, entry);
+  }
+  const pays = [...byPay.values()].sort((a, b) => String(b.op.created_at).localeCompare(String(a.op.created_at)));
+  const debit = (e: { op: Record<string, unknown>; firsts: string[] }): LeagueDebit => ({
+    id: e.op.id as string, state: e.op.status as 'clearing' | 'returned', totalCents: toCents(Number(e.op.total_amount)),
+    last4: (e.op.bank_last4 as string | null) ?? null, startedAt: (e.op.clearing_at as string | null) ?? null,
+    returnedAt: (e.op.returned_at as string | null) ?? null, reason: (e.op.return_reason as string | null) ?? null, childFirsts: e.firsts,
+  });
+  const clearing = pays.filter(p => p.op.status === 'clearing');
+  const newest = pays[0];
+  return {
+    clearing: clearing.map(debit),
+    returned: newest && newest.op.status === 'returned' && newest.op.rail === 'bank_debit' ? debit(newest) : null,
+    clearingRegs: new Set(clearing.flatMap(p => p.regs)),
+  };
 }
 
 export async function loadLeaguePayFacts(registrationId: string): Promise<LeaguePayFacts | null> {
@@ -244,18 +298,21 @@ export async function loadLeaguePayFacts(registrationId: string): Promise<League
   const org = orgRow?.slug ? await getOrganizationBySlugForServer(orgRow.slug as string) : null;
   if (!org || !season) return null;
   const regIds = rows.map(r => r.id);
-  const [divisions, lines, unrecorded] = await Promise.all([
-    getDivisionsForSeason(season.id), loadRegistrationMoneyLines(regIds), hasUnrecorded(regIds),
+  const [divisions, lines, unrecorded, debits] = await Promise.all([
+    getDivisionsForSeason(season.id), loadRegistrationMoneyLines(regIds), hasUnrecorded(regIds), signupDebits(regIds, new Map(rows.map(r => [r.id, r.player_first_name]))),
   ]);
   const divisionName = new Map(divisions.map(d => [d.id, d.name]));
 
   const children: LeaguePayChild[] = rows.map(r => {
     const fee = registrationOwes({ feeAmount: r.fee_amount != null ? Number(r.fee_amount) : null }, season);
     const receivedCents = toCents(receivedOf(lines.get(r.id) ?? []));
-    const owingCents = r.status === 'active' ? Math.max(0, toCents(fee ?? 0) - receivedCents) : 0;
+    const due = r.status === 'active' ? Math.max(0, toCents(fee ?? 0) - receivedCents) : 0;
+    // 12c: a child on a clearing debit owes nothing new until it clears or comes back.
+    const clearing = debits.clearingRegs.has(r.id);
     return {
       registrationId: r.id, firstName: r.player_first_name, lastName: r.player_last_name,
-      divisionName: (r.division_id && divisionName.get(r.division_id)) || '—', status: r.status, fee, receivedCents, owingCents,
+      divisionName: (r.division_id && divisionName.get(r.division_id)) || '—', status: r.status, fee, receivedCents,
+      owingCents: clearing ? 0 : due, clearingCents: clearing ? due : 0,
     };
   });
   const account = factsFromRow(acct as PayoutsAccountRow | null);
@@ -263,12 +320,16 @@ export async function loadLeaguePayFacts(registrationId: string): Promise<League
   const owingCents = owing.reduce((s, c) => s + c.owingCents, 0);
   const fee = owingCents > 0 && account ? onlineFee(owingCents, account.feePayer) : null;
   const split = fee ? splitFeeAcross(fee.feeCents, owing.map(c => c.owingCents)) : [];
-  const shares: LeaguePayShare[] = owing.map((c, i) => ({
+  const sharesOf = (parts: number[]): LeaguePayShare[] => owing.map((c, i) => ({
     registrationId: c.registrationId,
     description: `${c.firstName} ${c.lastName} · ${c.divisionName}`,
     amountCents: c.owingCents,
-    feeShareCents: split[i] ?? 0,
+    feeShareCents: parts[i] ?? 0,
   }));
+  const shares = sharesOf(split);
+  const bankDebit = takesBankDebit(account);
+  const bankFee = owingCents > 0 && account && bankDebit ? onlineFee(owingCents, account.feePayer, 'bankDebit') : null;
+  const bankShares = bankFee ? sharesOf(splitFeeAcross(bankFee.feeCents, owing.map(c => c.owingCents))) : [];
 
   const ended = (s: string) => s === 'declined' || s === 'withdrawn';
   let refusal: LeaguePayRefusal = null;
@@ -276,7 +337,8 @@ export async function loadLeaguePayFacts(registrationId: string): Promise<League
   else if (!takesPayments(account)) refusal = 'not_taking_payments';
   else if (unrecorded) refusal = 'unrecorded_payment';
   else if (owingCents <= 0) {
-    if (children.every(c => ended(c.status))) refusal = 'ended';
+    if (children.some(c => c.clearingCents > 0)) refusal = 'clearing';
+    else if (children.every(c => ended(c.status))) refusal = 'ended';
     else if (children.some(c => c.status === 'pending_review' || c.status === 'waitlisted') && !children.some(c => c.status === 'active' && c.receivedCents > 0)) refusal = 'not_accepted';
     else if (children.some(c => c.receivedCents > 0)) refusal = 'already_paid';
     else refusal = 'nothing_owed';
@@ -284,6 +346,7 @@ export async function loadLeaguePayFacts(registrationId: string): Promise<League
 
   return {
     org, season, anchorId: anchor.id, signupKey: anchor.signup_ref ?? anchor.id, guardianEmail: anchor.guardian_email,
-    children, account, owingCents, fee, shares, refusal,
+    children, account, owingCents, fee, shares, bankDebit, bankFee, bankShares,
+    clearing: debits.clearing, returned: debits.returned, refusal,
   };
 }

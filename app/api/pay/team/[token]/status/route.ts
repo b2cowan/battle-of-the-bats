@@ -26,11 +26,12 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
     .select('id, team_id, status, landed_at, land_error, stripe_account_id, created_at, updated_at')
     .eq('stripe_checkout_session_id', sessionId).maybeSingle();
   if (!op || op.team_id !== teamId) return NextResponse.json({ state: 'unknown' }, { status: 404 });
-  if (op.status === 'paid' || op.status === 'refunded') return NextResponse.json({ state: 'paid' });
+  // 12c: a bank debit clearing (or returned) reloads the page too, which then says so.
+  if (['paid', 'partly_refunded', 'refunded', 'clearing', 'returned', 'reversed'].includes(op.status as string)) return NextResponse.json({ state: 'paid' });
   if (op.status === 'expired') return NextResponse.json({ state: 'not_finished' });
   if (Date.now() - Date.parse(op.updated_at as string) > ASK_STRIPE_AFTER_MS) {
     const result = await landCheckoutSession(op.stripe_account_id as string, sessionId).catch(() => 'unknown' as const);
-    if (result === 'landed' || result === 'already' || result === 'not_recorded') return NextResponse.json({ state: 'paid' });
+    if (result === 'landed' || result === 'already' || result === 'not_recorded' || result === 'clearing' || result === 'returned') return NextResponse.json({ state: 'paid' });
   }
   return NextResponse.json({ state: 'confirming' });
 }, { route: '/api/pay/team/[token]/status' });

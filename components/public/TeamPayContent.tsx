@@ -6,7 +6,9 @@
  * this page adds the team's own part:
  *
  *   owing          deposit or full (A7, deposit pre-selected; the saving only while the team pays the fee), Pay {total}
- *                  by card — both choices and the button disable on press ("Opening the secure payment page…")
+ *                  by card and (12c) by bank debit — the choices and both buttons disable on press
+ *   clearing       12c: a bank debit on its way: no buttons, the place held, the club's contact
+ *   returned       12c: the bank debit came back before it cleared: said above the owing block
  *   confirming     back from Stripe: waits for the RECORD, never "Paid" on the redirect alone; polls the status route
  *   not finished   left Stripe's page: nothing charged, the owing block again
  *   paid           the receipt(s); the balance still owed, if any, under them
@@ -14,14 +16,16 @@
  */
 import { useMemo, useState } from 'react';
 import { CreditCard } from 'lucide-react';
-import { PAY_WORDS as W } from '@/lib/online-payment-words';
+import { BANK_DEBIT_WORDS as B, PAY_WORDS as W } from '@/lib/online-payment-words';
+import { possessive } from '@/lib/utils';
 import { formatStoredDate } from '@/lib/timezone';
 import type { PayPageView, PayPageReceipt } from '@/lib/team-pay-view';
 import type { PayScope } from '@/lib/team-pay-options';
 import reg from '@/app/[orgSlug]/register/register.module.css';
 import {
-  ConfirmingState, NotFinishedState, PayButton, PayError, PayFrame, PayerEmailField, PolicyAndOtherWays, ReceiptCard,
-  Receipts as ReceiptList, TestLine, openCheckout, payBlockStyles as pb, payDollars as dollars, usePaymentConfirming,
+  ClearingState, ConfirmingState, NotFinishedState, PayButtons, PayError, PayFrame, PayerEmailField, PolicyAndOtherWays, ReceiptCard,
+  Receipts as ReceiptList, ReturnedNotice, TestLine, openCheckout, payBlockStyles as pb, payDollars as dollars, usePaymentConfirming,
+  type PayRail,
 } from './PayBlock';
 import styles from './TeamPay.module.css';
 
@@ -51,6 +55,15 @@ export default function TeamPayContent({ token, view, returnedSession, left }: {
             <>
               {left && view.kind === 'owing' && <NotFinishedState />}
               <Receipts view={view} />
+              {view.kind === 'clearing' && view.debit && (
+                <ClearingState totalCents={view.debit.totalCents} last4={view.debit.last4} startedAt={view.debit.startedAt}
+                  held={B.holdTeam(possessive(view.teamName))} clubName={view.clubName} contact={view.clubContact}
+                  balance={view.clearingBalance && view.clearingBalance.dueDate
+                    ? B.clearingBalance(dollars(view.clearingBalance.cents), day(view.clearingBalance.dueDate)!) : null} />
+              )}
+              {view.kind === 'owing' && view.debit?.state === 'returned' && (
+                <ReturnedNotice returnedAt={view.debit.returnedAt} reason={view.debit.reason} held={B.holdTeam(possessive(view.teamName))} />
+              )}
               {view.kind === 'owing' && <Owing token={token} view={view} />}
               {view.kind === 'already' && view.receipts.length === 0 && (
                 <div className={pb.state}><h2>{W.alreadyTitle(view.teamName)}</h2><p>{W.alreadyBody}</p></div>
@@ -85,6 +98,7 @@ function Receipt({ r, view }: { r: PayPageReceipt; view: PayPageView }) {
       paidAt={r.paidAt} receiptNo={r.receiptNo}
       lines={[{ label: W.receiptLine[r.scope], cents: r.baseCents }]}
       feeCents={r.feePaidByPayer ? r.feeCents : null}
+      bank={r.bank ? { last4: r.bankLast4, startedAt: r.startedAt } : null}
     />
   );
 }
@@ -93,22 +107,24 @@ function Receipt({ r, view }: { r: PayPageReceipt; view: PayPageView }) {
 function Owing({ token, view }: { token: string; view: PayPageView }) {
   const [scope, setScope] = useState<PayScope | null>(view.preselected);
   const [email, setEmail] = useState(view.payerEmail ?? '');
-  const [opening, setOpening] = useState(false);
+  const [opening, setOpening] = useState<PayRail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const chosen = useMemo(() => view.choices.find(c => c.scope === scope) ?? view.choices[0], [scope, view.choices]);
   const deposit = view.choices.find(c => c.scope === 'deposit');
   const full = view.choices.find(c => c.scope === 'full');
   const balance = view.choices.find(c => c.scope === 'balance');
 
-  async function pay() {
+  async function pay(rail: PayRail) {
     if (!chosen) return;
-    setOpening(true);
+    const totalCents = rail === 'bank_debit' ? chosen.bankTotalCents : chosen.totalCents;
+    if (totalCents == null) return;
+    setOpening(rail);
     setError(null);
-    const r = await openCheckout(`/api/pay/team/${token}`, { scope: chosen.scope, totalCents: chosen.totalCents, email });
+    const r = await openCheckout(`/api/pay/team/${token}`, { scope: chosen.scope, rail, totalCents, email });
     if ('url' in r) { window.location.assign(r.url); return; }
     if ('changed' in r) { window.location.reload(); return; }
     setError(r.error);
-    setOpening(false);
+    setOpening(null);
   }
 
   return (
@@ -120,7 +136,7 @@ function Owing({ token, view }: { token: string; view: PayPageView }) {
           {balance.dueDate && <p className={pb.note}>{W.balanceDue(day(balance.dueDate)!)}</p>}
         </>
       ) : deposit && full ? (
-        <fieldset className={styles.choices} disabled={opening}>
+        <fieldset className={styles.choices} disabled={opening !== null}>
           <legend className={styles.legend}>{W.heading}</legend>
           <label className={styles.choice}>
             <input type="radio" name="pay-scope" checked={scope === 'deposit'} onChange={() => setScope('deposit')} />
@@ -133,7 +149,9 @@ function Owing({ token, view }: { token: string; view: PayPageView }) {
             <input type="radio" name="pay-scope" checked={scope === 'full'} onChange={() => setScope('full')} />
             <span>
               <strong>{W.chooseFull(dollars(full.baseCents))}</strong>
-              {view.savingCents ? <span className={pb.note}>{W.savingLine(dollars(view.savingCents))}</span> : null}
+              {view.savingCents && view.savingBankCents ? (
+                <span className={pb.note}>{W.savingLineBoth(dollars(view.savingCents), dollars(view.savingBankCents))}</span>
+              ) : view.savingCents ? <span className={pb.note}>{W.savingLine(dollars(view.savingCents))}</span> : null}
             </span>
           </label>
         </fieldset>
@@ -141,10 +159,11 @@ function Owing({ token, view }: { token: string; view: PayPageView }) {
         <h2>{W.noDepositHeading(dollars(full.baseCents))}</h2>
       ) : null}
 
-      <PayerEmailField value={email} onChange={setEmail} disabled={opening} />
+      <PayerEmailField value={email} onChange={setEmail} disabled={opening !== null} />
       {chosen && (
-        <PayButton totalCents={chosen.totalCents} feeCents={chosen.feeCents} feePaidByPayer={view.feePaidByPayer}
-          opening={opening} onPay={() => void pay()} buttonClass="btn btn-primary" />
+        <PayButtons totalCents={chosen.totalCents} feeCents={chosen.feeCents} bankTotalCents={chosen.bankTotalCents}
+          bankFeeCents={chosen.bankFeeCents} feePaidByPayer={view.feePaidByPayer} opening={opening}
+          onPay={rail => void pay(rail)} buttonClass="btn btn-primary" bankButtonClass="btn btn-outline" />
       )}
       <PayError message={error} />
       <PolicyAndOtherWays refundPolicy={view.refundPolicy} howToPay={view.howToPay} />

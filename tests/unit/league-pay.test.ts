@@ -63,16 +63,19 @@ describe('the pay route (Part 2)', () => {
   it('reads the switch first, then the link, then RE-READS what is owed at the moment of paying', () => {
     assert.ok(ROUTE.indexOf('onlinePaymentsOn()') < ROUTE.indexOf('registrationFromPayToken(token)'));
     assert.match(ROUTE, /const facts = await loadLeaguePayFacts\(regId\)/);
-    assert.match(ROUTE, /if \(fee\.totalCents !== shownTotalCents\) return NextResponse\.json\(\{ error: W\.error\.amountChanged, changed: true \}/);
+    // 12c: the fee and the split are the pressed rail's (a bank button whose account stopped taking bank debit reloads).
+    assert.match(ROUTE, /const fee = rail === 'bank_debit' \? facts\.bankFee : facts\.fee;/);
+    assert.match(ROUTE, /const shares = rail === 'bank_debit' \? facts\.bankShares : facts\.shares;/);
+    assert.match(ROUTE, /if \(!fee \|\| fee\.totalCents !== shownTotalCents\) return NextResponse\.json\(\{ error: W\.error\.amountChanged, changed: true \}/);
   });
   it('one line per child and the processing fee its own line only while families pay it (A14)', () => {
-    assert.match(ROUTE, /\.\.\.facts\.shares\.map\(s => \(\{ name: `\$\{s\.description\} · \$\{facts\.season\.name\}`, amountCents: s\.amountCents \}\)\)/);
+    assert.match(ROUTE, /\.\.\.shares\.map\(s => \(\{ name: `\$\{s\.description\} · \$\{facts\.season\.name\}`, amountCents: s\.amountCents \}\)\)/);
     assert.match(ROUTE, /\.\.\.\(fee\.feePayer === 'family' \? \[\{ name: W\.receiptFee, amountCents: fee\.feeCents \}\] : \[\]\)/);
     assert.match(ROUTE, /applicationFeeCents: fee\.applicationFeeCents/);
   });
   it('Stripe first, then the payment and its children recorded together; a lost race closes its own page', () => {
     assert.ok(ROUTE.indexOf('createCheckout(') < ROUTE.indexOf("rpc('online_payment_league_open'"));
-    assert.match(ROUTE, /p_items: facts\.shares\.map\(/);
+    assert.match(ROUTE, /p_rail: rail,\s*p_items: shares\.map\(/);
     assert.match(ROUTE, /if \(openError\) \{\s*await expireCheckout\(account\.stripeAccountId, session\.id\)/);
   });
   it('the status route answers from the RECORD and only for the sign-up the link opens', () => {

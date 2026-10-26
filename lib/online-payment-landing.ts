@@ -6,11 +6,13 @@ import { clearSettled } from './needs-attention';
 import { getOrganizationBySlugForServer } from './server-organizations';
 import { canConnectPayouts, canRefundLeagueOnline, canRefundOnline, isPayoutsTreasurer } from './online-payment-access';
 import { factsFromStripe, factsFromRow, payoutsPath, payoutsState, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from './online-payment-account';
-import { listRefunds, retrieveAccount, retrieveCheckout, refundToCard } from './stripe-connect';
+import { listRefunds, requestBankDebit, retrieveAccount, retrieveCheckout, refundToCard } from './stripe-connect';
 import { sendOnlineReceiptOnce, sendRefundEmail } from './online-payment-receipt';
 import { claimRefundEmail, sendLeagueRefundEmail } from './online-refund-email';
 import { childList } from './league-pay-words';
 import { pinLeagueRefund, pinTeamRefund } from './online-refund-pinning';
+import { bankReturnReason } from './bank-debit';
+import { sendDebitReturnedEmail, sendDebitStartedEmail } from './bank-debit-email';
 import { LEAGUE_ONLINE_NOTICE_WORDS as LW, cardLabel, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney } from './online-payment-words';
 import { formatStoredDate } from './timezone';
 import type { Organization, OrgRole } from './types';
@@ -86,7 +88,9 @@ async function raiseOnce(p: {
  */
 export async function syncPayoutsAccount(stripeAccountId: string): Promise<PayoutsAccountRow | null> {
   const acct = await retrieveAccount(stripeAccountId);
-  const { columns, onboardingFinished, closed } = factsFromStripe(acct);
+  const { columns, onboardingFinished, closed, bankDebitToRequest } = factsFromStripe(acct);
+  // 12c: an account taking card payments that never asked for bank debit asks now; Stripe's next account event re-syncs.
+  if (bankDebitToRequest) await requestBankDebit(stripeAccountId).catch(e => console.error('[online-payment-landing] bank debit request failed:', e instanceof Error ? e.message : String(e)));
   const now = new Date().toISOString();
   const { data, error } = await supabaseAdmin
     .from('org_payment_accounts')
@@ -208,13 +212,63 @@ async function raiseLeagueUnrecorded(op: OnlineRow): Promise<void> {
   }
 }
 
-function cardOf(session: Stripe.Checkout.Session): { intent: string | null; charge: string | null; brand: string | null; last4: string | null } {
+function cardOf(session: Stripe.Checkout.Session): { intent: string | null; charge: string | null; brand: string | null; last4: string | null; bankLast4: string | null } {
   const pi = session.payment_intent;
   const intent = typeof pi === 'string' ? pi : pi?.id ?? null;
   const ch = typeof pi === 'object' && pi ? pi.latest_charge : null;
   const charge = typeof ch === 'string' ? ch : ch?.id ?? null;
   const card = typeof ch === 'object' && ch ? ch.payment_method_details?.card : null;
-  return { intent, charge, brand: card?.brand ?? null, last4: card?.last4 ?? null };
+  // 12c: a bank debit's account — on the charge once it exists, else on the payment method.
+  const pm = typeof pi === 'object' && pi ? pi.payment_method : null;
+  const bankLast4 = (typeof ch === 'object' && ch ? ch.payment_method_details?.acss_debit?.last4 : null)
+    ?? (typeof pm === 'object' && pm ? pm.acss_debit?.last4 : null) ?? null;
+  return { intent, charge, brand: card?.brand ?? null, last4: card?.last4 ?? null, bankLast4 };
+}
+
+/**
+ * 12c: a bank debit that finished Stripe's page is CLEARING (unpaid until the bank settles it, up to 5 business days):
+ * the spot is held, nothing is in a book, no receipt number yet, and no second payment may open. Recorded once (only from
+ * open); the family is told it started (not a receipt) on that first time, unless it is landing in the same breath (the
+ * receipt says it all).
+ */
+async function startClearing(opId: string, card: ReturnType<typeof cardOf>, tell = true): Promise<boolean> {
+  const { data: moved, error } = await supabaseAdmin.rpc('online_payment_clearing', {
+    p_online_payment: opId, p_payment_intent: card.intent, p_bank_last4: card.bankLast4,
+  });
+  if (error) throw new Error(error.message);
+  if (moved === true && tell) await sendDebitStartedEmail(opId);
+  return moved === true;
+}
+
+/**
+ * 12c: the bank returned a debit before it settled (`checkout.session.async_payment_failed`): nothing was taken and no
+ * book was touched; the family is told, with a way to pay again. Idempotent: only an open or clearing debit that never
+ * landed moves to returned.
+ */
+export async function returnDebit(stripeAccountId: string, sessionId: string): Promise<void> {
+  const { data: op } = await supabaseAdmin.from('online_payments').select('id, stripe_account_id, rail').eq('stripe_checkout_session_id', sessionId).maybeSingle();
+  if (!op || op.stripe_account_id !== stripeAccountId || op.rail !== 'bank_debit') return;
+  // Re-read (review 2026-10-26): a failed read throws, so Stripe redelivers rather than a return recorded without its
+  // reason; and a debit Stripe now says is paid lands instead of being marked returned on a stale event.
+  const session = await retrieveCheckout(stripeAccountId, sessionId);
+  if (session.payment_status === 'paid') { await landCheckoutSession(stripeAccountId, sessionId); return; }
+  await markReturned(op.id as string, session);
+}
+
+/** A debit Stripe failed (its intent wants a new payment method, or was cancelled), as Stripe's own record says. */
+function debitFailed(session: Stripe.Checkout.Session): boolean {
+  const pi = typeof session.payment_intent === 'object' ? session.payment_intent : null;
+  return session.payment_status !== 'paid' && (pi?.status === 'requires_payment_method' || pi?.status === 'canceled');
+}
+
+async function markReturned(opId: string, session: Stripe.Checkout.Session): Promise<void> {
+  const pi = typeof session.payment_intent === 'object' ? session.payment_intent : null;
+  const code = pi?.last_payment_error?.code ?? pi?.last_payment_error?.decline_code ?? null;
+  const { data: moved, error } = await supabaseAdmin.rpc('online_payment_returned', {
+    p_online_payment: opId, p_reason: bankReturnReason(code), p_detail: code,
+  });
+  if (error) throw new Error(error.message);
+  if (moved === true) await sendDebitReturnedEmail(opId);
 }
 
 /**
@@ -223,23 +277,37 @@ function cardOf(session: Stripe.Checkout.Session): { intent: string | null; char
  * PAID and numbered, with the reason, and raises "isn't in the team's record" for whoever may refund. Stripe has the
  * money either way; nothing is lost.
  */
-export async function landCheckoutSession(stripeAccountId: string, sessionId: string): Promise<'landed' | 'already' | 'not_paid' | 'unknown' | 'not_recorded'> {
+export async function landCheckoutSession(stripeAccountId: string, sessionId: string): Promise<'landed' | 'already' | 'not_paid' | 'unknown' | 'not_recorded' | 'clearing' | 'returned'> {
   const { data } = await supabaseAdmin
     .from('online_payments')
-    .select('id, org_id, flow, team_id, tournament_id, season_id, status, landed_at, stripe_account_id, stripe_checkout_session_id, description, total_amount')
+    .select('id, org_id, flow, team_id, tournament_id, season_id, status, landed_at, stripe_account_id, stripe_checkout_session_id, description, total_amount, rail')
     .eq('stripe_checkout_session_id', sessionId)
     .maybeSingle();
-  const op = data as OnlineRow | null;
+  const op = data as (OnlineRow & { rail?: string | null }) | null;
   if (!op || op.stripe_account_id !== stripeAccountId) return 'unknown';
   if (op.landed_at) {
     // A replay still owes any child's notice a crash after the landing's commit missed (raiseLeagueUnrecorded).
     if (op.flow === 'league_signup') await raiseLeagueUnrecorded(op);
     return 'already';
   }
+  if (op.status === 'returned') return 'returned'; // 12c: a returned debit never lands
   const session = await retrieveCheckout(stripeAccountId, sessionId);
-  if (session.payment_status !== 'paid') return 'not_paid';
   const card = cardOf(session);
-  const paidAt = new Date(((typeof session.payment_intent === 'object' && session.payment_intent?.created) || session.created) * 1000).toISOString();
+  const bank = op.rail === 'bank_debit';
+  if (session.payment_status !== 'paid') {
+    // 12c: a bank debit that finished Stripe's page is clearing (completed, unpaid) — or, read after the bank said no
+    // (a missed async_payment_failed), returned.
+    if (bank && session.status === 'complete' && debitFailed(session)) { await markReturned(op.id, session); return 'returned'; }
+    if (bank && session.status === 'complete') { await startClearing(op.id, card); return 'clearing'; }
+    return 'not_paid';
+  }
+  // 12c: a debit that settles before its "completed" arrived is recorded clearing first (its account kept), then lands.
+  if (bank && op.status === 'open') await startClearing(op.id, card, false);
+  // A card is paid when its intent was made; a bank debit (12c) the day it CLEARED — it lands now, at Stripe's
+  // async_payment_succeeded (review 2026-10-26: the intent's time is the day it started, days earlier).
+  const paidAt = bank
+    ? new Date().toISOString()
+    : new Date(((typeof session.payment_intent === 'object' && session.payment_intent?.created) || session.created) * 1000).toISOString();
   // Stripe's own figures must be the ones the payment was opened for; anything else is recorded by a person, not by us.
   const expected = Math.round(Number(op.total_amount) * 100);
   const mismatch = session.amount_total !== expected || (session.currency ?? '').toLowerCase() !== 'cad'

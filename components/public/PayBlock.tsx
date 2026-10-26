@@ -4,21 +4,30 @@
  * tournament team's pay page (`TeamPayContent`) and a house-league family's status page (`LeaguePayBlock`) share, so the
  * six states read the same for both and bank debit (12c) is added in one place:
  *
- *   owing          the button carries its own total; the processing fee under it only while the payer pays it (A14);
- *                  it disables on press ("Opening the secure payment page…")
+ *   owing          each button carries its own total — by card, and (12c) by bank debit while the club takes it; the
+ *                  processing fee under it only while the payer pays it (A14); both disable on press
  *   confirming     back from Stripe: waits for the RECORD, never "Paid" on the redirect alone (`usePaymentConfirming`)
  *   not finished   left Stripe's page: nothing charged
- *   paid           the receipt card(s)
+ *   paid           the receipt card(s); a bank debit's reads the account and both dates (12c)
+ *   clearing       12c: a bank debit on its way — no button, the place held, the club's contact (`ClearingState`)
+ *   returned       12c: a bank debit that came back before it cleared — said above the owing block (`ReturnedNotice`)
  *   not taking payments / no longer payable — the flow's own words (each page keeps today's panel verbatim, A6)
  * Words are 12a's (`PAY_WORDS`); no rate is typed here.
  */
 import { useEffect, useState, type ReactNode } from 'react';
-import { CreditCard } from 'lucide-react';
-import { PAY_WORDS as W, cardLabel, money, paidAtLabel, receiptLabel } from '@/lib/online-payment-words';
+import { CreditCard, Landmark } from 'lucide-react';
+import { BANK_DEBIT_WORDS as B, PAY_WORDS as W, cardLabel, money, paidAtLabel, reasonFull, receiptLabel } from '@/lib/online-payment-words';
+import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import styles from './PayBlock.module.css';
 
 const SLOW_AFTER_MS = 20_000;
 export const payDollars = (cents: number) => money(cents / 100);
+/** "Oct 26" — a bank debit's days on a screen, in the club's zone; the year only when it is not this year (words, "How to read this"). */
+const clubDay = (iso: string | null) => {
+  if (!iso) return '';
+  const day = iso.length > 10 ? orgDayKey(iso) : iso;
+  return formatStoredDate(day, { withYear: day.slice(0, 4) !== orgDayKey(new Date().toISOString()).slice(0, 4) });
+};
 
 /** The block's colour frame: the tournament's theme by default, the club's inside a club page. */
 export function PayFrame({ inClub = false, children }: { inClub?: boolean; children: ReactNode }) {
@@ -77,18 +86,25 @@ export function TestLine({ text }: { text: string }) {
   return <p className={styles.test}>{text}</p>;
 }
 
-/** A receipt card: the title, "{total} to {club}", the card line, then the lines, the fee (only when the payer paid it)
- *  and the total. */
-export function ReceiptCard({ title, test, totalCents, clubName, brand, last4, paidAt, receiptNo, lines, feeCents }: {
+/** A receipt card: the title, "{total} to {club}", the card (or 12c: bank debit) line, then the lines, the fee (only when
+ *  the payer paid it) and the total. */
+export function ReceiptCard({ title, test, totalCents, clubName, brand, last4, paidAt, receiptNo, lines, feeCents, bank }: {
   title: string; test: boolean; totalCents: number; clubName: string; brand: string | null; last4: string | null;
   paidAt: string | null; receiptNo: number | null; lines: { label: string; cents: number }[]; feeCents: number | null;
+  bank?: { last4: string | null; startedAt: string | null } | null;
 }) {
   return (
     <div className={styles.receipt}>
       {test && <p className={styles.test}>{W.testReceipt}</p>}
       <h2>{title}</h2>
       <p className={styles.receiptTo}>{W.paidTo(payDollars(totalCents), clubName)}</p>
-      <p className={styles.note}>{W.paidLine(cardLabel(brand, last4), paidAt ? paidAtLabel(paidAt) : '', receiptLabel(receiptNo ?? ''))}</p>
+      <p className={styles.note}>
+        {bank
+          ? (bank.last4
+            ? B.methodBank(bank.last4, clubDay(bank.startedAt), clubDay(paidAt), receiptLabel(receiptNo ?? ''))
+            : B.methodBankNoAccount(clubDay(bank.startedAt), clubDay(paidAt), receiptLabel(receiptNo ?? '')))
+          : W.paidLine(cardLabel(brand, last4), paidAt ? paidAtLabel(paidAt) : '', receiptLabel(receiptNo ?? ''))}
+      </p>
       <dl className={styles.lines}>
         {lines.map((l, i) => <div key={i}><dt>{l.label}</dt><dd>{payDollars(l.cents)}</dd></div>)}
         {feeCents != null && feeCents > 0 && <div><dt>{W.receiptFee}</dt><dd>{payDollars(feeCents)}</dd></div>}
@@ -117,16 +133,67 @@ export function PayerEmailField({ value, onChange, disabled }: { value: string; 
   );
 }
 
-/** Pay {total} by card — the label is the amount, always; the fee note only while the payer pays the fee (A14). */
-export function PayButton({ totalCents, feeCents, feePaidByPayer, opening, onPay, buttonClass }: {
-  totalCents: number; feeCents: number; feePaidByPayer: boolean; opening: boolean; onPay: () => void; buttonClass: string;
+export type PayRail = 'card' | 'bank_debit';
+
+/**
+ * Pay {total} by card, and (12c) Pay {total} by bank debit beside it while the club's account takes it — each label one
+ * row, the amount always; the fee is the note under it only while the payer pays the fee (A14), and the bank's note keeps
+ * "Takes up to 5 business days." either way. Both disable on press; the pressed one says it is opening.
+ */
+export function PayButtons({ totalCents, feeCents, bankTotalCents, bankFeeCents, feePaidByPayer, opening, onPay, buttonClass, bankButtonClass }: {
+  totalCents: number; feeCents: number; bankTotalCents: number | null; bankFeeCents: number | null; feePaidByPayer: boolean;
+  opening: PayRail | null; onPay: (rail: PayRail) => void; buttonClass: string; bankButtonClass: string;
 }) {
   return (
-    <div className={styles.payRow}>
-      <button type="button" className={`${buttonClass} ${styles.payButton}`} onClick={onPay} disabled={opening}>
-        <CreditCard size={18} aria-hidden /> {opening ? W.opening : W.button(payDollars(totalCents))}
-      </button>
-      {feePaidByPayer && feeCents > 0 && <span className={styles.note}>{W.buttonFeeNote(payDollars(feeCents))}</span>}
+    <div className={styles.payButtons}>
+      <div className={styles.payRow}>
+        <button type="button" className={`${buttonClass} ${styles.payButton}`} onClick={() => onPay('card')} disabled={opening !== null}>
+          <CreditCard size={18} aria-hidden /> {opening === 'card' ? W.opening : W.button(payDollars(totalCents))}
+        </button>
+        {feePaidByPayer && feeCents > 0 && <span className={styles.note}>{W.buttonFeeNote(payDollars(feeCents))}</span>}
+      </div>
+      {bankTotalCents != null && (
+        <div className={styles.payRow}>
+          <button type="button" className={`${bankButtonClass} ${styles.payButton}`} onClick={() => onPay('bank_debit')} disabled={opening !== null}>
+            <Landmark size={18} aria-hidden /> {opening === 'bank_debit' ? W.opening : W.buttonBank(payDollars(bankTotalCents))}
+          </button>
+          <span className={styles.note}>
+            {feePaidByPayer && (bankFeeCents ?? 0) > 0 ? W.buttonBankNote(payDollars(bankFeeCents!)) : W.buttonBankNoteClubPays}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 12c: a bank debit on its way — the heading in the info colour, the sentence, the held line, and the page's exit (the
+ * club's contact). No Pay button and no other way to pay while it clears (ask 6).
+ */
+export function ClearingState({ totalCents, last4, startedAt, held, clubName, contact, balance = null }: {
+  totalCents: number; last4: string | null; startedAt: string | null; held: string; clubName: string; contact: string | null;
+  /** A team's deposit clearing: "The {balance} balance is due {date}." (words §2.5). */
+  balance?: string | null;
+}) {
+  const started = clubDay(startedAt);
+  return (
+    <div className={`${styles.state} ${styles.clearing}`} role="status">
+      <h2>{B.clearingTitle}</h2>
+      <p>{last4 ? B.clearingBody(payDollars(totalCents), last4, started) : B.clearingBodyNoAccount(payDollars(totalCents), started)}</p>
+      <p>{held}</p>
+      {balance && <p>{balance}</p>}
+      <p className={styles.note}>{B.contact(clubName, contact)}</p>
+    </div>
+  );
+}
+
+/** 12c: a bank debit that came back before it cleared — nothing taken, still held; the owing block follows with both buttons. */
+export function ReturnedNotice({ returnedAt, reason, held }: { returnedAt: string | null; reason: string | null; held: string }) {
+  return (
+    <div className={styles.state} role="status">
+      <h2>{B.returnedTitle}</h2>
+      <p>{B.returnedBody(clubDay(returnedAt), reasonFull(reason))}</p>
+      <p>{held}</p>
     </div>
   );
 }

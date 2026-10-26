@@ -45,7 +45,8 @@ export async function createClubAccount(args: {
         currency: 'cad',
         responsibilities: { fees_collector: 'application', losses_collector: 'stripe' },
       },
-      configuration: { merchant: { capabilities: { card_payments: { requested: true } } } },
+      // 12c: bank debit (Canadian pre-authorized debit) beside the card; the pay block offers it once Stripe turns it on.
+      configuration: { merchant: { capabilities: { card_payments: { requested: true }, acss_debit_payments: { requested: true } } } },
       metadata: { org_id: args.orgId },
     },
     { apiVersion: CONNECT_ACCOUNT_API_VERSION, idempotencyKey: `club-account:${args.orgId}` },
@@ -95,6 +96,18 @@ export async function onboardingLink(accountId: string, refreshUrl: string, retu
   return link.url;
 }
 
+/**
+ * 12c: ask Stripe to turn bank debit on for an account that has card payments (an account made before 12c). On the pinned
+ * version (sandbox probe 2026-10-26: accepted, and the capability then reads "pending").
+ */
+export async function requestBankDebit(accountId: string): Promise<void> {
+  await getStripe().v2.core.accounts.update(
+    accountId,
+    { configuration: { merchant: { capabilities: { acss_debit_payments: { requested: true } } } } },
+    { idempotencyKey: `bank-debit:${accountId}` },
+  );
+}
+
 export async function retrieveAccount(accountId: string): Promise<Stripe.V2.Core.Account> {
   return getStripe().v2.core.accounts.retrieve(accountId, { include: ACCOUNT_INCLUDE });
 }
@@ -106,13 +119,16 @@ export async function dashboardLink(accountId: string): Promise<string> {
 }
 
 /**
- * A Checkout Session on the club's account (a direct charge). Card only in 12a (L2); no saved cards (A3) — no customer is
- * created and nothing is set up for later use. `receipt_email` is never set: our receipt is the only one (Stripe sends
- * its own whenever that field is set).
+ * A Checkout Session on the club's account (a direct charge). No saved cards (A3) — no customer is created and nothing is
+ * set up for later use. `receipt_email` is never set: our receipt is the only one (Stripe sends its own whenever that field
+ * is set). 12c: `rail` 'bank_debit' opens a Canadian pre-authorized debit (`acss_debit`) instead of the card: one-off
+ * ("sporadic") on a personal account, verified by the family signing in to their bank only (owner §0k 3 — no micro-deposit
+ * wait), the agreement shown and accepted on Stripe's own page. The rail is one per session: its fee differs.
  */
 export async function createCheckout(args: {
   accountId: string;
   currency: 'cad';
+  rail?: 'card' | 'bank_debit';
   lines: { name: string; amountCents: number }[];
   applicationFeeCents: number;
   payerEmail: string | null;
@@ -125,7 +141,15 @@ export async function createCheckout(args: {
   return getStripe().checkout.sessions.create(
     {
       mode: 'payment',
-      payment_method_types: ['card'],
+      payment_method_types: [args.rail === 'bank_debit' ? 'acss_debit' : 'card'],
+      ...(args.rail === 'bank_debit' ? {
+        payment_method_options: {
+          acss_debit: {
+            mandate_options: { payment_schedule: 'sporadic', transaction_type: 'personal' },
+            verification_method: 'instant',
+          },
+        },
+      } : {}),
       line_items: args.lines.map((l) => ({
         quantity: 1,
         price_data: { currency: args.currency, unit_amount: l.amountCents, product_data: { name: l.name } },
@@ -148,7 +172,7 @@ export async function createCheckout(args: {
 export async function retrieveCheckout(accountId: string, sessionId: string): Promise<Stripe.Checkout.Session> {
   return getStripe().checkout.sessions.retrieve(
     sessionId,
-    { expand: ['payment_intent.latest_charge'] },
+    { expand: ['payment_intent.latest_charge', 'payment_intent.payment_method'] },
     on(accountId),
   );
 }

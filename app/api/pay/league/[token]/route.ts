@@ -9,7 +9,7 @@ import { leaguePayPath, registrationFromPayToken } from '@/lib/league-pay-link';
 import { getClubSiteContent } from '@/lib/club-page-meta';
 import { throttlePublicForm } from '@/lib/public-form-throttle';
 import { toDollars } from '@/lib/online-payment-fee';
-import { PAY_WORDS as W } from '@/lib/online-payment-words';
+import { BANK_DEBIT_WORDS as B, PAY_WORDS as W } from '@/lib/online-payment-words';
 import { LEAGUE_PAY_WORDS as LW } from '@/lib/league-pay-words';
 
 export const runtime = 'nodejs';
@@ -24,18 +24,22 @@ const REUSE_MS = 23 * 60 * 60 * 1000;
  * there is none (or it is now closed and recorded so) and a new one may be opened. An open page older than the reuse
  * window is closed here too, so a missed "expired" event never holds the sign-up's one open slot (/review 2026-10-25).
  */
-async function openSessionFor(seasonId: string, signupKey: string, totalCents: number): Promise<Response | null> {
+async function openSessionFor(seasonId: string, signupKey: string, rail: 'card' | 'bank_debit', totalCents: number, who: string, club: string): Promise<Response | null> {
   const { data: open } = await supabaseAdmin.from('online_payments')
-    .select('id, total_amount, stripe_checkout_session_id, created_at, stripe_account_id')
+    .select('id, rail, total_amount, stripe_checkout_session_id, created_at, stripe_account_id')
     .eq('flow', 'league_signup').eq('season_id', seasonId).eq('signup_key', signupKey).eq('status', 'open').maybeSingle();
   if (!open?.stripe_checkout_session_id) return null;
   const account = open.stripe_account_id as string;
   const sessionId = open.stripe_checkout_session_id as string;
   const session = await retrieveCheckout(account, sessionId).catch(() => null);
   if (!session) return NextResponse.json({ error: W.error.couldntOpen }, { status: 503 });
-  if (session.status === 'complete') return NextResponse.json({ error: LW.error.nothingOwed }, { status: 409 });
+  // 12c: a bank debit that finished Stripe's page is clearing (unpaid until the bank settles it): never a second payment.
+  if (session.status === 'complete') {
+    return NextResponse.json({ error: session.payment_status === 'unpaid' ? B.errorClearing(who, club) : LW.error.nothingOwed }, { status: 409 });
+  }
   const young = Date.now() - Date.parse(open.created_at as string) < REUSE_MS;
-  if (session.status === 'open' && young && Math.round(Number(open.total_amount) * 100) === totalCents && session.url) {
+  if (session.status === 'open' && young && (open.rail ?? 'card') === rail
+    && Math.round(Number(open.total_amount) * 100) === totalCents && session.url) {
     return NextResponse.json({ url: session.url });
   }
   if (session.status === 'open') {
@@ -66,6 +70,8 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const regId = registrationFromPayToken(token);
   if (!regId) return NextResponse.json({ error: LW.error.linkInvalid(null) }, { status: 404 });
   const body = await req.json().catch(() => ({}));
+  // 12c: the button pressed decides the rail (each has its own fee, its own split and its own Checkout).
+  const rail: 'card' | 'bank_debit' = body.rail === 'bank_debit' ? 'bank_debit' : 'card';
   const shownTotalCents = Number(body.totalCents);
   const email = typeof body.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim()) ? body.email.trim() : null;
 
@@ -75,19 +81,22 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     const contact = (await getClubSiteContent(facts.org.id).catch(() => null))?.contactEmail ?? null;
     return NextResponse.json({ error: leagueRefusalMessage(facts, contact) }, { status: 409 });
   }
-  const fee = facts.fee!;
-  // The page showed one amount; the re-read must agree, or the family checks the new amount first.
-  if (fee.totalCents !== shownTotalCents) return NextResponse.json({ error: W.error.amountChanged, changed: true }, { status: 409 });
+  const fee = rail === 'bank_debit' ? facts.bankFee : facts.fee;
+  const shares = rail === 'bank_debit' ? facts.bankShares : facts.shares;
+  // The page showed one amount; the re-read must agree, or the family checks the new amount first. (A bank button whose
+  // account no longer takes bank debit is the same: the page reloads without it.)
+  if (!fee || fee.totalCents !== shownTotalCents) return NextResponse.json({ error: W.error.amountChanged, changed: true }, { status: 409 });
   // Stripe refuses an application fee that is not below the charge (only possible when the club pays on a tiny amount).
   if (fee.applicationFeeCents >= fee.totalCents) return NextResponse.json({ error: W.error.tooSmall }, { status: 409 });
   const account = facts.account!;
 
-  const reuse = await openSessionFor(facts.season.id, facts.signupKey, fee.totalCents);
+  const who = shares.map(s => s.description.split(' · ')[0]).join(', ');
+  const reuse = await openSessionFor(facts.season.id, facts.signupKey, rail, fee.totalCents, who, facts.org.name);
   if (reuse) return reuse;
 
   // Asked of Stripe FIRST and recorded after, under the one-open-per-sign-up index (the team route's order, review H1).
   const id = randomUUID();
-  const description = [facts.shares.map(s => s.description.split(' · ')[0]).join(', '), facts.season.name].join(' · ');
+  const description = [who, facts.season.name].join(' · ');
   const origin = new URL(req.url).origin;
   const back = leaguePayPath(facts.org.slug, facts.season.slug, token);
   let session: Awaited<ReturnType<typeof createCheckout>>;
@@ -95,8 +104,9 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     session = await createCheckout({
       accountId: account.stripeAccountId,
       currency: 'cad',
+      rail,
       lines: [
-        ...facts.shares.map(s => ({ name: `${s.description} · ${facts.season.name}`, amountCents: s.amountCents })),
+        ...shares.map(s => ({ name: `${s.description} · ${facts.season.name}`, amountCents: s.amountCents })),
         ...(fee.feePayer === 'family' ? [{ name: W.receiptFee, amountCents: fee.feeCents }] : []),
       ],
       applicationFeeCents: fee.applicationFeeCents,
@@ -125,7 +135,8 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     p_fee_flat: toDollars(fee.flatCents),
     p_livemode: account.livemode,
     p_session: session.id,
-    p_items: facts.shares.map(s => ({
+    p_rail: rail,
+    p_items: shares.map(s => ({
       registrationId: s.registrationId, description: s.description,
       amount: toDollars(s.amountCents), feeShare: toDollars(s.feeShareCents),
     })),
@@ -133,7 +144,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   if (openError) {
     // Another press recorded its page first (or a child changed in between): close ours before anyone sees it.
     await expireCheckout(account.stripeAccountId, session.id);
-    const theirs = await openSessionFor(facts.season.id, facts.signupKey, fee.totalCents);
+    const theirs = await openSessionFor(facts.season.id, facts.signupKey, rail, fee.totalCents, who, facts.org.name);
     return theirs ?? NextResponse.json({ error: W.error.couldntOpen }, { status: 409 });
   }
   return NextResponse.json({ url: session.url });

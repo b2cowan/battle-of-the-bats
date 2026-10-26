@@ -19,7 +19,11 @@
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
 .label { font-size: var(--type-support); font-weight: 600; color: var(--pay-soft); }
 .input { height: 44px; padding: 0 0.75rem; border: 1px solid var(--pay-line); border-radius: var(--radius-sm); background: transparent; color: var(--pay-ink); font: inherit; }
+.payButtons { display: flex; flex-direction: column; gap: 0.75rem; }
 .payRow { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+/* 12c: a bank debit on its way — the state's heading in the info colour (words §2.2). */
+.clearing h2 { color: rgb(var(--info-rgb)); }
+.clearing p + p { margin-top: 0.35rem; }
 .payButton { min-height: 48px; display: inline-flex; align-items: center; gap: 0.5rem; }
 .error { margin: 0; color: rgb(var(--danger-rgb)); }
 .link { align-self: flex-start; padding: 0; border: 0; background: none; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; font-size: var(--type-support); }

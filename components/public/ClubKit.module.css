@@ -123,6 +123,12 @@
   color: var(--club-on-fill);
   border: 1.5px solid var(--club-edge);
 }
+/* 12c: the pay block's second rail (bank debit) — the club's colour, outlined, beside the filled card button. */
+.btnOutline {
+  background: transparent;
+  color: var(--club-ink);
+  border: 1.5px solid var(--club-ink);
+}
 .btnSecondary {
   background: var(--club-card);
   color: var(--club-text);

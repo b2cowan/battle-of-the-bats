@@ -97,6 +97,10 @@ const FAMILY_SENDERS: { file: string; posture: Posture; what: string }[] = [
     what: 'Club Tier Stage 12c: a house-league family\'s refund email — the "couldn\'t go on this registration" refund, a price ' +
           'correction, a refund made in Stripe, "still enrolled → keep" — money returned, so like a receipt it reaches a ' +
           'family who unsubscribed from announcements, and carries the shared footer saying why' },
+  { file: 'lib/bank-debit-email.ts', posture: 'transactional',
+    what: 'Club Tier Stage 12c: a bank debit\'s "it has started" and "it didn\'t go through" emails, to a family or a team — ' +
+          'money in flight, so like a receipt it reaches a payer who unsubscribed from announcements, and carries the shared ' +
+          'footer saying why' },
   { file: 'lib/online-payment-receipt.ts', posture: 'transactional',
     what: 'Club Tier Stage 12b: a house-league family\'s pay link ("Email the pay link", a raised price) and the refund ' +
           'notice of a price correction refunded to the card — money owed and money returned, so like a dues reminder it ' +
@@ -280,7 +284,8 @@ describe('Family email — every sender is accounted for', () => {
       // re-audited, not a drifted count. 4 again from 2026-10-25: Stage 12b's house-league pay link and price
       // refund notice (lib/online-payment-receipt.ts), audited as money mail with the shared footer. 5 from 2026-10-26:
       // Stage 12c's one house-league refund email (lib/online-refund-email.ts), money returned, with the shared footer.
-      transactional.length, 5,
+      // 6 from the same day: 12c's bank-debit started/returned emails (lib/bank-debit-email.ts), money in flight, footer.
+      transactional.length, 6,
       'The transactional set changed size — re-audit it. Each member skips the unsubscribe check, ' +
       'so each one owes a family an explanation of why it arrived anyway.',
     );

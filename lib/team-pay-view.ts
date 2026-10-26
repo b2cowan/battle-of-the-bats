@@ -1,6 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { loadTeamPayFacts } from './team-pay-facts';
+import { loadTeamPayFacts, type TeamPayFacts } from './team-pay-facts';
 import { refusalMessage } from './team-pay-refusal';
 
 export { refusalMessage };
@@ -9,13 +9,15 @@ import { PAY_WORDS as W } from './online-payment-words';
 import { toCents } from './online-payment-fee';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
 import type { PayScope } from './team-pay-options';
+import { clubPublicContact } from './club-email-context';
 
 /**
  * The team's pay page, as one plain object (Club Tier Stage 12a, drawn 12c §1–§3 and the Checkout tab). Built on the
  * server from the signed link, so the page never holds anything the link does not give it: what is owed, Pay, and this
  * team's receipts — never the team's record.
  */
-export type PayPageKind = 'owing' | 'already' | 'nothing' | 'not_taking' | 'refused' | 'invalid';
+/** 12c: 'clearing' — a bank debit is on its way: no Pay buttons, the place is held (ask 6). */
+export type PayPageKind = 'owing' | 'already' | 'nothing' | 'not_taking' | 'refused' | 'invalid' | 'clearing';
 
 export interface PayPageReceipt {
   id: string;
@@ -31,6 +33,10 @@ export interface PayPageReceipt {
   refunded: boolean;
   refundedAt: string | null;
   test: boolean;
+  /** 12c: a bank debit's receipt reads the account and the two dates. */
+  bank: boolean;
+  bankLast4: string | null;
+  startedAt: string | null;
 }
 
 export interface PayPageView {
@@ -45,9 +51,19 @@ export interface PayPageView {
   feePaidByPayer: boolean;
   refundPolicy: string | null;
   howToPay: string | null;
-  choices: { scope: PayScope; baseCents: number; feeCents: number; totalCents: number; dueDate: string | null }[];
+  choices: {
+    scope: PayScope; baseCents: number; feeCents: number; totalCents: number; dueDate: string | null;
+    /** 12c: the same part by bank debit, while the club takes it; null otherwise. */
+    bankFeeCents: number | null; bankTotalCents: number | null;
+  }[];
   preselected: PayScope | null;
   savingCents: number | null;
+  savingBankCents: number | null;
+  /** 12c: a bank debit on its way, or one that came back before it cleared. */
+  debit: { state: 'clearing' | 'returned'; totalCents: number; last4: string | null; startedAt: string | null; returnedAt: string | null; reason: string | null } | null;
+  /** 12c: while a deposit clears, the balance still to come and when it is due (words §2.5). */
+  clearingBalance: { cents: number; dueDate: string | null } | null;
+  clubContact: string | null;
   totalPaidCents: number;
   /** The fee schedule as today's panel shows it, for the not-taking state (A6: today's words, verbatim). */
   schedule: { totalCents: number | null; totalDue: string | null; depositCents: number | null; depositDue: string | null };
@@ -56,7 +72,8 @@ export interface PayPageView {
 
 const blank = (message: string): PayPageView => ({
   kind: 'invalid', message, clubName: '', tournamentName: '', teamName: '', divisionName: null, testMode: false, payerEmail: null,
-  feePaidByPayer: false, refundPolicy: null, howToPay: null, choices: [], preselected: null, savingCents: null, totalPaidCents: 0,
+  feePaidByPayer: false, refundPolicy: null, howToPay: null, choices: [], preselected: null, savingCents: null, savingBankCents: null,
+  debit: null, clearingBalance: null, clubContact: null, totalPaidCents: 0,
   schedule: { totalCents: null, totalDue: null, depositCents: null, depositDue: null }, receipts: [],
 });
 
@@ -69,9 +86,9 @@ export function teamFromPayToken(token: string): string | null {
 async function receiptsFor(teamId: string): Promise<PayPageReceipt[]> {
   const { data } = await supabaseAdmin
     .from('online_payments')
-    .select('id, receipt_no, scope, base_amount, fee_amount, total_amount, fee_payer, card_brand, card_last4, paid_at, status, livemode, updated_at')
+    .select('id, receipt_no, scope, base_amount, fee_amount, total_amount, fee_payer, card_brand, card_last4, paid_at, status, livemode, updated_at, rail, bank_last4, clearing_at')
     .eq('team_id', teamId)
-    .in('status', ['paid', 'refunded'])
+    .in('status', ['paid', 'partly_refunded', 'refunded'])
     .order('paid_at', { ascending: false });
   return (data ?? []).map(r => ({
     id: r.id as string,
@@ -87,13 +104,24 @@ async function receiptsFor(teamId: string): Promise<PayPageReceipt[]> {
     refunded: r.status === 'refunded',
     refundedAt: r.status === 'refunded' ? (r.updated_at as string) : null,
     test: !r.livemode,
+    bank: r.rail === 'bank_debit',
+    bankLast4: (r.bank_last4 as string | null) ?? null,
+    startedAt: (r.clearing_at as string | null) ?? null,
   }));
 }
 
 /** `at` is the address the page was opened under: a link shown under another club's or tournament's address is refused. */
+/** 12c: the entry left once the clearing debit lands (none when it pays the whole); its due date from the schedule. */
+function balanceAfter(f: TeamPayFacts): { cents: number; dueDate: string | null } | null {
+  const left = Math.round(Number(f.fee.totalFeeAmount ?? 0) * 100) - Math.round(f.totalPaid * 100) - (f.debit?.baseCents ?? 0);
+  return left > 0 ? { cents: left, dueDate: f.fee.totalFeeDueDate ?? null } : null;
+}
+
 export async function buildTeamPayView(token: string, at?: { orgSlug: string; tournamentSlug: string }): Promise<PayPageView> {
   const teamId = teamFromPayToken(token);
   if (!teamId) return blank(W.error.linkInvalid);
+  // 12c: a bank debit still clearing past Stripe's window is asked of Stripe first (loaded late: the landing reads this file).
+  await (await import('./bank-debit-overdue')).settleOverdueDebits({ teamId });
   const f = await loadTeamPayFacts(teamId);
   if (!f) return blank(W.error.linkInvalid);
   if (at && (at.orgSlug !== f.org.slug || at.tournamentSlug !== f.tournament.slug)) return blank(W.error.linkInvalid);
@@ -103,7 +131,8 @@ export async function buildTeamPayView(token: string, at?: { orgSlug: string; to
   const howToPay = tracked ? (settings.payment_instructions ?? '').trim() || null : null;
   const receipts = await receiptsFor(teamId);
   const kind: PayPageKind =
-    f.refusal === null ? 'owing'
+    f.refusal === 'clearing' ? 'clearing'
+    : f.refusal === null ? 'owing'
       : f.refusal === 'switch_off' || f.refusal === 'not_taking_payments' || f.refusal === 'not_tracked' ? 'not_taking'
         : (f.refusal === 'nothing_owed' || f.refusal === 'our_team') ? (f.totalPaid > 0 ? 'already' : 'nothing')
           : 'refused';
@@ -120,10 +149,17 @@ export async function buildTeamPayView(token: string, at?: { orgSlug: string; to
     refundPolicy: f.account?.refundPolicy?.trim() || null,
     howToPay,
     choices: kind === 'owing' && f.options
-      ? f.options.choices.map(c => ({ scope: c.scope, baseCents: c.fee.baseCents, feeCents: c.fee.feeCents, totalCents: c.fee.totalCents, dueDate: c.dueDate }))
+      ? f.options.choices.map(c => ({
+        scope: c.scope, baseCents: c.fee.baseCents, feeCents: c.fee.feeCents, totalCents: c.fee.totalCents, dueDate: c.dueDate,
+        bankFeeCents: c.bankFee?.feeCents ?? null, bankTotalCents: c.bankFee?.totalCents ?? null,
+      }))
       : [],
     preselected: kind === 'owing' ? f.options?.preselected ?? null : null,
     savingCents: kind === 'owing' ? f.options?.savingCents ?? null : null,
+    savingBankCents: kind === 'owing' ? f.options?.savingBankCents ?? null : null,
+    debit: f.debit ? { state: f.debit.state, totalCents: f.debit.totalCents, last4: f.debit.last4, startedAt: f.debit.startedAt, returnedAt: f.debit.returnedAt, reason: f.debit.reason } : null,
+    clearingBalance: kind === 'clearing' && f.debit ? balanceAfter(f) : null,
+    clubContact: await clubPublicContact(f.org.id).catch(() => null),
     totalPaidCents: toCents(f.totalPaid),
     schedule: tracked ? {
       totalCents: f.fee.totalFeeAmount ? toCents(f.fee.totalFeeAmount) : null,

@@ -186,7 +186,7 @@ export default function StatusLookupForm({
 
   const pay = found?.pay ?? null;
   // The one pay block owns the money's end of the page while it is waiting on Stripe or there is something to pay.
-  const payBlockOwns = !!pay && (!!returnedSession || pay.kind === 'owing' || pay.kind === 'refused' || pay.receipts.length > 0);
+  const payBlockOwns = !!pay && (!!returnedSession || pay.kind === 'owing' || pay.kind === 'refused' || pay.receipts.length > 0 || pay.clearing.length > 0);
   const endedOnly = pay?.kind === 'ended' ? regs.filter(ended) : [];
 
   return (
