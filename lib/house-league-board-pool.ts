@@ -94,15 +94,31 @@ const byName = (a: PoolPlayer, b: PoolPlayer) =>
  * as a 3, but by hand a convenor takes the best player they know). Age: youngest first, no age last. Family: households
  * together — ordered by the parent's last name, then the email — each child by name; a child on their own sits in the
  * same alphabet by their parent's name. Every order breaks a tie by name, so nothing jumps between renders.
+ *
+ * `reverse` flips the order the sort opens in (owner, 2026-10-26: one arrow beside the Sort pick). A not-rated or no-age
+ * player stays last either way, and a household's children stay in name order, so brothers and sisters never read
+ * backwards. Family opens with the children who have a sibling in the division (`households`, the Filter's own
+ * definition; a pool with none passed falls back to its own households of two or more), then everyone else.
  */
-export function sortPool<P extends PoolPlayer>(pool: readonly P[], sort: PoolSort, ratings: ReadonlyMap<string, number>): P[] {
+export function sortPool<P extends PoolPlayer>(
+  pool: readonly P[], sort: PoolSort, ratings: ReadonlyMap<string, number>,
+  opts: { reverse?: boolean; households?: ReadonlyMap<string, unknown> } = {},
+): P[] {
   const out = [...pool];
-  if (sort === 'last') return out.sort(byName);
+  const dir = opts.reverse ? -1 : 1;
+  if (sort === 'last') return out.sort((a, b) => dir * byName(a, b));
   if (sort === 'rating') {
-    return out.sort((a, b) => (ratings.get(b.id) ?? 0) - (ratings.get(a.id) ?? 0) || byName(a, b));
+    return out.sort((a, b) => {
+      const ra = ratings.get(a.id), rb = ratings.get(b.id);
+      if (ra === undefined || rb === undefined) return (ra === undefined ? 1 : 0) - (rb === undefined ? 1 : 0) || byName(a, b);
+      return dir * (rb - ra) || byName(a, b);
+    });
   }
   if (sort === 'age') {
-    return out.sort((a, b) => (a.age ?? Infinity) - (b.age ?? Infinity) || byName(a, b));
+    return out.sort((a, b) => {
+      if (a.age == null || b.age == null) return (a.age == null ? 1 : 0) - (b.age == null ? 1 : 0) || byName(a, b);
+      return dir * (a.age - b.age) || byName(a, b);
+    });
   }
   // One surname a household: the first one its children carry (by id, so it never depends on the incoming order) — a
   // parent's name typed two ways on two sign-ups must not split the family it sorts together.
@@ -113,5 +129,15 @@ export function sortPool<P extends PoolPlayer>(pool: readonly P[], sort: PoolSor
   }
   const nameOf = (p: PoolPlayer) => { const key = householdKey(p.guardianEmail); return key ? surname.get(key)! : fold(p.guardianLastName || p.lastName); };
   const homeOf = (p: PoolPlayer) => householdKey(p.guardianEmail) ?? `~${p.id}`;
-  return out.sort((a, b) => nameOf(a).localeCompare(nameOf(b), 'en-CA') || (homeOf(a) < homeOf(b) ? -1 : homeOf(a) > homeOf(b) ? 1 : 0) || byName(a, b));
+  const sizes = new Map<string, number>();
+  for (const p of pool) { const key = householdKey(p.guardianEmail); if (key) sizes.set(key, (sizes.get(key) ?? 0) + 1); }
+  const hasSibling = (p: PoolPlayer) => {
+    const key = householdKey(p.guardianEmail);
+    return !!key && (opts.households ? opts.households.has(key) : (sizes.get(key) ?? 0) > 1);
+  };
+  return out.sort((a, b) =>
+    dir * ((hasSibling(b) ? 1 : 0) - (hasSibling(a) ? 1 : 0)
+      || nameOf(a).localeCompare(nameOf(b), 'en-CA')
+      || (homeOf(a) < homeOf(b) ? -1 : homeOf(a) > homeOf(b) ? 1 : 0))
+    || byName(a, b));
 }

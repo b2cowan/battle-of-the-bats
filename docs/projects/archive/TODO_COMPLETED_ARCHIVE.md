@@ -981,3 +981,5 @@ All items below were already checked complete but had never been moved here (the
 
 - [x] **Phase F** — UpgradeGate component (F1), onboarding→Checkout verified (F2), soft upsell prompts (F3); F4 deferred (see Deferred Enhancements)
 
+- [x] 🧮 House-league draft board at real size (120 players / 10 teams): pool beside the teams, one-line rows, search/filter/sort, families, notes, steps drawer, and families together in the draft (owner ruled A1–A12 2026-10-26; committed 4aad77562 + a12fd32e2 2026-10-26; owner walk §387 passed 29/29 2026-10-26 — see docs/projects/active/HOUSE_LEAGUE_DRAFT_BOARD_AT_SCALE_PLAN.md)
+

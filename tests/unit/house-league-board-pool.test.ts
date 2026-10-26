@@ -64,6 +64,26 @@ describe('sort (A5)', () => {
     const order = ids('family');
     assert.equal(Math.abs(order.indexOf('a') - order.indexOf('b')), 1);
   });
+  it('family opens with the children who have a sibling, then the rest, each alphabetical by parent', () => {
+    assert.deepEqual(ids('family'), ['a', 'b', 'c', 'e', 'd']);
+    // Chen has no sibling, so a family (Macdonald) goes ahead of an earlier letter.
+    assert.deepEqual(sortPool(pool, 'family', new Map(), { households: families }).map(p => p.id), ['a', 'b', 'c', 'e', 'd']);
+  });
+  it('family: a sibling already on a team still counts (the Filter’s own households)', () => {
+    const solo = [kid('x', 'Zed', 'Zimmer', { guardianEmail: 'z@example.com' }), kid('y', 'Amy', 'Abbott', { guardianEmail: 'a@example.com' })];
+    const order = sortPool(solo, 'family', new Map(), { households: new Map([['z@example.com', [1, 2]]]) }).map(p => p.id);
+    assert.deepEqual(order, ['x', 'y']);
+  });
+  it('reversed: last name Z to A', () => assert.deepEqual(sortPool(pool, 'last', new Map(), { reverse: true }).map(p => p.id), ['e', 'd', 'b', 'a', 'c']));
+  it('reversed: weakest first, not rated still last', () => {
+    assert.deepEqual(sortPool(pool, 'rating', facts().ratings, { reverse: true }).map(p => p.id), ['a', 'c', 'b', 'd', 'e']);
+  });
+  it('reversed: oldest first, no age still last', () => {
+    assert.deepEqual(sortPool(pool, 'age', facts().ratings, { reverse: true }).map(p => p.id), ['e', 'a', 'c', 'b', 'd']);
+  });
+  it('reversed family: the rest first, Z to A, but a household’s children stay in name order', () => {
+    assert.deepEqual(sortPool(pool, 'family', new Map(), { reverse: true, households: families }).map(p => p.id), ['d', 'e', 'c', 'a', 'b']);
+  });
   it('family: a parent’s surname typed two ways does not split the household', () => {
     const mixed = [
       kid('a', 'Avery', 'Smith', { guardianLastName: 'Smith', guardianEmail: 'pat@x.com' }),

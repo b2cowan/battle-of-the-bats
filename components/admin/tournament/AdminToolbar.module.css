@@ -185,6 +185,10 @@
    first frame's. */
 .regFilterPanel.filterPanel {
   min-width: 15rem;
+  /* Grows to its longest row ("Has a sibling in this division") instead of ellipsising it; the panel sits in a
+     button-wide box, so without this it is only ever as wide as its min-width. */
+  width: max-content;
+  max-width: min(24rem, calc(100vw - 2rem));
   max-height: min(34rem, var(--panel-max-h, calc(100dvh - 12rem)));
   transform: translateX(var(--panel-shift-x, 0px));
   overscroll-behavior: contain;

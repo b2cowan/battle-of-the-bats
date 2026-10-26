@@ -58,10 +58,17 @@ export const TEAMS_WORDS = {
     sibling: 'Has a sibling in this division',
     sort: 'Sort',
     sortBy: { last: 'Last name', rating: 'Rating', age: 'Age', family: 'Family' },
-    sortDetail: { rating: 'Strongest first', age: 'Youngest first', family: 'Brothers and sisters together' },
+    // What the one arrow beside Sort does, per sort: [as it opens, reversed]. The arrow carries no words of its own.
+    sortOrder: {
+      last: ['A to Z', 'Z to A'],
+      rating: ['Strongest first', 'Weakest first'],
+      age: ['Youngest first', 'Oldest first'],
+      family: ['Brothers and sisters first', 'Brothers and sisters last'],
+    } as Record<'last' | 'rating' | 'age' | 'family', readonly [string, string]>,
+    sortOrderAria: (order: string) => `Order: ${order}. Reverse it`,
     noMatch: 'Nobody here matches.',
   },
-  col: { rating: 'Rating', player: 'Player', age: 'Age' },
+  col: { player: 'Player', age: 'Age' },
   mark: {
     owingAria: (amount: string) => `${amount} owing`,
     owingLine: (amount: string) => `${amount} owing.`,

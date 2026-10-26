@@ -5,7 +5,7 @@
 
 /* The player row's column sizes (A2), on the screen so every row reads them: the board, a phone's open group, and the
    drag's floating copy, which renders outside the board. */
-.screen { min-width: 0; --col-rating: 52px; --col-age: 34px; --col-more: 36px; }
+.screen { min-width: 0; --col-rating: 26px; --col-age: 34px; --col-more: 36px; }
 .headSub { margin: -0.5rem 0 1rem; font-size: var(--type-support); color: var(--text-secondary); }
 .tabCount { margin-left: 0.35rem; font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 
@@ -64,6 +64,7 @@
   border-radius: 8px;
   background: none;
   font: inherit;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--home-olive);
   cursor: pointer;
@@ -142,6 +143,23 @@
 .poolHead { display: flex; flex-direction: column; gap: 8px; padding: 12px 12px 10px 14px; border-bottom: 1px solid var(--home-line); }
 .poolTitleRow { display: flex; align-items: center; gap: 0.5rem; }
 .poolTools { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+/* The arrow beside Sort: a plain glyph (no border or fill, as a phone's secondary actions are), 44px on a phone. */
+.sortDir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.sortDir:hover { color: var(--text-primary); background: var(--home-olive-soft); }
+.sortDir:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+@media (max-width: 768px) { .sortDir { width: 44px; height: 44px; } }
 .poolList {
   flex: 1 1 auto;
   min-height: 0;
@@ -516,7 +534,7 @@
   .mark { min-width: 32px; height: 32px; }
 }
 @media (max-width: 640px) {
-  .screen { --col-rating: 40px; --col-age: 30px; }
+  .screen { --col-age: 30px; }
   .kid { min-height: 52px; padding-right: 0; }
   .poolTools { flex-wrap: nowrap; }
   .panel { padding: 1rem; }

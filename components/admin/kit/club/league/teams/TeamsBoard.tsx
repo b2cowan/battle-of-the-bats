@@ -22,7 +22,7 @@ import {
   DndContext, DragOverlay, MouseSensor, TouchSensor, rectIntersection, useDraggable, useDroppable, useSensor, useSensors,
   type CollisionDetection, type DragEndEvent, type DragStartEvent,
 } from '@dnd-kit/core';
-import { ChevronLeft, ChevronRight, FileText, Lock, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, FileText, Lock, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import SheetFrame from '@/components/coaches/SheetFrame';
@@ -110,7 +110,8 @@ function RatingChip({ rating }: { rating: number | null }) {
 function ColHead({ rights }: { rights: BoardRights }) {
   return (
     <div className={css.colHead} aria-hidden>
-      {rights.seeRatings && <span>{W.col.rating}</span>}
+      {/* No heading word over the chips: the column is only as wide as a chip (owner, 2026-10-26); each chip names itself. */}
+      {rights.seeRatings && <span />}
       <span>{W.col.player}</span>
       <span />
       <span className={css.right}>{W.col.age}</span>
@@ -348,6 +349,8 @@ function usePoolTools(props: BoardProps, pool: readonly BoardPlayer[], families:
   const [query, setQuery] = useState('');
   const [rawPicks, setPicks] = useState<readonly PoolFilter[]>([]);
   const [sort, setSort] = useState<PoolSort>('last');
+  // The arrow beside Sort reverses the order a sort opens in; picking another sort opens that one in its own order.
+  const [reverse, setReverse] = useState(false);
   // An emptied pool hides its tools (it folds), so a search or a tick left behind would hide the next player to land
   // there with no way to clear it: the narrowing goes when the pool empties.
   const empty = pool.length === 0;
@@ -367,13 +370,14 @@ function usePoolTools(props: BoardProps, pool: readonly BoardPlayer[], families:
   const picks = rawPicks.filter(p => offer.includes(p));
   const counts = filterCounts(pool, offer, facts);
   const label: Record<PoolFilter, string> = { notRated: W.pool.notRated, notes: REGS_WORDS.filterNotes, owing: REGS_WORDS.filterOwing, sibling: W.pool.sibling };
-  const shown = sortPool(narrowPool(pool, query, picks, facts), sort, props.ratings);
-  const sorts: { id: PoolSort; label: string; detail?: string }[] = [
+  const shown = sortPool(narrowPool(pool, query, picks, facts), sort, props.ratings, { reverse, households: families });
+  const sorts: { id: PoolSort; label: string }[] = [
     { id: 'last', label: W.pool.sortBy.last },
-    ...(props.rights.seeRatings ? [{ id: 'rating' as const, label: W.pool.sortBy.rating, detail: W.pool.sortDetail.rating }] : []),
-    { id: 'age', label: W.pool.sortBy.age, detail: W.pool.sortDetail.age },
-    { id: 'family', label: W.pool.sortBy.family, detail: W.pool.sortDetail.family },
+    ...(props.rights.seeRatings ? [{ id: 'rating' as const, label: W.pool.sortBy.rating }] : []),
+    { id: 'age', label: W.pool.sortBy.age },
+    { id: 'family', label: W.pool.sortBy.family },
   ];
+  const orderWords = W.pool.sortOrder[sort][reverse ? 1 : 0];
   const search = <SearchField value={query} onChange={setQuery} label={W.pool.search} layout="fill" />;
   const tools = (
     <div className={css.poolTools}>
@@ -389,7 +393,11 @@ function usePoolTools(props: BoardProps, pool: readonly BoardPlayer[], families:
         resetLabel={W.pool.filterClear}
         onReset={() => setPicks([])}
       />
-      <SingleSelectDropdown label={W.pool.sort} labelSuffix=":" lead options={sorts} value={sort} onChange={v => setSort(v as PoolSort)} />
+      <SingleSelectDropdown label={W.pool.sort} labelSuffix=":" lead options={sorts} value={sort} onChange={v => { setSort(v as PoolSort); setReverse(false); }} />
+      <button type="button" className={css.sortDir} onClick={() => setReverse(r => !r)}
+        title={orderWords} aria-label={W.pool.sortOrderAria(orderWords)}>
+        {reverse ? <ArrowDown size={16} aria-hidden /> : <ArrowUp size={16} aria-hidden />}
+      </button>
     </div>
   );
   const narrowed = query.trim() !== '' || picks.length > 0;

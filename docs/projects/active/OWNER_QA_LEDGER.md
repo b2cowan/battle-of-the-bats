@@ -26633,3 +26633,5 @@ republished; tick positions unchanged).
 
 **Not run by the builder:** any press in a browser; `check:layout` on the season pages (the UAT club's house-league admin pages land on "Page not found", the known Stage 9 gap §387 also met).
 <!-- /§388 -->
+
+**Walked 2026-10-26 by the owner: passed 29 of 29** — A pool at 120 4/4 · B Search, Filter and Sort 4/4 · C families and notes 6/6 · D the drawer 3/3 · E families together in the draft 5/5 · F states and the folded pool 3/3 · G other views 4/4. The same day, after or alongside the walk, the owner asked for four small changes that this walk did not cover: the "Show steps" toggle's size, the Filter menu growing to fit "Has a sibling in this division", a Sort arrow replacing the Sort menu's grey words (Family = siblings first), and the pool's Rating column narrowed to a chip with no heading word. Uncommitted at the time of writing; they need their own look.
