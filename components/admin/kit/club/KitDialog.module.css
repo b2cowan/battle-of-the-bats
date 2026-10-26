@@ -199,6 +199,11 @@
   border-top: 1px solid var(--home-line);
 }
 .footStart { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-right: auto; }
+/* A sentence handed in bare (a <span> or <p> with no class of its own) wears the foot note's face, not the panel's 16px
+   primary ink — it read larger and darker than the body it sums up (owner, 2026-10-25, Correct a price). A refusal
+   (`role="alert"`) reads in the danger ink. A caller's own class still decides its face (`repKit.footNote`). */
+.footStart > :is(span, p):not([class]) { align-self: center; font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
+.footStart > :is(span, p):not([class])[role="alert"] { color: var(--danger-light); }
 /* A confirmation docked in the foot (a coach form's "Delete …?" — Record money's two, One Window 2d) takes the foot's
    whole row and REPLACES the buttons it suspends: the caller passes no `footer` while it shows, so the question and the
    buttons it suspends stand in the same place (RoomShell's doors slot makes the same promise). */
