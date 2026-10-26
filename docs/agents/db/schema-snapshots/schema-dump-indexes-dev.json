@@ -1876,6 +1876,11 @@
   },
   {
     "tablename": "org_overrides",
+    "indexname": "org_overrides_one_plan_grant_at_a_time",
+    "indexdef": "CREATE INDEX org_overrides_one_plan_grant_at_a_time ON public.org_overrides USING gist (org_id, tstzrange(starts_at, expires_at, '[)'::text)) WHERE ((type = 'plan_tier'::text) AND (revoked_at IS NULL))"
+  },
+  {
+    "tablename": "org_overrides",
     "indexname": "org_overrides_pkey",
     "indexdef": "CREATE UNIQUE INDEX org_overrides_pkey ON public.org_overrides USING btree (id)"
   },
@@ -2428,6 +2433,36 @@
     "tablename": "platform_record_opens",
     "indexname": "platform_record_opens_pkey",
     "indexdef": "CREATE UNIQUE INDEX platform_record_opens_pkey ON public.platform_record_opens USING btree (id)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_actor_idx",
+    "indexdef": "CREATE INDEX platform_refunds_actor_idx ON public.platform_refunds USING btree (actor_email, created_at DESC)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_charge_idx",
+    "indexdef": "CREATE INDEX platform_refunds_charge_idx ON public.platform_refunds USING btree (stripe_charge_id)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_one_open_per_charge",
+    "indexdef": "CREATE UNIQUE INDEX platform_refunds_one_open_per_charge ON public.platform_refunds USING btree (stripe_charge_id) WHERE (status = ANY (ARRAY['started'::text, 'unknown'::text]))"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_org_idx",
+    "indexdef": "CREATE INDEX platform_refunds_org_idx ON public.platform_refunds USING btree (org_id, created_at DESC)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_refunds_pkey ON public.platform_refunds USING btree (id)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_stripe_refund_id_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_refunds_stripe_refund_id_key ON public.platform_refunds USING btree (stripe_refund_id)"
   },
   {
     "tablename": "platform_user_notes",

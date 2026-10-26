@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-26",
-  "total": 561,
+  "total": 601,
   "counts": {
-    "tables": 19,
-    "columns": 293,
-    "indexes": 86,
-    "constraints": 85,
-    "rls": 78
+    "tables": 20,
+    "columns": 312,
+    "indexes": 93,
+    "constraints": 88,
+    "rls": 88
   },
   "items": [
     {
@@ -283,6 +283,46 @@
     },
     {
       "key": "check:only-dev:platform_record_opens.platform_record_opens_record_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_refunds.platform_refunds_amount_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_refunds.platform_refunds_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_refunds.platform_refunds_currency_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_refunds.platform_refunds_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_refunds.platform_refunds_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_refunds.platform_refunds_stripe_charge_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_refunds.platform_refunds_stripe_error_code_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_refunds.platform_refunds_stripe_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_refunds.platform_refunds_stripe_refund_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_refunds.platform_refunds_stripe_request_id_check",
       "sig": ""
     },
     {
@@ -1246,6 +1286,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:platform_audit_log.reason",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:platform_record_opens.actor_email",
       "sig": ""
     },
@@ -1271,6 +1315,78 @@
     },
     {
       "key": "column:only-dev:platform_record_opens.via_find",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.actor_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.actor_role",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.amount_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.completed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.currency",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.livemode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.remaining_seen_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.stripe_charge_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.stripe_customer_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.stripe_error_code",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.stripe_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.stripe_refund_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_refunds.stripe_request_id",
       "sig": ""
     },
     {
@@ -1726,6 +1842,18 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:platform_refunds.platform_refunds_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_refunds.platform_refunds_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_refunds.platform_refunds_stripe_refund_id_key",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_team_tryout_contacts.rep_team_tryout_contacts_org_fk",
       "sig": ""
     },
@@ -2082,6 +2210,10 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:org_overrides_one_plan_grant_at_a_time",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:org_payment_accounts_pkey",
       "sig": ""
     },
@@ -2103,6 +2235,30 @@
     },
     {
       "key": "index:only-dev:platform_record_opens_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_refunds_actor_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_refunds_charge_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_refunds_one_open_per_charge",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_refunds_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_refunds_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_refunds_stripe_refund_id_key",
       "sig": ""
     },
     {
@@ -2227,6 +2383,10 @@
     },
     {
       "key": "table:only-dev:platform_record_opens",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:platform_refunds",
       "sig": ""
     },
     {

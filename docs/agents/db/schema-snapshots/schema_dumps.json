@@ -12170,6 +12170,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "platform_audit_log",
+        "pos": 9,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "platform_bulk_operations",
         "pos": 1,
         "column_name": "id",
@@ -13194,6 +13203,168 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 3,
+        "column_name": "stripe_customer_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 4,
+        "column_name": "stripe_charge_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 5,
+        "column_name": "stripe_refund_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 6,
+        "column_name": "amount_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 7,
+        "column_name": "currency",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 8,
+        "column_name": "remaining_seen_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 9,
+        "column_name": "stripe_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 10,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'started'::text"
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 11,
+        "column_name": "stripe_error_code",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 12,
+        "column_name": "stripe_request_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 13,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 14,
+        "column_name": "actor_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 15,
+        "column_name": "actor_role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 16,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 17,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 18,
+        "column_name": "completed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "platform_user_notes",
@@ -26773,6 +26944,13 @@
         "constraint_name": "platform_events_org_id_fkey"
       },
       {
+        "table_name": "platform_refunds",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "platform_refunds_org_id_fkey"
+      },
+      {
         "table_name": "platform_user_notes",
         "column_name": "user_id",
         "foreign_table": null,
@@ -31780,6 +31958,11 @@
       },
       {
         "tablename": "org_overrides",
+        "indexname": "org_overrides_one_plan_grant_at_a_time",
+        "indexdef": "CREATE INDEX org_overrides_one_plan_grant_at_a_time ON public.org_overrides USING gist (org_id, tstzrange(starts_at, expires_at, '[)'::text)) WHERE ((type = 'plan_tier'::text) AND (revoked_at IS NULL))"
+      },
+      {
+        "tablename": "org_overrides",
         "indexname": "org_overrides_pkey",
         "indexdef": "CREATE UNIQUE INDEX org_overrides_pkey ON public.org_overrides USING btree (id)"
       },
@@ -32332,6 +32515,36 @@
         "tablename": "platform_record_opens",
         "indexname": "platform_record_opens_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_record_opens_pkey ON public.platform_record_opens USING btree (id)"
+      },
+      {
+        "tablename": "platform_refunds",
+        "indexname": "platform_refunds_actor_idx",
+        "indexdef": "CREATE INDEX platform_refunds_actor_idx ON public.platform_refunds USING btree (actor_email, created_at DESC)"
+      },
+      {
+        "tablename": "platform_refunds",
+        "indexname": "platform_refunds_charge_idx",
+        "indexdef": "CREATE INDEX platform_refunds_charge_idx ON public.platform_refunds USING btree (stripe_charge_id)"
+      },
+      {
+        "tablename": "platform_refunds",
+        "indexname": "platform_refunds_one_open_per_charge",
+        "indexdef": "CREATE UNIQUE INDEX platform_refunds_one_open_per_charge ON public.platform_refunds USING btree (stripe_charge_id) WHERE (status = ANY (ARRAY['started'::text, 'unknown'::text]))"
+      },
+      {
+        "tablename": "platform_refunds",
+        "indexname": "platform_refunds_org_idx",
+        "indexdef": "CREATE INDEX platform_refunds_org_idx ON public.platform_refunds USING btree (org_id, created_at DESC)"
+      },
+      {
+        "tablename": "platform_refunds",
+        "indexname": "platform_refunds_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_refunds_pkey ON public.platform_refunds USING btree (id)"
+      },
+      {
+        "tablename": "platform_refunds",
+        "indexname": "platform_refunds_stripe_refund_id_key",
+        "indexdef": "CREATE UNIQUE INDEX platform_refunds_stripe_refund_id_key ON public.platform_refunds USING btree (stripe_refund_id)"
       },
       {
         "tablename": "platform_user_notes",
@@ -37081,6 +37294,72 @@
       {
         "kind": "RLS",
         "table_name": "platform_record_opens",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_amount_cents_check",
+        "check_clause": "(amount_cents > 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_check",
+        "check_clause": "(remaining_seen_cents >= amount_cents)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_currency_check",
+        "check_clause": "(currency ~ '^[a-z]{3}$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_reason_check",
+        "check_clause": "((length(btrim(reason)) >= 1) AND (length(btrim(reason)) <= 500))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_status_check",
+        "check_clause": "(status = ANY (ARRAY['started'::text, 'done'::text, 'refused'::text, 'unknown'::text, 'not_made'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_stripe_charge_id_check",
+        "check_clause": "(stripe_charge_id ~ '^(ch|py)_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_stripe_error_code_check",
+        "check_clause": "((stripe_error_code IS NULL) OR (stripe_error_code ~ '^[a-z_]{1,80}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_stripe_reason_check",
+        "check_clause": "(stripe_reason = ANY (ARRAY['duplicate'::text, 'requested_by_customer'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_stripe_refund_id_check",
+        "check_clause": "((stripe_refund_id IS NULL) OR (stripe_refund_id ~ '^(re|pyr)_[A-Za-z0-9]+$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_stripe_request_id_check",
+        "check_clause": "((stripe_request_id IS NULL) OR (stripe_request_id ~ '^req_[A-Za-z0-9]{1,64}$'::text))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_refunds",
         "detail": "ENABLED",
         "check_clause": null
       },

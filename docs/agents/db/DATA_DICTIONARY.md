@@ -268,6 +268,7 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 4. **`target.plan` is written for `plan_tier`, `target.addons` for `module_addon`; `subscription_status` uses the legacy `value` column** (`target.status` is read first but never written). **`expires_at` is always set** by the console (the first moment after the last free day, Eastern; the server takes a day, never an instant), capped at 6 months for Billing and 12 for Super admin; a club the staff member belongs to, a demo club, a Coaches Portal and (for a plan) a club with a live Stripe subscription are refused. Changing the end is a compare-and-set on `expires_at`.
 5. **`suppress_billing` has NO reader** — written + echoed to the audit payload, never consumed. Inert.
 6. **Mutations log to `platform_audit_log`, not `org_audit_log`** (POST `create_override`, DELETE `revoke_override`). `created_by`/`revoked_by` are free-text identity strings — a platform-admin email, or the literal `'system'` for the founding-season auto-grant at organization and league creation ([app/api/org/create/route.ts](../../../app/api/org/create/route.ts), [app/api/league/create/route.ts](../../../app/api/league/create/route.ts), both through `ensureFoundingSeasonCompPeriod`; the sign-up no longer makes an organization since Account-First Sign-up Part 2, 2026-10-19) — not FKs. (Those `'system'` grants are `comp_period`, so they're inert for access per gotcha 3 — founding-season free access isn't delivered through this enforcement path.)
+7. **One plan grant at a time, in the database** (mig 380, Stage 3 Q8): the exclusion constraint `org_overrides_one_plan_grant_at_a_time` (`btree_gist`, `org_id WITH =`, `tstzrange(starts_at, expires_at, '[)') WITH &&`, `WHERE type = 'plan_tier' AND revoked_at IS NULL`) refuses two un-ended plan grants of one club that overlap in time (SQLSTATE 23P01; the console maps it to its "already has free time" refusal). A grant that ran out by itself keeps `revoked_at` NULL but its range has passed, so it never blocks a new one — why this is an exclusion rule and not a partial unique index.
 
 **Fields** (boilerplate `id`, `created_at` omitted):
 
@@ -8254,7 +8255,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **Purpose:** the append-only **platform-admin mutation log** — one row per privileged staff action against an org or platform object. THE record-of-who-changed-what for the control plane (dev 117 / prod 53). Written by the shared `writePlatformAuditLog` helper ([lib/platform-audit.ts:4](../../../lib/platform-audit.ts#L4)) from ~30 routes; read by the global audit page, the per-org activity feed, and the CSV export.
 
 **Gotchas (read first):**
-1. **Append-only + best-effort** — `writePlatformAuditLog` INSERTs and on error only `console.error`s; it **never throws**, so a failed audit write does not block or roll back the action it was logging ([lib/platform-audit.ts:11-21](../../../lib/platform-audit.ts#L11)). Completeness is not guaranteed.
+1. **Append-only + best-effort** — `writePlatformAuditLog` INSERTs and on error only `console.error`s; it **never throws**, so a failed audit write does not block or roll back the action it was logging ([lib/platform-audit.ts](../../../lib/platform-audit.ts)). Completeness is not guaranteed. **Except the refund** (mig 380, Stage 3): `writePlatformAuditLogStrict` throws; a console refund's entries are written with it, and the refund's own record (`platform_refunds`) is the money trail either way. A refund entry's reason and values are shown only to the Stripe-reading roles (Super admin, Billing, Support); the Audit log and its export show the others "Shown to Super admin, Billing and Support".
 2. **`action` is free-text (no CHECK)** — dozens of verbs invented at call sites; the audit page builds its filter dropdown by SELECTing all `action` values and de-duping in JS ([audit/page.tsx:105-111](../../../app/platform-admin/audit/page.tsx#L105)), so retired call sites leave orphan verbs in the filter.
 3. **`field`/`old_value`/`new_value` are an action-defined, untyped triple** — meaning differs per call site (a whole before/after object for `update_platform_user` vs a scalar for `create_user_note`); no schema contract.
 4. **`org_id` FK is ON DELETE SET NULL** — deleting an org orphans its audit rows (org_id→null) rather than cascading, so history survives but loses org linkage.
@@ -8278,7 +8279,10 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **`old_value`** (jsonb, nullable) — prior state (5th arg, null-coerced when undefined); action-specific shape (scalar, string, or whole before-object); truncated to 80 chars in the UI.
 
 <!-- dict:col:platform_audit_log.new_value -->
-**`new_value`** (jsonb, nullable) — resulting state (6th arg, null-coerced); same per-action polymorphic shape as `old_value`.
+**`new_value`** (jsonb, nullable) — resulting state (6th arg, null-coerced); same per-action polymorphic shape as `old_value`. Since mig 380 the writer no longer puts a reason inside it (rows before 380 still carry `reason` / `change_note` / `changeNote` there, unedited).
+
+<!-- dict:col:platform_audit_log.reason -->
+**`reason`** (text, nullable; mig 380, Support console Stage 3, owner Q6 2026-10-26) — why the staff member made the change, in its own column (R4). **Required** on every staff change to a customer's club, person, plan, money or retention, and on refunds (the writer's `reason` option; the routes refuse a blank one). **NULL by design** for the product's own jobs (ticks, sweeps, the webhook's workspace creation, the demo seed) and the console's own work tools (notes, pitch decks, campaigns, feedback/error triage status, lead edits, staff roles until Stage 8). The migration copied the old reason out of `new_value` (`reason`, or a catalog approval's `change_note`/`changeNote`) once — 28 rows on dev. Readers: the Audit log's Reason column + entry window, the export, the club/person/free-time Stories (a staff row with none reads "Not recorded").
 
 ### `platform_user_notes`
 <!-- dict:table:platform_user_notes -->
@@ -8356,6 +8360,56 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 
 <!-- dict:col:platform_record_opens.opened_at -->
 **`opened_at`** (timestamptz, NOT NULL, default now()) — when it was opened. Indexed `(opened_at DESC)` for the prune and the Audit log's newest-first read.
+
+### `platform_refunds`
+<!-- dict:table:platform_refunds -->
+
+**Purpose:** the support console's **record of every refund a staff member makes** from a club's Money tab (mig 380, Support console Stage 3, owner Q1–Q3 2026-10-26). Written as `started` **before** Stripe is asked and completed with Stripe's answer, so a refund can never exist in Stripe without a line here. Only the club's **subscription** charges (the family payments rail keeps its own `online_payment_refunds`).
+
+**Gotchas (read first):**
+1. **The row's `id` is the refund's idempotency key** and rides in the Stripe refund's `metadata.platform_refund_id`. Recovery (opening the charge) lists the charge's refunds in Stripe and matches that id; it **never re-sends** a refund — Stripe prunes keys after ≥24 h, so a second POST could make a second refund.
+2. **One unfinished refund per charge, by the database** — partial unique index `platform_refunds_one_open_per_charge` on `stripe_charge_id` WHERE `status IN ('started','unknown')`. `not_made` releases the charge.
+3. **Forward-only, request frozen** — trigger `platform_refunds_guard`: an insert must be `started` with no refund id; after that only `status` (started → done/refused/unknown/not_made; unknown → done/not_made), `stripe_refund_id` (once), the error code/request id and `completed_at` may change.
+4. **Never card data, never Stripe's raw reply** — the card's brand and last four are read from Stripe each time they are shown; a refusal keeps only Stripe's error `code` and request id. The typed `reason` is never sent to Stripe.
+5. **Service role only.** RLS on, no policies; `anon`/`authenticated` hold no privilege (rule 7).
+
+**Fields** (`id` uuid, `created_at` boilerplate):
+
+<!-- dict:col:platform_refunds.org_id -->
+**`org_id`** (uuid, nullable; FK→`organizations(id)` ON DELETE SET NULL) — the club, from the record's address (never the request body). Survives the club's deletion as NULL, like the audit log.
+
+<!-- dict:col:platform_refunds.stripe_customer_id -->
+<!-- dict:col:platform_refunds.stripe_charge_id -->
+<!-- dict:col:platform_refunds.stripe_refund_id -->
+**`stripe_customer_id`** / **`stripe_charge_id`** (text, NOT NULL; charge CHECK `^(ch|py)_`) / **`stripe_refund_id`** (text, nullable, UNIQUE; CHECK `^(re|pyr)_`) — the club's Stripe customer at the time, the refunded charge (ownership-checked against exactly this club's customer), and Stripe's refund once made. The Story de-duplicates console and dashboard refunds on `stripe_refund_id`.
+
+<!-- dict:col:platform_refunds.amount_cents -->
+<!-- dict:col:platform_refunds.currency -->
+<!-- dict:col:platform_refunds.remaining_seen_cents -->
+**`amount_cents`** (integer > 0) / **`currency`** (3 lowercase letters) / **`remaining_seen_cents`** (integer ≥ amount) — the refund, always explicit (an "all of it" refund is sent as an amount), and what the staff member saw still refundable when they pressed Refund; the server refuses when Stripe's remainder differs.
+
+<!-- dict:col:platform_refunds.stripe_reason -->
+**`stripe_reason`** (text, CHECK `duplicate|requested_by_customer`) — Stripe's reason: `duplicate` when the Money tab flagged the charge as a double charge. **Never `fraudulent`** (it adds the card and email to Stripe's block lists).
+
+<!-- dict:col:platform_refunds.status -->
+**`status`** (text, NOT NULL, default `started`; CHECK `started|done|refused|unknown|not_made`) — see gotcha 3. `refused` only on Stripe's definite 4xx; `unknown` on a timeout or a Stripe 5xx until recovery decides.
+
+<!-- dict:col:platform_refunds.stripe_error_code -->
+<!-- dict:col:platform_refunds.stripe_request_id -->
+**`stripe_error_code`** (text, CHECK `^[a-z_]{1,80}$`) / **`stripe_request_id`** (text, CHECK `^req_`) — on a refusal, Stripe's error code and request id only (never its message, which can name an account or a key).
+
+<!-- dict:col:platform_refunds.reason -->
+**`reason`** (text, NOT NULL, 1–500 characters) — the staff member's typed reason; also in the audit entry's `reason` column. A Luhn-valid 13–19 digit run is refused on the server.
+
+<!-- dict:col:platform_refunds.actor_email -->
+<!-- dict:col:platform_refunds.actor_role -->
+**`actor_email`** / **`actor_role`** (text, NOT NULL) — who refunded and their console role at the time. Billing's daily brake counts this person's refunds in the last 24 hours (index `platform_refunds_actor_idx`).
+
+<!-- dict:col:platform_refunds.livemode -->
+**`livemode`** (boolean, NOT NULL) — the mode of the key that made it (`sk_live_` = true); a charge in the other mode is refused.
+
+<!-- dict:col:platform_refunds.completed_at -->
+**`completed_at`** (timestamptz, nullable) — when Stripe's answer (or recovery) completed the row.
 
 **The read-only lookup over sign-in records (same migration, functions only — invisible to the column snapshots).** `platform_people_search(p_query, p_status, p_exclude_emails, p_clubs, p_offset, p_limit)` (the People list: ranked, paged, ≤100 a page, `total_count` for the pager), `platform_find_people(p_query, p_exclude_emails)` (Find's People group: 2–120 characters, `LIMIT 8` in SQL), `platform_people_by_ids(p_ids)` (owners/members by account id, ≤1,000 per call — the caller chunks) and `platform_find_clubs(p_query, p_exclude_slugs)` (Find's Clubs group: name, web name, own web address, owner email; `LIMIT 8`). All `SECURITY DEFINER`, `search_path = ''`, schema-qualified; they return **exactly** id, email, name (metadata `display_name` → `full_name` → `name`), last sign-in, created, banned-until, email-confirmed-at (clubs: id, name, slug, plan, status, kind, own address, one owner email). LIKE wildcards in the words are escaped. Staff accounts (`platform_users` + the bootstrap emails the caller passes) are left out. **Execute is revoked from PUBLIC, anon and authenticated and granted to service_role only** (rule 7; `tests/unit/support-console-stage2-guard.test.ts`, and a dev call with the anon key returned 42501 for all four on 2026-10-25). They end the 1,000-account cap the console's single `listUsers` pages had (Customer users, the clubs list's owner sign-ins, Today's owner-inactive count, the Founding Season desk). **Mig 367 (2026-10-25, /review fix)** replaced `platform_find_clubs` with the same signature and grants: a club's matched owner is the EXACT email searched when one of its owners has it, then the alphabetically first containing the words — 365 took the first containing them, so `owner@x` showed `coowner@x` and missed the exact-match rank.
 
