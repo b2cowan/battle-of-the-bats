@@ -1,22 +1,23 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-10-25 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-10-26 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 438 divergence(s)** across dev/prod.
+**⚠️ 478 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 15 | 0 | — |
-| Columns | 231 | 1 | 0 |
-| Indexes | 62 | 0 | 2 |
-| Constraints | 62 | 0 | — |
-| RLS / CHECK | 65 | 0 | 0 (RLS state) |
+| Tables | 16 | 0 | — |
+| Columns | 247 | 1 | 0 |
+| Indexes | 72 | 0 | 2 |
+| Constraints | 69 | 0 | — |
+| RLS / CHECK | 71 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (15)
+### Only in DEV (16)
 - `family_email_sends`
 - `league_registration_price_changes`
 - `league_season_fee_words`
+- `online_payment_items`
 - `online_payment_refunds`
 - `online_payments`
 - `org_custom_domains`
@@ -34,7 +35,7 @@
 _none_
 
 ## Columns
-### Only in DEV (231)
+### Only in DEV (247)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -72,6 +73,7 @@ _none_
 - `league_registrations.end_money_reason`
 - `league_registrations.ended_at`
 - `league_registrations.fee_amount`
+- `league_registrations.pay_link_sent_at`
 - `league_registrations.signup_position`
 - `league_registrations.signup_ref`
 - `league_registrations.spot_released`
@@ -87,6 +89,17 @@ _none_
 - `league_seasons.how_to_pay`
 - `league_seasons.owing_amber_days`
 - `league_seasons.registration_closed_at`
+- `online_payment_items.amount`
+- `online_payment_items.created_at`
+- `online_payment_items.description`
+- `online_payment_items.entry_id`
+- `online_payment_items.fee_share`
+- `online_payment_items.id`
+- `online_payment_items.land_error`
+- `online_payment_items.online_payment_id`
+- `online_payment_items.org_id`
+- `online_payment_items.registration_id`
+- `online_payment_items.updated_at`
 - `online_payment_refunds.amount`
 - `online_payment_refunds.created_at`
 - `online_payment_refunds.created_by`
@@ -95,8 +108,10 @@ _none_
 - `online_payment_refunds.id`
 - `online_payment_refunds.note`
 - `online_payment_refunds.online_payment_id`
+- `online_payment_refunds.online_payment_item_id`
 - `online_payment_refunds.org_id`
 - `online_payment_refunds.origin`
+- `online_payment_refunds.partial_reason`
 - `online_payment_refunds.processing_cost_entry_id`
 - `online_payment_refunds.reason`
 - `online_payment_refunds.refund_entry_id`
@@ -128,6 +143,8 @@ _none_
 - `online_payments.receipt_emailed_at`
 - `online_payments.receipt_no`
 - `online_payments.scope`
+- `online_payments.season_id`
+- `online_payments.signup_key`
 - `online_payments.status`
 - `online_payments.stripe_account_id`
 - `online_payments.stripe_charge_id`
@@ -274,7 +291,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (62)
+### Only in DEV (72)
 - `accounting_entries_league_registration_idx`
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
@@ -291,9 +308,16 @@ _none_
 - `league_season_fee_words_org_idx`
 - `league_season_fee_words_pkey`
 - `notifications_one_open_online_payments_notice`
+- `online_payment_items_entry_key`
+- `online_payment_items_one_per_child`
+- `online_payment_items_org_idx`
+- `online_payment_items_payment_idx`
+- `online_payment_items_pkey`
+- `online_payment_items_registration_idx`
 - `online_payment_refunds_cost_entry_idx`
 - `online_payment_refunds_created_by_idx`
 - `online_payment_refunds_entry_idx`
+- `online_payment_refunds_item_idx`
 - `online_payment_refunds_one_full_refund`
 - `online_payment_refunds_org_idx`
 - `online_payment_refunds_payment_idx`
@@ -301,11 +325,13 @@ _none_
 - `online_payment_refunds_stripe_key`
 - `online_payments_cost_entry_idx`
 - `online_payments_intent_key`
+- `online_payments_one_open_per_signup`
 - `online_payments_one_open_per_team`
 - `online_payments_open_idx`
 - `online_payments_org_idx`
 - `online_payments_pkey`
 - `online_payments_receipt_key`
+- `online_payments_season_idx`
 - `online_payments_session_key`
 - `online_payments_team_idx`
 - `online_payments_tournament_idx`
@@ -321,6 +347,7 @@ _none_
 - `platform_record_opens_opened_at_idx`
 - `platform_record_opens_pkey`
 - `rep_team_tryout_contacts_pkey`
+- `stripe_connect_events_org_id_idx`
 - `stripe_connect_events_pkey`
 - `stripe_connect_events_received_idx`
 - `stripe_connect_events_unprocessed_idx`
@@ -350,7 +377,7 @@ _none_
   - prod: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (62)
+### Only in DEV (69)
 - `family_email_sends.family_email_sends_org_id_fkey`
 - `family_email_sends.family_email_sends_pkey`
 - `family_email_sends.family_email_sends_sent_by_fkey`
@@ -365,15 +392,22 @@ _none_
 - `league_season_fee_words.league_season_fee_words_org_id_fkey`
 - `league_season_fee_words.league_season_fee_words_pkey`
 - `league_season_fee_words.league_season_fee_words_season_id_fkey`
+- `online_payment_items.online_payment_items_entry_fk`
+- `online_payment_items.online_payment_items_org_fk`
+- `online_payment_items.online_payment_items_payment_fk`
+- `online_payment_items.online_payment_items_pkey`
+- `online_payment_items.online_payment_items_registration_fk`
 - `online_payment_refunds.online_payment_refunds_cost_entry_fk`
 - `online_payment_refunds.online_payment_refunds_created_by_fk`
 - `online_payment_refunds.online_payment_refunds_entry_fk`
+- `online_payment_refunds.online_payment_refunds_item_fk`
 - `online_payment_refunds.online_payment_refunds_org_fk`
 - `online_payment_refunds.online_payment_refunds_payment_fk`
 - `online_payment_refunds.online_payment_refunds_pkey`
 - `online_payments.online_payments_cost_entry_fk`
 - `online_payments.online_payments_org_fk`
 - `online_payments.online_payments_pkey`
+- `online_payments.online_payments_season_fk`
 - `online_payments.online_payments_team_fk`
 - `online_payments.online_payments_tournament_fk`
 - `org_custom_domains.org_custom_domains_org_fk`
@@ -421,7 +455,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (65)
+### CHECK only in DEV (71)
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -442,9 +476,14 @@ _none_
 - `league_registrations.league_registrations_withdraw_note_check`
 - `league_seasons.league_seasons_how_to_pay_check`
 - `league_seasons.league_seasons_owing_amber_days_check`
+- `online_payment_items.online_payment_items_amount_chk`
+- `online_payment_items.online_payment_items_description_chk`
+- `online_payment_items.online_payment_items_land_error_chk`
+- `online_payment_items.online_payment_items_landed_chk`
 - `online_payment_refunds.online_payment_refunds_amount_chk`
 - `online_payment_refunds.online_payment_refunds_note_chk`
 - `online_payment_refunds.online_payment_refunds_origin_chk`
+- `online_payment_refunds.online_payment_refunds_partial_reason_chk`
 - `online_payment_refunds.online_payment_refunds_reason_chk`
 - `online_payment_refunds.online_payment_refunds_status_chk`
 - `online_payment_refunds.online_payment_refunds_succeeded_chk`
@@ -454,6 +493,7 @@ _none_
 - `online_payments.online_payments_fee_chk`
 - `online_payments.online_payments_fee_payer_chk`
 - `online_payments.online_payments_flow_chk`
+- `online_payments.online_payments_flow_shape_chk`
 - `online_payments.online_payments_paid_chk`
 - `online_payments.online_payments_rail_chk`
 - `online_payments.online_payments_scope_chk`

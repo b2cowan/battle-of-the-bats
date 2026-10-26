@@ -1462,7 +1462,7 @@
   {
     "tablename": "notifications",
     "indexname": "notifications_one_open_online_payments_notice",
-    "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text])))"
+    "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text])))"
   },
   {
     "tablename": "notifications",
@@ -1495,6 +1495,36 @@
     "indexdef": "CREATE UNIQUE INDEX observability_cron_heartbeat_pkey ON public.observability_cron_heartbeat USING btree (job_name)"
   },
   {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_entry_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_items_entry_key ON public.online_payment_items USING btree (entry_id) WHERE (entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_one_per_child",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_items_one_per_child ON public.online_payment_items USING btree (online_payment_id, registration_id) WHERE (registration_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_org_idx",
+    "indexdef": "CREATE INDEX online_payment_items_org_idx ON public.online_payment_items USING btree (org_id)"
+  },
+  {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_payment_idx",
+    "indexdef": "CREATE INDEX online_payment_items_payment_idx ON public.online_payment_items USING btree (online_payment_id)"
+  },
+  {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_pkey",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_items_pkey ON public.online_payment_items USING btree (id)"
+  },
+  {
+    "tablename": "online_payment_items",
+    "indexname": "online_payment_items_registration_idx",
+    "indexdef": "CREATE INDEX online_payment_items_registration_idx ON public.online_payment_items USING btree (registration_id) WHERE (registration_id IS NOT NULL)"
+  },
+  {
     "tablename": "online_payment_refunds",
     "indexname": "online_payment_refunds_cost_entry_idx",
     "indexdef": "CREATE INDEX online_payment_refunds_cost_entry_idx ON public.online_payment_refunds USING btree (processing_cost_entry_id) WHERE (processing_cost_entry_id IS NOT NULL)"
@@ -1508,6 +1538,11 @@
     "tablename": "online_payment_refunds",
     "indexname": "online_payment_refunds_entry_idx",
     "indexdef": "CREATE INDEX online_payment_refunds_entry_idx ON public.online_payment_refunds USING btree (refund_entry_id) WHERE (refund_entry_id IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_item_idx",
+    "indexdef": "CREATE INDEX online_payment_refunds_item_idx ON public.online_payment_refunds USING btree (online_payment_item_id) WHERE (online_payment_item_id IS NOT NULL)"
   },
   {
     "tablename": "online_payment_refunds",
@@ -1546,6 +1581,11 @@
   },
   {
     "tablename": "online_payments",
+    "indexname": "online_payments_one_open_per_signup",
+    "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_signup ON public.online_payments USING btree (season_id, signup_key) WHERE ((status = 'open'::text) AND (flow = 'league_signup'::text) AND (season_id IS NOT NULL))"
+  },
+  {
+    "tablename": "online_payments",
     "indexname": "online_payments_one_open_per_team",
     "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_team ON public.online_payments USING btree (team_id) WHERE ((status = 'open'::text) AND (team_id IS NOT NULL))"
   },
@@ -1568,6 +1608,11 @@
     "tablename": "online_payments",
     "indexname": "online_payments_receipt_key",
     "indexdef": "CREATE UNIQUE INDEX online_payments_receipt_key ON public.online_payments USING btree (receipt_no) WHERE (receipt_no IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_season_idx",
+    "indexdef": "CREATE INDEX online_payments_season_idx ON public.online_payments USING btree (season_id) WHERE (season_id IS NOT NULL)"
   },
   {
     "tablename": "online_payments",
@@ -4543,6 +4588,11 @@
     "tablename": "schedule_facility_lanes",
     "indexname": "schedule_facility_lanes_unique_label",
     "indexdef": "CREATE UNIQUE INDEX schedule_facility_lanes_unique_label ON public.schedule_facility_lanes USING btree (tournament_id, division_id, label)"
+  },
+  {
+    "tablename": "stripe_connect_events",
+    "indexname": "stripe_connect_events_org_id_idx",
+    "indexdef": "CREATE INDEX stripe_connect_events_org_id_idx ON public.stripe_connect_events USING btree (org_id)"
   },
   {
     "tablename": "stripe_connect_events",

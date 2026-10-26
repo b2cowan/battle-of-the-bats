@@ -1,4 +1,5 @@
 -- DEV only. Club Tier Stage 9b-2 Part 1 (mig 368): the one house-league money writer, proved on the database.
+-- T19-T28: Stage 12b (mig 374) — a card payment lands through that writer, once, per child.
 -- Run: node scripts/db-query.mjs --dev -f scripts/house-league-money-check.sql
 -- The final exception rolls back every fixture row; the run passes only when it ends in HOUSE_LEAGUE_MONEY_PASSED.
 DO $hlmoney$
@@ -6,6 +7,9 @@ DECLARE
   v_org uuid; v_season uuid; v_free uuid; v_div uuid; v_div2 uuid;
   v_a uuid; v_b uuid; v_c uuid; v_d uuid; v_w uuid; v_p uuid;
   v_entry uuid; v_refusal text; v_promoted uuid; v_kept boolean; v_day date := DATE '2026-03-01';
+  -- 12b (mig 374): card payments.
+  v_s1 uuid; v_s2 uuid; v_s3 uuid; v_s4 uuid; v_s5 uuid; v_s6 uuid; v_s7 uuid; v_op uuid; v_res jsonb;
+  v_today date := (now() AT TIME ZONE 'America/Toronto')::date;
 BEGIN
   INSERT INTO organizations(name, slug, plan_id)
   VALUES ('MONEY CHECK 9b-2', 'money-check-9b2-' || substr(md5(random()::text), 1, 10), 'club') RETURNING id INTO v_org;
@@ -198,6 +202,139 @@ BEGIN
     RAISE EXCEPTION 'FAIL T18: the starting budget is not size × price'; END IF;
   IF club_league_fee_budget_seed(v_season)->>'code' IS DISTINCT FROM 'already_planned' THEN
     RAISE EXCEPTION 'FAIL T18: the starting budget was planned twice'; END IF;
+
+  -- ── Stage 12b (mig 374): a family pays by card ──────────────────────────────────────────────
+  INSERT INTO league_registrations(org_id, season_id, division_id, player_first_name, player_last_name,
+    guardian_first_name, guardian_last_name, guardian_email, status, fee_amount, signup_ref)
+  VALUES (v_org, v_season, v_div2, 'Sib', 'One', 'P', 'G', 's@example.invalid', 'active', 150, 'aa11bb22') RETURNING id INTO v_s1;
+  INSERT INTO league_registrations(org_id, season_id, division_id, player_first_name, player_last_name,
+    guardian_first_name, guardian_last_name, guardian_email, status, fee_amount, signup_ref)
+  VALUES (v_org, v_season, v_div2, 'Sib', 'Two', 'P', 'G', 's@example.invalid', 'active', 150, 'aa11bb22') RETURNING id INTO v_s2;
+
+  -- T19 · a person never writes "Online, card": the hand write is refused, nothing written.
+  SELECT m.entry, m.refusal INTO v_entry, v_refusal FROM club_league_money(v_org, v_season, v_s1, 'receive', NULL, v_day, 'online_card', NULL, NULL) m;
+  IF v_refusal IS DISTINCT FROM 'method' OR v_entry IS NOT NULL OR league_reg_received(v_s1) <> 0 THEN
+    RAISE EXCEPTION 'FAIL T19: a hand write said online_card (%)', v_refusal; END IF;
+
+  -- T20 · siblings in ONE checkout: one payment, a line per child through the writer, both paid; the fee is no revenue.
+  v_op := gen_random_uuid();
+  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'aa11bb22', 'Sib One, Sib Two', 's@example.invalid',
+    12.00, 'family', 0.0350, 1.50, false, 'cs_check_' || v_op::text,
+    jsonb_build_array(
+      jsonb_build_object('registrationId', v_s1, 'description', 'Sib One · B', 'amount', 150, 'feeShare', 6.00),
+      jsonb_build_object('registrationId', v_s2, 'description', 'Sib Two · B', 'amount', 150, 'feeShare', 6.00)));
+  IF (SELECT total_amount FROM online_payments WHERE id = v_op) <> 312.00 OR (SELECT base_amount FROM online_payments WHERE id = v_op) <> 300 THEN
+    RAISE EXCEPTION 'FAIL T20: the payment did not open as base + fee'; END IF;
+  v_res := online_payment_league_land(v_op, (v_day + 1)::timestamptz + interval '15 hours', 'pi_check_' || v_op::text, 'ch_x', 'visa', '4242');
+  IF (v_res->>'already')::boolean OR (v_res->>'landed')::int <> 2 OR jsonb_array_length(v_res->'unrecorded') <> 0
+     OR league_reg_received(v_s1) <> 150 OR league_reg_received(v_s2) <> 150
+     OR NOT (SELECT registration_fee_paid FROM league_registrations WHERE id = v_s2)
+     OR (SELECT status FROM online_payments WHERE id = v_op) <> 'paid'
+     OR (SELECT receipt_no FROM online_payments WHERE id = v_op) IS NULL
+     OR EXISTS (SELECT 1 FROM online_payment_items i WHERE i.online_payment_id = v_op AND i.entry_id IS NULL)
+     OR EXISTS (SELECT 1 FROM online_payment_items i JOIN accounting_entries e ON e.id = i.entry_id
+                 WHERE i.online_payment_id = v_op AND (e.payment_method <> 'online_card' OR e.amount <> 150 OR e.created_by IS NOT NULL
+                   OR e.entry_date <> v_day + 1 OR e.source_module <> 'league_registration')) THEN
+    RAISE EXCEPTION 'FAIL T20: siblings did not land as one line each (%)', v_res; END IF;
+
+  -- T21 · a replayed webhook writes nothing.
+  v_res := online_payment_league_land(v_op, (v_day + 1)::timestamptz + interval '15 hours', 'pi_check_' || v_op::text, 'ch_x', 'visa', '4242');
+  IF NOT (v_res->>'already')::boolean
+     OR (SELECT count(*) FROM accounting_entries WHERE source_module = 'league_registration' AND source_entity_id IN (v_s1, v_s2)
+           AND entry_type = 'income' AND status = 'posted') <> 2 THEN
+    RAISE EXCEPTION 'FAIL T21: a replay wrote again (%)', v_res; END IF;
+
+  -- T22 · a card payment has no Undo: it really arrived.
+  SELECT m.refusal INTO v_refusal FROM club_league_money(v_org, v_season, v_s1, 'undo', NULL, NULL, NULL, NULL, NULL) m;
+  IF v_refusal IS DISTINCT FROM 'card' OR league_reg_received(v_s1) <> 150 THEN RAISE EXCEPTION 'FAIL T22: a card payment was undone (%)', v_refusal; END IF;
+
+  -- T23 · declined between Checkout and the webhook: the payment is PAID, that child's share carries 'ended', nothing written.
+  INSERT INTO league_registrations(org_id, season_id, division_id, player_first_name, player_last_name,
+    guardian_first_name, guardian_last_name, guardian_email, status, fee_amount, signup_ref)
+  VALUES (v_org, v_season, v_div2, 'Late', 'Decline', 'P', 'G', 'l@example.invalid', 'active', 150, 'cc33dd44') RETURNING id INTO v_s3;
+  v_op := gen_random_uuid();
+  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'cc33dd44', 'Late Decline', NULL, 6.75, 'family', 0.0350, 1.50,
+    false, 'cs_check_' || v_op::text, jsonb_build_array(jsonb_build_object('registrationId', v_s3, 'description', 'Late Decline · B', 'amount', 150, 'feeShare', 6.75)));
+  PERFORM 1 FROM league_registration_close(v_org, v_season, v_s3, 'declined', NULL, NULL, false, false, NULL, NULL, NULL, NULL);
+  v_res := online_payment_league_land(v_op, now(), 'pi_check_' || v_op::text, NULL, NULL, NULL);
+  IF (v_res->'unrecorded'->0->>'refusal') IS DISTINCT FROM 'ended' OR league_reg_received(v_s3) <> 0
+     OR (SELECT status FROM online_payments WHERE id = v_op) <> 'paid' OR (SELECT landed_at FROM online_payments WHERE id = v_op) IS NULL
+     OR (SELECT land_error FROM online_payment_items WHERE online_payment_id = v_op) <> 'ended' THEN
+    RAISE EXCEPTION 'FAIL T23: a late payment after a decline (%)', v_res; END IF;
+
+  -- T24 · marked received by hand meanwhile: the card share is refused, the hand payment stands alone.
+  INSERT INTO league_registrations(org_id, season_id, division_id, player_first_name, player_last_name,
+    guardian_first_name, guardian_last_name, guardian_email, status, fee_amount, signup_ref)
+  VALUES (v_org, v_season, v_div2, 'Hand', 'First', 'P', 'G', 'h@example.invalid', 'active', 150, 'ee55ff66') RETURNING id INTO v_s4;
+  v_op := gen_random_uuid();
+  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'ee55ff66', 'Hand First', NULL, 6.75, 'family', 0.0350, 1.50,
+    false, 'cs_check_' || v_op::text, jsonb_build_array(jsonb_build_object('registrationId', v_s4, 'description', 'Hand First · B', 'amount', 150, 'feeShare', 6.75)));
+  PERFORM 1 FROM club_league_money(v_org, v_season, v_s4, 'receive', NULL, v_day, 'cash', NULL, NULL);
+  v_res := online_payment_league_land(v_op, now(), 'pi_check_' || v_op::text, NULL, NULL, NULL);
+  IF (v_res->'unrecorded'->0->>'refusal') IS DISTINCT FROM 'already_received' OR league_reg_received(v_s4) <> 150 THEN
+    RAISE EXCEPTION 'FAIL T24: a card payment landed beside a hand one (%)', v_res; END IF;
+
+  -- T25 · the club pays the fee (A14): the family pays the base, the fee is ONE "Payment processing" COST on the season's
+  -- book (source online_payment, a money-out word in the house-league category) — never a fee refund.
+  INSERT INTO league_registrations(org_id, season_id, division_id, player_first_name, player_last_name,
+    guardian_first_name, guardian_last_name, guardian_email, status, fee_amount, signup_ref)
+  VALUES (v_org, v_season, v_div2, 'Club', 'Pays', 'P', 'G', 'c@example.invalid', 'active', 150, 'aa77bb88') RETURNING id INTO v_s5;
+  v_op := gen_random_uuid();
+  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'aa77bb88', 'Club Pays', NULL, 6.75, 'club', 0.0350, 1.50,
+    false, 'cs_check_' || v_op::text, jsonb_build_array(jsonb_build_object('registrationId', v_s5, 'description', 'Club Pays · B', 'amount', 150, 'feeShare', 6.75)));
+  v_res := online_payment_league_land(v_op, now(), 'pi_check_' || v_op::text, NULL, NULL, NULL);
+  IF (SELECT total_amount FROM online_payments WHERE id = v_op) <> 150 OR league_reg_received(v_s5) <> 150
+     OR NOT EXISTS (SELECT 1 FROM online_payments p JOIN accounting_entries e ON e.id = p.processing_cost_entry_id
+                     JOIN budget_items i ON i.id = e.budget_item_id
+                     JOIN league_season_fee_words w ON w.category_id = i.category_id AND w.season_id = v_season
+                    WHERE p.id = v_op AND e.amount = 6.75 AND e.entry_type = 'expense' AND e.source_module = 'online_payment'
+                      AND i.name = 'Payment processing' AND i.direction = 'out') THEN
+    RAISE EXCEPTION 'FAIL T25: a club-paid fee did not file as a Payment processing cost (%)', v_res; END IF;
+
+  -- T26 · paid on a day in a closed fiscal year: booked today (the tournament landing's rule), never refused.
+  -- A fixture: the close step's own switch, for this rolled-back check only.
+  PERFORM set_config('club.fiscal_step', 'on', true);
+  INSERT INTO org_fiscal_years(org_id, name, first_day, last_day, closed_at, closed_by, closing_balance, closing_snapshot)
+  VALUES (v_org, 'Closed check', DATE '2025-04-01', DATE '2026-03-31', now(), (SELECT u.id FROM auth.users u LIMIT 1), 0, '{}'::jsonb);
+  PERFORM set_config('club.fiscal_step', 'off', true);
+  INSERT INTO league_registrations(org_id, season_id, division_id, player_first_name, player_last_name,
+    guardian_first_name, guardian_last_name, guardian_email, status, fee_amount, signup_ref)
+  VALUES (v_org, v_season, v_div2, 'Closed', 'Year', 'P', 'G', 'y@example.invalid', 'active', 150, 'cc99dd00') RETURNING id INTO v_s6;
+  v_op := gen_random_uuid();
+  PERFORM online_payment_league_open(v_op, v_org, 'acct_check', v_season, 'cc99dd00', 'Closed Year', NULL, 6.75, 'family', 0.0350, 1.50,
+    false, 'cs_check_' || v_op::text, jsonb_build_array(jsonb_build_object('registrationId', v_s6, 'description', 'Closed Year · B', 'amount', 150, 'feeShare', 6.75)));
+  v_res := online_payment_league_land(v_op, TIMESTAMPTZ '2026-03-15 15:00+00', 'pi_check_' || v_op::text, NULL, NULL, NULL);
+  IF jsonb_array_length(v_res->'unrecorded') <> 0 OR (v_res->>'day')::date <> v_today
+     OR (SELECT e.entry_date FROM online_payment_items i JOIN accounting_entries e ON e.id = i.entry_id WHERE i.online_payment_id = v_op) <> v_today THEN
+    RAISE EXCEPTION 'FAIL T26: a payment in a closed year was not booked today (%)', v_res; END IF;
+
+  -- T27 · the guards: nobody marks a payment paid or writes a child row outside the functions.
+  BEGIN
+    UPDATE online_payments SET status = 'refunded' WHERE id = v_op;
+    RAISE EXCEPTION 'FAIL T27: a hand update to a payment went through';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM LIKE 'FAIL%' THEN RAISE; END IF;
+  END;
+  BEGIN
+    UPDATE online_payment_items SET entry_id = NULL WHERE online_payment_id = v_op;
+    RAISE EXCEPTION 'FAIL T27: a hand update to a child row went through';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM LIKE 'FAIL%' THEN RAISE; END IF;
+  END;
+
+  -- T28 · a child is in at most ONE open payment, whatever key opened it (two payable pages = paying twice).
+  INSERT INTO league_registrations(org_id, season_id, division_id, player_first_name, player_last_name,
+    guardian_first_name, guardian_last_name, guardian_email, status, fee_amount)
+  VALUES (v_org, v_season, v_div2, 'Two', 'Pages', 'P', 'G', 't@example.invalid', 'active', 150) RETURNING id INTO v_s7;
+  PERFORM online_payment_league_open(gen_random_uuid(), v_org, 'acct_check', v_season, v_s7::text, 'Two Pages', NULL, 6.75, 'family', 0.0350, 1.50,
+    false, 'cs_check_a_' || v_s7::text, jsonb_build_array(jsonb_build_object('registrationId', v_s7, 'description', 'Two Pages · B', 'amount', 150, 'feeShare', 6.75)));
+  BEGIN
+    PERFORM online_payment_league_open(gen_random_uuid(), v_org, 'acct_check', v_season, 'other-key', 'Two Pages', NULL, 6.75, 'family', 0.0350, 1.50,
+      false, 'cs_check_b_' || v_s7::text, jsonb_build_array(jsonb_build_object('registrationId', v_s7, 'description', 'Two Pages · B', 'amount', 150, 'feeShare', 6.75)));
+    RAISE EXCEPTION 'FAIL T28: a second open payment for one child went through';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM LIKE 'FAIL%' THEN RAISE; END IF;
+  END;
 
   RAISE EXCEPTION 'HOUSE_LEAGUE_MONEY_PASSED';
 END $hlmoney$;

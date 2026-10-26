@@ -486,15 +486,54 @@ type OnlineRow = { id: string; status: string; landed_at: string | null };
 const onlinePayments = (rows: NoticeRow[]) =>
   rowsIn<OnlineRow>('online_payments', 'id, status, landed_at', 'id', uniq(rows.map(r => meta(r, 'onlinePaymentId'))));
 
+type OnlineItemRow = { id: string; amount: number; entry_id: string | null; land_error: string | null };
+type ItemRefundRow = { online_payment_item_id: string; status: string; amount: number; fee_refunded: number };
+
+/** A house-league child's share that could not land (Stage 12b, one notice per child, `onlinePaymentItemId`) — waits
+ *  until that share is refunded in full or lands after all. The payment itself is landed (its other children may be
+ *  recorded), so its `landed_at` never settles a child's notice. */
+async function onlineItemsNotRecorded(rows: NoticeRow[], out: Map<string, Verdict>): Promise<void> {
+  const ids = uniq(rows.map(r => meta(r, 'onlinePaymentItemId')));
+  if (!ids.length) return;
+  const [items, refunds] = await Promise.all([
+    rowsIn<OnlineItemRow>('online_payment_items', 'id, amount, entry_id, land_error', 'id', ids),
+    rowsIn<ItemRefundRow>('online_payment_refunds', 'online_payment_item_id, status, amount, fee_refunded', 'online_payment_item_id', ids,
+      q => q.eq('status', 'succeeded')),
+  ]);
+  const byId = new Map(items.map(i => [i.id, i]));
+  const refunded = new Map<string, number>();
+  for (const f of refunds) refunded.set(f.online_payment_item_id, (refunded.get(f.online_payment_item_id) ?? 0) + Number(f.amount) - Number(f.fee_refunded));
+  for (const r of rows) {
+    const id = meta(r, 'onlinePaymentItemId');
+    if (!id) continue;
+    const item = byId.get(id);
+    if (!item) out.set(r.id, said(W.onlinePaymentGone, { link: null }));
+    else if (item.entry_id) out.set(r.id, said(W.onlineItemRecorded));
+    else if (Math.round((refunded.get(id) ?? 0) * 100) >= Math.round(Number(item.amount) * 100)) out.set(r.id, said(W.onlinePaymentRefunded));
+    else out.set(r.id, 'waiting');
+  }
+}
+
 /** A paid online payment that could not land in the team's record (Stage 12a) — waits until it lands or is refunded. */
 const onlinePaymentNotRecorded: Resolver = async rows => {
   const out = new Map<string, Verdict>();
-  const byId = new Map((await onlinePayments(rows)).map(p => [p.id, p]));
+  await onlineItemsNotRecorded(rows.filter(r => meta(r, 'onlinePaymentItemId')), out);
+  const byId = new Map((await onlinePayments(rows.filter(r => !meta(r, 'onlinePaymentItemId')))).map(p => [p.id, p]));
+  // A refund made in Stripe's own dashboard that we could not record (`stripeRefundId`): the payment is LANDED, so its
+  // landed_at says nothing — the notice waits for THAT refund to be recorded (review 2026-10-25).
+  const stripeIds = uniq(rows.map(r => meta(r, 'stripeRefundId')));
+  const recordedRefunds = new Set(stripeIds.length
+    ? (await rowsIn<{ stripe_refund_id: string }>('online_payment_refunds', 'stripe_refund_id', 'stripe_refund_id', stripeIds, q => q.eq('status', 'succeeded')))
+      .map(f => f.stripe_refund_id)
+    : []);
   for (const r of rows) {
+    if (meta(r, 'onlinePaymentItemId')) continue;
     const id = meta(r, 'onlinePaymentId');
     if (!id) continue; // names no payment: malformed, so never cleared on doubt
     const p = byId.get(id);
+    const stripeRefundId = meta(r, 'stripeRefundId');
     if (!p) out.set(r.id, said(W.onlinePaymentGone, { link: null }));
+    else if (stripeRefundId) out.set(r.id, recordedRefunds.has(stripeRefundId) || p.status === 'refunded' ? said(W.refundRecorded) : 'waiting');
     else if (p.status === 'refunded') out.set(r.id, said(W.onlinePaymentRefunded));
     else if (p.landed_at) out.set(r.id, said(W.onlinePaymentRecorded));
     else out.set(r.id, 'waiting');

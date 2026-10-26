@@ -150,6 +150,7 @@ function moneyRefusal(
     changed: [409, MONEY_REFUSAL.changed],
     nothing_received: [409, MONEY_REFUSAL.nothingToUndo(name)],
     refunded: [409, MONEY_REFUSAL.refundedUndo],
+    card: [409, MONEY_REFUSAL.card],
     same: [400, MONEY_REFUSAL.priceSame],
     reason: [400, ending ? MONEY_REFUSAL.keptReason(amount) : MONEY_REFUSAL.priceReason],
     money: [409, MONEY_REFUSAL.money(amount)],

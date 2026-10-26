@@ -6,11 +6,14 @@
  *    (`org_settings` in OWNER_ONLY_CAPABILITIES); this is the same line.
  *  - See the Payouts state and get "needs attention": the owner and the treasurer (A1). The treasurer is the `treasurer`
  *    role, or anyone who holds the club's Accounting (`canMoveClubMoney`'s people).
- *  - Refund a card payment, email a pay link: whoever runs tournaments, plus the treasurer (A13).
+ *  - Refund a card payment, email a pay link: whoever may end the registration or record a payment IN THAT FLOW, plus
+ *    the treasurer (A13). Tournaments: whoever runs tournaments. House league (12b): the house-league gate's `takeFees`
+ *    (owner, club admin, league admin, registrar) — its own variant, never a widening of the tournament one.
  */
 import { hasCapability } from './roles';
 import { canOpenModule, type MemberAccessInput } from './member-access';
 import type { EntitlementOrg } from './module-entitlements';
+import { canHouseLeague } from './house-league-access';
 
 export function canConnectPayouts(member: Pick<MemberAccessInput, 'role'>): boolean {
   return member.role === 'owner';
@@ -26,4 +29,9 @@ export function canSeePayouts(member: MemberAccessInput, org: EntitlementOrg): b
 
 export function canRefundOnline(member: MemberAccessInput, org: EntitlementOrg): boolean {
   return hasCapability(member.role, member.capabilities, 'create_tournaments') || isPayoutsTreasurer(member, org);
+}
+
+/** A13, house league: the registration desk (`takeFees`) or the treasurer. A registrar refunds here, never a tournament. */
+export function canRefundLeagueOnline(member: MemberAccessInput, org: EntitlementOrg): boolean {
+  return canHouseLeague(member, org, 'takeFees') || isPayoutsTreasurer(member, org);
 }

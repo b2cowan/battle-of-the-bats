@@ -2810,6 +2810,56 @@
     "update_rule": null
   },
   {
+    "table_name": "online_payment_items",
+    "constraint_name": "online_payment_items_entry_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_items",
+    "constraint_name": "online_payment_items_org_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_items",
+    "constraint_name": "online_payment_items_payment_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_id",
+    "foreign_table": "online_payments",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_items",
+    "constraint_name": "online_payment_items_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "online_payment_items",
+    "constraint_name": "online_payment_items_registration_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "registration_id",
+    "foreign_table": "league_registrations",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "online_payment_refunds",
     "constraint_name": "online_payment_refunds_cost_entry_fk",
     "constraint_type": "FOREIGN KEY",
@@ -2835,6 +2885,16 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "refund_entry_id",
     "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "constraint_name": "online_payment_refunds_item_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_item_id",
+    "foreign_table": "online_payment_items",
     "foreign_column": "id",
     "delete_rule": "NO ACTION",
     "update_rule": "NO ACTION"
@@ -2898,6 +2958,16 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
+  },
+  {
+    "table_name": "online_payments",
+    "constraint_name": "online_payments_season_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
   },
   {
     "table_name": "online_payments",

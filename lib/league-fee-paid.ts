@@ -13,8 +13,10 @@ import type { AuthContextWithRole } from './api-auth';
  *
  * Every door that moves a house-league registration's money lands here, never a second copy: Registrations (Mark received,
  * Undo, Correct the price, the bulk bar), the ending window (Decline / Withdraw / Release the spot), the family record's
- * Record a payment, and — Stage 12b — a card payment. `tests/unit/club-stage5c-families-guard.test.ts` fails the build if a
- * door writes the money itself.
+ * Record a payment. `tests/unit/club-stage5c-families-guard.test.ts` fails the build if a door writes the money itself.
+ * A card payment (Stage 12b) reaches the SAME database writer from inside the database: `online_payment_league_land`
+ * (mig 374, called only by lib/online-payment-landing.ts) runs `club_league_money` per child in one transaction with no
+ * person behind it, so the landing and its payment can never disagree. Only that landing may write 'online_card'.
  *
  * Who: the one house-league gate's `takeFees` (lib/house-league-access.ts, Q17): the owner, a club admin, a league admin
  * or a league registrar, holding the house league. It stays open on a finished season (Q16): money arrives after the last
@@ -37,7 +39,8 @@ export function canMarkLeagueFeePaid(ctx: Pick<AuthContextWithRole, 'role' | 'ca
   return canHouseLeague(ctx, ctx.org, 'takeFees');
 }
 
-/** The methods a person picks (the product's one list) plus the card method Stage 12b writes. */
+/** The methods a person picks (the product's one list) plus the card method Stage 12b writes. 'online_card' is the card
+ *  landing's alone (mig 374, `online_payment_league_land`): a person who sends it is refused 'method', here and in the database. */
 export const LEAGUE_MONEY_METHODS: readonly string[] = [...DUES_PAYMENT_METHODS, 'online_card'];
 
 export type LeagueMoneyMove =
@@ -52,7 +55,9 @@ export type LeagueMoneyMove =
 
 export type LeagueMoneyRefusal =
   | 'ended' | 'not_accepted' | 'already_received' | 'amount' | 'over' | 'nothing_received' | 'refunded'
-  | 'same' | 'reason' | 'money' | 'date' | 'future' | 'method' | 'before_payment' | 'changed';
+  | 'same' | 'reason' | 'money' | 'date' | 'future' | 'method' | 'before_payment' | 'changed'
+  /** Undo on a card payment (mig 374): it really arrived, so it comes off only by a refund. */
+  | 'card';
 
 export type LeagueMoneyResult =
   | { entryId: string | null }
@@ -64,7 +69,7 @@ function moveInputRefusal(day: string | null | undefined, method: string | null 
   if (day == null) return required ? 'date' : null;
   if (!isCalendarDate(day)) return 'date';
   if (day > tournamentToday()) return 'future';
-  if (method != null && !LEAGUE_MONEY_METHODS.includes(method)) return 'method';
+  if (method != null && (!LEAGUE_MONEY_METHODS.includes(method) || method === 'online_card')) return 'method';
   return null;
 }
 

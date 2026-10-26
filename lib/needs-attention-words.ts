@@ -62,6 +62,7 @@ export const SETTLED_WORDS = {
   payoutsDisconnected: 'Payouts were disconnected.',
   onlinePaymentRecorded: 'It’s in the team’s record now.',
   onlinePaymentRefunded: 'It was refunded to the card.',
+  onlineItemRecorded: 'It’s on the registration now.',
   onlinePaymentGone: 'The payment’s record is gone.',
   refundRecorded: 'Refund recorded',
 

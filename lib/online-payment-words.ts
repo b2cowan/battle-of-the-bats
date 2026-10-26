@@ -59,6 +59,32 @@ export const ONLINE_NOTICE_WORDS = {
     `${description}: the refund to the card was returned, for example because the card was closed. Send the team the money another way, then record the refund.`,
 } as const;
 
+/** Why a child's share couldn't land: the house-league writer's refusal, in the family's terms (12b copy §7 `why*`). */
+export function leagueUnrecordedWhy(refusal: string): string {
+  switch (refusal) {
+    case 'ended': return 'the registration had already ended';
+    case 'already_received': return 'the fee was already marked received';
+    case 'over': return 'it was more than what was owing';
+    case 'not_accepted': return 'the registration isn’t accepted';
+    case 'gone': return 'the registration was deleted';
+    default: return 'something went wrong on our side';
+  }
+}
+
+/** Needs attention, house league (12b copy §7): one notice per child whose share couldn't land. */
+export const LEAGUE_ONLINE_NOTICE_WORDS = {
+  unrecordedTitle: (child: string) => `A card payment for ${child} couldn’t be recorded`,
+  unrecordedBody: (guardian: string | null, amount: string, date: string | null, child: string, why: string) =>
+    `${guardian ?? 'The family'} paid ${amount} by card${date ? ` on ${date}` : ''} for ${child}, but it couldn’t go on the registration: ${why}. The money is in the club’s Stripe balance. Refund it to the card.`,
+  // Derived: the whole landing threw (the season is gone, Stripe's amount differs) — no child's share is on a registration.
+  unrecordedSignupTitle: 'A house-league card payment couldn’t be recorded',
+  unrecordedSignupBody: (description: string, amount: string, reason: string) =>
+    `${description}: ${amount} was paid by card, but it couldn’t go on the registrations (${reason}). The money is in the club’s Stripe balance. Refund it to the card.`,
+  // Derived, until 12b's refunds land (Part 5): a refund started in Stripe's dashboard on a house-league payment.
+  refundedInStripeBody: (description: string, amount: string) =>
+    `${description}: ${amount} was refunded in Stripe. Record the refund by hand on Registrations so the season’s book matches.`,
+} as const;
+
 /** The receipt email (§14) and the refund email (§17). */
 export const ONLINE_EMAIL_WORDS = {
   testPrefix: '[Test] ',

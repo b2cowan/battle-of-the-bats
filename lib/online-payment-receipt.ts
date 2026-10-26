@@ -34,6 +34,9 @@ export async function sendOnlineReceiptOnce(onlinePaymentId: string): Promise<vo
     .eq('id', onlinePaymentId)
     .is('receipt_emailed_at', null)
     .in('status', ['paid', 'refunded'])
+    // Only a receipt this sends is claimed: a house-league payment (12b) waits for its own receipt rather than being
+    // stamped "emailed" with nothing sent (review 2026-10-25).
+    .eq('flow', 'tournament_team')
     .select(ONLINE_EMAIL_COLUMNS)
     .maybeSingle();
   const op = data as OnlineForEmail | null;

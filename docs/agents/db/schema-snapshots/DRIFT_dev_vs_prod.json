@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-25",
-  "total": 438,
+  "generated": "2026-10-26",
+  "total": 478,
   "counts": {
-    "tables": 15,
-    "columns": 232,
-    "indexes": 64,
-    "constraints": 62,
-    "rls": 65
+    "tables": 16,
+    "columns": 248,
+    "indexes": 74,
+    "constraints": 69,
+    "rls": 71
   },
   "items": [
     {
@@ -90,6 +90,22 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:online_payment_items.online_payment_items_amount_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_items.online_payment_items_description_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_items.online_payment_items_land_error_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_items.online_payment_items_landed_chk",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:online_payment_refunds.online_payment_refunds_amount_chk",
       "sig": ""
     },
@@ -99,6 +115,10 @@
     },
     {
       "key": "check:only-dev:online_payment_refunds.online_payment_refunds_origin_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_refunds.online_payment_refunds_partial_reason_chk",
       "sig": ""
     },
     {
@@ -135,6 +155,10 @@
     },
     {
       "key": "check:only-dev:online_payments.online_payments_flow_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payments.online_payments_flow_shape_chk",
       "sig": ""
     },
     {
@@ -418,6 +442,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_registrations.pay_link_sent_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_registrations.signup_position",
       "sig": ""
     },
@@ -478,6 +506,50 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:online_payment_items.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_items.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_items.description",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_items.entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_items.fee_share",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_items.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_items.land_error",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_items.online_payment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_items.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_items.registration_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_items.updated_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:online_payment_refunds.amount",
       "sig": ""
     },
@@ -510,11 +582,19 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:online_payment_refunds.online_payment_item_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:online_payment_refunds.org_id",
       "sig": ""
     },
     {
       "key": "column:only-dev:online_payment_refunds.origin",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_refunds.partial_reason",
       "sig": ""
     },
     {
@@ -639,6 +719,14 @@
     },
     {
       "key": "column:only-dev:online_payments.scope",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.signup_key",
       "sig": ""
     },
     {
@@ -1254,6 +1342,26 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:online_payment_items.online_payment_items_entry_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_items.online_payment_items_org_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_items.online_payment_items_payment_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_items.online_payment_items_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_items.online_payment_items_registration_fk",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:online_payment_refunds.online_payment_refunds_cost_entry_fk",
       "sig": ""
     },
@@ -1263,6 +1371,10 @@
     },
     {
       "key": "constraint:only-dev:online_payment_refunds.online_payment_refunds_entry_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_refunds.online_payment_refunds_item_fk",
       "sig": ""
     },
     {
@@ -1287,6 +1399,10 @@
     },
     {
       "key": "constraint:only-dev:online_payments.online_payments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payments.online_payments_season_fk",
       "sig": ""
     },
     {
@@ -1518,6 +1634,30 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:online_payment_items_entry_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_items_one_per_child",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_items_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_items_payment_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_items_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_items_registration_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:online_payment_refunds_cost_entry_idx",
       "sig": ""
     },
@@ -1527,6 +1667,10 @@
     },
     {
       "key": "index:only-dev:online_payment_refunds_entry_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_refunds_item_idx",
       "sig": ""
     },
     {
@@ -1558,6 +1702,10 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:online_payments_one_open_per_signup",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:online_payments_one_open_per_team",
       "sig": ""
     },
@@ -1575,6 +1723,10 @@
     },
     {
       "key": "index:only-dev:online_payments_receipt_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payments_season_idx",
       "sig": ""
     },
     {
@@ -1635,6 +1787,10 @@
     },
     {
       "key": "index:only-dev:rep_team_tryout_contacts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:stripe_connect_events_org_id_idx",
       "sig": ""
     },
     {
@@ -1711,6 +1867,10 @@
     },
     {
       "key": "table:only-dev:league_season_fee_words",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:online_payment_items",
       "sig": ""
     },
     {

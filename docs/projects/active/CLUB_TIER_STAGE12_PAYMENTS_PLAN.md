@@ -16,7 +16,8 @@
   refuses v1 account creation. The walk is owed again.
 - A14 logged by /strategy 2026-10-25 (BUSINESS_DECISIONS.md; the Facts doc rider closed). **12a build prompt written
   2026-10-25: `CLUB_TIER_STAGE12A_BUILD_PROMPT.md`.** The owner moved the tournament card flow into 12a so it can be walked
-  end to end; 12c is now bank debit for both flows. 12b waits on 9b-2.
+  end to end; 12c is now bank debit for both flows. 9b-2 walked and closed 2026-10-25 (ledger §378), so 12b is
+  unblocked: **12b build prompt written 2026-10-25, `CLUB_TIER_STAGE12B_BUILD_PROMPT.md`** (census at `9c1545220`).
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
@@ -199,6 +200,28 @@ committed `8eae6bec6` (migration 364) + `235a3e9bd` (the code)). What the build 
 - **Owed — the walk:** Set up payouts → "Before you set up payouts" → Stripe's sign-up with test data → back on the card
   → *Taking payments*; window 2 shows the account events; a tournament team pays by card; and record whether
   `acss_debit_payments` reached `active` (for 12c).
+
+## 0e · Rulings at the 12b build start (owner, 2026-10-25)
+
+Asked from `CLUB_TIER_STAGE12B_BUILD_PROMPT.md` "Before any code", after a census against `9c1545220`.
+- **The 12b UX summary was approved as written.** It covers the family, the registrar or convenor, the treasurer and the
+  owner, and a club not taking payments sees today's screens word for word.
+- **a · Siblings: one checkout, with an item per child** (`online_payment_items`). This corrects the schema review's
+  "the destination row is the item". A child's fee line exists only once the money lands, so the split has to be held
+  from the moment of paying. A sibling whose line is refused (declined mid-checkout, marked received by hand) does not
+  undo the others: only that child's share raises Needs attention with the refund door.
+- **b · The landing goes through the one writer with no person attached.** It is recorded once per child, safe to
+  replay. A refusal keeps the payment recorded as taken and raises the item. A day in a closed fiscal year books today,
+  as the tournament landing does.
+- **c · The pay link opens the family's status page, already unlocked, for that one sign-up.** It never expires. "Ask to
+  withdraw a child" comes with it, because it is the same page the email and reference open.
+- **d · The pay block is extracted and shared now**, so team and family read the same six states. The tournament pay page
+  gets a short re-check in the walk.
+- **A partial refund returns only the amount typed.** The "include the processing fee" box shows only with a full refund.
+- Recorded alongside, not new rulings: the application fee is never refunded (§0c; no `refund_application_fee`). The
+  drawings' "processor keeps $4.85" is superseded by §0c. A club-paid processing cost must never be filed as a
+  house-league refund line, which would net fees. Only the card landing may record `online_card`, and a card receipt
+  comes off only by refund (no Undo), as m4 draws.
 
 ## 1 · What it makes true
 

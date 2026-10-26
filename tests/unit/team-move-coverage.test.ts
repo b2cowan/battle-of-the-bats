@@ -57,6 +57,7 @@ const STAYS: Record<string, string> = {
   org_payment_accounts: 'the account’s own Stripe connected account (online payments exclude the coach portal)',
   online_payments: 'money taken on the account’s own Stripe account (online payments exclude the coach portal)',
   online_payment_refunds: 'refunds on the account’s own Stripe account (online payments exclude the coach portal)',
+  online_payment_items: 'the children a house-league card payment covered (house league and online payments exclude the coach portal)',
   stripe_connect_events: 'a log of Stripe’s events, kept for audit; its org_id is a plain label with no foreign key',
   team_entitlements: 'the old portal’s own plan — the move cancels it, and it stays as that portal’s record',
   org_public_site_content: 'the coach org’s own public-site page, not the team',

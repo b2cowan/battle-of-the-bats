@@ -11,6 +11,10 @@ import { filesUnder, readCode } from './_source-code.ts';
  * no route can write a payment cache, a payment row or a book line of its own. Every door that opens a payment, connects
  * an account or refunds reads the launch switch (`lib/online-payments-switch.ts`).
  *
+ * Stage 12b adds the SECOND landing, house league (mig 374): `online_payment_league_land` runs each child's fee through
+ * THE house-league writer `club_league_money` (mig 369) inside one transaction. This guard lists both landings; the
+ * house-league side's own guard (house-league-money-guard) still holds that no app file calls that writer but its one TS face.
+ *
  * ⚠ The two Connect webhooks are the ONLY doors exempt from the switch: money Stripe already took must still land, a
  * refund already asked for must still record, and an account Stripe closed must stop taking payments, even if the switch
  * is turned off in between. Payments arrive on one (v1 snapshot events), the account's own changes on the other (v2 thin
@@ -20,7 +24,13 @@ import { filesUnder, readCode } from './_source-code.ts';
 const LANDING = 'lib/online-payment-landing.ts';
 const WEBHOOKS = ['app/api/payments/connect-webhook/route.ts', 'app/api/payments/connect-account-events/route.ts'];
 const MIG = 'supabase/migrations/358_a_club_takes_payments_online.sql';
-const LAND_RPCS = ['online_payment_land', 'online_payment_land_failed', 'online_payment_refund_open', 'online_payment_refund_land', 'online_payment_refund_failed'];
+const MIG_12B = 'supabase/migrations/374_a_family_pays_house_league_fees_by_card.sql';
+/** Both landings and the refund functions: only the named landing module calls them. */
+const LAND_RPCS = ['online_payment_land', 'online_payment_league_land', 'online_payment_land_failed', 'online_payment_refund_open',
+  'online_payment_refund_land', 'online_payment_refund_failed',
+  // The house-league money-out line and its word are called from inside the landing's SQL only, never from app code.
+  'online_payment_league_post_out', 'club_league_out_word'];
+const fnBody = (sql: string, fn: string) => new RegExp(`FUNCTION public\\.${fn}\\([\\s\\S]*?\\nEND \\$\\$;`).exec(sql)?.[0] ?? '';
 
 const appCode = () => [...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx'), ...filesUnder('lib', '.ts'), ...filesUnder('lib', '.tsx'), ...filesUnder('components', '.tsx'), ...filesUnder('components', '.ts')]
   .filter(f => !f.endsWith('.test.ts'));
@@ -44,6 +54,28 @@ describe('the landing is the only way an online payment reaches a team’s recor
     assert.doesNotMatch(land, /UPDATE teams/i, 'the landing must not write the payment cache');
   });
 
+  it('the house-league landing runs each child through THE house-league writer, once, as Stripe (mig 374, §0e b)', () => {
+    const land = fnBody(readCode(MIG_12B), 'online_payment_league_land');
+    assert.match(land, /club_league_money\(v_op\.org_id, v_op\.season_id, v_it\.registration_id, 'receive', v_it\.amount, v_day,\s*'online_card', NULL, NULL\)/,
+      'the writer, the child’s amount, the card method, no person');
+    assert.doesNotMatch(land, /INSERT INTO accounting_entries/i, 'the landing must not write a fee line itself');
+    assert.doesNotMatch(land, /UPDATE league_registrations/i, 'the landing must not flip a registration itself');
+    // Idempotent: "already" before and after the locks, and only children with no line yet are landed.
+    assert.equal((land.match(/RETURN jsonb_build_object\('already', true/g) ?? []).length, 2);
+    assert.match(land, /i\.entry_id IS NULL/);
+    // The ending's lock order (mig 369): the season, then the registrations, then the payment.
+    const season = land.indexOf('FROM league_seasons s WHERE s.id = v_op.season_id FOR NO KEY UPDATE');
+    const regs = land.indexOf('ORDER BY r.id FOR UPDATE');
+    const pay = land.indexOf('FROM online_payments WHERE id = p_online_payment FOR UPDATE');
+    assert.ok(season > 0 && regs > season && pay > regs, 'season → registrations → payment');
+  });
+
+  it('a club-paid fee is a COST, never a house-league refund line (A14; isFeeRefund nets those)', () => {
+    const out = fnBody(readCode(MIG_12B), 'online_payment_league_post_out');
+    assert.match(out, /'expense', 'posted', NULL, 'online_payment'/);
+    assert.doesNotMatch(out, /'league_registration'/);
+  });
+
   it('the refund never voids the receipt: it marks the row refunded and adds a money-out line', () => {
     const sql = readCode(MIG);
     const refund = /FUNCTION public\.online_payment_refund_land\([\s\S]*?\nEND \$\$;/.exec(sql)?.[0] ?? '';
@@ -57,8 +89,9 @@ describe('the landing is the only way an online payment reaches a team’s recor
     assert.match(sql, /CREATE TRIGGER tournament_team_payments_online_guard\s+BEFORE INSERT OR UPDATE ON public\.tournament_team_payments/);
     assert.doesNotMatch(sql, /BEFORE[^;]*DELETE ON public\.tournament_team_payments/, 'never on DELETE: teams and tournaments cascade');
     // Every function that opens the write flag closes it again before returning.
-    for (const fn of ['online_payment_land', 'online_payment_refund_land']) {
-      const body = new RegExp(`FUNCTION public\\.${fn}\\([\\s\\S]*?\\nEND \\$\\$;`).exec(sql)?.[0] ?? '';
+    for (const [file, fn] of [[sql, 'online_payment_land'], [sql, 'online_payment_refund_land'],
+      [readCode(MIG_12B), 'online_payment_league_land'], [readCode(MIG_12B), 'online_payment_league_open']] as const) {
+      const body = fnBody(file, fn);
       assert.equal((body.match(/'flhq\.online_payment_write', 'on'/g) ?? []).length, 1, fn);
       assert.equal((body.match(/'flhq\.online_payment_write', 'off'/g) ?? []).length, 1, fn);
     }
@@ -73,6 +106,10 @@ describe('the landing is the only way an online payment reaches a team’s recor
     const failed = /FUNCTION public\.online_payment_land_failed\([\s\S]*?\nEND \$\$;/.exec(sql)?.[0] ?? '';
     assert.match(failed, /'flhq\.online_payment_write', 'on'/);
     assert.match(failed, /'flhq\.online_payment_write', 'off'/);
+    // Mig 374 keeps both guards and adds the children's; none fires on DELETE.
+    const sql12b = readCode(MIG_12B);
+    assert.match(sql12b, /CREATE TRIGGER online_payment_items_guard BEFORE INSERT OR UPDATE ON public\.online_payment_items/);
+    assert.doesNotMatch(sql12b, /BEFORE[^;]*DELETE ON public\.online_payment/, 'never on DELETE: organizations cascade');
   });
 
   it('no app code writes an online-payment book line or marks an online payment paid itself', () => {

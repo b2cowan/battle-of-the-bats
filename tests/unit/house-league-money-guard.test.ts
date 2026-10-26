@@ -19,13 +19,13 @@ const CODE = [...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx'), ...file
   .filter(f => !f.endsWith('.test.ts'));
 /** Dev-only seeders write fixtures through the same database function (no signed-in member to pass the write). */
 const DEV_TOOLS = new Set(['app/api/dev/seed/house-league/route.ts']);
-// The latest definition of each function wins (mig 369 replaced three of 368's after /review).
-const MIG = ['368_house_league_money_honest.sql', '369_house_league_money_review_fixes.sql']
+// The latest definition of each function wins (mig 369 replaced three of 368's after /review; mig 374 the writer, for 12b).
+const MIG = ['368_house_league_money_honest.sql', '369_house_league_money_review_fixes.sql', '374_a_family_pays_house_league_fees_by_card.sql']
   .map(f => readSource(`supabase/migrations/${f}`)).join('\n').replace(/--.*$/gm, '');
 
 const body = (fn: string) => {
   const at = MIG.lastIndexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`);
-  assert.ok(at >= 0, `${fn} is gone from migs 368-369`);
+  assert.ok(at >= 0, `${fn} is gone from migs 368-374`);
   const rest = MIG.slice(at);
   return rest.slice(0, rest.indexOf('END $$;'));
 };
@@ -91,6 +91,16 @@ describe('2 · the book is honest (mig 368)', () => {
     assert.match(price, /IF v_reason IS NULL THEN RETURN QUERY SELECT NULL::uuid, 'reason'::text/);
     assert.match(price, /IF v_got > v_price THEN[\s\S]*'registration_refund'/);
     assert.match(price, /INSERT INTO league_registration_price_changes/);
+  });
+  it('a card payment is Stripe’s: only the online-payment write may say "online_card", and it has no Undo (12b, mig 374)', () => {
+    const money = body('club_league_money');
+    assert.match(money, /IF v_method = 'online_card' AND coalesce\(current_setting\('flhq\.online_payment_write', true\), 'off'\) <> 'on' THEN\s*RETURN QUERY SELECT NULL::uuid, 'method'::text/);
+    const undo = money.slice(money.indexOf("ELSIF p_action = 'undo'"));
+    assert.match(undo, /FROM online_payment_items i WHERE i\.entry_id = v_line\.id\) THEN\s*RETURN QUERY SELECT NULL::uuid, 'card'::text/);
+    // The refusal sits before the void.
+    assert.ok(undo.indexOf("'card'::text") < undo.indexOf('club_fee_void('));
+    // The hand paths refuse it before the database is asked.
+    assert.match(readCode(WRITER), /method === 'online_card'\)\) return 'method'/);
   });
   it('accepted-at is set by a trigger on every door, never invented for an old row', () => {
     assert.match(MIG, /BEFORE INSERT OR UPDATE OF status ON public\.league_registrations/);

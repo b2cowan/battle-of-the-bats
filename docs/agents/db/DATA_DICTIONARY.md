@@ -6888,6 +6888,9 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_registrations.registered_at -->
 **`registered_at`** (timestamptz, NOT NULL, default `now()`) — **the effective create stamp** (no `created_at` column exists); drives default list ordering (newest first). Never written by code; admin-manual rows are not back-dated (gotcha 2).
 
+<!-- dict:col:league_registrations.pay_link_sent_at -->
+**`pay_link_sent_at`** (timestamptz, nullable; migration 374, Stage 12b) — when the convenor last emailed this child's family the pay link ("Pay link sent Oct 20" on the Registrations row; the menu item stays so it can be sent again). The `teams.pay_link_sent_at` pattern. The link itself is a derived token scoped to the sign-up, never stored. A card payment's money is not here: it is `online_payment_items` → the house-league line (`entry_id`).
+
 ---
 
 ## `league_registration_price_changes`
@@ -7252,7 +7255,10 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 8. **A deleted team or tournament does not erase the payment**: `team_id` / `tournament_id` are `ON DELETE SET NULL` and `description` is frozen text, so the receipt stays readable. `org_id` cascades. The delete routes should refuse a team with a paid online payment until it is refunded.
 9. **The stored rate is data, not a restated price**: `fee_pct` / `fee_flat` are the rate used for this payment (the pricing facts live in `docs/agents/strategy/PLAN_PRICING_FACTS.md`).
 10. **Only paid payments are numbered.** `receipt_no` is taken at landing from `online_payment_receipt_seq` (see the column).
-11. **Mig 359: the database refuses a hand write** (`online_payments_guard`, BEFORE INSERT OR UPDATE, never DELETE). Without the transaction-local flag `flhq.online_payment_write` (opened only inside the mig 358 functions and `online_payment_land_failed`), an insert must be an `open` payment with nothing paid, and an update may only close an open one (`expired`), set `receipt_emailed_at` / `land_error` / `updated_at`, or let a team or tournament go (their FKs set NULL). Money, Stripe's ids, the receipt number, `landed_at` and the paid / refunded states are the landing's alone. `online_payment_refunds_guard` holds the same for refunds: the amount never changes, only the refund landing calls one succeeded, Stripe's id may be recorded once, and a pending refund may fail.
+11. **Mig 359: the database refuses a hand write** (`online_payments_guard`, BEFORE INSERT OR UPDATE, never DELETE). Without the transaction-local flag `flhq.online_payment_write` (opened only inside the mig 358 functions and `online_payment_land_failed`), an insert must be an `open` payment with nothing paid, and an update may only close an open one (`expired`), set `receipt_emailed_at` / `land_error` / `updated_at`, or let a team or tournament go (their FKs set NULL). Money, Stripe's ids, the receipt number, `landed_at` and the paid / refunded states are the landing's alone. `online_payment_refunds_guard` holds the same for refunds: the amount never changes, only the refund landing calls one succeeded, Stripe's id may be recorded once, and a pending refund may fail. **Mig 374** keeps both rules, adds `season_id` / `signup_key` to them (a season may only go NULL), and on INSERT requires each flow to open on what it pays for (a team and a tournament, or a season).
+12. **House league (migration 374, Stage 12b): `flow = 'league_signup'`.** One payment per Checkout for ONE sign-up, covering one or more children — the children are rows of **`online_payment_items`**, each with its amount and its share of the fee (the base is their sum). The shape is a CHECK (`online_payments_flow_shape_chk`): a team payment never carries a season or `signup_key`; a league payment never a team or tournament, always a `signup_key`, and `scope = 'full'` (house league has no deposit: a payment covers what is owing). Opened by **`online_payment_league_open(...)`** (the payment and its items in one transaction; every child must be an accepted registration of the season owing at least its amount) once the Checkout Session exists, as 12a's route does. **One open Checkout per sign-up** (`online_payments_one_open_per_signup`, partial unique on `(season_id, signup_key) WHERE status='open' AND flow='league_signup'`).
+13. **`online_payment_league_land(...)` is the house-league landing** — security-definer, service-role only, idempotent (`{already:true}` before and after its locks). Lock order is the ending's (mig 369): the season (`FOR NO KEY UPDATE`) → the children's registrations (id order) → this row → its items. Each child's fee goes through **THE house-league writer `club_league_money('receive', amount, day, 'online_card')` with no actor** (`created_by` NULL = Stripe), and the item records the line (`online_payment_items.entry_id`). A child the writer refuses (`ended`, `already_received`, `over`, `not_accepted`, a deleted registration = `gone`) does NOT undo the others: the payment is still `paid` and `landed_at` is set, the item keeps the refusal in `land_error`, and the payment's `land_error` reads "Not recorded for n of m children" — the app raises one `online_payment_not_recorded` notice per child (metadata `onlinePaymentItemId`), settled when that child's share is refunded. A passing lock conflict re-raises so Stripe's redelivery retries the whole landing. The day rule is the tournament landing's (gotcha 2). A club-paid fee posts ONE "Payment processing" cost per payment through `online_payment_league_post_out` (see `accounting_entries` / `online_payment_items`). A landing that throws as a whole goes to `online_payment_land_failed` as in gotcha 3.
+14. **`partly_refunded`** (status, mig 374) is for 12b's partial refunds (L1); 12a's functions still set only `refunded`. Readers that list paid payments must read `paid`, `partly_refunded` and `refunded`.
 
 <!-- dict:col:online_payments.id -->
 **`id`** (uuid PK, default `gen_random_uuid()`) — also the `source_entity_id` of the "Payment processing" ledger line a club-pays payment posts (`accounting_entries.source_module = 'online_payment'`).
@@ -7264,11 +7270,17 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`stripe_account_id`** (text, NOT NULL) — the connected account the Checkout was opened on. **Not an FK** to `org_payment_accounts`: the account row may be gone after a disconnect, and the payment keeps the id it was taken on.
 
 <!-- dict:col:online_payments.flow -->
-**`flow`** (text, NOT NULL, CHECK `tournament_team`) — what kind of thing is being paid. 12a: only a tournament team's entry. 12b widens the CHECK.
+**`flow`** (text, NOT NULL, CHECK `tournament_team` | `league_signup`) — what kind of thing is being paid: a tournament team's entry (12a) or a house-league sign-up's fees (mig 374, gotcha 12). The shape of each is `online_payments_flow_shape_chk`.
 
 <!-- dict:col:online_payments.tournament_id -->
 <!-- dict:col:online_payments.team_id -->
-**`tournament_id` / `team_id`** (FK → `tournaments.id` / `teams.id`, both ON DELETE SET NULL, nullable) — the event and the paying registration. NULL only after a delete (gotcha 8); the creating function validates them, there is deliberately no CHECK that ties `flow` to non-null ids (it would block the delete).
+**`tournament_id` / `team_id`** (FK → `tournaments.id` / `teams.id`, both ON DELETE SET NULL, nullable) — the event and the paying registration. NULL only after a delete (gotcha 8), and always NULL on a `league_signup` payment. A new `tournament_team` payment must carry both (the mig 374 guard, on INSERT); there is deliberately no CHECK tying them non-null (it would block the delete).
+
+<!-- dict:col:online_payments.season_id -->
+**`season_id`** (FK → `league_seasons.id` ON DELETE SET NULL, nullable; migration 374) — the house-league season a `league_signup` payment pays into; NULL on a team payment, or after the season is deleted (the frozen `description` and the items keep the receipt readable). Required on INSERT for a league payment (guard). Partial index `online_payments_season_idx`.
+
+<!-- dict:col:online_payments.signup_key -->
+**`signup_key`** (text, nullable, 1–64 chars; migration 374) — which sign-up a `league_signup` payment is for: the sign-up's `league_registrations.signup_ref`, or the one registration's id when it has none (an older registration). Scopes the one-open-Checkout rule and the family pay link. NOT NULL exactly when `flow = 'league_signup'` (flow shape CHECK); never changes (guard).
 
 <!-- dict:col:online_payments.scope -->
 **`scope`** (text, NOT NULL, CHECK `deposit` | `balance` | `full`) — what the payment covers; names the team payment row's label ("Deposit" / "Balance" / "Payment"). It never decides what is owed — the team's SUM of posted rows does.
@@ -7298,7 +7310,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`rail`** (text, NOT NULL, default `'card'`, CHECK `card`) — 12a is card only; bank debit is a later stage.
 
 <!-- dict:col:online_payments.status -->
-**`status`** (text, NOT NULL, default `'open'`, CHECK `open` | `paid` | `expired` | `refunded`) — gotcha 1. Set to `refunded` by `online_payment_refund_land` (a full refund only in 12a).
+**`status`** (text, NOT NULL, default `'open'`, CHECK `open` | `paid` | `expired` | `partly_refunded` | `refunded`) — gotcha 1. Set to `refunded` by `online_payment_refund_land` (a full refund only in 12a); `partly_refunded` joined in mig 374 for 12b's partial refunds (gotcha 14).
 
 <!-- dict:col:online_payments.livemode -->
 **`livemode`** (boolean, NOT NULL, default false) — whether the charge was live mode; a payment keeps its own value across account switches.
@@ -7321,10 +7333,10 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 <!-- dict:col:online_payments.landed_at -->
 <!-- dict:col:online_payments.land_error -->
-**`landed_at`** (timestamptz, nullable) / **`land_error`** (text, nullable, ≤ 500) — `landed_at` set = a `tournament_team_payments` row now points at this payment (the cheap read of "landed"); `land_error` is why a landing could not complete (gotcha 3) and is cleared by a successful landing.
+**`landed_at`** (timestamptz, nullable) / **`land_error`** (text, nullable, ≤ 500) — `landed_at` set = a `tournament_team_payments` row now points at this payment (the cheap read of "landed"); `land_error` is why a landing could not complete (gotcha 3) and is cleared by a successful landing. ⚠ On a `league_signup` payment `landed_at` means the landing RAN: some children may still be unrecorded — read `online_payment_items.land_error`, never `landed_at`, for "is this child's fee on the registration" (gotcha 13).
 
 <!-- dict:col:online_payments.processing_cost_entry_id -->
-**`processing_cost_entry_id`** (FK → `accounting_entries.id`, NO ACTION, nullable) — the "Payment processing" money-out line a club-pays (`fee_payer = 'club'`) payment posted; NULL when the family paid the fee or the tournament's book is off. Partial index on it.
+**`processing_cost_entry_id`** (FK → `accounting_entries.id`, NO ACTION, nullable) — the "Payment processing" money-out line a club-pays (`fee_payer = 'club'`) payment posted; NULL when the family paid the fee or the tournament's book is off. On a house-league payment it is posted on the season's book under the club's one "Payment processing" spending word in the House league registration fees category (`club_league_out_word`, mig 374) with `source_module = 'online_payment'` — never `'league_registration'`, which `isFeeRefund` would net against fees as a refund. Partial index on it.
 
 <!-- dict:col:online_payments.receipt_emailed_at -->
 **`receipt_emailed_at`** (timestamptz, nullable) — when the receipt email was sent.
@@ -7333,10 +7345,48 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:online_payments.updated_at -->
 **`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()) — row stamps. Partial index `(created_at) WHERE status='open'` serves the expiry sweep.
 
+## `online_payment_items`
+<!-- dict:table:online_payment_items -->
+
+**Purpose (migration 374, Stage 12b, 2026-10-25):** the children one house-league payment covers — one row per child, with what the family paid for that child, its share of the processing fee, and (once landed) the house-league money line it became. **Why a table** (owner §0e a, correcting the 12a schema review's "the destination row is the item"): a child's fee line exists only once the money lands, so the split across siblings has to be held from the moment the family pays. Used only by `flow = 'league_signup'`; a tournament payment has no items. RLS on, grants to `anon`/`authenticated` revoked: server-only.
+
+**Gotchas (read first):**
+1. **Written only inside `online_payment_league_open` and `online_payment_league_land`** (trigger `online_payment_items_guard`, BEFORE INSERT OR UPDATE, never DELETE; refuses any write without the `flhq.online_payment_write` flag, except a deleted registration's FK going NULL).
+2. **Σ `amount` = the payment's `base_amount`; Σ `fee_share` = its `fee_amount`** (checked when opened). `fee_share` is what a FULL refund of that child gives back when A2's box is ticked; a partial refund never includes the fee (owner §0e).
+3. **"Landed" is per child:** `entry_id` set = the fee is on the registration; `land_error` set = the writer refused it (the payment is still paid; Needs attention, refund door). Never both (`online_payment_items_landed_chk`).
+4. **The link from a house-league money line to its card payment** is `entry_id` (partial UNIQUE). `club_league_money` reads it to refuse an Undo on a card line (`'card'`), and the screens read it for "receipt N".
+
+<!-- dict:col:online_payment_items.id -->
+**`id`** (uuid PK) — the subject of a child's `online_payment_not_recorded` notice (metadata `onlinePaymentItemId`).
+
+<!-- dict:col:online_payment_items.online_payment_id -->
+**`online_payment_id`** (FK → `online_payments.id`, NO ACTION, NOT NULL) — the payment. Indexed; partial UNIQUE `online_payment_items_one_per_child` on `(online_payment_id, registration_id)`.
+
+<!-- dict:col:online_payment_items.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — tenant key, indexed.
+
+<!-- dict:col:online_payment_items.registration_id -->
+**`registration_id`** (FK → `league_registrations.id` ON DELETE SET NULL, nullable) — the child. NULL only after the registration is deleted (the landing then records the share as `gone`). Partial index.
+
+<!-- dict:col:online_payment_items.description -->
+**`description`** (text, NOT NULL, 1–300) — "Ava Smith · U9", frozen when the family paid, for the receipt and the notices.
+
+<!-- dict:col:online_payment_items.amount -->
+<!-- dict:col:online_payment_items.fee_share -->
+**`amount`** (numeric(12,2), NOT NULL, > 0, ≤ 1000000) / **`fee_share`** (numeric(12,2), NOT NULL, default 0, ≥ 0) — gotcha 2.
+
+<!-- dict:col:online_payment_items.entry_id -->
+<!-- dict:col:online_payment_items.land_error -->
+**`entry_id`** (FK → `accounting_entries.id`, NO ACTION, nullable, partial UNIQUE) / **`land_error`** (text, nullable, ≤ 500) — gotcha 3. `land_error` is the writer's refusal code (`ended`, `already_received`, `over`, `not_accepted`, `gone`) or `error: …`.
+
+<!-- dict:col:online_payment_items.created_at -->
+<!-- dict:col:online_payment_items.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()) — row stamps.
+
 ## `online_payment_refunds`
 <!-- dict:table:online_payment_refunds -->
 
-**Purpose (migration 358, Stage 12a, 2026-10-25):** a refund of an online payment back to the card. 12a refunds in FULL only, so there is **one live refund per payment** (`online_payment_refunds_one_full_refund`, partial unique on `online_payment_id WHERE status IN ('pending','succeeded')`; ⚠ 12b's partial refunds drop this index by name). RLS is on: server-only.
+**Purpose (migration 358, Stage 12a, 2026-10-25):** a refund of an online payment back to the card. 12a refunds in FULL only, so there is **one live refund per payment** (`online_payment_refunds_one_full_refund`, partial unique on `online_payment_id WHERE status IN ('pending','succeeded')`; ⚠ 12b's partial refunds drop this index by name, in the same migration as the refund functions that replace it — mig 374 deliberately kept it). RLS is on: server-only.
 
 **Gotchas (read first):**
 1. **Three functions, one life-cycle.** `online_payment_refund_open(...)` inserts the refund as `pending` BEFORE Stripe is asked, so a second press or a second organizer meets the one-refund index ("already being refunded"); it refuses unless the payment is `paid`. `online_payment_refund_land(refund, stripe_refund)` (Stripe says it succeeded, idempotent) flips the team's payment row to `refunded`, posts the book lines, marks the refund `succeeded` and the payment `refunded`, then refreshes the team's cached paid figure (`team_payments_refresh`). `online_payment_refund_failed(...)` marks a `pending` refund `failed` with the reason — the payment stays `paid` and refundable again, and the app raises a `card_refund_failed` Needs-attention row ("refund another way").
@@ -7361,7 +7411,13 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 <!-- dict:col:online_payment_refunds.reason -->
 <!-- dict:col:online_payment_refunds.note -->
-**`reason`** (text, nullable, CHECK `organizer_ended` | `team_left`) / **`note`** (text, nullable, ≤ 1000) — why, and the organizer's note. `reason` is recorded only when the payer paid the fee (the window asks only then); NULL otherwise.
+**`reason`** (text, nullable, CHECK `organizer_ended` | `team_left` | `club_ended` | `family_left` | `price_corrected`) / **`note`** (text, nullable, ≤ 1000) — A2's who-ended-it (it sets the fee box's default), and the organizer's note. Tournaments use the first two; house league (mig 374) the club declining, the family leaving, or a lower price. `reason` is recorded only when the payer paid the fee (the window asks only then); NULL otherwise.
+
+<!-- dict:col:online_payment_refunds.online_payment_item_id -->
+**`online_payment_item_id`** (FK → `online_payment_items.id`, NO ACTION, nullable; migration 374) — the child a house-league refund returns money for. NULL on a tournament refund. **Required for a refund of a `league_signup` payment** (`online_payment_refunds_guard` refuses one without it, flag or no flag: 12a's refund functions are team-shaped). Partial index.
+
+<!-- dict:col:online_payment_refunds.partial_reason -->
+**`partial_reason`** (text, nullable, 1–500; migration 374) — the convenor's reason for refunding PART of a payment (L1; "Refund part of it" requires one); goes in the family's refund email and the book line. Never changes (guard).
 
 <!-- dict:col:online_payment_refunds.origin -->
 **`origin`** (text, NOT NULL, default `'app'`, CHECK `app` | `stripe_dashboard`) — gotcha 4.
@@ -8938,7 +8994,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 
 **Gotchas (read first):**
 1. **Absence of a row is NOT all-off — it falls through to `systemDefaults()` which is bell-ON.** `notify()` uses the row if present, else `systemDefaults()` ([lib/notify.ts:187](../../../lib/notify.ts#L187)), which returns `{bell:true, push:PUSH_DEFAULT_ON_EVENTS.has(event), email:(payment_failed && owner|admin)}` ([:58](../../../lib/notify.ts#L58)). Push defaults **on** for the ~13 action-worthy events (registrations, payments, scores, no-show, coach/roster/tryout, chat — see `PUSH_DEFAULT_ON_EVENTS` in `lib/notification-labels.ts`) and off for the informational ones. A user who never touched preferences still gets every bell event — and push for those default-on events **if they have a `push_subscriptions` row**.
-7. **One OPEN copy of an online-payments notice per person (mig 366, 2026-10-25).** The unique partial index `notifications_one_open_online_payments_notice` on `(org_id, user_id, event_type, COALESCE(metadata->>'stripeAccountId', metadata->>'onlinePaymentId'))`, `WHERE cleared_at IS NULL` and `event_type` is one of `payouts_need_attention` / `online_payment_not_recorded` / `card_refund_failed`.
+7. **One OPEN copy of an online-payments notice per person (mig 366, 2026-10-25).** The unique partial index `notifications_one_open_online_payments_notice` on `(org_id, user_id, event_type, COALESCE(metadata->>'stripeAccountId', metadata->>'onlinePaymentItemId', metadata->>'onlinePaymentId'))` (mig 374 added the house-league child's `onlinePaymentItemId`; a notice that carries more facts, such as `stripeRefundId`, keys on its subject alone), `WHERE cleared_at IS NULL` and `event_type` is one of `payouts_need_attention` / `online_payment_not_recorded` / `card_refund_failed`.
    - **Why:** `raiseOnce` ([lib/online-payment-landing.ts](../../../lib/online-payment-landing.ts)) reads then inserts, and two Stripe reads in the same second (the onboarding return and the account webhook) both inserted — the 2026-10-25 walk had five rows for three people.
    - **What a refusal means:** `notify()` treats a `23505` on the bell insert as "already open for them" and skips that person's push and email too. A cleared row does not count, so the notice can be raised again later.
    - **Bell-on only:** a person who turned the bell off for the kind writes no row, so two racing raises can still reach them twice by push or email. Accepted (/review 2026-10-25): a full guard needs a dedupe key outside this table.

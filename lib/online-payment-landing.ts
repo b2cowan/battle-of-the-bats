@@ -4,11 +4,12 @@ import { supabaseAdmin } from './supabase-admin';
 import { notify } from './notify';
 import { clearSettled } from './needs-attention';
 import { getOrganizationBySlugForServer } from './server-organizations';
-import { canConnectPayouts, canRefundOnline, isPayoutsTreasurer } from './online-payment-access';
+import { canConnectPayouts, canRefundLeagueOnline, canRefundOnline, isPayoutsTreasurer } from './online-payment-access';
 import { factsFromStripe, factsFromRow, payoutsPath, payoutsState, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from './online-payment-account';
 import { retrieveAccount, retrieveCheckout, refundToCard } from './stripe-connect';
 import { sendOnlineReceiptOnce, sendRefundEmail } from './online-payment-receipt';
-import { ONLINE_NOTICE_WORDS as W, money as formatMoney } from './online-payment-words';
+import { LEAGUE_ONLINE_NOTICE_WORDS as LW, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney } from './online-payment-words';
+import { formatStoredDate } from './timezone';
 import type { Organization, OrgRole } from './types';
 
 /**
@@ -58,11 +59,13 @@ async function refundPeople(org: Organization): Promise<string[]> {
 async function raiseOnce(p: {
   org: Organization; userIds: string[]; eventType: 'payouts_need_attention' | 'online_payment_not_recorded' | 'card_refund_failed';
   subjectKey: string; subjectId: string; title: string; body: string; link: string;
+  /** More facts the notice's resolver reads (never part of its one-open-copy key, mig 366/374). */
+  extra?: Record<string, string>;
 }): Promise<void> {
   if (!p.userIds.length) return;
   await notify({
     orgId: p.org.id, userIds: p.userIds, eventType: p.eventType, title: p.title, body: p.body, link: p.link,
-    metadata: { [p.subjectKey]: p.subjectId }, requiredFeature: 'online_payments',
+    metadata: { ...p.extra, [p.subjectKey]: p.subjectId }, requiredFeature: 'online_payments',
   });
 }
 
@@ -123,9 +126,74 @@ export function payoutsHref(org: Pick<Organization, 'slug' | 'planId'>): string 
 // ── A payment ───────────────────────────────────────────────────────────────────────────────────
 
 type OnlineRow = {
-  id: string; org_id: string; team_id: string | null; tournament_id: string | null; status: string; landed_at: string | null;
+  id: string; org_id: string; flow: 'tournament_team' | 'league_signup'; team_id: string | null; tournament_id: string | null;
+  season_id: string | null; status: string; landed_at: string | null;
   stripe_account_id: string; stripe_checkout_session_id: string | null; description: string; total_amount: number;
 };
+
+/** Where a payment's record lives: the team's tournament, or the season's Registrations (house league, 12b). */
+function recordHref(org: Organization, op: Pick<OnlineRow, 'tournament_id' | 'season_id'>): string {
+  if (op.tournament_id) return `/${org.slug}/admin/tournaments/registrations?tournament=${op.tournament_id}`;
+  if (op.season_id) return `/${org.slug}/admin/house-league/seasons/${op.season_id}/registrations`;
+  return `/${org.slug}/admin`;
+}
+
+/** Whoever may refund a house-league payment (A13's house-league variant: the desk, plus the treasurer). */
+async function leagueRefundPeople(org: Organization): Promise<string[]> {
+  const members = await activeMembers(org.id);
+  return [...new Set(members.filter(m => canRefundLeagueOnline(m, org)).map(m => m.user_id))];
+}
+
+type LeagueUnrecorded = { id: string; registration_id: string | null; land_error: string; amount: number; description: string };
+
+/**
+ * One notice per child whose share couldn't land (12b §0e a): the payment stays PAID, the refund is the way out. Read
+ * from the DATABASE, not from one landing's answer, and called on every landing including a replay (review 2026-10-25):
+ * a process that died between the landing's commit and its notices would otherwise leave a child unrecorded with no
+ * notice for good, since every redelivery answers `already`. Only a share still waiting is raised (no line, not refunded
+ * in full) — the resolver's own condition — so a settled notice is never reopened, and an open one is never doubled
+ * (mig 374's one-open-copy index).
+ */
+async function raiseLeagueUnrecorded(op: OnlineRow): Promise<void> {
+  const [{ data: items }, { data: pay }] = await Promise.all([
+    supabaseAdmin.from('online_payment_items').select('id, registration_id, land_error, amount, description')
+      .eq('online_payment_id', op.id).is('entry_id', null).not('land_error', 'is', null),
+    supabaseAdmin.from('online_payments').select('paid_on').eq('id', op.id).maybeSingle(),
+  ]);
+  let unrecorded = (items ?? []) as LeagueUnrecorded[];
+  if (!unrecorded.length) return;
+  const { data: refunds } = await supabaseAdmin.from('online_payment_refunds')
+    .select('online_payment_item_id, amount, fee_refunded').eq('status', 'succeeded').in('online_payment_item_id', unrecorded.map(u => u.id));
+  const back = new Map<string, number>();
+  for (const f of (refunds ?? []) as Array<{ online_payment_item_id: string; amount: number; fee_refunded: number }>) {
+    back.set(f.online_payment_item_id, (back.get(f.online_payment_item_id) ?? 0) + Math.round((Number(f.amount) - Number(f.fee_refunded)) * 100));
+  }
+  unrecorded = unrecorded.filter(u => (back.get(u.id) ?? 0) < Math.round(Number(u.amount) * 100));
+  if (!unrecorded.length) return;
+  const org = await orgById(op.org_id);
+  if (!org) return;
+  const day = (pay?.paid_on as string | null) ?? null;
+  const regIds = unrecorded.map(u => u.registration_id).filter((x): x is string => !!x);
+  const { data: regs } = regIds.length
+    ? await supabaseAdmin.from('league_registrations')
+      .select('id, player_first_name, player_last_name, guardian_first_name, guardian_last_name').in('id', regIds)
+    : { data: [] };
+  const byId = new Map(((regs ?? []) as Array<Record<string, string | null>>).map(r => [r.id as string, r]));
+  const people = await leagueRefundPeople(org);
+  for (const u of unrecorded) {
+    const reg = u.registration_id ? byId.get(u.registration_id) : undefined;
+    const child = reg ? `${reg.player_first_name} ${reg.player_last_name}` : u.description;
+    const guardian = reg && (reg.guardian_first_name || reg.guardian_last_name)
+      ? [reg.guardian_first_name, reg.guardian_last_name].filter(Boolean).join(' ') : null;
+    await raiseOnce({
+      org, userIds: people, eventType: 'online_payment_not_recorded',
+      subjectKey: 'onlinePaymentItemId', subjectId: u.id,
+      title: LW.unrecordedTitle(child),
+      body: LW.unrecordedBody(guardian, formatMoney(Number(u.amount)), day ? formatStoredDate(day, { withYear: false }) : null, child, leagueUnrecordedWhy(u.land_error)),
+      link: recordHref(org, op),
+    });
+  }
+}
 
 function cardOf(session: Stripe.Checkout.Session): { intent: string | null; charge: string | null; brand: string | null; last4: string | null } {
   const pi = session.payment_intent;
@@ -145,12 +213,16 @@ function cardOf(session: Stripe.Checkout.Session): { intent: string | null; char
 export async function landCheckoutSession(stripeAccountId: string, sessionId: string): Promise<'landed' | 'already' | 'not_paid' | 'unknown' | 'not_recorded'> {
   const { data } = await supabaseAdmin
     .from('online_payments')
-    .select('id, org_id, team_id, tournament_id, status, landed_at, stripe_account_id, stripe_checkout_session_id, description, total_amount')
+    .select('id, org_id, flow, team_id, tournament_id, season_id, status, landed_at, stripe_account_id, stripe_checkout_session_id, description, total_amount')
     .eq('stripe_checkout_session_id', sessionId)
     .maybeSingle();
   const op = data as OnlineRow | null;
   if (!op || op.stripe_account_id !== stripeAccountId) return 'unknown';
-  if (op.landed_at) return 'already';
+  if (op.landed_at) {
+    // A replay still owes any child's notice a crash after the landing's commit missed (raiseLeagueUnrecorded).
+    if (op.flow === 'league_signup') await raiseLeagueUnrecorded(op);
+    return 'already';
+  }
   const session = await retrieveCheckout(stripeAccountId, sessionId);
   if (session.payment_status !== 'paid') return 'not_paid';
   const card = cardOf(session);
@@ -160,6 +232,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
   const mismatch = session.amount_total !== expected || (session.currency ?? '').toLowerCase() !== 'cad'
     ? `Stripe took ${(session.amount_total ?? 0) / 100} ${(session.currency ?? '').toUpperCase()}, not the ${expected / 100} CAD the page asked for`
     : null;
+  if (op.flow === 'league_signup') return landLeague(op, paidAt, card, mismatch);
 
   const { data: landed, error: landError } = mismatch
     ? { data: null, error: { message: mismatch } }
@@ -179,7 +252,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
         subjectKey: 'onlinePaymentId', subjectId: op.id,
         title: W.notRecordedTitle,
         body: W.notRecordedBody(op.description, formatMoney(Number(op.total_amount)), error.message),
-        link: op.tournament_id ? `/${org.slug}/admin/tournaments/registrations?tournament=${op.tournament_id}` : `/${org.slug}/admin`,
+        link: recordHref(org, op),
       });
     }
     await sendOnlineReceiptOnce(op.id);
@@ -187,6 +260,59 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
   }
   await sendOnlineReceiptOnce(op.id);
   return (landed as { already?: boolean } | null)?.already ? 'already' : 'landed';
+}
+
+/**
+ * THE HOUSE-LEAGUE LANDING (Stage 12b, §0e b): each child's fee goes through THE house-league writer
+ * (`club_league_money`, inside `online_payment_league_land`) in ONE transaction, with no person behind it. Idempotent: a
+ * replayed webhook or the receipt page's own re-read answers `already` and writes nothing. A child the writer refuses
+ * (declined or marked received meanwhile) keeps the payment PAID and raises its own notice with the refund door; a
+ * landing that throws as a whole keeps it paid and numbered (`online_payment_land_failed`, as the tournament's).
+ */
+async function landLeague(
+  op: OnlineRow, paidAt: string, card: ReturnType<typeof cardOf>, mismatch: string | null,
+): Promise<'landed' | 'already' | 'not_recorded'> {
+  const { data: landed, error } = mismatch
+    ? { data: null, error: { message: mismatch } }
+    : await supabaseAdmin.rpc('online_payment_league_land', {
+      p_online_payment: op.id, p_paid_at: paidAt, p_payment_intent: card.intent, p_charge: card.charge, p_brand: card.brand, p_last4: card.last4,
+    });
+  if (error) {
+    // A passing conflict (a deadlock victim, a serialization or lock wait, a cancelled statement, the server busy) is
+    // Stripe's to retry: throw, so the webhook answers 500 and the event is redelivered. Marked "not recorded" it would
+    // be answered 200 and never landed (review 2026-10-25).
+    if (isTransientDbError(error)) throw new Error(`House-league landing will retry: ${error.message}`);
+    await supabaseAdmin.rpc('online_payment_land_failed', {
+      p_online_payment: op.id, p_paid_at: paidAt, p_payment_intent: card.intent, p_charge: card.charge, p_brand: card.brand,
+      p_last4: card.last4, p_error: error.message,
+    });
+    const org = await orgById(op.org_id);
+    if (org) {
+      await raiseOnce({
+        org, userIds: await leagueRefundPeople(org), eventType: 'online_payment_not_recorded',
+        subjectKey: 'onlinePaymentId', subjectId: op.id,
+        title: LW.unrecordedSignupTitle,
+        body: LW.unrecordedSignupBody(op.description, formatMoney(Number(op.total_amount)), error.message),
+        link: recordHref(org, op),
+      });
+    }
+    await sendOnlineReceiptOnce(op.id);
+    return 'not_recorded';
+  }
+  const result = landed as { already?: boolean; unrecorded?: unknown[] } | null;
+  // Notices are read from the database (a replay included), so a crash between the commit and here loses none.
+  await raiseLeagueUnrecorded(op);
+  if (result?.already) return 'already';
+  await clearSettled({ orgIds: [op.org_id], kinds: ['online_payment_not_recorded'] });
+  await sendOnlineReceiptOnce(op.id);
+  return result?.unrecorded?.length ? 'not_recorded' : 'landed';
+}
+
+/** Postgres classes a retry can cure: 40 (transaction rollback: deadlock, serialization), 53 (insufficient resources),
+ *  55P03 (lock not available), 57 (operator intervention: a cancelled statement, a restart). */
+function isTransientDbError(error: { code?: string | null; message?: string }): boolean {
+  const code = error.code ?? '';
+  return /^(40|53|57)/.test(code) || code === '55P03';
 }
 
 /** A Checkout Session expired unpaid: the payment closes, so the team can open a new one. */
@@ -281,7 +407,7 @@ export async function applyRefundEvent(stripeAccountId: string, refund: Stripe.R
   const intent = typeof refund.payment_intent === 'string' ? refund.payment_intent : refund.payment_intent?.id ?? null;
   if (!intent) return;
   const { data: op } = await supabaseAdmin.from('online_payments')
-    .select('id, org_id, status, total_amount, stripe_account_id, description, tournament_id')
+    .select('id, org_id, flow, status, total_amount, stripe_account_id, description, tournament_id, season_id')
     .eq('stripe_payment_intent_id', intent).maybeSingle();
   if (!op || op.stripe_account_id !== stripeAccountId) return;
   // Ours carries our refund's id in its metadata (set when we asked Stripe), or Stripe's id once recorded. A refund made
@@ -298,6 +424,23 @@ export async function applyRefundEvent(stripeAccountId: string, refund: Stripe.R
     }
     return;
   }
+  // A house-league payment refunded in Stripe's dashboard: recorded by a person until 12b's refunds land (Part 5).
+  if (op.flow === 'league_signup') {
+    if (refund.status !== 'succeeded') return;
+    const org = await orgById(op.org_id as string);
+    if (org) {
+      await raiseOnce({
+        org, userIds: await leagueRefundPeople(org), eventType: 'online_payment_not_recorded',
+        subjectKey: 'onlinePaymentId', subjectId: op.id as string,
+        title: LW.unrecordedSignupTitle,
+        body: LW.refundedInStripeBody(op.description as string, formatMoney(refund.amount / 100)),
+        link: recordHref(org, op as Pick<OnlineRow, 'tournament_id' | 'season_id'>),
+        // The payment is landed, so landed_at can't settle this one: it waits for THIS refund to be recorded.
+        extra: { stripeRefundId: refund.id },
+      });
+    }
+    return;
+  }
   if (refund.status !== 'succeeded' || op.status !== 'paid') return;
   const full = Math.round(Number(op.total_amount) * 100);
   if (refund.amount < full) {
@@ -308,7 +451,9 @@ export async function applyRefundEvent(stripeAccountId: string, refund: Stripe.R
         subjectKey: 'onlinePaymentId', subjectId: op.id as string,
         title: W.notRecordedTitle,
         body: W.partialInStripeBody(op.description as string, formatMoney(refund.amount / 100)),
-        link: op.tournament_id ? `/${org.slug}/admin/tournaments/registrations?tournament=${op.tournament_id}` : `/${org.slug}/admin`,
+        link: recordHref(org, op as Pick<OnlineRow, 'tournament_id' | 'season_id'>),
+        // A landed payment's landed_at would settle this at once (12a's slip, review 2026-10-25): wait for the refund.
+        extra: { stripeRefundId: refund.id },
       });
     }
     return;

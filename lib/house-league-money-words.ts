@@ -117,6 +117,8 @@ export const MONEY_REFUSAL = {
   money: (amount: string) => `Choose what happens to the ${amount}.`,
   nothingToUndo: (name: string) => `${name} has no received fee to undo.`,
   refundedUndo: 'This payment has a refund beside it, so it can’t be undone. The refund already records the money going back.',
+  /** 12b copy §5 `regs.undoCard`: a card payment really arrived (mig 374). */
+  card: 'A card payment comes off only by a refund. Use Withdraw or Correct the price.',
   futurePayment: 'A payment can’t be received after today.',
   futureRefund: 'A refund can’t be dated after today.',
   beforePayment: 'A refund can’t be dated before the payment it returns.',
