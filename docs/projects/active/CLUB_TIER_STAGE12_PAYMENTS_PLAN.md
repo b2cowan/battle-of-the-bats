@@ -22,12 +22,10 @@
   /dba + /review) · `40f7c5731` (Part 2) · `87cf762eb` (Part 3) · `7c69367b2` (Part 4) · `3ae979ef6` (Part 5, mig 375) ·
   `b3cb15e2b` (Part 6) · `1a2ca5bd4` (/review of Parts 2–6, mig 376, help). Migrations 374–376 applied to dev 2026-10-25
   (declared prod-pending, after 361–363 and 368–372); scripts/house-league-money-check.sql 34/34 on dev. Walk §380 owed.
-  **Named for the owner, not built:** (1) A13 says the treasurer may refund a house-league card payment, but every refund
-  door is on Registrations, which the treasurer cannot open — recommendation: a refund door on the season Money page's
-  card lines for whoever may refund; (2) a PARTIAL refund of a tournament team's card payment (L1, A12 row ⋯) — the
-  team's paid figure counts whole payment rows only, so it needs a team-writer change (a "refunded so far" amount);
-  12a's full refund is unchanged; (3) the Families record's "Paid online · card · receipt" line (b4) — the record window
-  had another session's edit in flight; (4) "View the payment" in the row ⋯ (b3) — the receipt number is on the row.
+  **Owner calls 2026-10-26 (§0f):** the treasurer does not refund, in either flow (built, same day); a PARTIAL refund of a
+  tournament team's card payment moves to **12c** (§4). **Not built, named:** the Families record's "Paid online · card ·
+  receipt" line (b4) — the record window had another session's edit in flight; "View the payment" in the row ⋯ (b3) —
+  the receipt number is on the row.
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
@@ -233,6 +231,17 @@ Asked from `CLUB_TIER_STAGE12B_BUILD_PROMPT.md` "Before any code", after a censu
   house-league refund line, which would net fees. Only the card landing may record `online_card`, and a card receipt
   comes off only by refund (no Undo), as m4 draws.
 
+## 0f · Rulings after the 12b build (owner, 2026-10-26)
+
+- **A13 amended: the treasurer does not refund, in either flow.** The owner: "I don't think a treasurer would interact
+  with registrations and refunds but rather just be there to log the accounting." Refunding a card payment, emailing a
+  pay link and the "couldn't be recorded" / "refund didn't reach the card" notices belong to whoever runs that flow
+  (house league: owner, club admin, league admin, registrar; tournaments: whoever runs tournaments). The treasurer keeps
+  A1: the Payouts state and the "Stripe needs something" alert. This reverses the treasurer half of A13 as ruled
+  2026-10-25, including what 12a built for tournaments. Built the same day.
+- **A partial refund of a tournament team's card payment is built in 12c** (§4), with that stage's other change to how a
+  team's payments move. Until then a team's card payment is refunded in full only (12a), as the help says.
+
 ## 1 · What it makes true
 
 A club's owner (A1) connects the club's own Stripe Express account once from the settings page (or, on Tournament Plus,
@@ -309,7 +318,7 @@ registration (house league) or from the payment's row (tournaments, A12), card f
 |---|---|---|---|
 | **12a** foundation + the tournament card flow | **Proves itself on a tournament team paying by card (owner, 2026-10-25)**: the team pay page with deposit or full (A7), Pay in the acceptance email and the balance reminder, online rows and a full refund from the row (A12), landing through the tournament writer with a new online method value. Payouts card, five states, both homes, with the A14 who-pays choice and the A9 refund-policy sentence; the "Before you set up payouts" window; onboarding via Account Links + return; the gate + launch switch; pay block; Checkout for card; receipt page + email; online-payment record; Connect webhook (own secret, idempotent); full refund; test mode | `org_payment_accounts` (org, Stripe account id, state, charges/payouts enabled, requirements due, connected/disconnected by/at); `online_payments` (org, flow, payer email, base, fee, total, rail, state, processor ids, receipt no., timestamps); `online_payment_items` (payment → registration or team, amount); `online_payment_refunds` (amount, fee included, reason, by, processor id, state); `stripe_connect_events` (idempotency log) | 7–9 d |
 | **12b** house league | every Stage 9 ghost; Pay now in approval and promotion emails; Email the pay link; no longer payable; refund in the end window; partial refund (L1); Families lines — **BUILT 2026-10-25 (§0 state; Families lines and the tournament partial refund named, not built)** | migs 374 (items, the league landing), 375 (refunds in part), 376 (refund cap) — dev only | 5–7 d |
-| **12c** bank debit | bank debit for both flows at once (L2): the debit agreement, Processing until it clears with the spot held (A4), a fourth "Processing" figure on the Money band while clearing (A11), a returned debit's fresh Pay and self-clearing item. ⚖ The tournament card flow moved into 12a (owner, 2026-10-25) | a way-of-paying value for bank debit | 3–5 d |
+| **12c** bank debit | bank debit for both flows at once (L2): the debit agreement, Processing until it clears with the spot held (A4), a fourth "Processing" figure on the Money band while clearing (A11), a returned debit's fresh Pay and self-clearing item. ⚖ The tournament card flow moved into 12a (owner, 2026-10-25). **+ A partial refund of a tournament team's card payment (L1 for tournaments, owner 2026-10-26, §0f):** a team's paid figure counts whole payment rows today, so it needs a "refunded so far" amount on the team's payment row (the team payments refresh sums amount less it), the refund functions taking an amount, and an amount field in the team's refund window | a way-of-paying value for bank debit; a refunded-so-far amount on a team's payment row | 3–5 d (+1–2 d) |
 | **12d** hardening | disputes and negative balance, paid twice, a payouts list for matching the bank, "+ GST/HST" rider, international cards, platform-admin oversight, offboarding with registrations still to pay, help, the terms | disputes, payouts | 10–15 d |
 
 The 12a–12c total of 16–22 days matches the scoping plan's first-build estimate (15–22). 12d matches its 10–15. Every

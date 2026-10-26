@@ -40,8 +40,7 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
 3. **12b · House league — built 2026-10-25, walk owed.** Pay now appears on the sign-up confirmation, the status page,
    and the sign-up, approval and waitlist emails; brothers and sisters pay in one checkout, and the pay link opens the
    family's page without a password. Convenors see "Online, card" beside "by hand", email the pay link, and refund to
-   the card from the ending or the price correction, all of it or part. Still to decide: where the treasurer refunds
-   (they can't open Registrations today), and part-refunds for tournament teams.
+   the card from the ending or the price correction, all of it or part. Part-refunds for tournament teams come in 12c.
 4. **Tournaments, built with 12a** (moved forward 2026-10-25 so 12a can be tried end to end). Once the organizer
    accepts a team, it pays its deposit or full entry by card from the acceptance email, and pays the balance from the
    reminder email.
@@ -51,7 +50,8 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
 ## Who sees what
 
 - **Owner:** connects payouts, chooses who pays the processing fee, and writes the refund policy.
-- **Treasurer:** sees whether payouts are working and gets an alert if Stripe needs something; can refund to a card.
+- **Treasurer:** sees whether payouts are working and gets an alert if Stripe needs something. Logs the accounting; does
+  not refund (owner, 2026-10-26).
 - **Convenor / registrar:** sees each payment's status and refunds from the window they already use.
 - **Families and team contacts:** see Pay now only when the club is taking payments; nothing looks broken otherwise.
 

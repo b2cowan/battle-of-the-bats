@@ -45,7 +45,8 @@ async function payoutsPeople(org: Organization): Promise<string[]> {
   return [...new Set(members.filter(m => canConnectPayouts(m) || isPayoutsTreasurer(m, org)).map(m => m.user_id))];
 }
 
-/** Whoever may refund (A13) — who hears that a payment or a refund needs a hand. */
+/** Whoever may refund (A13: whoever runs tournaments; the treasurer does not refund) — who hears that a payment or a
+ *  refund needs a hand. */
 async function refundPeople(org: Organization): Promise<string[]> {
   const members = await activeMembers(org.id);
   return [...new Set(members.filter(m => canRefundOnline(m, org)).map(m => m.user_id))];
@@ -141,7 +142,7 @@ function recordHref(org: Organization, op: Pick<OnlineRow, 'tournament_id' | 'se
   return `/${org.slug}/admin`;
 }
 
-/** Whoever may refund a house-league payment (A13's house-league variant: the desk, plus the treasurer). */
+/** Whoever may refund a house-league payment (A13's house-league variant: the desk; the treasurer does not refund). */
 async function leagueRefundPeople(org: Organization): Promise<string[]> {
   const members = await activeMembers(org.id);
   return [...new Set(members.filter(m => canRefundLeagueOnline(m, org)).map(m => m.user_id))];

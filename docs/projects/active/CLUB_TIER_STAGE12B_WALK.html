@@ -139,7 +139,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       { who: R, do: 'Mark a different, owing row received by hand.', see: 'It works exactly as before: date, how, and the row reads received. Undo is still there on this one.' }
     ]},
     { id: 'F', title: 'A payment that couldn’t be recorded', steps: [
-      { who: F, do: 'Open Stripe’s payment page for a child, but don’t pay yet. Then, as the registrar in another window, decline that child. Then go back and finish paying.', see: 'The payment goes through at Stripe. Needs attention shows "A card payment for {child} couldn’t be recorded". The owner, the registrar and the treasurer all see it.' },
+      { who: F, do: 'Open Stripe’s payment page for a child, but don’t pay yet. Then, as the registrar in another window, decline that child. Then go back and finish paying.', see: 'The payment goes through at Stripe. Needs attention shows "A card payment for {child} couldn’t be recorded". The owner and the registrar see it. The treasurer does not, because refunds are the desk’s.' },
       { who: R, do: 'On the declined row open ⋯ and press "Refund the card payment".', see: 'A confirm window says the money goes back to the card, and that the processing fee goes back too because the club declined. Confirm. The notice clears itself from Needs attention.' }
     ]},
     { id: 'G', title: 'Refunds', steps: [
@@ -154,10 +154,10 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       { who: R, do: 'On another card-paid child, raise the price.', see: 'The window says the family will owe $X more, and "We’ll email them a pay link for it." Press "Save and email". The family gets a pay link for the difference.' }
     ]},
     { id: 'I', title: 'The books', steps: [
-      { who: T, do: 'On the Club plan, open the season’s Money page.', see: 'The Received caption ends "{amount} of it by card". Card lines read "Online, card · receipt N". The treasurer sees the payouts status line.' },
+      { who: T, do: 'On the Club plan, open the season’s Money page.', see: 'The Received caption ends "{amount} of it by card". Card lines read "Online, card · receipt N". The treasurer sees the payouts status line, and no refund button anywhere: the treasurer logs the accounting and does not refund.' },
       { who: O, do: 'On a club where payouts are not set up, open the season’s Money page.', see: 'You see "Families and teams pay you directly, outside FieldLogicHQ." with a link, "Let them pay online · Settings › Payouts".' },
       { who: O, do: 'In Settings › Payouts choose "The club pays it". Then have a family pay a new registration by card. Open the Money page, then the Statement.', see: 'The family is charged only the price. The Money page shows a line "Payment processing · {child}". The Statement shows a Payment processing cost, and the fees income is the price only.' },
-      { who: T, do: 'Refund a card payment with the fee box on, then open the Money page and the Statement.', see: 'A line "Payment processing · fee given back" appears. Fees income nets the refund. It is never counted under spending.' }
+      { who: R, do: 'Refund a card payment with the fee box on (as the registrar). Then, as the treasurer, open the Money page and the Statement.', see: 'A line "Payment processing · fee given back" appears. Fees income nets the refund. It is never counted under spending.' }
     ]},
     { id: 'J', title: 'Tournament pay page re-check', steps: [
       { who: F, do: 'Open a tournament team’s pay link and pay a deposit or the full amount.', see: 'It shows deposit or full, pays, confirms and shows the receipt exactly as in the 12a walk.' }

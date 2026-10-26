@@ -1111,7 +1111,7 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Refunding a card payment',
           content: (
             <>
-              <p>Refunds to the card are <strong>full refunds only</strong>. Whoever runs tournaments, and the treasurer, can make them.</p>
+              <p>Refunds to the card are <strong>full refunds only</strong>. Whoever runs tournaments can make them; the treasurer doesn&rsquo;t refund.</p>
               <ol>
                 <li>Open the team&rsquo;s record. Under <strong>Received</strong>, press the <strong>&hellip;</strong> on the online payment and choose <strong>Refund to the card</strong>.</li>
                 <li>The window, titled for the team (for example <em>Refund Thunder&rsquo;s payment?</em>), says what the team paid and the card it goes back to. It arrives in 5 to 10 business days.</li>
@@ -1159,7 +1159,7 @@ const tournamentsHelp: HelpPageContent = {
               <p><strong>Needs attention items.</strong> Three can appear, and each clears itself when the cause is settled. You never dismiss one.</p>
               <HelpDefs>
                 <HelpDef term="Stripe needs something to keep online payments on">Goes to the owner and the treasurer. The owner presses <strong>Fix in Stripe</strong> on the Payouts card; the treasurer is told where. It clears when Stripe says payments are on again, or when payouts are disconnected.</HelpDef>
-                <HelpDef term="An online payment isn&rsquo;t in the team&rsquo;s record">Goes to whoever runs tournaments and the treasurer. A team paid by card but the payment couldn&rsquo;t be added to its record (or was part-refunded in Stripe). Refund it to the card from the team&rsquo;s record or in Stripe, or record the change by hand. It clears when the payment is in the record or has been refunded.</HelpDef>
+                <HelpDef term="An online payment isn&rsquo;t in the team&rsquo;s record">Goes to whoever runs tournaments. A team paid by card but the payment couldn&rsquo;t be added to its record (or was part-refunded in Stripe). Refund it to the card from the team&rsquo;s record or in Stripe, or record the change by hand. It clears when the payment is in the record or has been refunded.</HelpDef>
                 <HelpDef term="A refund didn&rsquo;t reach the card">Goes to the same people. It says the amount and card, and that the money was returned. Send the team the money another way, then use <strong>Record a refund made another way</strong>. It clears once the payment shows as refunded.</HelpDef>
               </HelpDefs>
             </>

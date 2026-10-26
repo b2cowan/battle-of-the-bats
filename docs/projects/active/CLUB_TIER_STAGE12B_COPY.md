@@ -217,7 +217,8 @@ A price correction sends this email alone.
 
 ## 7 · Needs attention (two items, both self-clearing)
 
-The owner, club admin, league admin, registrar and treasurer receive both (A13, house-league variant).
+The owner, club admin, league admin and registrar receive both (A13, house-league variant; the treasurer does not refund,
+owner 2026-10-26).
 
 ### A card payment couldn't be recorded
 

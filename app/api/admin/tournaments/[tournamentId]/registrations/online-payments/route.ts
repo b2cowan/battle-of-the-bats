@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
  *   POST { action: 'refund_another_way', onlinePaymentId, feeIncluded, reason, note }  after a refund to the card came back
  *   POST { action: 'email_pay_link', teamId }                                      "Email the pay link" → "Pay link sent"
  *
- * Who: whoever runs tournaments, plus the treasurer (A13, `canRefundOnline`). Inside the event's organization and scope,
+ * Who: whoever runs tournaments (A13, `canRefundOnline`; the treasurer does not refund, owner 2026-10-26). Inside the event's organization and scope,
  * behind the launch switch and the plan. FieldLogicHQ's fee is never refunded (§0c); with A2's box ticked the club pays
  * the team's fee back.
  */

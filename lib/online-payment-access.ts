@@ -4,11 +4,13 @@
  *
  *  - Connect, disconnect, change who pays the fee or the refund policy: the OWNER only (A1). Settings stay owner-only
  *    (`org_settings` in OWNER_ONLY_CAPABILITIES); this is the same line.
- *  - See the Payouts state and get "needs attention": the owner and the treasurer (A1). The treasurer is the `treasurer`
- *    role, or anyone who holds the club's Accounting (`canMoveClubMoney`'s people).
- *  - Refund a card payment, email a pay link: whoever may end the registration or record a payment IN THAT FLOW, plus
- *    the treasurer (A13). Tournaments: whoever runs tournaments. House league (12b): the house-league gate's `takeFees`
- *    (owner, club admin, league admin, registrar) — its own variant, never a widening of the tournament one.
+ *  - See the Payouts state and get "Stripe needs something": the owner and the treasurer (A1). The treasurer is the
+ *    `treasurer` role, or anyone who holds the club's Accounting (`canMoveClubMoney`'s people).
+ *  - Refund a card payment, email a pay link, and hear that a payment or a refund needs a hand: whoever may end the
+ *    registration or record a payment IN THAT FLOW (A13, as amended by the owner 2026-10-26: the treasurer logs the
+ *    accounting and does not refund, in either flow). Tournaments: whoever runs tournaments. House league (12b): the
+ *    house-league gate's `takeFees` (owner, club admin, league admin, registrar) — its own variant, never a widening of
+ *    the tournament one.
  */
 import { hasCapability } from './roles';
 import { canOpenModule, type MemberAccessInput } from './member-access';
@@ -27,11 +29,14 @@ export function canSeePayouts(member: MemberAccessInput, org: EntitlementOrg): b
   return canConnectPayouts(member) || isPayoutsTreasurer(member, org);
 }
 
+/** A13, tournaments: whoever runs tournaments. The treasurer does not refund (owner 2026-10-26). */
 export function canRefundOnline(member: MemberAccessInput, org: EntitlementOrg): boolean {
-  return hasCapability(member.role, member.capabilities, 'create_tournaments') || isPayoutsTreasurer(member, org);
+  void org;
+  return hasCapability(member.role, member.capabilities, 'create_tournaments');
 }
 
-/** A13, house league: the registration desk (`takeFees`) or the treasurer. A registrar refunds here, never a tournament. */
+/** A13, house league: the registration desk (`takeFees`). A registrar refunds here, never a tournament; the treasurer
+ *  does not refund (owner 2026-10-26). */
 export function canRefundLeagueOnline(member: MemberAccessInput, org: EntitlementOrg): boolean {
-  return canHouseLeague(member, org, 'takeFees') || isPayoutsTreasurer(member, org);
+  return canHouseLeague(member, org, 'takeFees');
 }
