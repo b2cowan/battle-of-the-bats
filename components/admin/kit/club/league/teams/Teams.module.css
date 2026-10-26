@@ -530,3 +530,6 @@
 /* The tag sits on the row's state line (A2): beside the name it was wider than the glyph trigger's fixed 44px box and
    spilled over the ⋯ button. Two classes deep, so it beats the glyph trigger's width/height whatever the bundle order. */
 .states .movedTrigger { display: inline-flex; align-items: center; width: auto; height: auto; padding: 0; border: 0; background: none; cursor: pointer; }
+
+/* The draft window's families switch (A7): the house switch row, standing in its own box under the facts. */
+.draftSwitch { margin-top: 1rem; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }

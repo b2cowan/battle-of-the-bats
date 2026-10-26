@@ -178,6 +178,12 @@ export const TEAMS_WORDS = {
         : rated === total ? `All ${total} rated` : `${rated} of ${total} rated · the other ${total - rated} count as a 3`,
     how: 'How it deals',
     howLine: 'Strongest first, and the order reverses each round. Ties and the first pick are drawn at random.',
+    // Families together (A7, /marketing 2026-10-26): on by default; off deals each child on their own, as before.
+    familiesSwitch: 'Keep families together',
+    familiesLine: 'Brothers and sisters signed up under one parent email go to the same team. Locked players stay where they are.',
+    teamsLineFamilies: (sizes: readonly number[]) =>
+      `Sizes ${nameList(sizes.map(String))}: keeping families together, the teams can’t come out even. Turn it off to deal each child on their own.`,
+    howLineFamilies:'Families first, then everyone else, strongest first, and the order reverses each round. Then single players swap teams where that evens out the averages. Ties and the first pick are drawn at random.',
     foot: 'Nothing is sent. Families hear when you publish.',
     button: 'Run the draft',
     working: 'Dealing…',

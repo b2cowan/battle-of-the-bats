@@ -94,6 +94,8 @@ export default function TeamsScreen() {
   const [whyOpen, setWhyOpen] = useState(false);
   const [lastPublish, setLastPublish] = useState<PublishOutcome | null>(null);
   const [resending, setResending] = useState(false);
+  // Families together (A7): on by default, and the last choice holds for the visit so Draft again honours it.
+  const [together, setTogether] = useState(true);
   // This visit's presses of Hide/Show steps, a division each; a division not pressed yet reads what the browser kept.
   const [stepsPressed, setStepsPressed] = useState<Record<string, boolean>>({});
   const stepsClosedFor = (divisionId: string) => stepsPressed[divisionId] ?? readStepsClosed(divisionId);
@@ -393,7 +395,7 @@ export default function TeamsScreen() {
           onClose={() => { setAct(null); reload(); }} />
       )}
       {act?.kind === 'draft' && (
-        <DraftWindow board={board} ratings={ratings} again={act.again} routes={routes} registrationsHref={registrationsHref}
+        <DraftWindow board={board} ratings={ratings} again={act.again} together={together} onTogether={setTogether} routes={routes} registrationsHref={registrationsHref}
           onDone={() => { setAct(null); reload(); }} onClose={() => { setAct(null); reload(); }} />
       )}
       {act?.kind === 'publish' && (

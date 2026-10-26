@@ -13,7 +13,8 @@ import { withObservability } from '@/lib/observability';
 /**
  * The balanced draft for one division (Club Tier 9c, Part 2; rulings Q8, 9c·3, 9c·5, 9c·7, 9c·8). Replaces the live
  * draft room (start / pick / undo / finalize) and Randomize, both retired (9c·5).
- *   · `run` — Run the draft / Draft again: deals every accepted, unlocked player of the division, in one write.
+ *   · `run` — Run the draft / Draft again: deals every accepted, unlocked player of the division, in one write. `together`
+ *     (A7, default on): a household's children (one guardian email) go to one team; `false` deals as before A7.
  *   · `clear` — Take all players off teams: before publishing only; locks and moves by hand go too.
  * Both carry the fingerprint the window saw, and are refused when the division changed under it (copy §4.3).
  */
@@ -58,10 +59,13 @@ export const POST = withObservability(async (req: Request,
     const ratingsRefused = houseLeagueRefusal(ctx, 'seeRatings', season);
     if (ratingsRefused) return ratingsRefused;
     const ratings = await getRatings(seasonId, board.players.map(p => p.id));
+    // A7: families together unless the window's switch was turned off (on by default — a request without it keeps them).
+    const together = body.together !== false;
     const result = runDraft(
-      board.players.map(p => ({ id: p.id, rating: ratings.get(p.id) ?? null, lockedTeamId: p.locked ? p.teamId : null })),
+      board.players.map(p => ({ id: p.id, rating: ratings.get(p.id) ?? null, lockedTeamId: p.locked ? p.teamId : null, household: p.guardianEmail })),
       board.teams.map(t => t.id),
       randomInt(2 ** 31),
+      { together },
     );
     if (!result.ok) {
       return NextResponse.json({ error: draftRefusal(result.refusal, words), code: result.refusal }, { status: 422 });
