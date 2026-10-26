@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { registrationsInSeason, teamsInSeason } from '@/lib/league-season-scope';
 import { placePlayer, setLock } from '@/lib/house-league-teams';
 import { sendPlacementEmails } from '@/lib/house-league-placement-mail';
-import { placeRefusal } from '@/lib/house-league-teams-words';
+import { lockWords, placeRefusal } from '@/lib/house-league-teams-words';
 import { withObservability } from '@/lib/observability';
 
 /**
@@ -56,9 +56,16 @@ export const POST = withObservability(async (req: Request,
   }
 
   if (action === 'lock') {
-    const done = await setLock(seasonId, registrationId, body.locked === true);
-    if (!done) {
-      return NextResponse.json({ error: 'Put them on a team first, then lock them there.', code: 'no_team' }, { status: 409 });
+    const refused = await setLock(seasonId, registrationId, body.locked === true);
+    if (refused) {
+      const { data: reg } = await supabaseAdmin.from('league_registrations')
+        .select('player_first_name, league_divisions(name)').eq('id', registrationId).maybeSingle();
+      const first = reg?.player_first_name ?? 'This player';
+      const division = (reg?.league_divisions as { name?: string } | null)?.name ?? 'This division';
+      const error = refused === 'published'
+        ? `${division} is published, so there is no draft left to lock ${first} against.`
+        : lockWords.noTeam(first);
+      return NextResponse.json({ error, code: refused }, { status: 409 });
     }
     return NextResponse.json({ ok: true });
   }

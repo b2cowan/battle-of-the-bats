@@ -10,9 +10,8 @@ import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
-import { clubDay } from '@/lib/league-registration-state';
 import { TEAMS_WORDS as W } from '@/lib/house-league-teams-screen-words';
-import { send, type BoardTeam, type TeamsRoutes } from './api';
+import { dayOf, send, type BoardTeam, type TeamsRoutes } from './api';
 import css from './Teams.module.css';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -44,6 +43,7 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
   const [busy, setBusy] = useState(false);
   const [asks, setAsks] = useState<Ask[]>([]);
   const [deleting, setDeleting] = useState(false);
+  const [resending, setResending] = useState<string | null>(null);
 
   const dirty = name.trim() !== team.name || colour !== team.color || removed.size > 0 || adds.some(a => a.name.trim() || a.email.trim());
 
@@ -62,11 +62,15 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
   async function addCoach(c: NewCoach): Promise<boolean> {
     const r = await send(routes.coaches(team.id), 'POST', { name: c.name.trim(), email: c.email.trim(), confirmed: published });
     if (!r.ok) { setError(r.error); return false; }
+    setAdds(list => list.filter(x => x.key !== c.key));
+    onChanged();
     return true;
   }
   async function removeCoach(id: string): Promise<boolean> {
     const r = await send(routes.coaches(team.id, id), 'DELETE');
     if (!r.ok) { setError(r.error); return false; }
+    setRemoved(prev => { const next = new Set(prev); next.delete(id); return next; });
+    onChanged();
     return true;
   }
 
@@ -103,6 +107,7 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
     setBusy(true);
     const ok = ask.kind === 'invite' ? await addCoach(ask.coach) : await removeCoach(ask.id);
     setBusy(false);
+    // A refusal stops the questions; what already landed stays landed, and what didn't stays in the form to try again.
     if (!ok) { setAsks([]); return; }
     const rest = asks.slice(1);
     setAsks(rest);
@@ -110,7 +115,10 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
   }
 
   async function sendAgain(coachId: string) {
+    if (resending) return;
+    setResending(coachId);
     const r = await send(routes.coaches(team.id), 'PATCH', { coachId, action: 'resend' });
+    setResending(null);
     if (!r.ok) { setError(r.error); return; }
     onChanged();
   }
@@ -126,10 +134,15 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
   const stateLine = (c: BoardTeam['coaches'][number]) => {
     if (c.state === 'waiting') return W.coachState.waiting;
     if (c.state === 'joined') return W.coachState.joined;
-    if (c.state === 'expired') {
-      return <span className={css.amberText}>{W.coachState.expired} · <button type="button" className={css.inlineLink} onClick={() => void sendAgain(c.id)}>{W.coachState.sendAgain}</button></span>;
+    if (c.state === 'expired' || c.state === 'failed') {
+      return (
+        <span className={css.amberText}>
+          {c.state === 'expired' ? W.coachState.expired : W.coachState.failed} ·{' '}
+          <button type="button" className={css.inlineLink} disabled={resending === c.id} onClick={() => void sendAgain(c.id)}>{W.coachState.sendAgain}</button>
+        </span>
+      );
     }
-    return W.coachState.invited(c.invitedAt ? clubDay(c.invitedAt) : '');
+    return W.coachState.invited(c.invitedAt ? dayOf(c.invitedAt) : '');
   };
 
   const firstNew = adds.find(a => a.name.trim());
@@ -252,7 +265,8 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
 export function CreateTeamsWindow({ divisionId, divisionName, existing, routes, onDone, onClose }: {
   divisionId: string;
   divisionName: string;
-  existing: number;
+  /** The division's teams' names, so a new "Team N" never repeats one. */
+  existing: readonly string[];
   routes: TeamsRoutes;
   onDone: () => void;
   onClose: () => void;
@@ -263,7 +277,12 @@ export function CreateTeamsWindow({ divisionId, divisionName, existing, routes, 
   const n = Math.max(1, Math.min(20, Number.parseInt(count, 10) || 0));
   async function create() {
     setBusy(true); setError(null);
-    const teams = Array.from({ length: n }, (_, i) => ({ name: W.team.defaultName(existing + i + 1) }));
+    const taken = new Set(existing.map(x => x.trim().toLowerCase()));
+    const teams: { name: string }[] = [];
+    for (let k = 1; teams.length < n; k++) {
+      const name = W.team.defaultName(k);
+      if (!taken.has(name.toLowerCase())) teams.push({ name });
+    }
     const r = await send(routes.teams, 'POST', { divisionId, teams });
     setBusy(false);
     if (!r.ok) { setError(r.error); return; }

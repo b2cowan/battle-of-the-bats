@@ -7,6 +7,7 @@ import { clubEmailFacts } from '@/lib/club-email-context';
 import { familyReplyPlan } from '@/lib/email-club-identity';
 import { senderName } from '@/lib/families-coach-ask';
 import type { LeagueRegistrationStatus } from '@/lib/types';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
 export const GET = withObservability(async (_req: Request,
@@ -74,6 +75,16 @@ export const POST = withObservability(async (req: Request,
       break;
     case 'team':
       if (!teamId) return NextResponse.json({ error: 'teamId required for team scope' }, { status: 400 });
+      {
+        // Club Tier 9c: before a division is published its teams are a draft, and families hear their child's team from
+        // the placement email at Publish. A team of an unpublished division is not an audience yet.
+        const { data: team } = await supabaseAdmin.from('league_teams')
+          .select('name, league_divisions(teams_published_at)').eq('id', teamId).eq('season_id', seasonId).maybeSingle();
+        const division = team?.league_divisions as { teams_published_at?: string | null } | null;
+        if (team && !division?.teams_published_at) {
+          return NextResponse.json({ error: `${team.name} isn’t published yet. Families hear their teams when you publish on Teams & draft.` }, { status: 409 });
+        }
+      }
       targets = allRegs.filter(r => r.teamId === teamId);
       break;
     case 'status':

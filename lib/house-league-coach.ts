@@ -124,6 +124,8 @@ export async function getCoachTeamCards(userId: string, now: Date = new Date()):
 export async function readCoachTeamPage(
   userId: string, orgSlug: string, teamId: string, now: Date = new Date(),
 ): Promise<CoachTeamPage | null> {
+  // An address that is not a team's id is not found, not an error.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teamId)) return null;
   const { data: links, error } = await supabaseAdmin.from('league_team_coaches')
     .select('team_id, user_id, accepted_at, removed_at').eq('user_id', userId).eq('team_id', teamId);
   if (error) throw new Error(`Couldn't read the coaching link: ${error.message}`);

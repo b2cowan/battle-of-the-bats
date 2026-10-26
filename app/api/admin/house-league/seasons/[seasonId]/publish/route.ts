@@ -5,8 +5,10 @@ import { getLeagueSeasonById } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { divisionInSeason } from '@/lib/league-season-scope';
 import { readDivisionBoard } from '@/lib/house-league-teams';
-import { failedPlacementEmails, sendPlacementEmails } from '@/lib/house-league-placement-mail';
-import { mintCoachTokens, sendCoachInvites } from '@/lib/house-league-coach-invite-mail';
+import { sendPlacementEmails, unsentPlacementEmails } from '@/lib/house-league-placement-mail';
+import {
+  issueCoachInvites, mintCoachTokens, sendCoachInvites, waitingCoachIds, type InvitedCoach,
+} from '@/lib/house-league-coach-invite-mail';
 import { publishRefusal } from '@/lib/house-league-teams-words';
 import { formatTime } from '@/lib/utils';
 import { utcToZonedInputs } from '@/lib/timezone';
@@ -40,8 +42,7 @@ export const POST = withObservability(async (req: Request,
   const org = { ...ctx!.org, slug: ctx!.org.slug };
 
   if (action === 'resend') {
-    const failed = await failedPlacementEmails(divisionId);
-    const outcome = await sendPlacementEmails(org, season, failed);
+    const outcome = await sendPlacementEmails(org, season, await unsentPlacementEmails(divisionId));
     return NextResponse.json({ ok: true, outcome });
   }
 
@@ -77,12 +78,24 @@ export const POST = withObservability(async (req: Request,
       return NextResponse.json({ error: publishRefusal('notReady', { division }), code: 'notReady' }, { status: 409 });
     }
 
-    // The facts are written. Now the emails: the families first, then the coaches.
-    const { data: rows } = await supabaseAdmin.from('league_placement_emails').select('id')
-      .eq('division_id', divisionId).eq('status', 'pending').eq('created_at', result.published_at!);
-    const outcome = await sendPlacementEmails(org, season, (rows ?? []).map(r => r.id as string));
-    const invitedIds = result.invited ?? [];
-    const invited = await sendCoachInvites(org, season, invitedIds, tokens.raw);
+    // The facts are written. Now the emails: the families, then the coaches — each on its own, so one failing never
+    // stops the other (/review 2026-10-25). A failed family send is recorded on its rows ("Send the {n} again").
+    let outcome = { sent: 0, failed: 0, skipped: 0 };
+    try {
+      outcome = await sendPlacementEmails(org, season, await unsentPlacementEmails(divisionId));
+    } catch (err) {
+      console.error('[publish] the family emails did not start (they wait for Send again):', err instanceof Error ? err.message : String(err));
+      outcome = { sent: 0, failed: result.families, skipped: 0 };
+    }
+    let invited: InvitedCoach[] = [];
+    try {
+      invited = await sendCoachInvites(org, season, result.invited ?? [], tokens.raw);
+      // A coach added while this window was open was not in the publish: invite them now.
+      const late = await waitingCoachIds(divisionId);
+      if (late.length) invited = [...invited, ...await issueCoachInvites(org, season, late, ctx!.user.id, { onlyNew: true })];
+    } catch (err) {
+      console.error('[publish] a coach invite did not go:', err instanceof Error ? err.message : String(err));
+    }
     return NextResponse.json({ ok: true, publishedAt: result.published_at, families: result.families, outcome, invited });
   }
 

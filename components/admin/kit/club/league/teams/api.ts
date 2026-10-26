@@ -5,6 +5,8 @@
  */
 import { moneyFetch, refusalText } from '@/components/admin/kit/club/money/MoneyKit';
 import { MONEY_REFUSAL } from '@/lib/house-league-money-words';
+import { clubDay } from '@/lib/league-registration-state';
+import { orgDayKey } from '@/lib/timezone';
 import type { DivisionBoard, DivisionTab } from '@/lib/house-league-teams';
 
 export type { BoardCoach, BoardLeft, BoardPlayer, BoardTeam, DivisionBoard, DivisionTab } from '@/lib/house-league-teams';
@@ -53,3 +55,6 @@ export function teamsRoutes(seasonId: string, orgQuery: string) {
   };
 }
 export type TeamsRoutes = ReturnType<typeof teamsRoutes>;
+
+/** "Oct 25" for an instant, read in the CLUB's day (a publish at 9 p.m. is that day, not tomorrow's UTC date). */
+export const dayOf = (iso: string) => clubDay(orgDayKey(iso));

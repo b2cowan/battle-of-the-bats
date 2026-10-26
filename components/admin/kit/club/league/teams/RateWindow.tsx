@@ -33,17 +33,25 @@ export default function RateWindow({ division, players, ratings, routes, isPhone
   const shown = useMemo(() => (onlyUnrated ? players.filter(p => !ratings.has(p.id)) : players), [onlyUnrated, players, ratings]);
   const rated = players.length - unrated.length;
 
-  async function rate(ids: readonly string[], rating: number | null) {
+  // Saves go out one after another (a player's later tap always lands last), and a failed save puts back only the
+  // players whose latest tap it was — never over a newer one (/review 2026-10-25).
+  const queue = useRef<Promise<void>>(Promise.resolve());
+  const latest = useRef(new Map<string, number>());
+  const seq = useRef(0);
+  function rate(ids: readonly string[], rating: number | null) {
     setError(null);
+    const mine = ++seq.current;
     const before = ids.map(id => [id, ratings.get(id) ?? null] as const);
+    for (const id of ids) latest.current.set(id, mine);
     onRated(ids, rating);
-    const r = await send(routes.ratings, 'PUT', { registrationIds: ids, rating });
-    if (!r.ok) {
-      for (const [id, was] of before) onRated([id], was);
+    queue.current = queue.current.then(async () => {
+      const r = await send(routes.ratings, 'PUT', { registrationIds: ids, rating });
+      if (r.ok) return;
+      for (const [id, was] of before) if (latest.current.get(id) === mine) onRated([id], was);
       setError(W.rate.err);
-    }
+    });
   }
-  const tap = (p: BoardPlayer, n: number) => void rate([p.id], ratings.get(p.id) === n ? null : n);
+  const tap = (p: BoardPlayer, n: number) => rate([p.id], ratings.get(p.id) === n ? null : n);
 
   function keyed(e: React.KeyboardEvent, p: BoardPlayer, index: number) {
     const n = Number(e.key);
@@ -102,7 +110,7 @@ export default function RateWindow({ division, players, ratings, routes, isPhone
               <div className={css.seg} role="group" aria-label={W.rate.rateThem}>
                 {NUMBERS.map(n => (
                   <button key={n} type="button" className={css.segBtn} aria-label={W.rate.bulkAria(n)}
-                    onClick={() => { void rate([...picked], n); setPicked(new Set()); }}>{n}</button>
+                    onClick={() => { rate([...picked], n); setPicked(new Set()); }}>{n}</button>
                 ))}
               </div>
             </div>

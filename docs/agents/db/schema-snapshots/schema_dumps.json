@@ -7796,6 +7796,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "league_team_coaches",
+        "pos": 17,
+        "column_name": "invite_failed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_teams",
         "pos": 1,
         "column_name": "id",

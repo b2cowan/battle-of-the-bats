@@ -1,4 +1,4 @@
--- DEV only. Club Tier Stage 9c Part 1 (mig 377): teams and people, proved on the database.
+-- DEV only. Club Tier Stage 9c Part 1 (mig 377; T11 mig 379): teams and people, proved on the database.
 -- Run: node scripts/db-query.mjs --dev -f scripts/house-league-teams-check.sql
 -- The final exception rolls back every fixture row; the run passes only when it ends in HOUSE_LEAGUE_TEAMS_PASSED.
 DO $hlteams$
@@ -139,6 +139,10 @@ BEGIN
   IF (SELECT team_id IS NULL AND previous_team_id = v_t2 AND team_changed_at IS NOT NULL
         FROM league_registrations WHERE id = v_a) IS NOT TRUE THEN
     RAISE EXCEPTION 'FAIL T9: an ended child kept their team'; END IF;
+  -- T11 (mig 379) · the ended child's rating went with them (Nora was rated 4 in T3).
+  IF EXISTS (SELECT 1 FROM league_player_ratings WHERE registration_id = v_a) THEN
+    RAISE EXCEPTION 'FAIL T11: an ended child kept their rating'; END IF;
+  INSERT INTO league_player_ratings(registration_id, org_id, season_id, rating) VALUES (v_c, v_org, v_season, 2);
   -- And a child moved to another division leaves their team too.
   UPDATE league_registrations SET division_id = v_div2 WHERE id = v_b;
   IF (SELECT team_id FROM league_registrations WHERE id = v_b) IS NOT NULL THEN

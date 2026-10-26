@@ -2,12 +2,12 @@
 
 **Generated:** 2026-10-26 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 560 divergence(s)** across dev/prod.
+**⚠️ 561 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 19 | 0 | — |
-| Columns | 291 | 1 | 0 |
+| Columns | 292 | 1 | 0 |
 | Indexes | 84 | 0 | 2 |
 | Constraints | 85 | 0 | — |
 | RLS / CHECK | 78 | 0 | 0 (RLS state) |
@@ -38,7 +38,7 @@
 _none_
 
 ## Columns
-### Only in DEV (291)
+### Only in DEV (292)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -125,6 +125,7 @@ _none_
 - `league_team_coaches.email`
 - `league_team_coaches.expires_at`
 - `league_team_coaches.id`
+- `league_team_coaches.invite_failed_at`
 - `league_team_coaches.invited_at`
 - `league_team_coaches.invited_by`
 - `league_team_coaches.name`

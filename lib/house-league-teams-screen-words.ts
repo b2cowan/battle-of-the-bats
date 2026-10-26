@@ -95,6 +95,7 @@ export const TEAMS_WORDS = {
     placeBody: (family: string, first: string) => `${capital(family)} gets an email with ${possessive(first)} team and coach.`,
     placeButton: 'Place and email',
     working: 'Moving…',
+    emailFailed: 'That email couldn’t be sent. Their status page shows the team.',
   },
 
   rate: {
@@ -183,6 +184,7 @@ export const TEAMS_WORDS = {
     invited: (day: string) => `Invited ${day}`,
     joined: 'Signed in',
     expired: 'Invite expired',
+    failed: 'Invite didn’t send',
     sendAgain: 'Send again',
   },
 
@@ -203,8 +205,8 @@ export const TEAMS_WORDS = {
     button: (n: number) => `Publish and email ${families(n)}`,
     sending: (n: number) => `Sending to ${families(n)}…`,
     working: 'Publishing…',
-    done: (day: string, n: number, invited: readonly string[]) =>
-      `Published ${day} · ${families(n)} emailed${invited.length ? ` · ${namesCapped(invited)} invited` : ''}.`,
+    done: (day: string, n: number, invited: readonly { name: string; team: string }[]) =>
+      `Published ${day} · ${families(n)} emailed${invited.length ? ` · ${namesCapped(invited.map(c => `${c.name} invited to coach ${c.team}`))}` : ''}.`,
     doneQuiet: (day: string) => `Published ${day}.`,
     failed: (bad: number, total: number) => `The teams are published, but ${bad} of ${emails(Math.max(total, bad))} couldn’t be sent. Their status pages show the team.`,
     sendAgain: (n: number) => `Send the ${n} again`,

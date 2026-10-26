@@ -386,6 +386,10 @@
     "378_house_league_placement_send_claim.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 9c Part 4. Visible: league_placement_emails.status CHECK widened with 'sending'; indexes league_placement_emails_org_id_idx, league_player_ratings_org_id_idx, league_team_coaches_org_id_idx. INVISIBLE to check:migrations: new function league_placement_emails_claim (a send claims its rows, so a family is never emailed twice), execute revoked from anon/authenticated. Requires 377; apply right after it in the promote that ships 9c. Verify on prod: the function exists and the CHECK lists sending. Applied to DEV 2026-10-25."
+    },
+    "379_house_league_teams_review_fixes.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 9c /review fixes. Visible: league_team_coaches.invite_failed_at; REVOKE ALL on league_player_ratings, league_team_coaches and league_placement_emails from anon/authenticated. INVISIBLE to check:migrations: league_registrations_team_follows replaced (same name; an ended registration also erases its rating) and a one-time DELETE of ratings held by ended registrations (prod has no house-league clubs, so it should touch nothing). Requires 377 + 378; apply right after them in the promote that ships 9c. Verify on prod: the column exists; anon/authenticated hold no grant on the three tables. Applied to DEV 2026-10-25; scripts/house-league-teams-check.sql passed (T1-T11)."
     }
   }
 }

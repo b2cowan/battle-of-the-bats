@@ -311,4 +311,7 @@
   .facts dd { margin-bottom: 0.5rem; }
   .coachNewFields { grid-template-columns: minmax(0, 1fr); }
   .step { flex-wrap: wrap; }
+  .pill, .noCoach, .inlineLink { min-height: 44px; }
+  .movedTrigger { min-height: 44px; }
 }
+.movedTrigger { display: inline-flex; align-items: center; padding: 0; border: 0; background: none; cursor: pointer; }

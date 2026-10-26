@@ -24,11 +24,9 @@ export const GET = withObservability(async (req: Request,
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
   const tabs = await readDivisionTabs(seasonId);
+  // A division the address names that isn't this season's (a stale link) falls back to the first tab, never a dead screen.
   const asked = url.searchParams.get('divisionId');
-  const divisionId = asked ?? tabs[0]?.id ?? null;
-  if (asked && !(await divisionInSeason(seasonId, asked))) {
-    return NextResponse.json({ error: 'Division not found' }, { status: 404 });
-  }
+  const divisionId = asked && (await divisionInSeason(seasonId, asked)) ? asked : tabs[0]?.id ?? null;
   const board = divisionId ? await readDivisionBoard(season, divisionId) : null;
 
   // 9c·2a: the registrar, the treasurer and everyone else who is not a runner get no rating, not even an empty map.

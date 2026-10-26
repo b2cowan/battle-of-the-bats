@@ -29,12 +29,13 @@ import { moneyFetch } from '../../money/MoneyKit';
 import HubTabBar from '@/components/shared/HubTabBar';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { clubDay } from '@/lib/league-registration-state';
+import { dayOf } from './api';
 import { teamAverage } from '@/lib/house-league-draft';
 import { divisionState, stateWords } from '@/lib/house-league-teams-words';
 import { TEAMS_WORDS as W } from '@/lib/house-league-teams-screen-words';
 import ConfirmWindow from '../registrations/ConfirmWindow';
 import { send, teamsRoutes, type BoardPlayer, type BoardRead } from './api';
+import { draftRefusal } from '@/lib/house-league-teams-words';
 import TeamsBoard, { type PlayerMenuItem } from './TeamsBoard';
 import RateWindow from './RateWindow';
 import DraftWindow from './DraftWindow';
@@ -130,9 +131,9 @@ export default function TeamsScreen() {
   const division = board.division;
   const players = board.players;
   const placed = players.filter(p => p.teamId);
-  const familyCount = new Set(placed.map(p => p.guardianEmail)).size;
+  const familyCount = new Set(placed.map(p => p.guardianEmail).filter(Boolean)).size;
   const state = divisionState({ teams: board.teams.length, placed: placed.length, publishedAt: division.publishedAt });
-  const day = division.publishedAt ? clubDay(division.publishedAt) : '';
+  const day = division.publishedAt ? dayOf(division.publishedAt) : '';
   const words = stateWords(state, { day, familyCount });
   const rated = players.filter(p => ratings.has(p.id)).length;
   const moves = players.filter(p => !published && p.draftTeamId && p.teamId !== p.draftTeamId);
@@ -150,7 +151,7 @@ export default function TeamsScreen() {
       if (r.code === 'published') { setAct({ kind: 'held', playerId: player.id, teamId }); return; }
       setNotice(r.error);
     } else if (r.data.emailed && r.data.emailed.failed > 0) {
-      setNotice(W.publish.failed(r.data.emailed.failed, 1));
+      setNotice(W.move.emailFailed);
     }
     setAct(null);
     reload();
@@ -231,7 +232,10 @@ export default function TeamsScreen() {
         <button type="button" className="btn btn-outline" onClick={() => setAct({ kind: 'rate' })}>{isPhone ? W.button.ratePhone : W.button.rate}</button>
       ) : undefined,
     }] : []),
-    { key: 'draft', done: placed.length > 0, title: W.stepTitle.draft, line: W.step.draft(players.length, board.teams.length) },
+    {
+      key: 'draft', done: placed.length > 0, title: W.stepTitle.draft,
+      line: board.teams.length === 0 ? draftRefusal('noTeams', { division: division.name }) : W.step.draft(players.length, board.teams.length),
+    },
     { key: 'publish', done: published, title: W.stepTitle.publish, line: published ? words.says : W.step.publish(familyCount) },
   ];
   const outLine = W.notDrafted(board.notDrafted.review.length, board.notDrafted.waitlisted);
@@ -239,8 +243,10 @@ export default function TeamsScreen() {
   // ── The result after publishing (copy §7.2) ──────────────────────────────────────────────────
   const invitedNow = lastPublish?.invited ?? board.teams.flatMap(t => t.coaches
     .filter(c => c.invitedAt && division.publishedAt && new Date(c.invitedAt).getTime() === new Date(division.publishedAt).getTime())
-    .map(c => `${c.name} to coach ${t.name}`));
-  const emailed = lastPublish ? lastPublish.outcome.sent + lastPublish.outcome.skipped : board.emails.atPublish - Math.min(board.emails.failed, board.emails.atPublish);
+    .map(c => ({ name: c.name, team: t.name })));
+  // The families the Publish emails reached: this press's own answer, or after a reload the rows written at Publish that went.
+  const emailed = lastPublish ? lastPublish.outcome.sent + lastPublish.outcome.skipped : board.emails.atPublishSent;
+  const unsent = board.emails.unsent;
 
   const playerFor = act && (act.kind === 'move' || act.kind === 'held') ? findPlayer(act.playerId) : null;
   const teamFor = act?.kind === 'team' ? board.teams.find(t => t.id === act.teamId) ?? null : null;
@@ -272,11 +278,11 @@ export default function TeamsScreen() {
             <Callout tone="info" role="status">
               <b>{emailed > 0 || invitedNow.length > 0 ? W.publish.done(day, emailed, invitedNow) : W.publish.doneQuiet(day)}</b>
             </Callout>
-            {board.emails.failed > 0 && rights.run && (
+            {unsent > 0 && rights.run && (
               <Callout tone="warn" role="alert" action={
-                <button type="button" className="btn btn-outline" disabled={resending} onClick={() => void resend()}>{W.publish.sendAgain(board.emails.failed)}</button>
+                <button type="button" className="btn btn-outline" disabled={resending} onClick={() => void resend()}>{W.publish.sendAgain(unsent)}</button>
               }>
-                <b>{W.publish.failed(board.emails.failed, board.emails.atPublish)}</b>
+                <b>{W.publish.failed(unsent, Math.max(board.emails.atPublish, unsent))}</b>
               </Callout>
             )}
             {rights.run && <p className={css.quiet}>{W.publish.after}</p>}
@@ -312,6 +318,7 @@ export default function TeamsScreen() {
 
         {board.teams.length > 0 && (
           <TeamsBoard
+            key={division.id}
             teams={board.teams}
             players={players}
             ratings={ratings}
@@ -338,7 +345,7 @@ export default function TeamsScreen() {
       )}
       {act?.kind === 'draft' && (
         <DraftWindow board={board} ratings={ratings} again={act.again} routes={routes} registrationsHref={registrationsHref}
-          onDone={() => { setAct(null); reload(); }} onClose={() => setAct(null)} />
+          onDone={() => { setAct(null); reload(); }} onClose={() => { setAct(null); reload(); }} />
       )}
       {act?.kind === 'publish' && (
         <PublishWindow board={board} season={season.name} routes={routes} registrationsHref={registrationsHref}
@@ -346,7 +353,7 @@ export default function TeamsScreen() {
           onClose={() => { setAct(null); reload(); }} />
       )}
       {act?.kind === 'create' && (
-        <CreateTeamsWindow divisionId={division.id} divisionName={division.name} existing={board.teams.length} routes={routes}
+        <CreateTeamsWindow divisionId={division.id} divisionName={division.name} existing={board.teams.map(t => t.name)} routes={routes}
           onDone={() => { setAct(null); reload(); }} onClose={() => setAct(null)} />
       )}
       {act?.kind === 'team' && teamFor && (

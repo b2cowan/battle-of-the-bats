@@ -20,7 +20,7 @@ export interface PublishOutcome {
   publishedAt: string;
   families: number;
   outcome: { sent: number; failed: number; skipped: number };
-  invited: string[];
+  invited: { name: string; team: string }[];
 }
 
 export default function PublishWindow({ board, season, routes, registrationsHref, onDone, onClose }: {
@@ -38,7 +38,8 @@ export default function PublishWindow({ board, season, routes, registrationsHref
   const placed = board.players.filter(p => p.teamId);
   const unplaced = board.players.length - placed.length;
   const families = new Map<string, typeof placed>();
-  for (const p of placed) families.set(p.guardianEmail, [...(families.get(p.guardianEmail) ?? []), p]);
+  // A child with no guardian email gets no email row at Publish, so is no family here either.
+  for (const p of placed) if (p.guardianEmail) families.set(p.guardianEmail, [...(families.get(p.guardianEmail) ?? []), p]);
   const coaches = board.teams.flatMap(t => t.coaches.filter(c => c.state === 'waiting').map(c => ({ name: c.name, team: t.name })));
   const noCoach = board.teams.filter(t => t.coaches.length === 0);
   // The family the preview shows: the one with the most children (copy §7.1 publish.preview).

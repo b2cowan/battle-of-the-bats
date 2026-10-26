@@ -1,9 +1,9 @@
 {
   "generated": "2026-10-26",
-  "total": 560,
+  "total": 561,
   "counts": {
     "tables": 19,
-    "columns": 292,
+    "columns": 293,
     "indexes": 86,
     "constraints": 85,
     "rls": 78
@@ -663,6 +663,10 @@
     },
     {
       "key": "column:only-dev:league_team_coaches.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_team_coaches.invite_failed_at",
       "sig": ""
     },
     {

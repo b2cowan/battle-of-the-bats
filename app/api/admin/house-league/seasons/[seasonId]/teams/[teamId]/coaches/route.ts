@@ -4,7 +4,7 @@ import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isSendableGuardianEmail, normalizeGuardianEmail } from '@/lib/guardian-email';
-import { mintCoachTokens, sendCoachInvites } from '@/lib/house-league-coach-invite-mail';
+import { issueCoachInvites } from '@/lib/house-league-coach-invite-mail';
 import { withObservability } from '@/lib/observability';
 
 /**
@@ -12,7 +12,7 @@ import { withObservability } from '@/lib/observability';
  *   · POST — add a coach. Before the division is published they are "Invited when you publish". After it, the add is
  *     held (`confirmed`, copy §2.1 "Send {Pat} the invite?") and the invite goes at once.
  *   · DELETE ?coachId= — remove them: they lose the team page at once; families aren't told.
- *   · PATCH { coachId, action: 'resend' } — "Send again" for an invite that expired (a new 7-day link).
+ *   · PATCH { coachId, action: 'resend' } — "Send again" for an invite that expired or didn't send (a new 7-day link).
  */
 
 async function teamOf(seasonId: string, teamId: string) {
@@ -31,16 +31,8 @@ interface Scope {
   org: NonNullable<Awaited<ReturnType<typeof getAuthContextWithRole>>>['org'] & { slug: string };
 }
 
-/** Give these coaches a fresh invite and send it. */
-async function invite(p: Scope, coachIds: string[]) {
-  const tokens = mintCoachTokens(coachIds);
-  const now = new Date();
-  const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  await Promise.all(tokens.ids.map((id, i) => supabaseAdmin.from('league_team_coaches').update({
-    token_hash: tokens.hashes[i], invited_at: now.toISOString(), expires_at: expires.toISOString(), invited_by: p.ctx.user.id,
-  }).eq('id', id).eq('team_id', p.team.id).is('removed_at', null).is('accepted_at', null)));
-  return sendCoachInvites(p.org, p.season, tokens.ids, tokens.raw);
-}
+/** Give these coaches a fresh invite and send it (only rows still a live, not-signed-in coach of this club). */
+const invite = (p: Scope, coachIds: string[]) => issueCoachInvites(p.org, p.season, coachIds, p.ctx.user.id, { onlyNew: false });
 
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string; teamId: string }> },) => {

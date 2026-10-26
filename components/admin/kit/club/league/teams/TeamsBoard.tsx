@@ -11,11 +11,10 @@ import { ChevronLeft, ChevronRight, Lock, MoreHorizontal, Pencil } from 'lucide-
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import frame from '@/components/admin/kit/AdminKitFrame.module.css';
 import { formatLeagueMoney } from '@/lib/league-money';
-import { clubDay } from '@/lib/league-registration-state';
 import { teamAverage } from '@/lib/house-league-draft';
 import { coachesLine } from '@/lib/house-league-teams-words';
 import { TEAMS_WORDS as W } from '@/lib/house-league-teams-screen-words';
-import type { BoardLeft, BoardPlayer, BoardTeam } from './api';
+import { dayOf, type BoardLeft, type BoardPlayer, type BoardTeam } from './api';
 import css from './Teams.module.css';
 
 export interface BoardRights {
@@ -83,12 +82,20 @@ function PlayerRow({ p, props, drag }: { p: BoardPlayer; props: BoardProps; drag
           )}
         </div>
         <div className={css.kidSub}>{sub}</div>
-        {p.askedToWithdrawAt && <div className={css.kidSub}>{W.kid.asked(clubDay(p.askedToWithdrawAt))}</div>}
+        {p.askedToWithdrawAt && <div className={css.kidSub}>{W.kid.asked(dayOf(p.askedToWithdrawAt))}</div>}
       </div>
       {moved && p.draftTeamId && (
-        <button type="button" className={css.movedTag} onClick={() => props.onMenu(p, 'putBack')} title={W.kid.putBack(teamName(p.draftTeamId))}>
-          {W.kid.moved}
-        </button>
+        <CoachToolbarMenu
+          variant="glyph"
+          label={W.kid.moved}
+          icon={<span className={css.movedTag}>{W.kid.moved}</span>}
+          drawerOnPhone
+          drawerTitle={name}
+          panelMinWidth={240}
+          triggerClassName={css.movedTrigger}
+        >
+          <CoachToolbarMenuItem label={W.kid.putBack(teamName(p.draftTeamId))} onSelect={() => props.onMenu(p, 'putBack')} />
+        </CoachToolbarMenu>
       )}
       {items.length > 0 && (
         <CoachToolbarMenu
@@ -109,9 +116,9 @@ function PlayerRow({ p, props, drag }: { p: BoardPlayer; props: BoardProps; drag
 }
 
 function DraggablePlayer({ p, props }: { p: BoardPlayer; props: BoardProps }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: p.id });
+  const { listeners, setNodeRef, isDragging } = useDraggable({ id: p.id });
   return (
-    <div ref={setNodeRef} className={`${css.drag}${isDragging ? ` ${css.dragging}` : ''}`} {...listeners} {...attributes}>
+    <div ref={setNodeRef} className={`${css.drag}${isDragging ? ` ${css.dragging}` : ''}`} {...listeners}>
       <PlayerRow p={p} props={props} />
     </div>
   );
@@ -144,7 +151,7 @@ function CardFoot({ team, members, props }: { team: BoardTeam; members: readonly
   const gone = props.left.filter(l => l.teamId === team.id);
   return (
     <>
-      {gone.map(l => <p key={l.id} className={css.leftLine}>{W.kid.left(l.name, clubDay(l.at))}</p>)}
+      {gone.map(l => <p key={l.id} className={css.leftLine}>{W.kid.left(l.name, dayOf(l.at))}</p>)}
       <div className={css.cardFoot}>{W.card.foot(members.length, avg)}</div>
     </>
   );

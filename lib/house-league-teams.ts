@@ -20,7 +20,7 @@ import { tournamentToday } from './timezone';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-export type CoachState = 'waiting' | 'invited' | 'joined' | 'expired';
+export type CoachState = 'waiting' | 'invited' | 'joined' | 'expired' | 'failed';
 
 export interface BoardCoach {
   id: string;
@@ -62,11 +62,11 @@ export interface BoardLeft {
 }
 
 export interface BoardEmails {
-  /** Families emailed at Publish (the result line's count). */
+  /** Families written an email at Publish, and how many of those went (the result line's "{n} families emailed"). */
   atPublish: number;
-  sent: number;
-  failed: number;
-  pending: number;
+  atPublishSent: number;
+  /** Every email of the division not yet sent — failed, never started, or held by a send that died ("Send the {n} again"). */
+  unsent: number;
 }
 
 export interface DivisionBoard {
@@ -87,13 +87,15 @@ export interface DivisionTab {
   publishedAt: string | null;
 }
 
-/** The coach's line under their name (copy §2.2). There is no "didn't arrive": the product cannot see a bounce. */
+/** The coach's line under their name (copy §2.2). There is no "didn't arrive": the product cannot see a bounce. It can see
+ *  a send that failed (mig 379): "Invite didn't send · Send again". */
 export function coachState(
-  row: { invited_at: string | null; expires_at: string | null; accepted_at: string | null },
+  row: { invited_at: string | null; expires_at: string | null; accepted_at: string | null; invite_failed_at?: string | null },
   now: Date = new Date(),
 ): CoachState {
   if (row.accepted_at) return 'joined';
   if (!row.invited_at) return 'waiting';
+  if (row.invite_failed_at) return 'failed';
   if (row.expires_at && new Date(row.expires_at).getTime() <= now.getTime()) return 'expired';
   return 'invited';
 }
@@ -139,15 +141,17 @@ export async function readDivisionBoard(
   if (divError) throw new Error(`Couldn't read the division: ${divError.message}`);
   if (!division) return null;
 
-  const [teamsRes, regsRes, fingerprintRes, emailsRes] = await Promise.all([
+  // The fingerprint is read BEFORE the rows: a change landing between them makes the window look stale (refused on its
+  // press), never fresh over old rows (/review 2026-10-25).
+  const fingerprintRes = await supabaseAdmin.rpc('league_division_fingerprint', { p_division: divisionId });
+  const [teamsRes, regsRes, emailsRes] = await Promise.all([
     supabaseAdmin.from('league_teams').select('id, name, color').eq('division_id', divisionId)
       .order('sort_order').order('created_at'),
     supabaseAdmin.from('league_registrations').select(BOARD_REG_COLUMNS).eq('season_id', season.id)
       .eq('division_id', divisionId).order('player_last_name').order('player_first_name'),
-    supabaseAdmin.rpc('league_division_fingerprint', { p_division: divisionId }),
     supabaseAdmin.from('league_placement_emails').select('status, kind, created_at').eq('division_id', divisionId),
   ]);
-  for (const r of [teamsRes, regsRes, fingerprintRes, emailsRes]) {
+  for (const r of [teamsRes, regsRes, fingerprintRes, emailsRes] as { error: { message: string } | null }[]) {
     if (r.error) throw new Error(`Couldn't read the board: ${r.error.message}`);
   }
   const teamRows = (teamsRes.data ?? []) as { id: string; name: string; color: string | null }[];
@@ -183,13 +187,13 @@ export async function readDivisionBoard(
 
   const emailRows = (emailsRes.data ?? []) as { status: string; kind: string; created_at: string }[];
   const publishedAt = division.teams_published_at as string | null;
+  const atPublish = publishedAt
+    ? emailRows.filter(e => e.kind === 'placed' && new Date(e.created_at).getTime() === new Date(publishedAt).getTime())
+    : [];
   const emails: BoardEmails = {
-    atPublish: publishedAt
-      ? emailRows.filter(e => e.kind === 'placed' && new Date(e.created_at).getTime() === new Date(publishedAt).getTime()).length
-      : 0,
-    sent: emailRows.filter(e => e.status === 'sent' || e.status === 'skipped').length,
-    failed: emailRows.filter(e => e.status === 'failed').length,
-    pending: emailRows.filter(e => e.status === 'pending').length,
+    atPublish: atPublish.length,
+    atPublishSent: atPublish.filter(e => e.status === 'sent' || e.status === 'skipped').length,
+    unsent: emailRows.filter(e => e.status === 'failed' || e.status === 'pending' || e.status === 'sending').length,
   };
 
   return {
@@ -214,14 +218,14 @@ export async function readDivisionBoard(
 
 interface CoachRow {
   id: string; team_id: string; name: string; email: string;
-  invited_at: string | null; expires_at: string | null; accepted_at: string | null;
+  invited_at: string | null; expires_at: string | null; accepted_at: string | null; invite_failed_at: string | null;
 }
 
 async function readCoachRows(teamIds: readonly string[]): Promise<CoachRow[]> {
   const out: CoachRow[] = [];
   for (const chunk of chunked([...teamIds])) {
     const { data, error } = await supabaseAdmin.from('league_team_coaches')
-      .select('id, team_id, name, email, invited_at, expires_at, accepted_at')
+      .select('id, team_id, name, email, invited_at, expires_at, accepted_at, invite_failed_at')
       .in('team_id', chunk).is('removed_at', null).order('created_at');
     if (error) throw new Error(`Couldn't read coaches: ${error.message}`);
     out.push(...((data ?? []) as CoachRow[]));
@@ -274,22 +278,32 @@ export async function placePlayer(
   return { emailId: row?.email ?? null };
 }
 
+export type LockRefusal = 'no_team' | 'published';
+
 /**
  * Lock a player to the team they are on, or unlock them (9c·3). Before publishing only: a lock is held against a draft,
- * and there is no draft after it. Returns false when there was nothing to lock (no team, not accepted, published).
+ * and there is no draft after it. Null when it landed, else why not. A lock that races a Publish is taken back (Publish
+ * clears every lock in its own transaction, so one written just after it would linger on a published division).
  */
-export async function setLock(seasonId: string, registrationId: string, locked: boolean): Promise<boolean> {
+export async function setLock(seasonId: string, registrationId: string, locked: boolean): Promise<LockRefusal | null> {
   const { data: reg, error } = await supabaseAdmin.from('league_registrations')
     .select('division_id, team_id, status').eq('id', registrationId).eq('season_id', seasonId).maybeSingle();
   if (error) throw new Error(`Couldn't read the player: ${error.message}`);
-  if (!reg || reg.status !== 'active' || !reg.team_id || !reg.division_id) return false;
-  const { data: div } = await supabaseAdmin.from('league_divisions')
-    .select('teams_published_at').eq('id', reg.division_id).maybeSingle();
-  if (div?.teams_published_at) return false;
+  if (!reg || reg.status !== 'active' || !reg.team_id || !reg.division_id) return 'no_team';
+  const published = async () => {
+    const { data: div } = await supabaseAdmin.from('league_divisions').select('teams_published_at').eq('id', reg.division_id).maybeSingle();
+    return !!div?.teams_published_at;
+  };
+  if (await published()) return 'published';
   const { data: updated, error: updateError } = await supabaseAdmin.from('league_registrations')
     .update({ team_locked_at: locked ? new Date().toISOString() : null })
     .eq('id', registrationId).eq('season_id', seasonId).eq('team_id', reg.team_id).eq('status', 'active')
     .select('id');
   if (updateError) throw new Error(`Couldn't ${locked ? 'lock' : 'unlock'} the player: ${updateError.message}`);
-  return (updated ?? []).length > 0;
+  if ((updated ?? []).length === 0) return 'no_team';
+  if (locked && await published()) {
+    await supabaseAdmin.from('league_registrations').update({ team_locked_at: null }).eq('id', registrationId);
+    return 'published';
+  }
+  return null;
 }

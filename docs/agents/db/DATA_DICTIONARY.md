@@ -6740,7 +6740,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 ## `league_player_ratings`
 <!-- dict:table:league_player_ratings -->
 
-**Purpose (mig 377, Club Tier 9c, rulings 9c·2a/b/c):** a player's **rating**, a number from 1 to 5 (no comment), set by the people who run the league and read by the draft. **Its own table on purpose**: whole `league_registrations` rows reach the registrar's screens and exports, so a rating column there would leak. Read and written only through [lib/house-league-ratings.ts](../../../lib/house-league-ratings.ts) by routes gated `seeRatings` / `rate` (`tests/unit/house-league-ratings-guard.test.ts` holds the list). **Erased when the season finishes** by `league_seasons_finished`. RLS on, no policies (service role only).
+**Purpose (mig 377, Club Tier 9c, rulings 9c·2a/b/c):** a player's **rating**, a number from 1 to 5 (no comment), set by the people who run the league and read by the draft. **Its own table on purpose**: whole `league_registrations` rows reach the registrar's screens and exports, so a rating column there would leak. Read and written only through [lib/house-league-ratings.ts](../../../lib/house-league-ratings.ts) by routes gated `seeRatings` / `rate` (`tests/unit/house-league-ratings-guard.test.ts` holds the list). **Erased when the season finishes** by `league_seasons_finished`, and **when the child's registration ends** (declined / withdrawn) by `league_registrations_team_follows` (mig 379). RLS on, no policies; mig 379 revoked the default anon / authenticated grants on all three 9c tables (service role only).
 
 <!-- dict:col:league_player_ratings.registration_id -->
 **`registration_id`** (PK, FK → `league_registrations.id` ON DELETE CASCADE) — one rating per registration, so per child per season (Stage 14 decides whether one follows a returning player).
@@ -6774,6 +6774,8 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_team_coaches.expires_at -->
 <!-- dict:col:league_team_coaches.invited_by -->
 **`token_hash` / `invited_at` / `expires_at` / `invited_by`** — the invite: a SHA-256 of the emailed token (unique where set), sent **at Publish** (`league_division_publish`, 9c·10) or when the convenor confirms a coach added after it. The link lasts 7 days, as the rep invite's does. NULL `invited_at` before publishing = "Invited when you publish".
+<!-- dict:col:league_team_coaches.invite_failed_at -->
+**`invite_failed_at`** (timestamptz, nullable; mig 379) — the last invite this coach was given did not send (the provider refused it or could not be reached): the card reads "Invite didn't send · Send again" rather than "Invited" over a link nobody received. Cleared when an invite sends. The product still cannot see a bounce.
 <!-- dict:col:league_team_coaches.accepted_at -->
 **`accepted_at`** — the coach signed in with the invite ("Signed in").
 <!-- dict:col:league_team_coaches.removed_at -->

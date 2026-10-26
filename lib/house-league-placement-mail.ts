@@ -61,21 +61,42 @@ async function readTeamFacts(teamIds: readonly string[]): Promise<{ names: Map<s
 }
 
 /**
- * Send these placement-email rows (the ones still pending or failed; anything another send claimed is left to it).
- * Never throws for a provider failure: the row says `failed` and the convenor sees "Send the {n} again".
+ * Send these placement-email rows (the ones still unsent; anything another send holds is left to it). Never throws once
+ * it has claimed rows: a failure after the claim marks every claimed row `failed`, so it is counted, shown and sent again
+ * by "Send the {n} again" — a claimed row is never left `sending` (/review 2026-10-25).
  */
 export async function sendPlacementEmails(org: MailOrg, season: MailSeason, rowIds: readonly string[]): Promise<SendOutcome> {
-  const outcome: SendOutcome = { sent: 0, failed: 0, skipped: 0 };
-  if (rowIds.length === 0) return outcome;
+  if (rowIds.length === 0) return { sent: 0, failed: 0, skipped: 0 };
   const { data: claimed, error: claimError } = await supabaseAdmin.rpc('league_placement_emails_claim', {
     p_org: org.id, p_ids: [...rowIds],
   });
   if (claimError) throw new Error(`Couldn't claim the emails: ${claimError.message}`);
   const ids = ((claimed ?? []) as unknown[]).map(v => (typeof v === 'string' ? v : (v as Record<string, string>).league_placement_emails_claim));
-  if (ids.length === 0) return outcome;
+  if (ids.length === 0) return { sent: 0, failed: 0, skipped: 0 };
+  try {
+    return await sendClaimed(org, season, ids);
+  } catch (err) {
+    console.error('[house-league-placement-mail] a send failed after its claim (its rows are marked failed):', err instanceof Error ? err.message : String(err));
+    await recordOutcome(ids, 'failed');
+    return { sent: 0, failed: ids.length, skipped: 0 };
+  }
+}
 
+/** Write an outcome onto rows this send still holds (`sending`): a newer send that took them over is never overwritten. */
+async function recordOutcome(ids: readonly string[], status: 'sent' | 'failed' | 'skipped'): Promise<void> {
+  const now = new Date().toISOString();
+  for (const chunk of chunked([...ids])) {
+    const { error } = await supabaseAdmin.from('league_placement_emails')
+      .update({ status, updated_at: now, ...(status === 'failed' ? {} : { sent_at: now }) })
+      .in('id', chunk).eq('status', 'sending');
+    if (error) console.error('[house-league-placement-mail] an outcome was not recorded:', error.message);
+  }
+}
+
+async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly string[]): Promise<SendOutcome> {
+  const outcome: SendOutcome = { sent: 0, failed: 0, skipped: 0 };
   const { data: rowData, error: rowError } = await supabaseAdmin.from('league_placement_emails')
-    .select('id, kind, guardian_email, registration_ids, from_team_id, division_id').in('id', ids);
+    .select('id, kind, guardian_email, registration_ids, from_team_id, division_id').in('id', [...ids]);
   if (rowError) throw new Error(`Couldn't read the emails: ${rowError.message}`);
   const rows = (rowData ?? []) as EmailRow[];
 
@@ -105,7 +126,9 @@ export async function sendPlacementEmails(org: MailOrg, season: MailSeason, rowI
     const division = divisionName.get(row.division_id) ?? '';
     const guardianFirstName = children[0].guardian_first_name?.trim() || 'there';
     const url = statusUrl(org, season, children[0].id);
-    if (row.kind === 'moved' && row.from_team_id) {
+    // A move stays a move email when its old team has since been deleted: the family reads "their old team", never
+    // "The teams are set".
+    if (row.kind === 'moved') {
       const child = children[0];
       messages.push({
         to: row.guardian_email,
@@ -113,7 +136,7 @@ export async function sendPlacementEmails(org: MailOrg, season: MailSeason, rowI
         html: leagueTeamMovedHtml({
           guardianFirstName, childName: `${child.player_first_name} ${child.player_last_name}`, seasonName: season.name,
           divisionName: division, clubName: org.name,
-          fromTeam: facts.names.get(row.from_team_id) ?? 'their old team', toTeam: facts.names.get(child.team_id!) ?? '',
+          fromTeam: (row.from_team_id && facts.names.get(row.from_team_id)) || 'their old team', toTeam: facts.names.get(child.team_id!) ?? '',
           coaches: facts.coaches.get(child.team_id!) ?? [], statusUrl: url, contactEmail: face?.contact ?? null, face,
         }),
       });
@@ -138,7 +161,6 @@ export async function sendPlacementEmails(org: MailOrg, season: MailSeason, rowI
   const results = messages.length === 0 ? [] : await sendFamilyServiceBatch({
     messages, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
   });
-  const now = new Date().toISOString();
   const byStatus = new Map<'sent' | 'failed' | 'skipped', string[]>([['sent', []], ['failed', []], ['skipped', [...nothingToSay]]]);
   results.forEach((r, i) => {
     const status = r.status === 'sent' ? 'sent' : r.status === 'skipped' ? 'skipped' : 'failed';
@@ -147,19 +169,18 @@ export async function sendPlacementEmails(org: MailOrg, season: MailSeason, rowI
   for (const [status, list] of byStatus) {
     if (list.length === 0) continue;
     outcome[status] += list.length;
-    for (const chunk of chunked(list)) {
-      const { error } = await supabaseAdmin.from('league_placement_emails')
-        .update({ status, updated_at: now, ...(status === 'failed' ? {} : { sent_at: now }) }).in('id', chunk);
-      if (error) console.error('[house-league-placement-mail] an outcome was not recorded:', error.message);
-    }
+    await recordOutcome(list, status);
   }
   return outcome;
 }
 
-/** Every failed email of a division ("Send the {n} again", copy §7.2). */
-export async function failedPlacementEmails(divisionId: string): Promise<string[]> {
+/**
+ * Every email of a division not yet sent ("Send the {n} again", copy §7.2): failed, never started (a publish whose send did
+ * not run), or held by a send that died. The claim takes only what is free (a `sending` row only after ten minutes).
+ */
+export async function unsentPlacementEmails(divisionId: string): Promise<string[]> {
   const { data, error } = await supabaseAdmin.from('league_placement_emails').select('id')
-    .eq('division_id', divisionId).eq('status', 'failed');
+    .eq('division_id', divisionId).in('status', ['failed', 'pending', 'sending']);
   if (error) throw new Error(`Couldn't read the failed emails: ${error.message}`);
   return (data ?? []).map(r => r.id as string);
 }
