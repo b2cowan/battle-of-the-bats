@@ -256,7 +256,7 @@ does not take any positional arguments".
 Window 1 — payments and refunds on the clubs' accounts:
 
 ```
-stripe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook
+stripe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook
 ```
 
 Window 2 — the clubs' accounts themselves:
@@ -277,8 +277,9 @@ Developers → Webhooks), create two. The form first asks where events come from
 **Your account**), then the payload style:
 
 1. **Connected accounts**, payload **Snapshot**, API version **2026-04-22.dahlia**. Events:
-   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.expired`,
-   `refund.created`, `refund.updated`, `refund.failed`. Endpoint: `https://<staging address>/api/payments/connect-webhook`.
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`,
+   `checkout.session.expired`, `charge.dispute.created`, `refund.created`, `refund.updated`, `refund.failed` (the two
+   bank-debit events — a debit that comes back, and one the bank reverses after it cleared — added with Stage 12c). Endpoint: `https://<staging address>/api/payments/connect-webhook`.
    Copy its signing secret into Amplify's `STRIPE_CONNECT_WEBHOOK_SECRET`.
 2. **Your account**, payload **Thin**. Events: `v2.core.account[requirements].updated`,
    `v2.core.account[configuration.merchant].capability_status_updated`, `v2.core.account.closed`. Endpoint:

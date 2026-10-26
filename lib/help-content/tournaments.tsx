@@ -980,16 +980,16 @@ const tournamentsHelp: HelpPageContent = {
       id: 'online-payments',
       group: 'Teams & Registration',
       heading: 'Let teams pay online by card',
-      summary: 'Connect your Stripe account in Payouts, choose who pays the processing fee, and teams pay their deposit or full entry by card once you accept them.',
-      keywords: ['online payments', 'pay online', 'pay by card', 'card payments', 'credit card', 'payouts', 'payouts card', 'stripe', 'set up payouts', 'connect stripe', 'processing fee', 'who pays the fee', 'pay now', 'pay the balance', 'pay link', 'email the pay link', 'refund to the card', 'refund', 'receipt', 'test mode', 'disconnect payouts', 'online payment', 'needs attention', 'payment processing', 'refund policy', 'how to pay'],
-      searchText: 'online payments tournament teams pay by card credit card debit stripe express account connect payouts card settings payouts settings and access payouts tile tournament plus league club owner only treasurer before you set up payouts what it costs who pays it teams pay it the club pays it where the money goes terms agree continue to stripe not set up setting up taking payments needs attention disconnected open stripe fix in stripe continue setup set up payouts again test mode no real money moves disconnect payouts processing fee the processing fee shown on your payouts card refund policy sentence link beside pay how to pay text pay now acceptance email pay the balance payment reminder review step pay page deposit pay in full entry fee saving receipt paid thank you receipt email confirming your payment payment not finished email the pay link pay link sent view the payment online card receipt number refund to the card full refund only who is ending this the organizer is ending it the team asked to leave include the processing fee note to the team refund and email refunded to card record a refund made another way refund didnt reach the card payment processing refunds tournament book own shelf treasurer status line accounting overview teams page payments line quiet line let them pay online an online payment isnt in the teams record not available free tournament plan premium coaches portal',
+      summary: 'Connect your Stripe account in Payouts, choose who pays the processing fee, and teams pay their deposit or full entry by card or bank debit once you accept them.',
+      keywords: ['online payments', 'pay online', 'pay by card', 'card payments', 'credit card', 'payouts', 'payouts card', 'stripe', 'set up payouts', 'connect stripe', 'processing fee', 'who pays the fee', 'pay now', 'pay the balance', 'pay link', 'email the pay link', 'refund to the card', 'refund', 'receipt', 'test mode', 'disconnect payouts', 'online payment', 'needs attention', 'payment processing', 'refund policy', 'how to pay', 'bank debit', 'pay by bank debit', 'bank debit clearing', 'clearing', 'bank debit returned', 'returned by the bank', 'reversed bank debit', 'part refund', 'refund part of a payment', 'partial refund', 'entry lowered', 'made in Stripe', 'record the refund sent another way', 'refund to the bank account', 'returned bank debit fee'],
+      searchText: 'online payments tournament teams pay by card credit card debit stripe express account connect payouts card settings payouts settings and access payouts tile tournament plus league club owner only treasurer before you set up payouts what it costs who pays it teams pay it the club pays it where the money goes terms agree continue to stripe not set up setting up taking payments needs attention disconnected open stripe fix in stripe continue setup set up payouts again test mode no real money moves disconnect payouts processing fee the processing fee shown on your payouts card refund policy sentence link beside pay how to pay text pay now acceptance email pay the balance payment reminder review step pay page deposit pay in full entry fee saving receipt paid thank you receipt email confirming your payment payment not finished email the pay link pay link sent view the payment online card receipt number refund to the card all of it part of it part refund refund part of a payment amount to refund reason the processing fee is never part of a part refund entry lowered lowered the entry stays paid who is ending this the organizer is ending it the team asked to leave include the processing fee note to the team refund and email refunded to card record the refund sent another way sent another way made in stripe refund recorded by itself refund didnt reach the card bank debit pay by bank debit pre-authorized debit pay by bank debit button includes a processing fee takes up to 5 business days bank debit clearing clearing owes clearing started up to 5 business days never past due while it clears mark paid not offered while it clears reminders skip it declined or withdrawn while a debit clears send it back to the bank account keep it with a reason send it back when it clears keep it when it clears payouts disconnected only keep it bank debit returned returned by the bank account closed not enough money reversed after it cleared refund to the bank account about 3 business days both rates card rate bank debit rate disconnect payouts bank debits still clearing returned bank debit fee next fieldlogichq invoice comped club not billed payment processing refunds tournament book own shelf treasurer status line accounting overview teams page payments line quiet line let them pay online an online payment isnt in the teams record not available free tournament plan premium coaches portal',
       links: [
         { label: 'Teams', href: '../tournaments/registrations' },
         { label: 'Settings & access', href: '../tournaments/settings' },
       ],
       content: (
         <>
-          <p>With online payments on, an accepted team pays its deposit or full entry fee by card on a secure payment page, and the money goes straight to your bank account through Stripe. This is part of <strong>Tournament Plus</strong> and above; the free Tournament plan and the Premium Coaches Portal don&rsquo;t include it.</p>
+          <p>With online payments on, an accepted team pays its deposit or full entry fee by card on a secure payment page, or by bank debit where your Stripe account is approved for it, and the money goes straight to your bank account through Stripe. This is part of <strong>Tournament Plus</strong> and above; the free Tournament plan and the Premium Coaches Portal don&rsquo;t include it.</p>
           <p>Teams pay once you accept them, from a link in the acceptance email, a payment reminder, or an email you send yourself. Each payment lands in the team&rsquo;s record by itself. Pick a question below.</p>
         </>
       ),
@@ -1006,7 +1006,7 @@ const tournamentsHelp: HelpPageContent = {
               </HelpDefs>
               <p>Before Stripe asks for anything, <strong>Set up payouts</strong> opens <strong>Before you set up payouts</strong>. It is where you learn what online payments cost and decide how they work:</p>
               <HelpDefs>
-                <HelpDef term="What it costs">The processing fee on each card payment, printed from FieldLogicHQ&rsquo;s current rate, with one worked line for an example fee. The same rate shows on your Payouts card as <em>Processing fee: &hellip; per card payment</em>.</HelpDef>
+                <HelpDef term="What it costs">The processing fee on a card payment and on a bank debit, each printed from FieldLogicHQ&rsquo;s current rate, with one worked line for an example fee that shows both. The same rates show on your Payouts card as <em>Processing fee: &hellip; per card payment, &hellip; per bank debit</em>. An account that doesn&rsquo;t take bank debit shows the card rate alone.</HelpDef>
                 <HelpDef term="Who pays it">Choose <strong>Teams pay it</strong> or <strong>The club pays it</strong>. You can change this later on the Payouts card. See <em>Who pays the processing fee</em>.</HelpDef>
                 <HelpDef term="Where the money goes">Straight to your bank account through Stripe. FieldLogicHQ never holds it.</HelpDef>
                 <HelpDef term="Refunds">You set your own refund policy, and refunds come out of your Stripe balance.</HelpDef>
@@ -1049,6 +1049,7 @@ const tournamentsHelp: HelpPageContent = {
               <ul>
                 <li>Teams stop seeing <strong>Pay now</strong> right away, and pay links already emailed show your <strong>How to pay</strong> text instead.</li>
                 <li>It says how many teams still owe money; they can pay you another way.</li>
+                <li>It says how many bank debits are still clearing. They finish, and their money still reaches you.</li>
                 <li>Payments already made stay in your books and in each team&rsquo;s record. Refunds of them are then made in Stripe, because <strong>Refund to the card</strong> is no longer offered.</li>
               </ul>
               <p>To turn online payments back on, use <strong>Set up payouts again</strong>.</p>
@@ -1060,15 +1061,15 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Who pays the processing fee',
           content: (
             <>
-              <p>Every card payment has a processing fee, shown on your Payouts card as the processing fee per card payment. You choose who pays it. It is one setting for your whole organization, and the default is <strong>Teams pay it</strong>. On the League and Club plans the same choice also covers house-league families paying by card, and is worded <strong>Families and teams pay it</strong>.</p>
+              <p>Every online payment has a processing fee, and a card payment and a bank debit each have their own rate, both shown on your Payouts card. You choose who pays it. It is one setting for your whole organization, and the default is <strong>Teams pay it</strong>. On the League and Club plans the same choice also covers house-league families paying by card, and is worded <strong>Families and teams pay it</strong>.</p>
               <HelpDefs>
-                <HelpDef term="Teams pay it">The fee is added to what the team pays. The pay button shows the full amount, with a line under it, <em>includes a $X processing fee</em>. You receive the full entry fee.</HelpDef>
-                <HelpDef term="The club pays it">The team pays the entry fee alone, and the pay button shows exactly that. The fee comes out of each payment, so you receive the entry fee less the fee.</HelpDef>
+                <HelpDef term="Teams pay it">The fee is added to what the team pays. Each pay button shows the full amount for its way of paying, with a line under it, <em>Includes a $X processing fee.</em> You receive the full entry fee.</HelpDef>
+                <HelpDef term="The club pays it">The team pays the entry fee alone, and each pay button shows exactly that. The fee comes out of each payment, so you receive the entry fee less the fee.</HelpDef>
               </HelpDefs>
               <p>Set it first in <strong>Before you set up payouts</strong>. To change it, the owner presses the pencil on the Payouts card and picks the other choice under <strong>Who pays the processing fee</strong>. A change applies to payments started from then on; anything already paid stays as it was.</p>
               <p><strong>Where it shows in your books.</strong> When the club pays the fee, each payment adds a <strong>Payment processing</strong> cost to the tournament&rsquo;s own book in Accounting, on the tournament&rsquo;s own shelf, dated the day the payment was made. The entry fee itself still counts in full as income, so the fee reads as a cost and never as less revenue. When teams pay the fee, it isn&rsquo;t your cost and nothing is added, unless you give it back in a refund.</p>
               <p>The same shelf takes <strong>Refunds</strong> as money out. The tournament&rsquo;s net is its revenue less refunds less payment processing.</p>
-              <HelpNote variant="tip" title="Pay in full saves the team money">While teams pay the fee, the pay page shows how much less in processing fees paying in full costs than paying the deposit and the balance separately, because the deposit and the balance are two payments.</HelpNote>
+              <HelpNote variant="tip" title="Pay in full saves the team money">While teams pay the fee, the pay page shows how much less in processing fees paying in full costs than paying the deposit and the balance separately, by card and by bank debit, because the deposit and the balance are two payments.</HelpNote>
             </>
           ),
         },
@@ -1086,7 +1087,7 @@ const tournamentsHelp: HelpPageContent = {
               <p>Each link opens that team&rsquo;s own pay page, under your tournament&rsquo;s address and in its colours. It shows the team and division, then:</p>
               <ol>
                 <li>If the fee schedule has a deposit, <strong>Pay the deposit</strong> is picked for the team (with the balance and its date underneath); <strong>Pay in full</strong> is the other choice. With no deposit it reads <strong>Pay the entry fee</strong>; after a deposit, <strong>Pay the balance</strong>.</li>
-                <li>The team checks <strong>Email for the receipt</strong>, then presses <strong>Pay $X by card</strong>. The button always shows the amount.</li>
+                <li>The team checks <strong>Email for the receipt</strong>, then presses <strong>Pay $X by card</strong>, or <strong>Pay $X by bank debit</strong> where your account offers it (see <em>Paying by bank debit</em>). The button always shows the amount.</li>
                 <li>Stripe&rsquo;s secure payment page opens for the card. The team never types card details on your site.</li>
                 <li>Back on the pay page, <strong>Confirming your payment</strong> waits for the payment to land, usually a few seconds. It says <strong>Paid, thank you</strong> only once the team&rsquo;s record has it, and the team is told not to pay again.</li>
                 <li>The receipt shows the amount, the card, the day and a receipt number. A receipt email goes out in your organization&rsquo;s name, with <strong>Pay the balance</strong> if a deposit left a balance. The pay link shows the receipt any time it is opened.</li>
@@ -1101,8 +1102,44 @@ const tournamentsHelp: HelpPageContent = {
           content: (
             <>
               <p>You can send a team its pay link yourself, and every card payment is kept in the team’s record.</p>
-              <p>To send a team a link yourself, open the team&rsquo;s record. Under <strong>Payment</strong>, press the <strong>&hellip;</strong> on the last <strong>Still due</strong> row and choose <strong>Email the pay link</strong>. It goes to the team&rsquo;s email, and the record then reads <em>Pay link sent</em> with the day. The choice stays, so you can send it again. It&rsquo;s there only while the team can pay online: accepted, with something owing, and a team email on file. Whoever runs tournaments and the treasurer can send it.</p>
-              <p>A card payment appears under <strong>Received</strong> as <em>Online, card &middot; receipt N</em>, and counts toward what the team has paid. It has no pencil, because the amount and day are the bank&rsquo;s. Its <strong>&hellip;</strong> menu has <strong>View the payment</strong>, a read-only window with the day, the card, the entry fee, the processing fee (and whether the team or the club paid it), the total, and who it came from.</p>
+              <p>To send a team a link yourself, open the team&rsquo;s record. Under <strong>Payment</strong>, press the <strong>&hellip;</strong> on the last <strong>Still due</strong> row and choose <strong>Email the pay link</strong>. It goes to the team&rsquo;s email, and the record then reads <em>Pay link sent</em> with the day. The choice stays, so you can send it again. It&rsquo;s there only while the team can pay online: accepted, with something owing, a team email on file, and no bank debit clearing. Whoever runs tournaments can send it; the treasurer can&rsquo;t.</p>
+              <p>A card payment appears under <strong>Received</strong> as <em>Online, card &middot; receipt N</em>, and counts toward what the team has paid. A bank debit reads <em>Online, bank debit &middot; receipt N</em> once it has cleared. It has no pencil, because the amount and day are the bank&rsquo;s. Its <strong>&hellip;</strong> menu has <strong>View the payment</strong>, a read-only window with the day, the card (or the bank account, with when the debit started and cleared), the entry fee, the processing fee (and whether the team or the club paid it), the total, and who it came from. Once there is a refund, the window also shows each refund with its amount, status, reason and Stripe reference.</p>
+            </>
+          ),
+        },
+        {
+          id: 'online-payments-bank-debit',
+          title: 'Paying by bank debit',
+          content: (
+            <>
+              <p>Where your Stripe account is approved for it, a team can pay by bank debit as well as by card. Bank debit is offered on the pay page only once Stripe has approved your account; until then teams see the card button alone, and nothing here appears.</p>
+              <HelpDefs>
+                <HelpDef term="What the team sees">A second button beside the card button, <strong>Pay $X by bank debit</strong>, with the bank icon. Its note says <em>Takes up to 5 business days</em>, and, while teams pay the fee, <em>Includes a $X processing fee</em>. When the club pays the fee, both buttons show the entry amount and only the bank button carries a note.</HelpDef>
+                <HelpDef term="Why it takes days">A bank debit is not an instant payment. The bank takes up to 5 business days to settle it, so the money is not received until it clears.</HelpDef>
+                <HelpDef term="While it clears">The team&rsquo;s pay page reads <strong>Bank debit clearing</strong> with the amount, the account and the day it started, says the place is held, and gives your contact. There is no Pay button, so the team can&rsquo;t pay twice. The team is emailed when it clears, and the receipt (<em>Paid, thank you</em>) is given then, not at the start.</HelpDef>
+              </HelpDefs>
+              <p>The team&rsquo;s record shows a clearing debit as a row of its own under <strong>Received</strong>, with a <strong>Clearing</strong> chip and <em>Started Oct 26 &middot; up to 5 business days</em>. The summary reads <em>Owes $300.00 &middot; $100.00 clearing</em>. These follow while it clears:</p>
+              <ul>
+                <li>It does not count toward what the team has paid, and it goes in the tournament&rsquo;s book when it clears.</li>
+                <li>The team is <strong>never past due</strong> and never dunned. A balance whose date passes while a debit clears reads <em>$X clearing</em>, and payment reminders skip the team.</li>
+                <li><strong>Mark paid</strong> and <strong>Email the pay link</strong> are not offered. If you try with an old window open, the page says a bank debit is clearing and the payment goes in the record when it clears.</li>
+              </ul>
+              <HelpNote variant="info" title="A team declined or withdrawn while its debit clears">The team&rsquo;s record asks what happens to the money when it clears: <strong>Send it back to the bank account</strong> (with the processing fee box, on for a decline and off for a team that asked to leave) or <strong>Keep it</strong> with a reason. Once payouts are disconnected only <strong>Keep it</strong> is offered; refund it in Stripe when it clears. The answer is carried out when the debit clears, in your name.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'online-payments-bank-debit-returned',
+          title: 'When a bank debit is returned or reversed',
+          content: (
+            <>
+              <p>A bank can send a debit back while it is clearing, or reverse it after it cleared. Both are shown in the team&rsquo;s record, the team is emailed, and a Needs attention item goes to whoever runs tournaments.</p>
+              <HelpDefs>
+                <HelpDef term="Returned while clearing">Nothing was taken. The row under what is due reads <em>Bank debit returned Oct 28 &middot; account closed</em> (the bank&rsquo;s reason appears only when it gave one that we can name). The team&rsquo;s place is still held, and its pay page says <em>The bank debit didn&rsquo;t go through</em> with both pay buttons back. The team&rsquo;s email says nothing was taken and gives a <strong>Pay now</strong> button.</HelpDef>
+                <HelpDef term="Reversed after it cleared">The receipt stays, but the row is struck through and reads <em>Returned by the bank, Nov 2</em>. It no longer counts toward what the team has paid, so the team owes it again, and the old receipt page reads <strong>Returned by the bank</strong>. The line is never deleted. The team&rsquo;s email says the bank reversed the payment and receipt N no longer counts.</HelpDef>
+              </HelpDefs>
+              <p>If a refund you sent back to a bank account doesn&rsquo;t arrive, it is handled like a card refund that comes back: see <em>When a refund doesn&rsquo;t reach the card</em>.</p>
+              <HelpNote variant="info" title="Stripe charges a fee when a debit comes back">That fee is billed to the club as a <em>Returned bank debit</em> line on its next FieldLogicHQ invoice. A club on a complimentary plan isn&rsquo;t billed for it.</HelpNote>
             </>
           ),
         },
@@ -1111,21 +1148,24 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Refunding a card payment',
           content: (
             <>
-              <p>Refunds to the card are <strong>full refunds only</strong>. Whoever runs tournaments can make them; the treasurer doesn&rsquo;t refund.</p>
+              <p>You can refund all of a card payment or part of it. Whoever runs tournaments can make them; the treasurer reads the refund and doesn&rsquo;t make one.</p>
               <ol>
                 <li>Open the team&rsquo;s record. Under <strong>Received</strong>, press the <strong>&hellip;</strong> on the online payment and choose <strong>Refund to the card</strong>.</li>
-                <li>The window, titled for the team (for example <em>Refund Thunder&rsquo;s payment?</em>), says what the team paid and the card it goes back to. It arrives in 5 to 10 business days.</li>
-                <li>If the team paid the processing fee, answer <strong>Who is ending this?</strong> and decide the fee box (below).</li>
+                <li>The window, titled for the payment (for example <em>Refund Thunder&rsquo;s deposit?</em>), says what the team paid and the card it goes back to. It arrives in 5 to 10 business days. A payment made by bank debit goes back to the bank account, and the window says it arrives in about 3 business days.</li>
+                <li>Choose <strong>All of it</strong> or <strong>Part of it</strong>. For all of it, if the team paid the processing fee, answer <strong>Who is ending this?</strong> and decide the fee box (below). For part of it, type the amount and a reason: the processing fee is never part of a part refund.</li>
                 <li>Add a <strong>Note to the team</strong> if you like. It goes in the refund email.</li>
-                <li>Press <strong>Refund and email</strong>. Nothing moves until you do.</li>
+                <li>Press <strong>Refund and email</strong> (for a part refund, <strong>Refund $X and email</strong>). Nothing moves until you do.</li>
               </ol>
+              <HelpDefs>
+                <HelpDef term="Part of it">The amount is up to what is left on that payment. The reason goes in the team&rsquo;s refund email. Once a payment has a part refund on it, the window opens straight on the part form, because only <strong>All of it</strong> can give the processing fee back. A refund bigger than one payment is made from each payment&rsquo;s <strong>&hellip;</strong> in turn.</HelpDef>
+              </HelpDefs>
               <HelpDefs>
                 <HelpDef term="The organizer is ending it">The box <strong>Include the processing fee</strong> starts ticked, so the team gets back the whole amount it paid.</HelpDef>
                 <HelpDef term="The team asked to leave">The box starts unticked, so the team gets back the entry fee. You can tick it.</HelpDef>
                 <HelpDef term="The club paid the fee">The team paid the entry fee alone, so there is no question and no box. The entry fee goes back.</HelpDef>
               </HelpDefs>
               <p>FieldLogicHQ&rsquo;s processing fee is never refunded, so a processing fee you give back comes from the club. The window says so, and it shows in your books as <strong>Payment processing</strong>.</p>
-              <p><strong>What changes afterward.</strong> The team gets a refund email in your organization&rsquo;s name (with your note and, if the team paid the fee, a line saying whether it was included). The payment stays in the team&rsquo;s record, tagged <em>Refunded to card</em> with the day, and no longer counts toward what the team has paid, so the team shows as owing again. The tournament&rsquo;s book keeps the original receipt and adds the refund as its own money-out line, <strong>Refunds</strong>. A refund doesn&rsquo;t change the team&rsquo;s place in the tournament; accept, withdraw or decline it separately.</p>
+              <p><strong>What changes afterward.</strong> The team gets a refund email in your organization&rsquo;s name (with your note and, if the team paid the fee, a line saying whether it was included). For a refund in full, the payment stays in the team&rsquo;s record, tagged <em>Refunded to card</em> with the day, and no longer counts toward what the team has paid, so the team shows as owing again. A part refund lowers that team&rsquo;s entry by the same amount: the payment stays, tagged <em>$40.00 refunded to card, Oct 27</em>, and the record shows the new entry with your reason (for example <em>Entry $360.00 for this team, lowered $40.00 on Oct 27 &middot; One game cancelled for weather</em>). The team&rsquo;s email gives the new balance. The tournament&rsquo;s book keeps the original receipt and adds the refund as its own money-out line, <strong>Refunds</strong>. A refund doesn&rsquo;t change the team&rsquo;s place in the tournament; accept, withdraw or decline it separately.</p>
             </>
           ),
         },
@@ -1135,8 +1175,8 @@ const tournamentsHelp: HelpPageContent = {
           content: (
             <>
               <p>A refund can be slow, or the bank can send it back.</p>
-              <p>While Stripe works on it, the row reads <em>Refunding to card&hellip;</em>. If the bank returns it, for example because the card was closed, the row is flagged <strong>Refund didn&rsquo;t reach the card</strong> and a Needs attention item is raised. Send the team the money another way, then choose <strong>Record a refund made another way</strong> from the row&rsquo;s <strong>&hellip;</strong> and press <strong>Record the refund</strong>. The team&rsquo;s record and the books then match. A full refund you make in the Stripe dashboard lands in the record by itself.</p>
-              <HelpNote variant="warning" title="After you disconnect">Once payouts are disconnected, <strong>Refund to the card</strong> isn&rsquo;t offered. Refund in Stripe instead. A full refund made there is recorded here for you; a part refund raises a Needs attention item to record by hand.</HelpNote>
+              <p>While Stripe works on it, the row reads <em>Refunding to card&hellip;</em>. If the bank returns it, for example because the card was closed, the row is flagged <strong>Refund didn&rsquo;t reach the card</strong> and a Needs attention item is raised. Send the team the money another way, then choose <strong>Record the refund sent another way</strong> from the row&rsquo;s <strong>&hellip;</strong> and press <strong>Record the refund</strong>. The team&rsquo;s record and the books then match. A refund you make in the Stripe dashboard, whole or part, lands in the record by itself, tagged <em>made in Stripe</em>.</p>
+              <HelpNote variant="warning" title="After you disconnect">Once payouts are disconnected, <strong>Refund to the card</strong> isn&rsquo;t offered. Refund in Stripe instead. A refund made there, whole or part, is recorded here for you.</HelpNote>
             </>
           ),
         },
@@ -1156,11 +1196,13 @@ const tournamentsHelp: HelpPageContent = {
                 <HelpDef term="Online payments are off"><em>The owner disconnected payouts on</em> the day. Teams see the organizer&rsquo;s payment instructions.</HelpDef>
               </HelpDefs>
               <p>While payouts are not set up or still being set up there is nothing to tell the treasurer, so no line shows. The owner sees a quiet line instead while payouts are not set up: <em>Teams pay you directly, outside FieldLogicHQ. Let them pay online</em>, which opens the card. Roles that can&rsquo;t connect payouts and aren&rsquo;t the treasurer see neither.</p>
-              <p><strong>Needs attention items.</strong> Three can appear, and each clears itself when the cause is settled. You never dismiss one.</p>
+              <p><strong>Needs attention items.</strong> Five can appear, and each clears itself when the cause is settled. You never dismiss one. The treasurer reads the money in each, and gets no button.</p>
               <HelpDefs>
                 <HelpDef term="Stripe needs something to keep online payments on">Goes to the owner and the treasurer. The owner presses <strong>Fix in Stripe</strong> on the Payouts card; the treasurer is told where. It clears when Stripe says payments are on again, or when payouts are disconnected.</HelpDef>
-                <HelpDef term="An online payment isn&rsquo;t in the team&rsquo;s record">Goes to whoever runs tournaments. A team paid by card but the payment couldn&rsquo;t be added to its record (or was part-refunded in Stripe). Refund it to the card from the team&rsquo;s record or in Stripe, or record the change by hand. It clears when the payment is in the record or has been refunded.</HelpDef>
-                <HelpDef term="A refund didn&rsquo;t reach the card">Goes to the same people. It says the amount and card, and that the money was returned. Send the team the money another way, then use <strong>Record a refund made another way</strong>. It clears once the payment shows as refunded.</HelpDef>
+                <HelpDef term="An online payment isn&rsquo;t in the team&rsquo;s record">Goes to whoever runs tournaments. A team paid by card but the payment couldn&rsquo;t be added to its record. Refund it to the card from the team&rsquo;s record or in Stripe, or record the change by hand. It clears when the payment is in the record or has been refunded.</HelpDef>
+                <HelpDef term="A refund didn&rsquo;t reach the card">Goes to the same people. It says the amount and card, and that the money was returned, whether it was a whole refund or a part one. Send the team the money another way, then use <strong>Record the refund sent another way</strong>. It clears once the refund shows as recorded.</HelpDef>
+                <HelpDef term="A team&rsquo;s bank debit was returned">Goes to whoever runs tournaments. A debit came back from the bank while it was clearing. Nothing was taken, the team&rsquo;s place is still held, and the team was emailed a way to pay.</HelpDef>
+                <HelpDef term="A team&rsquo;s bank payment was returned after it cleared">Goes to the same people. The bank reversed a payment that had cleared. It is out of the book, the amount is owing again, and the team was emailed a way to pay.</HelpDef>
               </HelpDefs>
             </>
           ),
