@@ -1,0 +1,314 @@
+/* A house-league season's Teams & draft on the kit (Club Tier Stage 9c, Part 3; copy HOUSE_LEAGUE_STAGE9C_COPY.md §1-8;
+   drawings HOUSE_LEAGUE_STAGE9C_DRAWINGS.html a-i). TOKENS ONLY, the body face throughout (D1; numbers in the body face
+   too). The window, the chips, the fields and the table are the kit's; this sheet draws the division's head, the steps,
+   the board and its cards, the rating buttons (D2's toggle look) and the move list. */
+
+.screen { min-width: 0; }
+.headSub { margin: -0.5rem 0 1rem; font-size: var(--type-support); color: var(--text-secondary); }
+.tabCount { margin-left: 0.35rem; font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+/* ── The division ── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--home-line);
+  border-radius: 12px;
+  background: var(--card-bg);
+  min-width: 0;
+}
+.divHead { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; }
+.divTitle { margin: 0; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.spacer { flex: 1 1 auto; }
+.divActions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 32px;
+  padding: 0.2rem 0.75rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.pillPlain { color: var(--text-secondary); }
+.pillDrafted { color: var(--badge-warning-ink); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
+.pillDone { color: var(--badge-success-ink); background: rgba(var(--success-rgb), 0.08); border-color: rgba(var(--success-rgb), 0.28); }
+.pillDot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.why { margin: -0.4rem 0 0; font-size: var(--type-support); color: var(--text-secondary); }
+.quiet { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── The steps ── */
+.steps { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--home-line); }
+.step { display: flex; align-items: center; gap: 0.75rem; min-height: 60px; padding: 0.6rem 0; border-bottom: 1px solid var(--home-line); }
+.stepMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 50%;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.stepDone { border-color: transparent; background: rgba(var(--success-rgb), 0.14); color: var(--badge-success-ink); }
+.stepText { display: flex; flex-direction: column; gap: 0.1rem; flex: 1 1 auto; min-width: 0; }
+.stepTitle { font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
+.stepLine { font-size: var(--type-support); color: var(--text-secondary); }
+
+.balance { display: flex; flex-wrap: wrap; gap: 0.35rem 1.25rem; margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.balance b { color: var(--text-primary); font-weight: 650; font-variant-numeric: tabular-nums; }
+
+/* ── The board: Not on a team and the team cards in one wrapping grid ── */
+.board { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; align-items: start; }
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.9rem;
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--card-bg);
+  min-width: 0;
+}
+.poolCard { background: var(--home-paper); }
+.over { border-color: var(--home-olive); box-shadow: 0 0 0 2px rgba(var(--home-olive-rgb), 0.18); }
+.cardHead { display: flex; align-items: flex-start; gap: 0.5rem; }
+.cardTitleBlock { display: flex; flex-direction: column; gap: 0.1rem; flex: 1 1 auto; min-width: 0; }
+.cardTitle { margin: 0; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
+.cardCoach { font-size: var(--type-support); color: var(--text-secondary); }
+.amberText { color: var(--badge-warning-ink); }
+.noCoach {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  color: var(--badge-warning-ink);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.dot { display: inline-block; flex: 0 0 auto; width: 12px; height: 12px; margin-top: 0.3rem; border-radius: 50%; background: var(--home-line-strong); }
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  margin: -0.6rem -0.6rem 0 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.iconBtn:hover { color: var(--text-primary); background: rgba(var(--home-olive-rgb), 0.08); }
+.kids { display: flex; flex-direction: column; gap: 4px; }
+.emptyDrop {
+  padding: 1rem 0.75rem;
+  border: 1px dashed var(--home-line-strong);
+  border-radius: 8px;
+  text-align: center;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.cardFoot { display: flex; justify-content: space-between; font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.leftLine { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── A player ── */
+.drag { touch-action: none; cursor: grab; }
+.dragging { opacity: 0.4; }
+.overlay { cursor: grabbing; box-shadow: var(--shadow); border-radius: 8px; background: var(--card-bg); }
+.kid { display: flex; align-items: center; gap: 0.6rem; min-height: 48px; padding: 0.35rem 0.4rem; border-radius: 8px; }
+.kidMoved { background: rgba(var(--info-rgb), 0.07); }
+.kidMain { display: flex; flex-direction: column; gap: 0.05rem; flex: 1 1 auto; min-width: 0; }
+.kidName { font-size: var(--type-body); font-weight: 650; color: var(--text-primary); overflow-wrap: anywhere; }
+.kidSub { font-size: var(--type-support); color: var(--text-tertiary); }
+.lockBadge { display: inline-flex; align-items: center; gap: 0.2rem; margin-left: 0.4rem; font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); }
+.movedTag {
+  flex: 0 0 auto;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid rgba(var(--info-rgb), 0.35);
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--info);
+  cursor: pointer;
+}
+.more { flex: 0 0 auto; }
+.rating {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--home-olive-soft);
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--home-olive);
+  font-variant-numeric: tabular-nums;
+}
+.ratingNone { border: 1px dashed var(--home-line-strong); background: none; color: var(--text-tertiary); }
+
+/* ── A phone: one row a team, a team's view in place ── */
+.phoneList { display: flex; flex-direction: column; border: 1px solid var(--home-line); border-radius: 10px; overflow: hidden; }
+.phoneRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 56px;
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-bottom: 1px solid var(--home-line);
+  background: var(--card-bg);
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.phoneRow:last-child { border-bottom: 0; }
+.phoneRowMain { display: flex; flex-direction: column; gap: 0.1rem; flex: 1 1 auto; min-width: 0; }
+.phoneRowTitle { font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.phoneRowSub { font-size: var(--type-support); color: var(--text-secondary); }
+.chev { flex: 0 0 auto; color: var(--text-tertiary); }
+.phoneTeam { display: flex; flex-direction: column; gap: 0.6rem; }
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 0.4rem 0 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* ── The rating buttons: five toggles, the chosen one olive (D2) ── */
+.seg { display: inline-flex; border: 1px solid var(--home-line-strong); border-radius: 8px; overflow: hidden; }
+.segBtn {
+  min-width: 36px;
+  height: 36px;
+  border: 0;
+  border-right: 1px solid var(--home-line);
+  background: var(--card-bg);
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.segBtn:last-child { border-right: 0; }
+.segBtn[aria-pressed='true'] { background: var(--home-olive); color: var(--home-paper); }
+.segBig { display: flex; }
+.segBig .segBtn { flex: 1 1 0; min-width: 44px; height: 44px; }
+.filters { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.filterChip[aria-pressed='true'] { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
+.bulk { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--home-olive-soft); font-size: var(--type-support); font-weight: 600; color: var(--text-primary); }
+.bulkSpacer { flex: 1 1 auto; }
+.rateRows { display: flex; flex-direction: column; gap: 0.75rem; }
+.rateRow { display: flex; flex-direction: column; gap: 0.35rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--home-line); }
+.rateRow:focus-visible, .rateTr:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.tickCell { width: 44px; }
+.error { margin: 0; font-size: var(--type-support); color: var(--danger); }
+
+/* ── The windows ── */
+.facts { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 0.6rem 1rem; margin: 0; font-size: var(--type-body); }
+.facts dt { font-weight: 600; color: var(--text-secondary); }
+.facts dd { margin: 0; color: var(--text-primary); }
+.form { display: flex; flex-direction: column; gap: 1rem; }
+.colourRow { display: flex; align-items: center; gap: 0.6rem; }
+.colour { width: 44px; height: 44px; padding: 0; border: 1px solid var(--home-line-strong); border-radius: 8px; background: none; }
+.coachList { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.coachEdit { display: flex; align-items: center; gap: 0.5rem; }
+.coachEditText { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.coachNew { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem; }
+.coachNewFields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; flex: 1 1 auto; min-width: 0; }
+.coachNew .iconBtn { margin: 0; }
+.addLink, .inlineLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--home-olive);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.inlineLink { min-height: 0; }
+.rareDoor { padding-top: 0.75rem; border-top: 1px solid var(--home-line); }
+.checks { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0.75rem; border: 1px solid var(--home-line); border-radius: 8px; list-style: none; }
+.checks li { display: flex; align-items: flex-start; gap: 0.5rem; font-size: var(--type-body); color: var(--text-primary); }
+.checks svg { flex: 0 0 auto; margin-top: 0.2rem; }
+.checkOk { color: var(--badge-success-ink); }
+.checkWarn { color: var(--badge-warning-ink); }
+.preview { display: flex; flex-direction: column; gap: 0.5rem; }
+.previewBody { padding: 0.75rem; border-radius: 8px; background: var(--home-paper); font-size: var(--type-support); color: var(--text-primary); }
+.previewBody p { margin: 0 0 0.4rem; }
+.previewBody ul { margin: 0; padding-left: 1.1rem; }
+.moveList { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; border: 1px solid var(--home-line); border-radius: 10px; overflow: hidden; }
+.moveRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 56px;
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-bottom: 1px solid var(--home-line);
+  background: var(--card-bg);
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.moveList li:last-child .moveRow { border-bottom: 0; }
+.moveHere { background: var(--home-olive-soft); cursor: default; }
+
+@media (max-width: 640px) {
+  .panel { padding: 1rem; }
+  .facts { grid-template-columns: minmax(0, 1fr); gap: 0.15rem; }
+  .facts dd { margin-bottom: 0.5rem; }
+  .coachNewFields { grid-template-columns: minmax(0, 1fr); }
+  .step { flex-wrap: wrap; }
+}

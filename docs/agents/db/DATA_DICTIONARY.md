@@ -6802,7 +6802,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_placement_emails.status -->
 <!-- dict:col:league_placement_emails.attempts -->
 <!-- dict:col:league_placement_emails.sent_at -->
-**`status`** (CHECK `pending|sent|failed|skipped`, default pending) / **`attempts`** / **`sent_at`** — the send's outcome. `failed` = the provider refused or could not be reached; `skipped` = no provider is set up (dev). **There is no `bounced`**: the product cannot learn of a bounce (owner, 9c build, 2026-10-25).
+**`status`** (CHECK `pending|sending|sent|failed|skipped`, default pending; `sending` added by mig 378) / **`attempts`** / **`sent_at`** — the send's outcome. A send CLAIMS its rows first (`league_placement_emails_claim`, mig 378: pending/failed → `sending`, attempts + 1; a row left `sending` ten minutes is claimable again), so two presses of "Send again" never email a family twice. `failed` = the provider refused or could not be reached; `skipped` = nothing was sent and nothing is owed: no provider is set up (dev), or the children it named are no longer accepted and on a team. **There is no `bounced`**: the product cannot learn of a bounce (owner, 9c build, 2026-10-25).
 <!-- dict:col:league_placement_emails.from_team_id -->
 **`from_team_id`** (FK → `league_teams` ON DELETE SET NULL) — a move's old team, as it was, so the email names it.
 <!-- dict:col:league_placement_emails.created_by -->

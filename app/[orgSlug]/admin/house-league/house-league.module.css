@@ -341,7 +341,6 @@
   line-height: 1;
 }
 .iconBtn:hover          { color: var(--white-80); border-color: rgba(255,255,255,0.25); }
-.iconBtnDanger:hover    { color: var(--danger); border-color: rgba(var(--danger-rgb), 0.4); }
 .iconBtn:disabled       { opacity: 0.3; cursor: not-allowed; }
 
 /* ── Teams page ───────────────────────────────────────────────────────────── */
@@ -549,126 +548,6 @@
   font-size: 0.67rem;
   color: var(--white-40);
   margin-top: 0.12rem;
-}
-
-.noTeamsPrompt {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 1rem;
-  color: var(--white-40);
-  text-align: center;
-  font-size: 0.88rem;
-}
-
-/* ── Draft overlay ────────────────────────────────────────────────────────── */
-.draftOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(8,10,18,0.97);
-  z-index: 400;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.draftHeader {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-2);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-shrink: 0;
-}
-
-.draftTitleGroup { display: flex; flex-direction: column; gap: 0.15rem; }
-
-.draftTitle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-heading);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.draftPickMeta {
-  font-size: 0.78rem;
-  color: var(--logic-lime);
-  font-weight: 600;
-}
-
-.draftPickOrder {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-  padding: 0.6rem 1.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  flex-shrink: 0;
-  overflow-x: auto;
-}
-
-.draftTeamChip {
-  padding: 0.18rem 0.5rem;
-  border-radius: 2px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.07);
-  color: var(--white-30);
-  white-space: nowrap;
-}
-.draftTeamChipActive {
-  background: rgba(var(--logic-lime-rgb), 0.13);
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-  color: var(--logic-lime);
-}
-
-.draftBody {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0.85rem 1.5rem;
-}
-
-.draftPlayerRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.5rem 0.7rem;
-  border-radius: 2px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid var(--white-05);
-  margin-bottom: 0.3rem;
-  transition: background 0.1s;
-}
-.draftPlayerRow:hover { background: var(--white-05); }
-
-.draftPlayerInfo { flex: 1; min-width: 0; }
-
-.draftFooter {
-  padding: 0.85rem 1.5rem;
-  border-top: 1px solid var(--border-2);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-shrink: 0;
-}
-
-.draftComplete {
-  text-align: center;
-  padding: 3rem 1rem;
-}
-.draftCompleteTitle {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--logic-lime);
-  margin-bottom: 0.5rem;
-}
-.draftCompleteMsg {
-  font-size: 0.88rem;
-  color: var(--white-50);
 }
 
 /* ── Schedule page ────────────────────────────────────────────────────────── */
@@ -1066,18 +945,16 @@
   border-radius: 6px;
 }
 :global([data-admin-kit]) .iconBtn:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
-:global([data-admin-kit]) .iconBtnDanger:hover { color: var(--home-live); border-color: rgba(var(--danger-rgb), 0.4); }
 
 /* ── Teams & draft board ── */
 :global([data-admin-kit]) .poolDropZone { border-radius: 8px; }
+:global([data-admin-kit]) .poolEmpty,
+:global([data-admin-kit]) .teamEmptySlot { color: var(--text-tertiary); }
 :global([data-admin-kit]) .poolDropZoneOver,
 :global([data-admin-kit]) .teamColumnOver {
   background: var(--home-olive-soft);
   border-color: var(--home-olive);
 }
-:global([data-admin-kit]) .poolEmpty,
-:global([data-admin-kit]) .teamEmptySlot,
-:global([data-admin-kit]) .noTeamsPrompt { color: var(--text-tertiary); }
 :global([data-admin-kit]) .teamColumn {
   background: var(--card-bg);
   border-color: var(--home-line);
@@ -1100,32 +977,6 @@
 }
 :global([data-admin-kit]) .playerName { color: var(--text-primary); }
 :global([data-admin-kit]) .playerMeta { color: var(--text-tertiary); }
-
-/* The live draft covers the page (a form surface): the page ground, not a near-black wash. */
-:global([data-admin-kit]) .draftOverlay { background: var(--pitch-black); }
-:global([data-admin-kit]) .draftHeader,
-:global([data-admin-kit]) .draftFooter { border-color: var(--home-line); }
-:global([data-admin-kit]) .draftPickOrder { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .draftPickMeta { color: var(--home-olive); }
-:global([data-admin-kit]) .draftTeamChip {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 999px;
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .draftTeamChipActive {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .draftPlayerRow {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 6px;
-}
-:global([data-admin-kit]) .draftPlayerRow:hover { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .draftCompleteTitle { color: var(--home-olive); }
-:global([data-admin-kit]) .draftCompleteMsg { color: var(--text-secondary); }
 
 /* ── Schedule: the week/list switch, game cards, the list table ── */
 :global([data-admin-kit]) .viewToggle { border-color: var(--home-line-strong); border-radius: 6px; }

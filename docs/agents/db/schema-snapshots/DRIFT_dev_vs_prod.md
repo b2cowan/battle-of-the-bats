@@ -2,13 +2,13 @@
 
 **Generated:** 2026-10-26 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 557 divergence(s)** across dev/prod.
+**⚠️ 560 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 19 | 0 | — |
 | Columns | 291 | 1 | 0 |
-| Indexes | 81 | 0 | 2 |
+| Indexes | 84 | 0 | 2 |
 | Constraints | 85 | 0 | — |
 | RLS / CHECK | 78 | 0 | 0 (RLS state) |
 
@@ -338,15 +338,17 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (81)
+### Only in DEV (84)
 - `accounting_entries_league_registration_idx`
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
 - `idx_rep_team_tryout_contacts_org`
 - `idx_rep_team_tryout_contacts_setter`
 - `league_placement_emails_division_idx`
+- `league_placement_emails_org_id_idx`
 - `league_placement_emails_pkey`
 - `league_placement_emails_season_idx`
+- `league_player_ratings_org_id_idx`
 - `league_player_ratings_pkey`
 - `league_player_ratings_season_idx`
 - `league_registration_price_changes_org_idx`
@@ -360,6 +362,7 @@ _none_
 - `league_season_fee_words_org_idx`
 - `league_season_fee_words_pkey`
 - `league_team_coaches_one_per_team`
+- `league_team_coaches_org_id_idx`
 - `league_team_coaches_pkey`
 - `league_team_coaches_season_idx`
 - `league_team_coaches_token`

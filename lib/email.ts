@@ -1,5 +1,5 @@
 ﻿import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
-import { possessive, registrationReference } from '@/lib/utils';
+import { joinWithAnd, possessive, registrationReference } from '@/lib/utils';
 import { nameList, ordinal, signupHeadline, signupToPay, type PlacedChild } from './league-signup';
 import { dollarsLine } from './house-league-season';
 import { methodInBrackets } from './house-league-money-words';
@@ -1140,6 +1140,114 @@ export function leagueSpotReleasedHtml(input: {
     ${noteAndMoney(input.note ?? null, input.money ?? null)}
     <p>${releasedContactLine(input.face, p.contactEmail)}</p>
   `, input.face, `${input.playerFirstName} was signed up for ${input.seasonName}`);
+}
+
+// ── House League teams (Club Tier 9c, copy §9) ────────────────────────────────
+
+/** One child's team in a placement email: "Nora Test: Cardinals, coach Pat Volunteer" (copy §9.1 mail.placed.line). */
+export interface PlacedTeamLine { child: string; team: string; coaches: string[] }
+
+/** "Questions? Contact {club} at {email}." (copy §9: the 9b-1 contact line), or nothing when the club has no public contact. */
+function teamsContactLine(clubName: string, contactEmail: string | null | undefined): string {
+  if (!contactEmail) return '';
+  const contact = escapeEmailHtml(contactEmail);
+  return `<p style="color:${WARM_EMAIL.secondary};font-size:0.9rem;margin-top:1.25rem;">Questions? Contact ${escapeEmailHtml(clubName)} at <a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a>.</p>`;
+}
+
+/**
+ * THE PLACEMENT EMAIL (Club Tier 9c, copy §9.1): one per family per division published, every child of theirs in it with
+ * their team and coach. A SERVICE notice (ruling 9c·4): sent through `sendFamilyServiceBatch`, so it reaches a family who
+ * unsubscribed from club news and carries no unsubscribe link. A late placement is the same email with one line.
+ */
+export function leagueTeamsPlacedHtml(input: {
+  guardianFirstName: string;
+  seasonName: string;
+  divisionName: string;
+  clubName: string;
+  lines: readonly PlacedTeamLine[];
+  /** The family's status page, opened for their sign-up. */
+  statusUrl: string;
+  contactEmail?: string | null;
+  face?: FamilyMailFace | null;
+}) {
+  const p = escapeEmailFields(input);
+  const coachClause = (names: readonly string[]) => names.length === 0
+    ? 'coach to be announced'
+    : `${names.length === 1 ? 'coach' : 'coaches'} ${escapeEmailHtml(joinWithAnd(names))}`;
+  const rows = input.lines.map(l =>
+    `<li style="margin:0 0 0.35rem;"><strong>${escapeEmailHtml(l.child)}</strong>: ${escapeEmailHtml(l.team)}, ${coachClause(l.coaches)}</li>`).join('');
+  const withCoach = input.lines.filter(l => l.coaches.length > 0);
+  const teams = new Set(withCoach.map(l => l.team));
+  const next = withCoach.length === 0 ? ''
+    : `<p>${teams.size > 1 ? 'Each coach will be in touch about getting started.' : 'The coach will be in touch about getting started.'}</p>`;
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">The teams are set</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>The ${p.divisionName} teams for ${p.seasonName} are set.</p>
+    <ul style="margin:0.5rem 0 1rem;padding-left:1.2rem;color:${WARM_EMAIL.ink};">${rows}</ul>
+    ${next}
+    ${warmEmailButton('See your registration', input.statusUrl)}
+    ${teamsContactLine(input.clubName, input.contactEmail)}
+  `, input.face, `your family is registered for ${input.seasonName}`);
+}
+
+/** Moved after publishing (Club Tier 9c, copy §9.2): the held move's one email. A service notice, as the placement email. */
+export function leagueTeamMovedHtml(input: {
+  guardianFirstName: string;
+  childName: string;
+  seasonName: string;
+  divisionName: string;
+  clubName: string;
+  fromTeam: string;
+  toTeam: string;
+  coaches: readonly string[];
+  statusUrl: string;
+  contactEmail?: string | null;
+  face?: FamilyMailFace | null;
+}) {
+  const p = escapeEmailFields(input);
+  const first = input.childName.split(' ')[0] ?? input.childName;
+  const coach = input.coaches.length === 0
+    ? 'Coach to be announced.'
+    : `${input.coaches.length === 1 ? 'Coach' : 'Coaches'}: ${escapeEmailHtml(joinWithAnd(input.coaches))}`;
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">A new team for ${escapeEmailHtml(first)}</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>${p.childName} has moved from ${p.fromTeam} to ${p.toTeam} in ${p.divisionName}.</p>
+    <p>${coach}</p>
+    ${warmEmailButton('See your registration', input.statusUrl)}
+    ${teamsContactLine(input.clubName, input.contactEmail)}
+  `, input.face, `${first} is registered for ${input.seasonName}`);
+}
+
+/**
+ * The house-league coach invite (Club Tier 9c, copy §9.3): the club's rep coach invite's pattern (`clubCoachInviteHtml`) —
+ * the button, the 7-day foot, "you can safely ignore this email" — for a team page, never the Coaches Portal.
+ */
+export function leagueCoachInviteHtml(input: {
+  clubName: string;
+  teamName: string;
+  seasonName: string;
+  divisionName: string;
+  playerCount: number;
+  invitedEmail: string;
+  inviteUrl: string;
+}) {
+  const p = escapeEmailFields(input);
+  const club = p.clubName;
+  const team = p.teamName;
+  const count = `${input.playerCount} ${input.playerCount === 1 ? 'player' : 'players'}`;
+  return wrap(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${club} added you as a coach of ${team}</h2>
+    <p>Your team page lists your ${count} in ${p.divisionName} and how to reach their families. The season’s schedule is on ${escapeEmailHtml(possessive(input.clubName))} site.</p>
+    ${warmEmailButton('Accept and open your team', input.inviteUrl)}
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">This link works for 7 days and signs in with ${p.invitedEmail}. If you don’t have a FieldLogicHQ account, you’ll set one up first. If you weren’t expecting this, you can safely ignore this email.</p>
+  `);
+}
+
+/** The coach invite's subject (copy §9.3 mail.coach.subject). */
+export function leagueCoachInviteSubject(p: { teamName: string; seasonName: string }): string {
+  return `You’re coaching ${p.teamName} — ${p.seasonName}`;
 }
 
 /* `leagueBroadcastHtml` lived here until 2026-08-18. The season broadcast now goes through

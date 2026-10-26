@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS public.league_player_ratings (
 );
 CREATE INDEX IF NOT EXISTS league_player_ratings_season_idx ON public.league_player_ratings(season_id);
 ALTER TABLE public.league_player_ratings ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.league_player_ratings TO service_role;
 
 -- The org and season come from the registration, never the caller; a finished season takes no rating.
 CREATE OR REPLACE FUNCTION public.league_player_ratings_guard() RETURNS trigger
@@ -112,6 +113,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS league_team_coaches_token
 CREATE INDEX IF NOT EXISTS league_team_coaches_user_idx ON public.league_team_coaches(user_id) WHERE user_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS league_team_coaches_season_idx ON public.league_team_coaches(season_id);
 ALTER TABLE public.league_team_coaches ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.league_team_coaches TO service_role;
 
 CREATE OR REPLACE FUNCTION public.league_team_coaches_guard() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
@@ -158,6 +160,7 @@ CREATE TABLE IF NOT EXISTS public.league_placement_emails (
 CREATE INDEX IF NOT EXISTS league_placement_emails_division_idx ON public.league_placement_emails(division_id, status);
 CREATE INDEX IF NOT EXISTS league_placement_emails_season_idx ON public.league_placement_emails(season_id);
 ALTER TABLE public.league_placement_emails ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.league_placement_emails TO service_role;
 
 -- ─── 6 · Backfill, BEFORE the team trigger exists ────────────────────────────────────────────────────────────────────
 

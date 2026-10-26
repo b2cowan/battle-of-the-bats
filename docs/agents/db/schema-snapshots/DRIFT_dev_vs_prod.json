@@ -1,10 +1,10 @@
 {
   "generated": "2026-10-26",
-  "total": 557,
+  "total": 560,
   "counts": {
     "tables": 19,
     "columns": 292,
-    "indexes": 83,
+    "indexes": 86,
     "constraints": 85,
     "rls": 78
   },
@@ -1862,11 +1862,19 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_placement_emails_org_id_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:league_placement_emails_pkey",
       "sig": ""
     },
     {
       "key": "index:only-dev:league_placement_emails_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_player_ratings_org_id_idx",
       "sig": ""
     },
     {
@@ -1919,6 +1927,10 @@
     },
     {
       "key": "index:only-dev:league_team_coaches_one_per_team",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_team_coaches_org_id_idx",
       "sig": ""
     },
     {

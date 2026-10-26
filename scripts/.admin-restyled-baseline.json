@@ -80,12 +80,6 @@
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
     "#f0f0f0": 2
   },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx": {
-    "#1a1f2e": 1,
-    "rgba(255,255,255,0.12)": 2,
-    "#f87171": 1,
-    "#60a5fa": 1
-  },
   "app/[orgSlug]/admin/onboarding/onboarding.module.css": {
     "rgba(255,255,255,0.4)": 7,
     "rgba(255,255,255,0.04)": 2,

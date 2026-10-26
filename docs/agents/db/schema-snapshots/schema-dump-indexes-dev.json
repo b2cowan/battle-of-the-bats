@@ -1286,6 +1286,11 @@
   },
   {
     "tablename": "league_placement_emails",
+    "indexname": "league_placement_emails_org_id_idx",
+    "indexdef": "CREATE INDEX league_placement_emails_org_id_idx ON public.league_placement_emails USING btree (org_id)"
+  },
+  {
+    "tablename": "league_placement_emails",
     "indexname": "league_placement_emails_pkey",
     "indexdef": "CREATE UNIQUE INDEX league_placement_emails_pkey ON public.league_placement_emails USING btree (id)"
   },
@@ -1293,6 +1298,11 @@
     "tablename": "league_placement_emails",
     "indexname": "league_placement_emails_season_idx",
     "indexdef": "CREATE INDEX league_placement_emails_season_idx ON public.league_placement_emails USING btree (season_id)"
+  },
+  {
+    "tablename": "league_player_ratings",
+    "indexname": "league_player_ratings_org_id_idx",
+    "indexdef": "CREATE INDEX league_player_ratings_org_id_idx ON public.league_player_ratings USING btree (org_id)"
   },
   {
     "tablename": "league_player_ratings",
@@ -1453,6 +1463,11 @@
     "tablename": "league_team_coaches",
     "indexname": "league_team_coaches_one_per_team",
     "indexdef": "CREATE UNIQUE INDEX league_team_coaches_one_per_team ON public.league_team_coaches USING btree (team_id, email) WHERE (removed_at IS NULL)"
+  },
+  {
+    "tablename": "league_team_coaches",
+    "indexname": "league_team_coaches_org_id_idx",
+    "indexdef": "CREATE INDEX league_team_coaches_org_id_idx ON public.league_team_coaches USING btree (org_id)"
   },
   {
     "tablename": "league_team_coaches",

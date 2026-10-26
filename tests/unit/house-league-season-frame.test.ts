@@ -124,7 +124,8 @@ describe('2 · the frame is wired', () => {
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx',
       // Registrations is a thin route over its screen (Club Tier 9b-2 Part 3): the gate is asked in the screen.
       REGISTRATIONS_SCREEN,
-      'app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx',
+      // Teams & draft too (Club Tier 9c Part 3).
+      'components/admin/kit/club/league/teams/TeamsScreen.tsx',
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx',
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx',
     ]) {

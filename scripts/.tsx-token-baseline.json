@@ -47,10 +47,6 @@
     "hex": 4,
     "rgba": 0
   },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx": {
-    "hex": 3,
-    "rgba": 0
-  },
   "app/[orgSlug]/admin/org/settings/page.tsx": {
     "hex": 9,
     "rgba": 0

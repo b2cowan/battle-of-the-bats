@@ -9,6 +9,7 @@ import { changeLeagueDivision, moveLeagueRegistration } from '@/lib/league-regis
 import { leaguePrice, priceFromBody, registrationOwes } from '@/lib/league-price';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { divisionInSeason, teamsInSeason } from '@/lib/league-season-scope';
+import { placePlayer } from '@/lib/house-league-teams';
 import {
   leagueAdminApprovedHtml,
   leagueAdminWaitlistedHtml,
@@ -391,8 +392,15 @@ export const PATCH = withObservability(async (req: Request,
       keptPrice = moved.keptPrice;
     }
     if ('teamId' in body) {
-      await supabaseAdmin.from('league_registrations')
-        .update({ team_id: body.teamId ?? null, updated_at: new Date().toISOString() }).eq('id', regId);
+      // 9c: a team changes only through the one placement function (mig 377), so a published division's move is held and
+      // emailed on Teams & draft, never made silently here.
+      const placed = await placePlayer(ctx!.org.id, seasonId, regId, body.teamId ?? null, false, ctx!.user.id);
+      if ('refusal' in placed) {
+        const words = placed.refusal === 'published'
+          ? 'This division is published. Move players on Teams & draft, where the family is told.'
+          : placed.refusal === 'not_accepted' ? 'Only an accepted player is put on a team.' : 'Team not found';
+        return NextResponse.json({ error: words, code: placed.refusal }, { status: 409 });
+      }
     }
     if (promotedId) emailPromoted(ctx!.org, season, seasonId, promotedId);
     const updated = await fetchReg(regId, seasonId);

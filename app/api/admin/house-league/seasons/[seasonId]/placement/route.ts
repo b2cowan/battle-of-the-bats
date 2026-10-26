@@ -1,30 +1,25 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import {
-  getLeagueSeasonById,
-  getTeamsForDivision,
-  getRegistrationsForDivision,
-  assignRegistrationToTeam,
-  bulkAssignTeams,
-} from '@/lib/db';
+import { getLeagueSeasonById } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { divisionInSeason, registrationsInSeason, teamsInSeason } from '@/lib/league-season-scope';
+import { registrationsInSeason, teamsInSeason } from '@/lib/league-season-scope';
+import { placePlayer, setLock } from '@/lib/house-league-teams';
+import { sendPlacementEmails } from '@/lib/house-league-placement-mail';
+import { placeRefusal } from '@/lib/house-league-teams-words';
 import { withObservability } from '@/lib/observability';
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
+/**
+ * One player on Teams & draft (Club Tier 9c, copy §5-6). Replaces Randomize, assign, bulk assign and clear (9c·5; clear is
+ * now the draft route's "Take all players off teams").
+ *   · `place` — onto a team, or off it (teamId null). Before publishing: immediate and silent. After publishing it is
+ *     refused with `code: 'published'` until the screen has asked and sends `confirmed: true` (9c·12); then the family is
+ *     emailed (the move email, or the placement email for a player placed late). Off a team emails nobody.
+ *   · `lock` — Lock to this team / Unlock (9c·3), before publishing.
+ */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
+  const ctx = await getAuthContextWithRole({ orgSlug: new URL(req.url).searchParams.get('orgSlug') ?? undefined, requireOrgSlug: true });
   const err = houseLeagueRefusal(ctx, 'run');
   if (err) return err;
 
@@ -34,100 +29,39 @@ export const POST = withObservability(async (req: Request,
   const refused = houseLeagueRefusal(ctx, 'run', season);
   if (refused) return refused;
 
-  const body = await req.json();
-  const { action, divisionId } = body;
-
-  if (!divisionId) return NextResponse.json({ error: 'divisionId required' }, { status: 400 });
-
-  const VALID_ACTIONS = ['randomize', 'assign', 'bulk_assign', 'clear'];
-  if (!VALID_ACTIONS.includes(action)) {
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+  const body = await req.json().catch(() => ({}));
+  const { action, registrationId } = body;
+  if (!(await registrationsInSeason(seasonId, [registrationId]))) {
+    return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
   }
 
-  // Ownership: every action below writes `team_id` on registrations — the division, and any
-  // registration or team id in the body, must be this season's (plan I01).
-  if (!(await divisionInSeason(seasonId, divisionId))) {
-    return NextResponse.json({ error: 'Division not found' }, { status: 404 });
-  }
-
-  if (action === 'randomize') {
-    const teams = await getTeamsForDivision(divisionId);
-    if (!teams.length) {
-      return NextResponse.json({ error: 'No teams in this division' }, { status: 422 });
-    }
-    const allActive = await getRegistrationsForDivision(divisionId, { status: 'active' });
-    const unassigned = shuffle(allActive.filter(r => !r.teamId));
-    if (!unassigned.length) return NextResponse.json({ assigned: 0 });
-
-    const assignments = unassigned.map((r, i) => ({
-      registrationId: r.id,
-      teamId: teams[i % teams.length].id,
-    }));
-    await bulkAssignTeams(assignments);
-    return NextResponse.json({ assigned: assignments.length });
-  }
-
-  if (action === 'assign') {
-    const { registrationId, teamId } = body;
-    if (!registrationId) {
-      return NextResponse.json({ error: 'registrationId required' }, { status: 400 });
-    }
-    if (!(await registrationsInSeason(seasonId, [registrationId]))) {
-      return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
-    }
-    if (teamId && !(await teamsInSeason(seasonId, [teamId]))) {
+  if (action === 'place') {
+    const teamId = body.teamId ?? null;
+    if (teamId !== null && !(await teamsInSeason(seasonId, [teamId]))) {
       return NextResponse.json({ error: 'Team not found' }, { status: 404 });
     }
-    if (teamId) {
-      await assignRegistrationToTeam(registrationId, teamId);
-    } else {
-      // teamId null = unassign (return player to pool)
-      await supabaseAdmin
-        .from('league_registrations')
-        .update({ team_id: null, updated_at: new Date().toISOString() })
-        .eq('id', registrationId);
+    const placed = await placePlayer(ctx!.org.id, seasonId, registrationId, teamId, body.confirmed === true, ctx!.user.id);
+    if ('refusal' in placed) {
+      const { data: reg } = await supabaseAdmin.from('league_registrations')
+        .select('player_first_name, player_last_name, league_divisions(name)').eq('id', registrationId).maybeSingle();
+      const division = (reg?.league_divisions as { name?: string } | null)?.name ?? 'This division';
+      const name = reg ? `${reg.player_first_name} ${reg.player_last_name}` : 'This player';
+      const status = placed.refusal === 'finished' ? 423 : 409;
+      return NextResponse.json({ error: placeRefusal(placed.refusal, name, division), code: placed.refusal }, { status });
+    }
+    const emailed = placed.emailId
+      ? await sendPlacementEmails({ ...ctx!.org, slug: ctx!.org.slug }, season, [placed.emailId])
+      : null;
+    return NextResponse.json({ ok: true, ...(emailed ? { emailed } : {}) });
+  }
+
+  if (action === 'lock') {
+    const done = await setLock(seasonId, registrationId, body.locked === true);
+    if (!done) {
+      return NextResponse.json({ error: 'Put them on a team first, then lock them there.', code: 'no_team' }, { status: 409 });
     }
     return NextResponse.json({ ok: true });
   }
 
-  if (action === 'bulk_assign') {
-    const { assignments } = body;
-    if (!Array.isArray(assignments) || assignments.some(a => !a || typeof a !== 'object')) {
-      return NextResponse.json({ error: 'assignments array required' }, { status: 400 });
-    }
-    if (
-      !(await registrationsInSeason(seasonId, assignments.map(a => a.registrationId))) ||
-      !(await teamsInSeason(seasonId, assignments.map(a => a.teamId)))
-    ) {
-      return NextResponse.json({ error: 'Registration or team not found' }, { status: 404 });
-    }
-    await bulkAssignTeams(assignments);
-    return NextResponse.json({ assigned: assignments.length });
-  }
-
-  if (action === 'clear') {
-    await supabaseAdmin
-      .from('league_registrations')
-      .update({ team_id: null, updated_at: new Date().toISOString() })
-      .eq('division_id', divisionId)
-      .eq('status', 'active');
-
-    // Clear draft state if it belongs to this division
-    const { data: seasonRow } = await supabaseAdmin
-      .from('league_seasons')
-      .select('draft_state')
-      .eq('id', seasonId)
-      .single();
-    const draft = seasonRow?.draft_state as { divisionId?: string } | null;
-    if (draft?.divisionId === divisionId) {
-      await supabaseAdmin
-        .from('league_seasons')
-        .update({ draft_state: null })
-        .eq('id', seasonId);
-    }
-
-    return NextResponse.json({ ok: true });
-  }
-
-  return NextResponse.json({ error: 'Unhandled action' }, { status: 500 });
+  return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/placement' });

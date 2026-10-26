@@ -1,70 +1,25 @@
 import { NextResponse } from 'next/server';
+import { randomInt } from 'node:crypto';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import { getLeagueSeasonById, getRegistrationsForDivision, bulkAssignTeams } from '@/lib/db';
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import type { LeagueDraftState } from '@/lib/types';
-import { divisionInSeason, registrationsInSeason, teamsInSeason } from '@/lib/league-season-scope';
+import { getLeagueSeasonById } from '@/lib/db';
+import { divisionInSeason } from '@/lib/league-season-scope';
+import { applyDraft, clearDivision, readDivisionBoard, type DivisionRefusal } from '@/lib/house-league-teams';
+import { runDraft } from '@/lib/house-league-draft';
+import { getRatings } from '@/lib/house-league-ratings';
+import { draftRefusal } from '@/lib/house-league-teams-words';
 import { withObservability } from '@/lib/observability';
 
-async function loadDraft(seasonId: string): Promise<LeagueDraftState | null> {
-  const { data } = await supabaseAdmin
-    .from('league_seasons')
-    .select('draft_state')
-    .eq('id', seasonId)
-    .single();
-  const draft = (data?.draft_state as LeagueDraftState | null) ?? null;
-  // A draft saved before the ownership checks below existed could name another org's division;
-  // every read of the remaining-player pool goes through here, so it is not this season's draft.
-  if (draft && !(await divisionInSeason(seasonId, draft.divisionId))) return null;
-  return draft;
-}
-
-async function saveDraft(seasonId: string, state: LeagueDraftState | null): Promise<void> {
-  await supabaseAdmin
-    .from('league_seasons')
-    .update({ draft_state: state })
-    .eq('id', seasonId);
-}
-
-function advance(pickNumber: number, pickOrder: string[]): { currentTeamId: string; round: number } {
-  const idx = (pickNumber - 1) % pickOrder.length;
-  return {
-    currentTeamId: pickOrder[idx],
-    round: Math.ceil(pickNumber / pickOrder.length),
-  };
-}
-
-async function getRemainingPlayers(divisionId: string, pickedIds: Set<string>) {
-  const all = await getRegistrationsForDivision(divisionId, { status: 'active' });
-  return all.filter(r => !pickedIds.has(r.id));
-}
-
-export const GET = withObservability(async (_req: Request,
-  { params }: { params: Promise<{ seasonId: string }> },) => {
-  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = houseLeagueRefusal(ctx, 'read');
-  if (err) return err;
-
-  const { seasonId } = await params;
-  const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
-  if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-
-  const draft = await loadDraft(seasonId);
-  if (!draft) return NextResponse.json({ draft: null, remainingPlayers: [] });
-
-  const pickedIds = new Set(draft.picks.map(p => p.registrationId));
-  const remainingPlayers = await getRemainingPlayers(draft.divisionId, pickedIds);
-
-  return NextResponse.json({ draft, remainingPlayers });
-}, { route: '/api/admin/house-league/seasons/[seasonId]/draft' });
-
+/**
+ * The balanced draft for one division (Club Tier 9c, Part 2; rulings Q8, 9c·3, 9c·5, 9c·7, 9c·8). Replaces the live
+ * draft room (start / pick / undo / finalize) and Randomize, both retired (9c·5).
+ *   · `run` — Run the draft / Draft again: deals every accepted, unlocked player of the division, in one write.
+ *   · `clear` — Take all players off teams: before publishing only; locks and moves by hand go too.
+ * Both carry the fingerprint the window saw, and are refused when the division changed under it (copy §4.3).
+ */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  // Auth seam: the people who run the league now; a coach's own-team path (9c) is a column of the same gate.
+  const ctx = await getAuthContextWithRole({ orgSlug: new URL(req.url).searchParams.get('orgSlug') ?? undefined, requireOrgSlug: true });
   const err = houseLeagueRefusal(ctx, 'run');
   if (err) return err;
 
@@ -74,120 +29,46 @@ export const POST = withObservability(async (req: Request,
   const refused = houseLeagueRefusal(ctx, 'run', season);
   if (refused) return refused;
 
-  const body = await req.json();
-  const { action } = body;
+  const body = await req.json().catch(() => ({}));
+  const { action, divisionId, fingerprint } = body;
+  if (!(await divisionInSeason(seasonId, divisionId))) {
+    return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  }
+  if (typeof fingerprint !== 'string' || !fingerprint) {
+    return NextResponse.json({ error: 'Close this window and look again.' }, { status: 400 });
+  }
+  const board = await readDivisionBoard(season, divisionId);
+  if (!board) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  const words = { division: board.division.name, players: board.players.length, teams: board.teams.length };
+  const refusal = (code: DivisionRefusal) => code === 'finished'
+    ? NextResponse.json({ error: 'This season is finished. Reopen it to change it.', finished: true }, { status: 423 })
+    : NextResponse.json({ error: draftRefusal(code, words), code }, { status: 409 });
+  if (board.division.publishedAt) return refusal('published');
+  if (board.fingerprint !== fingerprint) return refusal('changed');
 
-  if (action === 'start') {
-    const { divisionId, pickOrder } = body;
-    if (!divisionId || !Array.isArray(pickOrder) || pickOrder.length === 0) {
-      return NextResponse.json({ error: 'divisionId and pickOrder required' }, { status: 400 });
-    }
-    // Ownership: `start` returns the division's full registration rows (guardian contacts, dates
-    // of birth, notes) — a foreign division id must read as not found (plan I01).
-    if (!(await divisionInSeason(seasonId, divisionId))) {
-      return NextResponse.json({ error: 'Division not found' }, { status: 404 });
-    }
-    if (!(await teamsInSeason(seasonId, pickOrder, { divisionId }))) {
-      return NextResponse.json({ error: 'Team not found' }, { status: 404 });
-    }
-
-    const { currentTeamId, round } = advance(1, pickOrder);
-    const newDraft: LeagueDraftState = {
-      draftId: crypto.randomUUID(),
-      divisionId,
-      round,
-      pickNumber: 1,
-      currentTeamId,
-      pickOrder,
-      picks: [],
-    };
-
-    await saveDraft(seasonId, newDraft);
-
-    const all = await getRegistrationsForDivision(divisionId, { status: 'active' });
-    const remainingPlayers = all.filter(r => !r.teamId);
-
-    return NextResponse.json({ draft: newDraft, remainingPlayers });
+  if (action === 'clear') {
+    const cleared = await clearDivision(ctx!.org.id, seasonId, divisionId, fingerprint);
+    if (cleared) return refusal(cleared);
+    return NextResponse.json({ ok: true });
   }
 
-  if (action === 'pick') {
-    const { registrationId } = body;
-    if (!registrationId) {
-      return NextResponse.json({ error: 'registrationId required' }, { status: 400 });
+  if (action === 'run') {
+    // The draft reads ratings (9c·8): the runners only, the same answer as `run` today, asked by name so the ratings
+    // guard can see it.
+    const ratingsRefused = houseLeagueRefusal(ctx, 'seeRatings', season);
+    if (ratingsRefused) return ratingsRefused;
+    const ratings = await getRatings(seasonId, board.players.map(p => p.id));
+    const result = runDraft(
+      board.players.map(p => ({ id: p.id, rating: ratings.get(p.id) ?? null, lockedTeamId: p.locked ? p.teamId : null })),
+      board.teams.map(t => t.id),
+      randomInt(2 ** 31),
+    );
+    if (!result.ok) {
+      return NextResponse.json({ error: draftRefusal(result.refusal, words), code: result.refusal }, { status: 422 });
     }
-
-    const draft = await loadDraft(seasonId);
-    if (!draft) return NextResponse.json({ error: 'No active draft' }, { status: 409 });
-    // The pick must come from this draft's pool — this season, and this draft's division.
-    if (!(await registrationsInSeason(seasonId, [registrationId], { divisionId: draft.divisionId }))) {
-      return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
-    }
-
-    const pickedIds = new Set(draft.picks.map(p => p.registrationId));
-    if (pickedIds.has(registrationId)) {
-      return NextResponse.json({ error: 'Player already picked' }, { status: 409 });
-    }
-
-    const newPick = {
-      round: draft.round,
-      pickNumber: draft.pickNumber,
-      teamId: draft.currentTeamId,
-      registrationId,
-    };
-    const picks = [...draft.picks, newPick];
-    const nextPickNumber = draft.pickNumber + 1;
-    const { currentTeamId, round } = advance(nextPickNumber, draft.pickOrder);
-
-    const updated: LeagueDraftState = { ...draft, pickNumber: nextPickNumber, round, currentTeamId, picks };
-    await saveDraft(seasonId, updated);
-
-    const newPickedIds = new Set(picks.map(p => p.registrationId));
-    const remainingPlayers = await getRemainingPlayers(draft.divisionId, newPickedIds);
-
-    return NextResponse.json({ draft: updated, remainingPlayers });
-  }
-
-  if (action === 'undo') {
-    const draft = await loadDraft(seasonId);
-    if (!draft) return NextResponse.json({ error: 'No active draft' }, { status: 409 });
-    if (!draft.picks.length) {
-      return NextResponse.json({ error: 'No picks to undo' }, { status: 409 });
-    }
-
-    const picks = draft.picks.slice(0, -1);
-    const newPickNumber = draft.pickNumber - 1;
-    const { currentTeamId, round } = advance(newPickNumber, draft.pickOrder);
-
-    const updated: LeagueDraftState = { ...draft, pickNumber: newPickNumber, round, currentTeamId, picks };
-    await saveDraft(seasonId, updated);
-
-    const pickedIds = new Set(picks.map(p => p.registrationId));
-    const remainingPlayers = await getRemainingPlayers(draft.divisionId, pickedIds);
-
-    return NextResponse.json({ draft: updated, remainingPlayers });
-  }
-
-  if (action === 'finalize') {
-    const draft = await loadDraft(seasonId);
-    if (!draft) return NextResponse.json({ error: 'No active draft' }, { status: 409 });
-
-    // Picks were checked one at a time as they were made; re-check the set here, because finalize
-    // is the write and a draft saved before those checks existed carries unchecked ids.
-    if (
-      !(await registrationsInSeason(seasonId, draft.picks.map(p => p.registrationId), { divisionId: draft.divisionId })) ||
-      !(await teamsInSeason(seasonId, draft.picks.map(p => p.teamId), { divisionId: draft.divisionId }))
-    ) {
-      return NextResponse.json({ error: 'This draft names a player or team outside the season' }, { status: 409 });
-    }
-
-    if (draft.picks.length > 0) {
-      await bulkAssignTeams(
-        draft.picks.map(p => ({ registrationId: p.registrationId, teamId: p.teamId }))
-      );
-    }
-
-    await saveDraft(seasonId, null);
-    return NextResponse.json({ ok: true, assignedCount: draft.picks.length });
+    const applied = await applyDraft(ctx!.org.id, seasonId, divisionId, fingerprint, result.deal);
+    if (applied) return refusal(applied);
+    return NextResponse.json({ ok: true });
   }
 
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

@@ -17,6 +17,9 @@ import { filesUnder, readCode } from './_source-code.ts';
 /** The whole door. The module, and the runner-gated routes that read or write through it. */
 export const RATING_READERS = [
   'lib/house-league-ratings.ts',
+  'app/api/admin/house-league/seasons/[seasonId]/ratings/route.ts',
+  'app/api/admin/house-league/seasons/[seasonId]/teams-board/route.ts',
+  'app/api/admin/house-league/seasons/[seasonId]/draft/route.ts',
 ] as const;
 
 const SOURCES = ['app', 'lib', 'components'].flatMap(dir => [...filesUnder(dir, '.ts'), ...filesUnder(dir, '.tsx')]);

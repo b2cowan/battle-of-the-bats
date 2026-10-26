@@ -2328,7 +2328,6 @@ function mapLeagueSeason(row: any): LeagueSeason {
     howToPay:                  row.how_to_pay ?? null,
     askEmailConsent:           row.ask_email_consent ?? true,
     owingAmberDays:            row.owing_amber_days ?? 14,
-    draftState:                row.draft_state ?? null,
     createdAt:                 row.created_at,
     updatedAt:                 row.updated_at,
   };
@@ -2711,36 +2710,6 @@ export async function getRegistrationsForSeason(
   if (opts.status) q = q.eq('status', opts.status);
   const { data } = await q;
   return (data ?? []).map(mapLeagueRegistration);
-}
-
-export async function getRegistrationsForDivision(
-  divisionId: string,
-  opts: { status?: LeagueRegistrationStatus } = {}
-): Promise<LeagueRegistration[]> {
-  let q = supabaseAdmin
-    .from('league_registrations')
-    .select('*')
-    .eq('division_id', divisionId)
-    .order('registered_at', { ascending: false });
-  if (opts.status) q = q.eq('status', opts.status);
-  const { data } = await q;
-  return (data ?? []).map(mapLeagueRegistration);
-}
-
-// A child is placed, accepted, waitlisted or promoted ONLY through lib/league-registration-place.ts (one locked database
-// step, mig 362): the old blind insert, status flip and promote helpers were deleted with Club Tier 9b-1 Part 3.
-
-export async function assignRegistrationToTeam(registrationId: string, teamId: string): Promise<void> {
-  await supabaseAdmin
-    .from('league_registrations')
-    .update({ team_id: teamId, updated_at: new Date().toISOString() })
-    .eq('id', registrationId);
-}
-
-export async function bulkAssignTeams(
-  assignments: Array<{ registrationId: string; teamId: string }>
-): Promise<void> {
-  await Promise.all(assignments.map(a => assignRegistrationToTeam(a.registrationId, a.teamId)));
 }
 
 // ─── Game helpers ─────────────────────────────────────────────────────────────

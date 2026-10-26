@@ -60,7 +60,7 @@ function requestIds(handler: string): Set<IdKind> {
     new RegExp(`\\b${name}\\b`).test(destructured);
   if (has('divisionId')) kinds.add('division');
   if (has('teamId') || has('pickOrder')) kinds.add('team');
-  if (has('registrationId') || has('assignments')) kinds.add('registration');
+  if (has('registrationId') || has('registrationIds') || has('assignments')) kinds.add('registration');
   return kinds;
 }
 
@@ -91,6 +91,8 @@ const FILTER_ONLY: Record<string, string> = {
     "filters this season's registrations in memory (getRegistrationsForSeason)",
   'app/api/admin/house-league/seasons/[seasonId]/email/route.ts POST team':
     "filters this season's registrations in memory (getRegistrationsForSeason)",
+  'app/api/admin/house-league/seasons/[seasonId]/email/route.ts POST registration':
+    "filters this season's registrations in memory by registrationIds (getRegistrationsForSeason)",
 };
 
 const HOUSE_LEAGUE = 'app/api/admin/house-league/seasons/[seasonId]';
@@ -135,10 +137,11 @@ describe('house-league admin routes tie request ids to the season (plan I01)', (
   it('the derivation finds the handlers known on 2026-09-25 (it cannot silently find none)', () => {
     for (const key of [
       `${HOUSE_LEAGUE}/draft/route.ts POST division`,
-      `${HOUSE_LEAGUE}/draft/route.ts POST team`,
-      `${HOUSE_LEAGUE}/draft/route.ts POST registration`,
-      `${HOUSE_LEAGUE}/placement/route.ts POST division`,
       `${HOUSE_LEAGUE}/placement/route.ts POST team`,
+      // 9c (2026-10-25): the draft deals a division whole (no team or player ids in), placement moves one player.
+      `${HOUSE_LEAGUE}/ratings/route.ts PUT registration`,
+      `${HOUSE_LEAGUE}/publish/route.ts POST division`,
+      `${HOUSE_LEAGUE}/teams-board/route.ts GET division`,
       `${HOUSE_LEAGUE}/placement/route.ts POST registration`,
       `${HOUSE_LEAGUE}/standings/route.ts GET division`,
       `${HOUSE_LEAGUE}/teams/route.ts GET division`,

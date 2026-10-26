@@ -945,23 +945,6 @@ export type LeagueRegistrationStatus =
 export type LeagueGameStatus =
   | 'scheduled' | 'completed' | 'cancelled' | 'postponed';
 
-export interface LeagueDraftPick {
-  round: number;
-  pickNumber: number;
-  teamId: string;
-  registrationId: string;
-}
-
-export interface LeagueDraftState {
-  draftId: string;
-  divisionId: string;
-  round: number;
-  pickNumber: number;
-  currentTeamId: string;
-  pickOrder: string[];
-  picks: LeagueDraftPick[];
-}
-
 export interface LeagueSeason {
   id: string;
   orgId: string;
@@ -989,7 +972,6 @@ export interface LeagueSeason {
   askEmailConsent: boolean;
   /** "Owing" turns amber on Registrations after this many days from acceptance (mig 368, 9b·8; starts at 14). */
   owingAmberDays: number;
-  draftState: LeagueDraftState | null;
   createdAt: string;
   updatedAt: string;
 }

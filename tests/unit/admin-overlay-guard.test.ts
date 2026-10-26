@@ -57,7 +57,6 @@ const BAR = (() => {
 const LAYERS: Record<string, { file: string; selector?: string; inline?: true }> = {
   kitForm: { file: 'components/admin/kit/club/KitDialog.module.css', selector: '.overlay' },
   houseLeague: { file: 'app/[orgSlug]/admin/house-league/house-league.module.css', selector: '.modalOverlay' },
-  houseLeagueDraft: { file: 'app/[orgSlug]/admin/house-league/house-league.module.css', selector: '.draftOverlay' },
   globalModal: { file: 'app/globals.css', selector: '.modal-overlay' },
   bottomSheet: { file: 'components/admin/BottomSheet.module.css', selector: '.backdrop' },
   leagueCap: { file: 'components/admin/LeagueCapUpgrade.tsx', inline: true },
@@ -76,9 +75,9 @@ const LAYERS: Record<string, { file: string; selector?: string; inline?: true }>
  * none. ⚠ Adding a file here is the decision — a FORM names its layer; a MENU says what it does instead of taking input.
  */
 const WINDOWS: Record<string, { layers: string[] } | { notAForm: string }> = {
-  // (The season's Registrations left 2026-10-25, Club Tier 9b-2 Part 3: every window it opens is a KitDialog now.)
+  // (The season's Registrations left 2026-10-25, Club Tier 9b-2 Part 3, and Teams & draft with Club Tier 9c Part 3: every
+  //  window they open is a KitDialog now.)
   'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx': { layers: ['houseLeague'] },
-  'app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx': { layers: ['houseLeague', 'houseLeagueDraft'] },
   'app/[orgSlug]/admin/onboarding/page.tsx': { notAForm: 'a FOCUSED flow: the admin shell draws no bar on onboarding (AdminChrome `isFocused`)' },
   'app/[orgSlug]/admin/tournaments/chat/page.tsx': { layers: ['kitForm', 'newRoom'] },
   'app/[orgSlug]/admin/tournaments/registrations/page.tsx': { layers: ['globalModal'] },

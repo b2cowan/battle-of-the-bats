@@ -42,6 +42,11 @@ import { eyebrowRepeatsBand, familySenderName, type ClubEmailFacts } from './ema
  *    no org to key against. Closing it needs its own per-team opt-out record — an owner
  *    decision, not a re-route. Until then a paid coach's announcement honours an unsubscribe
  *    and the free-tier one does not, which is the inconsistency to weigh.
+ *  - **House-league service notices (Club Tier 9c, owner 2026-10-25, ruling 9c·4): the placement email and the
+ *    moved-team email.** Deliberate, and INSIDE this module rather than beside it: they go through
+ *    `sendFamilyServiceBatch` below — the batched sender's service mode. On the dues-reminder ground: news about the
+ *    family's own child, so an unsubscribe from club news does not mute it. Same batching, no suppression list, no
+ *    unsubscribe link; the club's footnote says why it arrived. Never counted toward a cap (Q12c).
  *  - **The practice plan a coach sends to the STAFF (1 sender — `…/practice-plan/send`,
  *    `lib/practice-plan-email.ts`).** Deliberate, and NOT family mail at all: it goes to the
  *    team's staff, a colleague addressing colleagues about tonight, only when the coach ticks
@@ -244,6 +249,43 @@ export async function sendFamilyEmailBatch(params: {
       try { await params.onBatch(results); }
       catch (err) { console.error('[family-email] a batch progress recorder threw (the send goes on):', err instanceof Error ? err.message : String(err)); }
     }
+  }
+  return results;
+}
+
+/** One family's service notice, already built (each family's names its own children, so each html differs). */
+export interface FamilyServiceMessage { to: string; subject: string; html: string }
+
+/**
+ * The batched sender's SERVICE mode (Club Tier 9c, owner 2026-10-25): the house-league placement and moved-team emails.
+ * A family who unsubscribed from club news still gets these (ruling 9c·4, the dues-reminder ground: it is about their own
+ * child), so this does NOT read the suppression list and the html carries no unsubscribe link (the caller's envelope
+ * says why it arrived). Everything else is `sendFamilyEmailBatch`'s: normalized, an unsendable address refused before the
+ * provider sees it, `EMAIL_BATCH_SIZE` at a time, a batch that throws is a `provider_error` and never an escaped error.
+ * The results come back in the messages' own order, so the caller can mark each one's row.
+ */
+export async function sendFamilyServiceBatch(params: {
+  messages: readonly FamilyServiceMessage[];
+  fromName: string | null;
+  replyTo?: string | null;
+}): Promise<SendEmailResult[]> {
+  const results: SendEmailResult[] = params.messages.map(() => ({ status: 'provider_error' }));
+  const going: { index: number; to: string; subject: string; html: string }[] = [];
+  params.messages.forEach((m, index) => {
+    const to = normalizeGuardianEmail(m.to);
+    if (to && isSendableGuardianEmail(to)) going.push({ index, to, subject: m.subject, html: m.html });
+  });
+  for (const chunk of chunked(going, EMAIL_BATCH_SIZE)) {
+    let result: SendEmailResult;
+    try {
+      result = await sendEmailBatch(chunk.map(m => ({
+        to: m.to, subject: m.subject, html: m.html, replyTo: params.replyTo ?? null, fromName: params.fromName,
+      })));
+    } catch (err) {
+      console.error('[family-email] a service batch threw:', err instanceof Error ? err.message : String(err));
+      result = { status: 'provider_error' };
+    }
+    for (const m of chunk) results[m.index] = result;
   }
   return results;
 }

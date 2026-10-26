@@ -779,7 +779,8 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     module: 'house_league',
     page: 'Season Teams',
     file: 'app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx',
-    formats: ['xlsx', 'csv'],
+    // Club Tier 9c: one row a player (team, coach); a Rating column only for the people who run the league (9c·2a).
+    formats: ['xlsx'],
     defaultFormat: 'xlsx',
     minPlan: 'league',
     moduleGate: 'league_exports',
@@ -787,7 +788,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     includesSensitiveFields: false,
     respectsCurrentFilters: true,
     serverSide: false,
-    helpSummary: 'Export season team list with team name, division, and player count.',
+    helpSummary: 'Export a division’s players with their team and coach. The people who run the league also get each player’s rating; the registrar’s file has none.',
   },
   {
     id: 'accounting-budget-plan',
