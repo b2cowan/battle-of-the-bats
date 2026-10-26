@@ -34,6 +34,8 @@ export interface TeamRecord {
   customAnswers?: Array<{ fieldId: string; label: string; fieldType: string; value: string }>;
   /** 12c (mig 382): how much this team's entry is lowered by part refunds (`teams.entry_lowered`). */
   entryLowered?: number;
+  /** 12c Part 6: the team's bank debit on its way (its base) — never paid, never past due while it clears. */
+  clearingAmount?: number;
 }
 
 export interface PoolSlot {
@@ -98,12 +100,14 @@ export function hasDepositStep(fee: FeeSchedule): boolean {
   return Boolean(fee.depositAmount && fee.totalFeeAmount && fee.depositAmount < fee.totalFeeAmount);
 }
 
-export function computePaymentStatus(team: Pick<TeamRecord, 'depositPaid' | 'totalPaid'>, fee: FeeSchedule, today: string): PaymentStatus {
+export function computePaymentStatus(team: Pick<TeamRecord, 'depositPaid' | 'totalPaid'> & { clearingAmount?: number }, fee: FeeSchedule, today: string): PaymentStatus {
   const { depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate } = fee;
   if (!totalFeeAmount) return 'no-schedule';
   if (team.totalPaid >= totalFeeAmount) return 'paid';
-  if (totalFeeDueDate && today > totalFeeDueDate) return 'past-due';
-  if (depositAmount && depositDueDate && today > depositDueDate && team.depositPaid < depositAmount) return 'past-due';
+  // 12c Part 6 (words §3.7): a bank debit on its way is never past due — the only thing owing is on its way.
+  const clearing = (team.clearingAmount ?? 0) > 0;
+  if (!clearing && totalFeeDueDate && today > totalFeeDueDate) return 'past-due';
+  if (!clearing && depositAmount && depositDueDate && today > depositDueDate && team.depositPaid < depositAmount) return 'past-due';
   if (depositAmount && team.depositPaid >= depositAmount) return 'deposit-paid';
   return 'pending';
 }
@@ -143,6 +147,9 @@ export function paymentLine(team: TeamRecord, fee: FeeSchedule, today: string): 
   }
   const rest: string[] = [];
   if (team.totalPaid > 0) rest.push(TEAM_RECORD_WORDS.paidOf(formatMoney(team.totalPaid), formatMoney(fee.totalFeeAmount)));
+  // 12c Part 6: "Owes $300.00 · $100.00 clearing", plain — the only thing owing is on its way (words §3.7).
+  const clearing = team.clearingAmount ?? 0;
+  if (clearing > 0) return { lead: TEAM_RECORD_WORDS.owesClearing(formatMoney(owed), formatMoney(clearing)), owes: false, rest };
   if (computePaymentStatus(team, fee, today) === 'past-due') rest.push(TEAM_RECORD_WORDS.pastDue);
   return { lead: TEAM_RECORD_WORDS.owes(formatMoney(owed)), owes: true, rest };
 }

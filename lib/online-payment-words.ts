@@ -420,6 +420,33 @@ export const TEAM_ROW_WORDS = {
   linkSent: (date: string) => `Pay link sent ${date}`,
   linkSentToast: (email: string) => `Pay link sent to ${email}.`,
   linkFailedToast: 'Couldn’t send the pay link. Try again.',
+  // 12c Part 6, words §3.7: a bank debit on the team's record.
+  methodBank: (receiptNo: string) => `Online, bank debit · receipt ${receiptNo}`,
+  methodBankClearing: 'Online, bank debit',
+  clearing: 'Clearing',
+  clearingSub: (started: string) => `Started ${started} · up to 5 business days`,
+  debitReturned: (day: string, reasonShort: string) => `Bank debit returned ${day}${reasonShort ? ` · ${reasonShort}` : ''}`,
+  debitReversed: (day: string) => `Returned by the bank, ${day}`,
+  // A team declined or withdrawn while its debit clears (§3.3, a team's version; asked in its record, ask 7).
+  clear: {
+    lead: (total: string) => `A bank debit of ${total} is still clearing. It isn’t in the tournament’s book yet. When it clears:`,
+    sendBack: 'Send it back to the bank account',
+    sendBackSub: 'It goes back by itself when it clears, in your name.',
+    sendBackSubClubPays: (base: string) => `The ${base} goes back by itself when it clears, in your name.`,
+    feeBox: (fee: string, total: string) => `Include the ${fee} processing fee · ${total} back`,
+    feeOnWhy: 'With the processing fee, because the club is declining.',
+    feeOffWhy: 'Without the processing fee, because the team asked to leave.',
+    keep: 'Keep it',
+    keepSub: 'Say why. It goes in the book as kept by the club.',
+    keepReason: 'Reason',
+    keepReasonError: 'Say why the club keeps it.',
+    disconnected: 'Payouts are disconnected. Refund it in Stripe when it clears.',
+    saveBack: 'Send it back when it clears',
+    saveKeep: 'Keep it when it clears',
+    saving: 'Saving…',
+    decidedBack: (back: string) => `When it clears, ${back} goes back to the bank account.`,
+    decidedKept: (base: string, reason: string) => `When it clears, the club keeps the ${base}. ${reason}`,
+  },
 } as const;
 
 export const PAY_VIEW_WORDS = {
@@ -432,6 +459,11 @@ export const PAY_VIEW_WORDS = {
   total: 'Total',
   from: 'From',
   close: 'Close',
+  // 12c Part 6, words §3.7 `payView.bank`.
+  bank: 'Bank account',
+  bankValue: (last4: string) => `Account ending ${last4}`,
+  started: 'Started',
+  cleared: 'Cleared',
   // 12c words §1.4: each refund below the payment's facts (the house-league record's block, with the team's nouns).
   amountPart: (scopeNoun: string) => `Part of the ${scopeNoun}. A part refund never includes the processing fee.`,
   entry: 'Entry',

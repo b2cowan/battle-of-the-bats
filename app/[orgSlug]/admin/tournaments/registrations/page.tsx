@@ -329,6 +329,7 @@ export default function UnifiedTeamsPage() {
           depositPaid: Number(r.deposit_paid ?? 0),
           totalPaid: Number(r.total_paid ?? 0),
           entryLowered: Number(r.entry_lowered ?? 0),
+          clearingAmount: Number(r.clearing_amount ?? 0),
           adminNotes: r.admin_notes,
           slotId: admin.slotId ?? null,
           waitlistPosition: admin.waitlistPosition ?? null,

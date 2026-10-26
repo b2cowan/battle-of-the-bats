@@ -122,3 +122,36 @@ describe('ending while it clears (words §3.3)', () => {
     assert.ok(route.indexOf("from('online_payment_clear_decisions').insert") > route.indexOf('const ended = await endLeagueRegistration'));
   });
 });
+
+describe('a tournament team while its bank debit clears (words §3.7)', () => {
+  const fee = { depositAmount: 100, depositDueDate: '2026-10-01', totalFeeAmount: 400, totalFeeDueDate: '2026-10-15' };
+  const team = { status: 'accepted', depositPaid: 0, totalPaid: 0, paymentStatus: 'pending' } as never as import('../../lib/tournament-teams.ts').TeamRecord;
+  it('never past due while it clears; the summary says what is on its way, plain', async () => {
+    const { computePaymentStatus, paymentLine } = await import('../../lib/tournament-teams.ts');
+    assert.equal(computePaymentStatus(team, fee, TODAY), 'past-due');
+    assert.notEqual(computePaymentStatus({ ...team, clearingAmount: 100 }, fee, TODAY), 'past-due');
+    const line = paymentLine({ ...team, clearingAmount: 100 }, fee, TODAY)!;
+    assert.equal(line.lead, 'Owes $400 · $100 clearing');
+    assert.equal(line.owes, false, '"Owes" stays plain: the only thing owing is on its way');
+    assert.ok(!line.rest.includes('past due'));
+  });
+  it('Mark paid waits (absent, and refused for a stale window); reminders skip the team; Record waits', () => {
+    assert.match(readCode('app/[orgSlug]/admin/tournaments/registrations/components/TeamRecord.tsx'), /recordsPayments && !clearingNow &&/);
+    assert.match(readCode('app/api/admin/teams/route.ts'), /\.eq\('status', 'clearing'\);\s*if \(\(clearing \?\? 0\) > 0\) return Response\.json\(\{ error: TEAM_RECORD_WORDS\.clearingMarkPaid/);
+    assert.match(readCode('app/api/admin/tournaments/[tournamentId]/registrations/payment-reminders/route.ts'), /&& !clearingTeams\.has\(team\.id\)/);
+    assert.match(readCode('app/[orgSlug]/admin/tournaments/registrations/components/TeamPayments.tsx'), /canRecord && !clearing && \(/);
+  });
+  it('a team ended while it clears is asked in its record; the route refuses an accepted team and a send-back after disconnect', () => {
+    const route = readCode('app/api/admin/tournaments/[tournamentId]/registrations/online-payments/route.ts');
+    assert.match(route, /body\.action === 'clear_decision'/);
+    assert.match(route, /team\?\.status === 'accepted'\) return json/);
+    assert.match(route, /choice === 'send_back'\) \{[\s\S]*?disconnected_at\) return json/);
+    assert.match(readCode('app/[orgSlug]/admin/tournaments/registrations/components/TeamRecord.tsx'), /\(t\.status === 'accepted' \|\| clearingNow\)/);
+  });
+  it('a reversed row stays, struck, and never counts; a bank row reads its own method', () => {
+    const tp = readCode('app/[orgSlug]/admin/tournaments/registrations/components/TeamPayments.tsx');
+    assert.match(tp, /p\.status === 'refunded' \|\| p\.status === 'reversed' \? 0 :/);
+    assert.match(tp, /p\.online\.rail === 'bank_debit' \? OW\.methodBank/);
+    assert.match(readCode('lib/team-payments-server.ts'), /status\.in\.\(refunded,reversed\)/);
+  });
+});

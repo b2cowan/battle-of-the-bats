@@ -16,7 +16,8 @@
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { TEAM_ENTRY_WORDS as EW, TEAM_ROW_WORDS as OW, REFUND_WORDS as RW, SCOPE_WORDS, money, receiptLabel } from '@/lib/online-payment-words';
+import { TEAM_ENTRY_WORDS as EW, TEAM_ROW_WORDS as OW, REFUND_WORDS as RW, SCOPE_WORDS, money, reasonShort, receiptLabel } from '@/lib/online-payment-words';
+import type { TeamDebit } from '@/lib/team-pay-facts';
 import { PaymentViewWindow, RefundWindow, type RefundSend } from './OnlinePaymentWindows';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import DateInput from '@/components/shared/DateInput';
@@ -55,9 +56,10 @@ interface Props {
 /** Online payments on this record (Club Tier Stage 12a): may the pay link go out, when it last did, may a card be refunded. */
 type OnlineInfo = { payLink: boolean; payLinkSentAt: string | null; refunds: boolean };
 
-/** What a team has paid: posted rows only, each net of its part refunds (12c) — a row refunded in full stays on the record
- *  but never counts. */
-const sumPaid = (list: TeamPayment[]) => list.reduce((s, p) => s + (p.status === 'refunded' ? 0 : p.amount - (p.refundedAmount ?? 0)), 0);
+/** What a team has paid: posted rows only, each net of its part refunds (12c) — a row refunded in full, or reversed by the
+ *  bank (12c Part 6), stays on the record but never counts. */
+const sumPaid = (list: TeamPayment[]) => list.reduce((s, p) => s + (p.status === 'refunded' || p.status === 'reversed' ? 0 : p.amount - (p.refundedAmount ?? 0)), 0);
+const DEBIT_LABEL: Record<'deposit' | 'balance' | 'full', string> = { deposit: 'Deposit', balance: 'Balance', full: 'Payment' };
 
 /** 12c words §1.2: what a row with part refunds says (a part refund never strikes it through). */
 function partTag(o: TeamOnlinePayment): { text: string; warn: boolean; sub: string | null } | null {
@@ -96,6 +98,16 @@ export default function TeamPayments(props: Props) {
   const [refunding, setRefunding] = useState<{ p: TeamOnlinePayment; anotherWay: boolean } | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
   const [adjustments, setAdjustments] = useState<EntryAdjustment[]>([]);
+  // 12c Part 6: the team's bank debit (clearing, returned, reversed), and for a team ended while it clears, the answer.
+  const [debit, setDebit] = useState<TeamDebit | null>(null);
+  const [teamStatus, setTeamStatus] = useState<string | null>(null);
+  const [decision, setDecision] = useState<{ choice: 'send_back' | 'keep'; feeBack: boolean; reason: string | null } | null>(null);
+  const [payoutsOn, setPayoutsOn] = useState(false);
+  const [clearChoice, setClearChoice] = useState<'send_back' | 'keep' | null>(null);
+  const [clearFeeOn, setClearFeeOn] = useState(true);
+  const [clearReason, setClearReason] = useState('');
+  const [clearError, setClearError] = useState('');
+  const [clearSaving, setClearSaving] = useState(false);
 
   const base = `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registrations/payments`;
   const orgParam = orgQuery ? orgQuery.replace(/^\?/, '&') : '';
@@ -110,6 +122,10 @@ export default function TeamPayments(props: Props) {
       setPostsToBook(data.postsToBook === true);
       setOnline((data.online as OnlineInfo | undefined) ?? null);
       setAdjustments((data.adjustments as EntryAdjustment[] | undefined) ?? []);
+      setDebit((data.debit as TeamDebit | null | undefined) ?? null);
+      setTeamStatus((data.teamStatus as string | null | undefined) ?? null);
+      setDecision(data.decision ?? null);
+      setPayoutsOn(data.payoutsOn === true);
     } catch {
       setLoadFailed(true);
     }
@@ -308,6 +324,29 @@ export default function TeamPayments(props: Props) {
   );
 
   const rows = payments ? receivedOrder(payments) : [];
+  const clearing = debit?.state === 'clearing' ? debit : null;
+  const day = (iso: string | null) => (iso ? formatStoredDate(iso, { withYear: false }) : '');
+  // A declined or withdrawn team's clearing debit: what happens when it clears (asked here, ask 7).
+  const askClear = !!clearing && teamStatus !== 'accepted' && !decision;
+  const C = OW.clear;
+  const clearFee = clearing && clearing.familyPaysFee ? clearing.feeCents : 0;
+
+  async function saveClear() {
+    if (!clearing || !clearChoice || clearSaving) return;
+    if (clearChoice === 'keep' && !clearReason.trim()) { setClearError(C.keepReasonError); return; }
+    setClearSaving(true); setClearError('');
+    try {
+      const res = await fetch(onlineBase, {
+        method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear_decision', onlinePaymentId: clearing.id, choice: clearChoice, feeBack: clearChoice === 'send_back' && clearFee > 0 && clearFeeOn, reason: clearReason.trim() || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setClearError(String(data.error ?? C.keepReasonError)); return; }
+      await load();
+    } finally {
+      setClearSaving(false);
+    }
+  }
 
   return (
     <>
@@ -330,24 +369,78 @@ export default function TeamPayments(props: Props) {
         );
       })()}
 
-      {rows.length > 0 && (
+      {askClear && clearing && (
+        <div className={styles.payEntry}>
+          <p>{C.lead(money(clearing.totalCents / 100))}</p>
+          {payoutsOn && (
+            <label className={styles.payChoice}>
+              <input type="radio" name={`${uid}-clear`} checked={clearChoice === 'send_back'} onChange={() => setClearChoice('send_back')} />
+              <span><strong>{C.sendBack}</strong> <span className={styles.payHow}>{clearFee > 0 ? C.sendBackSub : C.sendBackSubClubPays(money(clearing.baseCents / 100))}</span></span>
+            </label>
+          )}
+          {payoutsOn && clearChoice === 'send_back' && clearFee > 0 && (
+            <label className={styles.payChoice}>
+              <input type="checkbox" checked={clearFeeOn} onChange={e => setClearFeeOn(e.target.checked)} />
+              <span><strong>{C.feeBox(money(clearFee / 100), money((clearing.baseCents + clearFee) / 100))}</strong> <span className={styles.payHow}>{clearFeeOn ? C.feeOnWhy : C.feeOffWhy}</span></span>
+            </label>
+          )}
+          <label className={styles.payChoice}>
+            <input type="radio" name={`${uid}-clear`} checked={clearChoice === 'keep'} onChange={() => setClearChoice('keep')} />
+            <span><strong>{C.keep}</strong> <span className={styles.payHow}>{C.keepSub}</span></span>
+          </label>
+          {clearChoice === 'keep' && (
+            <input className={ck.input} aria-label={C.keepReason} placeholder={C.keepReason} maxLength={200} value={clearReason} onChange={e => setClearReason(e.target.value)} />
+          )}
+          {!payoutsOn && <p className={styles.payHow}>{C.disconnected}</p>}
+          {clearError && <p className={styles.payErr} role="alert">{clearError}</p>}
+          {clearChoice && (
+            <button type="button" className={screenParts.plainButton} onClick={() => void saveClear()} disabled={clearSaving || busy}>
+              {clearSaving ? C.saving : clearChoice === 'send_back' ? C.saveBack : C.saveKeep}
+            </button>
+          )}
+        </div>
+      )}
+      {clearing && decision && (
+        <p className={styles.paySent}>
+          {decision.choice === 'send_back'
+            ? C.decidedBack(money((clearing.baseCents + (decision.feeBack ? clearing.feeCents : 0)) / 100))
+            : C.decidedKept(money(clearing.baseCents / 100), decision.reason ?? '')}
+        </p>
+      )}
+
+      {(rows.length > 0 || clearing) && (
         <>
           <h4 className={styles.paySub}>{W.received}</h4>
           <div className={styles.payRows}>
+            {/* 12c Part 6 (words §3.7): a bank debit on its way — a row of its own, not counted in what was paid. */}
+            {clearing && (
+              <div className={styles.payRow}>
+                <span className={styles.payDate}>{day(clearing.startedAt)}</span>
+                <span>
+                  {DEBIT_LABEL[clearing.scope]}
+                  <span className={styles.payHow}> · {OW.methodBankClearing}</span>
+                  <span className={styles.payChip}><RepChip tone="info">{OW.clearing}</RepChip></span>
+                  <span className={styles.payTagSub}>{OW.clearingSub(day(clearing.startedAt))}</span>
+                </span>
+                <span className={styles.payAmt}>{formatPaymentMoney(clearing.baseCents / 100)}</span>
+                <span />
+              </div>
+            )}
             {rows.map(p => (editId === p.id ? <div key={p.id}>{editBlock(p)}</div> : (
-              <div key={p.id} className={`${styles.payRow}${p.status === 'refunded' ? ` ${styles.payRefunded}` : ''}`}>
+              <div key={p.id} className={`${styles.payRow}${p.status === 'refunded' || p.status === 'reversed' ? ` ${styles.payRefunded}` : ''}`}>
                 <span className={styles.payDate}>{paymentDay(p.paidOn, W.earlier)}</span>
                 <span>
                   {p.label}
                   {p.online
-                    ? <span className={styles.payHow}> · {OW.method(receiptLabel(p.online.receiptNo ?? ''))}</span>
+                    ? <span className={styles.payHow}> · {p.online.rail === 'bank_debit' ? OW.methodBank(receiptLabel(p.online.receiptNo ?? '')) : OW.method(receiptLabel(p.online.receiptNo ?? ''))}</span>
                     : p.method && <span className={styles.payHow}> · {W.methods[p.method]}</span>}
-                  {p.inLedger && p.status !== 'refunded' && <span className={styles.payChip}><RepChip tone="good">{W.inLedger}</RepChip></span>}
+                  {p.inLedger && p.status !== 'refunded' && p.status !== 'reversed' && <span className={styles.payChip}><RepChip tone="good">{W.inLedger}</RepChip></span>}
+                  {p.status === 'reversed' && p.online && <span className={styles.payTag}>{OW.debitReversed(day(p.online.reversedAt ?? null))}</span>}
                   {p.online?.test && <span className={styles.payTag}>{OW.test}</span>}
                   {p.online && p.status === 'refunded' && (p.online.refundedOn || p.online.refunds[0]) && (
                     <span className={styles.payTag}>{OW.refunded(formatStoredDate((p.online.refundedOn ?? p.online.refunds[0].succeededAt ?? p.online.refunds[0].createdAt), { withYear: false }))}</span>
                   )}
-                  {p.online && p.status !== 'refunded' && (() => {
+                  {p.online && p.status !== 'refunded' && p.status !== 'reversed' && (() => {
                     // 12c: part refunds read their own tags; a refund in full keeps 12a's.
                     const part = partTag(p.online);
                     if (part) {
@@ -364,7 +457,7 @@ export default function TeamPayments(props: Props) {
                 {p.online ? (
                   <CoachToolbarMenu variant="glyph" overWindow label={OW.menuLabel} icon={<MoreHorizontal size={16} aria-hidden />} disabled={locked}>
                     <CoachToolbarMenuItem label={OW.menuView} onSelect={() => setViewing(p.online!)} />
-                    {online?.refunds && p.status !== 'refunded' && p.online.leftCents > 0 && p.online.refund !== 'pending' && (
+                    {online?.refunds && p.status !== 'refunded' && p.status !== 'reversed' && p.online.leftCents > 0 && p.online.refund !== 'pending' && (
                       <CoachToolbarMenuItem label={OW.menuRefund} onSelect={() => setRefunding({ p: p.online!, anotherWay: false })} />
                     )}
                     {online?.refunds && p.online.refund === 'failed' && (
@@ -389,7 +482,7 @@ export default function TeamPayments(props: Props) {
                 <span>{d.label} <span className={styles.payAmt}>{formatPaymentMoney(d.amount)}</span></span>
                 <span className={styles.payHow}>{d.dueDate ? W.dueOn(formatStoredDate(d.dueDate, { withYear: false })) : ''}</span>
                 <span className={styles.payDueActs}>
-                  {canRecord && (
+                  {canRecord && !clearing && (
                     <button type="button" className={screenParts.plainButton} onClick={() => openRecord(d.key)} disabled={locked} aria-label={`${W.record} ${d.label.toLowerCase()}`}>{W.record}</button>
                   )}
                   {online?.payLink && d === due[due.length - 1] && (
@@ -401,9 +494,11 @@ export default function TeamPayments(props: Props) {
               </div>
             )))}
           </div>
+          {/* 12c Part 6: a debit that came back before it cleared — on the due row's foot, with the bank's reason. */}
+          {debit?.state === 'returned' && <p className={styles.paySent}>{OW.debitReturned(day(debit.returnedAt), reasonShort(debit.reason))}</p>}
           {online?.payLink && online.payLinkSentAt && <p className={styles.paySent}>{OW.linkSent(formatStoredDate(online.payLinkSentAt, { withYear: false }))}</p>}
           {canRecord && form?.key === 'other' && recordForm}
-          {canRecord && !form && (
+          {canRecord && !form && !clearing && (
             <button type="button" className={styles.payLink} onClick={() => openRecord('other')} disabled={locked}>{W.recordOther}</button>
           )}
         </>

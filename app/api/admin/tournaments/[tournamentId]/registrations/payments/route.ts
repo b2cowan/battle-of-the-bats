@@ -89,7 +89,7 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
     listTeamPaymentsForRecord(teamId as string),
     paymentsPostToBook(tournamentId),
     loadTeamPayFacts(teamId as string),
-    supabaseAdmin.from('teams').select('pay_link_sent_at').eq('id', teamId as string).maybeSingle(),
+    supabaseAdmin.from('teams').select('pay_link_sent_at, status').eq('id', teamId as string).maybeSingle(),
     listEntryAdjustments(teamId as string),
   ]);
   // Online payments on this record (Club Tier Stage 12a): the pay link goes out only while the team can pay online now;
@@ -100,7 +100,18 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
     payLinkSentAt: (team?.pay_link_sent_at as string | null) ?? null,
     refunds: facts?.refusal !== 'switch_off' && !!facts?.account && !facts.account.disconnectedAt && canRefundOnline(member, g.ctx.org),
   };
-  return json({ payments, postsToBook, online, adjustments });
+  // 12c Part 6 (words §3.7): the team's bank debit — clearing, returned, or reversed — and, for one ended while it clears,
+  // what happens when it clears.
+  const debit = facts?.debit ?? null;
+  const { data: decision } = debit?.state === 'clearing'
+    ? await supabaseAdmin.from('online_payment_clear_decisions').select('choice, fee_back, reason')
+      .eq('online_payment_id', debit.id).is('online_payment_item_id', null).is('outcome', null).maybeSingle()
+    : { data: null };
+  return json({
+    payments, postsToBook, online, adjustments, debit, teamStatus: (team?.status as string | null) ?? null,
+    decision: decision ? { choice: decision.choice as 'send_back' | 'keep', feeBack: !!decision.fee_back, reason: (decision.reason as string | null) ?? null } : null,
+    payoutsOn: !!facts?.account && !facts.account.disconnectedAt,
+  });
 }, { route: '/api/admin/tournaments/[tournamentId]/registrations/payments' });
 
 export const POST = withObservability(async (req: Request, { params }: { params: Promise<{ tournamentId: string }> }) => {

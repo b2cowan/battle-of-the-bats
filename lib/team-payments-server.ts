@@ -176,16 +176,16 @@ export async function listTeamPaymentsForRecord(teamId: string): Promise<TeamPay
     .from('tournament_team_payments')
     .select('id, team_id, amount, paid_on, label, method, entry_id, status, online_payment_id, refunded_amount')
     .eq('team_id', teamId)
-    .or('status.eq.posted,and(status.eq.refunded,online_payment_id.not.is.null)')
+    .or('status.eq.posted,and(status.in.(refunded,reversed),online_payment_id.not.is.null)')
     .order('paid_on', { ascending: true, nullsFirst: true }).order('ordinal', { ascending: true });
   if (error) throw error;
-  const rows = (data ?? []) as (PaymentRow & { status: 'posted' | 'refunded'; online_payment_id: string | null; refunded_amount: number | null })[];
+  const rows = (data ?? []) as (PaymentRow & { status: 'posted' | 'refunded' | 'reversed'; online_payment_id: string | null; refunded_amount: number | null })[];
   const onlineIds = rows.map(r => r.online_payment_id).filter((id): id is string => !!id);
   const online = new Map<string, TeamOnlinePayment>();
   if (onlineIds.length) {
     const [{ data: ops, error: opError }, { data: refunds, error: refundError }] = await Promise.all([
       supabaseAdmin.from('online_payments')
-        .select('id, receipt_no, card_brand, card_last4, base_amount, fee_amount, total_amount, fee_payer, payer_email, paid_at, livemode, scope, rail, bank_last4')
+        .select('id, receipt_no, card_brand, card_last4, base_amount, fee_amount, total_amount, fee_payer, payer_email, paid_at, livemode, scope, rail, bank_last4, clearing_at, reversed_at, return_reason')
         .in('id', onlineIds),
       supabaseAdmin.from('online_payment_refunds')
         .select('id, online_payment_id, status, succeeded_at, created_at, amount, fee_refunded, origin, part_refund, partial_reason, failed_at, failure_reason, stripe_refund_id, created_by, resolved_by, booked_at, family_emailed_at, family_email_failed_at')
@@ -239,6 +239,9 @@ export async function listTeamPaymentsForRecord(teamId: string): Promise<TeamPay
         scope: (p.scope as 'deposit' | 'balance' | 'full') ?? 'full',
         rail: p.rail === 'bank_debit' ? 'bank_debit' : 'card',
         bankLast4: (p.bank_last4 as string | null) ?? null,
+        startedAt: (p.clearing_at as string | null) ?? null,
+        reversedAt: (p.reversed_at as string | null) ?? null,
+        returnReason: (p.return_reason as string | null) ?? null,
         leftCents: cents(p.base_amount) - (usedCents.get(p.id as string) ?? 0),
         refunds: byPayment.get(p.id as string) ?? [],
       });

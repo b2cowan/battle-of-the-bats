@@ -363,7 +363,10 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   // 2026-10-13) and offers Mark paid; one marked paid by hand reads "Paid".
   const markedPaid = t.paymentStatus === 'paid';
   const recordsPayments = props.payments === 'edit';
-  const paymentBlock = props.payments !== 'none' && t.status === 'accepted' && (props.isClubOwnTeam || line || markedPaid || (canWrite && recordsPayments)) && (
+  // 12c Part 6: a team declined or withdrawn while its bank debit clears still opens its payments, to answer what happens
+  // when it clears (words §3.3, ask 7).
+  const clearingNow = (t.clearingAmount ?? 0) > 0;
+  const paymentBlock = props.payments !== 'none' && (t.status === 'accepted' || clearingNow) && (props.isClubOwnTeam || line || markedPaid || (canWrite && recordsPayments)) && (
     <RecordSection title={W.payment}>
       {/* The summary on the left, Mark paid on the right: the same edge the Record buttons below sit on. */}
       <div className={styles.payHead}>
@@ -375,7 +378,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
         ) : markedPaid ? (
           <p className={`${screenParts.recordText} ${styles.payHeadText}`}>{TEAMS_WORDS.paid}</p>
         ) : null}
-        {!props.isClubOwnTeam && canWrite && recordsPayments && (line ? owed > 0 : true) && (
+        {!props.isClubOwnTeam && canWrite && recordsPayments && !clearingNow && (line ? owed > 0 : true) && (
           line || t.paymentStatus !== 'paid'
             ? <RowAction onClick={() => void flushThen(() => props.onMarkPaid(t))} disabled={props.busy}>{W.markPaid(line ? formatMoney(owed) : null)}</RowAction>
             : <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onMarkUnpaid(t))} disabled={props.busy}>{W.markUnpaid}</button>

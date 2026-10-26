@@ -125,6 +125,10 @@ export const TEAM_RECORD_WORDS = {
   balanceDue: (date: string) => `balance due ${date}`,
   due: (date: string) => `due ${date}`,
   pastDue: 'past due',
+  // 12c Part 6, words §3.7: a bank debit on its way — "Owes" stays plain; it replaces "past due".
+  owesClearing: (owes: string, clearing: string) => `Owes ${owes} · ${clearing} clearing`,
+  // 12c Part 6, words §3.2: Mark paid while a debit clears (a stale window).
+  clearingMarkPaid: (team: string) => `A bank debit for ${team} is clearing, so Mark paid isn’t available yet. It goes in the record when it clears.`,
   paidInFull: (amount: string) => `Paid in full · ${amount}`,
   markPaid: (amount: string | null) => (amount ? `Mark paid · ${amount}` : 'Mark paid'),
   markUnpaid: 'Mark unpaid',

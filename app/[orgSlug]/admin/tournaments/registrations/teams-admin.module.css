@@ -698,6 +698,10 @@
 .payEntry { margin: 0.25rem 0 0.5rem; font-size: var(--type-support); color: var(--text-secondary); }
 .payEntry p { margin: 0; }
 .payTagSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+/* 12c Part 6: a team ended while its bank debit clears — what happens when it clears (one choice per row, 44px tall). */
+.payChoice { display: flex; align-items: flex-start; gap: 0.5rem; min-height: 44px; padding: 0.35rem 0; cursor: pointer; }
+.payChoice input { margin-top: 0.2rem; }
+.payEntry .payChoice + .payChoice { border-top: 1px solid var(--home-line); }
 @media (max-width: 640px) { .payRefundButton { width: 100%; min-height: 44px; } }
 @media (max-width: 640px) {
   .payViewList > div { grid-template-columns: 1fr; }

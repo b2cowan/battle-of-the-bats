@@ -48,13 +48,15 @@ export const GET = withObservability(async (req: NextRequest) => {
       return NextResponse.json([]);
     }
 
-    const [teamsRes, groupsRes] = await Promise.all([
+    const [teamsRes, groupsRes, clearingRes] = await Promise.all([
       supabaseAdmin
         .from('teams')
         .select('*')
         .in('tournament_id', tournamentIds)
         .order('registered_at', { ascending: false }),
       supabaseAdmin.from('divisions').select('id, name').in('tournament_id', tournamentIds),
+      // 12c Part 6: a team's bank debit on its way — not paid, not past due, said as "clearing" (words §3.7).
+      supabaseAdmin.from('online_payments').select('team_id, base_amount').in('tournament_id', tournamentIds).eq('status', 'clearing'),
     ]);
 
     if (teamsRes.error) throw teamsRes.error;
@@ -62,8 +64,13 @@ export const GET = withObservability(async (req: NextRequest) => {
     const groupsMap = new Map((groupsRes.data || []).map((g: { id: string; name: string }) => [g.id, g.name]));
     const tournsMap = new Map((orgTournaments || []).map((t: { id: string; name: string }) => [t.id, t.name]));
 
+    const clearing = new Map<string, number>();
+    for (const c of (clearingRes.data ?? []) as Array<{ team_id: string | null; base_amount: number }>) {
+      if (c.team_id) clearing.set(c.team_id, (clearing.get(c.team_id) ?? 0) + Number(c.base_amount));
+    }
     const flattened = teamsRes.data?.map((r: any) => ({
       ...r,
+      clearing_amount: clearing.get(r.id) ?? 0,
       division_name: groupsMap.get(r.division_id) || 'Unknown Division',
       tournament_name: r.tournament_id ? tournsMap.get(r.tournament_id) : 'Internal',
     }));

@@ -18,6 +18,8 @@ export const dynamic = 'force-dynamic';
  *   POST { action: 'refund', onlinePaymentId, amount, partialReason, note }       12c: part of it (never the fee; lowers the entry)
  *   POST { action: 'refund_another_way', onlinePaymentId, feeIncluded, reason, note }  after a refund to the card came back
  *   POST { action: 'email_pay_link', teamId }                                      "Email the pay link" → "Pay link sent"
+ *   POST { action: 'clear_decision', onlinePaymentId, choice, feeBack, reason }    12c Part 6: a team ended while its bank debit
+ *                                                                                  clears — send it back or keep it, when it clears
  *
  * Who: whoever runs tournaments (A13, `canRefundOnline`; the treasurer does not refund, owner 2026-10-26). Inside the event's organization and scope,
  * behind the launch switch and the plan. FieldLogicHQ's fee is never refunded (§0c); with A2's box ticked the club pays
@@ -46,6 +48,29 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     const sent = await sendTeamPayLink(body.teamId);
     if ('error' in sent) return json({ error: sent.error }, 409);
     return json(sent);
+  }
+
+  if (body.action === 'clear_decision') {
+    if (typeof body.onlinePaymentId !== 'string' || !UUID.test(body.onlinePaymentId)) return json({ error: 'That payment couldn’t be found.' }, 404);
+    const { data: op } = await supabaseAdmin.from('online_payments').select('id, org_id, tournament_id, team_id, status').eq('id', body.onlinePaymentId).maybeSingle();
+    if (!op || op.org_id !== ctx.org.id || op.tournament_id !== tournamentId) return json({ error: 'That payment couldn’t be found.' }, 404);
+    if (op.status !== 'clearing') return json({ error: 'That bank debit isn’t clearing any more. Open the record again.' }, 409);
+    const { data: team } = op.team_id ? await supabaseAdmin.from('teams').select('status').eq('id', op.team_id as string).maybeSingle() : { data: null };
+    if (team?.status === 'accepted') return json({ error: 'The team is still accepted: its debit goes in the record when it clears.' }, 409);
+    const choice = body.choice === 'send_back' || body.choice === 'keep' ? body.choice : null;
+    const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 200) : '';
+    if (!choice) return json({ error: 'Choose what happens when it clears.' }, 400);
+    if (choice === 'keep' && !reason) return json({ error: 'Say why the club keeps it.' }, 400);
+    if (choice === 'send_back') {
+      const { data: acct } = await supabaseAdmin.from('org_payment_accounts').select('disconnected_at').eq('org_id', ctx.org.id).maybeSingle();
+      if (!acct || acct.disconnected_at) return json({ error: 'Payouts are disconnected. Refund it in Stripe when it clears.' }, 409);
+    }
+    const { error } = await supabaseAdmin.from('online_payment_clear_decisions').insert({
+      org_id: ctx.org.id, online_payment_id: op.id, online_payment_item_id: null, choice, fee_back: choice === 'send_back' && body.feeBack === true,
+      reason: choice === 'keep' ? reason : null, decided_by: ctx.user.id,
+    });
+    if (error) return json({ error: error.code === '23505' ? 'This bank debit already has an answer.' : error.message }, 409);
+    return json({ ok: true });
   }
 
   if (body.action === 'refund' || body.action === 'refund_another_way') {

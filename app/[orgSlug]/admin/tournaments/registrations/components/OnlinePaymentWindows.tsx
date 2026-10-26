@@ -101,9 +101,13 @@ export function PaymentViewWindow({ p, onClose, entryNow = null, canDesk = false
   canDesk?: boolean;
   onAnotherWay?: () => void;
 }) {
+  const bank = p.rail === 'bank_debit';
   const rows: [string, string][] = [
-    [V.paid, p.paidAt ? paidAtLabel(p.paidAt) : '—'],
-    [p.rail === 'bank_debit' ? 'Bank account' : V.card, p.rail === 'bank_debit' ? `Account ending ${p.bankLast4 ?? ''}` : cardLabel(p.brand, p.last4)],
+    // 12c Part 6: a bank debit reads the account and both days (words §3.7 `payView.bank`).
+    ...(bank
+      ? [[V.started, p.startedAt ? formatStoredDate(p.startedAt) : '—'], [V.cleared, p.paidAt ? formatStoredDate(p.paidAt) : '—']] as [string, string][]
+      : [[V.paid, p.paidAt ? paidAtLabel(p.paidAt) : '—']] as [string, string][]),
+    [bank ? V.bank : V.card, bank ? V.bankValue(p.bankLast4 ?? '') : cardLabel(p.brand, p.last4)],
     [V.base, dollars(p.baseCents)],
     [p.feePaidByPayer ? V.feeTeam : V.feeClub, dollars(p.feeCents)],
     [V.total, dollars(p.totalCents)],

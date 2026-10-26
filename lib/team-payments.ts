@@ -30,8 +30,9 @@ export interface TeamPayment {
   method: PaymentMethod | null;
   /** On a plan with Accounting: this payment is one line in the tournament's book. */
   inLedger: boolean;
-  /** 'refunded' = an online payment refunded in full (Stage 12a): shown, never counted in what was paid. */
-  status?: 'posted' | 'refunded';
+  /** 'refunded' = an online payment refunded in full (Stage 12a); 'reversed' = a bank debit the bank took back after it
+   *  cleared (12c Part 6): shown, struck, never counted in what was paid. */
+  status?: 'posted' | 'refunded' | 'reversed';
   /** The online payment behind the row (Stage 12a), when there is one. */
   online?: TeamOnlinePayment | null;
   /** 12c: what part refunds have taken back from this row (never the fee). A posted row counts `amount − refundedAmount`. */
@@ -81,6 +82,10 @@ export interface TeamOnlinePayment {
   scope: 'deposit' | 'balance' | 'full';
   rail: 'card' | 'bank_debit';
   bankLast4: string | null;
+  /** 12c Part 6: a bank debit's start, and the day the bank took it back after it cleared (with its reason). */
+  startedAt?: string | null;
+  reversedAt?: string | null;
+  returnReason?: string | null;
   leftCents: number;
   refunds: TeamRefund[];
 }
