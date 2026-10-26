@@ -155,9 +155,9 @@ export const DELETE = withObservability(async (req: NextRequest,
       planId: org.plan_id,
       subscriptionStatus: org.subscription_status,
       stripeCustomerId: org.stripe_customer_id,
-      reason,
       notifyOwner,
     },
+    { reason },
   );
 
   // Purge tables whose org_id FKs are NO ACTION (confirmed via schema check). The club's held time first (mig 322): its
@@ -215,6 +215,7 @@ export const DELETE = withObservability(async (req: NextRequest,
         'stripe_customer_id',
         org.stripe_customer_id,
         { error: message, orgId: id, orgSlug: org.slug },
+        { reason },
       );
       stripeCustomerWarning = message;
     }

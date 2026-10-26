@@ -3,6 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import { canViewPlatformArea } from '@/lib/platform-areas';
 import { auditDoors, isScheduledEntry } from '@/lib/platform-audit-doors';
+import { auditReasonText, isMoneyEntry, MONEY_ENTRY_HIDDEN } from '@/lib/platform-audit-reason';
+import { reasonOfRow } from '@/lib/platform-story-view';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import kit from '../console.module.css';
 import { humanize } from '../chips';
@@ -32,6 +34,7 @@ type AuditLogRow = {
   field: string | null;
   old_value: unknown;
   new_value: unknown;
+  reason: string | null;
   created_at: string;
   organizations: { id: string; name: string } | { id: string; name: string }[] | null;
 };
@@ -50,6 +53,10 @@ const ACTION_LABELS: Record<string, string> = {
   generate_reset_link: 'Send password reset email',
   invite_platform_user: 'Invite platform user',
   remove_platform_user: 'Remove platform user',
+  refund_charge: 'Refunded a charge',
+  refund_charge_refused: 'Refund refused by Stripe',
+  refund_charge_unknown: 'Refund: no answer from Stripe',
+  refund_charge_resolved: 'Refund checked with Stripe',
   revoke_override: 'Revoke override',
   run_bulk_operation: 'Run bulk operation',
   update_addons: 'Update add-ons',
@@ -79,7 +86,7 @@ function orgNameFromJoin(value: AuditLogRow['organizations']) {
 async function getAuditLog(f: Filters) {
   let q = supabaseAdmin
     .from('platform_audit_log')
-    .select('id, actor_email, org_id, action, field, old_value, new_value, created_at, organizations(id, name)')
+    .select('id, actor_email, org_id, action, field, old_value, new_value, reason, created_at, organizations(id, name)')
     .order('created_at', { ascending: false })
     .range(f.offset, f.offset + PAGE_SIZE - 1);
 
@@ -100,6 +107,7 @@ async function getAuditLog(f: Filters) {
     field: r.field as string | null,
     oldValue: r.old_value,
     newValue: r.new_value,
+    reason: reasonOfRow(r),
     createdAt: r.created_at as string,
   }));
 
@@ -194,8 +202,12 @@ export default async function AuditLogPage({
   const hasNext = rows.length === PAGE_SIZE;
   const hasPrev = offset > 0;
 
-  const rowViews: AuditRowView[] = rows.map(row => {
+  const readsMoney = hasPlatformPower(auth.role, 'find_stripe');
+  const rowViews: AuditRowView[] = rows.map(raw => {
+    const row = !readsMoney && isMoneyEntry(raw.action) ? { ...raw, reason: MONEY_ENTRY_HIDDEN, oldValue: null, newValue: null } : raw;
     const scheduled = isScheduledEntry(row.action, row.actorEmail);
+    // A hidden money reason reads in the quiet ink, like "Not recorded": it is a fact about the entry, not the reason.
+    const why = row !== raw ? { text: MONEY_ENTRY_HIDDEN, notRecorded: true } : auditReasonText(row.action, row.reason);
     const orgFilterHref = row.orgId && row.orgName ? buildAuditHref(filters, { orgId: row.orgId, offset: 0 }) : null;
     return {
       id: row.id,
@@ -207,6 +219,8 @@ export default async function AuditLogPage({
       field: row.field,
       oldValue: row.oldValue,
       newValue: row.newValue,
+      reason: why.text,
+      reasonNotRecorded: why.notRecorded,
       dateLabel: fmtDate(row.createdAt),
       timeLabel: fmtTime(row.createdAt),
       momentKey: new Date(row.createdAt).toISOString().slice(0, 19),

@@ -333,6 +333,7 @@ async function applyStripePriceUpdateProposal(
       approved_change_request_id: changeRequestId,
       approval_mode: 'inline_catalog_request',
     },
+    { reason: proposal.changeNote },
   );
 
   await recordCatalogChangeApplication(
@@ -446,6 +447,7 @@ async function applyPlanGatingUpdateProposal(
       approvedChangeRequestId: changeRequestId,
       approval_mode: 'inline_catalog_request',
     },
+    { reason: proposal.changeNote },
   );
 
   await recordCatalogChangeApplication(
@@ -577,6 +579,7 @@ async function applyPlanConfigUpdateProposal(
       approved_change_request_id: changeRequestId,
       approval_mode: 'inline_catalog_request',
     },
+    { reason: proposal.changeNote },
   );
 
   await recordCatalogChangeApplication(

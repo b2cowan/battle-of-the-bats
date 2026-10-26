@@ -1,5 +1,5 @@
 import { consoleDay } from './console-dates';
-import { overrideWhat, sectionLabel } from './platform-labels';
+import { overrideWhat, sectionLabel, subscriptionStatusLabel } from './platform-labels';
 import { possessive } from './utils';
 import { earliestLastDay, formatLongDay, formatShortDay, isGrantRunning, lastDayOfInstant } from './free-time';
 import { isFoundingSeasonCompExpiry } from './plan-config';
@@ -43,8 +43,8 @@ export function freeTimeStoryEntries(input: {
   // from the date, nothing stored). Founding Season reads as its own entry and never carries Put it back. Put it back
   // sits only on the NEWEST entry of a grant still running: on "given" it ends it now; on "changed" it restores the
   // earlier last day. A comp period that is not Founding Season reads as it always has (owner ruling Q5).
-  const revokeReasons = new Map<string, unknown>();
-  for (const r of audit) if (r.action === 'revoke_override' && typeof r.old_value === 'string') revokeReasons.set(r.old_value, r.new_value);
+  const revokeRows = new Map<string, AuditRow>();
+  for (const r of audit) if (r.action === 'revoke_override' && typeof r.old_value === 'string') revokeRows.set(r.old_value, r);
   const changesByGrant = new Map<string, AuditRow[]>();
   for (const r of [...audit].reverse()) {
     if (r.action !== 'change_override_end') continue;
@@ -67,7 +67,7 @@ export function freeTimeStoryEntries(input: {
         sub: org.plan_id === 'team' ? 'Given at checkout' : 'Given at sign-up', who: THE_PRODUCT, why: null,
       });
       if (o.revoked_at) {
-        entries.push({ key: `override-ended:${o.id}`, at: o.revoked_at, kind: 'billing', title: 'Founding Season ended', who: o.revoked_by ?? 'Staff', ...whyFields(revokeReasons.get(o.id), false) });
+        entries.push({ key: `override-ended:${o.id}`, at: o.revoked_at, kind: 'billing', title: 'Founding Season ended', who: o.revoked_by ?? 'Staff', ...whyFields(revokeRows.get(o.id), false) });
       } else if (ranOut) {
         entries.push({ key: `override-ran-out:${o.id}`, at: o.expires_at, kind: 'billing', title: 'Founding Season ended by itself', who: THE_PRODUCT, why: null });
       }
@@ -78,7 +78,7 @@ export function freeTimeStoryEntries(input: {
       const what = overrideWhat(o.type, o.value, []);
       const ends = o.expires_at ? `until ${consoleDay(o.expires_at)}` : 'no end date';
       entries.push({ key: `override:${o.id}`, at: o.created_at, kind: 'staff', title: `Override applied: ${what}`, sub: running ? `Running, ${ends}` : ends, who: o.created_by ?? 'Staff', why: o.reason ?? null, whyNotRecorded: !o.reason });
-      if (o.revoked_at) entries.push({ key: `override-ended:${o.id}`, at: o.revoked_at, kind: 'staff', title: `Override ended: ${what}`, who: o.revoked_by ?? 'Staff', ...whyFields(revokeReasons.get(o.id), true) });
+      if (o.revoked_at) entries.push({ key: `override-ended:${o.id}`, at: o.revoked_at, kind: 'staff', title: `Override ended: ${what}`, who: o.revoked_by ?? 'Staff', ...whyFields(revokeRows.get(o.id), true) });
       else if (ranOut) entries.push({ key: `override-ran-out:${o.id}`, at: o.expires_at!, kind: 'staff', title: `Override ran out: ${what}`, who: THE_PRODUCT, why: null });
       continue;
     }
@@ -86,7 +86,7 @@ export function freeTimeStoryEntries(input: {
     const isPlan = o.type === 'plan_tier';
     const subject = isPlan ? planName(o.target?.plan)
       : o.type === 'module_addon' ? ((o.target?.addons ?? []).map(sectionLabel).join(', ') || 'Sections')
-      : `Billing status: ${(o.value ?? 'active').replace(/_/g, ' ')}`;
+      : `Billing status: ${subscriptionStatusLabel(o.value ?? 'active')}`;
     const back = isPlan ? `Back to ${ownPlan}` : undefined;
     const changes = changesByGrant.get(o.id) ?? [];
     const originalEnd = (typeof changes[0]?.old_value === 'string' ? changes[0].old_value : null) ?? o.expires_at;
@@ -113,7 +113,7 @@ export function freeTimeStoryEntries(input: {
       const entry: StoryEntry = {
         key: `audit:${c.id}`, at: c.created_at, kind: 'staff',
         title: `${putBackOf(c.new_value) ? 'Put back: ' : ''}Free time changed: ${subject} now free through ${short(to)}`,
-        sub: `Was through ${short(from)}`, who: c.actor_email ?? 'Staff', ...whyFields(c.new_value, true),
+        sub: `Was through ${short(from)}`, who: c.actor_email ?? 'Staff', ...whyFields(c, true),
       };
       // The newest change of a running grant restores the day before it (or ends it now, when that day has passed).
       if (c === newestChange && running && o.expires_at) {
@@ -136,10 +136,10 @@ export function freeTimeStoryEntries(input: {
     }
 
     if (o.revoked_at) {
-      const revoke = revokeReasons.get(o.id);
+      const revoke = revokeRows.get(o.id);
       entries.push({
         key: `override-ended:${o.id}`, at: o.revoked_at, kind: 'staff',
-        title: putBackOf(revoke) ? `Put back: free time ended: ${subject}` : `Free time ended early: ${subject}`,
+        title: putBackOf(revoke?.new_value) ? `Put back: free time ended: ${subject}` : `Free time ended early: ${subject}`,
         sub: back, who: o.revoked_by ?? 'Staff', ...whyFields(revoke, true),
       });
     } else if (ranOut) {

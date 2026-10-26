@@ -27,6 +27,8 @@ export type AuditRow = {
   field: string | null;
   old_value: unknown;
   new_value: unknown;
+  /** Its own column since mig 380 (R4, owner Q6 2026-10-26). */
+  reason?: string | null;
   created_at: string;
 };
 
@@ -36,17 +38,24 @@ export function obj(v: unknown): Record<string, unknown> | null {
 export function str(v: unknown): string | null {
   return typeof v === 'string' && v.trim() ? v : null;
 }
-function reasonOf(v: unknown): string | null {
-  return str(obj(v)?.reason);
+/**
+ * An entry's reason: the column, else the copy kept inside `new_value`. The fallback is not history alone: production
+ * takes the migration before this code, and a row written in between keeps its reason only inside the value (the
+ * migration's one-time copy has already run).
+ */
+export function reasonOfRow(r: Pick<AuditRow, 'reason' | 'new_value'> | null | undefined): string | null {
+  if (!r) return null;
+  const v = obj(r.new_value);
+  return str(r.reason) ?? str(v?.reason) ?? str(v?.change_note) ?? str(v?.changeNote);
 }
 export function putBackOf(v: unknown): string | null {
   return str(obj(v)?.put_back_of);
 }
-/** An entry's Why: the reason kept, else "Not recorded" for a change kept since Stage 2, else "—". */
-export function whyFields(v: unknown, keptSinceStage2: boolean): Pick<StoryEntry, 'why' | 'whyNotRecorded'> {
-  const reason = reasonOf(v);
+/** An entry's Why: the reason kept, else "Not recorded" for a staff change (owner Q6), else "—". */
+export function whyFields(r: Pick<AuditRow, 'reason' | 'new_value'> | null | undefined, staffChange: boolean): Pick<StoryEntry, 'why' | 'whyNotRecorded'> {
+  const reason = reasonOfRow(r);
   if (reason) return { why: reason };
-  return keptSinceStage2 ? { why: null, whyNotRecorded: true } : { why: null };
+  return staffChange ? { why: null, whyNotRecorded: true } : { why: null };
 }
 export function planName(id: unknown): string {
   return typeof id === 'string' && id ? planLabel(id) : 'no plan';
@@ -70,6 +79,10 @@ export type StoryEntry = {
   putBack?: PutBack;
   /** When this entry was put back (the door goes; the grey line says when). */
   putBackAt?: string;
+  /** A console refund's Stripe charge: the screen names it by its moment once Stripe has been read (Stage 3). */
+  chargeId?: string;
+  /** A billing fact Stripe's charges attach to when the screen merges them in (Stage 3): matched on this, never the words. */
+  moneyEvent?: 'bought' | 'missed' | 'recovered' | 'moved';
 };
 
 /** Narrow a Story by type and words (case-insensitive over what each row says). */

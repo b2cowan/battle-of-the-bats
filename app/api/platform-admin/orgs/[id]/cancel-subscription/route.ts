@@ -69,7 +69,7 @@ export const GET = withObservability(async (_req: NextRequest,
   }
 
   if (orgRow.subscription_status === 'canceled') {
-    return NextResponse.json({ error: 'Subscription is already canceled' }, { status: 400 });
+    return NextResponse.json({ error: 'Subscription is already cancelled' }, { status: 400 });
   }
 
   const org = mapOrgRow(orgRow);
@@ -114,7 +114,7 @@ export const POST = withObservability(async (req: NextRequest,
   }
 
   if (orgRow.subscription_status === 'canceled') {
-    return NextResponse.json({ error: 'Subscription is already canceled' }, { status: 400 });
+    return NextResponse.json({ error: 'Subscription is already cancelled' }, { status: 400 });
   }
 
   const org = mapOrgRow(orgRow);
@@ -241,11 +241,11 @@ export const POST = withObservability(async (req: NextRequest,
     orgRow.subscription_status,
     {
       status: 'canceled',
-      reason,
       retentionUntil,
       retainedTournamentIds: preflight.tournaments.map(t => t.id),
       stripeSubscriptionId: orgRow.stripe_subscription_id,
     },
+    { reason },
   );
 
   let stripeWarning: string | null = null;
@@ -263,6 +263,7 @@ export const POST = withObservability(async (req: NextRequest,
         'stripe_subscription_id',
         stripeSubscriptionId,
         { error: message },
+        { reason },
       );
       stripeWarning = message;
     }

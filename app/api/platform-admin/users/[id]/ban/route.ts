@@ -24,6 +24,6 @@ export const POST = withObservability(async (req: NextRequest,
   }
 
   await writePlatformAuditLog(auth.user.email!, null, action === 'ban' ? 'ban_user' : 'unban_user', 'user_id',
-    action === 'ban' ? 'active' : 'banned', personAuditValue(person, reason));
+    action === 'ban' ? 'active' : 'banned', personAuditValue(person), { reason });
   return NextResponse.json({ ok: true });
 }, { route: '/api/platform-admin/users/[id]/ban' });

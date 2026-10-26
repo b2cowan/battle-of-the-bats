@@ -57,6 +57,6 @@ export async function personActionContext<B extends Record<string, unknown>>(
 }
 
 /** The person, named the one way, with the reason — the `new_value` of every person action from Stage 2 on. */
-export function personAuditValue(person: Pick<PlatformPerson, 'id' | 'email'>, reason: string, extra: Record<string, unknown> = {}) {
-  return { userId: person.id, email: person.email, reason, ...extra };
+export function personAuditValue(person: Pick<PlatformPerson, 'id' | 'email'>, extra: Record<string, unknown> = {}) {
+  return { userId: person.id, email: person.email, ...extra };
 }

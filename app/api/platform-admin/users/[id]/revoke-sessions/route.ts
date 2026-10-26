@@ -28,6 +28,6 @@ export const POST = withObservability(async (req: NextRequest,
     return NextResponse.json({ error: 'They could not be signed out.' }, { status: 500 });
   }
 
-  await writePlatformAuditLog(auth.user.email!, null, 'revoke_sessions', 'user_id', null, personAuditValue(person, reason));
+  await writePlatformAuditLog(auth.user.email!, null, 'revoke_sessions', 'user_id', null, personAuditValue(person), { reason });
   return NextResponse.json({ ok: true });
 }, { route: '/api/platform-admin/users/[id]/revoke-sessions' });

@@ -92,8 +92,8 @@ export const POST = withObservability(async (req: NextRequest,
     {
       newOwnerUserId,
       demotedOwnerIds: currentOwners.map(m => m.user_id),
-      reason,
     },
+    { reason },
   );
 
   return NextResponse.json({

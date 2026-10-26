@@ -18,6 +18,6 @@ export const POST = withObservability(async (req: NextRequest,
     return NextResponse.json({ error: 'The email could not be confirmed.' }, { status: 500 });
   }
 
-  await writePlatformAuditLog(auth.user.email!, null, 'confirm_email', 'user_id', 'unconfirmed', personAuditValue(person, reason));
+  await writePlatformAuditLog(auth.user.email!, null, 'confirm_email', 'user_id', 'unconfirmed', personAuditValue(person), { reason });
   return NextResponse.json({ ok: true });
 }, { route: '/api/platform-admin/users/[id]/confirm-email' });

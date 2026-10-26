@@ -68,7 +68,8 @@ export const POST = withObservability(async (req: Request, ctx: { params: Promis
     'extend_billing_retention',
     'retention_until',
     current.retention_until,
-    { retentionUntil: nextIso, days, reason, recordId },
+    { retentionUntil: nextIso, days, recordId },
+    { reason },
   );
 
   return NextResponse.json({ ok: true, retentionUntil: nextIso });

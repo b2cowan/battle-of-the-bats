@@ -138,6 +138,7 @@ export const POST = withObservability(async (req: Request) => {
       request.id,
       { module_entitlements: current },
       appliedPayload,
+      { reason: changeNote },
     );
 
     await recordCatalogChangeApplication(

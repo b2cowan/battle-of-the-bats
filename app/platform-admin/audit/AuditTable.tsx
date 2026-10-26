@@ -8,6 +8,9 @@
  *   · "Same moment" lists the other entries this person made in the same second, one level deeper with a way back;
  *   · up to two doors in the foot, olive text (a control that goes somewhere is olive text — design decisions 2026-10-01);
  *     which doors comes from `lib/platform-audit-doors.ts`. No Revert, ever: the log is the record nobody edits.
+ * Support console Stage 3 (owner Q6, Q12 and the 2026-10-26 direction): the table reads who, when, which club, what and
+ * WHY — a Reason column after Action; Field, Old value and New value moved into the window, where they have room. A staff
+ * change without a reason reads "Not recorded"; a product job or a work tool, "—". The export keeps every column.
  * The rows arrive ready to draw (dates formatted, doors decided, filter links built) so the server stays the one place
  * that knows the filters, the viewer's role and the clock.
  */
@@ -29,6 +32,9 @@ export interface AuditRowView {
   field: string | null;
   oldValue: unknown;
   newValue: unknown;
+  /** The reason in words, "Not recorded" for a staff change without one, or null ("—": a job or a work tool). */
+  reason: string | null;
+  reasonNotRecorded: boolean;
   dateLabel: string;
   timeLabel: string;
   /** The entry's time to the second — entries by one person sharing it are "the same moment". */
@@ -44,12 +50,6 @@ function selectingText(): boolean {
   return (window.getSelection()?.toString() ?? '').length > 0;
 }
 
-function fmtValue(v: unknown): string {
-  if (v === null || v === undefined) return '-';
-  const s = typeof v === 'string' ? v : JSON.stringify(v);
-  return s.length > 80 ? `${s.slice(0, 80)}...` : s;
-}
-
 function plainValue(v: unknown): string {
   if (v === null || v === undefined) return '-';
   return typeof v === 'string' ? v : JSON.stringify(v, null, 2);
@@ -62,6 +62,7 @@ function entryText(r: AuditRowView): string {
     `${r.dateLabel}, ${r.timeLabel}`,
     `Superuser: ${r.actorEmail}`,
     `Org: ${r.orgName ?? 'None'}`,
+    `Reason: ${r.reason ?? '-'}`,
     `Field: ${r.field ?? '-'}`,
     `Old value: ${plainValue(r.oldValue)}`,
     `New value: ${plainValue(r.newValue)}`,
@@ -116,16 +117,14 @@ export default function AuditTable({ rows }: { rows: AuditRowView[] }) {
               <th>Superuser</th>
               <th>Org</th>
               <th>Action</th>
-              <th>Field</th>
-              <th>Old value</th>
-              <th>New value</th>
+              <th>Reason</th>
               <th aria-label="Open" />
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className={kit.empty}>No audit entries found.</td>
+                <td colSpan={6} className={kit.empty}>No audit entries found.</td>
               </tr>
             )}
             {rows.map(row => (
@@ -152,9 +151,9 @@ export default function AuditTable({ rows }: { rows: AuditRowView[] }) {
                   )}
                 </td>
                 <td data-label="Action">{row.actionLabel}</td>
-                <td data-label="Field" className={kit.muted}>{row.field ?? '-'}</td>
-                <td data-label="Old value"><span className={styles.val}>{fmtValue(row.oldValue)}</span></td>
-                <td data-label="New value"><span className={styles.val}>{fmtValue(row.newValue)}</span></td>
+                <td data-label="Reason" className={row.reason && !row.reasonNotRecorded ? undefined : kit.muted}>
+                  {row.reason ? <span className={styles.reason}>{row.reason}</span> : '-'}
+                </td>
                 <td className={`${kit.rowDoor} ${styles.openCell}`}>
                   <button
                     type="button"
@@ -200,6 +199,12 @@ export default function AuditTable({ rows }: { rows: AuditRowView[] }) {
               <div>
                 <div className={kit.eye}>Org</div>
                 <div className={styles.factValue}>{current.orgName ?? <span className={kit.muted}>None</span>}</div>
+              </div>
+              <div className={styles.factWide}>
+                <div className={kit.eye}>Reason</div>
+                <div className={styles.factValue}>
+                  {current.reason && !current.reasonNotRecorded ? current.reason : <span className={kit.muted}>{current.reason ?? '-'}</span>}
+                </div>
               </div>
               <div>
                 <div className={kit.eye}>Field</div>

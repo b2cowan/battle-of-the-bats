@@ -59,13 +59,13 @@ export async function applyClubIdentity(opts: {
 
   if (current.name !== name) {
     await writePlatformAuditLog(opts.actorEmail, opts.orgId, 'update_org_identity', 'name', current.name, {
-      value: name, reason: opts.reason, ...opts.extra,
-    });
+      value: name, ...opts.extra,
+    }, { reason: opts.reason });
   }
   if (current.slug !== slug) {
     await writePlatformAuditLog(opts.actorEmail, opts.orgId, 'update_org_identity', 'slug', current.slug, {
-      value: slug, reason: opts.reason, ...opts.extra,
-    });
+      value: slug, ...opts.extra,
+    }, { reason: opts.reason });
   }
   return { ok: true };
 }
@@ -121,8 +121,8 @@ export async function applyClubSections(opts: {
   if (!written || written.length === 0) return stale;
 
   await writePlatformAuditLog(opts.actorEmail, opts.orgId, 'update_addons', 'enabled_addons', before, {
-    value: next, reason: opts.reason, ...opts.extra,
-  });
+    value: next, ...opts.extra,
+  }, { reason: opts.reason });
   return { ok: true };
 }
 
@@ -146,6 +146,6 @@ export async function endClubOverride(opts: {
   if (!updated || updated.length === 0) return { ok: false, status: 404, error: 'That override has already ended.' };
 
   await writePlatformAuditLog(opts.actorEmail, opts.orgId, 'revoke_override', 'id', opts.overrideId,
-    opts.reason ? { reason: opts.reason, ...opts.extra } : null);
+    opts.extra && Object.keys(opts.extra).length ? opts.extra : null, { reason: opts.reason });
   return { ok: true, override: updated[0] as { id: string; revoked_at: string; revoked_by: string } };
 }

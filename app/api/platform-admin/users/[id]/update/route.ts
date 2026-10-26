@@ -40,9 +40,9 @@ export const PATCH = withObservability(async (req: NextRequest,
     return NextResponse.json({ error: error.message ?? 'The change could not be saved.' }, { status: 500 });
   }
 
-  await writePlatformAuditLog(auth.user.email!, null, 'update_user', 'user_id', person.email, personAuditValue(person, reason, {
+  await writePlatformAuditLog(auth.user.email!, null, 'update_user', 'user_id', person.email, personAuditValue(person, {
     ...(emailChanges ? { emailFrom: person.email, emailTo: email } : {}),
     ...(nameChanges ? { nameFrom: person.displayName, nameTo: name } : {}),
-  }));
+  }), { reason });
   return NextResponse.json({ ok: true });
 }, { route: '/api/platform-admin/users/[id]/update' });

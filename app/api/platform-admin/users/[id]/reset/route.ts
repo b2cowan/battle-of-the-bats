@@ -70,6 +70,6 @@ export const POST = withObservability(async (req: NextRequest,
     );
   }
 
-  await writePlatformAuditLog(auth.user.email!, null, 'generate_reset_link', 'email', null, personAuditValue(person, reason));
+  await writePlatformAuditLog(auth.user.email!, null, 'generate_reset_link', 'email', null, personAuditValue(person), { reason });
   return NextResponse.json({ ok: true });
 }, { route: '/api/platform-admin/users/[id]/reset' });

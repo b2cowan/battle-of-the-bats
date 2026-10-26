@@ -63,6 +63,6 @@ export const DELETE = withObservability(async (req: NextRequest,
   }
 
   await writePlatformAuditLog(auth.user.email!, null, 'delete_user', 'user_id', person.email,
-    personAuditValue(person, reason, cleanedTeamIds.length > 0 ? { cleanedBasicCoachTeams: cleanedTeamIds.length } : {}));
+    personAuditValue(person, cleanedTeamIds.length > 0 ? { cleanedBasicCoachTeams: cleanedTeamIds.length } : {}), { reason });
   return NextResponse.json({ ok: true });
 }, { route: '/api/platform-admin/users/[id]/delete' });

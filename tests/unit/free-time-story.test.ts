@@ -83,7 +83,7 @@ describe('free time on the Story', () => {
     assert.equal(s.title, 'Free time given: Accounting through Sep 30, 2026');
     assert.equal(s.sub, undefined);
     const [b] = story([grant({ id: 'b1', type: 'subscription_status', value: 'active', target: null })]);
-    assert.equal(b.title, 'Free time given: Billing status: active through Mar 31, 2027');
+    assert.equal(b.title, 'Free time given: Billing status: Active through Mar 31, 2027');
   });
 
   it('an entry already put back says when, and offers nothing', () => {

@@ -36,6 +36,7 @@ export const POST = withObservability(async (req: NextRequest,
     'release_club_web_address',
     'own_address',
     { address: row.full_name, status: row.status },
+    null,
     { reason },
   );
 

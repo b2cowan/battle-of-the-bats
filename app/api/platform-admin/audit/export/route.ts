@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformAreaApi } from '@/lib/platform-auth';
+import { hasPlatformPower, requirePlatformAreaApi } from '@/lib/platform-auth';
+import { isMoneyEntry, MONEY_ENTRY_HIDDEN } from '@/lib/platform-audit-reason';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
 import { withObservability } from '@/lib/observability';
 import { tournamentToday } from '@/lib/timezone';
+import { reasonOfRow } from '@/lib/platform-story-view';
 
 const EXPORT_LIMIT = 2000;
 
@@ -15,6 +17,7 @@ type AuditLogRow = {
   field: string | null;
   old_value: unknown;
   new_value: unknown;
+  reason: string | null;
   created_at: string;
   organizations: { id: string; name: string } | { id: string; name: string }[] | null;
 };
@@ -36,6 +39,7 @@ function csvValue(value: unknown) {
 export const GET = withObservability(async (req: NextRequest) => {
   const auth = await requirePlatformAreaApi('audit', 'view');
   if (auth.response) return auth.response;
+  const readsMoney = hasPlatformPower(auth.role, 'find_stripe');
 
   const sp = req.nextUrl.searchParams;
   const qText = sp.get('q')?.trim().toLowerCase() ?? '';
@@ -46,7 +50,7 @@ export const GET = withObservability(async (req: NextRequest) => {
 
   let query = supabaseAdmin
     .from('platform_audit_log')
-    .select('id, actor_email, org_id, action, field, old_value, new_value, created_at, organizations(id, name)')
+    .select('id, actor_email, org_id, action, field, old_value, new_value, reason, created_at, organizations(id, name)')
     .order('created_at', { ascending: false })
     .limit(EXPORT_LIMIT);
 
@@ -68,17 +72,20 @@ export const GET = withObservability(async (req: NextRequest) => {
       orgId: row.org_id as string | null,
       orgName: orgNameFromJoin(row.organizations),
       action: row.action as string,
+      reason: reasonOfRow(row),
       field: row.field as string | null,
       oldValue: row.old_value,
       newValue: row.new_value,
     }))
+    // A refund's reason and details are for the roles that read Stripe (A2); the others see that one was made.
+    .map(row => (readsMoney || !isMoneyEntry(row.action) ? row : { ...row, reason: MONEY_ENTRY_HIDDEN, oldValue: null, newValue: null }))
     .filter(row => {
       if (!qText) return true;
       return row.actorEmail.toLowerCase().includes(qText) ||
         row.orgName.toLowerCase().includes(qText);
     });
 
-  const header = ['id', 'created_at', 'actor_email', 'org_id', 'org_name', 'action', 'field', 'old_value', 'new_value'];
+  const header = ['id', 'created_at', 'actor_email', 'org_id', 'org_name', 'action', 'reason', 'field', 'old_value', 'new_value'];
   const date   = tournamentToday();
   const format = sp.get('format') ?? 'csv';
 
@@ -90,6 +97,7 @@ export const GET = withObservability(async (req: NextRequest) => {
       row.orgId ?? null,
       row.orgName || null,
       row.action,
+      row.reason,
       row.field ?? null,
       row.oldValue !== null && row.oldValue !== undefined
         ? typeof row.oldValue === 'string' ? row.oldValue : JSON.stringify(row.oldValue)
