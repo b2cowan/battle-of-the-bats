@@ -26594,3 +26594,14 @@ republished; tick positions unchanged).
 
 **Not run by the builder:** the walk; the rendered layout check (see §384).
 <!-- /§385 -->
+
+## §386 · Club site · "My team" for a house-league coach — **a signed-in coach of a house-league team sees "My team" (a jersey) at the top right of their club's site on a desk, underlined on their team page with House league unlit there; two or more teams make it "My teams" with a short list; on a phone the account menu's first row is "My team", or a "My teams" heading over the team names; the globe labelled "Public site" that flipped between Home and the team page is gone for an account whose only role is a team page, and real staff keep their door** — ✅ **WALKED 2026-10-26 (owner)**
+<!-- §386 -->
+**Built and committed 2026-10-26:** `710af3207` · fix `c2fdd9231` (the team list never reached the bar until then). Drawing: [CLUB_SITE_MY_TEAM_DRAWING.html](CLUB_SITE_MY_TEAM_DRAWING.html), https://claude.ai/artifact/DnXwNanG3vpuCMieJYv5Xk — A1–A5 ruled as recommended.
+
+**The walk:** owner, in the browser, as coach Pat Walk on Dev League Org's Cardinals page: "My team" lit on the team page and House league unlit, the account menu's first row on a phone, the way back from Home. Passed: "looks good".
+
+**Proven by the builder:** a headless render as the coach (one-time sign-in link) showed the lit "My team" and the unlit House league; flip-twins tests for the staff door; the club bar's guard tests.
+
+**Not walked:** a coach of two or more teams (the "My teams" list and the phone heading), and a coach who is also club staff.
+<!-- /§386 -->

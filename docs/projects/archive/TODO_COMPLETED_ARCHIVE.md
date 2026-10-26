@@ -6,6 +6,8 @@ Everything below was moved out of TODO.md verbatim on 2026-10-26. Add new comple
 
 (Newest additions go here.)
 
+- [x] 👕 "My team" on the club site for a house-league coach; the globe door goes for coach-only accounts (owner ruled 2026-10-26, A1–A5 as recommended; committed `710af3207` + fix `c2fdd9231` 2026-10-26; owner QA §386 ✅ 2026-10-26 — drawing docs/projects/active/CLUB_SITE_MY_TEAM_DRAWING.html)
+
 ## Checked items lifted out of the open list (2026-10-26)
 
 - [x] **📋 Save over a practice template, a drill or a circuit (drawn 2026-10-02 · D1–D12 ruled as drawn 2026-10-02 · committed `ff36aacd` 2026-10-02 after /simplify + /review · owner QA §260 ✅ PASSED 2026-10-07 on the owner's word · on prod 2026-10-02 (Amplify job 275))** — the lineup builder's save-over, on practice plans: a filled-in name decides new vs Replace / Update, with the are-you-sure inside the window and tags replaced; an updated drill reaches upcoming practices and never past ones (revises the 2026-08-01 "copied, never linked" rule); a placed circuit gets a save door; fixes the untitled-block circuit save and the drills-made-before-a-refused-circuit bug. Hub https://claude.ai/artifact/119bRyzRrt4MKxBDJ82WnE (see docs/projects/active/COACH_PRACTICE_SAVE_OVER_PLAN.md)

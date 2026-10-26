@@ -222,7 +222,6 @@ This file is the **index** of open work for the FieldLogicHQ platform. AI models
 - [ ] UAT Agent — Browser-based acceptance test suite + `/uat` slash command; Playwright scenarios for auth, plan-gating…
 ## 🚀 Active Tasks (Priority Order)
 
-- [ ] 👕 "My team" on the club site for a house-league coach; the globe door goes for coach-only accounts (owner ruled 2026-10-26, A1–A5 as recommended; COMMITTED 710af3207 10-26, browser check owed — drawing docs/projects/active/CLUB_SITE_MY_TEAM_DRAWING.html)
 - [ ] Themed date picker — our calendar and time list on a desk, the device picker on touch (owner ruled 2026-10-25, all four asks as…
 - [ ] Owner bookkeeping: accountant review accepted 2026-10-25; the fixes are next, then the outside accountant
 - [ ] Public tournament sites — review, calmer phone pages, sponsors, the club link (LOGGED 2026-10-24, not drawn)
