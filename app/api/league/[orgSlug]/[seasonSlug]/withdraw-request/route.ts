@@ -8,13 +8,15 @@ import { registrationReference } from '@/lib/utils';
 import { notify } from '@/lib/notify';
 import { houseLeagueDeskUserIds } from '@/lib/notify-recipients';
 import { ASK_WORDS } from '@/lib/house-league-money-words';
+import { registrationFromPayToken } from '@/lib/league-pay-link';
+import { signupRowsForLink } from '@/lib/league-signup-status';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/league/[orgSlug]/[seasonSlug]/withdraw-request — a family asks to withdraw a child (Club Tier 9b-2 Part 6,
  * copy §14). The SAME possession proof as the status lookup: the guardian's email AND the sign-up's reference (or an older
- * registration's own 8-character code). The child is named by its own registration code among the children that
+ * registration's own 8-character code) — or, since 12b, the family's pay link, which opens the same one sign-up. The child is named by its own registration code among the children that
  * reference shows. Asking changes nothing on its own — the child keeps their place; the house-league desk sees the ask in
  * Needs attention, and it clears itself when the registration ends (lib/needs-attention.ts `withdrawRequest`).
  * Throttled like every public family form. A refusal never says whether an email is registered.
@@ -31,7 +33,7 @@ export const POST = withObservability(async (req: Request,
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  let body: { email?: unknown; refCode?: unknown; child?: unknown; note?: unknown };
+  let body: { email?: unknown; refCode?: unknown; child?: unknown; note?: unknown; token?: unknown };
   try { body = await req.json(); } catch { return NextResponse.json({ error: ASK_WORDS.errGeneric }, { status: 400 }); }
 
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
@@ -39,17 +41,32 @@ export const POST = withObservability(async (req: Request,
   const refCode = code(body.refCode);
   const child = code(body.child);
   const note = typeof body.note === 'string' ? body.note.trim().slice(0, 300) || null : null;
-  if (!email || refCode.length !== 8 || child.length !== 8) return NextResponse.json({ error: ASK_WORDS.errGeneric }, { status: 400 });
+  // 12b (§0e c): the family's pay link is the same possession proof as the email and the reference — one sign-up.
+  const token = typeof body.token === 'string' ? body.token.trim() : '';
+  if (child.length !== 8 || (!token && (!email || refCode.length !== 8))) return NextResponse.json({ error: ASK_WORDS.errGeneric }, { status: 400 });
 
-  const { data, error } = await supabaseAdmin
-    .from('league_registrations')
-    .select('id, status, player_first_name, player_last_name, guardian_first_name, guardian_last_name, signup_ref, withdraw_requested_at')
-    .eq('season_id', season.id).eq('guardian_email', email);
-  if (error) throw error;
-  // Possession: only a child the reference shows (the status lookup's rule), and only the child named.
   type Row = { id: string; status: string; player_first_name: string; player_last_name: string; guardian_first_name: string; guardian_last_name: string; signup_ref: string | null; withdraw_requested_at: string | null };
-  const reg = ((data ?? []) as Row[]).find(r =>
-    (r.signup_ref === refCode || registrationReference(String(r.id)) === refCode) && registrationReference(String(r.id)) === child);
+  const COLUMNS = 'id, status, player_first_name, player_last_name, guardian_first_name, guardian_last_name, signup_ref, withdraw_requested_at';
+  let reg: Row | undefined;
+  if (token) {
+    // Possession: only a child of the sign-up the link opens, and only the child named.
+    const regId = registrationFromPayToken(token);
+    const signup = regId ? await signupRowsForLink(regId, { orgId: org.id, seasonId: season.id }) : null;
+    if (signup?.length) {
+      const { data, error } = await supabaseAdmin.from('league_registrations').select(COLUMNS).in('id', signup.map(r => r.id));
+      if (error) throw error;
+      reg = ((data ?? []) as Row[]).find(r => registrationReference(String(r.id)) === child);
+    }
+  } else {
+    const { data, error } = await supabaseAdmin
+      .from('league_registrations')
+      .select(COLUMNS)
+      .eq('season_id', season.id).eq('guardian_email', email);
+    if (error) throw error;
+    // Possession: only a child the reference shows (the status lookup's rule), and only the child named.
+    reg = ((data ?? []) as Row[]).find(r =>
+      (r.signup_ref === refCode || registrationReference(String(r.id)) === refCode) && registrationReference(String(r.id)) === child);
+  }
   if (!reg) return NextResponse.json({ error: ASK_WORDS.errGeneric }, { status: 404 });
   // A finished season takes no asks: there is nothing left to withdraw from (the status page offers no door then).
   if (season.status === 'completed' || season.status === 'archived') {

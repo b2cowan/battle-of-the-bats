@@ -6,14 +6,19 @@ import { childTag, nameList } from '@/lib/league-signup';
 import { dollarsLine } from '@/lib/house-league-season';
 import { clubDay } from '@/lib/league-registration-state';
 import { ASK_WORDS, methodInBrackets } from '@/lib/house-league-money-words';
+import { LEAGUE_PAY_WORDS as LW } from '@/lib/league-pay-words';
+import type { LeaguePayView } from '@/lib/league-pay-view';
+import LeaguePayBlock from '@/components/public/LeaguePayBlock';
 
 /**
  * THE FAMILY'S STATUS PAGE (Club Tier Stage 9b-1, Part 5; drawing §5, words HOUSE_LEAGUE_STAGE9B1_COPY.md §9). The email they
  * signed up with and their reference find the whole sign-up: each child with its tag ("Accepted", never "Approved"), its
- * division and its fee, then ONE pay block for what is still owed with the club's own how-to-pay words, and a greyed
- * "Pay now" (online payment comes later). No team yet.
+ * division and its fee, then ONE pay block for what is still owed with the club's own how-to-pay words. No team yet.
  * 9b-2 (copy §14): the money is read from the club's book — a part payment after a price change, a refund, a fee the club
  * kept on an ended child — and "Ask to withdraw a child" sends the club a request (nothing changes until the club acts).
+ * 12b (owner §0e c): the family's PAY LINK opens this page already unlocked (`initial`, from /status/{token}), and while
+ * the club takes card payments the pay block is THE one pay block (Pay by card, receipts, confirming). When it doesn't,
+ * the block is today's, word for word, and there is no button at all (A6) — the greyed "Pay now" is gone.
  */
 
 type Registration = {
@@ -32,8 +37,13 @@ type Registration = {
   refund: { amount: number; day: string; method: string | null } | null;
   kept: { amount: number; reason: string } | null;
   withdrawRequestedAt: string | null;
+  endedAt: string | null;
 };
-type Found = { registrations: Registration[]; howToPay: string | null; clubName: string; reviewFirst: boolean; finished: boolean };
+type Found = {
+  registrations: Registration[]; howToPay: string | null; clubName: string; reviewFirst: boolean; finished: boolean;
+  /** The pay block while the club takes card payments; null keeps today's words (A6). */
+  pay: LeaguePayView | null;
+};
 
 // Field, label and button faces are the club frame's (Club Tier Stage 4b-1): 44px fields with the form-field border,
 // 14px/600 labels, the club's fill on the one button.
@@ -79,15 +89,24 @@ export default function StatusLookupForm({
   orgSlug,
   seasonSlug,
   contactEmail,
+  initial,
+  returnedSession = null,
+  left = false,
 }: {
   orgSlug: string;
   seasonSlug: string;
   contactEmail: string | null;
+  /** Opened from the family's pay link (12b): the sign-up, already found, and the link's key. */
+  initial?: { found: Found; token: string; guardianEmail: string | null };
+  /** Stripe's return (`?paid=`): the pay block waits for the record. */
+  returnedSession?: string | null;
+  /** Left Stripe's page before paying (`?left=1`). */
+  left?: boolean;
 }) {
   const [email, setEmail] = useState('');
   const [refCode, setRefCode] = useState('');
-  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
-  const [found, setFound] = useState<Found | null>(null);
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>(initial ? 'done' : 'idle');
+  const [found, setFound] = useState<Found | null>(initial?.found ?? null);
   const [errorMsg, setErrorMsg] = useState('');
   // "Ask to withdraw a child" (9b-2): the reference the family looked up with is the possession proof again.
   const [asked, setAsked] = useState<string | null>(null);
@@ -117,6 +136,7 @@ export default function StatusLookupForm({
       setFound({
         registrations: Array.isArray(data.registrations) ? data.registrations : [],
         howToPay: data.howToPay ?? null, clubName: data.clubName ?? '', reviewFirst: !!data.reviewFirst, finished: !!data.finished,
+        pay: data.pay ?? null,
       });
       setState('done');
     } catch {
@@ -143,12 +163,15 @@ export default function StatusLookupForm({
       const res = await fetch(`/api/league/${orgSlug}/${seasonSlug}/withdraw-request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, refCode, child: askFor.child, note: askNote.trim() || null }),
+        // The pay link is the same possession proof as the email and the reference (12b §0e c).
+        body: JSON.stringify(initial
+          ? { token: initial.token, child: askFor.child, note: askNote.trim() || null }
+          : { email, refCode, child: askFor.child, note: askNote.trim() || null }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setAskError(data?.error ?? ASK_WORDS.errGeneric); setAskState('error'); return; }
       setAsked(askFor.child);
-      setAskSent(ASK_WORDS.sent(email.trim(), askFor.playerFirstName));
+      setAskSent(ASK_WORDS.sent(initial ? initial.guardianEmail ?? '' : email.trim(), askFor.playerFirstName));
       setAskOpen(false);
       setAskNote('');
       setAskState('idle');
@@ -159,9 +182,14 @@ export default function StatusLookupForm({
   }
   const sharedRef = regs.length > 0 && regs.every(r => r.ref === regs[0].ref) ? regs[0].ref : null;
 
+  const pay = found?.pay ?? null;
+  // The one pay block owns the money's end of the page while it is waiting on Stripe or there is something to pay.
+  const payBlockOwns = !!pay && (!!returnedSession || pay.kind === 'owing' || pay.kind === 'refused' || pay.receipts.length > 0);
+  const endedOnly = pay?.kind === 'ended' ? regs.filter(ended) : [];
+
   return (
     <>
-      <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
+      {!initial && <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
         <p style={{ ...soft, marginBottom: '1rem' }}>Enter the email you signed up with and your reference.</p>
         <div style={{ marginBottom: '1rem' }}>
           <label style={labelStyle} htmlFor="status-email">Parent or guardian email</label>
@@ -200,7 +228,7 @@ export default function StatusLookupForm({
         >
           {state === 'loading' ? 'Looking up…' : 'Look up'}
         </button>
-      </form>
+      </form>}
 
       {state === 'error' && (
         <div
@@ -260,7 +288,9 @@ export default function StatusLookupForm({
             );
           })}
 
-          {toPay > 0 ? (
+          {pay && payBlockOwns ? (
+            <LeaguePayBlock pay={pay} returnedSession={returnedSession} left={left} />
+          ) : toPay > 0 ? (
             <div className={kit.card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
                 <span style={{ fontWeight: 700, color: 'var(--club-text)' }}>To pay</span>
@@ -272,9 +302,19 @@ export default function StatusLookupForm({
               </p>
               {found?.howToPay && <p style={{ fontSize: '0.875rem', color: 'var(--club-text)', margin: '0.6rem 0 0' }}>How to pay: {found.howToPay}</p>}
               <p style={{ ...soft, marginTop: '0.35rem' }}>Payable separately to {found?.clubName}.</p>
-              <button type="button" className={`${kit.btn} ${kit.btnSecondary}`} disabled title="Online payment isn’t available yet. Use the instructions above." style={{ marginTop: '0.75rem', opacity: 0.5 }}>
-                Pay now
-              </button>
+            </div>
+          ) : pay?.kind === 'ended' && endedOnly.length === regs.length ? (
+            // b5: a link to a sign-up that has ended — nothing to pay, and where questions go.
+            <div className={kit.card}>
+              <p style={{ fontWeight: 700, color: 'var(--club-text)', margin: '0 0 0.35rem' }}>{LW.endedTitle}</p>
+              {endedOnly.map(r => (
+                <p key={r.child} style={soft}>
+                  {r.status === 'withdrawn'
+                    ? LW.endedWithdrawn(`${r.playerFirstName} ${r.playerLastName}`, r.endedAt ? clubDay(r.endedAt.slice(0, 10)) : null)
+                    : LW.endedDeclined(`${r.playerFirstName} ${r.playerLastName}`)}
+                </p>
+              ))}
+              <p style={{ ...soft, marginTop: '0.35rem' }}>{LW.endedQuestions(found?.clubName ?? '', contactEmail)}</p>
             </div>
           ) : accepted.length > 0 && accepted.every(r => r.paid) ? (
             <p style={soft}>Everything is paid. Thank you.</p>

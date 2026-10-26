@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getLeagueSeasonBySlug, getDivisionsForSeason } from '@/lib/db';
+import { getLeagueSeasonBySlug } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { throttlePublicForm } from '@/lib/public-form-throttle';
 import { registrationReference } from '@/lib/utils';
-import { registrationOwes } from '@/lib/league-price';
-import { loadRegistrationMoneyLines } from '@/lib/league-money-read';
-import { lastPayment, lastRefund, receivedOf, refundedOf } from '@/lib/league-money';
+import { buildSignupStatus, SIGNUP_STATUS_COLUMNS, type SignupStatusRow } from '@/lib/league-signup-status';
+import { buildLeaguePayView } from '@/lib/league-pay-view';
+import { getClubSiteContent } from '@/lib/club-page-meta';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +32,7 @@ export const dynamic = 'force-dynamic';
  *
  * 9b-1 (Part 5): each child's price (the one recorded at sign-up) and whether it is paid, and the club's how-to-pay words
  * once a child is accepted and owes something. "Accepted" is the family's word (the page says it, not this route).
+ * 12b: and the pay block (`pay`) when the club takes card payments — the same view the pay link opens.
  */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> },) => {
@@ -70,7 +71,7 @@ export const POST = withObservability(async (req: Request,
   // read from the season's book (a part payment after a price rise reads true), never from the paid flag alone.
   const { data } = await supabaseAdmin
     .from('league_registrations')
-    .select('id, status, player_first_name, player_last_name, division_id, waitlist_position, signup_ref, fee_amount, end_money, end_money_reason, withdraw_requested_at')
+    .select(`${SIGNUP_STATUS_COLUMNS}, guardian_email`)
     .eq('season_id', season.id)
     .eq('guardian_email', email)
     .order('registered_at', { ascending: true });
@@ -85,48 +86,17 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ registrations: [] });
   }
 
-  // Each child's money, from the season's book: received (in − out), the last payment's day, and any refund.
-  const [divisions, lines] = await Promise.all([
-    getDivisionsForSeason(season.id),
-    loadRegistrationMoneyLines(named.map((r: any) => String(r.id))),
+  // Each child's money, from the season's book (the shaping is shared with the pay link's page, Stage 12b).
+  const contactEmail = (await getClubSiteContent(org.id).catch(() => null))?.contactEmail ?? null;
+  // The pay block covers the WHOLE sign-up (its siblings' names are on it), so it comes only with the reference that
+  // shows the whole sign-up — the sign-up's own, or an older registration that has none. A child's own code opens that
+  // child alone, and no pay block.
+  const wholeSignup = named.every((r: any) => r.signup_ref === refCode || !r.signup_ref);
+  const [status, pay] = await Promise.all([
+    buildSignupStatus(season, org.name, named as SignupStatusRow[]),
+    // 12b: the pay block, when the club takes card payments (null keeps today's words, A6). The reference proved the
+    // sign-up, as the pay link does, so the page gets the link's key for Pay.
+    wholeSignup ? buildLeaguePayView(String(named[0].id), contactEmail) : Promise.resolve(null),
   ]);
-  const divisionMap = Object.fromEntries(divisions.map(d => [d.id, d.name]));
-
-  const registrations = named.map((r: any) => {
-    const fee = registrationOwes({ feeAmount: r.fee_amount != null ? Number(r.fee_amount) : null }, season);
-    const mine = lines.get(String(r.id)) ?? [];
-    const received = receivedOf(mine);
-    const last = lastPayment(mine);
-    const refund = lastRefund(mine);
-    const ended = r.status === 'declined' || r.status === 'withdrawn';
-    return {
-      ref: r.signup_ref ?? registrationReference(String(r.id)),
-      // The child's own code: what "Ask to withdraw" names (shown only to a family that already holds the reference).
-      child: registrationReference(String(r.id)),
-      status: r.status,
-      playerFirstName: r.player_first_name,
-      playerLastName: r.player_last_name,
-      divisionName: divisionMap[r.division_id] ?? '—',
-      waitlistPosition: r.waitlist_position ?? null,
-      fee,
-      received,
-      paid: (fee ?? 0) > 0 && received >= (fee ?? 0),
-      owing: !ended && r.status === 'active' ? Math.max(0, Math.round(((fee ?? 0) - received) * 100) / 100) : 0,
-      paidOn: last?.day ?? null,
-      refund: refund ? { amount: refundedOf(mine), day: refund.day, method: refund.method } : null,
-      kept: ended && r.end_money === 'kept' && received > 0 ? { amount: received, reason: r.end_money_reason ?? '' } : null,
-      withdrawRequestedAt: r.withdraw_requested_at ?? null,
-    };
-  });
-  // The club's how-to-pay words reach the family only once a child is accepted and owes something (9b·9).
-  const owes = registrations.some(r => r.status === 'active' && r.owing > 0);
-
-  return NextResponse.json({
-    registrations,
-    howToPay: owes ? season.howToPay : null,
-    clubName: org.name,
-    reviewFirst: !season.autoApproveUnderCapacity,
-    // A finished season takes no "Ask to withdraw" (9b-2).
-    finished: season.status === 'completed' || season.status === 'archived',
-  });
+  return NextResponse.json({ ...status, pay });
 }, { route: '/api/league/[orgSlug]/[seasonSlug]/status-lookup' });

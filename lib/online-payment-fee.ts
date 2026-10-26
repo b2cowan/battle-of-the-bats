@@ -61,6 +61,19 @@ export function onlineFee(baseCents: number, feePayer: OnlineFeePayer, rail: Onl
   };
 }
 
+/**
+ * One payment's fee split across the children it covers (Stage 12b, `online_payment_items.fee_share`): each child's share
+ * is in proportion to its amount, rounded down, and the last child takes the cents left over — so the shares always sum
+ * to the fee exactly. A share is what a FULL refund of that child gives back when A2's box is ticked.
+ */
+export function splitFeeAcross(feeCents: number, amountsCents: readonly number[]): number[] {
+  const base = amountsCents.reduce((s, a) => s + a, 0);
+  if (!amountsCents.length || base <= 0) return amountsCents.map(() => 0);
+  const shares = amountsCents.map(a => Math.floor((feeCents * a) / base));
+  shares[shares.length - 1] += feeCents - shares.reduce((s, x) => s + x, 0);
+  return shares;
+}
+
 /** Dollars as stored in the books (numeric(12,2)) → cents, without float drift. */
 export function toCents(dollars: number | string): number {
   const n = typeof dollars === 'string' ? Number(dollars) : dollars;

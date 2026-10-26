@@ -1,0 +1,29 @@
+/* THE ONE PAY BLOCK (Club Tier Stage 12b, owner §0e d): the pieces a team's pay page and a family's status page share.
+   Its colours are its own three custom properties, so it reads true on the tournament's theme (the default) and inside a
+   club's frame (`.inClub`), without a second copy of any rule. */
+.block { --pay-ink: var(--text-primary); --pay-soft: var(--text-secondary); --pay-dim: var(--text-tertiary); --pay-line: var(--border-2); }
+.inClub { --pay-ink: var(--club-text); --pay-soft: var(--club-soft); --pay-dim: var(--club-soft); --pay-line: var(--club-line); }
+
+.test { margin: 0 0 0.75rem; font-family: var(--font-data); font-size: var(--type-support); color: var(--pay-dim); }
+.state { margin: 0 0 1rem; }
+.state h2, .receipt h2 { margin: 0 0 0.35rem; font-size: var(--type-heading); color: var(--pay-ink); }
+.state p { margin: 0; color: var(--pay-soft); }
+.note { margin: 0.2rem 0 0; font-size: var(--type-support); color: var(--pay-dim); line-height: 1.45; }
+.receipts { margin: 0 0 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.receipt { padding: 0.9rem 1rem; border: 1px solid var(--pay-line); border-radius: var(--radius-sm); }
+.receiptTo { margin: 0; color: var(--pay-ink); font-weight: 600; }
+.lines { margin: 0.75rem 0 0; }
+.lines > div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.2rem 0; color: var(--pay-soft); }
+.lines dd { margin: 0; font-variant-numeric: tabular-nums; }
+.total { border-top: 1px solid var(--pay-line); margin-top: 0.3rem; padding-top: 0.4rem !important; color: var(--pay-ink) !important; font-weight: 700; }
+.field { display: flex; flex-direction: column; gap: 0.3rem; }
+.label { font-size: var(--type-support); font-weight: 600; color: var(--pay-soft); }
+.input { height: 44px; padding: 0 0.75rem; border: 1px solid var(--pay-line); border-radius: var(--radius-sm); background: transparent; color: var(--pay-ink); font: inherit; }
+.payRow { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+.payButton { min-height: 48px; display: inline-flex; align-items: center; gap: 0.5rem; }
+.error { margin: 0; color: rgb(var(--danger-rgb)); }
+.link { align-self: flex-start; padding: 0; border: 0; background: none; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; font-size: var(--type-support); }
+.owing { display: flex; flex-direction: column; gap: 0.9rem; }
+.owing h2 { margin: 0 0 0.35rem; font-size: var(--type-heading); color: var(--pay-ink); }
+.owingLines { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.2rem; color: var(--pay-soft); font-size: var(--type-support); }
+@media (max-width: 640px) { .payButton { width: 100%; justify-content: center; } }

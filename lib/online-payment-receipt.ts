@@ -9,6 +9,9 @@ import { refusalMessage } from './team-pay-view';
 import { teamPayUrl } from './team-pay-link';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
 import { ONLINE_EMAIL_WORDS as E, SCOPE_LINE, cardLabel, money, receiptLabel } from './online-payment-words';
+import { loadLeaguePayFacts } from './league-pay-facts';
+import { leaguePayUrl } from './league-pay-link';
+import { LEAGUE_PAY_WORDS as LW } from './league-pay-words';
 
 /**
  * The payer's emails (Club Tier Stage 12a, copy §14 and §17): one receipt per payment and one email per refund, from our
@@ -19,12 +22,12 @@ import { ONLINE_EMAIL_WORDS as E, SCOPE_LINE, cardLabel, money, receiptLabel } f
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? '';
 
 type OnlineForEmail = {
-  id: string; org_id: string; team_id: string | null; scope: 'deposit' | 'balance' | 'full'; payer_email: string | null;
+  id: string; org_id: string; flow: 'tournament_team' | 'league_signup'; team_id: string | null; scope: 'deposit' | 'balance' | 'full'; payer_email: string | null;
   base_amount: number; fee_amount: number; total_amount: number; fee_payer: 'family' | 'club'; livemode: boolean;
   card_brand: string | null; card_last4: string | null; receipt_no: number | null; paid_on: string | null;
 };
 const ONLINE_EMAIL_COLUMNS =
-  'id, org_id, team_id, scope, payer_email, base_amount, fee_amount, total_amount, fee_payer, livemode, card_brand, card_last4, receipt_no, paid_on';
+  'id, org_id, flow, team_id, scope, payer_email, base_amount, fee_amount, total_amount, fee_payer, livemode, card_brand, card_last4, receipt_no, paid_on';
 
 /** Claims the receipt (so two webhook deliveries send one), then sends it; a failed send releases the claim for a retry. */
 export async function sendOnlineReceiptOnce(onlinePaymentId: string): Promise<void> {
@@ -33,20 +36,57 @@ export async function sendOnlineReceiptOnce(onlinePaymentId: string): Promise<vo
     .update({ receipt_emailed_at: new Date().toISOString() })
     .eq('id', onlinePaymentId)
     .is('receipt_emailed_at', null)
-    .in('status', ['paid', 'refunded'])
-    // Only a receipt this sends is claimed: a house-league payment (12b) waits for its own receipt rather than being
-    // stamped "emailed" with nothing sent (review 2026-10-25).
-    .eq('flow', 'tournament_team')
+    .in('status', ['paid', 'partly_refunded', 'refunded'])
     .select(ONLINE_EMAIL_COLUMNS)
     .maybeSingle();
   const op = data as OnlineForEmail | null;
-  if (!op?.payer_email || !op.team_id) return;
+  if (!op?.payer_email) return;
   try {
-    await sendReceipt(op);
+    // A house-league payment (12b) has its own receipt: one line per child, in the season's words.
+    if (op.flow === 'league_signup') await sendLeagueReceipt(op);
+    else if (op.team_id) await sendReceipt(op);
   } catch (err) {
     await supabaseAdmin.from('online_payments').update({ receipt_emailed_at: null }).eq('id', op.id);
     console.error('[online-payment-receipt] the receipt was not sent:', err instanceof Error ? err.message : String(err));
   }
+}
+
+/**
+ * A house-league family's receipt (Stage 12b, copy §10; drawn k3): one line per child the payment covered
+ * ("{child} · {season} · {division} · {amount}"), the fee only when the family paid it, the total, a waitlisted
+ * sibling's "we'll email you a link to pay", and the status page (their pay link) as "View your receipt".
+ */
+async function sendLeagueReceipt(op: OnlineForEmail): Promise<void> {
+  const { data: items } = await supabaseAdmin.from('online_payment_items')
+    .select('registration_id, description, amount').eq('online_payment_id', op.id).order('created_at');
+  const rows = (items ?? []) as Array<{ registration_id: string | null; description: string; amount: number }>;
+  const anchor = rows.find(r => r.registration_id)?.registration_id;
+  const facts = anchor ? await loadLeaguePayFacts(anchor) : null;
+  if (!facts) return;
+  const face = await systemMailFace({
+    id: facts.org.id, name: facts.org.name, logoUrl: facts.org.logoUrl ?? null,
+    themePreset: facts.org.themePreset ?? null, themePrimary: facts.org.themePrimary ?? null, themeAccent: facts.org.themeAccent ?? null,
+  });
+  const receiptNo = receiptLabel(op.receipt_no ?? '');
+  const test = !op.livemode;
+  const link = leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId: anchor! });
+  const lines = [
+    warmEmailHeading(escapeHtml(E.receiptNumber(receiptNo))),
+    warmEmailParagraph(escapeHtml(E.receiptThanks(facts.org.name, null))),
+    ...rows.map(r => {
+      const [child, division] = r.description.split(' · ');
+      return warmEmailParagraph(escapeHtml(LW.receiptEmailLine(child ?? r.description, facts.season.name, division ?? '', money(Number(r.amount)))));
+    }),
+    op.fee_payer === 'family' && Number(op.fee_amount) > 0 ? warmEmailParagraph(escapeHtml(E.receiptFee(money(Number(op.fee_amount))))) : '',
+    warmEmailParagraph(escapeHtml(E.receiptTotal(money(Number(op.total_amount)), cardLabel(op.card_brand, op.card_last4), formatStoredDate(op.paid_on)))),
+    ...facts.children.filter(c => c.status === 'waitlisted').map(c => warmEmailParagraph(escapeHtml(LW.receiptWaitlisted(`${c.firstName} ${c.lastName}`)))),
+    link ? warmEmailButton(E.viewReceipt, link) : '',
+    warmEmailSmall(escapeHtml(E.questions(facts.org.name, face?.contact ?? null))),
+    test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
+  ];
+  const subject = `${test ? E.testPrefix : ''}${E.receiptSubject(receiptNo, facts.org.name)}`;
+  const result = await sendEmail(op.payer_email!, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), face?.sendOpts ?? {});
+  if (result.status === 'provider_error') throw new Error('send failed');
 }
 
 async function sendReceipt(op: OnlineForEmail): Promise<void> {
