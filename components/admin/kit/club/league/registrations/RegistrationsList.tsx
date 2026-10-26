@@ -55,6 +55,8 @@ type Handlers = {
   onPrimary: (row: RegRowModel) => void;
   onPick: (row: RegRowModel, key: RowActionKey) => void;
   onNote: (row: RegRowModel, key: 'waitlist') => void;
+  /** 12c: the desk's door from a refund the card sent back (the Fee cell's amber pill). Absent for a reader without it. */
+  onAlert?: (row: RegRowModel, refundId: string) => void;
 };
 
 export function Note({ row, onNote }: { row: RegRowModel; onNote: Handlers['onNote'] }) {
@@ -120,7 +122,7 @@ function PhoneRow({ row, h }: { row: RegRowModel; h: Handlers }) {
         </span>
         <span className={css.pDetail}>{row.phoneLine}</span>
         <span className={css.pSub}>{row.playerSub}</span>
-        {row.fee.corrected && <span className={css.pSub} title={row.fee.corrected.tip}>{row.fee.corrected.text}</span>}
+        {row.fee.third && <span className={css.pSub} title={row.fee.third.tip}>{row.fee.third.text}</span>}
       </button>
       <span className={css.pMore}>
         <RowMenu name={row.name} sub={row.sheetSub} items={row.sheet} isPhone onPick={key => h.onPick(row, key)} />
@@ -210,7 +212,7 @@ export default function RegistrationsList({
                   ? <span className={repKit.cellSub}>{row.email}</span>
                   : <span className={`${repKit.cellSub} ${css.noEmail}`}>{REGS_WORDS.noEmail}</span>}
               </td>
-              {showFee && <td><FeeCell parts={row.fee} /></td>}
+              {showFee && <td><FeeCell parts={row.fee} onAlert={h.onAlert ? id => h.onAlert!(row, id) : undefined} /></td>}
               <td className={css.actionsCol} onClick={e => e.stopPropagation()}>
                 <span className={css.actions}>
                   {row.primary && row.primaryLabel && <RowAction disabled={row.busy} onClick={() => h.onPrimary(row)}>{row.primaryLabel}</RowAction>}

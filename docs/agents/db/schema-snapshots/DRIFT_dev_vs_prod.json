@@ -1,11 +1,11 @@
 {
   "generated": "2026-10-26",
-  "total": 648,
+  "total": 654,
   "counts": {
     "tables": 21,
-    "columns": 334,
-    "indexes": 101,
-    "constraints": 94,
+    "columns": 338,
+    "indexes": 102,
+    "constraints": 95,
     "rls": 98
   },
   "items": [
@@ -858,7 +858,19 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:online_payment_refunds.failed_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:online_payment_refunds.failure_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_refunds.family_email_failed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_refunds.family_emailed_at",
       "sig": ""
     },
     {
@@ -907,6 +919,10 @@
     },
     {
       "key": "column:only-dev:online_payment_refunds.refund_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_refunds.resolved_by",
       "sig": ""
     },
     {
@@ -1906,6 +1922,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:online_payment_refunds.online_payment_refunds_resolved_by_fk",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:online_payments.online_payments_cost_entry_fk",
       "sig": ""
     },
@@ -2287,6 +2307,10 @@
     },
     {
       "key": "index:only-dev:online_payment_refunds_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_refunds_resolved_by_idx",
       "sig": ""
     },
     {

@@ -43,6 +43,11 @@
   cursor: help;
 }
 .feeCorrected:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+/* 12c: a correction's card refund that came back is amber, and the desk's door like the pill. */
+.feeCorrectedWarn { color: var(--badge-warning-ink); cursor: pointer; }
+/* 12c: the pill for a refund the card sent back is the desk's door ("Record the refund sent another way"). */
+.feeAlert { font: inherit; font-size: var(--type-body); font-weight: 650; cursor: pointer; }
+.feeAlert:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 .feeTip { font-size: var(--type-support); color: var(--text-secondary); max-width: 28ch; overflow-wrap: anywhere; }
 
 /* ── The table's own cells ── */
@@ -231,6 +236,31 @@
   color: var(--text-secondary);
 }
 .recordFee { margin: 0 0 0.5rem; }
+
+/* ── 12c: the "To the card" block, one per card refund, under the Fee facts ── */
+.cardRefund { margin: 0.75rem 0 0; padding: 0.75rem 0 0; border-top: 1px solid var(--home-line); }
+.cardRefundHead {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+  margin: 0 0 0.5rem; font-size: var(--type-body); font-weight: 650;
+}
+.cardRefundButton { margin-top: 0.5rem; }
+.factSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.refLine { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.refValue { font-family: var(--font-data); overflow-wrap: anywhere; } /* type-ok: code — Stripe's refund reference */
+.refCopy {
+  padding: 0; border: 0; background: none; font: inherit; font-size: var(--type-support);
+  color: var(--home-olive); text-decoration: underline; cursor: pointer;
+}
+.refCopy:focus-visible, .refCopyIcon:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+/* The phone's Copy is the symbol alone, 44px, no border or fill (a secondary action is its symbol). */
+.refCopyIcon {
+  display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+  padding: 0; border: 0; background: none; color: var(--text-secondary); cursor: pointer;
+}
+.refSaid { font-size: var(--type-support); color: var(--text-secondary); }
+@media (max-width: 640px) {
+  .cardRefundButton { width: 100%; min-height: 44px; }
+}
 .history { list-style: none; margin: 0; padding: 0; }
 .historyRow {
   display: grid;

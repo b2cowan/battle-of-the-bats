@@ -8433,6 +8433,42 @@
     "ordinal_position": 21
   },
   {
+    "table_name": "online_payment_refunds",
+    "column_name": "failed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "family_emailed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 23
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "family_email_failed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
+    "table_name": "online_payment_refunds",
+    "column_name": "resolved_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 25
+  },
+  {
     "table_name": "online_payments",
     "column_name": "id",
     "data_type": "uuid",

@@ -2,14 +2,14 @@
 
 **Generated:** 2026-10-26 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 648 divergence(s)** across dev/prod.
+**⚠️ 654 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 21 | 0 | — |
-| Columns | 333 | 1 | 0 |
-| Indexes | 99 | 0 | 2 |
-| Constraints | 94 | 0 | — |
+| Columns | 337 | 1 | 0 |
+| Indexes | 100 | 0 | 2 |
+| Constraints | 95 | 0 | — |
 | RLS / CHECK | 98 | 0 | 0 (RLS state) |
 
 ## Tables
@@ -40,7 +40,7 @@
 _none_
 
 ## Columns
-### Only in DEV (333)
+### Only in DEV (337)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -155,7 +155,10 @@ _none_
 - `online_payment_refunds.booked_at`
 - `online_payment_refunds.created_at`
 - `online_payment_refunds.created_by`
+- `online_payment_refunds.failed_at`
 - `online_payment_refunds.failure_reason`
+- `online_payment_refunds.family_email_failed_at`
+- `online_payment_refunds.family_emailed_at`
 - `online_payment_refunds.fee_refunded`
 - `online_payment_refunds.id`
 - `online_payment_refunds.note`
@@ -168,6 +171,7 @@ _none_
 - `online_payment_refunds.processing_cost_entry_id`
 - `online_payment_refunds.reason`
 - `online_payment_refunds.refund_entry_id`
+- `online_payment_refunds.resolved_by`
 - `online_payment_refunds.status`
 - `online_payment_refunds.stripe_refund_id`
 - `online_payment_refunds.succeeded_at`
@@ -382,7 +386,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (99)
+### Only in DEV (100)
 - `accounting_entries_league_registration_idx`
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
@@ -425,6 +429,7 @@ _none_
 - `online_payment_refunds_org_idx`
 - `online_payment_refunds_payment_idx`
 - `online_payment_refunds_pkey`
+- `online_payment_refunds_resolved_by_idx`
 - `online_payment_refunds_stripe_child_key`
 - `online_payments_clearing_idx`
 - `online_payments_cost_entry_idx`
@@ -495,7 +500,7 @@ _none_
   - prod: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (94)
+### Only in DEV (95)
 - `family_email_sends.family_email_sends_org_id_fkey`
 - `family_email_sends.family_email_sends_pkey`
 - `family_email_sends.family_email_sends_sent_by_fkey`
@@ -538,6 +543,7 @@ _none_
 - `online_payment_refunds.online_payment_refunds_org_fk`
 - `online_payment_refunds.online_payment_refunds_payment_fk`
 - `online_payment_refunds.online_payment_refunds_pkey`
+- `online_payment_refunds.online_payment_refunds_resolved_by_fk`
 - `online_payments.online_payments_cost_entry_fk`
 - `online_payments.online_payments_org_fk`
 - `online_payments.online_payments_pkey`

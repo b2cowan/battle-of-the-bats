@@ -14,11 +14,14 @@ import { formatLeagueMoney, receivedOf, type LeagueMoneyLine } from '@/lib/leagu
 import { endedKind, isOpenReg, owesNow, regDay, registrationHistory, type PriceChange, type RegsSeason, type RowActionKey } from '@/lib/house-league-registrations';
 import type { LeagueRegistration } from '@/lib/types';
 import FeeCell from './FeeCell';
+import CardRefundBlock from './CardRefundBlock';
+import { isShown, newestFirst, type CardRefund } from '@/lib/league-card-refunds';
 import { Note, type RegRowModel } from './RegistrationsList';
 import css from './Registrations.module.css';
 
 export default function RegistrationRecordWindow({
   model, season, seasonName, teamName, lines, changes, today, showFee, statusWord, steps, onPick, onNote, onClose,
+  cardRefunds = [], canDesk = false, isPhone = false, focus = null, onAnotherWay,
 }: {
   model: RegRowModel;
   season: RegsSeason;
@@ -36,11 +39,21 @@ export default function RegistrationRecordWindow({
   /** The offer beside a refusal ("Waitlist {name}"). */
   onNote: (key: 'waitlist') => void;
   onClose: () => void;
+  /** 12c: this child's card refunds (the "To the card" blocks). */
+  cardRefunds?: readonly CardRefund[];
+  /** The desk (takeFees): the button on a refund the card sent back, and the Fee cell's pill as its door. */
+  canDesk?: boolean;
+  isPhone?: boolean;
+  /** Opened from a Needs-attention item (F5): 'card' scrolls the newest card refund into view. */
+  focus?: 'fee' | 'card' | null;
+  onAnotherWay?: (refundId: string) => void;
 }) {
   const reg: LeagueRegistration = model.reg;
   const got = receivedOf(lines);
   const money = formatLeagueMoney;
-  const history = registrationHistory(reg, lines, changes, today);
+  const history = registrationHistory(reg, lines, changes, today, cardRefunds);
+  const refunds = newestFirst(cardRefunds.filter(isShown));
+  const door = canDesk && onAnotherWay ? onAnotherWay : undefined;
   const F = W.facts;
   const fee = model.fee.state;
 
@@ -67,6 +80,7 @@ export default function RegistrationRecordWindow({
     fee.kind === 'owing' || fee.kind === 'part' ? [F.owing, money(fee.owing)] as const : null,
     fee.kind === 'refunded' ? [F.refunded, money(fee.refunded)] as const : null,
     fee.kind === 'kept' ? [F.kept, `${money(fee.kept)}${fee.reason ? ` · ${fee.reason}` : ''}`] as const : null,
+    fee.kind === 'kept' && fee.refunded ? [F.refunded, money(fee.refunded)] as const : null,
   ];
 
   return (
@@ -90,8 +104,12 @@ export default function RegistrationRecordWindow({
       {showFee && (
         <section className={css.recordSection}>
           <h3 className={css.recordHead}>{W.fee}</h3>
-          <div className={css.recordFee}><FeeCell parts={model.fee} /></div>
+          <div className={css.recordFee}><FeeCell parts={model.fee} onAlert={door} /></div>
           <Facts rows={feeRows} />
+          {refunds.length > 0 && (
+            <CardRefundBlock refunds={refunds} reg={reg} childName={model.name} kept={fee.kind === 'kept' && fee.refunded ? fee.kept : null}
+              today={today} isPhone={isPhone} canDesk={!!door} focus={focus === 'card'} onAnotherWay={id => door?.(id)} />
+          )}
         </section>
       )}
 

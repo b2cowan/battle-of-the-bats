@@ -57,7 +57,8 @@ export type FeeState =
   | { kind: 'part'; received: number; owing: number; last: LeagueMoneyLine }
   | { kind: 'received'; received: number; last: LeagueMoneyLine | null }
   | { kind: 'refunded'; refunded: number; last: LeagueMoneyLine }
-  | { kind: 'kept'; kept: number; reason: string }
+  /** `refunded` / `lastRefund`: part was given back and the rest kept (12c: the refund is never hidden behind "kept"). */
+  | { kind: 'kept'; kept: number; reason: string; refunded?: number; lastRefund?: LeagueMoneyLine }
   | { kind: 'endedNone' };
 
 const cents = (n: number) => Math.round(n * 100);
@@ -105,8 +106,12 @@ export function feeState(
   const price = registrationOwes(reg, season) ?? 0;
   const got = receivedOf(lines);
   if (reg.status === 'declined' || reg.status === 'withdrawn') {
-    if (reg.endMoney === 'kept' && got > 0) return { kind: 'kept', kept: got, reason: reg.endMoneyReason ?? '' };
     const refund = lastRefund(lines);
+    if (reg.endMoney === 'kept' && got > 0) {
+      return refund
+        ? { kind: 'kept', kept: got, reason: reg.endMoneyReason ?? '', refunded: refundedOf(lines), lastRefund: refund }
+        : { kind: 'kept', kept: got, reason: reg.endMoneyReason ?? '' };
+    }
     if (refund) {
       return { kind: 'refunded', refunded: refundedOf(lines), last: refund };
     }

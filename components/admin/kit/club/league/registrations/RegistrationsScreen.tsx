@@ -157,6 +157,7 @@ export default function RegistrationsScreen() {
       registrations: regsRes.data.registrations ?? [], money: regsRes.data.money ?? {},
       priceChanges: regsRes.data.priceChanges ?? [], today: regsRes.data.today, payLinks: !!regsRes.data.payLinks,
       unrecordedCard: regsRes.data.unrecordedCard ?? {}, returnedRefunds: regsRes.data.returnedRefunds ?? {},
+      cardRefunds: regsRes.data.cardRefunds ?? {},
     });
     setFailed(null);
   }, [orgSlug, seasonId, orgQuery, beginRead]);
@@ -173,6 +174,7 @@ export default function RegistrationsScreen() {
   const charges = season ? seasonHasFees(season, divisions) : false;
 
   const linesOf = useCallback((id: string): LeagueMoneyLine[] => read?.money[id] ?? [], [read]);
+  const refundsOf = useCallback((id: string) => read?.cardRefunds?.[id] ?? [], [read]);
   const changesByReg = useMemo(() => {
     const m = new Map<string, PriceChange[]>();
     for (const c of read?.priceChanges ?? []) m.set(c.registrationId, [...(m.get(c.registrationId) ?? []), c]);
@@ -196,7 +198,13 @@ export default function RegistrationsScreen() {
   // The landing tab: the day's work (a registration waiting for an answer), else the roster. Chosen once, on the first read.
   const firstLanding: RegTab = counts.review > 0 ? 'review' : 'active';
   if (read && landed == null) setLanded(firstLanding);
-  const asked = search.get('tab');
+  // 12c (F5): a Needs-attention item opens the child's record (?reg=…&at=fee|card), on the tab the child is on.
+  const linkedId = search.get('reg');
+  const linked = linkedId ? regById.get(linkedId) ?? null : null;
+  const [openedLink, setOpenedLink] = useState<string | null>(null);
+  if (linked && openedLink !== linked.id) { setOpenedLink(linked.id); setOpenId(linked.id); }
+  const linkedAt = search.get('at') === 'card' ? 'card' : linked ? 'fee' : null;
+  const asked = search.get('tab') ?? (linked ? regTab(linked.status) : null);
   const tab: RegTab = isRegTab(asked) ? asked : landed ?? firstLanding;
   // A tab link changes the address only; the page keeps its state, so what belonged to the old tab is dropped here (the
   // React way to follow a value: adjusted during render, so the stale tab never paints).
@@ -206,9 +214,9 @@ export default function RegistrationsScreen() {
   const fees = useMemo(() => {
     const m = new Map<string, ReturnType<typeof feeCell>>();
     if (!season || !read) return m;
-    for (const r of regs) m.set(r.id, feeCell(r, season, linesOf(r.id), read.today, changesByReg.get(r.id) ?? []));
+    for (const r of regs) m.set(r.id, feeCell(r, season, linesOf(r.id), read.today, changesByReg.get(r.id) ?? [], refundsOf(r.id)));
     return m;
-  }, [regs, season, read, linesOf, changesByReg]);
+  }, [regs, season, read, linesOf, changesByReg, refundsOf]);
 
   // A pick belongs to the tab whose menu offers it (Refunded is the Ended tab's): a hidden pick filters nothing.
   const feeOptions = [
@@ -430,6 +438,12 @@ export default function RegistrationsScreen() {
     say(cardAct.op === 'refundCard' ? REGS_WORDS.refundCard.done(amount) : REGS_WORDS.refundAnotherWay.done(amount));
   }
 
+  /** 12c: the Fee cell's amber pill and the record's button open "Record the refund sent another way" (the desk's). */
+  function openAnotherWay(reg: LeagueRegistration, refundId: string) {
+    const r = refundsOf(reg.id).find(x => x.id === refundId);
+    if (r && rights.takeFees) setCardAct({ op: 'refundAnotherWay', reg, id: r.id, amount: r.amount });
+  }
+
   // ── The pay link (12b copy §5) ─────────────────────────────────────────────────────────────────
   async function payLinkOne(reg: LeagueRegistration) {
     markBusy([reg.id], true);
@@ -638,6 +652,7 @@ export default function RegistrationsScreen() {
             onPrimary={row => row.primary && pickRow(row.reg, row.primary)}
             onPick={(row, key) => pickRow(row.reg, key)}
             onNote={(row, key) => void statusOne(row.reg, key)}
+            onAlert={rights.takeFees ? (row, id) => openAnotherWay(row.reg, id) : undefined}
           />
           {charges && <p className={repKit.notes}>{REGS_WORDS.fee.foot}</p>}
         </>
@@ -667,6 +682,11 @@ export default function RegistrationsScreen() {
           onPick={key => pickRow(openReg, key)}
           onNote={key => void statusOne(openReg, key)}
           onClose={() => setOpenId(null)}
+          cardRefunds={refundsOf(openReg.id)}
+          canDesk={rights.takeFees}
+          isPhone={isPhone}
+          focus={openReg.id === openedLink ? linkedAt : null}
+          onAnotherWay={id => openAnotherWay(openReg, id)}
         />
       )}
 

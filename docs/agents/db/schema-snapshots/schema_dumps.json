@@ -8435,6 +8435,42 @@
         "column_default": "false"
       },
       {
+        "table_name": "online_payment_refunds",
+        "pos": 22,
+        "column_name": "failed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 23,
+        "column_name": "family_emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 24,
+        "column_name": "family_email_failed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 25,
+        "column_name": "resolved_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "online_payments",
         "pos": 1,
         "column_name": "id",
@@ -26610,6 +26646,13 @@
         "constraint_name": "online_payment_refunds_payment_fk"
       },
       {
+        "table_name": "online_payment_refunds",
+        "column_name": "resolved_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "online_payment_refunds_resolved_by_fk"
+      },
+      {
         "table_name": "online_payments",
         "column_name": "processing_cost_entry_id",
         "foreign_table": "accounting_entries",
@@ -31938,6 +31981,11 @@
         "tablename": "online_payment_refunds",
         "indexname": "online_payment_refunds_pkey",
         "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_pkey ON public.online_payment_refunds USING btree (id)"
+      },
+      {
+        "tablename": "online_payment_refunds",
+        "indexname": "online_payment_refunds_resolved_by_idx",
+        "indexdef": "CREATE INDEX online_payment_refunds_resolved_by_idx ON public.online_payment_refunds USING btree (resolved_by) WHERE (resolved_by IS NOT NULL)"
       },
       {
         "tablename": "online_payment_refunds",

@@ -1,7 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { getOrganizationBySlugForServer } from './server-organizations';
-import { getDivisionsForSeason, getLeagueSeasonById } from './db';
+import { getDivisionsForSeason, getLeagueSeasonById, resolvePersonNamer } from './db';
 import { hasPlanFeature } from './plan-features';
 import { onlinePaymentsOn } from './online-payments-switch';
 import { factsFromRow, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountFacts, type PayoutsAccountRow } from './online-payment-account';
@@ -13,6 +13,8 @@ import { PAY_WORDS as W } from './online-payment-words';
 import { payLinkSecret } from './league-pay-link';
 import { LEAGUE_PAY_WORDS as LW } from './league-pay-words';
 import type { LeagueSeason, Organization } from './types';
+import { fetchAllIn } from './supabase-paging';
+import type { CardRefund } from './league-card-refunds';
 
 /**
  * Everything a house-league sign-up's pay block, the pay route and the payment emails need, read once (Club Tier Stage
@@ -114,6 +116,51 @@ export async function returnedCardRefunds(regIds: string[]): Promise<Record<stri
   for (const f of (refunds ?? []) as Array<{ id: string; online_payment_item_id: string; amount: number }>) {
     const reg = byItem.get(f.online_payment_item_id);
     if (reg) (out[reg] ??= []).push({ refundId: f.id, amount: Number(f.amount) });
+  }
+  return out;
+}
+
+/**
+ * Every card refund of these registrations' card payments (12c Part 2, plan §0g): the Fee cell, the record's "To the card"
+ * block, the history and the Money page read them. Two reads for a whole season (the children's items, then their refunds
+ * with the payment's card facts), and one name lookup — never one per row.
+ */
+export async function loadCardRefunds(orgId: string, regIds: string[]): Promise<Record<string, CardRefund[]>> {
+  if (!regIds.length) return {};
+  const items = await fetchAllIn<Record<string, unknown>>(regIds, (chunk, from, to) =>
+    supabaseAdmin.from('online_payment_items').select('id, registration_id, amount, fee_share, entry_id, land_error')
+      .eq('org_id', orgId).in('registration_id', chunk).order('id').range(from, to));
+  if (!items.length) return {};
+  const itemById = new Map(items.map(i => [i.id as string, i]));
+  const refunds = await fetchAllIn<Record<string, unknown>>([...itemById.keys()], (chunk, from, to) =>
+    supabaseAdmin.from('online_payment_refunds')
+      .select('id, online_payment_item_id, amount, fee_refunded, status, origin, booked_at, refund_entry_id, reason, partial_reason, failure_reason, created_at, succeeded_at, failed_at, stripe_refund_id, created_by, resolved_by, family_emailed_at, family_email_failed_at, online_payments!inner(rail, card_brand, card_last4, bank_last4, receipt_no, paid_at, fee_payer)')
+      .in('online_payment_item_id', chunk).order('id').range(from, to));
+  if (!refunds.length) return {};
+  const nameOf = await resolvePersonNamer(orgId, refunds.flatMap(r => [r.created_by as string | null, r.resolved_by as string | null]));
+  const out: Record<string, CardRefund[]> = {};
+  for (const r of refunds) {
+    const item = itemById.get(r.online_payment_item_id as string);
+    if (!item?.registration_id) continue;
+    const op = (Array.isArray(r.online_payments) ? r.online_payments[0] : r.online_payments) as Record<string, unknown>;
+    const regId = item.registration_id as string;
+    (out[regId] ??= []).push({
+      id: r.id as string, regId, itemId: item.id as string,
+      amount: Number(r.amount), feeBack: Number(r.fee_refunded),
+      status: r.status as CardRefund['status'], origin: r.origin as CardRefund['origin'],
+      booked: !!r.booked_at, entryId: (r.refund_entry_id as string | null) ?? null,
+      inBook: !!item.entry_id, landError: (item.land_error as string | null) ?? null,
+      reason: (r.reason as string | null) ?? null, partialReason: (r.partial_reason as string | null) ?? null,
+      sentAnotherWay: r.status === 'succeeded' && !!r.failure_reason,
+      createdAt: r.created_at as string, succeededAt: (r.succeeded_at as string | null) ?? null, failedAt: (r.failed_at as string | null) ?? null,
+      reference: (r.stripe_refund_id as string | null) ?? null, by: nameOf(r.created_by as string | null),
+      resolvedBy: nameOf(r.resolved_by as string | null),
+      rail: op.rail === 'bank_debit' ? 'bank_debit' : 'card', cardBrand: (op.card_brand as string | null) ?? null,
+      cardLast4: (op.card_last4 as string | null) ?? null, bankLast4: (op.bank_last4 as string | null) ?? null,
+      receiptNo: op.receipt_no != null ? Number(op.receipt_no) : null, paidAt: (op.paid_at as string | null) ?? null,
+      share: Number(item.amount), shareFee: Number(item.fee_share), familyPaidFee: op.fee_payer === 'family',
+      emailedAt: (r.family_emailed_at as string | null) ?? null, emailFailedAt: (r.family_email_failed_at as string | null) ?? null,
+    });
   }
   return out;
 }

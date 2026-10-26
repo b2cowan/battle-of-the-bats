@@ -1626,6 +1626,11 @@
   },
   {
     "tablename": "online_payment_refunds",
+    "indexname": "online_payment_refunds_resolved_by_idx",
+    "indexdef": "CREATE INDEX online_payment_refunds_resolved_by_idx ON public.online_payment_refunds USING btree (resolved_by) WHERE (resolved_by IS NOT NULL)"
+  },
+  {
+    "tablename": "online_payment_refunds",
     "indexname": "online_payment_refunds_stripe_child_key",
     "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_stripe_child_key ON public.online_payment_refunds USING btree (stripe_refund_id, online_payment_item_id) NULLS NOT DISTINCT WHERE (stripe_refund_id IS NOT NULL)"
   },

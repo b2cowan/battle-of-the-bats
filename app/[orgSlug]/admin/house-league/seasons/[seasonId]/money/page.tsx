@@ -23,7 +23,9 @@ import { EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/c
 import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import s from '@/components/admin/kit/club/league/SeasonMoney.module.css';
 import { formatLeagueMoney, type SeasonMoney } from '@/lib/league-money';
-import { MONEY_PAGE_WORDS as W, REGS_WORDS, paymentMethodWord } from '@/lib/house-league-money-words';
+import { CARD_REFUND_WORDS, MONEY_PAGE_WORDS as W, REGS_WORDS, paymentMethodWord } from '@/lib/house-league-money-words';
+import type { CardRefundState } from '@/lib/league-card-refunds';
+import Link from 'next/link';
 import PayoutsStatusLine from '@/components/admin/kit/club/PayoutsStatusLine';
 import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import { buildFilename, downloadCSVBlob, downloadXLSX, generateCSV } from '@/lib/export';
@@ -31,7 +33,11 @@ import { buildFilename, downloadCSVBlob, downloadXLSX, generateCSV } from '@/lib
 interface BookLine {
   id: string; regId: string; player: string | null; day: string; amount: number; method: string | null; receiptNo?: number | null;
   kind: 'fee' | 'refund' | 'voided' | 'processing'; refundWhy: string | null; priceKind: 'regular' | 'corrected' | null; note: string | null;
+  /** 12c: a refund line that went to the card, and how it stands. */
+  card?: { state: CardRefundState; bank: boolean; stripe: boolean } | null;
 }
+/** 12c: a card refund whose payment never went on a registration — in no book line, named under the Refunds list. */
+interface NeverBooked { regId: string; player: string; amount: number; base: number; feeBack: number; day: string }
 interface HistoryLine { kind: 'corrected' | 'kept'; regId: string; player: string | null; at: string; oldAmount: number | null; newAmount: number; reason: string }
 interface OwingRow { regId: string; player: string; division: string | null; owing: number; acceptedDay: string | null; days: number | null; late: boolean }
 interface MoneyRead {
@@ -40,10 +46,15 @@ interface MoneyRead {
   /** 12b: how much of Received came by card. */
   byCard?: number;
   lines: BookLine[]; history: HistoryLine[]; owing: OwingRow[]; today: string;
+  neverBooked?: NeverBooked[];
 }
 
 type Tab = 'all' | 'owing' | 'refunds';
-type Row = { key: string; day: string; player: string; what: string; how: string; amount: string; value: number | null; tone: 'in' | 'out' | 'voided' | 'history' };
+type Row = { key: string; day: string; player: string; what: string; how: string; amount: string; value: number | null; tone: 'in' | 'out' | 'voided' | 'history'; howWarn?: boolean };
+const CM = CARD_REFUND_WORDS.money;
+/** 12c words §3: the How of a refund line that went to the card. */
+const cardHow = (c: NonNullable<BookLine['card']>) => (c.state === 'failed' ? CM.failed(c.bank)
+  : c.state === 'anotherWay' ? CM.anotherWay : c.state === 'pending' ? CM.toTargetPending(c.bank) : CM.toTarget(c.bank));
 
 export default function MoneyPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
@@ -96,17 +107,20 @@ export default function MoneyPage() {
   const lineRows: Row[] = [
     ...read.lines.map((l): Row => ({
       key: l.kind === 'processing' ? `cost:${l.id}` : l.id, day: l.day, player: l.player ?? '—',
-      what: l.kind === 'voided' ? W.what.voided : l.kind === 'refund' ? W.what.refund(l.refundWhy)
+      what: l.kind === 'voided' ? W.what.voided : l.kind === 'refund' ? W.what.refund(l.card?.stripe ? CM.madeInStripe : l.refundWhy)
         : l.kind === 'processing'
           ? ((l.note ?? '').startsWith('Processing fee refunded · ')
             ? W.what.processingBack((l.note ?? '').replace(/^Processing fee refunded · /, ''))
             : W.what.processing((l.note ?? '').replace(/^Payment processing · /, '')))
           : W.what.fee(l.priceKind),
       // 12b copy §5: a card payment's receipt after its method ("Online, card · receipt 1043").
-      how: l.receiptNo ? `${paymentMethodWord(l.method)} · ${REGS_WORDS.fee.receipt(l.receiptNo)}` : paymentMethodWord(l.method),
+      how: l.card ? cardHow(l.card)
+        : l.receiptNo ? `${paymentMethodWord(l.method)} · ${REGS_WORDS.fee.receipt(l.receiptNo)}` : paymentMethodWord(l.method),
       amount: l.kind === 'refund' || l.kind === 'processing' ? money(-l.amount) : money(l.amount),
       // The export's number: a refund negative, a voided line counted nowhere (its What says so).
       value: l.kind === 'voided' ? null : l.kind === 'refund' || l.kind === 'processing' ? -l.amount : l.amount,
+      // 12c: a refund the card sent back is amber text, no pill (a book line).
+      howWarn: l.card?.state === 'failed',
       tone: l.kind === 'voided' ? 'voided' : l.kind === 'refund' || l.kind === 'processing' ? 'out' : 'in',
     })),
     ...read.history.map((h): Row => ({
@@ -118,6 +132,8 @@ export default function MoneyPage() {
   // A refund, never a card cost (a processing line is money out too, but not a refund — 12b /review).
   const refundRows = lineRows.filter(r => r.tone === 'out' && !r.key.startsWith('cost:'));
   const shown = tab === 'refunds' ? refundRows : lineRows;
+  // On the Refunds tab every line is a refund, so the sign says nothing — show the plain amount (Every line keeps the minus).
+  const amountOf = (r: Row) => (tab === 'refunds' && r.value != null ? money(Math.abs(r.value)) : r.amount);
 
   // The export is the tab you are on (copy §10), amounts as numbers so a treasurer can sum them.
   const headers = tab === 'owing'
@@ -221,8 +237,8 @@ export default function MoneyPage() {
                     <td>{day(r.day)}</td>
                     <td>{r.player}</td>
                     <td>{r.what}</td>
-                    <td>{r.how}</td>
-                    <td className={`${repKit.num} ${toneClass(r.tone)}`}>{r.amount}</td>
+                    <td className={r.howWarn ? s.late : undefined}>{r.how}</td>
+                    <td className={`${repKit.num} ${toneClass(r.tone)}`}>{amountOf(r)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -235,14 +251,52 @@ export default function MoneyPage() {
                   <span className={s.phoneName}>{r.player}</span>
                   <span className={s.sub}>{[day(r.day), r.what, r.how].filter(Boolean).join(' · ')}</span>
                 </span>
-                <span className={`${s.phoneAmount} ${toneClass(r.tone)}`}>{r.amount}</span>
+                <span className={`${s.phoneAmount} ${toneClass(r.tone)}`}>{amountOf(r)}</span>
               </li>
             ))}
           </ul>
         </>
       )}
 
+      {tab === 'refunds' && (read.neverBooked?.length ?? 0) > 0 && (
+        <NeverBookedLine items={read.neverBooked!} href={id => `/${orgSlug}/admin/house-league/seasons/${seasonId}/registrations?reg=${id}&at=fee`} money={money} day={day} />
+      )}
+
       <p className={s.hint}>{read.filesToStatement ? W.hintClub : W.hintLeague} {W.registrations}</p>
     </div>
+  );
+}
+
+/** 12c words §3: one closing line under the Refunds list naming each card refund that never entered the book (at most three
+ *  named, each opening that registration's record at its Fee section); a dashed row each on a phone. */
+function NeverBookedLine({ items, href, money, day }: {
+  items: readonly NeverBooked[]; href: (regId: string) => string; money: (n: number) => string; day: (d: string) => string;
+}) {
+  const named = items.slice(0, 3);
+  const more = items.length - named.length;
+  const fees = items.filter(i => i.feeBack > 0);
+  const feeSentence = fees.length === 0 ? null : items.length === 1 ? CM.neverBookedFee(money(fees[0].feeBack)) : CM.neverBookedFeeMany;
+  return (
+    <>
+      <p className={`${s.hint} ${s.deskTable}`}>
+        {items.length === 1 ? CM.neverBookedOne : CM.neverBookedMany(items.length)}{' '}
+        {named.map((i, n) => (
+          <span key={i.regId}>
+            {n > 0 && '; '}<Link href={href(i.regId)}>{i.player}</Link>{CM.neverBookedItem(money(i.amount), day(i.day))}
+          </span>
+        ))}
+        {more > 0 ? <>{'; '}{CM.neverBookedMore(more)}</> : '.'}
+        {feeSentence && <> {feeSentence}</>}
+      </p>
+      <div className={s.neverList}>
+        <p className={s.neverHead}>{CM.phoneHead}</p>
+        {items.map(i => (
+          <Link key={i.regId} href={href(i.regId)} className={s.neverRow}>
+            <span>{CM.phoneLine(i.player, money(i.amount), day(i.day))}</span>
+            <span aria-hidden>›</span>
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }

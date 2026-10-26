@@ -10,6 +10,8 @@ import { joinWithAnd, pluralize, possessive } from './utils';
 export function paymentMethodWord(m: string | null | undefined): string {
   if (!m) return 'Not recorded';
   if (m === 'online_card') return 'Online, card';
+  // 12c words §3.5: a pre-authorized bank debit, the twin of "Online, card".
+  if (m === 'online_bank') return 'Online, bank debit';
   return DUES_PAYMENT_METHOD_LABEL[m as DuesPaymentMethod] ?? m;
 }
 
@@ -601,4 +603,131 @@ export const REG_RECORD_WORDS = {
   position: (n: number, of: number) => `${n} of ${of}`,
   none: 'Nothing yet.',
   close: 'Close',
+} as const;
+
+const target = (bank: boolean) => (bank ? 'bank account' : 'card');
+/** A sentence that ends on a clock ("2:15 p.m.") takes no second full stop. */
+const stop = (t: string) => (t.endsWith('.') ? t : `${t}.`);
+
+/**
+ * A card refund you can see (Club Tier Stage 12c Part 2), from docs/projects/active/CLUB_TIER_STAGE12C_REFUND_VISIBLE_COPY.md
+ * §1–3 (keys `regs.fee.*`, `rec.card.*`, `rec.hist.*`, `money.*`). `bank` swaps the card's words for a bank account's (the
+ * rail table, CLUB_TIER_STAGE12C_PARTREFUND_BANKDEBIT_COPY.md §3.9). Every refund marked by hand keeps today's words.
+ */
+export const CARD_REFUND_WORDS = {
+  cell: {
+    toTarget: (amount: string, bank: boolean) => `${amount} to the ${target(bank)}`,
+    pending: 'pending',
+    madeInStripe: 'made in Stripe',
+    sentAnotherWay: 'sent another way',
+    failed: (bank: boolean) => `Refund didn’t reach the ${target(bank)}`,
+    failedSub: (toTarget: string, day: string) => `${toTarget} · sent back ${day}`,
+    failedAria: (bank: boolean) => `Refund didn’t reach the ${target(bank)}. Record the refund sent another way.`,
+    keptAndRefunded: (kept: string, refunded: string) => `${kept} kept by the club · ${refunded} refunded`,
+    neverBooked: {
+      ended: 'Paid after the registration ended',
+      already_received: 'Also paid by card · that payment was refunded',
+      over: 'Paid more than was owing · the extra was refunded',
+      not_accepted: 'Paid before the registration was accepted',
+      other: 'Card payment not on this registration',
+    } as Record<string, string>,
+    neverBookedTip: (paidDay: string, paidTime: string, why: string, refundDay: string, refundTime: string, bank: boolean) =>
+      `Paid by ${bank ? 'bank debit' : 'card'} on ${paidDay} at ${paidTime}, but it couldn’t go on this registration: ${why}. Refunded to the ${target(bank)} on ${refundDay} at ${stop(refundTime)}`,
+    corrected: (amount: string, bank: boolean) => `Price corrected · ${amount} back to the ${target(bank)}`,
+    correctedPending: (amount: string, bank: boolean) => `Price corrected · ${amount} back to the ${target(bank)} · pending`,
+    correctedFailed: (amount: string, bank: boolean) => `Price corrected · ${amount} refund didn’t reach the ${target(bank)}`,
+    correctedTip: (was: string, now: string, day: string, reason: string, amount: string, refundDay: string, bank: boolean) =>
+      `Was ${was}, now ${now}. Corrected on ${day}. ${reason ? `${reason} ` : ''}${amount} went back to the ${target(bank)} on ${refundDay}.`,
+  },
+  record: {
+    heading: (bank: boolean) => (bank ? 'To the bank account' : 'To the card'),
+    headingAnother: 'Sent another way',
+    pill: { refunded: 'Refunded', pending: 'Pending', failed: (bank: boolean) => `Refund didn’t reach the ${target(bank)}` },
+    tagStripe: 'Made in Stripe',
+    amount: 'Amount',
+    amountValue: (amount: string, to: string) => `${amount} to ${to}`,
+    amountSplit: (base: string, fee: string) => `${base} fee + ${fee} processing fee`,
+    amountPart: (fee: string) => `Part of the ${fee} fee. A part refund never includes the processing fee.`,
+    amountWhole: 'The whole payment, so the processing fee went back too.',
+    fee: 'Processing fee',
+    feeWhy: {
+      declined: 'Given back, because the club declined',
+      included: 'Given back, because the club chose to include it',
+      whole: 'Given back with the whole payment',
+      keptAsked: 'Not refunded, because the family asked to leave',
+      keptPart: 'Not refunded. A part refund never includes it.',
+    },
+    feeBook: 'In the season’s book as Payment processing',
+    by: 'Refunded by',
+    byValue: (who: string, day: string, time: string) => `${who}, ${day} at ${time}`,
+    byStripe: (day: string, time: string) => `Someone in the club’s Stripe dashboard, ${day} at ${time}`,
+    byStripeSub: (time: string) => `Recorded here by itself at ${time}`,
+    reached: (bank: boolean) => `Reached the ${target(bank)}`,
+    reachedValue: (day: string, time: string) => `${day} at ${time}`,
+    // A bank account's {bankDays} is Stripe's "about 3 business days" (plan §0k).
+    reachedSub: (bank: boolean) => (bank
+      ? 'It takes about 3 business days to appear on the family’s statement.'
+      : 'It takes 5 to 10 business days to appear on the family’s statement.'),
+    status: 'Status',
+    statusValue: (day: string, time: string, bank: boolean) =>
+      `Stripe accepted it ${day} at ${time} and is waiting on the ${bank ? 'bank' : 'card’s bank'}. It’s already in the season’s book. Nothing to do.`,
+    what: 'What happened',
+    whatValue: (sent: string, back: string, bank: boolean) => (bank
+      ? `Sent ${sent}; the bank sent it back ${back}, for example because the account was closed. The club still owes it.`
+      : `Sent ${sent}; the card’s bank sent it back ${back}, for example because the card was closed. The club still owes it.`),
+    ref: 'Stripe reference',
+    copy: 'Copy',
+    copied: 'Copied',
+    copyAria: 'Copy the Stripe reference',
+    copyFailed: 'Selected. Press and hold to copy.',
+    copyFailedDesk: 'Selected. Press Ctrl+C to copy.',
+    paidWith: 'Paid with',
+    paidWithValue: (receiptNo: number | null, day: string) => (receiptNo ? `Receipt ${receiptNo}, ${day}` : day),
+    reason: 'Reason',
+    kept: 'Kept by the club',
+    before: 'Before it',
+    beforeKept: (reason: string) => (reason ? `The club had kept the fee: “${reason}”` : 'The club had kept the fee.'),
+    beforeFailed: (reference: string, day: string) => `The card refund (${reference}) was sent back ${day}`,
+    anotherAmount: (amount: string, who: string, day: string) => `${amount}, recorded by ${who} on ${day}`,
+    why: 'Why',
+    whyEnded: (day: string, time: string, verb: 'declined' | 'withdrew', child: string, endTime: string) =>
+      `Paid ${day} at ${time}, after the club ${verb} ${child} at ${stop(endTime)} It never went on this registration.`,
+    whyReleased: (day: string, time: string, childPossessive: string, endTime: string) =>
+      `Paid ${day} at ${time}, after the club released ${childPossessive} spot at ${stop(endTime)} It never went on this registration.`,
+    whyOther: (day: string, time: string, why: string, bank: boolean) =>
+      `Paid ${day} at ${time} by ${bank ? 'bank debit' : 'card'}, but it couldn’t go on this registration: ${why}.`,
+    book: 'Season’s book',
+    bookValue: (fee: string | null) => (fee ? `No fee line. The ${fee} given back is in it as Payment processing.` : 'No fee line.'),
+    emailed: 'Family emailed',
+    emailedSent: (email: string, day: string) => `${email}, ${day}`,
+    emailedNone: 'No email address on file. Tell the family yourself.',
+    emailedFailed: (day: string) => `Couldn’t be sent ${day}`,
+    emailedNotFailed: 'Not emailed. Contact the family to arrange another way.',
+    emailedAnotherWay: 'Not emailed by us. You told the family.',
+    button: 'Record the refund sent another way',
+  },
+  history: {
+    refund: (booked: string, amount: string, to: string) => `Refunded ${booked} · ${amount} to ${to}`,
+    reached: (booked: string, amount: string, to: string, bank: boolean) => `Refunded ${booked} · ${amount} to ${to} · reached the ${target(bank)}`,
+    pending: (booked: string, amount: string, to: string) => `Refunded ${booked} · ${amount} to ${to} · pending`,
+    stripe: (booked: string, amount: string, to: string) => `Refunded ${booked} · ${amount} to ${to} · made in Stripe`,
+    failed: (amount: string, to: string, bank: boolean) => `Refund didn’t reach the ${target(bank)} · ${amount} to ${to}`,
+    anotherWay: (amount: string) => `Refund sent another way · ${amount}`,
+    neverBooked: (amount: string, to: string) => `Card refund ${amount} to ${to} · not on this registration`,
+  },
+  money: {
+    toTarget: (bank: boolean) => (bank ? 'To the bank account' : 'To the card'),
+    toTargetPending: (bank: boolean) => `${bank ? 'To the bank account' : 'To the card'} · pending`,
+    failed: (bank: boolean) => `Refund didn’t reach the ${target(bank)}`,
+    anotherWay: 'Sent another way',
+    madeInStripe: 'made in Stripe',
+    neverBookedOne: 'One card refund isn’t in this book, because its payment never went on a registration:',
+    neverBookedMany: (n: number) => `${n} card refunds aren’t in this book, because their payments never went on a registration:`,
+    neverBookedItem: (amount: string, day: string) => `, ${amount} on ${day}`,
+    neverBookedMore: (m: number) => `and ${m} more. See them under Ended on Registrations.`,
+    neverBookedFee: (fee: string) => `Its ${fee} processing fee is under Payment processing.`,
+    neverBookedFeeMany: 'Their processing fees are under Payment processing.',
+    phoneHead: 'Not in this book',
+    phoneLine: (name: string, amount: string, day: string) => `${name} · ${amount} card refund, ${day}. The payment never went on a registration.`,
+  },
 } as const;

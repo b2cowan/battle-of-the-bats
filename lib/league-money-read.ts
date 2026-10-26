@@ -33,7 +33,7 @@ function toLine(r: Record<string, unknown>): LeagueMoneyLine | null {
 /** Stage 12b: a card payment's line carries its receipt number — the line is the one an online payment's child
  *  became (`online_payment_items.entry_id`). One read for every card line in the map, none when there are none. */
 async function withReceipts(map: Map<string, LeagueMoneyLine[]>): Promise<Map<string, LeagueMoneyLine[]>> {
-  const card = [...map.values()].flat().filter(l => l.method === 'online_card');
+  const card = [...map.values()].flat().filter(l => l.method === 'online_card' || l.method === 'online_bank');
   if (!card.length) return map;
   const items = await fetchAllIn<Record<string, unknown>>(card.map(l => l.id), (chunk, from, to) =>
     supabaseAdmin.from('online_payment_items').select('id, entry_id, online_payments(receipt_no)').in('entry_id', chunk).order('id').range(from, to));

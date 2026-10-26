@@ -7595,6 +7595,16 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:online_payment_refunds.stripe_refund_id -->
 **`stripe_refund_id`** (text, nullable) — Stripe's `re_…`; set when Stripe accepts, lands or fails the refund. Unique per child since migration 382 (`online_payment_refunds_stripe_child_key` on `(stripe_refund_id, online_payment_item_id) NULLS NOT DISTINCT`, so a tournament refund's id is still unique); the event lookup by Stripe id rides its leading column. ⚠ A split dashboard refund is TWO rows with one Stripe id: code that settles a Stripe refund event must update every row carrying it.
 
+<!-- dict:col:online_payment_refunds.failed_at -->
+**`failed_at`** (timestamptz, nullable; migration 383) — when the card's bank sent the refund back (Stripe's `failed`), stamped once by `online_payment_refund_failed` and kept after the club records the refund as sent another way (the record's "sent back {day}"; `updated_at` moves then). Guarded like Stripe's other answers. Backfilled from `updated_at` for refunds already failed.
+
+<!-- dict:col:online_payment_refunds.family_emailed_at -->
+<!-- dict:col:online_payment_refunds.family_email_failed_at -->
+**`family_emailed_at`** / **`family_email_failed_at`** (timestamptz, nullable; migration 383) — when the family's refund email went, or could not be sent (the record's "Family emailed"). Written by the app's email step, not guarded (like `online_payments.receipt_emailed_at`). Never set for a failed refund (owner ruling §0g 6).
+
+<!-- dict:col:online_payment_refunds.resolved_by -->
+**`resolved_by`** (FK → `auth.users` ON DELETE SET NULL, nullable, partial index; migration 383) — who recorded a refund the card sent back as sent another way (`online_payment_league_refund_resolve`, which always took the person and, until 383, never kept them). The record's "recorded by {who}". Guarded.
+
 <!-- dict:col:online_payment_refunds.part_refund -->
 **`part_refund`** (boolean, NOT NULL, default false; migration 382) — a tournament team's PART refund: never the fee, booked at Stripe's acceptance by `online_payment_team_refund_book`, lowers the team's entry. Set only by `online_payment_refund_open`; never changes (guard). House-league part refunds leave it false (they are told by their item and amount).
 

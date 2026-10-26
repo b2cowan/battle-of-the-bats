@@ -135,10 +135,14 @@ type OnlineRow = {
   stripe_account_id: string; stripe_checkout_session_id: string | null; description: string; total_amount: number;
 };
 
-/** Where a payment's record lives: the team's tournament, or the season's Registrations (house league, 12b). */
-function recordHref(org: Organization, op: Pick<OnlineRow, 'tournament_id' | 'season_id'>): string {
+/** Where a payment's record lives: the team's tournament, or the season's Registrations (house league, 12b). A child's
+ *  notice opens that child's record (12c F5: `reg`, at its Fee section, or at its "To the card" block). */
+function recordHref(org: Organization, op: Pick<OnlineRow, 'tournament_id' | 'season_id'>, child?: { regId: string | null; at?: 'fee' | 'card' }): string {
   if (op.tournament_id) return `/${org.slug}/admin/tournaments/registrations?tournament=${op.tournament_id}`;
-  if (op.season_id) return `/${org.slug}/admin/house-league/seasons/${op.season_id}/registrations`;
+  if (op.season_id) {
+    const base = `/${org.slug}/admin/house-league/seasons/${op.season_id}/registrations`;
+    return child?.regId ? `${base}?reg=${child.regId}&at=${child.at ?? 'fee'}` : base;
+  }
   return `/${org.slug}/admin`;
 }
 
@@ -194,7 +198,7 @@ async function raiseLeagueUnrecorded(op: OnlineRow): Promise<void> {
       subjectKey: 'onlinePaymentItemId', subjectId: u.id,
       title: LW.unrecordedTitle(child),
       body: LW.unrecordedBody(guardian, formatMoney(Number(u.amount)), day ? formatStoredDate(day, { withYear: false }) : null, child, leagueUnrecordedWhy(u.land_error)),
-      link: recordHref(org, op),
+      link: recordHref(org, op, { regId: u.registration_id }),
     });
   }
 }
@@ -408,7 +412,7 @@ async function leagueRefundFailed(refundId: string, stripeRefundId: string | nul
   if (!r?.booked_at) return; // refused before it was booked: nothing changed, and the window said so
   const [{ data: op }, { data: item }] = await Promise.all([
     supabaseAdmin.from('online_payments').select('org_id, season_id, card_brand, card_last4').eq('id', r.online_payment_id as string).maybeSingle(),
-    supabaseAdmin.from('online_payment_items').select('description').eq('id', r.online_payment_item_id as string).maybeSingle(),
+    supabaseAdmin.from('online_payment_items').select('description, registration_id').eq('id', r.online_payment_item_id as string).maybeSingle(),
   ]);
   const org = op ? await orgById(op.org_id as string) : null;
   if (!org || !op) return;
@@ -418,7 +422,8 @@ async function leagueRefundFailed(refundId: string, stripeRefundId: string | nul
     subjectKey: 'onlinePaymentItemId', subjectId: r.online_payment_item_id as string,
     title: LW.refundFailedTitle(child),
     body: LW.refundFailedBody(formatMoney(Number(r.amount)), cardLabel(op.card_brand as string | null, op.card_last4 as string | null)),
-    link: recordHref(org, { tournament_id: null, season_id: (op.season_id as string | null) ?? null }),
+    link: recordHref(org, { tournament_id: null, season_id: (op.season_id as string | null) ?? null },
+      { regId: (item?.registration_id as string | null) ?? null, at: 'card' }),
     extra: { refundId },
   });
 }

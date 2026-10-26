@@ -16,7 +16,9 @@ import {
 } from './league-money';
 import { leaguePrice, registrationOwes, type LeaguePrice } from './league-price';
 import { formatStoredDate, orgDayKey } from './timezone';
-import { BULK_WORDS, END_WORDS, REGS_WORDS, MONEY_REFUSAL, REG_RECORD_WORDS, paymentMethodWord } from './house-league-money-words';
+import { BULK_WORDS, CARD_REFUND_WORDS, END_WORDS, REGS_WORDS, MONEY_REFUSAL, REG_RECORD_WORDS, paymentMethodWord } from './house-league-money-words';
+import { clockOf, isBank, isShown, newestFirst, refundBase, refundState, refundTarget, type CardRefund } from './league-card-refunds';
+import { leagueUnrecordedWhy } from './online-payment-words';
 
 // ── What the screen reads ───────────────────────────────────────────────────────────────────────
 
@@ -28,6 +30,8 @@ export interface PriceChange {
   newAmount: number;
   reason: string | null;
   changedAt: string;
+  /** The refund line a correction below what was paid wrote (12c: matched to its card refund, if it went to the card). */
+  refundEntryId?: string | null;
 }
 
 /** The season facts the screen needs (the season GET, narrowed). */
@@ -67,6 +71,8 @@ export interface RegsRead {
   unrecordedCard?: Record<string, { itemId: string; amount: number }[]>;
   /** 12b: booked card refunds Stripe returned, by registration ("sent another way"). */
   returnedRefunds?: Record<string, { refundId: string; amount: number }[]>;
+  /** 12c: every card refund, by registration (the Fee cell, the record's "To the card" block, the history). */
+  cardRefunds?: Record<string, CardRefund[]>;
 }
 
 // ── Words about a person and a day ──────────────────────────────────────────────────────────────
@@ -129,8 +135,12 @@ export interface FeeCellParts {
   sub: string | null;
   /** Green when received, amber only when late, else the plain ink. */
   tone: 'good' | 'warn' | 'plain';
-  /** The third line, from the latest correction, with its hover and tap text. */
-  corrected: { text: string; tip: string } | null;
+  /** 12c: a card refund the card's bank sent back — the amber pill in place of the primary line, and the desk's door
+   *  ("Record the refund sent another way"). */
+  alert: { text: string; aria: string; refundId: string } | null;
+  /** The dotted third line: a price correction (its card refund when it went to the card), or a card refund that never
+   *  entered the book. `refundId` makes a failed correction refund the same door as the pill. */
+  third: { text: string; tip: string; tone: 'plain' | 'warn'; refundId: string | null } | null;
   state: FeeState;
 }
 
@@ -140,9 +150,11 @@ export function feeCell(
   lines: readonly LeagueMoneyLine[],
   today: string,
   changes: readonly PriceChange[],
+  cardRefunds: readonly CardRefund[] = [],
 ): FeeCellParts {
   const state = feeState(reg, season, lines, today);
   const F = REGS_WORDS.fee;
+  const C = CARD_REFUND_WORDS.cell;
   const money = formatLeagueMoney;
   let primary: string | null = null;
   let sub: string | null = null;
@@ -174,6 +186,12 @@ export function feeCell(
       sub = F.on(regDay(state.last.day, today), howOf(state.last));
       break;
     case 'kept':
+      // 12c words §1: a part refund with the rest kept names both; the reason moves to the record.
+      if (state.refunded && state.lastRefund) {
+        primary = C.keptAndRefunded(money(state.kept), money(state.refunded));
+        sub = F.on(regDay(state.lastRefund.day, today), howOf(state.lastRefund));
+        break;
+      }
       primary = F.kept(money(state.kept));
       sub = state.reason ? clip(state.reason, 60) : null;
       break;
@@ -182,23 +200,84 @@ export function feeCell(
   // 12b copy §5: an owing row the desk emailed the pay link reads when it was sent.
   if (state.kind === 'owing' && reg.payLinkSentAt) sub = F.linkSent(regDay(reg.payLinkSentAt.slice(0, 10), today));
 
+  // ── 12c: a refund to the card is on the registration (words §1). A club with no card refund reads today's cell. ──
+  const refunds = newestFirst(cardRefunds.filter(isShown));
+  const byEntry = new Map(refunds.filter(r => r.entryId).map(r => [r.entryId as string, r]));
+  /** What the second line says after the day: "$156.75 to the card", "· pending", "· made in Stripe". */
+  const cardHow = (r: CardRefund) => {
+    const s = refundState(r);
+    if (s === 'anotherWay') return C.sentAnotherWay;
+    const to = C.toTarget(money(r.amount), isBank(r));
+    return s === 'pending' ? `${to} · ${C.pending}` : r.origin === 'stripe_dashboard' ? `${to} · ${C.madeInStripe}` : to;
+  };
+  const cardDay = (r: CardRefund, bookDay: string | null) =>
+    regDay(refundState(r) === 'anotherWay' ? r.succeededAt : bookDay ?? r.succeededAt ?? r.createdAt, today);
+  const failedSub = (r: CardRefund) => C.failedSub(C.toTarget(money(r.amount), isBank(r)), regDay(r.failedAt ?? r.createdAt, today));
+
+  // The latest refund line on the second line, when it went to the card.
+  const lastOut = state.kind === 'refunded' ? state.last : state.kind === 'kept' ? state.lastRefund ?? null : null;
+  const onCard = lastOut ? byEntry.get(lastOut.id) : undefined;
+  if (onCard && lastOut) sub = F.on(cardDay(onCard, lastOut.day), cardHow(onCard));
+
+  // A correction whose difference went to the card reads the card's state on the third line.
   const latest = changes
     .filter(c => c.kind === 'corrected')
     .sort((a, b) => Date.parse(a.changedAt) - Date.parse(b.changedAt))
     .at(-1);
-  const corrected = latest
-    ? {
+  const correctionCard = latest?.refundEntryId ? byEntry.get(latest.refundEntryId) : undefined;
+
+  // A refund the card sent back (not one a correction's third line already carries) is the amber pill.
+  const failed = refunds.find(r => refundState(r) === 'failed' && r !== correctionCard);
+  let alert: FeeCellParts['alert'] = null;
+  if (failed) {
+    alert = { text: C.failed(isBank(failed)), aria: C.failedAria(isBank(failed)), refundId: failed.id };
+    primary = null;
+    sub = failedSub(failed);
+    tone = 'plain';
+  }
+
+  // A card payment that never went on the registration, refunded: on the row anyway (words §1, "Never in the book").
+  const neverBooked = refunds.filter(r => !r.inBook && !r.entryId);
+  const nb = neverBooked[0];
+  if (nb && state.kind === 'endedNone' && !alert) {
+    primary = F.refunded(money(refundBase(nb)));
+    sub = F.on(cardDay(nb, null), cardHow(nb));
+  }
+
+  let third: FeeCellParts['third'] = null;
+  if (latest && correctionCard) {
+    const s = refundState(correctionCard);
+    const amount = money(refundBase(correctionCard));
+    const bank = isBank(correctionCard);
+    third = {
+      text: s === 'failed' ? C.correctedFailed(amount, bank) : s === 'pending' ? C.correctedPending(amount, bank) : C.corrected(amount, bank),
+      tip: C.correctedTip(latest.oldAmount != null ? money(latest.oldAmount) : '—', money(latest.newAmount), regDay(latest.changedAt, today),
+        latest.reason ?? '', amount, cardDay(correctionCard, null), bank),
+      tone: s === 'failed' ? 'warn' : 'plain',
+      refundId: s === 'failed' ? correctionCard.id : null,
+    };
+  } else if (nb) {
+    const paid = nb.paidAt ?? nb.createdAt;
+    const back = nb.succeededAt ?? nb.createdAt;
+    third = {
+      text: C.neverBooked[nb.landError ?? ''] ?? C.neverBooked.other,
+      tip: C.neverBookedTip(regDay(paid, today), clockOf(paid), leagueUnrecordedWhy(nb.landError ?? ''), regDay(back, today), clockOf(back), isBank(nb)),
+      tone: 'plain', refundId: null,
+    };
+  } else if (latest) {
+    third = {
       text: F.corrected(clip(latest.reason ?? '', 50)),
       tip: F.correctedTip(latest.oldAmount != null ? money(latest.oldAmount) : '—', money(latest.newAmount), regDay(latest.changedAt, today), latest.reason ?? ''),
-    }
-    : null;
+      tone: 'plain', refundId: null,
+    };
+  }
 
-  return { kind: state.kind, primary, sub, tone, corrected, state };
+  return { kind: state.kind, primary, sub, tone, alert, third, state };
 }
 
 /** The phone row's detail line: division · fee line · fee sub-line (copy §1.3). */
 export function phoneDetail(division: string | null, team: string | null, fee: FeeCellParts): string {
-  return [division, team, fee.primary, fee.sub].filter(Boolean).join(' · ');
+  return [division, team, fee.alert?.text ?? fee.primary, fee.sub].filter(Boolean).join(' · ');
 }
 
 // ── Who can do what to a row ────────────────────────────────────────────────────────────────────
@@ -429,20 +508,39 @@ export function registrationHistory(
   lines: readonly LeagueMoneyLine[],
   changes: readonly PriceChange[],
   today: string,
+  cardRefunds: readonly CardRefund[] = [],
 ): HistoryItem[] {
   const H = REG_RECORD_WORDS.timeline;
+  const CH = CARD_REFUND_WORDS.history;
   const money = formatLeagueMoney;
   const items: HistoryItem[] = [];
   const add = (iso: string | null | undefined, text: string, day?: string) => {
     if (!iso) return;
     items.push({ at: Date.parse(iso), day: regDay(day ?? iso, today), text });
   };
+  // 12c words §2: a refund to the card keeps the book's figure first and adds the card's.
+  const refunds = cardRefunds.filter(isShown);
+  const byEntry = new Map(refunds.filter(r => r.entryId).map(r => [r.entryId as string, r]));
   add(reg.registeredAt, reg.source === 'admin_manual' ? H.byHand : H.registered);
   if (reg.acceptedAt) add(reg.acceptedAt, H.accepted);
   for (const l of lines) {
     if (l.status === 'void') { add(l.createdAt, H.voided(money(l.amount)), l.day); continue; }
     if (l.status !== 'posted') continue;
+    const card = l.dir === 'out' ? byEntry.get(l.id) : undefined;
+    if (card) {
+      const [booked, amount, to, bank] = [money(l.amount), money(card.amount), refundTarget(card), isBank(card)];
+      const s = refundState(card);
+      add(l.createdAt, s === 'pending' ? CH.pending(booked, amount, to)
+        : card.origin === 'stripe_dashboard' ? CH.stripe(booked, amount, to)
+          : card.succeededAt && s === 'refunded' ? CH.reached(booked, amount, to, bank) : CH.refund(booked, amount, to), l.day);
+      continue;
+    }
     add(l.createdAt, l.dir === 'in' ? H.received(money(l.amount), how(l.method)) : H.refund(money(l.amount), how(l.method)), l.day);
+  }
+  for (const r of refunds) {
+    if (!r.entryId && !r.inBook) add(r.succeededAt ?? r.createdAt, CH.neverBooked(money(r.amount), refundTarget(r)));
+    if (r.failedAt) add(r.failedAt, CH.failed(money(r.amount), refundTarget(r), isBank(r)));
+    if (r.sentAnotherWay) add(r.succeededAt, CH.anotherWay(money(r.amount)));
   }
   for (const c of changes) {
     add(c.changedAt, c.kind === 'corrected'

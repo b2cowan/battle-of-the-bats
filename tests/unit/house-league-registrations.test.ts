@@ -3,7 +3,9 @@ import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import {
   bulkActions, bulkResult, feeCell, parsePrice, receiveDayError, refundDayError, rowActions, tallyWhy, whyOf, matchesFee, regTab,
+  registrationHistory,
 } from '../../lib/house-league-registrations.ts';
+import type { CardRefund } from '../../lib/league-card-refunds.ts';
 import { MONEY_REFUSAL } from '../../lib/house-league-money-words.ts';
 import { feeState, type LeagueMoneyLine } from '../../lib/league-money.ts';
 import type { LeagueRegistration } from '../../lib/types.ts';
@@ -53,8 +55,73 @@ describe('the Fee cell (copy §1.3)', () => {
   });
   it('a correction adds the third line, clipped, with the whole record as its tip', () => {
     const c = feeCell(reg(), SEASON, [], TODAY, [{ registrationId: 'r1', kind: 'corrected', oldAmount: 150, newAmount: 120, reason: 'Coach’s child', changedAt: '2026-10-24T15:00:00Z' }]);
-    assert.equal(c.corrected?.text, 'Price corrected · Coach’s child');
-    assert.equal(c.corrected?.tip, 'Was $150, now $120. Corrected on Oct 24. Coach’s child');
+    assert.equal(c.third?.text, 'Price corrected · Coach’s child');
+    assert.equal(c.third?.tip, 'Was $150, now $120. Corrected on Oct 24. Coach’s child');
+  });
+});
+
+/**
+ * Club Tier Stage 12c Part 2 — a refund to the card is visible on the row (words CLUB_TIER_STAGE12C_REFUND_VISIBLE_COPY.md §1).
+ * A club with no card refund reads today's cell word for word (frame f): every test above passes no refunds.
+ */
+describe('the Fee cell reads a card refund (12c words §1)', () => {
+  const refund = (over: Partial<CardRefund> = {}): CardRefund => ({
+    id: 'f1', regId: 'r1', itemId: 'i1', amount: 156.75, feeBack: 6.75, status: 'succeeded', origin: 'app', booked: true,
+    entryId: 'l2', inBook: true, landError: null, reason: 'club_ended', partialReason: null, sentAnotherWay: false,
+    createdAt: '2026-10-26T18:14:00Z', succeededAt: '2026-10-26T18:15:00Z', failedAt: null, reference: 're_123', by: 'Pat Lee', resolvedBy: null,
+    rail: 'card', cardBrand: 'visa', cardLast4: '4242', bankLast4: null, receiptNo: 1046, paidAt: '2026-10-20T15:00:00Z',
+    share: 150, shareFee: 6.75, familyPaidFee: true, emailedAt: null, emailFailedAt: null, ...over,
+  });
+  const declined = reg({ status: 'declined', endedAt: '2026-10-26T18:00:00Z' });
+  const paidAndBack = [line(), line({ id: 'l2', dir: 'out', day: '2026-10-26' })];
+  it('refunded in full: the fee figure first, the card amount on the second line', () => {
+    const c = feeCell(declined, SEASON, paidAndBack, TODAY, [], [refund()]);
+    assert.deepEqual([c.primary, c.sub, c.alert], ['$150 refunded', 'Oct 26 · $156.75 to the card', null]);
+  });
+  it('pending at the bank, and made in Stripe', () => {
+    assert.equal(feeCell(declined, SEASON, paidAndBack, TODAY, [], [refund({ status: 'pending', succeededAt: null })]).sub, 'Oct 26 · $156.75 to the card · pending');
+    assert.equal(feeCell(declined, SEASON, paidAndBack, TODAY, [], [refund({ origin: 'stripe_dashboard' })]).sub, 'Oct 26 · $156.75 to the card · made in Stripe');
+  });
+  it('a refund the card sent back never reads "refunded": the amber pill, the door to record it sent another way', () => {
+    const c = feeCell(declined, SEASON, paidAndBack, TODAY, [], [refund({ status: 'failed', succeededAt: null, failedAt: '2026-10-23T15:00:00Z' })]);
+    assert.equal(c.primary, null);
+    assert.deepEqual(c.alert, { text: 'Refund didn’t reach the card', aria: 'Refund didn’t reach the card. Record the refund sent another way.', refundId: 'f1' });
+    assert.equal(c.sub, '$156.75 to the card · sent back Oct 23');
+  });
+  it('sent another way after it came back', () => {
+    const c = feeCell(declined, SEASON, paidAndBack, TODAY, [], [refund({ sentAnotherWay: true, succeededAt: '2026-10-30T15:00:00Z', failedAt: '2026-10-23T15:00:00Z' })]);
+    assert.deepEqual([c.primary, c.sub, c.alert], ['$150 refunded', 'Oct 30 · sent another way', null]);
+  });
+  it('a part refund with the rest kept names both (the refund is no longer hidden behind "kept")', () => {
+    const r = reg({ status: 'withdrawn', endMoney: 'kept', endMoneyReason: 'After the date', endedAt: '2026-10-19T15:00:00Z' });
+    const c = feeCell(r, SEASON, [line(), line({ id: 'l2', dir: 'out', amount: 50, day: '2026-10-19' })], TODAY, [],
+      [refund({ amount: 50, feeBack: 0, reason: 'family_left', partialReason: 'After the date' })]);
+    assert.deepEqual([c.primary, c.sub], ['$100 kept by the club · $50 refunded', 'Oct 19 · $50 to the card']);
+  });
+  it('a payment that never went on the registration, refunded: on the row, with the dotted third line and its tip', () => {
+    const c = feeCell(declined, SEASON, [], TODAY, [], [refund({ entryId: null, inBook: false, landError: 'ended' })]);
+    assert.deepEqual([c.primary, c.sub], ['$150 refunded', 'Oct 26 · $156.75 to the card']);
+    assert.equal(c.third?.text, 'Paid after the registration ended');
+    assert.equal(c.third?.tip, 'Paid by card on Oct 20 at 11:00 a.m., but it couldn’t go on this registration: the registration had already ended. Refunded to the card on Oct 26 at 2:15 p.m.');
+    const also = feeCell(reg(), SEASON, [line()], TODAY, [], [refund({ entryId: null, inBook: false, landError: 'already_received' })]);
+    assert.deepEqual([also.primary, also.third?.text], ['$150 received', 'Also paid by card · that payment was refunded']);
+  });
+  it('a correction whose difference went to the card says so on the third line; a failed one is amber and the door', () => {
+    const change = { registrationId: 'r1', kind: 'corrected' as const, oldAmount: 150, newAmount: 135, reason: 'Sibling discount', changedAt: '2026-10-24T15:00:00Z', refundEntryId: 'l2' };
+    const lines = [line(), line({ id: 'l2', dir: 'out', amount: 15, day: '2026-10-24' })];
+    const ok = feeCell(reg({ feeAmount: 135 }), SEASON, lines, TODAY, [change], [refund({ amount: 15, feeBack: 0, reason: 'price_corrected' })]);
+    assert.deepEqual([ok.primary, ok.third?.text, ok.third?.tone, ok.alert], ['$135 received', 'Price corrected · $15 back to the card', 'plain', null]);
+    const bad = feeCell(reg({ feeAmount: 135 }), SEASON, lines, TODAY, [change], [refund({ amount: 15, feeBack: 0, reason: 'price_corrected', status: 'failed', failedAt: '2026-10-25T15:00:00Z' })]);
+    assert.deepEqual([bad.third?.text, bad.third?.tone, bad.third?.refundId, bad.alert], ['Price corrected · $15 refund didn’t reach the card', 'warn', 'f1', null]);
+  });
+  it('a refund Stripe refused before booking changed nothing, and is on no screen', () => {
+    const c = feeCell(reg(), SEASON, [line()], TODAY, [], [refund({ status: 'failed', booked: false, entryId: null })]);
+    assert.deepEqual([c.primary, c.alert, c.third], ['$150 received', null, null]);
+  });
+  it('the history keeps the book’s figure first and adds the card’s, and the day it came back', () => {
+    const h = registrationHistory(declined, paidAndBack, [], TODAY, [refund({ status: 'failed', succeededAt: null, failedAt: '2026-10-27T15:00:00Z' })]).map(x => x.text);
+    assert.ok(h.includes('Refunded $150 · $156.75 to Visa •••• 4242'), h.join(' | '));
+    assert.ok(h.includes('Refund didn’t reach the card · $156.75 to Visa •••• 4242'), h.join(' | '));
   });
 });
 

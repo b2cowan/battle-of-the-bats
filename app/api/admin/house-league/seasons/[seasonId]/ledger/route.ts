@@ -8,6 +8,8 @@ import { feeState, isOwing, seasonMoney } from '@/lib/league-money';
 import { filesToClubStatement, loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { fetchAll } from '@/lib/supabase-paging';
+import { loadCardRefunds } from '@/lib/league-pay-facts';
+import { isBank, isShown, refundBase, refundState } from '@/lib/league-card-refunds';
 
 /** The season book's card costs (12b, mig 374: source 'online_payment'), newest first. */
 async function seasonProcessingLines(orgId: string, seasonId: string): Promise<Array<{ id: string; day: string; amount: number; description: string; createdAt: string }>> {
@@ -53,6 +55,10 @@ export const GET = withObservability(async (_req: Request,
     seasonProcessingLines(ctx!.org.id, seasonId),
   ]);
   if (changes.error) throw changes.error;
+  // 12c words §3: a refund line that went to the card says so (and how it stands); one that never entered the book is
+  // named under the Refunds list.
+  const cardRefunds = Object.values(await loadCardRefunds(ctx!.org.id, regs.map(r => r.id))).flat().filter(isShown);
+  const cardByEntry = new Map(cardRefunds.filter(r => r.entryId).map(r => [r.entryId as string, r]));
 
   const today = tournamentToday();
   const regById = new Map(regs.map(r => [r.id, r]));
@@ -77,13 +83,17 @@ export const GET = withObservability(async (_req: Request,
       refundWhy: why,
       priceKind: l.dir === 'in' ? (correctedRegs.has(l.regId) ? 'corrected' : 'regular') : null,
       note: l.note, createdAt: l.createdAt,
+      card: (() => {
+        const c = l.dir === 'out' ? cardByEntry.get(l.id) : undefined;
+        return c ? { state: refundState(c), bank: isBank(c), stripe: c.origin === 'stripe_dashboard' } : null;
+      })(),
     };
   });
   // 12b (drawn m1): the season's card costs — a club-paid processing fee, a fee given back on a refund. A cost on the
   // book, never a fee or a refund (the Statement files them under Payment processing).
   const costs = processing.map(p => ({
     id: p.id, regId: '', player: null, day: p.day, amount: p.amount, method: 'online_card', receiptNo: null,
-    kind: 'processing' as const, refundWhy: null, priceKind: null, note: p.description, createdAt: p.createdAt,
+    kind: 'processing' as const, refundWhy: null, priceKind: null, note: p.description, createdAt: p.createdAt, card: null,
   }));
   const bookAll = [...book, ...costs].sort((a, b) => (a.day === b.day ? b.createdAt.localeCompare(a.createdAt) : b.day.localeCompare(a.day)));
 
@@ -127,6 +137,10 @@ export const GET = withObservability(async (_req: Request,
       .filter(l => l.status === 'posted' && l.method === 'online_card')
       .reduce((sum, l) => sum + (l.dir === 'in' ? l.amount : -l.amount), 0) * 100) / 100,
     lines: bookAll,
+    neverBooked: cardRefunds.filter(r => !r.entryId && !r.inBook && r.regId).map(r => ({
+      regId: r.regId as string, player: name(r.regId as string) ?? '—', amount: r.amount, base: refundBase(r), feeBack: r.feeBack,
+      day: orgDayKey(r.succeededAt ?? r.createdAt),
+    })),
     history,
     owing,
     today,

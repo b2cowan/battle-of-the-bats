@@ -3090,6 +3090,16 @@
     "update_rule": null
   },
   {
+    "table_name": "online_payment_refunds",
+    "constraint_name": "online_payment_refunds_resolved_by_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "resolved_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "online_payments",
     "constraint_name": "online_payments_cost_entry_fk",
     "constraint_type": "FOREIGN KEY",
