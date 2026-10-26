@@ -48,7 +48,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePublicPathname } from '@/lib/use-public-pathname';
-import { User, Bell, Settings, MessageSquarePlus, LogOut, Check } from 'lucide-react';
+import { User, Shirt, Bell, Settings, MessageSquarePlus, LogOut, Check } from 'lucide-react';
 import { getSession, signOut } from '@/lib/auth';
 import { useDismissable } from '@/lib/overlay-hooks';
 import {
@@ -72,6 +72,7 @@ export default function AccountMenu({
   warm = false,
   signOutTo = 'sign-in',
   showAccount = true,
+  teams,
   className,
   wrapClassName,
   children,
@@ -89,6 +90,10 @@ export default function AccountMenu({
   signOutTo?: 'sign-in' | 'here' | 'platform';
   /** False in the support console: no Notification settings / Account settings rows. */
   showAccount?: boolean;
+  /** A house-league coach's teams at THIS club (the club site passes them): one is a "My team" row, two or more sit under
+   *  a "My teams" caption by name, the one being viewed shaded. The phone's way to the team; at a desk the bar's own "My
+   *  team" link leads too. Nothing renders when empty. */
+  teams?: { teamName: string; href: string; current: boolean }[];
   /** The host bar's icon-door class — the trigger wears that row's exact skin. */
   className?: string;
   /** Lets a host re-anchor the popover (the marketing bar pins it to its own right edge on a phone). */
@@ -214,6 +219,21 @@ export default function AccountMenu({
             </div>
           )}
 
+          {teams && teams.length > 1 && <span className={`${styles.identityCap} ${styles.groupCap}`}>My teams</span>}
+          {teams?.map(t => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className={`${styles.row} ${t.current ? styles.rowCurrent : ''}`}
+              role="menuitem"
+              aria-current={t.current ? 'page' : undefined}
+              onClick={() => setOpen(false)}
+            >
+              <Shirt size={15} aria-hidden />
+              {teams.length > 1 ? t.teamName : 'My team'}
+            </Link>
+          ))}
+          {teams && teams.length > 1 && <div className={styles.sep} aria-hidden />}
           {showAccount && (
             <Link href={notifHref} className={styles.row} role="menuitem" onClick={() => setOpen(false)}>
               <Bell size={15} aria-hidden />

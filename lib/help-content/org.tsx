@@ -1357,7 +1357,7 @@ const orgHelp: HelpPageContent = {
         'sign in', 'account', 'phone navigation', 'mobile navigation', 'bottom bar', 'discover', 'pricing',
         'footer', 'contact email', 'copy email', 'social links', 'built on fieldlogichq', 'colours', 'colors',
         'light colour', 'readable', 'event card colour', 'event card color',
-        'return to admin from public page', 'admin shortcut', 'coaches portal shortcut', 'flip', 'account menu', 'sign out',
+        'return to admin from public page', 'admin shortcut', 'coaches portal shortcut', 'flip', 'account menu', 'sign out', 'my team', 'my teams', 'house league coach',
         'page not found', 'couldn’t find that page', 'broken link', 'old link', 'qr code', 'short address', 'site isn’t available',
         'home page', 'open now', 'teams tab', 'teams page', 'team page', 'about the club', 'follow', 'tournament status',
         'live now', 'this weekend', 'finished', 'see all teams', 'team schedule', 'earlier this season', 'banner photo',
@@ -1520,7 +1520,10 @@ const orgHelp: HelpPageContent = {
           id: 'public-org-page-admin-shortcut',
           title: 'Your shortcut back to admin',
           content: (
-            <p>If you help run this club and you are signed in, a quiet <strong>&#8646;</strong> door sits at the far right of your bar, after Account: labelled on a computer, the &#8646; alone on a phone. It takes you back to your admin area or Coaches Portal in the same tab, to the exact screen you came from. If you hold more than one role here, it opens a short list so you can pick. Families, signed-out visitors and staff of other clubs never see it.</p>
+            <>
+              <p>If you help run this club and you are signed in, an icon sits at the far right of your bar, after the person icon. Point at it to see where it goes. It takes you back to your admin area or Coaches Portal in the same tab, to the exact screen you came from. If you hold more than one role here, it opens a short list so you can pick. Families, signed-out visitors and staff of other clubs never see it.</p>
+              <p>A house league coach gets <strong>My team</strong> at the top right instead, which opens their team page. On a phone it is the first row of the person icon&rsquo;s menu. A coach who also runs the club gets both.</p>
+            </>
           ),
         },
       ],

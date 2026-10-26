@@ -62,8 +62,14 @@ export const GET = withObservability(async () => {
   const adminHref = workspaces.find(d => d.kind === 'organization')?.href ?? null;
   const primaryOrg = getPrimaryOrgPlanContext(contexts, adminHref);
 
+  // The house-league teams this person coaches, for the club site's "My team" door (the context card's own destination).
+  const leagueTeams = contexts
+    .filter(c => c.kind === 'house_league_coach' && c.orgSlug)
+    .map(c => ({ id: c.id, teamName: c.title, orgSlug: c.orgSlug as string, href: c.destination }));
+
   return NextResponse.json({
     adminHref,
+    leagueTeams,
     coachHref: hasCoachAccess(contexts) ? '/coaches' : null,
     hasChat,
     workspaces,

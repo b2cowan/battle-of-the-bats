@@ -161,6 +161,17 @@
   color: var(--data-gray);
 }
 
+/* The page being viewed, among a coach's teams: shaded, as the bar's own "My teams" list shades it. */
+.rowCurrent {
+  background: color-mix(in srgb, var(--fl-text) 6%, transparent);
+  font-weight: 600;
+}
+
+/* "My teams" over a coach's two or more teams: the menu's own eyebrow, set in a row's inset. */
+.groupCap {
+  padding: 0.5rem 0.65rem 0.15rem;
+}
+
 .sep {
   height: 1px;
   background: var(--border-2);

@@ -483,6 +483,16 @@ test('org return: slug match is SEGMENT-exact — a prefix org must not borrow t
   );
 });
 
+test("org return: a door that is a public page of this org is no side to return to (a house-league coach's team)", () => {
+  assert.equal(resolveOrgReturnFlip([{ href: '/ravens/league/2027/team/t1', title: 'Cardinals' }], 'ravens'), null);
+  // Beside a real side it is dropped before the fork, so the admin keeps a direct pill, not a chooser.
+  const res = resolveOrgReturnFlip(
+    [{ href: '/ravens/admin', title: 'Ravens' }, { href: '/ravens/league/2027/team/t1', title: 'Cardinals' }],
+    'ravens',
+  );
+  assert.equal(res?.kind === 'single' && res.target.href, '/ravens/admin');
+});
+
 test('org return: one door → a direct pill labelled by SURFACE', () => {
   const res = resolveOrgReturnFlip(
     [{ href: '/ravens/admin/tournaments/dashboard', title: 'Cedarvale Ravens' }],

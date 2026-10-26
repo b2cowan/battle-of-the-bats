@@ -15,12 +15,20 @@
  * every width, like Account beside it (owner 2026-10-20; its destination is its accessible name and its hover tooltip). Staff of another club and every family see none: the everywhere-chooser
  * (Workspaces) that the old bar fell back to drew a door into Riverbend on Lakeshore's own page.
  *
+ * MY TEAM (2026-10-26, drawing CLUB_SITE_MY_TEAM_DRAWING.html): a signed-in house-league coach of THIS club gets a
+ * "My team" link left of Account at a desk, drawn like a tab (it is a place on this site, the tabs' kind of thing), and lit
+ * on that team's page, where House league goes unlit so one item says where they are. Two or more teams make it "My teams"
+ * with a short list. On a phone the band has no room for a word, so the same teams are the account menu's first rows. It
+ * replaces the staff door for a coach, which drew a globe labelled "Public site" that ping-ponged between Home and the team.
+ *
  * Identity resolves in the browser after the page loads, never on the server, so the page a service worker caches for
  * an anonymous visitor carries no one's doors (the anonymous-public invariant).
  */
 import Link from 'next/link';
 import { useOrgHref, usePublicPathname, useSignInHref } from '@/lib/use-public-pathname';
-import { User } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { ChevronDown, Shirt, User } from 'lucide-react';
+import { useDismissable } from '@/lib/overlay-hooks';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 import { useRoleSummary } from '@/lib/use-role-summary';
 import { resolveOrgReturnFlip } from '@/lib/flip-twins';
@@ -46,6 +54,10 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
   const roles = useRoleSummary(signedIn);
   const door = preview ? null : resolveOrgReturnFlip(roles?.workspaces, club.slug);
   const showTabs = club.sections.length >= ORG_SECTION_TABS_MIN;
+  // The teams this person coaches at THIS club, addressed through the club's own links; `current` is the one being viewed.
+  const myTeams = (roles?.leagueTeams ?? []).filter(t => t.orgSlug === club.slug)
+    .map(t => ({ teamName: t.teamName, href: href(t.href.slice(club.slug.length + 1)), current: pathname === t.href }));
+  const onMyTeam = myTeams.some(t => t.current);
 
   return (
     // data-club-chrome: the club refusal steps this bar aside (components/public/ClubNotFound.module.css).
@@ -67,16 +79,17 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
         <OrgSectionTabs
           sections={club.sections}
           orgSlug={club.slug}
-          activeKey={activeOrgSectionKey(pathname, club.slug, club.sections)}
+          activeKey={onMyTeam ? null : activeOrgSectionKey(pathname, club.slug, club.sections)}
           className={styles.tabsSlot}
         />
       )}
 
       <div className={styles.actions}>
+        {signedIn && myTeams.length > 0 && <MyTeamDoor teams={myTeams} />}
         {signedIn ? (
           // The shared demo account is never offered Sign out (the strips' rule), so a demo club shows no Account.
           !isDemoOrgSlug(club.slug) && (
-            <AccountMenu className={styles.word} wrapClassName={styles.account} signOutTo="here">
+            <AccountMenu className={styles.word} wrapClassName={styles.account} signOutTo="here" teams={myTeams}>
               <User className={styles.wordIcon} strokeWidth={1.8} aria-hidden />
             </AccountMenu>
           )
@@ -88,5 +101,57 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
         {door && <FlipPill resolution={door} variant="inline" compact className={flipStyles.clubLook} />}
       </div>
     </header>
+  );
+}
+
+type MyTeam = { teamName: string; href: string; current: boolean };
+
+/** The desk's "My team" link (one team) or "My teams" list (two or more). Hidden on a phone, where the account menu
+ *  carries the same rows. */
+function MyTeamDoor({ teams }: { teams: MyTeam[] }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  useDismissable(open, wrapRef, () => setOpen(false));
+  const lit = teams.some(t => t.current);
+
+  if (teams.length === 1) {
+    return (
+      <Link href={teams[0].href} className={`${styles.mine} ${lit ? styles.mineOn : ''}`} aria-current={lit ? 'page' : undefined}>
+        <Shirt className={styles.mineIcon} strokeWidth={1.8} aria-hidden />
+        My team
+      </Link>
+    );
+  }
+  return (
+    <div ref={wrapRef} className={styles.mineWrap}>
+      <button
+        type="button"
+        className={`${styles.mine} ${lit ? styles.mineOn : ''}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
+      >
+        <Shirt className={styles.mineIcon} strokeWidth={1.8} aria-hidden />
+        My teams
+        <ChevronDown className={`${styles.mineCaret} ${open ? styles.mineCaretOpen : ''}`} size={14} aria-hidden />
+      </button>
+      {open && (
+        <div className={styles.mineMenu} role="menu">
+          {teams.map(t => (
+            <Link
+              key={t.href}
+              href={t.href}
+              role="menuitem"
+              className={`${styles.mineRow} ${t.current ? styles.mineRowOn : ''}`}
+              aria-current={t.current ? 'page' : undefined}
+              onClick={() => setOpen(false)}
+            >
+              <Shirt size={15} strokeWidth={1.8} aria-hidden />
+              {t.teamName}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

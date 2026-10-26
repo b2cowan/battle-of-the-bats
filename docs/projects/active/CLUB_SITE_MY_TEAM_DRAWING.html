@@ -1,0 +1,430 @@
+<title>My Team Door</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review sheet in a neutral slate ground; each product frame is a white specimen that keeps the club site's own (light) look in both themes. */
+:root {
+  /* sheet */
+  --sheet-bg: #eceef2;
+  --sheet-ink: #1d2230;
+  --sheet-soft: #586074;
+  --sheet-line: #cfd4de;
+  --tag-new: #0f6b47;
+  --tag-new-bg: #d9f1e6;
+  --tag-gone: #9b2c2c;
+  --tag-gone-bg: #f8dede;
+  --tag-same: #4b5368;
+  --tag-same-bg: #e2e5ec;
+  --ask-bg: #fff6e0;
+  --ask-line: #e5c56d;
+  /* product frames: the club site is light in both themes */
+  --club-fill: #1e3a8a;
+  --club-on-fill: #ffffff;
+  --club-mark: #ffffff;
+  --site-bg: #f5f4f1;
+  --site-card: #ffffff;
+  --site-text: #1c1d22;
+  --site-soft: #55575f;
+  --site-line: #e2e0da;
+  --site-ink: #1e3a8a;
+  --face-title: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --face-text: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sheet-bg: #161a22; --sheet-ink: #e7eaf0; --sheet-soft: #a2a9b8; --sheet-line: #2f3644;
+    --tag-new: #7fe0b4; --tag-new-bg: #133a2a; --tag-gone: #f3a3a3; --tag-gone-bg: #3d1c1c;
+    --tag-same: #c3c8d4; --tag-same-bg: #2a303c; --ask-bg: #2e2716; --ask-line: #7a6326;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --sheet-bg: #161a22; --sheet-ink: #e7eaf0; --sheet-soft: #a2a9b8; --sheet-line: #2f3644;
+  --tag-new: #7fe0b4; --tag-new-bg: #133a2a; --tag-gone: #f3a3a3; --tag-gone-bg: #3d1c1c;
+  --tag-same: #c3c8d4; --tag-same-bg: #2a303c; --ask-bg: #2e2716; --ask-line: #7a6326;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--sheet-bg);
+  color: var(--sheet-ink);
+  font: 15px/1.55 var(--face-text);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.page { max-width: 1120px; margin: 0 auto; display: grid; gap: 44px; }
+header.top h1 { font: 700 34px/1.1 var(--face-title); margin: 0 0 8px; letter-spacing: .01em; text-wrap: balance; }
+header.top p { margin: 0; max-width: 68ch; color: var(--sheet-soft); }
+section { display: grid; gap: 14px; min-width: 0; }
+section > h2 { font: 700 22px/1.2 var(--face-title); margin: 0; letter-spacing: .01em; }
+section > p.lead { margin: 0; max-width: 72ch; color: var(--sheet-soft); }
+.pair { display: grid; grid-template-columns: 1fr; gap: 18px; }
+.cap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; font-size: 13px; color: var(--sheet-soft); text-transform: uppercase; letter-spacing: .06em; }
+.tag { font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 2px 7px; border-radius: 4px; }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.gone { color: var(--tag-gone); background: var(--tag-gone-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.notes { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 76ch; }
+.notes li::marker { color: var(--sheet-soft); }
+.scroll { overflow-x: auto; border-radius: 10px; border: 1px solid var(--sheet-line); }
+
+/* ── Product frame: desk ── */
+.desk { width: 1080px; background: var(--site-bg); color: var(--site-text); font-family: var(--face-text); }
+.band { display: grid; grid-template-columns: auto 1fr auto; align-items: center; background: var(--club-fill); color: var(--club-on-fill); padding: 0 24px; min-height: 72px; }
+.desk.narrow { width: 940px; }
+.desk.narrow .cname { max-width: 150px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ident { display: flex; align-items: center; gap: 12px; }
+.logo { width: 44px; height: 44px; border-radius: 10px; background: #fff; color: var(--club-fill); display: grid; place-items: center; font: 700 15px var(--face-text); }
+.cname { font: 700 24px/1.1 var(--face-title); }
+.tabs { display: flex; gap: 6px; margin-left: 28px; }
+.tab { min-height: 44px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 8px; font: 600 16px/1 var(--face-text); color: var(--club-on-fill); }
+.tab.on { box-shadow: inset 0 -3px 0 var(--club-mark); }
+.acts { display: flex; align-items: center; gap: 4px; position: relative; }
+.ibtn { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 10px; color: var(--club-on-fill); }
+.ibtn svg { width: 22px; height: 22px; }
+.mine { min-height: 44px; display: inline-flex; align-items: center; gap: 7px; padding: 0 10px; border-radius: 8px; font: 600 16px/1 var(--face-text); color: var(--club-on-fill); }
+.mine svg { width: 19px; height: 19px; }
+.mine.on { box-shadow: inset 0 -3px 0 var(--club-mark); }
+.mine .car { width: 14px; height: 14px; margin-left: -2px; }
+.ring { outline: 2px dashed #ffd23f; outline-offset: 2px; }
+.body { padding: 36px 24px 40px; max-width: 1080px; }
+.crumb { font: 600 17px var(--face-text); color: var(--site-soft); }
+.team { font: 700 38px/1.1 var(--face-title); margin: 6px 0 4px; }
+.coach { color: var(--site-soft); font-size: 16px; }
+.players { margin-top: 32px; width: 900px; display: grid; gap: 14px; }
+.phead { display: flex; justify-content: space-between; align-items: center; }
+.phead b { font-size: 21px; } .phead b span { font-weight: 500; color: var(--site-soft); margin-left: 6px; }
+.btn { border: 1px solid #b9bbc2; background: var(--site-card); border-radius: 8px; padding: 10px 18px; font: 600 16px var(--face-text); color: var(--site-text); }
+.pcard { background: var(--site-card); border: 1px solid var(--site-line); border-radius: 10px; padding: 18px 24px; }
+.pcard b { font-size: 18px; display: block; margin-bottom: 10px; }
+.pcard span { color: var(--site-soft); margin-right: 24px; }
+.pcard a { color: var(--site-ink); }
+.pop { position: absolute; top: calc(100% + 6px); right: 48px; min-width: 220px; background: var(--site-card); color: var(--site-text); border: 1px solid var(--site-line); border-radius: 10px; box-shadow: 0 10px 28px rgba(15, 23, 42, .18); padding: 6px; z-index: 2; }
+.prow { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 7px; font-size: 14px; }
+.prow svg { width: 15px; height: 15px; flex: none; color: var(--site-soft); }
+.prow.cur { background: color-mix(in srgb, var(--site-text) 6%, transparent); font-weight: 600; }
+
+/* ── Product frame: phone ── */
+.phones { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+.phonecol { display: grid; gap: 10px; }
+.phone { width: 360px; max-width: 100%; height: 640px; background: var(--site-bg); color: var(--site-text); border: 1px solid var(--sheet-line); border-radius: 22px; overflow: hidden; position: relative; font-family: var(--face-text); }
+.pband { display: flex; align-items: center; justify-content: space-between; background: var(--club-fill); color: var(--club-on-fill); min-height: 72px; padding: 0 8px 0 16px; }
+.pband .cname { font-size: 20px; }
+.ptabs { display: flex; gap: 4px; padding: 0 8px; background: var(--site-card); border-bottom: 1px solid var(--site-line); border-top: 3px solid var(--club-fill); }
+.ptab { min-height: 44px; display: inline-flex; align-items: center; padding: 3px 8px 0; border-bottom: 3px solid transparent; font: 600 14px/1 var(--face-text); color: var(--site-soft); }
+.ptab.on { color: var(--site-text); border-bottom-color: var(--site-ink); }
+.pbody { padding: 20px 16px; }
+.pbody .crumb { font-size: 14px; } .pbody .team { font-size: 30px; } .pbody .coach { font-size: 14px; }
+.pbody .pcard { margin-top: 12px; padding: 14px 16px; } .pbody .pcard b { font-size: 16px; margin-bottom: 4px; } .pbody .pcard span { font-size: 13px; }
+.scrim { position: absolute; inset: 0; background: rgba(15, 23, 42, .28); }
+.pmenu { position: absolute; top: 64px; right: 8px; width: 270px; background: var(--site-card); border: 1px solid var(--site-line); border-radius: 10px; box-shadow: 0 10px 28px rgba(15, 23, 42, .22); padding: 6px; }
+.mid { display: flex; align-items: center; gap: 10px; padding: 8px 10px 10px; border-bottom: 1px solid var(--site-line); margin-bottom: 4px; font-size: 13px; }
+.av { width: 30px; height: 30px; border-radius: 50%; background: var(--site-ink); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 13px; flex: none; }
+.mid small { display: block; color: var(--site-soft); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.sep { height: 1px; background: var(--site-line); margin: 4px 0; }
+
+.grp { padding: 8px 10px 2px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--site-soft); }
+.prow.sub { padding-left: 14px; }
+.syms { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.sym { background: var(--site-card); color: var(--site-text); border: 1px solid var(--sheet-line); border-radius: 10px; overflow: hidden; display: grid; }
+.sym .strip { display: flex; justify-content: flex-end; align-items: center; gap: 4px; background: var(--club-fill); color: var(--club-on-fill); padding: 10px 12px; }
+.sym .menu { padding: 6px; border-bottom: 1px solid var(--site-line); }
+.sym .menu .prow svg { color: var(--site-text); }
+.sym .what { padding: 10px 14px 14px; font-size: 13.5px; color: var(--site-soft); }
+.sym .what b { display: block; color: var(--site-text); font-size: 15px; margin-bottom: 2px; }
+.sym .what .tag { margin-left: 6px; vertical-align: 1px; }
+.asks { display: grid; gap: 10px; }
+.ask { background: var(--ask-bg); border: 1px solid var(--ask-line); border-radius: 10px; padding: 14px 18px; max-width: 80ch; }
+.ask b { display: block; margin-bottom: 2px; }
+.ask p { margin: 0; }
+@media (max-width: 640px) { header.top h1 { font-size: 28px; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></symbol>
+  <symbol id="i-shirt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+</svg>
+
+<div class="page">
+  <header class="top">
+    <h1>A coach's way to their team, on the club's site</h1>
+    <p>Today a house-league coach finds their team through a globe in the corner labelled "Public site", which flips between Home and the team page. This drawing replaces it with a link that says "My team". The club site keeps its own look in every frame below; the yellow dashed ring marks what changed.</p>
+  </header>
+
+  <section>
+    <h2>1 · The team page at a desk, before and after</h2>
+    <p class="lead">Dev League Org, signed in as the Cardinals' coach, standing on the team page.</p>
+    <div class="pair">
+      <div class="cap">Before <span class="tag gone">GOES</span> the globe</div>
+      <div class="scroll"><div class="desk">
+        <div class="band">
+          <div class="ident"><span class="logo">DL</span><span class="cname">Dev League Org</span></div>
+          <div class="tabs"><span class="tab">Home</span><span class="tab on">House league</span></div>
+          <div class="acts">
+            <span class="ibtn"><svg><use href="#i-user"/></svg></span>
+            <span class="ibtn ring" title="Public site"><svg><use href="#i-globe"/></svg></span>
+          </div>
+        </div>
+        <div class="body">
+          <div class="crumb">U10 Division A · Dev House League 2027</div>
+          <div class="team">Cardinals</div>
+          <div class="coach">Coach Pat Walk</div>
+          <div class="players">
+            <div class="phead"><b>Players<span>3</span></b><span class="btn">Copy emails</span></div>
+            <div class="pcard"><b>Liam Chen</b><span>Parent Chen</span><a>liam.chen@dev.local</a></div>
+          </div>
+        </div>
+      </div></div>
+
+      <div class="cap">After <span class="tag new">NEW</span> "My team" <span class="tag same">UNCHANGED</span> tabs and account</div>
+      <div class="scroll"><div class="desk">
+        <div class="band">
+          <div class="ident"><span class="logo">DL</span><span class="cname">Dev League Org</span></div>
+          <div class="tabs"><span class="tab">Home</span><span class="tab">House league</span></div>
+          <div class="acts">
+            <span class="mine on ring"><svg><use href="#i-users"/></svg>My team</span>
+            <span class="ibtn"><svg><use href="#i-user"/></svg></span>
+          </div>
+        </div>
+        <div class="body">
+          <div class="crumb">U10 Division A · Dev House League 2027</div>
+          <div class="team">Cardinals</div>
+          <div class="coach">Coach Pat Walk</div>
+          <div class="players">
+            <div class="phead"><b>Players<span>3</span></b><span class="btn">Copy emails</span></div>
+            <div class="pcard"><b>Liam Chen</b><span>Parent Chen</span><a>liam.chen@dev.local</a></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <ul class="notes">
+      <li>"My team" sits in the personal corner, left of the account icon. The club's tabs are the same for every visitor and stay that way.</li>
+      <li>"My team" is drawn like a tab (same size and underline) rather than as a small word like "Sign in", because it is a place on this site you go to, the same kind of thing as the tabs.</li>
+      <li>On the team page "My team" is the one lit item: underlined like a tab, and "House league" goes unlit. On every other page it is a plain link. See A3: today "House league" lights on this page for everyone, so this makes the coach's bar differ from a family's on the same page.</li>
+      <li>It appears only for a signed-in coach of a team at <em>this</em> club. Visitors who are not signed in, families, and coaches at other clubs see the bar exactly as today.</li>
+      <li>The globe is gone for anyone whose only role at the club is a team page. <span class="tag new">BUILT</span> already in this session; real staff keep their door.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2 · A coach with two teams</h2>
+    <p class="lead">The link becomes "My teams" with a caret and opens a short list in the same style as the account menu. Each row names a team, and the team you are on is shaded.</p>
+    <div class="scroll"><div class="desk">
+      <div class="band">
+        <div class="ident"><span class="logo">DL</span><span class="cname">Dev League Org</span></div>
+        <div class="tabs"><span class="tab">Home</span><span class="tab">House league</span></div>
+        <div class="acts">
+          <span class="mine on ring"><svg><use href="#i-users"/></svg>My teams<svg class="car"><use href="#i-down"/></svg></span>
+          <span class="ibtn"><svg><use href="#i-user"/></svg></span>
+          <div class="pop">
+            <div class="prow cur"><svg><use href="#i-users"/></svg>Cardinals</div>
+            <div class="prow"><svg><use href="#i-users"/></svg>Blue Jays</div>
+          </div>
+        </div>
+      </div>
+      <div class="body" style="min-height:190px">
+        <div class="crumb">U10 Division A · Dev House League 2027</div>
+        <div class="team">Cardinals</div>
+        <div class="coach">Coach Pat Walk</div>
+      </div>
+    </div></div>
+  </section>
+
+  <section>
+    <h2>3 · A coach who is also club staff</h2>
+    <p class="lead">Both doors, each saying what it is: "My team" for the team, and the office icon back to Admin. The office icon is today's staff door, unchanged.</p>
+    <div class="scroll"><div class="desk">
+      <div class="band">
+        <div class="ident"><span class="logo">DL</span><span class="cname">Dev League Org</span></div>
+        <div class="tabs"><span class="tab on">Home</span><span class="tab">House league</span></div>
+        <div class="acts">
+          <span class="mine ring"><svg><use href="#i-users"/></svg>My team</span>
+          <span class="ibtn"><svg><use href="#i-user"/></svg></span>
+          <span class="ibtn" title="Admin"><svg><use href="#i-building"/></svg></span>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <section>
+    <h2>3b · The tightest desk width</h2>
+    <p class="lead">Just above phone width (940 px here), with a longer club name, both tabs, "My team" and two icons in one band. It still fits on one line.</p>
+    <div class="scroll"><div class="desk narrow">
+      <div class="band">
+        <div class="ident"><span class="logo">RR</span><span class="cname">Riverdale Ridge Minor Ball</span></div>
+        <div class="tabs"><span class="tab on">Home</span><span class="tab">House league</span></div>
+        <div class="acts">
+          <span class="mine ring"><svg><use href="#i-users"/></svg>My team</span>
+          <span class="ibtn"><svg><use href="#i-user"/></svg></span>
+          <span class="ibtn" title="Admin"><svg><use href="#i-building"/></svg></span>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <section>
+    <h2>4 · On a phone</h2>
+    <p class="lead">The colour band has room for the club's name and an icon or two, so on a phone "My team" is the first row of the account menu. That row is already in the code, so the recommended phone version needs no new work; the desk link is the new part.</p>
+    <div class="phones">
+      <div class="phonecol">
+        <div class="cap">Recommended <span class="tag same">ALREADY IN THE CODE</span> first row of the menu</div>
+        <div class="phone">
+          <div class="pband"><div class="ident"><span class="logo">DL</span><span class="cname">Dev League Org</span></div><span class="ibtn"><svg><use href="#i-user"/></svg></span></div>
+          <div class="ptabs"><span class="ptab">Home</span><span class="ptab on">House league</span></div>
+          <div class="pbody">
+            <div class="crumb">U10 Division A · Dev House League 2027</div>
+            <div class="team">Cardinals</div>
+            <div class="coach">Coach Pat Walk</div>
+            <div class="pcard"><b>Liam Chen</b><span>Parent Chen</span></div>
+            <div class="pcard"><b>Avery Macdonald</b><span>Parent Macdonald</span></div>
+          </div>
+          <div class="scrim"></div>
+          <div class="pmenu">
+            <div class="mid"><span class="av">P</span><span><small>Signed in</small>pat.walk@dev.local</span></div>
+            <div class="prow ring"><svg><use href="#i-users"/></svg>My team</div>
+            <div class="prow"><svg><use href="#i-bell"/></svg>Notification settings</div>
+            <div class="prow"><svg><use href="#i-msg"/></svg>Send feedback</div>
+            <div class="prow"><svg><use href="#i-gear"/></svg>Account settings</div>
+            <div class="sep"></div>
+            <div class="prow"><svg><use href="#i-out"/></svg>Sign out</div>
+          </div>
+        </div>
+      </div>
+      <div class="phonecol">
+        <div class="cap">Alternative <span class="tag new">NEW</span> a team icon in the band (coach who is also staff)</div>
+        <div class="phone">
+          <div class="pband"><div class="ident"><span class="logo">DL</span><span class="cname">Dev League Org</span></div><span style="display:flex"><span class="ibtn ring" title="My team"><svg><use href="#i-users"/></svg></span><span class="ibtn"><svg><use href="#i-user"/></svg></span><span class="ibtn" title="Admin"><svg><use href="#i-building"/></svg></span></span></div>
+          <div class="ptabs"><span class="ptab">Home</span><span class="ptab on">House league</span></div>
+          <div class="pbody">
+            <div class="crumb">U10 Division A · Dev House League 2027</div>
+            <div class="team">Cardinals</div>
+            <div class="coach">Coach Pat Walk</div>
+            <div class="pcard"><b>Liam Chen</b><span>Parent Chen</span></div>
+            <div class="pcard"><b>Avery Macdonald</b><span>Parent Macdonald</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ul class="notes">
+      <li>The recommended version is one tap more, and it is never a bare symbol someone has to guess. Guessing a bare symbol is the problem this drawing exists to fix.</li>
+      <li>The alternative is one tap, but for a coach who is also staff it puts three bare icons side by side, and a team icon on its own is easy to misread on a first visit.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>4b · A coach with two teams, on a phone</h2>
+    <p class="lead">Left is what the code does today: one row per team, each repeating "My team". Right is a small "My teams" heading with the team names under it, the same pattern as the menu's own "Signed in" heading. The team you are on is shaded in both.</p>
+    <div class="phones">
+      <div class="phonecol">
+        <div class="cap">As in the code today <span class="tag same">ALREADY IN THE CODE</span></div>
+        <div class="phone" style="height:470px">
+          <div class="pband"><div class="ident"><span class="logo">DL</span><span class="cname">Dev League Org</span></div><span class="ibtn"><svg><use href="#i-user"/></svg></span></div>
+          <div class="ptabs"><span class="ptab">Home</span><span class="ptab on">House league</span></div>
+          <div class="scrim"></div>
+          <div class="pmenu">
+            <div class="mid"><span class="av">P</span><span><small>Signed in</small>pat.walk@dev.local</span></div>
+            <div class="prow cur ring"><svg><use href="#i-shirt"/></svg>My team · Cardinals</div>
+            <div class="prow ring"><svg><use href="#i-shirt"/></svg>My team · Blue Jays</div>
+            <div class="prow"><svg><use href="#i-bell"/></svg>Notification settings</div>
+            <div class="prow"><svg><use href="#i-msg"/></svg>Send feedback</div>
+            <div class="prow"><svg><use href="#i-gear"/></svg>Account settings</div>
+            <div class="sep"></div>
+            <div class="prow"><svg><use href="#i-out"/></svg>Sign out</div>
+          </div>
+        </div>
+      </div>
+      <div class="phonecol">
+        <div class="cap">Recommended <span class="tag new">NEW</span> a "My teams" heading</div>
+        <div class="phone" style="height:470px">
+          <div class="pband"><div class="ident"><span class="logo">DL</span><span class="cname">Dev League Org</span></div><span class="ibtn"><svg><use href="#i-user"/></svg></span></div>
+          <div class="ptabs"><span class="ptab">Home</span><span class="ptab on">House league</span></div>
+          <div class="scrim"></div>
+          <div class="pmenu">
+            <div class="mid"><span class="av">P</span><span><small>Signed in</small>pat.walk@dev.local</span></div>
+            <div class="grp ring">My teams</div>
+            <div class="prow cur"><svg><use href="#i-shirt"/></svg>Cardinals</div>
+            <div class="prow"><svg><use href="#i-shirt"/></svg>Blue Jays</div>
+            <div class="sep"></div>
+            <div class="prow"><svg><use href="#i-bell"/></svg>Notification settings</div>
+            <div class="prow"><svg><use href="#i-msg"/></svg>Send feedback</div>
+            <div class="prow"><svg><use href="#i-gear"/></svg>Account settings</div>
+            <div class="sep"></div>
+            <div class="prow"><svg><use href="#i-out"/></svg>Sign out</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ul class="notes">
+      <li>The heading version reads faster with three or four teams, and the team names line up. It matches the desk's "My teams" list, which also shows names only.</li>
+      <li>A line under the teams separates "your teams" from "your account". With one team there is no heading, and the menu stays as drawn above.</li>
+      <li>These two frames use the jersey symbol, which is the recommendation below.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>5 · Symbol choices</h2>
+    <p class="lead">The two-people symbol is the account symbol twice over, so beside the account icon they look like the same thing. Each choice below is shown at true size where it matters most: in the band next to the account icon, and as a menu row. The symbol should also work for a parent later, when this slot will lead to their child's team.</p>
+    <div class="syms">
+      <div class="sym">
+        <div class="strip"><span class="mine"><svg><use href="#i-users"/></svg>My team</span><span class="ibtn"><svg><use href="#i-user"/></svg></span></div>
+        <div class="menu"><div class="prow"><svg><use href="#i-users"/></svg>My team</div></div>
+        <div class="what"><b>Two people <span class="tag gone">TODAY</span></b>Too close to the account symbol beside it.</div>
+      </div>
+      <div class="sym">
+        <div class="strip"><span class="mine"><svg><use href="#i-shirt"/></svg>My team</span><span class="ibtn"><svg><use href="#i-user"/></svg></span></div>
+        <div class="menu"><div class="prow"><svg><use href="#i-shirt"/></svg>My team</div></div>
+        <div class="what"><b>Jersey <span class="tag new">RECOMMENDED</span></b>The plainest sign of a team in every sport, and it fits a parent as well as a coach. Its outline is nothing like a person.</div>
+      </div>
+      <div class="sym">
+        <div class="strip"><span class="mine"><svg><use href="#i-shield"/></svg>My team</span><span class="ibtn"><svg><use href="#i-user"/></svg></span></div>
+        <div class="menu"><div class="prow"><svg><use href="#i-shield"/></svg>My team</div></div>
+        <div class="what"><b>Crest</b>Reads as a team badge, but people also know a shield as security or privacy.</div>
+      </div>
+      <div class="sym">
+        <div class="strip"><span class="mine"><svg><use href="#i-clip"/></svg>My team</span><span class="ibtn"><svg><use href="#i-user"/></svg></span></div>
+        <div class="menu"><div class="prow"><svg><use href="#i-clip"/></svg>My team</div></div>
+        <div class="what"><b>Clipboard</b>Clearly the coach's tool. That stops being right once parents use the same slot.</div>
+      </div>
+      <div class="sym">
+        <div class="strip"><span class="mine"><svg><use href="#i-flag"/></svg>My team</span><span class="ibtn"><svg><use href="#i-user"/></svg></span></div>
+        <div class="menu"><div class="prow"><svg><use href="#i-flag"/></svg>My team</div></div>
+        <div class="what"><b>Pennant</b>Distinct, but a flag usually means "report" or "mark" in an app.</div>
+      </div>
+      <div class="sym">
+        <div class="strip"><span class="mine"><svg><use href="#i-cal"/></svg>My team</span><span class="ibtn"><svg><use href="#i-user"/></svg></span></div>
+        <div class="menu"><div class="prow"><svg><use href="#i-cal"/></svg>My team</div></div>
+        <div class="what"><b>Calendar</b>Matches what parents will come for (schedules), but it promises a schedule, and the team page is a roster today.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Later · families</h2>
+    <p class="lead">The same corner is where a signed-in parent would find their child's team: schedule and scores. They cannot be sent to this page, because it is the coach's view with every family's email and a Copy emails button. Parents need their own page first, so this slot is planned now and filled later. Its word is an open question ("My family", or the child's name).</p>
+  </section>
+
+  <section>
+    <h2>Asks</h2>
+    <div class="asks">
+      <div class="ask"><b>A1 · Desk: "My team" in the personal corner, as drawn?</b><p>Or as a tab after "House league" instead. A tab is in the club's row, so it would appear a moment after the page loads and shift the other tabs.</p></div>
+      <div class="ask"><b>A2 · Phone: inside the account menu (recommended), or a team icon in the band?</b></div>
+      <div class="ask"><b>A3 · On the team page, "My team" lights and "House league" goes unlit?</b><p>The trade-off: a coach and a family looking at the same team page would see different tabs lit. The other choice is to leave "House league" lit and not light "My team", which is consistent but tells the coach less about where they are.</p></div>
+      <div class="ask"><b>A4 · Two teams: "My teams" with a list on the desk, and a "My teams" heading in the phone menu (4b)?</b></div>
+      <div class="ask"><b>A5 · Symbol: the jersey (recommended), or another from section 5?</b></div>
+    </div>
+  </section>
+</div>

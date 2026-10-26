@@ -385,13 +385,17 @@ export interface OrgReturnDoor {
  * Segment-exact matching (note the trailing slash) — without it an operator of `ravens-north`
  * would get a return pill on `ravens`'s public page. Org-less coach doors (`/coaches/…`) and the
  * Following feed fall out correctly: neither is a side of THIS org.
+ *
+ * A door that is itself a PUBLIC page of this org falls out too (2026-10-26): a house-league coach's team page lives on
+ * the club site, so it is not another side to return to. Kept, it drew a globe labelled "Public site" that ping-ponged
+ * between Home and the team page; that coach reaches the team through "My team" instead.
  */
 export function resolveOrgReturnFlip(
   workspaces: OrgReturnDoor[] | undefined,
   orgSlug: string,
 ): FlipResolution | null {
   if (!workspaces?.length || !orgSlug) return null;
-  const doors = workspaces.filter(w => w.href.startsWith(`/${orgSlug}/`));
+  const doors = workspaces.filter(w => w.href.startsWith(`/${orgSlug}/`) && flipSurfaceLabel(w.href) !== 'Public site');
   if (doors.length === 0) return null;
 
   // Labelled by SURFACE ("Admin" / "Coaches Portal" / "Scorekeeper") through the same helper the

@@ -398,8 +398,8 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How coaches get their team page',
       summary: 'A coach is added in a team’s window with their email, invited when you publish, and sees one page: their players and each family’s contact details.',
-      keywords: ['coach', 'house league coach', 'coach invite', 'invite coach', 'team page', 'coach team page', 'send again', 'invite expired', 'invite didn’t send', 'remove a coach', 'coach email', 'fix a coach', 'edit a coach', 'change coach email', 'change coach name', 'coach typo', 'copy emails', 'coach sign in', 'coach access'],
-      searchText: 'how coaches get their team page house league coach added in a team window with an email invited when you publish or at once after you confirm if added later invite link works 7 days signs in only with that email one page their players each family name email and phone copy emails link to the season schedule the club enters scores never ratings fees or other teams never the coaches portal invited when you publish invited signed in invite expired invite didn’t send fix the email send again removing a coach takes the page away at once families are not told coach who is a registrar or admin keeps their club role page stays 30 days after the season finishes',
+      keywords: ['coach', 'house league coach', 'coach invite', 'invite coach', 'team page', 'coach team page', 'send again', 'invite expired', 'invite didn’t send', 'remove a coach', 'coach email', 'fix a coach', 'edit a coach', 'change coach email', 'change coach name', 'coach typo', 'copy emails', 'coach sign in', 'coach access', 'my team', 'my teams', 'find my team', 'back to my team', 'where is my team page'],
+      searchText: 'how coaches get their team page house league coach added in a team window with an email invited when you publish or at once after you confirm if added later invite link works 7 days signs in only with that email one page their players each family name email and phone copy emails link to the season schedule the club enters scores never ratings fees or other teams never the coaches portal invited when you publish invited signed in invite expired invite didn’t send fix the email send again removing a coach takes the page away at once families are not told coach who is a registrar or admin keeps their club role page stays 30 days after the season finishes back to the team page my team at the top right of the club site my teams lists each team on a phone the first row of the account menu',
       content: (
         <>
           <p>A house league coach never needs the Coaches Portal. They get one page for their team, by an emailed link, and it shows only what they need to reach their families.</p>
@@ -436,6 +436,7 @@ const houseLeagueHelp: HelpPageContent = {
                 <li>A link to <strong>the season&apos;s schedule</strong>. Games aren&apos;t listed on the page itself. A line says the club enters scores.</li>
                 <li>A coach of two teams switches between them.</li>
               </ul>
+              <p>To get back to it, a coach signs in on the club&apos;s site and clicks <strong>My team</strong> at the top right. A coach of two or more teams clicks <strong>My teams</strong> and picks one. On a phone, tap the person icon: the team is the first row of the menu.</p>
               <p>They never see ratings, fees or other teams, and never the Coaches Portal. The sign-up form tells families that their child&apos;s coach sees their name, email and phone.</p>
               <p>The page stays for 30 days after the season finishes, then it is gone.</p>
             </>

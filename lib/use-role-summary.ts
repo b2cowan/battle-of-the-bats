@@ -6,6 +6,8 @@ export type RoleSummary = {
   adminHref: string | null;
   coachHref: string | null;
   hasChat: boolean;
+  /** The house-league teams this account coaches (a signed-in coach's "My team" door on that club's site). */
+  leagueTeams?: { id: string; teamName: string; orgSlug: string; href: string }[];
   /** Every place this account holds, in Home's order (Stage D.2) — 2+ turns the operator
    *  pill into the "Workspaces ▾" popover; fewer keeps the direct labelled door. */
   workspaces: WorkspaceDoor[];
