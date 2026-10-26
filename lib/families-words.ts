@@ -357,6 +357,16 @@ export const FAMILY_EMAIL_WORDS = {
   teamsSub: 'Pick the teams',
   season: 'A house league season',
   seasonLabel: 'Season',
+  /** 9d-1: a season's "everyone" is its families with an active child, from either door (owner 2026-10-26). */
+  seasonSub: 'Families with an active child, each once',
+  /** One season: the row names it, its state and its families. */
+  seasonOption: (name: string, state: string | null, n: number) => [name, state, pluralize(n, 'family', 'families')].filter(Boolean).join(' · '),
+  /** The picker's second line under each season's name. */
+  seasonPickSub: (state: string | null, n: number) => [state, pluralize(n, 'family', 'families')].filter(Boolean).join(' · '),
+  /** Whose three a season picked here spends (9d1·6), said under the picker. */
+  seasonCounts: (season: string) =>
+    `Counts toward ${possessive(season)} ${CLUB_EMAIL_CAP} emails, not the club’s. To email a division, a team or a status, use the season’s own Email families.`,
+  openSeason: (season: string) => `Open ${season}`,
   /** Families from one of the Families tab's lists (Owes money …): the same names as the Show pill. */
   list: 'Families from a list',
   listSub: 'The same lists as on Families',
@@ -379,7 +389,17 @@ export const FAMILY_EMAIL_WORDS = {
   youNotCounted: 'You are not counted.',
   cancel: 'Cancel',
   send: (n: number) => `Send to ${n}`,
+  /** One family's lime (a message to one family names nobody to count). */
+  sendOne: 'Send',
   sending: 'Sending…',
+  /** × with words typed (Registrations' words, kept by 9d-1). */
+  discardAsk: 'Close without sending? What you typed won’t be kept.',
+  messagePlaceholder: 'Write your message here…',
+  /** "See who gets it" (/ux, 9d-1). */
+  seeWho: 'See who gets it',
+  optedOutTag: 'Opted out',
+  moreFamilies: (n: number) => `and ${n} more ${n === 1 ? 'family' : 'families'}`,
+  showAll: 'Show all',
   sent: (reached: number, of: number) => `Sent. Reached ${reached} of ${pluralize(of, 'family', 'families')}.`,
   coachesCopied: (n: number) => `${pluralize(n, 'head coach', 'head coaches')} copied.`,
   capReason: (nextAt: string | null) =>
@@ -550,6 +570,8 @@ export const SEASON_EMAIL_WORDS = {
   oneFailed: (name: string | null, address: string, child: string) =>
     `This didn’t reach ${name ? `the ${name} family` : 'the family'}. Check ${address} on ${possessive(child)} registration, then try again. Your message is still here.`,
   oneOptedOut: (name: string | null) => `${name ? `The ${name} family` : 'This family'} opted out of club email, so nobody would get it.`,
+  /** Every family picked opted out, and there are one to three to name ("the Dubois family"). */
+  nobodyOptedOutNamed: (named: string) => `${named.charAt(0).toUpperCase()}${named.slice(1)} opted out of club email, so nobody would get it.`,
   noAddress: (n: number) => `Nobody to send to: the ${pluralize(n, 'child', 'children')} picked ${n === 1 ? 'has' : 'have'} no family email on file.`,
   pageNote: (season: string, reached: number, of: number) =>
     `${season}: reached ${reached} of ${pluralize(of, 'family', 'families')}.${of > reached ? ` ${of - reached} didn’t get it.` : ''}`,

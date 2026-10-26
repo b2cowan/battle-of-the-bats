@@ -300,7 +300,7 @@ export interface AudienceChoices {
   teams: { teamId: string; teamName: string; families: number }[];
   /** House-league seasons with a family in them (an active child), in ANY status (9d1·6). Empty: no "A house league
    *  season". `status` is the season's own, for the picker's "Registration closed". */
-  seasons: { seasonId: string; name: string; status: string; families: number }[];
+  seasons: { seasonId: string; name: string; status: string; families: number; label?: string }[];
   /** The Families lists with a family on them, with the families in each (those who get it and those opted out). Empty:
    *  the window offers no "Families from a list" (also empty when the read was made without lists). */
   lists: { list: FamilyListKey; families: number }[];

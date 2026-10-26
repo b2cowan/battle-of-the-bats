@@ -17,6 +17,7 @@ import {
   SEASON_EMAIL_WORDS as SW, familiesNamed, seasonEmailReason,
 } from './families-words';
 import { writeOrgAudit } from './org-audit';
+import { seasonState } from './house-league-season';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -167,6 +168,23 @@ export async function familyEmailPreview(ctx: AuthContextWithRole, scope: Family
   // A house-league season copies no head coach: its audience names no rep team, so this reads nobody.
   const coaches = await headCoachesToCopy(ctx.org.id, audience.coachTeamIds, ctx.user.id, familyAddresses(audience));
   const seasonName = seasonId ? seasonNameIn(world.people, seasonId) : null;
+  // The picker names each season's state the way the season's own pages do ("Registration closed", "Finished"): every
+  // status is offered now (9d1·6), so the sender can tell a running season from a finished one.
+  if (choices.seasons.length > 0) {
+    const { data } = await supabaseAdmin.from('league_seasons')
+      .select('id, status, season_start_date, season_end_date, registration_open_at, registration_close_at, registration_closed_at')
+      .eq('org_id', ctx.org.id).in('id', choices.seasons.map(s => s.seasonId));
+    const byId = new Map((data ?? []).map(s => [s.id as string, s]));
+    choices.seasons = choices.seasons.map(s => {
+      const row = byId.get(s.seasonId);
+      return row ? {
+        ...s, label: seasonState({
+          status: row.status, seasonStartDate: row.season_start_date, seasonEndDate: row.season_end_date,
+          registrationOpenAt: row.registration_open_at, registrationCloseAt: row.registration_close_at, registrationClosedAt: row.registration_closed_at,
+        }).label,
+      } : s;
+    });
+  }
   return {
     choices, scope,
     families: audience.families.length, optedOut: audience.optedOut,
