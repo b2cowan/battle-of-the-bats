@@ -38,6 +38,8 @@ type Registration = {
   kept: { amount: number; reason: string } | null;
   withdrawRequestedAt: string | null;
   endedAt: string | null;
+  /** 9c: an accepted child's team (name null = not set yet), its coaches, and a move after publishing. */
+  team: { name: string | null; coaches: string[]; movedFrom: { team: string; day: string } | null } | null;
 };
 type Found = {
   registrations: Registration[]; howToPay: string | null; clubName: string; reviewFirst: boolean; finished: boolean;
@@ -272,6 +274,19 @@ export default function StatusLookupForm({
                   </span>
                 </div>
                 <div style={row}><span style={{ color: 'var(--club-soft)' }}>Division</span><span style={{ color: 'var(--club-text)' }}>{r.divisionName}</span></div>
+                {/* 9c (copy §11): an accepted child's team, then their coach once the team is set. */}
+                {r.team && (
+                  <div style={row}>
+                    <span style={{ color: 'var(--club-soft)' }}>Team</span>
+                    <span style={{ color: 'var(--club-text)', fontWeight: r.team.name ? 650 : 400 }}>{r.team.name ?? 'Not set yet'}</span>
+                  </div>
+                )}
+                {r.team?.name && (
+                  <div style={row}>
+                    <span style={{ color: 'var(--club-soft)' }}>Coach</span>
+                    <span style={{ color: 'var(--club-text)', textAlign: 'right' }}>{r.team.coaches.length > 0 ? nameList(r.team.coaches) : 'To be announced'}</span>
+                  </div>
+                )}
                 <div style={row}>
                   <span style={{ color: 'var(--club-soft)' }}>Fee</span>
                   <span style={{ color: fee.owing ? 'var(--badge-warning-ink, var(--club-text))' : 'var(--club-text)', fontWeight: fee.owing ? 650 : 400, textAlign: 'right' }}>{fee.text}</span>
@@ -284,6 +299,8 @@ export default function StatusLookupForm({
                 )}
                 {!sharedRef && <div style={row}><span style={{ color: 'var(--club-soft)' }}>Reference</span><span>{r.ref}</span></div>}
                 {r.status === 'waitlisted' && <p style={{ ...soft, marginTop: '0.4rem' }}>We’ll email you if a spot opens.</p>}
+                {r.team && !r.team.name && <p style={{ ...soft, marginTop: '0.4rem' }}>We’ll email you when the teams are set.</p>}
+                {r.team?.movedFrom && <p style={{ ...soft, marginTop: '0.4rem' }}>Moved from {r.team.movedFrom.team} on {clubDay(r.team.movedFrom.day)}.</p>}
               </div>
             );
           })}

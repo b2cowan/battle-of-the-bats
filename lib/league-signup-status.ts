@@ -2,6 +2,7 @@ import 'server-only';
 import { getDivisionsForSeason } from './db';
 import { supabaseAdmin } from './supabase-admin';
 import { registrationReference } from './utils';
+import { orgDayKey } from './timezone';
 import { registrationOwes } from './league-price';
 import { loadRegistrationMoneyLines } from './league-money-read';
 import { lastPayment, lastRefund, receivedOf, refundedOf } from './league-money';
@@ -13,12 +14,13 @@ import type { LeagueSeason } from './types';
  * (`/league/{season}/status/{token}`). Both read the children of ONE sign-up — never every child under an email.
  */
 export const SIGNUP_STATUS_COLUMNS =
-  'id, status, player_first_name, player_last_name, division_id, waitlist_position, signup_ref, fee_amount, end_money, end_money_reason, withdraw_requested_at, ended_at';
+  'id, status, player_first_name, player_last_name, division_id, waitlist_position, signup_ref, fee_amount, end_money, end_money_reason, withdraw_requested_at, ended_at, team_id, previous_team_id, team_changed_at';
 
 export type SignupStatusRow = {
   id: string; status: string; player_first_name: string; player_last_name: string; division_id: string | null;
   waitlist_position: number | null; signup_ref: string | null; fee_amount: number | null; end_money: string | null;
   end_money_reason: string | null; withdraw_requested_at: string | null; ended_at: string | null;
+  team_id?: string | null; previous_team_id?: string | null; team_changed_at?: string | null;
   /** Read only by the pay link's page (the family's email for "Request sent"); never sent to the page as a column. */
   guardian_email?: string | null;
 };
@@ -41,6 +43,12 @@ export interface SignupStatusRegistration {
   kept: { amount: number; reason: string } | null;
   withdrawRequestedAt: string | null;
   endedAt: string | null;
+  /**
+   * The child's team (Club Tier 9c, copy §11), for an ACCEPTED child only (null otherwise: 9b-2's card is unchanged).
+   * Before their division is published `name` is null ("Not set yet"); after it, the team and its coaches — named whatever
+   * the club's "Coaches on team pages" setting says, which governs public pages only (9c·11) — and the move after publishing.
+   */
+  team: { name: string | null; coaches: string[]; movedFrom: { team: string; day: string } | null } | null;
 }
 
 export interface SignupStatus {
@@ -70,9 +78,10 @@ export async function signupRowsForLink(registrationId: string, at: { orgId: str
 }
 
 export async function buildSignupStatus(season: LeagueSeason, clubName: string, rows: SignupStatusRow[]): Promise<SignupStatus> {
-  const [divisions, lines] = await Promise.all([
+  const [divisions, lines, teams] = await Promise.all([
     getDivisionsForSeason(season.id),
     loadRegistrationMoneyLines(rows.map(r => String(r.id))),
+    readTeamFacts(season.id, rows),
   ]);
   const divisionMap = Object.fromEntries(divisions.map(d => [d.id, d.name]));
   const registrations = rows.map(r => {
@@ -99,6 +108,7 @@ export async function buildSignupStatus(season: LeagueSeason, clubName: string, 
       kept: ended && r.end_money === 'kept' && received > 0 ? { amount: received, reason: r.end_money_reason ?? '' } : null,
       withdrawRequestedAt: r.withdraw_requested_at ?? null,
       endedAt: r.ended_at ?? null,
+      team: r.status === 'active' ? teamOf(r, teams) : null,
     };
   });
   // The club's how-to-pay words reach the family only once a child is accepted and owes something (9b·9).
@@ -110,5 +120,42 @@ export async function buildSignupStatus(season: LeagueSeason, clubName: string, 
     reviewFirst: !season.autoApproveUnderCapacity,
     // A finished season takes no "Ask to withdraw" (9b-2).
     finished: season.status === 'completed' || season.status === 'archived',
+  };
+}
+
+interface TeamFacts {
+  published: Map<string, string | null>;
+  names: Map<string, string>;
+  coaches: Map<string, string[]>;
+}
+
+/** The divisions' published-at, and the names and coaches of every team these children are, or were, on. */
+async function readTeamFacts(seasonId: string, rows: readonly SignupStatusRow[]): Promise<TeamFacts> {
+  const facts: TeamFacts = { published: new Map(), names: new Map(), coaches: new Map() };
+  const accepted = rows.filter(r => r.status === 'active');
+  if (accepted.length === 0) return facts;
+  const teamIds = [...new Set(accepted.flatMap(r => [r.team_id, r.previous_team_id]).filter((t): t is string => !!t))];
+  const [divs, teams, coaches] = await Promise.all([
+    supabaseAdmin.from('league_divisions').select('id, teams_published_at').eq('season_id', seasonId),
+    teamIds.length ? supabaseAdmin.from('league_teams').select('id, name').in('id', teamIds).eq('season_id', seasonId) : null,
+    teamIds.length ? supabaseAdmin.from('league_team_coaches').select('team_id, name').in('team_id', teamIds).is('removed_at', null).order('created_at') : null,
+  ]);
+  for (const d of divs.data ?? []) facts.published.set(d.id as string, (d.teams_published_at as string | null) ?? null);
+  for (const t of teams?.data ?? []) facts.names.set(t.id as string, t.name as string);
+  for (const c of coaches?.data ?? []) facts.coaches.set(c.team_id as string, [...(facts.coaches.get(c.team_id as string) ?? []), c.name as string]);
+  return facts;
+}
+
+/** One accepted child's team, as the family reads it. */
+function teamOf(r: SignupStatusRow, facts: TeamFacts): SignupStatusRegistration['team'] {
+  const publishedAt = r.division_id ? facts.published.get(r.division_id) ?? null : null;
+  if (!publishedAt || !r.team_id) return { name: null, coaches: [], movedFrom: null };
+  const movedAfterPublish = !!r.previous_team_id && !!r.team_changed_at && r.previous_team_id !== r.team_id
+    && new Date(r.team_changed_at).getTime() > new Date(publishedAt).getTime();
+  const from = movedAfterPublish ? facts.names.get(r.previous_team_id!) : undefined;
+  return {
+    name: facts.names.get(r.team_id) ?? null,
+    coaches: facts.coaches.get(r.team_id) ?? [],
+    movedFrom: from ? { team: from, day: orgDayKey(r.team_changed_at!) } : null,
   };
 }

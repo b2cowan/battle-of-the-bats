@@ -309,6 +309,8 @@ export default function RegisterForm({
               onChange={e => setGuardian(g => ({ ...g, phone: e.target.value }))} maxLength={30} autoComplete="tel" />
           </div>
         </div>
+        {/* Club Tier 9c, ruling 9c·9 (copy §12): the coach sees these three, so the form says so, every season. */}
+        <p className={formKit.hint}>Your child’s coach will see your name, email and phone to reach you about the team.</p>
       </div>
 
       {(waiverText || askEmailConsent) && (
