@@ -1,0 +1,69 @@
+/* Free time on Plan & billing (Support console Stage 4): the Founding Season band's own recipe
+   (app/[orgSlug]/admin/org/billing/billing.module.css .foundingSeasonBanner), so free time adds nothing new to the page's
+   kit. Olive while it runs; amber in the last 14 days; plain for 30 days after it ends. */
+.band {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 2px;
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-olive);
+  margin-bottom: 1rem;
+}
+
+.icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 2px;
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-olive);
+  color: var(--home-olive);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.body { flex: 1; min-width: 0; }
+
+.eyebrow {
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+  color: var(--home-olive);
+  margin: 0 0 0.3rem;
+}
+
+.title {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.3rem;
+  text-transform: none;
+}
+
+.copy {
+  margin: 0;
+  color: var(--text-secondary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.amber { background: color-mix(in srgb, var(--warning) 9%, transparent); border-color: color-mix(in srgb, var(--warning) 45%, transparent); }
+.amber .icon { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 45%, transparent); background: transparent; }
+.amber .eyebrow { color: var(--warning); }
+
+.plain { background: var(--card-bg); border-color: var(--home-line-strong); }
+.plain .icon { color: var(--text-secondary); border-color: var(--home-line-strong); background: transparent; }
+.plain .eyebrow { color: var(--text-tertiary); }
+
+.phone { display: none; }
+@media (max-width: 640px) {
+  .desk { display: none; }
+  .phone { display: inline; }
+}

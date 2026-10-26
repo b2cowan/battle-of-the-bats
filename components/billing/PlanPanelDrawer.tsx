@@ -16,6 +16,7 @@ import { usePlanGating } from '@/lib/use-plan-gating';
 import { isEffectivelyGated } from '@/lib/plan-config';
 import { getBillingHref } from '@/lib/billing-urls';
 import { planUpdatedMessage, requestPlanUpgrade, upgradePlansFor, type PanelPlanKey } from '@/lib/plan-upgrade';
+import { ownPlanOf } from '@/lib/free-time';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlanArticlePanel from './PlanArticlePanel';
 
@@ -78,7 +79,7 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
         isComingSoon={gating ? gating[plan] : isEffectivelyGated(plan)}
         // Only the owner may change the plan (the server's 'billing' capability): anyone else reads what the plan
         // includes, with no Upgrade that would only be refused.
-        canUpgrade={userRole === 'owner' && (upgradePlansFor(currentOrg?.planId) as PanelPlanKey[]).includes(plan)}
+        canUpgrade={userRole === 'owner' && (upgradePlansFor(currentOrg ? ownPlanOf(currentOrg) : undefined) as PanelPlanKey[]).includes(plan)}
       />
       {outcome && <FeedbackModal isOpen onClose={onClose} title={outcome.title} message={outcome.message} type={outcome.type} />}
     </>

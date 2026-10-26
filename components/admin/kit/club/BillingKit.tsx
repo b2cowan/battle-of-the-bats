@@ -36,6 +36,9 @@ import { useClubBrief } from './ClubBriefProvider';
 import KitDialog from './KitDialog';
 import PageNotice, { useNotice } from './PageNotice';
 import PlanMoveDialog, { CONTACT_HREF } from './PlanMoveDialog';
+import FreeTimeBand, { useCustomerFreeTime } from '@/components/admin/FreeTimeBand';
+import { freeTimeCopy } from '@/lib/free-time-copy';
+import { ownPlanOf } from '@/lib/free-time';
 import ck from './ClubKit.module.css';
 import styles from './Billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
@@ -82,6 +85,8 @@ export default function BillingKit() {
   const [cancelReason, setCancelReason] = useState('');
   const [working, setWorking] = useState<'portal' | 'cancel' | 'reactivate' | 'keep' | null>(null);
   const [cycle, setCycle] = useState<'monthly' | 'annual'>(currentOrg?.subscriptionPeriod ?? 'monthly');
+  // Free time (Support console Stage 4): Club given by staff for a while — from the server, never its reason or giver.
+  const freeTimeState = useCustomerFreeTime(slug);
   const [notice, setNotice] = useNotice(() =>
     searchParams.get('success') === '1'
       ? { tone: 'good', text: 'Your plan is active. Everything it includes is open now.' }
@@ -121,9 +126,21 @@ export default function BillingKit() {
 
   if (loading || !currentOrg || !userRole) return <LoadingState label="Loading plan & billing…" />;
 
+  // The page shows the plan the club is on right now; a billing ACTION reads the plan it holds (`ownPlanKey`).
   const planKey = currentOrg.planId;
+  const ownPlanKey = ownPlanOf(currentOrg);
   const plan = PLAN_CONFIG[planKey];
   const orgName = currentOrg.name;
+  const freeTime = freeTimeState?.freeTime ?? null;
+  const freeCopy = freeTime ? freeTimeCopy({
+    freeTime,
+    foundingThrough: freeTimeState?.foundingThrough ?? null,
+    givenOnSale: gating !== null && gating[freeTime.plan] === false,
+    overLimitAfter: freeTimeState?.overLimitAfter ?? false,
+  }) : null;
+  // ⚖ While Club is free there is no Club subscription to change (/billing, 2026-10-25): Payment method, Move and Reduce
+  // or cancel are absent, not disabled.
+  const onFreeClub = !!freeCopy?.card && ownPlanKey !== planKey;
 
   if (!isOwner) {
     return (
@@ -237,8 +254,8 @@ export default function BillingKit() {
   const nearCap = active !== null && limit < 9999 && active >= Math.ceil(limit * 0.85);
   const atCap = active !== null && limit < 9999 && active >= limit;
   const pct = active !== null && limit < 9999 ? Math.min(100, Math.round((active / limit) * 100)) : 0;
-  const up: OrgPlan | null = planKey === 'club' ? 'club_large' : null;
-  const down: OrgPlan | null = planKey === 'club_large' ? 'club' : null;
+  const up: OrgPlan | null = !onFreeClub && planKey === 'club' ? 'club_large' : null;
+  const down: OrgPlan | null = !onFreeClub && planKey === 'club_large' ? 'club' : null;
 
   const moveButton = (to: OrgPlan, primary: boolean) =>
     gating === null ? null : onSale(to) ? (
@@ -318,11 +335,18 @@ export default function BillingKit() {
           <div className={styles.planSide}>
             <CoachEyebrow chip={<CoachChip tone={status.tone}>{status.label}</CoachChip>}>Your plan</CoachEyebrow>
             <h2 className={styles.planName}>{plan.label}</h2>
-            <p className={styles.planPrice}>
-              {priceLine(planKey, currentOrg.subscriptionPeriod ?? 'monthly')}
-              {currentOrg.subscriptionPeriod && <> · billed {currentOrg.subscriptionPeriod === 'annual' ? 'yearly' : 'monthly'}</>}
-            </p>
-            {renewal && (
+            {onFreeClub && freeCopy?.card ? (
+              <>
+                <p className={styles.planPrice}>{freeCopy.card.price}</p>
+                <p className={kit.sub}><strong>{freeCopy.card.from}</strong></p>
+              </>
+            ) : (
+              <p className={styles.planPrice}>
+                {priceLine(planKey, currentOrg.subscriptionPeriod ?? 'monthly')}
+                {currentOrg.subscriptionPeriod && <> · billed {currentOrg.subscriptionPeriod === 'annual' ? 'yearly' : 'monthly'}</>}
+              </p>
+            )}
+            {renewal && !onFreeClub && (
               <p className={kit.sub}>{currentOrg.subscriptionStatus === 'trialing' ? `Trial ends ${renewal}` : `Renews ${renewal}`}</p>
             )}
             {scheduled && (
@@ -334,11 +358,13 @@ export default function BillingKit() {
                 </button>
               </p>
             )}
-            <div className={styles.planActions}>
-              <button type="button" className="btn btn-outline" onClick={() => void openPortal()} disabled={working !== null} id="billing-manage-btn">
-                <CreditCard size={15} aria-hidden /> {working === 'portal' ? 'Opening…' : 'Payment method & invoices'}
-              </button>
-            </div>
+            {!onFreeClub && (
+              <div className={styles.planActions}>
+                <button type="button" className="btn btn-outline" onClick={() => void openPortal()} disabled={working !== null} id="billing-manage-btn">
+                  <CreditCard size={15} aria-hidden /> {working === 'portal' ? 'Opening…' : 'Payment method & invoices'}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className={styles.capSide}>
@@ -356,7 +382,9 @@ export default function BillingKit() {
               </div>
             )}
             <p className={kit.sub}>
-              {limit > bandLimit
+              {onFreeClub
+                ? `Teams you add while ${plan.label} is free are kept after it ends.`
+                : limit > bandLimit
                 ? `Your plan holds up to ${limit} teams, a custom limit for ${orgName}. Archived teams don’t count.`
                 : atCap && up
                   ? `${orgName} holds ${limit} teams on ${plan.label}, its limit. Move to ${PLAN_CONFIG[up].label} to add more.`
@@ -368,6 +396,8 @@ export default function BillingKit() {
           </div>
         </div>
       </CoachCard>
+
+      {freeCopy && <FreeTimeBand band={freeCopy.band} />}
 
       {/* ── Club's two sizes (D7) ────────────────────────────────────────────────────────────── */}
       <section className={ck.section} aria-labelledby="billing-bands">
@@ -420,7 +450,7 @@ export default function BillingKit() {
       </section>
 
       {/* ── Reduce or cancel (A12): the club's programs, by name ──────────────────────────────── */}
-      <section className={ck.section} aria-labelledby="billing-cancel">
+      {!onFreeClub && <section className={ck.section} aria-labelledby="billing-cancel">
         <div className={ck.sectionHead}><h2 id="billing-cancel" className={ck.sectionTitle}>Reduce or cancel</h2></div>
         <p className={styles.cancelCopy}>
           Cancelling suspends {orgName}: {joinWithAnd(offline)} go offline. Everything is kept for {retentionDays} days and comes
@@ -429,11 +459,11 @@ export default function BillingKit() {
         <button type="button" className={`btn btn-outline ${styles.dangerText}`} onClick={() => setCancelOpen(true)} id="billing-cancel-btn">
           Cancel and suspend {orgName}…
         </button>
-      </section>
+      </section>}
 
       {moveTo && (
         <PlanMoveDialog
-          org={{ slug, name: orgName, planId: planKey, subscriptionPeriod: currentOrg.subscriptionPeriod }}
+          org={{ slug, name: orgName, planId: ownPlanKey, subscriptionPeriod: currentOrg.subscriptionPeriod }}
           toPlan={moveTo}
           onClose={() => setMoveTo(null)}
           onMoved={async (text) => {

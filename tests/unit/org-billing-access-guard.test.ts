@@ -46,6 +46,7 @@ const ALLOWED_SUSPENDED_ORG_FILES: Record<string, string> = {
   'app/api/billing/setup-payment-method/route.ts': 'billing — card re-entry',
   'app/api/admin/members/count/route.ts': 'read the billing PAGE itself makes',
   'app/api/admin/org/founding-season-status/route.ts': 'read the billing PAGE itself makes',
+  'app/api/admin/org/free-time/route.ts': 'read the billing PAGE itself makes (its free-time band, Support console Stage 4)',
 
   // ── Identity / nav. The app shell cannot render at all without these, including the shell
   //    that hosts the billing page. Neither returns org DATA — only who and where you are. ──

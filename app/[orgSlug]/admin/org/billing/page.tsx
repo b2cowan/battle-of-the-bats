@@ -25,6 +25,9 @@ import PlanArticlePanel from '@/components/billing/PlanArticlePanel';
 import { requestPlanUpgrade, planUpdatedMessage, upgradePlansFor, type UpgradePlanKey } from '@/lib/plan-upgrade';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import { holdsSlot } from '@/lib/tournament-slot';
+import FreeTimeBand, { useCustomerFreeTime } from '@/components/admin/FreeTimeBand';
+import { freeTimeCopy } from '@/lib/free-time-copy';
+import { ownPlanOf } from '@/lib/free-time';
 import styles from './billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -266,6 +269,8 @@ function BillingPagePlans() {
   // the code, the shelf below said the Coaches Portal was "Coming soon" for two months after it opened.
   const gating = usePlanGating();
   const isGated = (planKey: OrgPlan) => (gating ? gating[planKey] : isEffectivelyGated(planKey));
+  // Free time (Support console Stage 4): what staff gave, from the server — never its reason or giver.
+  const freeTimeState = useCustomerFreeTime(currentOrg?.slug);
 
   async function refreshBillingState() {
     await Promise.all([refreshOrg(), refreshTournaments()]);
@@ -501,8 +506,13 @@ function BillingPagePlans() {
     }
   }
 
+  // ⚖ Two plans on this page (Support console Stage 4, /billing 2026-10-25). The CARD shows the plan the club is on right
+  // now (free time included); every billing ACTION — the upgrade cards, a downgrade, the next-season choice — reads the
+  // plan it holds and is billed for, so free time can never be bought, downgraded or cancelled out of.
   const currentPlanKey = currentOrg.planId;
+  const ownPlanKey     = ownPlanOf(currentOrg);
   const currentPlan    = PLAN_CONFIG[currentPlanKey];
+  const ownPlan        = PLAN_CONFIG[ownPlanKey];
   const status         = currentOrg.subscriptionStatus;
 
   // Founding Season banner: before the summer card window it states that no payment action is
@@ -519,8 +529,15 @@ function BillingPagePlans() {
   // (/review 2026-09-07). Until the status answers, fall back to the window (the only state a
   // brand-new account can be in).
   const currentPlanComped = foundingSeasonStatus === null
-    ? isFoundingSeasonPromoActive(currentPlanKey)
-    : isFoundingSeason && (currentPlanKey === 'tournament_plus' || currentPlanKey === 'team');
+    ? isFoundingSeasonPromoActive(ownPlanKey)
+    : isFoundingSeason && (ownPlanKey === 'tournament_plus' || ownPlanKey === 'team');
+  const freeTime = freeTimeState?.freeTime ?? null;
+  const freeCopy = freeTime ? freeTimeCopy({
+    freeTime,
+    foundingThrough: freeTimeState?.foundingThrough ?? null,
+    givenOnSale: !isGated(freeTime.plan),
+    overLimitAfter: freeTimeState?.overLimitAfter ?? false,
+  }) : null;
   // ⚠ THE BANNER SPEAKS FOR WHICHEVER PRODUCT THE ACCOUNT IS ON (2026-09-07, Phase 2).
   // It used to be suppressed entirely for coach workspaces because its copy was
   // Tournament-Plus-specific — which left a comped Coaches Portal with NO Founding Season message at
@@ -528,10 +545,10 @@ function BillingPagePlans() {
   // button opens a card-save session in January, unlabelled and ungated. Every plan-specific word
   // now derives from the account's own plan, so one block serves both kinds and the coach's card
   // door is gated to the same summer window the organization's is.
-  const foundingProductLabel = currentPlan?.label ?? 'your plan';
+  const foundingProductLabel = ownPlan?.label ?? 'your plan';
   // Which plans this account may choose for next season — its own plan, in either cycle. An account
   // comped onto a FREE plan has nothing to renew and gets no chooser (it simply stays free).
-  const nextSeasonOptions = nextSeasonPlanOptions(currentPlanKey);
+  const nextSeasonOptions = nextSeasonPlanOptions(ownPlanKey);
   const nextSeasonPlanKey = nextSeasonOptions[0] ?? null;
   const nextSeasonChoice = foundingSeasonStatus?.nextSeason ?? null;
   const cardOnFile = foundingSeasonStatus?.card ?? null;
@@ -540,14 +557,14 @@ function BillingPagePlans() {
   const usageCount     = tournaments.filter(t => holdsSlot(t.status)).length;
   const usageLimit     = currentOrg.tournamentLimit;
   const usagePct       = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
-  const primaryUpgradePlans: OrgPlan[] = upgradePlansFor(currentPlanKey);
+  const primaryUpgradePlans: OrgPlan[] = upgradePlansFor(ownPlanKey);
   // The shelf waits for the live switch, so a card never flashes "Coming soon" before it opens.
   const productShelfPlans = isTeamWorkspaceBilling || !gating
     ? []
-    : PRODUCT_SHELF_PLANS.filter(planKey => planKey !== currentPlanKey);
-  const downgradePlans: OrgPlan[] = currentPlanKey === 'tournament_plus' ? ['tournament'] : [];
+    : PRODUCT_SHELF_PLANS.filter(planKey => planKey !== ownPlanKey);
+  const downgradePlans: OrgPlan[] = ownPlanKey === 'tournament_plus' ? ['tournament'] : [];
   const showSubscriptionOptions = primaryUpgradePlans.length > 0 || productShelfPlans.length > 0;
-  const hasPaidPlan    = currentPlanKey !== 'tournament';
+  const hasPaidPlan    = ownPlanKey !== 'tournament';
   const canManageBilling = userRole === 'owner';
   // ⚠ `?next_season=1` means the customer has just come back from Checkout. The webhook that
   // records the choice is asynchronous and routinely loses the race with that redirect, so the
@@ -768,7 +785,9 @@ function BillingPagePlans() {
             <div className={styles.planName}>{currentPlan.label} Plan</div>
             <div className={styles.planTagline}>{PLAN_TAGLINE[currentPlanKey]}</div>
             <div className={styles.planPrice}>
-              {currentPlanComped
+              {freeCopy?.card
+                ? freeCopy.card.price
+                : currentPlanComped
                 ? `Free through ${FOUNDING_SEASON_END_LABEL}`
                 : currentPlan.monthlyPrice === 0
                   ? 'Free forever'
@@ -776,15 +795,16 @@ function BillingPagePlans() {
                     ? `${formatPriceAmount(currentPlan.annualPrice)} CAD / year`
                     : `${formatPriceAmount(currentPlan.monthlyPrice)} CAD / month`}
             </div>
-            {currentPlanComped && (
+            {freeCopy?.card && <div className={styles.planBillingCycle}><strong>{freeCopy.card.from}</strong></div>}
+            {currentPlanComped && !freeCopy?.card && (
               <div className={styles.planBillingCycle}>normally {formatPriceAmount(currentPlan.monthlyPrice)}/month · in {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for {FOUNDING_SEASON_NEXT_YEAR_LABEL}</div>
             )}
-            {currentOrg.subscriptionPeriod && currentPlan.monthlyPrice > 0 && !currentPlanComped && (
+            {currentOrg.subscriptionPeriod && currentPlan.monthlyPrice > 0 && !currentPlanComped && !freeCopy?.card && (
               <div className={styles.planBillingCycle}>
                 Billed {currentOrg.subscriptionPeriod === 'annual' ? 'annually' : 'monthly'}
               </div>
             )}
-            {currentOrg.currentPeriodEnd && (
+            {currentOrg.currentPeriodEnd && !freeCopy?.card && (
               <div className={styles.planRenewalDate}>
                 {status === 'trialing' ? 'Trial ends ' : 'Renews '}
                 {new Date(currentOrg.currentPeriodEnd).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -795,6 +815,8 @@ function BillingPagePlans() {
         </div>
         <span className={`badge ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
       </div>
+
+      {freeCopy && <FreeTimeBand band={freeCopy.band} />}
 
       {isFoundingSeason && (
         <div className={styles.foundingSeasonBanner}>
@@ -1246,6 +1268,16 @@ function BillingPagePlans() {
               {!addCardLoading && <ArrowRight size={14} />}
             </button>
           )}
+        </div>
+      )}
+
+      {/* Free time with nothing to bill: the Billing card says so, as Founding's does. */}
+      {freeCopy?.billingCard && !isFoundingSeason && !hasPaidPlan && (
+        <div className={styles.billingTools}>
+          <div>
+            <h2 className={styles.sectionTitle}>Billing</h2>
+            <p className={styles.manageHint}>{freeCopy.billingCard}</p>
+          </div>
         </div>
       )}
 
