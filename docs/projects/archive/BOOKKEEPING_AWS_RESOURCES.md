@@ -44,3 +44,7 @@ The `.bookkeeping-backups/` directory is ignored by Git. Copy the encrypted arch
 ## Cost boundary
 
 [Aurora DSQL pricing](https://aws.amazon.com/rds/aurora/dsql/pricing/) currently includes 100,000 DPUs and 1 GB of storage free each month, shared at the AWS payer/management-account level; idle clusters have no DPU charge. Both clusters consume from that same allowance. [S3](https://aws.amazon.com/s3/pricing/) stores receipts and versions on a metered basis, and AWS Backup would be an additional charge. The setup avoids a fixed database-project fee but is **not guaranteed to bill exactly zero**. No multi-Region replica or paid backup was enabled.
+
+## Local sign-in (changed 2026-10-25)
+
+The local app no longer uses the root `aws login`. IAM user `fieldlogichq-bookkeeping-dev-local` (inline policy = `scripts/bookkeeping-aws/dev-policy.json`, dev cluster and dev receipts only) is mapped to the restricted DSQL role `bookkeeping_app` and its key lives in the local AWS profile `bookkeeping-dev-local` (outside the repo). `.env.local` sets `AWS_PROFILE=bookkeeping-dev-local` and `BOOKKEEPING_DSQL_USERNAME=bookkeeping_app`, so the page never expires. Schema migrations, backup restores and other admin work still need root: run them as `AWS_PROFILE=fieldlogichq BOOKKEEPING_DSQL_USERNAME=admin node --env-file=.env.local <script>` after `aws login --profile fieldlogichq` (a shell value overrides `.env.local`). To rotate or revoke: create a new key for the IAM user and run `aws configure set` on the profile, then delete the old key.

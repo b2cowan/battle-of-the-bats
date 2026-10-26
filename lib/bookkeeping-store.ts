@@ -3,8 +3,10 @@ import 'server-only';
 import { auroraDSQLPostgres } from '@aws/aurora-dsql-postgresjs-connector';
 import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import type { ExpenseRevision } from './bookkeeping-expenses';
+import type { OwnerMovementRevision } from './bookkeeping-owner-movements';
 
 type NewExpenseRevision = Omit<ExpenseRevision, 'created_at'>;
+type NewOwnerMovementRevision = Omit<OwnerMovementRevision, 'created_at'>;
 type ReceiptReference = Pick<ExpenseRevision, 'receipt_path' | 'receipt_name'>;
 
 let database: ReturnType<typeof auroraDSQLPostgres> | undefined;
@@ -34,16 +36,19 @@ function s3() {
 }
 
 function revision(row: Record<string, unknown>): ExpenseRevision {
+  const date = (value: unknown): string | null => value == null ? null : value instanceof Date
+    ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
   return {
     ...row,
     revision: Number(row.revision),
     original_cents: Number(row.original_cents),
     cad_cents: Number(row.cad_cents),
     tax_cad_cents: Number(row.tax_cad_cents),
+    tax_amount_known: row.tax_amount_known == null ? null : Boolean(row.tax_amount_known),
     business_use_percent: Number(row.business_use_percent),
-    expense_date: row.expense_date instanceof Date
-      ? row.expense_date.toISOString().slice(0, 10)
-      : String(row.expense_date).slice(0, 10),
+    expense_date: date(row.expense_date)!,
+    incurred_date: date(row.incurred_date),
+    paid_date: date(row.paid_date),
     created_at: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
   } as ExpenseRevision;
 }
@@ -51,6 +56,60 @@ function revision(row: Record<string, unknown>): ExpenseRevision {
 export async function listExpenseRevisions(): Promise<ExpenseRevision[]> {
   const rows = await db()`SELECT * FROM bookkeeping.expense_revisions ORDER BY expense_date DESC LIMIT 1001`;
   return rows.map(revision);
+}
+
+export async function hasExpenseDateColumns(): Promise<boolean> {
+  const rows = await db()`SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'bookkeeping' AND table_name = 'expense_revisions'
+      AND column_name IN ('incurred_date', 'paid_date')`;
+  return rows.length === 2;
+}
+
+export async function hasExpenseTaxColumn(): Promise<boolean> {
+  const rows = await db()`SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'bookkeeping' AND table_name = 'expense_revisions'
+      AND column_name = 'tax_amount_known'`;
+  return rows.length === 1;
+}
+
+export async function hasOwnerMovementTable(): Promise<boolean> {
+  const rows = await db()`SELECT table_name FROM information_schema.tables
+    WHERE table_schema = 'bookkeeping' AND table_name = 'owner_movement_revisions'`;
+  return rows.length === 1;
+}
+
+function ownerMovement(row: Record<string, unknown>): OwnerMovementRevision {
+  const date = row.movement_date instanceof Date ? row.movement_date.toISOString().slice(0, 10) : String(row.movement_date).slice(0, 10);
+  return {
+    ...row,
+    revision: Number(row.revision),
+    amount_cents: Number(row.amount_cents),
+    movement_date: date,
+    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+  } as OwnerMovementRevision;
+}
+
+export async function listOwnerMovementRevisions(): Promise<OwnerMovementRevision[]> {
+  const rows = await db()`SELECT * FROM bookkeeping.owner_movement_revisions ORDER BY movement_date DESC LIMIT 1001`;
+  return rows.map(ownerMovement);
+}
+
+export async function latestOwnerMovementRevision(movementId: string): Promise<OwnerMovementRevision | null> {
+  const rows = await db()`SELECT * FROM bookkeeping.owner_movement_revisions
+    WHERE movement_id = ${movementId}::uuid ORDER BY revision DESC LIMIT 1`;
+  return rows[0] ? ownerMovement(rows[0]) : null;
+}
+
+export async function insertOwnerMovementRevision(row: NewOwnerMovementRevision): Promise<OwnerMovementRevision> {
+  const rows = await db()`INSERT INTO bookkeeping.owner_movement_revisions (
+    movement_id, revision, movement_date, movement_kind, amount_cents, linked_expense_id,
+    source_reference, note, change_reason, void_reason, created_by
+  ) VALUES (
+    ${row.movement_id}::uuid, ${row.revision}, ${row.movement_date}::date, ${row.movement_kind},
+    ${row.amount_cents}, ${row.linked_expense_id}::uuid, ${row.source_reference}, ${row.note},
+    ${row.change_reason}, ${row.void_reason}, ${row.created_by}::uuid
+  ) RETURNING *`;
+  return ownerMovement(rows[0]);
 }
 
 export async function latestExpenseRevision(expenseId: string): Promise<ExpenseRevision | null> {
@@ -66,15 +125,19 @@ export async function receiptReference(expenseId: string, revisionNumber: number
 }
 
 export async function insertExpenseRevision(row: NewExpenseRevision): Promise<ExpenseRevision> {
+  if ((!row.incurred_date || !row.paid_date) && !row.void_reason) {
+    throw new Error('Both expense dates are required for a new or corrected expense');
+  }
   const rows = await db()`INSERT INTO bookkeeping.expense_revisions (
-    expense_id, revision, expense_date, supplier, category, business_purpose,
-    original_currency, original_cents, cad_cents, tax_cad_cents, tax_status,
+    expense_id, revision, expense_date, incurred_date, paid_date, supplier, category, business_purpose,
+    original_currency, original_cents, cad_cents, tax_cad_cents, tax_amount_known, tax_status,
     business_use_percent, payment_source, conversion_note, notes, change_reason,
     receipt_path, receipt_name, void_reason, created_by
   ) VALUES (
-    ${row.expense_id}::uuid, ${row.revision}, ${row.expense_date}::date, ${row.supplier},
+    ${row.expense_id}::uuid, ${row.revision}, ${row.expense_date}::date,
+    ${row.incurred_date ?? null}::date, ${row.paid_date ?? null}::date, ${row.supplier},
     ${row.category}, ${row.business_purpose}, ${row.original_currency}, ${row.original_cents},
-    ${row.cad_cents}, ${row.tax_cad_cents}, ${row.tax_status}, ${row.business_use_percent},
+    ${row.cad_cents}, ${row.tax_cad_cents}, ${row.tax_amount_known ?? null}, ${row.tax_status}, ${row.business_use_percent},
     ${row.payment_source}, ${row.conversion_note}, ${row.notes}, ${row.change_reason},
     ${row.receipt_path}, ${row.receipt_name}, ${row.void_reason}, ${row.created_by}::uuid
   ) RETURNING *`;

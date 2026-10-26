@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBookkeepingApi } from '@/lib/bookkeeping-access';
-import { currentExpenses, hasValidConversionEvidence, isExpenseDate, parseCents, redactExpenseRevision, type ExpenseRevision, type PaymentSource, type TaxStatus } from '@/lib/bookkeeping-expenses';
-import { deleteExpenseRevisions, deleteReceipt, insertExpenseRevision, latestExpenseRevision, listExpenseRevisions, putReceipt } from '@/lib/bookkeeping-store';
+import { currentExpenses, hasConfirmedDates, hasValidConversionEvidence, isExpenseDate, parseCents, redactExpenseRevision, type ExpenseRevision, type PaymentSource, type TaxStatus } from '@/lib/bookkeeping-expenses';
+import { currentOwnerMovements } from '@/lib/bookkeeping-owner-movements';
+import { deleteExpenseRevisions, deleteReceipt, hasExpenseDateColumns, hasExpenseTaxColumn, hasOwnerMovementTable, insertExpenseRevision, latestExpenseRevision, listExpenseRevisions, listOwnerMovementRevisions, putReceipt } from '@/lib/bookkeeping-store';
 import { withObservability } from '@/lib/observability';
 
 const MAX_FILE = 10 * 1024 * 1024;
@@ -23,6 +24,14 @@ function validFile(file: File, bytes: Uint8Array): boolean {
   return false;
 }
 
+async function activeReimbursementCents(expenseId: string): Promise<number> {
+  if (!await hasOwnerMovementTable()) return 0;
+  const revisions = await listOwnerMovementRevisions();
+  if (revisions.length > 1000) throw new Error('Owner movement list needs pagination');
+  return currentOwnerMovements(revisions).filter(row => !row.void_reason && row.movement_kind === 'expense_reimbursement' && row.linked_expense_id === expenseId)
+    .reduce((total, row) => total + row.amount_cents, 0);
+}
+
 export const GET = withObservability(async () => {
   const gate = await requireBookkeepingApi();
   if (gate.response) return gate.response;
@@ -30,7 +39,7 @@ export const GET = withObservability(async () => {
     const rows = await listExpenseRevisions();
     if (rows.length > 1000) return NextResponse.json({ error: 'Expense register needs pagination before more records can be shown' }, { status: 503 });
     const revisions = rows.map(redactExpenseRevision);
-    return NextResponse.json({ expenses: currentExpenses(revisions), revisions }, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json({ expenses: currentExpenses(revisions), revisions, dateSchemaReady: await hasExpenseDateColumns(), taxSchemaReady: await hasExpenseTaxColumn() }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     return NextResponse.json({ error: 'Unable to load expenses' }, { status: 500 });
   }
@@ -55,6 +64,7 @@ export const DELETE = withObservability(async (req: NextRequest) => {
     const previous = await latestExpenseRevision(expenseId);
     if (!previous) return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     if (previous.revision !== expectedRevision) return NextResponse.json({ error: 'Expense changed; reload before deleting' }, { status: 409 });
+    if (await activeReimbursementCents(expenseId)) return NextResponse.json({ error: 'Void the linked reimbursement before deleting this expense' }, { status: 409 });
 
     const receiptPaths = await deleteExpenseRevisions(expenseId, expectedRevision);
     if (!receiptPaths) return NextResponse.json({ error: 'Expense changed; reload before deleting' }, { status: 409 });
@@ -88,7 +98,8 @@ export const POST = withObservability(async (req: NextRequest) => {
     if (previous.revision !== expectedRevision) return NextResponse.json({ error: 'Expense changed; reload before saving' }, { status: 409 });
   }
 
-  const expenseDate = textField(form, 'expenseDate', 10);
+  const incurredDate = textField(form, 'incurredDate', 10);
+  const paidDate = textField(form, 'paidDate', 10);
   const supplier = textField(form, 'supplier', 160);
   const category = textField(form, 'category', 80);
   const businessPurpose = textField(form, 'businessPurpose', 500);
@@ -96,6 +107,7 @@ export const POST = withObservability(async (req: NextRequest) => {
   const originalCents = parseCents(form.get('originalAmount'));
   const cadCents = parseCents(form.get('cadAmount'));
   const taxCents = parseCents(form.get('taxCadAmount'));
+  const taxAmountKnown = textField(form, 'taxAmountKnown', 5);
   const taxStatus = textField(form, 'taxStatus', 20);
   const businessUse = Number(textField(form, 'businessUsePercent', 3));
   const paymentSource = textField(form, 'paymentSource', 20);
@@ -103,8 +115,12 @@ export const POST = withObservability(async (req: NextRequest) => {
   const notes = textField(form, 'notes', 2000);
   const changeReason = textField(form, 'changeReason', 500);
   const voidReason = textField(form, 'voidReason', 500);
-  if (!isExpenseDate(expenseDate) || !supplier || !category || !businessPurpose ||
+  const datesConfirmed = isExpenseDate(incurredDate) && isExpenseDate(paidDate);
+  const voidingLegacy = Boolean(previous && !hasConfirmedDates(previous) && form.has('voidReason'));
+  if ((!datesConfirmed && !voidingLegacy) || !supplier || !category || !businessPurpose ||
     !['CAD', 'USD'].includes(originalCurrency ?? '') || !originalCents || !cadCents || taxCents === null || taxCents > cadCents ||
+    !['true', 'false'].includes(taxAmountKnown ?? '') ||
+    (taxAmountKnown === 'false' && (taxCents !== 0 || taxStatus !== 'pending')) ||
     !TAX.includes(taxStatus as TaxStatus) || !SOURCES.includes(paymentSource as PaymentSource) ||
     !Number.isInteger(businessUse) || businessUse < 1 || businessUse > 100 ||
     (originalCurrency === 'USD' && !hasValidConversionEvidence(conversionNote)) ||
@@ -115,6 +131,20 @@ export const POST = withObservability(async (req: NextRequest) => {
     return NextResponse.json({ error: 'Check the expense amounts and required fields' }, { status: 400 });
   }
   if (previous?.void_reason) return NextResponse.json({ error: 'A voided expense cannot be changed' }, { status: 409 });
+  try {
+    if (!await hasExpenseDateColumns() || !await hasExpenseTaxColumn()) return NextResponse.json({ error: 'Expense storage is being updated; try again after the upgrade' }, { status: 503 });
+  } catch {
+    return NextResponse.json({ error: 'Unable to check expense date storage' }, { status: 503 });
+  }
+  if (previous) {
+    try {
+      const reimbursed = await activeReimbursementCents(expenseIdInput!);
+      const correctedBusinessAmount = Math.floor((cadCents! * businessUse + 50) / 100);
+      if (reimbursed && (paymentSource !== 'personal' || voidReason || reimbursed > correctedBusinessAmount)) {
+        return NextResponse.json({ error: 'Void or correct the linked reimbursement before changing this personal expense' }, { status: 409 });
+      }
+    } catch { return NextResponse.json({ error: 'Unable to check linked reimbursements' }, { status: 503 }); }
+  }
 
   const file = form.get('receipt');
   if (file !== null && !(file instanceof File)) return NextResponse.json({ error: 'Invalid receipt' }, { status: 400 });
@@ -134,9 +164,14 @@ export const POST = withObservability(async (req: NextRequest) => {
     catch { return NextResponse.json({ error: 'Unable to store receipt' }, { status: 500 }); }
   }
   const row = {
-    expense_id: expenseId, revision, expense_date: expenseDate, supplier, category,
+    expense_id: expenseId, revision,
+    expense_date: datesConfirmed ? incurredDate! : previous!.expense_date,
+    incurred_date: datesConfirmed ? incurredDate! : null,
+    paid_date: datesConfirmed ? paidDate! : null,
+    supplier, category,
     business_purpose: businessPurpose, original_currency: originalCurrency as ExpenseRevision['original_currency'],
     original_cents: originalCents, cad_cents: cadCents, tax_cad_cents: taxCents,
+    tax_amount_known: taxAmountKnown === 'true',
     tax_status: taxStatus as TaxStatus, business_use_percent: businessUse, payment_source: paymentSource as PaymentSource,
     conversion_note: conversionNote || null, notes: notes || null, change_reason: changeReason || null,
     receipt_path: receiptPath, receipt_name: receiptName, void_reason: voidReason || null,

@@ -18,7 +18,7 @@ describe('proprietor expense revisions', () => {
     assert.equal(summarizeExpenses([base, corrected]).recordedSpendCents, 107);
     const voided = { ...corrected, revision: 3, void_reason: 'Duplicate' };
     assert.deepEqual(summarizeExpenses([base, corrected, voided]), {
-      count: 0, recordedSpendCents: 0, pendingTaxCents: 0, byCategory: [],
+      count: 0, recordedSpendCents: 0, pendingTaxCents: 0, byCategory: [], bySupplier: [], unknownTaxCount: 0,
       taxByStatus: [['pending', 0], ['reviewed', 0], ['none', 0]], byPaymentSource: [],
       missingReceiptCount: 0, missingConversionCount: 0, personallyPaidCents: 0,
     });

@@ -13,7 +13,7 @@ export const GET = withObservability(async (req: NextRequest) => {
   try { revisions = await listExpenseRevisions(); }
   catch { return NextResponse.json({ error: 'Unable to export expenses' }, { status: 500 }); }
   if (revisions.length > 1000) return NextResponse.json({ error: 'Expense export needs pagination before more records can be included' }, { status: 503 });
-  return new NextResponse(expenseCsv(selectExpenseRevisions(revisions, filters)), { headers: {
+  return new NextResponse(expenseCsv(selectExpenseRevisions(revisions, filters), filters), { headers: {
     'Content-Type': 'text/csv; charset=utf-8',
     'Content-Disposition': 'attachment; filename="fieldlogichq-expenses.csv"',
     'Cache-Control': 'private, no-store',

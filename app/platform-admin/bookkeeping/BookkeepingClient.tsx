@@ -1,17 +1,37 @@
 'use client';
 
 import { useCallback, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
-import { businessCents, hasValidConversionEvidence, matchesReviewFilter, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
+import { businessCents, hasConfirmedDates, hasKnownTaxAmount, hasValidConversionEvidence, matchesReviewFilter, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
 import { previewBookkeepingSourceCsv, type BookkeepingSourcePreview } from '@/lib/bookkeeping-source-import';
+import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { downloadCSVBlob } from '@/lib/export';
+import OwnerLedger from './OwnerLedger';
 import DateInput from '@/components/shared/DateInput';
 import styles from './bookkeeping.module.css';
 
 const SOURCES: Record<string, string> = {
   business_bank: 'Business bank', business_card: 'Business card', personal: 'Paid personally', other: 'Other',
 };
+const STARTER_CATEGORIES = [
+  'Software & online services', 'Advertising & marketing', 'Equipment & supplies',
+  'Professional services', 'Travel & meals', 'Bank charges', 'Other',
+];
+type BookkeepingView = 'overview' | 'expenses' | 'attention' | 'add' | 'record' | 'reports' | 'ledger' | 'sources';
+type ReportPeriod = 'all' | 'month' | 'year' | 'custom';
+type ReportDrilldown = { kind: 'all' | 'category' | 'supplier' | 'personal'; key?: string };
+const today = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
 const money = (cents: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(cents / 100);
 const amount = (cents: number) => (cents / 100).toFixed(2);
+const attentionReasons = (row: ExpenseRevision) => [
+  !hasConfirmedDates(row) ? 'Dates to review' : '',
+  !row.receipt_path ? 'Receipt missing' : '',
+  !hasKnownTaxAmount(row) ? 'Purchase tax amount unknown' : '',
+  hasKnownTaxAmount(row) && row.tax_status === 'pending' ? 'Tax review pending' : '',
+  row.original_currency === 'USD' && !hasValidConversionEvidence(row.conversion_note) ? 'USD conversion evidence needed' : '',
+].filter(Boolean);
 const sourceMoney = (cents: number, currency: string) => {
   const sign = cents < 0 ? '−' : '';
   try {
@@ -22,12 +42,29 @@ const sourceMoney = (cents: number, currency: string) => {
   }
 };
 
-export default function BookkeepingClient({ initialExpenses, initialRevisions }: { initialExpenses: ExpenseRevision[]; initialRevisions: ExpenseRevision[] }) {
+export default function BookkeepingClient({ initialExpenses, initialRevisions, initialDateSchemaReady, initialTaxSchemaReady, initialOwnerMovements, initialOwnerRevisions, initialOwnerSchemaReady }: {
+  initialExpenses: ExpenseRevision[]; initialRevisions: ExpenseRevision[]; initialDateSchemaReady: boolean; initialTaxSchemaReady: boolean;
+  initialOwnerMovements: OwnerMovementRevision[]; initialOwnerRevisions: OwnerMovementRevision[]; initialOwnerSchemaReady: boolean;
+}) {
   const [expenses, setExpenses] = useState<ExpenseRevision[]>(initialExpenses);
   const [revisions, setRevisions] = useState<ExpenseRevision[]>(initialRevisions);
+  const [dateSchemaReady, setDateSchemaReady] = useState(initialDateSchemaReady);
+  const [taxSchemaReady, setTaxSchemaReady] = useState(initialTaxSchemaReady);
+  const [view, setView] = useState<BookkeepingView>('overview');
+  const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
   const [editing, setEditing] = useState<ExpenseRevision | null>(null);
-  const [historyId, setHistoryId] = useState<string | null>(null);
   const [voidMode, setVoidMode] = useState(false);
+  const [formVersion, setFormVersion] = useState(0);
+  const [formDirty, setFormDirty] = useState(false);
+  const [pendingLeave, setPendingLeave] = useState<BookkeepingView | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [incurredDate, setIncurredDate] = useState(today);
+  const [paidDate, setPaidDate] = useState(today);
+  const [differentPaymentDate, setDifferentPaymentDate] = useState(false);
+  const [currency, setCurrency] = useState<'CAD' | 'USD'>('CAD');
+  const [customCategory, setCustomCategory] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [taxAmountKnown, setTaxAmountKnown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -39,9 +76,12 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions }:
   const [category, setCategory] = useState('');
   const [query, setQuery] = useState('');
   const [review, setReview] = useState<ReviewFilter>('all');
+  const [reportPeriod, setReportPeriod] = useState<ReportPeriod>('all');
+  const [reportDrilldown, setReportDrilldown] = useState<ReportDrilldown>({ kind: 'all' });
   const [sourcePreview, setSourcePreview] = useState<BookkeepingSourcePreview | null>(null);
   const [sourceFileName, setSourceFileName] = useState('');
   const [sourcePreviewError, setSourcePreviewError] = useState('');
+  const invalidPeriod = Boolean(from && to && from > to);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,19 +91,71 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions }:
       if (!response.ok) throw new Error(body.error ?? 'Unable to load expenses');
       setExpenses(body.expenses);
       setRevisions(body.revisions);
+      setDateSchemaReady(Boolean(body.dateSchemaReady));
+      setTaxSchemaReady(Boolean(body.taxSchemaReady));
       setError('');
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to load expenses'); }
     finally { setLoading(false); }
   }, []);
 
-  const categories = useMemo(() => [...new Set(expenses.map(row => row.category))].sort(), [expenses]);
+  const categories = useMemo(() => [...new Set([...STARTER_CATEGORIES, ...expenses.map(row => row.category)])].sort(), [expenses]);
   const visible = useMemo(() => expenses.filter(row =>
-    (!from || row.expense_date >= from) && (!to || row.expense_date <= to) &&
+    (!row.incurred_date || ((!from || row.incurred_date >= from) && (!to || row.incurred_date <= to))) &&
     (!category || row.category === category) &&
     (!query || `${row.supplier} ${row.business_purpose} ${row.category}`.toLowerCase().includes(query.toLowerCase())) &&
     matchesReviewFilter(row, review)
   ), [expenses, from, to, category, query, review]);
-  const summary = useMemo(() => summarizeExpenses(visible), [visible]);
+  const datedVisible = useMemo(() => visible.filter(hasConfirmedDates), [visible]);
+  const legacyVisible = useMemo(() => visible.filter(row => !hasConfirmedDates(row) && !row.void_reason), [visible]);
+  const summary = useMemo(() => summarizeExpenses(datedVisible), [datedVisible]);
+  const reportRows = useMemo(() => datedVisible.filter(row => !row.void_reason && (
+    reportDrilldown.kind === 'all' ||
+    (reportDrilldown.kind === 'category' && row.category === reportDrilldown.key) ||
+    (reportDrilldown.kind === 'supplier' && row.supplier === reportDrilldown.key) ||
+    (reportDrilldown.kind === 'personal' && row.payment_source === 'personal')
+  )), [datedVisible, reportDrilldown]);
+  const selectedExpense = expenses.find(row => row.expense_id === selectedExpenseId) ?? null;
+  const attention = expenses.filter(row => !row.void_reason &&
+    attentionReasons(row).length > 0);
+  const reportPeriodLabel = reportPeriod === 'all' ? 'All confirmed dates'
+    : reportPeriod === 'month' ? new Intl.DateTimeFormat('en-CA', { month: 'long', year: 'numeric' }).format(new Date()) + ' to date'
+    : reportPeriod === 'year' ? `${new Date().getFullYear()} to date`
+    : `${from || 'Any start'} to ${to || 'Any end'}`;
+  const drilldownLabel = reportDrilldown.kind === 'category' ? reportDrilldown.key
+    : reportDrilldown.kind === 'supplier' ? reportDrilldown.key
+    : reportDrilldown.kind === 'personal' ? 'Paid personally' : 'All recorded expenses';
+
+  function chooseReportPeriod(value: ReportPeriod) {
+    setReportPeriod(value);
+    setReportDrilldown({ kind: 'all' });
+    if (value === 'all') { setFrom(''); setTo(''); }
+    if (value === 'month') { setFrom(`${today().slice(0, 7)}-01`); setTo(today()); }
+    if (value === 'year') { setFrom(`${today().slice(0, 4)}-01-01`); setTo(today()); }
+  }
+
+  function openRecord(row: ExpenseRevision) { setDeleteConfirmId(null); setSelectedExpenseId(row.expense_id); setView('record'); }
+  function openForm(row: ExpenseRevision | null = null, asVoid = false) {
+    setEditing(row); setVoidMode(asVoid); setFormDirty(false); setPendingLeave(null); setFormVersion(version => version + 1);
+    const incurred = row?.incurred_date ?? '';
+    const paid = row?.paid_date ?? incurred;
+    setIncurredDate(incurred || (row ? '' : today()));
+    setPaidDate(paid || (row ? '' : today()));
+    setDifferentPaymentDate(Boolean(incurred && paid && incurred !== paid));
+    setCurrency(row?.original_currency ?? 'CAD');
+    setCustomCategory(Boolean(row && !categories.includes(row.category)));
+    setShowAdvanced(Boolean(row && (row.business_use_percent !== 100 || row.tax_cad_cents !== 0 || !hasKnownTaxAmount(row) || row.notes)));
+    setTaxAmountKnown(row ? hasKnownTaxAmount(row) : false);
+    setView('add');
+  }
+  function leaveForm(next: BookkeepingView) {
+    if (saving) return;
+    if (formDirty) { setPendingLeave(next); return; }
+    setFormDirty(false); setPendingLeave(null); setEditing(null); setVoidMode(false); setView(next);
+  }
+  function discardForm() {
+    if (!pendingLeave || saving) return;
+    setFormDirty(false); setEditing(null); setVoidMode(false); setView(pendingLeave); setPendingLeave(null);
+  }
 
   async function previewSourceCsv(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
@@ -87,26 +179,36 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions }:
     event.preventDefault();
     setSaving(true); setError(''); setNotice('');
     const form = new FormData(event.currentTarget);
+    form.set('incurredDate', incurredDate);
+    form.set('paidDate', differentPaymentDate ? paidDate : incurredDate);
+    if (currency === 'CAD') form.set('cadAmount', String(form.get('originalAmount') ?? ''));
+    if (!form.has('taxCadAmount')) form.set('taxCadAmount', editing ? amount(editing.tax_cad_cents) : '0.00');
+    if (!form.has('taxStatus')) form.set('taxStatus', editing?.tax_status ?? 'pending');
+    form.set('taxAmountKnown', String(taxAmountKnown));
+    if (!taxAmountKnown) { form.set('taxCadAmount', '0.00'); form.set('taxStatus', 'pending'); }
+    if (!form.has('businessUsePercent')) form.set('businessUsePercent', String(editing?.business_use_percent ?? 100));
+    if (!form.has('notes')) form.set('notes', editing?.notes ?? '');
     const receipt = form.get('receipt');
     if (!(receipt instanceof File) || receipt.size === 0) form.delete('receipt');
     if (editing) {
       form.set('expenseId', editing.expense_id);
       form.set('expectedRevision', String(editing.revision));
     }
+    if (voidMode) form.set('changeReason', String(form.get('voidReason') ?? ''));
     try {
       const response = await fetch('/api/platform-admin/bookkeeping/expenses', { method: 'POST', body: form });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error ?? 'Unable to save expense');
       setNotice(voidMode ? 'Expense voided; its history is retained.' : editing ? 'Correction saved with history.' : 'Expense saved.');
+      setSelectedExpenseId(body.expense.expense_id);
       setEditing(null); setVoidMode(false);
+      setFormDirty(false); setView('record');
       await load();
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to save expense'); }
     finally { setSaving(false); }
   }
 
   async function deleteExpense(row: ExpenseRevision) {
-    const confirmed = window.confirm(`Delete “${row.supplier}” (${money(row.cad_cents)}) permanently? Its saved revisions and receipt files will be removed.`);
-    if (!confirmed) return;
     setDeletingId(row.expense_id); setError(''); setNotice('');
     try {
       const params = new URLSearchParams({ expenseId: row.expense_id, expectedRevision: String(row.revision) });
@@ -117,7 +219,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions }:
         ? 'Expense deleted, but one or more receipt files could not be removed.'
         : 'Expense deleted.');
       if (editing?.expense_id === row.expense_id) { setEditing(null); setVoidMode(false); }
-      if (historyId === row.expense_id) setHistoryId(null);
+      if (selectedExpenseId === row.expense_id) { setSelectedExpenseId(null); setView('expenses'); }
+      setDeleteConfirmId(null);
       await load();
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to delete expense'); }
     finally { setDeletingId(null); }
@@ -127,6 +230,12 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions }:
     setExporting(kind); setError('');
     try {
       const params = new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), ...(category ? { category } : {}), ...(query ? { q: query } : {}), ...(review !== 'all' ? { review } : {}) });
+      if (view === 'reports' && reportDrilldown.kind !== 'all') {
+        params.set('dateStatus', 'confirmed');
+        if (reportDrilldown.kind === 'category') params.set('category', reportDrilldown.key ?? '');
+        if (reportDrilldown.kind === 'supplier') params.set('supplier', reportDrilldown.key ?? '');
+        if (reportDrilldown.kind === 'personal') params.set('paymentSource', 'personal');
+      }
       const route = kind === 'csv' ? 'export' : 'package';
       const response = await fetch(`/api/platform-admin/bookkeeping/${route}?${params}`, { cache: 'no-store' });
       if (!response.ok) {
@@ -138,7 +247,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions }:
         const url = URL.createObjectURL(await response.blob());
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'fieldlogichq-expense-package.zip';
+        link.download = 'fieldlogichq-accountant-package.zip';
         document.body.append(link);
         link.click();
         link.remove();
@@ -150,16 +259,24 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions }:
   return <div className={styles.page}>
     <header className={styles.header}>
       <div><p className={styles.eyebrow}>Private finance</p><h1>Bookkeeping</h1>
-        <p>Record expenses and original receipts. Purchase tax stays pending until its treatment is reviewed.</p></div>
-      <div className={styles.exportActions}>
-        <button type="button" className={styles.export} onClick={() => exportExpenses('csv')} disabled={!!exporting}>{exporting === 'csv' ? 'Preparing CSV…' : 'Export expense detail CSV'}</button>
-        <button type="button" className={styles.export} onClick={() => exportExpenses('package')} disabled={!!exporting}>{exporting === 'package' ? 'Preparing package…' : 'Download receipt package'}</button>
-      </div>
+        <p>Record a purchase, keep its receipt, and see what needs attention.</p></div>
+      <button type="button" className={styles.primaryAction} onClick={() => openForm()} disabled={!dateSchemaReady || !taxSchemaReady}>+ Add expense</button>
     </header>
+
+    <nav className={styles.sectionNav} aria-label="Bookkeeping sections">
+      {(['overview', 'expenses', 'attention', 'reports', 'ledger', 'sources'] as const).map(section =>
+        <button key={section} type="button" aria-current={view === section ? 'page' : undefined}
+          onClick={() => view === 'add' ? leaveForm(section) : setView(section)}>{section === 'attention' ? 'Needs attention' : section[0].toUpperCase() + section.slice(1)}</button>)}
+    </nav>
 
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {notice && <p role="status" className={styles.notice}>{notice}</p>}
-    <section className={`${styles.panel} ${styles.importPanel}`} aria-labelledby="source-import-title">
+    {(!dateSchemaReady || !taxSchemaReady) && <p role="status" className={styles.notice}>Expense entry is paused while bookkeeping storage is updated. Existing records and exports remain available.</p>}
+
+    {view === 'ledger' && <OwnerLedger expenses={expenses} initialMovements={initialOwnerMovements} initialRevisions={initialOwnerRevisions}
+      schemaReady={initialOwnerSchemaReady} onOpenExpense={openRecord} />}
+
+    {view === 'sources' && <section className={`${styles.panel} ${styles.importPanel}`} aria-labelledby="source-import-title">
       <div className={styles.importHeading}>
         <div><p className={styles.eyebrow}>B3 · fixture import preview</p><h2 id="source-import-title">Review source CSV</h2>
           <p className={styles.hint}>Choose a CSV to check its movement identities and totals. The file stays in this browser and is not uploaded.</p></div>
@@ -202,100 +319,169 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions }:
         {!sourcePreview.rows.length && !sourcePreview.file_issues.length && <p className={styles.empty}>This CSV has a header but no movement rows.</p>}
         <p className={styles.importCallout}><strong>Source handoff pending:</strong> Revenue must confirm source identifiers, seller and tax attribution, fee/refund links, payout mapping, and export columns before real movements can be imported.</p>
       </>}
-    </section>
-    <div className={styles.columns}>
-      <section className={styles.panel} aria-labelledby="expense-form-title">
-        <h2 id="expense-form-title">{editing ? `Correct ${editing.supplier}` : 'Add an expense'}</h2>
-        <p className={styles.hint}>Amounts include purchase tax. Keep the original invoice amount when converting USD to CAD.</p>
-        <form key={editing ? `${editing.expense_id}-${editing.revision}` : 'new'} onSubmit={save} className={styles.form}>
-          <label>Date paid or incurred<DateInput name="expenseDate" required defaultValue={editing?.expense_date ?? ''} /></label>
-          <label>Supplier<input name="supplier" required maxLength={160} defaultValue={editing?.supplier ?? ''} /></label>
-          <label>Category<input name="category" list="bookkeeping-categories" required maxLength={80} defaultValue={editing?.category ?? ''} placeholder="Software, travel, equipment…" /></label>
-          <datalist id="bookkeeping-categories">{categories.map(value => <option key={value} value={value} />)}</datalist>
-          <label>Business purpose<textarea name="businessPurpose" required maxLength={500} rows={2} defaultValue={editing?.business_purpose ?? ''} /></label>
-          <div className={styles.pair}>
-            <label>Invoice currency<select name="originalCurrency" defaultValue={editing?.original_currency ?? 'CAD'}><option>CAD</option><option>USD</option></select></label>
-            <label>Invoice total<input name="originalAmount" inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" required defaultValue={editing ? amount(editing.original_cents) : ''} /></label>
-          </div>
-          <div className={styles.pair}>
-            <label>CAD total<input name="cadAmount" inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" required defaultValue={editing ? amount(editing.cad_cents) : ''} /></label>
-            <label>Purchase tax in CAD<input name="taxCadAmount" inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" required defaultValue={editing ? amount(editing.tax_cad_cents) : '0.00'} /></label>
-          </div>
-          <div className={styles.pair}>
-            <label>Tax treatment<select name="taxStatus" defaultValue={editing?.tax_status ?? 'pending'}><option value="pending">Pending review</option><option value="none">No tax recorded</option><option value="reviewed">Reviewed</option></select></label>
-            <label>Business use %<input name="businessUsePercent" type="number" min="1" max="100" required defaultValue={editing?.business_use_percent ?? 100} /></label>
-          </div>
-          <label>Paid from<select name="paymentSource" defaultValue={editing?.payment_source ?? 'personal'}>{Object.entries(SOURCES).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></label>
-          <label>USD conversion source and date, if applicable<textarea name="conversionNote" maxLength={500} rows={2} placeholder="For example: Bank of Canada rate 2026-10-22" defaultValue={editing?.conversion_note ?? ''} /></label>
-          <label>Notes<textarea name="notes" maxLength={2000} rows={2} defaultValue={editing?.notes ?? ''} /></label>
-          <label>Original receipt · PDF, JPEG or PNG · up to 10 MB<input name="receipt" type="file" accept="application/pdf,image/jpeg,image/png" /></label>
-          {editing?.receipt_path && <p className={styles.hint}>Current receipt stays attached unless you choose a replacement. Earlier files remain in history.</p>}
-          {editing && <label>Reason for correction<input name="changeReason" required maxLength={500} placeholder="What changed and why?" /></label>}
-          {voidMode && <label>Reason to void<input name="voidReason" required maxLength={500} placeholder="Why should this expense leave the report?" /></label>}
-          <div className={styles.actions}>
-            <button type="submit" disabled={saving}>{saving ? 'Saving…' : voidMode ? 'Confirm void' : editing ? 'Save correction' : 'Save expense'}</button>
-            {editing && <button type="button" className={styles.secondary} onClick={() => { setEditing(null); setVoidMode(false); }}>Cancel</button>}
-            {editing && !voidMode && <button type="button" className={styles.secondary} onClick={() => setVoidMode(true)}>Void expense</button>}
-            {voidMode && <button type="button" className={styles.secondary} onClick={() => setVoidMode(false)}>Keep expense</button>}
-          </div>
-        </form>
-      </section>
+    </section>}
+    {view === 'overview' && <section className={styles.overview} aria-labelledby="overview-title">
+      <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Daily workspace</p><h2 id="overview-title">How things stand</h2><p>Recorded expenses and the few things still to finish.</p></div></div>
+      <div className={styles.metrics}>
+        <div><span>Recorded spend · all confirmed dates</span><strong>{money(summarizeExpenses(expenses.filter(hasConfirmedDates)).recordedSpendCents)}</strong></div>
+        <div><span>Needs a receipt</span><strong>{expenses.filter(row => !row.void_reason && !row.receipt_path).length}</strong></div>
+        <div><span>Dates to review</span><strong>{expenses.filter(row => !row.void_reason && !hasConfirmedDates(row)).length}</strong></div>
+      </div>
+      <div className={styles.overviewGrid}>
+        <div className={styles.panel}><div className={styles.subHeading}><h3>Needs your attention</h3>{attention.length > 5 && <button type="button" className={styles.textButton} onClick={() => setView('attention')}>See all {attention.length}</button>}</div>{attention.length ? attention.slice(0, 5).map(row =>
+          <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}>
+            <span><strong>{row.supplier}</strong><small>{attentionReasons(row).join(' · ')}</small></span><b>{money(businessCents(row))}</b>
+          </button>) : <p className={styles.empty}>Nothing needs attention.</p>}</div>
+        <div className={styles.panel}><h3>Recent expenses</h3>{expenses.slice(0, 5).map(row =>
+          <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}>
+            <span><strong>{row.supplier}</strong><small>{row.incurred_date ?? `${row.expense_date} · date unconfirmed`} · {row.category}</small></span><b>{money(businessCents(row))}</b>
+          </button>)}{!expenses.length && <p className={styles.empty}>Your first expense will appear here.</p>}</div>
+      </div>
+    </section>}
+    {view === 'attention' && <section className={styles.panel} aria-labelledby="attention-title">
+      <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Follow up</p><h2 id="attention-title">Needs attention</h2>
+        <p>Open a purchase to add evidence or confirm a detail. These items remain here until corrected.</p></div></div>
+      {attention.length ? <div className={styles.rows}>{attention.map(row => <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}>
+        <span><strong>{row.supplier}</strong><small>{attentionReasons(row).join(' · ')}</small></span><b>{money(businessCents(row))} ›</b>
+      </button>)}</div> : <p className={styles.empty}>Nothing needs attention.</p>}
+    </section>}
 
-      <div className={styles.register}>
-        <section className={styles.panel} aria-labelledby="report-title">
-          <h2 id="report-title">Expense report</h2>
+    {view === 'add' && <section className={`${styles.panel} ${styles.entryPanel}`} aria-labelledby="expense-form-title">
+      <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Expenses</p><h2 id="expense-form-title">{voidMode ? `Void ${editing?.supplier}` : editing ? `Correct ${editing.supplier}` : 'Add an expense'}</h2>
+        <p>Record the purchase once. Keep its receipt with it.</p></div><button type="button" className={styles.textButton} onClick={() => leaveForm(editing ? 'record' : 'expenses')}>Back to {editing ? 'record' : 'expenses'}</button></div>
+      {editing && !hasConfirmedDates(editing) && <p className={styles.dateWarning}>This older entry has a recorded date of {editing.expense_date}, but its meaning is unconfirmed. Use its receipt or other evidence to confirm both dates when correcting it.</p>}
+      <form key={`${editing?.expense_id ?? 'new'}-${formVersion}`} onSubmit={save} onChange={() => setFormDirty(true)} className={styles.form}>
+        <div className={styles.dateBox}>
+          <label>Expense date (incurred)<DateInput name="incurredDate" required={!voidMode} value={incurredDate} onChange={value => { setFormDirty(true); setIncurredDate(value); if (!differentPaymentDate) setPaidDate(value); }} /></label>
+          <label className={styles.inlineCheck}><input type="checkbox" checked={differentPaymentDate} onChange={event => { setDifferentPaymentDate(event.target.checked); if (!event.target.checked) setPaidDate(incurredDate); }} /> Payment date is different from expense date</label>
+          {differentPaymentDate && <label>Payment date<DateInput name="paidDate" required={!voidMode} value={paidDate} onChange={v => { setFormDirty(true); setPaidDate(v); }} /></label>}
+        </div>
+        <div className={styles.pair}><label>Supplier<input name="supplier" required maxLength={160} defaultValue={editing?.supplier ?? ''} /></label>
+          <label>Category<select name={customCategory ? undefined : 'category'} required={!customCategory} defaultValue={editing?.category ?? ''} onChange={event => setCustomCategory(event.target.value === '__custom__')}>
+            <option value="">Choose a category</option>{categories.map(value => <option key={value} value={value}>{value}</option>)}<option value="__custom__">+ Add a category</option></select></label></div>
+        {customCategory && <label>New category<input name="category" required maxLength={80} placeholder="Name this category" /></label>}
+        <label>What was it for?<textarea name="businessPurpose" required maxLength={500} rows={2} defaultValue={editing?.business_purpose ?? ''} /></label>
+        <div className={styles.pair}><label>Currency<select name="originalCurrency" value={currency} onChange={event => setCurrency(event.target.value as 'CAD' | 'USD')}><option>CAD</option><option>USD</option></select></label>
+          <label>{currency === 'CAD' ? 'Amount · CAD' : 'Invoice amount · USD'}<input name="originalAmount" inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" required defaultValue={editing ? amount(editing.original_cents) : ''} /></label></div>
+        {currency === 'USD' && <div className={styles.pair}><label>CAD amount<input name="cadAmount" inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" required defaultValue={editing ? amount(editing.cad_cents) : ''} /></label>
+          <label>Conversion source and date<textarea name="conversionNote" required maxLength={500} rows={2} placeholder="Bank of Canada rate 2026-10-22" defaultValue={editing?.conversion_note ?? ''} /></label></div>}
+        <label>How did you pay?<select name="paymentSource" required defaultValue={editing?.payment_source ?? ''}><option value="">Choose one</option>{Object.entries(SOURCES).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></label>
+        <label>Receipt · PDF, JPEG or PNG · up to 10 MB<input name="receipt" type="file" accept="application/pdf,image/jpeg,image/png" /></label>
+        <p className={styles.hint}>{editing?.receipt_path ? 'The current receipt stays attached unless you choose a replacement. Earlier files remain in history.' : 'You can save now and add the receipt later.'}</p>
+        <button type="button" className={styles.moreButton} aria-expanded={showAdvanced} onClick={() => setShowAdvanced(!showAdvanced)}>{showAdvanced ? 'Hide more details' : 'More details'}</button>
+        {showAdvanced && <div className={styles.advanced}>
+          <label className={styles.inlineCheck}><input type="checkbox" checked={taxAmountKnown} onChange={event => setTaxAmountKnown(event.target.checked)} /> I know the purchase tax amount</label>
+          {taxAmountKnown ? <div className={styles.pair}>
+            <label>Purchase tax amount · CAD<input name="taxCadAmount" inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" required defaultValue={editing ? amount(editing.tax_cad_cents) : '0.00'} /></label>
+            <label>Tax review status<select name="taxStatus" defaultValue={editing?.tax_status ?? 'pending'}><option value="pending">Pending review</option><option value="none">No tax recorded</option><option value="reviewed">Reviewed</option></select></label></div>
+            : <p className={styles.hint}>Tax amount unknown. A blank amount will not be treated as confirmed $0.</p>}
+          <label>Business use %<input name="businessUsePercent" type="number" min="1" max="100" required defaultValue={editing?.business_use_percent ?? 100} /></label>
+          <label>Notes<textarea name="notes" maxLength={2000} rows={2} defaultValue={editing?.notes ?? ''} /></label>
+          <p className={styles.hint}>Purchase tax is a recorded detail. This form does not claim a tax credit.</p></div>}
+        {editing && !voidMode && <label>Reason for correction<input name="changeReason" required maxLength={500} placeholder="What changed and why?" /></label>}
+        {voidMode && <label>Reason to void<input name="voidReason" required maxLength={500} placeholder="Why should this expense leave the report?" /></label>}
+        <div className={styles.actions}><button type="submit" disabled={saving || !dateSchemaReady || !taxSchemaReady}>{saving ? 'Saving…' : voidMode ? 'Confirm void' : editing ? 'Save correction' : 'Save expense'}</button>
+          <button type="button" className={styles.secondary} onClick={() => leaveForm(editing ? 'record' : 'expenses')}>Cancel</button></div>
+        {pendingLeave && <div className={styles.confirmBox} role="group" aria-label="Close without saving?">
+          <p><strong>Close without saving?</strong> What you typed won’t be kept.</p>
+          <div className={styles.confirmActions}><button type="button" className={styles.textButton} onClick={() => setPendingLeave(null)}>Keep writing</button>
+            <button type="button" className={styles.dangerButton} onClick={discardForm}>Discard changes</button></div>
+        </div>}
+      </form>
+    </section>}
+
+    {view === 'reports' && <section className={styles.panel} aria-labelledby="report-title">
+          <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Recorded expenses</p><h2 id="report-title">Expense report</h2>
+            <p>{reportPeriodLabel} · Period totals use confirmed incurred dates. Older dates to review appear separately.</p></div>
+            <div className={styles.exportActions}><button type="button" className={styles.export} onClick={() => exportExpenses('csv')} disabled={!!exporting || invalidPeriod}>{exporting === 'csv' ? 'Preparing CSV…' : 'Export CSV'}</button>
+              <button type="button" className={styles.export} onClick={() => exportExpenses('package')} disabled={!!exporting || invalidPeriod}>{exporting === 'package' ? 'Preparing package…' : 'Accountant package'}</button></div></div>
           <div className={styles.filters}>
-            <label>From<DateInput value={from} onChange={setFrom} /></label>
-            <label>To<DateInput value={to} onChange={setTo} /></label>
+            <label>Period<select value={reportPeriod} onChange={event => chooseReportPeriod(event.target.value as ReportPeriod)}><option value="all">All confirmed dates</option><option value="month">This month to date</option><option value="year">This year to date</option><option value="custom">Custom dates</option></select></label>
+            <label>From · incurred date<DateInput value={from} onChange={v => { setFrom(v); setReportPeriod('custom'); }} /></label>
+            <label>To · incurred date<DateInput value={to} onChange={v => { setTo(v); setReportPeriod('custom'); }} /></label>
             <label>Category<select value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
             <label>Find<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Supplier or purpose" /></label>
           <label>Review view<select value={review} onChange={event => setReview(event.target.value as ReviewFilter)}><option value="all">All expenses</option><option value="missing_receipt">Missing receipt</option><option value="missing_conversion">USD conversion evidence needed</option><option value="personal">Paid personally</option><option value="foreign">USD invoices</option></select></label>
           </div>
+          {invalidPeriod && <p role="alert" className={styles.dateWarning}>Choose a From date on or before the To date before exporting this report.</p>}
           <div className={styles.metrics}>
-            <div><span>Recorded business spend</span><strong>{money(summary.recordedSpendCents)}</strong></div>
-            <div><span>Expenses</span><strong>{summary.count}</strong></div>
-            <div><span>Purchase tax pending review</span><strong>{money(summary.pendingTaxCents)}</strong></div>
+            <div><span>Recorded spend · {reportPeriodLabel}</span><strong>{money(summary.recordedSpendCents)}</strong></div>
+            <div><span>Expenses with confirmed dates</span><strong>{summary.count}</strong></div>
+            <div><span>Dates to review</span><strong>{legacyVisible.length}</strong></div>
           </div>
           <p className={styles.hint}>Spend includes purchase tax and the recorded business-use share. It is not a tax-credit or profit calculation.</p>
-          <p className={styles.hint}>CSV and receipt package use the same period, category, search and review filters shown here. They include the revision history for matching expenses.</p>
-          {!!summary.byCategory.length && <div className={styles.categories}>{summary.byCategory.map(([name, cents]) => <div key={name}><span>{name}</span><strong>{money(cents)}</strong></div>)}</div>}
+          <p className={styles.hint}>Expense CSV and the accountant package use the same expense filters. The package also includes owner transfers dated in the selected period; a narrowed expense view includes only linked reimbursements. Unconfirmed older expense dates stay labelled for review.</p>
+          {legacyVisible.length > 0 && <section className={styles.reviewList} aria-labelledby="legacy-dates-title"><h3 id="legacy-dates-title">Dates to review · {money(legacyVisible.reduce((total, row) => total + businessCents(row), 0))}</h3>
+            <p className={styles.hint}>These expenses have a recorded date whose meaning was not established. They are excluded from the incurred-date total until confirmed.</p>
+            {legacyVisible.map(row => <button type="button" className={styles.listDoor} key={row.expense_id} onClick={() => openRecord(row)}><span><strong>{row.supplier}</strong><small>Recorded date {row.expense_date} · meaning unconfirmed</small></span><b>{money(businessCents(row))}</b></button>)}</section>}
           <div className={styles.reportGrid}>
-            <div><h3>Purchase tax recorded</h3>{summary.taxByStatus.map(([status, cents]) => <p key={status}><span>{status === 'none' ? 'None recorded' : status === 'pending' ? 'Pending review' : 'Reviewed'}</span><strong>{money(cents)}</strong></p>)}</div>
-            <div><h3>Recorded spend by payment source</h3>{summary.byPaymentSource.length ? summary.byPaymentSource.map(([source, cents]) => <p key={source}><span>{SOURCES[source]}</span><strong>{money(cents)}</strong></p>) : <p>No active expenses.</p>}</div>
+            <div><h3>By category</h3>{summary.byCategory.length ? summary.byCategory.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ kind: 'category', key: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
+            <div><h3>By supplier</h3>{summary.bySupplier.length ? summary.bySupplier.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ kind: 'supplier', key: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
           </div>
+          <div className={styles.reportGrid}>
+            <div><h3>Purchase tax recorded</h3><p><span>Amount unknown</span><strong>{summary.unknownTaxCount} expense(s)</strong></p>{summary.taxByStatus.map(([status, cents]) => <p key={status}><span>{status === 'none' ? 'Confirmed no tax' : status === 'pending' ? 'Known amount · review pending' : 'Reviewed'}</span><strong>{money(cents)}</strong></p>)}</div>
+            <div><h3>Recorded spend by payment source</h3>{summary.byPaymentSource.length ? summary.byPaymentSource.map(([source, cents]) => source === 'personal' ? <button type="button" className={styles.reportDoor} key={source} onClick={() => setReportDrilldown({ kind: 'personal' })}><span>{SOURCES[source]}</span><strong>{money(cents)} ›</strong></button> : <p key={source}><span>{SOURCES[source]}</span><strong>{money(cents)}</strong></p>) : <p>No active expenses.</p>}</div>
+          </div>
+          <section className={styles.reviewList} aria-labelledby="report-lines-title"><div className={styles.subHeading}><h3 id="report-lines-title">{drilldownLabel} · {money(reportRows.reduce((total, row) => total + businessCents(row), 0))}</h3>
+            {reportDrilldown.kind !== 'all' && <button type="button" className={styles.textButton} onClick={() => setReportDrilldown({ kind: 'all' })}>Show all entries</button>}</div>
+            <p className={styles.hint}>{reportRows.length} contributing expense(s) · {reportPeriodLabel}. Open a row to see its receipt and revisions.</p>
+            {reportRows.map(row => <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}><span><strong>{row.supplier}</strong><small>{row.incurred_date} · {row.category} · {SOURCES[row.payment_source]}</small></span><b>{money(businessCents(row))} ›</b></button>)}
+            {!reportRows.length && <p className={styles.empty}>No expenses contribute to this figure.</p>}
+          </section>
           <p className={styles.hint}>Paid personally: {money(summary.personallyPaidCents)} across active expenses. A later reimbursement or owner movement is a separate record and must not be entered as another expense here.</p>
           <section className={styles.reviewList} aria-labelledby="evidence-review-title">
-            <h3 id="evidence-review-title">Evidence review</h3>
-            <p className={styles.hint}>{summary.missingReceiptCount} active expense(s) have no receipt. {summary.missingConversionCount} USD expense(s) need a conversion source and valid date. Voided expenses are excluded.</p>
-            {visible.filter(row => !row.void_reason && (!row.receipt_path || (row.original_currency === 'USD' && !hasValidConversionEvidence(row.conversion_note)))).map(row => <p key={row.expense_id}><strong>{row.supplier}</strong> · {row.expense_date} · {[
-              !row.receipt_path ? 'Receipt missing' : '',
-              row.original_currency === 'USD' && !hasValidConversionEvidence(row.conversion_note) ? 'USD conversion source/date missing or invalid' : '',
-            ].filter(Boolean).join(' · ')}</p>)}
+            <div className={styles.subHeading}><h3 id="evidence-review-title">Needs attention</h3><button type="button" className={styles.textButton} onClick={() => setView('attention')}>Open worklist · {attention.length}</button></div>
+            <p className={styles.hint}>Missing receipts, unknown dates or tax amounts, pending tax review, and USD conversion evidence appear in one worklist. Each item opens its expense record.</p>
           </section>
           <section className={styles.reviewList} aria-labelledby="usd-review-title">
             <h3 id="usd-review-title">USD invoices</h3>
             {visible.filter(row => !row.void_reason && row.original_currency === 'USD').length ? visible.filter(row => !row.void_reason && row.original_currency === 'USD').map(row => <p key={row.expense_id}><strong>{row.supplier}</strong> · USD {amount(row.original_cents)} → CAD {amount(row.cad_cents)} · {row.conversion_note || 'Conversion source/date needed'}</p>) : <p>No active USD invoices in this view.</p>}
           </section>
-        </section>
-        <section className={styles.panel} aria-labelledby="register-title">
-          <h2 id="register-title">Expense register</h2>
-          {loading ? <p>Loading expenses…</p> : !visible.length ? <p className={styles.empty}>No expenses match this view.</p> :
-            <div className={styles.rows}>{visible.map(row => <article key={row.expense_id} className={styles.row}>
-              <div className={styles.rowHead}><div><strong>{row.supplier}</strong><span>{row.expense_date} · {row.category}</span></div><strong>{row.void_reason ? 'Voided' : money(businessCents(row))}</strong></div>
-              <p>{row.business_purpose}</p>
-              <div className={styles.rowMeta}><span>{SOURCES[row.payment_source]}</span><span>Tax: {row.tax_status === 'pending' ? 'pending review' : row.tax_status === 'none' ? 'none recorded' : 'reviewed'}</span><span>Rev. {row.revision}</span>{!row.receipt_path && <span>Receipt missing</span>}</div>
-              <div className={styles.rowActions}>
-                {row.receipt_path && <a href={`/api/platform-admin/bookkeeping/receipt/${row.expense_id}/${row.revision}`}>Download receipt</a>}
-                {!row.void_reason && <button type="button" onClick={() => { setEditing(row); setVoidMode(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Correct</button>}
-                <button type="button" onClick={() => void deleteExpense(row)} disabled={deletingId === row.expense_id}>{deletingId === row.expense_id ? 'Deleting…' : 'Delete'}</button>
-                <button type="button" onClick={() => setHistoryId(historyId === row.expense_id ? null : row.expense_id)}>{historyId === row.expense_id ? 'Hide history' : 'History'}</button>
-              </div>
-              {historyId === row.expense_id && <ol className={styles.history}>{revisions.filter(item => item.expense_id === row.expense_id).sort((a, b) => b.revision - a.revision).map(item =>
-                <li key={item.revision}>Rev. {item.revision} · {new Date(item.created_at).toLocaleString('en-CA')} · {money(item.cad_cents)} {item.change_reason ? `· ${item.change_reason}` : '· First entry'} {item.void_reason ? `· Voided: ${item.void_reason}` : ''} {item.receipt_path && <a href={`/api/platform-admin/bookkeeping/receipt/${item.expense_id}/${item.revision}`}>Receipt</a>}</li>
-              )}</ol>}
-            </article>)}</div>}
-        </section>
-      </div>
-    </div>
+        </section>}
+    {view === 'expenses' && <section className={styles.panel} aria-labelledby="register-title">
+      <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Your records</p><h2 id="register-title">Expenses</h2><p>Find a purchase, receipt or correction.</p></div></div>
+      <div className={styles.filters}><label>Find<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Supplier or purpose" /></label>
+        <label>From · incurred date<DateInput value={from} onChange={v => { setFrom(v); setReportPeriod('custom'); }} /></label>
+        <label>To · incurred date<DateInput value={to} onChange={v => { setTo(v); setReportPeriod('custom'); }} /></label>
+        <label>Category<select value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
+        <label>Show<select value={review} onChange={event => setReview(event.target.value as ReviewFilter)}><option value="all">All expenses</option><option value="missing_receipt">Missing receipt</option><option value="missing_conversion">USD conversion needed</option><option value="personal">Paid personally</option><option value="foreign">USD invoices</option></select></label></div>
+      {loading ? <p>Loading expenses…</p> : !visible.length ? <p className={styles.empty}>No expenses match this view.</p> :
+        <div className={styles.rows}>{visible.map(row => <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}>
+          <span><strong>{row.supplier}</strong><small>{row.incurred_date ?? `${row.expense_date} · date unconfirmed`} · {row.category} · {SOURCES[row.payment_source]}</small>
+            <small>{row.receipt_path ? 'Receipt attached' : 'Receipt missing'}{row.void_reason ? ' · Voided' : ''}</small></span>
+          <b>{row.void_reason ? 'Voided' : money(businessCents(row))} ›</b>
+        </button>)}</div>}
+    </section>}
+
+    {view === 'record' && selectedExpense && <section className={styles.panel} aria-labelledby="expense-record-title">
+      <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Expenses / Record</p><h2 id="expense-record-title">{selectedExpense.supplier}</h2>
+        <p>{selectedExpense.category} · {selectedExpense.business_purpose}</p></div>
+        <button type="button" className={styles.textButton} onClick={() => setView('expenses')}>Back to expenses</button></div>
+      {selectedExpense.void_reason && <p className={styles.dateWarning}>Voided: {selectedExpense.void_reason}. This record is excluded from active spend.</p>}
+      {!hasConfirmedDates(selectedExpense) && <p className={styles.dateWarning}>Recorded date {selectedExpense.expense_date} · meaning unconfirmed. Check the source document before confirming incurred and payment dates.</p>}
+      <div className={styles.recordGrid}><div className={styles.recordCard}><h3>Expense details</h3><dl>
+        <div><dt>Business amount</dt><dd>{money(businessCents(selectedExpense))}</dd></div>
+        <div><dt>Expense date</dt><dd>{selectedExpense.incurred_date ?? 'Needs review'}</dd></div>
+        <div><dt>Payment date</dt><dd>{selectedExpense.paid_date ?? 'Needs review'}</dd></div>
+        <div><dt>Paid from</dt><dd>{SOURCES[selectedExpense.payment_source]}</dd></div>
+        <div><dt>Receipt</dt><dd>{selectedExpense.receipt_path ? 'Attached' : 'Missing'}</dd></div>
+        <div><dt>Purchase tax amount</dt><dd>{hasKnownTaxAmount(selectedExpense) ? money(selectedExpense.tax_cad_cents) : 'Unknown'}</dd></div>
+        <div><dt>Tax review</dt><dd>{selectedExpense.tax_status === 'pending' ? 'Pending review' : selectedExpense.tax_status === 'none' ? 'No tax recorded' : 'Reviewed'}</dd></div>
+      </dl></div><div className={styles.recordCard}><h3>Original receipt</h3>
+        {selectedExpense.receipt_path ? <p><a href={`/api/platform-admin/bookkeeping/receipt/${selectedExpense.expense_id}/${selectedExpense.revision}`}>{selectedExpense.receipt_name ?? 'Download receipt'}</a></p> : <p>No receipt attached yet.</p>}
+        {selectedExpense.original_currency === 'USD' && <p>USD {amount(selectedExpense.original_cents)} → CAD {amount(selectedExpense.cad_cents)} · {selectedExpense.conversion_note}</p>}
+        {selectedExpense.notes && <p>{selectedExpense.notes}</p>}</div></div>
+      <div className={styles.recordActions}>{!selectedExpense.void_reason && <button type="button" className={styles.primaryAction} onClick={() => openForm(selectedExpense)}>Correct expense</button>}
+        {!selectedExpense.void_reason && <button type="button" className={styles.textButton} onClick={() => openForm(selectedExpense, true)}>Void expense</button>}
+        <button type="button" className={styles.dangerButton} onClick={() => setDeleteConfirmId(selectedExpense.expense_id)} disabled={deletingId === selectedExpense.expense_id}>{deletingId === selectedExpense.expense_id ? 'Deleting…' : 'Permanently delete'}</button></div>
+      {deleteConfirmId === selectedExpense.expense_id && <div className={styles.confirmBox} role="group" aria-label={`Permanently delete ${selectedExpense.supplier}?`}>
+        <p><strong>Delete {selectedExpense.supplier} permanently?</strong> Its saved revisions and receipt files will be removed. This cannot be undone.</p>
+        <div className={styles.confirmActions}><button type="button" className={styles.textButton} onClick={() => setDeleteConfirmId(null)} disabled={!!deletingId}>Keep expense</button>
+          <button type="button" className={styles.dangerButton} onClick={() => void deleteExpense(selectedExpense)} disabled={!!deletingId}>{deletingId ? 'Deleting…' : 'Delete permanently'}</button></div>
+      </div>}
+      <section className={styles.historySection} aria-labelledby="history-title"><h3 id="history-title">Changes</h3><ol className={styles.history}>{revisions.filter(item => item.expense_id === selectedExpense.expense_id).sort((a, b) => b.revision - a.revision).map(item =>
+        <li key={item.revision}>Rev. {item.revision} · {new Date(item.created_at).toLocaleString('en-CA')} · {money(item.cad_cents)} · {item.incurred_date ?? `${item.expense_date} (date unconfirmed)`} {item.change_reason ? `· ${item.change_reason}` : '· First entry'} {item.void_reason ? `· Voided: ${item.void_reason}` : ''} {item.receipt_path && <a href={`/api/platform-admin/bookkeeping/receipt/${item.expense_id}/${item.revision}`}>Receipt</a>}</li>
+      )}</ol></section>
+    </section>}
   </div>;
 }

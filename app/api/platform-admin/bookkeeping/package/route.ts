@@ -2,8 +2,9 @@ import { createHash } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBookkeepingApi } from '@/lib/bookkeeping-access';
 import { csvCell } from '@/lib/bookkeeping-expenses';
-import { expenseCsv, parseExpenseFilters, selectExpenseRevisions } from '@/lib/bookkeeping-export';
-import { getReceipt, headReceipt, listExpenseRevisions } from '@/lib/bookkeeping-store';
+import { expenseCsv, ownerMovementCsv, parseExpenseFilters, selectExpenseRevisions, selectOwnerMovementRevisions } from '@/lib/bookkeeping-export';
+import { getReceipt, hasOwnerMovementTable, headReceipt, listExpenseRevisions, listOwnerMovementRevisions } from '@/lib/bookkeeping-store';
+import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { zipStream, type ZipEntry } from '@/lib/bookkeeping-zip';
 import { withObservability } from '@/lib/observability';
 
@@ -15,10 +16,17 @@ export const GET = withObservability(async (req: NextRequest) => {
   const filters = parseExpenseFilters(req.nextUrl.searchParams);
   if (!filters) return NextResponse.json({ error: 'Invalid report period' }, { status: 400 });
   let revisions;
-  try { revisions = await listExpenseRevisions(); }
-  catch { return NextResponse.json({ error: 'Unable to export expenses' }, { status: 500 }); }
+  let ownerRevisions: OwnerMovementRevision[] = [];
+  let ownerSchemaReady = false;
+  try {
+    revisions = await listExpenseRevisions();
+    ownerSchemaReady = await hasOwnerMovementTable();
+    if (ownerSchemaReady) ownerRevisions = await listOwnerMovementRevisions();
+  } catch { return NextResponse.json({ error: 'Unable to prepare accountant package' }, { status: 500 }); }
   if (revisions.length > 1000) return NextResponse.json({ error: 'Expense package needs pagination before more records can be included' }, { status: 503 });
+  if (ownerRevisions.length > 1000) return NextResponse.json({ error: 'Owner transfer package needs pagination before more records can be included' }, { status: 503 });
   const selected = selectExpenseRevisions(revisions, filters);
+  const selectedOwners = selectOwnerMovementRevisions(ownerRevisions, filters, selected);
   const documents = new Map<string, { filename: string; contentType: string }>();
   // Check every referenced object before starting the download. The ZIP itself fetches one file at a time.
   try {
@@ -38,7 +46,18 @@ export const GET = withObservability(async (req: NextRequest) => {
   const hashes = new Map<string, string>();
   const encoder = new TextEncoder();
   const entries: ZipEntry[] = [
-    { name: 'expenses.csv', load: async () => encoder.encode(expenseCsv(selected)) },
+    { name: 'expenses.csv', load: async () => encoder.encode(expenseCsv(selected, filters)) },
+    { name: 'owner-transfers.csv', load: async () => encoder.encode(ownerMovementCsv(selectedOwners)) },
+    { name: 'package-scope.txt', load: async () => encoder.encode([
+      'FieldLogicHQ private proprietor bookkeeping package',
+      `Expense revisions: ${selected.length}; owner transfer revisions: ${selectedOwners.length}; receipt files: ${documents.size}.`,
+      `Period: ${filters.from || 'any start'} to ${filters.to || 'any end'}. Expenses use incurred date; owner transfers use transfer date.`,
+      'Legacy expense dates with unknown meaning may appear outside the selected period and are labelled in expenses.csv.',
+      'Expense filters apply to expenses.csv. If an expense category, supplier, payment source, search or review filter is selected, owner-transfers.csv includes only reimbursements linked to those expenses.',
+      ownerSchemaReady ? 'Owner transfer history is included where records match the scope.' : 'Owner transfer storage is not present in this environment; owner-transfers.csv has a header only.',
+      'Bank statements, Stripe income, processor fees, refunds, payouts and bank reconciliation are not in this package.',
+      'A source reference is owner-entered text and is not a bank statement.',
+    ].join('\r\n') + '\r\n') },
   ];
   for (const [path, document] of documents) {
     entries.push({ name: document.filename, load: async () => {
@@ -61,7 +80,7 @@ export const GET = withObservability(async (req: NextRequest) => {
   } });
   return new Response(zipStream(entries), { headers: {
     'Content-Type': 'application/zip',
-    'Content-Disposition': 'attachment; filename="fieldlogichq-expense-package.zip"',
+    'Content-Disposition': 'attachment; filename="fieldlogichq-accountant-package.zip"',
     'Cache-Control': 'private, no-store',
     'X-Content-Type-Options': 'nosniff',
   } });
