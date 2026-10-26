@@ -78,11 +78,14 @@ by owner decision. Deferred slices remain:
   `lib/plan-gating-server.ts`. That is **not true** — the CHECK is `subscription_status | comp_period`.
   Correct the guide.
 
-### 1.5 Plan / Tier Trial — proposed, deferred, not scheduled
-Operator-granted, timed, auto-reverting **whole-plan** trial ("give this club League Plus for 14 days").
-Access-only; never touches Stripe. Completes the long-deferred `plan_tier` slice of the grants engine,
-which needs an **effective plan rank** threaded through gating. Owner relabelled the existing surgical
-grant for clarity and deferred the build.
+### 1.5 Plan / Tier Trial — BUILT as Support console Stage 4 "Free time" (2026-10-25 on dev, walk ledger §379)
+Operator-granted, timed, auto-reverting **whole-plan** free time: Tournament Plus, Club or Club · Association (never
+League plans), Billing up to 6 months, Super admin up to 12, refused on a paying club, a portal, a demo or a club the staff
+member belongs to. The `plan_tier` slice is no longer deferred: ONE effective-plan door (`lib/entitlement-grants.ts`,
+rules `lib/free-time.ts`) folds it into the plan and limits every access decision reads, build-guarded by
+`plan-reader-door-guard`; **every billing action reads the club's own plan** (`ownPlanOf`). The fee book's SQL reads it
+through `org_effective_plan` (mig 373). The customer reads "Free through {day}" on Plan & billing. Plan:
+`PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md`. The `/billing` guide's stale `type:'plan'` claim (§1.4) is still to correct.
 
 ### 1.6 Billing downgrade & data retention — hard purge missing
 Retention windows, owner warnings, the `pending_purge` transition and the notice emails are built and

@@ -1,0 +1,1358 @@
+<title>Support Console Stage 4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: a 920 reading column for the words and asks; each drawing breaks out to a true-size 1440 frame inside its own
+   horizontal scroller. The document chrome is cool stone; the frames wear FieldLogicHQ's real warm (or dark) tokens. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8; --red: #9c321d; --red-soft: #f6e2dc;
+  --tag: #1d4f8a; --tag-soft: #dde8f5;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1914;
+  --tag: #9cc2f0; --tag-soft: #16243a; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); }
+.wrap { max-width: 920px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 90px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; letter-spacing: -.4px; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 21px; line-height: 1.3; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0 0 4px; }
+p { margin: 0; max-width: 72ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.lede { display: grid; gap: 12px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 10px; margin-block: 18px 26px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bar a.jump { font: 600 13px/1 var(--font-body); padding: 9px 11px; min-height: 36px; display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.bar .sw { margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.bar .sw button { font: 600 13px/1 var(--font-body); min-height: 36px; padding: 8px 12px; border: 0; background: var(--card); color: var(--ink); cursor: pointer; }
+.bar .sw button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); }
+.screen { display: grid; gap: 14px; margin-bottom: 46px; scroll-margin-top: 80px; }
+.screen-head { display: grid; gap: 6px; }
+.screen-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); letter-spacing: .08em; }
+.ba { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.before { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 14px; align-items: start; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+@media (max-width: 640px) { .before { grid-template-columns: minmax(0, 1fr); } }
+.before button.shot { padding: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; cursor: zoom-in; background: #0a0a0a; max-height: 170px; display: block; width: 100%; }
+.before img { display: block; width: 100%; height: auto; }
+.lbl { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.scroller { overflow-x: auto; margin-inline: calc(50% - 50vw + 16px); padding-inline: max(16px, calc(50vw - 736px)); padding-block: 4px 10px; }
+.scroller > .fx { width: 1440px; }
+.scroller > .fx.win { width: 600px; }
+.scroller > .fx.wide-note { width: 1440px; }
+.hint { font-size: 12.5px; color: var(--dim); }
+button.tag { font: 700 11px/1 var(--font-data); letter-spacing: .04em; padding: 5px 7px; border-radius: 6px; border: 1px solid var(--tag); background: var(--tag-soft); color: var(--tag); cursor: pointer; white-space: nowrap; }
+.tagrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+/* asks */
+.ask { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+.ask .q { font-weight: 700; }
+.ask .rec { font-size: 14px; color: var(--soft); }
+.ask .rec b { color: var(--ink); }
+.ask .opts { display: grid; gap: 4px; }
+.ask label { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+.ask input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+.ask textarea { width: 100%; min-height: 56px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+table.doc { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.doc th { text-align: left; font: 600 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.doc td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.doc tr:last-child td { border-bottom: 0; }
+.paste { display: grid; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.paste textarea { width: 100%; min-height: 220px; font: 13px/1.5 var(--font-data); padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); max-width: min(560px, calc(100vw - 32px)); padding: 18px 18px 14px; }
+dialog::backdrop { background: rgba(20, 24, 18, .45); }
+dialog .foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+dialog button.close { font: 600 14px/1 var(--font-body); min-height: 40px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+dialog.zoom { max-width: calc(100vw - 32px); width: 1200px; padding: 10px; }
+dialog.zoom .z { max-height: 80vh; overflow: auto; } dialog.zoom img { width: 100%; display: block; }
+
+/* ═════ The product frames — FieldLogicHQ warm tokens, dark on the switch. Type stays on the ladder: 10 · 11 · 12 · 14 · 16 · 20 · 24 ═════ */
+.fx { --p: #F8F4ED; --c: #FFFFFF; --ln: rgba(70,55,30,.12); --ln2: rgba(70,55,30,.20); --fill: rgba(70,55,30,.05); --fieldbg: #F8F4ED;
+  --i: #241E15; --i2: #4A4235; --i3: #615A54; --ol: #57651E; --ols: rgba(87,101,30,.10); --lime: #D9F99D; --limei: #241E15; --tabon: #57651E;
+  --am: #835006; --rd: #B03A22; --gr: #34662A; --scrim: rgba(36,30,21,.34);
+  background: var(--p); color: var(--i); font: 14px/1.45 var(--font-body); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative; }
+.fx.dark { --p: #0A0A0A; --c: #111827; --ln: rgba(255,255,255,.08); --ln2: rgba(255,255,255,.14); --fill: rgba(255,255,255,.03); --fieldbg: rgba(255,255,255,.05);
+  --i: #F1F5F9; --i2: rgba(255,255,255,.70); --i3: rgba(255,255,255,.50); --ol: #D9F99D; --ols: rgba(30,58,138,.18); --lime: #D9F99D; --limei: #0A0A0A; --tabon: #F1F5F9;
+  --am: #F59E0B; --rd: #EF4444; --gr: #22C55E; --scrim: rgba(13,17,26,.55); }
+.fx * { box-sizing: border-box; }
+.fx svg.ic { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.strip { height: 48px; display: grid; grid-template-columns: 240px 1fr auto; align-items: center; background: var(--c); border-bottom: 1px solid var(--ln); }
+.strip .lock { display: flex; align-items: center; gap: 8px; padding-left: 20px; font: 700 16px/1 var(--font-body); }
+.strip .lock .mk { width: 20px; height: 20px; border-radius: 5px; background: var(--ol); }
+.strip .lock em { font-style: normal; color: var(--ol); }
+.strip .mid { display: flex; align-items: center; gap: 16px; padding-left: 20px; }
+.strip .portal { font: 600 14px/1 var(--font-body); color: var(--i2); }
+.strip .find { margin: 0 auto; width: 440px; display: flex; align-items: center; gap: 8px; height: 34px; border: 1px solid var(--ln2); border-radius: 999px; padding: 0 12px; color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+.strip .find .k { margin-left: auto; font: 700 10px/1 var(--font-data); border: 1px solid var(--ln2); border-radius: 4px; padding: 2px 5px; }
+.strip .find.typed { color: var(--i); border-color: var(--ol); }
+.strip .end { display: flex; align-items: center; gap: 6px; padding-right: 16px; }
+.strip .end .b { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.strip .end .b svg.ic { width: 18px; height: 18px; }
+.strip .end .av { width: 30px; height: 30px; border-radius: 999px; background: var(--ols); color: var(--ol); display: inline-flex; align-items: center; justify-content: center; font: 700 12px/1 var(--font-body); }
+.app { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 840px; }
+.side { background: var(--c); border-right: 1px solid var(--ln); padding: 12px 0 16px; display: flex; flex-direction: column; }
+.grp { display: grid; }
+.gl { display: flex; align-items: center; gap: 8px; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); padding: 12px 20px 6px; }
+.gl .cv { margin-left: auto; opacity: .55; display: inline-flex; }
+.gl.folded .cv { transform: rotate(-90deg); }
+.it { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 20px; color: var(--i2); font-size: 14px; }
+.it.on { background: var(--ols); color: var(--ol); font-weight: 600; }
+.it .pill { margin-left: auto; }
+.side .foot { margin-top: auto; border-top: 1px solid var(--ln); padding-top: 8px; }
+.main { padding: 28px 40px 48px; min-width: 0; }
+.page { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px; }
+.ph { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 34px; }
+.ph .back { color: var(--i2); font-weight: 600; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; padding: 6px 8px; margin-left: -8px; }
+.ph .rule { width: 1px; align-self: stretch; margin: 2px 0; background: var(--ln2); }
+.ph h1 { font: 700 20px/1.3 var(--font-body); margin: 0; letter-spacing: 0; color: var(--i); }
+.ph .end { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.ph .help { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.ph .help svg.ic { width: 18px; height: 18px; }
+.ph .quiet { font-size: 12px; color: var(--i3); }
+.chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font: 700 10px/1.3 var(--font-data); letter-spacing: .05em; border: 1px solid var(--ln2); background: var(--ols); color: var(--i2); white-space: nowrap; }
+.chip.ok { color: var(--ol); background: color-mix(in srgb, var(--ol) 7%, transparent); border-color: color-mix(in srgb, var(--ol) 25%, transparent); }
+.chip.warn { color: var(--am); background: color-mix(in srgb, var(--am) 8%, transparent); border-color: color-mix(in srgb, var(--am) 30%, transparent); }
+.chip.bad { color: var(--rd); background: color-mix(in srgb, var(--rd) 8%, transparent); border-color: color-mix(in srgb, var(--rd) 30%, transparent); }
+.pill { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; font: 700 10px/1 var(--font-data); color: var(--am); background: color-mix(in srgb, var(--am) 11%, transparent); border: 1px solid color-mix(in srgb, var(--am) 32%, transparent); }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; font: 600 14px/1 var(--font-body); border: 1px solid var(--ln2); background: var(--c); color: var(--i); white-space: nowrap; }
+.btn.lime { background: var(--lime); border-color: var(--lime); color: var(--limei); }
+.btn.door { border: 0; background: none; color: var(--ol); padding: 0 4px; }
+.band { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.band > div { padding: 14px 16px; border-right: 1px solid var(--ln); min-width: 0; display: grid; gap: 4px; }
+.band > div:last-child { border-right: 0; }
+.band .k { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.band .v { font: 700 24px/1.1 var(--font-body); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.band .v.warn { color: var(--am); }
+.band .s { font-size: 12px; color: var(--i3); }
+.sec { font: 700 16px/1.3 var(--font-body); margin: 0 0 -8px; }
+.card { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; }
+.tb { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--ln); }
+.tb .count { font-size: 14px; color: var(--i2); }
+.tb .gap { flex: 1; }
+.tb .note { font-size: 12px; color: var(--i3); }
+.view { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--ol); background: var(--ols); color: var(--ol); font: 600 14px/1 var(--font-body); }
+.view .n { font: 700 11px/1 var(--font-data); opacity: .65; }
+.fpill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--ln2); color: var(--i2); font: 600 12px/1 var(--font-body); background: var(--c); }
+.search { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; width: 256px; border-radius: 999px; border: 1px solid var(--ln2); color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+table.t { width: 100%; border-collapse: collapse; }
+table.t th { font: 700 12px/1.2 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--i2); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--ln); white-space: nowrap; }
+table.t td { padding: 7px 14px; border-bottom: 1px solid var(--ln); vertical-align: middle; font-variant-numeric: tabular-nums; }
+table.t tr.cmf td { padding: 11px 14px; }
+table.t tr:last-child td { border-bottom: 0; }
+table.t .r { text-align: right; }
+table.t .nm { color: var(--i); font-weight: 600; text-decoration: underline; text-decoration-color: var(--ln2); text-underline-offset: 3px; }
+table.t .sub { display: block; font-size: 12px; color: var(--i3); font-weight: 400; }
+table.t .cv { width: 40px; text-align: right; color: var(--ol); }
+table.t .ts { color: var(--i2); white-space: nowrap; }
+table.t .none { color: var(--i3); }
+.code { font: 400 12px/1.3 var(--font-data); }
+table.t tr.band-row td { background: color-mix(in srgb, var(--ol) 10%, transparent); font: 700 12px/1.2 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--i2); padding: 8px 14px; }
+.flagline { display: block; font-size: 12px; color: var(--am); font-weight: 600; margin-top: 2px; }
+.callout { display: flex; gap: 10px; align-items: flex-start; background: var(--c); border: 1px solid var(--ln); border-left: 3px solid var(--ol); border-radius: 8px; padding: 12px 14px; font-size: 14px; color: var(--i2); }
+.callout svg.ic { width: 16px; height: 16px; color: var(--ol); margin-top: 2px; }
+.callout.warn { border-left-color: var(--am); } .callout.warn svg.ic { color: var(--am); }
+.callout .go { margin-left: auto; color: var(--ol); font-weight: 600; white-space: nowrap; }
+.subnav { display: flex; gap: 4px; border-bottom: 1px solid var(--ln); }
+.subnav span { padding: 10px 14px; font-weight: 600; font-size: 14px; color: var(--i2); border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; gap: 6px; align-items: baseline; }
+.subnav span.on { color: var(--tabon); border-bottom-color: var(--ol); }
+.subnav .n { font: 700 11px/1 var(--font-data); opacity: .65; }
+.ex { position: absolute; right: 14px; bottom: 10px; font: 700 10px/1 var(--font-data); color: var(--i3); letter-spacing: .06em; text-transform: uppercase; }
+/* a window (the kit window: tinted edge, no shadow) */
+.win { background: var(--scrim); padding: 28px; }
+.dlg { background: var(--c); border-radius: 12px; border: 1px solid color-mix(in srgb, var(--ol) 30%, transparent); }
+.dlg .dh { display: flex; align-items: center; padding: 18px 24px 6px; }
+.dlg .dh h2 { font: 700 16px/1.3 var(--font-body); margin: 0; }
+.dlg .dh .x { margin-left: auto; width: 44px; height: 44px; margin-right: -12px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: var(--i2); }
+.dlg .db { padding: 10px 24px 16px; display: grid; gap: 14px; }
+.lines { display: grid; grid-template-columns: 140px 1fr; gap: 8px 14px; font-size: 14px; }
+.lines dt { color: var(--i3); } .lines dd { margin: 0; }
+.fld { display: grid; gap: 6px; }
+.fld .fl { font-size: 12px; font-weight: 650; color: var(--i2); }
+.fld .fl .req { color: inherit; margin-left: 2px; }
+.inp { height: 36px; border: 1px solid var(--ln2); border-radius: 6px; padding: 0 10px; display: flex; align-items: center; color: var(--i); background: var(--fieldbg); font-size: 14px; }
+.inp.area { height: 80px; align-items: flex-start; padding-top: 8px; }
+.inp .chev { margin-left: auto; color: var(--i3); display: inline-flex; }
+.radio { display: grid; gap: 2px; border: 1px solid var(--ln2); border-radius: 8px; padding: 10px 12px; }
+.radio.on { border-color: var(--ol); background: var(--ols); }
+.radio b { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+.radio b::before { content: ""; width: 14px; height: 14px; border-radius: 999px; border: 2px solid var(--ln2); }
+.radio.on b::before { border: 4px solid var(--ol); }
+.radio span { font-size: 12px; color: var(--i3); padding-left: 22px; }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.quick span { height: 34px; display: inline-flex; align-items: center; padding: 0 12px; font-size: 14px; border-radius: 999px; border: 1px solid var(--ln2); color: var(--i2); }
+.quick span.on { border-color: var(--ol); color: var(--ol); background: var(--ols); }
+.df { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-top: 1px solid var(--ln); }
+.df .sent { font-size: 14px; color: var(--i2); flex: 1; }
+.df .bts { display: flex; gap: 8px; }
+/* the Find panel, under the strip */
+.fpanel { position: absolute; left: 50%; transform: translateX(-30px); top: 50px; width: 520px; background: var(--c); border: 1px solid var(--ln2); border-radius: 10px; z-index: 4; }
+.fpanel .fh { padding: 10px 14px; font: 700 11px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); border-top: 1px solid var(--ln); }
+.fpanel .fh:first-child { border-top: 0; }
+.fpanel .fr { display: flex; align-items: center; gap: 10px; padding: 8px 14px; }
+.fpanel .fr.on { background: var(--ols); }
+.fpanel .fr b { font-weight: 600; } .fpanel .fr .sub { font-size: 12px; color: var(--i3); }
+.fpanel .fr .cv { margin-left: auto; color: var(--ol); }
+.fpanel .ft { padding: 9px 14px; border-top: 1px solid var(--ln); font-size: 12px; color: var(--i3); }
+/* ═════ Stage 1 additions ═════ */
+.fx .fold { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--am); z-index: 3; pointer-events: none; }
+.fx .fold span { position: absolute; right: 12px; top: -9px; background: var(--p); color: var(--am); font: 700 10px/1 var(--font-data); padding: 0 6px; letter-spacing: .06em; text-transform: uppercase; }
+.fx .app.auto { min-height: 0; }
+.band.c6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.band.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.band.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.band .v.sm { font-size: 20px; }
+.chk { width: 16px; height: 16px; border: 1.5px solid var(--ln2); border-radius: 4px; display: inline-block; vertical-align: middle; background: var(--fieldbg); }
+.chk.on { background: var(--ol); border-color: var(--ol); box-shadow: inset 0 0 0 2px var(--c); }
+.cols2 { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; }
+.tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tools .gap { flex: 1; }
+.chkl { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--i2); }
+.sel { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px 0 12px; border: 1px solid var(--ln2); border-radius: 8px; background: var(--fieldbg); color: var(--i); font-size: 14px; white-space: nowrap; }
+.sel .chev { color: var(--i3); display: inline-flex; }
+.sel.w { width: 100%; height: 36px; border-radius: 6px; justify-content: space-between; }
+.acct { position: absolute; right: 12px; top: 50px; width: 288px; background: var(--c); border: 1px solid var(--ln2); border-radius: 12px; padding: 8px; z-index: 6; display: grid; gap: 2px; }
+.acct .id { display: flex; gap: 10px; padding: 10px; align-items: center; }
+.acct .id .av { width: 32px; height: 32px; border-radius: 999px; background: var(--ols); color: var(--ol); display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 var(--font-body); }
+.acct .cap { font: 700 10px/1.2 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i3); }
+.acct .val { font-size: 14px; color: var(--i); }
+.acct .ap { padding: 6px 10px 10px; display: grid; gap: 6px; }
+.acct .seg { display: flex; gap: 4px; border: 1px solid var(--ln2); border-radius: 8px; padding: 3px; }
+.acct .seg span { flex: 1; height: 28px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; border-radius: 6px; color: var(--i2); }
+.acct .seg span.on { background: var(--ols); color: var(--ol); }
+.acct .r { display: flex; gap: 10px; height: 36px; align-items: center; padding: 0 10px; border-radius: 8px; color: var(--i2); font-size: 14px; }
+.acct .r.out { color: var(--rd); }
+.acct .r.ghost { opacity: .45; text-decoration: line-through; }
+.acct .sep { height: 1px; background: var(--ln); margin: 4px 0; }
+.rails { display: flex; gap: 28px; padding: 24px; align-items: flex-start; background: var(--p); }
+.rails .col { display: grid; gap: 8px; }
+.rails .col .side { height: 1060px; border: 1px solid var(--ln); border-radius: 8px; width: 240px; }
+.rails .col .side.slim { width: 64px; }
+.side.slim .it { padding: 0; justify-content: center; }
+.side.slim .it .eye { display: none; }
+.rails .col .lbl2 { max-width: 240px; }
+.nw { white-space: nowrap; }
+/* the kit eyebrow: 11 px, .09em, in the typewriter face with the chips (admin lettering ruling 2026-10-19); D3 covers cell content */
+.fx .lbl2, .fx .band .k, .fx .aq .gl2, .fx .tile5 .k, .fx .acct .cap { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; }
+.fx .cap12 { font-size: 12px; line-height: 1.4; color: var(--i3); margin: 0; max-width: none; }
+.fx .inp, .fx .sel.w { height: 34px; }
+.fx .nm0 { color: var(--i); font-weight: 600; }
+.fx .lk { display: inline-flex; align-items: center; gap: .45em; line-height: 1; }
+.fx .lk .mk2 { width: 1.1em; height: 1.1em; fill: var(--ol); flex: none; }
+.fx .lk .nm2 { font-weight: 700; color: var(--i); }
+.fx .lk .hq { font-weight: 600; color: var(--ol); }
+.fx .lk.big .hq { font-weight: 500; }
+.fx.dark .lk .mk2 { fill: var(--i); }
+.fx.dark .lk .hq { color: var(--i2); }
+.fx .strip .lock { padding-left: 20px; font: 16px/1 var(--font-body); }
+.fx .tile5 .v, .fx .band .v { font-variant-numeric: tabular-nums; }
+.fx .band .v.quiet { font-size: 14px; font-weight: 400; color: var(--i3); letter-spacing: 0; }
+.fx .band .v.txt { font-size: 14px; font-weight: 600; letter-spacing: 0; word-break: break-all; }
+.fx .subnav .n { font: 600 12px/1 var(--font-body); }
+.phone .drawer .side .it { height: 44px; font-size: 16px; padding: 0 16px; }
+.phone .drawer .side .it svg.ic { width: 17px; height: 17px; }
+.phone .drawer .side .gl { padding: 14px 16px 6px; }
+.phone .cardrow { background: var(--c); border: 1px solid var(--ln); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+.phone .cardrow .top { display: flex; align-items: center; gap: 8px; }
+.phone .cardrow .top .nm { flex: 1; }
+.phone .cardrow .meta { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--i3); flex-wrap: wrap; }
+.phone .six { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.phone .six > div { padding: 10px 12px; border-right: 1px solid var(--ln); border-bottom: 1px solid var(--ln); display: grid; gap: 2px; }
+.phone .six > div:nth-child(3n) { border-right: 0; } .phone .six > div:nth-child(n+4) { border-bottom: 0; }
+.phone .six .k { font: 700 10px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); }
+.phone .six .v { font: 700 20px/1.1 var(--font-body); }
+.tb.tools { gap: 8px; flex-wrap: nowrap; }
+.side.slim .it .t, .side.slim .gl, .side.slim .it .pill { display: none; }
+.side.slim .grp + .grp { border-top: 1px solid var(--ln); margin-top: 6px; padding-top: 6px; }
+.side .it .eye { margin-left: auto; opacity: .6; display: inline-flex; }
+.side .it .eye svg.ic { width: 12px; height: 12px; }
+.side .gl.cur { color: var(--i2); }
+.lbl2 { font: 700 11px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--i3); }
+.chart { width: 100%; height: 220px; display: block; }
+.bars { display: grid; gap: 10px; padding: 14px 16px; }
+.bars .b { display: grid; gap: 4px; font-size: 12px; }
+.bars .b .h { display: flex; justify-content: space-between; color: var(--i2); }
+.bars .b .tr { height: 6px; border-radius: 999px; background: var(--fill); overflow: hidden; }
+.bars .b .tr i { display: block; height: 100%; background: var(--ol); border-radius: 999px; }
+.pad { padding: 14px 16px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.tabsl { display: flex; gap: 4px; }
+.sign { display: grid; place-items: center; min-height: 720px; background: var(--p); }
+.sign .card2 { width: 400px; background: var(--c); border: 1px solid var(--ln); border-radius: 12px; padding: 32px 40px 36px; display: grid; gap: 18px; }
+.sign .lock2 { display: flex; align-items: center; justify-content: center; font: 20px/1 var(--font-body); }
+.sign h1 { font: 700 20px/1.3 var(--font-body); text-align: center; margin: 0; }
+.sign .sub { text-align: center; font-size: 12px; color: var(--i3); }
+.sign .btn.full { width: 100%; justify-content: center; height: 42px; }
+.sign .lr { display: flex; justify-content: space-between; align-items: baseline; }
+.sign .lr .door { color: var(--ol); font-size: 12px; font-weight: 600; }
+.phones { display: flex; gap: 28px; padding: 24px; background: var(--p); align-items: flex-start; }
+.phone { width: 390px; height: 720px; border: 1px solid var(--ln2); border-radius: 18px; overflow: hidden; position: relative; background: var(--p); }
+.phone .pstrip { height: 48px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 4px; background: var(--c); border-bottom: 1px solid var(--ln); }
+.phone .pstrip .mb { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.phone .pstrip .mb svg.ic { width: 20px; height: 20px; }
+.phone .pstrip .grow { flex: 1; font: 700 16px/1 var(--font-body); }
+.phone .pstrip .grow em { font-style: normal; color: var(--ol); }
+.phone .pbody { padding: 16px; display: grid; gap: 14px; }
+.phone .sc { overflow-x: auto; border: 1px solid var(--ln); border-radius: 8px; background: var(--c); }
+.phone .sc table { min-width: 560px; }
+.phone .scrim { position: absolute; inset: 0; background: var(--scrim); }
+.phone .drawer { position: absolute; left: 0; top: 0; bottom: 0; width: 290px; background: var(--c); border-right: 1px solid var(--ln); display: flex; flex-direction: column; overflow: hidden; }
+.phone .drawer .dh { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px 0 16px; border-bottom: 1px solid var(--ln); font: 700 16px/1 var(--font-body); }
+.phone .drawer .dh em { font-style: normal; color: var(--ol); }
+.phone .drawer .dh .mb { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); font-size: 20px; }
+.phone .drawer .side { border: 0; flex: 1; overflow: hidden; }
+.tags-inline { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+.box.find { border-left: 3px solid var(--amber); }
+.box h3 { margin: 0; }
+.box ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.stepn { font: 700 16px/1.3 var(--font-body); color: var(--ol); margin-right: 8px; font-variant-numeric: tabular-nums; }
+.ph .sub { font-size: 12px; color: var(--i3); }
+.tile5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.tile5 > div { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; }
+.tile5 .k { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); }
+.tile5 .v { font: 700 24px/1.1 var(--font-body); }
+.aq { display: grid; gap: 10px; padding: 14px 16px; }
+.aq .g { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.aq .gl2 { font: 700 11px/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--i3); width: 100%; }
+.aq .q { display: inline-flex; gap: 8px; align-items: baseline; padding: 6px 10px; border: 1px solid var(--ln2); border-radius: 6px; font-size: 12px; color: var(--i2); }
+.aq .q b { font: 700 14px/1 var(--font-body); color: var(--i); }
+.aq .q.hot { border-color: color-mix(in srgb, var(--am) 40%, transparent); background: color-mix(in srgb, var(--am) 8%, transparent); }
+.aq .q.hot b { color: var(--am); }
+.ta { height: 88px; border: 1px solid var(--ln2); border-radius: 6px; background: var(--fieldbg); padding: 8px 10px; color: var(--i3); font-size: 14px; }
+/* ═════ Stage 2 additions ═════ */
+/* the strip as Stage 1 built it: lockup, a hairline, the portal name in small capitals, the account glyph */
+.fx .strip .mid { padding-left: 0; gap: 0; }
+.fx .strip .portal2 { font: 700 11px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i2); padding-left: 14px; border-left: 1px solid var(--ln2); height: 18px; display: inline-flex; align-items: center; white-space: nowrap; }
+.fx .strip .acc { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--i2); }
+.fx .strip .acc svg.ic { width: 18px; height: 18px; }
+.fx .strip .find { width: 440px; }
+.fx .strip .find.focus { border-color: var(--ol); box-shadow: 0 0 0 3px var(--ols); color: var(--i3); }
+.fx .strip .find .caret { width: 1px; height: 16px; background: var(--i); margin-left: -6px; }
+.fx .strip.withfind { grid-template-columns: 240px minmax(0, 1fr) 440px minmax(0, 1fr) auto; }
+.fx .strip.withfind .mid { grid-column: 2; }
+.fx .strip.withfind .fslot { grid-column: 3; }
+.fx .strip.withfind .end { grid-column: 5; }
+/* Find panel: hangs from the box, same width plus 80 */
+.fx .fpanel { left: auto; transform: none; width: 520px; top: 48px; }
+.fx .fpanel .fr { min-height: 44px; }
+.fx .fpanel .fr .ic2 { width: 28px; height: 28px; border-radius: 6px; background: var(--fill); color: var(--i2); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.fx .fpanel .fr .ic2 svg.ic { width: 15px; height: 15px; }
+.fx .fpanel .fr .tx { display: grid; gap: 1px; min-width: 0; }
+.fx .fpanel .fr .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fx .fpanel .fr.kid { padding-left: 52px; min-height: 34px; }
+.fx .fpanel .fr.kid .tx { font-size: 12px; color: var(--i2); }
+.fx .fpanel .fr.kid .tx b { font-weight: 600; color: var(--i); }
+.fx .fpanel .fr .kbd, .fx .kbd { font: 700 10px/1 var(--font-data); border: 1px solid var(--ln2); border-radius: 4px; padding: 2px 5px; color: var(--i3); }
+.fx .fpanel .msg { padding: 14px; display: grid; gap: 6px; font-size: 14px; color: var(--i2); }
+.fx .fpanel .msg b { color: var(--i); }
+.fx .fpanel .more { padding: 8px 14px 10px; font-size: 12px; color: var(--i3); display: flex; gap: 10px; align-items: center; }
+.fx .fpanel .more .door { margin-left: auto; color: var(--ol); font-weight: 600; }
+.fx .fpanel .hint2 { display: grid; gap: 4px; padding: 4px 14px 12px; font-size: 12px; color: var(--i2); }
+.fx .fpanel .hint2 .code { color: var(--i); }
+.fx .panels { display: grid; grid-template-columns: repeat(2, 520px); gap: 28px 40px; padding: 28px 40px 36px; justify-content: center; background: var(--p); }
+.fx .panels .pcol { display: grid; gap: 10px; align-content: start; }
+.fx .panels .fpanel { position: static; }
+.fx .panels .fbox { width: 440px; display: flex; align-items: center; gap: 8px; height: 34px; border: 1px solid var(--ln2); border-radius: 999px; padding: 0 12px; color: var(--i3); font-size: 14px; background: var(--fieldbg); }
+.fx .panels .fbox.typed { color: var(--i); border-color: var(--ol); box-shadow: 0 0 0 3px var(--ols); }
+.fx .panels .fbox .kbd { margin-left: auto; }
+.fx .stlbl { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); }
+.fx .dim { opacity: .4; }
+/* Today */
+.fx .health { display: flex; gap: 10px; align-items: center; background: var(--c); border: 1px solid var(--ln); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--i2); }
+.fx .health .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--gr); flex: none; }
+.fx .health b { color: var(--i); }
+.fx .health .go { margin-left: auto; color: var(--ol); font-weight: 600; white-space: nowrap; }
+.fx .health .later { font-size: 12px; color: var(--i3); }
+.fx table.t tr.clear td { color: var(--i3); font-size: 12px; padding: 6px 14px 10px; }
+.fx table.t tr.quiet td { color: var(--i3); }
+.fx .numbers { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; font-size: 14px; color: var(--i2); padding: 2px 2px; }
+.fx .numbers b { color: var(--i); font-variant-numeric: tabular-nums; }
+.fx .numbers .door { margin-left: auto; color: var(--ol); font-weight: 600; }
+/* the record */
+.fx .ph .meta { flex-basis: 100%; font-size: 12px; color: var(--i3); display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; }
+.fx .ph .meta .code { color: var(--i2); }
+.fx .pencil { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--ln2); border-radius: 8px; color: var(--i2); background: var(--c); }
+.fx .pencil svg.ic { width: 15px; height: 15px; }
+.fx .pb { color: var(--ol); font-weight: 600; font-size: 12px; white-space: nowrap; }
+.fx .pbdone { display: block; font-size: 12px; color: var(--i3); margin-top: 2px; }
+.fx .why0 { color: var(--i3); font-style: normal; }
+.fx .tline { font-size: 12px; color: var(--i3); padding: 10px 16px; border-top: 1px solid var(--ln); }
+.fx .lbox { border: 1px dashed var(--ln2); border-radius: 8px; padding: 14px 16px; display: grid; gap: 6px; color: var(--i2); font-size: 14px; background: var(--c); }
+.fx .lbox .stg { font: 700 10px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--am); }
+.fx .lbox ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.fx .lbox.s2 .stg { color: var(--ol); }
+.fx .tabcols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; padding: 24px 40px 32px; background: var(--p); }
+.fx .rare { display: flex; gap: 22px; flex-wrap: wrap; padding: 2px 2px; }
+.fx .rare span { color: var(--ol); font-weight: 600; font-size: 14px; }
+.fx .rare span.red { color: var(--rd); }
+.fx .rows2 { display: grid; gap: 0; }
+.fx .kv { display: grid; grid-template-columns: 200px minmax(0, 1fr) auto; gap: 14px; padding: 11px 16px; border-bottom: 1px solid var(--ln); align-items: baseline; font-size: 14px; }
+.fx .kv:last-child { border-bottom: 0; }
+.fx .kv .k2 { color: var(--i3); }
+.fx .secrow { display: flex; align-items: center; gap: 10px; }
+.fx .secrow .sec { margin: 0; }
+.fx .secrow .end2 { margin-left: auto; }
+.fx .wins { display: flex; gap: 28px; padding: 28px; background: var(--scrim); align-items: flex-start; }
+.fx .wins .dlg { width: 560px; flex: none; }
+.fx .dlg .db .sentence { font-size: 14px; color: var(--i); background: var(--fill); border-radius: 8px; padding: 12px 14px; }
+.fx .chkrow { display: flex; gap: 10px; align-items: center; font-size: 14px; min-height: 30px; }
+.fx .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fx .subnav { align-items: flex-end; }
+.fx .subnav span { align-items: center; }
+.fx .subnav span { height: 42px; padding-top: 0; padding-bottom: 0; box-sizing: border-box; }
+.fx .side .it .eye { margin-left: auto; }
+.fx .side .it .eye + .pill { margin-left: 8px; }
+.fx .btn.red { background: var(--rd); border-color: var(--rd); color: #fff; }
+.fx .pencil.on { color: var(--ol); border-color: var(--ol); }
+.fx table.t td.who { white-space: nowrap; }
+.fx .plist { background: var(--c); border: 1px solid var(--ln); border-radius: 10px; }
+.fx .plist .pr { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--ln); min-height: 52px; }
+.fx .plist .pr:last-child { border-bottom: 0; }
+.fx .plist .pr .tx { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.fx .plist .pr .tx b { font-weight: 600; }
+.fx .plist .pr .tx span { font-size: 12px; color: var(--i3); }
+.fx .plist .pr .cv { color: var(--ol); }
+.fx .health .dot.n { background: var(--i3); }
+/* the document */
+.wrap .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 720px) { .wrap .split { grid-template-columns: minmax(0, 1fr); } }
+.k-new, .k-res, .k-unc, .k-lat, .k-out { display: inline-block; font: 700 10px/1.3 var(--font-data); letter-spacing: .05em; padding: 2px 6px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.k-new { color: var(--olive); background: var(--olive-soft); border-color: var(--olive); }
+.k-res { color: var(--tag); background: var(--tag-soft); border-color: var(--tag); }
+.k-unc { color: var(--dim); border-color: var(--line); }
+.k-lat { color: var(--amber); background: var(--amber-soft); border-color: var(--amber); }
+.k-out { color: var(--red); background: var(--red-soft); border-color: var(--red); }
+table.doc td .code2 { font: 500 12.5px/1.4 var(--font-data); }
+.box.sec2 { border-left: 3px solid var(--tag); }
+.ok-y { color: var(--olive); font-weight: 700; } .ok-n { color: var(--red); font-weight: 700; } .ok-l { color: var(--amber); font-weight: 700; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-today" viewBox="0 0 24 24"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-clubs" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.5c3 0 5 1.8 5 4.5"/></symbol>
+  <symbol id="i-free" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4"/><rect x="5" y="12" width="14" height="9"/><path d="M12 8v13M12 8c-2-4-6-4-6-1s6 1 6 1c2-4 6-4 6-1s-6 1-6 1"/></symbol>
+  <symbol id="i-retention" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></symbol>
+  <symbol id="i-status" viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></symbol>
+  <symbol id="i-errors" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 9v4M12 16.5v.01"/></symbol>
+  <symbol id="i-feedback" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+  <symbol id="i-leads" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/></symbol>
+  <symbol id="i-campaigns" viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></symbol>
+  <symbol id="i-decks" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/></symbol>
+  <symbol id="i-plans" viewBox="0 0 24 24"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-approval" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/></symbol>
+  <symbol id="i-bulk" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></symbol>
+  <symbol id="i-templates" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-staff" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/></symbol>
+  <symbol id="i-audit" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-sent" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17v.01"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 3v18"/></symbol>
+  <symbol id="i-collapse" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="M4 17l6-6-6-6M12 19h8"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h13v4"/><path d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2z"/><path d="M16 14h.01"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-bellc" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></symbol>
+</svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+</svg>
+<style>
+/* ═════ Stage 4 additions ═════ */
+.fx .chip.ft { color: var(--ol); background: color-mix(in srgb, var(--ol) 7%, transparent); border-color: var(--ol); }
+.fx .chip.ft.btnish { cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--ol) 40%, transparent); text-underline-offset: 2px; }
+.fx .band .v.free { color: var(--ol); }
+.fx .gl0 { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); }
+.fx .glist { background: var(--c); border: 1px solid var(--ln); border-radius: 8px; }
+.fx .grow2 { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; padding: 12px 16px; border-bottom: 1px solid var(--ln); align-items: baseline; }
+.fx .grow2:last-child { border-bottom: 0; }
+.fx .grow2 b { font-weight: 600; }
+.fx .grow2 .sub { grid-column: 1; font-size: 12px; color: var(--i3); }
+.fx .grow2 .doors { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 16px; align-self: center; }
+.fx .grow2 .doors span { color: var(--ol); font-weight: 600; font-size: 14px; white-space: nowrap; }
+.fx .left { font-variant-numeric: tabular-nums; color: var(--i2); }
+.fx .left.soon { color: var(--am); font-weight: 600; }
+.fx .refuse { display: flex; gap: 10px; align-items: flex-start; border-radius: 8px; padding: 12px 14px; font-size: 14px; color: var(--i); background: color-mix(in srgb, var(--am) 9%, transparent); border: 1px solid color-mix(in srgb, var(--am) 30%, transparent); }
+.fx .refuse svg.ic { color: var(--am); width: 16px; height: 16px; margin-top: 2px; }
+.fx .refuse.bad { background: color-mix(in srgb, var(--rd) 8%, transparent); border-color: color-mix(in srgb, var(--rd) 30%, transparent); }
+.fx .refuse.bad svg.ic { color: var(--rd); }
+.fx .wins.cols3 .dlg { width: 420px; }
+.fx .seg2 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.fx .datef { height: 34px; border: 1px solid var(--ol); border-radius: 6px; padding: 0 10px; display: flex; align-items: center; gap: 8px; background: var(--fieldbg); font-size: 14px; }
+.fx .datef .cal { margin-left: auto; color: var(--i3); display: inline-flex; }
+.fx .hintl { font-size: 12px; color: var(--i3); }
+/* the customer's admin portal (tournament tier and Club), drawn on the same warm/dark tokens */
+.fx .cstrip { height: 48px; display: grid; grid-template-columns: 240px 1fr auto; align-items: center; background: var(--c); border-bottom: 1px solid var(--ln); }
+.fx .cstrip .lock { display: flex; align-items: center; gap: 8px; padding-left: 20px; }
+.fx .cstrip .portal2 { font: 700 11px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--i2); padding-left: 14px; border-left: 1px solid var(--ln2); height: 18px; display: inline-flex; align-items: center; margin-left: 14px; }
+.fx .cstrip .end { display: flex; gap: 10px; align-items: center; padding-right: 16px; }
+.fx .cstrip .ws { height: 32px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid var(--ol); border-radius: 999px; font: 600 12px/1 var(--font-body); color: var(--ol); }
+.fx .cside { background: var(--c); border-right: 1px solid var(--ln); padding: 12px 0; }
+.fx .cside .pick { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 2px 14px 10px; height: 36px; border: 1px solid var(--ln2); border-radius: 6px; display: flex; align-items: center; padding: 0 10px; font-size: 14px; font-weight: 600; }
+.fx .cpage { max-width: 960px; margin: 0 auto; display: grid; gap: 16px; }
+.fx .ceyebrow { font: 700 11px/1.2 var(--font-data); letter-spacing: .09em; text-transform: uppercase; color: var(--i3); }
+.fx .ch1 { font: 700 20px/1.3 var(--font-body); margin: 0; }
+.fx .ccard { background: var(--c); border: 1px solid var(--ln); border-radius: 10px; padding: 20px 24px; display: grid; gap: 6px; }
+.fx .ccard h3 { font: 700 16px/1.3 var(--font-body); margin: 0; display: flex; gap: 10px; align-items: center; }
+.fx .ccard .ln { font-size: 14px; color: var(--i2); }
+.fx .ccard .ln b { color: var(--i); }
+.fx .ccard .free { font-size: 14px; font-weight: 600; color: var(--ol); }
+.fx .ccard .small { font-size: 12px; color: var(--i3); }
+.fx .fband { display: flex; gap: 12px; align-items: flex-start; border-radius: 10px; padding: 14px 18px; background: color-mix(in srgb, var(--ol) 10%, transparent); border: 1px solid color-mix(in srgb, var(--ol) 35%, transparent); }
+.fx .fband .ico { width: 32px; height: 32px; border: 1px solid color-mix(in srgb, var(--ol) 45%, transparent); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: var(--ol); flex: none; }
+.fx .fband .ico svg.ic { width: 16px; height: 16px; }
+.fx .fband .t { display: grid; gap: 4px; font-size: 14px; color: var(--i2); }
+.fx .fband .t b { color: var(--i); font-size: 14px; }
+.fx .fband.amber { background: color-mix(in srgb, var(--am) 9%, transparent); border-color: color-mix(in srgb, var(--am) 35%, transparent); }
+.fx .fband.amber .ico { color: var(--am); border-color: color-mix(in srgb, var(--am) 45%, transparent); }
+.fx .fband.plain { background: var(--c); border-color: var(--ln); }
+.fx .fband.plain .ico { color: var(--i2); border-color: var(--ln2); }
+.fx .capbar { height: 8px; border-radius: 999px; background: var(--fill); overflow: hidden; } .fx .capbar i { display: block; height: 100%; background: var(--ol); }
+.fx .cgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+.phone .cphone { padding: 16px; display: grid; gap: 12px; }
+.phone .cphone .ccard { padding: 16px; }
+.phone .ptabs { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: var(--c); border-top: 1px solid var(--ln); display: grid; grid-template-columns: repeat(5, 1fr); font-size: 10px; color: var(--i3); text-align: center; align-items: center; }
+.phone .ptabs span { display: grid; gap: 4px; justify-items: center; }
+.phone .ptabs span.on { color: var(--ol); font-weight: 700; }
+.phone .ptabs svg.ic { width: 18px; height: 18px; }
+.fx .lbox.s4 .stg { color: var(--ol); }
+.wrap .gridb { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 720px) { .wrap .gridb { grid-template-columns: minmax(0, 1fr); } }
+.box.warnb { border-left: 3px solid var(--red); }
+.box.okb { border-left: 3px solid var(--olive); }
+.reach { font-variant-numeric: tabular-nums; }
+.fx .cbadge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font: 700 10px/1.3 var(--font-data); letter-spacing: .08em; text-transform: uppercase; color: var(--ol); border: 1px solid color-mix(in srgb, var(--ol) 35%, transparent); background: color-mix(in srgb, var(--ol) 8%, transparent); vertical-align: middle; white-space: nowrap; }
+.phone .phead { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 16px; background: var(--c); border-bottom: 1px solid var(--ln); }
+.phone .phead .pt { font: 700 16px/1.3 var(--font-body); }
+.phone .phead svg.ic { width: 20px; height: 20px; color: var(--i); }
+.fx .wins .stlbl { background: var(--c); padding: 4px 8px; border-radius: 6px; justify-self: start; color: var(--i2); }
+.fx .btn.sm { height: 30px; padding: 0 10px; font-size: 12px; }
+.fx .grow2 .doors .btn { color: var(--i); }
+.fx .ftdate { font-size: 12px; color: var(--i2); }
+</style>
+
+<div class="wrap">
+<header class="lede">
+  <p class="eyebrow">Support console, stage 4 · free time · drawn 2026-10-25</p>
+  <h1>Support Console Stage 4</h1>
+  <p>Stage 4 is the owner's second job from the kickoff: <b>give a customer free time on a plan, with an end date, and have the product take it back by itself.</b> Every drawing is at true size: 1440 pixels wide for a desk, 390 for a phone. On a narrower window each one scrolls sideways inside its own box. <b>Before</b> is a capture from today's dev server, in the Stage 2 look you walked on Oct 25. <b>After</b> is drawn on that same shell, in the product's real warm and dark colours. Blue tags say what changes and why, and each one opens when you click it. The <b>Warm / Dark</b> switch at the top flips every drawing. Your questions sit beside the drawing each one decides, each with my recommendation.</p>
+  <p>Anything marked <b>example</b> is invented for the drawing. Anything marked <b>Stage 3, 5 or 6</b> is not part of this stage and is not drawn as if it were built. <b>Nothing on this page states a price or writes a plan's limits as new words:</b> the console's figures are worked out from the plan settings, as they are today. Prices and limits are /billing's and /strategy's, and the customer's words go through /billing and /marketing before they are built.</p>
+</header>
+
+<section class="screen" id="headline" style="margin-top:22px">
+  <div class="screen-head"><span class="n">READ THIS FIRST</span><h2>Two places where I think the prompt asks the wrong thing</h2></div>
+  <div class="box warnb">
+    <h3>1 · "The product reads 'is this still in force?' every time." Today it reads the plan without asking, in about twenty places.</h3>
+    <p>The timed grants built so far change only two things, a section and a billing status, and they are added <i>after</i> the club's plan and limits have been read. Everywhere else, the product reads the plan stored on the club directly: the gate every request passes through (which sends a Tournament-tier club away from the club pages), sign-up forms, chat, the venue tools, notifications to fans, the public site and its sitemap, the tournament and team limits, and the billing page itself. A browser tab also keeps the plan it loaded until it is refreshed. <b>So a whole-plan grant is not a console screen. It is a change to how the whole product answers "what plan is this club on right now".</b> Done any other way, a club given Club would be refused the club pages by the first gate it meets.</p>
+    <p><b>What I recommend instead of a patch:</b> one door that answers "what plan, what limits, until when", used by every place that reads a plan, with a build check that fails when new code reads the stored plan directly. It is the largest part of Stage 4, and it is what makes "ends by itself, no job, nobody remembering" actually true everywhere. <b>Question 1.</b></p>
+  </div>
+  <div class="box warnb">
+    <h3>2 · "Founding Season becomes a group of grants." Moving it now would decide how September 30, 2027 ends.</h3>
+    <p>A Founding club is not on a grant. At sign-up its plan is <i>written</i> as Tournament Plus, and a separate "comp period" row marks it as Founding by its end date. Nothing ends it: the desk's own note says "nothing in the product turns a comp off by itself", and how the turn-off runs is the Founding Season plan's own decision, due May 2027 (a manual runbook if under about 50 accounts, a job if more). If Stage 4 moved each Founding club onto a grant, every one of them would <b>drop to the free Tournament plan by itself on October 1, 2027</b>. That is a business decision about the Founding cohort (/strategy's), not a console tidy-up, and it would also rewrite the sign-up and checkout paths that grant the comp, which stay open until December 31, 2026.</p>
+    <p><b>What I recommend:</b> fold Founding Season into the console's <i>view</i> now (one Free time list, Founding as a named group, the desk's card and 2028 columns kept) and move its <i>access</i> onto grants when the Founding turn-off is decided. You ruled "Founding Season folded in" on Oct 24; this is a narrower reading of that ruling, said out loud. <b>Question 4.</b></p>
+  </div>
+</section>
+
+<section class="screen" id="staff">
+  <div class="screen-head"><span class="n">WHAT STAFF AND CUSTOMERS WILL SEE</span><h2>Six changes, in plain words</h2></div>
+  <div class="box">
+    <ul>
+      <li><b>Give free time, in one window.</b> On a club's Access tab, "Add an override" becomes <b>Give free time</b>: a whole plan, sections, or a billing status, through a day you pick, and why. The window says the consequence in one sentence before anything happens: what the club gets, until when, and what it goes back to by itself.</li>
+      <li><b>The whole plan, for a while.</b> New. A club on Tournament can be given Tournament Plus or Club for a set time. While it runs, every part of the product treats the club as on that plan; the day after it ends, every part treats it as back on its own plan, with nothing scheduled to make that happen.</li>
+      <li><b>The record shows it.</b> A chip in the title ("Club, free through Mar 31, 2027"), a Free time figure in the band, the running list on Access, and Story entries for given, changed, ended early and ended by itself, with Put it back on the ones it can undo.</li>
+      <li><b>Free time, one list.</b> The menu's Founding season entry becomes <b>Free time</b>: everyone on free time, with Founding Season as a named group that keeps the desk's card and 2028 columns.</li>
+      <li><b>Today's queue is real.</b> "Overrides ending" becomes <b>Free time ending</b>: every timed grant ending in the next 14 days, counted by club.</li>
+      <li><b>The customer sees it.</b> Their Plan &amp; billing page says <b>"Free through March 31, 2027"</b> and what happens the day after, turns amber in the last 14 days, and says plainly when it has ended.</li>
+    </ul>
+    <p class="hint"><b>Deliberately not in Stage 4:</b> anything that reads or changes Stripe, including pausing a paying club's charges (Stage 3). An email when free time ends (it needs its own ruling, and account emails are not logged until Stage 5). Status and the sent-email log (Stage 5). Club web addresses (Stage 6). Free time on a Coaches Portal (question 10).</p>
+  </div>
+</section>
+
+<section class="screen" id="found">
+  <div class="screen-head"><span class="n">BEFORE THE DRAWINGS</span><h2>What the code showed, checked against every lead in the prompt</h2><p>Four helpers read the code. I opened the lines each drawing turns on myself before drawing on them.</p></div>
+  <div class="tbl"><table class="doc"><thead><tr><th style="width:26%">The prompt's lead</th><th>What the code does</th><th style="width:16%">Drawing</th></tr></thead><tbody>
+    <tr><td>Overrides revert at read time for sections and billing status only; no whole-plan grant</td><td><span class="ok-y">True</span>, and narrower than it sounds. The plan and both limits are worked out from the stored plan <i>before</i> the grants run. A whole-plan grant is allowed by the database and refused by the console's own route ("not yet enforced"). Three places apply grants at all; about twenty read the plan around them (headline 1).</td><td>Question 1</td></tr>
+    <tr><td>"Comp period" is a separate older mechanism</td><td><span class="ok-y">True.</span> It is one of the override kinds, and it <b>grants nothing</b>: the console's own window says "a billing tag; it gives no access". About thirty places read or write it, nearly all for Founding Season (sign-up, checkout, the desk, the 2028 choice, the Founding emails' audience). Bulk changes can also give it, with any end date.</td><td>A · question 5</td></tr>
+    <tr><td>Founding Season is its own desk</td><td><span class="ok-y">True</span>, and it is not a grant (headline 2). The desk is read-only by design (owner, Sept 7). 5 accounts on dev (4 clubs, 1 portal); 3 real accounts on production as of Oct 12, all Founding.</td><td>C · question 4</td></tr>
+    <tr><td>A plan grant on a club that already pays</td><td>Stripe <b>overwrites</b> a paying club's plan, both limits and its state on every subscription event. A grant would survive, because it is read on top rather than written. But the club would keep being charged for its own plan, and nothing in the console can see Stripe until Stage 3.</td><td>A · question 3</td></tr>
+    <tr><td>Expiry is checked everywhere</td><td><span class="ok-n">No.</span> Where grants are applied, the end is checked at the moment of reading (good). Elsewhere it is not checked at all. Nothing refuses an end date in the past or caps the length. The day is turned into a moment in the <i>staff member's browser</i> time zone, while Founding ends at the end of the day in Eastern time. The Founding status check counts its last moment as still in force; the grant engine does not.</td><td>F</td></tr>
+    <tr><td>Today's queue: "overrides ending", 30 days</td><td><span class="ok-n">14 days</span>, not 30: "An override that ends in the next 14 days". It counts <i>override rows</i>, while the list it opens counts <i>clubs</i>, so a club with two shows 2 on Today and 1 in the list.</td><td>E · question 7</td></tr>
+    <tr><td>The customer billing page can show a date</td><td>It already does, for Founding only: "Tournament Plus is free through September 30, 2027." A staff grant shows nothing at all; a billing-status grant just reads "Active". A Club grant would land on a different page (Club's), which never mentions free time.</td><td>D · question 8</td></tr>
+    <tr><td>The Story and Put it back already cover overrides</td><td><span class="ok-y">True.</span> Given, ended early, put back, and <b>"ran out by itself"</b> are all Story entries today, and Put it back on a running override ends it now. A whole-plan grant becomes its own entry type beside them.</td><td>B</td></tr>
+    <tr><td>Who may give it</td><td>Super admin and Billing (the plan-and-billing power). <b>Nothing stops a staff member giving free time to a club they belong to</b>, and nothing caps how long.</td><td>F · question 2</td></tr>
+    <tr><td>The switch</td><td>On in dev; on in production (you confirmed Oct 25). When it is off, giving free time <b>still succeeds and does nothing</b>, and the console shows it as running. On production the switch is fixed when the site is built, so changing it needs a redeploy.</td><td>F · question 9</td></tr>
+    <tr><td>A Coaches Portal grant</td><td>It can be written, but it <b>would not open the portal</b>: whether a Premium portal is live is read from the portal's own record, which grants never touch.</td><td>D · question 10</td></tr>
+    <tr><td>(not in the prompt) One end, three ways of saying it</td><td>The customer reads "free through September 30, 2027". The club record says the comp runs "Until Oct 1, 2027" and the band says "Renews Oct 1, 2027", though nothing renews. The Founding desk's <i>Free through</i> column says <b>Oct 1, 2027</b> under a header that says September 30. They are one instant (the first moment of October 1), named three ways.</td><td>All · question 8</td></tr>
+  </tbody></table></div>
+</section>
+
+<div class="bar" role="navigation" aria-label="Drawings">
+  <a class="jump" href="#a">A · Give</a><a class="jump" href="#b">B · Record</a><a class="jump" href="#c">C · Free time list</a><a class="jump" href="#d">D · Customer</a><a class="jump" href="#e">E · Today</a><a class="jump" href="#f">F · Can't</a><a class="jump" href="#sec">Money &amp; safety</a><a class="jump" href="#g">G · Boundary</a><a class="jump" href="#fmt">Formatting</a><a class="jump" href="#paste">Paste-back</a>
+  <span class="sw" role="group" aria-label="Frames theme"><button type="button" id="sw-warm" aria-pressed="true">Warm</button><button type="button" id="sw-dark" aria-pressed="false">Dark</button></span>
+</div>
+
+<!-- ═══════════ A · GIVE FREE TIME ═══════════ -->
+<section class="screen" id="a">
+  <div class="screen-head"><span class="n">DRAWING A</span><h2>Give free time, in one window</h2>
+  <p>The door stays where "Add an override" is today, at the head of the Access tab's list (your Stage 2 ruling A6), renamed <b>Give free time</b>. The window gains a fourth thing it can give, <b>a whole plan</b>, and loses "Comp period", which never gave anything. The consequence is written out in the window as you fill it, so what you confirm is the sentence, not the fields.</p></div>
+  <div class="before"><button class="shot" data-src="cap-s4/override-window.jpg" aria-label="Add an override today at full size"><img src="cap-s4/override-window.jpg" alt="The Add an override window today: Kind, Sections, Ends on, Why"></button><div><div class="lbl">Before · Add an override, as Stage 2 built it</div><p>Kind is Feature access (timed), Subscription status or Comp period. No whole plan. "Ends on" takes any day, past ones included, and an empty date means it never ends. The day becomes a moment in your browser's time zone. Comp period says, correctly, that it "gives no access".</p></div></div>
+  <div class="before"><button class="shot" data-src="cap-s4/access.jpg" aria-label="The Access tab today at full size"><img src="cap-s4/access.jpg" alt="UAT Plus Org's Access tab: plan and limits, sections, one comp period override until Oct 1, 2027"></button><div><div class="lbl">Before · the Access tab of a Founding club</div><p>UAT Plus Org is a Founding Season club. Its plan reads Tournament Plus, the band says it "Renews Oct 1, 2027" though nothing renews, and its one override is a comp period "Until Oct 1, 2027", which the customer reads as free <i>through September 30</i>.</p></div></div>
+
+  <div class="ask" data-q="A1"><div class="q">Question 1 · A whole-plan grant reaches every part of the product. Build it that way?</div>
+    <p class="rec">Headline 1 above. A plan grant only means something if every part of the product that reads a plan asks the same question, "what plan is this club on right now?", and gets the same answer, including the gate in front of every page, the limits, the public site, the emails and an open browser tab's next request. Today about twenty places read the stored plan directly.</p>
+    <p class="rec"><b>Recommended: yes. One door for "the plan right now", every reader moved onto it, and a build check that fails when new code reads the stored plan around it.</b> It is the biggest part of the stage and it touches billing, so /billing reviews it and /review runs on it. The alternative people reach for, "write the plan now and have a nightly job put it back", is what Founding Season does without the job; a job that misses a night gives free time forever. Narrowing Stage 4 to sections and billing status would skip the work, and also the thing you asked for.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Yes: one door for the plan right now, every reader on it, build-enforced (recommended)"> Yes: one door for the plan right now, every reader on it, build-enforced (recommended)</label>
+      <label><input type="checkbox" data-o="Write the plan and have a job put it back"> Write the plan and have a job put it back</label>
+      <label><input type="checkbox" data-o="Narrow Stage 4: sections and billing status only, no whole plan"> Narrow Stage 4: sections and billing status only, no whole plan</label>
+    </div><textarea aria-label="Notes on question 1" placeholder="Notes"></textarea></div>
+
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Stage 2's door, renamed. It stays where it is on the Access tab (your ruling A6), as an outlined button at the head of the list (a button that opens a window is outlined, your Oct 1 ruling; Stage 2 built 'Add an override' as olive text, which this build corrects), shown only to a role that may give free time. 'Override' was the engineers' word; what support does with it is give free time. The list beneath it is renamed Free time to match.">S4 · RESTYLED · the door</button>
+    <button class="tag" data-n="New. A whole plan for a set time. While it runs, every part of the product treats the club as on the given plan (question 1). The plan dropdown offers only plans above the club's own: Tournament Plus, Club, Club · Association. League and League Plus are not offered while they are parked; /strategy's call if that changes.">S4 · NEW · a whole plan</button>
+    <button class="tag" data-n="'Ends on' becomes 'Free through', the last free day, because that is how the customer already reads it ('free through September 30, 2027'). A plan grant always has an end; an open-ended plan is a plan change, which the pencil does. The day ends at midnight Eastern, the same rule Founding Season uses, whatever time zone the staff member is in. The shared date field, as everywhere: in its calendar, days before tomorrow and days past the giver's limit are greyed out.">S4 · free through, always ends</button>
+    <button class="tag" data-n="The consequence sentence is the confirm (R3). It names what the club gets, through when, what it goes back to and when, that nothing is charged or deleted, whether the owner is emailed, and what their billing page will say. It updates as the fields change, so what is confirmed is what is read.">S4 · the sentence</button>
+    <button class="tag" data-n="Comp period leaves the window and Bulk changes. It never gave anything; offering it beside things that do is how a club ends up 'comped' and charged. Founding Season's own comp rows stay as they are until question 4's later step. See question 5.">S4 · comp period goes</button>
+  </div>
+
+  <div class="scroller"><div class="fx" data-frame style="height:820px">
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app" style="min-height:0">
+      <aside class="side" data-role="billing" data-active="clubs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Clubs &amp; portals</span><span class="rule"></span><h1>UAT Plus Org</h1><span class="chip">Tournament Plus</span><span class="chip ok">Active</span><div class="end"><span class="pencil" aria-hidden="true"><svg class="ic"><use href="#i-pencil"/></svg></span><span class="btn"><svg class="ic"><use href="#i-mail"/></svg>Email the owner</span><span class="btn">Add a note</span><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div>
+          <div class="meta"><span>Owner uat-owner@uat-test-org.local</span><span>·</span><span class="code">uat-plus-org</span><span>·</span><span>Created May 21, 2026</span></div></div>
+        <div class="band"><div><span class="k">Members</span><span class="v">2</span><span class="s">owner signed in Oct 25</span></div><div><span class="k">Tournaments</span><span class="v">6 of 10</span><span class="s">the Tournament Plus limit</span></div><div><span class="k">Free time</span><span class="v">1</span><span class="s">Founding Season</span></div><div><span class="k">Billing</span><span class="v quiet">Free through Sep 30, 2027</span><span class="s">Founding Season, no Stripe subscription</span></div></div>
+        <div class="subnav"><span>Story <span class="n">2</span></span><span>Money</span><span class="on">Access</span><span>People &amp; tournaments <span class="n">9</span></span></div>
+        <h2 class="sec" style="margin:0">Plan and limits</h2>
+        <div class="card"><div class="kv"><span class="k2">Plan</span><span>Tournament Plus</span><span></span></div><div class="kv"><span class="k2">Tournament limit</span><span>10</span><span></span></div></div>
+        <div class="secrow"><h2 class="sec">Free time</h2><span class="end2 btn">Give free time</span></div>
+        <div class="glist">
+          <div class="grow2"><b>Tournament Plus · Founding Season</b><span class="doors"></span><span class="sub">Free through Sep 30, 2027 · <span class="left">340 days left</span> · given at sign-up</span></div>
+        </div>
+        <p class="cap12">Running free time is listed here, each with its two doors. Sections, Own web address and the rare doors (Cancel the subscription, Delete the club) follow below, unchanged.</p>
+      </div></main>
+    </div>
+    <span class="ex">UAT Plus Org real (dev) · Billing role</span>
+  </div></div>
+
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="wins">
+      <div class="dlg" style="width:600px"><div class="dh"><h2>Give free time to UAT Plus Org</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <div class="fld"><span class="fl">What</span>
+            <div class="radio on"><b>A whole plan</b><span>Every part of the product treats the club as on that plan</span></div>
+            <div class="radio"><b>Sections</b><span>One or more sections its plan does not include</span></div>
+            <div class="radio"><b>Billing status</b><span>Reads as active while unpaid, to keep a club open</span></div></div>
+          <div class="grid2"><div class="fld"><span class="fl">Plan<span class="req">*</span></span><span class="sel w">Club<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span><span class="hintl">Club or Club · Association</span></div>
+            <div class="fld"><span class="fl">Free through<span class="req">*</span></span><span class="datef">March 31, 2027<span class="cal"><svg class="ic"><use href="#i-cal"/></svg></span></span><span class="hintl">The last free day; it ends that midnight, Eastern</span></div></div>
+          <div class="fld"><span class="fl">Why<span class="req">*</span></span><span class="inp area">Trying Club for the spring house league before they decide</span></div>
+          <div class="sentence">UAT Plus Org gets <b>Club through March 31, 2027</b>. On April 1 it goes back to <b>Tournament Plus</b> by itself, still free through September 30, 2027 under Founding Season. Nothing is charged, nothing is deleted, and the owner is not emailed. Their Plan &amp; billing page says "Free through March 31, 2027".</div>
+        </div>
+        <div class="df"><span class="sent">Shows on the Story, and can be ended early or given a new end date from there.</span><div class="bts"><span class="btn">Cancel</span><span class="btn lime">Give free time</span></div></div></div>
+      <div class="dlg" style="width:600px"><div class="dh"><h2>Give free time to UAT Plus Org</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <div class="fld"><span class="fl">What</span>
+            <div class="radio"><b>A whole plan</b><span>Every part of the product treats the club as on that plan</span></div>
+            <div class="radio on"><b>Sections</b><span>One or more sections its plan does not include</span></div>
+            <div class="radio"><b>Billing status</b><span>Reads as active while unpaid, to keep a club open</span></div></div>
+          <div class="fld"><span class="fl">Sections<span class="req">*</span></span><div style="display:flex;gap:22px;flex-wrap:wrap"><span class="chkrow"><span class="chk on"></span>House league</span><span class="chkrow"><span class="chk"></span>Rep teams</span><span class="chkrow"><span class="chk"></span>Accounting</span><span class="chkrow"><span class="chk"></span>Public site</span></div></div>
+          <div class="fld"><span class="fl">Free through<span class="req">*</span></span><span class="datef">December 31, 2026<span class="cal"><svg class="ic"><use href="#i-cal"/></svg></span></span></div>
+          <div class="fld"><span class="fl">Why<span class="req">*</span></span><span class="inp area" style="color:var(--i3)">Why are you giving this?</span></div>
+          <div class="sentence">UAT Plus Org gets <b>House league through December 31, 2026</b>, then it turns off by itself. Nothing is charged or deleted, and the owner is not emailed.</div>
+        </div>
+        <div class="df"><span class="sent">Sections, as today, now with an end.</span><div class="bts"><span class="btn">Cancel</span><span class="btn lime">Give free time</span></div></div></div>
+    </div>
+    <span class="ex">Windows at true size · reason and dates example</span>
+  </div></div>
+
+  <h3 style="margin-top:8px">When a whole plan cannot be given, the window says why, in place of the plan fields</h3>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Absent, not disabled (your standing rule): the whole-plan row is replaced by one line saying why, and the other two choices stay below it, ready to pick. A top-plan club cannot be given a higher plan; a club already on free plan time changes its end date instead of stacking a second grant (question 6).">S4 · the three refusals</button>
+    <button class="tag" data-n="The paying club, drawn as recommended in question 3: refused while Stripe charges for a plan, because nothing in the console can see Stripe until Stage 3, and a plan given on top would leave the club paying for one plan while using another. Sections and billing status stay available. The other answer to question 3 would draw this as a warning instead.">S4 · a paying club</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="wins cols3">
+      <div class="dlg"><div class="dh"><h2>Give free time to UAT Rep Club</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db"><div class="fld"><span class="fl">What</span>
+          <div class="refuse"><svg class="ic"><use href="#i-flag"/></svg><span>UAT Rep Club is on <b>Club · Association</b>, the top plan. Give it sections, or change the plan with the record's pencil.</span></div><div class="radio"><b>Sections</b><span>One or more sections its plan does not include</span></div><div class="radio"><b>Billing status</b><span>Reads as active while unpaid, to keep a club open</span></div></div></div>
+        <div class="df"><span class="sent">Sections and billing status can still be given.</span><div class="bts"><span class="btn">Cancel</span></div></div></div>
+      <div class="dlg"><div class="dh"><h2>Give free time to UAT Plus Org</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db"><div class="fld"><span class="fl">What</span>
+          <div class="refuse"><svg class="ic"><use href="#i-flag"/></svg><span>UAT Plus Org already has <b>Club free through March 31, 2027</b>. Give it more time from that entry instead of a second grant. <span style="color:var(--ol);font-weight:600">Change the end date</span></span></div><div class="radio"><b>Sections</b><span>One or more sections its plan does not include</span></div><div class="radio"><b>Billing status</b><span>Reads as active while unpaid, to keep a club open</span></div></div></div>
+        <div class="df"><span class="sent">Sections and billing status can still be given.</span><div class="bts"><span class="btn">Cancel</span></div></div></div>
+      <div class="dlg"><div class="dh"><h2>Give free time to UAT Lakeshore Lynx</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db"><div class="fld"><span class="fl">What</span>
+          <div class="refuse"><svg class="ic"><use href="#i-card"/></svg><span>UAT Lakeshore Lynx pays for <b>Tournament Plus</b> through Stripe. A plan can't be given while Stripe charges for one: they would keep paying for one plan while using another. Give sections, or move their plan in Stripe.</span></div><div class="radio"><b>Sections</b><span>One or more sections its plan does not include</span></div><div class="radio"><b>Billing status</b><span>Reads as active while unpaid, to keep a club open</span></div></div></div>
+        <div class="df"><span class="sent">Sections and billing status can still be given.</span><div class="bts"><span class="btn">Cancel</span></div></div></div>
+    </div>
+    <span class="ex">Clubs real (dev) · their states example</span>
+  </div></div>
+
+  <div class="ask" data-q="A3"><div class="q">Question 3 · A club that pays through Stripe: refuse a plan grant, or allow it?</div>
+    <p class="rec">Stripe overwrites a paying club's plan on every subscription event, so a grant would survive only because it is read on top. Meanwhile Stripe keeps charging for the club's own plan, and the club's billing page would offer to cancel or move a subscription for a plan it is not using. The console cannot see Stripe until Stage 3, and your rule R7 is that the money truth is shown, never remembered.</p>
+    <p class="rec"><b>Recommended: refuse a whole-plan grant while a Stripe subscription is live</b> (drawn above); sections and billing status stay available. "Don't charge them for a while" is a Stripe credit or pause, which stays in Stripe (your Q7). Revisit once Stage 3 shows Stripe beside us. The other answer allows it as "trying a higher plan" with a line on their billing page that they are still billed for their own.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Refuse a plan grant while Stripe charges; sections and status stay (recommended)"> Refuse a plan grant while Stripe charges; sections and status stay (recommended)</label>
+      <label><input type="checkbox" data-o="Allow a higher plan on top, and say on their billing page they are still billed for their own"> Allow a higher plan on top, and say on their billing page they are still billed for their own</label>
+    </div><textarea aria-label="Notes on question 3" placeholder="Notes"></textarea></div>
+
+  <div class="ask" data-q="A5"><div class="q">Question 5 · "Comp period": retire it now, or keep offering it until every club on it has ended?</div>
+    <p class="rec">It grants nothing. Its only working use is to mark a club as Founding Season, by its exact end date, and about thirty places read it for that (sign-up, checkout, the desk, the 2028 choice, the Founding emails). The console and Bulk changes also offer it to staff, with any date, beside choices that do grant things.</p>
+    <p class="rec"><b>Recommended: stop offering it in this stage</b> (the window and Bulk changes lose it), and leave existing rows reading as they are. Founding's rows keep marking the cohort until question 4's later step moves them. Any non-Founding comp row reads on the Access list as "Billing tag, gives nothing" until its date. Retiring it from the data waits for that later step, because the sign-up path writes it until December 31, 2026.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Stop offering it now; existing rows read as they are (recommended)"> Stop offering it now; existing rows read as they are (recommended)</label>
+      <label><input type="checkbox" data-o="Keep offering it until every club on it has ended"> Keep offering it until every club on it has ended</label>
+      <label><input type="checkbox" data-o="Retire it from the data in this stage too"> Retire it from the data in this stage too</label>
+    </div><textarea aria-label="Notes on question 5" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ B · THE RECORD WITH FREE TIME RUNNING ═══════════ -->
+<section class="screen" id="b">
+  <div class="screen-head"><span class="n">DRAWING B</span><h2>The club record with free time running</h2>
+  <p>Free time shows in four places on the record, each once: a chip in the title (the staff grant that ends first), a figure in the band, a row on the Access list, and entries in the Story. While a Club grant runs, the band reads as a Club band, because the club <i>is</i> on Club for every other purpose.</p></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The title keeps the club's own plan chip (the plan it goes back to) and adds a short 'Free time' chip, with the given plan and its last day beside it in the body face: 'Club free through Apr 30, 2027' (dates take the body face, D3). With two grants it names the one that ends first. It is clickable and opens the Access tab at the Free time list (every highlight is clickable). Founding Season is not a chip: it reads in the band's Billing figure, where today's band wrongly says 'Renews Oct 1, 2027'.">S4 · NEW · the chip</button>
+    <button class="tag" data-n="The band's Overrides figure becomes Free time: the number running, and the soonest end. While a whole-plan grant runs, the band takes the given plan's shape: a Club grant shows Teams beside Tournaments, as a Club does. When nothing renews, the last figure is Billing and says what is true: 'Free through Sep 30, 2027 · Founding Season' instead of today's 'Renews Oct 1, 2027'. The band's figures are worked out from the plan settings, as today, never written as new words.">S4 · RESTYLED · the band</button>
+    <button class="tag" data-n="Story entries: Free time given, Free time changed (a new end date, with the old one), Free time ended early (by whom, why), and Free time ended by itself (The product). Ended-by-itself is already worked out from the date today, with nothing stored, and stays that way.">S4 · NEW · Story entries</button>
+    <button class="tag" data-n="Put it back sits only on the newest entry of a grant that is still running, as the plan's does: on 'given' it ends the free time now; on 'changed' it restores the earlier end date. Never on an entry that ended, and never on Founding Season's (its access is the club's plan, not a grant, until question 4's later step).">S4 · Put it back</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app auto">
+      <aside class="side" data-role="billing" data-active="clubs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Clubs &amp; portals</span><span class="rule"></span><h1>UAT Plus Org</h1><span class="chip">Tournament Plus</span><span class="chip ok">Active</span><span class="chip ft btnish">Free time</span><span class="ftdate">Club free through Apr 30, 2027</span><div class="end"><span class="pencil" aria-hidden="true"><svg class="ic"><use href="#i-pencil"/></svg></span><span class="btn"><svg class="ic"><use href="#i-mail"/></svg>Email the owner</span><span class="btn">Add a note</span><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div>
+          <div class="meta"><span>Owner uat-owner@uat-test-org.local</span><span>·</span><span class="code">uat-plus-org</span><span>·</span><span>Created May 21, 2026</span></div></div>
+        <div class="band c5"><div><span class="k">Members</span><span class="v">2</span><span class="s">owner signed in Oct 25</span></div><div><span class="k">Teams</span><span class="v">0 of 15</span><span class="s">on Club, while it is free</span></div><div><span class="k">Tournaments</span><span class="v">6</span><span class="s">no limit on Club</span></div><div><span class="k">Free time</span><span class="v free">2</span><span class="s">Club ends first, Apr 30, 2027</span></div><div><span class="k">Billing</span><span class="v quiet">Free through Sep 30, 2027</span><span class="s">Founding Season, no Stripe subscription</span></div></div>
+        <div class="subnav"><span class="on">Story <span class="n">6</span></span><span>Money</span><span>Access</span><span>People &amp; tournaments <span class="n">9</span></span></div>
+        <div class="card">
+          <div class="tb tools"><span class="count">6 entries, newest first</span><span class="gap"></span><span class="search"><svg class="ic"><use href="#i-search"/></svg>Search the story</span><span class="sel">All types <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+          <table class="t">
+            <thead><tr><th style="width:150px">When</th><th>What happened</th><th style="width:250px">Who</th><th style="width:250px">Why</th><th style="width:110px"></th></tr></thead>
+            <tbody>
+              <tr class="cmf"><td class="ts">Oct 25, 11:02 a.m.</td><td><span class="nm0">Free time changed: Club now free through Apr 30, 2027</span><span class="sub">Was through Mar 31, 2027</span></td><td class="who">billing@fieldlogichq.ca</td><td>Their spring draft moved to April</td><td class="r"><span class="pb"><svg class="ic" style="width:12px;height:12px;vertical-align:-2px"><use href="#i-undo"/></svg> Put it back</span></td></tr>
+              <tr class="cmf"><td class="ts">Oct 25, 10:12 a.m.</td><td><span class="nm0">Free time given: Club through Mar 31, 2027</span><span class="sub">Then back to Tournament Plus by itself</span></td><td class="who">billing@fieldlogichq.ca</td><td>Trying Club for the spring house league before they decide</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Oct 1, 12:00 a.m.</td><td><span class="nm0">Free time ended by itself: Accounting</span></td><td class="who">The product</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">Sep 2, 3:18 p.m.</td><td><span class="nm0">Free time given: Accounting through Sep 30, 2026</span></td><td class="who">support@fieldlogichq.ca</td><td>Closing their books after the summer tournament</td><td></td></tr>
+              <tr class="cmf"><td class="ts">May 21, 9:04 a.m.</td><td><span class="nm0">Founding Season: Tournament Plus free through Sep 30, 2027</span><span class="sub">Given at sign-up</span></td><td class="who">The product</td><td class="none">—</td><td></td></tr>
+              <tr class="cmf"><td class="ts">May 21, 9:04 a.m.</td><td><span class="nm0">Club created on the Tournament Plus plan</span></td><td class="who">uat-owner@uat-test-org.local</td><td class="none">—</td><td></td></tr>
+            </tbody>
+          </table>
+          <div class="tline">Not in the Story yet: Stripe's charges and refunds, purchases the customer makes in Stripe, and account emails such as password resets.</div>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Club real (dev) · free time, Story entries and the second grant example</span>
+  </div></div>
+
+  <h3 style="margin-top:8px">The Access list, and the two windows its entries open</h3>
+  <div class="scroller"><div class="fx" data-frame style="height:560px">
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app" style="min-height:0">
+      <aside class="side" data-role="billing" data-active="clubs" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Clubs &amp; portals</span><span class="rule"></span><h1>UAT Plus Org</h1><span class="chip">Tournament Plus</span><span class="chip ok">Active</span><span class="chip ft btnish">Free time</span><span class="ftdate">Club free through Apr 30, 2027</span></div>
+        <div class="subnav"><span>Story <span class="n">6</span></span><span>Money</span><span class="on">Access</span><span>People &amp; tournaments <span class="n">9</span></span></div>
+        <div class="secrow"><h2 class="sec">Free time</h2><span class="end2 btn">Give free time</span></div>
+        <div class="glist">
+          <div class="grow2"><b>Club · the whole plan</b><span class="doors"><span class="btn sm">Change the end date</span><span class="btn sm">End it now</span></span><span class="sub">Free through Apr 30, 2027 · <span class="left">187 days left</span> · Their spring draft moved to April · by billing@fieldlogichq.ca</span></div>
+          <div class="grow2"><b>Tournament Plus · Founding Season</b><span class="doors"></span><span class="sub">Free through Sep 30, 2027 · <span class="left">340 days left</span> · given at sign-up · the club's own plan, ending with the Founding Season</span></div>
+        </div>
+        <p class="cap12">End it now here and Put it back on the Story open the same window. Ended free time stays in the Story, not here.</p>
+      </div></main>
+    </div>
+    <span class="ex">Access tab · example</span>
+  </div></div>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="wins">
+      <div class="dlg"><div class="dh"><h2>Change the end of UAT Plus Org's free time</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <div class="fld"><span class="fl">Free through<span class="req">*</span></span><span class="datef">April 30, 2027<span class="cal"><svg class="ic"><use href="#i-cal"/></svg></span></span></div>
+          <div class="fld"><span class="fl">Why<span class="req">*</span></span><span class="inp area">Their spring draft moved to April</span></div>
+          <div class="sentence">UAT Plus Org's <b>Club</b> free time now runs <b>through April 30, 2027</b> instead of March 31. Then back to Tournament Plus by itself. The owner is not emailed.</div>
+        </div>
+        <div class="df"><span class="sent">A new Story entry; Put it back restores March 31.</span><div class="bts"><span class="btn">Cancel</span><span class="btn lime">Change the end date</span></div></div></div>
+      <div class="dlg"><div class="dh"><h2>End UAT Plus Org's free time now</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db">
+          <div class="sentence">UAT Plus Org's <b>Club</b> free time ends <b>now</b> instead of on April 30, 2027. It goes back to Tournament Plus at once; anyone using Club's tools is moved out on their next click. Nothing is deleted.</div>
+          <div class="fld"><span class="fl">Why<span class="req">*</span></span><span class="inp area" style="color:var(--i3)">Why are you ending it early?</span></div>
+        </div>
+        <div class="df"><span class="sent">Writes a new entry in the Story.</span><div class="bts"><span class="btn">Keep it</span><span class="btn lime">End it now</span></div></div></div>
+    </div>
+    <span class="ex">Windows at true size · example</span>
+  </div></div>
+
+  <div class="ask" data-q="A6"><div class="q">Question 6 · Giving more time: change the running grant, or give a new one?</div>
+    <p class="rec">A new grant beside the old means two rows that overlap, two ends to read, and a Story that has to explain which one counts. Changing the running one keeps one row with one end, and the Story says what changed.</p>
+    <p class="rec"><b>Recommended: change the running grant's end date</b> (drawn above): a door on its Access row, a "Free time changed: … (was …)" Story entry with its own reason, and Put it back restoring the earlier date. Shortening works the same way; ending is "End it now". A <i>different</i> plan means ending this one and giving a new one, two entries.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Change the running grant's end date; the Story says from what to what (recommended)"> Change the running grant's end date; the Story says from what to what (recommended)</label>
+      <label><input type="checkbox" data-o="Every extension is a new grant"> Every extension is a new grant</label>
+    </div><textarea aria-label="Notes on question 6" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ C · FREE TIME, ONE LIST ═══════════ -->
+<section class="screen" id="c">
+  <div class="screen-head"><span class="n">DRAWING C</span><h2>Free time, one list, with Founding Season as a group</h2>
+  <p>The menu's <b>Founding season</b> entry becomes <b>Free time</b>, in the same place in Customers. It opens on everyone with free time running, in three views: <b>Everyone</b>, <b>Founding Season</b> and <b>Given by staff</b>. The Founding Season view keeps the desk's whole job, the card and 2028 columns for the September 2027 conversion. Drawn as question 4 recommends: the Founding rows are read from where they live today, and their access does not move in this stage.</p></div>
+  <div class="before"><button class="shot" data-src="cap-s4/founding.jpg" aria-label="The Founding season desk today at full size"><img src="cap-s4/founding.jpg" alt="Founding season desk: 5 accounts, free through column, card on file, 2028 choice"></button><div><div class="lbl">Before · the Founding season desk</div><p>Five accounts on dev. Read-only by design. Its header says free through September 30, 2027 while its <i>Free through</i> column says Oct 1, 2027 for four of them. One shows <b>Dec 31, 2026</b> marked Legacy, the first Founding end date, never moved. One club holds the Founding mark on the free <b>Tournament</b> plan, so it is marked Founding without having Tournament Plus.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The entry is renamed and keeps its place, between People and Retention. Who opens it: today's Founding desk opens for Super admin, Billing and Product. Free time adds Support, because 'when does my free time end' is a support question. Giving free time stays with the plan-and-billing power (question 2).">S4 · RESTYLED · the menu entry</button>
+    <button class="tag" data-n="One list, three views. Everyone, grouped by Founding Season and Given by staff. Founding Season keeps the desk's whole page: its band, its summer note, and its columns (card on file, 2028 choice, owner last seen). Given by staff shows who gave it and why. An 'Ending in 14 days' filter is what Today's queue opens.">S4 · NEW · three views</button>
+    <button class="tag" data-n="Free through is the last free day, everywhere: September 30, 2027 for Founding, never October 1. The Legacy row keeps its own date and its chip: until it is healed it ends on December 31, 2026, which is a defect to fix in the build, not a design choice.">S4 · one way to say the end</button>
+    <button class="tag" data-n="Rows open the club's record (the Access tab's Free time list). Nothing on this page acts: no bulk end, no bulk extend. The desk was read-only on purpose (Sept 7), and a group-wide change to Founding Season is the turn-off decision, not a support action.">S4 · reads, does not act</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app auto">
+      <aside class="side" data-role="billing" data-active="free" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Free time</h1><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="subnav"><span>Everyone <span class="n">6</span></span><span class="on">Founding Season <span class="n">5</span></span><span>Given by staff <span class="n">3</span></span></div>
+        <div class="band"><div><span class="k">Founding accounts</span><span class="v">5</span><span class="s">4 clubs · 1 portal</span></div><div><span class="k">No card yet</span><span class="v warn">4</span><span class="s">80%</span></div><div><span class="k">No 2028 choice yet</span><span class="v warn">5</span><span class="s">100%</span></div><div><span class="k">Free through</span><span class="v sm">Sep 30, 2027</span><span class="s">340 days left</span></div></div>
+        <div class="callout"><svg class="ic"><use href="#i-check"/></svg><span><b>The summer ask has not opened yet.</b> Founding accounts are not asked for a card or a 2028 plan until the card window opens; the "no card yet" and "no choice yet" columns fill in over the summer.</span></div>
+        <div class="card">
+          <div class="tb tools"><span class="count">5 accounts</span><span class="gap"></span><span class="search"><svg class="ic"><use href="#i-search"/></svg>Search account or contact</span><span class="sel">All kinds <span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span><span class="chkl"><span class="chk"></span>No card yet</span><span class="chkl"><span class="chk"></span>No 2028 choice</span><span class="btn">Export</span></div>
+          <table class="t">
+            <thead><tr><th>Account</th><th style="width:150px">Kind</th><th style="width:170px">Free on</th><th style="width:150px">Free through</th><th style="width:130px">Card on file</th><th style="width:100px">2028 choice</th><th style="width:110px">Owner last seen</th><th style="width:130px">Used it for</th></tr></thead>
+            <tbody>
+              <tr class="cmf"><td><span class="nm">Dev Standalone Team</span><span class="sub code">dev-standalone-team</span></td><td><span class="chip">Coaches Portal</span></td><td>Premium Coaches Portal</td><td class="ts">Sep 30, 2027</td><td class="none">—</td><td class="none">—</td><td class="ts">2d ago</td><td>No players yet</td></tr>
+              <tr class="cmf"><td><span class="nm">Dev Test Org</span><span class="sub code">dev-test-org</span></td><td><span class="chip">Organization</span></td><td>Tournament Plus</td><td class="ts">Sep 30, 2027</td><td class="none">—</td><td class="none">—</td><td class="ts">21h ago</td><td>9 tournaments</td></tr>
+              <tr class="cmf"><td><span class="nm">Dev Tournament+ Org</span><span class="sub code">dev-tplus-org</span></td><td><span class="chip">Organization</span></td><td>Tournament Plus</td><td class="ts">Dec 31, 2026 <span class="chip warn">Legacy</span></td><td>Visa ••4242<span class="sub">Jun 3, 2027</span></td><td class="none">—</td><td class="ts">21h ago</td><td>No tournaments yet</td></tr>
+              <tr class="cmf"><td><span class="nm">Test Minor Softball</span><span class="sub code">test-minor-softball</span></td><td><span class="chip">Organization</span></td><td>Tournament <span class="flagline">Marked Founding, on the free plan</span></td><td class="ts">Sep 30, 2027</td><td class="none">—</td><td class="none">—</td><td class="ts">Jun 12, 2026</td><td>No tournaments yet</td></tr>
+              <tr class="cmf"><td><span class="nm">UAT Plus Org</span><span class="sub code">uat-plus-org</span></td><td><span class="chip">Organization</span></td><td>Tournament Plus <span class="sub">Club free through Apr 30, 2027</span></td><td class="ts">Sep 30, 2027</td><td class="none">—</td><td class="none">—</td><td class="ts">7h ago</td><td>7 tournaments</td></tr>
+            </tbody>
+          </table>
+          <div class="tline">Card on file is recorded when Stripe confirms it. This list never calls Stripe.</div>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Accounts real (dev) · UAT Plus Org's Club grant example</span>
+  </div></div>
+  <div class="scroller"><div class="fx" data-frame style="height:540px">
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app" style="min-height:0">
+      <aside class="side" data-role="support" data-active="free" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Free time</h1><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="subnav"><span>Everyone <span class="n">6</span></span><span>Founding Season <span class="n">5</span></span><span class="on">Given by staff <span class="n">3</span></span></div>
+        <div class="card">
+          <div class="tb tools"><span class="count">3 running, soonest end first</span><span class="gap"></span><span class="chkl"><span class="chk"></span>Ending in 14 days</span></div>
+          <table class="t">
+            <thead><tr><th style="min-width:220px">Club</th><th style="width:200px">Free on</th><th style="width:130px">Free through</th><th style="width:90px" class="r">Left</th><th style="width:220px">Given by</th><th>Why</th></tr></thead>
+            <tbody>
+              <tr class="cmf"><td><span class="nm">Dev Test Org</span></td><td>Accounting</td><td class="ts">Nov 3, 2026</td><td class="r"><span class="left soon">9 days</span></td><td class="who">support@fieldlogichq.ca</td><td>Closing their books after the fall tournament</td></tr>
+              <tr class="cmf"><td><span class="nm">UAT Lakeshore Lynx</span></td><td>Billing status: active</td><td class="ts">Nov 6, 2026</td><td class="r"><span class="left soon">12 days</span></td><td class="who">billing@fieldlogichq.ca</td><td>Card expired; kept open while they update it</td></tr>
+              <tr class="cmf"><td><span class="nm">UAT Plus Org</span></td><td>Club, the whole plan</td><td class="ts">Apr 30, 2027</td><td class="r"><span class="left">187 days</span></td><td class="who">billing@fieldlogichq.ca</td><td>Trying Club for the spring house league</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Support role, read only here · rows example</span>
+  </div></div>
+
+  <div class="box okb"><h3>How the clubs already on Founding Season move, stated plainly</h3>
+    <ul>
+      <li><b>Recommended (question 4): nothing moves in Stage 4.</b> The Free time list reads the Founding mark where it is today. Their access stays the plan written on each club, and the Founding turn-off decision (due May 2027) is where it moves.</li>
+      <li><b>When it moves, it moves in one step per account</b>: the club's own plan goes back to what it would be without Founding (Tournament, or Basic for a portal), and a Tournament Plus grant through September 30, 2027 is written at the same moment, so nothing changes for the customer that day. After that, October 1, 2027 ends it by itself unless the turn-off decision says otherwise.</li>
+      <li><b>Three things must be settled first</b>, all visible on dev today: the Legacy row that still ends December 31, 2026; the club marked Founding on the free plan (does it get Tournament Plus, or lose the mark?); and the portal, whose access lives on its own record (question 10).</li>
+      <li><b>The sign-up and checkout paths</b> that give the Founding comp stay open until December 31, 2026; moving the access before then means changing them while they are live.</li>
+    </ul></div>
+
+  <div class="ask" data-q="A4"><div class="q">Question 4 · Founding Season: move the clubs already on it onto grants now, or fold in the view now and the access later?</div>
+    <p class="rec">You ruled "Founding Season folded in" (Oct 24). Read literally, that moves each Founding club onto a grant, and then every one drops to the free plan by itself on October 1, 2027. How that day runs is the Founding plan's own open decision, a /strategy call due May 2027, and the paths that give the comp are live until December 31.</p>
+    <p class="rec"><b>Recommended: fold in the view now</b> (one Free time list, Founding as a named group, the desk's columns kept, the dates said one way) <b>and move the access when the Founding turn-off is decided</b>, in the one-step way above. <b>No bulk "end it now" for a group</b>, in either case: for Founding that <i>is</i> the turn-off decision, and for anything else it belongs in Bulk changes.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Fold in the view now; move Founding's access when the turn-off is decided; no bulk end (recommended)"> Fold in the view now; move Founding's access when the turn-off is decided; no bulk end (recommended)</label>
+      <label><input type="checkbox" data-o="Move every Founding club onto a grant in Stage 4 (they end by themselves Oct 1, 2027)"> Move every Founding club onto a grant in Stage 4 (they end by themselves Oct 1, 2027)</label>
+      <label><input type="checkbox" data-o="Leave the desk as it is; new grants only"> Leave the desk as it is; new grants only</label>
+      <label><input type="checkbox" data-o="Add a bulk End it now for a group of grants"> Add a bulk End it now for a group of grants</label>
+    </div><textarea aria-label="Notes on question 4" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ D · THE CUSTOMER'S VIEW ═══════════ -->
+<section class="screen" id="d">
+  <div class="screen-head"><span class="n">DRAWING D</span><h2>What the customer sees: "Free through", on their Plan &amp; billing page</h2>
+  <p>The one customer screen this project touches. It reuses what Founding Season already says ("free through September 30, 2027"), so the product keeps one phrase for one idea. These drawings show <b>where the words go and what they must say</b>; the exact customer copy goes through /billing and /marketing before it is built, and nothing here states a price or what a plan includes.</p></div>
+  <div class="ba">
+    <div class="before"><button class="shot" data-src="cap-s4/billing-uat-plus-org.jpg" aria-label="The tournament Plan and billing page today at full size"><img src="cap-s4/billing-uat-plus-org.jpg" alt="Plan and billing for a Founding club: Free through September 30, 2027, Founding Season banner"></button><div><div class="lbl">Before · a Founding club's Plan &amp; billing, desk</div><p>The pattern this stage reuses: the plan card says "Free through September 30, 2027", and an olive band explains it. A staff grant gets nothing like it today: a billing-status grant just reads "Active", a section grant does not appear, and a Club grant would land on Club's own billing page, which never mentions free time. (The Club owner's test sign-in had expired on dev, so Club's page is drawn from its code, not captured.)</p></div></div>
+    <div class="before"><button class="shot" data-src="cap-s4/billing-phone-uat-plus-org.jpg" aria-label="The same page on a phone at full size"><img src="cap-s4/billing-phone-uat-plus-org.jpg" alt="The same page on a phone"></button><div><div class="lbl">Before · the same, on a phone</div><p>The same card and band, stacked.</p></div></div>
+  </div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The page's own parts, reused as they are: the plan card, its ACTIVE badge, and the olive band Founding Season already wears (eyebrow, icon box, headline, one sentence). Free time adds nothing new to the page's kit. The only changed line on the card is the one where a price would sit: 'Free through March 31, 2027', as Founding's card reads today.">S4 · RESTYLED · the Founding pattern, reused</button>
+    <button class="tag" data-n="The end is said in two places, as Founding does: once on the card where the price would be, and once in the band, which carries the only explanation (who gave it, what happens the day after, that nothing is charged or deleted). 'Automatically', not 'by yourselves': the customer does nothing.">S4 · said twice, explained once</button>
+    <button class="tag" data-n="In the last 14 days (the window Today uses) the same band, in the same place, turns amber and counts the days. On the billing page only; nothing is emailed (question 8).">S4 · NEW · the last 14 days</button>
+    <button class="tag" data-n="The day after: the band, in the same place, says the free time ended, on which day, which plan they are on now, and that what they made is kept. It shows for 30 days, then goes. The upgrade cards below are unchanged.">S4 · NEW · after it ends</button>
+    <button class="tag" data-n="The Billing card at the foot of the page says 'No billing action needed' with the free-through date, as it does for Founding.">S4 · the Billing card</button>
+    <button class="tag" data-n="A Club grant opens the club pages (question 1), and Club's own billing page wears the same band in the same three states. Its Payment method, Move and Cancel are hidden while Club is free, because there is no Club subscription to change; /billing confirms that. Club's page is drawn from its code: the Club owner's test sign-in had expired on dev.">S4 · Club's billing page</button>
+    <button class="tag" data-n="Grey placeholders mark what does not change: the plan's description, slots and seats, the upgrade cards. Drawing their words or numbers would restate what a plan includes, which this page does not do.">UNCHANGED · the rest of the page</button>
+  </div>
+
+  <div class="scroller"><div class="fx" data-frame style="height:900px">
+    <div class="cstrip"><span class="lock" data-lockup></span><span style="display:flex;align-items:center"><span class="portal2">Admin area</span></span><span class="end"><span class="ws">Workspaces <svg class="ic"><use href="#i-down"/></svg></span></span></div>
+    <div class="app" style="min-height:0">
+      <aside class="cside"><div class="pick" style="justify-content:space-between">UAT Import Smoke Tournament<svg class="ic"><use href="#i-down"/></svg></div><div class="gl">Operations</div><div class="it"><svg class="ic"><use href="#i-grid"/></svg>Dashboard</div><div class="it"><svg class="ic"><use href="#i-people"/></svg>Teams</div><div class="it"><svg class="ic"><use href="#i-cal"/></svg>Schedule</div><div class="gl">Admin</div><div class="it on"><svg class="ic"><use href="#i-gear"/></svg>Settings &amp; access</div><div class="it"><svg class="ic"><use href="#i-flag"/></svg>Tournaments</div></aside>
+      <main class="main"><div class="cpage">
+        <div><div class="ceyebrow">Organization</div><h1 class="ch1">Plan &amp; billing</h1></div>
+        <div class="ccard"><div style="display:flex;gap:12px;align-items:flex-start"><div style="display:grid;gap:6px;flex:1"><h3>Tournament Plus Plan</h3>
+          <div class="ln dim">The plan's description (unchanged)</div>
+          <div class="ln" style="color:var(--i)">Free through March 31, 2027</div>
+          <div class="small" style="font-weight:600">from FieldLogicHQ · then the free Tournament plan, automatically</div>
+          <div class="ln">You're on Tournament Plus. Your tournament operations tools are active.</div></div><span class="cbadge">Active</span></div></div>
+        <div class="fband"><span class="ico"><svg class="ic"><use href="#i-free"/></svg></span><span class="t"><span class="ceyebrow" style="color:var(--ol)">Free time</span><b>Tournament Plus is free through March 31, 2027.</b><span>FieldLogicHQ gave your organization Tournament Plus for a while. On April 1 it goes back to the free Tournament plan automatically. Nothing is charged, and nothing you made is deleted.</span></span></div>
+        <div class="ccard dim" style="min-height:64px"><div class="ln">Tournament slots in use · Staff seats (unchanged)</div><div class="capbar"><i style="width:30%"></i></div></div>
+        <div class="ccard dim" style="min-height:120px"><div class="ln">Managing more than tournaments? · the upgrade cards (unchanged)</div></div>
+        <div class="ccard"><h3>Billing</h3><div class="ln">No billing action needed: your free time runs through March 31, 2027.</div></div>
+      </div></main>
+    </div>
+    <span class="ex">Desk · while it runs · UAT Test Org real (dev), its grant example</span>
+  </div></div>
+
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="phones">
+      <div class="phone"><div class="phead"><div><div class="ceyebrow">Jul 1–3, 2099 <span class="cbadge">Open</span></div><div class="pt">UAT Import Smoke Tournament</div></div><svg class="ic"><use href="#i-web"/></svg></div>
+        <div class="cphone"><div><div class="ceyebrow">Organization</div><h1 class="ch1">Plan &amp; billing</h1></div>
+          <div class="ccard"><h3>Tournament Plus Plan</h3><div class="ln dim">The plan's description (unchanged)</div><div class="ln" style="color:var(--i)">Free through March 31, 2027</div><div class="small" style="font-weight:600">from FieldLogicHQ · then the free Tournament plan, automatically</div><div><span class="cbadge">Active</span></div></div>
+          <div class="fband"><span class="ico"><svg class="ic"><use href="#i-free"/></svg></span><span class="t"><span class="ceyebrow" style="color:var(--ol)">Free time</span><b>Tournament Plus is free through March 31, 2027.</b><span>On April 1 it goes back to the free Tournament plan automatically. Nothing is charged or deleted.</span></span></div></div>
+        <div class="ptabs"><span><svg class="ic"><use href="#i-grid"/></svg>Dashboard</span><span><svg class="ic"><use href="#i-people"/></svg>Teams</span><span><svg class="ic"><use href="#i-cal"/></svg>Schedule</span><span><svg class="ic"><use href="#i-mail"/></svg>Messages</span><span class="on"><svg class="ic"><use href="#i-menu"/></svg>More</span></div></div>
+      <div class="phone"><div class="phead"><div><div class="ceyebrow">Jul 1–3, 2099 <span class="cbadge">Open</span></div><div class="pt">UAT Import Smoke Tournament</div></div><svg class="ic"><use href="#i-web"/></svg></div>
+        <div class="cphone"><div><div class="ceyebrow">Organization</div><h1 class="ch1">Plan &amp; billing</h1></div>
+          <div class="ccard"><h3>Tournament Plus Plan</h3><div class="ln dim">The plan's description (unchanged)</div><div class="ln" style="color:var(--i)">Free through March 31, 2027</div><div class="small" style="font-weight:600">from FieldLogicHQ · then the free Tournament plan, automatically</div><div><span class="cbadge">Active</span></div></div>
+          <div class="fband amber"><span class="ico"><svg class="ic"><use href="#i-flag"/></svg></span><span class="t"><span class="ceyebrow" style="color:var(--am)">Free time · 9 days left</span><b>Your free time ends on March 31, 2027.</b><span>On April 1 you go back to the free Tournament plan automatically. To keep Tournament Plus, choose it below.</span></span></div></div>
+        <div class="ptabs"><span><svg class="ic"><use href="#i-grid"/></svg>Dashboard</span><span><svg class="ic"><use href="#i-people"/></svg>Teams</span><span><svg class="ic"><use href="#i-cal"/></svg>Schedule</span><span><svg class="ic"><use href="#i-mail"/></svg>Messages</span><span class="on"><svg class="ic"><use href="#i-menu"/></svg>More</span></div></div>
+      <div class="phone"><div class="phead"><div><div class="ceyebrow">Jul 1–3, 2099 <span class="cbadge">Open</span></div><div class="pt">UAT Import Smoke Tournament</div></div><svg class="ic"><use href="#i-web"/></svg></div>
+        <div class="cphone"><div><div class="ceyebrow">Organization</div><h1 class="ch1">Plan &amp; billing</h1></div>
+          <div class="ccard"><h3>Tournament Plan</h3><div class="ln dim">The plan's description (unchanged)</div><div class="ln">You're on the free Tournament plan.</div><div><span class="cbadge">Active</span></div></div>
+          <div class="fband plain"><span class="ico"><svg class="ic"><use href="#i-check"/></svg></span><span class="t"><span class="ceyebrow">Free time ended</span><b>Your free time on Tournament Plus ended on March 31, 2027.</b><span>You're on the free Tournament plan again. Everything you made is kept; Tournament Plus's own tools are closed until you choose it.</span></span></div></div>
+        <div class="ptabs"><span><svg class="ic"><use href="#i-grid"/></svg>Dashboard</span><span><svg class="ic"><use href="#i-people"/></svg>Teams</span><span><svg class="ic"><use href="#i-cal"/></svg>Schedule</span><span><svg class="ic"><use href="#i-mail"/></svg>Messages</span><span class="on"><svg class="ic"><use href="#i-menu"/></svg>More</span></div></div>
+    </div>
+    <span class="ex">Phone · while it runs · the last 14 days · the day after (shown 30 days) · example</span>
+  </div></div>
+
+  <div class="scroller"><div class="fx" data-frame style="height:640px">
+    <div class="cstrip"><span class="lock" data-lockup></span><span style="display:flex;align-items:center"><span class="portal2">Admin area</span></span><span class="end"><span class="ws">Workspaces <svg class="ic"><use href="#i-down"/></svg></span></span></div>
+    <div class="app" style="min-height:0">
+      <aside class="cside"><div class="pick" style="justify-content:space-between">UAT Plus Org<svg class="ic"><use href="#i-down"/></svg></div><div class="gl">Club</div><div class="it"><svg class="ic"><use href="#i-grid"/></svg>Overview</div><div class="it"><svg class="ic"><use href="#i-people"/></svg>Teams</div><div class="gl">Admin</div><div class="it on"><svg class="ic"><use href="#i-wallet"/></svg>Plan &amp; billing</div></aside>
+      <main class="main"><div class="cpage">
+        <div><div class="ceyebrow">Organization</div><h1 class="ch1">Plan &amp; billing</h1></div>
+        <div class="ccard"><div class="cgrid"><div style="display:grid;gap:6px"><div class="ceyebrow" style="display:flex;gap:8px;align-items:center">Your plan <span class="cbadge">Active</span></div><h3 style="font-size:20px">Club</h3><div class="ln" style="color:var(--i)">Free through March 31, 2027</div><div class="small" style="font-weight:600">from FieldLogicHQ · then Tournament Plus again, automatically</div></div>
+          <div style="display:grid;gap:6px;align-content:start"><div class="ceyebrow">Teams on your plan</div><div style="font:700 24px/1.1 var(--font-body)">0 teams</div><div class="capbar"><i style="width:2%"></i></div><div class="small">Teams you add while Club is free are kept after it ends.</div></div></div></div>
+        <div class="fband"><span class="ico"><svg class="ic"><use href="#i-free"/></svg></span><span class="t"><span class="ceyebrow" style="color:var(--ol)">Free time</span><b>Club is free through March 31, 2027.</b><span>FieldLogicHQ gave your organization Club for a while. On April 1 it goes back to Tournament Plus automatically, still free through September 30, 2027 as a founding organization. Nothing is charged, and nothing you made is deleted.</span></span></div>
+        <div class="ccard dim" style="min-height:100px"><div class="ln">Club's two sizes · What Club includes (unchanged) · Payment method, Move and Cancel hidden while Club is free</div></div>
+      </div></main>
+    </div>
+    <span class="ex">Club's billing page while a Club grant runs · drawn from its code · example</span>
+  </div></div>
+
+  <div class="ask" data-q="A8"><div class="q">Question 8 · What the customer is told, and the words for it</div>
+    <p class="rec">The product already says <b>"Free through September 30, 2027"</b> for Founding, in approved copy. "Free until" would be a second phrase for one idea, and your one-spelling rule treats that as a bug. Telling them by email is a customer-facing send, needs its own ruling, and would go unlogged until Stage 5.</p>
+    <p class="rec"><b>Recommended: the billing page only, in three states</b> (while it runs, amber in the last 14 days, and the day after for 30 days), <b>worded "Free through {last free day}"</b>, the house phrase, everywhere a date of free time is shown: the customer's page, the console's chip, list and band. No email in this stage; if you want one, it is its own ruling with /marketing and comes after Stage 5 logs sends.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Billing page only, three states, worded Free through {last free day}, everywhere (recommended)"> Billing page only, three states, worded "Free through {last free day}", everywhere (recommended)</label>
+      <label><input type="checkbox" data-o="Also email the owner before it ends (its own ruling)"> Also email the owner before it ends (its own ruling)</label>
+      <label><input type="checkbox" data-o="Use Free until instead"> Use "Free until" instead</label>
+    </div><textarea aria-label="Notes on question 8" placeholder="Notes"></textarea></div>
+
+  <div class="ask" data-q="A10"><div class="q">Question 10 · Free time on a Coaches Portal</div>
+    <p class="rec">A portal can be given an override today, but it would not open the portal. Whether a Premium portal is live is read from the portal's own record, which grants never touch, so a grant would show on its billing page and change nothing. The coach Founding comp is given by the portal's own checkout, the same way.</p>
+    <p class="rec"><b>Recommended: no free time on a Coaches Portal in Stage 4.</b> On a portal's record the door is absent, with one line saying why, and a portal's Founding comp stays as it is. Making portals read grants is its own piece of work in the coach portal's billing, best done with question 4's later step.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="No free time on a Coaches Portal in Stage 4; the door is absent there (recommended)"> No free time on a Coaches Portal in Stage 4; the door is absent there (recommended)</label>
+      <label><input type="checkbox" data-o="Build it: portals read grants too, in this stage"> Build it: portals read grants too, in this stage</label>
+    </div><textarea aria-label="Notes on question 10" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ E · TODAY ═══════════ -->
+<section class="screen" id="e">
+  <div class="screen-head"><span class="n">DRAWING E</span><h2>Today: one queue, "Free time ending"</h2>
+  <p>"Overrides ending" becomes <b>Free time ending</b>, in the same place in Customers. It covers every timed grant: a plan, sections, a billing status. The window stays 14 days, the one that exists today (the prompt's 30 was wrong). It counts <b>clubs</b>, so the number on Today matches the list it opens. Its count also sits on the menu's Free time entry.</p></div>
+  <div class="before"><button class="shot" data-src="cap-s4/today.jpg" aria-label="Today at full size"><img src="cap-s4/today.jpg" alt="Today: Customers 19 waiting, clear line naming overrides ending in 14 days"></button><div><div class="lbl">Before · Today, as Stage 2 built it</div><p>"Overrides ending" is in the clear line ("Clear: past due, trials ending in 14 days, overrides ending in 14 days"). When it has rows it counts each override, but the list it opens marks clubs.</p></div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Renamed and widened: the one queue for every timed grant. Not a second queue beside the first: 'Overrides ending' stops existing. Founding Season is not in it while its access is the club's plan (question 4); the desk's own band counts its days.">S4 · RESTYLED · one queue</button>
+    <button class="tag" data-n="It counts clubs, not grant rows: a club with a plan and a section both ending counts once, and the Free time list it opens ('Ending in 14 days') shows that club once.">S4 · counts clubs</button>
+    <button class="tag" data-n="Who sees it: the same rule as every queue, a role that can open the Free time page. Super admin, Billing, Support and Product.">S4 · roles</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="height:770px">
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app" style="min-height:0">
+      <aside class="side" data-role="billing" data-active="today" data-open="Customers"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Today</h1><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="health"><span class="dot n"></span><span><b>26 errors</b> in the last 24 hours.</span><span class="later">Builds and the databases are not checked here yet.</span><span class="go">Errors ›</span></div>
+        <h2 class="sec">Waiting on us</h2>
+        <div class="card">
+          <div class="tb"><span class="count">30 waiting in 7 queues</span><span class="gap"></span><span class="note">Since your last visit on Oct 25 at 6:36 p.m.</span></div>
+          <table class="t">
+            <thead><tr><th style="width:240px">Queue</th><th>Why it waits</th><th class="r" style="width:110px">Waiting</th><th class="cv"></th></tr></thead>
+            <tbody>
+              <tr class="band-row"><td colspan="4">Customers · 21 waiting</td></tr>
+              <tr class="cmf"><td><span class="nm">Owner inactive</span></td><td>The owner has not signed in for 30 days</td><td class="r"><span class="pill">9</span></td><td class="cv">›</td></tr>
+              <tr class="cmf"><td><span class="nm">Retention</span></td><td>A cancelled club whose kept data runs out within 30 days</td><td class="r"><span class="pill">9</span></td><td class="cv">›</td></tr>
+              <tr class="cmf"><td><span class="nm">Free time ending</span></td><td>A club whose free time ends in the next 14 days: a plan, sections or a billing status</td><td class="r"><span class="pill">2</span></td><td class="cv">›</td></tr>
+              <tr class="cmf"><td><span class="nm">Missing owner</span></td><td>A club with nobody as its owner</td><td class="r"><span class="pill">1</span></td><td class="cv">›</td></tr>
+              <tr class="clear"><td colspan="4">Clear: past due, trials ending in 14 days</td></tr>
+              <tr class="band-row"><td colspan="4">Health · 3 waiting</td></tr>
+              <tr class="cmf"><td><span class="nm">New feedback</span></td><td>A message from inside the product nobody has triaged</td><td class="r"><span class="pill">3</span></td><td class="cv">›</td></tr>
+              <tr class="clear"><td colspan="4">Clear: new errors</td></tr>
+              <tr class="band-row"><td colspan="4">Growth · 6 waiting</td></tr>
+              <tr class="cmf"><td><span class="nm">Campaigns past due</span></td><td>A planned campaign whose send date has passed</td><td class="r"><span class="pill">5</span></td><td class="cv">›</td></tr>
+              <tr class="cmf"><td><span class="nm">Campaigns due soon</span></td><td>Due in the next 30 days</td><td class="r"><span class="pill">1</span></td><td class="cv">›</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Queues and counts real (dev) · Free time ending 2 example</span>
+  </div></div>
+
+  <div class="ask" data-q="A7"><div class="q">Question 7 · Today's queue: one "Free time ending" that includes what overrides were, or two?</div>
+    <p class="rec">Overrides <i>are</i> free time once comp period goes: sections for a while, a billing status for a while, and now a plan for a while. Two queues would split one job by how it was built.</p>
+    <p class="rec"><b>Recommended: one queue, "Free time ending", 14 days, counting clubs</b>, opening the Free time list filtered to ending in 14 days. "Overrides ending" goes. Founding Season joins it only once its access is a grant (question 4).</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="One queue, Free time ending, 14 days, counting clubs (recommended)"> One queue, "Free time ending", 14 days, counting clubs (recommended)</label>
+      <label><input type="checkbox" data-o="Two queues: plan free time, and other overrides"> Two queues: plan free time, and other overrides</label>
+      <label><input type="checkbox" data-o="One queue, but a 30-day window"> One queue, but a 30-day window</label>
+    </div><textarea aria-label="Notes on question 7" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ F · WHEN IT CANNOT WORK ═══════════ -->
+<section class="screen" id="f">
+  <div class="screen-head"><span class="n">DRAWING F</span><h2>When it cannot work</h2>
+  <p>Seven ways giving free time fails, and what the person at the console reads. <b>The server refuses first</b>; the screen only says so. When the console knows before you click (the switch is off, it is your own club, it is a Coaches Portal), the door is <b>absent</b> and one line on the Access tab says why. Only what cannot be known in advance shows inside the window: a save that fails, two people at once, a date past your limit.</p></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Absent beats disabled: where the answer is known when the tab opens, there is no door to press and refuse. One line under the Free time heading says why. Red when nobody here may give it (the switch off, your own club). Amber when the club's own state is the reason (a portal here; a top-plan, already-granted or paying club inside the window, drawing A).">S4 · absent, with a line</button>
+    <button class="tag" data-n="The switch off. Today a grant given with the switch off is saved, shown as running, and does nothing. Drawn as question 9 recommends: the server refuses the write, the door is absent, and the line says why. On production the switch is fixed when the site is built, so turning it off needs a redeploy; nobody flips it by accident.">S4 · the switch off</button>
+    <button class="tag" data-n="Free time cannot be given to a club the staff member belongs to, in any role. The server checks membership, not the screen.">S4 · not your own club</button>
+    <button class="tag" data-n="A save that fails keeps every field as typed and says nothing was given. The Story only ever shows what was saved.">S4 · a failed save</button>
+    <button class="tag" data-n="Two people at once: the change carries the end date it was opened with, and the server refuses it if the grant changed since, naming who changed it and to what. Stage 2 already does this for sections.">S4 · edited twice</button>
+    <button class="tag" data-n="The shared date field greys out every day before tomorrow and every day past your limit, so neither can be picked from the calendar. A day typed past the limit gets the line under the field. The server refuses both regardless.">S4 · past your limit</button>
+    <button class="tag" data-n="After the date nothing runs. Every reader asks the one door (question 1), which compares the end with the moment of reading, on the server, every time. A page open in a tab moves on its next request. Saved work is never touched.">S4 · after the date</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="tabcols">
+      <div class="stack" style="gap:8px"><span class="stlbl">1 · The switch off</span><div class="secrow"><h2 class="sec">Free time</h2></div><div class="refuse bad"><svg class="ic"><use href="#i-lock"/></svg><span><b>Free time is switched off on this server</b>, so anything given here would do nothing. An engineer can switch it on.</span></div><div class="glist"><div class="grow2"><b>Tournament Plus · Founding Season</b><span class="doors"></span><span class="sub">Free through Sep 30, 2027 · given at sign-up</span></div></div></div>
+      <div class="stack" style="gap:8px"><span class="stlbl">2 · Your own club</span><div class="secrow"><h2 class="sec">Free time</h2></div><div class="refuse bad"><svg class="ic"><use href="#i-people"/></svg><span><b>You're a member of Riverdale Ridge Baseball</b>, so you can't give it free time. Another staff member can.</span></div><div class="glist"><div class="grow2"><span class="sub" style="grid-column:1/-1">No free time running.</span></div></div></div>
+      <div class="stack" style="gap:8px"><span class="stlbl">3 · A Coaches Portal</span><div class="secrow"><h2 class="sec">Free time</h2></div><div class="refuse"><svg class="ic"><use href="#i-flag"/></svg><span><b>A Coaches Portal can't be given free time yet.</b> A portal reads its own billing, not free time. Its Founding Season stays as it is.</span></div><div class="glist"><div class="grow2"><b>Premium Coaches Portal · Founding Season</b><span class="doors"></span><span class="sub">Free through Sep 30, 2027 · given at checkout</span></div></div></div>
+    </div>
+    <div class="wins cols3" style="padding-top:0">
+      <div class="stack" style="gap:8px"><span class="stlbl">4 · A failed save</span><div class="dlg"><div class="dh"><h2>Give free time to UAT Plus Org</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db"><div class="sentence">UAT Plus Org gets <b>Club through March 31, 2027</b>…</div><div class="refuse bad"><svg class="ic"><use href="#i-errors"/></svg><span><b>Nothing was given.</b> The server could not save it. Your answers are kept; try again.</span></div></div>
+        <div class="df"><span class="sent">Shows on the Story once it is given.</span><div class="bts"><span class="btn">Cancel</span><span class="btn lime">Give free time</span></div></div></div></div>
+      <div class="stack" style="gap:8px"><span class="stlbl">5 · Edited twice</span><div class="dlg"><div class="dh"><h2>Change the end of UAT Plus Org's free time</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db"><div class="refuse"><svg class="ic"><use href="#i-flag"/></svg><span><b>billing@fieldlogichq.ca changed this free time</b> while you had it open. It now runs through April 30, 2027. Look again before you change it.</span></div></div>
+        <div class="df"><span class="sent">Nothing was changed.</span><div class="bts"><span class="btn">Cancel</span><span class="btn lime">Look again</span></div></div></div></div>
+      <div class="stack" style="gap:8px"><span class="stlbl">6 · Past your limit</span><div class="dlg"><div class="dh"><h2>Give free time to UAT Plus Org</h2><span class="x" aria-hidden="true">×</span></div>
+        <div class="db"><div class="fld"><span class="fl">Free through<span class="req">*</span></span><span class="datef" style="border-color:var(--rd)">October 2, 2027<span class="cal"><svg class="ic"><use href="#i-cal"/></svg></span></span><span class="hintl" style="color:var(--rd)">You can give up to 6 months, through April 25, 2027. Longer needs a super admin.</span></div></div>
+        <div class="df"><span class="sent">Days before tomorrow are greyed out in the calendar.</span><div class="bts"><span class="btn">Cancel</span><span class="btn lime">Give free time</span></div></div></div></div>
+    </div>
+    <div class="wins" style="padding-top:0">
+      <div class="stack" style="gap:8px"><span class="stlbl">7 · After the date</span><div class="dlg" style="width:880px"><div class="dh"><h2>UAT Plus Org on May 1, 2027 · its Story</h2></div>
+        <div class="db"><table class="t"><tbody>
+          <tr class="cmf"><td class="ts" style="width:150px">May 1, 12:00 a.m.</td><td><span class="nm0">Free time ended by itself: Club</span><span class="sub">Back to Tournament Plus</span></td><td class="who" style="width:150px">The product</td><td class="none" style="width:40px">—</td></tr>
+        </tbody></table>
+        <p class="cap12">At the same moment the chip and the band's Free time figure go, Today's queue drops the club, the customer's page shows "ended", and the gate in front of every page reads Tournament Plus. Nothing ran to make that happen. A tab left open on a Club page moves on its next click; anything saved is kept.</p></div></div></div>
+    </div>
+    <span class="ex">Access tab lines and windows at true size · clubs real (dev), states example</span>
+  </div></div>
+
+  <h3 style="margin-top:8px">Who may give free time, role by role (drawn as question 2 recommends)</h3>
+  <div class="tbl"><table class="doc"><thead><tr><th>Role</th><th>Sees free time</th><th>Gives it</th><th>Changes the end, ends it early</th><th>Longest</th></tr></thead><tbody>
+    <tr><td>Super admin</td><td>Record, Free time list, Today</td><td><span class="ok-y">Yes</span></td><td><span class="ok-y">Yes</span></td><td>12 months</td></tr>
+    <tr><td>Billing</td><td>Record, Free time list, Today</td><td><span class="ok-y">Yes</span></td><td><span class="ok-y">Yes</span></td><td>6 months</td></tr>
+    <tr><td>Support</td><td>Record, Free time list, Today</td><td><span class="ok-n">No</span>, asks Billing</td><td><span class="ok-n">No</span></td><td>—</td></tr>
+    <tr><td>Product</td><td>Record, Free time list, Today</td><td><span class="ok-n">No</span></td><td><span class="ok-n">No</span></td><td>—</td></tr>
+    <tr><td>Growth, Read only</td><td>The record only, read (R6: no doors)</td><td><span class="ok-n">No</span></td><td><span class="ok-n">No</span></td><td>—</td></tr>
+  </tbody></table></div>
+
+  <div class="ask" data-q="A9"><div class="q">Question 9 · The switch off: refuse, or show the window with a warning?</div>
+    <p class="rec">With the switch off, a grant is saved, shown as running, and does nothing. That is the one outcome worse than not giving it: staff believe it worked, and the customer's page says "free through" a plan they cannot use.</p>
+    <p class="rec"><b>Recommended: refuse.</b> The server refuses the write and says why; the door is absent and one line on the Access tab says so; the Free time page carries the same red line while it is off. Production is on, so this only bites in dev or a new environment.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Refuse: the server and the window both say it is switched off (recommended)"> Refuse: the server and the window both say it is switched off (recommended)</label>
+      <label><input type="checkbox" data-o="Show the window with a warning"> Show the window with a warning</label>
+    </div><textarea aria-label="Notes on question 9" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ MONEY & SAFETY ═══════════ -->
+<section class="screen" id="sec">
+  <div class="screen-head"><span class="n">MONEY AND SAFETY</span><h2>Giving a plan away is a money-adjacent write</h2>
+  <p>A grant is revenue not collected, given by one person with a sentence. So it is designed and reviewed the way a refund would be. Below: who may give it, the longest period, what is kept, what stops someone giving free Club time to themselves or a friend, and the security review's threat list, run over the <i>design</i>.</p></div>
+  <div class="gridb">
+    <div class="box okb"><h3>Who, how long, what is kept</h3><ul>
+      <li><b>Who gives it:</b> Super admin and Billing, the people who already change plans. Support and Product see it and do not give it.</li>
+      <li><b>How long:</b> a plan grant always ends. Billing up to 6 months, Super admin up to 12. Longer than that is a plan change, done with the pencil, where it shows as a plan, not as free time.</li>
+      <li><b>What is kept:</b> who, when, the club, what, through when, the reason, and every change to the end, each a Story entry and an audit entry. The reason is required. The audit log's own reason column is Stage 3's; until then the reason travels inside the entry, as Stage 2's changes do.</li>
+    </ul></div>
+    <div class="box warnb"><h3>What stops free Club time for yourself or a friend</h3><ul>
+      <li><b>Yourself:</b> the server refuses a grant to a club the staff member belongs to (drawing F, 2).</li>
+      <li><b>A friend:</b> nothing technical can know who your friends are. What it can do is make every grant <b>seen</b>: it is on the club's Story with your name and reason, on Free time's "Given by staff" view, and in Today's queue before it ends. The cap limits the cost of one bad grant. Super admin reads all of it.</li>
+      <li><b>No one gives a club a plan quietly:</b> no bulk plan grant, no grant without an end, no grant over a paying club (question 3).</li>
+    </ul></div>
+  </div>
+  <div class="tbl"><table class="doc"><thead><tr><th style="width:44px">#</th><th style="width:34%">Threat</th><th>What the design does</th></tr></thead><tbody data-fill="threats"></tbody></table></div>
+
+  <div class="ask" data-q="A2"><div class="q">Question 2 · Who may give free time, and is there a longest period?</div>
+    <p class="rec">Today: Super admin and Billing may add an override, with no cap, no end required, past dates accepted, and nothing stopping a grant to a club you belong to.</p>
+    <p class="rec"><b>Recommended: Super admin and Billing give it; a plan grant always ends; Billing up to 6 months, Super admin up to 12; never to a club you belong to.</b> Support asks Billing, the same split as plan changes (your Stage 2 ruling A1). Sections and billing status follow the same caps; they too must end.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Super admin + Billing; always ends; Billing 6 months, Super admin 12; never your own club (recommended)"> Super admin and Billing; always ends; Billing 6 months, Super admin 12; never your own club (recommended)</label>
+      <label><input type="checkbox" data-o="Support may give it too"> Support may give it too</label>
+      <label><input type="checkbox" data-o="No cap"> No cap</label>
+      <label><input type="checkbox" data-o="A different cap (say which in the notes)"> A different cap (say which in the notes)</label>
+    </div><textarea aria-label="Notes on question 2" placeholder="Notes"></textarea></div>
+</section>
+
+<!-- ═══════════ G · THE BOUNDARY ═══════════ -->
+<section class="screen" id="g">
+  <div class="screen-head"><span class="n">DRAWING G</span><h2>The boundary: what Stage 4 delivers, and what it does not</h2>
+  <p>Drawn with the recommended answers. A different answer to a question moves its row.</p></div>
+  <div class="tbl"><table class="doc"><thead><tr><th style="width:110px">Mark</th><th>Part</th><th>Notes</th></tr></thead><tbody>
+    <tr><td><span class="k-new">NEW</span></td><td>A whole plan for a set time</td><td>Read the same way everywhere through one door, build-enforced (question 1). The largest part.</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>The check on the server that an ended grant is ended</td><td>At the moment of reading, every read. Past dates and over-cap ends refused on write.</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>"Free through" on the customer's Plan &amp; billing page</td><td>Tournament-tier page and Club's page; while it runs, the last 14 days, the day after. Copy through /billing and /marketing.</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>Change the end date; the free-time chip; three Free time views</td><td>Questions 6 and 4.</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>Refusals: the switch off, your own club, a paying club, a portal, past the cap</td><td>Questions 2, 3, 9, 10.</td></tr>
+    <tr><td><span class="k-res">RESTYLED</span></td><td>Add an override → Give free time; Overrides → Free time on Access; the band's figure</td><td>Same door, same place (A6). Comp period leaves the window and Bulk changes (question 5).</td></tr>
+    <tr><td><span class="k-res">RESTYLED</span></td><td>Founding season → Free time in the menu</td><td>The desk's columns kept in its Founding Season view.</td></tr>
+    <tr><td><span class="k-res">RESTYLED</span></td><td>Overrides ending → Free time ending on Today</td><td>14 days, counting clubs (question 7).</td></tr>
+    <tr><td><span class="k-res">RESTYLED</span></td><td>Dates of free time said one way</td><td>"Free through" the last free day, in the console and to the customer (question 8).</td></tr>
+    <tr><td><span class="k-unc">UNCHANGED</span></td><td>The shell, Find, the menu's groups, Today's frame, the Story, the one pencil, Put it back's rules</td><td>Stages 1–2, as walked.</td></tr>
+    <tr><td><span class="k-unc">UNCHANGED</span></td><td>Founding Season's access, sign-up and checkout</td><td>Its access moves at the Founding turn-off decision (question 4).</td></tr>
+    <tr><td><span class="k-lat">LATER</span></td><td>Stripe on the Money tab, refunds, the audit reason column</td><td>Stage 3. A paying club's plan grant is revisited then.</td></tr>
+    <tr><td><span class="k-lat">LATER</span></td><td>An email when free time ends; the sent-email log; Status</td><td>Stage 5, and the email needs its own ruling.</td></tr>
+    <tr><td><span class="k-lat">LATER</span></td><td>Club web addresses and the quota</td><td>Stage 6.</td></tr>
+    <tr><td><span class="k-lat">LATER</span></td><td>Free time on a Coaches Portal</td><td>With Founding's later step (question 10).</td></tr>
+    <tr><td><span class="k-out">NOT BUILT</span></td><td>A bulk "end it now" for a group; a plan grant with no end; League plans as a grant</td><td>Question 4; question 2; parked plans are /strategy's.</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ═══════════ FORMATTING CHECK ═══════════ -->
+<section class="screen" id="fmt">
+  <div class="screen-head"><span class="n">FORMATTING CHECK</span><h2>The written rules, checked against the drawings</h2></div>
+  <div class="tbl"><table class="doc"><thead><tr><th>Rule</th><th>In these drawings</th></tr></thead><tbody>
+    <tr><td>Type ladder 10 · 11 · 12 · 14 · 16 · 20 · 24</td><td>Titles 20, section and window titles 16, body 14, captions 12, eyebrows and band labels 11, chips 10, figures 24 (20 for a date).</td></tr>
+    <tr><td>One lime per screen</td><td>None on the record, the Free time list or Today. One per window: Give free time, Change the end date, End it now, Look again.</td></tr>
+    <tr><td>Absent beats disabled</td><td>A plan that cannot be given is replaced by a sentence, not a greyed field; the portal's door is absent; Put it back is absent where it cannot apply.</td></tr>
+    <tr><td>Every highlight is clickable</td><td>The free-time chip opens the Access list; queue rows and list rows open their record.</td></tr>
+    <tr><td>A window's foot: sentence left, buttons right</td><td>Every window.</td></tr>
+    <tr><td>Mark required, not optional</td><td>Plan, Free through and Why carry the star.</td></tr>
+    <tr><td>Every date is the shared field</td><td>Free through is the shared date field with its calendar; days it cannot take are greyed out there. No quick picks (they would be a new part).</td></tr>
+    <tr><td>A door that opens a window is an outlined button (Oct 1)</td><td>Give free time, Change the end date and End it now are outlined. Olive text stays for doors that go somewhere.</td></tr>
+    <tr><td>Red for what cannot be undone (console rule, June 26)</td><td>Red refusals are the ones nobody here can get past (the switch off, your own club). End it now stays lime: free time can be given again, and it is a Put it back.</td></tr>
+    <tr><td>A waiting count is the amber pill</td><td>Free time ending on Today and on the menu.</td></tr>
+    <tr><td>One spelling</td><td>"Free through" for free time everywhere; "Club · Association", "Tournament Plus", "Coaches Portal" as the naming canon spells them.</td></tr>
+    <tr><td>Times read 9:40 a.m.</td><td>Every time on the drawings.</td></tr>
+    <tr><td>A title carries no count</td><td>Counts sit on tabs and in toolbars.</td></tr>
+  </tbody></table></div>
+  <div class="box" id="design-pass"><h3>The design pass</h3><p>The design pass looked at every frame in Warm and Dark against the written standards, the design log and the real pages captured from dev. It found fourteen defects; all are fixed above except the one I kept on purpose (End it now stays lime), which is listed with the rule conflicts below.</p>
+    <ul>
+      <li><b>The customer page invented parts the real page does not have</b>: a chip, a title-case Active, a band without its eyebrow, a Site tab. Redrawn on the real page's own parts: the ACTIVE badge, the band Founding wears (eyebrow, icon box, headline, one sentence), the Billing card at the foot, the tournament header and the Messages tab on a phone. The end is said once on the card and explained once in the band. "By yourselves" became "automatically".</li>
+      <li><b>Refusals that refused a choice they still offered.</b> Inside the window, the whole-plan row is replaced by one line and the other two choices stay. Where the console knows in advance (the switch off, your own club, a portal), the door is absent and one line says why (drawing F was rebuilt that way).</li>
+      <li><b>Doors that open windows are outlined buttons</b> (your Oct 1 ruling): Give free time, Change the end date, and a new End it now on each Access row, which had been missing.</li>
+      <li><b>The date field is the shared one</b>, with its calendar; the quick picks are gone (they would have been a new part). The past-your-limit state is one field, not two.</li>
+      <li><b>Numbers reconcile</b>: Free time ending 2 is two clubs inside 14 days; Everyone counts 6 distinct accounts.</li>
+      <li><b>One spelling</b>: "free through" everywhere, including the Founding row that said "given until"; the band's last figure reads Billing when nothing renews.</li>
+      <li><b>The record</b>: the chip is a short "Free time" with the plan and day beside it in the body face; the Founding view keeps the desk's summer note, Owner last seen and its Organization kind.</li>
+      <li><b>Small ones</b>: one width for the window; the Given by staff list's Club column no longer wraps; frames no longer crop their last row.</li>
+    </ul>
+    <h3 style="margin-top:6px">Where two written rules meet (for you to rule, recommendation first)</h3>
+    <ul>
+      <li><b>D-1 · End it now: lime or red?</b> The console's June 26 rule keeps red for what cannot be undone from the screen. Ended free time can be given again, and ending it is one of Stage 2's Put it back windows, which are lime. <b>Recommended: lime</b>, as drawn. The design pass recommended red.</li>
+      <li><b>D-2 · The Stage 2 build's olive-text doors.</b> Add an override (and the Story's Put it back) were built as olive text. Your Oct 1 ruling makes a door that opens a window an outlined button. <b>Recommended: the Oct 1 rule; Stage 4's build corrects Add an override as it renames it</b>, and Put it back stays a quiet row door (a table row's action, not a header button).</li>
+      <li><b>D-3 · Absent door vs a sentence in the window.</b> <b>Recommended: absent with one line wherever the console knows before the click; a sentence in the window only for what it cannot know</b> (a failed save, two people at once, a typed date past the limit). Drawn that way.</li>
+      <li><b>D-4 · Chips in the data face vs dates in the body face (D3).</b> <b>Recommended: a short chip ("Free time") and the date beside it in the body face</b>, as drawn.</li>
+    </ul></div>
+  <div class="ask" data-q="A11"><div class="q">Question 11 · Where two written rules meet (D-1 to D-4 above)</div>
+    <p class="rec"><b>Recommended: all four as drawn</b>: End it now lime; the Oct 1 outlined-button rule, correcting Add an override as Stage 4 renames it; absent with one line where the console knows in advance; a short chip with the date in the body face.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="D-1 to D-4 as recommended"> D-1 to D-4 as recommended</label>
+      <label><input type="checkbox" data-o="D-1: End it now red instead"> D-1: End it now red instead</label>
+    </div><textarea aria-label="Notes on question 11" placeholder="Notes"></textarea></div>
+</section>
+
+<section class="screen" id="paste">
+  <div class="screen-head"><span class="n">PASTE-BACK</span><h2>Your answers, ready to paste into the chat</h2><p>Tick and type above. Your answers stay in this browser only. Copy them here when you are done.</p></div>
+  <div class="paste"><button class="btn-doc" type="button" id="make">Copy my answers</button><textarea id="out" aria-label="Your answers" readonly></textarea></div>
+</section>
+</div>
+
+<dialog id="note" aria-labelledby="note-h"><h3 id="note-h">Detail</h3><p id="note-b"></p><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+<dialog id="zoom" class="zoom" aria-label="Capture at full size"><div class="z"><img id="zoom-img" alt=""></div><div class="foot"><button class="close" type="button">Close</button></div></dialog>
+<script>
+/* core: the menu per role from one rulebook, the strip with Find, the threat list; the theme switch; tags; captures. */
+(function () {
+  var LOCK = '<span class="lk" style="font-size:16px"><svg class="mk2" viewBox="10 10 44 44" aria-hidden="true"><path d="M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z"/></svg><span class="nm2">FieldLogic<span class="hq">HQ</span></span></span>';
+  /* entry: [key, label, icon, area, waiting count (example)] — Stage 4 renames Founding season to Free time */
+  var MENU = [
+    { g: "", items: [["today", "Today", "inbox", "overview"]] },
+    { g: "Customers", items: [["clubs", "Clubs & portals", "clubs", "clubs", 10], ["people", "People", "people", "people"], ["free", "Free time", "free", "founding", 2], ["retention", "Retention", "retention", "retention", 9]] },
+    { g: "Health", items: [["errors", "Errors", "errors", "errors"], ["feedback", "Feedback", "feedback", "feedback", 3]] },
+    { g: "Growth", items: [["leads", "Leads", "leads", "leads"], ["campaigns", "Campaigns", "campaigns", "growth", 6], ["decks", "Pitch decks", "decks", "growth"]] },
+    { g: "Product", items: [["plans", "Plans & pricing", "plans", "plans"], ["approval", "Approval queue", "approval", "plans"], ["bulk", "Bulk changes", "bulk", "bulk"], ["templates", "Email templates", "templates", "templates"], ["export", "Export registry", "export", "export"]] },
+    { g: "Records", items: [["staff", "Staff", "staff", "staff"], ["audit", "Audit log", "audit", "audit"]] },
+    { g: "System", extra: true, items: [["dev", "Dev tools", "terminal", "staff"]] },
+    { g: "Private finance", owner: true, items: [["book", "Bookkeeping", "wallet", "book"]] }
+  ];
+  var VIEW = {
+    overview: "*", clubs: "*", people: "*", audit: "*",
+    founding: "billing product support", retention: "billing support", errors: "product support", feedback: "product support billing",
+    leads: "product growth", growth: "product growth", plans: "product billing", bulk: "billing product", templates: "product",
+    export: "product billing support", staff: "", book: ""
+  };
+  var WRITE = {
+    clubs: "support billing product", people: "support billing", founding: "billing", retention: "billing", errors: "product", feedback: "product support billing",
+    leads: "product growth", growth: "product growth", plans: "product", bulk: "billing product", templates: "product", staff: ""
+  };
+  function has(list, role) { return list === "*" || (" " + list + " ").indexOf(" " + role + " ") >= 0; }
+  function canView(role, area) { return role === "super" || has(VIEW[area] || "", role); }
+  function isRead(role, area) { return role !== "super" && area in WRITE && WRITE[area] !== "" && !has(WRITE[area], role); }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+  function ic(id) { return '<svg class="ic" aria-hidden="true"><use href="#i-' + id + '"/></svg>'; }
+  document.querySelectorAll("aside.side").forEach(function (side) {
+    var role = side.getAttribute("data-role") || "super";
+    var active = side.getAttribute("data-active"), open = side.getAttribute("data-open") || "";
+    var extras = side.getAttribute("data-extras"), h = "";
+    MENU.forEach(function (grp) {
+      if (grp.extra && !extras) return;
+      if (grp.owner && role !== "super") return;
+      var items = grp.items.filter(function (it) { return grp.owner || canView(role, it[3]); });
+      if (!items.length) return;
+      var hasActive = items.some(function (it) { return it[0] === active; });
+      var isOpen = !grp.g || open === "all" || open === grp.g || (hasActive && open !== "none");
+      var sum = items.reduce(function (n, it) { return n + (it[4] || 0); }, 0);
+      h += '<div class="grp">';
+      if (grp.g) h += '<div class="gl' + (isOpen ? "" : " folded") + (hasActive ? " cur" : "") + '">' + esc(grp.g) + (!isOpen && sum ? '<span class="pill" style="margin-left:auto">' + sum + "</span>" : "") + '<span class="cv"' + (!isOpen && sum ? ' style="margin-left:8px"' : "") + ">" + ic("down") + "</span></div>";
+      if (isOpen) items.forEach(function (it) {
+        var ro = isRead(role, it[3]);
+        h += '<div class="it' + (it[0] === active ? " on" : "") + '">' + ic(it[2]) + '<span class="t">' + esc(it[1]) + "</span>" + (ro ? '<span class="eye" title="Read only">' + ic("eye") + "</span>" : "") + (it[4] ? '<span class="pill">' + it[4] + "</span>" : "") + "</div>";
+      });
+      h += "</div>";
+    });
+    h += '<div class="foot"><div class="it">' + ic("help") + '<span class="t">Help</span></div><div class="it">' + ic("collapse") + '<span class="t">Collapse sidebar</span></div></div>';
+    side.innerHTML = h;
+  });
+  document.querySelectorAll("[data-strip]").forEach(function (st) {
+    var q = st.getAttribute("data-find");
+    st.className = "strip withfind";
+    var box = q ? '<span class="find typed focus">' + ic("search") + '<span style="color:var(--i)">' + esc(q) + '</span><span class="caret"></span></span>'
+                : '<span class="find">' + ic("search") + 'Find a club, person or Stripe number<span class="k">/</span></span>';
+    st.innerHTML = '<span class="lock">' + LOCK + '</span><div class="mid"><span class="portal2">Support console</span></div><div class="fslot">' + box + '</div><span></span><div class="end"><span class="acc">' + ic("user") + "</span></div>";
+  });
+  document.querySelectorAll("[data-lockup]").forEach(function (n) { n.innerHTML = LOCK; });
+
+  var THREATS = [
+    ["A staff member gives their own club free time", "The server refuses a grant to any club the staff member belongs to, in any role, before it writes. The window's refusal is a courtesy; the server's is the guard."],
+    ["A staff member gives a friend's club free Club time", "Nothing can know who a friend is, so every grant is seen: the club's Story with the giver's name and reason, Free time's Given by staff view, Today's queue before it ends, and the audit log, all read by Super admin. The cap limits what one grant can cost."],
+    ["A role without the power calls the give route directly", "The route checks the plan-and-billing power before it reads anything, from the same rulebook as the menu. Support, Product, Growth and Read only get a refusal."],
+    ["A grant that never ends: free forever", "A grant must have an end. The server refuses no end, an end past the giver's cap (6 months for Billing, 12 for Super admin), and a day that is not after today. An open-ended plan is a plan change, made with the pencil, where it shows as a plan."],
+    ["The end lands on the wrong day (time zones)", "The server turns the chosen day into the end of that day in Eastern time, the rule Founding Season uses. It never uses the staff member's browser clock."],
+    ["Free time used to get round Stripe for a paying club", "A whole-plan grant is refused while a Stripe subscription is live (question 3). Stripe's own events cannot remove a grant, or add one."],
+    ["Many clubs given free time at once", "There is no bulk plan grant, and comp period leaves Bulk changes. Each grant is one club, one window, one reason."],
+    ["The switch goes off and every grant quietly stops", "On production the switch is fixed when the site is built. While it is off the server refuses new grants, and the Free time page shows a red line. Grants already given simply stop applying, which is the safe direction: nobody gets more than they paid for."],
+    ["An ended grant is still read as in force somewhere", "Every part of the product reads the plan through one door that compares the end with the moment of reading (question 1). A build check fails if code reads the stored plan around it. An old browser tab cannot write anything: every write is checked again on the server."],
+    ["Put it back used to lengthen free time", "Put it back on 'given' only ends it. On 'changed' it restores the earlier date, and if that is later than now it obeys the same cap and asks for a reason, like any change."],
+    ["Two staff change the same grant at once", "The change carries the end date it was opened with; the server refuses it if the grant changed since, and says who changed it."],
+    ["A grant on a public demo club", "Refused. The demo clubs are reseeded and public; a grant there would change the shop window for everyone."],
+    ["A grant that unlocks a plan we do not sell", "Only Tournament Plus, Club and Club · Association can be given. The server refuses League and League Plus while they are parked."],
+    ["The reason is empty or meaningless", "It is required and kept, beside the giver's name, wherever the grant shows. Its quality cannot be enforced; being seen is the check."],
+    ["The customer reads what staff wrote about them", "The reason and the giver's email are staff notes. The customer's page is given only the plan, the last free day and whether it has ended, from the server; never the reason, never who gave it."],
+    ["A grant lands on the wrong club", "The club comes from the record's address on the server, never from the request's body, and the server checks it exists and is not a demo or a portal before writing."],
+    ["A browser reads or writes grants directly", "The grants table stays readable and writable by the server only, as it is today (row security on, no customer rule). The customer's billing page reads its free time through the one door, on the server."]
+  ];
+  var tb = document.querySelector('[data-fill="threats"]');
+  if (tb) tb.innerHTML = THREATS.map(function (t, i) { return "<tr><td>T" + (i + 1) + "</td><td>" + esc(t[0]) + "</td><td>" + esc(t[1]) + "</td></tr>"; }).join("");
+
+  var frames = document.querySelectorAll("[data-frame]");
+  function theme(dark) {
+    frames.forEach(function (f) { f.classList.toggle("dark", dark); });
+    document.getElementById("sw-warm").setAttribute("aria-pressed", dark ? "false" : "true");
+    document.getElementById("sw-dark").setAttribute("aria-pressed", dark ? "true" : "false");
+    try { localStorage.setItem("pas4-frames", dark ? "dark" : "warm"); } catch (e) {}
+  }
+  document.getElementById("sw-warm").addEventListener("click", function () { theme(false); });
+  document.getElementById("sw-dark").addEventListener("click", function () { theme(true); });
+  try { if (localStorage.getItem("pas4-frames") === "dark") theme(true); } catch (e) {}
+  var note = document.getElementById("note"), zoom = document.getElementById("zoom");
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("button.tag");
+    if (t) { document.getElementById("note-h").textContent = t.textContent; document.getElementById("note-b").textContent = t.getAttribute("data-n"); note.showModal(); return; }
+    var s = e.target.closest("button.shot");
+    if (s) { var i = document.getElementById("zoom-img"); i.src = s.getAttribute("data-src"); i.alt = s.getAttribute("aria-label"); zoom.showModal(); return; }
+    if (e.target.closest("button.close")) { var d = e.target.closest("dialog"); if (d) d.close(); }
+  });
+  [note, zoom].forEach(function (d) { d.addEventListener("click", function (e) { if (e.target === d) d.close(); }); });
+})();
+</script>
+<script>
+/* answers: checkboxes + notes kept in this browser, and the paste-back */
+(function () {
+  var KEY = "pas4-answers-v1", state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var asks = Array.prototype.slice.call(document.querySelectorAll(".ask")).sort(function (a, b) {
+    return parseInt(a.getAttribute("data-q").slice(1), 10) - parseInt(b.getAttribute("data-q").slice(1), 10);
+  });
+  asks.forEach(function (a) {
+    var q = a.getAttribute("data-q"), s = state[q] || { o: [], n: "" };
+    a.querySelectorAll('input[type="checkbox"]').forEach(function (c) {
+      c.checked = s.o.indexOf(c.getAttribute("data-o")) >= 0;
+      c.addEventListener("change", function () {
+        var cur = state[q] || { o: [], n: "" }, v = c.getAttribute("data-o");
+        cur.o = cur.o.filter(function (x) { return x !== v; }); if (c.checked) cur.o.push(v);
+        state[q] = cur; save();
+      });
+    });
+    var ta = a.querySelector("textarea");
+    if (ta) { ta.value = s.n || ""; ta.addEventListener("input", function () { var cur = state[q] || { o: [], n: "" }; cur.n = ta.value; state[q] = cur; save(); }); }
+  });
+  document.getElementById("make").addEventListener("click", function () {
+    var lines = ["Support console stage 4 drawings: my answers"];
+    asks.forEach(function (a) {
+      var title = a.querySelector(".q").textContent;
+      var picked = []; a.querySelectorAll('input[type="checkbox"]').forEach(function (c) { if (c.checked) picked.push(c.getAttribute("data-o")); });
+      var n = (a.querySelector("textarea") || {}).value || "";
+      lines.push("", title, picked.length ? "  Picked: " + picked.join(" | ") : "  Picked: (nothing)");
+      if (n.trim()) lines.push("  Notes: " + n.trim());
+    });
+    var out = document.getElementById("out"); out.value = lines.join("\n");
+    var done = function () { document.getElementById("make").textContent = "Copied"; setTimeout(function () { document.getElementById("make").textContent = "Copy my answers"; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>

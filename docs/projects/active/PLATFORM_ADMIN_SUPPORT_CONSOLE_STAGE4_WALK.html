@@ -1,0 +1,236 @@
+<title>Support Console Stage 4 Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: give a club free time, see it everywhere the club looks, and see it end.
+   Checkable walk with a paste-back; the Stage 2 walk's look, so it reads the same. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.role { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.role b { font-size: 14px; }
+.role span { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.as { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 240px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Support console · stage 4 · free time · owner walk · 2026-10-25 · ledger §379</p>
+  <h1>Support Console Stage 4 Walk</h1>
+  <p>One question: <b>can you give a club free time, see it everywhere the club looks, and see it end?</b> Tick what holds, and write what does not. Your ticks stay in this browser; the paste-back at the foot gathers them for the chat. The build is on the dev server only.</p>
+</header>
+
+<div class="card signin">
+  <h2>Sign in first</h2>
+  <p>Two windows side by side help: the <b>console</b> at <code>http://localhost:3000/platform-admin/login</code>, and the <b>club owner</b> at <code>http://localhost:3000/auth/login</code> (a private window, so the two sign-ins don't collide). Walk as <b>Super admin</b> unless a section says otherwise.</p>
+  <div class="roles">
+    <div class="role"><b>Super admin</b><span>your own account, or uat-platform@fieldlogichq.ca</span></div>
+    <div class="role"><b>Billing</b><span>billing@dev.local</span></div>
+    <div class="role"><b>Support</b><span>support@dev.local</span></div>
+    <div class="role"><b>Read only</b><span>readonly@dev.local</span></div>
+    <div class="role"><b>Club owner</b><span>uat-owner@uat-test-org.local (owns UAT Test Org and UAT Plus Org)</span></div>
+  </div>
+  <p class="hint">⚠ Sections 2 to 7 give, change and end free time on <code>UAT Test Org</code> (the free Tournament plan) and <code>UAT Plus Org</code> (a Founding Season club). Every grant ends, and section 6 ends them, so both clubs are back as they were by the end. Nothing here emails anyone or reaches Stripe. The drawings this walk checks against: <a href="https://claude.ai/artifact/5eawvGUPwQVPoWiAV7vQY5">Support Console Stage 4</a>.</p>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed. The first four were yours at the build gate and are listed so the walk has them in one place.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <button class="btn-doc" type="button" id="make">Copy my answers</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  var S = [
+    ["window", "The door and its window", "Clubs & portals › UAT Test Org › Access", "Super admin", [
+      "Access has a Free time heading with an outlined Give free time button at its right (not olive text), and under it \"No free time running.\" The old Overrides heading and Add an override are gone.",
+      "Give free time opens one window: What (A whole plan · Sections · Billing status as three rows, the first picked), then Plan and Free through side by side, then Why, then the sentence, then the foot (sentence left, Cancel and Give free time right).",
+      "Plan offers only plans above the club's own: Tournament Plus, Club, Club · Association. No League plans.",
+      "Free through is the shared date field. In its calendar today and every day before it are greyed out, and so is every day more than 12 months away (6 for Billing). Its hint says the day is the last free day and it ends that midnight, Eastern.",
+      "Until a day is chosen the sentence says \"Choose what to give and its last free day.\" and Give free time waits. Once a plan and a day are chosen, the sentence names what the club gets, through when, what it goes back to on which day, that nothing is charged or deleted and the owner is not emailed, and what their Plan & billing page will say.",
+      "Pick Sections: four tick boxes (only sections the plan does not already include), and the sentence turns to \"… then it turns off by itself\". Pick Billing status: the sentence says the club reads as active while unpaid. Cancel."
+    ]],
+    ["give", "Give a whole plan", "UAT Test Org", "Super admin", [
+      "Give UAT Test Org Tournament Plus through a day about three weeks from today, with a reason. The window closes and the record refreshes.",
+      "The title keeps its own plan chip (Tournament) and adds a short olive Free time chip with \"Tournament Plus free through {day}\" beside it in the ordinary text face. Clicking the chip opens the Access tab.",
+      "The band reads Tournaments with no limit on Tournament Plus (it said 2 of 1 before), and a Free time figure of 1 with \"Tournament Plus ends first, {day}\". Plan and limits on Access still says Tournament: the plan the club holds.",
+      "The Access row reads \"Tournament Plus · the whole plan\", with \"Free through {day} · N days left · your reason · by your email\" under it, and two outlined buttons: Change the end date, End it now.",
+      "The Story's newest entry: \"Free time given: Tournament Plus through {day}\", \"Then back to Tournament by itself\" under it, you as Who, your reason as Why, and Put it back at the right."
+    ]],
+    ["everywhere", "The club is on Tournament Plus everywhere", "the club owner's window, UAT Test Org", "Club owner", [
+      "Plan & billing (Settings › Plan & billing): the card reads Tournament Plus Plan, its price line says \"Free through {day}\" with \"from FieldLogicHQ · then the free Tournament plan, automatically\" under it, and the Active badge.",
+      "Under the card an olive band: eyebrow FREE TIME, \"Tournament Plus is free through {day}.\", and one sentence that FieldLogicHQ gave it for a while, that it goes back automatically, and that nothing is charged or deleted. It never says why or who gave it.",
+      "The Billing card at the foot says \"No billing action needed: your free time runs through {day}.\" The upgrade cards still offer Tournament Plus (to keep it), and there is no Downgrade to Tournament.",
+      "A Tournament Plus feature is open: the tournament limit no longer stops a new tournament, and a Tournament Plus tool (custom registration fields, exports or branding) is usable where it was locked.",
+      "On a phone width the band's sentence is the short one: \"On {day after} it goes back to the free Tournament plan automatically. Nothing is charged or deleted.\""
+    ]],
+    ["change", "Change the end date, into the last 14 days", "the console, UAT Test Org › Access", "Super admin", [
+      "Change the end date opens \"Change the end of UAT Test Org’s free time\" with Free through already holding the current day. Move it to about 10 days from today: the sentence says it now runs through the new day instead of the old one, then back to Tournament by itself, and the owner is not emailed. Its foot: \"A new Story entry; Put it back restores {old day}.\"",
+      "The Story gains \"Free time changed: Tournament Plus now free through {new day}\", \"Was through {old day}\" under it, with your reason. Put it back moved to this entry; the \"given\" entry no longer carries it.",
+      "The owner's Plan & billing turns amber: \"Free time · N days left\", \"Your free time runs through {day}.\", and a sentence that ends \"To keep Tournament Plus, choose it below.\" followed by \"Your tournaments are kept; you can start a new one once you're back within the free plan.\" (UAT Test Org holds more tournaments than the free plan allows.)",
+      "The Billing card in the amber state says the free time runs through the day, to choose Tournament Plus below to keep it, otherwise there is nothing to do.",
+      "Today shows Free time ending with an amber 1, \"A club whose free time ends in the next 14 days: a plan, sections or a billing status\". The menu's Free time entry carries the same 1, and Overrides ending is gone.",
+      "Free time ending opens Free time on Given by staff with Ending in 14 days ticked: UAT Test Org, Tournament Plus, the whole plan, the day, the days left in amber, you, your reason."
+    ]],
+    ["putback", "Put it back, and two people at once", "UAT Test Org › Story", "Super admin", [
+      "Put it back on the \"changed\" entry: the window says the free time runs through the earlier day again and asks why. Confirm: a new \"Put back: Free time changed …\" entry, the old one now reads Put back at …, and the Access row shows the earlier day.",
+      "Open Change the end date in two tabs. Save a new day in the first. In the second, choose another day and save: an amber line names who changed it while you had it open and the day it now runs through, the foot says \"Nothing was changed.\", and the main button is Look again.",
+      "Type a day more than 12 months away straight into Free through (or, as Billing, more than 6): the field refuses it in red. The server refuses the same day if it ever arrives."
+    ]],
+    ["end", "End it now, and what the owner sees after", "UAT Test Org", "Super admin · Club owner", [
+      "End it now opens \"End UAT Test Org’s free time now\": the sentence first (ends now instead of on {day}, back to Tournament at once, anyone using the Tournament Plus tools moved out on their next click, nothing deleted), then Why, then Keep it and a lime End it now.",
+      "After ending: the Free time chip and the Access row are gone, the band says Tournaments 2 of 1 again and Free time 0, none running. The Story gains \"Free time ended early: Tournament Plus\" with \"Back to Tournament\" and your reason. Put it back is gone from every free-time entry.",
+      "The owner's Plan & billing: a plain band, eyebrow FREE TIME ENDED, \"Your free time on Tournament Plus ran through {today}.\", \"You're on the free Tournament plan again. Everything you made is kept. The tools that come only with Tournament Plus are closed until you choose it.\" The card is the free Tournament plan's own. The band shows for 30 days.",
+      "The Tournament Plus tool opened in section 3 is closed again for the owner on their next click; nothing they made is gone."
+    ]],
+    ["club", "Free Club on a Founding Season club", "UAT Plus Org", "Super admin · Club owner", [
+      "Before giving: UAT Plus Org's band ends with Billing \"Free through Sep 30, 2027\" and \"Founding Season, no Stripe subscription\" (it said Renews Oct 1, 2027 before). Access lists \"Tournament Plus · Founding Season\", \"Free through Sep 30, 2027 · N days left · given at sign-up · the club’s own plan, ending with the Founding Season\", with no buttons.",
+      "Give it Club through a day about a month away. The sentence says that on the day after it goes back to Tournament Plus by itself, still free through September 30, 2027 under Founding Season.",
+      "The band takes Club's shape: Teams N of 15 \"on Club, while it is free\", Tournaments \"no limit on Club\", Free time 2 with \"Club ends first, {day}\". The Story shows the grant and the Founding Season entry (\"Founding Season: Tournament Plus free through Sep 30, 2027\", The product, no Put it back).",
+      "The owner sees the club pages: the admin menu has the club sections, and an address under /admin/org opens instead of bouncing to tournaments.",
+      "The owner's Plan & billing is Club's page: Your plan Club, \"Free through {day}\", \"from FieldLogicHQ · then Tournament Plus again, automatically\", \"Teams you add while Club is free are kept after it ends.\" Payment method & invoices, Move and Reduce or cancel are absent. The olive band says it goes back to Tournament Plus automatically, still free through September 30, 2027 as a founding organization.",
+      "End it now. The owner is back on the Tournament Plus page, which shows the plain ended band (\"You're back on Tournament Plus, free through September 30, 2027 as a founding organization …\") above the Founding Season band. An /admin/org address bounces to tournaments again."
+    ]],
+    ["refusals", "When it cannot be given", "the console", "Super admin · Billing", [
+      "UAT Rep Club (on Club): the plan dropdown offers only Club · Association. On a Club · Association club the whole-plan row is replaced by one line (\"… is on Club · Association, the top plan. Give it sections, or change the plan with the record's pencil.\"), the other two choices stay, and there is no Give free time button until you pick one.",
+      "A club with a running plan grant: the whole-plan row is replaced by \"… already has {plan} free through {day}. Give it more time from that entry instead of a second grant.\" with a Change the end date link that opens that window.",
+      "A club that pays through Stripe (UAT Lakeshore Lynx, if its subscription is live on dev): the whole-plan row is replaced by the paying line; Sections and Billing status still give.",
+      "A Coaches Portal's record: no Give free time; one amber line says a Coaches Portal can't be given free time yet. A club you are a member of: one red line instead. A public demo club: one amber line.",
+      "As Billing: the calendar greys out days past 6 months, and a typed day past it reads \"You can give up to 6 months, through {day}. Longer needs a super admin.\"",
+      "Bulk changes offers Subscription status override, Plan change and Extra feature access: Comp period grant is gone."
+    ]],
+    ["list", "Free time, one list", "the menu › Customers › Free time", "Super admin", [
+      "The menu entry is Free time (a gift), between People and Retention, where Founding season was. The old address /platform-admin/founding-season opens Free time on the Founding Season tab.",
+      "Three tabs with counts: Everyone · Founding Season · Given by staff. The title carries no count. Nothing on the page acts: no end, no extend, no bulk.",
+      "Founding Season keeps the desk whole: its band (Founding accounts, No card yet, No 2028 choice yet, Free through September 30, 2027 with the days left), the summer note, the filters, Export, and its columns. Free through reads Sep 30, 2027, never Oct 1. The Legacy row keeps its Dec 31, 2026 and its chip; Test Minor Softball says \"Marked Founding, on the free plan\" in amber.",
+      "While a staff grant runs on a Founding club, its Founding row says \"{plan} free through {day}\" under Free on.",
+      "Given by staff: one row per club, soonest end first: Club, Free on, Free through, Left (amber in the last 14 days), Given by, Why. Ending in 14 days filters it, and the address keeps the filter. Every row opens the club's Access tab.",
+      "Everyone: Given by staff and Founding Season as two groups, each account once in each."
+    ]],
+    ["roles", "Who sees and who gives", "sign in as each", "Billing · Support · Read only", [
+      "Billing: gives, changes and ends free time, up to 6 months. Free time in the menu has no eye.",
+      "Support: Free time in the menu carries the eye. Support reads the list and every record's Free time list, chip, band and Story, with no Give free time, no Change the end date, no End it now and no Put it back on free time.",
+      "Product: the same as Support (the eye, read only).",
+      "Read only and Growth: no Free time in the menu; a club's record shows the chip, band and Access list, with no doors."
+    ]],
+    ["itself", "It ends by itself", "a club you may change, over two days", "Super admin · Club owner", [
+      "Optional, needs tomorrow: give a club Sections (Accounting) or a plan through tomorrow. The day after, with nothing run, the chip and the row are gone, the Story says \"Free time ended by itself: …\" with The product as Who, and the section or plan is closed for the owner on their next click.",
+      "Optional, needs a club with a tournament: give a Tournament club Club for a while, record a team's entry fee on one of its tournaments, and the payment posts to the club's Accounting book (the change you chose at the build gate)."
+    ]]
+  ];
+  var CALLS = [
+    ["Gate call (yours): the early redirect in front of the club pages is deleted; the club pages' own check follows free time."],
+    ["Gate call (yours): tournament fees post to a club's Accounting book during free Club time or free Accounting. One database change, for the release."],
+    ["Gate call (yours): the customer's page shows whole-plan grants only; a section or status grant ends with no notice to the customer, as before."],
+    ["Gate call (yours): the amber band adds one sentence when the club will hold more tournaments than its own plan allows."],
+    ["Every billing action reads the plan the club pays for, never the free one: checkout, upgrade cards, downgrade, move, cancel, the 2028 choice and the upgrade panel on any other page. A club on free Tournament Plus still sees Tournament Plus as an upgrade to keep it."],
+    ["A club on free time gets the given plan's limits, unless its own are higher (a raised team limit is kept)."],
+    ["Billing status as free time always reads \"active\" (the drawn choice). The old window let you pick any status, including cancelled."],
+    ["Comp period rows that are not Founding Season read \"Billing tag, gives nothing\" with their date and no buttons; Founding Season's rows cannot be ended from the console."],
+    ["The record's Plan and limits section keeps the plan the club holds; the band follows the plan it is on right now."],
+    ["Club's amber state says \"Club isn't open for sign-up yet, so there is nothing to choose on this page.\" (Club is not self-serve); the page's existing Contact us stays where it was."],
+    ["Words from /marketing: \"ran through {day}\" for the ended band, \"the tools that come only with Tournament Plus\" (a plan name never takes a possessive), and the per-plan \"then …\" lines."],
+    ["The Story's Put it back on a \"given\" entry opens the same End it now window (Keep it, End it now), as the drawings say."],
+    ["Days left count to the last free day everywhere, so the Founding view reads 340, the same as the club's row (the old desk counted to the moment after and said 341)."],
+    ["Open, not built: Bulk changes' Subscription status override still takes an optional end with no cap. It is a bulk way to keep clubs open without an end. Say if it should follow free time's rules (an end, the cap)."]
+  ];
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem('pas4-walk') || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem('pas4-walk', JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[4].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = (i + 1) + ' ' + s[1].split(' (')[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card"><div class="sec-head"><span class="n">W' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="route">' + esc(s[2]) + '</span></div><span class="as">As ' + esc(s[3]) + '</span>';
+    s[4].forEach(function (t, k) { h += '<label class="chk"><input type="checkbox" id="c-' + id + '-' + k + '" data-k="' + id + '.' + k + '"> <span>' + esc(t) + '</span></label>'; });
+    h += '<textarea id="n-' + id + '" aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" id="c-call-' + k + '" data-k="call.' + k + '"> <span>' + esc(c[0]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea id="n-calls" aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function progress() {
+    var done = document.querySelectorAll('.sec input[type=checkbox]:checked').length - document.querySelectorAll('#rule input:checked').length;
+    document.getElementById('prog').textContent = done + ' of ' + total + ' ticked';
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Support console stage 4 walk (§379): my results'];
+    S.forEach(function (s, i) {
+      var miss = [], ok = 0;
+      s[4].forEach(function (t, k) { if (state[s[0] + '.' + k]) ok++; else miss.push(k + 1); });
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', 'W' + (i + 1) + ' ' + s[1] + ': ' + ok + '/' + s[4].length + ' ticked' + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (state['call.' + k] ? '[accepted] ' : '[not ticked] ') + c[0]); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Copy my answers'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>

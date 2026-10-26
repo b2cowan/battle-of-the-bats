@@ -7,6 +7,23 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-25 — SUPPORT CONSOLE STAGE 4 (FREE TIME), ELEVEN ASKS RULED AS RECOMMENDED (owner, paste-back from the drawings https://claude.ai/artifact/5eawvGUPwQVPoWiAV7vQY5, every recommended box ticked)
+
+**Decision (as ruled):**
+- **Q1:** A whole-plan grant is built as one door for "the plan right now", with every reader of a club's plan on it, build-enforced.
+- **Q2:** Super admin and Billing give free time; it always ends; Billing up to 6 months, Super admin up to 12; never to a club the staff member belongs to.
+- **Q3:** A whole-plan grant is refused while a Stripe subscription is live; sections and billing status stay available.
+- **Q4:** Founding Season is folded into the console's view now; its access moves onto grants when the Founding turn-off is decided; no bulk end for a group.
+- **Q5:** Comp period stops being offered now; existing rows read as they are.
+- **Q6:** Giving more time changes the running grant's end date; the Story says from what to what.
+- **Q7:** One Today queue, "Free time ending", 14 days, counting clubs.
+- **Q8:** The customer is told on the billing page only, in three states, worded "Free through {last free day}", everywhere.
+- **Q9:** With the switch off, the server and the window both say it is switched off (refuse).
+- **Q10:** No free time on a Coaches Portal in Stage 4; the door is absent there.
+- **Q11 (design pass, D-1 to D-4 as recommended):** D-1 End it now stays lime. D-2 the Oct 1 rule (a door that opens a window is an outlined button); Stage 4's build corrects Add an override as it renames it. D-3 absent with one line where the console knows before the click; a sentence in the window only for what it cannot know. D-4 a short "Free time" chip, the date beside it in the body face.
+**Rationale:** the drawings' reasons beside each question (the plan's "Stage 4 findings" holds the code facts).
+**Applies to:** the support console's Stage 4 and the customer's Plan & billing page.
+
 ### 2026-10-25 — AN AUDIT-LOG ENTRY OPENS IN A WINDOW: THE WHOLE ROW, DOORS IN OLIVE TEXT, NO REVERT (owner, "I agree with your recommendations", drawing https://claude.ai/artifact/2MSm4vf6oMxm4dnQrcU1KU)
 
 **Decision:** (1) The whole audit-log row (the whole card on a phone) opens the entry; a quiet › at the right edge (the card's top-right corner on a phone) is the cue and the keyboard's way in; the org name and its Filter link keep working on their own. (2) The two value columns lose their ▶ and the raw action key leaves the row; the window shows both in full. (3) The window is a record window at the 640 width: who, when, org, field, action key, then Old and New side by side with the lines that differ tinted and a sentence saying so. (4) A "Same moment" list shows the other entries by that person in the same second, one level deeper with the named back line. (5) The foot carries at most two DOORS in olive text, named for the console menu's names (Open org, Show this org's entries, Open Leads, Open Staff, Open Bulk changes, Open Plans & pricing, Open Feedback…); a door appears only when the entry carries enough to find its target and the viewer's role can open it; a scheduled job gets none and says so in the foot's left sentence. (6) Copy acts in place, so it is plain ink, never olive. (7) No Revert, no Edit, no Delete, ever.

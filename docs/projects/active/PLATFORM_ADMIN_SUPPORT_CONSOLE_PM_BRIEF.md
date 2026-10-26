@@ -4,7 +4,35 @@ Plan: `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` · Status: **Stage 1 (the warm fo
 2026-10-25** (45 of 45). **Stage 2 drawn and ruled 2026-10-25** (all eleven questions as recommended,
 https://claude.ai/artifact/Ub7fXLh29SC34Zp4oqKUx1). **Stage 2 built 2026-10-25 on dev**; the owner's walk is next
 (https://claude.ai/artifact/GqozHVh1Bg2FLqSKEM78Xs, ledger §377), and its one database change goes to production with the release.
-Runs in parallel with Club Tier (owner, 2026-10-24).
+Runs in parallel with Club Tier (owner, 2026-10-24). **Stage 2 walked 2026-10-25 (60 of 60). Stage 4 (free time) drawn
+2026-10-25** (https://claude.ai/artifact/5eawvGUPwQVPoWiAV7vQY5) **and ruled the same day, all eleven as recommended**;
+the build prompt is written. Free time on a Premium Coaches Portal is proposed as a follow-on (S4b), done together with
+moving Founding Season's access, and is not yet ruled. **Stage 4 built 2026-10-25 on dev and committed** (walk ledger §379); the owner's
+walk is next, and its one database change (tournament fees post to the club's book during free time) goes to production
+with the release.
+
+**What the Stage 4 build added to the drawings (owner calls at the build gate, 2026-10-25).** Billing actions never see
+free time: buying, moving, downgrading, cancelling and the next-season choice all read the plan the club pays for, so free
+time can never be bought out of or downgraded into for keeps. A club on free time gets the given plan's limits (unless its
+own are higher). The early redirect in front of the club pages is gone; the club pages' own check follows free time.
+Tournament fees post to the club's Accounting book during free Club time. The customer's amber note warns when the club
+will hold more tournaments than its own plan allows. Club's billing page says plainly that Club isn't open for sign-up
+yet, instead of "choose it below".
+
+**What Stage 4 means (as ruled).** Support gives a club free time on a whole plan, sections or a billing
+status from one window on its record, through a day they pick and with a reason; the window says the consequence in one
+sentence first. It ends by itself: nothing is scheduled, every part of the product simply stops treating the club as on
+the given plan after that day. The record shows it as a chip, a figure, a list and Story entries; Today warns 14 days
+ahead; a new Free time list shows everyone on it, with Founding Season as a named group. **The customer** reads "Free
+through {day}" on their Plan & billing page, an amber warning in the last 14 days, and a plain line after it ends.
+**Two things the drawings push back on:** a whole-plan grant is a change to how the whole product reads a plan (about
+twenty places read it directly today), which makes it the biggest part of the stage; and moving Founding Season's clubs
+onto grants now would decide how September 30, 2027 ends, so the recommendation is the view now and the access when the
+Founding turn-off is decided. **Not in Stage 4:** pausing a paying club's charges (Stripe, Stage 3), an email when free
+time ends (its own ruling), free time on a Coaches Portal. **Roles (recommended):** Super admin and Billing give it
+(Billing up to 6 months, Super admin 12); nobody gives it to a club they belong to; Support and Product see it.
+**Success looks like:** free time in about 5 clicks that ends by itself; no club anywhere in the product still reads
+a plan whose free time has ended; the customer is never surprised by the end.
 
 **Success for Stage 2 (to check in the walk):** a support person finds any customer from one box in a few keystrokes; a club's
 record answers "what happened, who, why" without opening five tabs; a live change always says what it does and keeps its reason;
