@@ -51,7 +51,7 @@ import {
   priceOn, REG_TABS, regDay, regTab, regFilterCounts, regFilterOffer, rowActions, seasonHasFees, tallyWhy, whyOf, isRegTab,
   NO_PICKS, NOT_PLACED,
   type BulkKey, type PriceChange, type RegFilterGroup, type RegFilterPicks, type RegRights, type RegTab, type RegsDivision, type RegsRead, type RegsSeason,
-  type RowActionKey, type Why,
+  type RowActionKey, type Why, howOf,
 } from '@/lib/house-league-registrations';
 import type { LeagueRegistration } from '@/lib/types';
 import { patchRegistration } from './api';
@@ -207,6 +207,8 @@ export default function RegistrationsScreen() {
   const [openedLink, setOpenedLink] = useState<string | null>(null);
   if (linked && openedLink !== linked.id) { setOpenedLink(linked.id); setOpenId(linked.id); }
   const linkedAt = search.get('at') === 'card' ? 'card' : linked ? 'fee' : null;
+  // 12c Part 7: "View the payment" opens the record at its Fee.
+  const [feeFocus, setFeeFocus] = useState<string | null>(null);
   // 12c: a still-enrolled notice's answer (?answer=withdraw|link|keep), asked once on arrival; "whose was it?" (?whose=…).
   const linkedAnswer = search.get('answer');
   const [answered, setAnswered] = useState<string | null>(null);
@@ -267,9 +269,13 @@ export default function RegistrationsScreen() {
       case 'payLink': return { key, label: M.payLink.label, hint: reg.payLinkSentAt ? M.payLink.hintSent(regDay(reg.payLinkSentAt.slice(0, 10), today)) : M.payLink.hint };
       case 'refundCard': return { key, label: M.refundCard.label, hint: M.refundCard.hint(formatLeagueMoney(read?.unrecordedCard?.[reg.id]?.[0]?.amount ?? 0)) };
       case 'refundAnotherWay': return { key, label: M.refundAnotherWay.label, hint: M.refundAnotherWay.hint(formatLeagueMoney(read?.returnedRefunds?.[reg.id]?.[0]?.amount ?? 0)) };
+      case 'viewPayment': {
+        const last = lastPayment(linesOf(reg.id));
+        return { key, label: M.viewPayment.label, hint: last ? M.viewPayment.hint(regDay(last.day, today), howOf(last)) : undefined };
+      }
       default: return { key, label: M[key].label, hint: M[key].hint };
     }
-  }, [read, today]);
+  }, [read, today, linesOf]);
 
   /** One registration as the list draws it. */
   const modelFor = useCallback((reg: LeagueRegistration): RegRowModel => {
@@ -435,6 +441,8 @@ export default function RegistrationsScreen() {
       case 'payLink': void payLinkOne(reg); break;
       case 'refundCard': { const s = read?.unrecordedCard?.[reg.id]?.[0]; if (s) setCardAct({ op: 'refundCard', reg, id: s.itemId, amount: s.amount }); break; }
       case 'refundAnotherWay': { const r = read?.returnedRefunds?.[reg.id]?.[0]; if (r) setCardAct({ op: 'refundAnotherWay', reg, id: r.refundId, amount: r.amount }); break; }
+      // 12c Part 7: the record, opened at its Fee (the payment and its refunds in one place, §0j).
+      case 'viewPayment': setFeeFocus(reg.id); setOpenId(reg.id); break;
     }
   }
 
@@ -746,7 +754,7 @@ export default function RegistrationsScreen() {
           cardRefunds={refundsOf(openReg.id)}
           canDesk={rights.takeFees}
           isPhone={isPhone}
-          focus={openReg.id === openedLink ? linkedAt : null}
+          focus={openReg.id === openedLink ? linkedAt : openReg.id === feeFocus ? 'fee' : null}
           onAnotherWay={id => openAnotherWay(openReg, id)}
         />
       )}

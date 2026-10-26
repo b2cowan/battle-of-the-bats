@@ -53,6 +53,13 @@ export const ASK_WORDS = {
     [guardian, season, note ? (note.length > 120 ? `${note.slice(0, 119)}…` : note) : 'No note'].filter(Boolean).join(' · '),
 } as const;
 
+/** 12c Part 7 (12b's b4): the child's payment line on the family's record — online, or the pay link while owing. The
+ *  processing fee is never shown as dues or paid: it is the family's, not the club's. */
+export const FAMILY_ONLINE_WORDS = {
+  paidOnline: (day: string, how: 'card' | 'bank debit', receiptNo: string) => `Paid online ${day} · ${how} · receipt ${receiptNo}`,
+  linkSent: (day: string) => `Pay link sent ${day}`,
+} as const;
+
 /** A house-league child's line on the family's record in Families (copy §13). */
 export const FAMILY_LINE_WORDS = {
   fixed: (day: string) => `Price fixed at sign-up, ${day}`,
@@ -251,6 +258,8 @@ export const REGS_WORDS = {
     refundCard: { label: 'Refund the card payment', hint: (amount: string) => `${amount} paid by card couldn’t go on this registration` },
     // 12b copy §7: a card refund that came back, sent to the family another way.
     refundAnotherWay: { label: 'Record the refund sent another way', hint: (amount: string) => `${amount} came back from the card` },
+    // 12c Part 7 (12b's b3): an online payment opens the record at its Fee.
+    viewPayment: { label: 'View the payment', hint: (day: string, how: string | null) => (how ? `${day} · ${how}` : day) },
   },
   refundAnotherWay: {
     title: (name: string) => `Record the refund for ${name} as sent another way?`,

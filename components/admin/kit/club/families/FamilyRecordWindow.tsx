@@ -48,7 +48,7 @@ import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { formatStoredDate } from '@/lib/timezone';
 import { joinWithAnd } from '@/lib/utils';
-import { FAMILY_LINE_WORDS } from '@/lib/house-league-money-words';
+import { FAMILY_LINE_WORDS, FAMILY_ONLINE_WORDS } from '@/lib/house-league-money-words';
 import {
   FAMILY_FILE_WORDS as FW, FAMILY_MESSAGE_WORDS as MW, FAMILY_PAGE_WORDS as PW, FAMILY_PAYMENT_WORDS as PayW,
   FAMILY_RECORD_WORDS as W,
@@ -417,6 +417,10 @@ function ChildTable({ lines, chips }: { lines: readonly FamilyChildLine[]; chips
                   {l.league?.feeCents != null && (l.league.corrected != null
                     ? <span className={fam.ladder}>{FAMILY_LINE_WORDS.corrected(l.league.corrected)}</span>
                     : l.league.fixedOn && <span className={fam.ladder}>{FAMILY_LINE_WORDS.fixed(formatStoredDate(l.league.fixedOn))}</span>)}
+                  {/* 12c Part 7 (12b's b4): how the fee was paid online, or the pay link while it is owed. */}
+                  {l.league?.online && l.league.paidCents > 0
+                    ? <span className={fam.ladder}>{FAMILY_ONLINE_WORDS.paidOnline(formatStoredDate(l.league.online.day, { withYear: false }), l.league.online.rail === 'bank_debit' ? 'bank debit' : 'card', String(l.league.online.receiptNo ?? ''))}</span>
+                    : l.league && l.league.balanceCents > 0 && l.league.payLinkSentAt && <span className={fam.ladder}>{FAMILY_ONLINE_WORDS.linkSent(formatStoredDate(l.league.payLinkSentAt, { withYear: false }))}</span>}
                 </td>
                 {f ? (
                   <>

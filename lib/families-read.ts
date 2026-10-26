@@ -218,6 +218,10 @@ export interface LeagueFeeLine {
   fixedOn: string | null;
   /** The latest correction's reason ("Price corrected · {reason}"), when the price was corrected. */
   corrected: string | null;
+  /** 12c Part 7 (12b's b4): the latest payment that came online — its day, rail and receipt — read for one family's record. */
+  online?: { day: string; rail: 'card' | 'bank_debit'; receiptNo: number | null } | null;
+  /** When the desk last emailed the pay link (the line while owing). */
+  payLinkSentAt?: string | null;
 }
 /** A registration's money facts, attached once by the org world's load (`LEAGUE_FEE_FACTS`). */
 export interface LeagueFeeFacts { receivedCents: number; priceChanged: boolean; corrected: string | null }
@@ -230,11 +234,12 @@ export function leagueFeeLine(r: any): LeagueFeeLine {
   const facts = r[LEAGUE_FEE_FACTS] as LeagueFeeFacts | undefined;
   const corrected = facts?.corrected ?? null;
   const fixedOn = !facts?.priceChanged && r.registered_at ? orgDayKey(r.registered_at) : null;
-  if (fee == null) return { feeCents: null, paidCents: 0, balanceCents: 0, fixedOn, corrected };
+  const payLinkSentAt = (r.pay_link_sent_at as string | null | undefined) ?? null;
+  if (fee == null) return { feeCents: null, paidCents: 0, balanceCents: 0, fixedOn, corrected, payLinkSentAt };
   const feeCents = toCents(fee);
   const paidCents = facts ? facts.receivedCents : r.registration_fee_paid === true ? feeCents : 0;
   const owes = r.status === undefined || r.status === 'active';
-  return { feeCents, paidCents, balanceCents: owes ? Math.max(0, feeCents - paidCents) : 0, fixedOn, corrected };
+  return { feeCents, paidCents, balanceCents: owes ? Math.max(0, feeCents - paidCents) : 0, fixedOn, corrected, payLinkSentAt };
 }
 
 /** What a raw league_registrations row (with its league_seasons join) owes, in dollars: the one rule. */
@@ -275,7 +280,7 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
       'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, status, team_id, program_year_id, tryout_registration_id, created_at, rep_teams(name, slug), rep_program_years(year, status, name, credit_application)',
       orgId, q => q.neq('status', 'callup')),
     orgRows<any>('league_registrations',
-      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, guardian_last_name, status, registration_fee_paid, fee_amount, waiver_accepted_at, registered_at, season_id, division_id, team_id, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
+      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, guardian_last_name, status, registration_fee_paid, fee_amount, waiver_accepted_at, registered_at, season_id, division_id, team_id, pay_link_sent_at, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
       orgId),
     orgRows<any>('family_links', 'id, person_id, player_id, user_id, status, role, relationship, invited_email, claimed_email, updated_at', orgId),
     orgRows<any>('family_email_optouts', 'id, email, source, opted_out_at', orgId),
@@ -735,6 +740,24 @@ function messageState(log: Awaited<ReturnType<typeof readMessageLog>>, guardians
 
 // ── The family page (chunk D) ─────────────────────────────────────────────────
 
+/** 12c Part 7: these registrations' latest online payment that went into the book (card or bank debit), by registration. */
+async function leagueOnlinePaid(regIds: string[]): Promise<Map<string, { day: string; rail: 'card' | 'bank_debit'; receiptNo: number | null }>> {
+  const out = new Map<string, { day: string; rail: 'card' | 'bank_debit'; receiptNo: number | null }>();
+  if (!regIds.length) return out;
+  // Paged like every Families read (E05): an unpaged read stops at 1,000 rows without an error.
+  const data = await fetchAllIn<Record<string, unknown>>(regIds, (chunk, from, to) => supabaseAdmin.from('online_payment_items')
+    .select('id, registration_id, online_payments!inner(paid_on, rail, receipt_no, status)')
+    .in('registration_id', chunk).not('entry_id', 'is', null).order('id').range(from, to));
+  for (const i of data) {
+    const op = (Array.isArray(i.online_payments) ? i.online_payments[0] : i.online_payments) as Record<string, unknown>;
+    if (!op?.paid_on || op.status === 'reversed') continue;
+    const prev = out.get(i.registration_id as string);
+    if (prev && prev.day >= String(op.paid_on)) continue;
+    out.set(i.registration_id as string, { day: String(op.paid_on), rail: op.rail === 'bank_debit' ? 'bank_debit' : 'card', receiptNo: op.receipt_no != null ? Number(op.receipt_no) : null });
+  }
+  return out;
+}
+
 export async function buildFamilyPage(orgId: string, personId: string): Promise<FamilyPagePayload | null> {
   const world = await loadOrgFamilyWorld(orgId);
   const p: any = world.personById.get(personId);
@@ -816,6 +839,9 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
       league: leagueFeeLine(r), leagueReg: { id: r.id, seasonId: r.season_id },
     });
   }
+  // 12c Part 7 (12b's b4): each house-league child's latest online payment, for "Paid online Oct 24 · card · receipt 1043".
+  const onlineOf = await leagueOnlinePaid(childLines.filter(l => l.leagueReg).map(l => l.leagueReg!.id));
+  for (const l of childLines) if (l.league && l.leagueReg) l.league.online = onlineOf.get(l.leagueReg.id) ?? null;
   // This season's house-league fees — the band adds them to the rep figures (owner 2026-10-18).
   const feeLines = childLines.filter(l => l.league?.feeCents != null);
   const feeSum = (f: (l: LeagueFeeLine) => number) => feeLines.reduce((s, l) => s + f(l.league!), 0);

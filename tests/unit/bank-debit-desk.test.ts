@@ -177,3 +177,23 @@ describe('payouts: both rates, and Disconnect counts what is clearing (words §3
     assert.match(readCode('components/admin/kit/club/PayoutsCard.tsx'), /\{clearing > 0 && <p>\{W\.disconnect\.clearing\(clearing\)\}<\/p>\}/);
   });
 });
+
+describe('Part 7: the Families record and "View the payment" (12b b3, b4)', () => {
+  it('a payment that came online offers "View the payment", which opens the record at its Fee', () => {
+    const online = [line({ method: 'online_card', receiptNo: 1043 })];
+    assert.ok(rowActions(reg(), feeState(reg(), SEASON, online, TODAY), online, RIGHTS).all.includes('viewPayment'));
+    const byHand = [line({ method: 'etransfer' })];
+    assert.ok(!rowActions(reg(), feeState(reg(), SEASON, byHand, TODAY), byHand, RIGHTS).all.includes('viewPayment'));
+    assert.match(readCode('components/admin/kit/club/league/registrations/RegistrationsScreen.tsx'), /case 'viewPayment': setFeeFocus\(reg\.id\); setOpenId\(reg\.id\); break;/);
+  });
+  it('the family\'s record reads "Paid online Oct 24 · card · receipt 1043", or the pay link while owing', async () => {
+    const { FAMILY_ONLINE_WORDS: F } = await import('../../lib/house-league-money-words.ts');
+    assert.equal(F.paidOnline('Oct 24', 'card', '1043'), 'Paid online Oct 24 · card · receipt 1043');
+    assert.equal(F.linkSent('Oct 20'), 'Pay link sent Oct 20');
+    const w = readCode('components/admin/kit/club/families/FamilyRecordWindow.tsx');
+    assert.match(w, /l\.league\?\.online && l\.league\.paidCents > 0/);
+    const read = readCode('lib/families-read.ts');
+    assert.match(read, /async function leagueOnlinePaid/);
+    assert.match(read, /op\.status === 'reversed'\) continue;/, 'a payment the bank took back is not "paid online"');
+  });
+});

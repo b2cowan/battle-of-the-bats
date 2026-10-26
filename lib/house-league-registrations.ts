@@ -106,7 +106,7 @@ export function clip(text: string, max: number): string {
 /** A method as a short word on a staff line: the label, or nothing when it was not recorded. */
 const how = (m: string | null | undefined) => (m ? paymentMethodWord(m) : null);
 /** How a payment arrived, and a card payment's receipt after it (12b copy §5: "Online, card · receipt 1043"). */
-const howOf = (l: { method: string | null; receiptNo?: number | null }) => {
+export const howOf = (l: { method: string | null; receiptNo?: number | null }) => {
   const word = how(l.method);
   return word && l.receiptNo ? `${word} · ${REGS_WORDS.fee.receipt(l.receiptNo)}` : word;
 };
@@ -328,11 +328,11 @@ export interface RegRights {
 
 export type RowActionKey =
   | 'approve' | 'markReceived' | 'promote' | 'move' | 'correct' | 'release' | 'withdraw' | 'decline' | 'email' | 'undo' | 'waitlist'
-  | 'payLink' | 'refundCard' | 'refundAnotherWay';
+  | 'payLink' | 'refundCard' | 'refundAnotherWay' | 'viewPayment';
 
 /** The ⋯ menu's order (copy §1.5). */
 const MENU_ORDER: readonly RowActionKey[] = [
-  'approve', 'markReceived', 'payLink', 'move', 'correct', 'release', 'withdraw', 'decline', 'email', 'undo', 'waitlist', 'promote',
+  'approve', 'markReceived', 'payLink', 'viewPayment', 'move', 'correct', 'release', 'withdraw', 'decline', 'email', 'undo', 'waitlist', 'promote',
 ];
 
 /**
@@ -368,6 +368,8 @@ export function rowActions(
     if (rights.register) { has.add('promote'); has.add('decline'); }
     if (rights.run) has.add('move');
   }
+  // 12c Part 7 (12b's b3): a payment that came online opens the record at its Fee, where it and its refunds are read.
+  if (latest && (latest.method === 'online_card' || latest.method === 'online_bank')) has.add('viewPayment');
   if (rights.email) has.add('email');
   const primary: RowActionKey | null = has.has('approve') ? 'approve'
     : has.has('markReceived') ? 'markReceived'
