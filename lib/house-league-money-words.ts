@@ -523,38 +523,6 @@ export const UNDO_WORDS = {
   done: (name: string) => `Took back ${possessive(name)} payment.`,
 } as const;
 
-/** Email a family, the ticked families, or the season (the 9b-2 bulk bar; today's composer for the season). */
-export const REGS_EMAIL_WORDS = {
-  eyebrow: (season: string) => season,
-  titleOne: 'Email this family',
-  titleMany: (n: number) => `Email ${nFamilies(n)}`,
-  titleSeason: 'Email families',
-  subject: 'Subject',
-  subjectPlaceholder: 'e.g. Season start reminder',
-  message: 'Message',
-  messagePlaceholder: 'Write your message here…',
-  audience: 'Audience',
-  audienceAll: 'All active registrants',
-  audienceDivision: 'By division',
-  audienceTeam: 'By team',
-  audienceStatus: 'By status',
-  division: 'Division',
-  divisionPick: 'Select a division…',
-  team: 'Team',
-  teamPick: 'Select a team…',
-  status: 'Status',
-  statusOptions: { active: 'Active', waitlisted: 'Waitlisted', pending_review: 'To review', declined: 'Declined' },
-  toOne: (email: string) => `Sends to ${email}.`,
-  toSeason: (n: number) => (n > 0 ? `Sending to ${pluralize(n, 'guardian')}.` : 'No recipients match this selection.'),
-  cancel: 'Cancel',
-  send: 'Send',
-  sendN: (n: number) => `Send to ${n}`,
-  working: 'Sending…',
-  needBoth: 'Write a subject and a message.',
-  failed: 'That didn’t go through. Please try again.',
-  sentSeason: (sent: number, skipped: number) => `Sent to ${pluralize(sent, 'guardian')}.${skipped ? ` ${skipped} skipped.` : ''}`,
-} as const;
-
 /** Add a registration by hand (today's form, on a window). */
 export const ADD_REG_WORDS = {
   title: 'Add registration',

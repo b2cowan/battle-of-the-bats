@@ -58,7 +58,7 @@ import { patchRegistration } from './api';
 import AddRegistrationWindow from './AddRegistrationWindow';
 import BulkBar from './BulkBar';
 import ConfirmWindow from './ConfirmWindow';
-import EmailWindow from './EmailWindow';
+import EmailFamiliesWindow from '../../families/EmailFamiliesWindow';
 import EndWindow from './EndWindow';
 import MoveWindow, { type MoveOutcome, type MoveTarget } from './MoveWindow';
 import PriceWindow from './PriceWindow';
@@ -884,16 +884,16 @@ export default function RegistrationsScreen() {
         />
       )}
       {(act?.kind === 'email' || act?.kind === 'seasonEmail') && (
-        <EmailWindow
-          seasonName={season.name}
-          audience={act.kind === 'email' ? { kind: 'selected', regs: act.ids.map(id => regById.get(id)).filter((r): r is LeagueRegistration => !!r) } : { kind: 'season' }}
-          allRegs={regs}
-          divisions={divisions}
-          teams={teams}
-          orgQuery={orgQuery}
-          seasonId={seasonId}
-          raised={raised}
+        // The club's one email window, opened from this season (9d1·1): Tools reaches the whole Who list, the bulk bar the
+        // ticked families, a row's ⋯ one family (which never counts toward the season's three).
+        <EmailFamiliesWindow
+          q={orgQuery.slice(1)}
+          season={{
+            id: seasonId, name: season.name, ticked: act.kind === 'email' ? act.ids : undefined,
+            registrationsHref: base, teamsHref: `/${orgSlug}/admin/house-league/seasons/${seasonId}/teams`,
+          }}
           onClose={() => setAct(null)}
+          onShowNoFamily={() => setAct(null)}
           onSent={said => { setAct(null); say(said); if (act.kind === 'email') clearSelection(); }}
         />
       )}
