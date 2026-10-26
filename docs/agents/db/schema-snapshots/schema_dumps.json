@@ -4511,6 +4511,69 @@
         "column_default": "now()"
       },
       {
+        "table_name": "family_email_recipients",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "family_email_recipients",
+        "pos": 2,
+        "column_name": "send_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_recipients",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_recipients",
+        "pos": 4,
+        "column_name": "person_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_recipients",
+        "pos": 5,
+        "column_name": "family_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_recipients",
+        "pos": 6,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "table_name": "family_email_recipients",
+        "pos": 7,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "family_email_sends",
         "pos": 1,
         "column_name": "id",
@@ -4653,6 +4716,15 @@
         "udt_name": "text",
         "is_nullable": "NO",
         "column_default": "'sending'::text"
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 17,
+        "column_name": "retried_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "family_links",
@@ -4914,6 +4986,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "family_messages",
+        "pos": 6,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "family_notes",
@@ -6734,6 +6815,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "league_placement_emails",
+        "pos": 15,
+        "column_name": "notice_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_player_ratings",
         "pos": 1,
         "column_name": "registration_id",
@@ -7420,6 +7510,96 @@
       {
         "table_name": "league_season_fee_words",
         "pos": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 4,
+        "column_name": "division_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 5,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 6,
+        "column_name": "family_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 7,
+        "column_name": "reached_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 8,
+        "column_name": "failed_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 9,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 10,
         "column_name": "created_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
@@ -8471,6 +8651,42 @@
         "column_default": null
       },
       {
+        "table_name": "online_payment_refunds",
+        "pos": 26,
+        "column_name": "stripe_created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 27,
+        "column_name": "family_answer",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 28,
+        "column_name": "family_answer_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_refunds",
+        "pos": 29,
+        "column_name": "family_answer_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "online_payments",
         "pos": 1,
         "column_name": "id",
@@ -8845,6 +9061,87 @@
         "column_name": "stripe_dispute_id",
         "data_type": "text",
         "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "pos": 3,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "pos": 4,
+        "column_name": "stripe_refund_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "pos": 5,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "pos": 6,
+        "column_name": "stripe_created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "pos": 7,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "pos": 8,
+        "column_name": "assigned_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "pos": 9,
+        "column_name": "assigned_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -25869,6 +26166,20 @@
         "constraint_name": "family_email_optouts_org_id_fkey"
       },
       {
+        "table_name": "family_email_recipients",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "family_email_recipients_org_id_fkey"
+      },
+      {
+        "table_name": "family_email_recipients",
+        "column_name": "send_id",
+        "foreign_table": "family_email_sends",
+        "foreign_column": "id",
+        "constraint_name": "family_email_recipients_send_id_fkey"
+      },
+      {
         "table_name": "family_email_sends",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -26311,6 +26622,13 @@
       },
       {
         "table_name": "league_placement_emails",
+        "column_name": "notice_id",
+        "foreign_table": "league_season_notices",
+        "foreign_column": "id",
+        "constraint_name": "league_placement_emails_notice_id_fkey"
+      },
+      {
+        "table_name": "league_placement_emails",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -26499,6 +26817,34 @@
         "constraint_name": "league_season_fee_words_season_id_fkey"
       },
       {
+        "table_name": "league_season_notices",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_season_notices_created_by_fkey"
+      },
+      {
+        "table_name": "league_season_notices",
+        "column_name": "division_id",
+        "foreign_table": "league_divisions",
+        "foreign_column": "id",
+        "constraint_name": "league_season_notices_division_id_fkey"
+      },
+      {
+        "table_name": "league_season_notices",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_season_notices_org_id_fkey"
+      },
+      {
+        "table_name": "league_season_notices",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_season_notices_season_id_fkey"
+      },
+      {
         "table_name": "league_seasons",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -26626,6 +26972,13 @@
       },
       {
         "table_name": "online_payment_refunds",
+        "column_name": "family_answer_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "online_payment_refunds_family_answer_by_fk"
+      },
+      {
+        "table_name": "online_payment_refunds",
         "column_name": "online_payment_item_id",
         "foreign_table": "online_payment_items",
         "foreign_column": "id",
@@ -26686,6 +27039,27 @@
         "foreign_table": "tournaments",
         "foreign_column": "id",
         "constraint_name": "online_payments_tournament_fk"
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "column_name": "assigned_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "online_refunds_unassigned_assigned_by_fk"
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "online_refunds_unassigned_org_fk"
+      },
+      {
+        "table_name": "online_refunds_unassigned",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "online_refunds_unassigned_payment_fk"
       },
       {
         "table_name": "org_audit_log",
@@ -31218,6 +31592,21 @@
         "indexdef": "CREATE UNIQUE INDEX family_email_optouts_pkey ON public.family_email_optouts USING btree (id)"
       },
       {
+        "tablename": "family_email_recipients",
+        "indexname": "family_email_recipients_org_idx",
+        "indexdef": "CREATE INDEX family_email_recipients_org_idx ON public.family_email_recipients USING btree (org_id)"
+      },
+      {
+        "tablename": "family_email_recipients",
+        "indexname": "family_email_recipients_pkey",
+        "indexdef": "CREATE UNIQUE INDEX family_email_recipients_pkey ON public.family_email_recipients USING btree (id)"
+      },
+      {
+        "tablename": "family_email_recipients",
+        "indexname": "family_email_recipients_send_idx",
+        "indexdef": "CREATE INDEX family_email_recipients_send_idx ON public.family_email_recipients USING btree (send_id, status)"
+      },
+      {
         "tablename": "family_email_sends",
         "indexname": "family_email_sends_org_sent_idx",
         "indexdef": "CREATE INDEX family_email_sends_org_sent_idx ON public.family_email_sends USING btree (org_id, sent_at DESC)"
@@ -31226,6 +31615,11 @@
         "tablename": "family_email_sends",
         "indexname": "family_email_sends_pkey",
         "indexdef": "CREATE UNIQUE INDEX family_email_sends_pkey ON public.family_email_sends USING btree (id)"
+      },
+      {
+        "tablename": "family_email_sends",
+        "indexname": "family_email_sends_season_sent_idx",
+        "indexdef": "CREATE INDEX family_email_sends_season_sent_idx ON public.family_email_sends USING btree (season_id, sent_at DESC) WHERE (season_id IS NOT NULL)"
       },
       {
         "tablename": "family_links",
@@ -31291,6 +31685,11 @@
         "tablename": "family_messages",
         "indexname": "family_messages_pkey",
         "indexdef": "CREATE UNIQUE INDEX family_messages_pkey ON public.family_messages USING btree (id)"
+      },
+      {
+        "tablename": "family_messages",
+        "indexname": "family_messages_season_idx",
+        "indexdef": "CREATE INDEX family_messages_season_idx ON public.family_messages USING btree (season_id, sent_at DESC) WHERE (season_id IS NOT NULL)"
       },
       {
         "tablename": "family_notes",
@@ -31644,6 +32043,11 @@
       },
       {
         "tablename": "league_placement_emails",
+        "indexname": "league_placement_emails_notice_idx",
+        "indexdef": "CREATE INDEX league_placement_emails_notice_idx ON public.league_placement_emails USING btree (notice_id) WHERE (notice_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_placement_emails",
         "indexname": "league_placement_emails_org_id_idx",
         "indexdef": "CREATE INDEX league_placement_emails_org_id_idx ON public.league_placement_emails USING btree (org_id)"
       },
@@ -31808,6 +32212,26 @@
         "indexdef": "CREATE UNIQUE INDEX league_season_fee_words_pkey ON public.league_season_fee_words USING btree (season_id)"
       },
       {
+        "tablename": "league_season_notices",
+        "indexname": "league_season_notices_division_idx",
+        "indexdef": "CREATE INDEX league_season_notices_division_idx ON public.league_season_notices USING btree (division_id)"
+      },
+      {
+        "tablename": "league_season_notices",
+        "indexname": "league_season_notices_org_idx",
+        "indexdef": "CREATE INDEX league_season_notices_org_idx ON public.league_season_notices USING btree (org_id)"
+      },
+      {
+        "tablename": "league_season_notices",
+        "indexname": "league_season_notices_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_season_notices_pkey ON public.league_season_notices USING btree (id)"
+      },
+      {
+        "tablename": "league_season_notices",
+        "indexname": "league_season_notices_season_idx",
+        "indexdef": "CREATE INDEX league_season_notices_season_idx ON public.league_season_notices USING btree (season_id, created_at DESC)"
+      },
+      {
         "tablename": "league_seasons",
         "indexname": "league_seasons_org_id_slug_key",
         "indexdef": "CREATE UNIQUE INDEX league_seasons_org_id_slug_key ON public.league_seasons USING btree (org_id, slug)"
@@ -31885,7 +32309,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_one_open_online_payments_notice",
-        "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text])))"
+        "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text])))"
       },
       {
         "tablename": "notifications",
@@ -31895,7 +32319,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_org_needs_attention_idx",
-        "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+        "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
       },
       {
         "tablename": "notifications",
@@ -31905,7 +32329,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_user_needs_attention_idx",
-        "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+        "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
       },
       {
         "tablename": "notifications",
@@ -31961,6 +32385,11 @@
         "tablename": "online_payment_refunds",
         "indexname": "online_payment_refunds_entry_idx",
         "indexdef": "CREATE INDEX online_payment_refunds_entry_idx ON public.online_payment_refunds USING btree (refund_entry_id) WHERE (refund_entry_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payment_refunds",
+        "indexname": "online_payment_refunds_family_answer_by_idx",
+        "indexdef": "CREATE INDEX online_payment_refunds_family_answer_by_idx ON public.online_payment_refunds USING btree (family_answer_by) WHERE (family_answer_by IS NOT NULL)"
       },
       {
         "tablename": "online_payment_refunds",
@@ -32061,6 +32490,31 @@
         "tablename": "online_payments",
         "indexname": "online_payments_tournament_idx",
         "indexdef": "CREATE INDEX online_payments_tournament_idx ON public.online_payments USING btree (tournament_id) WHERE (tournament_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_refunds_unassigned",
+        "indexname": "online_refunds_unassigned_assigned_by_idx",
+        "indexdef": "CREATE INDEX online_refunds_unassigned_assigned_by_idx ON public.online_refunds_unassigned USING btree (assigned_by) WHERE (assigned_by IS NOT NULL)"
+      },
+      {
+        "tablename": "online_refunds_unassigned",
+        "indexname": "online_refunds_unassigned_org_idx",
+        "indexdef": "CREATE INDEX online_refunds_unassigned_org_idx ON public.online_refunds_unassigned USING btree (org_id)"
+      },
+      {
+        "tablename": "online_refunds_unassigned",
+        "indexname": "online_refunds_unassigned_payment_idx",
+        "indexdef": "CREATE INDEX online_refunds_unassigned_payment_idx ON public.online_refunds_unassigned USING btree (online_payment_id)"
+      },
+      {
+        "tablename": "online_refunds_unassigned",
+        "indexname": "online_refunds_unassigned_pkey",
+        "indexdef": "CREATE UNIQUE INDEX online_refunds_unassigned_pkey ON public.online_refunds_unassigned USING btree (id)"
+      },
+      {
+        "tablename": "online_refunds_unassigned",
+        "indexname": "online_refunds_unassigned_stripe_key",
+        "indexdef": "CREATE UNIQUE INDEX online_refunds_unassigned_stripe_key ON public.online_refunds_unassigned USING btree (stripe_refund_id)"
       },
       {
         "tablename": "org_audit_log",
@@ -36180,9 +36634,33 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "family_email_recipients",
+        "detail": "family_email_recipients_family_name_check",
+        "check_clause": "((family_name IS NULL) OR (char_length(family_name) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_recipients",
+        "detail": "family_email_recipients_person_ids_check",
+        "check_clause": "(cardinality(person_ids) > 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_recipients",
+        "detail": "family_email_recipients_status_check",
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'sent'::text, 'failed'::text, 'opted_out'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "family_email_recipients",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "family_email_sends",
         "detail": "family_email_sends_audience_kind_check",
-        "check_clause": "(audience_kind = ANY (ARRAY['every'::text, 'teams'::text, 'season'::text, 'list'::text]))"
+        "check_clause": "(audience_kind = ANY (ARRAY['every'::text, 'teams'::text, 'season'::text, 'list'::text, 'season_divisions'::text, 'season_teams'::text, 'season_statuses'::text, 'season_families'::text]))"
       },
       {
         "kind": "CHECK",
@@ -36225,6 +36703,12 @@
         "table_name": "family_email_sends",
         "detail": "family_email_sends_reached_count_check",
         "check_clause": "(reached_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_season_kind_names_season",
+        "check_clause": "((audience_kind !~~ 'season%'::text) OR (season_id IS NOT NULL))"
       },
       {
         "kind": "CHECK",
@@ -36600,6 +37084,36 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "league_season_notices",
+        "detail": "league_season_notices_failed_count_check",
+        "check_clause": "(failed_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_season_notices",
+        "detail": "league_season_notices_family_count_check",
+        "check_clause": "(family_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_season_notices",
+        "detail": "league_season_notices_kind_check",
+        "check_clause": "(kind = 'teams_published'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_season_notices",
+        "detail": "league_season_notices_reached_count_check",
+        "check_clause": "(reached_count >= 0)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_season_notices",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "league_seasons",
         "detail": "league_seasons_how_to_pay_check",
         "check_clause": "((how_to_pay IS NULL) OR (char_length(how_to_pay) <= 1000))"
@@ -36723,6 +37237,12 @@
         "table_name": "online_payment_refunds",
         "detail": "online_payment_refunds_amount_chk",
         "check_clause": "((amount > (0)::numeric) AND (fee_refunded >= (0)::numeric) AND (fee_refunded < amount))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_refunds",
+        "detail": "online_payment_refunds_family_answer_chk",
+        "check_clause": "(((family_answer IS NULL) OR (family_answer = ANY (ARRAY['withdraw'::text, 'link'::text, 'keep'::text]))) AND ((family_answer IS NULL) = (family_answer_at IS NULL)))"
       },
       {
         "kind": "CHECK",
@@ -36859,6 +37379,18 @@
       {
         "kind": "RLS",
         "table_name": "online_payments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_refunds_unassigned",
+        "detail": "online_refunds_unassigned_amount_chk",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "online_refunds_unassigned",
         "detail": "ENABLED",
         "check_clause": null
       },

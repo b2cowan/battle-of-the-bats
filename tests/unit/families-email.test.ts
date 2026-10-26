@@ -136,11 +136,17 @@ describe('Email families — who it reaches (the one audience)', () => {
 describe('Email families — the press, the claim and the cap', () => {
   const send = code('lib/families-email.ts');
 
-  it('the club cap is one number: on screen and in family_email_claim (mig 347)', () => {
-    const m = read('supabase/migrations/347_the_club_can_email_every_family.sql').match(/v_cap\s+constant integer := (\d+);/);
-    assert.ok(m, 'mig 347 lost its v_cap');
+  it('the cap is one number: on screen and in the LATEST family_email_claim (mig 347, by bucket since 385)', () => {
+    // The newest migration that defines the claim is the one the database runs, so a later file that changes the
+    // number cannot pass behind an older one.
+    const dir = join(REPO, 'supabase', 'migrations');
+    const latest = readdirSync(dir).filter(f => f.endsWith('.sql')).sort()
+      .filter(f => /CREATE OR REPLACE FUNCTION public\.family_email_claim\(/.test(readFileSync(join(dir, f), 'utf8'))).at(-1);
+    assert.ok(latest, 'no migration defines family_email_claim');
+    const m = read(`supabase/migrations/${latest}`).match(/v_cap\s+constant integer := (\d+);/);
+    assert.ok(m, `${latest} lost its v_cap`);
     assert.equal(Number(m![1]), CLUB_EMAIL_CAP);
-    assert.equal(CLUB_EMAIL_CAP, 3, 'Ask 7 A: three club-wide sends a day');
+    assert.equal(CLUB_EMAIL_CAP, 3, 'Ask 7 A, 9d1·12: three emails in any 24 hours, for the club and for each season');
   });
 
   it('it re-counts from the one audience, refuses a changed count, then claims BEFORE the first email', () => {

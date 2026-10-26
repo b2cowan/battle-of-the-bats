@@ -1,14 +1,26 @@
 {
   "generated": "2026-10-26",
-  "total": 654,
+  "total": 730,
   "counts": {
-    "tables": 21,
-    "columns": 338,
-    "indexes": 102,
-    "constraints": 95,
-    "rls": 98
+    "tables": 24,
+    "columns": 371,
+    "indexes": 118,
+    "constraints": 109,
+    "rls": 108
   },
   "items": [
+    {
+      "key": "check:only-dev:family_email_recipients.family_email_recipients_family_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_recipients.family_email_recipients_person_ids_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_recipients.family_email_recipients_status_check",
+      "sig": ""
+    },
     {
       "key": "check:only-dev:family_email_sends.family_email_sends_audience_kind_check",
       "sig": ""
@@ -39,6 +51,10 @@
     },
     {
       "key": "check:only-dev:family_email_sends.family_email_sends_reached_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_season_kind_names_season",
       "sig": ""
     },
     {
@@ -102,6 +118,22 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:league_season_notices.league_season_notices_failed_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_season_notices.league_season_notices_family_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_season_notices.league_season_notices_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_season_notices.league_season_notices_reached_count_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:league_seasons.league_seasons_how_to_pay_check",
       "sig": ""
     },
@@ -143,6 +175,10 @@
     },
     {
       "key": "check:only-dev:online_payment_refunds.online_payment_refunds_amount_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_refunds.online_payment_refunds_family_answer_chk",
       "sig": ""
     },
     {
@@ -227,6 +263,10 @@
     },
     {
       "key": "check:only-dev:online_payments.online_payments_total_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_refunds_unassigned.online_refunds_unassigned_amount_chk",
       "sig": ""
     },
     {
@@ -402,6 +442,34 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:family_email_recipients.family_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_recipients.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_recipients.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_recipients.person_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_recipients.send_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_recipients.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_recipients.updated_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:family_email_sends.audience_kind",
       "sig": ""
     },
@@ -442,6 +510,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:family_email_sends.retried_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:family_email_sends.season_id",
       "sig": ""
     },
@@ -463,6 +535,10 @@
     },
     {
       "key": "column:only-dev:family_email_sends.team_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_messages.season_id",
       "sig": ""
     },
     {
@@ -523,6 +599,10 @@
     },
     {
       "key": "column:only-dev:league_placement_emails.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.notice_id",
       "sig": ""
     },
     {
@@ -698,6 +778,46 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_season_notices.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_notices.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_notices.division_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_notices.failed_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_notices.family_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_notices.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_notices.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_notices.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_notices.reached_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_notices.season_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_seasons.ask_email_consent",
       "sig": ""
     },
@@ -866,6 +986,18 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:online_payment_refunds.family_answer",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_refunds.family_answer_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_refunds.family_answer_by",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:online_payment_refunds.family_email_failed_at",
       "sig": ""
     },
@@ -927,6 +1059,10 @@
     },
     {
       "key": "column:only-dev:online_payment_refunds.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_refunds.stripe_created_at",
       "sig": ""
     },
     {
@@ -1107,6 +1243,42 @@
     },
     {
       "key": "column:only-dev:online_payments.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_refunds_unassigned.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_refunds_unassigned.assigned_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_refunds_unassigned.assigned_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_refunds_unassigned.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_refunds_unassigned.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_refunds_unassigned.online_payment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_refunds_unassigned.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_refunds_unassigned.stripe_created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_refunds_unassigned.stripe_refund_id",
       "sig": ""
     },
     {
@@ -1754,6 +1926,18 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:family_email_recipients.family_email_recipients_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_email_recipients.family_email_recipients_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_email_recipients.family_email_recipients_send_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:family_email_sends.family_email_sends_org_id_fkey",
       "sig": ""
     },
@@ -1771,6 +1955,10 @@
     },
     {
       "key": "constraint:only-dev:league_placement_emails.league_placement_emails_from_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_placement_emails.league_placement_emails_notice_id_fkey",
       "sig": ""
     },
     {
@@ -1854,6 +2042,26 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_season_notices.league_season_notices_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_season_notices.league_season_notices_division_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_season_notices.league_season_notices_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_season_notices.league_season_notices_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_season_notices.league_season_notices_season_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:league_team_coaches.league_team_coaches_org_id_fkey",
       "sig": ""
     },
@@ -1906,6 +2114,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:online_payment_refunds.online_payment_refunds_family_answer_by_fk",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:online_payment_refunds.online_payment_refunds_item_fk",
       "sig": ""
     },
@@ -1947,6 +2159,22 @@
     },
     {
       "key": "constraint:only-dev:online_payments.online_payments_tournament_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_refunds_unassigned.online_refunds_unassigned_assigned_by_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_refunds_unassigned.online_refunds_unassigned_org_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_refunds_unassigned.online_refunds_unassigned_payment_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_refunds_unassigned.online_refunds_unassigned_pkey",
       "sig": ""
     },
     {
@@ -2135,14 +2363,26 @@
     },
     {
       "key": "index:changed:notifications_org_needs_attention_idx",
-      "sig": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+      "sig": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
     },
     {
       "key": "index:changed:notifications_user_needs_attention_idx",
-      "sig": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+      "sig": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
     },
     {
       "key": "index:only-dev:accounting_entries_league_registration_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_email_recipients_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_email_recipients_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_email_recipients_send_idx",
       "sig": ""
     },
     {
@@ -2151,6 +2391,14 @@
     },
     {
       "key": "index:only-dev:family_email_sends_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_email_sends_season_sent_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_messages_season_idx",
       "sig": ""
     },
     {
@@ -2163,6 +2411,10 @@
     },
     {
       "key": "index:only-dev:league_placement_emails_division_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_placement_emails_notice_idx",
       "sig": ""
     },
     {
@@ -2230,6 +2482,22 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_season_notices_division_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_season_notices_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_season_notices_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_season_notices_season_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:league_team_coaches_one_per_team",
       "sig": ""
     },
@@ -2291,6 +2559,10 @@
     },
     {
       "key": "index:only-dev:online_payment_refunds_entry_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_refunds_family_answer_by_idx",
       "sig": ""
     },
     {
@@ -2371,6 +2643,26 @@
     },
     {
       "key": "index:only-dev:online_payments_tournament_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_refunds_unassigned_assigned_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_refunds_unassigned_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_refunds_unassigned_payment_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_refunds_unassigned_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_refunds_unassigned_stripe_key",
       "sig": ""
     },
     {
@@ -2542,6 +2834,10 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:family_email_recipients",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:family_email_sends",
       "sig": ""
     },
@@ -2562,6 +2858,10 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:league_season_notices",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:league_team_coaches",
       "sig": ""
     },
@@ -2575,6 +2875,10 @@
     },
     {
       "key": "table:only-dev:online_payments",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:online_refunds_unassigned",
       "sig": ""
     },
     {

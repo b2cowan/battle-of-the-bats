@@ -2,27 +2,30 @@
 
 **Generated:** 2026-10-26 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 654 divergence(s)** across dev/prod.
+**⚠️ 730 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 21 | 0 | — |
-| Columns | 337 | 1 | 0 |
-| Indexes | 100 | 0 | 2 |
-| Constraints | 95 | 0 | — |
-| RLS / CHECK | 98 | 0 | 0 (RLS state) |
+| Tables | 24 | 0 | — |
+| Columns | 370 | 1 | 0 |
+| Indexes | 116 | 0 | 2 |
+| Constraints | 109 | 0 | — |
+| RLS / CHECK | 108 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (21)
+### Only in DEV (24)
+- `family_email_recipients`
 - `family_email_sends`
 - `league_placement_emails`
 - `league_player_ratings`
 - `league_registration_price_changes`
 - `league_season_fee_words`
+- `league_season_notices`
 - `league_team_coaches`
 - `online_payment_items`
 - `online_payment_refunds`
 - `online_payments`
+- `online_refunds_unassigned`
 - `org_custom_domains`
 - `org_payment_accounts`
 - `org_site_notices`
@@ -40,7 +43,14 @@
 _none_
 
 ## Columns
-### Only in DEV (337)
+### Only in DEV (370)
+- `family_email_recipients.family_name`
+- `family_email_recipients.id`
+- `family_email_recipients.org_id`
+- `family_email_recipients.person_ids`
+- `family_email_recipients.send_id`
+- `family_email_recipients.status`
+- `family_email_recipients.updated_at`
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -51,12 +61,14 @@ _none_
 - `family_email_sends.opted_out_count`
 - `family_email_sends.org_id`
 - `family_email_sends.reached_count`
+- `family_email_sends.retried_at`
 - `family_email_sends.season_id`
 - `family_email_sends.sent_at`
 - `family_email_sends.sent_by`
 - `family_email_sends.status`
 - `family_email_sends.subject`
 - `family_email_sends.team_ids`
+- `family_messages.season_id`
 - `league_divisions.born_from_year`
 - `league_divisions.born_to_year`
 - `league_divisions.early_price`
@@ -72,6 +84,7 @@ _none_
 - `league_placement_emails.guardian_email`
 - `league_placement_emails.id`
 - `league_placement_emails.kind`
+- `league_placement_emails.notice_id`
 - `league_placement_emails.org_id`
 - `league_placement_emails.registration_ids`
 - `league_placement_emails.season_id`
@@ -115,6 +128,16 @@ _none_
 - `league_season_fee_words.item_id`
 - `league_season_fee_words.org_id`
 - `league_season_fee_words.season_id`
+- `league_season_notices.created_at`
+- `league_season_notices.created_by`
+- `league_season_notices.division_id`
+- `league_season_notices.failed_count`
+- `league_season_notices.family_count`
+- `league_season_notices.id`
+- `league_season_notices.kind`
+- `league_season_notices.org_id`
+- `league_season_notices.reached_count`
+- `league_season_notices.season_id`
 - `league_seasons.ask_email_consent`
 - `league_seasons.early_bird_until`
 - `league_seasons.finished_at`
@@ -157,6 +180,9 @@ _none_
 - `online_payment_refunds.created_by`
 - `online_payment_refunds.failed_at`
 - `online_payment_refunds.failure_reason`
+- `online_payment_refunds.family_answer`
+- `online_payment_refunds.family_answer_at`
+- `online_payment_refunds.family_answer_by`
 - `online_payment_refunds.family_email_failed_at`
 - `online_payment_refunds.family_emailed_at`
 - `online_payment_refunds.fee_refunded`
@@ -173,6 +199,7 @@ _none_
 - `online_payment_refunds.refund_entry_id`
 - `online_payment_refunds.resolved_by`
 - `online_payment_refunds.status`
+- `online_payment_refunds.stripe_created_at`
 - `online_payment_refunds.stripe_refund_id`
 - `online_payment_refunds.succeeded_at`
 - `online_payment_refunds.updated_at`
@@ -218,6 +245,15 @@ _none_
 - `online_payments.total_amount`
 - `online_payments.tournament_id`
 - `online_payments.updated_at`
+- `online_refunds_unassigned.amount`
+- `online_refunds_unassigned.assigned_at`
+- `online_refunds_unassigned.assigned_by`
+- `online_refunds_unassigned.created_at`
+- `online_refunds_unassigned.id`
+- `online_refunds_unassigned.online_payment_id`
+- `online_refunds_unassigned.org_id`
+- `online_refunds_unassigned.stripe_created_at`
+- `online_refunds_unassigned.stripe_refund_id`
 - `org_custom_domains.connected_at`
 - `org_custom_domains.created_at`
 - `org_custom_domains.created_by_user_id`
@@ -386,13 +422,19 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (100)
+### Only in DEV (116)
 - `accounting_entries_league_registration_idx`
+- `family_email_recipients_org_idx`
+- `family_email_recipients_pkey`
+- `family_email_recipients_send_idx`
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
+- `family_email_sends_season_sent_idx`
+- `family_messages_season_idx`
 - `idx_rep_team_tryout_contacts_org`
 - `idx_rep_team_tryout_contacts_setter`
 - `league_placement_emails_division_idx`
+- `league_placement_emails_notice_idx`
 - `league_placement_emails_org_id_idx`
 - `league_placement_emails_pkey`
 - `league_placement_emails_season_idx`
@@ -409,6 +451,10 @@ _none_
 - `league_season_fee_words_item_uniq`
 - `league_season_fee_words_org_idx`
 - `league_season_fee_words_pkey`
+- `league_season_notices_division_idx`
+- `league_season_notices_org_idx`
+- `league_season_notices_pkey`
+- `league_season_notices_season_idx`
 - `league_team_coaches_one_per_team`
 - `league_team_coaches_org_id_idx`
 - `league_team_coaches_pkey`
@@ -425,6 +471,7 @@ _none_
 - `online_payment_refunds_cost_entry_idx`
 - `online_payment_refunds_created_by_idx`
 - `online_payment_refunds_entry_idx`
+- `online_payment_refunds_family_answer_by_idx`
 - `online_payment_refunds_item_idx`
 - `online_payment_refunds_org_idx`
 - `online_payment_refunds_payment_idx`
@@ -445,6 +492,11 @@ _none_
 - `online_payments_session_key`
 - `online_payments_team_idx`
 - `online_payments_tournament_idx`
+- `online_refunds_unassigned_assigned_by_idx`
+- `online_refunds_unassigned_org_idx`
+- `online_refunds_unassigned_payment_idx`
+- `online_refunds_unassigned_pkey`
+- `online_refunds_unassigned_stripe_key`
 - `org_custom_domains_domain_uidx`
 - `org_custom_domains_full_name_uidx`
 - `org_custom_domains_org_uidx`
@@ -493,19 +545,23 @@ _none_
 
 ### Definition changed (2)
 - `notifications_org_needs_attention_idx`
-  - dev: `CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
+  - dev: `CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
   - prod: `CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 - `notifications_user_needs_attention_idx`
-  - dev: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
+  - dev: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
   - prod: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (95)
+### Only in DEV (109)
+- `family_email_recipients.family_email_recipients_org_id_fkey`
+- `family_email_recipients.family_email_recipients_pkey`
+- `family_email_recipients.family_email_recipients_send_id_fkey`
 - `family_email_sends.family_email_sends_org_id_fkey`
 - `family_email_sends.family_email_sends_pkey`
 - `family_email_sends.family_email_sends_sent_by_fkey`
 - `league_placement_emails.league_placement_emails_division_id_fkey`
 - `league_placement_emails.league_placement_emails_from_team_id_fkey`
+- `league_placement_emails.league_placement_emails_notice_id_fkey`
 - `league_placement_emails.league_placement_emails_org_id_fkey`
 - `league_placement_emails.league_placement_emails_pkey`
 - `league_placement_emails.league_placement_emails_season_id_fkey`
@@ -526,6 +582,11 @@ _none_
 - `league_season_fee_words.league_season_fee_words_org_id_fkey`
 - `league_season_fee_words.league_season_fee_words_pkey`
 - `league_season_fee_words.league_season_fee_words_season_id_fkey`
+- `league_season_notices.league_season_notices_created_by_fkey`
+- `league_season_notices.league_season_notices_division_id_fkey`
+- `league_season_notices.league_season_notices_org_id_fkey`
+- `league_season_notices.league_season_notices_pkey`
+- `league_season_notices.league_season_notices_season_id_fkey`
 - `league_team_coaches.league_team_coaches_org_id_fkey`
 - `league_team_coaches.league_team_coaches_pkey`
 - `league_team_coaches.league_team_coaches_season_id_fkey`
@@ -539,6 +600,7 @@ _none_
 - `online_payment_refunds.online_payment_refunds_cost_entry_fk`
 - `online_payment_refunds.online_payment_refunds_created_by_fk`
 - `online_payment_refunds.online_payment_refunds_entry_fk`
+- `online_payment_refunds.online_payment_refunds_family_answer_by_fk`
 - `online_payment_refunds.online_payment_refunds_item_fk`
 - `online_payment_refunds.online_payment_refunds_org_fk`
 - `online_payment_refunds.online_payment_refunds_payment_fk`
@@ -550,6 +612,10 @@ _none_
 - `online_payments.online_payments_season_fk`
 - `online_payments.online_payments_team_fk`
 - `online_payments.online_payments_tournament_fk`
+- `online_refunds_unassigned.online_refunds_unassigned_assigned_by_fk`
+- `online_refunds_unassigned.online_refunds_unassigned_org_fk`
+- `online_refunds_unassigned.online_refunds_unassigned_payment_fk`
+- `online_refunds_unassigned.online_refunds_unassigned_pkey`
 - `org_custom_domains.org_custom_domains_org_fk`
 - `org_custom_domains.org_custom_domains_pkey`
 - `org_payment_accounts.org_payment_accounts_connected_by_fk`
@@ -604,7 +670,10 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (98)
+### CHECK only in DEV (108)
+- `family_email_recipients.family_email_recipients_family_name_check`
+- `family_email_recipients.family_email_recipients_person_ids_check`
+- `family_email_recipients.family_email_recipients_status_check`
 - `family_email_sends.family_email_sends_audience_kind_check`
 - `family_email_sends.family_email_sends_audience_label_check`
 - `family_email_sends.family_email_sends_body_check`
@@ -613,6 +682,7 @@ _none_
 - `family_email_sends.family_email_sends_family_count_check`
 - `family_email_sends.family_email_sends_opted_out_count_check`
 - `family_email_sends.family_email_sends_reached_count_check`
+- `family_email_sends.family_email_sends_season_kind_names_season`
 - `family_email_sends.family_email_sends_status_check`
 - `family_email_sends.family_email_sends_subject_check`
 - `league_divisions.league_divisions_born_years_check`
@@ -628,6 +698,10 @@ _none_
 - `league_registrations.league_registrations_end_money_check`
 - `league_registrations.league_registrations_fee_amount_check`
 - `league_registrations.league_registrations_withdraw_note_check`
+- `league_season_notices.league_season_notices_failed_count_check`
+- `league_season_notices.league_season_notices_family_count_check`
+- `league_season_notices.league_season_notices_kind_check`
+- `league_season_notices.league_season_notices_reached_count_check`
 - `league_seasons.league_seasons_how_to_pay_check`
 - `league_seasons.league_seasons_owing_amber_days_check`
 - `league_team_coaches.league_team_coaches_email_check`
@@ -639,6 +713,7 @@ _none_
 - `online_payment_items.online_payment_items_land_error_chk`
 - `online_payment_items.online_payment_items_landed_chk`
 - `online_payment_refunds.online_payment_refunds_amount_chk`
+- `online_payment_refunds.online_payment_refunds_family_answer_chk`
 - `online_payment_refunds.online_payment_refunds_note_chk`
 - `online_payment_refunds.online_payment_refunds_origin_chk`
 - `online_payment_refunds.online_payment_refunds_partial_reason_chk`
@@ -660,6 +735,7 @@ _none_
 - `online_payments.online_payments_state_chk`
 - `online_payments.online_payments_status_chk`
 - `online_payments.online_payments_total_chk`
+- `online_refunds_unassigned.online_refunds_unassigned_amount_chk`
 - `org_custom_domains.org_custom_domains_lowercase`
 - `org_custom_domains.org_custom_domains_name_parts`
 - `org_custom_domains.org_custom_domains_status_check`

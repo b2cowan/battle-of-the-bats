@@ -6241,6 +6241,37 @@ send, kept when a team is later archived.
 <!-- dict:col:family_coach_asks.recipient_count -->
 **`recipient_count`** (integer NOT NULL ≥ 0) — how many coaches were emailed.
 
+## `family_email_recipients`
+<!-- dict:table:family_email_recipients -->
+
+**Purpose:** one row per **family** an Email families email was going to, and how it went (Club Tier Stage 9d-1,
+argument 3, **mig 385**). Written before the first batch (`pending`, or `opted_out`) and updated as each batch returns
+(`sent` / `failed`), so a stopped email knows whom it missed ("Send to the N it missed", 9d1·10) and its row window names
+the families missed or opted out. ⚖ It supersedes 7c's "never a list of families" for an email's own record (the 9d-1
+drawings, ruled 2026-10-26). **Never addresses**: a resend goes to each family's address as it is THEN. **Service-role
+only** (RLS enabled, no policies).
+
+<!-- dict:col:family_email_recipients.id -->
+<!-- dict:col:family_email_recipients.send_id -->
+<!-- dict:col:family_email_recipients.org_id -->
+**`id`** / **`send_id`** (uuid NOT NULL, FK → `family_email_sends` CASCADE: the email's record goes with it; indexed with
+`status` as `family_email_recipients_send_idx`) / **`org_id`** (uuid NOT NULL, FK → `organizations` CASCADE; indexed).
+
+<!-- dict:col:family_email_recipients.person_ids -->
+**`person_ids`** (uuid[] NOT NULL, ≥ 1) — the household's people (`org_people` ids), the family the audience counted
+once. Not FK-checked (an array): a merged or deleted person leaves the record readable.
+
+<!-- dict:col:family_email_recipients.family_name -->
+**`family_name`** (text, ≤ 200) — the name the family is called by on screen ("Kim" → "the Kim family"), frozen at the
+email. Null when none is known.
+
+<!-- dict:col:family_email_recipients.status -->
+<!-- dict:col:family_email_recipients.updated_at -->
+**`status`** (text NOT NULL: `pending` · `sent` · `failed` · `opted_out`, default `pending`) — `pending` = not tried (a
+stopped email's missed families); `sent` = the mail service accepted at least one address (not a delivery receipt);
+`failed` = it accepted none; `opted_out` = every address had opted out, none tried. **`updated_at`** (timestamptz NOT
+NULL, default now()).
+
 ## `family_email_sends`
 <!-- dict:table:family_email_sends -->
 
@@ -6253,12 +6284,23 @@ Emails tab on Families; "Last sent … by …" in the window). **Service-role on
 one-household message is NOT here — it stays a date and a sender in `family_messages` (the Stage 5a rule, unchanged);
 the Emails tab merges the two.
 
+**Since 9d-1 (mig 385, owner 9d1·1–12, 2026-10-26)** a house-league **season's** emails are rows here too, from the
+season's own door (the season's audiences: everyone, divisions, teams, statuses, ticked families) or from Families'
+season choice. The per-family outcome that the 7c rule kept out of this row now lives beside it, in
+`family_email_recipients` (people and last name, never addresses), because the 9d-1 drawings name the families an email
+missed and offer "Send to the N it missed". Automatic notices are **never** here (9d1·7: this is the book of typed
+emails) — they are `league_season_notices`.
+
 **Gotchas:**
 
 1. **Inserted only by `family_email_claim(org, actor, subject, body, kind, label, team_ids, season_id, family_count,
    opted_out_count)`** — a per-club `pg_advisory_xact_lock`, then "anything in the last 60 seconds?" (`just_sent`), then
-   the cap (`v_cap` = 3 in the rolling 24 hours, refused `cap` with `nextAt`), then the insert. The SAME 3 is
-   `CLUB_EMAIL_CAP` in `lib/families-words.ts` (held equal by `tests/unit/families-email.test.ts`). ⚠ A **different
+   the cap (`v_cap` = 3 in the rolling 24 hours, refused `cap` with `nextAt`), then the insert. ⚖ **Both checks are BY
+   BUCKET since mig 385**: a row with a `season_id` counts toward THAT season's three (from either door, 9d1·6), a row
+   without toward the club's; the 60 seconds look at the same bucket, so a convenor and a club admin a few seconds apart
+   never refuse each other. The lock stays per club. The SAME 3 is
+   `CLUB_EMAIL_CAP` in `lib/families-words.ts` (held equal by `tests/unit/families-email.test.ts`, which reads the
+   LATEST migration defining the claim). One number for the club and every season. ⚠ A **different
    number in a different place** from `family_message_claim`'s per-FAMILY three: a one-household message never counts
    toward this cap, and an Email families send never counts toward a family's own three.
 2. **The send route then UPDATEs or DELETEs that one row** (`lib/families-email.ts`): the counts after each batch of 100
@@ -6267,7 +6309,9 @@ the Emails tab merges the two.
 3. **"Reached" is not a delivery receipt.** The platform takes no bounce reports from the mail service: `reached_count`
    is families at least one of whose addresses the service ACCEPTED. A later bounce never changes it.
 4. **A row still `sending` 15 minutes after `sent_at` is read as stopped** by the app (`CLUB_EMAIL_STOPPED_AFTER_MS`) —
-   no job rewrites it. There is no Resume (owner, Put to the owner 4): a resend is a new send against the cap.
+   no job rewrites it. ⚖ **Since 9d-1 (9d1·10) a stopped email offers "Send to the N it missed"**: the SAME row and words,
+   sent to its `family_email_recipients` that never reached `sent`, stamped `retried_at`, **never a new claim and never
+   counted**; its counts update as it goes. (This replaces 7c's "no Resume; a resend is a new send against the cap".)
 5. **The unit is FAMILIES** (households — Families' household rule, each once), never addresses: `family_count`,
    `opted_out_count`, `reached_count` and `failed_count` all count families.
 
@@ -6291,7 +6335,11 @@ went to their address.
 **`audience_kind`** (text NOT NULL: `every` · `teams` · `season` · `list`) — `every` = each family with a child on a live team or
 in an open season (never a tryout-only applicant); `teams` = the families of the rep teams in `team_ids`; `season` = the
 families of the house-league season `season_id`; `list` = the families on one Families list (Owes money, Missing forms, No
-consent on file, Not back this season — mig 348), named in `audience_label` ("Families · Owes money").
+consent on file, Not back this season — mig 348), named in `audience_label` ("Families · Owes money"). **Mig 385 (9d-1)**
+adds the season's own audiences, each with `season_id` required (CHECK `family_email_sends_season_kind_names_season`):
+`season_divisions` · `season_teams` (`team_ids` = the LEAGUE teams) · `season_statuses` · `season_families` (the families
+ticked on Registrations); `audience_label` names which. ⚠ A season's "everyone" (`season`) is **families with an ACTIVE
+child** (on a finished season, active when it finished) from BOTH doors (owner, 9d-1 build session 2026-10-26).
 
 <!-- dict:col:family_email_sends.audience_label -->
 **`audience_label`** (text NOT NULL, 1–500) — who it went to, in words, as the Emails tab's To shows it ("Every family",
@@ -6300,7 +6348,12 @@ consent on file, Not back this season — mig 348), named in `audience_label` ("
 <!-- dict:col:family_email_sends.team_ids -->
 <!-- dict:col:family_email_sends.season_id -->
 **`team_ids`** (uuid[] NOT NULL, default '{}') / **`season_id`** (uuid) — the teams or the season picked. Not FK-checked:
-a record of a send, kept when a team or a season is later archived.
+a record of a send, kept when a team or a season is later archived. ⚖ `season_id` is the row's **bucket** (gotcha 1);
+partial index `family_email_sends_season_sent_idx` (season_id, sent_at DESC) serves the season's allowance and history.
+
+<!-- dict:col:family_email_sends.retried_at -->
+**`retried_at`** (timestamptz, mig 385) — when "Send to the N it missed" began on this stopped email (gotcha 4). Null when
+never resent. A row `sending` with a `retried_at` inside the grace period reads as still sending, not stopped.
 
 <!-- dict:col:family_email_sends.family_count -->
 **`family_count`** (integer NOT NULL ≥ 0) — families it was going to (the lime's "Send to N"; opted-out families and the
@@ -6360,6 +6413,12 @@ Indexed with `sent_at DESC` (`family_messages_person_sent_idx`): the cap's count
 
 <!-- dict:col:family_messages.sent_at -->
 **`sent_at`** (timestamptz NOT NULL, default now()) — the claim's time, which is the send's.
+
+<!-- dict:col:family_messages.season_id -->
+**`season_id`** (uuid, mig 385) — the house-league season whose door sent it (9d-1, argument 5), so the season's Email
+families history lists "A message to this family" (date, sender, family — never the words). Null from Families. Not
+FK-checked. ⚠ **Never counted toward a season's three**: a family's own three (`family_message_claim`) is its only limit.
+Set by the app right after the claim (the claim's signature is unchanged). Partial index `family_messages_season_idx`.
 
 ## `family_payment_handoffs`
 <!-- dict:table:family_payment_handoffs -->
@@ -6818,8 +6877,44 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_placement_emails.created_at -->
 <!-- dict:col:league_placement_emails.updated_at -->
 **`created_by` / `created_at` / `updated_at`** — boilerplate.
+<!-- dict:col:league_placement_emails.notice_id -->
+**`notice_id`** (uuid, FK → `league_season_notices` ON DELETE SET NULL, mig 385; partial index) — the Publish this email belongs to, stamped by `league_division_publish` on exactly the rows it wrote. Null for a late placement or a move: one family each, off the season's history (9d1·4).
 
-**Functions (mig 377, all service-role only):** `league_division_fingerprint(division)` (what a window saw: the division's teams and each accepted player's team and lock, as an md5), `league_division_draft_apply`, `league_division_clear`, `league_team_place`, `league_division_publish`. Each locks the season and the division and refuses a finished season, a stale fingerprint, or (draft and clear) a published division. Proved on dev by `scripts/house-league-teams-check.sql` (DEV only).
+**Functions (mig 377, all service-role only):** `league_division_fingerprint(division)` (what a window saw: the division's teams and each accepted player's team and lock, as an md5), `league_division_draft_apply`, `league_division_clear`, `league_team_place`, `league_division_publish` (**replaced by mig 385**, same signature: it also writes the Publish's `league_season_notices` row). Each locks the season and the division and refuses a finished season, a stale fingerprint, or (draft and clear) a published division. Proved on dev by `scripts/house-league-teams-check.sql` (DEV only).
+
+---
+
+## `league_season_notices`
+<!-- dict:table:league_season_notices -->
+
+**Purpose:** one row per **automatic notice** the product sent many families of a house-league season at once (Club Tier
+Stage 9d-1, 9d1·4, argument 4, **mig 385**): Publish teams now (`teams_published`), 9d-2's schedule notices later (they
+widen `kind`). The season's Email families history lists each as one row tagged **Automatic**. ⚠ **Never counted toward
+any allowance and never in `family_email_sends`** (9d1·7). Written by `league_division_publish` inside its transaction
+(only when the Publish wrote at least one family email); its family emails point at it through
+`league_placement_emails.notice_id`. **Service-role only** (RLS enabled, no policies).
+
+<!-- dict:col:league_season_notices.id -->
+<!-- dict:col:league_season_notices.org_id -->
+<!-- dict:col:league_season_notices.season_id -->
+<!-- dict:col:league_season_notices.division_id -->
+**`id`** / **`org_id`** (FK → `organizations` CASCADE) / **`season_id`** (FK → `league_seasons` CASCADE; indexed with
+`created_at DESC`) / **`division_id`** (FK → `league_divisions` ON DELETE SET NULL) — whose notice, and the division it
+was about.
+
+<!-- dict:col:league_season_notices.kind -->
+**`kind`** (text NOT NULL, CHECK `teams_published`) — what the notice was.
+
+<!-- dict:col:league_season_notices.family_count -->
+<!-- dict:col:league_season_notices.reached_count -->
+<!-- dict:col:league_season_notices.failed_count -->
+**`family_count`** (families it was going to, set at the act) / **`reached_count`** / **`failed_count`** (integer NOT NULL
+≥ 0) — updated by the app from its emails' outcomes as they go (`sent` / `failed`; `skipped` is neither).
+
+<!-- dict:col:league_season_notices.created_by -->
+<!-- dict:col:league_season_notices.created_at -->
+**`created_by`** (FK → `auth.users` ON DELETE SET NULL) / **`created_at`** — who did the act, and when (the history's
+Sent and By).
 
 ---
 
@@ -7087,7 +7182,9 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 ## `league_email_log`
 <!-- dict:table:league_email_log -->
 
-**Purpose:** the **live** audit log of house-league bulk-email broadcasts — one row per admin "send" (who, targeting scope/audience, sent vs skipped counts). Written by `insertLeagueEmailLog` ([lib/db.ts:3198](../../../lib/db.ts#L3198)), read by `getLeagueEmailLog` ([lib/db.ts:3221](../../../lib/db.ts#L3221)); sole caller is the broadcast route `email/route.ts`.
+**⚖ READ-ONLY HISTORY from Club Tier Stage 9d-1 (owner 9d1·3, 2026-10-26).** A season's email now goes through Families' engine and is a `family_email_sends` row; this log is read only for the season history's "Earlier emails · counted per child" (hidden when a season has none), and **nothing writes it again** — 9d-1 Part 4 deletes the writer. Never convert, migrate or drop it. It has **no CREATE TABLE in the migrations**: its shape lives only in the snapshots. Rows at 9d-1: dev 0, prod 0 (counted read-only 2026-10-26).
+
+**Purpose (before 9d-1):** the audit log of house-league bulk-email broadcasts — one row per admin "send" (who, targeting scope/audience, sent vs skipped counts), counted per child. Written by `insertLeagueEmailLog` ([lib/db.ts:3198](../../../lib/db.ts#L3198)), read by `getLeagueEmailLog` ([lib/db.ts:3221](../../../lib/db.ts#L3221)); sole caller was the broadcast route `email/route.ts`.
 
 **Gotchas (read first):**
 1. **This is the LIVE log — `league_notification_log` is its dead predecessor.** The admin "Notifications" page (`notifications/page.tsx`) writes **here** via the `/email` endpoint.
