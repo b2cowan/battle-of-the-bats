@@ -33,13 +33,18 @@ export interface LeaguePayReceipt {
   bank: boolean;
   bankLast4: string | null;
   startedAt: string | null;
+  /** 12c Part 6: the bank took this debit back after it cleared. */
+  reversedAt: string | null;
 }
 
 /** 12c: a bank debit as the family's block says it (clearing, or returned before it cleared). */
 export interface LeaguePayDebit {
   id: string;
-  state: 'clearing' | 'returned';
+  state: 'clearing' | 'returned' | 'reversed';
   totalCents: number;
+  baseCents: number;
+  receiptNo: number | null;
+  reversedAt: string | null;
   last4: string | null;
   startedAt: string | null;
   returnedAt: string | null;
@@ -70,6 +75,7 @@ export interface LeaguePayView {
   clearingLines: { childName: string; divisionName: string; cents: number }[];
   clearing: LeaguePayDebit[];
   returned: LeaguePayDebit | null;
+  reversed: LeaguePayDebit | null;
   clubContact: string | null;
   receipts: LeaguePayReceipt[];
 }
@@ -82,8 +88,8 @@ async function receiptsFor(regIds: string[]): Promise<LeaguePayReceipt[]> {
   if (!ids.length) return [];
   const [{ data: pays }, { data: lines }] = await Promise.all([
     supabaseAdmin.from('online_payments')
-      .select('id, receipt_no, base_amount, fee_amount, total_amount, fee_payer, card_brand, card_last4, paid_at, status, livemode, rail, bank_last4, clearing_at')
-      .in('id', ids).in('status', ['paid', 'partly_refunded', 'refunded']).order('paid_at', { ascending: false }),
+      .select('id, receipt_no, base_amount, fee_amount, total_amount, fee_payer, card_brand, card_last4, paid_at, status, livemode, rail, bank_last4, clearing_at, reversed_at')
+      .in('id', ids).in('status', ['paid', 'partly_refunded', 'refunded', 'reversed']).order('paid_at', { ascending: false }),
     supabaseAdmin.from('online_payment_items').select('online_payment_id, description, amount').in('online_payment_id', ids).order('created_at'),
   ]);
   const byPay = new Map<string, { label: string; cents: number }[]>();
@@ -107,6 +113,7 @@ async function receiptsFor(regIds: string[]): Promise<LeaguePayReceipt[]> {
     bank: p.rail === 'bank_debit',
     bankLast4: (p.bank_last4 as string | null) ?? null,
     startedAt: (p.clearing_at as string | null) ?? null,
+    reversedAt: p.status === 'reversed' ? ((p.reversed_at as string | null) ?? null) : null,
   }));
 }
 
@@ -153,6 +160,7 @@ export function viewFromFacts(f: LeaguePayFacts, token: string, receipts: League
       .map(c => ({ childName: `${c.firstName} ${c.lastName}`, divisionName: c.divisionName, cents: c.clearingCents })),
     clearing: f.clearing,
     returned: kind === 'owing' ? f.returned : null,
+    reversed: kind === 'owing' ? f.reversed : null,
     clubContact: contactEmail,
     receipts,
   };

@@ -346,5 +346,91 @@ BEGIN
   EXCEPTION WHEN unique_violation THEN v_ok := true; END;
   IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T21: one Stripe refund held twice'; END IF;
 
+  -- ── Part 6 (mig 387) ──
+  -- T22 · the Stripe-only actions are never a person's.
+  v_err := NULL;
+  BEGIN PERFORM 1 FROM club_league_money(v_org, v_season, v_reg, 'reverse', 10, v_today, NULL, NULL, NULL);
+  EXCEPTION WHEN others THEN v_err := SQLERRM; END;
+  IF v_err IS DISTINCT FROM 'Only the online-payment functions record this.' THEN RAISE EXCEPTION 'FAIL T22: a person reversed (%)', v_err; END IF;
+
+  -- T23 · ended while a bank debit cleared, "keep it": it lands into the book anyway, and the registration reads kept with
+  -- the reason; the decision is done.
+  INSERT INTO league_registrations(org_id, season_id, player_first_name, player_last_name, guardian_first_name, guardian_last_name,
+    guardian_email, status, fee_amount, signup_ref)
+  VALUES (v_org, v_season, 'Iris', 'Lee', 'P', 'L', 'l@example.invalid', 'active', 150, 'IRISLEE1') RETURNING id INTO v_reg;
+  v_lop := gen_random_uuid();
+  PERFORM online_payment_league_open(v_lop, v_org, 'acct_check12c', v_season, 'IRISLEE1', 'Iris', 'l@example.invalid',
+    4.75, 'family', 0.025, 1.00, false, 'cs_check12c_' || gen_random_uuid(),
+    jsonb_build_array(jsonb_build_object('registrationId', v_reg, 'description', 'Iris Lee · U9', 'amount', 150, 'feeShare', 4.75)),
+    'bank_debit');
+  PERFORM online_payment_clearing(v_lop, 'pi_c12_iris', '4321');
+  SELECT c.refusal INTO v_refusal FROM league_registration_close(v_org, v_season, v_reg, 'declined', NULL, NULL, false, false, NULL, NULL, NULL, NULL) c;
+  IF v_refusal IS NOT NULL THEN RAISE EXCEPTION 'FAIL T23: ending while clearing refused (%)', v_refusal; END IF;
+  SELECT id INTO v_item FROM online_payment_items WHERE online_payment_id = v_lop;
+  INSERT INTO online_payment_clear_decisions(org_id, online_payment_id, online_payment_item_id, choice, reason)
+  VALUES (v_org, v_lop, v_item, 'keep', 'Spot was held for a week');
+  v_res := online_payment_league_land(v_lop, now(), 'pi_c12_iris', 'ch_c12_iris', NULL, NULL);
+  IF league_reg_received(v_reg) <> 150 OR (SELECT end_money FROM league_registrations WHERE id = v_reg) <> 'kept'
+     OR (SELECT end_money_reason FROM league_registrations WHERE id = v_reg) <> 'Spot was held for a week'
+     OR (SELECT outcome FROM online_payment_clear_decisions WHERE online_payment_id = v_lop) <> 'kept'
+     OR jsonb_array_length(v_res -> 'sendBack') <> 0 THEN
+    RAISE EXCEPTION 'FAIL T23: a kept decision (%)', v_res; END IF;
+
+  -- T24 · "send it back": it lands, and the landing hands the app the child to refund (the fee box with it); the outcome
+  -- waits for the refund. With no decision, an ended child still refuses (unrecorded, as 12b).
+  INSERT INTO league_registrations(org_id, season_id, player_first_name, player_last_name, guardian_first_name, guardian_last_name,
+    guardian_email, status, fee_amount, signup_ref)
+  VALUES (v_org, v_season, 'Jack', 'Lee', 'P', 'L', 'l@example.invalid', 'active', 150, 'JACKLEE1') RETURNING id INTO v_reg2;
+  v_lop := gen_random_uuid();
+  PERFORM online_payment_league_open(v_lop, v_org, 'acct_check12c', v_season, 'JACKLEE1', 'Jack', 'l@example.invalid',
+    4.75, 'family', 0.025, 1.00, false, 'cs_check12c_' || gen_random_uuid(),
+    jsonb_build_array(jsonb_build_object('registrationId', v_reg2, 'description', 'Jack Lee · U9', 'amount', 150, 'feeShare', 4.75)),
+    'bank_debit');
+  PERFORM online_payment_clearing(v_lop, 'pi_c12_jack', '4321');
+  PERFORM 1 FROM league_registration_close(v_org, v_season, v_reg2, 'withdrawn', NULL, NULL, false, false, NULL, NULL, NULL, NULL);
+  SELECT id INTO v_item2 FROM online_payment_items WHERE online_payment_id = v_lop;
+  INSERT INTO online_payment_clear_decisions(org_id, online_payment_id, online_payment_item_id, choice, fee_back)
+  VALUES (v_org, v_lop, v_item2, 'send_back', false);
+  v_res := online_payment_league_land(v_lop, now(), 'pi_c12_jack', 'ch_c12_jack', NULL, NULL);
+  IF league_reg_received(v_reg2) <> 150 OR jsonb_array_length(v_res -> 'sendBack') <> 1
+     OR (v_res -> 'sendBack' -> 0 ->> 'itemId')::uuid <> v_item2
+     OR (SELECT outcome FROM online_payment_clear_decisions WHERE online_payment_id = v_lop) IS NOT NULL THEN
+    RAISE EXCEPTION 'FAIL T24: a send-back decision (%)', v_res; END IF;
+
+  -- T25 · a cleared house-league debit reversed by the bank: a returned line per child (not in Refunds), the receipt kept,
+  -- received drops; a second dispute event changes nothing; a card payment and a never-cleared debit are refused.
+  v_res := online_payment_reverse(v_lop, 'dp_c12_jack', 'insufficient_funds', 'insufficient_funds');
+  IF league_reg_received(v_reg2) <> 0 OR (SELECT status FROM online_payments WHERE id = v_lop) <> 'reversed'
+     OR (SELECT count(*) FROM accounting_entries WHERE source_entity_id = v_reg2 AND category = 'registration_returned'
+          AND entry_type = 'expense' AND payment_method = 'online_bank') <> 1
+     OR (SELECT count(*) FROM accounting_entries WHERE source_entity_id = v_reg2 AND category = 'registration_fee' AND status = 'posted') <> 1 THEN
+    RAISE EXCEPTION 'FAIL T25: the reversal (%)', v_res; END IF;
+  v_res := online_payment_reverse(v_lop, 'dp_c12_jack', 'insufficient_funds', NULL);
+  IF NOT (v_res ->> 'already')::boolean THEN RAISE EXCEPTION 'FAIL T25: reversed twice'; END IF;
+  v_err := NULL;
+  BEGIN PERFORM online_payment_reverse((SELECT id FROM online_payments WHERE org_id = v_org AND rail = 'card' AND landed_at IS NOT NULL LIMIT 1), 'dp_x', NULL, NULL);
+  EXCEPTION WHEN others THEN v_err := SQLERRM; END;
+  IF v_err IS DISTINCT FROM 'Only a bank debit is reversed here.' THEN RAISE EXCEPTION 'FAIL T25: a card payment reversed (%)', v_err; END IF;
+
+  -- T26 · a team's cleared debit reversed: its row reads reversed and leaves the paid figure; a "Returned by the bank" line.
+  SELECT id INTO v_op FROM online_payments WHERE team_id = v_bankteam AND rail = 'bank_debit' AND landed_at IS NOT NULL LIMIT 1;
+  v_res := online_payment_reverse(v_op, 'dp_c12_team', NULL, NULL);
+  IF (SELECT status FROM tournament_team_payments WHERE online_payment_id = v_op) <> 'reversed'
+     OR (SELECT total_paid FROM teams WHERE id = v_bankteam) <> 0
+     OR NOT EXISTS (SELECT 1 FROM accounting_entries WHERE source_entity_id = v_op AND description LIKE 'Returned by the bank · %' AND payment_method = 'online_bank') THEN
+    RAISE EXCEPTION 'FAIL T26: a team''s reversal (%)', v_res; END IF;
+
+  -- T27 · one failure fee per debit and kind; a billed row carries its invoice item; an exempt one is never billed.
+  INSERT INTO platform_debit_fees(org_id, online_payment_id, kind, amount) VALUES (v_org, v_op, 'reversed', 5);
+  v_ok := false;
+  BEGIN INSERT INTO platform_debit_fees(org_id, online_payment_id, kind, amount) VALUES (v_org, v_op, 'reversed', 5);
+  EXCEPTION WHEN unique_violation THEN v_ok := true; END;
+  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T27: a fee recorded twice'; END IF;
+  v_ok := false;
+  BEGIN INSERT INTO platform_debit_fees(org_id, online_payment_id, kind, amount, exempt_reason, stripe_invoice_item_id, billed_at)
+    VALUES (v_org, v_lop, 'reversed', 5, 'comped', 'ii_x', now());
+  EXCEPTION WHEN check_violation THEN v_ok := true; END;
+  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T27: an exempt fee billed'; END IF;
+
   RAISE EXCEPTION 'ONLINE_PAYMENTS_12C_PASSED';
 END $op12c$;

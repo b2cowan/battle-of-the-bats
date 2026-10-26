@@ -37,6 +37,8 @@ export interface PayPageReceipt {
   bank: boolean;
   bankLast4: string | null;
   startedAt: string | null;
+  /** 12c Part 6: the bank took this debit back after it cleared; the receipt no longer counts. */
+  reversedAt: string | null;
 }
 
 export interface PayPageView {
@@ -60,7 +62,10 @@ export interface PayPageView {
   savingCents: number | null;
   savingBankCents: number | null;
   /** 12c: a bank debit on its way, or one that came back before it cleared. */
-  debit: { state: 'clearing' | 'returned'; totalCents: number; last4: string | null; startedAt: string | null; returnedAt: string | null; reason: string | null } | null;
+  debit: {
+    state: 'clearing' | 'returned' | 'reversed'; totalCents: number; baseCents: number; last4: string | null; startedAt: string | null;
+    returnedAt: string | null; reason: string | null; receiptNo: number | null; reversedAt: string | null;
+  } | null;
   /** 12c: while a deposit clears, the balance still to come and when it is due (words §2.5). */
   clearingBalance: { cents: number; dueDate: string | null } | null;
   clubContact: string | null;
@@ -86,9 +91,9 @@ export function teamFromPayToken(token: string): string | null {
 async function receiptsFor(teamId: string): Promise<PayPageReceipt[]> {
   const { data } = await supabaseAdmin
     .from('online_payments')
-    .select('id, receipt_no, scope, base_amount, fee_amount, total_amount, fee_payer, card_brand, card_last4, paid_at, status, livemode, updated_at, rail, bank_last4, clearing_at')
+    .select('id, receipt_no, scope, base_amount, fee_amount, total_amount, fee_payer, card_brand, card_last4, paid_at, status, livemode, updated_at, rail, bank_last4, clearing_at, reversed_at')
     .eq('team_id', teamId)
-    .in('status', ['paid', 'partly_refunded', 'refunded'])
+    .in('status', ['paid', 'partly_refunded', 'refunded', 'reversed'])
     .order('paid_at', { ascending: false });
   return (data ?? []).map(r => ({
     id: r.id as string,
@@ -107,6 +112,7 @@ async function receiptsFor(teamId: string): Promise<PayPageReceipt[]> {
     bank: r.rail === 'bank_debit',
     bankLast4: (r.bank_last4 as string | null) ?? null,
     startedAt: (r.clearing_at as string | null) ?? null,
+    reversedAt: r.status === 'reversed' ? ((r.reversed_at as string | null) ?? null) : null,
   }));
 }
 
@@ -157,7 +163,10 @@ export async function buildTeamPayView(token: string, at?: { orgSlug: string; to
     preselected: kind === 'owing' ? f.options?.preselected ?? null : null,
     savingCents: kind === 'owing' ? f.options?.savingCents ?? null : null,
     savingBankCents: kind === 'owing' ? f.options?.savingBankCents ?? null : null,
-    debit: f.debit ? { state: f.debit.state, totalCents: f.debit.totalCents, last4: f.debit.last4, startedAt: f.debit.startedAt, returnedAt: f.debit.returnedAt, reason: f.debit.reason } : null,
+    debit: f.debit ? {
+      state: f.debit.state, totalCents: f.debit.totalCents, baseCents: f.debit.baseCents, last4: f.debit.last4, startedAt: f.debit.startedAt,
+      returnedAt: f.debit.returnedAt, reason: f.debit.reason, receiptNo: f.debit.receiptNo, reversedAt: f.debit.reversedAt,
+    } : null,
     clearingBalance: kind === 'clearing' && f.debit ? balanceAfter(f) : null,
     clubContact: await clubPublicContact(f.org.id).catch(() => null),
     totalPaidCents: toCents(f.totalPaid),

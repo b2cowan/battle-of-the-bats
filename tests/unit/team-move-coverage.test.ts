@@ -61,6 +61,8 @@ const STAYS: Record<string, string> = {
   // Club Tier 12c (mig 382, 384): both follow online payments, which exclude the coach portal.
   online_refunds_unassigned: 'a refund made in Stripe on a house-league payment, waiting for "whose was it?" (house league and online payments exclude the coach portal)',
   tournament_team_entry_adjustments: 'a tournament team’s entry lowered by a part refund of its card payment (online payments exclude the coach portal)',
+  online_payment_clear_decisions: 'what happens to a club’s clearing bank debit when it clears, answered at an ending (online payments exclude the coach portal)',
+  platform_debit_fees: 'Stripe’s returned-debit fee recovered from a club on its FieldLogicHQ invoice (online payments exclude the coach portal)',
   stripe_connect_events: 'a log of Stripe’s events, kept for audit; its org_id is a plain label with no foreign key',
   team_entitlements: 'the old portal’s own plan — the move cancels it, and it stays as that portal’s record',
   org_public_site_content: 'the coach org’s own public-site page, not the team',

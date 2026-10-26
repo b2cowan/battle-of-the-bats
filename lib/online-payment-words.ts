@@ -555,6 +555,35 @@ export const BANK_REASON_WORDS: Record<string, { full: string; short: string }> 
 export const reasonFull = (code: string | null | undefined) => (code ? BANK_REASON_WORDS[code]?.full ?? '' : '');
 export const reasonShort = (code: string | null | undefined) => (code ? BANK_REASON_WORDS[code]?.short ?? '' : '');
 
+/**
+ * The desk's notices for a bank debit that came back (12c words §3.6), one per debit naming every child on it, to the desk
+ * (house league) or whoever runs tournaments. `held` / `owesAgain` are composed by the caller ("Henry’s spot is", "Henry
+ * owes $150.00 again").
+ */
+export const DEBIT_NOTICE_WORDS = {
+  returnedTitle: (children: string) => `A bank debit for ${children} was returned`,
+  returnedTitleTeam: (teamPossessive: string) => `${teamPossessive} bank debit was returned`,
+  returnedBody: (total: string, last4: string | null, day: string, reasonFull: string, held: string, emailed: boolean) =>
+    `${total}${last4 ? ` from the account ending ${last4}` : ''} didn’t go through (${day}${reasonFull}). Nothing was taken, and ${held} still held. ${emailed ? 'We emailed the family a way to pay.' : 'There’s no email address on file, so tell the family yourself.'}`,
+  returnedBodyTeam: (total: string, last4: string | null, day: string, reasonFull: string, teamPossessive: string, emailed: boolean) =>
+    `${total}${last4 ? ` from the account ending ${last4}` : ''} didn’t go through (${day}${reasonFull}). Nothing was taken. ${teamPossessive} place is still held. ${emailed ? 'We emailed the team’s contact a way to pay.' : 'There’s no email address on file, so tell the team yourself.'}`,
+  heldOne: (childPossessive: string) => `${childPossessive} spot is`,
+  heldMany: 'their spots are',
+  reversedTitleOne: (childPossessive: string) => `${childPossessive} bank payment was returned after it cleared`,
+  reversedTitleMany: (children: string) => `A bank payment for ${children} was returned after it cleared`,
+  reversedTitleTeam: (teamPossessive: string) => `${teamPossessive} bank payment was returned after it cleared`,
+  reversedBody: (receiptNo: string, total: string, day: string, book: 'season' | 'tournament', owesAgain: string, emailed: boolean) =>
+    `The bank reversed receipt ${receiptNo} (${total}) on ${day}. It’s out of the ${book}’s book, and ${owesAgain}. ${emailed ? 'We emailed the family a way to pay.' : 'There’s no email address on file, so tell the family yourself.'}`,
+  owesAgain: (who: string, amount: string, many: boolean) => `${who} ${many ? 'owe' : 'owes'} ${amount} again`,
+  /** The family's own sentence (§2.2 reversedBody's `{owesAgain}`). */
+  owingAgain: (amount: string) => `${amount} is owing again`,
+} as const;
+
+/** The line on the club's FieldLogicHQ invoice for Stripe's returned-debit fee (§0k answer 2; words via /marketing). */
+export const RETURNED_DEBIT_FEE_WORDS = {
+  invoiceLine: (day: string) => `Returned bank debit · ${day}`,
+} as const;
+
 /** The four bank-debit emails (words §2.4). A team's version swaps the children for the team, "spot" for "place". */
 export const BANK_DEBIT_EMAIL_WORDS = {
   startedSubject: (club: string) => `Your bank debit to ${club} has started`,

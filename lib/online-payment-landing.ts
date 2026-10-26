@@ -12,8 +12,10 @@ import { claimRefundEmail, sendLeagueRefundEmail } from './online-refund-email';
 import { childList } from './league-pay-words';
 import { pinLeagueRefund, pinTeamRefund } from './online-refund-pinning';
 import { bankReturnReason } from './bank-debit';
-import { sendDebitReturnedEmail, sendDebitStartedEmail } from './bank-debit-email';
-import { LEAGUE_ONLINE_NOTICE_WORDS as LW, cardLabel, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney } from './online-payment-words';
+import { sendDebitReturnedEmail, sendDebitReversedEmail, sendDebitStartedEmail } from './bank-debit-email';
+import { recordDebitFee } from './platform-debit-fee';
+import { possessive } from './utils';
+import { DEBIT_NOTICE_WORDS as DW, LEAGUE_ONLINE_NOTICE_WORDS as LW, cardLabel, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney, reasonFull } from './online-payment-words';
 import { formatStoredDate } from './timezone';
 import type { Organization, OrgRole } from './types';
 
@@ -65,7 +67,7 @@ async function refundPeople(org: Organization): Promise<string[]> {
 async function raiseOnce(p: {
   org: Organization; userIds: string[];
   eventType: 'payouts_need_attention' | 'online_payment_not_recorded' | 'card_refund_failed'
-    | 'card_refund_whose' | 'card_refund_still_enrolled' | 'card_refund_unmatched';
+    | 'card_refund_whose' | 'card_refund_still_enrolled' | 'card_refund_unmatched' | 'debit_returned' | 'debit_reversed';
   subjectKey: string; subjectId: string; title: string; body: string; link: string;
   /** More facts the notice's resolver reads (never part of its one-open-copy key, mig 366/374). */
   extra?: Record<string, string>;
@@ -268,8 +270,154 @@ async function markReturned(opId: string, session: Stripe.Checkout.Session): Pro
     p_online_payment: opId, p_reason: bankReturnReason(code), p_detail: code,
   });
   if (error) throw new Error(error.message);
-  if (moved === true) await sendDebitReturnedEmail(opId);
+  if (moved === true) {
+    await sendDebitReturnedEmail(opId);
+    await afterDebitBack(opId, 'returned'); // 12c Part 6: the desk's notice, the fee, any decision made while it cleared
+  }
 }
+
+// ── A bank debit at the desk (12c Part 6) ────────────────────────────────────────────────────────
+
+type DebitRow = {
+  id: string; org_id: string; flow: 'tournament_team' | 'league_signup'; team_id: string | null; tournament_id: string | null;
+  season_id: string | null; total_amount: number; base_amount: number; bank_last4: string | null; returned_at: string | null;
+  reversed_at: string | null; return_reason: string | null; receipt_no: number | null; payer_email: string | null; livemode: boolean;
+};
+const DEBIT_COLUMNS = 'id, org_id, flow, team_id, tournament_id, season_id, total_amount, base_amount, bank_last4, returned_at, reversed_at, return_reason, receipt_no, payer_email, livemode';
+
+/**
+ * After a debit came back (returned while clearing, or reversed after it cleared): the desk's notice (one per debit,
+ * naming every child, words §3.6), Stripe's failure fee recorded against the club (§0k answer 2), and — for a return —
+ * any decision made while it cleared stamped 'returned' (nothing was taken, so nothing is sent back or kept).
+ */
+async function afterDebitBack(opId: string, kind: 'returned' | 'reversed'): Promise<void> {
+  const { data } = await supabaseAdmin.from('online_payments').select(DEBIT_COLUMNS).eq('id', opId).maybeSingle();
+  const op = data as DebitRow | null;
+  if (!op) return;
+  if (kind === 'returned') {
+    await supabaseAdmin.from('online_payment_clear_decisions').update({ outcome: 'returned', outcome_at: new Date().toISOString() })
+      .eq('online_payment_id', op.id).is('outcome', null);
+  }
+  await raiseDebitNotice(op, kind);
+  await recordDebitFee({ orgId: op.org_id, onlinePaymentId: op.id, kind, livemode: op.livemode });
+}
+
+async function raiseDebitNotice(op: DebitRow, kind: 'returned' | 'reversed'): Promise<void> {
+  const org = await orgById(op.org_id);
+  if (!org) return;
+  const total = formatMoney(Number(op.total_amount));
+  const day = formatStoredDate(kind === 'returned' ? op.returned_at : op.reversed_at, { withYear: false });
+  const emailed = !!op.payer_email;
+  const receiptNo = op.receipt_no != null ? String(op.receipt_no) : '';
+  const eventType = kind === 'returned' ? 'debit_returned' as const : 'debit_reversed' as const;
+  if (op.flow === 'tournament_team' && op.team_id) {
+    const { data: team } = await supabaseAdmin.from('teams').select('name').eq('id', op.team_id).maybeSingle();
+    const name = (team?.name as string | null) ?? '';
+    await raiseOnce({
+      org, userIds: await refundPeople(org), eventType, subjectKey: 'onlinePaymentId', subjectId: op.id,
+      title: kind === 'returned' ? DW.returnedTitleTeam(possessive(name)) : DW.reversedTitleTeam(possessive(name)),
+      body: kind === 'returned'
+        ? DW.returnedBodyTeam(total, op.bank_last4, day, reasonFull(op.return_reason), possessive(name), emailed)
+        : DW.reversedBody(receiptNo, total, day, 'tournament', DW.owesAgain(name, formatMoney(Number(op.base_amount)), false), emailed),
+      link: recordHref(org, op), extra: { teamId: op.team_id },
+    });
+    return;
+  }
+  const { data: items } = await supabaseAdmin.from('online_payment_items').select('registration_id, amount').eq('online_payment_id', op.id);
+  const kids = ((items ?? []) as Array<{ registration_id: string | null; amount: number }>).filter(i => i.registration_id);
+  if (!kids.length) return;
+  const { data: regs } = await supabaseAdmin.from('league_registrations').select('id, player_first_name').in('id', kids.map(k => k.registration_id!));
+  const first = new Map(((regs ?? []) as Array<{ id: string; player_first_name: string }>).map(r => [r.id, r.player_first_name]));
+  const names = kids.map(k => first.get(k.registration_id!) ?? '').filter(Boolean);
+  const one = kids.length === 1;
+  const owed = formatMoney(kids.reduce((s, k) => s + Number(k.amount), 0));
+  await raiseOnce({
+    org, userIds: await leagueRefundPeople(org), eventType, subjectKey: 'onlinePaymentId', subjectId: op.id,
+    title: kind === 'returned' ? DW.returnedTitle(childList(names))
+      : one ? DW.reversedTitleOne(possessive(names[0] ?? '')) : DW.reversedTitleMany(childList(names)),
+    body: kind === 'returned'
+      ? DW.returnedBody(total, op.bank_last4, day, reasonFull(op.return_reason), one ? DW.heldOne(possessive(names[0] ?? '')) : DW.heldMany, emailed)
+      : DW.reversedBody(receiptNo, total, day, 'season', DW.owesAgain(childList(names), owed, !one), emailed),
+    link: recordHref(org, op, one ? { regId: kids[0].registration_id } : undefined),
+    extra: { registrationIds: kids.map(k => k.registration_id!).join(',') },
+  });
+}
+
+/**
+ * `charge.dispute.created` on a club's account (12c Part 6, §0k answer 4): a BANK DEBIT the bank reversed after it
+ * cleared — a returned line beside the receipt (house league per child; a tournament team's row out of the paid figure),
+ * the family emailed, the desk's notice, the fee recorded. A card dispute is 12d's: left alone. Idempotent.
+ */
+export async function reverseDebit(stripeAccountId: string, dispute: Stripe.Dispute): Promise<void> {
+  const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
+  if (!chargeId) return;
+  const { data: op } = await supabaseAdmin.from('online_payments').select('id, stripe_account_id, rail, landed_at')
+    .eq('stripe_charge_id', chargeId).maybeSingle();
+  if (!op || op.stripe_account_id !== stripeAccountId || op.rail !== 'bank_debit' || !op.landed_at) return;
+  const { data: res, error } = await supabaseAdmin.rpc('online_payment_reverse', {
+    p_online_payment: op.id, p_dispute: dispute.id, p_reason: bankReturnReason(dispute.reason), p_detail: dispute.reason ?? null,
+  });
+  if (error) throw new Error(error.message);
+  if ((res as { already?: boolean } | null)?.already) return;
+  await sendDebitReversedEmail(op.id as string);
+  await afterDebitBack(op.id as string, 'reversed');
+}
+
+/**
+ * The decisions made while a debit cleared (12c Part 6, words §3.3), carried out once it has landed: "send it back" is a
+ * refund in the name of whoever decided, with A2's box as they set it (a failure raises the refund-didn't-reach item,
+ * worded for an account, like any refund); "keep it" was answered by the landing itself (house league) or is stamped here
+ * (a team). Read from the DATABASE, so a replay finds what a crash left; each decision is claimed before Stripe is asked,
+ * so two deliveries never refund twice.
+ */
+async function carryOutDecisions(onlinePaymentId: string): Promise<void> {
+  const { data } = await supabaseAdmin.from('online_payment_clear_decisions')
+    .select('id, online_payment_item_id, choice, fee_back, decided_by').eq('online_payment_id', onlinePaymentId).is('outcome', null);
+  for (const d of (data ?? []) as Array<{ id: string; online_payment_item_id: string | null; choice: string; fee_back: boolean; decided_by: string | null }>) {
+    const now = new Date().toISOString();
+    if (d.choice === 'keep') {
+      if (!d.online_payment_item_id) await supabaseAdmin.from('online_payment_clear_decisions').update({ outcome: 'kept', outcome_at: now }).eq('id', d.id).is('outcome', null);
+      continue;
+    }
+    if (d.online_payment_item_id) {
+      // Only a child whose share is in the book (the landing ran) is sent back.
+      const { data: item } = await supabaseAdmin.from('online_payment_items').select('entry_id, registration_id').eq('id', d.online_payment_item_id).maybeSingle();
+      if (!item?.entry_id) continue;
+    }
+    const { data: claimed } = await supabaseAdmin.from('online_payment_clear_decisions').update({ outcome: 'sent_back', outcome_at: now })
+      .eq('id', d.id).is('outcome', null).select('id').maybeSingle();
+    if (!claimed) continue;
+    try {
+      let refundId: string | null = null;
+      if (d.online_payment_item_id) {
+        const { data: item } = await supabaseAdmin.from('online_payment_items').select('registration_id').eq('id', d.online_payment_item_id).maybeSingle();
+        const { data: reg } = item?.registration_id
+          ? await supabaseAdmin.from('league_registrations').select('status').eq('id', item.registration_id as string).maybeSingle() : { data: null };
+        const r = await refundLeagueToCard({
+          itemId: d.online_payment_item_id, amount: null, feeIncluded: d.fee_back,
+          reason: reg?.status === 'withdrawn' ? 'family_left' : 'club_ended', partialReason: null, note: null,
+          actorId: d.decided_by as string,
+        });
+        refundId = r.refundId;
+      } else {
+        const { data: team } = await supabaseAdmin.from('online_payments').select('team_id').eq('id', onlinePaymentId).maybeSingle();
+        const { data: t } = team?.team_id ? await supabaseAdmin.from('teams').select('status').eq('id', team.team_id as string).maybeSingle() : { data: null };
+        const r = await refundOnlinePayment({
+          onlinePaymentId, feeIncluded: d.fee_back, reason: t?.status === 'withdrawn' ? 'team_left' : 'organizer_ended', note: null,
+          actorId: d.decided_by as string,
+        });
+        refundId = (r as { refundId?: string }).refundId ?? null;
+      }
+      if (refundId) await supabaseAdmin.from('online_payment_clear_decisions').update({ refund_id: refundId }).eq('id', d.id);
+    } catch (err) {
+      // The refund could not be opened (a refused amount, Stripe down before a refund row existed): the decision reads
+      // failed and the desk is told by the not-recorded/refund items its own path raises; nothing is lost.
+      await supabaseAdmin.from('online_payment_clear_decisions').update({ outcome: 'failed', outcome_at: new Date().toISOString() }).eq('id', d.id);
+      console.error('[online-payment-landing] a send-back after clearing failed:', err instanceof Error ? err.message : String(err));
+    }
+  }
+}
+
 
 /**
  * A Checkout Session on a club's account completed and paid → land it. Idempotent (the database function answers
@@ -340,6 +488,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     return 'not_recorded';
   }
   await sendOnlineReceiptOnce(op.id);
+  await carryOutDecisions(op.id); // 12c Part 6: a team declined while its debit cleared
   if (!(landed as { already?: boolean } | null)?.already) await reconcileDashboardRefunds(stripeAccountId, op.id);
   return (landed as { already?: boolean } | null)?.already ? 'already' : 'landed';
 }
@@ -384,6 +533,7 @@ async function landLeague(
   const result = landed as { already?: boolean; unrecorded?: unknown[] } | null;
   // Notices are read from the database (a replay included), so a crash between the commit and here loses none.
   await raiseLeagueUnrecorded(op);
+  await carryOutDecisions(op.id); // 12c Part 6
   if (result?.already) return 'already';
   await clearSettled({ orgIds: [op.org_id], kinds: ['online_payment_not_recorded'] });
   await sendOnlineReceiptOnce(op.id);

@@ -563,6 +563,40 @@ const cardRefundFailed: Resolver = async rows => {
   return out;
 };
 
+/**
+ * A bank debit returned while clearing, or reversed after it cleared (12c Part 6, `registrationIds` or `teamId`): the
+ * family or team owes again — waits until it is paid in full, or the registration (team) ends.
+ */
+const debitOwedAgain: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const regIds = uniq(rows.flatMap(r => (meta(r, 'registrationIds') ?? '').split(',').filter(Boolean)));
+  const teamIds = uniq(rows.map(r => meta(r, 'teamId')));
+  const [regs, teams] = await Promise.all([
+    regIds.length ? rowsIn<{ id: string; status: string; registration_fee_paid: boolean | null }>(
+      'league_registrations', 'id, status, registration_fee_paid', 'id', regIds) : Promise.resolve([]),
+    teamIds.length ? rowsIn<{ id: string; status: string; payment_status: string | null }>(
+      'teams', 'id, status, payment_status', 'id', teamIds) : Promise.resolve([]),
+  ]);
+  const regById = new Map(regs.map(g => [g.id, g]));
+  const teamById = new Map(teams.map(t => [t.id, t]));
+  for (const r of rows) {
+    const teamId = meta(r, 'teamId');
+    if (teamId) {
+      const t = teamById.get(teamId);
+      if (!t || t.status !== 'accepted') out.set(r.id, said(W.withdrawDone));
+      else out.set(r.id, t.payment_status === 'paid' ? said(W.paidInFull) : 'waiting');
+      continue;
+    }
+    const kids = (meta(r, 'registrationIds') ?? '').split(',').filter(Boolean).map(id => regById.get(id));
+    if (!kids.length) continue;
+    const live = kids.filter(k => k && k.status !== 'declined' && k.status !== 'withdrawn');
+    if (!live.length) out.set(r.id, said(W.withdrawDone));
+    else if (live.every(k => k!.registration_fee_paid)) out.set(r.id, said(W.paidInFull));
+    else out.set(r.id, 'waiting');
+  }
+  return out;
+};
+
 /** "Whose was it?" (12c, `unassignedRefundId`): a part refund made in Stripe on a payment for two or more children —
  *  waits until a person says whose it was (no Done: leaving it would keep the refund out of the book for good). */
 const cardRefundWhose: Resolver = async rows => {
@@ -650,6 +684,8 @@ export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   card_refund_whose: cardRefundWhose,
   card_refund_still_enrolled: cardRefundStillEnrolled,
   card_refund_unmatched: cardRefundUnmatched,
+  debit_returned: debitOwedAgain,
+  debit_reversed: debitOwedAgain,
 };
 
 const isNeedsAttention = (eventType: string): eventType is NeedsAttentionKind => (NEEDS_ATTENTION_KINDS as readonly string[]).includes(eventType);

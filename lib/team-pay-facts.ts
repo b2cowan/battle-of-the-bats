@@ -37,7 +37,10 @@ export interface TeamPayFacts {
 }
 
 export interface TeamDebit {
-  state: 'clearing' | 'returned';
+  /** 12c Part 6: 'reversed' — the bank took back a debit that had cleared; the team owes it again. */
+  state: 'clearing' | 'returned' | 'reversed';
+  receiptNo: number | null;
+  reversedAt: string | null;
   totalCents: number;
   /** What the debit pays toward the entry (its total less any processing fee the team pays). */
   baseCents: number;
@@ -68,7 +71,7 @@ export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | n
     // A payment Stripe took that couldn't land (review 2026-10-25, M2): the record says owing, the money is taken.
     supabaseAdmin.from('online_payments').select('id', { count: 'exact', head: true }).eq('team_id', teamId).eq('status', 'paid').is('landed_at', null),
     // 12c: the latest online payment, so a debit on its way (or just returned) is said on the page.
-    supabaseAdmin.from('online_payments').select('status, rail, total_amount, base_amount, bank_last4, clearing_at, returned_at, return_reason, scope')
+    supabaseAdmin.from('online_payments').select('status, rail, total_amount, base_amount, receipt_no, reversed_at, bank_last4, clearing_at, returned_at, return_reason, scope')
       .eq('team_id', teamId).neq('status', 'expired').order('created_at', { ascending: false }).limit(1).maybeSingle(),
   ]);
   const org = orgRow?.slug ? await getOrganizationBySlugForServer(orgRow.slug as string) : null;
@@ -82,8 +85,9 @@ export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | n
   const depositPaid = Number(team.deposit_paid ?? 0);
   const bankDebit = takesBankDebit(account);
   const options = account ? payOptions({ totalPaid, depositPaid }, fee, account.feePayer, bankDebit) : null;
-  const debit: TeamDebit | null = lastDebit && lastDebit.rail === 'bank_debit' && (lastDebit.status === 'clearing' || lastDebit.status === 'returned') ? {
-    state: lastDebit.status as 'clearing' | 'returned',
+  const debit: TeamDebit | null = lastDebit && lastDebit.rail === 'bank_debit' && ['clearing', 'returned', 'reversed'].includes(lastDebit.status as string) ? {
+    state: lastDebit.status as TeamDebit['state'],
+    receiptNo: lastDebit.receipt_no != null ? Number(lastDebit.receipt_no) : null, reversedAt: (lastDebit.reversed_at as string | null) ?? null,
     totalCents: Math.round(Number(lastDebit.total_amount) * 100), baseCents: Math.round(Number(lastDebit.base_amount) * 100), last4: (lastDebit.bank_last4 as string | null) ?? null,
     startedAt: (lastDebit.clearing_at as string | null) ?? null, returnedAt: (lastDebit.returned_at as string | null) ?? null,
     reason: (lastDebit.return_reason as string | null) ?? null, scope: lastDebit.scope as TeamDebit['scope'],

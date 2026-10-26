@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { readCode } from './_source-code.ts';
 import { bankReturnReason } from '../../lib/bank-debit.ts';
 import { payOptions } from '../../lib/team-pay-options.ts';
 import { onlineFee } from '../../lib/online-payment-fee.ts';
-import { ONLINE_PAYMENT_RATES } from '../../lib/plan-config.ts';
+import { ONLINE_PAYMENT_RATES, RETURNED_BANK_DEBIT_FEE_CENTS } from '../../lib/plan-config.ts';
 import { refusalMessage } from '../../lib/team-pay-refusal.ts';
 import { BANK_REASON_WORDS, reasonFull, reasonShort } from '../../lib/online-payment-words.ts';
 
@@ -100,7 +102,7 @@ describe('the webhook and the landing (§0k)', () => {
     assert.match(land, /if \(bank && op\.status === 'open'\) await startClearing\(op\.id, card, false\)/);
     // Each email once: only the database's first move answers true.
     assert.match(land, /if \(moved === true && tell\) await sendDebitStartedEmail/);
-    assert.match(land, /if \(moved === true\) await sendDebitReturnedEmail/);
+    assert.match(land, /if \(moved === true\) \{\s*await sendDebitReturnedEmail/);
   });
 
   it('a bank debit is booked the day it clears, never the day it started (review 2026-10-26)', () => {
@@ -125,6 +127,47 @@ describe('the webhook and the landing (§0k)', () => {
     for (const f of ['lib/team-pay-view.ts', 'lib/league-pay-view.ts']) {
       assert.match(readCode(f), /import\('\.\/bank-debit-overdue'\)\)\.settleOverdueDebits/, f);
     }
+  });
+
+  it('Part 6: a reversal is a bank-debit dispute only, and tells the family, the desk and the club\'s bill once', () => {
+    const hook = readCode('app/api/payments/connect-webhook/route.ts');
+    assert.match(hook, /case 'charge\.dispute\.created':[\s\S]*?reverseDebit\(account/);
+    const land = readCode('lib/online-payment-landing.ts');
+    const rev = /export async function reverseDebit[\s\S]*?\n}\n/.exec(land)?.[0] ?? '';
+    assert.match(rev, /op\.rail !== 'bank_debit'/, 'a card dispute is 12d\'s');
+    assert.match(rev, /if \(\(res as \{ already\?: boolean \} \| null\)\?\.already\) return;/, 'a replayed dispute tells no one twice');
+    assert.match(rev, /sendDebitReversedEmail[\s\S]*afterDebitBack\(op\.id as string, 'reversed'\)/);
+    // A return while clearing: the notice, the fee, and any decision stamped returned (nothing was taken).
+    assert.match(land, /await sendDebitReturnedEmail\(opId\);\s*await afterDebitBack\(opId, 'returned'\)/);
+    const after = /async function afterDebitBack[\s\S]*?\n}\n/.exec(land)?.[0] ?? '';
+    assert.match(after, /outcome: 'returned'/);
+    assert.match(after, /recordDebitFee\(/);
+  });
+
+  it('Part 6: a decision made while it cleared is carried out once, from the database, after each landing', () => {
+    const land = readCode('lib/online-payment-landing.ts');
+    const carry = /async function carryOutDecisions[\s\S]*?\n}\n/.exec(land)?.[0] ?? '';
+    assert.match(carry, /\.update\(\{ outcome: 'sent_back', outcome_at: now \}\)\s*\.eq\('id', d\.id\)\.is\('outcome', null\)\.select\('id'\)\.maybeSingle\(\)/,
+      'the decision is claimed before Stripe is asked');
+    assert.match(carry, /if \(!item\?\.entry_id\) continue;/, 'only a share in the book is sent back');
+    assert.equal((land.match(/await carryOutDecisions\(op\.id\)/g) ?? []).length, 2, 'both flows, replays included');
+  });
+
+  it('Part 6: Stripe\'s failure fee is the constant, billed on the club\'s subscription, never on a comped club', () => {
+    const fee = readCode('lib/platform-debit-fee.ts');
+    assert.match(fee, /RETURNED_BANK_DEBIT_FEE_CENTS/);
+    assert.doesNotMatch(fee, /amount: \d|\b5\.00\b/, 'the figure is printed from the constant');
+    assert.match(fee, /workspaceHoldsFoundingComp\(orgId\)[\s\S]*'comped'/);
+    assert.match(fee, /invoiceItems\.create\(\{[\s\S]*subscription: sub\.id/);
+    assert.match(fee, /idempotencyKey: `debit-fee:\$\{feeId\}`/);
+  });
+
+  it('Part 6: the returned-debit fee constant matches the Facts doc, its canonical record', () => {
+    // Plain text, not readCode: the doc is prose, and its apostrophes would read as strings.
+    const facts = readFileSync(join(import.meta.dirname, '..', '..', 'docs/agents/strategy/PLAN_PRICING_FACTS.md'), 'utf8');
+    const m = /A returned or reversed bank debit \(DECIDED[^)]*\):\*\* Stripe charges the platform CA\$(\d+\.\d{2})/.exec(facts);
+    assert.ok(m, 'the Facts doc names the fee');
+    assert.equal(Math.round(Number(m![1]) * 100), RETURNED_BANK_DEBIT_FEE_CENTS);
   });
 
   it('the status routes reload the page for a clearing or returned debit', () => {

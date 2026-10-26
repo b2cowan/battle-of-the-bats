@@ -24,7 +24,7 @@ import type { PayScope } from '@/lib/team-pay-options';
 import reg from '@/app/[orgSlug]/register/register.module.css';
 import {
   ClearingState, ConfirmingState, NotFinishedState, PayButtons, PayError, PayFrame, PayerEmailField, PolicyAndOtherWays, ReceiptCard,
-  Receipts as ReceiptList, ReturnedNotice, TestLine, openCheckout, payBlockStyles as pb, payDollars as dollars, usePaymentConfirming,
+  Receipts as ReceiptList, ReturnedNotice, ReversedNotice, TestLine, openCheckout, payBlockStyles as pb, payDollars as dollars, usePaymentConfirming,
   type PayRail,
 } from './PayBlock';
 import styles from './TeamPay.module.css';
@@ -64,6 +64,10 @@ export default function TeamPayContent({ token, view, returnedSession, left }: {
               {view.kind === 'owing' && view.debit?.state === 'returned' && (
                 <ReturnedNotice returnedAt={view.debit.returnedAt} reason={view.debit.reason} held={B.holdTeam(possessive(view.teamName))} />
               )}
+              {view.kind === 'owing' && view.debit?.state === 'reversed' && (
+                <ReversedNotice totalCents={view.debit.totalCents} reversedAt={view.debit.reversedAt} reason={view.debit.reason}
+                  receiptNo={view.debit.receiptNo} owingAgainCents={view.debit.baseCents} />
+              )}
               {view.kind === 'owing' && <Owing token={token} view={view} />}
               {view.kind === 'already' && view.receipts.length === 0 && (
                 <div className={pb.state}><h2>{W.alreadyTitle(view.teamName)}</h2><p>{W.alreadyBody}</p></div>
@@ -93,7 +97,8 @@ function Receipts({ view }: { view: PayPageView }) {
 function Receipt({ r, view }: { r: PayPageReceipt; view: PayPageView }) {
   return (
     <ReceiptCard
-      title={r.refunded && r.refundedAt ? W.refundedTag(day(r.refundedAt) ?? '') : W.paidTitle}
+      title={r.reversedAt ? B.receiptReversedTitle : r.refunded && r.refundedAt ? W.refundedTag(day(r.refundedAt) ?? '') : W.paidTitle}
+      reversedAt={r.reversedAt}
       test={r.test} totalCents={r.totalCents} clubName={view.clubName} brand={r.brand} last4={r.last4}
       paidAt={r.paidAt} receiptNo={r.receiptNo}
       lines={[{ label: W.receiptLine[r.scope], cents: r.baseCents }]}

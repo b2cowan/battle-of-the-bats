@@ -46,8 +46,12 @@ export interface LeaguePayChild {
 /** 12c: a bank debit of this sign-up, on its way (clearing) or come back before it cleared (returned). */
 export interface LeagueDebit {
   id: string;
-  state: 'clearing' | 'returned';
+  state: 'clearing' | 'returned' | 'reversed';
   totalCents: number;
+  /** What it paid toward the fees (owing again once reversed). */
+  baseCents: number;
+  receiptNo: number | null;
+  reversedAt: string | null;
   last4: string | null;
   startedAt: string | null;
   returnedAt: string | null;
@@ -85,6 +89,8 @@ export interface LeaguePayFacts {
   /** 12c: the sign-up's bank debits clearing now, and the newest payment when it came back (returned) with nothing newer. */
   clearing: LeagueDebit[];
   returned: LeagueDebit | null;
+  /** 12c Part 6: the newest payment, when the bank took it back after it cleared. */
+  reversed: LeagueDebit | null;
   refusal: LeaguePayRefusal;
 }
 
@@ -257,10 +263,10 @@ export function leagueRefusalMessage(f: Pick<LeaguePayFacts, 'refusal' | 'childr
 }
 
 /** 12c: the sign-up's payments (not expired) with the children each covers: the clearing debits, and the newest when returned. */
-async function signupDebits(regIds: string[], firstName: Map<string, string>): Promise<{ clearing: LeagueDebit[]; returned: LeagueDebit | null; clearingRegs: Set<string> }> {
-  if (!regIds.length) return { clearing: [], returned: null, clearingRegs: new Set() };
+async function signupDebits(regIds: string[], firstName: Map<string, string>): Promise<{ clearing: LeagueDebit[]; returned: LeagueDebit | null; reversed: LeagueDebit | null; clearingRegs: Set<string> }> {
+  if (!regIds.length) return { clearing: [], returned: null, reversed: null, clearingRegs: new Set() };
   const { data } = await supabaseAdmin.from('online_payment_items')
-    .select('registration_id, description, online_payments!inner(id, status, rail, total_amount, bank_last4, clearing_at, returned_at, return_reason, created_at)')
+    .select('registration_id, description, online_payments!inner(id, status, rail, total_amount, base_amount, receipt_no, bank_last4, clearing_at, returned_at, reversed_at, return_reason, created_at)')
     .in('registration_id', regIds).neq('online_payments.status', 'expired');
   const byPay = new Map<string, { op: Record<string, unknown>; regs: string[]; firsts: string[] }>();
   for (const i of (data ?? []) as Array<Record<string, unknown>>) {
@@ -272,7 +278,9 @@ async function signupDebits(regIds: string[], firstName: Map<string, string>): P
   }
   const pays = [...byPay.values()].sort((a, b) => String(b.op.created_at).localeCompare(String(a.op.created_at)));
   const debit = (e: { op: Record<string, unknown>; firsts: string[] }): LeagueDebit => ({
-    id: e.op.id as string, state: e.op.status as 'clearing' | 'returned', totalCents: toCents(Number(e.op.total_amount)),
+    id: e.op.id as string, state: e.op.status as LeagueDebit['state'], totalCents: toCents(Number(e.op.total_amount)),
+    baseCents: toCents(Number(e.op.base_amount)), receiptNo: e.op.receipt_no != null ? Number(e.op.receipt_no) : null,
+    reversedAt: (e.op.reversed_at as string | null) ?? null,
     last4: (e.op.bank_last4 as string | null) ?? null, startedAt: (e.op.clearing_at as string | null) ?? null,
     returnedAt: (e.op.returned_at as string | null) ?? null, reason: (e.op.return_reason as string | null) ?? null, childFirsts: e.firsts,
   });
@@ -281,6 +289,7 @@ async function signupDebits(regIds: string[], firstName: Map<string, string>): P
   return {
     clearing: clearing.map(debit),
     returned: newest && newest.op.status === 'returned' && newest.op.rail === 'bank_debit' ? debit(newest) : null,
+    reversed: newest && newest.op.status === 'reversed' ? debit(newest) : null,
     clearingRegs: new Set(clearing.flatMap(p => p.regs)),
   };
 }
@@ -347,6 +356,6 @@ export async function loadLeaguePayFacts(registrationId: string): Promise<League
   return {
     org, season, anchorId: anchor.id, signupKey: anchor.signup_ref ?? anchor.id, guardianEmail: anchor.guardian_email,
     children, account, owingCents, fee, shares, bankDebit, bankFee, bankShares,
-    clearing: debits.clearing, returned: debits.returned, refusal,
+    clearing: debits.clearing, returned: debits.returned, reversed: debits.reversed, refusal,
   };
 }

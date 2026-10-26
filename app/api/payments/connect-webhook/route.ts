@@ -3,7 +3,7 @@ import type Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureError } from '@/lib/observability';
 import { connectWebhookSecret, constructConnectEvent } from '@/lib/stripe-connect';
-import { applyRefundEvent, expireCheckoutSession, landCheckoutSession, returnDebit } from '@/lib/online-payment-landing';
+import { applyRefundEvent, expireCheckoutSession, landCheckoutSession, returnDebit, reverseDebit } from '@/lib/online-payment-landing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -57,6 +57,11 @@ export const POST = withObservability(async (req: Request) => {
       case 'checkout.session.async_payment_failed': {
         // 12c: the bank returned a debit before it settled: nothing taken, the family told.
         await returnDebit(account, (event.data.object as Stripe.Checkout.Session).id);
+        break;
+      }
+      case 'charge.dispute.created': {
+        // 12c Part 6: a bank debit reversed by the bank after it cleared (a card dispute is 12d's and is left alone).
+        await reverseDebit(account, event.data.object as Stripe.Dispute);
         break;
       }
       case 'checkout.session.expired': {

@@ -16,7 +16,7 @@
  */
 import { useEffect, useState, type ReactNode } from 'react';
 import { CreditCard, Landmark } from 'lucide-react';
-import { BANK_DEBIT_WORDS as B, PAY_WORDS as W, cardLabel, money, paidAtLabel, reasonFull, receiptLabel } from '@/lib/online-payment-words';
+import { BANK_DEBIT_WORDS as B, DEBIT_NOTICE_WORDS as DW, PAY_WORDS as W, cardLabel, money, paidAtLabel, reasonFull, receiptLabel } from '@/lib/online-payment-words';
 import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import styles from './PayBlock.module.css';
 
@@ -88,15 +88,18 @@ export function TestLine({ text }: { text: string }) {
 
 /** A receipt card: the title, "{total} to {club}", the card (or 12c: bank debit) line, then the lines, the fee (only when
  *  the payer paid it) and the total. */
-export function ReceiptCard({ title, test, totalCents, clubName, brand, last4, paidAt, receiptNo, lines, feeCents, bank }: {
+export function ReceiptCard({ title, test, totalCents, clubName, brand, last4, paidAt, receiptNo, lines, feeCents, bank, reversedAt = null }: {
   title: string; test: boolean; totalCents: number; clubName: string; brand: string | null; last4: string | null;
   paidAt: string | null; receiptNo: number | null; lines: { label: string; cents: number }[]; feeCents: number | null;
   bank?: { last4: string | null; startedAt: string | null } | null;
+  /** 12c Part 6: the bank took it back after it cleared — "Reversed {day}. This receipt no longer counts." */
+  reversedAt?: string | null;
 }) {
   return (
     <div className={styles.receipt}>
       {test && <p className={styles.test}>{W.testReceipt}</p>}
       <h2>{title}</h2>
+      {reversedAt && <p className={styles.note}>{B.receiptReversedLine(clubDay(reversedAt))}</p>}
       <p className={styles.receiptTo}>{W.paidTo(payDollars(totalCents), clubName)}</p>
       <p className={styles.note}>
         {bank
@@ -183,6 +186,18 @@ export function ClearingState({ totalCents, last4, startedAt, held, clubName, co
       <p>{held}</p>
       {balance && <p>{balance}</p>}
       <p className={styles.note}>{B.contact(clubName, contact)}</p>
+    </div>
+  );
+}
+
+/** 12c Part 6: the bank reversed a debit after it cleared — above the owing block, which is back with both buttons. */
+export function ReversedNotice({ totalCents, reversedAt, reason, receiptNo, owingAgainCents }: {
+  totalCents: number; reversedAt: string | null; reason: string | null; receiptNo: number | null; owingAgainCents: number;
+}) {
+  return (
+    <div className={styles.state} role="status">
+      <h2>{B.reversedTitle}</h2>
+      <p>{B.reversedBody(payDollars(totalCents), clubDay(reversedAt), reasonFull(reason), receiptLabel(receiptNo ?? ''), DW.owingAgain(payDollars(owingAgainCents)))}</p>
     </div>
   );
 }

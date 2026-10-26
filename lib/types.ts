@@ -3471,6 +3471,8 @@ export type NotificationEventType =
   | 'card_refund_whose'          // a part refund on a payment for two or more children: choose the child
   | 'card_refund_still_enrolled' // a child's fee went back in Stripe while the child is registered: withdraw, link or keep
   | 'card_refund_unmatched'      // a refund on a payment we haven't recorded yet (Stripe's events out of order)
+  | 'debit_returned'             // 12c: a bank debit came back while it was clearing (nothing taken; the family emailed)
+  | 'debit_reversed'             // 12c: the bank reversed a debit after it cleared (out of the book; owing again)
   //   To the people who built the schedule:
   | 'club_schedule_reply'        // a team answered the review round
   | 'club_schedule_handed_back'  // a team handed a club practice back

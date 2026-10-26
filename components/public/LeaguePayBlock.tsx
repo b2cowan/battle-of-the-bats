@@ -18,7 +18,7 @@ import { LEAGUE_PAY_WORDS as LW, childList } from '@/lib/league-pay-words';
 import type { LeaguePayDebit, LeaguePayView } from '@/lib/league-pay-view';
 import {
   ClearingState, ConfirmingState, NotFinishedState, PayButtons, PayError, PayFrame, PayerEmailField, PolicyAndOtherWays, ReceiptCard,
-  Receipts, ReturnedNotice, TestLine, openCheckout, payBlockStyles as pb, payDollars as dollars, usePaymentConfirming,
+  Receipts, ReturnedNotice, ReversedNotice, TestLine, openCheckout, payBlockStyles as pb, payDollars as dollars, usePaymentConfirming,
   type PayRail,
 } from './PayBlock';
 import kit from './ClubKit.module.css';
@@ -42,6 +42,10 @@ export default function LeaguePayBlock({ pay, returnedSession, left }: {
                 clubName={pay.clubName} contact={pay.clubContact} />
             </div>
           ))}
+          {pay.kind === 'owing' && pay.reversed && (
+            <ReversedNotice totalCents={pay.reversed.totalCents} reversedAt={pay.reversed.reversedAt} reason={pay.reversed.reason}
+              receiptNo={pay.reversed.receiptNo} owingAgainCents={pay.reversed.baseCents} />
+          )}
           {pay.kind === 'owing' && pay.returned && (
             <ReturnedNotice returnedAt={pay.returned.returnedAt} reason={pay.returned.reason} held={heldLine(pay.returned)} />
           )}
@@ -62,7 +66,8 @@ function LeagueReceipts({ pay }: { pay: LeaguePayView }) {
       {pay.receipts.map(r => (
         <ReceiptCard
           key={r.id}
-          title={r.refunded ? LW.receiptRefunded : W.paidTitle}
+          title={r.reversedAt ? B.receiptReversedTitle : r.refunded ? LW.receiptRefunded : W.paidTitle}
+          reversedAt={r.reversedAt}
           test={r.test} totalCents={r.totalCents} clubName={pay.clubName} brand={r.brand} last4={r.last4}
           paidAt={r.paidAt} receiptNo={r.receiptNo} lines={r.lines} feeCents={r.feePaidByPayer ? r.feeCents : null}
           bank={r.bank ? { last4: r.bankLast4, startedAt: r.startedAt } : null}

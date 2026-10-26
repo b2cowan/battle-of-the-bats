@@ -568,6 +568,14 @@ export const ONLINE_PAYMENT_RATES = {
 
 export type OnlinePaymentRail = keyof typeof ONLINE_PAYMENT_RATES;
 
+/**
+ * Stripe's fee for each returned or reversed bank debit (CA$5.00, stripe.com/en-ca pricing, read 2026-10-26), which Stripe
+ * charges the platform and the owner ruled is the club's (plan §0k answer 2): billed as a "Returned bank debit" line on the
+ * club's next FieldLogicHQ invoice; a comped or free club is not billed. Canonical record: the Facts doc's facilitated-
+ * payments section. Never typed elsewhere.
+ */
+export const RETURNED_BANK_DEBIT_FEE_CENTS = 500;
+
 /** "3.5% + $1.50" — the rate as a customer reads it, printed from the constant above. */
 export function onlineFeeRateLabel(rail: OnlinePaymentRail): string {
   const { pctBps, flatCents } = ONLINE_PAYMENT_RATES[rail];

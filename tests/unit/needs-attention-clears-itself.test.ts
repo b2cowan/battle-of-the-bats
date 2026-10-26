@@ -22,10 +22,10 @@ import { registrationAmountDue, registrationFee } from '../../lib/registration-a
 const LIB = readCode('lib/needs-attention.ts');
 
 describe('1 · the rulebook is total over the Needs-attention kinds', () => {
-  it('names exactly the nineteen kinds that wait on someone', () => {
+  it('names exactly the twenty-one kinds that wait on someone', () => {
     assert.deepEqual([...NEEDS_ATTENTION_KINDS].sort(), [
       'assistant_coach_approval_requested', 'card_refund_failed', 'card_refund_still_enrolled', 'card_refund_unmatched', 'card_refund_whose', 'club_hand_back_asked', 'club_hand_back_unasked', 'club_payment_handed_off',
-      'club_schedule_review', 'house_league_withdraw_request', 'online_payment_not_recorded', 'payment_failed', 'payouts_need_attention', 'team_coach_payment_reminder',
+      'club_schedule_review', 'debit_returned', 'debit_reversed', 'house_league_withdraw_request', 'online_payment_not_recorded', 'payment_failed', 'payouts_need_attention', 'team_coach_payment_reminder',
       'team_money_sent', 'team_move_requested', 'team_no_show', 'team_request_filed', 'team_request_holding_payout',
     ]);
   });
@@ -95,8 +95,8 @@ describe('the /review fixes (2026-10-16)', () => {
   it('the two Needs-attention indexes cover exactly the Needs-attention kinds (a new kind needs a new migration)', () => {
     // The NEWEST definition: mig 332 made them, mig 338 re-made them with Families' hand-off (Club Tier Stage 5c), and
     // mig 358 with online payments' three (Club Tier Stage 12a), mig 370 with a family's ask to withdraw (Club Tier 9b-2),
-    // mig 384 with the three refunds made in Stripe (Club Tier 12c).
-    const sql = readCode('supabase/migrations/384_a_refund_made_in_stripe_records_itself.sql');
+    // mig 384 with the three refunds made in Stripe (Club Tier 12c), mig 387 with a bank debit returned or reversed (12c).
+    const sql = readCode('supabase/migrations/387_a_bank_debit_at_the_desk.sql');
     const lists = [...sql.matchAll(/on public\.notifications \([a-z_]+, event_type\)\s+where cleared_at is null\s+and event_type in \(([^)]*)\)/g)].map(m => m[1]);
     assert.equal(lists.length, 2);
     for (const list of lists) {

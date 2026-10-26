@@ -12,7 +12,7 @@ import { childList } from './league-pay-words';
 import { transactionalFamilyFooterHtml } from './family-mail-footer';
 import { emailFactsPanel } from './online-refund-block';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
-import { BANK_DEBIT_EMAIL_WORDS as D, BANK_DEBIT_WORDS as B, ONLINE_EMAIL_WORDS as E, PAY_WORDS as P, money, reasonFull } from './online-payment-words';
+import { BANK_DEBIT_EMAIL_WORDS as D, BANK_DEBIT_WORDS as B, DEBIT_NOTICE_WORDS as DW, ONLINE_EMAIL_WORDS as E, PAY_WORDS as P, money, reasonFull } from './online-payment-words';
 import { possessive } from './utils';
 import type { Organization } from './types';
 
@@ -28,8 +28,8 @@ const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? '';
 
 type DebitRow = {
   id: string; flow: 'tournament_team' | 'league_signup'; team_id: string | null; payer_email: string | null;
-  total_amount: number; livemode: boolean; bank_last4: string | null; clearing_at: string | null; returned_at: string | null;
-  return_reason: string | null; created_at: string;
+  total_amount: number; base_amount: number; livemode: boolean; bank_last4: string | null; clearing_at: string | null;
+  returned_at: string | null; reversed_at: string | null; return_reason: string | null; receipt_no: number | null; created_at: string;
 };
 
 type DebitContext = {
@@ -41,7 +41,7 @@ type DebitContext = {
 
 async function debitContext(onlinePaymentId: string): Promise<DebitContext | null> {
   const { data } = await supabaseAdmin.from('online_payments')
-    .select('id, flow, team_id, payer_email, total_amount, livemode, bank_last4, clearing_at, returned_at, return_reason, created_at')
+    .select('id, flow, team_id, payer_email, total_amount, base_amount, livemode, bank_last4, clearing_at, returned_at, reversed_at, return_reason, receipt_no, created_at')
     .eq('id', onlinePaymentId).maybeSingle();
   const op = data as DebitRow | null;
   if (!op?.payer_email) return null;
@@ -131,5 +131,26 @@ export async function sendDebitReturnedEmail(onlinePaymentId: string): Promise<v
     ], 'questions');
   } catch (err) {
     console.error('[bank-debit-email] the debit-returned email was not sent:', err instanceof Error ? err.message : String(err));
+  }
+}
+
+/**
+ * "A payment to {club} was returned" (12c Part 6, words §2.4 email 4) — once, when the bank reverses a debit that had
+ * cleared: the receipt no longer counts, what is owing again, Pay now.
+ */
+export async function sendDebitReversedEmail(onlinePaymentId: string): Promise<void> {
+  try {
+    const c = await debitContext(onlinePaymentId);
+    if (!c) return;
+    const total = money(Number(c.op.total_amount));
+    const why = reasonFull(c.op.return_reason);
+    await send(c, D.reversedSubject(c.org.name), [
+      warmEmailParagraph(escapeHtml(D.reversedLead(total, c.org.name, formatStoredDate(c.op.reversed_at)))),
+      why ? warmEmailParagraph(escapeHtml(D.reversedReason(why))) : '',
+      warmEmailParagraph(escapeHtml(D.reversedOwes(String(c.op.receipt_no ?? ''), DW.owingAgain(money(Number(c.op.base_amount)))))),
+      c.payLink && c.canPayAgain ? warmEmailButton(D.payNow, c.payLink) : '',
+    ], 'questions');
+  } catch (err) {
+    console.error('[bank-debit-email] the debit-reversed email was not sent:', err instanceof Error ? err.message : String(err));
   }
 }
