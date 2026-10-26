@@ -349,7 +349,7 @@ is not finished at SUCCEED; this checklist is part of it (same session, right af
 Amplify job):
 
 1. **TODO.md** — tick `[x]` every line this release ships; move fully-verified items to
-   "✅ Completed Tasks".
+   `docs/projects/archive/TODO_COMPLETED_ARCHIVE.md` (one line each; keep TODO.md an index).
 2. **`docs/projects/active/OWNER_QA_LEDGER.md`** — any "on dev / unshipped" population notes now
    describe LIVE behaviour; update the framing.
 3. **Auto-memory `reference_prod_release_history`** — record the promote: new prod HEAD hash,
