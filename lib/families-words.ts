@@ -596,7 +596,9 @@ export const SEASON_EMAIL_WORDS = {
   /** An old row's To when the old log kept only the word (a division, a team, a status), never which one. */
   notRecorded: (what: string) => `${what} (which one wasn’t recorded)`,
   oldReached: (sent: number, skipped: number) => `${sent} sent${skipped > 0 ? ` · ${skipped} didn’t go` : ''}`,
-  footnote: 'Automatic emails to one family (accepted, waitlisted, declined) aren’t listed here. Each shows on that child’s registration.',
+  // /marketing drew "Each shows on that child's registration"; the registration's history shows the change (Accepted, Ended), not the
+  // email, and a waitlist move not at all — so the line says only what is true.
+  footnote: 'Automatic emails to one family (accepted, waitlisted, declined) aren’t listed here. Each goes to the family when the child’s registration changes.',
   emptyTitle: 'No emails to this season’s families yet',
   emptyBody: (season: string) => `Emails you send to ${possessive(season)} families are listed here, with the ones FieldLogicHQ sends for you when you publish teams.`,
   noFamiliesTitle: (season: string) => `No families in ${season} yet`,

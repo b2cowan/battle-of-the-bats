@@ -74,7 +74,7 @@ const registrationsHelp: HelpPageContent = {
             <li>Start with position #1 unless your organization has a documented exception.</li>
             <li>Click <strong>Promote</strong> on that player&apos;s row.</li>
             <li>Confirm the player moved to <strong>Active</strong> and that the queue positions compacted.</li>
-            <li>If the family says they didn&apos;t get the promotion email, check the sent log on the season&apos;s <strong>Email families</strong> page.</li>
+            <li>If the family says they didn&apos;t get the promotion email, check the address on the registration. An email to one family about their child goes when the registration changes; the season&apos;s <strong>Email families</strong> page lists emails sent to many families, not these.</li>
           </ol>
           <p>If auto-promote is on for the season, this can happen automatically when a spot opens. Still review the queue after declines and withdrawals to make sure the outcome matches your policy.</p>
         </>
@@ -165,8 +165,8 @@ const registrationsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to email or export a targeted registration group',
       summary: 'Reach the right families and download the right list without over-sending.',
-      keywords: ['email families', 'message registrants', 'email', 'export registrations', 'target audience', 'download'],
-      searchText: 'email families message registrants renamed email active waitlisted pending by division by team by status export registration list csv xlsx excel contact details download targeted audience league plus league registrar can email',
+      keywords: ['email families', 'message registrants', 'email', 'export registrations', 'target audience', 'download', 'email ticked families', 'email this family'],
+      searchText: 'email families message registrants renamed email everyone in the season by division by team by status to review waitlist ended tick rows bulk bar email one family email this family families counted siblings one email three emails in any 24 hours export registration list csv xlsx excel contact details download targeted audience league plus league registrar can email',
       links: [
         { label: 'Exports & downloads guide', href: '../help/exports' },
       ],
@@ -175,8 +175,8 @@ const registrationsHelp: HelpPageContent = {
           <p>Before sending email or exporting data, narrow to the group you actually need.</p>
           <ol>
             <li>Use the status tabs and the search box to confirm the target group.</li>
-            <li>For email, click <strong>Email families</strong> and choose the audience: all active, by division, by team, or by status.</li>
-            <li>Review the recipient count before sending. If it looks off, cancel and adjust the audience.</li>
+            <li>For email, click <strong>Tools &rsaquo; Email families</strong> and choose who: everyone in the season, one or more divisions or teams, or one or more statuses. To write to particular families, tick their rows and click <strong>Email</strong>.</li>
+            <li>Check the count of families in the window&apos;s foot before sending. If it looks off, change Who.</li>
             <li>For exports, use the <strong>Export</strong> action on the table. The standard Excel/CSV omits contact details for privacy; a separate &quot;with contact details&quot; option is there when you need them.</li>
           </ol>
           <p><strong>Email families is open to the owner, club admin, league admin and league registrar</strong>, and stays open on a finished season. <strong>Exports are part of League Plus</strong>; on the free League plan the export menu is replaced with an upgrade badge. Registration exports contain family contact information, so store them carefully.</p>
@@ -217,19 +217,18 @@ const registrationsHelp: HelpPageContent = {
       id: 'reaching-registrants',
       group: 'How registrations work',
       heading: 'Reaching out to registrants',
-      summary: 'Email a targeted audience, and review the sent-email history on the Email families page.',
-      keywords: ['email families', 'message registrants', 'email', 'audience', 'notifications', 'sent email log'],
-      searchText: 'email families message registrants renamed email all active by division by team by status recipient count send immediately notifications page renamed sent email history log league registrar can email owner club admin league admin finished season stays open',
+      summary: 'Email the season, a part of it, the families you ticked or one family, and see what was sent on the season’s Email families page.',
+      keywords: ['email families', 'message registrants', 'email', 'audience', 'notifications', 'sent email log', 'email this family', 'three emails', 'in any 24 hours'],
+      searchText: 'email families message registrants renamed email everyone in the season families with an active child by division by team published by status active to review waitlist ended ticked families bulk bar one family email this family never counts each season three emails in any 24 hours automatic emails publish teams never count families counted siblings one email sent history notifications page renamed league registrar can email owner club admin league admin no families access finished season stays open',
       content: (
         <>
-          <p>The owner, club admin, league admin and league registrar can use <strong>Email families</strong> on the Registrations page to email a targeted audience:</p>
+          <p>The owner, club admin, league admin and league registrar can email a season&apos;s families from Registrations, three ways:</p>
           <ul>
-            <li><strong>All active</strong> — everyone with an Active status.</li>
-            <li><strong>By division</strong> — active registrants in one division.</li>
-            <li><strong>By team</strong> — registrants assigned to a specific team (after teams are created).</li>
-            <li><strong>By status</strong> — a specific status group, e.g. everyone Waitlisted.</li>
+            <li><strong>Tools &rsaquo; Email families</strong> — everyone in the season (families with an active child), one or more divisions, teams in a published division, or statuses.</li>
+            <li><strong>Tick rows, then Email</strong> — just the families you ticked.</li>
+            <li><strong>A row&apos;s &#8943; &rsaquo; Email this family</strong> — one family.</li>
           </ul>
-          <p>Emails send immediately to all matching guardian addresses — there&apos;s no undo, so check the recipient count first. The season&apos;s <strong>Email families</strong> page, in its menu beside Money, keeps a full sent-email history (approvals, waitlist notices, declines, and messages) you can reference.</p>
+          <p>The window counts families, so siblings get one email. Each season can send <strong>3 emails in any 24 hours</strong>; a message to one family, and the automatic emails Publish teams sends, never count. An email goes as soon as you press Send, so check the count first. The season&apos;s <strong>Email families</strong> page, in its menu beside Money, lists what was sent. More in <em>Money and Email families</em> in the House league guide.</p>
         </>
       ),
     },

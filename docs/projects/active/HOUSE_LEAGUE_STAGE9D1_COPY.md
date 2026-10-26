@@ -175,7 +175,7 @@ counted new email, which is no longer the advice).
 | Reached | 10 of 10 (today's) · a one-family row: 1 family |
 | One-family row's Subject | A message to this family (today's) |
 | Automatic row | Teams published: Division B · tag Automatic |
-| Footnote | Automatic emails to one family (accepted, waitlisted, declined) aren't listed here. Each shows on that child's registration. |
+| Footnote | Automatic emails to one family (accepted, waitlisted, declined) aren't listed here. Each goes to the family when the child's registration changes. (Build: the drawn "Each shows on that child's registration" was untrue — the history shows the change, not the email, and no waitlist move.) |
 | Phone row | Oct 26 · 9:14 a.m. · Everyone · Alex Rivera |
 | Divider | Earlier emails · counted per child |
 | Old row, To | (stored words, e.g. All active registrants) · a bare division / team / status: A division (which one wasn't recorded) |
