@@ -106,6 +106,14 @@ export function useRoleSummaryState(enabled = true): { summary: RoleSummary | nu
                   w && typeof w.href === 'string' && typeof w.title === 'string' && typeof w.label === 'string',
               )
             : [],
+          // Copied field by field like every other: a field left off this list never reaches the chrome (the club
+          // bar's "My team" read an empty list until this line existed).
+          leagueTeams: Array.isArray(data.leagueTeams)
+            ? data.leagueTeams.filter(
+                (t: { id?: unknown; teamName?: unknown; orgSlug?: unknown; href?: unknown }) =>
+                  t && typeof t.id === 'string' && typeof t.teamName === 'string' && typeof t.orgSlug === 'string' && typeof t.href === 'string',
+              )
+            : [],
           orgPlan: typeof data.orgPlan === 'string' ? data.orgPlan : null,
           billingHref: typeof data.billingHref === 'string' ? data.billingHref : null,
         });
