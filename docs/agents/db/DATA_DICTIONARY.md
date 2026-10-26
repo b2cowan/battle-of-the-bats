@@ -6651,8 +6651,11 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_seasons.owing_amber_days -->
 **`owing_amber_days`** (smallint, NOT NULL, default 14, CHECK 1–365; mig 368, owner 9b·8) — an accepted registration that still owes turns amber on Registrations after this many days from `league_registrations.accepted_at`. Set on the season's Registration block.
 
+<!-- dict:col:league_seasons.finished_at -->
+**`finished_at`** (timestamptz, nullable; mig 377, Club Tier 9c) — when the season last became finished (`completed` or `archived`), stamped by the trigger `league_seasons_finished` on the status change and cleared when it is reopened. **The same trigger erases the season's `league_player_ratings`** (ruling 9c·2b; a reopened season does not get them back). A house-league coach's team page stays 30 days from it (`COACH_PAGE_DAYS_AFTER_FINISH`, [lib/house-league-access.ts](../../../lib/house-league-access.ts)). Mig 377 backfilled already-finished seasons from `updated_at`.
+
 <!-- dict:col:league_seasons.draft_state -->
-**`draft_state`** (jsonb, nullable; added mig 079) — **transient live player-draft snapshot** (a **rotating** draft assigning registered players to teams — a plain repeating rotation `(pickNumber-1) % len`, **not** serpentine/snake); null = no active draft, cleared on finalize ([draft/route.ts:172](../../../app/api/admin/house-league/seasons/[seasonId]/draft/route.ts#L172)) or when placement runs ([placement/route.ts:114](../../../app/api/admin/house-league/seasons/[seasonId]/placement/route.ts#L114)). Typed `LeagueDraftState` ([lib/types.ts:708-716](../../../lib/types.ts#L708-L716)). Mig 079 self-labels "DEV ONLY / already in prod" but the column is **identical in both envs** — decide from the snapshot, not the migration.
+**`draft_state`** (jsonb, nullable; added mig 079) — ⚠ **UNUSED from Club Tier 9c (mig 377): left in place, never dropped.** 9c's draft is a pure function ([lib/house-league-draft.ts](../../../lib/house-league-draft.ts)) that lands whole through `league_division_draft_apply`, with no live draft state. What follows describes the retired draft room. **Transient live player-draft snapshot** (a **rotating** draft assigning registered players to teams — a plain repeating rotation `(pickNumber-1) % len`, **not** serpentine/snake); null = no active draft, cleared on finalize ([draft/route.ts:172](../../../app/api/admin/house-league/seasons/[seasonId]/draft/route.ts#L172)) or when placement runs ([placement/route.ts:114](../../../app/api/admin/house-league/seasons/[seasonId]/placement/route.ts#L114)). Typed `LeagueDraftState` ([lib/types.ts:708-716](../../../lib/types.ts#L708-L716)). Mig 079 self-labels "DEV ONLY / already in prod" but the column is **identical in both envs** — decide from the snapshot, not the migration.
 
 **`draft_state` jsonb key catalog** (`LeagueDraftState`):
 
@@ -6697,6 +6700,10 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_divisions.born_to_year -->
 **`born_from_year` / `born_to_year`** (smallint, nullable; CHECK each 1900–2100 and from ≤ to; mig 349, Club Tier Stage 4c-2) — the division's birth years, the same pair and the same rule as `rep_program_years.born_*` (read through [lib/born-years.ts](../../../lib/born-years.ts) with the season's sport's cut-off). Typed in the Add division / Edit division windows. **No carried marker**: divisions are typed fresh every season.
 
+<!-- dict:col:league_divisions.teams_published_at -->
+<!-- dict:col:league_divisions.teams_published_by -->
+**`teams_published_at` / `teams_published_by`** (timestamptz / uuid, nullable; mig 377, Club Tier 9c, ruling 9c·6) — the division's teams were **published**: each family emailed once, each child's team on the family's status page, each coach invited. Written only by `league_division_publish` (one transaction with the family email rows and the coach invites). **There is no unpublish.** Once set, the draft and "Take all players off teams" are refused, and a move asks first and emails the family (`league_team_place`, 9c·12). Mig 377 backfilled every division that already had accepted players on teams with `now()` and **no email** (a season being played never emails because 9c turned on); `teams_published_by` is NULL on those.
+
 ---
 
 ## `league_teams`
@@ -6706,7 +6713,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 **Gotchas (read first):**
 1. **NO `org_id` and NO `updated_at`** — `league_teams` scopes via `season_id → league_seasons.org_id` (a 2-hop), unlike its sibling `league_games` which was denormalized with `org_id` (mig 075). PK `id` only; sorted in-app by `(sort_order, created_at)`.
-2. **`coach_name` is FREE TEXT, not an account** — a label, not a FK to `organization_members`/`auth.users`. Distinguishes house-league coaches from the Coaches-Portal operator model.
+2. **`coach_name` is FREE TEXT, not an account, and LEGACY from 9c** — a label with no email. From Club Tier 9c (mig 377) a team's coaches are rows of `league_team_coaches` (name + email, invited at Publish, the access truth for the coach's team page); the 9c screens stop writing `coach_name` and it is left in place (the fixture's "Pat Volunteer" cannot become an invite without an email).
 3. **`deleteLeagueTeam` is a HARD delete** ([lib/db.ts:3180](../../../lib/db.ts#L3180)) — the lib helper has only a code-comment guard; the DELETE route adds a real guard but it **only counts `status='active'` registrations** ([teams/[teamId]/route.ts:75-86](../../../app/api/admin/house-league/seasons/[seasonId]/teams/[teamId]/route.ts#L75-L86)). So deleting a team with no *active* players still **cascade-deletes every game it appears in** (`league_games.home/away_team_id` `ON DELETE CASCADE`) and **SET-NULLs any non-active registrations** (`league_registrations.team_id` `ON DELETE SET NULL`) — silently.
 4. **Bulk-create restarts `sort_order` at the array index** — a second bulk insert collides at 0 (no uniqueness).
 
@@ -6729,6 +6736,81 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 <!-- dict:col:league_teams.sort_order -->
 **`sort_order`** (integer, NOT NULL, default 0) — manual order within a division (gotcha 4).
+
+## `league_player_ratings`
+<!-- dict:table:league_player_ratings -->
+
+**Purpose (mig 377, Club Tier 9c, rulings 9c·2a/b/c):** a player's **rating**, a number from 1 to 5 (no comment), set by the people who run the league and read by the draft. **Its own table on purpose**: whole `league_registrations` rows reach the registrar's screens and exports, so a rating column there would leak. Read and written only through [lib/house-league-ratings.ts](../../../lib/house-league-ratings.ts) by routes gated `seeRatings` / `rate` (`tests/unit/house-league-ratings-guard.test.ts` holds the list). **Erased when the season finishes** by `league_seasons_finished`. RLS on, no policies (service role only).
+
+<!-- dict:col:league_player_ratings.registration_id -->
+**`registration_id`** (PK, FK → `league_registrations.id` ON DELETE CASCADE) — one rating per registration, so per child per season (Stage 14 decides whether one follows a returning player).
+<!-- dict:col:league_player_ratings.org_id -->
+<!-- dict:col:league_player_ratings.season_id -->
+**`org_id` / `season_id`** (FKs, NOT NULL) — **taken from the registration by the trigger `league_player_ratings_guard`**, never from the caller; the same trigger refuses a finished season.
+<!-- dict:col:league_player_ratings.rating -->
+**`rating`** (smallint, NOT NULL, CHECK 1–5). A player with no row is **not rated** and counts as a 3 in the draft (9c·8).
+<!-- dict:col:league_player_ratings.rated_by -->
+<!-- dict:col:league_player_ratings.rated_at -->
+**`rated_by` / `rated_at`** (uuid / timestamptz) — who last rated, and when (stamped by the trigger).
+
+---
+
+## `league_team_coaches`
+<!-- dict:table:league_team_coaches -->
+
+**Purpose (mig 377, Club Tier 9c, rulings 9c·1, 9c·10):** a house-league team's coaches, and **the access truth for the coach's team page and their sign-in card** (the coach column of the one gate, Q17). A coach is a ROW, not a club role: a registrar or a club admin can coach a team without their role changing, and accepting **creates no club membership** (a capability-less `coach` member gets a Coaches Portal card on a club with a subscription, the one place 9c must never route them). The invite token lives on the row, not in `assistant_invite_tokens`, whose `team_id` is a NOT NULL FK to `rep_teams`. RLS on, no policies. Read by [lib/house-league-coach.ts](../../../lib/house-league-coach.ts).
+
+<!-- dict:col:league_team_coaches.org_id -->
+<!-- dict:col:league_team_coaches.season_id -->
+<!-- dict:col:league_team_coaches.team_id -->
+**`team_id`** (FK → `league_teams` ON DELETE CASCADE, NOT NULL), with **`org_id` / `season_id`** taken from the team by the trigger `league_team_coaches_guard` (a row never changes team).
+<!-- dict:col:league_team_coaches.name -->
+<!-- dict:col:league_team_coaches.email -->
+**`name` / `email`** (text, NOT NULL; email stored lowercase, CHECK) — who the convenor typed. One live row per (team, email) (`league_team_coaches_one_per_team`, where not removed). The invite signs in only with this address.
+<!-- dict:col:league_team_coaches.user_id -->
+**`user_id`** (FK → `auth.users` ON DELETE SET NULL, nullable) — the person, set when they accept with the invited address. **Access reads this, never the email.**
+<!-- dict:col:league_team_coaches.token_hash -->
+<!-- dict:col:league_team_coaches.invited_at -->
+<!-- dict:col:league_team_coaches.expires_at -->
+<!-- dict:col:league_team_coaches.invited_by -->
+**`token_hash` / `invited_at` / `expires_at` / `invited_by`** — the invite: a SHA-256 of the emailed token (unique where set), sent **at Publish** (`league_division_publish`, 9c·10) or when the convenor confirms a coach added after it. The link lasts 7 days, as the rep invite's does. NULL `invited_at` before publishing = "Invited when you publish".
+<!-- dict:col:league_team_coaches.accepted_at -->
+**`accepted_at`** — the coach signed in with the invite ("Signed in").
+<!-- dict:col:league_team_coaches.removed_at -->
+**`removed_at`** — the convenor removed them: the page answers "You're no longer a coach of {team}" at once. Kept, not deleted, for that answer; adding the same email again is a new row.
+<!-- dict:col:league_team_coaches.created_by -->
+<!-- dict:col:league_team_coaches.created_at -->
+<!-- dict:col:league_team_coaches.updated_at -->
+**`created_by` / `created_at` / `updated_at`** — boilerplate (`updated_at` stamped by the trigger).
+
+---
+
+## `league_placement_emails`
+<!-- dict:table:league_placement_emails -->
+
+**Purpose (mig 377, Club Tier 9c, ruling 9c·4 + build argument 4):** one row per family per placement email — **the fact is written before the send**. `league_division_publish` writes a `placed` row per family (every child of that guardian email placed in the division, on one email) in the same transaction as the publish; `league_team_place` writes one after publishing for a move (`moved`) or a late placement (`placed`). The send afterwards is a SERVICE send (it reaches a family who unsubscribed from club news, owner 2026-10-25) and marks each row, so "{n} emails couldn't be sent · Send the {n} again" survives a reload and re-sends only those. RLS on, no policies.
+
+<!-- dict:col:league_placement_emails.org_id -->
+<!-- dict:col:league_placement_emails.season_id -->
+<!-- dict:col:league_placement_emails.division_id -->
+**`org_id` / `season_id` / `division_id`** (FKs, NOT NULL) — scope.
+<!-- dict:col:league_placement_emails.kind -->
+**`kind`** (CHECK `placed|moved`).
+<!-- dict:col:league_placement_emails.guardian_email -->
+<!-- dict:col:league_placement_emails.registration_ids -->
+**`guardian_email`** (lowercase CHECK) / **`registration_ids`** (uuid[], non-empty) — the family and the children the email names. The email's words are built at send time from the children's current team and coaches.
+<!-- dict:col:league_placement_emails.status -->
+<!-- dict:col:league_placement_emails.attempts -->
+<!-- dict:col:league_placement_emails.sent_at -->
+**`status`** (CHECK `pending|sent|failed|skipped`, default pending) / **`attempts`** / **`sent_at`** — the send's outcome. `failed` = the provider refused or could not be reached; `skipped` = no provider is set up (dev). **There is no `bounced`**: the product cannot learn of a bounce (owner, 9c build, 2026-10-25).
+<!-- dict:col:league_placement_emails.from_team_id -->
+**`from_team_id`** (FK → `league_teams` ON DELETE SET NULL) — a move's old team, as it was, so the email names it.
+<!-- dict:col:league_placement_emails.created_by -->
+<!-- dict:col:league_placement_emails.created_at -->
+<!-- dict:col:league_placement_emails.updated_at -->
+**`created_by` / `created_at` / `updated_at`** — boilerplate.
+
+**Functions (mig 377, all service-role only):** `league_division_fingerprint(division)` (what a window saw: the division's teams and each accepted player's team and lock, as an md5), `league_division_draft_apply`, `league_division_clear`, `league_team_place`, `league_division_publish`. Each locks the season and the division and refuses a finished season, a stale fingerprint, or (draft and clear) a published division. Proved on dev by `scripts/house-league-teams-check.sql` (DEV only).
 
 ---
 
@@ -6842,13 +6924,23 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`guardian_phone`** (text, nullable) — capped 30 on the public form; no format validation.
 
 <!-- dict:col:league_registrations.status -->
-**`status`** (text, NOT NULL, default `'pending_review'`; CHECK `pending_review|active|waitlisted|declined|withdrawn`) — lifecycle (gotcha 3). Spellings: `pending_review` (underscore), `waitlisted` (not "waitlist"), `withdrawn`. The public status page renders only active/pending_review/waitlisted and **hides declined/withdrawn** from the family.
+**`status`** (text, NOT NULL, default `'pending_review'`; CHECK `pending_review|active|waitlisted|declined|withdrawn`) — lifecycle (gotcha 3). Spellings: `pending_review` (underscore), `waitlisted` (not "waitlist"), `withdrawn`. The public status page shows every status, an ended child included (since 9b-2: Declined / Withdrawn with a refund or the fee the club kept); from 9c an accepted child also shows their Team and Coach once the division is published.
 
 <!-- dict:col:league_registrations.waitlist_position -->
 **`waitlist_position`** (integer, nullable) — 1-based queue slot when `waitlisted`; NULL otherwise; per-division, kept by the database functions under the season lock (gotcha 4).
 
 <!-- dict:col:league_registrations.team_id -->
-**`team_id`** (FK → `league_teams.id` ON DELETE SET NULL, nullable) — the placed team (set by placement/draft, [placement/route.ts](../../../app/api/admin/house-league/seasons/[seasonId]/placement/route.ts) → `assignRegistrationToTeam` [lib/db.ts:3313](../../../lib/db.ts#L3313) / draft finalize → `bulkAssignTeams` [lib/db.ts:3320](../../../lib/db.ts#L3320)); NULL until placement. The **randomize/clear** flows only touch `active` regs, but the manual **assign/bulk_assign** actions place any reg by id with **no status guard** — a waitlisted/pending reg can be given a `team_id`.
+**`team_id`** (FK → `league_teams.id` ON DELETE SET NULL, nullable) — the placed team (set by placement/draft, [placement/route.ts](../../../app/api/admin/house-league/seasons/[seasonId]/placement/route.ts) → `assignRegistrationToTeam` [lib/db.ts:3313](../../../lib/db.ts#L3313) / draft finalize → `bulkAssignTeams` [lib/db.ts:3320](../../../lib/db.ts#L3320)); NULL until placement ("Not on a team"). **From mig 377 the database holds two rules** (trigger `league_registrations_team_follows`, BEFORE INSERT OR UPDATE): only an **accepted** (`active`) child is on a team, and only on a team of **their own division**; a child who leaves accepted (ended, waitlisted, back to review) or moves division **leaves their team**, keeping it in `previous_team_id` (T08: before 9c an ended child kept their team). Written by `league_division_draft_apply` (the draft), `league_division_clear`, and `league_team_place` (one player; held and emailed after publishing).
+
+<!-- dict:col:league_registrations.team_locked_at -->
+**`team_locked_at`** (timestamptz, nullable; mig 377, ruling 9c·3) — **Lock to this team**: the draft deals around a locked player and counts their rating toward the team's average. Cleared by any move (a lock is to a team), by leaving the team, and for the whole division at Publish (locks end there).
+
+<!-- dict:col:league_registrations.draft_team_id -->
+**`draft_team_id`** (FK → `league_teams.id` ON DELETE SET NULL, nullable; mig 377) — the team the last draft dealt this player to (a locked player: where they stood). `team_id ≠ draft_team_id` before publishing is **"Moved by you"**, and **Put back on {team}** returns them here. Cleared for the division at Publish.
+
+<!-- dict:col:league_registrations.previous_team_id -->
+<!-- dict:col:league_registrations.team_changed_at -->
+**`previous_team_id` / `team_changed_at`** (FK → `league_teams.id` ON DELETE SET NULL / timestamptz, nullable; mig 377) — where the player was and when that changed: a move **after publishing** (the status page's "Moved from {team} on {date}", copy §11) or leaving the team (the team card's "{name} left the team on {date}" for an ended child). Cleared for the division's accepted players at Publish, so a pre-publish shuffle is never a "move" a family hears of. Mig 377 backfilled ended rows that still held a team (`team_changed_at` = their `ended_at`).
 
 <!-- dict:col:league_registrations.registration_fee_paid -->
 **`registration_fee_paid`** (bool, NOT NULL, default false) — **derived since mig 368**: true when the price is above $0 and the posted lines cover it (`league_reg_money_sync`, run by the money writer). Never written by app code (`house-league-money-guard`). A fee the club KEPT on an ended registration stays true. Mig 368's one-time catch-up gave every paid tick with no posted line its line (the frozen price, dated the row's last change, method not recorded); no club was on production.

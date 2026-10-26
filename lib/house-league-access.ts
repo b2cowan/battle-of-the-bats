@@ -27,7 +27,14 @@ import type { LeagueSeasonStatus, OrgRole } from './types';
  * (owner 2026-10-24, 9a build: a note to families is not a change to the season's record, and the Families window cannot
  * reach a finished season). Pass the season to get that answer; leave it out (a new season) and nothing is finished.
  *
- * A coach (if Q7) becomes a column of this same gate in 9c — their own team only.
+ * ⚖ Ratings (9c·2a): read and written by the people who run the league, nobody else — not the registrar, a coach or a
+ *   family, on any screen or export. They live in their own table (`lib/house-league-ratings.ts`), so no whole-row read can
+ *   carry one; `tests/unit/house-league-ratings-guard.test.ts` holds who may import it.
+ *
+ * ⚖ A coach (9c·1, Q7) is a column of this gate that no ROLE opens: a house-league coach is a row of
+ *   league_team_coaches, so a registrar or a club admin can coach a team without their role changing, and a `coach` member
+ *   gets nothing here. `houseLeagueCoachAccess` below answers for one person and one team: their own team's players and
+ *   each family's name, email and phone, and nothing else.
  *
  * Client-safe (no server imports): the screens read the same answer to decide what to render, and a control a person
  * can't use is absent, not greyed.
@@ -59,6 +66,10 @@ export interface HouseLeagueAccess {
   takeFees: boolean;
   /** Email the season's families and read what was sent. Stays open on a finished season. */
   email: boolean;
+  /** Read players' ratings (9c·2a): the runners only, never the registrar. Absent everywhere else, exports included. */
+  seeRatings: boolean;
+  /** Rate players (9c·2): the runners, on a live season (a finished season's ratings are erased, 9c·2b). */
+  rate: boolean;
   /** The season is completed or archived. */
   finished: boolean;
 }
@@ -88,6 +99,8 @@ export function houseLeagueAccess(
     register: desk && !finished,
     takeFees: desk,
     email: desk,
+    seeRatings: runner,
+    rate: runner && !finished,
     finished,
   };
 }
@@ -100,4 +113,48 @@ export function canHouseLeague(
   season?: { status: LeagueSeasonStatus | string } | null,
 ): boolean {
   return houseLeagueAccess(member, org, season)[action];
+}
+
+/** How long a coach's team page stays after the season finishes, before the page and the sign-in card go (copy §10.3). */
+export const COACH_PAGE_DAYS_AFTER_FINISH = 30;
+
+/** One row of league_team_coaches, as the coach column reads it. */
+export interface HouseLeagueCoachLink {
+  teamId: string;
+  userId: string | null;
+  acceptedAt: string | null;
+  removedAt: string | null;
+}
+
+/**
+ * What one signed-in person may read of one house-league team (9c·1):
+ *   · `open` — they coach it: the team's accepted players and each family's name, email and phone.
+ *   · `finished` — the same, with the season-finished line, for 30 days after the season finishes.
+ *   · `ended` — the season finished more than 30 days ago: no players, the finished line only; the card is gone.
+ *   · `gone` — they coached it and were removed ("You're no longer a coach of {team}").
+ *   · `none` — they never coached it: nothing, not even that the team exists.
+ * The answer reads ONLY rows that carry this person's id for THIS team: a coach of the Jays reads nothing of the
+ * Cardinals however their links are passed in.
+ */
+export type HouseLeagueCoachView = 'open' | 'finished' | 'ended' | 'gone' | 'none';
+
+export function houseLeagueCoachAccess(
+  links: readonly HouseLeagueCoachLink[],
+  userId: string,
+  teamId: string,
+  season: { status: LeagueSeasonStatus | string; finishedAt: string | null } | null,
+  now: Date = new Date(),
+): HouseLeagueCoachView {
+  const mine = links.filter(l => l.userId === userId && l.teamId === teamId && l.acceptedAt);
+  if (mine.length === 0) return 'none';
+  if (!mine.some(l => !l.removedAt)) return 'gone';
+  if (!isFinishedLeagueSeason(season)) return 'open';
+  return coachPageOpenUntil(season?.finishedAt ?? null, now) ? 'finished' : 'ended';
+}
+
+/** The day a finished season's coach page closes, or null once it has (or when the finish time is unknown). */
+export function coachPageOpenUntil(finishedAt: string | null, now: Date = new Date()): Date | null {
+  if (!finishedAt) return null;
+  const until = new Date(new Date(finishedAt).getTime() + COACH_PAGE_DAYS_AFTER_FINISH * 24 * 60 * 60 * 1000);
+  return until.getTime() > now.getTime() ? until : null;
 }
