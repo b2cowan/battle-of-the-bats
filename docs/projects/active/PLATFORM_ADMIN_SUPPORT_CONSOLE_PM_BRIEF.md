@@ -11,8 +11,8 @@ moving Founding Season's access, and is not yet ruled. **Stage 4 built 2026-10-2
 walk is next, and its one database change (tournament fees post to the club's book during free time) goes to production
 with the release. **Stage 3 (money) drawn 2026-10-26** (https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX) **and ruled the same day, all
 twelve as recommended**; the build prompt is written. The owner also moved the audit log's raw values into its entry window
-and asked that a window's foot sentence never ship unformatted again. **Stage 3 built 2026-10-26 on dev** (not committed; the
-owner's OK is owed): two owner walks wait, a double charge found and refunded (ledger §384,
+and asked that a window's foot sentence never ship unformatted again. **Stage 3 built and committed 2026-10-26 on dev**
+(`270211ca0` · `4bfc9ca41` · `6c6d0da7e` · `d77ee9da9` · `e764efd90` · docs `bc9616345`): two owner walks wait, a double charge found and refunded (ledger §384,
 https://claude.ai/artifact/CBCDtZjmsd9pFr5o8toUUV) and the guard rails (§385, https://claude.ai/artifact/QNSBdd8xbeqGysxH7mTw5y).
 Two things changed from the drawings, both found while building: a Coaches Portal a club pays for is billed on the club's own
 Stripe account, so the Money tab names it as the club's rather than as a second subscription; and the plan refusal covers the

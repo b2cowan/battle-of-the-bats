@@ -26571,7 +26571,7 @@ republished; tick positions unchanged).
 
 ## §384 · Support console · Stage 3, a double charge found and refunded — **a club's Money tab reads Stripe live (Super admin, Billing, Support): the first line says whether Stripe and our record agree or names a double charge or two live subscriptions; a joined band (paid 12 months, refunded, next charge); the subscription twice, ours and Stripe's, with a difference marked on its row; the charges with the five patterns named under them; a charge opens as a record that reads first, and Super admin or Billing refund all or part to the card it came from, with a reason, in one sentence and a red button; the Story gains purchases, Stripe's charges and every refund; the audit log keeps the reason; Find takes a charge, an invoice or an invoice's printed number and opens the Money tab on it** — ⏳ **WALK OWED**
 <!-- §384 -->
-**Built:** 2026-10-26 on dev from `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_BUILD_PROMPT.md` to the owner's twelve rulings of 2026-10-26 and the four build-gate calls (plan "Stage 3 build gate"). Migration 380 applied to dev (prod at the next release, with 365, 367 and 373). **Not committed: the owner's OK is owed.**
+**Built:** 2026-10-26 on dev from `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_BUILD_PROMPT.md` to the owner's twelve rulings of 2026-10-26 and the four build-gate calls (plan "Stage 3 build gate"). Migration 380 applied to dev (prod at the next release, with 365, 367 and 373). **Committed 2026-10-26:** `270211ca0` · `4bfc9ca41` · `6c6d0da7e` · `d77ee9da9` · `e764efd90` · docs `bc9616345`.
 
 **The walk:** [Support Console Money Walk](PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_WALK.html), published https://claude.ai/artifact/CBCDtZjmsd9pFr5o8toUUV 2026-10-26. One purpose: a double charge found and refunded from the record. 10 sections, 44 ticks, 9 calls the build made. A short set-up first (a Tournament Plus purchase on UAT Test Org with Stripe's test card, a one-off invoice and a second subscription in Stripe's test dashboard). Every refund is a test-mode refund.
 
@@ -26582,7 +26582,7 @@ republished; tick positions unchanged).
 
 ## §385 · Support console · Stage 3, the guard rails — **a club Stripe still bills keeps its plan and tournament limit in Stripe (the pencil shows one line, Put it back refuses, Bulk changes skips it with the line; a custom team limit still saves; a subscription Stripe already ended is asked about and let through); Bulk changes' billing status override needs Free through within the 6 or 12 month cap and skips a club you belong to; "your own club" is wider for free time and refunds; Cancelled, Trial and Billing status everywhere a person reads them; the audit log reads Timestamp, Superuser, Org, Action, Reason with the details in its window; every console window's foot sentence is the small grey face** — ⏳ **WALK OWED**
 <!-- §385 -->
-**Built:** 2026-10-26 on dev with §384 (same build, same prompt). **Not committed: the owner's OK is owed.**
+**Built:** 2026-10-26 on dev with §384 (same build, same prompt). **Committed 2026-10-26:** `270211ca0` · `4bfc9ca41` · `6c6d0da7e` · `d77ee9da9` · `e764efd90` · docs `bc9616345`.
 
 **The walk:** [Support Console Guard Rails Walk](PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_WALK2.html), published https://claude.ai/artifact/QNSBdd8xbeqGysxH7mTw5y 2026-10-26. One purpose: the guard rails hold and the words and windows read right. 6 sections, 26 ticks, 6 calls the build made. Walk after §384 (section 1 uses its subscription).
 

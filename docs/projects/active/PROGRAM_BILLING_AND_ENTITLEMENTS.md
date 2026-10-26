@@ -140,7 +140,7 @@ by enforcement. Copy-side items route to `/marketing`.
 - **Retention lifecycle** — retention windows, 14-day owner warning, `pending_purge` transition, notice emails.
 - **Founding Season — Coaches Free** — Premium Coaches Portal $0 until 2027-01-01, Coaches Portal live self-serve, mischarging trial-checkout bug fixed, accidentally-open $29 prod checkout closed.
 - **Founding Season GTM** — Tournament Plus free through 2026-12-31 for founding orgs, homepage/pricing callouts, in-app billing banner, platform-admin tracking.
-- **Console refunds of subscription charges** (Support console Stage 3, built on dev 2026-10-26, not yet committed or released; plan `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md`) — a club's Money tab reads Stripe live; Super admin and Billing refund all or part of a subscription charge to the original card from the console (record first, one keyed Stripe call, recovery by listing), so a refund no longer needs the "Open Stripe" fallback above. A staff plan change on a club Stripe still bills is refused (Q9). Decision logged in `BUSINESS_DECISIONS.md` 2026-10-26.
+- **Console refunds of subscription charges** (Support console Stage 3, committed on dev 2026-10-26, `270211ca0` · `4bfc9ca41` · `6c6d0da7e` · `d77ee9da9` · `e764efd90` · docs `bc9616345`; plan `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md`) — a club's Money tab reads Stripe live; Super admin and Billing refund all or part of a subscription charge to the original card from the console (record first, one keyed Stripe call, recovery by listing), so a refund no longer needs the "Open Stripe" fallback above. A staff plan change on a club Stripe still bills is refused (Q9). Decision logged in `BUSINESS_DECISIONS.md` 2026-10-26.
 
 ---
 

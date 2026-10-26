@@ -12,7 +12,7 @@
 **Status:** **Decided** (owner, 2026-10-26: Support console Stage 3 drawings, Q1–Q3, every recommended box ticked —
 https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX; recorded in `memory/design_decisions.md` 2026-10-26 and the plan
 `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` "Owner rulings 2026-10-26"). The owner confirmed at the build gate that Stripe's
-**Refunds** customer email is **on in production**. **Built on dev 2026-10-26; not committed, not released.**
+**Refunds** customer email is **on in production**. **Built and committed on dev 2026-10-26** (`270211ca0` · `4bfc9ca41` · `6c6d0da7e` · `d77ee9da9` · `e764efd90` · docs `bc9616345`); deployment state lives in the release-history record.
 **Decision:**
 1. **Who:** Super admin and Billing refund a club's subscription charge from its Money tab. Support reads Stripe's side and
    hands a refund on. No other role refunds.
