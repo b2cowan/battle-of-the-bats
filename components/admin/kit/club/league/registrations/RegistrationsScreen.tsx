@@ -6,7 +6,7 @@
  *
  *   the head      — "Registrations" under the season's name, + Add registration (absent on a finished season);
  *   the tabs      — To review (the amber count) · Active · Waitlist · Ended, in the address (`?tab=`);
- *   the toolbar   — the division, Search, Filter (Fee), Export (one button, Excel first) and Tools (Email families);
+ *   the toolbar   — the division, Search, Filter (Fee), and Export (one button, Excel first);
  *   the list      — a table at a desk, one framed row a child on a phone, the money on every row (the Fee cell is read from
  *                   the one money function, `feeState`), ONE primary action a row and the rest behind ⋯;
  *   the bulk bar  — ticked rows: Approve / Promote · Waitlist · Mark received · Move division · Email, the screen looping
@@ -21,7 +21,7 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { MoreHorizontal, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
@@ -38,7 +38,6 @@ import FilterMenu, { FilterLine, pickedLabels } from '@/components/admin/tournam
 import { useToolbarSearch } from '@/components/admin/tournament/useToolbarSearch';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import frame from '@/components/admin/kit/AdminKitFrame.module.css';
-import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import {
   BULK_WORDS, CARD_REFUND_WORDS, FULL_WORDS, MOVE_WORDS, RECV_WORDS, REGS_WORDS,
   type EndMode,
@@ -83,7 +82,6 @@ type Act =
   | { kind: 'move'; ids: string[]; targets: MoveTarget[] }
   | { kind: 'undo'; id: string; payment: LeagueMoneyLine }
   | { kind: 'email'; ids: string[] }
-  | { kind: 'seasonEmail' }
   | { kind: 'confirm'; verb: 'approve' | 'promote' | 'waitlist'; ids: string[] }
   | { kind: 'add' };
 
@@ -680,19 +678,6 @@ export default function RegistrationsScreen() {
             disabled={tabRegs.length === 0}
           />
         )}
-        {rights.email && (
-          <CoachToolbarMenu
-            label={REGS_WORDS.tools}
-            icon={<MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
-            collapseOnPhone
-            bareOnPhone
-            drawerOnPhone
-            drawerTitle={REGS_WORDS.tools}
-            triggerClassName={tb.tool}
-          >
-            <CoachToolbarMenuItem label={REGS_WORDS.toolsEmail} onSelect={() => setAct({ kind: 'seasonEmail' })} />
-          </CoachToolbarMenu>
-        )}
       </div>
       {searchField.row}
       <FilterLine picks={pickedLabels(groups)} label={REGS_WORDS.filter} />
@@ -902,18 +887,18 @@ export default function RegistrationsScreen() {
           onDone={said => { setAct(null); afterWrite(false); say(said); }}
         />
       )}
-      {(act?.kind === 'email' || act?.kind === 'seasonEmail') && (
-        // The club's one email window, opened from this season (9d1·1): Tools reaches the whole Who list, the bulk bar the
-        // ticked families, a row's ⋯ one family (which never counts toward the season's three).
+      {act?.kind === 'email' && (
+        // The club's one email window, opened from this season: the bulk bar sends to the ticked families, a row's ⋯ to one
+        // family (which never counts toward the season's three). The whole season is emailed from the season's Email families page.
         <EmailFamiliesWindow
           q={orgQuery.slice(1)}
           season={{
-            id: seasonId, name: season.name, ticked: act.kind === 'email' ? act.ids : undefined,
+            id: seasonId, name: season.name, ticked: act.ids,
             registrationsHref: base, teamsHref: `/${orgSlug}/admin/house-league/seasons/${seasonId}/teams`,
           }}
           onClose={() => setAct(null)}
           onShowNoFamily={() => setAct(null)}
-          onSent={said => { setAct(null); say(said); if (act.kind === 'email') clearSelection(); }}
+          onSent={said => { setAct(null); say(said); clearSelection(); }}
         />
       )}
       {act?.kind === 'confirm' && (

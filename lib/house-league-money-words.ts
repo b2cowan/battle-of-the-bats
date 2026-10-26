@@ -191,8 +191,6 @@ export const REGS_WORDS = {
   filterLate: (days: number) => `Owing ${pluralize(days, 'day')} or more`,
   filterNoPayLink: 'Pay link not sent',
   filterNotes: 'Has player notes',
-  tools: 'Tools',
-  toolsEmail: 'Email families',
   col: { player: 'Player', division: 'Division', guardian: 'Guardian', fee: 'Fee', actions: 'Actions', select: 'Select' },
   selectRow: (name: string) => `Select ${name}`,
   selectAll: 'Select all',

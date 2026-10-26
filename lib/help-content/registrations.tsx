@@ -175,7 +175,7 @@ const registrationsHelp: HelpPageContent = {
           <p>Before sending email or exporting data, narrow to the group you actually need.</p>
           <ol>
             <li>Use the status tabs and the search box to confirm the target group.</li>
-            <li>For email, click <strong>Tools &rsaquo; Email families</strong> and choose who: everyone in the season, one or more divisions or teams, or one or more statuses. To write to particular families, tick their rows and click <strong>Email</strong>.</li>
+            <li>For email, tick the rows of the families you want and click <strong>Email</strong>. To write to everyone in the season, a division, a team or a status, open the season&apos;s <strong>Email families</strong> page instead.</li>
             <li>Check the count of families in the window&apos;s foot before sending. If it looks off, change Who.</li>
             <li>For exports, use the <strong>Export</strong> action on the table. The standard Excel/CSV omits contact details for privacy; a separate &quot;with contact details&quot; option is there when you need them.</li>
           </ol>
@@ -222,10 +222,10 @@ const registrationsHelp: HelpPageContent = {
       searchText: 'email families message registrants renamed email everyone in the season families with an active child by division by team published by status active to review waitlist ended ticked families bulk bar one family email this family never counts each season three emails in any 24 hours automatic emails publish teams never count families counted siblings one email sent history notifications page renamed league registrar can email owner club admin league admin no families access finished season stays open',
       content: (
         <>
-          <p>The owner, club admin, league admin and league registrar can email a season&apos;s families from Registrations, three ways:</p>
+          <p>The owner, club admin, league admin and league registrar can email a season&apos;s families three ways:</p>
           <ul>
-            <li><strong>Tools &rsaquo; Email families</strong> — everyone in the season (families with an active child), one or more divisions, teams in a published division, or statuses.</li>
-            <li><strong>Tick rows, then Email</strong> — just the families you ticked.</li>
+            <li><strong>The season&apos;s Email families page</strong> — everyone in the season (families with an active child), one or more divisions, teams in a published division, or statuses.</li>
+            <li><strong>On Registrations, tick rows, then Email</strong> — just the families you ticked.</li>
             <li><strong>A row&apos;s &#8943; &rsaquo; Email this family</strong> — one family.</li>
           </ul>
           <p>The window counts families, so siblings get one email. Each season can send <strong>3 emails in any 24 hours</strong>; a message to one family, and the automatic emails Publish teams sends, never count. An email goes as soon as you press Send, so check the count first. The season&apos;s <strong>Email families</strong> page, in its menu beside Money, lists what was sent. More in <em>Money and Email families</em> in the House league guide.</p>
