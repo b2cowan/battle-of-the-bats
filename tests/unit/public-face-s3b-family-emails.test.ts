@@ -236,7 +236,8 @@ describe('S3b — the reply line (copy items 3–5)', () => {
     }
   });
   it('the Message door and Email families still reply to their sender (the guard’s pin), and the two person-sent sends are new', () => {
-    assert.match(readCode('app/api/admin/families/[personId]/message/route.ts'), /replyTo:\s*ctx\.user\.email/);
+    // The Message door's send lives in lib/families-email.ts since 9d-1 (both doors call `messageOneFamily`).
+    assert.match(readCode('lib/families-email.ts'), /replyTo:\s*ctx\.user\.email/);
     assert.match(readCode('lib/families-email.ts'), /replyTo: senderEmail/);
     assert.match(readCode('lib/rep-team-announcements.ts'), /replyTo: reply\.replyTo/, 'the rep-team announcement now replies to the coach');
     assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/email/route.ts'), /replyTo: reply\.replyTo/, 'the season email replies to the admin');

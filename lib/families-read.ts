@@ -11,7 +11,7 @@ import { resolvePersonNamer, getRepDuesPaidBackByCredit } from './db';
 import { FAMILY_MESSAGE_CAP, FAMILY_PAGE_WORDS as PW, FAMILY_DUPLICATE_WORDS } from './families-words';
 import { fmt } from './coach-money-summary';
 import { proposeDuplicates, unionFind, type DuplicateChildIn, type DuplicatePersonIn, type DuplicateProposal } from './families-duplicates';
-import { isCurrentLeagueSeason, isCurrentRepYear, isLiveRegStatus, type AudiencePerson } from './families-audience';
+import { isCurrentLeagueSeason, isCurrentRepYear, isLiveRegStatus, type AudiencePerson, type SeasonRow } from './families-audience';
 import { listsByPerson } from './families-lists';
 import { registrationOwes } from './league-price';
 import { loadOrgLeagueReceivedCents } from './league-money-read';
@@ -275,7 +275,7 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
       'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, status, team_id, program_year_id, tryout_registration_id, created_at, rep_teams(name, slug), rep_program_years(year, status, name, credit_application)',
       orgId, q => q.neq('status', 'callup')),
     orgRows<any>('league_registrations',
-      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, status, registration_fee_paid, fee_amount, waiver_accepted_at, registered_at, season_id, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
+      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, guardian_last_name, status, registration_fee_paid, fee_amount, waiver_accepted_at, registered_at, season_id, division_id, team_id, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
       orgId),
     orgRows<any>('family_links', 'id, person_id, player_id, user_id, status, role, relationship, invited_email, claimed_email, updated_at', orgId),
     orgRows<any>('family_email_optouts', 'id, email, source, opted_out_at', orgId),
@@ -996,6 +996,18 @@ export interface FamilyAudienceWorld {
   suppressed: Set<string>;
   /** This season's children with no family on file (the window's "Nobody to send to"), by team or season. */
   noFamily: NoFamilyChild[];
+  /** Every house-league registration with no person (no address on file, or not attached yet), ANY status: a season's
+   *  own door counts its "Nobody to send to" from these (9d-1). */
+  unattachedLeague: SeasonRow[];
+}
+
+/** A raw league_registrations row (with its season join) as a season's audiences read it. */
+function seasonRowOf(r: any): SeasonRow {
+  return {
+    regId: r.id, seasonId: r.season_id, seasonName: r.league_seasons?.name ?? 'House league',
+    seasonStatus: r.league_seasons?.status ?? '', status: r.status, divisionId: r.division_id ?? null, teamId: r.team_id ?? null,
+    childFirst: r.player_first_name ?? '', childLast: r.player_last_name ?? '', guardianLast: r.guardian_last_name ?? null,
+  };
 }
 
 /**
@@ -1018,9 +1030,15 @@ export async function loadFamilyAudience(orgId: string, orgSlug: string, opts: {
       roster: h.roster.map(r => ({ teamId: r.team_id, teamName: r.rep_teams?.name ?? 'Rep team', current: isCurrentRepYear(r) })),
       league: h.league.map(r => ({ seasonId: r.season_id, seasonName: r.league_seasons?.name ?? 'House league', current: isCurrentLeagueSeason(r) })),
       coGuardians: h.guardians.slice(1).map(g => g.personId),
+      lastName: p.last_name ?? null,
+      // 9d-1: every registration of theirs, ANY status — a season's own audiences decide which count (lib/families-audience.ts).
+      seasonRows: (world.leagueByPerson.get(p.id) ?? []).map(seasonRowOf),
     };
   });
-  return { people, suppressed, noFamily: childrenWithNoFamily(world.rosterRows, world.leagueRegs, orgSlug) };
+  return {
+    people, suppressed, noFamily: childrenWithNoFamily(world.rosterRows, world.leagueRegs, orgSlug),
+    unattachedLeague: world.leagueRegs.filter((r: any) => !r.person_id).map(seasonRowOf),
+  };
 }
 
 // ── Merge (chunk E write) ─────────────────────────────────────────────────────

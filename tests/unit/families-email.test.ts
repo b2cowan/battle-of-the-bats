@@ -90,10 +90,19 @@ describe('Email families — who it reaches (the one audience)', () => {
     assert.deepEqual(every.coachTeamIds, ['t1', 't2', 't9']);
   });
 
-  it('a house-league season: only its families, and no head coach copy', () => {
-    const people = [person('a', { league: [hl('s1')] }), person('b', { league: [hl('s2')] }), person('c', { roster: [rep('t1')] })];
+  it('a house-league season: only its families with an ACTIVE child (9d-1, either door), and no head coach copy', () => {
+    const row = (seasonId: string, status: string, regId: string) => ({
+      regId, seasonId, seasonName: `Season ${seasonId}`, seasonStatus: 'completed', status, divisionId: null, teamId: null,
+      childFirst: 'K', childLast: 'Id', guardianLast: null,
+    });
+    const people = [
+      person('a', { seasonRows: [row('s1', 'active', 'r1')] }),
+      person('w', { seasonRows: [row('s1', 'waitlisted', 'r2')] }),
+      person('b', { seasonRows: [row('s2', 'active', 'r3')] }),
+      person('c', { roster: [rep('t1')] }),
+    ];
     const a = familyAudience(people, { kind: 'season', seasonId: 's1' }, NONE, null);
-    assert.deepEqual(a.families.map(f => f.addresses[0]), ['a@x.test']);
+    assert.deepEqual(a.families.map(f => f.addresses[0]), ['a@x.test'], 'a waitlisted child is not "everyone in the season"');
     assert.deepEqual(a.coachTeamIds, []);
   });
 

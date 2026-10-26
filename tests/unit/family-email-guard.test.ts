@@ -72,12 +72,11 @@ type Posture = 'guarded' | 'transactional' | 'known-gap';
 /** Every module that puts a message in a GUARDIAN's inbox. Ten doors, audited 2026-08-18. */
 const FAMILY_SENDERS: { file: string; posture: Posture; what: string }[] = [
   // ── Announcements: the club talking to families. All guarded. ──────────────────────────────
-  { file: 'app/api/admin/families/[personId]/message/route.ts', posture: 'guarded',
-    what: 'Message this family, from the Families area' },
   { file: 'lib/families-email.ts', posture: 'guarded',
-    what: 'Email families, from the Families area (Club Tier Stage 7c) — every family, some rep teams or a season, in ' +
-          'batches through the choke point. Its head coach copy is COLLEAGUE mail in lib/families-email-coaches.ts ' +
-          '(NOT_FAMILY_MAIL below), never this file' },
+    what: 'Email families (Club Tier Stage 7c) — every family, some rep teams, a list or a season, in batches through the ' +
+          'choke point — and, since 9d-1, a house-league season\'s own email and "Send to the N it missed"; plus Message ' +
+          'this family (`messageOneFamily`), the household door the Families route and a season\'s door both call. Its ' +
+          'coach copy is COLLEAGUE mail in lib/families-email-coaches.ts (NOT_FAMILY_MAIL below), never this file' },
   { file: 'lib/rep-team-announcements.ts', posture: 'guarded',
     what: 'A paid rep coach\'s team announcement' },
   { file: 'lib/family-notify.ts', posture: 'guarded',
@@ -187,8 +186,17 @@ describe('Family email — the choke point keeps its shape', () => {
  * the one door — additive, so no other sender changes. Read from comment-stripped source.
  */
 describe('Family email — the Families message door (claim + cap, then the guarded send, replies to the sender)', () => {
-  const door = codeOf('app/api/admin/families/[personId]/message/route.ts');
+  // The door's send is `messageOneFamily` (lib/families-email.ts) since 9d-1: the Families route and a house-league
+  // season's door both call it, so its shape is read there.
+  const lib = codeOf('lib/families-email.ts');
+  const door = lib.slice(lib.indexOf('export async function messageOneFamily'));
   const choke = codeOf('lib/family-email.ts');
+
+  it('the Families route sends only through the one household door', () => {
+    const route = codeOf('app/api/admin/families/[personId]/message/route.ts');
+    assert.match(route, /messageOneFamily\(ctx, personId,/);
+    assert.ok(!CALLS_GUARDED_SEND.test(route) && !CALLS_RAW_SEND.test(route), 'the route sends on its own again');
+  });
 
   it('the claim and the cap run before the first send', () => {
     const claimAt = door.indexOf("rpc('family_message_claim'");

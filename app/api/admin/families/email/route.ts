@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireFamiliesAccess } from '@/lib/families-auth';
-import { familyEmailPreview, sendFamilyEmailToClub } from '@/lib/families-email';
-import { parseScope } from '@/lib/families-audience';
+import { familyEmailPreview, resendMissedFamilies, sendFamilyEmailToClub } from '@/lib/families-email';
+import { isSeasonDoorScope, parseScope } from '@/lib/families-audience';
 import { FAMILY_EMAIL_WORDS as W } from '@/lib/families-words';
 import { withObservability } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
@@ -23,7 +23,8 @@ export const GET = withObservability(async (req: Request) => {
   if ('failure' in gate) return gate.failure;
   const params = new URL(req.url).searchParams;
   const scope = parseScope({ kind: params.get('kind') ?? 'every', teamIds: params.get('teamIds') ?? '', seasonId: params.get('seasonId') ?? '', list: params.get('list') ?? '' });
-  if (!scope) return NextResponse.json({ error: W.loadFailed }, { status: 400 });
+  // A season's divisions, teams and statuses stay on the season's own door (9d1·6).
+  if (!scope || isSeasonDoorScope(scope)) return NextResponse.json({ error: W.loadFailed }, { status: 400 });
   return NextResponse.json(await familyEmailPreview(gate.ctx, scope));
 }, { route: '/api/admin/families/email' });
 
@@ -34,6 +35,14 @@ export const POST = withObservability(async (req: Request) => {
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
+  // "Send to the N it missed" on a stopped email (9d1·10): the same row and words, never counted.
+  if (body.action === 'resend') {
+    if (typeof body.sendId !== 'string') return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    const r = await resendMissedFamilies(ctx, body.sendId);
+    if (!r.ok) return NextResponse.json(r.body, { status: r.status });
+    await writeOrgAudit(ctx.org.id, ctx.user.id, null, 'families_emailed', { resend: true, families: r.families, reached: r.reached });
+    return NextResponse.json(r);
   }
   const result = await sendFamilyEmailToClub(ctx, body);
   if (!result.ok) return NextResponse.json(result.body, { status: result.status });

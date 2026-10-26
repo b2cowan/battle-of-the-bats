@@ -79,6 +79,36 @@ export async function sendPlacementEmails(org: MailOrg, season: MailSeason, rowI
     console.error('[house-league-placement-mail] a send failed after its claim (its rows are marked failed):', err instanceof Error ? err.message : String(err));
     await recordOutcome(ids, 'failed');
     return { sent: 0, failed: ids.length, skipped: 0 };
+  } finally {
+    await refreshNoticeCounts(ids);
+  }
+}
+
+/**
+ * A Publish is one notice on the season's Email families history (9d-1, `league_season_notices`): its reached and
+ * failed follow its family emails, recounted from them after every send of them (a "Send again" included). Never
+ * throws — the emails have gone; a count that didn't move is logged.
+ */
+async function refreshNoticeCounts(ids: readonly string[]): Promise<void> {
+  try {
+    const notices = new Set<string>();
+    for (const chunk of chunked([...ids])) {
+      const { data, error } = await supabaseAdmin.from('league_placement_emails').select('notice_id').in('id', chunk).not('notice_id', 'is', null);
+      if (error) throw error;
+      for (const r of data ?? []) notices.add(r.notice_id as string);
+    }
+    for (const noticeId of notices) {
+      const { data, error } = await supabaseAdmin.from('league_placement_emails').select('status').eq('notice_id', noticeId);
+      if (error) throw error;
+      const rows = data ?? [];
+      const { error: upErr } = await supabaseAdmin.from('league_season_notices').update({
+        reached_count: rows.filter(r => r.status === 'sent').length,
+        failed_count: rows.filter(r => r.status === 'failed').length,
+      }).eq('id', noticeId);
+      if (upErr) throw upErr;
+    }
+  } catch (err) {
+    console.error('[house-league-placement-mail] a notice\'s counts were not updated (the emails went):', err instanceof Error ? err.message : String(err));
   }
 }
 

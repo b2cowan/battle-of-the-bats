@@ -383,7 +383,7 @@ export const FAMILY_EMAIL_WORDS = {
   sent: (reached: number, of: number) => `Sent. Reached ${reached} of ${pluralize(of, 'family', 'families')}.`,
   coachesCopied: (n: number) => `${pluralize(n, 'head coach', 'head coaches')} copied.`,
   capReason: (nextAt: string | null) =>
-    closed(`Your club has sent ${CLUB_EMAIL_CAP} emails to families in the last 24 hours. The next can go ${whenNext(nextAt)}`),
+    `${closed(`Your club has sent ${CLUB_EMAIL_CAP} emails to families in the last 24 hours. The next can go ${whenNext(nextAt)}`)} Each house league season has its own ${CLUB_EMAIL_CAP}: pick one under Who to email its families.`,
   justSent: 'This was just sent. Check Last sent before sending it again.',
   changed: (n: number) => `Who this reaches changed while you were writing: it now goes to ${pluralize(n, 'family', 'families')}. Check it and send again.`,
   nobodyOptedOut: 'Every family you picked opted out of club email, so nobody would get it.',
@@ -394,7 +394,7 @@ export const FAMILY_EMAIL_WORDS = {
   needMessage: 'Write a message.',
   tooLong: 'The subject can be up to 200 characters, and the message up to 5,000.',
   failed: 'The email couldn’t be sent. Please try again.',
-  sentNoneDelivered: 'This didn’t reach any family, so it doesn’t count toward the three a day. Please try again.',
+  sentNoneDelivered: `This didn’t reach any family, so it doesn’t count toward the club’s ${CLUB_EMAIL_CAP}. Please try again.`,
   unknown: 'We couldn’t tell whether this went out. Check the Emails tab before you send it again.',
   loadFailed: 'We couldn’t load who this would reach.',
   tryAgain: 'Try again',
@@ -446,6 +446,122 @@ export const FAMILY_EMAILS_TAB_WORDS = {
   reachedNote: 'Reached counts the families whose email the mail service accepted. An email that bounces later isn’t shown here.',
   stoppedNote: 'This send stopped partway. The families it hadn’t reached yet didn’t get it; send it again to reach them.',
   oneFamilyNote: 'A message to one family keeps its date and who sent it, never its words.',
+} as const;
+
+/** Why a family is receiving a house-league season's email — completes "Sent by {club} because …" (9d1·11). */
+export const seasonEmailReason = (season: string) => `your family is registered in ${season}`;
+
+/** "the Kim family"; two or three named, "the Rossi and Nguyen families"; more (or a family with no name) are counted,
+ *  never named. */
+export function familiesNamed(names: readonly (string | null)[]): string | null {
+  const known = names.map(n => n?.trim()).filter((n): n is string => !!n);
+  if (known.length === 0 || known.length > 3 || known.length !== names.length) return null;
+  return known.length === 1 ? `the ${known[0]} family` : `the ${joinWithAnd(known)} families`;
+}
+
+/** Whose allowance an email counts toward: a season's own three, or the club's (9d1·6, 9d1·12). `here`: said on the
+ *  season's own door ("This season"). */
+export type AllowanceOwner = { kind: 'club' } | { kind: 'season'; name: string; here: boolean };
+
+/**
+ * THE ALLOWANCE IN WORDS (9d1·8, 9d1·12; /marketing 2026-10-26, HOUSE_LEAGUE_STAGE9D1_COPY.md settlement 1). A rolling
+ * 24 hours has no "today": the line counts what was SENT in the last 24 hours, the way the club's refusal always has.
+ */
+export const ALLOWANCE_WORDS = {
+  /** The window's foot, after the reach sentence. */
+  foot: (owner: AllowanceOwner, used: number) => {
+    const who = owner.kind === 'club' ? 'The club' : owner.here ? 'This season' : owner.name;
+    return used === 0
+      ? `${who} can send ${CLUB_EMAIL_CAP} emails in any 24 hours.`
+      : `${who} has sent ${used} of its ${CLUB_EMAIL_CAP} emails in the last 24 hours.`;
+  },
+  /** The season page's subtitle, after "{Season} · " (the phone drops the season name). */
+  subtitle: (used: number, nextAt: string | null) =>
+    used === 0 ? `up to ${CLUB_EMAIL_CAP} emails in any 24 hours`
+      : used >= CLUB_EMAIL_CAP ? `${CLUB_EMAIL_CAP} of ${CLUB_EMAIL_CAP} emails sent in the last 24 hours; the next can go ${whenNext(nextAt)}`
+        : `${used} of ${CLUB_EMAIL_CAP} emails sent in the last 24 hours`,
+} as const;
+
+/**
+ * A HOUSE-LEAGUE SEASON EMAILS ITS FAMILIES (Club Tier Stage 9d-1 — owner 9d1·1–12, 2026-10-26; the words settled by
+ * /marketing, HOUSE_LEAGUE_STAGE9D1_COPY.md). The club's window and engine; these are the words only a season says.
+ * "emails", never "sends", on a screen.
+ */
+export const SEASON_EMAIL_WORDS = {
+  everyone: 'Everyone in the season',
+  everyoneSub: 'Families with an active child, each once',
+  everyoneCount: (families: number, children: number) => `${pluralize(families, 'family', 'families')} · ${pluralize(children, 'child', 'children')}`,
+  division: 'A division',
+  teams: 'A team',
+  teamsSub: 'Teams in a published division',
+  status: 'By status',
+  statusSub: 'Active, to review, waitlist or ended',
+  pickSub: 'Pick one or more',
+  statusNames: { active: 'Active', review: 'To review', waitlist: 'Waitlist', ended: 'Ended' } as const,
+  chip: (name: string, n: number) => `${name} · ${n}`,
+  teamHint: 'Families with an active child on the team.',
+  copyCoaches: (teams: number, coaches: number) =>
+    `${teams === 1 ? 'Copy the team’s coaches' : 'Copy each team’s coaches'} · ${pluralize(coaches, 'coach', 'coaches')}`,
+  copyCoachesSub: 'They get a copy as colleagues and aren’t counted as families.',
+  unpublished: (division: string) => `${possessive(division)} teams aren’t published yet, so they aren’t listed. Families hear their teams when you publish them on Teams & draft.`,
+  noneUnpublished: 'No team is published yet. Families hear their teams when you publish them on Teams & draft.',
+  goTeams: 'Go to Teams & draft',
+  pickDivision: 'Pick a division.',
+  pickTeam: 'Pick a team.',
+  pickStatus: 'Pick a status.',
+  pickFamilies: 'Tick at least one family on Registrations.',
+  subjectPlaceholder: 'e.g. Picture day is Saturday',
+  statement: (season: string) => `Sends one email to each family you choose in ${season}, from the club, with your address to reply to. A family that opted out of club email is skipped.`,
+  statementPhone: 'One email to each family you choose in this season, from the club. Families who opted out are skipped.',
+  /** The foot's reach: families, then children (a season counts both). */
+  reach: (families: number, children: number) =>
+    `${pluralize(families, 'family', 'families')} ${families === 1 ? 'gets' : 'get'} it (${pluralize(children, 'child', 'children')}).`,
+  optedOut: (n: number, named: string | null) =>
+    `${n} opted out of club email and won’t${named ? `: ${named}` : ''}.`,
+  /** One family (9d1·5). */
+  oneTitle: 'Message this family',
+  oneFamily: (name: string | null) => (name ? `The ${name} family` : 'This family'),
+  oneTo: (address: string) => `Sends to ${address}. A message to one family doesn’t count toward the season’s ${CLUB_EMAIL_CAP}.`,
+  twoChildrenOneFamily: (children: number) =>
+    `You ticked ${children} children of one family, so this is a message to that family. It doesn’t count toward the season’s ${CLUB_EMAIL_CAP}.`,
+  oneCap: (name: string | null, nextAt: string | null) =>
+    closed(`${name ? `The ${name} family` : 'This family'} has had ${FAMILY_MESSAGE_CAP} messages from the club in the last 24 hours. The next can go ${whenNext(nextAt)}`),
+  /** Ticked families. */
+  tickedTitle: (n: number) => `Email ${pluralize(n, 'family', 'families')}`,
+  tickedLead: (n: number) => `The ${pluralize(n, 'family', 'families')} you ticked`,
+  tickedMore: (n: number) => `and ${n} more`,
+  /** The history's To for ticked families. */
+  audienceTicked: (n: number) => `${n} ticked ${n === 1 ? 'family' : 'families'}`,
+  /** Refusals (the window opens on them; Send is absent). */
+  capReason: (season: string, nextAt: string | null) =>
+    `${closed(`${season} has sent its ${CLUB_EMAIL_CAP} emails to families in the last 24 hours. The next can go ${whenNext(nextAt)}`)} Automatic notices and a message to one family still go.`,
+  capReasonPhone: (nextAt: string | null) =>
+    closed(`This season has sent its ${CLUB_EMAIL_CAP} emails in the last 24 hours. The next can go ${whenNext(nextAt)}`),
+  counting: 'Counting who this reaches…',
+  /** Results. */
+  sent: (reached: number, of: number) => `Sent. Reached ${reached} of ${pluralize(of, 'family', 'families')}.`,
+  missed: (n: number, named: string | null) =>
+    named ? `${n} couldn’t be sent: ${named}. Check their addresses on Registrations.` : `${n} couldn’t be sent. Check their addresses on Registrations.`,
+  openEmail: 'Open the email',
+  sentNoneDelivered: `This didn’t reach any family, so it doesn’t count toward the season’s ${CLUB_EMAIL_CAP}. Please try again.`,
+  unknown: 'We couldn’t tell whether this went out. Check Last sent before you send it again.',
+  coachesCopied: (n: number) => `${pluralize(n, 'coach', 'coaches')} copied.`,
+  oneSent: (name: string | null) => `Sent to ${name ? `the ${name} family` : 'the family'}. It doesn’t count toward the season’s ${CLUB_EMAIL_CAP}.`,
+  oneFailed: (name: string | null, address: string, child: string) =>
+    `This didn’t reach ${name ? `the ${name} family` : 'the family'}. Check ${address} on ${possessive(child)} registration, then try again. Your message is still here.`,
+  oneOptedOut: (name: string | null) => `${name ? `The ${name} family` : 'This family'} opted out of club email, so nobody would get it.`,
+  noAddress: (n: number) => `Nobody to send to: the ${pluralize(n, 'child', 'children')} picked ${n === 1 ? 'has' : 'have'} no family email on file.`,
+  pageNote: (season: string, reached: number, of: number) =>
+    `${season}: reached ${reached} of ${pluralize(of, 'family', 'families')}.${of > reached ? ` ${of - reached} didn’t get it.` : ''}`,
+  /** A stopped email (9d1·10). */
+  stoppedNote: (n: number) => `This email stopped partway. ${pluralize(n, 'family', 'families')} it hadn’t reached didn’t get it.`,
+  resend: (n: number) => `Send to the ${n} it missed`,
+  resendNote: (owner: 'season' | 'club') => `Sending to the families it missed doesn’t count toward the ${owner === 'season' ? 'season’s' : 'club’s'} ${CLUB_EMAIL_CAP}.`,
+  resent: (n: number, reached: number, of: number) => `Sent to the ${n} it missed. Reached ${reached} of ${pluralize(of, 'family', 'families')}.`,
+  notStopped: 'This email isn’t stopped, so there’s nothing to send again.',
+  /** The coach's colleague copy (9d1·9). */
+  coachLead: (org: string, audience: string, families: number) =>
+    `A copy of the email ${org} sent to the families on ${audience} (${families} reached). You’re getting it as a coach. Families don’t see this note.`,
 } as const;
 
 /** The Members grant (Ask 12): Families is never given to a member limited to a group of teams. */

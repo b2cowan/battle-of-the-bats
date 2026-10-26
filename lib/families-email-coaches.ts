@@ -5,7 +5,8 @@ import { emailHtml } from './club-schedule-send';
 import type { EmailWords } from './club-schedule-words';
 import { sendEmail } from './email';
 import { normalizeGuardianEmail } from './guardian-email';
-import { FAMILY_EMAIL_WORDS as W } from './families-words';
+import { FAMILY_EMAIL_WORDS as W, SEASON_EMAIL_WORDS as SW } from './families-words';
+import { supabaseAdmin } from './supabase-admin';
 
 /**
  * EMAIL FAMILIES' COPY TO THE HEAD COACHES (Club Tier Stage 7c; owner 2026-10-22, Put to the owner 5). ⚠ COLLEAGUE MAIL,
@@ -19,7 +20,7 @@ import { FAMILY_EMAIL_WORDS as W } from './families-words';
  *   · never a head coach who is also a guardian the send reaches — they get the family copy only.
  */
 
-interface CopiedCoach { userId: string; name: string | null; email: string }
+export interface CopiedCoach { userId: string; name: string | null; email: string }
 
 /** The head coaches a copy goes to, for the teams the audience names. `familyAddresses`: every address the family send
  *  reaches (a coach who is one of them is a parent first). */
@@ -37,12 +38,33 @@ export async function headCoachesToCopy(orgId: string, teamIds: readonly string[
   return [...byEmail.values()].sort((a, b) => a.email.localeCompare(b.email));
 }
 
-/** The copy's words. */
-export function coachCopyWords(o: { orgName: string; audience: string; families: number; subject: string; body: string; sender: string; coachName: string | null }): EmailWords {
+/**
+ * A house-league team's coaches (Club Tier Stage 9d-1, 9d1·9: "Copy the team's coaches", offered on a team audience,
+ * unticked): the picked teams' coaches with an address, each ONCE, never removed, never the sender, never a parent the
+ * send reaches. Never counted as a family.
+ */
+export async function leagueCoachesToCopy(orgId: string, seasonId: string, teamIds: readonly string[], senderId: string, familyAddresses: ReadonlySet<string>): Promise<CopiedCoach[]> {
+  if (teamIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin.from('league_team_coaches')
+    .select('email, name, first_name, last_name, user_id')
+    .eq('org_id', orgId).eq('season_id', seasonId).in('team_id', [...teamIds]).is('removed_at', null);
+  if (error) throw error;
+  const byEmail = new Map<string, CopiedCoach>();
+  for (const c of data ?? []) {
+    const email = normalizeGuardianEmail(c.email);
+    if (!email || (c.user_id && c.user_id === senderId) || familyAddresses.has(email) || byEmail.has(email)) continue;
+    const name = [c.first_name, c.last_name].filter(Boolean).join(' ') || c.name || null;
+    byEmail.set(email, { userId: c.user_id ?? '', name, email });
+  }
+  return [...byEmail.values()].sort((a, b) => a.email.localeCompare(b.email));
+}
+
+/** The copy's words. `league`: a house-league team's coach (9d-1), not a rep team's head coach. */
+export function coachCopyWords(o: { orgName: string; audience: string; families: number; subject: string; body: string; sender: string; coachName: string | null; league?: boolean }): EmailWords {
   return {
     subject: W.coachSubject(o.subject),
     greeting: W.coachGreeting(o.coachName?.split(' ')[0] ?? null),
-    paragraphs: [W.coachLead(o.orgName, o.audience, o.families), `${W.subject}: ${o.subject}`, ...o.body.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)],
+    paragraphs: [o.league ? SW.coachLead(o.orgName, o.audience, o.families) : W.coachLead(o.orgName, o.audience, o.families), `${W.subject}: ${o.subject}`, ...o.body.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)],
     lists: [],
     link: null,
     outro: W.coachOutro(o.sender),
