@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBookkeepingApi } from '@/lib/bookkeeping-access';
-import { currentExpenses, hasConfirmedDates, hasValidConversionEvidence, isExpenseDate, parseCents, redactExpenseRevision, type ExpenseRevision, type PaymentSource, type TaxStatus } from '@/lib/bookkeeping-expenses';
+import { currentExpenses, hasConfirmedDates, isExpenseDate, isRecordId, MAX_RECEIPT_BYTES, parseCents, RECEIPT_EMPTY_MESSAGE, RECEIPT_MESSAGE, RECEIPT_NAME_MESSAGE, redactExpenseRevision, validateExpenseFields, type ExpenseRevision, type PaymentSource, type TaxStatus } from '@/lib/bookkeeping-expenses';
 import { currentOwnerMovements } from '@/lib/bookkeeping-owner-movements';
-import { deleteExpenseRevisions, deleteReceipt, hasExpenseDateColumns, hasExpenseTaxColumn, hasOwnerMovementTable, insertExpenseRevision, latestExpenseRevision, listExpenseRevisions, listOwnerMovementRevisions, putReceipt } from '@/lib/bookkeeping-store';
+import { deleteReceipt, hasExpenseDateColumns, hasExpenseTaxColumn, hasOwnerMovementTable, insertExpenseRevision, latestExpenseRevision, listExpenseRevisions, listOwnerMovementRevisions, putReceipt } from '@/lib/bookkeeping-store';
 import { withObservability } from '@/lib/observability';
-
-const MAX_FILE = 10 * 1024 * 1024;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const SOURCES: PaymentSource[] = ['business_bank', 'business_card', 'personal', 'other'];
-const TAX: TaxStatus[] = ['pending', 'none', 'reviewed'];
 
 function textField(form: FormData, key: string, max: number): string | null {
   const raw = form.get(key);
@@ -45,36 +40,6 @@ export const GET = withObservability(async () => {
   }
 }, { route: '/api/platform-admin/bookkeeping/expenses' });
 
-export const DELETE = withObservability(async (req: NextRequest) => {
-  const gate = await requireBookkeepingApi();
-  if (gate.response) return gate.response;
-  const origin = req.headers.get('origin');
-  try {
-    if (origin && new URL(origin).host !== req.nextUrl.host) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  } catch { return NextResponse.json({ error: 'Forbidden' }, { status: 403 }); }
-
-  const expenseId = req.nextUrl.searchParams.get('expenseId') ?? '';
-  const revisionInput = req.nextUrl.searchParams.get('expectedRevision') ?? '';
-  const expectedRevision = Number(revisionInput);
-  if (!UUID.test(expenseId) || !/^\d+$/.test(revisionInput) || !Number.isInteger(expectedRevision) || expectedRevision < 1) {
-    return NextResponse.json({ error: 'Invalid expense reference' }, { status: 400 });
-  }
-
-  try {
-    const previous = await latestExpenseRevision(expenseId);
-    if (!previous) return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
-    if (previous.revision !== expectedRevision) return NextResponse.json({ error: 'Expense changed; reload before deleting' }, { status: 409 });
-    if (await activeReimbursementCents(expenseId)) return NextResponse.json({ error: 'Void the linked reimbursement before deleting this expense' }, { status: 409 });
-
-    const receiptPaths = await deleteExpenseRevisions(expenseId, expectedRevision);
-    if (!receiptPaths) return NextResponse.json({ error: 'Expense changed; reload before deleting' }, { status: 409 });
-    const cleanup = await Promise.allSettled(receiptPaths.map(deleteReceipt));
-    return NextResponse.json({ deleted: true, receiptCleanupIncomplete: cleanup.some(result => result.status === 'rejected') });
-  } catch {
-    return NextResponse.json({ error: 'Unable to delete expense' }, { status: 500 });
-  }
-}, { route: '/api/platform-admin/bookkeeping/expenses' });
-
 export const POST = withObservability(async (req: NextRequest) => {
   const gate = await requireBookkeepingApi();
   if (gate.response) return gate.response;
@@ -84,10 +49,16 @@ export const POST = withObservability(async (req: NextRequest) => {
   } catch { return NextResponse.json({ error: 'Forbidden' }, { status: 403 }); }
 
   let form: FormData;
-  try { form = await req.formData(); } catch { return NextResponse.json({ error: 'Invalid form' }, { status: 400 }); }
+  try { form = await req.formData(); } catch {
+    // The request proxy buffers only the first 10 MB of a body, so an oversized receipt arrives cut off and the form
+    // cannot be parsed. Say so in the receipt's own words rather than "Invalid form".
+    const tooLarge = Number(req.headers.get('content-length') ?? 0) > MAX_RECEIPT_BYTES;
+    return NextResponse.json(tooLarge ? { field: 'receipt', error: RECEIPT_MESSAGE }
+      : { error: 'This form could not be read. Reload the page and try again.' }, { status: tooLarge ? 413 : 400 });
+  }
   const expenseIdInput = textField(form, 'expenseId', 36);
   const expectedRevision = Number(textField(form, 'expectedRevision', 10) ?? '0');
-  if (expenseIdInput && (!UUID.test(expenseIdInput) || !Number.isInteger(expectedRevision) || expectedRevision < 1)) {
+  if (expenseIdInput && (!isRecordId(expenseIdInput) || !Number.isInteger(expectedRevision) || expectedRevision < 1)) {
     return NextResponse.json({ error: 'Invalid correction reference' }, { status: 400 });
   }
   let previous: ExpenseRevision | null = null;
@@ -117,19 +88,12 @@ export const POST = withObservability(async (req: NextRequest) => {
   const voidReason = textField(form, 'voidReason', 500);
   const datesConfirmed = isExpenseDate(incurredDate) && isExpenseDate(paidDate);
   const voidingLegacy = Boolean(previous && !hasConfirmedDates(previous) && form.has('voidReason'));
-  if ((!datesConfirmed && !voidingLegacy) || !supplier || !category || !businessPurpose ||
-    !['CAD', 'USD'].includes(originalCurrency ?? '') || !originalCents || !cadCents || taxCents === null || taxCents > cadCents ||
-    !['true', 'false'].includes(taxAmountKnown ?? '') ||
-    (taxAmountKnown === 'false' && (taxCents !== 0 || taxStatus !== 'pending')) ||
-    !TAX.includes(taxStatus as TaxStatus) || !SOURCES.includes(paymentSource as PaymentSource) ||
-    !Number.isInteger(businessUse) || businessUse < 1 || businessUse > 100 ||
-    (originalCurrency === 'USD' && !hasValidConversionEvidence(conversionNote)) ||
-    (originalCurrency === 'CAD' && originalCents !== cadCents) ||
-    (taxStatus === 'none' && taxCents !== 0) ||
-    (form.has('voidReason') && !voidReason) || (previous && !changeReason) ||
-    (form.has('notes') && notes === null) || (form.has('conversionNote') && conversionNote === null)) {
-    return NextResponse.json({ error: 'Check the expense amounts and required fields' }, { status: 400 });
-  }
+  const refusal = validateExpenseFields({
+    incurredDate, paidDate, voidingLegacy, supplier, category, businessPurpose, originalCurrency, originalCents, cadCents, taxCents,
+    taxAmountKnown, taxStatus, businessUse, paymentSource, conversionNote, hasConversionNote: form.has('conversionNote'),
+    notes, hasNotes: form.has('notes'), isCorrection: Boolean(previous), changeReason, isVoid: form.has('voidReason'), voidReason,
+  });
+  if (refusal) return NextResponse.json(refusal, { status: 400 });
   if (previous?.void_reason) return NextResponse.json({ error: 'A voided expense cannot be changed' }, { status: 409 });
   try {
     if (!await hasExpenseDateColumns() || !await hasExpenseTaxColumn()) return NextResponse.json({ error: 'Expense storage is being updated; try again after the upgrade' }, { status: 503 });
@@ -147,9 +111,10 @@ export const POST = withObservability(async (req: NextRequest) => {
   }
 
   const file = form.get('receipt');
-  if (file !== null && !(file instanceof File)) return NextResponse.json({ error: 'Invalid receipt' }, { status: 400 });
-  if (file && (file.size === 0 || file.size > MAX_FILE || file.name.length > 180)) {
-    return NextResponse.json({ error: 'Receipt must be a PDF, JPEG or PNG under 10 MB' }, { status: 400 });
+  if (file !== null && !(file instanceof File)) return NextResponse.json({ field: 'receipt', error: RECEIPT_MESSAGE }, { status: 400 });
+  if (file && (file.size === 0 || file.size > MAX_RECEIPT_BYTES || file.name.length > 180)) {
+    const error = file.size === 0 ? RECEIPT_EMPTY_MESSAGE : file.size > MAX_RECEIPT_BYTES ? RECEIPT_MESSAGE : RECEIPT_NAME_MESSAGE;
+    return NextResponse.json({ field: 'receipt', error }, { status: 400 });
   }
   const expenseId = expenseIdInput ?? crypto.randomUUID();
   const revision = previous ? previous.revision + 1 : 1;
@@ -157,7 +122,7 @@ export const POST = withObservability(async (req: NextRequest) => {
   let receiptName = previous?.receipt_name ?? null;
   if (file) {
     const bytes = new Uint8Array(await file.arrayBuffer());
-    if (!validFile(file, bytes)) return NextResponse.json({ error: 'Receipt must be a valid PDF, JPEG or PNG' }, { status: 400 });
+    if (!validFile(file, bytes)) return NextResponse.json({ field: 'receipt', error: RECEIPT_MESSAGE }, { status: 400 });
     receiptPath = `${expenseId}/${crypto.randomUUID()}`;
     receiptName = file.name;
     try { await putReceipt(receiptPath, bytes, file.type); }
@@ -168,9 +133,10 @@ export const POST = withObservability(async (req: NextRequest) => {
     expense_date: datesConfirmed ? incurredDate! : previous!.expense_date,
     incurred_date: datesConfirmed ? incurredDate! : null,
     paid_date: datesConfirmed ? paidDate! : null,
-    supplier, category,
-    business_purpose: businessPurpose, original_currency: originalCurrency as ExpenseRevision['original_currency'],
-    original_cents: originalCents, cad_cents: cadCents, tax_cad_cents: taxCents,
+    // validateExpenseFields has refused every missing value above.
+    supplier: supplier!, category: category!,
+    business_purpose: businessPurpose!, original_currency: originalCurrency as ExpenseRevision['original_currency'],
+    original_cents: originalCents!, cad_cents: cadCents!, tax_cad_cents: taxCents!,
     tax_amount_known: taxAmountKnown === 'true',
     tax_status: taxStatus as TaxStatus, business_use_percent: businessUse, payment_source: paymentSource as PaymentSource,
     conversion_note: conversionNote || null, notes: notes || null, change_reason: changeReason || null,

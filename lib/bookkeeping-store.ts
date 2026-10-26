@@ -144,16 +144,8 @@ export async function insertExpenseRevision(row: NewExpenseRevision): Promise<Ex
   return revision(rows[0]);
 }
 
-/** Permanently remove one expense and every saved revision, only if its latest revision still matches. */
-export async function deleteExpenseRevisions(expenseId: string, expectedRevision: number): Promise<string[] | null> {
-  const rows = await db()`DELETE FROM bookkeeping.expense_revisions
-    WHERE expense_id = ${expenseId}::uuid
-      AND (SELECT MAX(revision) FROM bookkeeping.expense_revisions WHERE expense_id = ${expenseId}::uuid) = ${expectedRevision}
-    RETURNING receipt_path`;
-  if (!rows.length) return null;
-  return [...new Set(rows.map(row => typeof row.receipt_path === 'string' ? row.receipt_path : null).filter((path): path is string => path !== null))];
-}
-
+// Records are append-only: a void is the only way one leaves the totals (owner ruling R1, 2026-10-25).
+// The one object delete below removes a receipt this request uploaded when its revision then failed to save.
 function key(path: string) { return `receipts/${path}`; }
 
 export async function putReceipt(path: string, bytes: Uint8Array, contentType: string): Promise<void> {

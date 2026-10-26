@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
-import { businessCents, hasConfirmedDates, hasKnownTaxAmount, hasValidConversionEvidence, matchesReviewFilter, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { businessCents, CONVERSION_NOTE_HINT, FUTURE_DATE_NOTE, hasConfirmedDates, hasKnownTaxAmount, hasValidConversionEvidence, matchesReviewFilter, MAX_RECEIPT_BYTES, RECEIPT_MESSAGE, summarizeExpenses, type ExpenseRevision, type FieldRefusal, type ReviewFilter } from '@/lib/bookkeeping-expenses';
+import { reportPeriodRange, type NamedReportPeriod } from '@/lib/bookkeeping-export';
 import { previewBookkeepingSourceCsv, type BookkeepingSourcePreview } from '@/lib/bookkeeping-source-import';
 import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { downloadCSVBlob } from '@/lib/export';
@@ -16,8 +17,11 @@ const STARTER_CATEGORIES = [
   'Software & online services', 'Advertising & marketing', 'Equipment & supplies',
   'Professional services', 'Travel & meals', 'Bank charges', 'Other',
 ];
+// 'sources' keeps the Stage 3 fixture preview; its tab is out of the row until Revenue's source contract is accepted.
 type BookkeepingView = 'overview' | 'expenses' | 'attention' | 'add' | 'record' | 'reports' | 'ledger' | 'sources';
-type ReportPeriod = 'all' | 'month' | 'year' | 'custom';
+type ReportPeriod = 'all' | NamedReportPeriod | 'custom';
+/** Fields inside More details: a refusal on one opens the section before focus moves there. */
+const ADVANCED_FIELDS = ['taxCadAmount', 'taxStatus', 'businessUsePercent', 'notes'];
 type ReportDrilldown = { kind: 'all' | 'category' | 'supplier' | 'personal'; key?: string };
 const today = () => {
   const date = new Date();
@@ -57,7 +61,6 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const [formVersion, setFormVersion] = useState(0);
   const [formDirty, setFormDirty] = useState(false);
   const [pendingLeave, setPendingLeave] = useState<BookkeepingView | null>(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [incurredDate, setIncurredDate] = useState(today);
   const [paidDate, setPaidDate] = useState(today);
   const [differentPaymentDate, setDifferentPaymentDate] = useState(false);
@@ -67,9 +70,9 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const [taxAmountKnown, setTaxAmountKnown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [exporting, setExporting] = useState<'csv' | 'package' | null>(null);
   const [error, setError] = useState('');
+  const [formError, setFormError] = useState<FieldRefusal | null>(null);
   const [notice, setNotice] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -82,6 +85,14 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const [sourceFileName, setSourceFileName] = useState('');
   const [sourcePreviewError, setSourcePreviewError] = useState('');
   const invalidPeriod = Boolean(from && to && from > to);
+
+  // A refusal at Save moves focus to the field it names (after More details has opened, if the field lives there).
+  useEffect(() => {
+    if (formError?.field) document.getElementById(`bk-${formError.field}`)?.focus();
+  }, [formError]);
+  const fieldFor = (name: string) => formError?.field === name
+    ? { id: `bk-${name}`, 'aria-invalid': true as const, 'aria-describedby': 'bk-form-error' }
+    : { id: `bk-${name}` };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -118,9 +129,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const attention = expenses.filter(row => !row.void_reason &&
     attentionReasons(row).length > 0);
   const reportPeriodLabel = reportPeriod === 'all' ? 'All confirmed dates'
-    : reportPeriod === 'month' ? new Intl.DateTimeFormat('en-CA', { month: 'long', year: 'numeric' }).format(new Date()) + ' to date'
-    : reportPeriod === 'year' ? `${new Date().getFullYear()} to date`
-    : `${from || 'Any start'} to ${to || 'Any end'}`;
+    : reportPeriod === 'custom' ? `${from || 'Any start'} to ${to || 'Any end'}`
+    : reportPeriodRange(reportPeriod, today()).label;
   const drilldownLabel = reportDrilldown.kind === 'category' ? reportDrilldown.key
     : reportDrilldown.kind === 'supplier' ? reportDrilldown.key
     : reportDrilldown.kind === 'personal' ? 'Paid personally' : 'All recorded expenses';
@@ -129,13 +139,12 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     setReportPeriod(value);
     setReportDrilldown({ kind: 'all' });
     if (value === 'all') { setFrom(''); setTo(''); }
-    if (value === 'month') { setFrom(`${today().slice(0, 7)}-01`); setTo(today()); }
-    if (value === 'year') { setFrom(`${today().slice(0, 4)}-01-01`); setTo(today()); }
+    else if (value !== 'custom') { const range = reportPeriodRange(value, today()); setFrom(range.from); setTo(range.to); }
   }
 
-  function openRecord(row: ExpenseRevision) { setDeleteConfirmId(null); setSelectedExpenseId(row.expense_id); setView('record'); }
+  function openRecord(row: ExpenseRevision) { setSelectedExpenseId(row.expense_id); setView('record'); }
   function openForm(row: ExpenseRevision | null = null, asVoid = false) {
-    setEditing(row); setVoidMode(asVoid); setFormDirty(false); setPendingLeave(null); setFormVersion(version => version + 1);
+    setEditing(row); setVoidMode(asVoid); setFormDirty(false); setPendingLeave(null); setFormError(null); setFormVersion(version => version + 1);
     const incurred = row?.incurred_date ?? '';
     const paid = row?.paid_date ?? incurred;
     setIncurredDate(incurred || (row ? '' : today()));
@@ -150,11 +159,15 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   function leaveForm(next: BookkeepingView) {
     if (saving) return;
     if (formDirty) { setPendingLeave(next); return; }
-    setFormDirty(false); setPendingLeave(null); setEditing(null); setVoidMode(false); setView(next);
+    setFormDirty(false); setPendingLeave(null); setEditing(null); setVoidMode(false); setFormError(null); setView(next);
   }
   function discardForm() {
     if (!pendingLeave || saving) return;
-    setFormDirty(false); setEditing(null); setVoidMode(false); setView(pendingLeave); setPendingLeave(null);
+    setFormDirty(false); setEditing(null); setVoidMode(false); setFormError(null); setView(pendingLeave); setPendingLeave(null);
+  }
+  function refuse(refusal: FieldRefusal) {
+    if (refusal.field && ADVANCED_FIELDS.includes(refusal.field)) setShowAdvanced(true);
+    setFormError(refusal);
   }
 
   async function previewSourceCsv(event: ChangeEvent<HTMLInputElement>) {
@@ -177,7 +190,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSaving(true); setError(''); setNotice('');
+    setError(''); setNotice(''); setFormError(null);
     const form = new FormData(event.currentTarget);
     form.set('incurredDate', incurredDate);
     form.set('paidDate', differentPaymentDate ? paidDate : incurredDate);
@@ -190,40 +203,27 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     if (!form.has('notes')) form.set('notes', editing?.notes ?? '');
     const receipt = form.get('receipt');
     if (!(receipt instanceof File) || receipt.size === 0) form.delete('receipt');
+    // The request proxy cuts a body off at 10 MB, so an oversized receipt is refused here, before uploading.
+    else if (receipt.size > MAX_RECEIPT_BYTES) { refuse({ field: 'receipt', error: RECEIPT_MESSAGE }); return; }
     if (editing) {
       form.set('expenseId', editing.expense_id);
       form.set('expectedRevision', String(editing.revision));
     }
     if (voidMode) form.set('changeReason', String(form.get('voidReason') ?? ''));
+    setSaving(true);
+    let saved: ExpenseRevision;
     try {
       const response = await fetch('/api/platform-admin/bookkeeping/expenses', { method: 'POST', body: form });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? 'Unable to save expense');
-      setNotice(voidMode ? 'Expense voided; its history is retained.' : editing ? 'Correction saved with history.' : 'Expense saved.');
-      setSelectedExpenseId(body.expense.expense_id);
-      setEditing(null); setVoidMode(false);
-      setFormDirty(false); setView('record');
-      await load();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to save expense'); }
+      const body: { error?: unknown; expense?: ExpenseRevision } = await response.json().catch(() => ({}));
+      if (!response.ok || !body.expense) { refuse(typeof body.error === 'string' ? body as FieldRefusal : { error: 'Unable to save expense.' }); return; }
+      saved = body.expense;
+    } catch { refuse({ error: 'Unable to save expense.' }); return; }
     finally { setSaving(false); }
-  }
-
-  async function deleteExpense(row: ExpenseRevision) {
-    setDeletingId(row.expense_id); setError(''); setNotice('');
-    try {
-      const params = new URLSearchParams({ expenseId: row.expense_id, expectedRevision: String(row.revision) });
-      const response = await fetch(`/api/platform-admin/bookkeeping/expenses?${params}`, { method: 'DELETE' });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? 'Unable to delete expense');
-      setNotice(body.receiptCleanupIncomplete
-        ? 'Expense deleted, but one or more receipt files could not be removed.'
-        : 'Expense deleted.');
-      if (editing?.expense_id === row.expense_id) { setEditing(null); setVoidMode(false); }
-      if (selectedExpenseId === row.expense_id) { setSelectedExpenseId(null); setView('expenses'); }
-      setDeleteConfirmId(null);
-      await load();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to delete expense'); }
-    finally { setDeletingId(null); }
+    setNotice(voidMode ? 'Expense voided; its history is retained.' : editing ? 'Correction saved with history.' : 'Expense saved.');
+    setSelectedExpenseId(saved.expense_id);
+    setEditing(null); setVoidMode(false);
+    setFormDirty(false); setView('record');
+    await load();
   }
 
   async function exportExpenses(kind: 'csv' | 'package') {
@@ -264,7 +264,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     </header>
 
     <nav className={styles.sectionNav} aria-label="Bookkeeping sections">
-      {(['overview', 'expenses', 'attention', 'reports', 'ledger', 'sources'] as const).map(section =>
+      {(['overview', 'expenses', 'attention', 'reports', 'ledger'] as const).map(section =>
         <button key={section} type="button" aria-current={view === section ? 'page' : undefined}
           onClick={() => view === 'add' ? leaveForm(section) : setView(section)}>{section === 'attention' ? 'Needs attention' : section[0].toUpperCase() + section.slice(1)}</button>)}
     </nav>
@@ -350,36 +350,45 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
       <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Expenses</p><h2 id="expense-form-title">{voidMode ? `Void ${editing?.supplier}` : editing ? `Correct ${editing.supplier}` : 'Add an expense'}</h2>
         <p>Record the purchase once. Keep its receipt with it.</p></div><button type="button" className={styles.textButton} onClick={() => leaveForm(editing ? 'record' : 'expenses')}>Back to {editing ? 'record' : 'expenses'}</button></div>
       {editing && !hasConfirmedDates(editing) && <p className={styles.dateWarning}>This older entry has a recorded date of {editing.expense_date}, but its meaning is unconfirmed. Use its receipt or other evidence to confirm both dates when correcting it.</p>}
-      <form key={`${editing?.expense_id ?? 'new'}-${formVersion}`} onSubmit={save} onChange={() => setFormDirty(true)} className={styles.form}>
+      <form key={`${editing?.expense_id ?? 'new'}-${formVersion}`} onSubmit={save} onChange={event => {
+        setFormDirty(true);
+        // Editing the refused field retires its refusal; the next Save checks again.
+        if (formError?.field && (event.target as HTMLElement).id === `bk-${formError.field}`) setFormError(null);
+      }} className={styles.form}>
         <div className={styles.dateBox}>
-          <label>Expense date (incurred)<DateInput name="incurredDate" required={!voidMode} value={incurredDate} onChange={value => { setFormDirty(true); setIncurredDate(value); if (!differentPaymentDate) setPaidDate(value); }} /></label>
+          <label>Expense date (incurred)<DateInput name="incurredDate" required={!voidMode} value={incurredDate} {...fieldFor('incurredDate')} onChange={value => { setFormDirty(true); setIncurredDate(value); if (!differentPaymentDate) setPaidDate(value); }} /></label>
+          {incurredDate > today() && <p className={styles.hint}>{FUTURE_DATE_NOTE}</p>}
           <label className={styles.inlineCheck}><input type="checkbox" checked={differentPaymentDate} onChange={event => { setDifferentPaymentDate(event.target.checked); if (!event.target.checked) setPaidDate(incurredDate); }} /> Payment date is different from expense date</label>
-          {differentPaymentDate && <label>Payment date<DateInput name="paidDate" required={!voidMode} value={paidDate} onChange={v => { setFormDirty(true); setPaidDate(v); }} /></label>}
+          {differentPaymentDate && <label>Payment date<DateInput name="paidDate" required={!voidMode} value={paidDate} {...fieldFor('paidDate')} onChange={v => { setFormDirty(true); setPaidDate(v); }} /></label>}
+          {differentPaymentDate && paidDate > today() && <p className={styles.hint}>{FUTURE_DATE_NOTE}</p>}
         </div>
-        <div className={styles.pair}><label>Supplier<input name="supplier" required maxLength={160} defaultValue={editing?.supplier ?? ''} /></label>
-          <label>Category<select name={customCategory ? undefined : 'category'} required={!customCategory} defaultValue={editing?.category ?? ''} onChange={event => setCustomCategory(event.target.value === '__custom__')}>
+        <div className={styles.pair}><label>Supplier<input name="supplier" required maxLength={160} defaultValue={editing?.supplier ?? ''} {...fieldFor('supplier')} /></label>
+          <label>Category<select name={customCategory ? undefined : 'category'} required={!customCategory} defaultValue={editing?.category ?? ''} {...fieldFor(customCategory ? 'categoryChoice' : 'category')} onChange={event => setCustomCategory(event.target.value === '__custom__')}>
             <option value="">Choose a category</option>{categories.map(value => <option key={value} value={value}>{value}</option>)}<option value="__custom__">+ Add a category</option></select></label></div>
-        {customCategory && <label>New category<input name="category" required maxLength={80} placeholder="Name this category" /></label>}
-        <label>What was it for?<textarea name="businessPurpose" required maxLength={500} rows={2} defaultValue={editing?.business_purpose ?? ''} /></label>
-        <div className={styles.pair}><label>Currency<select name="originalCurrency" value={currency} onChange={event => setCurrency(event.target.value as 'CAD' | 'USD')}><option>CAD</option><option>USD</option></select></label>
-          <label>{currency === 'CAD' ? 'Amount · CAD' : 'Invoice amount · USD'}<input name="originalAmount" inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" required defaultValue={editing ? amount(editing.original_cents) : ''} /></label></div>
-        {currency === 'USD' && <div className={styles.pair}><label>CAD amount<input name="cadAmount" inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" required defaultValue={editing ? amount(editing.cad_cents) : ''} /></label>
-          <label>Conversion source and date<textarea name="conversionNote" required maxLength={500} rows={2} placeholder="Bank of Canada rate 2026-10-22" defaultValue={editing?.conversion_note ?? ''} /></label></div>}
-        <label>How did you pay?<select name="paymentSource" required defaultValue={editing?.payment_source ?? ''}><option value="">Choose one</option>{Object.entries(SOURCES).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></label>
-        <label>Receipt · PDF, JPEG or PNG · up to 10 MB<input name="receipt" type="file" accept="application/pdf,image/jpeg,image/png" /></label>
+        {customCategory && <label>New category<input name="category" required maxLength={80} placeholder="Name this category" {...fieldFor('category')} /></label>}
+        <label>What was it for?<textarea name="businessPurpose" required maxLength={500} rows={2} defaultValue={editing?.business_purpose ?? ''} {...fieldFor('businessPurpose')} /></label>
+        <div className={styles.pair}><label>Currency<select name="originalCurrency" value={currency} {...fieldFor('originalCurrency')} onChange={event => setCurrency(event.target.value as 'CAD' | 'USD')}><option>CAD</option><option>USD</option></select></label>
+          <label>{currency === 'CAD' ? 'Amount · CAD' : 'Invoice amount · USD'}<input name="originalAmount" inputMode="decimal" required defaultValue={editing ? amount(editing.original_cents) : ''} {...fieldFor('originalAmount')} /></label></div>
+        {currency === 'USD' && <div className={styles.pair}><label>CAD amount<input name="cadAmount" inputMode="decimal" required defaultValue={editing ? amount(editing.cad_cents) : ''} {...fieldFor('cadAmount')} /></label>
+          <div className={styles.fieldStack}><label>Conversion source and date<textarea name="conversionNote" required maxLength={500} rows={2} placeholder="Card statement 2026-10-16" defaultValue={editing?.conversion_note ?? ''} {...fieldFor('conversionNote')} aria-describedby={formError?.field === 'conversionNote' ? 'bk-form-error bk-conversion-hint' : 'bk-conversion-hint'} />
+</label>
+            <p id="bk-conversion-hint" className={styles.hint}>{CONVERSION_NOTE_HINT}</p></div></div>}
+        <label>How did you pay?<select name="paymentSource" required defaultValue={editing?.payment_source ?? ''} {...fieldFor('paymentSource')}><option value="">Choose one</option>{Object.entries(SOURCES).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></label>
+        <label>Receipt · PDF, JPEG or PNG · up to 10 MB<input name="receipt" type="file" accept="application/pdf,image/jpeg,image/png" {...fieldFor('receipt')} /></label>
         <p className={styles.hint}>{editing?.receipt_path ? 'The current receipt stays attached unless you choose a replacement. Earlier files remain in history.' : 'You can save now and add the receipt later.'}</p>
         <button type="button" className={styles.moreButton} aria-expanded={showAdvanced} onClick={() => setShowAdvanced(!showAdvanced)}>{showAdvanced ? 'Hide more details' : 'More details'}</button>
         {showAdvanced && <div className={styles.advanced}>
           <label className={styles.inlineCheck}><input type="checkbox" checked={taxAmountKnown} onChange={event => setTaxAmountKnown(event.target.checked)} /> I know the purchase tax amount</label>
           {taxAmountKnown ? <div className={styles.pair}>
-            <label>Purchase tax amount · CAD<input name="taxCadAmount" inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" required defaultValue={editing ? amount(editing.tax_cad_cents) : '0.00'} /></label>
-            <label>Tax review status<select name="taxStatus" defaultValue={editing?.tax_status ?? 'pending'}><option value="pending">Pending review</option><option value="none">No tax recorded</option><option value="reviewed">Reviewed</option></select></label></div>
+            <label>Purchase tax amount · CAD<input name="taxCadAmount" inputMode="decimal" required defaultValue={editing ? amount(editing.tax_cad_cents) : '0.00'} {...fieldFor('taxCadAmount')} /></label>
+            <label>Tax review status<select name="taxStatus" defaultValue={editing?.tax_status ?? 'pending'} {...fieldFor('taxStatus')}><option value="pending">Pending review</option><option value="none">No tax recorded</option><option value="reviewed">Reviewed</option></select></label></div>
             : <p className={styles.hint}>Tax amount unknown. A blank amount will not be treated as confirmed $0.</p>}
-          <label>Business use %<input name="businessUsePercent" type="number" min="1" max="100" required defaultValue={editing?.business_use_percent ?? 100} /></label>
-          <label>Notes<textarea name="notes" maxLength={2000} rows={2} defaultValue={editing?.notes ?? ''} /></label>
+          <label>Business use %<input name="businessUsePercent" type="number" min="1" max="100" required defaultValue={editing?.business_use_percent ?? 100} {...fieldFor('businessUsePercent')} /></label>
+          <label>Notes<textarea name="notes" maxLength={2000} rows={2} defaultValue={editing?.notes ?? ''} {...fieldFor('notes')} /></label>
           <p className={styles.hint}>Purchase tax is a recorded detail. This form does not claim a tax credit.</p></div>}
-        {editing && !voidMode && <label>Reason for correction<input name="changeReason" required maxLength={500} placeholder="What changed and why?" /></label>}
-        {voidMode && <label>Reason to void<input name="voidReason" required maxLength={500} placeholder="Why should this expense leave the report?" /></label>}
+        {editing && !voidMode && <label>Reason for correction<input name="changeReason" required maxLength={500} placeholder="What changed and why?" {...fieldFor('changeReason')} /></label>}
+        {voidMode && <label>Reason to void<input name="voidReason" required maxLength={500} placeholder="Why should this expense leave the report?" {...fieldFor('voidReason')} /></label>}
+        {formError && <p id="bk-form-error" role="alert" className={`${styles.error} ${styles.formError}`}>{formError.error}</p>}
         <div className={styles.actions}><button type="submit" disabled={saving || !dateSchemaReady || !taxSchemaReady}>{saving ? 'Saving…' : voidMode ? 'Confirm void' : editing ? 'Save correction' : 'Save expense'}</button>
           <button type="button" className={styles.secondary} onClick={() => leaveForm(editing ? 'record' : 'expenses')}>Cancel</button></div>
         {pendingLeave && <div className={styles.confirmBox} role="group" aria-label="Close without saving?">
@@ -396,7 +405,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
             <div className={styles.exportActions}><button type="button" className={styles.export} onClick={() => exportExpenses('csv')} disabled={!!exporting || invalidPeriod}>{exporting === 'csv' ? 'Preparing CSV…' : 'Export CSV'}</button>
               <button type="button" className={styles.export} onClick={() => exportExpenses('package')} disabled={!!exporting || invalidPeriod}>{exporting === 'package' ? 'Preparing package…' : 'Accountant package'}</button></div></div>
           <div className={styles.filters}>
-            <label>Period<select value={reportPeriod} onChange={event => chooseReportPeriod(event.target.value as ReportPeriod)}><option value="all">All confirmed dates</option><option value="month">This month to date</option><option value="year">This year to date</option><option value="custom">Custom dates</option></select></label>
+            <label>Period<select value={reportPeriod} onChange={event => chooseReportPeriod(event.target.value as ReportPeriod)}><option value="all">All confirmed dates</option><option value="month">This month to date</option><option value="year">This year to date</option><option value="last_month">Last month</option><option value="last_quarter">Last quarter</option><option value="last_year">Last calendar year</option><option value="custom">Custom dates</option></select></label>
             <label>From · incurred date<DateInput value={from} onChange={v => { setFrom(v); setReportPeriod('custom'); }} /></label>
             <label>To · incurred date<DateInput value={to} onChange={v => { setTo(v); setReportPeriod('custom'); }} /></label>
             <label>Category<select value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
@@ -471,14 +480,10 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
         {selectedExpense.receipt_path ? <p><a href={`/api/platform-admin/bookkeeping/receipt/${selectedExpense.expense_id}/${selectedExpense.revision}`}>{selectedExpense.receipt_name ?? 'Download receipt'}</a></p> : <p>No receipt attached yet.</p>}
         {selectedExpense.original_currency === 'USD' && <p>USD {amount(selectedExpense.original_cents)} → CAD {amount(selectedExpense.cad_cents)} · {selectedExpense.conversion_note}</p>}
         {selectedExpense.notes && <p>{selectedExpense.notes}</p>}</div></div>
-      <div className={styles.recordActions}>{!selectedExpense.void_reason && <button type="button" className={styles.primaryAction} onClick={() => openForm(selectedExpense)}>Correct expense</button>}
-        {!selectedExpense.void_reason && <button type="button" className={styles.textButton} onClick={() => openForm(selectedExpense, true)}>Void expense</button>}
-        <button type="button" className={styles.dangerButton} onClick={() => setDeleteConfirmId(selectedExpense.expense_id)} disabled={deletingId === selectedExpense.expense_id}>{deletingId === selectedExpense.expense_id ? 'Deleting…' : 'Permanently delete'}</button></div>
-      {deleteConfirmId === selectedExpense.expense_id && <div className={styles.confirmBox} role="group" aria-label={`Permanently delete ${selectedExpense.supplier}?`}>
-        <p><strong>Delete {selectedExpense.supplier} permanently?</strong> Its saved revisions and receipt files will be removed. This cannot be undone.</p>
-        <div className={styles.confirmActions}><button type="button" className={styles.textButton} onClick={() => setDeleteConfirmId(null)} disabled={!!deletingId}>Keep expense</button>
-          <button type="button" className={styles.dangerButton} onClick={() => void deleteExpense(selectedExpense)} disabled={!!deletingId}>{deletingId ? 'Deleting…' : 'Delete permanently'}</button></div>
-      </div>}
+      {/* Correct and Void only: a void is the only way a record leaves the totals (owner ruling R1, 2026-10-25). */}
+      {!selectedExpense.void_reason && <div className={styles.recordActions}>
+        <button type="button" className={styles.primaryAction} onClick={() => openForm(selectedExpense)}>Correct expense</button>
+        <button type="button" className={styles.textButton} onClick={() => openForm(selectedExpense, true)}>Void expense</button></div>}
       <section className={styles.historySection} aria-labelledby="history-title"><h3 id="history-title">Changes</h3><ol className={styles.history}>{revisions.filter(item => item.expense_id === selectedExpense.expense_id).sort((a, b) => b.revision - a.revision).map(item =>
         <li key={item.revision}>Rev. {item.revision} · {new Date(item.created_at).toLocaleString('en-CA')} · {money(item.cad_cents)} · {item.incurred_date ?? `${item.expense_date} (date unconfirmed)`} {item.change_reason ? `· ${item.change_reason}` : '· First entry'} {item.void_reason ? `· Voided: ${item.void_reason}` : ''} {item.receipt_path && <a href={`/api/platform-admin/bookkeeping/receipt/${item.expense_id}/${item.revision}`}>Receipt</a>}</li>
       )}</ol></section>

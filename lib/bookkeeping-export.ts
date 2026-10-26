@@ -1,6 +1,31 @@
 import { businessCents, csvCell, currentExpenses, hasConfirmedDates, hasKnownTaxAmount, isExpenseDate, matchesReviewFilter, type ExpenseRevision, type ReviewFilter } from './bookkeeping-expenses';
 import { currentOwnerMovements, type OwnerMovementRevision } from './bookkeeping-owner-movements';
 
+export type NamedReportPeriod = 'month' | 'year' | 'last_month' | 'last_quarter' | 'last_year';
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const pad = (n: number) => String(n).padStart(2, '0');
+const lastDay = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+/** A named report period as an incurred-date range. `today` is the viewer's own calendar day (YYYY-MM-DD); quarters are calendar quarters. */
+export function reportPeriodRange(period: NamedReportPeriod, today: string): { from: string; to: string; label: string } {
+  const year = Number(today.slice(0, 4));
+  const month = Number(today.slice(5, 7));
+  if (period === 'month') return { from: `${today.slice(0, 7)}-01`, to: today, label: `${MONTHS[month - 1]} ${year} to date` };
+  if (period === 'year') return { from: `${year}-01-01`, to: today, label: `${year} to date` };
+  if (period === 'last_year') return { from: `${year - 1}-01-01`, to: `${year - 1}-12-31`, label: `Last calendar year · ${year - 1}` };
+  if (period === 'last_month') {
+    const y = month === 1 ? year - 1 : year;
+    const m = month === 1 ? 12 : month - 1;
+    return { from: `${y}-${pad(m)}-01`, to: `${y}-${pad(m)}-${pad(lastDay(y, m))}`, label: `Last month · ${MONTHS[m - 1]} ${y}` };
+  }
+  const quarter = Math.floor((month - 1) / 3);
+  const y = quarter === 0 ? year - 1 : year;
+  const first = quarter === 0 ? 10 : (quarter - 1) * 3 + 1;
+  return { from: `${y}-${pad(first)}-01`, to: `${y}-${pad(first + 2)}-${pad(lastDay(y, first + 2))}`,
+    label: `Last quarter · ${MONTHS[first - 1]} to ${MONTHS[first + 1]} ${y}` };
+}
+
 export type ExpenseFilters = { from: string | null; to: string | null; category: string; supplier?: string; paymentSource?: string; dateStatus?: 'all' | 'confirmed'; query: string; review: ReviewFilter };
 
 export function parseExpenseFilters(params: URLSearchParams): ExpenseFilters | null {

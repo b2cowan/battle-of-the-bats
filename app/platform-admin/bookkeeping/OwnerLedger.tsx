@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { businessCents, type ExpenseRevision } from '@/lib/bookkeeping-expenses';
+import { businessCents, type ExpenseRevision, type FieldRefusal } from '@/lib/bookkeeping-expenses';
 import { ownerLedgerRows, type OwnerMovementKind, type OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import styles from './bookkeeping.module.css';
 import DateInput from '@/components/shared/DateInput';
@@ -35,7 +35,16 @@ export default function OwnerLedger({ expenses, initialMovements, initialRevisio
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [showForm, setShowForm] = useState(false);
+  // A refusal shows beside the button that was pressed: the transfer form's Save, or the record's Void.
+  const [formError, setFormError] = useState<FieldRefusal | null>(null);
+  const [voidError, setVoidError] = useState('');
   const selected = movements.find(row => row.movement_id === selectedId) ?? null;
+  useEffect(() => {
+    if (formError?.field) document.getElementById(`bk-move-${formError.field}`)?.focus();
+  }, [formError]);
+  const fieldFor = (name: string) => formError?.field === name
+    ? { id: `bk-move-${name}`, 'aria-invalid': true as const, 'aria-describedby': 'bk-move-error' }
+    : { id: `bk-move-${name}` };
   const personalExpenses = expenses.filter(row => !row.void_reason && row.payment_source === 'personal');
   const rows = useMemo(() => ownerLedgerRows(expenses, movements), [expenses, movements]);
 
@@ -57,7 +66,7 @@ export default function OwnerLedger({ expenses, initialMovements, initialRevisio
     setFormId(row?.movement_id ?? crypto.randomUUID());
     setFormVersion(value => value + 1);
     setShowForm(true);
-    setError('');
+    setError(''); setFormError(null); setVoidError('');
   }
 
   async function reload() {
@@ -83,23 +92,23 @@ export default function OwnerLedger({ expenses, initialMovements, initialRevisio
       note: form.get('note'),
       changeReason: editing ? form.get('changeReason') : undefined,
     };
-    setSaving(true); setError(''); setNotice('');
+    setSaving(true); setError(''); setNotice(''); setFormError(null);
     try {
       const response = await fetch('/api/platform-admin/bookkeeping/owner-movements', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? 'Unable to save owner movement');
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) { setFormError(typeof body.error === 'string' ? body : { error: 'Unable to save the transfer.' }); return; }
       await reload();
       setSelectedId(formId); setShowForm(false); setEditing(null);
       setNotice(body.repeated ? 'This transfer was already saved.' : editing ? 'Correction saved with its history.' : 'Owner transfer saved.');
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to save owner movement'); }
+    } catch { setFormError({ error: 'Unable to save the transfer.' }); }
     finally { setSaving(false); }
   }
 
   async function voidMovement(row: OwnerMovementRevision, reason: string) {
     if (!reason.trim() || saving) return;
-    setSaving(true); setError(''); setNotice('');
+    setSaving(true); setError(''); setNotice(''); setVoidError('');
     try {
       const response = await fetch('/api/platform-admin/bookkeeping/owner-movements', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -108,11 +117,11 @@ export default function OwnerLedger({ expenses, initialMovements, initialRevisio
           linkedExpenseId: row.linked_expense_id, sourceReference: row.source_reference, note: row.note,
           changeReason: reason, voidReason: reason }),
       });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? 'Unable to void owner movement');
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) { setVoidError(typeof body.error === 'string' ? body.error : 'Unable to void the transfer.'); return; }
       await reload();
       setNotice('Owner transfer voided; its history is retained.');
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to void owner movement'); }
+    } catch { setVoidError('Unable to void the transfer.'); }
     finally { setSaving(false); }
   }
 
@@ -125,20 +134,24 @@ export default function OwnerLedger({ expenses, initialMovements, initialRevisio
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {notice && <p role="status" className={styles.notice}>{notice}</p>}
 
-    {showForm && schemaReady && <form key={formVersion} className={styles.form} onSubmit={event => void save(event)}>
+    {showForm && schemaReady && <form key={formVersion} className={styles.form} onSubmit={event => void save(event)} onChange={event => {
+      // Editing the refused field retires its refusal; the next Save checks again.
+      if (formError?.field && (event.target as HTMLElement).id === `bk-move-${formError.field}`) setFormError(null);
+    }}>
       <h3>{editing ? 'Correct owner transfer' : 'Add owner transfer'}</h3>
       <p className={styles.hint}>Record a transfer that actually happened. If you paid for a purchase personally, record the purchase under Expenses first.</p>
-      <label>What happened?<select value={kind} onChange={event => setKind(event.target.value as OwnerMovementKind)}>
+      <label>What happened?<select value={kind} {...fieldFor('movementKind')} onChange={event => setKind(event.target.value as OwnerMovementKind)}>
         {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select></label>
-      {kind === 'expense_reimbursement' && <label>Which personal expense did you repay?<select name="linkedExpenseId" defaultValue={editing?.linked_expense_id ?? ''} required>
+      {kind === 'expense_reimbursement' && <label>Which personal expense did you repay?<select name="linkedExpenseId" defaultValue={editing?.linked_expense_id ?? ''} required {...fieldFor('linkedExpenseId')}>
         <option value="">Choose an expense</option>{personalExpenses.map(row => <option key={row.expense_id} value={row.expense_id}>{row.supplier} · {row.incurred_date ?? row.expense_date} · {money(businessCents(row))}</option>)}
       </select></label>}
-      <label>Transfer date<DateInput name="movementDate" defaultValue={editing?.movement_date ?? today()} required /></label>
-      <label>Amount in CAD<input name="amount" type="number" inputMode="decimal" min="0.01" step="0.01" defaultValue={editing ? (editing.amount_cents / 100).toFixed(2) : ''} required /></label>
-      <label>Bank reference or transfer ID <span className={styles.hint}>(optional)</span><input name="sourceReference" maxLength={160} defaultValue={editing?.source_reference ?? ''} /></label>
-      <label>Note <span className={styles.hint}>(optional)</span><textarea name="note" maxLength={1000} defaultValue={editing?.note ?? ''} /></label>
-      {editing && <label>Why are you correcting this transfer?<textarea name="changeReason" maxLength={500} required /></label>}
+      <label>Transfer date<DateInput name="movementDate" defaultValue={editing?.movement_date ?? today()} required {...fieldFor('movementDate')} /></label>
+      <label>Amount in CAD<input name="amount" inputMode="decimal" defaultValue={editing ? (editing.amount_cents / 100).toFixed(2) : ''} required {...fieldFor('amount')} /></label>
+      <label>Bank reference or transfer ID <span className={styles.hint}>(optional)</span><input name="sourceReference" maxLength={160} defaultValue={editing?.source_reference ?? ''} {...fieldFor('sourceReference')} /></label>
+      <label>Note <span className={styles.hint}>(optional)</span><textarea name="note" maxLength={1000} defaultValue={editing?.note ?? ''} {...fieldFor('note')} /></label>
+      {editing && <label>Why are you correcting this transfer?<textarea name="changeReason" maxLength={500} required {...fieldFor('changeReason')} /></label>}
+      {formError && <p id="bk-move-error" role="alert" className={`${styles.error} ${styles.formError}`}>{formError.error}</p>}
       <div className={styles.recordActions}><button type="submit" className={styles.primaryAction} disabled={saving}>{saving ? 'Saving…' : editing ? 'Save correction' : 'Save transfer'}</button>
         <button type="button" className={styles.textButton} disabled={saving} onClick={() => setShowForm(false)}>Cancel</button></div>
     </form>}
@@ -155,6 +168,7 @@ export default function OwnerLedger({ expenses, initialMovements, initialRevisio
         <button type="button" className={styles.textButton} onClick={() => openForm(selected)}>Correct transfer</button>
         <form onSubmit={event => { event.preventDefault(); const reason = new FormData(event.currentTarget).get('reason'); void voidMovement(selected, String(reason ?? '')); }} className={styles.form}>
           <label>Reason for voiding<input name="reason" maxLength={500} required /></label><button type="submit" className={styles.dangerButton} disabled={saving}>Void transfer</button>
+          {voidError && <p role="alert" className={`${styles.error} ${styles.formError}`}>{voidError}</p>}
         </form>
       </div>}
       <h4>Changes</h4><ol className={styles.history}>{revisions.filter(row => row.movement_id === selected.movement_id).sort((a, b) => b.revision - a.revision).map(row =>
@@ -164,7 +178,7 @@ export default function OwnerLedger({ expenses, initialMovements, initialRevisio
     {!rows.length ? <p className={styles.empty}>No recorded activity yet.</p> : <div className={styles.rows}>{rows.map(row =>
       <button key={row.key} type="button" className={styles.listDoor} onClick={() => {
         if (row.expense_id && row.type === 'expense') { const expense = expenses.find(item => item.expense_id === row.expense_id); if (expense) onOpenExpense(expense); }
-        else setSelectedId(row.movement_id);
+        else { setSelectedId(row.movement_id); setVoidError(''); }
       }}><span><strong>{row.title}</strong><small>{row.date ?? 'Date needs review'} · {row.type === 'expense' ? 'Expense' : labels[row.type]} · {row.cash_direction === 'personal' ? 'Paid personally' : row.cash_direction === 'in' ? 'Money in' : row.cash_direction === 'out' ? 'Money out' : 'Payment needs review'}{row.needs_review ? ' · Needs review' : ''}</small></span><b>{money(row.amount_cents)} ›</b></button>)}</div>}
   </section>;
 }

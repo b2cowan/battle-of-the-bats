@@ -108,11 +108,82 @@ export function summarizeExpenses(rows: ExpenseRevision[]) {
   };
 }
 
+/** Accepts "1200.00", "1,200.00" and "$1,200.00". A comma that is not a thousands separator ("12,50") is refused as ambiguous. */
 export function parseCents(value: unknown): number | null {
-  if (typeof value !== 'string' || !/^(0|[1-9]\d{0,8})(?:\.\d{1,2})?$/.test(value)) return null;
-  const [dollars, cents = ''] = value.split('.');
+  if (typeof value !== 'string') return null;
+  let text = value.trim();
+  if (text.startsWith('$')) text = text.slice(1);
+  if (/^[1-9]\d{0,2}(,\d{3})+(\.\d{1,2})?$/.test(text)) text = text.replaceAll(',', '');
+  if (!/^(0|[1-9]\d{0,8})(?:\.\d{1,2})?$/.test(text)) return null;
+  const [dollars, cents = ''] = text.split('.');
   const result = Number(dollars) * 100 + Number(cents.padEnd(2, '0'));
   return Number.isSafeInteger(result) ? result : null;
+}
+
+/** An expense or owner-transfer id: a version 1–8 UUID, which is what crypto.randomUUID() makes. */
+export function isRecordId(value: unknown): value is string {
+  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+/** The request proxy keeps only the first 10 MiB of a body, and the form's other fields and multipart framing ride
+ * in that same body, so a receipt must leave room for them or it arrives cut off. */
+export const MAX_RECEIPT_BYTES = 10 * 1024 * 1024 - 64 * 1024;
+export const RECEIPT_MESSAGE = 'Receipt must be a PDF, JPEG or PNG under 10 MB.';
+export const RECEIPT_NAME_MESSAGE = 'Rename the receipt file to 180 characters or fewer.';
+export const RECEIPT_EMPTY_MESSAGE = 'This receipt file is empty. Choose the file again.';
+export const CONVERSION_NOTE_HINT = "Say where the rate came from and its date, like 'Card statement 2026-10-16'.";
+export const FUTURE_DATE_NOTE = 'This date is in the future. Check it before saving.';
+
+/** The refusal for an amount field: null is unreadable, 0 is too small. */
+export function amountMessage(cents: number | null): string | null {
+  if (cents === null) return 'Use numbers like 1200.00.';
+  if (cents === 0) return 'Enter an amount above $0.00.';
+  return null;
+}
+
+/** A refusal that names the form field it belongs to, so the page can show it at Save and move focus there. */
+export type FieldRefusal = { error: string; field?: string };
+
+export type ExpenseFieldInput = {
+  incurredDate: string | null; paidDate: string | null; voidingLegacy: boolean;
+  supplier: string | null; category: string | null; businessPurpose: string | null;
+  originalCurrency: string | null; originalCents: number | null; cadCents: number | null; taxCents: number | null;
+  taxAmountKnown: string | null; taxStatus: string | null; businessUse: number; paymentSource: string | null;
+  conversionNote: string | null; hasConversionNote: boolean; notes: string | null; hasNotes: boolean;
+  isCorrection: boolean; changeReason: string | null; isVoid: boolean; voidReason: string | null;
+};
+
+const TAX_STATUSES: TaxStatus[] = ['pending', 'none', 'reviewed'];
+const PAYMENT_SOURCES: PaymentSource[] = ['business_bank', 'business_card', 'personal', 'other'];
+
+/** The expense form's checks, in the form's top-to-bottom order; the first one that fails is the one reported. */
+export function validateExpenseFields(input: ExpenseFieldInput): FieldRefusal | null {
+  const cad = input.originalCurrency === 'CAD';
+  if (!input.voidingLegacy && !isExpenseDate(input.incurredDate)) return { field: 'incurredDate', error: 'Enter the expense date.' };
+  if (!input.voidingLegacy && !isExpenseDate(input.paidDate)) return { field: 'paidDate', error: 'Enter the payment date.' };
+  if (!input.supplier) return { field: 'supplier', error: 'Enter the supplier.' };
+  if (!input.category) return { field: 'category', error: 'Choose a category.' };
+  if (!input.businessPurpose) return { field: 'businessPurpose', error: 'Say what the purchase was for.' };
+  if (!cad && input.originalCurrency !== 'USD') return { field: 'originalCurrency', error: 'Choose CAD or USD.' };
+  const original = amountMessage(input.originalCents);
+  if (original) return { field: 'originalAmount', error: original };
+  const converted = amountMessage(input.cadCents);
+  if (converted) return { field: cad ? 'originalAmount' : 'cadAmount', error: converted };
+  if (cad && input.originalCents !== input.cadCents) return { field: 'originalAmount', error: 'A CAD purchase has one amount.' };
+  if (input.hasConversionNote && input.conversionNote === null) return { field: 'conversionNote', error: 'Keep the conversion note to 500 characters.' };
+  if (!cad && !hasValidConversionEvidence(input.conversionNote)) return { field: 'conversionNote', error: CONVERSION_NOTE_HINT };
+  if (!PAYMENT_SOURCES.includes(input.paymentSource as PaymentSource)) return { field: 'paymentSource', error: 'Choose how you paid.' };
+  if (!['true', 'false'].includes(input.taxAmountKnown ?? '')) return { error: 'Reload the page and try again.' };
+  if (input.taxCents === null) return { field: 'taxCadAmount', error: 'Use numbers like 1200.00.' };
+  if (input.taxCents > input.cadCents!) return { field: 'taxCadAmount', error: "Purchase tax can't be more than the amount." };
+  if (input.taxAmountKnown === 'false' && (input.taxCents !== 0 || input.taxStatus !== 'pending')) return { error: 'Reload the page and try again.' };
+  if (!TAX_STATUSES.includes(input.taxStatus as TaxStatus)) return { field: 'taxStatus', error: 'Choose a tax review status.' };
+  if (input.taxStatus === 'none' && input.taxCents !== 0) return { field: 'taxCadAmount', error: 'No tax recorded means a tax amount of $0.00.' };
+  if (!Number.isInteger(input.businessUse) || input.businessUse < 1 || input.businessUse > 100) return { field: 'businessUsePercent', error: 'Enter a business use from 1 to 100.' };
+  if (input.hasNotes && input.notes === null) return { field: 'notes', error: 'Keep the notes to 2,000 characters.' };
+  if (input.isVoid && !input.voidReason) return { field: 'voidReason', error: 'Say why this expense should leave the report.' };
+  if (input.isCorrection && !input.changeReason) return { field: input.isVoid ? 'voidReason' : 'changeReason', error: 'Say what changed and why.' };
+  return null;
 }
 
 export function isExpenseDate(value: unknown): value is string {
