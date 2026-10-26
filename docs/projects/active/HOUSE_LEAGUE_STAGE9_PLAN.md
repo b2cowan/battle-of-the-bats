@@ -154,6 +154,35 @@ Drawings https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk (source `HOUSE_LEAGUE
 - **9c·12** Moving a child after publishing **asks first, then emails the family the new team**; both coaches' pages change at
   once.
 
+## 0g · Owner rulings 2026-10-26, the 9d-1 drawings (all twelve as recommended, by paste-back)
+
+Drawings: https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB.
+- **9d1·1** One window, two doors (option C). The Families window's face is the only composer; the door decides its Who list.
+  The season's old page and Email window are deleted.
+- **9d1·2** The season's door is gated by the season's email gate (the runners plus the registrar), on every season status,
+  showing only that season's families. Families stays a grant and is never needed for a season.
+- **9d1·3** The old sent history is shown read-only on the season's history under "Earlier sends · counted per child", saying
+  where the audience wasn't recorded. Nothing is converted; the old log stays where it is and nothing writes to it again.
+- **9d1·4** The season's history shows notices that go to many families at once (Publish teams now, schedule notices in 9d-2),
+  one row each, tagged Automatic. One-family status emails (accepted, waitlisted, declined) stay off it; each belongs to its
+  registration.
+- **9d1·5** A one-family email never counts toward the season's 3, the same as the club, and has the same limit of 3 a day to
+  that family. Its history row keeps the date, sender and family, never the words. Ticking two or more families counts.
+- **9d1·6** The allowance follows the audience: a season picked from Families counts toward that season's 3, never the club's.
+  The picker lists every season with families, whatever its status. Divisions, teams and statuses stay on the season's door.
+- **9d1·7** Families › Emails is the club's book of typed sends to families and lists season sends with the season named. The
+  season's page lists only its own.
+- **9d1·8** The allowance is always shown: one line in the window's foot and the page's subtitle, on the club's door too. The
+  refusal names the time.
+- **9d1·9** "Copy the team's coaches" is offered when the audience is a team, unticked. A copied coach isn't counted as a
+  family.
+- **9d1·10** A stopped send's row window offers "Send to the N it missed": the same words to the families it hadn't reached,
+  not counted (it is the same send). The club's Families › Emails gets it too.
+- **9d1·11** A season send's footer names the season ("Sent by {club} because your family is registered in {season}.");
+  Families' club sentence stays for club-wide sends.
+- **9d1·12** The allowance is any 24 hours, the same rule as the club's, so one engine counts both and the refusal's time is
+  exact. The words say so; /marketing settles them. (9d1·8's example sentence said "left today"; 9d1·12 governs its words.)
+
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
 - The trust list re-verified (§3); the coupling check for a standalone League Plus club; the ledger seam under D1 (C18);
@@ -240,7 +269,7 @@ check the snapshot before touching it); the org home's empty-tournaments hero (S
 | **9b-1** Sign-up, payments-ready — **BUILT 2026-10-25** (§0d, §9; walk §375 owed) | Create reshaped (Setup = the Overview's Divisions and Registration blocks, extended); price per division + early bird, one resolver; real dates; atomic capacity + waitlist constraint; no duplicate child; approve respects capacity; several children; CASL; DOB picks division; staff notice on every public sign-up. Server and public form only — the Registrations screen is rebuilt once, in 9b-2 | Q5 S1·a S2·b | L |
 | **9b-2** Money, honest — **BUILT 2026-10-25** (§0e, §9; walk §378 ✅ 2026-10-25, 51 of 51) | Frozen price (per-registration correction with a reason; Move division asks to re-price); one ending path with refunds as money out; Money band; Money stays open after Complete; Registrations on the kit (Withdraw, Move division, Release the spot, bulk, Paid/Owing filter, phone rows); the club's own payment instructions until 12b; "Ask to withdraw" on the status page; Statement filing + Walk 7a 7.6; ghost pay spots; Families balance from the frozen price. **12b drawn right after this is ruled.** | Q1 Q2 Q3 Q4 Q6 Q10 Q15 | L |
 | **9c** Teams and people — **RULED 2026-10-26 · BUILT 2026-10-26** (commits in the status log; walk §381 ✅ 2026-10-26, 42 of 42) (§0f; drawings https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk, source `HOUSE_LEAGUE_STAGE9C_DRAWINGS.html`; §9) | Ratings (convenor-only) + balanced snake draft; draft per division; coach accounts (if Q7) as a column of 9a's gate; Publish teams with placement notices; the status page shows the team | Q7 Q8 Q9 | M–L |
-| **9d-1** One email composer — **split from 9d 2026-10-26 (owner)**; drawing prompt `HOUSE_LEAGUE_STAGE9D1_DRAWING_PROMPT.md` | The season's email onto the Families window and the batched sender (Q12b): opened from the season already set to it; division / team / status / "Selected" audiences; the season's own 3 typed sends a day, automatic notices never counted (Q12c); the season's own sent history (the registrar has no Families access); the old Notifications page and "Message registrants" window retire; the green "0 delivered" goes with them | Q12b Q12c (ruled) | M |
+| **9d-1** One email composer — **split from 9d 2026-10-26 (owner)** · **DRAWN · RULED · BUILT 2026-10-26** (commits in the status log; walk §388 owed) (§0g, all twelve as recommended; drawings https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB, source `HOUSE_LEAGUE_STAGE9D1_DRAWINGS.html`; build prompt `HOUSE_LEAGUE_STAGE9D1_BUILD_PROMPT.md`; §9) | The season's email onto the Families window and the batched sender (Q12b): opened from the season already set to it; division / team / status / "Selected" audiences; the season's own 3 typed sends a day, automatic notices never counted (Q12c); the season's own sent history (the registrar has no Families access); the old Notifications page and "Message registrants" window retire; the green "0 delivered" goes with them | Q12b Q12c (ruled) | M |
 | **9d-2** The schedule — **split from 9d 2026-10-26 (owner)** | Generator rebuilt; C1–C12 admin + public; health (Q11); 11b; venue/permit links; Publish schedule + change notices (sent through 9d-1's composer path) | Q11 (ruled) | L |
 | **9e** Game day | Standings by sport pack; score entry (coaches if Q7); rainout as one action | — | S–M |
 | **9f** Season end | Archive; the finished-season record (Q16); Start next season copies forward. Returning families with a pre-filled form wait on Stage 14 | — | M |
@@ -443,3 +472,50 @@ open it, and the menu's top level is Stage 13's.
 - **2026-10-26 — 9d SPLIT into 9d-1 and 9d-2 (owner).** 9d as written held more than 9b did when 9b was split. 9d-1 is the
   one email composer (Q12b/Q12c, already ruled; it is also what 9d-2's change notices are sent through), 9d-2 the schedule.
   9d-1 drawing prompt written: `HOUSE_LEAGUE_STAGE9D1_DRAWING_PROMPT.md`.
+- **2026-10-26 — 9d-1 DRAWN, asks open (one email composer).** From `HOUSE_LEAGUE_STAGE9D1_DRAWING_PROMPT.md`. Drawings
+  https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB (source `HOUSE_LEAGUE_STAGE9D1_DRAWINGS.html`, built by
+  `.probe/hl/build9d1.mjs` from `.probe/hl/src9d1/`; captures by `.probe/hl/cap9d1.mjs`; republish the BUILT
+  `.probe/hl/house-league-9d1.html`). Frames (a)–(i) at desk and phone; /ux and /design ran and their changes are listed
+  on the page's asks tab. **Push-backs on the page:** (1) "the Families window" is the wrong noun: the season's own Email
+  window already has every ruled audience; what it lacks is the engine. Recommended one window, two doors: the Families
+  window's face, its Who list set by the door; (2) Families is a grant for every role, so the season's door is gated by the
+  season's email gate and reaches every status (the Families season audience reaches open/playing only, so Draft Test 2027
+  in Registration closed, 101 families, is unreachable from Families today); (3) one record, two views: the season's
+  history lists its own sends, Families › Emails lists all; the old log shown read-only under "Earlier sends", nothing
+  converted; (4) show only the allowance that applies; a one-family message doesn't count, matching the club's 2026-10-22
+  ruling. **Asks 9d1·1–12**, all with recommendations (composer shape · the season door's gate · old history · which
+  automatic notices the history shows · one-family counts · a season picked from Families · season sends on Families ›
+  Emails · when the allowance shows · copy a team's coaches · finish a stopped send · the footer names the season ·
+  calendar day vs any 24 hours). **Census corrections (re-verified 2026-10-26):** the season route already honours the
+  unsubscribe list and adds the unsubscribe link (the gap is per-child sends, no batches, no lock, no limit); "By team" lists
+  every team and refuses an unpublished one only after Send (409), and counts declined/withdrawn children; the season
+  window's "guardians" count is registrations (2026: 11 children, 10 families); the club's one-minute double-press guard
+  is club-wide; the old log keeps no body and no division/team (the bare scope word), "skipped" mixes three reasons, and
+  the dev fixture has no rows (count production at build). **Build notes on the page:** the claim function must count by
+  season (a migration) and the double-press guard by audience; the season audience can't reuse `isCurrentLeagueSeason`;
+  retire the rail page, the Registrations Email window, the per-child loop and its writes to `league_email_log`; 9d-2's
+  notices call the engine as automatic; 9c's placement rows need a per-Publish record for the history; the Families
+  window's audience list becomes a door input.
+- **2026-10-26 — 9d-1 RULED; build prompt written.** The owner ruled all twelve 9d-1 asks as recommended (§0g, by paste-back).
+  9d1·12 (any 24 hours) governs the allowance's words over 9d1·8's example sentence ("left today"). Build prompt
+  `HOUSE_LEAGUE_STAGE9D1_BUILD_PROMPT.md` (six parts; the words through /marketing before code, into
+  `HOUSE_LEAGUE_STAGE9D1_COPY.md`). Three gaps the drawings didn't show, argued in the prompt: "Send to the N it missed" needs a
+  per-family outcome that nothing records today (`family_email_sends` keeps counts only); a Publish has no record of itself as
+  one act (`league_placement_emails` is one row per family, a late placement the same kind), so the Automatic rows need a season
+  notices record that 9d-2 will also write; `family_messages` has no season, so the season's one-family rows need one. The
+  season audience needs each child's status, division and team, which the Families world doesn't carry today.
+- **2026-10-26 — 9d-1 BUILT, committed in six parts** (`65d637854` data · `7135e8875` engine · `0a197222f` window ·
+  `7210e5948` Registrations' doors · `7f36efa5b` history and Families › Emails · `b62d54281` help · `510fd3137` test).
+  **The build session's ruling (owner):** a season's "everyone" is families with an ACTIVE child from both doors (the Families
+  season choice used to reach to-review and waitlisted children too). **Mig 385** (dev; prod pending): the claim counts and
+  guards by bucket (a season's own 3, the club's 3); `family_email_recipients` (people and last name, never addresses);
+  `league_season_notices` written by `league_division_publish` in its transaction; `family_messages.season_id`.
+  **Built as argued:** the season audience reads each person's season rows of every status beside Families' household rule;
+  one send (`deliverFamilyEmail`) for both doors; one household goes through the household door (`messageOneFamily`, moved
+  out of the Families route); the season's door is the season's email right, never the Families grant. **Retired:** the rail's
+  old composer page, the Registrations Email window, the per-child route and every write to `league_email_log` (read only for
+  "Earlier emails"; dev and prod held 0 rows on 2026-10-26). **Found and recorded:** the admin header has no subtitle (F3), so
+  the allowance is the page's first line; the drawn footnote overclaimed (a status email isn't shown on the registration); the
+  old help said the season log held approvals and waitlist notices, which it never did; Families' 7c email had no help section
+  (added). **Owed:** the walk (§388, https://claude.ai/artifact/MJ1gaUN1LXvMpsZJtykM2G); mig 385 at the promote that ships
+  9d-1; /review on the whole.

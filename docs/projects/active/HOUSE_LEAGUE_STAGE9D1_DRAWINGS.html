@@ -1,0 +1,1229 @@
+<title>House League 9d-1 Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700;800&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) that holds captures of today's product and true-size
+   specimens of the club admin kit. Chrome and specimens deliberately do not share a ground.
+   Source of truth: docs/projects/active/HOUSE_LEAGUE_STAGE9_HUB.html ({{IMG:…}} placeholders);
+   the build (.probe/hl/build.mjs) inlines the captures. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:16px 90px}
+@media (max-width:600px){.doc{padding-inline:16px}}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em;scroll-margin-top:70px}
+.doc h3{font-size:18px;margin:24px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)} .mo{font-family:var(--f-mono)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px;max-width:82ch}
+/* top tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+.thm{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.thm button{border-radius:0;min-height:36px;font-size:13px}
+.thm button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+section.pane[hidden]{display:none}
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+/* station */
+.st{border-top:2px solid var(--line);padding-top:8px;margin-top:40px}
+.st>h2{margin-top:6px}
+.st .who{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start;margin:10px 0}
+@media (max-width:1000px){.cols{grid-template-columns:minmax(0,1fr)}}
+.cols>*{min-width:0}
+.shot{border-radius:10px;outline:1px solid var(--line);box-shadow:var(--shadow);background:var(--surface);overflow:hidden;position:relative}
+.shot .sc{max-height:520px;overflow:auto}
+.shot.open .sc{max-height:none}
+.shot img{display:block;width:100%;height:auto;max-width:none}
+.shot.desk img{min-width:0}
+.shot .bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 10px;border-top:1px solid var(--line);font:600 12px/1.3 var(--f-mono);color:var(--muted);background:var(--surface-2)}
+.shot .bar button{font:600 12px/1 var(--f-doc);min-height:30px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+.ph-shot{width:390px;max-width:100%}
+.meas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px;margin:10px 0}
+.meas div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.meas b{display:block;font:700 18px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.meas span{font-size:12.5px;color:var(--muted)}
+.meas .bad b{color:var(--flag)} .meas .ok b{color:var(--fix)}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+/* flags + tags */
+.fl{font:700 11px/1 var(--f-mono);letter-spacing:.03em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid var(--flag);color:var(--flag);background:var(--flag-soft);min-height:24px;vertical-align:1px;white-space:nowrap}
+.fl.fix{border-color:var(--fix);color:var(--fix);background:var(--fix-soft)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:22px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.mk.s{color:var(--ask)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);max-width:90ch;margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{color:var(--ink);padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700}
+/* paste */
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:260px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* dialog */
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px;display:flex;flex-direction:column;gap:10px}
+dialog.note .nb h4{margin:0;font:700 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+dialog.note .nb p{margin:0}
+
+/* ===== the product kit, for specimens (Warm default; .dk = Dark) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--amber:#835006;--amber-soft:#FBEFD9;--green:#34662A;--green-soft:#E6F0E2;--blue:#1D4A8A;--blue-soft:#E3ECF8;--grid:rgba(70,55,30,.06);--dimbg:rgba(36,30,21,.28);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak.dk{--paper:#0A0A0A;--card:#141A22;--ink:#F1F5F9;--soft:rgba(255,255,255,.72);--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
+  --olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#F08A74;--amber:#F2B55A;--amber-soft:rgba(242,181,90,.14);--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--blue:#9CC2F5;--blue-soft:rgba(156,194,245,.13);--grid:rgba(255,255,255,.03);--dimbg:rgba(0,0,0,.6)}
+.ak *{box-sizing:border-box}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%;margin:8px 0}
+.dt{width:1440px}
+.ph{width:390px;max-width:100%;flex:none;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.ak .tb{display:flex;align-items:center;gap:10px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .tb .lg{width:18px;height:18px;background:var(--olive);border-radius:4px}
+.ak .tb .ar{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .tb .sp{flex:1}
+.ak .tb .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2)}
+.ak .shell{display:flex;min-height:760px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px;display:flex;align-items:center;gap:8px;min-height:38px}
+.ak .sb .it.sub{padding-left:26px;font-size:13.5px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .sb .sw{margin:4px 10px 6px 26px;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;font:600 13px/1.2 'Inter';display:flex;justify-content:space-between;align-items:center;background:var(--paper)}
+.ak .chev{width:8px;height:8px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-4px;flex:none}
+.ak .mn{flex:1;min-width:0;padding:22px 0 60px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.ak .pg{width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.ak .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .ph1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ak .ph1 h1{font:700 28px/1.1 'Barlow Condensed',sans-serif;margin:2px 0 0;letter-spacing:.005em}
+.ak .ph1 .sp{flex:1}
+.ak .sub{color:var(--soft);font-size:14px;margin:4px 0 0}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .btn.pri{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .btn.dng{color:var(--red)}
+.ak .btn.ic{width:44px;padding:0;justify-content:center}
+.ak .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 'Inter';border-radius:999px;padding:5px 10px;border:1px solid var(--line2);color:var(--soft);white-space:nowrap}
+.ak .pill.live{color:var(--green);background:var(--green-soft);border-color:transparent}
+.ak .pill.reg{color:var(--blue);background:var(--blue-soft);border-color:transparent}
+.ak .pill.wait{color:var(--amber);background:var(--amber-soft);border-color:transparent}
+.ak .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.ak .panel{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.ak .panel>.hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ak .panel>.hd h2{font:700 16px/1.2 'Inter';margin:0;flex:1}
+.ak .rows .r{display:flex;align-items:center;gap:14px;padding:12px 16px;min-height:64px;border-top:1px solid var(--line)}
+.ak .rows .r:first-child{border-top:0}
+.ak .rows .r .m{flex:1;min-width:0}
+.ak .rows .r b{font:650 15px/1.3 'Inter';display:block}
+.ak .rows .r .d{font-size:13px;color:var(--soft);margin-top:2px}
+.ak .rows .r .u{font:500 12px/1.3 'IBM Plex Mono',monospace;color:var(--dim);margin-top:3px}
+.ak .band{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{padding:12px 16px;border-left:1px solid var(--line);min-width:0}
+.ak .band>div:first-child{border-left:0}
+.ak .band .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .band .v{font:700 22px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .band .v.am{color:var(--amber)}
+.ak .band .h{font-size:12px;color:var(--soft)}
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink)}
+.ak table.kt td{color:var(--ink)}
+.ak table.kt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 16px;border-bottom:1px solid var(--line)}
+.ak table.kt td{padding:12px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.ak table.kt tr:last-child td{border-bottom:0}
+.ak .meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden;width:110px;display:inline-block;vertical-align:middle;margin-right:8px}
+.ak .meter i{display:block;height:100%;background:var(--olive)}
+.ak .rare{font-size:13.5px;color:var(--soft);display:flex;gap:10px;align-items:center;padding:6px 2px}
+.ak .rare a{color:var(--soft);text-decoration:underline;font-weight:600}
+.ak .fold{display:flex;align-items:center;gap:10px;padding:14px 16px;min-height:56px}
+.ak .fold b{flex:1;font:650 15px/1.2 'Inter'}
+.ak .amb{display:inline-flex;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--amber-soft);color:var(--amber);font:700 12px/22px 'Inter';justify-content:center}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+/* phone frame */
+.ak .pbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .pbar .sp{flex:1}
+.ak .pin{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.ak .ptabs{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;background:var(--card)}
+.ak .pswitch{display:flex;align-items:center;gap:8px;padding:12px 16px 10px;background:var(--card)}
+.ak .pswitch .t{flex:1;min-width:0}
+.ak .pswitch .t b{font:700 22px/1.1 'Barlow Condensed',sans-serif;display:block}
+.ak .bnav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card);height:62px}
+.ak .bnav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/1 'Inter';color:var(--soft)}
+.ak .bnav span i{width:20px;height:20px;border-radius:5px;border:1.5px solid currentColor;display:block}
+.ak .bnav span.on{color:var(--olive)}
+/* window */
+.ak.win{padding:40px 28px;background:var(--dimbg)}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);max-width:480px;margin:0 auto;display:flex;flex-direction:column}
+.ak .dlg .dh{display:flex;align-items:center;padding:16px 18px 6px}
+.ak .dlg .dh h4{font:700 17px/1.3 'Inter';margin:0;flex:1}
+.ak .dlg .dh .xx{font-size:22px;color:var(--dim);width:44px;text-align:center}
+.ak .dlg .db{padding:4px 18px 16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:14px}
+.ak .dlg .db ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .df{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line)}
+.ak .dlg .df .s{flex:1;font-size:13px;color:var(--dim)}
+/* public face (club site), fixed light like the product */
+.pub{background:#F5F4F0;color:#1B1B1B;font:15px/1.5 'Inter',system-ui,sans-serif}
+.pub .nv{background:#1F3A8A;color:#fff;display:flex;align-items:center;gap:22px;padding:0 24px;height:64px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .nv span{font:600 15px/1 'Inter'} .pub .nv .on{border-bottom:2px solid #fff;padding-bottom:6px}
+.pub .in{max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:14px}
+.pub h3{font:700 17px/1.2 'Inter';margin:6px 0 0}
+.pub .rw{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:12px;min-height:64px}
+.pub .rw .m{flex:1;min-width:0} .pub .rw b{display:block;font:650 16px/1.3 'Inter'} .pub .rw .d{font-size:13.5px;color:#555}
+.pub .tag{font:600 12px/1 'Inter';padding:5px 9px;border-radius:999px;background:#E3ECF8;color:#1D4A8A}
+.pub .tag.g{background:#E6F0E2;color:#34662A}
+.pub .lk{font:600 14px/1 'Inter';color:#1F3A8A}
+/* design-review additions (2026-10-24) */
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ak .ptabs>span{flex:none;font:600 14px/1 'Inter';color:var(--soft);padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:999px;border:1px solid var(--line2)}
+.ak .ptabs>span.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ak .ptabs .on .amb{background:var(--amber);color:var(--paper)}
+.ak.ph-in .btn,.ak.ph-in .btn.ic{min-height:44px}
+.ak.ph-in .btn.ic{border-color:transparent;background:none}
+.ak .utabs{display:flex;gap:18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.ak .utabs span{flex:none;min-height:44px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 'Inter';color:var(--soft);border-bottom:2px solid transparent}
+.ak .utabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .utabs .c{font:700 11px/1 'Inter';background:var(--olive-soft);border-radius:999px;padding:3px 7px}
+.ak .ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ak .band .mk,.ak th .mk,.ak .sb .it .mk{position:absolute;top:3px;right:3px}
+.ak .band>div,.ak th,.ak .sb .it{position:relative}
+.ak .sb .blk{margin-left:18px;border-left:2px solid var(--line2);padding-left:4px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .blk .it.sub{padding-left:14px}
+.ak .sb .it i{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;opacity:.6;flex:none}
+.ak .sb .it .mk{top:8px}
+.ak .fsw{display:flex;flex-direction:column;min-height:700px;background:var(--card)}
+.ak .fsw .fh{display:flex;align-items:center;gap:6px;height:56px;padding:0 6px;border-bottom:1px solid var(--line);font:700 16px/1.2 'Inter'}
+.ak .fsw .fb{padding:16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:15px;flex:1}
+.ak .fsw .fb ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.ak .fsw .ff{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .fsw .ff .s{font-size:13px;color:var(--dim)}
+.ak .fsw .ff .bb{display:flex;gap:10px;justify-content:flex-end}
+.pub .rw .lk{min-height:44px;display:inline-flex;align-items:center}
+.pub .hdr{display:flex;align-items:center;gap:12px;font:700 20px/1 'Barlow Condensed',sans-serif}
+.pub .mono{width:40px;height:40px;border-radius:8px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 14px/1 'Inter'}
+.pub .si{margin-left:auto;font:600 15px/1 'Inter'}
+.pub .cols2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px}
+.pub .chev{width:9px;height:9px;border:solid #555;border-width:0 2px 2px 0;transform:rotate(-45deg);flex:none}
+.pub .rw2{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.pub .rw2 .top{display:flex;align-items:center;gap:10px;min-height:44px}
+.pub .rw2 .top b{flex:1;font:650 16px/1.3 'Inter'}
+.pub .rw2 .ln{display:flex;gap:18px}
+table.t.stick td:first-child,table.t.stick th:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
+table.t td.no{color:var(--muted)}
+.spec{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:10px 0}
+.spec>.col{min-width:0;display:flex;flex-direction:column;gap:8px;max-width:100%}
+.sp-cap{font:600 12px/1.35 var(--f-mono);letter-spacing:.04em;color:var(--muted);margin:0}
+.ann{position:absolute;z-index:3}
+</style>
+<style>
+/* 9c round additions, carried (2026-10-25) */
+.ak .fld{display:inline-flex;align-items:center;min-height:40px;padding:0 10px;border:1px solid var(--line2);border-radius:8px;background:var(--card);font:500 14px/1.3 'Inter';color:var(--ink);min-width:72px}
+.ak .fld.wide{flex:1;min-width:0;display:flex}
+.ak .fld.empty{color:var(--dim)}
+.ak .hint{font-size:12.5px;color:var(--dim);margin:0;line-height:1.45}
+.ak .dim,.ak .d2{color:var(--dim);font-size:12.5px}
+.ak .facts2{padding:14px 16px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px 20px;font-size:14px;align-items:baseline}
+.ak .facts2>span:nth-child(odd){color:var(--dim)}
+.ak .bulk{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--ink);color:var(--paper)}
+.ak .bulk .btn{background:transparent;color:var(--paper);border-color:rgba(255,255,255,.35)}
+.ak.dk .bulk{background:var(--olive-soft);color:var(--ink)}
+.ak.dk .bulk .btn{color:var(--ink);border-color:var(--line2)}
+.ak .bulk .sp{flex:1}
+.ak .note{background:var(--amber-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.45}
+.ak .note.blue{background:var(--blue-soft)}
+.ak .note.green{background:var(--green-soft)}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+.ak .panel,.ak .dlg .db{overflow-x:auto}
+.ak .dlg,.ak .panel{min-width:0;max-width:100%}
+.ak.win{max-width:100%}
+.ak .dlg .df{flex-wrap:wrap}
+.ak .ph1 h1{font:700 26px/1.15 'Inter',system-ui,sans-serif;letter-spacing:0}
+.ak .pswitch .t b{font:700 18px/1.2 'Inter',system-ui,sans-serif}
+.mail{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;max-width:560px}
+.mail .mh{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);font-size:14px;display:flex;flex-direction:column;gap:2px}
+.mail .mb{padding:14px 16px;font-size:14px;line-height:1.55;display:flex;flex-direction:column;gap:10px}
+.mail .mb p{margin:0}
+.mail .club{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#1F3A8A;color:#fff;font:700 15px/1 'Inter',sans-serif}
+.mail .club .mono{width:30px;height:30px;border-radius:6px;background:#fff;color:#1F3A8A;display:grid;place-items:center;font:700 12px/1 'Inter',sans-serif}
+.mail .foot{padding:10px 16px 14px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.mail .foot u{color:var(--muted)}
+.mail .newv{background:var(--fix-soft);border-radius:4px;padding:0 4px;margin-left:-4px}
+.cap{font-size:13.5px;color:var(--muted);max-width:92ch;margin:6px 0 0}
+table.t.gate td:not(:first-child),table.t.gate th:not(:first-child){text-align:center}
+table.t.gate td.co,table.t.gate th.co{background:var(--fix-soft)}
+.edges{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;margin:12px 0}
+.edges>.card{margin:0;min-width:0}
+.edges .card h3{font-size:16px}
+.rec-line{font-size:14px;margin:8px 0 0}
+.rec-line b{color:var(--fix)}
+/* 9d-1 round (2026-10-26): the composer */
+.ak .mn{position:relative}
+.ak .shell:has(.ov){min-height:1020px}
+.ak .ov{position:absolute;inset:0;background:rgba(24,22,14,.42);display:flex;justify-content:center;align-items:flex-start;padding-top:36px;z-index:2}
+.ak .ov .dlg{width:640px;max-width:calc(100% - 32px);margin:0}
+.ak .dlg .ey,.ak .fsw .ey{font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);display:block}
+.ak .dlg .dh{align-items:flex-start;padding:18px 18px 8px 24px}
+.ak .dlg .dh .tt{flex:1;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .dh .tt h4{flex:none}
+.ak .dlg .db{padding:6px 24px 18px;gap:12px}
+.ak .dlg .df{padding:14px 24px}
+.ak .stmt{border-left:3px solid var(--olive);background:var(--card);border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0 8px 8px 0;padding:10px 14px;font:600 13.5px/1.45 'Inter';color:var(--ink)}
+.ak .lbl{font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:2px 0 -4px}
+.ak .flbl{font:600 13px/1.2 'Inter';color:var(--ink);margin:2px 0 -6px}
+.ak .who{border:1px solid var(--line2);border-radius:10px;background:var(--card);overflow:hidden}
+.ak .who .o{display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border-top:1px solid var(--line);min-height:44px;box-sizing:border-box}
+.ak .who .o:first-child{border-top:0}
+.ak .who .o .rd{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);flex:none;margin-top:1px;box-sizing:border-box}
+.ak .who .o.on .rd{border:5px solid var(--olive)}
+.ak .who .o .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ak .who .o b{font:500 14.5px/1.3 'Inter';color:var(--ink)}
+.ak .who .o .d{font-size:12.5px;color:var(--soft)}
+.ak .who .o .n{font:600 13px/1.3 'Inter';color:var(--soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ak .who .sub{padding:4px 14px 12px 44px;display:flex;flex-wrap:wrap;gap:6px}
+.ak .chipk{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line2);font:600 13px/1 'Inter';color:var(--soft);background:var(--card)}
+.ak .chipk.on{background:var(--olive-soft);border-color:var(--olive);color:var(--ink)}
+.ak .chipk.no{border-style:dashed;color:var(--dim)}
+.ak.ph-in .chipk{min-height:44px}
+.ak .tx{width:100%;min-height:40px;border:1px solid var(--line2);border-radius:8px;background:var(--paper);padding:9px 12px;font:500 14px/1.4 'Inter';color:var(--ink);box-sizing:border-box}
+.ak .tx.ta{min-height:120px;white-space:pre-line}
+.ak .tx.ph{color:var(--dim)}
+.ak .lime{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .fixedto{display:flex;gap:12px;align-items:center;border:1px solid var(--line2);border-radius:10px;padding:12px 14px;background:var(--card)}
+.ak .fixedto .m{flex:1;min-width:0}
+.ak .fixedto b{font:600 14.5px/1.3 'Inter';display:block}
+.ak .fixedto .d{font-size:12.5px;color:var(--soft)}
+.ak .allow{display:inline-flex;align-items:center;gap:6px;font:600 12.5px/1.2 'Inter';color:var(--soft)}
+.ak .allow .pips{display:inline-flex;gap:3px}
+.ak .allow .pips i{width:8px;height:8px;border-radius:50%;background:var(--olive);display:block}
+.ak .allow .pips i.u{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line2)}
+.ak .held{background:var(--amber-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font:500 13.5px/1.45 'Inter';flex:1;min-width:220px}
+.ak .tagA{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';letter-spacing:.02em;border-radius:999px;padding:4px 8px;background:var(--blue-soft);color:var(--blue);white-space:nowrap}
+.ak .tagO{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--paper);border:1px solid var(--line2);color:var(--dim);white-space:nowrap}
+.ak .warnc{display:inline-flex;align-items:center;font:700 10.5px/1 'Inter';border-radius:999px;padding:4px 8px;background:var(--amber-soft);color:var(--amber);white-space:nowrap}
+.ak table.kt td .sm{display:block;font-size:12.5px;color:var(--dim);margin-top:2px}
+.ak table.kt tr.div td{background:var(--paper);font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding:8px 16px}
+.ak table.kt tr.old td{color:var(--soft)}
+.ak .lrow{display:flex;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);min-height:56px}
+.ak .lrow:first-child{border-top:0}
+.ak .lrow .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ak .lrow b{font:600 14.5px/1.3 'Inter'}
+.ak .lrow .d{font-size:12.5px;color:var(--soft)}
+.ak .lrow .r{font:600 13px/1.3 'Inter';color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+.ak .empt{padding:28px 20px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;color:var(--soft);font-size:14px}
+.ak .empt b{font:650 16px/1.3 'Inter';color:var(--ink)}
+.ak .fsw .fb .lbl{margin-top:4px}
+.ak .fsw .ff .s{line-height:1.45}
+.ak .fsw .ff .bb .btn{min-height:44px}
+.optgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:12px 0}
+.optgrid .card{margin:0}
+.optgrid .card.rec{outline:2px solid var(--fix)}
+.optgrid .card h3{font-size:16px;margin-top:0}
+.optgrid .card ul{padding-left:18px;margin:6px 0 0;display:flex;flex-direction:column;gap:5px;font-size:14px}
+.bn{font-size:14px}
+.bn li{margin:4px 0}
+</style>
+<style>
+/* /design pass 2026-10-26 */
+.ak .dlg .lnk,.ak .fsw .lnk{text-decoration:underline;text-underline-offset:3px}
+.ak table.kt td:first-child,.ak table.kt td:last-child{white-space:nowrap}
+@media (max-width:640px){
+  .ak .dlg .df{flex-wrap:wrap}
+  .ak .dlg .df .s,.ak .dlg .df .held,.ak .dlg .df .note{flex:1 0 100%;min-width:0}
+  .ak .dlg .df{justify-content:flex-end}
+  .ak .chipk{min-height:44px}
+}
+</style>
+
+
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · Club Tier · Stage 9 · house league · round 4 · 9d-1 · 2026-10-26</p>
+<h1>9d-1 drawn: one way to email a season's families</h1>
+<p class="lede">The fourth drawing round. A season's email moves onto the club's one email engine: one email per family, sent in batches, with each season's own 3 typed sends a day and a sent history the registrar can read. The ruling (Q12b, Q12c) is settled. Four push-backs come first, because the ruling's words ("the Families window") would lock out most of the people who email a season today if taken literally.</p>
+<div class="card">
+  <h3>How to read this</h3>
+  <ul>
+    <li>Each screen has today's capture (before) and the drawing (after), a desk and a phone. Tags: <button class="mk new" data-note="NEW marks something the product does not have today.">NEW</button> <button class="mk res" data-note="RESTYLED marks something that exists today and is redrawn.">RESTYLED</button> <button class="mk unc" data-note="UNCHANGED marks something kept as it is.">UNCHANGED</button>.</li>
+    <li>Red flags open a finding about today's code; green chips name the finding a drawing fixes. Every tag and flag opens an explanation when clicked.</li>
+    <li>Everything already ruled (Q12b, Q12c, 9a's "email stays open on a finished season", Q17, 9c's placement emails) is drawn as ruled and not reopened. The asks are only what this round raises.</li>
+    <li><b>All words are provisional.</b> Final words go through /marketing after you rule, before any code.</li>
+    <li>Desk drawings fit your screen; "Show at true size" shows them at 1440. Open this page on a phone to judge the phone drawings.</li>
+  </ul>
+  <p class="muted" style="margin:10px 0 0;font-size:13.5px">Drawn on the dev fixture (Dev League Org). <b>Dev House League 2026</b> is being played: 11 active children from <b>10 families</b> (Ava and Henry Kim are one family), 1 to review, 7 ended; Division A has 7 children on the Cardinals, Jays and Orioles, Division B has 4 on the Cubs, Braves and Tigers. <b>Draft Test 2027</b> is in Registration closed with 120 children from 101 families. <b>Dev House League 2027</b> is open for registration (5 children, 3 families). <b>Dev House League 2025</b> is completed and has no families; <b>test season</b> is a draft. Nothing has been emailed from either engine in the fixture, so every sent row, sender name and opted-out family below is an example and is marked so.</p>
+</div>
+<p class="muted" style="font-size:13.5px">Earlier rounds: <a href="https://claude.ai/artifact/UtrYHLaqbkfQQC2kBbGEQ7">the deep dive (walk, ladder, 9a)</a> · <a href="https://claude.ai/artifact/Ru3aDgVoyBTJb8XivYPLgT">9b drawings</a> · <a href="https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk">9c drawings</a>.</p>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="why" aria-selected="true">Push-backs</button>
+  <button role="tab" data-pane="today" aria-selected="false">Today</button>
+  <button role="tab" data-pane="compose" aria-selected="false">The window</button>
+  <button role="tab" data-pane="send" aria-selected="false">Sending &amp; results</button>
+  <button role="tab" data-pane="hist" aria-selected="false">Sent history &amp; Families</button>
+  <button role="tab" data-pane="who" aria-selected="false">Statuses, who, families</button>
+  <button role="tab" data-pane="asks" aria-selected="false">Asks &amp; paste-back</button>
+  <span class="sp"></span>
+  <span class="thm" role="group" aria-label="Drawing theme"><button type="button" data-thm="warm" aria-pressed="true">Warm</button><button type="button" data-thm="dark" aria-pressed="false">Dark</button></span>
+</nav>
+<div class="dt-tools"><button type="button" class="btn-d" data-fit>Show at true size</button><span class="zl">Scaled to fit; use the button for true size.</span></div>
+
+<!-- ======================= PUSH-BACKS ======================= -->
+<section class="pane" id="why" data-pane="why">
+<h2 style="margin-top:16px">Four push-backs, before the drawings</h2>
+
+<div class="verdict push"><h3>1 · "The Families window" is the wrong noun. What the ruling wants is one engine behind one window.</h3>
+<ul>
+  <li><b>What a season already has.</b> The season's own Email window, opened from Registrations, already offers everything Q12b listed: the whole season, a division, a team, a status, the families you ticked, one family <button class="fl" data-f="E01">E01</button>. "Message registrants" is already gone. So the audiences are not the missing part.</li>
+  <li><b>What it lacks is the engine.</b> It sends one email per child, one at a time, with no limit and no lock <button class="fl" data-f="E02">E02</button> <button class="fl" data-f="E03">E03</button>, and reports a send nobody got in green <button class="fl" data-f="E04">E04</button>. The Families engine already sends one email per family, in batches, with a double-press guard, a daily limit and an honest "Reached 8 of 10".</li>
+  <li><b>Three honest options:</b>
+    <ul>
+      <li><b>A · The Families window learns the season audiences</b> and opens from the season. The window's "Who" list grows season rows beside "Every family" and "Some rep teams". Cost: a convenor sees club-wide choices they can't use, unless the window hides them per door, which is option C by another name.</li>
+      <li><b>B · The season keeps its own window and sends through the Families engine.</b> Cheapest to build. Cost: two windows that look different for one club. A registrar who is also granted Families meets both, with two "Who" designs, two foot sentences and two result lines. The ruling says one composer, and this keeps two.</li>
+      <li><b>C · One window, two doors (recommended).</b> The Families window's face (statement, Who, subject, message, See the email, Last sent, the foot sentence) is the only composer. The door it opens from decides its "Who" list: a season's door lists only that season's audiences; the Families door keeps its own list. Cost: the window takes its audience list from the door, one change, and the season's old window and page are deleted rather than kept beside it.</li>
+    </ul></li>
+  <li><b>What each costs the people who use it.</b> A registrar keeps every door they use today (row ⋯, the bulk bar, Tools) and gets the better engine. A convenor keeps Email families on the rail. 9d-2's schedule notices don't use the window at all: they are automatic, so they call the same engine directly, like Publish teams does.</li>
+</ul>
+<p class="rec-line">Ask 1. Drawn as C on "The window" tab.</p></div>
+
+<div class="verdict push"><h3>2 · A season's door must not need Families. Families is a grant, even for an admin.</h3>
+<ul>
+  <li><b>What the code says.</b> No role gets Families by default, the club admin included (owner decision, 2026-08-17, pinned by a test) <button class="fl" data-f="E06">E06</button>. Today a season is emailed by the owner, admin, league admin and registrar, on every season status.</li>
+  <li><b>So "the composer is the Families window" must mean the window, not the permission.</b> Recommended: the season's door is gated by the season's email gate (the runners plus the registrar, finished seasons included, per 9a), and shows only that season's families. No Families book, no other season, no "Every family".</li>
+  <li><b>An admin with no Families grant</b> keeps exactly today's season email (every door, every status) on the better engine. They never see Families on the rail, as today.</li>
+  <li><b>A registrar who was granted Families</b> sees both doors, each scoped as it is: from the season, that season; from Families, the club. Same window, same words.</li>
+  <li><b>The Families window's season choice reaches only open and playing seasons</b> <button class="fl" data-f="E05">E05</button>. The season door must reach every status: Registration closed (between sign-up and the first game, when convenors email most), Completed and Archived (9a). Draft Test 2027, in Registration closed with 101 families, is unreachable from Families today.</li>
+</ul>
+<p class="rec-line">Ask 2. The full table is on the "Statuses, who, families" tab.</p></div>
+
+<div class="verdict push"><h3>3 · One send, two places to read it. The season's history is a view of the club's record, not a second log.</h3>
+<ul>
+  <li><b>The ruling:</b> the season keeps its own sent history, because the registrar has no Families access. Ruled, kept.</li>
+  <li><b>The risk:</b> two logs that disagree. Recommended: a season send is <b>one record</b>, the same kind Families › Emails already keeps. The season's Email families page lists that season's records, read through the season's gate. Families › Emails lists every record, the season's included, for the people with Families (ask 7).</li>
+  <li><b>The old history doesn't fit the record</b> <button class="fl" data-f="E08">E08</button>. It never stored which division or team, mixed three reasons into "skipped", counted children and kept no words. Converting it would invent fields. Recommended: show the old rows read-only under "Earlier sends", saying what they are, and convert nothing (ask 3). The dev fixture has no old rows; whether production has any is checked at build.</li>
+  <li><b>Automatic notices:</b> recommended that a notice that went to many families at once (Publish teams today, schedule notices in 9d-2) shows as a row tagged Automatic, so a convenor can see why families heard something and why the 3 didn't move. One-family status emails (approved, waitlisted) stay off it <button class="fl" data-f="E11">E11</button> (ask 4).</li>
+</ul></div>
+
+<div class="verdict push"><h3>4 · Two allowances a convenor will confuse. Show only the one that applies, where it applies.</h3>
+<ul>
+  <li><b>The ruling:</b> each season has its own 3 typed sends a day; club-wide sends keep the club's 3; automatic notices never count. Today the count is club-wide and ignores the season, and the double-press guard is club-wide too <button class="fl" data-f="E07">E07</button>.</li>
+  <li><b>Recommended reading.</b> The season's door shows the season's allowance and never mentions the club's. The Families door shows the club's, unless "A house league season" is picked, when it shows that season's (ask 6: the allowance follows the audience, not the door). A season send never touches the club's 3. One quiet line in the window's foot says what is left (ask 8); the refusal names the time the next can go.</li>
+  <li><b>A convenor running two live seasons</b> has 3 for each. The page title already names the season, so "2 of 3 left today" never needs to say which.</li>
+  <li><b>Does a one-family email count?</b> Recommended no. The owner already ruled it for the club on 2026-10-22: a message to one household never counts toward the 3, and has its own limit of 3 a day to the same family. The season should match, so the same press means the same thing from either door (ask 5).</li>
+</ul></div>
+
+<div class="card"><h3>What the code does today on these screens</h3>
+<p class="muted" style="margin:0 0 6px;font-size:13.5px">Each flag opens what the code does and what this round proposes.</p>
+<div class="chips">
+  <button class="fl" data-f="E01">E01 Three composers</button>
+  <button class="fl" data-f="E02">E02 Siblings get two</button>
+  <button class="fl" data-f="E03">E03 No batches or limit</button>
+  <button class="fl" data-f="E04">E04 Green "0 delivered"</button>
+  <button class="fl" data-f="E05">E05 Families can't reach most statuses</button>
+  <button class="fl" data-f="E06">E06 Families is a grant</button>
+  <button class="fl" data-f="E07">E07 The 3 a day ignores the season</button>
+  <button class="fl" data-f="E08">E08 Old history can't say who</button>
+  <button class="fl" data-f="E09">E09 "By team" refuses late</button>
+  <button class="fl" data-f="E10">E10 Old look</button>
+  <button class="fl" data-f="E11">E11 Automatic emails leave no trace</button>
+</div></div>
+</section>
+
+
+<!-- ======================= TODAY ======================= -->
+<section class="pane" id="today" data-pane="today" hidden>
+<h2 style="margin-top:16px">(a) Today: three composers, two engines</h2>
+<p>Captured from the dev server on 2026-10-26, signed in as the league's owner, on Dev House League 2026 (being played, 11 active children from 10 families).</p>
+
+<h3>1 · The rail's "Email families" page</h3>
+<div class="chips"><button class="fl" data-f="E10">E10</button><button class="fl" data-f="E04">E04</button><button class="fl" data-f="E02">E02</button></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · season rail › Email families, 1440</p><div class="shot"><div class="sc" style="max-height:480px"><img src="{{IMG:d-rail-desk-warm}}" alt="Today's Email families page: a warning callout, three recipient radios (All active, Waitlist, Pending review), subject and message, Preview, then an empty Sent history"></div><div class="bar"><span>Three audiences · Preview → Send · "Sent history" below</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col"><p class="sp-cap">BEFORE · same page, 390</p><div class="shot ph-shot"><div class="sc" style="max-height:480px"><img src="{{IMG:d-rail-phone-warm}}" alt="Today's Email families page on a phone"></div><div class="bar"><span>390</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+<p class="cap">Its result is a green banner, "Email sent — {n} delivered.", shown even when n is 0. Its audiences are a subset of the Registrations window's. It sends one email per child.</p>
+
+<h3>2 · Registrations' Email window, from its three doors</h3>
+<div class="chips"><button class="fl" data-f="E01">E01</button><button class="fl" data-f="E09">E09</button><button class="fl" data-f="E04">E04</button></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · Tools › Email families (the whole season), 1440</p><div class="shot"><div class="sc" style="max-height:440px"><img src="{{IMG:d-tools-desk-warm}}" alt="Registrations' Email families window: an Audience dropdown, subject, message, and the foot 'Sending to 11 guardians' with Send to 11"></div><div class="bar"><span>"Sending to 11 guardians" · it's 11 children in 10 families</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col"><p class="sp-cap">BEFORE · same window, 390</p><div class="shot ph-shot"><div class="sc" style="max-height:440px"><img src="{{IMG:d-tools-phone-warm}}" alt="The same window on a phone"></div><div class="bar"><span>390</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+<div class="spec">
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">BEFORE · bulk bar › Email (3 ticked), 1440</p><div class="shot"><div class="sc" style="max-height:360px"><img src="{{IMG:d-bulk-desk-warm}}" alt="Email 3 families: subject, message and the foot '3 families.'"></div><div class="bar"><span>"Email 3 families" · de-duplicated by address</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">BEFORE · a row's ⋯ › Email this family, 1440</p><div class="shot"><div class="sc" style="max-height:360px"><img src="{{IMG:d-row-desk-warm}}" alt="Email this family: subject, message, 'Sends to maya.singh@dev.local.'"></div><div class="bar"><span>One family · counts toward nothing</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col"><p class="sp-cap">BEFORE · the bulk bar on a phone (Email is behind ⋯)</p><div class="shot ph-shot"><div class="sc" style="max-height:360px"><img src="{{IMG:d-bulk-phone-warm}}" alt="Registrations on a phone with three rows ticked and a bar: 3 selected, Mark received, more"></div><div class="bar"><span>390</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+<p class="cap">"By team" lists every team, then refuses an unpublished one after Send. Its count includes declined and withdrawn children who were once on the team. Its result is "Sent to {n} guardians." even at 0, and families who opted out drop out of the result unmentioned.</p>
+
+<h3>3 · Families › Email families (the club's window)</h3>
+<div class="chips"><button class="fl" data-f="E05">E05</button><button class="fl" data-f="E06">E06</button><button class="fl" data-f="E07">E07</button></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · Families › Email these families (Owes money list), 1440</p><div class="shot"><div class="sc" style="max-height:520px"><img src="{{IMG:d-famsel-desk-warm}}" alt="Families' Email families window: a statement, a Who list (Every family · 15, A house league season, Families from a list), subject, message, See the email, Not sent from here yet, foot '5 families get it.' and Send to 5"></div><div class="bar"><span>The engine Q12b means · its season choice reaches open and playing seasons only</span><button type="button" class="op">Full size</button></div></div></div>
+  <div class="col"><p class="sp-cap">BEFORE · same window, 390</p><div class="shot ph-shot"><div class="sc" style="max-height:520px"><img src="{{IMG:d-famsel-phone-warm}}" alt="The Families window on a phone"></div><div class="bar"><span>390</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">BEFORE · Families › Emails (the club's log), empty in the fixture, 1440</p><div class="shot"><div class="sc" style="max-height:300px"><img src="{{IMG:d-famlog-desk-warm}}" alt="Families › Emails: No emails yet, with an Email families button"></div><div class="bar"><span>Columns when filled: Sent · Subject · To · By · Reached</span><button type="button" class="op">Full size</button></div></div></div>
+</div>
+<p class="cap">Families needs a Families grant for every role, the admin included. Its limit is the club's 3 typed sends in any 24 hours; it says nothing about what is left until it refuses ("Your club has sent 3 emails to families in the last 24 hours. The next can go at …"). A one-family message ("Message this family") never counts toward the 3 and has its own limit of 3 a day to that family (owner, 2026-10-22).</p>
+
+<div class="card"><h3>Side by side</h3>
+<div class="tw"><table class="t">
+<thead><tr><th></th><th>Rail page</th><th>Registrations window</th><th>Families window</th></tr></thead>
+<tbody>
+<tr><td>Who opens it</td><td>Owner, admin, league admin, registrar</td><td>Same</td><td>Anyone granted Families</td></tr>
+<tr><td>Season statuses</td><td>Every status</td><td>Every status</td><td>Open for registration and being played only</td></tr>
+<tr><td>Audiences</td><td>All active · Waitlist · Pending review</td><td>All active · division · team · status · ticked · one family</td><td>Every family · rep teams · one season · a list · one family</td></tr>
+<tr><td>Per</td><td>Child</td><td>Child (address once only when ticked)</td><td>Family</td></tr>
+<tr><td>Batches, lock, limit</td><td>None</td><td>None</td><td>100 a batch · one minute · 3 a day for the club</td></tr>
+<tr><td>Result</td><td>Green "Email sent — 0 delivered."</td><td>"Sent to 0 guardians."</td><td>"Sent. Reached 8 of 10 families."</td></tr>
+<tr><td>History</td><td>Season "Sent history" (counts only)</td><td>None of its own</td><td>Families › Emails</td></tr>
+</tbody></table></div>
+<p class="cap">Both season composers honour the club's unsubscribe list and add an unsubscribe link. That part is right today and stays.</p></div>
+</section>
+
+
+<!-- ======================= THE WINDOW ======================= -->
+<section class="pane" id="compose" data-pane="compose" hidden>
+<h2 style="margin-top:16px">(b) The window, opened from a season</h2>
+<div class="chips"><button class="fl fix" data-f="E01">fixes E01</button><button class="fl fix" data-f="E02">fixes E02</button><button class="fl fix" data-f="E09">fixes E09</button><button class="mk s" data-note="Ask 1: one window, two doors (option C). Ask 2: the season door is gated by the season's email gate and reaches only this season's families.">asks 1 · 2</button></div>
+<p>The Families window's face, with a "Who" list the season's door sets: only this season's families, counted in <b>families</b> with children beside them. Every door a person uses today opens it: Email families on the rail (the season's sent history, then its button), Tools › Email families on Registrations, the bulk bar, and a row's ⋯.</p>
+
+<p class="sp-cap">AFTER · Dev House League 2026 › Email families › Email families (the whole season) · desk, 1440</p>
+<div class="dt-wrap"><div class="ak dt">
+  <div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic">4</span></div>
+  <div class="shell">
+    <div class="sb">
+      <span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span>
+      <span class="grp">Programs</span>
+      <span class="it" style="font-weight:650;color:var(--ink)"><i></i>House league<span class="chev" style="margin-left:auto"></span></span>
+      <div class="blk">
+        <span class="it sub">Seasons</span>
+        <span class="grp" style="padding-left:14px">Season</span>
+        <span class="sw" style="margin-left:14px">Dev House League 2026<span class="chev"></span></span>
+        <span class="it sub">Overview</span><span class="it sub">Registrations</span><span class="it sub">Teams &amp; draft</span><span class="it sub">Schedule</span><span class="it sub">Standings</span><span class="it sub">Money</span><span class="it sub on">Email families</span>
+      </div>
+      <span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span>
+    </div>
+    <div class="mn"><div class="pg">
+      <div class="ph1"><div><div class="ey">House league · season</div><h1>Email families</h1><p class="sub">Dev House League 2026 · 2 of 3 emails left today</p></div><span class="sp"></span><span class="btn pri"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email families</span></div>
+      <div class="panel"><table class="kt"><thead><tr><th>Sent</th><th>Subject</th><th>To</th><th>By</th><th style="text-align:right">Reached</th></tr></thead><tbody>
+        <tr><td>Oct 26 · 9:14 a.m.</td><td>Picture day is Saturday</td><td>Everyone in the season</td><td>Alex Rivera</td><td style="text-align:right">10 of 10 families</td></tr>
+      </tbody></table></div>
+      <div class="ov"><div class="dlg">
+        <div class="dh"><div class="tt"><span class="ey">Dev House League 2026</span><h4>Email families</h4></div><span class="xx">×</span></div>
+        <div class="db">
+          <div class="stmt">Sends one email to each family you choose in Dev House League 2026, from the club, with your address to reply to. A family that opted out of club email is skipped.</div>
+          <span class="lbl">Who</span>
+          <div class="who">
+            <div class="o on"><span class="rd"></span><div class="m"><b>Everyone in the season</b><span class="d">Families with an active child, each once</span></div><span class="n">10 families · 11 children</span></div>
+            <div class="o"><span class="rd"></span><div class="m"><b>A division</b><span class="d">Division A, Division B</span></div></div>
+            <div class="o"><span class="rd"></span><div class="m"><b>A team</b><span class="d">Teams in a published division</span></div></div>
+            <div class="o"><span class="rd"></span><div class="m"><b>By status</b><span class="d">Active, to review, waitlist or ended</span></div></div>
+          </div>
+          <span class="flbl">Subject *</span><div class="tx">Picture day moved to Sunday</div>
+          <span class="flbl">Message *</span><div class="tx ta">Hi everyone,
+Picture day is now Sunday, Nov 2, at the Centennial Park field house. Each team has a 20-minute slot; your coach will send yours.</div>
+          <span style="display:flex;gap:18px"><a class="lnk">See who gets it</a><a class="lnk">See the email</a></span>
+          <span class="dim">Last sent Oct 26 by Alex Rivera · "Picture day is Saturday" · 10 families.</span>
+        </div>
+        <div class="df"><span class="s">10 families get it. <span class="allow">2 of this season's 3 emails left today.</span></span><span class="btn">Cancel</span><span class="btn lime">Send to 10</span></div>
+      </div></div>
+</div></div>
+  </div>
+</div></div>
+<div class="chips"><button class="mk res" data-note="RESTYLED: the season's composer takes the Families window's face (statement, Who, subject, message, See the email, Last sent, the foot sentence and the lime Send). The Registrations Email window and the rail's old page are deleted, not kept beside it.">RESTYLED · one window</button><button class="mk new" data-note="NEW: the Who list is set by the door. From a season it lists only that season's audiences; there is no Every family, no rep teams, no lists, no other season. The count is families, with children beside it: 11 children in 10 families, because Ava and Henry Kim are one family.">NEW · Who from the season</button><button class="mk new" data-note="NEW: the allowance line (ask 8), one sentence in the foot. It names the season's allowance only; the club's 3 never appears on a season's door. It is in the foot's sentence, left, with the buttons right (house rule).">NEW · allowance line</button><button class="mk new" data-note="NEW: the rail's Email families now opens the season's sent history (frame e), with Email families as its one primary button. Example sends; the fixture has none.">NEW · rail opens the history</button></div>
+
+<div class="spec" style="margin-top:14px">
+  <div class="col"><p class="sp-cap">AFTER · the same, phone (full-screen window)</p>
+  <div class="ph"><div class="ak ph-in"><div class="fsw" style="min-height:760px">
+    <div class="fh"><span class="btn ic" aria-label="Back"><svg class="ico" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span><div style="display:flex;flex-direction:column;gap:2px"><span class="ey">Dev House League 2026</span>Email families</div></div>
+    <div class="fb">
+      <div class="stmt">One email to each family you choose in this season, from the club. Families who opted out are skipped.</div>
+      <span class="lbl">Who</span>
+      <div class="who">
+        <div class="o on"><span class="rd"></span><div class="m"><b>Everyone in the season</b><span class="d">10 families · 11 children</span></div></div>
+        <div class="o"><span class="rd"></span><div class="m"><b>A division</b><span class="d">Division A, Division B</span></div></div>
+        <div class="o"><span class="rd"></span><div class="m"><b>A team</b><span class="d">Teams in a published division</span></div></div>
+        <div class="o"><span class="rd"></span><div class="m"><b>By status</b><span class="d">Active, to review, waitlist or ended</span></div></div>
+      </div>
+      <span class="flbl">Subject *</span><div class="tx">Picture day moved to Sunday</div>
+      <span class="flbl">Message *</span><div class="tx ta">Hi everyone,
+Picture day is now Sunday, Nov 2…</div>
+      <span style="display:flex;gap:18px"><a class="lnk">See who gets it</a><a class="lnk">See the email</a></span>
+      <span class="dim">Last sent Oct 26 by Alex Rivera · "Picture day is Saturday" · 10 families.</span>
+    </div>
+    <div class="ff"><span class="s">10 families get it. 2 of this season's 3 emails left today.</span><div class="bb"><span class="btn">Cancel</span><span class="btn lime">Send to 10</span></div></div>
+  </div></div></div></div>
+  <div class="col" style="flex:1 1 420px"><div class="card" style="margin:0"><h3>Which doors open it, and what each sets</h3><ul>
+    <li><b>Rail › Email families</b> (the history page's button) and <b>Registrations › Tools › Email families</b>: the whole Who list, "Everyone in the season" picked.</li>
+    <li><b>Registrations' bulk bar › Email</b>: Who is fixed to the families you ticked. The list rows are absent.</li>
+    <li><b>A row's ⋯ › Email this family</b>: the one-family window, below.</li>
+    <li><b>Teams &amp; draft</b> has no email door of its own today, and none is added: its Publish email is automatic (9c). A team is reached through "A team" in this window.</li>
+    <li>Every door is absent for anyone outside the season's email gate (ask 2). The treasurer, who reads Money, sees none of them.</li>
+  </ul></div></div>
+</div>
+
+<h3>The audiences, one at a time</h3>
+<p>Each is a desk window cut to its Who block and foot. The rest of the window is as above.</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">A division (one or more)</p>
+  <div class="ak win" style="border-radius:12px;padding:14px"><div class="dlg" style="max-width:560px">
+    <div class="db" style="padding-top:16px"><span class="lbl">Who</span><div class="who">
+      <div class="o"><span class="rd"></span><div class="m"><b>Everyone in the season</b></div><span class="n">10 families</span></div>
+      <div class="o on"><span class="rd"></span><div class="m"><b>A division</b><span class="d">Pick one or more</span></div></div>
+      <div class="sub"><span class="chipk on">Division A · 7 families</span><span class="chipk">Division B · 3 families</span></div>
+      <div class="o"><span class="rd"></span><div class="m"><b>A team</b></div></div>
+      <div class="o"><span class="rd"></span><div class="m"><b>By status</b></div></div>
+    </div></div>
+    <div class="df"><span class="s">7 families get it (7 children). 2 of this season's 3 emails left today.</span><span class="btn">Cancel</span><span class="btn lime">Send to 7</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: one or more divisions in one send (today: one). A family with a child in each picked division gets one email. Counts per division are families.">NEW · several at once</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">A team (published divisions only)</p>
+  <div class="ak win" style="border-radius:12px;padding:14px"><div class="dlg" style="max-width:560px">
+    <div class="db" style="padding-top:16px"><span class="lbl">Who</span><div class="who">
+      <div class="o on"><span class="rd"></span><div class="m"><b>A team</b><span class="d">Pick one or more</span></div></div>
+      <div class="sub"><span class="chipk">Cardinals · 2</span><span class="chipk on">Jays · 3</span><span class="chipk">Orioles · 2</span><span class="chipk">Cubs · 1</span><span class="chipk">Braves · 1</span><span class="chipk">Tigers · 1</span></div>
+    </div>
+    <span class="hint">Families with an active child on the team. A team's coach is not copied unless you tick it (ask 9).</span></div>
+    <div class="df"><span class="s">3 families get it (3 children). 2 of this season's 3 emails left today.</span><span class="btn">Cancel</span><span class="btn lime">Send to 3</span></div>
+  </div></div>
+  <div class="chips"><button class="fl fix" data-f="E09">fixes E09</button><button class="mk new" data-note="NEW: only teams of a published division are listed, counted in families with an active child. Ended children (Avery Macdonald, declined) are not counted. The Kims' Ava has no team yet, so the Tigers count only Henry's family. A team with no active child is left out.">NEW · published teams only</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">A team, when a division isn't published (Dev House League 2027)</p>
+  <div class="ak win" style="border-radius:12px;padding:14px"><div class="dlg" style="max-width:560px">
+    <div class="db" style="padding-top:16px"><span class="lbl">Who</span><div class="who">
+      <div class="o on"><span class="rd"></span><div class="m"><b>A team</b></div></div>
+      <div class="sub" style="padding-left:44px"><span class="hint" style="font-size:13px">U10 Division A's teams aren't published yet. Families hear their teams when you publish on Teams &amp; draft. <a class="lnk">Go to Teams &amp; draft</a></span></div>
+    </div></div>
+    <div class="df"><span class="s">Pick a team.</span><span class="btn">Cancel</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: said before Send, not refused after it. With no published team, A team stays in the list (so the convenor learns why) but its rows say so and Send is absent until a team is picked. The 9c rule is unchanged: a draft team is not an audience.">NEW · said up front</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">By status</p>
+  <div class="ak win" style="border-radius:12px;padding:14px"><div class="dlg" style="max-width:560px">
+    <div class="db" style="padding-top:16px"><span class="lbl">Who</span><div class="who">
+      <div class="o on"><span class="rd"></span><div class="m"><b>By status</b><span class="d">Pick one or more</span></div></div>
+      <div class="sub"><span class="chipk">Active · 10</span><span class="chipk on">To review · 1</span><span class="chipk">Ended · 7</span></div>
+    </div></div>
+    <div class="df"><span class="s">1 family gets it (Maya Singh's). A message to one family doesn't count toward the season's 3.</span><span class="btn">Cancel</span><span class="btn lime">Send to 1</span></div>
+  </div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: the four statuses use the Registrations tab words (Active, To review, Waitlist, Ended), not today's mix (Active registrants, Pending review, Waitlisted, Declined). Ended covers declined and withdrawn, as the tab does. A status with nobody in it is left out. When the pick reaches one family, the one-family rule applies (ask 5).">RESTYLED · the tab words</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">The families you ticked (bulk bar › Email)</p>
+  <div class="ak win" style="border-radius:12px;padding:14px"><div class="dlg" style="max-width:560px">
+    <div class="dh"><div class="tt"><span class="ey">Dev House League 2026</span><h4>Email 3 families</h4></div><span class="xx">×</span></div>
+    <div class="db"><span class="lbl">Who</span><div class="fixedto"><div class="m"><b>The 3 families you ticked</b><span class="d">Chen (Liam), Rossi (Sofia), Patel (Noah)</span></div></div></div>
+    <div class="df"><span class="s">3 families get it. 2 of this season's 3 emails left today.</span><span class="btn">Cancel</span><span class="btn lime">Send to 3</span></div>
+  </div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: today's 'Email 3 families' window, on the one face. Ticking Ava and Henry Kim is one family, and the line says so ('2 children, 1 family'). Two or more families count toward the season's 3; one family doesn't (ask 5). On a phone the bulk bar's ⋯ holds Email, as today.">RESTYLED · ticked families</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">One family (a row's ⋯ › Email this family)</p>
+  <div class="ak win" style="border-radius:12px;padding:14px"><div class="dlg" style="max-width:560px">
+    <div class="dh"><div class="tt"><span class="ey">Dev House League 2026</span><h4>Message this family</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="fixedto"><div class="m"><b>The Kim family</b><span class="d">Ava and Henry · henry.kim@dev.local</span></div></div>
+    <span class="flbl">Subject *</span><div class="tx ph">e.g. Henry's shin pads</div>
+    <span class="flbl">Message *</span><div class="tx ta ph">Write your message here…</div></div>
+    <div class="df"><span class="s">Sends to henry.kim@dev.local. A message to one family doesn't count toward the season's 3.</span><span class="btn">Cancel</span><span class="btn lime">Send</span></div>
+  </div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: today's 'Email this family', renamed to Families' 'Message this family' so one press has one name. It reaches the family, not one child: Ava and Henry are named. It doesn't count toward the season's 3 and has the club's own limit of 3 a day to the same family (ask 5). Its history row keeps the date and sender, never the words, as Families does.">RESTYLED · one family</button><button class="mk s" data-note="Ask 5: a one-family message doesn't count (recommended), matching the owner's 2026-10-22 ruling for the club.">ask 5</button></div></div>
+</div>
+
+<h2>(c) Held until you press Send</h2>
+<div class="chips"><button class="fl fix" data-f="E03">fixes E03</button><button class="fl fix" data-f="E07">fixes E07</button><button class="mk s" data-note="Ask 8: the allowance line shows from the first send (recommended), or only when it runs out (Families today).">ask 8</button></div>
+<p>Nothing goes until Send, and Send names the number of families. The foot is the only place the allowance is read: the sentence on the left, the buttons on the right. When the season's 3 are spent, Send is absent and the sentence says when the next can go. What you typed stays in the window until you close it.</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">The foot, as the day goes</p>
+  <div class="ak" style="padding:14px;border-radius:12px;display:flex;flex-direction:column;gap:10px">
+    <div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="s">10 families get it. <span class="allow">This season can send 3 emails today.</span></span><span class="btn">Cancel</span><span class="btn lime">Send to 10</span></div></div>
+    <div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="s">10 families get it. <span class="allow">1 of this season's 3 emails left today.</span></span><span class="btn">Cancel</span><span class="btn lime">Send to 10</span></div></div>
+    <div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="s">10 families get it. 1 opted out of club email and won't (the Dubois family). <span class="allow">1 left today.</span></span><span class="btn">Cancel</span><span class="btn lime">Send to 10</span></div></div>
+    <div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="s">10 families get it.</span><span class="btn">Cancel</span><span class="btn lime" style="opacity:.55">Sending…</span></div></div>
+  </div>
+  <div class="chips"><button class="mk new" data-note="NEW: the allowance line, read in the foot as one sentence. It never mentions the club's 3 on a season's door.">NEW · allowance</button><button class="mk unc" data-note="UNCHANGED from Families: an opted-out family is said in the foot before Send ('M opted out and won't'), named here when it's one to three families (from /ux). Example family; the fixture has none.">UNCHANGED · opted out, before Send</button><button class="mk unc" data-note="UNCHANGED from Families: while sending, the button says so and can't be pressed twice; a second press within a minute on the same audience is refused ('This was just sent…').">UNCHANGED · sending</button></div></div>
+
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">The season's 3 are spent</p>
+  <div class="ak win" style="border-radius:12px;padding:14px"><div class="dlg" style="max-width:600px">
+    <div class="dh"><div class="tt"><span class="ey">Dev House League 2026</span><h4>Email families</h4></div><span class="xx">×</span></div>
+    <div class="db"><span class="lbl">Who</span><div class="who"><div class="o on"><span class="rd"></span><div class="m"><b>Everyone in the season</b></div><span class="n">10 families</span></div></div>
+    <span class="flbl">Subject *</span><div class="tx ph">e.g. Rainout tonight</div></div>
+    <div class="df"><span class="held">Dev House League 2026 has sent its 3 emails to families today. The next can go at 4:12 p.m. Automatic notices, and a message to one family, still go.</span><span class="btn">Close</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the refusal, said before typing is wasted: it shows as soon as the window opens on a spent day. Send is absent (absent beats disabled). It names the season and the time, in the house clock ('4:12 p.m.'). It says what still works: automatic notices and one-family messages. 'Tomorrow at 9:14 a.m.' when the time is tomorrow.">NEW · refusal</button><button class="mk s" data-note="A rainout is a typical fourth send. 9e's 'rainout as one action' is an automatic notice, so it will never be blocked by this.">rainout is 9e</button></div></div>
+</div>
+<div class="spec">
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">Who this reaches changed while you were writing</p>
+  <div class="ak" style="padding:14px;border-radius:12px;display:flex;flex-direction:column;gap:10px">
+    <div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="s">Counting who this reaches…</span><span class="btn">Cancel</span></div></div>
+    <div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="held">Who this reaches changed while you were writing: it now goes to 11 families (Maya Singh's was accepted). Check it and send again.</span><span class="btn">Cancel</span><span class="btn lime">Send to 11</span></div></div>
+  </div>
+  <div class="chips"><button class="mk unc" data-note="UNCHANGED from Families (drawn at /ux's request): changing Who shows a counting state with no Send; if the audience changes between opening and Send, the first press is refused with the new count and the button names it, so nothing goes to a number the sender didn't see.">UNCHANGED · recount</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">Closing with words typed</p>
+  <div class="ak" style="padding:14px;border-radius:12px"><div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="held">Close without sending? What you typed won't be kept.</span><span class="btn">Keep writing</span><span class="btn dng">Close</span></div></div></div>
+  <div class="chips"><button class="mk unc" data-note="UNCHANGED from today's Registrations window (its own words): × or Back with a subject or message typed asks first. The spent-day refusal shows when the window opens, before anything is typed (from /ux).">UNCHANGED · asks before discarding</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">See who gets it (opened under Who)</p>
+  <div class="ak" style="padding:14px;border-radius:12px"><div class="panel">
+    <div class="lrow"><div class="m"><b>Chen</b><span class="d">Liam · Cardinals</span></div></div>
+    <div class="lrow"><div class="m"><b>Kim</b><span class="d">Ava and Henry · Tigers</span></div></div>
+    <div class="lrow"><div class="m"><b>Dubois</b><span class="d">Charlotte · Braves</span></div><span class="tagO">Opted out</span></div>
+    <div class="lrow"><div class="m"><span class="d">and 8 more families</span></div><a class="lnk">Show all</a></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW (from /ux): the families behind the count, by family name with children and team, opted-out and no-address families marked and not counted. For a 101-family season it shows the first few and Show all. Example opted-out family.">NEW · who gets it</button></div></div>
+</div>
+
+<h3>One family and ticked families: the results</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 360px"><p class="sp-cap">Sent to one family</p><div class="ak" style="padding:14px;border-radius:12px"><div class="note green">Sent to the Kim family. It doesn't count toward the season's 3.</div></div></div>
+  <div class="col" style="flex:1 1 360px"><p class="sp-cap">One family, not sent</p><div class="ak" style="padding:14px;border-radius:12px"><div class="note">This didn't reach the Kim family. Check henry.kim@dev.local on Henry's registration, then try again. Your message is still here.</div></div></div>
+  <div class="col" style="flex:1 1 360px"><p class="sp-cap">Ticked: 3 families, 1 not sent</p><div class="ak" style="padding:14px;border-radius:12px"><div class="note">Sent. Reached 2 of 3 families. The Patel family's email couldn't be sent.</div></div></div>
+  <div class="col" style="flex:1 1 360px"><p class="sp-cap">Ticked: Ava and Henry Kim</p><div class="ak" style="padding:14px;border-radius:12px"><div class="fixedto"><div class="m"><b>The Kim family</b><span class="d">2 children ticked, 1 family · a message to one family doesn't count</span></div></div></div></div>
+</div>
+<div class="chips"><button class="mk new" data-note="NEW (from /ux): one-family and ticked results, said the same way as a season send. Ticking two children of one family is a one-family message (title 'Message this family'). The ticks clear after a send that reached everyone and stay on the rows it missed. Example failures.">NEW · small results</button></div>
+
+<div class="spec">
+  <div class="col"><p class="sp-cap">The refusal on a phone</p>
+  <div class="ph"><div class="ak ph-in"><div class="fsw" style="min-height:420px">
+    <div class="fh"><span class="btn ic" aria-label="Back"><svg class="ico" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span>Email families</div>
+    <div class="fb"><span class="lbl">Who</span><div class="who"><div class="o on"><span class="rd"></span><div class="m"><b>Everyone in the season</b><span class="d">10 families</span></div></div></div><span class="held" style="min-width:0;flex:none">This season has sent its 3 emails today. The next can go at 4:12 p.m.</span></div>
+    <div class="ff"><div class="bb"><span class="btn">Close</span></div></div>
+  </div></div></div></div>
+  <div class="col" style="flex:1 1 420px"><div class="card" style="margin:0"><h3>Two live seasons, one convenor</h3><ul>
+    <li>Dev House League 2026 has sent 3 today; Dev House League 2027 has sent none. Switching season on the rail switches the page, and its line reads "This season can send 3 emails today".</li>
+    <li>The page title names the season and the window's eyebrow names it again, so the allowance never needs to.</li>
+    <li>The club's own 3 (Families › Every family) are untouched by either.</li>
+  </ul></div></div>
+</div>
+</section>
+
+
+<!-- ======================= SENDING & RESULTS ======================= -->
+<section class="pane" id="send" data-pane="send" hidden>
+<h2 style="margin-top:16px">(d) Results, said honestly</h2>
+<div class="chips"><button class="fl fix" data-f="E04">fixes E04</button><button class="fl fix" data-f="E03">fixes E03</button></div>
+<p>The result replaces the window's foot and names families reached out of families meant. Green only when every family was reached. A send that can't reach anyone is never offered: its Send button is absent and the foot says why.</p>
+
+<div class="spec">
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">Sent to everyone</p>
+  <div class="ak" style="padding:14px;border-radius:12px"><div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="note green" style="flex:1">Sent. Reached 10 of 10 families. 1 of this season's 3 emails left today.</span><span class="btn">Close</span></div></div></div>
+  <div class="chips"><button class="mk unc" data-note="UNCHANGED from Families: 'Sent. Reached R of N families.' The allowance clause is new.">UNCHANGED · Families' words</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">Partly reached</p>
+  <div class="ak" style="padding:14px;border-radius:12px"><div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="note" style="flex:1">Sent. Reached 8 of 10 families. 2 couldn't be sent: the Rossi and Nguyen families. Check their addresses on Registrations. <a class="lnk">See the send</a></span><span class="btn">Close</span></div></div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: a partial result is amber and names the families it missed (by family name; up to three, then 'and N more'), with where to fix it. Example failures; the fixture has none. 'Reached' means the mail service accepted it; a bounce later isn't seen (Families' own note, kept).">NEW · names who it missed</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">The service took none of them</p>
+  <div class="ak" style="padding:14px;border-radius:12px"><div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="note" style="flex:1">This didn't reach any family, so it doesn't count toward the season's 3. Please try again.</span><span class="btn">Close</span><span class="btn lime">Send to 10</span></div></div></div>
+  <div class="chips"><button class="mk unc" data-note="UNCHANGED from Families, with 'the season's 3' for 'the three a day'. The slot is given back. Today's rail page would show this as a green 'Email sent — 0 delivered.'">UNCHANGED · slot given back</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">Couldn't tell</p>
+  <div class="ak" style="padding:14px;border-radius:12px"><div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="note" style="flex:1">We couldn't tell whether this went out. Check this season's sent history before you send it again.</span><span class="btn">Close</span></div></div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: Families' 'Check the Emails tab' becomes 'Check this season's sent history', because a registrar has no Emails tab.">RESTYLED · points at the season</button></div></div>
+</div>
+
+<h3>Nobody reachable: Send is not offered</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">Everyone picked opted out (example)</p>
+  <div class="ak win" style="border-radius:12px;padding:14px"><div class="dlg" style="max-width:560px">
+    <div class="db" style="padding-top:16px"><span class="lbl">Who</span><div class="who"><div class="o on"><span class="rd"></span><div class="m"><b>A team</b></div></div><div class="sub"><span class="chipk on">Braves · 1</span></div></div></div>
+    <div class="df"><span class="held">The Dubois family opted out of club email, so nobody would get it.</span><span class="btn">Cancel</span></div>
+  </div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: Families' 'Every family you picked opted out of club email, so nobody would get it.', naming the family when it's one. Send is absent. Example: the fixture has no opted-out family. A one-family message to an opted-out family is held the same way, with the same sentence; the build confirms the unsubscribe list governs one-family messages as it does today.">RESTYLED · held</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">No email on file</p>
+  <div class="ak win" style="border-radius:12px;padding:14px"><div class="dlg" style="max-width:560px">
+    <div class="db" style="padding-top:16px"><div class="note"><b>Nobody to send to:</b> the 1 child picked has no family email on file. <a class="lnk">Show them</a></div></div>
+    <div class="df"><span class="s"></span><span class="btn">Cancel</span></div>
+  </div></div>
+  <div class="chips"><button class="mk unc" data-note="UNCHANGED from Families: 'Nobody to send to: N children have no family on file.' with Show them, which here opens Registrations filtered to those children. When some have an address and some don't, the line sits above the foot and Send goes to the rest.">UNCHANGED · Show them</button></div></div>
+
+</div>
+
+<h3>Stopped partway (a big season)</h3>
+<p>Draft Test 2027 has 101 families: two batches, 100 then 1. If the second batch never runs (the sender stops, a deploy restarts the server), the send is left "Sending". After 15 minutes it reads "Stopped", as Families does today. There is no Stop button, today or drawn.</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">The history row, then its window</p>
+  <div class="ak" style="padding:14px;border-radius:12px;display:flex;flex-direction:column;gap:12px">
+    <div class="panel"><table class="kt"><tbody><tr><td>Oct 26 · 6:40 p.m.</td><td>First practice times</td><td>Everyone in the season</td><td>Alex Rivera</td><td style="text-align:right"><span class="warnc">Stopped</span> 100 of 101</td></tr></tbody></table></div>
+    <div class="dlg" style="max-width:600px;margin:0">
+      <div class="dh"><div class="tt"><span class="ey">Draft Test 2027</span><h4>First practice times</h4></div><span class="xx">×</span></div>
+      <div class="db"><div class="facts2" style="padding:0;grid-template-columns:120px minmax(0,1fr)"><span>Sent</span><span>Oct 26 · 6:40 p.m.</span><span>By</span><span>Alex Rivera</span><span>To</span><span>Everyone in the season</span><span>Going to</span><span>101 families</span><span>Reached</span><span>100</span><span>Didn't go</span><span>1</span></div>
+      <div class="note">This send stopped partway. The 1 family it hadn't reached didn't get it.</div></div>
+      <div class="df"><span class="s">Finishing it doesn't count toward the season's 3.</span><span class="btn">Close</span><span class="btn lime">Send to the 1 it missed</span></div>
+    </div>
+  </div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: Families' Stopped chip and row window, unchanged in shape.">RESTYLED · Stopped</button><button class="mk new" data-note="NEW (ask 10): finish a stopped send. Families today says 'send it again to reach them', which emails the 100 who got it a second time. Recommended: send the same words to the families it missed, and don't count it, because it is the same send finishing. Example names and times.">NEW · finish it</button><button class="mk s" data-note="Ask 10.">ask 10</button></div></div>
+  <div class="col" style="flex:1 1 380px"><div class="card" style="margin:0"><h3>A large season, at a glance</h3><ul>
+    <li>101 families: one press, two batches, about a minute.</li>
+    <li>120 children from 101 families: one email each, so 19 fewer emails than children.</li>
+    <li>The window can close while it sends; the history row says "Sending…" until it's done, and a note on the season's page says how it ended ("Dev House League 2026: reached 8 of 10, 2 didn't go. See the send").</li>
+    <li>Today the same press would be 120 emails sent one after another in one request.</li>
+  </ul></div></div>
+</div>
+</section>
+
+
+<!-- ======================= SENT HISTORY & FAMILIES ======================= -->
+<section class="pane" id="hist" data-pane="hist" hidden>
+<h2 style="margin-top:16px">(e) The season's sent history: what the rail's "Email families" opens</h2>
+<div class="chips"><button class="fl fix" data-f="E10">fixes E10</button><button class="fl fix" data-f="E08">fixes E08</button><button class="mk s" data-note="Ask 3: the old rows, read-only under Earlier sends. Ask 4: automatic notices that went to many families, tagged. Ask 7: the same records show on Families › Emails.">asks 3 · 4 · 7</button></div>
+<p>One page per season: the allowance in the subtitle, Email families as its one primary button, and every send to this season's families, newest first. The columns are Families › Emails' columns, because it is the same record. Every row opens its own window.</p>
+
+<p class="sp-cap">AFTER · Dev House League 2026 › Email families · desk, 1440 (example rows)</p>
+<div class="dt-wrap"><div class="ak dt">
+  <div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="ic">4</span></div>
+  <div class="shell">
+    <div class="sb">
+      <span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span>
+      <span class="grp">Programs</span>
+      <span class="it" style="font-weight:650;color:var(--ink)"><i></i>House league<span class="chev" style="margin-left:auto"></span></span>
+      <div class="blk">
+        <span class="it sub">Seasons</span>
+        <span class="grp" style="padding-left:14px">Season</span>
+        <span class="sw" style="margin-left:14px">Dev House League 2026<span class="chev"></span></span>
+        <span class="it sub">Overview</span><span class="it sub">Registrations</span><span class="it sub">Teams &amp; draft</span><span class="it sub">Schedule</span><span class="it sub">Standings</span><span class="it sub">Money</span><span class="it sub on">Email families</span>
+      </div>
+      <span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span>
+    </div>
+    <div class="mn"><div class="pg">
+      <div class="ph1"><div><div class="ey">House league · season</div><h1>Email families</h1><p class="sub">Dev House League 2026 · 1 of 3 emails left today</p></div><span class="sp"></span><span class="btn pri"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email families</span></div>
+      <div class="panel"><table class="kt"><thead><tr><th>Sent</th><th>Subject</th><th>To</th><th>By</th><th style="text-align:right">Reached</th></tr></thead><tbody>
+        <tr><td>Oct 26 · 9:14 a.m.</td><td>Picture day is Saturday</td><td>Everyone in the season</td><td>Alex Rivera</td><td style="text-align:right">10 of 10 families</td></tr>
+        <tr><td>Oct 26 · 8:02 a.m.</td><td>Field change for the Jays</td><td>Jays</td><td>Sam Okafor</td><td style="text-align:right">3 of 3 families</td></tr>
+        <tr><td>Oct 25 · 7:30 p.m.</td><td>A message to this family <span class="sm">The words of a one-family message aren't kept.</span></td><td>The Kim family</td><td>Sam Okafor</td><td style="text-align:right">1 family</td></tr>
+        <tr><td>Oct 24 · 6:15 p.m.</td><td>Teams published: Division B <span class="tagA">Automatic</span></td><td>Division B</td><td>Alex Rivera</td><td style="text-align:right">3 of 3 families</td></tr>
+        <tr class="div"><td colspan="5">Earlier sends · before Oct 2026 · counted per child</td></tr>
+        <tr class="old"><td>Sep 3 · 7:48 p.m.</td><td>End of season party</td><td>All active registrants</td><td>Alex Rivera</td><td style="text-align:right">11 sent<span class="sm">0 not sent</span></td></tr>
+        <tr class="old"><td>Jun 2 · 6:20 p.m.</td><td>Jersey pickup</td><td>A division <span class="sm">which one wasn't recorded</span></td><td>Sam Okafor</td><td style="text-align:right">7 sent<span class="sm">1 not sent</span></td></tr>
+      </tbody></table></div>
+      <p class="rare" style="margin:0">Automatic emails to one family (accepted, waitlisted, declined) aren't listed here. Each shows on that child's registration.</p>
+</div></div>
+  </div>
+</div></div>
+<div class="chips"><button class="mk new" data-note="NEW: the season's sent history, on the kit, replacing the old dual-look page. The subtitle carries the allowance. Example senders (Alex Rivera, Sam Okafor) and rows; the fixture has none.">NEW · season history</button><button class="mk new" data-note="NEW (ask 4): Publish teams went to 3 families in Division B. Tagged Automatic, it never counted toward the 3. 9d-2's schedule notices will show the same way. Clicking the tag says why it didn't count.">NEW · Automatic row</button><button class="mk new" data-note="NEW (ask 5): a one-family message keeps its date, sender and family, never its words (Families' rule). It never counted.">NEW · one-family row</button><button class="mk new" data-note="NEW (ask 3): the old season history, read-only, under its own divider that says what it is: counted per child, and 'which one wasn't recorded' where the old log kept only the word 'division', 'team' or 'status'. 'Not sent' replaces 'Skipped' (it mixed no address, a failure and an opted-out family). No words are shown because none were kept. Its rows open nothing.">NEW · earlier sends</button><button class="fl fix" data-f="E11">E11</button></div>
+
+<div class="spec" style="margin-top:14px">
+  <div class="col"><p class="sp-cap">AFTER · the same, phone</p>
+  <div class="ph"><div class="ak ph-in" style="display:flex;flex-direction:column;min-height:760px">
+    <div class="pswitch"><div class="t"><span class="ey">Season</span><b>Dev House League 2026</b></div><span class="pill">Playing now</span><span class="btn ic" aria-label="Switch season"><svg class="ico" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span></div>
+    <div class="ptabs"><span>Overview</span><span>Registrations</span><span>Teams &amp; draft</span><span>Schedule</span><span>Standings</span><span>Money</span><span class="on">Email families</span></div>
+    <div class="pin" style="flex:1">
+    <div style="display:flex;align-items:center;gap:10px"><div style="flex:1"><b style="font:700 20px/1.2 'Inter'">Email families</b><div class="dim">1 of 3 emails left today</div></div><span class="btn lime" style="min-height:44px"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email</span></div>
+    <div class="panel">
+      <div class="lrow"><div class="m"><b>Picture day is Saturday</b><span class="d">Oct 26 · 9:14 a.m. · Everyone · Alex Rivera</span></div><span class="r">10 of 10</span></div>
+      <div class="lrow"><div class="m"><b>Field change for the Jays</b><span class="d">Oct 26 · 8:02 a.m. · Jays · Sam Okafor</span></div><span class="r">3 of 3</span></div>
+      <div class="lrow"><div class="m"><b>A message to this family</b><span class="d">Oct 25 · The Kim family · Sam Okafor</span></div><span class="r">1</span></div>
+      <div class="lrow"><div class="m"><b>Teams published: Division B</b><span class="d">Oct 24 · <span class="tagA">Automatic</span></span></div><span class="r">3 of 3</span></div>
+    </div>
+    <span class="lbl">Earlier sends · counted per child</span>
+    <div class="panel">
+      <div class="lrow"><div class="m"><b>End of season party</b><span class="d">Sep 3 · All active registrants · Alex Rivera</span></div><span class="r">11 sent</span></div>
+      <div class="lrow"><div class="m"><b>Jersey pickup</b><span class="d">Jun 2 · A division (not recorded) · 1 not sent</span></div><span class="r">7 sent</span></div>
+    </div>
+  </div>
+    <div class="bnav"><span><i></i>Overview</span><span><i></i>Calendar</span><span class="on"><i></i>House league</span><span><i></i>Families</span><span><i></i>More</span></div>
+  </div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the phone list. The primary button keeps its word ('Email') because it is the page's one action, not a secondary one.">NEW · phone list</button></div></div>
+
+  <div class="col" style="flex:1 1 460px">
+  <p class="sp-cap">A row's window (a typed send)</p>
+  <div class="ak win" style="border-radius:12px;padding:14px"><div class="dlg" style="max-width:600px">
+    <div class="dh"><div class="tt"><span class="ey">Dev House League 2026</span><h4>Picture day is Saturday</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="facts2" style="padding:0;grid-template-columns:120px minmax(0,1fr)"><span>Sent</span><span>Oct 26 · 9:14 a.m.</span><span>By</span><span>Alex Rivera</span><span>To</span><span>Everyone in the season</span><span>Going to</span><span>10 families (11 children)</span><span>Reached</span><span>10</span><span>Opted out</span><span>0 (names shown when there are any)</span></div>
+    <span class="lbl">What it said</span><div class="tx ta" style="min-height:0">Hi everyone,
+Picture day is Saturday, Nov 1, at the Centennial Park field house…</div>
+    <span class="hint">Reached counts the families whose email the mail service accepted. An email that bounces later isn't shown here.</span></div>
+    <div class="df"><span class="s"></span><span class="btn">Close</span></div>
+  </div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: Families' row window, with the words shown, since Families keeps them. The registrar reads this through the season's gate.">RESTYLED · row window</button></div>
+
+  <p class="sp-cap" style="margin-top:14px">A season with nothing sent (Dev House League 2027)</p>
+  <div class="ak" style="padding:14px;border-radius:12px"><div class="panel"><div class="empt"><b>Nothing sent to this season's families yet</b><span>Emails you send to Dev House League 2027's families are listed here, with the notices FieldLogicHQ sends for you, like Publish teams.</span><span class="btn lime" style="margin-top:6px"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email families</span></div></div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the empty state names what will appear and how to add the first. The 3 families of 2027 can be emailed.">NEW · empty</button></div>
+
+  <p class="sp-cap" style="margin-top:14px">The Automatic tag, clicked</p>
+  <div class="ak" style="padding:14px;border-radius:12px"><div class="note blue">Sent by FieldLogicHQ when you published Division B's teams. Automatic notices don't count toward the season's 3 sends a day. <a class="lnk">Open Teams &amp; draft</a></div>
+  <p class="cap">The link shows only to someone who can open Teams &amp; draft (the registrar can, per Q17).</p></div>
+  </div>
+</div>
+
+<h2>(f) Families › Email families and Families › Emails, after 9d-1</h2>
+<div class="chips"><button class="fl fix" data-f="E05">fixes E05</button><button class="fl fix" data-f="E07">fixes E07</button><button class="mk s" data-note="Ask 6: from the Families door, a season send counts toward that season's 3 and reaches every status. Ask 7: season sends are listed on Families › Emails too.">asks 6 · 7</button></div>
+<p>For a club-wide sender almost nothing changes: the same window, the same Who list, the club's 3. Two things move: the season choice reaches every season with families, and when a season is picked the foot reads that season's allowance, because it is that season's send.</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px"><p class="sp-cap">AFTER · Families › Email families, a season picked · desk window</p>
+  <div class="ak win" style="border-radius:12px;padding:14px"><div class="dlg" style="max-width:640px">
+    <div class="dh"><div class="tt"><span class="ey">Families</span><h4>Email families</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="stmt">Sends one email to each family you choose, from the club, with your address to reply to. A family that opted out of club email is skipped.</div>
+    <span class="lbl">Who</span><div class="who">
+      <div class="o"><span class="rd"></span><div class="m"><b>Every family · 15</b><span class="d">Each family once</span></div></div>
+      <div class="o on"><span class="rd"></span><div class="m"><b>A house league season</b><span class="d">Everyone in it, each family once</span></div></div>
+      <div class="sub" style="flex-direction:column;align-items:stretch"><div class="tx" style="display:flex;justify-content:space-between;align-items:center">Draft Test 2027 · Registration closed · 101 families <span><svg class="ico" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span></div><span class="hint">Counts toward Draft Test 2027's 3 sends a day, not the club's. For a division, a team or a status, use the season's own Email families. <a class="lnk">Open Draft Test 2027</a></span></div>
+      <div class="o"><span class="rd"></span><div class="m"><b>Families from a list</b><span class="d">The same lists as on Families</span></div></div>
+    </div></div>
+    <div class="df"><span class="s">101 families get it. <span class="allow">Draft Test 2027 can send 3 emails today.</span></span><span class="btn">Cancel</span><span class="btn lime">Send to 101</span></div>
+  </div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED: the season picker lists every season with families, whatever its status, each with its status and family count (ask 6). Today Draft Test 2027, in Registration closed, isn't in the list. The season's narrower audiences stay on the season's door; this one points there.">RESTYLED · every status</button><button class="mk new" data-note="NEW (ask 6): the allowance follows the audience. A season picked here is that season's send and reads that season's allowance; the club's 3 are untouched. 'Every family · 15' is an example count.">NEW · the season's allowance here</button></div></div>
+
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">AFTER · the club's allowance, Every family picked</p>
+  <div class="ak" style="padding:14px;border-radius:12px"><div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="s">15 families get it. <span class="allow">2 of the club's 3 emails left today.</span></span><span class="btn">Cancel</span><span class="btn lime">Send to 15</span></div></div></div>
+  <div class="ak" style="padding:14px;border-radius:12px;margin-top:10px"><div class="dlg" style="max-width:none"><div class="df" style="border-top:0"><span class="held">Your club has sent 3 emails to families in the last 24 hours. The next can go at 11:05 a.m. Each house league season has its own 3, from its own page.</span><span class="btn">Close</span></div></div></div>
+  <div class="chips"><button class="mk new" data-note="NEW: the same allowance line on the club's door, naming the club's 3 (ask 8).">NEW · club allowance</button><button class="mk res" data-note="RESTYLED: today's club refusal, plus one sentence pointing at the season's own allowance, so a club admin who is also a convenor knows a season send can still go.">RESTYLED · club refusal</button></div></div>
+</div>
+
+<div class="spec">
+  <div class="col" style="flex:1 1 760px"><p class="sp-cap">AFTER · Families › Emails, with season sends in it (example rows)</p>
+  <div class="ak" style="padding:16px;border-radius:12px"><div class="panel"><table class="kt"><thead><tr><th>Sent</th><th>Subject</th><th>To</th><th>By</th><th style="text-align:right">Reached</th></tr></thead><tbody>
+    <tr><td>Oct 26 · 9:14 a.m.</td><td>Picture day is Saturday</td><td>Dev House League 2026 · everyone</td><td>Alex Rivera</td><td style="text-align:right">10 of 10</td></tr>
+    <tr><td>Oct 26 · 8:02 a.m.</td><td>Field change for the Jays</td><td>Dev House League 2026 · Jays</td><td>Sam Okafor</td><td style="text-align:right">3 of 3</td></tr>
+    <tr><td>Oct 25 · 4:30 p.m.</td><td>Volunteer night</td><td>Every family</td><td>Jordan Lee</td><td style="text-align:right">14 of 15</td></tr>
+  </tbody></table></div></div>
+  <div class="chips"><button class="mk res" data-note="RESTYLED (ask 7): the club's log lists season sends too, the season named in To. Automatic season notices are not listed here; they belong to the season's history. One record, two doors on it: nothing is copied. A Season filter (All · Club-wide · each season) keeps club rows findable once season rows arrive (from /ux).">RESTYLED · season sends listed</button></div></div>
+</div>
+</section>
+
+
+<!-- ======================= STATUSES, WHO, FAMILIES ======================= -->
+<section class="pane" id="who" data-pane="who" hidden>
+<h2 style="margin-top:16px">(g) Every season status</h2>
+<div class="chips"><button class="fl fix" data-f="E05">fixes E05</button><button class="mk s" data-note="9a, ruled: email on a finished season stays open for the people who may email it. A note to families is not a change to the season's record.">9a · ruled</button></div>
+<p>The season's door reaches every status that has families. Nothing about the window changes with the status except what its Who list can find.</p>
+<div class="edges">
+  <div class="card"><h3>Draft · test season</h3><p>No families yet. The rail entry still opens the page, so the convenor learns where email will be:</p>
+  <div class="ak" style="padding:10px;border-radius:10px"><div class="panel"><div class="empt"><b>No families in test season yet</b><span>Once families sign up you can email them from here.</span></div></div></div>
+  <p class="muted" style="font-size:13px">No Email families button: absent beats disabled.</p></div>
+  <div class="card"><h3>Registration open · Dev House League 2027</h3><p>3 families, 5 children (the Test family has three). "A team" says U10 Division A's teams aren't published yet. Everything else works, and a family who signs up after the window opens is picked up when the count refreshes ("Who this reaches changed while you were writing…", Families' own words).</p></div>
+  <div class="card"><h3>Registration closed · Draft Test 2027</h3><p>101 families, 120 children. This is the season Families can't reach today. Through the season's door it is a normal send: two batches, about a minute.</p><div class="chips"><button class="fl fix" data-f="E05">fixes E05</button></div></div>
+  <div class="card"><h3>Playing now · Dev House League 2026</h3><p>10 families, 11 children, six published teams. Drawn throughout this page.</p></div>
+  <div class="card"><h3>Completed · Dev House League 2025</h3><p>Still open (9a). The page keeps the season's lock line from 9a, and the Email families button stays:</p>
+  <div class="ak" style="padding:10px;border-radius:10px"><div class="note blue">This season is finished. Its record is locked; you can still email its families.</div></div>
+  <p class="muted" style="font-size:13px">"Everyone in the season" on a finished season is the families whose child was active when it finished. The fixture's 2025 has no families, so its page shows "No families in Dev House League 2025"; with families, the Who list and counts are as on a playing season. Example wording.</p></div>
+  <div class="card"><h3>Archived</h3><p>The same as Completed. Archive is a label today (9a) and stays one; what it will do is 9f's, and email isn't part of it.</p></div>
+</div>
+
+<h3>Two live seasons, side by side</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">Dev House League 2026 · 3 sent today</p>
+  <div class="ak" style="padding:14px;border-radius:12px"><div class="ph1"><div><h1 style="font-size:22px">Email families</h1><p class="sub">Dev House League 2026 · no emails left today; the next at 4:12 p.m.</p></div><span class="sp"></span><span class="btn pri"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email families</span></div></div></div>
+  <div class="col" style="flex:1 1 460px"><p class="sp-cap">Dev House League 2027 · nothing sent today</p>
+  <div class="ak" style="padding:14px;border-radius:12px"><div class="ph1"><div><h1 style="font-size:22px">Email families</h1><p class="sub">Dev House League 2027 · 3 emails left today</p></div><span class="sp"></span><span class="btn pri"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email families</span></div></div></div>
+</div>
+<p class="cap">On a spent day the button stays, because the window still sends a one-family message and shows the refusal with its time; the subtitle has already said so. Each season's count is its own (Q12c).</p>
+
+<h2>(h) Who can do what, per door</h2>
+<div class="chips"><button class="fl fix" data-f="E06">fixes E06</button><button class="mk s" data-note="Ask 2: the season door is gated by the season's email gate, every status; Families stays a grant.">ask 2</button></div>
+<p>9a's gate table with the email column split by door. The season's door follows the season's email gate (Q17: the runners plus the registrar). The Families door follows the Families grant, which no role has by default (owner, 2026-08-17).</p>
+<div class="tw"><table class="t gate">
+<thead><tr><th>Person</th><th class="co">Season door: send</th><th class="co">Season door: sent history</th><th>Families door</th><th>Today</th></tr></thead>
+<tbody>
+<tr><td>Owner</td><td class="co">Yes, every status</td><td class="co">Yes</td><td>Yes (the owner holds every grant)</td><td>Same</td></tr>
+<tr><td>Club admin, no Families grant</td><td class="co">Yes, every status</td><td class="co">Yes</td><td>No access</td><td>Same: nothing lost</td></tr>
+<tr><td>League admin</td><td class="co">Yes, every status</td><td class="co">Yes</td><td>No access</td><td>Same</td></tr>
+<tr><td>Registrar</td><td class="co">Yes, every status</td><td class="co">Yes</td><td>No access</td><td>Same, plus a history it can read</td></tr>
+<tr><td>Registrar granted Families</td><td class="co">Yes, that season only</td><td class="co">Yes</td><td>Yes: club audiences, the club's 3, and any season from its picker</td><td>Two composers today; one after</td></tr>
+<tr><td>Treasurer</td><td class="co">No access</td><td class="co">No access</td><td>No access unless granted</td><td>Same (reads Money only)</td></tr>
+<tr><td>House-league coach (9c)</td><td class="co">No access</td><td class="co">No access</td><td>No access</td><td>Same; their team page keeps "Copy emails"</td></tr>
+</tbody></table></div>
+<p class="cap">"No access" means the door is absent, not greyed. A finished season changes nothing in this table (9a). Granting someone Families never widens what the season door shows them.</p>
+
+<h2>(i) What a family receives</h2>
+<div class="chips"><button class="fl fix" data-f="E02">fixes E02</button><button class="mk s" data-note="Ask 11: the footer names the season.">ask 11</button></div>
+<p>The Kims have two children in Dev House League 2026, Ava (Division B, no team yet) and Henry (Division B, the Tigers), and one address. "Everyone in the season", today and after:</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 420px"><p class="sp-cap">BEFORE · two emails, the same words</p>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div class="mail"><div class="mh"><b>Picture day is Saturday</b><span class="muted">From Dev League Org via FieldLogicHQ · to henry.kim@dev.local · 9:14 a.m.</span></div></div>
+    <div class="mail"><div class="mh"><b>Picture day is Saturday</b><span class="muted">From Dev League Org via FieldLogicHQ · to henry.kim@dev.local · 9:14 a.m.</span></div></div>
+  </div>
+  <p class="cap">One per registration. The Test family, with three children in 2027, would get three.</p></div>
+  <div class="col" style="flex:1 1 480px"><p class="sp-cap">AFTER · one email, as typed</p>
+  <div class="mail">
+    <div class="mh"><b>Picture day is Saturday</b><span class="muted">From Dev League Org via FieldLogicHQ · to henry.kim@dev.local · reply goes to Alex Rivera</span></div>
+    <div class="club"><span class="mono">DL</span>Dev League Org</div>
+    <div class="mb"><p>Hi everyone,</p><p>Picture day is Saturday, Nov 1, at the Centennial Park field house. Each team has a 20-minute slot; your coach will send yours.</p><p>Alex</p></div>
+    <div class="foot"><span><span class="newv">Sent by Dev League Org because your family is registered in Dev House League 2026.</span></span><span>Reply to this email to reach Alex Rivera.</span><span><u>Unsubscribe from Dev League Org emails</u></span></div>
+  </div>
+  <div class="chips"><button class="mk new" data-note="NEW: one email per family, every address the family holds once. The words are exactly as typed; the product doesn't add the children's names to a typed message, because the sender wrote it to everyone. (A notice the product writes, like Publish teams, does name each child.)">NEW · one per family</button><button class="mk res" data-note="RESTYLED (ask 11): the footer names the season, as the season's email does today ('because you have a registration in …'), in Families' sentence shape. A club-wide send keeps 'registered with this organization'. Example sender.">RESTYLED · season footer</button><button class="mk unc" data-note="UNCHANGED: the unsubscribe link, the club's band and mark (the family-emails ruling), and the reply going to the person who sent it.">UNCHANGED · unsubscribe</button></div></div>
+</div>
+<div class="edges">
+  <div class="card"><h3>Two guardians, two addresses</h3><p>The Families engine already joins a household's registrations by the addresses they share, and counts the household once. Whatever it does today for two guardians with two addresses, the season send does the same; the build confirms which address or addresses it writes to. Two families the book hasn't recognized as one are the duplicates tool's job, not this window's.</p></div>
+  <div class="card"><h3>A family who unsubscribed</h3><p>Skipped, and counted in "opted out" on the foot and the row. Their placement and move notices still reach them (9c's service mode, unchanged).</p></div>
+  <div class="card"><h3>A family in two seasons</h3><p>The Chens have Liam in 2026 and in 2027. A 2026 send reaches them once; a 2027 send reaches them once. Each counts toward its own season.</p></div>
+</div>
+</section>
+
+
+<!-- ======================= ASKS ======================= -->
+<section class="pane" id="asks" data-pane="asks" hidden>
+<h2 style="margin-top:16px">Asks &amp; paste-back</h2>
+
+<div class="card"><h3>Ruled, and how it's drawn</h3>
+<ul>
+  <li><b>Q12b one composer:</b> one window, opened from the season already set to it, with division, team, status and ticked-family audiences. The rail's old page and the Registrations Email window retire. The season keeps its own sent history (frame e).</li>
+  <li><b>Q12c the cap:</b> automatic notices never count; each season has its own 3 typed sends a day; club-wide sends keep the club's 3 (frames c and f).</li>
+  <li><b>9a, email on a finished season stays open</b> for the people who may email it (frame g).</li>
+  <li><b>Q17 who emails a season:</b> the runners plus the registrar; the treasurer doesn't (frame h).</li>
+  <li><b>9c·4 and 9c's service mode:</b> placement and move emails are untouched; they appear only in the season's history (ask 4).</li>
+  <li><b>2026-10-22 (club):</b> a one-household message never counts toward the 3. Ask 5 asks whether the season matches it.</li>
+</ul></div>
+
+<div class="card" id="reviews"><h3>What the /ux and /design reviews changed before you saw this</h3>
+<ul style="margin:6px 0 0">
+  <li><b>Flows (/ux):</b>
+    <ul>
+      <li>Added "See who gets it" under Who: the families behind the count, with opted-out and no-address families marked.</li>
+      <li>An opted-out family is said in the foot before Send, named when it's one to three families; the row window names them after.</li>
+      <li>Drew the recount: a counting state with no Send, and Families' "Who this reaches changed while you were writing" with the new number on the button.</li>
+      <li>Closing with words typed asks first (today's Registrations words). The spent-day refusal shows when the window opens, before anything is typed.</li>
+      <li>Drew one-family and ticked-family results. Ticking two children of one family is a one-family message.</li>
+      <li>Fixed a contradiction: an opted-out family's held sentence no longer says a one-family message can still reach them.</li>
+      <li>A send left running after the window closes ends with a note on the season's page naming the result.</li>
+      <li>On the Families door, the season row says which allowance it counts toward before Send. Families › Emails gets a Season filter.</li>
+      <li>The Automatic tag's "Open Teams &amp; draft" shows only to people who can open it. "Everyone in the season" on a finished season is defined (families whose child was active when it finished).</li>
+    </ul></li>
+  <li><b>Drawings (/design):</b>
+    <ul>
+      <li>Window titles no longer carry a time in the capitalised eyebrow, which printed "9:14 A.M."; the time moved to a Sent row in the house clock.</li>
+      <li>On a narrow screen a window's foot puts its sentence on its own line and the buttons under it, right-aligned.</li>
+      <li>A status or team with nobody in it is left out instead of drawn dashed and dead (absent beats disabled). The "status with nobody" specimen is gone.</li>
+      <li>The allowance dots are gone. The sentence carries the count, and the customer word is "emails", never "sends".</li>
+      <li>The statement block, links and fields now match the real Families window: a white block, underlined links and full-width fields.</li>
+      <li>The phone window's back control is the real ← arrow. The phone compose got back its Who sub-lines and Last sent line.</li>
+      <li>The phone refusal sits at the end of the body, with only Close in the foot (the 2026-10-13 ruling).</li>
+      <li>Dates and Reached counts in the tables no longer wrap.</li>
+    </ul></li>
+  <li><b>Kept on purpose:</b>
+    <ul>
+      <li>On a desk, a held message and a result keep Families' real placement in the window's foot. The 10-13 ruling is about phone sheets, and moving it on a desk would change the house window everywhere. /design suggested it; it isn't drawn.</li>
+      <li>The rail and nav icons are the round-1 placeholders shared with 9a–9c.</li>
+      <li>Asks 1 and 2 keep their alternatives. The ruling settled one composer, not which shape it takes, and not which gate opens it.</li>
+    </ul></li>
+  <li><b>Raised as an ask:</b> 9d1·12, a calendar day or any 24 hours.</li>
+</ul></div>
+
+<div class="ask" data-ask="D1"><h3><span class="no">9d1·1</span>Which composer?</h3>
+  <p class="rides">Push-back 1. Rides on it: whether one club ever shows two composers, and how much is deleted rather than kept.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D1" value="C one window two doors">C: one window, two doors. The Families window's face is the only composer; the door decides its Who list. The season's old page and Email window are deleted.</label>
+    <label><input type="checkbox" name="D1" value="A Families window learns season audiences">A: the Families window learns the season audiences and opens from the season, with its club-wide choices beside them.</label>
+    <label><input type="checkbox" name="D1" value="B season window on the Families engine">B: the season keeps its own Email window and sends through the Families engine.</label>
+  </div><textarea aria-label="Notes for 9d1·1" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="D2"><h3><span class="no">9d1·2</span>The season door's gate</h3>
+  <p class="rides">Push-back 2. Families is a grant for every role, the admin included (owner, 2026-08-17); not reopened.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D2" value="Season email gate, season only">The season's email gate (the runners plus the registrar), on every season status, showing only that season's families. Families stays a grant and is never needed for a season.</label>
+    <label><input type="checkbox" name="D2" value="Families grant required">The Families grant is required to email a season.</label>
+  </div><textarea aria-label="Notes for 9d1·2" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="D3"><h3><span class="no">9d1·3</span>The old sent history</h3>
+  <p class="rides">The old rows hold a date, sender, subject, an audience word (often just "division", "team" or "status"), and per-child sent and skipped counts. No words were kept. The fixture has none; production is checked at build.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D3" value="Read-only under Earlier sends">Shown read-only on the season's history under "Earlier sends · counted per child", saying where the audience wasn't recorded. Nothing is converted; the old log stays where it is and nothing writes to it again.</label>
+    <label><input type="checkbox" name="D3" value="Converted">Converted into the new record (per-child counts and missing audiences carried over as they are).</label>
+    <label><input type="checkbox" name="D3" value="Dropped from view">Not shown. The old log is kept but nothing reads it.</label>
+  </div><textarea aria-label="Notes for 9d1·3" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="D4"><h3><span class="no">9d1·4</span>Which automatic notices the season's history shows</h3>
+  <p class="rides">Push-back 3. None counts toward a cap either way (Q12c).</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D4" value="Batch notices, tagged">Notices that go to many families at once (Publish teams now, schedule notices in 9d-2), one row each, tagged Automatic. One-family status emails (accepted, waitlisted, declined) stay off it; each belongs to its registration.</label>
+    <label><input type="checkbox" name="D4" value="Typed only">Typed sends only; automatic notices are seen where they were triggered (Teams &amp; draft).</label>
+    <label><input type="checkbox" name="D4" value="Everything">Everything, one-family status emails included (needs a new record of each).</label>
+  </div><textarea aria-label="Notes for 9d1·4" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="D5"><h3><span class="no">9d1·5</span>Does a one-family email count toward the season's 3?</h3>
+  <p class="rides">Push-back 4. The club already ruled no for its own one-household message (2026-10-22), with a limit of 3 a day to the same family.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D5" value="No, like the club">No, the same as the club: a message to one family never counts, and has the same limit of 3 a day to that family. Its history row keeps the date, sender and family, never the words. Ticking two or more families counts.</label>
+    <label><input type="checkbox" name="D5" value="Yes, counts">Yes, every typed send counts, one family included.</label>
+  </div><textarea aria-label="Notes for 9d1·5" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="D6"><h3><span class="no">9d1·6</span>A season picked from the Families door</h3>
+  <p class="rides">Frame f. Today Families' season choice reaches open and playing seasons only, and counts toward the club's 3.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D6" value="Allowance follows the audience, every status">The allowance follows the audience: a season picked from Families counts toward that season's 3, never the club's. The picker lists every season with families, whatever its status. Divisions, teams and statuses stay on the season's door.</label>
+    <label><input type="checkbox" name="D6" value="Counts toward the club">A season picked from Families counts toward the club's 3; the picker reaches every status.</label>
+    <label><input type="checkbox" name="D6" value="Remove the season choice">Remove "A house league season" from Families; a season is emailed from its own page only.</label>
+  </div><textarea aria-label="Notes for 9d1·6" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="D7"><h3><span class="no">9d1·7</span>Does a season send also show on Families › Emails?</h3>
+  <p class="rides">Push-back 3. One record either way; this decides who can read it from where.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D7" value="Yes, both">Yes. Families › Emails is the club's book of typed sends to families, and lists season sends with the season named. The season's page lists only its own.</label>
+    <label><input type="checkbox" name="D7" value="Season only">No, only on the season's page.</label>
+  </div><textarea aria-label="Notes for 9d1·7" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="D8"><h3><span class="no">9d1·8</span>When the allowance is shown</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D8" value="Always, in the foot and subtitle">Always: one line in the window's foot and the page's subtitle ("2 of this season's 3 emails left today"), on the club's door too. The refusal names the time.</label>
+    <label><input type="checkbox" name="D8" value="Only when spent">Only when it runs out, as Families does today.</label>
+  </div><textarea aria-label="Notes for 9d1·8" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="D9"><h3><span class="no">9d1·9</span>Copy a team's coach on a team send?</h3>
+  <p class="rides">Raised by frame b. Families offers "Copy each team's head coach" for rep teams. 9c gave each house-league team coaches with addresses.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D9" value="Offered, unticked">Offered when the audience is a team, unticked: "Copy the team's coaches". A copied coach isn't counted as a family.</label>
+    <label><input type="checkbox" name="D9" value="Always copied">Always copied on a team send.</label>
+    <label><input type="checkbox" name="D9" value="Not offered">Not offered.</label>
+  </div><textarea aria-label="Notes for 9d1·9" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="D10"><h3><span class="no">9d1·10</span>Finishing a send that stopped partway</h3>
+  <p class="rides">Raised by frame d. Today Families can only send it again to everyone, which emails the families it already reached a second time.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D10" value="Send to the ones it missed">"Send to the N it missed" on the stopped row's window: the same words to the families it hadn't reached, not counted (it is the same send). The club's Families › Emails gets it too.</label>
+    <label><input type="checkbox" name="D10" value="Leave as today">Leave it as today: the row says it stopped; the sender sends again.</label>
+  </div><textarea aria-label="Notes for 9d1·10" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="D11"><h3><span class="no">9d1·11</span>The family's footer on a season send</h3>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D11" value="Names the season">Names the season: "Sent by Dev League Org because your family is registered in Dev House League 2026." Today's season email already names it; Families' club sentence stays for club-wide sends.</label>
+    <label><input type="checkbox" name="D11" value="Club sentence">The club's sentence for every send: "because your family is registered with this organization."</label>
+  </div><textarea aria-label="Notes for 9d1·11" placeholder="Notes"></textarea></div>
+
+<div class="ask" data-ask="D12"><h3><span class="no">9d1·12</span>Is "3 a day" a calendar day or any 24 hours?</h3>
+  <p class="rides">Raised by /design. The club's 3 today is any rolling 24 hours ("Your club has sent 3 emails to families in the last 24 hours. The next can go at …"). The drawings say "today" for the season, which is a different rule if taken literally.</p>
+  <div class="opts">
+    <label class="rec"><input type="checkbox" name="D12" value="Rolling 24 hours, like the club">Any 24 hours, the same rule as the club's, so one engine counts both and the refusal's time is exact. The words say so ("2 of this season's 3 emails left in the last 24 hours" or similar); /marketing settles them.</label>
+    <label><input type="checkbox" name="D12" value="Calendar day">A calendar day in the club's time zone, resetting at midnight, for the season and the club alike.</label>
+  </div><textarea aria-label="Notes for 9d1·12" placeholder="Notes"></textarea></div>
+
+<div class="card"><h3>Build notes (not asks; the build prompt carries them)</h3>
+<ul class="bn">
+  <li><b>The per-season count needs a migration.</b> The club's claim function counts every Families send for the org in 24 hours and never reads the season the row already records. It must count a season's typed sends by season, the club's by "no season", and leave one-family messages and automatic notices out. The one-minute double-press guard is club-wide today and must look at the same audience (or season), or a convenor and a club admin refuse each other.</li>
+  <li><b>The season send must reach every status.</b> The Families season audience reads "open or playing" only; the season door can't reuse it. The season gate (runners plus registrar, finished included) decides who; the audience reads the season's registrations by the audience picked, active children only for a team.</li>
+  <li><b>The old log's real shape</b> is in the dev and prod snapshots (date, sender, subject, scope, audience, sent, skipped; no body, no division or team). It has no CREATE TABLE in the migrations. Read it; don't migrate it; stop writing it. Count production's rows at build.</li>
+  <li><b>Retire, don't hide:</b> the rail's old page (its route becomes the season's sent history), the Registrations Email window, the per-child loop in the season email route and its writes to the old log, and the "Sent to 0 guardians" words. The guard test that proves "Message registrants" is gone gets the same for these.</li>
+  <li><b>9d-2's schedule notices call this path</b> as automatic notices: through the engine, recorded so the season's history can list them (ask 4), never counted.</li>
+  <li><b>Automatic records:</b> 9c's placement emails are recorded one row per family in their own table; the history needs one row per Publish (group them, or record the batch). Decide at build; the screen is the same.</li>
+  <li><b>The Families window's audience list becomes a door input</b> (ask 1, C): the season door passes its season and the families it can reach; the Families door passes nothing and keeps today's list.</li>
+  <li><b>Words</b> go through /marketing after the rulings, before code: the Who rows, the allowance line, the refusal, the history divider, the Automatic tag, the footer. House rules: sentence case, "4:12 p.m.", the bare possessive, one spelling (<code>npm run check:spelling</code>).</li>
+</ul></div>
+
+<div class="tw"><table class="t" id="askIndex"><thead><tr><th>Ask</th><th>Where</th><th>Your answer so far</th></tr></thead><tbody></tbody></table></div>
+<div class="paste">
+  <div class="row"><button type="button" class="btn-d pri" id="build">Build the summary</button><button type="button" class="btn-d" id="copy">Copy</button><span class="muted" id="copied" style="font-size:13px"></span></div>
+  <label for="out" class="eyebrow">Paste this back</label>
+  <textarea id="out" readonly></textarea>
+</div>
+</section>
+</div>
+
+<dialog class="note" id="dlg" aria-labelledby="dlgT"><div class="nh"><h3 id="dlgT">Note</h3><button type="button" class="x" aria-label="Close" id="dlgX">×</button></div><div class="nb" id="dlgB"></div></dialog>
+
+<script>
+(function(){
+var FINDINGS = {
+ E01:{t:'Three composers on two engines', today:'A season has two ways to email families today: the rail’s Email families page (All active, Waitlist or Pending review, then a preview) and the Registrations Email window, opened from a row’s ⋯, the bulk bar or Tools (All active, By division, By team, By status, the selected families, or one family). Both send through the season’s own route. Families › Email families is a third composer on a different engine. "Message registrants" is already gone.', fix:'One window, opened from every door. The door decides who it can reach: a season’s door reaches only that season’s families.', st:'9d-1'},
+ E02:{t:'One email per child: siblings get two', today:'The season route sends one email per registration, in a loop. It removes duplicate addresses only when you picked families on Registrations. For every other audience, a family with two children in the season gets the same email twice (the Kims, with Ava and Henry in 2026, would get two). The window counts these as "guardians", but it is counting children.', fix:'One email per household, the Families rule: every address the family holds, once. The window counts families, and children beside them.', st:'9d-1'},
+ E03:{t:'No batches, no lock, no limit on a season send', today:'The season route sends one at a time with no batching, no lock against a double press and no daily limit. 101 families in Draft Test 2027 would be 120 emails sent one after another inside one request. Families’ engine sends in batches of 100, records each batch as it goes, and refuses a second press within a minute.', fix:'The season sends through the Families engine: batches, the double-press guard, and the season’s own 3 typed sends a day (Q12c).', st:'9d-1'},
+ E04:{t:'"Sent" said in green when nobody got it', today:'The rail page shows a green banner, "Email sent — 0 delivered.", whenever a send returns, including when it reached nobody. The Registrations window says "Sent to 0 guardians." as an ordinary notice, and leaves out families who opted out, so they vanish from the result.', fix:'A send nobody can receive is never offered. A result says how many families it reached out of how many, and names the ones it didn’t reach and why.', st:'9d-1'},
+ E05:{t:'The Families window can’t reach most of a season’s life', today:'Families’ season choice reaches only seasons that are open for registration or being played. A season in Registration closed (between sign-up and the first game, when a convenor emails most), a completed season and an archived season are all unreachable. The 9a ruling keeps email open on a finished season.', fix:'The season door reaches every season status that has families. Ask 6 asks whether Families’ own season choice follows.', st:'9d-1'},
+ E06:{t:'Families is a grant, even for an admin', today:'No role gets Families by default, including the club admin (owner decision, 2026-08-17, pinned by a test). Today a season is emailed by the owner, admin, league admin and registrar, none of whom needs Families. If "the Families window" meant "you need Families", every one of them except a granted person would lose season email.', fix:'The season door is gated by the season’s email gate and shows only that season’s families. Families stays a grant.', st:'9d-1'},
+ E07:{t:'The club’s 3 a day ignores the season', today:'The daily limit counts every Families send for the club in the last 24 hours. Each send already records its season, but the count never reads it. The one-minute double-press guard is also club-wide, so a convenor and a club admin sending to different audiences a few seconds apart would refuse each other. Nothing tells a sender how many are left until the limit refuses them.', fix:'Two allowances: each season’s 3, counted by season, and the club’s 3 for club-wide sends. The double-press guard looks at the same audience. The window says what is left.', st:'9d-1'},
+ E08:{t:'The old sent history can’t say who it went to', today:'Each old season send left one row: date, sender, subject, an audience word, a sent count and a skipped count. For a division, a team or a status, the audience is stored as the bare word ("division", "team", "status"), not which one. "Skipped" mixes no address, a failed send and an opted-out family. The words of the email were never kept. The counts are per child, not per family.', fix:'Shown read-only under "Earlier sends", saying what they are (ask 3). Nothing is converted or invented.', st:'9d-1'},
+ E09:{t:'"By team" lists teams it then refuses, and counts ended children', today:'The team list holds every team in the season. Picking a team of a division that isn’t published yet is refused only after you press Send ("Jays isn’t published yet…"). The team count and send include every child ever placed on the team, including declined and withdrawn ones.', fix:'Only published teams are listed, and an unpublished division says why. A team reaches the families of its active children only.', st:'9d-1'},
+ E10:{t:'The rail page is still on the old look', today:'Email families is a dual-look page: the kit look swaps colours, but its callout and buttons are the old ones, and it has a separate preview screen.', fix:'The rail entry opens the season’s sent history on the kit, with Email families as its one primary button.', st:'9d-1'},
+ E11:{t:'Most automatic emails leave no trace', today:'The approved, waitlisted, promoted, declined, withdrawn and spot-released emails, and the sign-up confirmation, go one at a time and are logged nowhere a person can read. Only Publish teams and team moves record each family’s email, shown as counts on Teams & draft.', fix:'Ask 4: emails that go to many families at once (Publish teams now, schedule notices in 9d-2) appear in the season’s history, tagged Automatic. A one-family status email stays on that family’s registration.', st:'9d-1'}
+};
+function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+var dlg=$('#dlg'), dT=$('#dlgT'), dB=$('#dlgB');
+function esc(t){return String(t).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function open(title, parts){ dT.textContent=title; dB.innerHTML=parts.map(function(p){return '<div><h4>'+esc(p[0])+'</h4><p>'+esc(p[1])+'</p></div>'}).join(''); if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); }
+$('#dlgX').addEventListener('click',function(){dlg.close()});
+dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
+document.addEventListener('click',function(e){
+  var f=e.target.closest('.fl'); if(f){ e.preventDefault(); e.stopPropagation(); var k=f.getAttribute('data-f'), F=FINDINGS[k]; if(!F) return;
+    var parts=[['What the code does today',F.today]]; var h=f.getAttribute('data-here'); if(h) parts.push(['Where you are looking',h]); parts.push(['What the proposal does',F.fix]); parts.push(['Stage',F.st]);
+    open(k+' · '+F.t, parts); return; }
+  var m=e.target.closest('.mk'); if(m){ e.preventDefault(); e.stopPropagation(); var kind=m.classList.contains('new')?'NEW':m.classList.contains('res')?'RESTYLED':m.classList.contains('unc')?'UNCHANGED':'Later stage';
+    open(m.textContent.trim(), [[kind, m.getAttribute('data-note')||'']]); return; }
+  var o=e.target.closest('.shot .op'); if(o){ var s=o.closest('.shot'); s.classList.toggle('open'); o.textContent=s.classList.contains('open')?'Fold':'Full size'; }
+}, true);
+// tabs
+var tabs=$$('.tabs [role=tab]');
+function show(p, scrollTo){ tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p}); if(p==='asks') buildIndex(); try{localStorage.setItem('hl9d1-tab',p)}catch(e){}
+  if(scrollTo){ var el=document.getElementById(scrollTo); if(el) el.scrollIntoView({block:'start'}); } else window.scrollTo(0, $('.tabs').offsetTop - 4); }
+tabs.forEach(function(t){ t.addEventListener('click',function(){ show(t.getAttribute('data-pane')) }) });
+// theme for specimens
+function thm(v){ $$('.ak').forEach(function(a){ a.classList.toggle('dk', v==='dark') }); $$('[data-thm]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-thm')===v)) }); try{localStorage.setItem('hl9-thm',v)}catch(e){} }
+$$('[data-thm]').forEach(function(b){ b.addEventListener('click',function(){ thm(b.getAttribute('data-thm')) }) });
+// asks: persist
+var KEY='hl9d1-asks';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}') }catch(e){ return {} } }
+function save(){ var st={}; $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'); st[id]={c:$$('input[type=checkbox]',a).filter(function(i){return i.checked}).map(function(i){return i.value}), n:($('textarea',a)||{}).value||''} }); try{ localStorage.setItem(KEY, JSON.stringify(st)) }catch(e){} }
+(function restore(){ var st=load(); $$('.ask').forEach(function(a){ var id=a.getAttribute('data-ask'), v=st[id]; if(!v) return; $$('input[type=checkbox]',a).forEach(function(i){ i.checked = v.c.indexOf(i.value)>=0 }); var ta=$('textarea',a); if(ta) ta.value=v.n||''; }) })();
+document.addEventListener('change',function(e){ if(e.target.closest('.ask')) save() });
+document.addEventListener('input',function(e){ if(e.target.closest('.ask')) save() });
+function askTitle(a){ var h=$('h3',a); var no=$('.no',h); return {no:no?no.textContent.trim():a.getAttribute('data-ask'), t:h.textContent.replace(no?no.textContent:'','').trim()} }
+function buildIndex(){ var tb=$('#askIndex tbody'); tb.innerHTML=''; $$('.ask').forEach(function(a){ var T=askTitle(a), pane=a.closest('section.pane').getAttribute('data-pane'); var ch=$$('input:checked',a).map(function(i){return i.closest('label').textContent.trim()}); var tr=document.createElement('tr');
+  if(!a.id) a.id='ask-'+a.getAttribute('data-ask');
+  tr.innerHTML='<td><b>'+esc(T.no)+'</b> '+esc(T.t)+'</td><td><a href="#'+a.id+'" data-go="'+pane+'">'+(($('.tabs [data-pane='+pane+']')||{}).textContent||pane)+'</a></td><td>'+(ch.length?esc(ch.join(' + ')):'<span class="muted">not answered</span>')+'</td>'; tb.appendChild(tr); });
+  $$('[data-go]',tb).forEach(function(l){ l.addEventListener('click',function(e){ e.preventDefault(); show(l.getAttribute('data-go'), l.getAttribute('href').slice(1)) }) }); }
+$('#build').addEventListener('click',function(){ var L=['House league · Stage 9 · 9d-1 round · rulings ('+new Date().toISOString().slice(0,10)+')','']; $$('.ask').forEach(function(a){ var T=askTitle(a); var ch=$$('input:checked',a).map(function(i){return i.closest('label').textContent.trim()}); var n=(($('textarea',a)||{}).value||'').trim(); L.push(T.no+' '+T.t); L.push('  → '+(ch.length?ch.join(' + '):'(no answer)')); if(n) L.push('  note: '+n.replace(/\n+/g,' / ')); }); $('#out').value=L.join('\n'); buildIndex(); });
+$('#copy').addEventListener('click',function(){ var t=$('#out'); if(!t.value) $('#build').click(); var done=function(){ $('#copied').textContent='Copied' }; try{ navigator.clipboard.writeText(t.value).then(done, function(){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' }) }catch(e){ t.select(); $('#copied').textContent='Selected; press Ctrl+C' } });
+// desk drawings: scaled to fit, or true size
+var trueSize=false;
+function fitAll(){ $$('.dt-wrap').forEach(function(w){ var avail=w.parentElement.clientWidth||w.clientWidth; var z=trueSize?1:Math.min(1,avail/1440); w.style.setProperty('--z',z); w.classList.toggle('fit',!trueSize); }) }
+$$('[data-fit]').forEach(function(b){ b.addEventListener('click',function(){ trueSize=!trueSize; fitAll(); $$('[data-fit]').forEach(function(x){ x.textContent=trueSize?'Fit to width':'Show at true size' }); $$('.zl').forEach(function(z){ z.textContent=trueSize?'True size (1440 wide). Scroll sideways.':'Scaled to fit; use the button for true size.' }) }) });
+window.addEventListener('resize',fitAll);
+tabs.forEach(function(t){ t.addEventListener('click',function(){ setTimeout(fitAll,0) }) });
+// restore
+var p0='why', t0='warm'; try{ p0=localStorage.getItem('hl9d1-tab')||'why'; t0=localStorage.getItem('hl9-thm')||'warm' }catch(e){}
+var h=(location.hash||'').slice(1); if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(h)>=0) p0=h;
+thm(t0); tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p0))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p0}); if(p0==='asks') buildIndex();
+fitAll();
+})();
+</script>

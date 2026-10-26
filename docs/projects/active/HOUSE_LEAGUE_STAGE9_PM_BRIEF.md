@@ -37,6 +37,22 @@
 > Families window, already set to that season, with a choice of division, team, status or picked families; each season
 > gets its own three sends a day, and automatic notices never count. 9d-2 is the schedule. The email comes first because
 > the schedule's change notices go out through it. The 9d-1 drawing prompt is written.
+>
+> **9d-1 drawn 2026-10-26, asks open.** Drawings: https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB. A convenor or
+> registrar emails a season from the same window the club uses for Families, opened from the season. It lists only that
+> season's families and counts them as families, so siblings get one email, not one each. Each season shows how many of
+> its three emails are left, and its own sent history: typed sends, the team-publishing notices, and the old sends,
+> marked as counted per child. Recommended: the season's door never needs Families access, so an admin or registrar loses
+> nothing. It reaches every season status, including Registration closed and finished seasons. A message to one family
+> doesn't count, matching the club. **Ruled 2026-10-26, all twelve as recommended**; the limit is any 24 hours, the same
+> as the club's. The build prompt is written; the words go through /marketing at the start of the build, before any code.
+>
+> **9d-1 built 2026-10-26; walk owed.** One email window for a season: from its Email families page (now the list of what
+> went) or from Registrations, a convenor or registrar picks the whole season, a division, a team, a status or the families
+> they ticked, and each family gets one email. Each season has its own three emails in any 24 hours, apart from the club's;
+> a message to one family and the Publish teams emails never count. A stopped email can be finished for the families it
+> missed. The owner ruled during the build that "everyone in a season" means families with an active child, from Families
+> too. The walk is the next step.
 
 ## What this is
 

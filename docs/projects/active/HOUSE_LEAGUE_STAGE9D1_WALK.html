@@ -1,0 +1,248 @@
+<title>Season Email Walk</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 9d-1 · §388</span>
+    <h1>One email window for a season</h1>
+    <p class="sub">Written 2026-10-26. One purpose: a season emails its families through the club's one window — each family once, its own 3 emails in any 24 hours, the people who run the league and the registrar (never Families access needed), and a history that says what went.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Drawn on <a href="https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB">the 9d-1 drawings</a>; words in HOUSE_LEAGUE_STAGE9D1_COPY.md. Your rulings apply (plan §0g, 9d1·1–12) plus the build session's: <strong>"everyone in the season" is families with an active child, from both doors.</strong></p>
+    <p><strong>It passes when</strong> the season's window counts families with their children beside them (the Kims once), each season keeps its own 3 in any 24 hours apart from the club's, a message to one family and Publish teams never count, the registrar does it all without Families, the treasurer has no door, and the season's page lists what went.</p>
+    <p><strong>Dev sends no email</strong> (no provider key): every email "reaches" its families on dev, so steps read the window's result and the history instead of an inbox. <strong>Two things differ from the drawings:</strong> the allowance is the page's first line, not a subtitle (the admin header has no subtitle slot, ruling F3), and the history's footnote no longer says a status email "shows on the registration" (it doesn't). <strong>Not in this walk:</strong> 9d-2's schedule notices.</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> · <code>/dev-league-org/admin/house-league</code> · Families at <code>/dev-league-org/admin/families</code></dd>
+      <dt>Owner</dt><dd><code>league-owner@dev.local</code> · <code>devpass123</code> (an owner always opens Families)</dd>
+      <dt>Registrar</dt><dd><code>league-registrar@dev.local</code> · <code>devpass123</code> (no Families grant)</dd>
+      <dt>Club admin</dt><dd><code>league-clubadmin@dev.local</code> · <code>devpass123</code> (no Families grant)</dd>
+      <dt>Treasurer</dt><dd><code>league-treasurer@dev.local</code> · <code>devpass123</code></dd>
+      <dt>Seasons</dt><dd><strong>Dev House League 2026</strong> (Playing): 11 active children in 10 families (Ava and Henry Kim share one), Maya Singh to review, 7 ended. <strong>Draft Test 2027</strong> (Registration closed): 120 children, 101 families. <strong>Dev House League 2027</strong> (Registration open): 5 children, 3 families. <strong>Dev House League 2025</strong> (Finished): no families.</dd>
+      <dt>Restart</dt><dd>Restart the dev server before you start (new files, shared modules and migration 385): stop it, then <code>npm run dev</code>.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'house-league-9d1-email-walk-v1';
+  var O = 'Owner, computer', P = 'Owner, phone', R = 'Registrar, computer', A = 'Club admin, computer', T = 'Treasurer, computer';
+  var PARTS = [
+    { id: 'A', title: 'The season’s Email families page', steps: [
+      { who: O, do: 'Open House league › Dev House League 2026 › Email families (the season menu).', see: 'Eyebrow "Dev House League 2026", title "Email families", one lime "Email families" button top right. First line "Dev House League 2026 · up to 3 emails in any 24 hours". "No emails to this season’s families yet" with its sentence and the button. No old compose form, no "Back to compose".' },
+      { who: O, do: 'Open Dev House League 2025 › Email families.', see: '"No families in Dev House League 2025", no button, and the line "This season is finished. Its record is locked; you can still email its families."' }
+    ]},
+    { id: 'B', title: 'The whole season, each family once', steps: [
+      { who: O, do: 'On 2026, press Email families.', see: 'A window: eyebrow "Dev House League 2026", title "Email families", the statement naming the season. Who: "Everyone in the season · Families with an active child, each once · 10 families · 11 children", A division, A team, By status. Foot: "10 families get it (11 children). This season can send 3 emails in any 24 hours." and "Send to 10".' },
+      { who: O, do: 'Open "See who gets it".', see: 'Ten families, each once; "Ava and Henry Kim · {team}" is ONE line. Maya Singh (to review) is not in it.' },
+      { who: O, do: 'Open "See the email". Type a subject and message.', see: 'The sample carries your words and the footer "Sent by Dev League Org because your family is registered in Dev House League 2026."' },
+      { who: O, do: 'Press × with words typed.', see: '"Close without sending? What you typed won’t be kept." — Keep writing. Then press Send to 10.', },
+      { who: O, do: 'Read the result and the page.', see: 'The pill "Sent. Reached 10 of 10 families. This season has sent 1 of its 3 emails in the last 24 hours." The first line now "… · 1 of 3 emails sent in the last 24 hours". A row: Sent · your subject · "Everyone in the season" · you · "10 of 10".' },
+      { who: O, do: 'Open the row.', see: 'Sent, By, To, Going to 10, Reached 10 of 10, Opted out 0, Didn’t go 0, Head coaches copied 0, then "What it said" (your message).' }
+    ]},
+    { id: 'C', title: 'A division, a team, a status', steps: [
+      { who: O, do: 'Email families › A division.', see: 'Chips "U10 Division A · n", "Division B · n" (only divisions with a family). Nothing picked: the foot says "Pick a division." and no Send. Pick one: the count follows ("Counting who this reaches…" for a moment).' },
+      { who: O, do: 'Switch to A team.', see: 'Chips for published teams only, each with its families. Under them "Families with an active child on the team." If a division isn’t published, a line says "{Division}’s teams aren’t published yet…" with "Go to Teams & draft". An ended child is never counted.' },
+      { who: O, do: 'Pick a team.', see: '"Copy the team’s coaches · n coaches" UNTICKED, with "They get a copy as colleagues and aren’t counted as families." (only if the team has a coach with an address).' },
+      { who: O, do: 'Switch to By status.', see: 'Chips Active · 10, To review · 1, Ended · 7 (no Waitlist: nobody is on it). Pick To review: the window becomes "Message this family" for Maya Singh’s family (one family never counts). Close it.' }
+    ]},
+    { id: 'D', title: 'Ticked families and one family', steps: [
+      { who: O, do: 'On 2026 Registrations, tick three children of three families, press Email in the bulk bar.', see: 'Title "Email 3 families", Who fixed: "The 3 families you ticked" with "Chen (Liam) · …" (no Who choices). Foot counts 3 and the season’s allowance.' },
+      { who: O, do: 'Clear, tick Ava Kim and Henry Kim only, press Email.', see: 'Title "Message this family": "The Kim family · Ava and Henry · {address}", "You ticked 2 children of one family, so this is a message to that family. It doesn’t count toward the season’s 3." Send it.' },
+      { who: O, do: 'Read the pill and the Email families page.', see: '"Sent to the Kim family. It doesn’t count toward the season’s 3." The page: a row "A message to this family" · "The Kim family" · "1 family" — and the first line still "1 of 3 emails sent". Open it: "A message to one family keeps its date and who sent it, never its words."' },
+      { who: O, do: 'On a row’s ⋯ (any 2026 child), Email this family.', see: 'The same "Message this family" window for that child’s family.' }
+    ]},
+    { id: 'E', title: 'The allowance runs out, and comes back', steps: [
+      { who: O, do: 'Send two more whole-season emails on 2026 (wait a minute between them; a second press within 60 seconds says "This was just sent…").', see: 'After the 3rd, the first line reads "3 of 3 emails sent in the last 24 hours; the next can go at {time}" (or "tomorrow at …").' },
+      { who: O, do: 'Press Email families again.', see: 'The window opens on the refusal: "Dev House League 2026 has sent its 3 emails to families in the last 24 hours. The next can go at {time}. Automatic notices and a message to one family still go." No Send, only Cancel.' },
+      { who: O, do: 'Message one 2026 family from a row’s ⋯.', see: 'It still goes (a family’s own 3).' },
+      { who: O, do: 'Open Dev House League 2027 › Email families and send to everyone.', see: '"3 families get it (5 children). This season can send 3 emails in any 24 hours." It goes: each season has its own 3.' }
+    ]},
+    { id: 'F', title: 'A big season', steps: [
+      { who: O, do: 'Draft Test 2027 (Registration closed) › Email families › Everyone.', see: '"101 families · 120 children"; Send to 101 goes in two batches (the button says "Sending…" until both are done); "Reached 101 of 101 families."' }
+    ]},
+    { id: 'G', title: 'A stopped email', steps: [
+      { who: O, do: 'Ask Claude: "stop the last Draft Test 2027 email for the 9d-1 walk" (Claude marks it as a send the server never finished, with one family missed).', see: 'The row reads Stopped · "100 of 101".' },
+      { who: O, do: 'Open the row.', see: '"This email stopped partway. 1 family it hadn’t reached didn’t get it." and "Sending to the families it missed doesn’t count toward the season’s 3." with "Send to the 1 it missed". Press it: "Sent to the 1 it missed. Reached 101 of 101 families." The first line’s count did not move.' }
+    ]},
+    { id: 'H', title: 'Publish teams is Automatic', steps: [
+      { who: O, do: 'On a season with an unpublished division that has teams, publish it (Teams & draft › Publish teams). Then open that season’s Email families.', see: 'A row "Teams published: {division}" with an Automatic tag, To {division}, By you, Reached n of n. The allowance line did not move.' },
+      { who: O, do: 'Click the Automatic tag.', see: '"FieldLogicHQ sent this when {division}’s teams were published. Automatic emails don’t count toward the season’s 3." and "Open Teams & draft".' },
+      { who: O, do: 'Read the foot of the list.', see: '"Automatic emails to one family (accepted, waitlisted, declined) aren’t listed here. Each goes to the family when the child’s registration changes."' }
+    ]},
+    { id: 'I', title: 'Who can', steps: [
+      { who: R, do: 'As the registrar: open 2026 › Email families, then Registrations’ Tools › Email families, then a row’s ⋯ › Email this family.', see: 'All three work (window, Who list, history), on any season. There is NO Families in the registrar’s menu anywhere.' },
+      { who: A, do: 'As the club admin (no Families grant): open 2026 › Email families.', see: 'The page and window work. Families is not in the menu.' },
+      { who: T, do: 'As the treasurer: open 2026’s season menu and Registrations.', see: 'No Email families in the menu; no Email in Tools or on rows. Typing /seasons/{id}/notifications reads "Emailing this season’s families is for its league admins and registrar."' },
+      { who: P, do: 'On your phone, open 2026 › Email families, then the button "Email".', see: 'The first line without the season name; the window full-screen with the short statement "One email to each family you choose in this season…"; chips 44px tall; a refusal (if spent) at the end of the body with only Close.' }
+    ]},
+    { id: 'J', title: 'The Families side', steps: [
+      { who: O, do: 'Families › Emails › Email families › A house league season.', see: 'The picker lists every season with families, each with its state and count ("Draft Test 2027 · Registration closed · 101 families"). Under it: "Counts toward {season}’s 3 emails, not the club’s. To email a division, a team or a status, use the season’s own Email families." and "Open {season}".' },
+      { who: O, do: 'Pick Dev House League 2027 and send.', see: 'The foot says "Dev House League 2027 has sent 1 of its 3 emails in the last 24 hours." (its own 3, not the club’s). Afterwards the season’s own Email families page lists it.' },
+      { who: O, do: 'Pick Every family.', see: 'The foot: "The club can send 3 emails in any 24 hours." (the club’s 3, untouched by the season emails).' },
+      { who: O, do: 'Read Families › Emails.', see: 'Season emails named "Dev House League 2026 · Everyone in the season" etc.; a Season filter (All · Club-wide · each season) narrows the list. No Automatic rows here (they live on the season’s page).' }
+    ]},
+    { id: 'K', title: 'Earlier emails (optional)', steps: [
+      { who: O, do: 'Dev and prod have no emails from the old composer, so "Earlier emails" is hidden. To see it, ask Claude to add one old-log row to 2026, then reload the page.', see: 'A divider "Earlier emails · counted per child" under the list, the old row with To "All active registrants" (or "A division (which one wasn’t recorded)") and Reached "11 sent". It opens nothing.' }
+    ]}
+  ];
+
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['Season email walk §388 (2026-10-26)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
