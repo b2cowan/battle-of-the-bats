@@ -31,7 +31,12 @@
 > publish one division at a time. Each family gets one email (even if they unsubscribed from club news, because it is about
 > their own child), sees the team and coach on their status page, and each coach is invited to a page of their own with
 > their players and how to reach each family, never the Coaches Portal. The registrar reads the board but never a rating.
-> Draft mode and Randomize are gone. Owner walk §381 is owed.
+> Draft mode and Randomize are gone. Owner walk §381 passed 2026-10-26 (42 of 42); 9c is closed.
+>
+> **9d split in two (owner, 2026-10-26).** 9d-1 gives the club one place to email families: a season's email moves into the
+> Families window, already set to that season, with a choice of division, team, status or picked families; each season
+> gets its own three sends a day, and automatic notices never count. 9d-2 is the schedule. The email comes first because
+> the schedule's change notices go out through it. The 9d-1 drawing prompt is written.
 
 ## What this is
 
@@ -70,9 +75,13 @@ gets sign-ups and money ready for online payment, which is the stage after this 
    as a one-screen team page of their own; Publish teams tells families their child's team and coach; the status page shows
    the team. Success: a convenor can build and publish a division's teams from a phone, every family hears once per
    publish, and no coach sees another team, a rating or a fee.
-5. **9d · The schedule.** A real schedule generator. An honest public schedule. Families told about changes.
-6. **9e · Game day.** Standings that follow the sport's scoring rules, and scores entered by coaches.
-7. **9f · Season end.** Finishing a season, looking back at past seasons, and starting next season from this one.
+5. **9d-1 · One email composer.** A season's family email moves into the Families window, already set to the season, with
+   division, team, status and picked-family choices, its own three sends a day, and its own sent history. The old
+   Notifications page and "Message registrants" window go. Success: one place to email families, and a registrar can still
+   email a season without seeing the club's Families book.
+6. **9d-2 · The schedule.** A real schedule generator. An honest public schedule. Families told about changes.
+7. **9e · Game day.** Standings that follow the sport's scoring rules, and scores entered by coaches.
+8. **9f · Season end.** Finishing a season, looking back at past seasons, and starting next season from this one.
 
 ## Who it affects
 
