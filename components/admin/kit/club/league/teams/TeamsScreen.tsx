@@ -18,7 +18,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
-import { Check, MoreHorizontal, Plus } from 'lucide-react';
+import { Check, ChevronUp, MoreHorizontal, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -30,7 +30,6 @@ import HubTabBar from '@/components/shared/HubTabBar';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { dayOf } from './api';
-import { teamAverage } from '@/lib/house-league-draft';
 import { divisionState, stateWords } from '@/lib/house-league-teams-words';
 import { TEAMS_WORDS as W } from '@/lib/house-league-teams-screen-words';
 import ConfirmWindow from '../registrations/ConfirmWindow';
@@ -57,6 +56,24 @@ type Act =
 
 interface SeasonLite { id: string; name: string; status: string }
 
+type StepKey = 'teams' | 'ratings' | 'draft' | 'publish';
+
+/**
+ * A12: a closed steps drawer stays closed for this person on this division until they open it again — browser storage,
+ * one key a division. Every read and write is wrapped: a private window, blocked storage or a thrown accessor means the
+ * drawer is open, which loses nothing.
+ */
+const stepsKey = (divisionId: string) => `fieldlogic:teams-steps-closed:${divisionId}`;
+function readStepsClosed(divisionId: string): boolean {
+  try { return typeof window !== 'undefined' && window.localStorage.getItem(stepsKey(divisionId)) === '1'; } catch { return false; }
+}
+function writeStepsClosed(divisionId: string, closed: boolean) {
+  try {
+    if (closed) window.localStorage.setItem(stepsKey(divisionId), '1');
+    else window.localStorage.removeItem(stepsKey(divisionId));
+  } catch { /* the drawer still folds for this visit */ }
+}
+
 export default function TeamsScreen() {
   const { currentOrg, loading: orgLoading } = useOrg();
   const { seasonId } = useParams<{ seasonId: string }>();
@@ -77,6 +94,13 @@ export default function TeamsScreen() {
   const [whyOpen, setWhyOpen] = useState(false);
   const [lastPublish, setLastPublish] = useState<PublishOutcome | null>(null);
   const [resending, setResending] = useState(false);
+  // This visit's presses of Hide/Show steps, a division each; a division not pressed yet reads what the browser kept.
+  const [stepsPressed, setStepsPressed] = useState<Record<string, boolean>>({});
+  const stepsClosedFor = (divisionId: string) => stepsPressed[divisionId] ?? readStepsClosed(divisionId);
+  const setStepsClosed = (divisionId: string, closed: boolean) => {
+    setStepsPressed(prev => ({ ...prev, [divisionId]: closed }));
+    writeStepsClosed(divisionId, closed);
+  };
 
   const gate = useHouseLeagueAccess();
   const access = useSeasonAccess(season);
@@ -215,7 +239,7 @@ export default function TeamsScreen() {
   // ── The steps ────────────────────────────────────────────────────────────────────────────────
   const teamNames = board.teams.map(t => t.name);
   const noCoach = board.teams.filter(t => t.coaches.length === 0).map(t => t.name);
-  const steps: { key: string; done: boolean; title: string; line: string; button?: React.ReactNode }[] = [
+  const steps: { key: StepKey; done: boolean; title: string; line: string; button?: React.ReactNode }[] = [
     {
       key: 'teams', done: board.teams.length > 0, title: W.stepTitle.teams,
       line: board.teams.length ? W.step.teams(teamNames, noCoach) : W.step.teamsNone,
@@ -226,7 +250,7 @@ export default function TeamsScreen() {
       ) : undefined,
     },
     ...(rights.seeRatings ? [{
-      key: 'ratings', done: players.length > 0 && rated === players.length, title: W.stepTitle.ratings,
+      key: 'ratings' as const, done: players.length > 0 && rated === players.length, title: W.stepTitle.ratings,
       line: players.length === 0 ? W.step.ratingsEmpty(tab?.capacity ?? null) : rated === 0 ? W.step.ratingsNone : W.step.ratings(rated, players.length),
       button: rights.rate && players.length > 0 && !published ? (
         <button type="button" className="btn btn-outline" onClick={() => setAct({ kind: 'rate' })}>{isPhone ? W.button.ratePhone : W.button.rate}</button>
@@ -239,6 +263,13 @@ export default function TeamsScreen() {
     { key: 'publish', done: published, title: W.stepTitle.publish, line: published ? words.says : W.step.publish(familyCount) },
   ];
   const outLine = W.notDrafted(board.notDrafted.review.length, board.notDrafted.waitlisted);
+  // The drawer's closed line: how many steps are done, and the first one that isn't. Ratings is never "next" once the
+  // draft has run (rating is optional: an unrated player counts as a 3), so a drafted division points at Publish.
+  const doneCount = steps.filter(s => s.done).length;
+  const nextStep = steps.find(s => !s.done && !(s.key === 'ratings' && (placed.length > 0 || players.length === 0))) ?? null;
+  // Only a button that lives nowhere else: Create teams and Rate players. Run the draft and Publish sit in the head.
+  const nextButton = nextStep && (nextStep.key === 'teams' || nextStep.key === 'ratings') ? nextStep.button : null;
+  const stepsClosed = stepsClosedFor(division.id);
 
   // ── The result after publishing (copy §7.2) ──────────────────────────────────────────────────
   const invitedNow = lastPublish?.invited ?? board.teams.flatMap(t => t.coaches
@@ -289,31 +320,46 @@ export default function TeamsScreen() {
           </>
         )}
 
-        <ol className={css.steps}>
-          {steps.map((s, i) => (
-            <li key={s.key} className={css.step}>
-              <span className={`${css.stepMark}${s.done ? ` ${css.stepDone}` : ''}`} aria-hidden>{s.done ? <Check size={14} /> : i + 1}</span>
-              <div className={css.stepText}>
-                <span className={css.stepTitle}>{s.title}</span>
-                <span className={css.stepLine}>{s.line}</span>
-              </div>
-              {s.button}
-            </li>
-          ))}
-        </ol>
+        {/* The steps are the way TO a published division. Once it is published every button is gone and each line repeats the cards or the notice above, so the board takes the room (owner 2026-10-26). */}
+        {!published && (
+          <div className={css.drawer}>
+            {/* The drawer (owner, round 3; A12): Hide steps folds it to one line that keeps the progress, the next step and
+                that step's own button when it lives nowhere else (Run the draft and Publish teams sit in the head). */}
+            <div className={css.drawerHead}>
+              <span className={css.drawerTitle}>{W.drawer.steps}</span>
+              <span className={css.drawerProgress}>{W.drawer.done(doneCount, steps.length)}</span>
+              {stepsClosed && nextStep && <span className={css.drawerNext}>· {W.drawer.next(W.drawer.nextPhrase[nextStep.key])}</span>}
+              <span className={css.spacer} />
+              {stepsClosed && nextButton}
+              <button type="button" className={css.drawerToggle} aria-expanded={!stepsClosed} aria-controls={stepsClosed ? undefined : 'teams-steps'}
+                onClick={() => setStepsClosed(division.id, !stepsClosed)}>
+                {stepsClosed ? W.drawer.show : W.drawer.hide}
+                <ChevronUp size={16} aria-hidden className={stepsClosed ? css.drawerFlip : undefined} />
+              </button>
+            </div>
+            {!stepsClosed && (
+              <ol id="teams-steps" className={css.steps}>
+                {steps.map((s, i) => (
+                  <li key={s.key} className={css.step}>
+                    <span className={`${css.stepMark}${s.done ? ` ${css.stepDone}` : ''}`} aria-hidden>{s.done ? <Check size={14} /> : i + 1}</span>
+                    <div className={css.stepText}>
+                      <span className={css.stepTitle}>{s.title}</span>
+                      <span className={css.stepLine}>{s.line}</span>
+                    </div>
+                    {s.button}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        )}
         {outLine && (
           <p className={css.quiet}>{outLine} {board.notDrafted.review.length > 0 && <Link href={registrationsHref} className={ck.link}>{W.reviewLink}</Link>}</p>
         )}
 
-        {rights.seeRatings && placed.length > 0 && (
-          <p className={css.balance}>
-            <span>{W.balance.avg} <b>{board.teams.map(t => {
-              const avg = teamAverage(players.filter(p => p.teamId === t.id).map(p => ({ rating: ratings.get(p.id) ?? null })));
-              return `${t.name} ${avg == null ? '–' : avg.toFixed(1)}`;
-            }).join(' · ')}</b></span>
-            <span>{W.balance.sizes} <b>{board.teams.map(t => players.filter(p => p.teamId === t.id).length).join(' and ')}</b></span>
-            {moves.length > 0 && <span>{W.balance.moved} <b>{moves.length}</b></span>}
-          </p>
+        {/* A10: the averages and sizes live on each card's head now; this line keeps only the moves by hand. */}
+        {rights.seeRatings && moves.length > 0 && (
+          <p className={css.balance}><span>{W.balance.moved} <b>{moves.length}</b></span></p>
         )}
 
         {board.teams.length > 0 && (
@@ -322,6 +368,9 @@ export default function TeamsScreen() {
             teams={board.teams}
             players={players}
             ratings={ratings}
+            notes={read.notes ?? null}
+            divisionName={division.name}
+            paymentsHref={`${base}/registrations?tab=active`}
             left={board.left}
             published={published}
             rights={rights}

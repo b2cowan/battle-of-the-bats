@@ -88,6 +88,7 @@ const WINDOWS: Record<string, { layers: string[] } | { notAForm: string }> = {
   'components/admin/kit/club/KitDialog.tsx': { layers: ['kitForm'] },
   'components/admin/kit/club/money/AllocationWindow.tsx': { notAForm: 'reads its KitDialog (`closest(\'[role="dialog"]\')`); draws none' },
   // (MoneyKit.tsx left 2026-10-19: FormError is KitDialog's own refusal line now, `DialogReason`, One Window 2b.)
+  'components/admin/kit/club/league/teams/TeamsBoard.tsx': { notAForm: 'a row mark\'s READ-ONLY window (a family\'s children, a sign-up note, an amount owing): a popover at a desk, a SheetFrame menu on a phone; it takes no input' },
   'components/admin/tournament/PrintedPage.tsx': { notAForm: 'a print-only portal; never on screen' },
   'components/admin/tournament/ReorderList.tsx': { notAForm: 'a MENU: the row\'s options (move up, move down), a SheetFrame menu on a phone' },
   // (TournamentAdminUI.tsx left 2026-10-20: its status legend popover went with admin type sweep Stage 5.)

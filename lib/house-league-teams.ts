@@ -54,7 +54,9 @@ export interface BoardPlayer {
   /** What they still owe (staff only), or null when nothing is owed. */
   owes: number | null;
   askedToWithdrawAt: string | null;
+  guardianFirstName: string;
   guardianLastName: string;
+  /** Trimmed and lower-cased: the household key (a family is one guardian email, never a surname). */
   guardianEmail: string;
 }
 
@@ -132,7 +134,7 @@ export async function readDivisionTabs(seasonId: string): Promise<DivisionTab[]>
 
 const BOARD_REG_COLUMNS =
   'id, status, player_first_name, player_last_name, player_date_of_birth, team_id, team_locked_at, draft_team_id, '
-  + 'previous_team_id, team_changed_at, fee_amount, withdraw_requested_at, guardian_last_name, guardian_email';
+  + 'previous_team_id, team_changed_at, fee_amount, withdraw_requested_at, guardian_first_name, guardian_last_name, guardian_email';
 
 /** One division's board. The season and division are the caller's, already proven to be this org's. */
 export async function readDivisionBoard(
@@ -166,7 +168,7 @@ export async function readDivisionBoard(
     id: string; status: string; player_first_name: string; player_last_name: string; player_date_of_birth: string | null;
     team_id: string | null; team_locked_at: string | null; draft_team_id: string | null; previous_team_id: string | null;
     team_changed_at: string | null; fee_amount: number | null; withdraw_requested_at: string | null;
-    guardian_last_name: string | null; guardian_email: string | null;
+    guardian_first_name: string | null; guardian_last_name: string | null; guardian_email: string | null;
   }[];
   const accepted = regs.filter(r => r.status === 'active');
   const lines = await loadRegistrationMoneyLines(accepted.map(r => r.id));
@@ -180,7 +182,7 @@ export async function readDivisionBoard(
       age: ageOn(r.player_date_of_birth, today),
       teamId: r.team_id, locked: !!r.team_locked_at, draftTeamId: r.draft_team_id,
       owes: owes > 0 ? owes : null, askedToWithdrawAt: r.withdraw_requested_at,
-      guardianLastName: r.guardian_last_name ?? '', guardianEmail: (r.guardian_email ?? '').trim().toLowerCase(),
+      guardianFirstName: r.guardian_first_name ?? '', guardianLastName: r.guardian_last_name ?? '', guardianEmail: (r.guardian_email ?? '').trim().toLowerCase(),
     };
   });
 
@@ -218,6 +220,24 @@ export async function readDivisionBoard(
     left,
     emails,
   };
+}
+
+/**
+ * The families' sign-up notes for one division's accepted players (A8), as id → note, blank notes left out. NOT part of
+ * the board: the draft and Publish read `readDivisionBoard` too, and a note goes only to a reader who can already open
+ * that registration. The board route adds it behind the same gate the registrations read uses;
+ * tests/unit/house-league-board-notes-guard.test.ts holds both ends.
+ */
+export async function readBoardNotes(seasonId: string, divisionId: string): Promise<Record<string, string>> {
+  const { data, error } = await supabaseAdmin.from('league_registrations').select('id, player_notes')
+    .eq('season_id', seasonId).eq('division_id', divisionId).eq('status', 'active');
+  if (error) throw new Error(`Couldn't read the notes: ${error.message}`);
+  const out: Record<string, string> = {};
+  for (const r of (data ?? []) as { id: string; player_notes: string | null }[]) {
+    const note = (r.player_notes ?? '').trim();
+    if (note) out[r.id] = note;
+  }
+  return out;
 }
 
 interface CoachRow {

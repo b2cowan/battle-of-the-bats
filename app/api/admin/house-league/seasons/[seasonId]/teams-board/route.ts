@@ -4,7 +4,7 @@ import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { houseLeagueAccess } from '@/lib/house-league-access';
 import { getLeagueSeasonById } from '@/lib/db';
 import { divisionInSeason } from '@/lib/league-season-scope';
-import { readDivisionBoard, readDivisionTabs } from '@/lib/house-league-teams';
+import { readBoardNotes, readDivisionBoard, readDivisionTabs } from '@/lib/house-league-teams';
 import { getRatings } from '@/lib/house-league-ratings';
 import { withObservability } from '@/lib/observability';
 
@@ -35,5 +35,12 @@ export const GET = withObservability(async (req: Request,
   if (board && access.seeRatings && !houseLeagueRefusal(ctx, 'seeRatings', season)) {
     ratings = Object.fromEntries(await getRatings(seasonId, board.players.map(p => p.id)));
   }
-  return NextResponse.json({ tabs, board, ...(ratings ? { ratings } : {}) });
+  // A8: the families' sign-up notes, only for a reader who can already open the registration — the registrations read's
+  // own gate, asked by name (tests/unit/house-league-board-notes-guard.test.ts holds the two together). Notes can be
+  // medical; a reader the gate refuses gets no `notes` key at all.
+  let notes: Record<string, string> | undefined;
+  if (board && !houseLeagueRefusal(ctx, 'read')) {
+    notes = await readBoardNotes(seasonId, board.division.id);
+  }
+  return NextResponse.json({ tabs, board, ...(ratings ? { ratings } : {}), ...(notes ? { notes } : {}) });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/teams-board' });

@@ -16,6 +16,8 @@ export interface BoardRead {
   board: DivisionBoard | null;
   /** Present only for a reader the gate lets see ratings (9c·2a). */
   ratings?: Record<string, number>;
+  /** The families' sign-up notes: present only for a reader who can open registrations (A8). */
+  notes?: Record<string, string>;
 }
 
 export type Sent<T = Record<string, unknown>> =
