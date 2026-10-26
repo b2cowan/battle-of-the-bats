@@ -541,11 +541,18 @@ const onlinePaymentNotRecorded: Resolver = async rows => {
   return out;
 };
 
-/** A refund that could not reach the card (Stage 12a) — waits until the payment is refunded (again, or another way). */
+/** A refund that could not reach the card (Stage 12a) — waits until the payment is refunded (again, or another way).
+ *  A house-league one (12b, `refundId`) waits on ITS refund: booked when Stripe accepted it, done once sent another way. */
 const cardRefundFailed: Resolver = async rows => {
   const out = new Map<string, Verdict>();
-  const byId = new Map((await onlinePayments(rows)).map(p => [p.id, p]));
+  const refundIds = uniq(rows.map(r => meta(r, 'refundId')));
+  const refundDone = new Set(refundIds.length
+    ? (await rowsIn<{ id: string; status: string }>('online_payment_refunds', 'id, status', 'id', refundIds)).filter(f => f.status === 'succeeded').map(f => f.id)
+    : []);
+  const byId = new Map((await onlinePayments(rows.filter(r => !meta(r, 'refundId')))).map(p => [p.id, p]));
   for (const r of rows) {
+    const refundId = meta(r, 'refundId');
+    if (refundId) { out.set(r.id, refundDone.has(refundId) ? said(W.refundRecorded) : 'waiting'); continue; }
     const id = meta(r, 'onlinePaymentId');
     if (!id) continue;
     const p = byId.get(id);

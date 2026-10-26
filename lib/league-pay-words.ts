@@ -56,6 +56,15 @@ export const LEAGUE_PAY_WORDS = {
     otherWays: (how: string) => `Or pay another way: ${how}`,
     reference: (ref: string) => `Reference ${ref}`,
   },
+  // §6.3 · the refund email for a price correction (an ending's refund rides in the ending's own email)
+  refundEmail: {
+    subject: (club: string) => `Refund from ${club}`,
+    leadPart: (amount: string, child: string, season: string) => `${amount} of ${possessive(child)} registration fee for ${season} was refunded.`,
+    priceChanged: (from: string, to: string) => `The price changed from ${from} to ${to}.`,
+    reason: (club: string, why: string) => `${possessive(club)} reason: ${why}`,
+    amount: (amount: string) => `${amount} is on its way back to the card. It takes 5 to 10 business days to appear.`,
+    questions: (contact: string) => `Questions: ${contact}.`,
+  },
   // §3 · the emails' Pay now (while the club takes payments)
   mail: {
     payButton: 'Pay now',

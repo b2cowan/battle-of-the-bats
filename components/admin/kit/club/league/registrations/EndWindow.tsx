@@ -9,15 +9,22 @@
  *
  * Who is told (⚖ a change that tells families is held until the button, and the button names it): Decline and Release email
  * the family, with the note typed here; Withdraw emails ONLY when money moved. The window says which, live.
+ *
+ * 12b (drawn m3, copy §6.1): a child paid by card offers "Refund to the card" (all of what is left, and A2's box for the
+ * processing fee while the family paid it — on when the club declines, off when the family leaves), "Refund part of it"
+ * (an amount and a reason; never the fee) or "Kept by the club". The card refund and the ending are one act: Stripe
+ * first, the book with it, then the ending; a refusal changes nothing. A child paid partly by hand keeps today's choices.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
+import { repKit } from '../../RepKit';
 import { DayField, FormError, MethodField, TextField, moneyKit } from '../../money/MoneyKit';
 import { END_WORDS, MONEY_REFUSAL, methodInBrackets, type EndMode } from '@/lib/house-league-money-words';
 import { formatLeagueMoney, lastPayment, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
 import { endWaitlistLine, guardianName, refundDayError, regDay } from '@/lib/house-league-registrations';
 import type { DuesPaymentMethod, LeagueRegistration } from '@/lib/types';
+import { cardLabel } from '@/lib/online-payment-words';
 import { patchRegistration } from './api';
 import css from './Registrations.module.css';
 
@@ -50,9 +57,30 @@ export default function EndWindow({
   const last = lastPayment(lines);
   const payments = lines.filter(l => l.status === 'posted' && l.dir === 'in').length;
   const amount = formatLeagueMoney(received);
+  // 12b: every payment for this child came by card (only the card landing writes 'online_card'), so the money goes back
+  // to the card. The shares still refundable are read from the server (card, fee share, what is left).
+  const allCard = hasMoney && lines.filter(l => l.status === 'posted' && l.dir === 'in').every(l => l.method === 'online_card');
+  type Share = { itemId: string; leftCents: number; feeShareCents: number; untouched: boolean; familyPaidFee: boolean; brand: string | null; last4: string | null };
+  const [shares, setShares] = useState<Share[] | null>(null);
+  useEffect(() => {
+    if (!allCard) return;
+    let live = true;
+    void fetch(`/api/admin/house-league/seasons/${seasonId}/registrations/${reg.id}${orgQuery}`, { credentials: 'same-origin' })
+      .then(r => r.json()).then(d => { if (live) setShares((d?.cardShares ?? []) as Share[]); }).catch(() => { if (live) setShares([]); });
+    return () => { live = false; };
+  }, [allCard, seasonId, reg.id, orgQuery]);
+  const card = allCard && shares && shares.length > 0 ? shares : null;
+  const cardLeftCents = card ? card.reduce((sum, x) => sum + x.leftCents, 0) : 0;
+  const newest = card?.[0] ?? null;
+  // A2's box: a FULL refund, every share untouched, while the family paid the fee (owner §0e).
+  const feeCents = card && card.every(x => x.untouched && x.familyPaidFee) ? card.reduce((sum, x) => sum + x.feeShareCents, 0) : 0;
+  const clubEnding = mode !== 'withdrawn';
 
   // Nothing is picked (owner 2026-10-25): the primary waits for a choice.
-  const [answer, setAnswer] = useState<'refunded' | 'kept' | null>(null);
+  const [answer, setAnswer] = useState<'refunded' | 'kept' | 'card' | 'cardPart' | null>(null);
+  const [feeOn, setFeeOn] = useState(clubEnding);
+  const [partAmount, setPartAmount] = useState('');
+  const [partReason, setPartReason] = useState('');
   const [day, setDay] = useState(today);
   const [method, setMethod] = useState<DuesPaymentMethod | ''>('');
   const [keptReason, setKeptReason] = useState('');
@@ -63,17 +91,21 @@ export default function EndWindow({
   const tellsFamily = mode !== 'withdrawn';
   const lastWords = last ? { day: regDay(last.day, today), how: methodInBrackets(last.method) } : { day: '', how: '' };
   const refundedHow = methodInBrackets(method || null);
+  const cardBackCents = answer === 'card' ? cardLeftCents + (feeOn ? feeCents : 0) : answer === 'cardPart' ? Math.round(Number(partAmount || 0) * 100) : 0;
   const hint = !hasMoney || !answer
     ? END_WORDS.hintPlain[mode]
+    : answer === 'card' || answer === 'cardPart'
+      ? END_WORDS.hintCard(mode, name, formatLeagueMoney(cardBackCents / 100))
     : answer === 'refunded'
       ? END_WORDS.hintRefunded(mode, name, amount, regDay(day, today), refundedHow)
       : END_WORDS.hintKept(mode, name, amount);
   const waitlistLine = endWaitlistLine(reg, regs, autoPromote);
   const needsChoice = hasMoney && !answer;
   const foot = !hasMoney ? null
-    : answer === 'refunded' ? END_WORDS.footRefunded(amount)
+    : answer === 'refunded' || answer === 'card' ? END_WORDS.footRefunded(amount)
       : answer === 'kept' ? END_WORDS.footKept(amount)
-        : END_WORDS.footChoose(amount);
+        : answer === 'cardPart' ? null
+          : END_WORDS.footChoose(amount);
 
   async function go() {
     if (busy || needsChoice) return;
@@ -82,6 +114,12 @@ export default function EndWindow({
       if (dayError) { setError(dayError); return; }
     }
     if (hasMoney && answer === 'kept' && !keptReason.trim()) { setError(MONEY_REFUSAL.keptReason(amount)); return; }
+    if (answer === 'cardPart') {
+      const cents = Math.round(Number(partAmount) * 100);
+      const leftCents = newest?.leftCents ?? 0;
+      if (!Number.isFinite(cents) || cents <= 0 || cents > leftCents) { setError(END_WORDS.cardPartAmountError(formatLeagueMoney(leftCents / 100))); return; }
+      if (!partReason.trim()) { setError(END_WORDS.cardPartReasonError); return; }
+    }
     setBusy(true); setError('');
     const body: Record<string, unknown> = {
       status: mode === 'declined' ? 'declined' : 'withdrawn',
@@ -89,6 +127,8 @@ export default function EndWindow({
       ...(tellsFamily && note.trim() ? { familyNote: note.trim() } : {}),
       ...(hasMoney && answer === 'refunded' ? { money: { answer: 'refunded', day, method: method || null } } : {}),
       ...(hasMoney && answer === 'kept' ? { money: { answer: 'kept', reason: keptReason.trim() } } : {}),
+      ...(answer === 'card' ? { money: { answer: 'card', feeIncluded: feeCents > 0 && feeOn, note: note.trim() || null } } : {}),
+      ...(answer === 'cardPart' ? { money: { answer: 'card', amount: Number(partAmount), partialReason: partReason.trim(), note: note.trim() || null } } : {}),
     };
     const r = await patchRegistration(orgQuery, seasonId, reg.id, body);
     if (!r.ok) {
@@ -101,6 +141,7 @@ export default function EndWindow({
     const parts = [END_WORDS.done[mode](name)];
     if (hasMoney && answer === 'refunded') parts.push(END_WORDS.done.refunded(amount));
     if (hasMoney && answer === 'kept') parts.push(END_WORDS.done.kept(amount));
+    if (answer === 'card' || answer === 'cardPart') parts.push(END_WORDS.doneCard(formatLeagueMoney(cardBackCents / 100)));
     if (r.promoted) parts.push(END_WORDS.done.moved(r.promoted.playerFirstName));
     onDone({ mode, said: parts.join(' ') }, r.registration, r.promoted);
   }
@@ -113,14 +154,14 @@ export default function EndWindow({
       title={END_WORDS.title(mode, name)}
       onClose={onClose}
       busy={busy}
-      dirty={note.trim() !== '' || keptReason.trim() !== ''}
+      dirty={note.trim() !== '' || keptReason.trim() !== '' || partReason.trim() !== ''}
       footerStart={foot ? <span>{foot}</span> : undefined}
       footer={(
         <>
           <DialogCancel>{END_WORDS.cancel}</DialogCancel>
           {!needsChoice && (
             <button type="button" className="btn btn-lime" onClick={() => void go()} disabled={busy}>
-              {busy ? END_WORDS.working[mode] : END_WORDS.submit[mode]}
+              {busy ? END_WORDS.working[mode] : answer === 'card' || answer === 'cardPart' ? END_WORDS.submitCard[mode] : END_WORDS.submit[mode]}
             </button>
           )}
         </>
@@ -138,7 +179,68 @@ export default function EndWindow({
       </p>
       <FormError>{error}</FormError>
 
-      {hasMoney && (
+      {card && newest && (
+        <fieldset className={css.choices}>
+          <label className={css.choice}>
+            <input type="radio" name="regs-end-money" checked={answer === 'card'} onChange={() => setAnswer('card')} />
+            <span>
+              <span className={css.choiceName}>{END_WORDS.cardFull(cardLabel(newest.brand, newest.last4))}</span>
+              <span className={ck.hint}>{END_WORDS.cardArrives}</span>
+            </span>
+          </label>
+          {answer === 'card' && feeCents > 0 && (
+            <div className={css.choiceFields}>
+              <label className={css.choice}>
+                <input type="checkbox" checked={feeOn} onChange={e => setFeeOn(e.target.checked)} />
+                <span>
+                  <span className={css.choiceName}>{END_WORDS.feeBox(formatLeagueMoney(feeCents / 100), formatLeagueMoney((cardLeftCents + feeCents) / 100))}</span>
+                  <span className={ck.hint}>
+                    {feeOn
+                      ? (clubEnding ? END_WORDS.feeOnWhy(formatLeagueMoney(feeCents / 100)) : END_WORDS.feeOnChanged(formatLeagueMoney(feeCents / 100)))
+                      : END_WORDS.feeOffWhy(formatLeagueMoney(cardLeftCents / 100))}
+                  </span>
+                </span>
+              </label>
+            </div>
+          )}
+          <label className={css.choice}>
+            <input type="radio" name="regs-end-money" checked={answer === 'cardPart'} onChange={() => setAnswer('cardPart')} />
+            <span>
+              <span className={css.choiceName}>{END_WORDS.cardPart}</span>
+              <span className={ck.hint}>{END_WORDS.cardPartSub(formatLeagueMoney(newest.leftCents / 100))}</span>
+            </span>
+          </label>
+          {answer === 'cardPart' && (
+            <div className={css.choiceFields}>
+              <label className={ck.field} htmlFor="regs-end-part">
+                <span className={ck.label}>{END_WORDS.cardPartAmount}<span className={repKit.req} aria-hidden>*</span></span>
+                <input id="regs-end-part" className={ck.input} inputMode="decimal" value={partAmount} onChange={e => setPartAmount(e.target.value)} />
+              </label>
+              <TextField id="regs-end-part-reason" label={END_WORDS.cardPartReason} value={partReason} onChange={setPartReason}
+                required maxLength={500} hint={END_WORDS.cardPartReasonHint} />
+              {Number(partAmount) > 0 && Math.round(Number(partAmount) * 100) <= newest.leftCents && (
+                <p className={ck.hint}>{END_WORDS.cardPartRest(formatLeagueMoney((Math.round(received * 100) - Math.round(Number(partAmount) * 100)) / 100))}</p>
+              )}
+            </div>
+          )}
+          <label className={css.choice}>
+            <input type="radio" name="regs-end-money" checked={answer === 'kept'} onChange={() => setAnswer('kept')} />
+            <span>
+              <span className={css.choiceName}>{END_WORDS.kept}</span>
+              <span className={ck.hint}>{END_WORDS.keptSub}</span>
+            </span>
+          </label>
+          {answer === 'kept' && (
+            <div className={css.choiceFields}>
+              <TextField id="regs-end-reason-card" label={END_WORDS.keptReason} value={keptReason} onChange={setKeptReason}
+                required maxLength={200} hint={END_WORDS.keptReasonHint} />
+            </div>
+          )}
+        </fieldset>
+      )}
+
+      {/* Paid partly by hand, or nothing left to send back to the card: today's choices. */}
+      {hasMoney && (!allCard || (shares !== null && shares.length === 0)) && (
         <fieldset className={css.choices}>
           <label className={css.choice}>
             <input type="radio" name="regs-end-money" checked={answer === 'refunded'} onChange={() => setAnswer('refunded')} />

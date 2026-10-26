@@ -83,6 +83,10 @@ export const LEAGUE_ONLINE_NOTICE_WORDS = {
   unrecordedSignupTitle: 'A house-league card payment couldn’t be recorded',
   unrecordedSignupBody: (description: string, amount: string, reason: string) =>
     `${description}: ${amount} was paid by card, but it couldn’t go on the registrations (${reason}). The money is in the club’s Stripe balance. Refund it to the card.`,
+  // 12b copy §7: a child's card refund Stripe returned (it was booked when Stripe accepted it).
+  refundFailedTitle: (child: string) => `${possessive(child)} refund didn’t reach the card`,
+  refundFailedBody: (amount: string, card: string) =>
+    `${amount} to ${card} was returned, for example because the card was closed. Send the family the money another way, then record the refund.`,
   // Derived, until 12b's refunds land (Part 5): a refund started in Stripe's dashboard on a house-league payment.
   refundedInStripeBody: (description: string, amount: string) =>
     `${description}: ${amount} was refunded in Stripe. Record the refund by hand on Registrations so the season’s book matches.`,

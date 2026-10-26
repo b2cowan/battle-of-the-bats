@@ -1546,11 +1546,6 @@
   },
   {
     "tablename": "online_payment_refunds",
-    "indexname": "online_payment_refunds_one_full_refund",
-    "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_one_full_refund ON public.online_payment_refunds USING btree (online_payment_id) WHERE (status = ANY (ARRAY['pending'::text, 'succeeded'::text]))"
-  },
-  {
-    "tablename": "online_payment_refunds",
     "indexname": "online_payment_refunds_org_idx",
     "indexdef": "CREATE INDEX online_payment_refunds_org_idx ON public.online_payment_refunds USING btree (org_id)"
   },

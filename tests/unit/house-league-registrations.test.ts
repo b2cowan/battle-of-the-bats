@@ -153,7 +153,8 @@ describe('the screen is built on the kit, once', () => {
   it('the route is thin, and the ending starts with nothing picked', () => {
     assert.ok(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx').split('\n').length < 20);
     const end = readCode(`${dir}/EndWindow.tsx`);
-    assert.match(end, /useState<'refunded' \| 'kept' \| null>\(null\)/);
+    // 12b adds the card choices (Refund to the card, Refund part of it); nothing is picked still.
+    assert.match(end, /useState<'refunded' \| 'kept' \| 'card' \| 'cardPart' \| null>\(null\)/);
     assert.match(end, /\{!needsChoice && \(/, 'the primary is absent until Refunded or Kept is chosen');
   });
 });

@@ -9,6 +9,7 @@ DECLARE
   v_entry uuid; v_refusal text; v_promoted uuid; v_kept boolean; v_day date := DATE '2026-03-01';
   -- 12b (mig 374): card payments.
   v_s1 uuid; v_s2 uuid; v_s3 uuid; v_s4 uuid; v_s5 uuid; v_s6 uuid; v_s7 uuid; v_op uuid; v_res jsonb;
+  v_sib uuid; v_ref uuid; v_item uuid;
   v_today date := (now() AT TIME ZONE 'America/Toronto')::date;
 BEGIN
   INSERT INTO organizations(name, slug, plan_id)
@@ -321,6 +322,59 @@ BEGIN
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM LIKE 'FAIL%' THEN RAISE; END IF;
   END;
+
+  -- ── Stage 12b Part 5 (mig 375): refunds to the card, in full and in part ──────────────────────
+  SELECT i.online_payment_id INTO v_sib FROM online_payment_items i WHERE i.registration_id = v_s2;
+
+  -- T29 · a sibling's FULL refund with A2's box: the child's line goes out through the writer (online_card), the fee
+  -- share the club gives back is ONE "Payment processing" cost, the other sibling's money stays, the payment is partly refunded.
+  SELECT i.id INTO v_item FROM online_payment_items i WHERE i.registration_id = v_s2;
+  v_ref := online_payment_refund_open(v_sib, true, 'club_ended', NULL, NULL, 'app', v_item, NULL, NULL);
+  IF (SELECT amount FROM online_payment_refunds WHERE id = v_ref) <> 156.00 OR (SELECT fee_refunded FROM online_payment_refunds WHERE id = v_ref) <> 6.00 THEN
+    RAISE EXCEPTION 'FAIL T29: the full refund did not take the child''s share and fee'; END IF;
+  v_res := online_payment_league_refund_book(v_ref, 're_check_1', true);
+  IF league_reg_received(v_s2) <> 0 OR league_reg_received(v_s1) <> 150
+     OR (SELECT status FROM online_payments WHERE id = v_sib) <> 'partly_refunded'
+     OR (SELECT payment_method FROM accounting_entries WHERE id = (SELECT refund_entry_id FROM online_payment_refunds WHERE id = v_ref)) <> 'online_card'
+     OR (SELECT source_module FROM accounting_entries WHERE id = (SELECT processing_cost_entry_id FROM online_payment_refunds WHERE id = v_ref)) <> 'online_payment'
+     OR (SELECT status FROM online_payment_refunds WHERE id = v_ref) <> 'succeeded' THEN
+    RAISE EXCEPTION 'FAIL T29: a sibling''s card refund booked wrong (%)', v_res; END IF;
+  -- A replay books nothing twice.
+  PERFORM online_payment_league_refund_book(v_ref, 're_check_1', true);
+  IF (SELECT count(*) FROM accounting_entries WHERE source_module = 'league_registration' AND source_entity_id = v_s2 AND entry_type = 'expense') <> 1 THEN
+    RAISE EXCEPTION 'FAIL T29: a replayed refund wrote again'; END IF;
+
+  -- T30 · PART of a share: needs a reason, never takes the fee, and never more than is left.
+  SELECT i.id INTO v_item FROM online_payment_items i WHERE i.registration_id = v_s1;
+  BEGIN
+    PERFORM online_payment_refund_open(v_sib, true, 'family_left', NULL, NULL, 'app', v_item, 50, NULL);
+    RAISE EXCEPTION 'FAIL T30: a partial refund without a reason went through';
+  EXCEPTION WHEN raise_exception THEN IF SQLERRM LIKE 'FAIL%' THEN RAISE; END IF; END;
+  v_ref := online_payment_refund_open(v_sib, true, 'family_left', NULL, NULL, 'app', v_item, 50, 'Missed the first month');
+  IF (SELECT fee_refunded FROM online_payment_refunds WHERE id = v_ref) <> 0 OR (SELECT amount FROM online_payment_refunds WHERE id = v_ref) <> 50 THEN
+    RAISE EXCEPTION 'FAIL T30: a partial refund took the fee'; END IF;
+  PERFORM online_payment_league_refund_book(v_ref, NULL, false);
+  IF league_reg_received(v_s1) <> 100 OR (SELECT booked_at FROM online_payment_refunds WHERE id = v_ref) IS NULL
+     OR (SELECT status FROM online_payment_refunds WHERE id = v_ref) <> 'pending' THEN
+    RAISE EXCEPTION 'FAIL T30: a pending partial refund was not booked'; END IF;
+  BEGIN
+    PERFORM online_payment_refund_open(v_sib, false, 'family_left', NULL, NULL, 'app', v_item, 101, 'More than is left');
+    RAISE EXCEPTION 'FAIL T30: a refund above what is left went through';
+  EXCEPTION WHEN raise_exception THEN IF SQLERRM LIKE 'FAIL%' THEN RAISE; END IF; END;
+
+  -- T31 · a share that never landed (declined mid-checkout, T23): the refund returns Stripe's money, no line to reverse.
+  SELECT i.id, i.online_payment_id INTO v_item, v_op FROM online_payment_items i WHERE i.registration_id = v_s3;
+  v_ref := online_payment_refund_open(v_op, true, 'club_ended', NULL, NULL, 'app', v_item, NULL, NULL);
+  PERFORM online_payment_league_refund_book(v_ref, 're_check_3', true);
+  IF (SELECT refund_entry_id FROM online_payment_refunds WHERE id = v_ref) IS NOT NULL OR league_reg_received(v_s3) <> 0
+     OR (SELECT status FROM online_payments WHERE id = v_op) <> 'refunded' THEN
+    RAISE EXCEPTION 'FAIL T31: an unrecorded share''s refund wrote a line, or the payment did not read refunded'; END IF;
+
+  -- T32 · nobody books, marks or opens a house-league refund by hand: no child named, or another payment's child.
+  BEGIN
+    INSERT INTO online_payment_refunds(online_payment_id, org_id, amount) VALUES (v_sib, v_org, 10);
+    RAISE EXCEPTION 'FAIL T32: a house-league refund without a child went in';
+  EXCEPTION WHEN raise_exception THEN IF SQLERRM LIKE 'FAIL%' THEN RAISE; END IF; END;
 
   -- T28 · a child is in at most ONE open payment, whatever key opened it (two payable pages = paying twice).
   INSERT INTO league_registrations(org_id, season_id, division_id, player_first_name, player_last_name,

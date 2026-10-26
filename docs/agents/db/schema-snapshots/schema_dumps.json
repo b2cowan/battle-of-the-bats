@@ -8003,6 +8003,15 @@
         "column_default": null
       },
       {
+        "table_name": "online_payment_refunds",
+        "pos": 20,
+        "column_name": "booked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "online_payments",
         "pos": 1,
         "column_name": "id",
@@ -30951,11 +30960,6 @@
         "tablename": "online_payment_refunds",
         "indexname": "online_payment_refunds_item_idx",
         "indexdef": "CREATE INDEX online_payment_refunds_item_idx ON public.online_payment_refunds USING btree (online_payment_item_id) WHERE (online_payment_item_id IS NOT NULL)"
-      },
-      {
-        "tablename": "online_payment_refunds",
-        "indexname": "online_payment_refunds_one_full_refund",
-        "indexdef": "CREATE UNIQUE INDEX online_payment_refunds_one_full_refund ON public.online_payment_refunds USING btree (online_payment_id) WHERE (status = ANY (ARRAY['pending'::text, 'succeeded'::text]))"
       },
       {
         "tablename": "online_payment_refunds",

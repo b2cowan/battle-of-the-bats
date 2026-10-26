@@ -8,7 +8,7 @@ import { canConnectPayouts, canRefundLeagueOnline, canRefundOnline, isPayoutsTre
 import { factsFromStripe, factsFromRow, payoutsPath, payoutsState, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from './online-payment-account';
 import { retrieveAccount, retrieveCheckout, refundToCard } from './stripe-connect';
 import { sendOnlineReceiptOnce, sendRefundEmail } from './online-payment-receipt';
-import { LEAGUE_ONLINE_NOTICE_WORDS as LW, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney } from './online-payment-words';
+import { LEAGUE_ONLINE_NOTICE_WORDS as LW, cardLabel, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney } from './online-payment-words';
 import { formatStoredDate } from './timezone';
 import type { Organization, OrgRole } from './types';
 
@@ -389,7 +389,136 @@ export async function refundOnlinePayment(p: {
   return applyStripeRefund(refund, id, p.onlinePaymentId);
 }
 
+// ── A house-league refund (Stage 12b Part 5, mig 375) ───────────────────────────────────────────
+
+/** Stripe accepted (or finished) a house-league refund → its lines, once (`online_payment_league_refund_book`). */
+async function bookLeagueRefund(refundId: string, stripeRefundId: string | null, succeeded: boolean): Promise<void> {
+  const { error } = await supabaseAdmin.rpc('online_payment_league_refund_book', { p_refund: refundId, p_stripe_refund: stripeRefundId, p_succeeded: succeeded });
+  if (error) throw new Error(error.message);
+  const { data } = await supabaseAdmin.from('online_payment_refunds').select('org_id').eq('id', refundId).maybeSingle();
+  if (data) await clearSettled({ orgIds: [data.org_id as string], kinds: ['card_refund_failed', 'online_payment_not_recorded'] });
+}
+
+/** A booked house-league refund Stripe returned: the line stays (the club still owes it), the desk sends it another way. */
+async function leagueRefundFailed(refundId: string, stripeRefundId: string | null, reason: string): Promise<void> {
+  await supabaseAdmin.rpc('online_payment_refund_failed', { p_refund: refundId, p_stripe_refund: stripeRefundId, p_reason: reason });
+  const { data: r } = await supabaseAdmin.from('online_payment_refunds')
+    .select('online_payment_id, online_payment_item_id, amount, booked_at').eq('id', refundId).maybeSingle();
+  if (!r?.booked_at) return; // refused before it was booked: nothing changed, and the window said so
+  const [{ data: op }, { data: item }] = await Promise.all([
+    supabaseAdmin.from('online_payments').select('org_id, season_id, card_brand, card_last4').eq('id', r.online_payment_id as string).maybeSingle(),
+    supabaseAdmin.from('online_payment_items').select('description').eq('id', r.online_payment_item_id as string).maybeSingle(),
+  ]);
+  const org = op ? await orgById(op.org_id as string) : null;
+  if (!org || !op) return;
+  const child = ((item?.description as string | undefined) ?? '').split(' · ')[0];
+  await raiseOnce({
+    org, userIds: await leagueRefundPeople(org), eventType: 'card_refund_failed',
+    subjectKey: 'onlinePaymentItemId', subjectId: r.online_payment_item_id as string,
+    title: LW.refundFailedTitle(child),
+    body: LW.refundFailedBody(formatMoney(Number(r.amount)), cardLabel(op.card_brand as string | null, op.card_last4 as string | null)),
+    link: recordHref(org, { tournament_id: null, season_id: (op.season_id as string | null) ?? null }),
+    extra: { refundId },
+  });
+}
+
+export type LeagueCardRefund = { state: 'succeeded' | 'pending' | 'failed'; refundId: string; amountCents: number; message?: string };
+
+/**
+ * Refund one child's card payment, in full or in part (12b, L1; owner §0e: the fee share only on a full refund, with
+ * A2's box, while the family paid it). Opened in the database FIRST (the payment's lock caps it at what is left), then
+ * asked of Stripe, then BOOKED the moment Stripe accepts it — so the ending or the price correction that follows reads
+ * the money already back. A refusal changes nothing; a lost connection is pending and its event books it.
+ */
+export async function refundLeagueToCard(p: {
+  itemId: string; amount: number | null; feeIncluded: boolean; reason: 'club_ended' | 'family_left' | 'price_corrected' | null;
+  partialReason: string | null; note: string | null; actorId: string;
+}): Promise<LeagueCardRefund> {
+  const { data: item } = await supabaseAdmin.from('online_payment_items').select('online_payment_id').eq('id', p.itemId).maybeSingle();
+  if (!item) throw new Error('That card payment couldn’t be found.');
+  const onlinePaymentId = item.online_payment_id as string;
+  const { data: refundId, error } = await supabaseAdmin.rpc('online_payment_refund_open', {
+    p_online_payment: onlinePaymentId, p_fee_included: p.feeIncluded, p_reason: p.reason, p_note: p.note, p_actor: p.actorId, p_origin: 'app',
+    p_item: p.itemId, p_amount: p.amount, p_partial_reason: p.partialReason,
+  });
+  if (error) throw new Error(error.message);
+  const id = refundId as string;
+  const [{ data: op }, { data: r }] = await Promise.all([
+    supabaseAdmin.from('online_payments').select('stripe_account_id, stripe_payment_intent_id').eq('id', onlinePaymentId).single(),
+    supabaseAdmin.from('online_payment_refunds').select('amount').eq('id', id).single(),
+  ]);
+  const amountCents = Math.round(Number(r!.amount) * 100);
+  let refund: Stripe.Refund;
+  try {
+    refund = await refundToCard({
+      accountId: op!.stripe_account_id as string, paymentIntentId: op!.stripe_payment_intent_id as string,
+      amountCents, refundId: id, metadata: { online_payment_id: onlinePaymentId, refund_id: id },
+    });
+  } catch (e) {
+    const type = (e as { type?: string } | null)?.type;
+    if (type === 'StripeConnectionError' || type === 'StripeAPIError') return { state: 'pending', refundId: id, amountCents };
+    const message = e instanceof Error ? e.message : 'Stripe refused the refund';
+    await leagueRefundFailed(id, null, message);
+    return { state: 'failed', refundId: id, amountCents, message };
+  }
+  await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id, updated_at: new Date().toISOString() }).eq('id', id);
+  if (refund.status === 'failed' || refund.status === 'canceled') {
+    await leagueRefundFailed(id, refund.id, refund.failure_reason ?? refund.status);
+    return { state: 'failed', refundId: id, amountCents, message: refund.failure_reason ?? refund.status };
+  }
+  await bookLeagueRefund(id, refund.id, refund.status === 'succeeded');
+  return { state: refund.status === 'succeeded' ? 'succeeded' : 'pending', refundId: id, amountCents };
+}
+
+/** A house-league refund Stripe returned, sent another way by the club: the booked refund is marked done. */
+export async function resolveLeagueRefundAnotherWay(refundId: string, actorId: string): Promise<void> {
+  const { error } = await supabaseAdmin.rpc('online_payment_league_refund_resolve', { p_refund: refundId, p_actor: actorId });
+  if (error) throw new Error(error.message);
+  const { data } = await supabaseAdmin.from('online_payment_refunds').select('org_id').eq('id', refundId).maybeSingle();
+  if (data) await clearSettled({ orgIds: [data.org_id as string], kinds: ['card_refund_failed'] });
+}
+
+/**
+ * The child's card shares still refundable, newest first (the ending window's "Refund to the card"; the price
+ * correction). A share that never landed is the Needs-attention item's to refund, not the child's.
+ */
+export async function leagueCardShares(registrationId: string): Promise<Array<{
+  itemId: string; leftCents: number; feeShareCents: number; untouched: boolean; familyPaidFee: boolean; brand: string | null; last4: string | null;
+}>> {
+  const { data: items } = await supabaseAdmin.from('online_payment_items')
+    .select('id, amount, fee_share, created_at, online_payments!inner(fee_payer, card_brand, card_last4, status)')
+    .eq('registration_id', registrationId).not('entry_id', 'is', null).order('created_at', { ascending: false });
+  const rows = (items ?? []) as Array<Record<string, unknown>>;
+  if (!rows.length) return [];
+  const { data: refunds } = await supabaseAdmin.from('online_payment_refunds').select('online_payment_item_id, amount, fee_refunded, status, booked_at')
+    .in('online_payment_item_id', rows.map(i => i.id as string));
+  const back = new Map<string, number>();
+  for (const f of (refunds ?? []) as Array<{ online_payment_item_id: string; amount: number; fee_refunded: number; status: string; booked_at: string | null }>) {
+    if (f.status !== 'pending' && f.status !== 'succeeded' && !f.booked_at) continue;
+    back.set(f.online_payment_item_id, (back.get(f.online_payment_item_id) ?? 0) + Math.round((Number(f.amount) - Number(f.fee_refunded)) * 100));
+  }
+  return rows.map(i => {
+    const op = (Array.isArray(i.online_payments) ? i.online_payments[0] : i.online_payments) as { fee_payer: string; card_brand: string | null; card_last4: string | null };
+    const amount = Math.round(Number(i.amount) * 100);
+    const done = back.get(i.id as string) ?? 0;
+    return {
+      itemId: i.id as string, leftCents: amount - done, feeShareCents: Math.round(Number(i.fee_share) * 100), untouched: done === 0,
+      familyPaidFee: op.fee_payer === 'family', brand: op.card_brand, last4: op.card_last4,
+    };
+  }).filter(s => s.leftCents > 0);
+}
+
 async function applyStripeRefund(refund: Stripe.Refund, refundId: string, onlinePaymentId: string): Promise<RefundOutcome> {
+  // A house-league refund books when Stripe accepts it and only settles here (12b).
+  const { data: flowRow } = await supabaseAdmin.from('online_payments').select('flow').eq('id', onlinePaymentId).maybeSingle();
+  if (flowRow?.flow === 'league_signup') {
+    if (refund.status === 'failed' || refund.status === 'canceled') {
+      await leagueRefundFailed(refundId, refund.id, refund.failure_reason ?? refund.status);
+      return { state: 'failed', refundId };
+    }
+    await bookLeagueRefund(refundId, refund.id, refund.status === 'succeeded');
+    return { state: refund.status === 'succeeded' ? 'succeeded' : 'pending', refundId };
+  }
   if (refund.status === 'succeeded') {
     await landRefund(refundId, refund.id);
     return { state: 'succeeded', refundId };

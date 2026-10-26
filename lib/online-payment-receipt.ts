@@ -222,6 +222,33 @@ export async function sendLeaguePayLink(registrationId: string, raised?: { child
 }
 
 /**
+ * A price correction refunded to the card (Stage 12b, copy §6.3): the family is told how much went back and why. An
+ * ending's refund is told in the ending's own email (one email per act); this is the correction's.
+ */
+export async function sendLeaguePriceRefundEmail(registrationId: string, p: { amount: string; from: string; to: string; reason: string }): Promise<void> {
+  try {
+    const facts = await loadLeaguePayFacts(registrationId);
+    if (!facts?.guardianEmail) return;
+    const child = facts.children.find(c => c.registrationId === registrationId);
+    const face = await systemMailFace({
+      id: facts.org.id, name: facts.org.name, logoUrl: facts.org.logoUrl ?? null,
+      themePreset: facts.org.themePreset ?? null, themePrimary: facts.org.themePrimary ?? null, themeAccent: facts.org.themeAccent ?? null,
+    });
+    const R = LW.refundEmail;
+    const html = warmEmailDocument([
+      warmEmailParagraph(escapeHtml(R.leadPart(p.amount, child ? `${child.firstName} ${child.lastName}` : '', facts.season.name))),
+      warmEmailParagraph(escapeHtml(R.priceChanged(p.from, p.to))),
+      warmEmailParagraph(escapeHtml(R.reason(facts.org.name, p.reason))),
+      warmEmailParagraph(escapeHtml(R.amount(p.amount))),
+      face?.contact ? warmEmailSmall(escapeHtml(R.questions(face.contact))) : '',
+    ].filter(Boolean).join('\n'), face?.club ?? null);
+    await sendEmail(facts.guardianEmail, R.subject(facts.org.name), html, face?.sendOpts ?? {});
+  } catch (err) {
+    console.error('[online-payment-receipt] the price refund email was not sent:', err instanceof Error ? err.message : String(err));
+  }
+}
+
+/**
  * The team's pay link for an email that offers Pay now (the acceptance email, the balance reminder): only while the
  * team can pay online at this moment, else null and the email is exactly today's (A6).
  */

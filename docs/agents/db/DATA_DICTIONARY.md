@@ -7386,7 +7386,9 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 ## `online_payment_refunds`
 <!-- dict:table:online_payment_refunds -->
 
-**Purpose (migration 358, Stage 12a, 2026-10-25):** a refund of an online payment back to the card. 12a refunds in FULL only, so there is **one live refund per payment** (`online_payment_refunds_one_full_refund`, partial unique on `online_payment_id WHERE status IN ('pending','succeeded')`; ⚠ 12b's partial refunds drop this index by name, in the same migration as the refund functions that replace it — mig 374 deliberately kept it). RLS is on: server-only.
+**Purpose (migration 358, Stage 12a, 2026-10-25):** a refund of an online payment back to the card. 12a refunds in FULL only, so there is **one live refund per payment** — **mig 375 dropped that index**: the one-at-a-time rule is now `online_payment_refund_open`'s lock on the payment row. A team's card payment keeps 12a's rule (the whole payment, one live refund, refused "already being refunded"); a house-league refund names its child (`online_payment_item_id`) and returns all or PART of what is left of that child's share (L1). RLS is on: server-only.
+
+**House league (mig 375):** `online_payment_refund_open(..., p_item, p_amount, p_partial_reason)` opens it (part of a share needs `partial_reason`, except a price correction; the fee share goes back only on a FULL refund of an untouched share while the family paid the fee — owner §0e). It is **BOOKED the moment Stripe accepts it** (`online_payment_league_refund_book`, `booked_at`): the child's money goes out through `club_league_money('refund', …, 'online_card')` and a fee given back is a "Payment processing" cost (`online_payment_league_post_out`), in the same act as the ending or the price correction, so the book, the card and the registration never disagree. A share that never landed has no line to reverse. The payment becomes `partly_refunded` / `refunded` by what is booked. A booked refund Stripe later returns keeps its line (`card_refund_failed`, metadata `refundId`); `online_payment_league_refund_resolve` marks it done once the club sent it another way.
 
 **Gotchas (read first):**
 1. **Three functions, one life-cycle.** `online_payment_refund_open(...)` inserts the refund as `pending` BEFORE Stripe is asked, so a second press or a second organizer meets the one-refund index ("already being refunded"); it refuses unless the payment is `paid`. `online_payment_refund_land(refund, stripe_refund)` (Stripe says it succeeded, idempotent) flips the team's payment row to `refunded`, posts the book lines, marks the refund `succeeded` and the payment `refunded`, then refreshes the team's cached paid figure (`team_payments_refresh`). `online_payment_refund_failed(...)` marks a `pending` refund `failed` with the reason — the payment stays `paid` and refundable again, and the app raises a `card_refund_failed` Needs-attention row ("refund another way").
@@ -7415,6 +7417,9 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 <!-- dict:col:online_payment_refunds.online_payment_item_id -->
 **`online_payment_item_id`** (FK → `online_payment_items.id`, NO ACTION, nullable; migration 374) — the child a house-league refund returns money for. NULL on a tournament refund. **Required for a refund of a `league_signup` payment** (`online_payment_refunds_guard` refuses one without it, flag or no flag: 12a's refund functions are team-shaped). Partial index.
+
+<!-- dict:col:online_payment_refunds.booked_at -->
+**`booked_at`** (timestamptz, nullable; migration 375) — when a house-league refund's lines were written (Stripe accepted it: succeeded or pending). NULL on a tournament refund (those post at `online_payment_refund_land`) and on a house-league refund Stripe refused before booking. Set only by `online_payment_league_refund_book` (guard).
 
 <!-- dict:col:online_payment_refunds.partial_reason -->
 **`partial_reason`** (text, nullable, 1–500; migration 374) — the convenor's reason for refunding PART of a payment (L1; "Refund part of it" requires one); goes in the family's refund email and the book line. Never changes (guard).

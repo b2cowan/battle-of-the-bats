@@ -7,8 +7,8 @@
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 16 | 0 | — |
-| Columns | 247 | 1 | 0 |
-| Indexes | 72 | 0 | 2 |
+| Columns | 248 | 1 | 0 |
+| Indexes | 71 | 0 | 2 |
 | Constraints | 69 | 0 | — |
 | RLS / CHECK | 71 | 0 | 0 (RLS state) |
 
@@ -35,7 +35,7 @@
 _none_
 
 ## Columns
-### Only in DEV (247)
+### Only in DEV (248)
 - `family_email_sends.audience_kind`
 - `family_email_sends.audience_label`
 - `family_email_sends.body`
@@ -101,6 +101,7 @@ _none_
 - `online_payment_items.registration_id`
 - `online_payment_items.updated_at`
 - `online_payment_refunds.amount`
+- `online_payment_refunds.booked_at`
 - `online_payment_refunds.created_at`
 - `online_payment_refunds.created_by`
 - `online_payment_refunds.failure_reason`
@@ -291,7 +292,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (72)
+### Only in DEV (71)
 - `accounting_entries_league_registration_idx`
 - `family_email_sends_org_sent_idx`
 - `family_email_sends_pkey`
@@ -318,7 +319,6 @@ _none_
 - `online_payment_refunds_created_by_idx`
 - `online_payment_refunds_entry_idx`
 - `online_payment_refunds_item_idx`
-- `online_payment_refunds_one_full_refund`
 - `online_payment_refunds_org_idx`
 - `online_payment_refunds_payment_idx`
 - `online_payment_refunds_pkey`

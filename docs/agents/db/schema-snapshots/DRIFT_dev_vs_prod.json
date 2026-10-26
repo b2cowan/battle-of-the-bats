@@ -3,8 +3,8 @@
   "total": 478,
   "counts": {
     "tables": 16,
-    "columns": 248,
-    "indexes": 74,
+    "columns": 249,
+    "indexes": 73,
     "constraints": 69,
     "rls": 71
   },
@@ -551,6 +551,10 @@
     },
     {
       "key": "column:only-dev:online_payment_refunds.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_refunds.booked_at",
       "sig": ""
     },
     {
@@ -1671,10 +1675,6 @@
     },
     {
       "key": "index:only-dev:online_payment_refunds_item_idx",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:online_payment_refunds_one_full_refund",
       "sig": ""
     },
     {

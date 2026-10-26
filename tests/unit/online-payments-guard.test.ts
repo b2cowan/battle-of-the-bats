@@ -29,7 +29,10 @@ const MIG_12B = 'supabase/migrations/374_a_family_pays_house_league_fees_by_card
 const LAND_RPCS = ['online_payment_land', 'online_payment_league_land', 'online_payment_land_failed', 'online_payment_refund_open',
   'online_payment_refund_land', 'online_payment_refund_failed',
   // The house-league money-out line and its word are called from inside the landing's SQL only, never from app code.
-  'online_payment_league_post_out', 'club_league_out_word'];
+  'online_payment_league_post_out', 'club_league_out_word',
+  // 12b Part 5 (mig 375): a house-league refund's booking and its "sent another way".
+  'online_payment_league_refund_book', 'online_payment_league_refund_resolve'];
+const MIG_12B_REFUNDS = 'supabase/migrations/375_a_house_league_refund_goes_back_to_the_card.sql';
 const fnBody = (sql: string, fn: string) => new RegExp(`FUNCTION public\\.${fn}\\([\\s\\S]*?\\nEND \\$\\$;`).exec(sql)?.[0] ?? '';
 
 const appCode = () => [...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx'), ...filesUnder('lib', '.ts'), ...filesUnder('lib', '.tsx'), ...filesUnder('components', '.tsx'), ...filesUnder('components', '.ts')]
@@ -76,6 +79,32 @@ describe('the landing is the only way an online payment reaches a team’s recor
     assert.doesNotMatch(out, /'league_registration'/);
   });
 
+  it('a house-league refund goes out through THE writer as a card refund; a fee given back is a cost (mig 375)', () => {
+    const sql = readCode(MIG_12B_REFUNDS);
+    const book = fnBody(sql, 'online_payment_league_refund_book');
+    assert.match(book, /club_league_money\(v_op\.org_id, v_op\.season_id, v_it\.registration_id, 'refund', v_r\.amount - v_r\.fee_refunded, v_today,\s*'online_card'/);
+    assert.match(book, /online_payment_league_post_out\(v_op\.season_id, 'Payment processing'/);
+    assert.doesNotMatch(book, /INSERT INTO accounting_entries/i);
+    // Idempotent: a booked refund only moves to succeeded.
+    assert.match(book, /IF v_r\.booked_at IS NULL THEN/);
+    const open = fnBody(sql, 'online_payment_refund_open');
+    // A team's card payment keeps 12a's rule: the whole payment, one live refund.
+    assert.match(open, /IF p_item IS NOT NULL OR p_amount IS NOT NULL THEN RAISE EXCEPTION 'A team''s card payment is refunded in full\.'/);
+    assert.match(open, /This payment is already being refunded\./);
+    // The fee share only on a FULL refund of an untouched share, while the family paid it (owner §0e).
+    assert.match(open, /IF p_fee_included AND v_op\.fee_payer = 'family' AND v_amt = v_it\.amount AND v_back = 0 THEN v_fee := v_it\.fee_share;/);
+    assert.match(open, /A partial refund needs a reason\./);
+    assert.match(sql, /DROP INDEX IF EXISTS public\.online_payment_refunds_one_full_refund;/);
+  });
+
+  it('a card refund comes first, as one act: before the ending, before a lower price (12b Part 5)', () => {
+    const route = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
+    assert.ok(route.indexOf('await refundChildToCard(regId, ctx!.user.id, newStatus') < route.indexOf('await endLeagueRegistration(ctx!'),
+      'the card refund is booked before the ending reads the money');
+    assert.ok(route.indexOf("await refundChildToCard(regId, ctx!.user.id, 'price_corrected'") < route.indexOf('await writeLeagueMoney(ctx!, { seasonId, regId }, move)'),
+      'the difference goes back to the card before the correction, so it never refunds by hand too');
+  });
+
   it('the refund never voids the receipt: it marks the row refunded and adds a money-out line', () => {
     const sql = readCode(MIG);
     const refund = /FUNCTION public\.online_payment_refund_land\([\s\S]*?\nEND \$\$;/.exec(sql)?.[0] ?? '';
@@ -90,7 +119,8 @@ describe('the landing is the only way an online payment reaches a team’s recor
     assert.doesNotMatch(sql, /BEFORE[^;]*DELETE ON public\.tournament_team_payments/, 'never on DELETE: teams and tournaments cascade');
     // Every function that opens the write flag closes it again before returning.
     for (const [file, fn] of [[sql, 'online_payment_land'], [sql, 'online_payment_refund_land'],
-      [readCode(MIG_12B), 'online_payment_league_land'], [readCode(MIG_12B), 'online_payment_league_open']] as const) {
+      [readCode(MIG_12B), 'online_payment_league_land'], [readCode(MIG_12B), 'online_payment_league_open'],
+      [readCode(MIG_12B_REFUNDS), 'online_payment_league_refund_book'], [readCode(MIG_12B_REFUNDS), 'online_payment_league_refund_resolve']] as const) {
       const body = fnBody(file, fn);
       assert.equal((body.match(/'flhq\.online_payment_write', 'on'/g) ?? []).length, 1, fn);
       assert.equal((body.match(/'flhq\.online_payment_write', 'off'/g) ?? []).length, 1, fn);
