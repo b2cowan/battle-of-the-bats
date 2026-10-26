@@ -463,8 +463,8 @@ export const FAMILY_EMAILS_TAB_WORDS = {
   factOptedOut: 'Opted out',
   factFailed: 'Didn’t go',
   factCoaches: 'Head coaches copied',
+  close: 'Close',
   reachedNote: 'Reached counts the families whose email the mail service accepted. An email that bounces later isn’t shown here.',
-  stoppedNote: 'This send stopped partway. The families it hadn’t reached yet didn’t get it; send it again to reach them.',
   oneFamilyNote: 'A message to one family keeps its date and who sent it, never its words.',
 } as const;
 
@@ -581,6 +581,38 @@ export const SEASON_EMAIL_WORDS = {
   resendNote: (owner: 'season' | 'club') => `Sending to the families it missed doesn’t count toward the ${owner === 'season' ? 'season’s' : 'club’s'} ${CLUB_EMAIL_CAP}.`,
   resent: (n: number, reached: number, of: number) => `Sent to the ${n} it missed. Reached ${reached} of ${pluralize(of, 'family', 'families')}.`,
   notStopped: 'This email isn’t stopped, so there’s nothing to send again.',
+  /** The season's sent history (frame e). The allowance is the page's first line (the admin header has no subtitle, F3). */
+  historyEyebrow: (season: string) => season,
+  historyTitle: 'Email families',
+  historyButtonPhone: 'Email',
+  historyLede: (season: string, allowance: string) => `${season} · ${allowance}`,
+  teamsPublished: (division: string | null) => (division ? `Teams published: ${division}` : 'Teams published'),
+  automaticTag: 'Automatic',
+  automaticBody: (division: string | null) =>
+    `FieldLogicHQ sent this when ${division ? `${possessive(division)} teams were` : 'the teams were'} published. Automatic emails don’t count toward the season’s ${CLUB_EMAIL_CAP}.`,
+  openTeams: 'Open Teams & draft',
+  oneFamilyTo: (name: string) => `The ${name} family`,
+  earlierDivider: 'Earlier emails · counted per child',
+  /** An old row's To when the old log kept only the word (a division, a team, a status), never which one. */
+  notRecorded: (what: string) => `${what} (which one wasn’t recorded)`,
+  oldReached: (sent: number, skipped: number) => `${sent} sent${skipped > 0 ? ` · ${skipped} didn’t go` : ''}`,
+  footnote: 'Automatic emails to one family (accepted, waitlisted, declined) aren’t listed here. Each shows on that child’s registration.',
+  emptyTitle: 'No emails to this season’s families yet',
+  emptyBody: (season: string) => `Emails you send to ${possessive(season)} families are listed here, with the ones FieldLogicHQ sends for you when you publish teams.`,
+  noFamiliesTitle: (season: string) => `No families in ${season} yet`,
+  noFamiliesBody: 'Once families sign up you can email them from here.',
+  noFamiliesDone: (season: string) => `No families in ${season}`,
+  finished: 'This season is finished. Its record is locked; you can still email its families.',
+  loadFailed: 'We couldn’t load this season’s emails.',
+  noAccess: 'Emailing this season’s families is for its league admins and registrar.',
+  /** Who an email went to, on the history and the window's facts. */
+  goingTo: (families: number, children: number | null) => `${pluralize(families, 'family', 'families')}${children ? ` (${pluralize(children, 'child', 'children')})` : ''}`,
+  namedFact: (n: number, named: string | null) => (named ? `${n}: ${named}` : String(n)),
+  /** Families › Emails' Season filter. */
+  filterLabel: 'Season',
+  filterAll: 'All',
+  filterClub: 'Club-wide',
+  seasonTo: (season: string, to: string) => `${season} · ${to}`,
   /** The coach's colleague copy (9d1·9). */
   coachLead: (org: string, audience: string, families: number) =>
     `A copy of the email ${org} sent to the families on ${audience} (${families} reached). You’re getting it as a coach. Families don’t see this note.`,

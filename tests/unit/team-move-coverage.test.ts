@@ -84,6 +84,7 @@ const STAYS: Record<string, string> = {
   family_messages: 'the org’s Message this family dates about its own people (mig 334) — a coach portal has no Families area (League and Club bands only), so none exist to move',
   family_coach_asks: 'the club’s own Ask the coaches log (mig 335) — sent from Families, which a coach portal does not have (League and Club bands only), so none exist to move',
   family_email_sends: 'the club’s own Email families log (mig 347) — sent from Families, which a coach portal does not have (League and Club bands only), so none exist to move',
+  family_email_recipients: 'each family a club email was going to (Club Tier 9d-1, mig 385) — rows of family_email_sends, which a coach portal never writes, so none exist to move',
   family_notes: 'the club’s own notes about its own people (mig 338) — written in Families, which a coach portal does not have, so none exist to move',
   family_payment_handoffs: 'a payment the CLUB received and passed to one of its teams (mig 338) — sent from Families, which a coach portal does not have, so none exist to move',
   // ── The coach's OWN tournament (a Premium portal includes one) — the org's, not the team's ────
@@ -107,6 +108,7 @@ const STAYS: Record<string, string> = {
   league_player_ratings: 'house league (a player’s rating, Club Tier 9c mig 377)',
   league_team_coaches: 'house league (a house-league team’s coaches, mig 377)',
   league_placement_emails: 'house league (a family’s placement email, mig 377)',
+  league_season_notices: 'house league (an automatic notice to a season’s families, Club Tier 9d-1 mig 385)',
   // ── Org-level setup a Coaches Portal does not use ────────────────────────────────────────────
   org_budget_lines: 'the club-side org budget (a Coaches Portal has none); moved rows that pointed at one are cleared',
   org_fiscal_years: 'the club’s fiscal years (mig 318) — the years its own plan and books are closed by; a team’s money runs on seasons, never fiscal years, so a Coaches Portal has none to move',

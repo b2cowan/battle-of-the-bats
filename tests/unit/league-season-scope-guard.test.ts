@@ -87,12 +87,6 @@ const FILTER_ONLY: Record<string, string> = {
     'narrows `league_games` already filtered `.eq(season_id)`',
   'app/api/admin/house-league/seasons/[seasonId]/registrations/route.ts GET division':
     'narrows `league_registrations` already filtered `.eq(season_id)`',
-  'app/api/admin/house-league/seasons/[seasonId]/email/route.ts POST division':
-    "filters this season's registrations in memory (getRegistrationsForSeason)",
-  'app/api/admin/house-league/seasons/[seasonId]/email/route.ts POST team':
-    "filters this season's registrations in memory (getRegistrationsForSeason)",
-  'app/api/admin/house-league/seasons/[seasonId]/email/route.ts POST registration':
-    "filters this season's registrations in memory by registrationIds (getRegistrationsForSeason)",
 };
 
 const HOUSE_LEAGUE = 'app/api/admin/house-league/seasons/[seasonId]';
@@ -155,9 +149,18 @@ describe('house-league admin routes tie request ids to the season (plan I01)', (
     ]) assert.ok(found.includes(key), `expected the guard to see ${key}`);
   });
 
-  it("the email log is read only after the season is proven to be the caller's", () => {
-    const get = handlers(read(`${HOUSE_LEAGUE}/email/route.ts`)).GET;
-    assert.ok(/getLeagueSeasonById\(seasonId, ctx!\.org\.id\)[\s\S]*getLeagueEmailLog\(seasonId\)/.test(get));
+  it("the season's email history is read only after the season is proven to be the caller's (9d-1)", () => {
+    const get = handlers(read(`${HOUSE_LEAGUE}/emails/history/route.ts`)).GET;
+    assert.ok(/getLeagueSeasonById\(seasonId, ctx!\.org\.id\)[\s\S]*readSeasonHistory\(ctx!\.org\.id, seasonId\)/.test(get));
+    assert.ok(/getLeagueSeasonById\(seasonId, ctx!\.org\.id\)[\s\S]*readClubEmail\([\s\S]*row\.seasonId !== seasonId/.test(get),
+      'one email is read only when it is this season\'s');
+  });
+
+  it("the season's email ties every picked division, team and registration to the season (9d-1)", () => {
+    const src = read(`${HOUSE_LEAGUE}/emails/route.ts`);
+    assert.match(src, /divisionInSeason\(seasonId, divisionId\)/);
+    assert.match(src, /teamsInSeason\(seasonId, scope\.teamIds\)/);
+    assert.match(src, /registrationsInSeason\(seasonId, scope\.registrationIds\)/);
   });
 });
 

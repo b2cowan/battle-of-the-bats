@@ -5,11 +5,6 @@
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
     "kitScope": 87
   },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx": {
-    "useAdminKit": 1,
-    "kx": 12,
-    "helpers": 1
-  },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
     "useAdminKit": 1,
     "kx": 9,

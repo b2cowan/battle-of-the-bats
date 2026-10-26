@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { readCode } from './_source-code.ts';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { filesUnder, readCode } from './_source-code.ts';
 import {
   orderSeasons, seasonGroup, seasonPageAt, seasonPageHref, seasonPagesFor, seasonSegment, seasonState, SEASON_PAGES, toReviewLabel,
 } from '../../lib/house-league-season.ts';
@@ -112,16 +114,33 @@ describe('2 · the frame is wired', () => {
     assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx'), /redirect\(`\/\$\{orgSlug\}\/admin\/house-league\/seasons\/\$\{seasonId\}\/money`\)/);
   });
   it('Email families is the composer’s one name (Q12)', () => {
-    assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx'), /title="Email families"/);
+    // 9d-1: the rail's page is the season's sent history, a thin route over its screen; the words module names it.
+    assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx'), /<SeasonEmailsScreen \/>/);
+    assert.match(readCode('components/admin/kit/club/league/email/SeasonEmailsScreen.tsx'), /title=\{SW\.historyTitle\}/);
+    assert.match(readCode('lib/families-words.ts'), /historyTitle: 'Email families',/);
     const regs = readCode(REGISTRATIONS_SCREEN);
     assert.doesNotMatch(regs, /Message registrants/);
+  });
+  it('one composer (9d1·1): the season’s old window, page composer and per-child loop are gone, and nothing writes the old log (9d1·3)', () => {
+    assert.ok(!existsSync(join(process.cwd(), 'components/admin/kit/club/league/registrations/EmailWindow.tsx')), 'the Registrations Email window is back');
+    assert.ok(!existsSync(join(process.cwd(), 'app/api/admin/house-league/seasons/[seasonId]/email/route.ts')), 'the per-child season send is back');
+    assert.match(readCode(REGISTRATIONS_SCREEN), /<EmailFamiliesWindow/);
+    assert.doesNotMatch(readCode('components/admin/kit/club/league/email/SeasonEmailsScreen.tsx'), /sendFamilyEmail|league_email_log/);
+    assert.doesNotMatch(readCode('lib/db.ts'), /insertLeagueEmailLog|from\('league_email_log'\)\.insert/);
+    assert.doesNotMatch(readCode('lib/house-league-money-words.ts'), /REGS_EMAIL_WORDS|guardian\(s\)|Sent to \$\{pluralize\(sent, 'guardian'\)\}/);
+    // The old log is read in one place only: the season history's "Earlier emails" (lib/families-emails-log.ts, via
+    // lib/db.ts's reader) — besides the season delete's own count.
+    const readers = filesUnder('app', '.ts').concat(filesUnder('app', '.tsx'), filesUnder('lib', '.ts'), filesUnder('components', '.tsx'))
+      .filter(f => /league_email_log|getLeagueEmailLog/.test(readCode(f)));
+    assert.deepEqual(readers.sort(), ['lib/db.ts', 'lib/families-emails-log.ts']);
   });
   it('the season screens decide their controls through the gate, never a role list', () => {
     for (const f of [
       'app/[orgSlug]/admin/house-league/page.tsx',
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/page.tsx',
       'app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx',
-      'app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx',
+      // Email families is a thin route over its screen (9d-1).
+      'components/admin/kit/club/league/email/SeasonEmailsScreen.tsx',
       // Registrations is a thin route over its screen (Club Tier 9b-2 Part 3): the gate is asked in the screen.
       REGISTRATIONS_SCREEN,
       // Teams & draft too (Club Tier 9c Part 3).

@@ -240,7 +240,7 @@ describe('S3b — the reply line (copy items 3–5)', () => {
     assert.match(readCode('lib/families-email.ts'), /replyTo:\s*ctx\.user\.email/);
     assert.match(readCode('lib/families-email.ts'), /replyTo: senderEmail/);
     assert.match(readCode('lib/rep-team-announcements.ts'), /replyTo: reply\.replyTo/, 'the rep-team announcement now replies to the coach');
-    assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/email/route.ts'), /replyTo: reply\.replyTo/, 'the season email replies to the admin');
+    // 9d-1: a season's email is the club's engine (lib/families-email.ts, `replyTo: senderEmail` above).
   });
   it('the public contact is read from the public site, once per send or run — never Organization.contactEmail', () => {
     const ctx = readCode('lib/club-email-context.ts');
@@ -354,7 +354,6 @@ describe('S3b — the senders thread the club', () => {
       ['lib/families-email.ts', /club, replyLine: reply\.line/],
       ['app/api/admin/families/[personId]/message/route.ts', /club,\s*replyLine: reply\.line/],
       ['lib/rep-team-announcements.ts', /club, replyLine: reply\.line/],
-      ['app/api/admin/house-league/seasons/[seasonId]/email/route.ts', /club,\s*replyLine: reply\.line/],
       ['lib/family-notify.ts', /club: face\?\.club,\s*replyLine: face\?\.replyLine/],
     ];
     for (const [f, re] of sites) assert.match(readCode(f), re, f);

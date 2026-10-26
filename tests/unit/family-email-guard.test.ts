@@ -81,9 +81,8 @@ const FAMILY_SENDERS: { file: string; posture: Posture; what: string }[] = [
     what: 'A paid rep coach\'s team announcement' },
   { file: 'lib/family-notify.ts', posture: 'guarded',
     what: 'Game updates to followers when a coach saves a score' },
-  { file: 'app/api/admin/house-league/seasons/[seasonId]/email/route.ts', posture: 'guarded',
-    what: 'The house-league season broadcast — guarded 2026-08-18; before that it was a bulk ' +
-          'announcement carrying no unsubscribe link at all, the clearest exposure in the audit' },
+  // The house-league season broadcast (app/api/admin/house-league/seasons/[seasonId]/email) is GONE since 9d-1: a season
+  // emails its families through lib/families-email.ts above (households once, the cap, the unsubscribe footer).
 
   // ── Transactional: money owed, and a place on a roster. Suppression skipped ON PURPOSE. ────
   { file: 'app/api/coaches/[orgSlug]/teams/[teamId]/dues/send-reminders/route.ts', posture: 'transactional',

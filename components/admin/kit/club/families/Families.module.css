@@ -164,3 +164,11 @@
 /* The Emails table: a date, a sender and a figure read on one line (drawing 5's td.nw). A long sender ends in an ellipsis. */
 .nw { white-space: nowrap; }
 .nwClip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
+
+/* ── An email log's extras (Club Tier Stage 9d-1): the Automatic tag opens what it means; the old season log sits apart
+      under its divider ("Earlier emails · counted per child") ── */
+.tagButton { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; vertical-align: baseline; }
+.tagButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 999px; }
+.divider { margin: 1rem 0 0.4rem; font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
+.dividerRow td { padding-top: 0.9rem; font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
+.filter { min-width: 12rem; }

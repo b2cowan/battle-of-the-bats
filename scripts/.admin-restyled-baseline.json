@@ -67,11 +67,6 @@
     "#fbbf24": 1,
     "rgba(251,191,36,0.25)": 1
   },
-  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx": {
-    "#1a1a2e": 1,
-    "rgba(34,197,94,0.1)": 1,
-    "rgba(34,197,94,0.3)": 1
-  },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
     "#1a1f2e": 1,
     "rgba(255,255,255,0.12)": 2,

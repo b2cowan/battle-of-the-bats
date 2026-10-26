@@ -60,7 +60,9 @@ describe('3 · the surfaces a rating must never reach do not import it (9c·2a, 
     'lib/house-league-coach.ts',
     'app/api/admin/house-league/seasons/[seasonId]/registrations/route.ts',
     'app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts',
-    'app/api/admin/house-league/seasons/[seasonId]/email/route.ts',
+    // 9d-1: the season's email (the old per-child route is gone) reads its audience through these.
+    'app/api/admin/house-league/seasons/[seasonId]/emails/route.ts',
+    'lib/house-league-email.ts',
   ];
   for (const f of NEVER) it(f, () => assert.doesNotMatch(readCode(f), NAMES_RATINGS));
 });

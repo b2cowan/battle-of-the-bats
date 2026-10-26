@@ -2651,29 +2651,9 @@ export interface LeagueEmailLogEntry {
   countSkipped: number;
 }
 
-export async function insertLeagueEmailLog(entry: {
-  orgId: string;
-  seasonId: string;
-  sentBy: string;
-  subject: string;
-  scope: string;
-  audience: string;
-  countSent: number;
-  countSkipped: number;
-}): Promise<void> {
-  const { error } = await supabaseAdmin.from('league_email_log').insert({
-    org_id:        entry.orgId,
-    season_id:     entry.seasonId,
-    sent_by:       entry.sentBy,
-    subject:       entry.subject,
-    scope:         entry.scope,
-    audience:      entry.audience,
-    count_sent:    entry.countSent,
-    count_skipped: entry.countSkipped,
-  });
-  if (error) throw error;
-}
-
+// ⚖ READ-ONLY since Club Tier Stage 9d-1 (owner 9d1·3, 2026-10-26): a season emails its families through the club's
+// engine (lib/families-email.ts), so nothing writes league_email_log again. Its rows are read only for the season
+// history's "Earlier emails · counted per child" (lib/families-emails-log.ts).
 export async function getLeagueEmailLog(seasonId: string): Promise<LeagueEmailLogEntry[]> {
   const { data, error } = await supabaseAdmin
     .from('league_email_log')
