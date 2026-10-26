@@ -8,6 +8,41 @@
 
 ---
 
+### 2026-10-25 — Operator free time: staff may give a club a plan, sections or a billing status for a while, with no price and no card
+**Status:** **Decided** (owner, 2026-10-25: the eleven Stage 4 drawing rulings, every recommended box ticked, and the four
+build-gate calls; plan `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` "Owner rulings … (Stage 4 drawings)" and "Stage 4 build
+gate"). **Built on dev, committed `6c8f8fb89` · `5353f2cf3` · `e9bb0b059` · `a26ec5165`; walk §379 owed; not released.**
+**Decision:**
+1. **Free time is an operator grant above a club's own plan.** It gives a whole plan (Tournament Plus, Club, Club ·
+   Association; League is not given), one or more sections the plan lacks, or a billing status that reads as active, free
+   through a **last free day**. Every part of the product treats the club as on that plan until that day, and on its own
+   plan the moment after, with nothing scheduled and nothing charged. It has **no price, no card and no invoice**, and the
+   owner is not emailed.
+2. **Who and how long:** Super admin up to **12 months** from today, Billing up to **6**, always with an end date and a
+   reason; never to a club the staff member belongs to. No other role can give it.
+3. **What refuses it:** a plan is refused while Stripe charges the club for a plan (they would pay for one and use another),
+   when the club already has a plan given (change its end date instead), and when it is already on the top plan; sections
+   and billing status remain available. A **Coaches Portal** gets none in Stage 4 (the door is absent), and a **public demo
+   club** gets none.
+4. **Change the end date, End it now, Put it back** exist on a running grant; **comp period** is no longer given from the
+   console or Bulk changes (it never gave a club anything). Founding Season is read as free time but is not moved until its
+   own turn-off decision, and cannot be ended in bulk.
+5. **Billing reads the plan the club PAYS for, always** (checkout, moves, downgrades, cancel, next-season choice, plan
+   events); access reads the plan the club is on right now. Revenue metrics, the Founding email audience and "card payment
+   failed" read the stored plan on purpose: free time is never revenue.
+6. **Tournament fees post to the club's Accounting book during free time** (the fee book follows access).
+7. **The customer sees one phrase everywhere: "Free through {last free day}"** (amber in the last 14 days; "Free time ended"
+   for 30 days after). Never a price, never the reason, never who gave it. Staff see it on the club's record, a Free time
+   list (Everyone · Founding Season · Given by staff) and Today's "Free time ending" (14 days, counted by club).
+**Rationale:** Support needs a safe, visible, self-ending way to keep or open up a club (pilots, make-goods, grace periods)
+that does not rewrite the billing record, cannot be forgotten (it ends by itself), and cannot leak into revenue or bills.
+**Affects:** `PLAN_PRICING_FACTS.md` (one inclusions line; no price, name, band, SKU or gate value moved); in-app help (done in
+the finish pass); no pricing-page copy (free time is not an offer and is never advertised).
+**Handoff:** none outstanding to `/marketing` (customer strings were signed off at the build gate). `/billing`: the finish
+review's findings are recorded in the Stage 4 plan.
+**Open, Proposed (NOT decided):** (a) a club could take up to 12 months of free Club and then the full 90-day Club trial;
+moot until Club is on sale, decide before it is. (b) Free time for a Premium Coaches Portal (S4b) is a recommendation only.
+
 ### 2026-10-25 — Who pays the processing fee is the club's choice: families pay by default, a club may pay it itself
 **Status:** **Decided** (owner, 2026-10-25, Club Tier Stage 12 Ask A14, ruled as recommended in the drawing round at
 https://claude.ai/artifact/X7quYgnDpiWV9Dh76TYm57; the owner raised the question on 2026-10-24: *"is it too

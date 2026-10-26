@@ -68,8 +68,9 @@ After reading, briefly confirm: _"Billing context loaded — [N] features in FEA
 - Never hard-delete data on downgrade — only gate access
 
 ### `org_overrides` table
-- Platform admin can grant temporary plan overrides via `org_overrides` (type: plan, expires_at)
-- Always check overrides before rejecting a feature request — `lib/plan-gating-server.ts` handles this
+- Platform staff give **free time** through `org_overrides` (types `plan_tier`, `module_addon`, `subscription_status`, each with `expires_at`; `comp_period` is a billing tag that gives nothing and is no longer given)
+- ACCESS reads the plan the club is on right now through ONE door, `lib/entitlement-grants.ts` (rules in `lib/free-time.ts`); never read the stored plan column for an access decision (`tests/unit/plan-reader-door-guard.test.ts` fails on it)
+- BILLING ACTIONS (checkout, moves, downgrades, cancel, next-season choice) read the plan the club PAYS for: `ownPlanOf` in `lib/free-time.ts`
 
 ---
 

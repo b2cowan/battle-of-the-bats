@@ -74,9 +74,8 @@ by owner decision. Deferred slices remain:
 - **Daily reconciliation** — audit-log expirations, clear stale flags, optional internal notice.
   Cron mechanism decision was deferred alongside the notifications work; **cron is now wired**, so this
   is unblocked.
-- **Stale canon to fix:** the `/billing` agent guide claims an `org_overrides type:'plan'` enforced by
-  `lib/plan-gating-server.ts`. That is **not true** — the CHECK is `subscription_status | comp_period`.
-  Correct the guide.
+- **Stale canon fixed 2026-10-25:** the `/billing` agent guide claimed an `org_overrides type:'plan'` enforced by
+  `lib/plan-gating-server.ts`; it now describes free time and the one door (see §1.5).
 
 ### 1.5 Plan / Tier Trial — BUILT as Support console Stage 4 "Free time" (2026-10-25 on dev, walk ledger §379)
 Operator-granted, timed, auto-reverting **whole-plan** free time: Tournament Plus, Club or Club · Association (never
@@ -85,8 +84,7 @@ member belongs to. The `plan_tier` slice is no longer deferred: ONE effective-pl
 rules `lib/free-time.ts`) folds it into the plan and limits every access decision reads, build-guarded by
 `plan-reader-door-guard`; **every billing action reads the club's own plan** (`ownPlanOf`). The fee book's SQL reads it
 through `org_effective_plan` (mig 373). The customer reads "Free through {day}" on Plan & billing. Plan:
-`PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md`. The `/billing` guide's stale `type:'plan'` claim (§1.4) is still to correct.
-
+`PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md`.
 ### 1.6 Billing downgrade & data retention — hard purge missing
 Retention windows, owner warnings, the `pending_purge` transition and the notice emails are built and
 applied in both environments. **Not built: the hard purge execution + purge audit events** — deliberately
