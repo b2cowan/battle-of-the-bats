@@ -1,0 +1,276 @@
+<title>House League Money Walk</title><style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box. */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 9b-2 · §378</span>
+    <h1>House league money, honest</h1>
+    <p class="sub">Written 2026-10-25. One purpose: the money on a house-league registration is told the truth everywhere — marked received with a date and how, refunded as money going back, kept with a reason, corrected with a reason — and every figure (Registrations, Money, the Overview, Families, the status page, and on the Club plan the Budget vs. Actual Statement) agrees with the book.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Drawn on <a href="https://claude.ai/artifact/Ru3aDgVoyBTJb8XivYPLgT">the 9b drawings</a>, tab "9b-2 Money"; words in HOUSE_LEAGUE_STAGE9B2_COPY.md. Your rulings apply (plan §0e): a refund is its own line going out; an ending asks what happened to the money, with nothing picked; Undo is for a payment that never came; a corrected price on a paid registration refunds a lower price and leaves a higher one owing; a child who has paid keeps their price on a move; old registrations have no day count; Withdraw emails only when money moved.</p>
+    <p><strong>It passes when</strong> every row shows its money in one of the drawn states, every money press records exactly one honest line (or refuses in plain words), no ending loses money silently, the Money band adds up to the rows, and on the Club plan the fees row on Budget vs. Actual equals the season’s Money page.</p>
+    <p><strong>Not in this walk:</strong> online payment and the "no longer payable" page (Stage 12b), partial refunds, teams on the status page (9c), the season email composer’s audiences (9d), the family’s email of G1 (§375, joins the end-to-end payments test). Two known gaps, not issues: a child who holds a spot can’t be moved into a FULL division to join its waitlist (only a waitlisted child can), and the Statement’s season sub-row has no link to that season’s Money page.</p>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> · League Plus <code>/dev-league-org/admin/house-league</code> · Club plan <code>/uat-rep-club/admin/house-league</code> · public <code>/dev-league-org/league</code></dd>
+      <dt>Owner</dt><dd><code>league-owner@dev.local</code> · <code>devpass123</code> (sign in only, never reset)</dd>
+      <dt>Registrar</dt><dd><code>league-registrar@dev.local</code> · <code>devpass123</code></dd>
+      <dt>Treasurer</dt><dd><code>league-treasurer@dev.local</code> · <code>devpass123</code> (League Plus: no Money)</dd>
+      <dt>Club plan</dt><dd><code>uat-club-owner@uat-rep-club.local</code> / <code>uat-club-treasurer@uat-rep-club.local</code> · <code>UATPassword2026!</code> — season <em>2026 Fall House League</em>, fiscal year 2026–27, starting budget $3,000</dd>
+      <dt>A family</dt><dd>A private window, nobody signed in. Use a guardian email you can read for the email steps (or read them in the email log).</dd>
+      <dt>Season</dt><dd>Dev House League 2026: 14 accepted at $150, 10 already received. Old paid ticks were given their missing book lines (date = their last change, how = Not recorded).</dd>
+      <dt>Restart</dt><dd>The dev server was restarted after the build (new files and shared modules).</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'house-league-money-walk-v1';
+  var O = 'Owner, computer', R = 'Registrar, computer', F = 'A family, private window', P = 'Owner, phone', T = 'Treasurer, computer', C = 'Club owner (Club plan), computer';
+  var PARTS = [
+    { id: 'A', title: 'The money on every row', steps: [
+      { who: O, do: 'Open House league › Dev House League 2026 › Registrations.', see: 'Tabs To review · Active · Waitlist · Ended, the To review count an amber pill. Columns Player · Division · Guardian · Fee. The foot reads "The fee shown is the price fixed on each registration when the family signed up."' },
+      { who: O, do: 'Read the Fee column on the Active tab.', see: 'Paid rows read "$150 received" with a date and how (the old ones say the date alone: how was never recorded). Unpaid rows read "$150 owing" with no day count: they were accepted before the product kept that date, so they never turn amber. Nothing reads "payment pending".' },
+      { who: O, do: 'Open Filter and pick Owing. Then Received. Then clear it.', see: 'The list narrows to the owing rows, then the received rows, and comes back. "Filter · Owing" while it is on.' },
+      { who: O, do: 'Open Tools.', see: '"Email families" only. Export is its own button beside Tools, Excel first.' }
+    ]},
+    { id: 'B', title: 'Mark received, with a date and how', steps: [
+      { who: O, do: 'On an owing row, press Mark received.', see: 'A window "Mark {name}’s fee received": the amount shown, not a field ("This is the whole amount still owing."), Date received (today), How (empty choice reads Not recorded). The foot says "Records $150 received in the season’s book."' },
+      { who: O, do: 'Pick E-Transfer and press Mark received.', see: 'The row reads "$150 received · Oct 25 · E-Transfer". "Marked {name}’s fee received." fades.' },
+      { who: O, do: 'Try a date after today.', see: 'Refused: "A payment can’t be received after today." Nothing is recorded.' }
+    ]},
+    { id: 'C', title: 'Undo: marked received by mistake', steps: [
+      { who: O, do: 'On the row you just marked, open ⋯ › Undo: marked received by mistake.', see: 'A window names the payment ("This takes back the $150 marked received on Oct 25…") and says it isn’t a refund. Press Undo payment.' },
+      { who: O, do: 'Read the row, then open the season’s Money page, Every line.', see: 'The row is owing again. On Money the line reads "Voided · marked received by mistake", struck through and not counted.' },
+      { who: O, do: 'Mark that child received again (you need it paid for part E).', see: 'Received.' }
+    ]},
+    { id: 'D', title: 'A full division refuses, and says what to do', steps: [
+      { who: O, do: 'Find a division that is full with someone on its Waitlist (or set a division’s Players it holds to its current count). On the Waitlist tab press Promote on that child.', see: 'Refused beside the row: "{Division} is full. {name} stays on the waitlist until a spot frees." Nothing changes. (Approve from To review never meets a full division: a child in review already holds a spot.)' }
+    ]},
+    { id: 'E', title: 'Decline a paid registration: refunded, then kept', steps: [
+      { who: O, do: 'On a paid row, ⋯ › Decline.', see: 'A window "Decline {name}?": "{name}’s family paid $150 on {date} (E-Transfer). What happens to it?" with Refunded and Kept by the club, NEITHER picked, no Decline button yet, and "Choose what happens to the $150." in the foot.' },
+      { who: O, do: 'Pick Refunded. Date refunded today, How E-Transfer. Write a Note to the family. Press Decline and email.', see: 'The foot read "The $150 stays in the season’s book with the refund beside it." The row moves to Ended: "Declined Oct 25", "$150 refunded · Oct 25 · E-Transfer". If someone was waiting in that division, they move up and are emailed.' },
+      { who: F, do: 'Open the family’s email (use a guardian address you can read, or check the email log).', see: '"Registration update": not accepted, your note in its own paragraph, and "We refunded the $150 you paid on Oct 25 (E-Transfer)."' },
+      { who: O, do: 'Decline another paid child, pick Kept by the club and leave the reason empty.', see: 'The button holds: "Say why the club is keeping the $150." Type "Withdrew after the refund date" and press Decline and email.' },
+      { who: O, do: 'Read the Ended row and the Money page.', see: 'Ended: "$150 kept by the club · Withdrew after the refund date". Money still counts the $150 as received, and a history line "Kept by the club · Withdrew after the refund date".' }
+    ]},
+    { id: 'F', title: 'Withdraw', steps: [
+      { who: O, do: 'Withdraw an UNPAID accepted child (⋯ › Withdraw).', see: 'The window has no money question and says the family is not emailed. Press Withdraw. Ended: "Withdrawn Oct 25". No email.' },
+      { who: O, do: 'Withdraw a PAID child, Refunded, Cash.', see: 'The hint says the family is emailed that the child was withdrawn and that $150 was refunded (owner ruling: a withdrawal tells the family only when money moved). The email says "…has been withdrawn." and the refund line.' }
+    ]},
+    { id: 'G', title: 'Release the spot', steps: [
+      { who: O, do: 'On an accepted, unpaid child, ⋯ › Release the spot.', see: 'A window "Release {name}’s spot?": "{name}’s family hasn’t paid, so the spot goes back to {division}. The family is emailed." Press Release and email.' },
+      { who: O, do: 'Read the row and the email.', see: 'Ended: "Spot released Oct 25". The email "{name}’s spot was released — Dev House League 2026" says the spot was released and "The $150 fee was not received." The family’s status page reads Withdrawn.' }
+    ]},
+    { id: 'H', title: 'Correct a price on a paid registration', steps: [
+      { who: O, do: 'On a paid row, ⋯ › Correct the price. New price 180, no reason.', see: 'The line under the fields says "{name}’s family has paid $150. The $30 difference shows as still owing." Save price holds until a reason: "Say why the price is changing." Give one and save.' },
+      { who: O, do: 'Read the row.', see: '"$150 received · $30 owing" with "Price corrected · {reason}" under it. Mark received now records $30.' },
+      { who: O, do: 'Correct another paid child to 120.', see: 'The line says "The $30 difference is recorded as a refund." with Date refunded and How. Save: the row reads received, and Money lists "Refund · price corrected −$30" and the history line "Price corrected $150 → $120 · {reason}".' }
+    ]},
+    { id: 'I', title: 'Move a child to a dearer division', steps: [
+      { who: O, do: 'Give one division a higher price than another (e.g. Division B $175). On an UNPAID child in the cheaper division, ⋯ › Move to another division, pick the dearer one.', see: 'The window asks once: "Keep {name}’s price · $150" (picked) or "Use {Division}’s price · $175", with the early-bird note. Pick Use and Move. The row reads $175 owing.' },
+      { who: O, do: 'Move a PAID child the same way.', see: 'No price question: "{name}’s family has paid, so the price stays $150. To change it, use Correct the price."' }
+    ]},
+    { id: 'J', title: 'Bulk, with a partial result said plainly', steps: [
+      { who: O, do: 'On Active, tick three owing rows and one already-received row. Press Mark received in the bulk bar.', see: 'One window "Mark 3 fees received" with the total across 3 players, one date and one way. After: "3 marked received; 1 skipped: already received." stays until dismissed, and the skipped row is still ticked.' },
+      { who: O, do: 'Tick two children and press Move division into a division with room for one.', see: 'The window says the division has room for 1. After: "1 moved to {division}; 1 stayed: {division} is full."' },
+      { who: O, do: 'Tick some rows and press Email.', see: 'A message window to those families; two children of one family get one email.' }
+    ]},
+    { id: 'K', title: 'On a phone', steps: [
+      { who: P, do: 'Open Registrations on a phone (or 390 px).', see: 'Rows, not a table: "Division B · $150 owing · …" on the detail line. The whole row opens the registration. The ⋯ is a 44 px symbol and opens a sheet headed by the child.' },
+      { who: P, do: 'Long-press a row (or tick it).', see: 'The bulk bar docks at the foot: "1 selected", the tab’s main action in words, the rest behind ⋯.' }
+    ]},
+    { id: 'L', title: 'The season’s Money page and the Overview', steps: [
+      { who: O, do: 'Open the season’s Money page.', see: 'One joined band: Owed (14 players or so) · Received ("{n} players · after $… refunded") · Still owing (amber above $0). Tabs Every line · Still owing · Refunds. No "Outstanding" anywhere. The hint says "This page is the season’s book." (League Plus).' },
+      { who: O, do: 'Open Still owing and Refunds.', see: 'Still owing lists players with Owing since ("Not known" for the old rows). Refunds lists the refunds you made, in red.' },
+      { who: O, do: 'Open the season’s Overview.', see: 'Two new tiles, Owed and Still owing, the same figures as the band. Each opens Money.' },
+      { who: O, do: 'On the Registration block press the pencil: "Turn owing amber after" 14 days. Set 1, and save.', see: 'A row accepted yesterday or earlier now reads its owing pill in amber with "· N days". Put it back to 14.' }
+    ]},
+    { id: 'M', title: 'The family’s record in Families', steps: [
+      { who: O, do: 'Open Families and a family with a house-league child who owes (or part-owes after part H).', see: 'The child’s line: "Price fixed at sign-up, {date}" ("Price corrected · {reason}" for a child you corrected in part H), Dues · Paid · Balance from the book (a part payment reads true), and a greyed Pay link with a tooltip.' },
+      { who: O, do: 'Record a payment for that child with a date last week and How Cheque.', see: 'On Registrations the row reads received on THAT date, "Cheque" (it used to be dated today with no method).' }
+    ]},
+    { id: 'N', title: 'The family’s status page: ask to withdraw', steps: [
+      { who: F, do: 'Open the season’s status page and look up a sign-up whose child is accepted.', see: 'The child, its fee from the book, and "Ask to withdraw {child}" below.' },
+      { who: F, do: 'Press it, write a note, Send request.', see: '"Request sent. The club will email … when {child} is withdrawn." and "You asked to withdraw {child} on Oct 25. The club will confirm by email." The child is still Accepted.' },
+      { who: O, do: 'Open Needs attention.', see: '"Withdrawal request: {child}" · guardian · season · the note. It opens Registrations; the Withdraw window leads with "{guardian} asked to withdraw {child} on Oct 25: “…”".' },
+      { who: O, do: 'Withdraw the child.', see: 'The notice clears itself from Needs attention.' },
+      { who: F, do: 'Look up a sign-up whose child you declined with a refund in part E.', see: 'The child shows Declined and "$150 refunded on Oct 25 (E-Transfer)".' }
+    ]},
+    { id: 'O', title: 'The Statement and the season books agree (Club plan)', steps: [
+      { who: C, do: 'Sign in to uat-rep-club as its owner. Open House league › 2026 Fall House League › Registrations. Approve two children and mark both received (E-Transfer, today).', see: 'Received.' },
+      { who: C, do: 'Open Accounting › Budget vs. Actual for 2026–27.', see: 'Revenue has ONE row "House league registration fees", the season "2026 Fall House League" under it: Budgeted $3,000 (each division’s size × price, planned when registration opened), Actual the two fees.' },
+      { who: C, do: 'Decline one of the two with Refunded. Reload Budget vs. Actual and the season’s Money page.', see: 'The fees row’s Actual dropped by the refund (it never shows as spending). The band’s Collected matches. The season’s Money page Received equals the row’s Actual.' },
+      { who: C, do: 'Open the Budget page, find the season’s line, change its amount, and add a line for the same word in the next fiscal year.', see: 'The Statement’s Budgeted follows: the treasurer splits a season across years this way. The starting budget is never put back over your change.' },
+      { who: C, do: 'Read the Money page hint.', see: '"Fees file on the club’s Budget vs. Actual under House league registration fees, in the fiscal year each one is received."' }
+    ]},
+    { id: 'P', title: 'Who can do what', steps: [
+      { who: R, do: 'Sign in as league-registrar@dev.local and open Registrations.', see: 'Mark received, Undo, Correct the price, Decline, Withdraw, Release, Waitlist, bulk all there. NO Move to another division (only the owner, a club admin or a league admin move children).' },
+      { who: T, do: 'Sign in as league-treasurer@dev.local (League Plus).', see: 'No house-league Money: League Plus carries no Accounting.' },
+      { who: C, do: 'On uat-rep-club, sign in as its treasurer (uat-club-treasurer@uat-rep-club.local) and open the season’s Money.', see: 'Money reads; nothing on it writes. Registrations is not theirs.' },
+      { who: O, do: 'Complete a season that has money owing, then open its Registrations.', see: 'Status actions (Approve, Decline, Withdraw, Move) are gone; Mark received, Undo and Correct the price stay. Money stays open.' }
+    ]},
+    { id: 'Q', title: 'Help', steps: [
+      { who: O, do: 'Open Help and search registrations, refund, correct the price, money, withdraw.', see: 'The house-league guides describe what you just did.' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var row = el('label', 'step');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, id: id, cb: cb });
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = ['House league money walk §378 (2026-10-25)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length);
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.id; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

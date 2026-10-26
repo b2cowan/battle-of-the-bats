@@ -208,7 +208,7 @@ check the snapshot before touching it); the org home's empty-tournaments hero (S
 |---|---|---|---|
 | **9a** The frame and who can do what — **BUILT 2026-10-24** (§9; walk §372 ✅ 2026-10-25) | Home (Running now · Getting ready · Past seasons shelf); season block with Overview, Money, Email families and a working switcher; phone season header + tab strip inside house league's frame; two live seasons (admin, index, club home); every status change asks (rare door + window); one write gate matched to D8 + registrar/treasurer; dead fee switch removed; old look retired on home and overview | Q12 Q14 Q16 Q17 Q18 S1·b 9a·1–4 | M |
 | **9b-1** Sign-up, payments-ready — **BUILT 2026-10-25** (§0d, §9; walk §375 owed) | Create reshaped (Setup = the Overview's Divisions and Registration blocks, extended); price per division + early bird, one resolver; real dates; atomic capacity + waitlist constraint; no duplicate child; approve respects capacity; several children; CASL; DOB picks division; staff notice on every public sign-up. Server and public form only — the Registrations screen is rebuilt once, in 9b-2 | Q5 S1·a S2·b | L |
-| **9b-2** Money, honest | Frozen price (per-registration correction with a reason; Move division asks to re-price); one ending path with refunds as money out; Money band; Money stays open after Complete; Registrations on the kit (Withdraw, Move division, Release the spot, bulk, Paid/Owing filter, phone rows); the club's own payment instructions until 12b; "Ask to withdraw" on the status page; Statement filing + Walk 7a 7.6; ghost pay spots; Families balance from the frozen price. **12b drawn right after this is ruled.** | Q1 Q2 Q3 Q4 Q6 Q10 Q15 | L |
+| **9b-2** Money, honest — **BUILT 2026-10-25** (§0e, §9; walk §378 owed) | Frozen price (per-registration correction with a reason; Move division asks to re-price); one ending path with refunds as money out; Money band; Money stays open after Complete; Registrations on the kit (Withdraw, Move division, Release the spot, bulk, Paid/Owing filter, phone rows); the club's own payment instructions until 12b; "Ask to withdraw" on the status page; Statement filing + Walk 7a 7.6; ghost pay spots; Families balance from the frozen price. **12b drawn right after this is ruled.** | Q1 Q2 Q3 Q4 Q6 Q10 Q15 | L |
 | **9c** Teams and people | Ratings (convenor-only) + balanced snake draft; draft per division; coach accounts (if Q7) as a column of 9a's gate; Publish teams with placement notices; the status page shows the team | Q7 Q8 Q9 | M–L |
 | **9d** The schedule | Generator rebuilt; C1–C12 admin + public; health (Q11); 11b; venue/permit links; Publish schedule + change notices; season email onto the batched sender | Q11 | L |
 | **9e** Game day | Standings by sport pack; score entry (coaches if Q7); rainout as one action | — | S–M |
@@ -332,3 +332,27 @@ open it, and the menu's top level is Stage 13's.
   the price from today's prices" would have repriced earlier families (ruled §0d). Left for 9b-2 as drawn: moving a child to
   another division now respects room and the waitlist but keeps its price (re-pricing is 9b-2's). Migrations 361 and 362
   are prod-pending in `MANUAL_PROD_STEPS.json` and MUST precede the promote (the code calls 362's functions); 363 is a column.
+
+- **2026-10-25 — 9b-2 BUILT (Money, honest).** From `HOUSE_LEAGUE_STAGE9B2_BUILD_PROMPT.md`; the owner ruled the build
+  session's seven asks and the words' four open questions as recommended (§0e). Commits: `ecbca10f5` (Parts 1–2 server:
+  ONE money writer `club_league_money` — receive with an amount, a day and a method; refund as its own line out; undo; price
+  with a reason — and `league_registration_close`, an ending that asks about money, mig 368; the old call shapes route
+  through it; the accepted-at trigger; a one-time catch-up for paid ticks with no line) · `1d770f13e` (/review: an
+  ending's money answer reached the money branch and could never run; Undo names its payment; mig 369) · `549948077`
+  (Parts 3, 4, 6: Registrations rebuilt on the kit with the money on every row, bulk and partial results, the record window,
+  the owing threshold on the Registration block; the season's Money page as its book and the Overview's Owed / Still owing;
+  Families reads the book; the status page reads the book and carries "Ask to withdraw a child" with a Needs-attention
+  notice that clears itself, mig 370) · `fec381566` (Part 5: real budget words per season — the hosted-tournament
+  precedent — stamped on every house-league line, refunds netting the fees row and the band's Collected, a starting budget
+  of size × price planned once when registration opens, mig 371; walk 7a step 7.6 updated) · `1869e3b53` (/review of
+  the whole: a deadlock between a payment and an ending fixed with advisory locks, the Mark received window's crash after
+  a refusal, the opening date read as typed, mig 372; /docs help guides). Proven on dev: `scripts/house-league-money-check.sql`
+  18/18, `check:club-money-atomicity`, `check-club-money-arithmetic`. Migrations 368–372 are prod-pending in
+  `MANUAL_PROD_STEPS.json` and MUST follow 361–363 at the promote. **12b is unblocked:** the writer's signature is
+  `writeLeagueMoney(ctx, { seasonId, regId }, { kind: 'receive', day, method: 'online_card', amount })`. Findings that
+  changed the plan: approving from To review never meets a full division (a child in review holds a spot — the refusal
+  lives on Promote, revive and move); the split of a season's budget needs no new editor (a line in another year under the
+  same word on the Budget page); the Statement's word is a real budget word, not a synthetic row (the split, the Budgeted
+  door and the plan checks come free). Known gaps: a child holding a spot can't move into a FULL division to join its
+  waitlist; the Statement's season sub-row has no link to Money; `check:layout` could not measure (the UAT club's admin
+  pages render "Page not found" in its browser session). Walk §378.

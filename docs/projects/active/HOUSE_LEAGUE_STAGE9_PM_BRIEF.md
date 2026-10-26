@@ -6,7 +6,17 @@
 > **Status 2026-10-25:** 9a built and walked (§372 ✅). **9b-1 built** (sign-up, payments-ready): a season is set up on its
 > own page, families sign up several children at once and see each outcome first, a spot can only be taken once, and the
 > form's dates run it. Four owner rulings in its build session (plan §0d), the biggest: a child's price is fixed the day
-> they sign up. Owner walk §375 owed. Next: 9b-2 (money, honest).
+> they sign up. Owner walk §375 walked 50 of 51.
+>
+> **9b-2 built 2026-10-25 (money, honest).** The convenor and registrar see the money on every registration: what is owing
+> and for how long since the child was accepted (amber after the club's own number of days), what was received, when and
+> how, what was refunded or kept. Marking a fee received takes a date and how it was paid; ending a registration that has
+> money asks whether it was refunded (recorded as money going back, never erased) or kept with a reason; a price can be
+> corrected with a reason; moving a child can re-price them unless they've paid. The Registrations screen is rebuilt for
+> desk and phone, with bulk actions that say plainly what didn't happen. The season's Money page is its book; Families and
+> the family's status page read the same money; families can ask to withdraw a child; on the Club plan the fees show as one
+> row on Budget vs. Actual with each season under it and a starting budget of size × price. Seven owner rulings in its
+> build session (plan §0e). Owner walk §378 owed. Unblocks Stage 12b (online payment lands through the same money writer).
 
 ## What this is
 
