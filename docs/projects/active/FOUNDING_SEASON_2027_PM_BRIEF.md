@@ -1,5 +1,11 @@
 # Founding Season 2027 — PM brief
 
+> **Update 2026-10-26: the offer closed early.** New visitors no longer see the free season anywhere, and a new
+> organization or Premium coach pays the list price at sign-up. Premium has no trial. The accounts that already joined keep
+> their free season to September 30, 2027, exactly as promised. **Why:** no coach took the offer, and it was getting in
+> the way of real purchases. **Success:** no offer wording on any public page, and a new sign-up can buy Tournament Plus or
+> Premium through Stripe.
+
 **Plan:** `FOUNDING_SEASON_2027_PLAN.md` · **Copy:** `FOUNDING_SEASON_2027_OFFER_COPY.md` · **Mockups:** artifact `61a78f09`
 **Status:** Phase 0 built on dev 2026-09-07, owner QA §150 ✅ passed 73/73. **Phase 1 committed `d2b3b2db` 2026-09-08; owner QA §154 owed.** Migrations 279 and 284 prod-owed (both data-only).
 

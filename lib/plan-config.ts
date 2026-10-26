@@ -298,8 +298,18 @@ export function normalizeBillingCycle(value: unknown): BillingCycle {
 // (and the comped workspaces' / orgs' current_period_end) in the same change, as migration 279 did
 // for the 2027-01-01 → 2027-10-01 move.
 
+// Closed early, 2026-10-26 (owner — no coach had taken the offer; BUSINESS_DECISIONS 2026-10-26): the window
+// ends at the end of October 25, 2026 EDT instead of December 31 (closed as of the ruling day, so dev walks see it shut). Every account already in keeps its comp
+// through FOUNDING_SEASON_END exactly as sold — only the OFFER stops.
 export const FOUNDING_SEASON_SIGNUP_CLOSE =
-  process.env.NEXT_PUBLIC_FOUNDING_SEASON_SIGNUP_CLOSE ?? '2027-01-01T05:00:00.000Z';
+  process.env.NEXT_PUBLIC_FOUNDING_SEASON_SIGNUP_CLOSE ?? '2026-10-26T04:00:00.000Z';
+/**
+ * The deadline the comp HOLDERS were sold: "the free season is yours if you upgrade by December 31" (the Tournament Plus
+ * upsell email, the window as it stood). Closing the offer early ends it for newcomers only. An organization already
+ * holding the comp keeps Tournament Plus at $0 on any upgrade until this instant, exactly as sold
+ * (`foundingSeasonOfferOnPlanChoice`, owner 2026-10-26). Fixed — it is the old close, not a date to move.
+ */
+export const FOUNDING_SEASON_HOLDER_UPGRADE_BY = '2027-01-01T05:00:00.000Z';
 export const FOUNDING_SEASON_END =
   process.env.NEXT_PUBLIC_FOUNDING_SEASON_END ?? '2027-10-01T04:00:00.000Z';
 /**

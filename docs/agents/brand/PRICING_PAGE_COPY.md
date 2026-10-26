@@ -5,6 +5,14 @@
 **Last updated:** 2026-05-27  
 **Supersedes:** Previous three-tier + module add-on strategy (initial draft, no longer on disk)
 
+> ### ⛔ THE FOUNDING SEASON OFFER IS CLOSED 2026-10-26 (`BUSINESS_DECISIONS.md` 2026-10-26, "The Founding Season offer closes early")
+> The sign-up window ended at the **end of October 25, 2026**. Every Founding Season line in this document is **history**.
+> Do not put any of it on a surface again: no "free through", no "$0", no "sign up by", no "2027 season free". New
+> sign-ups see list prices, and Premium has **no trial**. The live site already shows its closed state (walked in §150).
+> The `/pricing` FAQ dropped the Founding question rather than answering it. **Still live, for accounts already on the
+> comp only** (they run to September 30, 2027): the billing page's free-season words, the lock lines' `Free for you
+> through {date}`, and the `founding_*` emails. Those are served from the Founding canon and stay as they are.
+
 ---
 
 ### 🆕 The free Tournament plan on every page — the invite-only event, said everywhere — APPROVED 2026-10-16 (owner: all 43 as recommended, on the free tier hub's Words tab; `/marketing`, the free tournament tier's R9 repositioning after the build `d82c4118`). No prices.
@@ -184,6 +192,9 @@ No plan, price, gate or inclusion moved: the names only. Outcome lines that desc
 
 ### 🆕 FOUNDING SEASON 2027 — offer copy APPROVED 2026-09-07 (owner, on mockup sheet `61a78f09`; built on `dev` 2026-09-07)
 
+> ⛔ **CLOSED 2026-10-26 (`BUSINESS_DECISIONS.md` 2026-10-26, "The Founding Season offer closes early").** History, not live copy. See the notice at the top of this document.
+
+
 **Every Founding Season sentence on the pages now comes from ONE canon and is single-sourced in
 code.** The canon is `docs/projects/active/FOUNDING_SEASON_2027_OFFER_COPY.md` (the surface-by-surface
 Current/Proposed record, with the flags raised); the words themselves are DERIVED from the two date
@@ -304,7 +315,7 @@ The sections below document all copy changes applied to the live pages after the
 
 > ### ⛔ SUPERSEDED — all "Free Trial" copy in this document (added 2026-06-08)
 > Every "14-Day Free Trial" / "Start Free Trial" badge, CTA, FAQ answer, and trial-length row in the body sections below (Section 4 cards, Section 9 FAQ, the Comparison/Availability tables, etc.) is **superseded and must not be used.** Two changes overrode the original trial model:
-> 1. **Founding Season comp** — paid tiers are **free through Dec 31, 2026, no credit card** (no clock, no card-at-signup). Use "Free through Dec 31, 2026 · no credit card required" framing.
+> 1. ⛔ *(Offer closed 2026-10-26; history.)* **Founding Season comp** — paid tiers are **free through Dec 31, 2026, no credit card** (no clock, no card-at-signup). Use "Free through Dec 31, 2026 · no credit card required" framing.
 > 2. **Free-floor model** — each operator type starts on a **free-forever scoped floor** (Free Tournament / Free League Starter / Free Basic Coaches Portal), not a time-limited trial. Conversion is driven by scope/scale walls, not a trial expiry. See `docs/projects/archive/FREE_TIER_COACHES_UNIFIED_PLAN.md`.
 >
 > Do **not** reintroduce trial-length language (14/30/90-day) anywhere in live copy. The body trial sections are retained below only as historical record.
@@ -421,6 +432,9 @@ In-app copy for the **free standalone-coach** Explore page (the rediscovery home
 - **Appendix tournament slots** — Tournament Plus tournament slots are unlimited (9999), not 3; config was corrected
 
 ### ⏰ Post-Founding Season update checklist (before Jan 1, 2027)
+
+> ⛔ **Overtaken 2026-10-26.** The offer closed early. The live pages took their built closed state (no callout, list prices, no Founding FAQ, the credit-card FAQ rewritten), so this checklist is history. `trialDays` stays as configured (Premium 0). The Founding history in this doc is **marked closed, not deleted**.
+
 When December 31, 2026 passes, update the following before January billing activates:
 - [ ] Hero sub — remove "no credit card required" from Tournament Plus mention
 - [ ] Founding Season callout card on homepage and pricing page — remove or replace
@@ -435,6 +449,8 @@ When December 31, 2026 passes, update the following before January billing activ
 ## SECTION 9 — LIVE FAQ (authoritative — supersedes original Section 9)
 
 The following are the approved live FAQ answers as of 2026-05-27. The original Section 9 below retains useful framing guidance but the specific answers here take precedence.
+
+> ⛔ *Both answers below are history (offer CLOSED 2026-10-26 (`BUSINESS_DECISIONS.md` 2026-10-26, "The Founding Season offer closes early")). The live `/pricing` page no longer has the first question, and its credit-card answer reads: "No. Tournament is free — no credit card, no time limit. The Basic Coaches Portal is free with no time limit too. Paid plans use secure Stripe Checkout."*
 
 **Q: What happens after the Founding Season offer ends?**  
 A: Tournament Plus is free through December 31, 2026 for organizations that sign up during the founding season — no credit card required. Starting January 2027, the standard rate of $39/month applies. We'll send a reminder before the offer closes. Your data and settings stay in place regardless of what you choose at renewal.

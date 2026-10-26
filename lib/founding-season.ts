@@ -2,6 +2,7 @@ import {
   FOUNDING_SEASON_END,
   FOUNDING_SEASON_END_LABEL,
   FOUNDING_SEASON_COMP_EXPIRIES,
+  FOUNDING_SEASON_HOLDER_UPGRADE_BY,
   isFoundingSeasonActive,
   isFoundingSeasonCurrentExpiry,
   isFoundingSeasonOpenFor,
@@ -89,6 +90,9 @@ export async function foundingSeasonOfferOnPlanChoice(org: { id: string; planId?
     supabaseAdmin.from('organizations').select('startup_tasks, onboarding_completed_at').eq('id', org.id).maybeSingle(),
   ]);
   if (comp.error || tournaments.error || row.error || !row.data) return false;
+  // THE EARLY CLOSE (owner 2026-10-26): the offer ended for newcomers on October 25, but a holder was sold "upgrade by
+  // December 31", so any upgrade before that keeps the $0 — first-run choice or not.
+  if (comp.data && Date.now() < Date.parse(FOUNDING_SEASON_HOLDER_UPGRADE_BY)) return true;
   return !!comp.data
     && (tournaments.count ?? 0) === 0
     && !row.data.onboarding_completed_at
@@ -118,6 +122,31 @@ export async function workspaceHoldsFoundingComp(workspaceOrgId: string): Promis
   if (!isFoundingSeasonActive()) return false;
   const { data, error } = await liveFoundingCompRow(workspaceOrgId);
   return !error && !!data;
+}
+
+/**
+ * A COMPED PORTAL COMING BACK (the early close, owner 2026-10-26: existing comps run "exactly as sold"). A Founding coach
+ * who cancelled and reactivates must take the comp path again. Their locked start door was cleared when the portal was
+ * first made, so `foundingSeasonOfferFor` is false once the window shuts, and the paid path cannot restore a comp
+ * (`platform_override`) workspace: the coach would be charged and the webhook would refuse to restore the portal.
+ * True when the named workspace is a comp portal whose org still holds a live comp. Ownership is checked by the comp
+ * path's own reactivation lookup. Fails closed: a read error is the paid path, the same as before this check existed.
+ */
+export async function reactivationHoldsFoundingComp(reactivateOrgSlug: string | null | undefined): Promise<boolean> {
+  if (!reactivateOrgSlug || !isFoundingSeasonActive()) return false;
+  const { data: org, error } = await supabaseAdmin
+    .from('organizations')
+    .select('id')
+    .eq('slug', reactivateOrgSlug)
+    .maybeSingle<{ id: string }>();
+  if (error || !org) return false;
+  const { data: workspace, error: workspaceError } = await supabaseAdmin
+    .from('team_workspaces')
+    .select('billing_mode')
+    .eq('workspace_org_id', org.id)
+    .maybeSingle<{ billing_mode: string | null }>();
+  if (workspaceError || workspace?.billing_mode !== 'platform_override') return false;
+  return workspaceHoldsFoundingComp(org.id);
 }
 
 /**

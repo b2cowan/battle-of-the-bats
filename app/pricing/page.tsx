@@ -212,21 +212,18 @@ export default async function PricingPage() {
         return faq;
       });
 
-  // Post-window state, written NOW so the page never asserts an expired date and never hedges
-  // about a second offer (there is none): from the day the signup window closes, the Founding
-  // Season question becomes "can I still get it?" with the list prices as the answer.
+  // Post-window state. The window closed early (owner 2026-10-26) and the offer's marketing comes off the site with it,
+  // so the Founding Season question leaves the FAQ rather than being answered: a visitor who never saw the offer has no
+  // reason to read about it. The three accounts already in read their own free season on their billing page.
   const faqsForWindow = tpPromoActive
     ? faqs
-    : faqs.map(faq =>
-        faq.q === 'What happens after the Founding Season offer ends?'
-          ? {
-              q: 'Can I still get the Founding Season offer?',
-              a: `The Founding Season closed on ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}. Tournament is free with no time limit, and Tournament Plus is ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month or ${formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year. The Basic Coaches Portal is free with no time limit, and the Premium Coaches Portal is ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month or ${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/year. No contract; cancel anytime.`,
-            }
-          : faq.q === 'Do I need a credit card to get started?'
+    : faqs
+        .filter(faq => faq.q !== 'What happens after the Founding Season offer ends?')
+        .map(faq =>
+          faq.q === 'Do I need a credit card to get started?'
             ? { ...faq, a: 'No. Tournament is free — no credit card, no time limit. The Basic Coaches Portal is free with no time limit too. Paid plans use secure Stripe Checkout.' }
             : faq,
-      );
+        );
 
   return (
     <main className={kit.page}>

@@ -126,7 +126,12 @@ describe('the Founding Season offer at a creation', () => {
     assert.match(readCode('app/api/org/create/route.ts'), /if \(foundingSeasonOfferFor\(user, 'organization'\)\) \{/);
     assert.match(readCode('app/api/league/create/route.ts'), /if \(foundingSeasonOfferFor\(user, 'league'\)\) \{/);
     // edge (b): Coach Premium on the same rule (Part 3)
-    assert.match(readCode('app/api/billing/create-team-checkout/route.ts'), /if \(foundingSeasonOfferFor\(user, 'premium'\)\) \{/);
+    assert.match(readCode('app/api/billing/create-team-checkout/route.ts'), /if \(foundingSeasonOfferFor\(user, 'premium'\) \|\| await reactivationHoldsFoundingComp\(checkoutRequest\.reactivateOrgSlug\)\) \{/);
+    // the early close (2026-10-26): a comp portal coming back after a cancel keeps its comp — a comp workspace with a live
+    // comp row only, and never after the comp ends (the paid path cannot restore a comp workspace)
+    const back = lib.slice(lib.indexOf('export async function reactivationHoldsFoundingComp('));
+    assert.match(back, /if \(!reactivateOrgSlug \|\| !isFoundingSeasonActive\(\)\) return false;/);
+    assert.match(back, /if \(workspaceError \|\| workspace\?\.billing_mode !== 'platform_override'\) return false;\s*return workspaceHoldsFoundingComp\(org\.id\);/);
     for (const f of ['app/api/org/create/route.ts', 'app/api/league/create/route.ts', 'app/api/billing/create-checkout/route.ts', 'app/api/auth/signup/route.ts', 'app/api/billing/create-team-checkout/route.ts']) {
       assert.doesNotMatch(readCode(f), /isFoundingSeasonSignupOpen\(\)/, `${f} reads the one rule, not the bare window`);
     }
@@ -148,6 +153,9 @@ describe('the Founding Season offer at a creation', () => {
     assert.match(rule, /if \(!foundingCompAppliesToPlan\(org\.ownPlanId \?\? org\.planId\)\) return false;\s*if \(isFoundingSeasonSignupOpen\(\)\) return true;/, 'Club never (2026-09-25), even in the window');
     assert.match(rule, /\.is\('revoked_at', null\)/);
     assert.match(rule, /if \(comp\.error \|\| tournaments\.error \|\| row\.error \|\| !row\.data\) return false;/, 'fails closed: a read error is the list price');
+    // the early close (owner 2026-10-26): a HOLDER keeps $0 on any upgrade until the deadline it was sold, December 31
+    assert.match(rule, /if \(comp\.data && Date\.now\(\) < Date\.parse\(FOUNDING_SEASON_HOLDER_UPGRADE_BY\)\) return true;/);
+    assert.match(readCode('lib/plan-config.ts'), /export const FOUNDING_SEASON_HOLDER_UPGRADE_BY = '2027-01-01T05:00:00\.000Z';/);
     // server facts only — the first run ends when setup starts, as the free-plan route's own lock reads it
     assert.match(rule, /&& \(tournaments\.count \?\? 0\) === 0\s*&& !row\.data\.onboarding_completed_at\s*&& !hasSavedSetupWork\(row\.data\.startup_tasks\);/);
     // ⚠ never the browser-written plan task: every first-run plan change wipes it, so an abandoned checkout reopened $0 (/review)

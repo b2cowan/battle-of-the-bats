@@ -38,3 +38,48 @@ export function useFoundingSeasonLock(): string | null {
 
   return foundingSeasonLockUntil(currentOrg?.planId, Boolean(onFree && answer && answer.slug === slug && answer.isFoundingSeason));
 }
+
+/**
+ * Does this organization hold a running Founding Season comp, whatever its plan? The same once-per-page status read as
+ * the lock lines. For a surface that speaks to a HOLDER rather than to a newcomer (the onboarding welcome): the offer's
+ * window closed early (owner 2026-10-26), but a holder is still in its Founding Season. False while loading.
+ */
+export function useHoldsFoundingComp(): boolean {
+  const { currentOrg } = useOrg();
+  const slug = currentOrg?.slug ?? null;
+  const [answer, setAnswer] = useState<{ slug: string; isFoundingSeason: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!slug) return;
+    let live = true;
+    askOnce(slug).then(isFoundingSeason => { if (live) setAnswer({ slug, isFoundingSeason }); });
+    return () => { live = false; };
+  }, [slug]);
+
+  return Boolean(answer && answer.slug === slug && answer.isFoundingSeason);
+}
+
+/**
+ * Is Tournament Plus still $0 for THIS organization's plan choice: the checkout's own answer
+ * (`foundingSeasonOfferOnPlanChoice`), so a price card never shows a price the checkout won't charge. Read fresh on each
+ * mount, never cached for the page: the answer can change as setup starts. Feed it to `showsFoundingZero`. False while
+ * loading, the list price, which is what the checkout falls back to as well. `enabled` false asks nothing (a caller that
+ * already holds the answer, or a panel that is closed).
+ */
+export function useFoundingOfferOnPlanChoice(enabled = true): boolean {
+  const { currentOrg } = useOrg();
+  const slug = enabled ? currentOrg?.slug ?? null : null;
+  const [answer, setAnswer] = useState<{ slug: string; held: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!slug) return;
+    let live = true;
+    fetch(`/api/admin/org/founding-season-status?orgSlug=${encodeURIComponent(slug)}&planChoice=1`, { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: { offerOnPlanChoice?: boolean } | null) => { if (live) setAnswer({ slug, held: d?.offerOnPlanChoice === true }); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [slug]);
+
+  return Boolean(answer && answer.slug === slug && answer.held);
+}

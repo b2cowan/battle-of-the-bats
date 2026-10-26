@@ -4,7 +4,7 @@ import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { getStripePriceId } from '@/lib/stripe-prices';
 import { FOUNDING_SEASON_END } from '@/lib/plan-config';
-import { foundingSeasonOfferFor } from '@/lib/founding-season';
+import { foundingSeasonOfferFor, reactivationHoldsFoundingComp } from '@/lib/founding-season';
 import {
   buildTeamCheckoutMetadata,
   normalizeTeamCheckoutRequest,
@@ -123,8 +123,9 @@ export const POST = withObservability(async (req: Request) => {
   // promo and takes precedence over BOTH the dev mock and real Stripe checkout — no card is ever
   // collected or charged while the window is open. After the close, only an account made by then whose Coach Premium
   // sign-up came for this portal keeps it (edge (b), 2026-10-19; the one rule, lib/founding-season.ts); everyone else
-  // gets the list-price checkout.
-  if (foundingSeasonOfferFor(user, 'premium')) {
+  // gets the list-price checkout. A comp portal coming back after a cancel keeps its comp too (the early close,
+  // 2026-10-26: existing comps run as sold) — the paid path cannot restore a comp workspace.
+  if (foundingSeasonOfferFor(user, 'premium') || await reactivationHoldsFoundingComp(checkoutRequest.reactivateOrgSlug)) {
     try {
       const metadata = buildTeamCheckoutMetadata({
         ownerUserId: user.id,

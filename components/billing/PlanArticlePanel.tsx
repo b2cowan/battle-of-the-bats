@@ -11,7 +11,8 @@ import { X, CheckCircle } from 'lucide-react';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, isFoundingSeasonPromoActive, gatedPlanSentence, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { PLAN_CONFIG, showsFoundingZero, gatedPlanSentence, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { useFoundingOfferOnPlanChoice } from '@/lib/use-founding-season-lock';
 import type { PanelPlanKey as PlanKey } from '@/lib/plan-upgrade';
 import styles from './PlanArticlePanel.module.css';
 
@@ -23,6 +24,9 @@ interface Props {
   upgradeLoading: PlanKey | null;
   isComingSoon: boolean;
   canUpgrade?: boolean;
+  /** The checkout's own "$0 for this organization's choice" answer, when the host already read it (Plan & billing).
+   *  Left out, the panel asks for itself once it opens (the plan drawer a lock line opens). */
+  foundingOfferHeld?: boolean;
 }
 
 export default function PlanArticlePanel({
@@ -33,6 +37,7 @@ export default function PlanArticlePanel({
   upgradeLoading,
   isComingSoon,
   canUpgrade = true,
+  foundingOfferHeld,
 }: Props) {
   useEffect(() => {
     if (!planKey) return;
@@ -43,12 +48,14 @@ export default function PlanArticlePanel({
 
   const panelRef = useRef<HTMLElement>(null);
   useDialogFloor(Boolean(planKey), panelRef, { onClose, busy: planKey !== null && upgradeLoading === planKey });
+  const askedHere = useFoundingOfferOnPlanChoice(foundingOfferHeld === undefined && planKey !== null);
 
   if (!planKey) return null;
 
   const article = PLAN_ARTICLE_CONTENT[planKey];
   const config  = PLAN_CONFIG[planKey];
-  const promoActive = isFoundingSeasonPromoActive(planKey);
+  // The price shown is the price charged: the window for a newcomer, the checkout's answer for a comp holder.
+  const promoActive = showsFoundingZero(planKey, foundingOfferHeld ?? askedHere);
   const price   =
     promoActive
       ? `Free through ${FOUNDING_SEASON_END_LABEL}`

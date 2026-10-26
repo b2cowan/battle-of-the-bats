@@ -8,6 +8,60 @@
 
 ---
 
+### 2026-10-26 — The Founding Season offer closes early (end of October 25, 2026); every account already in keeps its free season through September 30, 2027 exactly as sold; a new Premium coach pays at sign-up
+**Status:** **Decided** (owner, 2026-10-26 — *"given we are almost at November and no coach has signed on, I think we can go
+ahead and remove all founding season marketing and functionality"*; then, on the three choices put to him, **"Close the
+offer, honour existing"** and **"No trial, pay at signup"**). **Built on dev 2026-10-26, same session**; deployment state
+lives in the release-history record.
+**Decision:**
+1. **The sign-up window closes at the end of October 25, 2026 (Eastern)** instead of December 31, 2026
+   (`FOUNDING_SEASON_SIGNUP_CLOSE` 2026-10-26T04:00Z, was 2027-01-01T05:00Z). Every offer surface takes the closed state it
+   already had, walked in the §150 rehearsal: no homepage panel, no "$0 through" price, no sign-up pills, no persona-page or
+   onboarding offer. New organizations and new Premium Coaches Portals pay the **list price through Stripe**.
+2. **Every account already holding the comp keeps it through September 30, 2027, exactly as sold** (`FOUNDING_SEASON_END`
+   unchanged), with everything that serves it: the billing page's free-season block, the June 2027 card window, the 2028
+   plan choice, the platform-admin Founding view and desk, and the `founding_*` send book. 2026-10-12 point 5 stands for
+   them. The account-first eligibility rule (2026-10-18/19) keeps working against the new close: an account made by it,
+   whose start sign-up came for an organization or a portal, still gets the comp when it creates it. **"As sold"
+   includes the holder's own deadline** (found by `/review` the same day, and built to the ruling, not a new one). A
+   holder on the free plan was told *"the free season is yours if you upgrade by December 31"*, so it keeps Tournament
+   Plus at $0 on any upgrade until the end of December 31, 2026. The lock lines, the plan panel and Plan & billing show
+   the checkout's own answer. **A comped Premium portal that was cancelled reactivates on its comp, not at $29.**
+   Without that, the paid path charged the coach and could not restore the portal.
+3. **The offer's marketing comes off the site.** The pricing FAQ drops the Founding Season question after the close rather
+   than answering "can I still get it?". The three live campaigns that sell the offer are **retired**:
+   `spotlight_coaches_org`, `spotlight_coaches_coach` and `spotlight_full_picture`, with their copy kept verbatim as the
+   database rows hold it, the same as the retired Club spotlights.
+4. **No Premium trial is added.** A new Premium Coaches Portal pays $29/month or $290/year at checkout. (The premise that
+   coaches "still have their trial period" was wrong: `trialDays` for `team` is 0, and the comp was the only free period a
+   coach ever had.)
+5. **Removing the Founding machinery from the code is deferred** until the last comp ends. Most of it exists to serve the
+   accounts point 2 honours.
+**Rationale:** the offer had run since July (Premium) and September (the dates) without a coach taking it, and it was
+blocking real Stripe purchases on dev, so the §384 walk could not buy Tournament Plus. Closing the window costs nothing
+already promised. Ripping the functionality out would either strand the three real accounts on the comp (nothing ends it,
+and a comped account has nothing it can buy) or quietly break "the offer stays exactly as sold". Pre-revenue: this tests
+whether list-price self-serve converts with no promotion.
+**Affects:** `lib/plan-config.ts` (the close instant); the `/pricing` FAQ; the campaign registry (three retired); every offer
+surface (by the existing window check, no code change); `PLAN_PRICING_FACTS.md` (Promotions, the two "$0" cells, the
+Premium "purchasable" cell); `memory/project_pricing_strategy.md` (nothing to change, it points at the Facts doc). **No
+price, name, band, SKU, feature key or gate value moved.** Coach checkout now runs the paid $29 Stripe path in production.
+**Handoff:**
+HANDOFF → `/release` — at the next promote: confirm Amplify carries no `NEXT_PUBLIC_FOUNDING_SEASON_SIGNUP_CLOSE` override,
+and that the Premium Coaches Portal's live Stripe prices are wired and buyable (until now production only ever ran the $0
+comp path for coaches). No data migration ships with this.
+HANDOFF → `/marketing` — `PRICING_PAGE_COPY.md` (31 Founding Season mentions) describes an open offer. Mark it closed and stop
+it reading as live copy; no customer surface needs new words, because the closed state is already written.
+HANDOFF → `/docs` — none for customers (no customer help article sells the offer); the platform-admin articles on the
+Founding desk stay true while comps run.
+HANDOFF → `/plan` — the Founding Season plan records the early close and moves the code removal behind the last comp's end
+(October 1, 2027).
+**Supersedes:** 2026-09-07 Founding Season 2027, on the **sign-up close date only** (December 31, 2026 → October 25, 2026);
+its end date, its September ask and "no second promotion" all stand. **Refines:** 2026-10-18 eligibility (the rule is
+unchanged; the close it reads moved).
+
+---
+
 ### 2026-10-26 — Refunds of a club's FieldLogicHQ subscription charges are made from the support console, by Super admin and Billing, back to the card only
 **Status:** **Decided** (owner, 2026-10-26: Support console Stage 3 drawings, Q1–Q3, every recommended box ticked —
 https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX; recorded in `memory/design_decisions.md` 2026-10-26 and the plan
@@ -1221,7 +1275,7 @@ HANDOFF → `/billing`   — nothing: no gate or inclusion changed.
 
 
 ### 2026-09-07 — FOUNDING SEASON 2027: the free season runs through September 30, 2027 for everyone who signs up by December 31, 2026; the two dates separate; no second promotion; the September ask is a 2028 plan choice, annual first; the offer goes front and centre
-**Status:** Decided (owner, 2026-09-07 — *"I agree with all of your recommendations"* on the six decisions, then *"looks good, go for it"* on the mockup sheet `61a78f09` with the recommended option on each of its three choices). **Committed `2f02a949` on `dev` 2026-09-07** after `/review` (seven findings fixed; migration 279 on prod 2026-09-08 (job 262)). Plan: `docs/projects/active/FOUNDING_SEASON_2027_PLAN.md` (+ PM brief); copy canon: `FOUNDING_SEASON_2027_OFFER_COPY.md`.
+**Status:** Decided — **sign-up close date superseded 2026-10-26** ("The Founding Season offer closes early"; the window shut at the end of October 25, 2026; everything else here stands). Originally decided (owner, 2026-09-07 — *"I agree with all of your recommendations"* on the six decisions, then *"looks good, go for it"* on the mockup sheet `61a78f09` with the recommended option on each of its three choices). **Committed `2f02a949` on `dev` 2026-09-07** after `/review` (seven findings fixed; migration 279 on prod 2026-09-08 (job 262)). Plan: `docs/projects/active/FOUNDING_SEASON_2027_PLAN.md` (+ PM brief); copy canon: `FOUNDING_SEASON_2027_OFFER_COPY.md`.
 
 **Decision:** Seven parts.
 1. **The free period ends September 30, 2027** (was December 31, 2026) for Tournament Plus and the Premium Coaches Portal. Not August 31: the product's own season model says settlement, awards, documents and next year's tryout all happen after the last game, and ball tryouts run August into September — the conversion moment must coincide with "I have next year's team".

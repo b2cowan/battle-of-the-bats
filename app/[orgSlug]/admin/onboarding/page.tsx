@@ -16,6 +16,7 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener';
 import { PLAN_CONFIG, isFoundingSeasonSignupOpen, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL } from '@/lib/plan-config';
+import { useHoldsFoundingComp } from '@/lib/use-founding-season-lock';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
 import type { FreeFloor, OrgPlan } from '@/lib/types';
@@ -228,6 +229,9 @@ export default function OnboardingPage() {
 
 function OnboardingPageLegacy() {
   const { currentOrg, userRole, loading, refresh: refreshOrgContext } = useOrg();
+  // The welcome speaks to a comp HOLDER as well as a newcomer: the window closed early (owner 2026-10-26), but an
+  // organization that joined in time is still in its Founding Season.
+  const holdsFoundingComp = useHoldsFoundingComp();
   const { refresh: refreshTournamentContext } = useTournament();
   const { openNew } = useSetupWizard();
   const router = useRouter();
@@ -1413,7 +1417,7 @@ function OnboardingPageLegacy() {
         <p className={styles.sub}>Let&apos;s get {currentOrg.name} set up in a few quick steps.</p>
       </div>
 
-      {isFoundingSeasonSignupOpen() && (
+      {(isFoundingSeasonSignupOpen() || holdsFoundingComp) && (
         <div className={styles.foundingSeasonBanner}>
           <p className={styles.foundingSeasonBannerEyebrow}>Founding Season</p>
           <p className={styles.foundingSeasonBannerTitle}>Welcome to your Founding Season.</p>

@@ -1,5 +1,19 @@
 # Founding Season 2027 — the free season runs through September 30, 2027; the offer goes front and centre
 
+> **⚠ THE OFFER CLOSED EARLY — 2026-10-26 (owner; `BUSINESS_DECISIONS.md` 2026-10-26).** The sign-up window now ends
+> at the **end of October 25, 2026**, not December 31. No coach had taken the offer, and it blocked real Stripe purchases.
+> Built on dev the same day: `FOUNDING_SEASON_SIGNUP_CLOSE` → `2026-10-26T04:00Z` (every offer surface takes the closed
+> state walked in §150); the `/pricing` FAQ drops the Founding question after the close; `spotlight_coaches_org`,
+> `spotlight_coaches_coach` and `spotlight_full_picture` retired (copy kept verbatim to the database rows, so no reseed).
+> **Everything below that serves accounts already holding the comp still applies** (the end date, the card window, the
+> 2028 choice, the desk, the send book, Phase 3's turn-off). **Removing the Founding code waits for the last comp to end
+> (October 1, 2027).** Release checks: no Amplify close-date override; the Premium portal's live Stripe price is buyable.
+> No Premium trial was added (`trialDays` 0).
+> **Same-day `/review` fixes (holders honoured "as sold"):** a comp holder keeps $0 on any Tournament Plus upgrade
+> until its sold deadline, December 31 (`FOUNDING_SEASON_HOLDER_UPGRADE_BY` in `foundingSeasonOfferOnPlanChoice`); Plan &
+> billing and the plan panel price from that same server answer (`useFoundingOfferOnPlanChoice`); the onboarding welcome
+> keys on the comp, not the window; a cancelled comp portal reactivates on its comp (`reactivationHoldsFoundingComp`).
+
 **Status:** Phase 0 ✅ **committed `2f02a949` on `dev` 2026-09-07** after `/review` (§3b; owner QA §150 ✅ **PASSED 73/73, zero defects, 2026-09-07** — B9 on the owner's run-order artifact `5ef0163e`; the one question it raised — the comparison table had no Coaches Portal column — was RULED the same day: **the table is removed** (`BUSINESS_DECISIONS.md` 2026-09-07);
 **migration 279 applied to dev, PROD-OWED and invisible to `check:migrations` — it is data-only**).
 **Phase 1 ✅ committed `d2b3b2db` on `dev` 2026-09-08** after `/review` (the campaign emails, the demos, the help, the offer bar walked into both demos; migration 284 on prod 2026-09-08 (job 262) (data-only — verified by query, not by a gate); owner QA §154 owed; copy approved by the owner on artifact `4e8c6474` before any seed was written, walk artifact `fc80f4bf`). Phases 2–3 planned. Ruling: `docs/agents/strategy/BUSINESS_DECISIONS.md` 2026-09-07. Design:

@@ -11,7 +11,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
 import { getBillingHref } from '@/lib/billing-urls';
 import {
-  PLAN_CONFIG, isEffectivelyGated, gatedPlanTag, gatedPlanNote, isFoundingSeasonActive, isFoundingSeasonPromoActive, isFoundingSeasonCardWindowOpen,
+  PLAN_CONFIG, isEffectivelyGated, gatedPlanTag, gatedPlanNote, isFoundingSeasonActive, isFoundingSeasonPromoActive, isFoundingSeasonCardWindowOpen, showsFoundingZero,
   formatPriceAmount, formatAnnualSavings,
   FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
 } from '@/lib/plan-config';
@@ -20,6 +20,7 @@ import { COACHES_START_PATH, teamWorkspaceReactivatePath } from '@/lib/coaches-p
 import { nextSeasonPlanOptions } from '@/lib/next-season-choice';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { usePlanGating } from '@/lib/use-plan-gating';
+import { useFoundingOfferOnPlanChoice } from '@/lib/use-founding-season-lock';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlanArticlePanel from '@/components/billing/PlanArticlePanel';
 import { requestPlanUpgrade, planUpdatedMessage, upgradePlansFor, type UpgradePlanKey } from '@/lib/plan-upgrade';
@@ -180,6 +181,9 @@ const METER = { ok: 'var(--home-olive)', near: 'var(--warning)', full: 'var(--ho
 
 function BillingPagePlans() {
   const { currentOrg, refresh: refreshOrg, userRole } = useOrg();
+  // Is Tournament Plus still $0 for THIS organization's choice? The checkout's own answer, so every price on the page is
+  // the price charged — a comp holder keeps it to its sold deadline after the window closed early (owner 2026-10-26).
+  const foundingOfferHeld = useFoundingOfferOnPlanChoice();
   usePageTitle('Plan & billing');
   const { tournaments, refresh: refreshTournaments }  = useTournament();
   const searchParams     = useSearchParams();
@@ -597,7 +601,7 @@ function BillingPagePlans() {
     : `Cancellation suspends the full account. Public pages and modules shut down, and data is retained for ${cancelPreflight?.retentionDays ?? 90} days.`;
   function getPrice(planKey: OrgPlan): string {
     if (isGated(planKey)) return gatedPlanTag(planKey);
-    if (isFoundingSeasonPromoActive(planKey)) return `Free through ${FOUNDING_SEASON_END_LABEL}`;
+    if (showsFoundingZero(planKey, foundingOfferHeld)) return `Free through ${FOUNDING_SEASON_END_LABEL}`;
     const plan = PLAN_CONFIG[planKey];
     if (plan.monthlyPrice === 0) return 'Free';
     if (billingCycle === 'annual') return `${formatPriceAmount(plan.annualPrice)} CAD / year`;
@@ -605,7 +609,7 @@ function BillingPagePlans() {
   }
 
   function getShelfPrice(planKey: OrgPlan): string {
-    if (isFoundingSeasonPromoActive(planKey)) return `Free through ${FOUNDING_SEASON_END_LABEL}`;
+    if (showsFoundingZero(planKey, foundingOfferHeld)) return `Free through ${FOUNDING_SEASON_END_LABEL}`;
     const plan = PLAN_CONFIG[planKey];
     if (plan.monthlyPrice === 0) return 'Free';
     return `from ${formatPriceAmount(plan.monthlyPrice)} CAD / month`;
@@ -613,21 +617,21 @@ function BillingPagePlans() {
 
   function getSavings(planKey: OrgPlan): string | null {
     if (isGated(planKey)) return null;
-    if (isFoundingSeasonPromoActive(planKey)) return null;
+    if (showsFoundingZero(planKey, foundingOfferHeld)) return null;
     if (billingCycle !== 'annual') return null;
     return formatAnnualSavings(planKey);
   }
 
   function getTrialNote(planKey: OrgPlan): string {
     if (isGated(planKey)) return gatedPlanNote(planKey);
-    if (isFoundingSeasonPromoActive(planKey)) return `No credit card — nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}`;
+    if (showsFoundingZero(planKey, foundingOfferHeld)) return `No credit card — nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}`;
     const days = PLAN_CONFIG[planKey].trialDays;
     if (days === 90) return 'Early-access trial details collected in Stripe';
     return `${days}-day trial · Payment details collected in Stripe`;
   }
 
   function getUpgradeLoadingLabel(planKey: OrgPlan): string {
-    return isFoundingSeasonPromoActive(planKey) ? 'Applying…' : 'Redirecting…';
+    return showsFoundingZero(planKey, foundingOfferHeld) ? 'Applying…' : 'Redirecting…';
   }
 
   // ── Cancelled-state view: stripped page with reactivate CTA ──────────────
@@ -1035,7 +1039,7 @@ function BillingPagePlans() {
                   <h2 className={styles.sectionTitle}>Get more from your tournaments</h2>
                   <p className={styles.upgradeIntro}>Tournament Plus adds registration control, custom branding, exports, and scheduling automation — everything you need to run repeat events without the spreadsheet.</p>
                 </div>
-                {!isFoundingSeasonPromoActive('tournament_plus') && (
+                {!showsFoundingZero('tournament_plus', foundingOfferHeld) && (
                   <div className={styles.billingToggle}>
                     <button
                       className={`${styles.toggleOption} ${billingCycle === 'monthly' ? styles.toggleActive : ''}`}
@@ -1446,6 +1450,7 @@ function BillingPagePlans() {
         isComingSoon={panelPlan ? isGated(panelPlan as OrgPlan) : false}
         // The owner only, as the panel opened over any other page (PlanPanelDrawer): no Upgrade the server would refuse.
         canUpgrade={canManageBilling && panelPlan === 'tournament_plus' && primaryUpgradePlans.includes('tournament_plus')}
+        foundingOfferHeld={foundingOfferHeld}
       />
     </div>
   );

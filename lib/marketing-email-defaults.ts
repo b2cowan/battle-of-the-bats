@@ -39,13 +39,11 @@ import {
   PLAN_CONFIG,
   formatPriceAmount,
   FOUNDING_SEASON_END_LABEL,
-  FOUNDING_SEASON_SIGNUP_CLOSE_LABEL,
   FOUNDING_SEASON_FIRST_CHARGE_LABEL,
   FOUNDING_SEASON_YEAR_LABEL,
   FOUNDING_SEASON_NEXT_YEAR_LABEL,
   FOUNDING_SEASON_DECISION_MONTH_LABEL,
   FOUNDING_SEASON_AFTER_LINE,
-  foundingSeasonOfferLine,
 } from './plan-config';
 
 // ── Derived words: plan names, prices, dates ──────────────────────────────────
@@ -264,7 +262,11 @@ Thank you for running your season with us. You were one of the first.
 — The FieldLogicHQ team`,
   },
 
-  // ── The acquisition push: the Coaches Portal, while the signup window is open ─
+  // ── The acquisition push — RETIRED 2026-10-26 ─────────────────────────────────
+  // The Founding Season offer closed early (owner 2026-10-26, BUSINESS_DECISIONS), and all three of these
+  // sell it. They leave the board and the send route refuses them. The offer sentence is written out
+  // verbatim as the database row holds it (mig 284) rather than derived from the close date, so moving
+  // the date did not rewrite copy that is never sent again — the same rule as the retired Club spotlights.
   "spotlight_coaches_org": {
     label: "Spotlight — Coaches Portal (to orgs)",
     description: `Sent to org owners during the signup window. Pitches the ${PORTAL} for the coaches on their teams.`,
@@ -274,6 +276,7 @@ Thank you for running your season with us. You were one of the first.
     audience: 'founding',
     timing: { kind: 'date', plannedSendDate: '2026-10-01' },
     audienceLabel: 'Org owners',
+    retired: { on: '2026-10-26', why: 'The Founding Season offer closed early' },
     body: `Hi {{firstName}},
 
 The coaches managing teams in your tournaments are tracking rosters in group texts, lineups in notes apps, and team fees in someone's head.
@@ -287,7 +290,7 @@ The coaches managing teams in your tournaments are tracking rosters in group tex
 
 It works whether or not a coach's team is registered in a tournament you run on FieldLogicHQ. A coach can sign up on their own and run their team year-round.
 
-${foundingSeasonOfferLine('team')} Normally ${PORTAL_MONTHLY} or ${PORTAL_ANNUAL} — or included when your organization is on ${CLUB}.
+The Premium Coaches Portal is free through September 30, 2027 when you sign up by December 31, 2026. No credit card. Normally ${PORTAL_MONTHLY} or ${PORTAL_ANNUAL} — or included when your organization is on ${CLUB}.
 
 Know a coach who'd use it? They can start today:
 ::link Send them this link → | {{coachShareUrl}}
@@ -306,6 +309,7 @@ Want the details first?
     audience: 'coaches',
     timing: { kind: 'date', plannedSendDate: '2026-10-01' },
     audienceLabel: 'Coach accounts (tournament participants)',
+    retired: { on: '2026-10-26', why: 'The Founding Season offer closed early' },
     body: `Hi {{firstName}},
 
 You've been through a tournament on FieldLogicHQ. But managing your team between tournaments is still probably spread across your phone, your email, and your memory.
@@ -319,7 +323,7 @@ You've been through a tournament on FieldLogicHQ. But managing your team between
 
 No organization account required. Your team's workspace, on your timeline.
 
-${foundingSeasonOfferLine('team')} Normally ${PORTAL_MONTHLY} or ${PORTAL_ANNUAL}.
+The Premium Coaches Portal is free through September 30, 2027 when you sign up by December 31, 2026. No credit card. Normally ${PORTAL_MONTHLY} or ${PORTAL_ANNUAL}.
 
 ${FOUNDING_SEASON_AFTER_LINE}
 
@@ -336,6 +340,7 @@ ${FOUNDING_SEASON_AFTER_LINE}
     audience: 'founding',
     timing: { kind: 'date', plannedSendDate: '2026-11-15' },
     audienceLabel: 'All founding season participants',
+    retired: { on: '2026-10-26', why: 'The Founding Season offer closed early' },
     body: `Hi {{firstName}},
 
 You're one of the first organizations running on FieldLogicHQ. Here's where things stand, and where they're going.
@@ -346,7 +351,7 @@ You're one of the first organizations running on FieldLogicHQ. Here's where thin
 - **The ${PORTAL}** — a full season workspace for one team: roster, lineups, budget, dues, documents
 ::end
 
-${foundingSeasonOfferLine()}
+Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by December 31, 2026. No credit card.
 
 ::callout.blue What's coming
 - More ways for families to follow their teams
@@ -356,7 +361,7 @@ ${foundingSeasonOfferLine()}
 
 You helped build this — by running real events on the platform and telling us what worked and what didn't.
 
-If you know another tournament organizer or coach who should be here, the Founding Season is open until **${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}**:
+If you know another tournament organizer or coach who should be here, the Founding Season is open until **December 31, 2026**:
 ::link Share FieldLogicHQ → | {{shareUrl}}
 
 There is nothing to do about billing. ${FOUNDING_SEASON_AFTER_LINE}

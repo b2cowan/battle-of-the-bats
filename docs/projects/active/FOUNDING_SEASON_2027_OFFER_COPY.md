@@ -1,5 +1,7 @@
 # Founding Season 2027 — Offer Copy Canon
 
+> ⛔ **THE OFFER IS CLOSED 2026-10-26 (`BUSINESS_DECISIONS.md` 2026-10-26, "The Founding Season offer closes early").** The sign-up window ended at the end of October 25, 2026. The OFFER sentences below are history and never go on a surface again. The lines that speak to accounts already on the comp (billing page, lock lines, the `founding_*` emails) stay live until September 30, 2027.
+
 **Status:** ✅ **APPROVED 2026-09-07** (owner, on mockup sheet `61a78f09`: "looks good, go for it")
 and **committed `2f02a949` on `dev` 2026-09-07** — every sentence below is live behind the signup-window gate, and
 the dates in it are derived in code from `lib/plan-config.ts` (see `PRICING_PAGE_COPY.md`'s

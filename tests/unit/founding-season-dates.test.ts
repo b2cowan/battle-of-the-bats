@@ -33,8 +33,8 @@ describe('Founding Season dates and labels', () => {
     assert.ok(card > close && card < end, 'the card window opens after the signup close and before the end');
   });
 
-  it('the ratified dates: sign up by December 31, 2026; free through September 30, 2027', () => {
-    assert.equal(FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, 'December 31, 2026');
+  it('the ratified dates (signup closed early 2026-10-26): sign up by October 25, 2026; free through September 30, 2027', () => {
+    assert.equal(FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, 'October 25, 2026'); // closed early, owner 2026-10-26
     assert.equal(FOUNDING_SEASON_END_LABEL, 'September 30, 2027');
     assert.equal(FOUNDING_SEASON_FIRST_CHARGE_LABEL, 'October 1, 2027');
     assert.equal(FOUNDING_SEASON_YEAR_LABEL, '2027');
@@ -43,8 +43,8 @@ describe('Founding Season dates and labels', () => {
   });
 
   it('the instants are pinned to the END of the named day in Eastern time, not to UTC midnight', () => {
-    // 2026-12-31 23:59:59 EST = 2027-01-01T05:00Z; 2027-09-30 23:59:59 EDT = 2027-10-01T04:00Z.
-    assert.equal(FOUNDING_SEASON_SIGNUP_CLOSE, '2027-01-01T05:00:00.000Z');
+    // 2026-10-25 23:59:59 EDT = 2026-10-26T04:00Z; 2027-09-30 23:59:59 EDT = 2027-10-01T04:00Z.
+    assert.equal(FOUNDING_SEASON_SIGNUP_CLOSE, '2026-10-26T04:00:00.000Z');
     assert.equal(FOUNDING_SEASON_END, '2027-10-01T04:00:00.000Z');
   });
 
@@ -58,19 +58,19 @@ describe('Founding Season dates and labels', () => {
   it('the offer line is the copy canon sentence, verbatim, in all three forms', () => {
     assert.equal(
       foundingSeasonOfferLine(),
-      'Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by December 31, 2026. No credit card.',
+      'Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by October 25, 2026. No credit card.',
     );
     assert.equal(
       foundingSeasonOfferLine('tournament_plus'),
-      'Tournament Plus is free through September 30, 2027 when you sign up by December 31, 2026. No credit card.',
+      'Tournament Plus is free through September 30, 2027 when you sign up by October 25, 2026. No credit card.',
     );
     assert.equal(
       foundingSeasonOfferLine('team'),
-      'The Premium Coaches Portal is free through September 30, 2027 when you sign up by December 31, 2026. No credit card.',
+      'The Premium Coaches Portal is free through September 30, 2027 when you sign up by October 25, 2026. No credit card.',
     );
     assert.equal(
       foundingSeasonOfferCore('tournament_plus'),
-      'Tournament Plus is free through September 30, 2027 when you sign up by December 31, 2026',
+      'Tournament Plus is free through September 30, 2027 when you sign up by October 25, 2026',
     );
   });
 
