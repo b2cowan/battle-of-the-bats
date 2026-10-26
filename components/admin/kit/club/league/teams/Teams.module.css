@@ -223,6 +223,10 @@
 .segBtn[aria-pressed='true'] { background: var(--home-olive); color: var(--home-paper); }
 .segBig { display: flex; }
 .segBig .segBtn { flex: 1 1 0; min-width: 44px; height: 44px; }
+/* The window's body is plain block flow, so the chips, table and hint need their own rhythm.
+   Doubled class: the body's `p` margin rule would otherwise add to the gap. */
+.rateStack { display: flex; flex-direction: column; gap: 0.75rem; }
+.rateStack.rateStack > p { margin: 0; }
 .filters { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .filterChip {
   display: inline-flex;

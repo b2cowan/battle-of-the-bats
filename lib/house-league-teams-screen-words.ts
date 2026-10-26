@@ -48,6 +48,7 @@ export const TEAMS_WORDS = {
     foot: (n: number, avg: number | null) => `${players(n)}${avg != null ? ` · avg ${avg.toFixed(1)}` : ''}`,
     edit: (team: string) => `Edit ${team}`,
     open: (team: string) => `Open ${team}`,
+    deleteTeam: (team: string) => `Delete ${team}`,
   },
   kid: {
     age: (age: number | null) => (age == null ? 'Age not given' : `Age ${age}`),
@@ -156,7 +157,8 @@ export const TEAMS_WORDS = {
     defaultName: (n: number) => `Team ${n}`,
     name: 'Name', colour: 'Colour', coach: 'Coach', coachEmail: 'Coach’s email', coaches: 'Coaches',
     noColour: 'No colour',
-    addCoach: 'Add another coach',
+    addCoach: 'Add a coach',
+    addAnotherCoach: 'Add another coach',
     removeCoach: (name: string) => `Remove ${name} as coach`,
     hintBefore: (first: string, division: string) =>
       `${first} gets an invite to the team page when you publish ${division}. The page shows this team’s players and each family’s name, email and phone.`,

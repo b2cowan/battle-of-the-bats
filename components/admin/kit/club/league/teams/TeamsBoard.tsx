@@ -7,7 +7,7 @@
  */
 import { useState, type ReactNode } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
-import { ChevronLeft, ChevronRight, Lock, MoreHorizontal, Pencil } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Lock, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import frame from '@/components/admin/kit/AdminKitFrame.module.css';
 import { formatLeagueMoney } from '@/lib/league-money';
@@ -37,7 +37,8 @@ export interface BoardProps {
   teamName: (id: string | null) => string;
   onDrop: (playerId: string, teamId: string | null) => void;
   onMenu: (player: BoardPlayer, key: PlayerMenuItem['key']) => void;
-  onOpenTeam: (teamId: string, atCoach?: boolean) => void;
+  /** `how`: "coach" opens at the coach fields; "delete" opens the delete question (the card's trash can). */
+  onOpenTeam: (teamId: string, how?: 'coach' | 'delete') => void;
 }
 
 const isMoved = (p: BoardPlayer, published: boolean) => !published && !!p.draftTeamId && p.teamId !== p.draftTeamId;
@@ -126,6 +127,8 @@ function DraggablePlayer({ p, props }: { p: BoardPlayer; props: BoardProps }) {
 
 function TeamHead({ team, props }: { team: BoardTeam; props: BoardProps }) {
   const names = team.coaches.map(c => c.name);
+  // Only a team nobody is on, before publish: the same test the delete itself applies.
+  const deletable = props.rights.run && !props.published && !props.players.some(p => p.teamId === team.id);
   return (
     <div className={css.cardHead}>
       <span className={css.dot} style={team.color ? { background: team.color } : undefined} aria-hidden />
@@ -134,12 +137,17 @@ function TeamHead({ team, props }: { team: BoardTeam; props: BoardProps }) {
         {names.length > 0
           ? <div className={css.cardCoach}>{coachesLine(names)}</div>
           : props.rights.run
-            ? <button type="button" className={css.noCoach} onClick={() => props.onOpenTeam(team.id, true)}>{W.card.noCoach}</button>
+            ? <button type="button" className={css.noCoach} onClick={() => props.onOpenTeam(team.id, 'coach')}>{W.card.noCoach}</button>
             : <div className={`${css.cardCoach} ${css.amberText}`}>{W.card.noCoach}</div>}
       </div>
       {props.rights.run && (
         <button type="button" className={css.iconBtn} aria-label={W.card.edit(team.name)} onClick={() => props.onOpenTeam(team.id)}>
           <Pencil size={16} aria-hidden />
+        </button>
+      )}
+      {deletable && (
+        <button type="button" className={css.iconBtn} aria-label={W.card.deleteTeam(team.name)} onClick={() => props.onOpenTeam(team.id, 'delete')}>
+          <Trash2 size={16} aria-hidden />
         </button>
       )}
     </div>

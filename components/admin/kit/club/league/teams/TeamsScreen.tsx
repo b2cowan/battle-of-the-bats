@@ -50,7 +50,7 @@ type Act =
   | { kind: 'draft'; again: boolean }
   | { kind: 'publish' }
   | { kind: 'create' }
-  | { kind: 'team'; teamId: string; atCoach: boolean }
+  | { kind: 'team'; teamId: string; how?: 'coach' | 'delete' }
   | { kind: 'move'; playerId: string }
   | { kind: 'held'; playerId: string; teamId: string | null }
   | { kind: 'clear' };
@@ -329,7 +329,7 @@ export default function TeamsScreen() {
             teamName={teamName}
             onDrop={(id, teamId) => { const p = findPlayer(id); if (p) void place(p, teamId); }}
             onMenu={onMenu}
-            onOpenTeam={(teamId, atCoach) => setAct({ kind: 'team', teamId, atCoach: !!atCoach })}
+            onOpenTeam={(teamId, how) => setAct({ kind: 'team', teamId, how })}
           />
         )}
       </section>
@@ -358,7 +358,7 @@ export default function TeamsScreen() {
       )}
       {act?.kind === 'team' && teamFor && (
         <TeamWindow team={teamFor} divisionName={division.name} published={published}
-          playerCount={players.filter(p => p.teamId === teamFor.id).length} routes={routes} startEditing={act.atCoach && rights.run}
+          playerCount={players.filter(p => p.teamId === teamFor.id).length} routes={routes} startEditing={act.how === 'coach' && rights.run} startDeleting={act.how === 'delete' && rights.run}
           onChanged={reload} onClose={() => setAct(null)} />
       )}
       {act?.kind === 'move' && playerFor && (

@@ -22,7 +22,7 @@ type Ask =
   | { kind: 'invite'; coach: NewCoach }
   | { kind: 'remove'; id: string; name: string };
 
-export default function TeamWindow({ team, divisionName, published, playerCount, routes, startEditing, onChanged, onClose }: {
+export default function TeamWindow({ team, divisionName, published, playerCount, routes, startEditing, startDeleting, onChanged, onClose }: {
   team: BoardTeam;
   divisionName: string;
   published: boolean;
@@ -30,6 +30,8 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
   routes: TeamsRoutes;
   /** Opened from "No coach yet": straight to the coach fields. */
   startEditing: boolean;
+  /** Opened from a card's trash can: straight to the delete question, with no team window behind it. */
+  startDeleting: boolean;
   onChanged: () => void;
   onClose: () => void;
 }) {
@@ -42,7 +44,7 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [asks, setAsks] = useState<Ask[]>([]);
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting] = useState(startDeleting);
   const [resending, setResending] = useState<string | null>(null);
 
   const dirty = name.trim() !== team.name || colour !== team.color || removed.size > 0 || adds.some(a => a.name.trim() || a.email.trim());
@@ -58,6 +60,8 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
     if (!name.trim()) { setError(W.team.errTeamName); return null; }
     return Object.keys(next).length ? null : filled;
   }
+
+  const hasCoach = adds.length > 0 || team.coaches.some(c => !removed.has(c.id));
 
   async function addCoach(c: NewCoach): Promise<boolean> {
     const r = await send(routes.coaches(team.id), 'POST', { name: c.name.trim(), email: c.email.trim(), confirmed: published });
@@ -147,6 +151,20 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
 
   const firstNew = adds.find(a => a.name.trim());
   const ask = asks[0] ?? null;
+  // From a card's trash can the question stands alone (no team window behind it), and cancelling leaves the board.
+  const alone = startDeleting && deleting;
+  const deleteQuestion = (
+    <KitDialog kind="question" raised={!alone} busy={busy} onClose={() => (alone ? onClose() : setDeleting(false))} title={W.team.deleteTitle(team.name)}
+      footer={(
+        <>
+          <DialogCancel />
+          <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void deleteTeam()}>{W.team.deleteButton}</button>
+        </>
+      )}>
+      <p className={ck.hint}>{W.team.deleteBody(team.name)}</p>
+    </KitDialog>
+  );
+  if (alone) return deleteQuestion;
   return (
     <>
       <KitDialog
@@ -215,7 +233,7 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
                 </div>
               ))}
               <button type="button" className={css.addLink} onClick={() => setAdds(list => [...list, { key: Date.now(), name: '', email: '' }])}>
-                <Plus size={14} aria-hidden />{W.team.addCoach}
+                <Plus size={14} aria-hidden />{hasCoach ? W.team.addAnotherCoach : W.team.addCoach}
               </button>
               {firstNew && <p className={ck.hint}>{published ? W.team.hintAfter(first(firstNew.name)) : W.team.hintBefore(first(firstNew.name), divisionName)}</p>}
             </div>
@@ -247,17 +265,7 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
         </KitDialog>
       )}
 
-      {deleting && (
-        <KitDialog kind="question" raised busy={busy} onClose={() => setDeleting(false)} title={W.team.deleteTitle(team.name)}
-          footer={(
-            <>
-              <DialogCancel />
-              <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void deleteTeam()}>{W.team.deleteButton}</button>
-            </>
-          )}>
-          <p className={ck.hint}>{W.team.deleteBody(team.name)}</p>
-        </KitDialog>
-      )}
+      {deleting && deleteQuestion}
     </>
   );
 }
@@ -271,7 +279,7 @@ export function CreateTeamsWindow({ divisionId, divisionName, existing, routes, 
   onDone: () => void;
   onClose: () => void;
 }) {
-  const [count, setCount] = useState('2');
+  const [count, setCount] = useState(existing.length ? '1' : '2'); // a first set is a pair; after that, one more at a time
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const n = Math.max(1, Math.min(20, Number.parseInt(count, 10) || 0));

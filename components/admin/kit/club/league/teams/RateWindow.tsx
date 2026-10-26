@@ -99,7 +99,7 @@ export default function RateWindow({ division, players, ratings, routes, isPhone
     >
       <p className={ck.hint}>{W.rate.intro}</p>
       {players.length === 0 ? <p className={ck.hint}>{W.rate.empty}</p> : (
-        <>
+        <div className={css.rateStack}>
           {filters}
           {error && <p className={css.error} role="alert">{error}</p>}
           {!isPhone && picked.size > 0 && (
@@ -159,7 +159,7 @@ export default function RateWindow({ division, players, ratings, routes, isPhone
             </div>
           )}
           {!isPhone && <p className={ck.hint}>{W.rate.hint}</p>}
-        </>
+        </div>
       )}
     </KitDialog>
   );
