@@ -12,7 +12,7 @@ import { Facts } from '../../money/MoneyKit';
 import { RepChip } from '../../RepKit';
 import { CARD_REFUND_WORDS } from '@/lib/house-league-money-words';
 import { formatLeagueMoney } from '@/lib/league-money';
-import { clockOf, isBank, refundBase, refundState, refundTarget, type CardRefund } from '@/lib/league-card-refunds';
+import { awaitsAnswer, clockOf, isBank, refundBase, refundState, refundTarget, type CardRefund } from '@/lib/league-card-refunds';
 import { endedKind, regDay } from '@/lib/house-league-registrations';
 import { leagueUnrecordedWhy } from '@/lib/online-payment-words';
 import { possessive } from '@/lib/utils';
@@ -105,7 +105,8 @@ export default function CardRefundBlock({
               : W.whyEnded(day(paid), clockOf(paid), reg.status === 'declined' ? 'declined' : 'withdrew', childName, clockOf(reg.endedAt)))
             : W.whyOther(day(paid), clockOf(paid), leagueUnrecordedWhy(r.landError ?? ''), bank)
         ) : null;
-        const emailed = s === 'failed' ? W.emailedNotFailed
+        const emailed = awaitsAnswer(r) && !r.emailedAt ? W.emailedWaits
+          : s === 'failed' ? W.emailedNotFailed
           : s === 'anotherWay' ? W.emailedAnotherWay
             : r.emailedAt ? W.emailedSent(email || '—', day(r.emailedAt))
               : r.emailFailedAt ? W.emailedFailed(day(r.emailFailedAt))

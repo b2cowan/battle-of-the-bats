@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { BellOff, CheckCheck, ChevronRight, Settings, Trash2, X } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
 import {
+  canMarkDone,
   BUNDLE_NOUN, FEED_CAUGHT_UP, FEED_EMPTY_COPY, TEAM_COACH_FEED_EMPTY, entryKey, entryMembers, groupActivityItems, iconFor,
   notificationTime, type ActivityEntry,
 } from '@/lib/notification-view';
@@ -272,6 +273,7 @@ export default function NotificationDrawer({
                the row OPENS the notification, and being finished with one is a different gesture. */
             <div className={styles.notifMeta}>
               <span className={styles.notifTime}>{notificationTime(n.createdAt, groupedAt, { withDay: true })}</span>
+              {canMarkDone(n.eventType) && (
               <button
                 type="button"
                 className={styles.clearBtn}
@@ -281,6 +283,7 @@ export default function NotificationDrawer({
               >
                 Done
               </button>
+              )}
             </div>
           ) : (
             <p className={styles.notifTime}>{notificationTime(n.createdAt, groupedAt)}</p>

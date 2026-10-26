@@ -288,5 +288,45 @@ BEGIN
   EXCEPTION WHEN others THEN v_err := SQLERRM; END;
   IF v_err IS DISTINCT FROM 'A partial refund needs a reason.' THEN RAISE EXCEPTION 'FAIL T17: app part refund without a reason (%)', v_err; END IF;
 
+  -- ── A refund made in Stripe records itself (mig 384) ──
+  -- T18 · Henry's share has $120 left (T17 took $30): a $20 refund made in Stripe records on him, no reason, with Stripe's
+  -- moment; the same Stripe refund recorded again answers the same row (a replayed event writes nothing twice).
+  v_ref := online_payment_refund_record_dashboard(v_lop, v_item, 20, 0, 're_c12_dash', now() - interval '1 day', NULL, NULL);
+  IF online_payment_refund_record_dashboard(v_lop, v_item, 20, 0, 're_c12_dash', now(), NULL, NULL) <> v_ref THEN
+    RAISE EXCEPTION 'FAIL T18: a replay wrote a second row'; END IF;
+  PERFORM online_payment_league_refund_book(v_ref, 're_c12_dash', true);
+  IF league_reg_received(v_reg) <> 100 OR (SELECT origin FROM online_payment_refunds WHERE id = v_ref) <> 'stripe_dashboard'
+     OR (SELECT stripe_created_at FROM online_payment_refunds WHERE id = v_ref) IS NULL THEN
+    RAISE EXCEPTION 'FAIL T18: the dashboard refund did not record'; END IF;
+  -- T19 · the processing fee goes back only with the whole of an untouched share; never more than is left.
+  v_err := NULL;
+  BEGIN PERFORM online_payment_refund_record_dashboard(v_lop, v_item, 10, 4.25, 're_c12_fee', now(), NULL, NULL);
+  EXCEPTION WHEN others THEN v_err := SQLERRM; END;
+  IF v_err IS DISTINCT FROM 'The processing fee goes back only with the whole of an untouched share.' THEN RAISE EXCEPTION 'FAIL T19: fee on a part (%)', v_err; END IF;
+  v_err := NULL;
+  BEGIN PERFORM online_payment_refund_record_dashboard(v_lop, v_item, 101, 0, 're_c12_over', now(), NULL, NULL);
+  EXCEPTION WHEN others THEN v_err := SQLERRM; END;
+  IF v_err NOT LIKE 'A refund is more than zero and no more than what is left: 100%' THEN RAISE EXCEPTION 'FAIL T19: over the cap (%)', v_err; END IF;
+  -- T20 · a team's part refund made in Stripe: a part refund, booked, lowering the entry "made in Stripe" (no reason).
+  INSERT INTO teams(tournament_id, division_id, name, email, status, payment_status)
+  VALUES (v_event, v_div, 'Stripe Team', 's@example.invalid', 'accepted', 'pending') RETURNING id INTO v_dash;
+  INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
+    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+  VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_dash, 'deposit', 'Stripe Team · deposit', 100, 5, 105,
+    'family', 0.035, 1.50, 'cs_check12c_' || gen_random_uuid()) RETURNING id INTO v_op2;
+  PERFORM online_payment_land(v_op2, now(), 'pi_c12_' || gen_random_uuid(), NULL, 'visa', '4242');
+  v_ref := online_payment_refund_record_dashboard(v_op2, NULL, 30, 0, 're_c12_tdash', now(), NULL, NULL);
+  PERFORM online_payment_team_refund_book(v_ref, 're_c12_tdash', true);
+  IF NOT (SELECT part_refund FROM online_payment_refunds WHERE id = v_ref)
+     OR (SELECT entry_lowered FROM teams WHERE id = v_dash) <> 30
+     OR (SELECT count(*) FROM tournament_team_entry_adjustments WHERE refund_id = v_ref AND origin = 'stripe_dashboard' AND reason IS NULL) <> 1 THEN
+    RAISE EXCEPTION 'FAIL T20: a team dashboard part refund'; END IF;
+  -- T21 · "whose was it?" holds one row per Stripe refund.
+  INSERT INTO online_refunds_unassigned(org_id, online_payment_id, stripe_refund_id, amount) VALUES (v_org, v_lop, 're_c12_whose', 25);
+  v_ok := false;
+  BEGIN INSERT INTO online_refunds_unassigned(org_id, online_payment_id, stripe_refund_id, amount) VALUES (v_org, v_lop, 're_c12_whose', 25);
+  EXCEPTION WHEN unique_violation THEN v_ok := true; END;
+  IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T21: one Stripe refund held twice'; END IF;
+
   RAISE EXCEPTION 'ONLINE_PAYMENTS_12C_PASSED';
 END $op12c$;

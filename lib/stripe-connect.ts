@@ -180,6 +180,17 @@ export async function refundToCard(args: {
   );
 }
 
+/** One refund at Stripe, read when a person answers "whose was it?" (its status decides pending or refunded). */
+export async function retrieveRefund(accountId: string, refundId: string): Promise<Stripe.Refund> {
+  return getStripe().refunds.retrieve(refundId, {}, on(accountId));
+}
+
+/** A payment's refunds at Stripe (12c): a refund made in Stripe before its payment landed here is recorded once it lands. */
+export async function listRefunds(accountId: string, paymentIntentId: string): Promise<Stripe.Refund[]> {
+  const page = await getStripe().refunds.list({ payment_intent: paymentIntentId, limit: 100 }, on(accountId));
+  return page.data;
+}
+
 /**
  * The two Connect webhooks, each with its own signing secret — never the billing webhook's (plan §0d):
  *   - the PAYMENTS webhook: v1 snapshot events from clubs' connected accounts (checkout, refunds);

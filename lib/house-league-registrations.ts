@@ -73,6 +73,8 @@ export interface RegsRead {
   returnedRefunds?: Record<string, { refundId: string; amount: number }[]>;
   /** 12c: every card refund, by registration (the Fee cell, the record's "To the card" block, the history). */
   cardRefunds?: Record<string, CardRefund[]>;
+  /** 12c: a part refund made in Stripe waiting for "whose was it?", on every child of that payment. */
+  notMatched?: Record<string, { id: string; amount: number; children: string }>;
 }
 
 // ── Words about a person and a day ──────────────────────────────────────────────────────────────
@@ -151,6 +153,7 @@ export function feeCell(
   today: string,
   changes: readonly PriceChange[],
   cardRefunds: readonly CardRefund[] = [],
+  notMatched: { amount: number; children: string } | null = null,
 ): FeeCellParts {
   const state = feeState(reg, season, lines, today);
   const F = REGS_WORDS.fee;
@@ -245,7 +248,11 @@ export function feeCell(
   }
 
   let third: FeeCellParts['third'] = null;
-  if (latest && correctionCard) {
+  const CW = CARD_REFUND_WORDS.whose;
+  if (notMatched) {
+    // Waiting for "whose was it?" (words §1 third line): it goes on one registration once the desk answers.
+    third = { text: CW.notMatched(money(notMatched.amount)), tip: CW.notMatchedTip(money(notMatched.amount), notMatched.children), tone: 'plain', refundId: null };
+  } else if (latest && correctionCard) {
     const s = refundState(correctionCard);
     const amount = money(refundBase(correctionCard));
     const bank = isBank(correctionCard);

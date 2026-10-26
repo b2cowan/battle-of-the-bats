@@ -35,7 +35,7 @@ export interface EndedResult {
 }
 
 export default function EndWindow({
-  reg, name, mode, division, regs, lines, autoPromote, today, orgQuery, seasonId, raised, onClose, onChanged, onDone,
+  reg, name, mode, division, regs, lines, autoPromote, today, orgQuery, seasonId, raised, onClose, onChanged, onDone, stripeRefundIds,
 }: {
   reg: LeagueRegistration;
   name: string;
@@ -48,6 +48,8 @@ export default function EndWindow({
   orgQuery: string;
   seasonId: string;
   raised: boolean;
+  /** 12c: "Withdraw {child}" from a refund made in Stripe — the ending's email carries that refund (one email). */
+  stripeRefundIds?: string[];
   onClose: () => void;
   onChanged: () => void;
   onDone: (result: EndedResult, ended: LeagueRegistration, promoted: LeagueRegistration | undefined) => void;
@@ -129,6 +131,7 @@ export default function EndWindow({
       ...(hasMoney && answer === 'kept' ? { money: { answer: 'kept', reason: keptReason.trim() } } : {}),
       ...(answer === 'card' ? { money: { answer: 'card', feeIncluded: feeCents > 0 && feeOn, note: note.trim() || null } } : {}),
       ...(answer === 'cardPart' ? { money: { answer: 'card', amount: Number(partAmount), partialReason: partReason.trim(), note: note.trim() || null } } : {}),
+      ...(stripeRefundIds?.length ? { stripeRefundIds } : {}),
     };
     const r = await patchRegistration(orgQuery, seasonId, reg.id, body);
     if (!r.ok) {

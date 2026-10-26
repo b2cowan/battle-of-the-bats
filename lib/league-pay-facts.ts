@@ -11,7 +11,7 @@ import { loadRegistrationMoneyLines } from './league-money-read';
 import { receivedOf } from './league-money';
 import { PAY_WORDS as W } from './online-payment-words';
 import { payLinkSecret } from './league-pay-link';
-import { LEAGUE_PAY_WORDS as LW } from './league-pay-words';
+import { LEAGUE_PAY_WORDS as LW, childList } from './league-pay-words';
 import type { LeagueSeason, Organization } from './types';
 import { fetchAllIn } from './supabase-paging';
 import type { CardRefund } from './league-card-refunds';
@@ -134,7 +134,7 @@ export async function loadCardRefunds(orgId: string, regIds: string[]): Promise<
   const itemById = new Map(items.map(i => [i.id as string, i]));
   const refunds = await fetchAllIn<Record<string, unknown>>([...itemById.keys()], (chunk, from, to) =>
     supabaseAdmin.from('online_payment_refunds')
-      .select('id, online_payment_item_id, amount, fee_refunded, status, origin, booked_at, refund_entry_id, reason, partial_reason, failure_reason, created_at, succeeded_at, failed_at, stripe_refund_id, created_by, resolved_by, family_emailed_at, family_email_failed_at, online_payments!inner(rail, card_brand, card_last4, bank_last4, receipt_no, paid_at, fee_payer)')
+      .select('id, online_payment_item_id, amount, fee_refunded, status, origin, booked_at, refund_entry_id, reason, partial_reason, failure_reason, created_at, succeeded_at, failed_at, stripe_refund_id, created_by, resolved_by, family_answer, family_emailed_at, family_email_failed_at, online_payments!inner(rail, card_brand, card_last4, bank_last4, receipt_no, paid_at, fee_payer)')
       .in('online_payment_item_id', chunk).order('id').range(from, to));
   if (!refunds.length) return {};
   const nameOf = await resolvePersonNamer(orgId, refunds.flatMap(r => [r.created_by as string | null, r.resolved_by as string | null]));
@@ -160,7 +160,33 @@ export async function loadCardRefunds(orgId: string, regIds: string[]): Promise<
       receiptNo: op.receipt_no != null ? Number(op.receipt_no) : null, paidAt: (op.paid_at as string | null) ?? null,
       share: Number(item.amount), shareFee: Number(item.fee_share), familyPaidFee: op.fee_payer === 'family',
       emailedAt: (r.family_emailed_at as string | null) ?? null, emailFailedAt: (r.family_email_failed_at as string | null) ?? null,
+      familyAnswer: (r.family_answer as CardRefund['familyAnswer']) ?? null,
     });
+  }
+  return out;
+}
+
+/**
+ * Part refunds made in Stripe that wait for "whose was it?" (12c, mig 384), by registration: every child of that payment
+ * shows "{amount} refunded in Stripe on this family's payment · not matched yet" until the desk answers.
+ */
+export async function loadUnassignedRefunds(orgId: string, seasonId: string): Promise<Record<string, { id: string; amount: number; children: string }>> {
+  const { data: waiting } = await supabaseAdmin.from('online_refunds_unassigned')
+    .select('id, amount, online_payment_id, online_payments!inner(season_id)')
+    .eq('org_id', orgId).is('assigned_at', null).eq('online_payments.season_id', seasonId);
+  const rows = (waiting ?? []) as Array<{ id: string; amount: number; online_payment_id: string }>;
+  if (!rows.length) return {};
+  const { data: items } = await supabaseAdmin.from('online_payment_items')
+    .select('online_payment_id, registration_id, description').in('online_payment_id', rows.map(r => r.online_payment_id));
+  const byPay = new Map<string, Array<{ registration_id: string | null; description: string }>>();
+  for (const i of (items ?? []) as Array<{ online_payment_id: string; registration_id: string | null; description: string }>) {
+    byPay.set(i.online_payment_id, [...(byPay.get(i.online_payment_id) ?? []), i]);
+  }
+  const out: Record<string, { id: string; amount: number; children: string }> = {};
+  for (const r of rows) {
+    const kids = byPay.get(r.online_payment_id) ?? [];
+    const children = childList(kids.map(k => k.description.split(' · ')[0].split(' ')[0]));
+    for (const k of kids) if (k.registration_id) out[k.registration_id] = { id: r.id, amount: Number(r.amount), children };
   }
   return out;
 }

@@ -8,7 +8,9 @@ import { loadTeamPayFacts } from './team-pay-facts';
 import { refusalMessage } from './team-pay-view';
 import { teamPayUrl } from './team-pay-link';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
-import { ONLINE_EMAIL_WORDS as E, SCOPE_LINE, cardLabel, money, receiptLabel } from './online-payment-words';
+import { ONLINE_EMAIL_WORDS as E, REFUND_BLOCK_WORDS, SCOPE_LINE, cardLabel, money, receiptLabel } from './online-payment-words';
+import { refundBlockHtml, type RefundBlockInput } from './online-refund-block';
+import { stampRefundEmailed } from './online-refund-email';
 import { loadLeaguePayFacts } from './league-pay-facts';
 import { transactionalFamilyFooterHtml } from './family-mail-footer';
 import { leaguePayUrl } from './league-pay-link';
@@ -26,9 +28,10 @@ type OnlineForEmail = {
   id: string; org_id: string; flow: 'tournament_team' | 'league_signup'; team_id: string | null; scope: 'deposit' | 'balance' | 'full'; payer_email: string | null;
   base_amount: number; fee_amount: number; total_amount: number; fee_payer: 'family' | 'club'; livemode: boolean;
   card_brand: string | null; card_last4: string | null; receipt_no: number | null; paid_on: string | null;
+  rail: 'card' | 'bank_debit'; bank_last4: string | null;
 };
 const ONLINE_EMAIL_COLUMNS =
-  'id, org_id, flow, team_id, scope, payer_email, base_amount, fee_amount, total_amount, fee_payer, livemode, card_brand, card_last4, receipt_no, paid_on';
+  'id, org_id, flow, team_id, scope, payer_email, base_amount, fee_amount, total_amount, fee_payer, livemode, card_brand, card_last4, receipt_no, paid_on, rail, bank_last4';
 
 /** Claims the receipt (so two webhook deliveries send one), then sends it; a failed send releases the claim for a retry. */
 export async function sendOnlineReceiptOnce(onlinePaymentId: string): Promise<void> {
@@ -122,10 +125,15 @@ async function sendReceipt(op: OnlineForEmail): Promise<void> {
   if (result.status === 'provider_error') throw new Error('send failed');
 }
 
-/** The refund email — called once, on the refund's first landing (the database function answers `already` after). */
-export async function sendRefundEmail(refundId: string): Promise<void> {
+/**
+ * The team's refund email — called once, when the refund is first recorded (the database functions answer `already` after).
+ * 12c: the one refund block (lib/online-refund-block.ts), dated by the REFUND, never by the send (the F3 class), and the
+ * record's "Family emailed" stamped. `extra` carries the part-refund lines a team's part refund adds (Part 4).
+ */
+export async function sendRefundEmail(refundId: string, extra?: { lead?: string; lines?: string[] }): Promise<void> {
   try {
-    const { data: r } = await supabaseAdmin.from('online_payment_refunds').select('online_payment_id, amount, fee_refunded, note').eq('id', refundId).maybeSingle();
+    const { data: r } = await supabaseAdmin.from('online_payment_refunds')
+      .select('online_payment_id, amount, fee_refunded, note, created_at, stripe_refund_id').eq('id', refundId).maybeSingle();
     if (!r) return;
     const { data } = await supabaseAdmin.from('online_payments').select(ONLINE_EMAIL_COLUMNS).eq('id', r.online_payment_id as string).maybeSingle();
     const op = data as OnlineForEmail | null;
@@ -137,22 +145,27 @@ export async function sendRefundEmail(refundId: string): Promise<void> {
       themePreset: facts.org.themePreset ?? null, themePrimary: facts.org.themePrimary ?? null, themeAccent: facts.org.themeAccent ?? null,
     });
     const test = !op.livemode;
-    const today = new Date().toISOString();
+    const block: RefundBlockInput = {
+      refundCents: Math.round(Number(r.amount) * 100), bank: op.rail === 'bank_debit', cardBrand: op.card_brand, cardLast4: op.card_last4,
+      bankLast4: op.bank_last4, refundedAt: r.created_at as string, reference: (r.stripe_refund_id as string | null) ?? null,
+      receiptNo: op.receipt_no, paidOn: op.paid_on, feeBackCents: Math.round(Number(r.fee_refunded) * 100),
+      feeKeptCents: op.fee_payer === 'family' && Number(r.fee_refunded) === 0 ? Math.round(Number(op.fee_amount) * 100) : 0,
+    };
     const lines = [
-      warmEmailHeading(escapeHtml(E.refundLead(facts.teamName, facts.tournament.name))),
-      warmEmailParagraph(escapeHtml(E.refundAmount(money(Number(r.amount)), cardLabel(op.card_brand, op.card_last4), formatStoredDate(today)))),
+      `<div style="display:none;max-height:0;overflow:hidden;">${escapeHtml(REFUND_BLOCK_WORDS.preheader(money(Number(r.amount)), block.bank))}</div>`,
+      warmEmailHeading(escapeHtml(extra?.lead ?? E.refundLead(facts.teamName, facts.tournament.name))),
+      ...(extra?.lines ?? []).map(l => warmEmailParagraph(escapeHtml(l))),
+      refundBlockHtml(block),
     ];
-    if (op.fee_payer === 'family' && Number(op.fee_amount) > 0) {
-      lines.push(warmEmailParagraph(escapeHtml(Number(r.fee_refunded) > 0 ? E.refundFeeIncluded(money(Number(op.fee_amount))) : E.refundFeeKept(money(Number(op.fee_amount))))));
-    }
     if (r.note) lines.push(warmEmailParagraph(escapeHtml(r.note as string)));
-    const q = E.refundQuestions(face?.contact ?? null);
-    if (q) lines.push(warmEmailSmall(escapeHtml(q)));
+    lines.push(warmEmailSmall(escapeHtml(E.refundQuestions(face?.contact ?? null) || E.refundQuestionsClub(facts.org.name))));
     if (test) lines.push(warmEmailSmall(escapeHtml(E.testNote)));
     const subject = `${test ? E.testPrefix : ''}${E.refundSubject(facts.org.name)}`;
-    await sendEmail(op.payer_email, subject, warmEmailDocument(lines.join('\n'), face?.club ?? null), face?.sendOpts ?? {});
+    const result = await sendEmail(op.payer_email, subject, warmEmailDocument(lines.join('\n'), face?.club ?? null), face?.sendOpts ?? {});
+    await stampRefundEmailed([refundId], result.status !== 'provider_error');
   } catch (err) {
     console.error('[online-payment-receipt] the refund email was not sent:', err instanceof Error ? err.message : String(err));
+    await stampRefundEmailed([refundId], false).catch(() => null);
   }
 }
 
@@ -192,7 +205,11 @@ export async function sendTeamPayLink(teamId: string): Promise<{ sentTo: string;
  * email for every child still owing. Only while the family can pay online now; stamps "Pay link sent" on each owing
  * child. `raised` words it as a price raise (Part 5). The amount is what is owing, never the processing fee.
  */
-export async function sendLeaguePayLink(registrationId: string, raised?: { child: string; from: string; to: string; diff: string } | null): Promise<{ sentTo: string; sentAt: string } | { error: string }> {
+export async function sendLeaguePayLink(
+  registrationId: string,
+  raised?: { child: string; from: string; to: string; diff: string } | null,
+  refunded?: { child: string; childFirst: string; owing: string; blockHtml: string } | null,
+): Promise<{ sentTo: string; sentAt: string } | { error: string }> {
   const facts = await loadLeaguePayFacts(registrationId);
   if (!facts) return { error: 'That registration couldn’t be found.' };
   if (facts.refusal) return { error: facts.refusal === 'switch_off' || facts.refusal === 'not_taking_payments' ? 'The club isn’t taking card payments right now.' : 'There’s nothing owing to send a pay link for.' };
@@ -209,8 +226,9 @@ export async function sendLeaguePayLink(registrationId: string, raised?: { child
   const reference = (anchor?.signup_ref as string | null) ?? registrationId.replace(/-/g, '').slice(0, 8).toUpperCase();
   const how = facts.season.howToPay?.trim() || null;
   const html = warmEmailDocument([
-    warmEmailParagraph(escapeHtml(raised ? L.bodyRaised(raised.child, facts.season.name, raised.from, raised.to, raised.diff) : L.body(facts.org.name, names, facts.season.name))),
-    warmEmailParagraph(escapeHtml(L.amount(money(facts.owingCents / 100)))),
+    warmEmailParagraph(escapeHtml(refunded ? LW.linkEmailRefunded(facts.org.name, refunded.child, facts.season.name, refunded.childFirst, refunded.owing)
+      : raised ? L.bodyRaised(raised.child, facts.season.name, raised.from, raised.to, raised.diff) : L.body(facts.org.name, names, facts.season.name))),
+    refunded ? refunded.blockHtml : warmEmailParagraph(escapeHtml(L.amount(money(facts.owingCents / 100)))),
     warmEmailButton(L.button, payLink),
     how ? warmEmailParagraph(escapeHtml(L.otherWays(how))) : '',
     warmEmailSmall(escapeHtml(L.reference(reference))),
@@ -222,34 +240,6 @@ export async function sendLeaguePayLink(registrationId: string, raised?: { child
   const sentAt = new Date().toISOString();
   await supabaseAdmin.from('league_registrations').update({ pay_link_sent_at: sentAt }).in('id', facts.shares.map(s => s.registrationId));
   return { sentTo: facts.guardianEmail, sentAt };
-}
-
-/**
- * A price correction refunded to the card (Stage 12b, copy §6.3): the family is told how much went back and why. An
- * ending's refund is told in the ending's own email (one email per act); this is the correction's.
- */
-export async function sendLeaguePriceRefundEmail(registrationId: string, p: { amount: string; from: string; to: string; reason: string }): Promise<void> {
-  try {
-    const facts = await loadLeaguePayFacts(registrationId);
-    if (!facts?.guardianEmail) return;
-    const child = facts.children.find(c => c.registrationId === registrationId);
-    const face = await systemMailFace({
-      id: facts.org.id, name: facts.org.name, logoUrl: facts.org.logoUrl ?? null,
-      themePreset: facts.org.themePreset ?? null, themePrimary: facts.org.themePrimary ?? null, themeAccent: facts.org.themeAccent ?? null,
-    });
-    const R = LW.refundEmail;
-    const html = warmEmailDocument([
-      warmEmailParagraph(escapeHtml(R.leadPart(p.amount, child ? `${child.firstName} ${child.lastName}` : '', facts.season.name))),
-      warmEmailParagraph(escapeHtml(R.priceChanged(p.from, p.to))),
-      warmEmailParagraph(escapeHtml(R.reason(facts.org.name, p.reason))),
-      warmEmailParagraph(escapeHtml(R.amount(p.amount))),
-      face?.contact ? warmEmailSmall(escapeHtml(R.questions(face.contact))) : '',
-      transactionalFamilyFooterHtml({ orgName: facts.org.name, teamName: facts.season.name, noticeKind: 'Payment notices', about: 'a refund of a registration fee', replyLine: null }),
-    ].filter(Boolean).join('\n'), face?.club ?? null);
-    await sendEmail(facts.guardianEmail, R.subject(facts.org.name), html, face?.sendOpts ?? {});
-  } catch (err) {
-    console.error('[online-payment-receipt] the price refund email was not sent:', err instanceof Error ? err.message : String(err));
-  }
 }
 
 /**

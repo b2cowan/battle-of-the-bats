@@ -40,9 +40,10 @@ import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import frame from '@/components/admin/kit/AdminKitFrame.module.css';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import {
-  BULK_WORDS, FULL_WORDS, MOVE_WORDS, RECV_WORDS, REGS_WORDS,
+  BULK_WORDS, CARD_REFUND_WORDS, FULL_WORDS, MOVE_WORDS, RECV_WORDS, REGS_WORDS,
   type EndMode,
 } from '@/lib/house-league-money-words';
+import { awaitsAnswer, refundTarget, type CardRefund } from '@/lib/league-card-refunds';
 import { formatLeagueMoney, isOwing, lastPayment, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
 import { orgDayKey } from '@/lib/timezone';
 import {
@@ -65,6 +66,7 @@ import ReceiveWindow, { type ReceiveOutcome, type ReceiveTarget } from './Receiv
 import RegistrationRecordWindow from './RegistrationRecordWindow';
 import RegistrationsList, { type RegRowModel, type RowNote } from './RegistrationsList';
 import UndoWindow from './UndoWindow';
+import WhoseWindow from './WhoseWindow';
 import type { MenuItem } from './RowMenu';
 import { exportCsv, exportPdf, exportXlsx, type ExportRow } from './registrationsExport';
 import css from './Registrations.module.css';
@@ -76,7 +78,7 @@ type Act =
   // The windows that can refuse and read again keep what they OPENED on: a reload must never change their targets (a
   // refusal stays a refusal, and a second press sends what the first did).
   | { kind: 'receive'; ids: string[]; targets: ReceiveTarget[] }
-  | { kind: 'end'; id: string; mode: EndMode }
+  | { kind: 'end'; id: string; mode: EndMode; stripeRefundIds?: string[] }
   | { kind: 'price'; id: string }
   | { kind: 'move'; ids: string[]; targets: MoveTarget[] }
   | { kind: 'undo'; id: string; payment: LeagueMoneyLine }
@@ -158,7 +160,7 @@ export default function RegistrationsScreen() {
       registrations: regsRes.data.registrations ?? [], money: regsRes.data.money ?? {},
       priceChanges: regsRes.data.priceChanges ?? [], today: regsRes.data.today, payLinks: !!regsRes.data.payLinks,
       unrecordedCard: regsRes.data.unrecordedCard ?? {}, returnedRefunds: regsRes.data.returnedRefunds ?? {},
-      cardRefunds: regsRes.data.cardRefunds ?? {},
+      cardRefunds: regsRes.data.cardRefunds ?? {}, notMatched: regsRes.data.notMatched ?? {},
     });
     setFailed(null);
   }, [orgSlug, seasonId, orgQuery, beginRead]);
@@ -205,6 +207,13 @@ export default function RegistrationsScreen() {
   const [openedLink, setOpenedLink] = useState<string | null>(null);
   if (linked && openedLink !== linked.id) { setOpenedLink(linked.id); setOpenId(linked.id); }
   const linkedAt = search.get('at') === 'card' ? 'card' : linked ? 'fee' : null;
+  // 12c: a still-enrolled notice's answer (?answer=withdraw|link|keep), asked once on arrival; "whose was it?" (?whose=…).
+  const linkedAnswer = search.get('answer');
+  const [answered, setAnswered] = useState<string | null>(null);
+  const whoseId = search.get('whose');
+  const [whoseOpen, setWhoseOpen] = useState<string | null>(null);
+  const [seenWhose, setSeenWhose] = useState<string | null>(null);
+  if (whoseId && seenWhose !== whoseId) { setSeenWhose(whoseId); setWhoseOpen(whoseId); }
   const asked = search.get('tab') ?? (linked ? regTab(linked.status) : null);
   const tab: RegTab = isRegTab(asked) ? asked : landed ?? firstLanding;
   // A tab link changes the address only; the page keeps its state, so what belonged to the old tab is dropped here (the
@@ -215,7 +224,7 @@ export default function RegistrationsScreen() {
   const fees = useMemo(() => {
     const m = new Map<string, ReturnType<typeof feeCell>>();
     if (!season || !read) return m;
-    for (const r of regs) m.set(r.id, feeCell(r, season, linesOf(r.id), read.today, changesByReg.get(r.id) ?? [], refundsOf(r.id)));
+    for (const r of regs) m.set(r.id, feeCell(r, season, linesOf(r.id), read.today, changesByReg.get(r.id) ?? [], refundsOf(r.id), read.notMatched?.[r.id] ?? null));
     return m;
   }, [regs, season, read, linesOf, changesByReg, refundsOf]);
 
@@ -441,6 +450,28 @@ export default function RegistrationsScreen() {
     setCardAct(null);
     afterWrite(false);
     say(cardAct.op === 'refundCard' ? REGS_WORDS.refundCard.done(amount) : REGS_WORDS.refundAnotherWay.done(amount));
+  }
+
+  // 12c: the still-enrolled answers. Withdraw opens today's ending window carrying the Stripe refund (one email, with the
+  // block); Email the pay link and Keep enrolled ask first (each emails the family), then answer on the refund.
+  const [enrolledAct, setEnrolledAct] = useState<{ reg: LeagueRegistration; answer: 'link' | 'keep'; refund: CardRefund } | null>(null);
+  if (linked && read && linkedAnswer && answered !== `${linked.id}:${linkedAnswer}`) {
+    setAnswered(`${linked.id}:${linkedAnswer}`);
+    const waitingRefunds = (read.cardRefunds?.[linked.id] ?? []).filter(awaitsAnswer);
+    if (waitingRefunds.length && access?.takeFees) {
+      if (linkedAnswer === 'withdraw') setAct({ kind: 'end', id: linked.id, mode: END_MODE.withdraw, stripeRefundIds: waitingRefunds.map(r => r.id) });
+      else if (linkedAnswer === 'link' || linkedAnswer === 'keep') setEnrolledAct({ reg: linked, answer: linkedAnswer, refund: waitingRefunds[0] });
+    }
+  }
+  async function runEnrolled() {
+    if (!enrolledAct) return;
+    const { reg, answer, refund } = enrolledAct;
+    const r = await patchRegistration(orgQuery, seasonId, reg.id, { enrolledAnswer: { refundId: refund.id, answer } });
+    setEnrolledAct(null);
+    if (!r.ok) { say(r.error); return; }
+    afterWrite(false);
+    const E = CARD_REFUND_WORDS.enrolled;
+    say(answer === 'link' ? E.doneLink(reg.guardianEmail) : E.doneKeep(reg.playerFirstName, reg.guardianEmail));
   }
 
   /** 12c: the Fee cell's amber pill and the record's button open "Record the refund sent another way" (the desk's). */
@@ -742,9 +773,36 @@ export default function RegistrationsScreen() {
           orgQuery={orgQuery}
           seasonId={seasonId}
           raised={raised}
+          stripeRefundIds={act.stripeRefundIds}
           onClose={() => setAct(null)}
           onChanged={() => void load()}
           onDone={(done) => { setAct(null); afterWrite(true); say(done.said); setSelected(prev => { const n = new Set(prev); n.delete(act.id); return n; }); }}
+        />
+      )}
+      {/* 12c: a still-enrolled child's answer — a question first, since it emails the family. */}
+      {enrolledAct && (() => {
+        const E = CARD_REFUND_WORDS.enrolled;
+        const r = enrolledAct.refund;
+        const first = enrolledAct.reg.playerFirstName;
+        const go = enrolledAct.answer === 'link' ? E.link : E.keep(first);
+        return (
+          <ConfirmWindow
+            title={go}
+            body={E.body(formatLeagueMoney(r.amount), refundTarget(r), regDay(r.createdAt, today), first, formatLeagueMoney(r.amount - r.feeBack))}
+            go={go}
+            onClose={() => setEnrolledAct(null)}
+            onConfirm={runEnrolled}
+          />
+        );
+      })()}
+      {/* 12c: "whose was it?" — a part refund made in Stripe on a payment for two or more children. */}
+      {whoseOpen && (
+        <WhoseWindow
+          orgQuery={orgQuery}
+          seasonId={seasonId}
+          unassignedId={whoseOpen}
+          onClose={() => setWhoseOpen(null)}
+          onDone={said => { setWhoseOpen(null); afterWrite(false); say(said); }}
         />
       )}
       {act?.kind === 'price' && regById.has(act.id) && (() => {

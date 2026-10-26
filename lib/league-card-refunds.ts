@@ -60,7 +60,12 @@ export interface CardRefund {
   familyPaidFee: boolean;
   emailedAt: string | null;
   emailFailedAt: string | null;
+  /** A refund made in Stripe on a child still enrolled: the desk's answer to "what now?" (null while it waits). */
+  familyAnswer: 'withdraw' | 'link' | 'keep' | null;
 }
+
+/** A refund made in Stripe that still waits for "what now?" (the child is still enrolled). */
+export const awaitsAnswer = (r: CardRefund) => r.origin === 'stripe_dashboard' && !r.familyAnswer && r.inBook;
 
 export type CardRefundState = 'refunded' | 'pending' | 'failed' | 'anotherWay';
 

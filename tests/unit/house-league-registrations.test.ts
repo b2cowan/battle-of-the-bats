@@ -70,7 +70,7 @@ describe('the Fee cell reads a card refund (12c words §1)', () => {
     entryId: 'l2', inBook: true, landError: null, reason: 'club_ended', partialReason: null, sentAnotherWay: false,
     createdAt: '2026-10-26T18:14:00Z', succeededAt: '2026-10-26T18:15:00Z', failedAt: null, reference: 're_123', by: 'Pat Lee', resolvedBy: null,
     rail: 'card', cardBrand: 'visa', cardLast4: '4242', bankLast4: null, receiptNo: 1046, paidAt: '2026-10-20T15:00:00Z',
-    share: 150, shareFee: 6.75, familyPaidFee: true, emailedAt: null, emailFailedAt: null, ...over,
+    share: 150, shareFee: 6.75, familyPaidFee: true, emailedAt: null, emailFailedAt: null, familyAnswer: null, ...over,
   });
   const declined = reg({ status: 'declined', endedAt: '2026-10-26T18:00:00Z' });
   const paidAndBack = [line(), line({ id: 'l2', dir: 'out', day: '2026-10-26' })];

@@ -64,7 +64,28 @@ export const LEAGUE_PAY_WORDS = {
     reason: (club: string, why: string) => `${possessive(club)} reason: ${why}`,
     amount: (amount: string) => `${amount} is on its way back to the card. It takes 5 to 10 business days to appear.`,
     questions: (contact: string) => `Questions: ${contact}.`,
+    // 12c words §4: the refund email's leads, in the season's words (the block under each is REFUND_BLOCK_WORDS).
+    lead: (child: string, season: string) => `${possessive(child)} registration fee for ${season} was refunded.`,
+    leadMany: (children: string, season: string) => `Your payment for ${children} in ${season} was refunded.`,
+    leadManyPart: (amount: string, children: string, season: string) => `${amount} of your payment for ${children} in ${season} was refunded.`,
+    leadNeverBooked: (child: string, season: string) => `A payment for ${possessive(child)} registration for ${season} was refunded.`,
+    why: {
+      ended: (child: string) => `Your payment arrived after ${possessive(child)} registration had ended, so the club sent it back.`,
+      already_received: (child: string) => `${possessive(child)} fee had already been paid another way, so the club sent this payment back.`,
+      over: (child: string) => `The payment was more than ${child} owed, so the club sent the extra back.`,
+      not_accepted: (child: string) => `${possessive(child)} registration hadn’t been accepted yet, so the club sent this payment back.`,
+      other: (child: string) => `The club couldn’t put this payment on ${possessive(child)} registration, so it sent it back.`,
+    } as Record<string, (child: string) => string>,
+    stillEnrolled: (childFirst: string, owing: string) => `${childFirst} is still registered and owes ${owing}.`,
   },
+  // 12c words §4: the ending email's refund (in place of its old money sentence) and the "still enrolled" pay-link email.
+  endMail: {
+    refundLead: 'We refunded your payment.',
+    refundLeadPart: (amount: string) => `We refunded ${amount} of your payment.`,
+    keptRest: (rest: string, reason: string) => `The club is keeping the ${rest} you paid. The reason: ${reason}.`,
+  },
+  linkEmailRefunded: (club: string, child: string, season: string, childFirst: string, owing: string) =>
+    `${club} refunded ${possessive(child)} fee for ${season}, and ${childFirst} is still registered, so ${owing} is due.`,
   // §3 · the emails' Pay now (while the club takes payments)
   mail: {
     payButton: 'Pay now',

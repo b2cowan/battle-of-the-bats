@@ -6,8 +6,11 @@ import { clearSettled } from './needs-attention';
 import { getOrganizationBySlugForServer } from './server-organizations';
 import { canConnectPayouts, canRefundLeagueOnline, canRefundOnline, isPayoutsTreasurer } from './online-payment-access';
 import { factsFromStripe, factsFromRow, payoutsPath, payoutsState, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from './online-payment-account';
-import { retrieveAccount, retrieveCheckout, refundToCard } from './stripe-connect';
+import { listRefunds, retrieveAccount, retrieveCheckout, refundToCard } from './stripe-connect';
 import { sendOnlineReceiptOnce, sendRefundEmail } from './online-payment-receipt';
+import { claimRefundEmail, sendLeagueRefundEmail } from './online-refund-email';
+import { childList } from './league-pay-words';
+import { pinLeagueRefund, pinTeamRefund } from './online-refund-pinning';
 import { LEAGUE_ONLINE_NOTICE_WORDS as LW, cardLabel, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney } from './online-payment-words';
 import { formatStoredDate } from './timezone';
 import type { Organization, OrgRole } from './types';
@@ -58,7 +61,9 @@ async function refundPeople(org: Organization): Promise<string[]> {
  * waiting", so this does not read the notifications table itself — a second reader would skip the bell rule.
  */
 async function raiseOnce(p: {
-  org: Organization; userIds: string[]; eventType: 'payouts_need_attention' | 'online_payment_not_recorded' | 'card_refund_failed';
+  org: Organization; userIds: string[];
+  eventType: 'payouts_need_attention' | 'online_payment_not_recorded' | 'card_refund_failed'
+    | 'card_refund_whose' | 'card_refund_still_enrolled' | 'card_refund_unmatched';
   subjectKey: string; subjectId: string; title: string; body: string; link: string;
   /** More facts the notice's resolver reads (never part of its one-open-copy key, mig 366/374). */
   extra?: Record<string, string>;
@@ -267,6 +272,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     return 'not_recorded';
   }
   await sendOnlineReceiptOnce(op.id);
+  if (!(landed as { already?: boolean } | null)?.already) await reconcileDashboardRefunds(stripeAccountId, op.id);
   return (landed as { already?: boolean } | null)?.already ? 'already' : 'landed';
 }
 
@@ -313,6 +319,7 @@ async function landLeague(
   if (result?.already) return 'already';
   await clearSettled({ orgIds: [op.org_id], kinds: ['online_payment_not_recorded'] });
   await sendOnlineReceiptOnce(op.id);
+  await reconcileDashboardRefunds(op.stripe_account_id, op.id);
   return result?.unrecorded?.length ? 'not_recorded' : 'landed';
 }
 
@@ -390,7 +397,7 @@ export async function refundOnlinePayment(p: {
     await refundFailed(id, null, e instanceof Error ? e.message : 'Stripe refused the refund', p.onlinePaymentId);
     return { state: 'failed', refundId: id };
   }
-  await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id, updated_at: new Date().toISOString() }).eq('id', id);
+  await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id, stripe_created_at: stripeMoment(refund), updated_at: new Date().toISOString() }).eq('id', id);
   return applyStripeRefund(refund, id, p.onlinePaymentId);
 }
 
@@ -469,7 +476,7 @@ export async function refundLeagueToCard(p: {
     await leagueRefundFailed(id, null, message);
     return { state: 'failed', refundId: id, amountCents, booked: false, message };
   }
-  await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id, updated_at: new Date().toISOString() }).eq('id', id);
+  await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id, stripe_created_at: stripeMoment(refund), updated_at: new Date().toISOString() }).eq('id', id);
   if (refund.status === 'failed' || refund.status === 'canceled') {
     await leagueRefundFailed(id, refund.id, refund.failure_reason ?? refund.status);
     return { state: 'failed', refundId: id, amountCents, booked: false, message: refund.failure_reason ?? refund.status };
@@ -534,6 +541,15 @@ async function applyStripeRefund(refund: Stripe.Refund, refundId: string, online
     await bookLeagueRefund(refundId, refund.id, refund.status === 'succeeded');
     return { state: refund.status === 'succeeded' ? 'succeeded' : 'pending', refundId };
   }
+  const { data: rRow } = await supabaseAdmin.from('online_payment_refunds').select('part_refund').eq('id', refundId).maybeSingle();
+  if (rRow?.part_refund) {
+    if (refund.status === 'failed' || refund.status === 'canceled') {
+      await teamPartRefundFailed(refundId, refund.id, refund.failure_reason ?? refund.status, onlinePaymentId);
+      return { state: 'failed', refundId };
+    }
+    await bookTeamRefund(refundId, refund.id, refund.status === 'succeeded');
+    return { state: refund.status === 'succeeded' ? 'succeeded' : 'pending', refundId };
+  }
   if (refund.status === 'succeeded') {
     await landRefund(refundId, refund.id);
     return { state: 'succeeded', refundId };
@@ -545,72 +561,249 @@ async function applyStripeRefund(refund: Stripe.Refund, refundId: string, online
   return { state: 'pending', refundId };
 }
 
+/** Stripe's own moment for a refund (the email's "On", 12c words §4). */
+const stripeMoment = (refund: Stripe.Refund) => new Date(refund.created * 1000).toISOString();
+
 /**
- * A refund event from Stripe (refund.created / refund.updated / refund.failed, or charge.refunded). Ours lands or fails;
- * one started in the club's own Stripe dashboard is recorded the same way (origin 'stripe_dashboard') when it returns
- * the whole payment — a partial one, which 12a cannot record, raises "isn't in the team's record" so a person settles it.
+ * A team's part refund Stripe accepted (12c, mig 382): the payment row's refunded amount, the "Refunds" line and the team's
+ * lowered entry — once (the booking answers the same on a replay). The team's contact is emailed once (claimed).
+ */
+async function bookTeamRefund(refundId: string, stripeRefundId: string | null, succeeded: boolean): Promise<void> {
+  const { error } = await supabaseAdmin.rpc('online_payment_team_refund_book', { p_refund: refundId, p_stripe_refund: stripeRefundId, p_succeeded: succeeded });
+  if (error) throw new Error(error.message);
+  const { data } = await supabaseAdmin.from('online_payment_refunds').select('org_id').eq('id', refundId).maybeSingle();
+  if (data) await clearSettled({ orgIds: [data.org_id as string], kinds: ['card_refund_failed', 'online_payment_not_recorded'] });
+  if (await claimRefundEmail(refundId)) await sendRefundEmail(refundId);
+}
+
+/** A team's booked part refund Stripe returned: its line and lowered entry stay (the club still owes it); the desk sends it
+ *  another way (`online_payment_league_refund_resolve`, flow-blind). */
+async function teamPartRefundFailed(refundId: string, stripeRefundId: string | null, reason: string, onlinePaymentId: string): Promise<void> {
+  await supabaseAdmin.rpc('online_payment_refund_failed', { p_refund: refundId, p_stripe_refund: stripeRefundId, p_reason: reason });
+  const [{ data: r }, { data: op }] = await Promise.all([
+    supabaseAdmin.from('online_payment_refunds').select('booked_at').eq('id', refundId).maybeSingle(),
+    supabaseAdmin.from('online_payments').select('org_id, description, tournament_id').eq('id', onlinePaymentId).maybeSingle(),
+  ]);
+  if (!r?.booked_at || !op) return; // refused before it was booked: nothing changed, and the window said so
+  const org = await orgById(op.org_id as string);
+  if (!org) return;
+  await raiseOnce({
+    org, userIds: await refundPeople(org), eventType: 'card_refund_failed',
+    subjectKey: 'onlinePaymentId', subjectId: onlinePaymentId,
+    title: W.refundFailedTitle, body: W.refundFailedBody(op.description as string),
+    link: op.tournament_id ? `/${org.slug}/admin/tournaments/registrations?tournament=${op.tournament_id}` : `/${org.slug}/admin`,
+    extra: { refundId },
+  });
+}
+
+type PayForRefund = {
+  id: string; org_id: string; flow: 'tournament_team' | 'league_signup'; status: string; total_amount: number; base_amount: number;
+  fee_amount: number; fee_payer: string; stripe_account_id: string; description: string; tournament_id: string | null;
+  season_id: string | null; landed_at: string | null; receipt_no: number | null; card_brand: string | null; card_last4: string | null;
+  bank_last4: string | null; rail: string; stripe_payment_intent_id: string | null;
+};
+const PAY_FOR_REFUND = 'id, org_id, flow, status, total_amount, base_amount, fee_amount, fee_payer, stripe_account_id, description, tournament_id, season_id, landed_at, receipt_no, card_brand, card_last4, bank_last4, rail, stripe_payment_intent_id';
+const toCents = (n: number) => Math.round(Number(n) * 100);
+
+/**
+ * A refund event from Stripe (refund.created / refund.updated / refund.failed, or charge.refunded). Ours lands, books or
+ * fails — every row of it (a split refund made in Stripe is a row per child, one Stripe id). One made in the club's own
+ * Stripe dashboard RECORDS ITSELF whenever it can be pinned (12c, plan §0g ruling 5, §0j ask 4); a person is asked only
+ * "whose was it?" (a part refund on a payment for two or more children) or "what now?" (a child still enrolled). A refund on
+ * a payment we haven't recorded yet waits ("matches no payment") and is recorded when the payment lands.
  */
 export async function applyRefundEvent(stripeAccountId: string, refund: Stripe.Refund): Promise<void> {
   const intent = typeof refund.payment_intent === 'string' ? refund.payment_intent : refund.payment_intent?.id ?? null;
   if (!intent) return;
-  const { data: op } = await supabaseAdmin.from('online_payments')
-    .select('id, org_id, flow, status, total_amount, stripe_account_id, description, tournament_id, season_id')
-    .eq('stripe_payment_intent_id', intent).maybeSingle();
-  if (!op || op.stripe_account_id !== stripeAccountId) return;
+  const { data } = await supabaseAdmin.from('online_payments').select(PAY_FOR_REFUND).eq('stripe_payment_intent_id', intent).maybeSingle();
+  const op = data as PayForRefund | null;
+  if (!op) { await raiseUnmatched(stripeAccountId, refund); return; }
+  if (op.stripe_account_id !== stripeAccountId) return;
   // Ours carries our refund's id in its metadata (set when we asked Stripe), or Stripe's id once recorded. A refund made
   // in the club's own Stripe dashboard has neither and is never taken for one of ours.
   const ourId = typeof refund.metadata?.refund_id === 'string' ? refund.metadata.refund_id : null;
   const { data: ours } = await supabaseAdmin.from('online_payment_refunds')
-    .select('id, status').eq('online_payment_id', op.id as string)
-    .or(ourId ? `id.eq.${ourId},stripe_refund_id.eq.${refund.id}` : `stripe_refund_id.eq.${refund.id}`)
-    .limit(1).maybeSingle();
-  if (ours) {
-    if (ours.status === 'pending') {
-      await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id }).eq('id', ours.id as string).is('stripe_refund_id', null);
-      await applyStripeRefund(refund, ours.id as string, op.id as string);
+    .select('id, status').eq('online_payment_id', op.id)
+    .or(ourId ? `id.eq.${ourId},stripe_refund_id.eq.${refund.id}` : `stripe_refund_id.eq.${refund.id}`);
+  const rows = (ours ?? []) as Array<{ id: string; status: string }>;
+  if (rows.length) {
+    for (const row of rows) {
+      if (row.status !== 'pending') continue;
+      await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id }).eq('id', row.id).is('stripe_refund_id', null);
+      await applyStripeRefund(refund, row.id, op.id);
     }
     return;
   }
-  // A house-league payment refunded in Stripe's dashboard: recorded by a person until 12b's refunds land (Part 5).
-  if (op.flow === 'league_signup') {
-    if (refund.status !== 'succeeded') return;
-    const org = await orgById(op.org_id as string);
-    if (org) {
-      await raiseOnce({
-        org, userIds: await leagueRefundPeople(org), eventType: 'online_payment_not_recorded',
-        subjectKey: 'onlinePaymentId', subjectId: op.id as string,
-        title: LW.unrecordedSignupTitle,
-        body: LW.refundedInStripeBody(op.description as string, formatMoney(refund.amount / 100)),
-        link: recordHref(org, op as Pick<OnlineRow, 'tournament_id' | 'season_id'>),
-        // The payment is landed, so landed_at can't settle this one: it waits for THIS refund to be recorded.
-        extra: { stripeRefundId: refund.id },
-      });
-    }
-    return;
-  }
-  if (refund.status !== 'succeeded' || op.status !== 'paid') return;
-  const full = Math.round(Number(op.total_amount) * 100);
-  if (refund.amount < full) {
-    const org = await orgById(op.org_id as string);
-    if (org) {
-      await raiseOnce({
-        org, userIds: await refundPeople(org), eventType: 'online_payment_not_recorded',
-        subjectKey: 'onlinePaymentId', subjectId: op.id as string,
-        title: W.notRecordedTitle,
-        body: W.partialInStripeBody(op.description as string, formatMoney(refund.amount / 100)),
-        link: recordHref(org, op as Pick<OnlineRow, 'tournament_id' | 'season_id'>),
-        // A landed payment's landed_at would settle this at once (12a's slip, review 2026-10-25): wait for the refund.
-        extra: { stripeRefundId: refund.id },
-      });
-    }
-    return;
-  }
-  const { data: refundId, error } = await supabaseAdmin.rpc('online_payment_refund_open', {
-    p_online_payment: op.id, p_fee_included: true, p_reason: null, p_note: null, p_actor: null, p_origin: 'stripe_dashboard',
+  // A refund made in Stripe that failed or was cancelled moved no money: nothing to record.
+  if (refund.status !== 'succeeded' && refund.status !== 'pending') return;
+  const { data: waiting } = await supabaseAdmin.from('online_refunds_unassigned').select('id').eq('stripe_refund_id', refund.id).maybeSingle();
+  if (waiting) return; // already waiting for "whose was it?"
+  if (op.flow === 'league_signup') await recordLeagueDashboardRefund(op, refund);
+  else await recordTeamDashboardRefund(op, refund);
+}
+
+/** A payment just landed: any refund made in Stripe before it did is recorded on it now (events out of order). */
+export async function reconcileDashboardRefunds(stripeAccountId: string, onlinePaymentId: string): Promise<void> {
+  const { data } = await supabaseAdmin.from('online_payments').select('stripe_payment_intent_id').eq('id', onlinePaymentId).maybeSingle();
+  const intent = (data?.stripe_payment_intent_id as string | null) ?? null;
+  if (!intent) return;
+  const refunds = await listRefunds(stripeAccountId, intent).catch(() => [] as Stripe.Refund[]);
+  for (const r of refunds) await applyRefundEvent(stripeAccountId, r);
+  const { data: org } = await supabaseAdmin.from('online_payments').select('org_id').eq('id', onlinePaymentId).maybeSingle();
+  if (refunds.length && org) await clearSettled({ orgIds: [org.org_id as string], kinds: ['card_refund_unmatched'] });
+}
+
+/** "A refund in Stripe matches no payment we recorded" (words §5): to both desks, since the flow can't be told yet. */
+async function raiseUnmatched(stripeAccountId: string, refund: Stripe.Refund): Promise<void> {
+  if (refund.status !== 'succeeded' && refund.status !== 'pending') return;
+  const { data: acct } = await supabaseAdmin.from('org_payment_accounts').select('org_id').eq('stripe_account_id', stripeAccountId).maybeSingle();
+  const org = acct ? await orgById(acct.org_id as string) : null;
+  if (!org) return;
+  const people = [...new Set([...(await leagueRefundPeople(org)), ...(await refundPeople(org))])];
+  await raiseOnce({
+    org, userIds: people, eventType: 'card_refund_unmatched', subjectKey: 'unmatchedStripeRefundId', subjectId: refund.id,
+    title: LW.noMatchTitle, body: LW.noMatchBody(formatMoney(refund.amount / 100), formatStoredDate(stripeMoment(refund).slice(0, 10), { withYear: false })),
+    link: payoutsHref(org),
   });
-  if (error) return; // a refund of ours opened in between: its own event lands it
-  await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id }).eq('id', refundId as string);
-  await landRefund(refundId as string, refund.id);
+}
+
+type ItemForRefund = { id: string; registration_id: string | null; amount: number; fee_share: number; entry_id: string | null; description: string };
+
+/**
+ * A house-league refund made in Stripe (12c, §0g ruling 5). Pinned on one child — any amount on a one-child payment, or
+ * the whole of what is left of a payment — it is recorded and booked at once: a refund counts against the fee first, and
+ * anything above it is the processing fee given back. A part refund on a payment for two or more children waits for
+ * "whose was it?". A child still enrolled whose fee went back raises "what now?" and the family's email waits for it;
+ * otherwise the family is emailed now (ruling 6: Stripe accepted it).
+ */
+async function recordLeagueDashboardRefund(op: PayForRefund, refund: Stripe.Refund): Promise<void> {
+  const org = await orgById(op.org_id);
+  if (!org) return;
+  const { data: its } = await supabaseAdmin.from('online_payment_items')
+    .select('id, registration_id, amount, fee_share, entry_id, description').eq('online_payment_id', op.id).order('created_at').order('id');
+  const items = (its ?? []) as ItemForRefund[];
+  const { data: back } = await supabaseAdmin.from('online_payment_refunds').select('online_payment_item_id, amount, fee_refunded, status, booked_at')
+    .eq('online_payment_id', op.id);
+  const used = new Map<string, number>();
+  for (const f of (back ?? []) as Array<{ online_payment_item_id: string | null; amount: number; fee_refunded: number; status: string; booked_at: string | null }>) {
+    if (!f.online_payment_item_id || (f.status !== 'pending' && f.status !== 'succeeded' && !f.booked_at)) continue;
+    used.set(f.online_payment_item_id, (used.get(f.online_payment_item_id) ?? 0) + toCents(f.amount) - toCents(f.fee_refunded));
+  }
+  const familyFee = op.fee_payer === 'family';
+  const shares = items.map(i => {
+    const done = used.get(i.id) ?? 0;
+    return { item: i, left: toCents(i.amount) - done, fee: familyFee && done === 0 ? toCents(i.fee_share) : 0 };
+  }).filter(x => x.left > 0);
+  const x = refund.amount;
+  const pin = pinLeagueRefund(shares.map(sh => ({ itemId: sh.item.id, leftCents: sh.left, feeCents: sh.fee })), x);
+  if (pin.kind === 'whose') {
+    // "Whose was it?" — held out of the book until a person answers.
+    const { data: held, error } = await supabaseAdmin.from('online_refunds_unassigned')
+      .insert({ org_id: op.org_id, online_payment_id: op.id, stripe_refund_id: refund.id, amount: x / 100, stripe_created_at: stripeMoment(refund) })
+      .select('id').maybeSingle();
+    if (error || !held) return; // a replay met the one-per-refund key
+    const regIds = shares.map(sh => sh.item.registration_id).filter((v): v is string => !!v);
+    const { data: regs } = await supabaseAdmin.from('league_registrations')
+      .select('id, player_first_name, guardian_first_name, guardian_last_name').in('id', regIds);
+    const regRows = (regs ?? []) as Array<{ id: string; player_first_name: string; guardian_first_name: string | null; guardian_last_name: string | null }>;
+    const g = regRows[0];
+    const guardian = g && (g.guardian_first_name || g.guardian_last_name) ? [g.guardian_first_name, g.guardian_last_name].filter(Boolean).join(' ') : null;
+    await raiseOnce({
+      org, userIds: await leagueRefundPeople(org), eventType: 'card_refund_whose', subjectKey: 'unassignedRefundId', subjectId: held.id as string,
+      title: LW.whoseTitle(formatMoney(x / 100), guardian),
+      body: LW.whoseBody(childList(regRows.map(r => r.player_first_name)), formatMoney(Number(op.total_amount)), String(op.receipt_no ?? '')),
+      link: `/${org.slug}/admin/house-league/seasons/${op.season_id}/registrations?whose=${held.id as string}`,
+      // Never onlinePaymentId: the one-open key reads it first, and a second refund on this payment is its own question.
+      extra: { stripeRefundId: refund.id },
+    });
+    return;
+  }
+  if (pin.kind !== 'record') { await raiseUnmatched(op.stripe_account_id, refund); return; }
+  await recordLeagueRefundRows(org, op, refund.id, stripeMoment(refund), refund.status === 'succeeded', pin.plan, null, null);
+}
+
+/**
+ * Record and book a refund Stripe already made, one row per child (a dashboard refund pinned on its own, or "whose was
+ * it?" answered), then tell the family — or, for a child still enrolled whose fee went back, ask the desk first.
+ */
+export async function recordLeagueRefundRows(
+  org: Organization, op: Pick<PayForRefund, 'id' | 'org_id' | 'season_id' | 'card_brand' | 'card_last4' | 'bank_last4' | 'rail'>,
+  stripeRefundId: string, stripeCreatedAt: string, succeeded: boolean,
+  plan: Array<{ itemId: string; base: number; fee: number }>, reason: string | null, actorId: string | null,
+): Promise<{ ids: string[]; emailed: boolean }> {
+  const ids: string[] = [];
+  for (const row of plan) {
+    const { data: id, error } = await supabaseAdmin.rpc('online_payment_refund_record_dashboard', {
+      p_online_payment: op.id, p_item: row.itemId, p_base: row.base / 100, p_fee: row.fee / 100, p_stripe_refund: stripeRefundId,
+      p_stripe_created: stripeCreatedAt, p_partial_reason: reason, p_actor: actorId,
+    });
+    if (error) throw new Error(error.message);
+    await bookLeagueRefund(id as string, stripeRefundId, succeeded);
+    ids.push(id as string);
+  }
+  // Who is still enrolled with a fee that went back: "what now?" — their email waits for the answer.
+  const { data: rows } = await supabaseAdmin.from('online_payment_refunds')
+    .select('id, amount, fee_refunded, created_at, stripe_created_at, online_payment_items!inner(registration_id, entry_id)').in('id', ids);
+  const regIds = ((rows ?? []) as Array<Record<string, unknown>>).map(r => {
+    const it = (Array.isArray(r.online_payment_items) ? r.online_payment_items[0] : r.online_payment_items) as { registration_id: string | null };
+    return it.registration_id;
+  }).filter((v): v is string => !!v);
+  const { data: regs } = regIds.length
+    ? await supabaseAdmin.from('league_registrations').select('id, status, player_first_name, player_last_name').in('id', regIds)
+    : { data: [] };
+  const regById = new Map(((regs ?? []) as Array<{ id: string; status: string; player_first_name: string; player_last_name: string }>).map(g => [g.id, g]));
+  const toEmail: string[] = [];
+  const people = await leagueRefundPeople(org);
+  for (const r of (rows ?? []) as Array<Record<string, unknown>>) {
+    const it = (Array.isArray(r.online_payment_items) ? r.online_payment_items[0] : r.online_payment_items) as { registration_id: string | null; entry_id: string | null };
+    const g = it.registration_id ? regById.get(it.registration_id) : undefined;
+    const enrolled = !!g && !!it.entry_id && (g.status === 'active' || g.status === 'pending_review' || g.status === 'waitlisted');
+    if (!enrolled) { toEmail.push(r.id as string); continue; }
+    const base = Number(r.amount) - Number(r.fee_refunded);
+    const card = op.rail === 'bank_debit' ? `the account ending ${op.bank_last4 ?? ''}` : cardLabel(op.card_brand, op.card_last4);
+    const at = (r.stripe_created_at as string | null) ?? (r.created_at as string);
+    await raiseOnce({
+      org, userIds: people, eventType: 'card_refund_still_enrolled', subjectKey: 'enrolledRefundId', subjectId: r.id as string,
+      title: LW.enrolledTitle(`${g!.player_first_name} ${g!.player_last_name}`, g!.player_first_name),
+      body: LW.enrolledBody(formatMoney(Number(r.amount)), card, formatStoredDate(at.slice(0, 10), { withYear: false }), g!.player_first_name, formatMoney(base)),
+      link: recordHref(org, { tournament_id: null, season_id: op.season_id }, { regId: g!.id, at: 'card' }),
+      extra: { registrationId: g!.id, childFirst: g!.player_first_name },
+    });
+  }
+  if (toEmail.length) await sendLeagueRefundEmail(toEmail, { kind: 'stripe' });
+  await clearSettled({ orgIds: [op.org_id], kinds: ['online_payment_not_recorded', 'card_refund_whose', 'card_refund_unmatched'] });
+  return { ids, emailed: toEmail.length === ids.length };
+}
+
+/**
+ * A tournament team's refund made in Stripe (12c, §0j ask 4). The whole payment lands through 12a's full path; a PART
+ * records itself as a part refund — booked at once, lowering the team's entry by the same amount ("made in Stripe").
+ */
+async function recordTeamDashboardRefund(op: PayForRefund, refund: Stripe.Refund): Promise<void> {
+  if (op.status !== 'paid' && op.status !== 'partly_refunded') return;
+  const { data: back } = await supabaseAdmin.from('online_payment_refunds').select('amount, fee_refunded, status, booked_at').eq('online_payment_id', op.id);
+  let used = 0;
+  for (const f of (back ?? []) as Array<{ amount: number; fee_refunded: number; status: string; booked_at: string | null }>) {
+    if (f.status === 'pending' || f.status === 'succeeded' || f.booked_at) used += toCents(f.amount) - toCents(f.fee_refunded);
+  }
+  const pin = pinTeamRefund({ baseCents: toCents(op.base_amount), wholeCents: toCents(op.total_amount), usedCents: used, landed: !!op.landed_at }, refund.amount);
+  if (pin.kind === 'whole') {
+    if (refund.status !== 'succeeded') return; // 12a's full refund lands when Stripe finishes it (its next event)
+    const { data: refundId, error } = await supabaseAdmin.rpc('online_payment_refund_open', {
+      p_online_payment: op.id, p_fee_included: true, p_reason: null, p_note: null, p_actor: null, p_origin: 'stripe_dashboard',
+    });
+    if (error) return; // a refund of ours opened in between: its own event lands it
+    await supabaseAdmin.from('online_payment_refunds').update({ stripe_refund_id: refund.id, stripe_created_at: stripeMoment(refund) }).eq('id', refundId as string);
+    await landRefund(refundId as string, refund.id);
+    return;
+  }
+  if (pin.kind !== 'part') { await raiseUnmatched(op.stripe_account_id, refund); return; }
+  const { data: id, error } = await supabaseAdmin.rpc('online_payment_refund_record_dashboard', {
+    p_online_payment: op.id, p_item: null, p_base: pin.base / 100, p_fee: 0, p_stripe_refund: refund.id,
+    p_stripe_created: stripeMoment(refund), p_partial_reason: null, p_actor: null,
+  });
+  if (error) throw new Error(error.message);
+  await bookTeamRefund(id as string, refund.id, refund.status === 'succeeded');
 }
 
 /**

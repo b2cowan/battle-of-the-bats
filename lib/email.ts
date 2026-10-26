@@ -1055,7 +1055,10 @@ export function leagueRegistrationDeclinedHtml(input: {
 /** What happened to money on an ended house-league registration, for the family's email (9b-2 copy §15). */
 export type EndedMoneyLine =
   | { answer: 'refunded'; amount: number; day: string; method: string | null }
-  | { answer: 'kept'; amount: number; reason: string };
+  | { answer: 'kept'; amount: number; reason: string }
+  /** 12c words §4: a refund to the card rides as the one refund block — the lead, the club's reason, the block and what the
+   *  club keeps of the rest, built by the caller (lib/online-refund-email.ts) and already escaped. */
+  | { answer: 'card'; html: string };
 
 /** Who a house-league family email sends the family to: the club's own address when it has a public contact (or the caller
  *  passed one), otherwise the club by name — never the platform's inbox (S3b, copy item 9); with no club at all the old
@@ -1087,7 +1090,11 @@ function noteAndMoney(note: string | null, money: EndedMoneyLine | null): string
   const out: string[] = [];
   if (note && note.trim()) out.push(`<p>${escapeEmailHtml(note.trim()).replace(/\n/g, '<br>')}</p>`);
   if (money?.answer === 'refunded') {
-    out.push(`<p>We refunded the ${dollarsLine(money.amount)} you paid on ${formatStoredDate(money.day)}${escapeEmailHtml(methodInBrackets(money.method))}.</p>`);
+    // 12c (F3): the day is the refund's, so the sentence says only that — "We refunded $150.00 on Oct 26 (Cheque)." — never
+    // "the $X you paid on {refund day}", which dated the payment wrong and is false for a part refund.
+    out.push(`<p>We refunded ${dollarsLine(money.amount)} on ${formatStoredDate(money.day)}${escapeEmailHtml(methodInBrackets(money.method))}.</p>`);
+  } else if (money?.answer === 'card') {
+    out.push(money.html);
   } else if (money?.answer === 'kept') {
     out.push(`<p>The club is keeping the ${dollarsLine(money.amount)} you paid. The reason: ${escapeEmailHtml(money.reason)}.</p>`);
   }

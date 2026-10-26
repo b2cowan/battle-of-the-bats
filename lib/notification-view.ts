@@ -379,6 +379,27 @@ function adminDestination(rest: string, query: URLSearchParams): string | null {
  * coach's Record money, filled in), and Not received is the same door asking once. Both are links: the bell posts nothing.
  */
 export const HANDOFF_ACTIONS = { recordIt: 'Record it', notReceived: 'Not received' } as const;
+
+/**
+ * Kinds a person may NOT mark Done (12c words §5): "whose was it?" keeps a refund made in Stripe out of the season's book
+ * until it is answered, so leaving it would leave the book wrong for good. It clears only when answered.
+ */
+const NO_DONE: ReadonlySet<string> = new Set(['card_refund_whose']);
+
+/**
+ * A card refund's notices, house league (12c words §5, F6): their ways on are links into Registrations, which opens the
+ * window on arrival (`?answer=` / `?whose=`) — the bell posts nothing. "Still enrolled" has three: Withdraw, Email the
+ * pay link, Keep enrolled; the child's first name rides in the notice's metadata.
+ */
+export const REFUND_NOTICE_ACTIONS = {
+  whose: 'Choose the child',
+  withdraw: (child: string) => `Withdraw ${child}`,
+  link: 'Email the pay link',
+  keep: (child: string) => `Keep ${child} enrolled`,
+  anotherWay: 'Record the refund sent another way',
+} as const;
+export const withAnswer = (link: string, answer: 'withdraw' | 'link' | 'keep'): string => `${link}${link.includes('?') ? '&' : '?'}answer=${answer}`;
+export const canMarkDone = (eventType: string): boolean => !NO_DONE.has(eventType);
 export const handoffNotReceivedLink = (link: string): string => `${link}${link.includes('?') ? '&' : '?'}handoffAnswer=not-received`;
 
 /**

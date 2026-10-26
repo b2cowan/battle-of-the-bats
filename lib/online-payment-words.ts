@@ -55,11 +55,29 @@ export const ONLINE_NOTICE_WORDS = {
   notRecordedTitle: 'An online payment isn’t in the team’s record',
   notRecordedBody: (description: string, amount: string, reason: string) =>
     `${description}: ${amount} was paid by card, but it couldn’t be added to the team’s record (${reason}). Refund it to the card from the team’s record or in Stripe.`,
-  partialInStripeBody: (description: string, amount: string) =>
-    `${description}: ${amount} was refunded in Stripe, which is only part of the payment. Record the change by hand.`,
   refundFailedTitle: 'A refund didn’t reach the card',
   refundFailedBody: (description: string) =>
     `${description}: the refund to the card was returned, for example because the card was closed. Send the team the money another way, then record the refund.`,
+} as const;
+
+/**
+ * THE REFUND BLOCK (Club Tier Stage 12c, words CLUB_TIER_STAGE12C_REFUND_VISIBLE_COPY.md §4): one block, the same in every
+ * email that carries a refund, in both flows. `bank` swaps the card's words for a bank account's (the rail table, §3.9 of
+ * the bank-debit words). Replaces 12b's one-sentence `refundAmount`.
+ */
+export const REFUND_BLOCK_WORDS = {
+  preheader: (amount: string, bank: boolean) => `${amount} refunded to your ${bank ? 'bank account' : 'card'}.`,
+  amount: 'Refunded',
+  forLabel: 'For',
+  forValue: (name: string, amount: string) => `${name} · ${amount}`,
+  to: 'To',
+  bankTarget: (last4: string | null) => (last4 ? `Bank account ending ${last4}` : 'Your bank account'),
+  on: 'On',
+  ref: 'Refund reference',
+  receipt: 'Your receipt',
+  receiptValue: (receiptNo: string, paid: string) => `${receiptNo} (paid ${paid})`,
+  // {bankDays}: Stripe's refund to a bank account takes about 3 business days (plan §0k).
+  arrives: (bank: boolean) => (bank ? 'It takes about 3 business days to appear.' : 'It takes 5 to 10 business days to appear.'),
 } as const;
 
 /** Why a child's share couldn't land: the house-league writer's refusal, in the family's terms (12b copy §7 `why*`). */
@@ -87,9 +105,18 @@ export const LEAGUE_ONLINE_NOTICE_WORDS = {
   refundFailedTitle: (child: string) => `${possessive(child)} refund didn’t reach the card`,
   refundFailedBody: (amount: string, card: string) =>
     `${amount} to ${card} was returned, for example because the card was closed. Send the family the money another way, then record the refund.`,
-  // Derived, until 12b's refunds land (Part 5): a refund started in Stripe's dashboard on a house-league payment.
-  refundedInStripeBody: (description: string, amount: string) =>
-    `${description}: ${amount} was refunded in Stripe. Record the refund by hand on Registrations so the season’s book matches.`,
+  // 12c words §5 (a refund made in Stripe records itself; a person is asked only these). The 12b
+  // `refundedInStripeBody` ("record the refund by hand") is retired: it had no door on an ended row (F4).
+  whoseTitle: (amount: string, guardian: string | null) =>
+    `${amount} was refunded in Stripe on ${guardian ? `${possessive(guardian)} payment` : 'the family’s payment'}`,
+  whoseBody: (children: string, total: string, receiptNo: string) =>
+    `It paid for ${children} (${total}, receipt ${receiptNo}), so we can’t tell whose fee it was. Choose the child, and it goes on that registration. Until then it isn’t in the season’s book.`,
+  enrolledTitle: (child: string, childFirst: string) => `${possessive(child)} fee was refunded in Stripe, and ${childFirst} is still enrolled`,
+  enrolledBody: (amount: string, card: string, day: string, childFirst: string, owing: string) =>
+    `${amount} went back to ${card} on ${day}. It’s recorded, and ${childFirst} owes ${owing} again. Withdraw ${childFirst}, email the family the pay link, or keep ${childFirst} enrolled. The family is emailed once you choose.`,
+  noMatchTitle: 'A refund in Stripe matches no payment we recorded',
+  noMatchBody: (amount: string, day: string) =>
+    `${amount} was refunded in Stripe on ${day}, on a payment we haven’t recorded yet. It goes on the registration as soon as that payment arrives. If it’s still here tomorrow, the club’s owner can check the payment in Stripe.`,
 } as const;
 
 /** The receipt email (§14) and the refund email (§17). */
@@ -115,6 +142,8 @@ export const ONLINE_EMAIL_WORDS = {
   refundFeeIncluded: (fee: string) => `This includes the ${fee} processing fee.`,
   refundFeeKept: (fee: string) => `The ${fee} processing fee isn’t part of this refund.`,
   refundQuestions: (contact: string | null) => (contact ? `Questions: ${contact}.` : ''),
+  // 12c words §4 (refund visibility): without a club contact the line names the club instead of going silent.
+  refundQuestionsClub: (clubName: string) => `Questions go to ${clubName}.`,
   // "Email the pay link" (copy §15, derived)
   linkSubject: (team: string, tournament: string) => `Pay for ${team} in ${tournament}`,
   linkBody: (club: string, team: string, division: string | null) =>

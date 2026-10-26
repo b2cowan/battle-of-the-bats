@@ -3467,6 +3467,10 @@ export type NotificationEventType =
   | 'payouts_need_attention'     // to the owner and the treasurer: Stripe needs something from the club
   | 'online_payment_not_recorded' // to whoever runs tournaments + the treasurer: Stripe took a payment that couldn't be recorded
   | 'card_refund_failed'         // to whoever refunded it + the treasurer: a refund couldn't reach the card
+  // Club Tier Stage 12c (mig 384) — a refund made in the club's Stripe dashboard. All three Needs attention, to the desk.
+  | 'card_refund_whose'          // a part refund on a payment for two or more children: choose the child
+  | 'card_refund_still_enrolled' // a child's fee went back in Stripe while the child is registered: withdraw, link or keep
+  | 'card_refund_unmatched'      // a refund on a payment we haven't recorded yet (Stripe's events out of order)
   //   To the people who built the schedule:
   | 'club_schedule_reply'        // a team answered the review round
   | 'club_schedule_handed_back'  // a team handed a club practice back

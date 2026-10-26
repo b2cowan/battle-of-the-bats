@@ -563,6 +563,72 @@ const cardRefundFailed: Resolver = async rows => {
   return out;
 };
 
+/** "Whose was it?" (12c, `unassignedRefundId`): a part refund made in Stripe on a payment for two or more children —
+ *  waits until a person says whose it was (no Done: leaving it would keep the refund out of the book for good). */
+const cardRefundWhose: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const ids = uniq(rows.map(r => meta(r, 'unassignedRefundId')));
+  const byId = new Map((ids.length
+    ? await rowsIn<{ id: string; assigned_at: string | null; assigned_by: string | null }>('online_refunds_unassigned', 'id, assigned_at, assigned_by', 'id', ids)
+    : []).map(u => [u.id, u]));
+  for (const r of rows) {
+    const id = meta(r, 'unassignedRefundId');
+    if (!id) continue;
+    const u = byId.get(id);
+    if (!u) out.set(r.id, said(W.onlinePaymentGone, { link: null }));
+    else if (u.assigned_at) out.set(r.id, { by: u.assigned_by, at: u.assigned_at, words: () => ({ outcome: W.refundRecorded }) });
+    else out.set(r.id, 'waiting');
+  }
+  return out;
+};
+
+/** "Still enrolled" (12c, `enrolledRefundId` + `registrationId`): a child's fee went back in Stripe while the child is
+ *  registered — waits for the desk's answer (withdraw · email the pay link · keep), or for the child to end or pay again. */
+const cardRefundStillEnrolled: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const refundIds = uniq(rows.map(r => meta(r, 'enrolledRefundId')));
+  const regIds = uniq(rows.map(r => meta(r, 'registrationId')));
+  const [refunds, regs] = await Promise.all([
+    refundIds.length ? rowsIn<{ id: string; family_answer: string | null; family_answer_by: string | null; family_answer_at: string | null }>(
+      'online_payment_refunds', 'id, family_answer, family_answer_by, family_answer_at', 'id', refundIds) : Promise.resolve([]),
+    regIds.length ? rowsIn<{ id: string; status: string; ended_at: string | null; player_first_name: string }>(
+      'league_registrations', 'id, status, ended_at, player_first_name', 'id', regIds) : Promise.resolve([]),
+  ]);
+  const refundById = new Map(refunds.map(f => [f.id, f]));
+  const regById = new Map(regs.map(g => [g.id, g]));
+  for (const r of rows) {
+    const f = refundById.get(meta(r, 'enrolledRefundId') ?? '');
+    const g = regById.get(meta(r, 'registrationId') ?? '');
+    if (!f || !g) { out.set(r.id, said(W.onlinePaymentGone, { link: null })); continue; }
+    if (g.status === 'declined' || g.status === 'withdrawn' || f.family_answer === 'withdraw') out.set(r.id, said(W.withdrawDone, { at: g.ended_at }));
+    else if (f.family_answer === 'link') out.set(r.id, { by: f.family_answer_by, at: f.family_answer_at, words: (who, you) => ({ outcome: W.payLinkEmailed(who, you) }) });
+    else if (f.family_answer === 'keep') {
+      const child = g.player_first_name;
+      out.set(r.id, { by: f.family_answer_by, at: f.family_answer_at, words: (who, you) => ({ outcome: W.keptEnrolled(child, who, you) }) });
+    } else out.set(r.id, 'waiting');
+  }
+  return out;
+};
+
+/** A refund made in Stripe that matched no payment we recorded (12c, `unmatchedStripeRefundId`): events arrive out of
+ *  order — it settles once the payment lands and the refund is recorded on it. */
+const cardRefundUnmatched: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const ids = uniq(rows.map(r => meta(r, 'unmatchedStripeRefundId')));
+  const recorded = new Set(ids.length
+    ? (await rowsIn<{ stripe_refund_id: string }>('online_payment_refunds', 'stripe_refund_id', 'stripe_refund_id', ids)).map(f => f.stripe_refund_id)
+    : []);
+  const waiting = new Set(ids.length
+    ? (await rowsIn<{ stripe_refund_id: string }>('online_refunds_unassigned', 'stripe_refund_id', 'stripe_refund_id', ids)).map(f => f.stripe_refund_id)
+    : []);
+  for (const r of rows) {
+    const id = meta(r, 'unmatchedStripeRefundId');
+    if (!id) continue;
+    out.set(r.id, recorded.has(id) || waiting.has(id) ? said(W.refundRecorded, { words: () => ({ outcome: W.refundRecorded, then: W.onlineItemRecorded }) }) : 'waiting');
+  }
+  return out;
+};
+
 /** THE RULEBOOK — one entry per Needs-attention kind (`NeedsAttentionKind` makes it total). */
 export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   club_hand_back_asked: handBackAsked,
@@ -581,6 +647,9 @@ export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   online_payment_not_recorded: onlinePaymentNotRecorded,
   card_refund_failed: cardRefundFailed,
   house_league_withdraw_request: withdrawRequest,
+  card_refund_whose: cardRefundWhose,
+  card_refund_still_enrolled: cardRefundStillEnrolled,
+  card_refund_unmatched: cardRefundUnmatched,
 };
 
 const isNeedsAttention = (eventType: string): eventType is NeedsAttentionKind => (NEEDS_ATTENTION_KINDS as readonly string[]).includes(eventType);

@@ -4,6 +4,8 @@ import { ArrowRight, Check, Trash2 } from 'lucide-react';
 import type { AppNotification, NotificationEventType } from '@/lib/types';
 import { NOTIFICATION_EVENT_LABELS, notificationCategory } from '@/lib/notification-labels';
 import {
+  REFUND_NOTICE_ACTIONS, withAnswer,
+  canMarkDone,
   BUNDLE_NOUN, HANDOFF_ACTIONS, entryMembers, handoffNotReceivedLink, iconFor, notificationDestination, notificationStamp,
   type ActivityEntry,
 } from '@/lib/notification-view';
@@ -75,13 +77,23 @@ export default function NotificationMessage({
   // The club's hand-off (Club Tier Stage 5c, Ask 28): while it waits, the way on is "Record it" (the coach's own Record
   // money, filled in) and Not received is the same door asking once — two links, nothing posted from the bell.
   const handoff = entry.kind === 'item' && !settled && !lead.clearedAt && lead.eventType === 'club_payment_handed_off' ? link : null;
-  const goLabel = handoff ? HANDOFF_ACTIONS.recordIt : notificationDestination(link, portal);
+  // 12c: a refund made in Stripe — "Choose the child"; a still-enrolled child's three answers; a returned house-league
+  // refund's "Record the refund sent another way" (F6). Each a link that opens its window on Registrations.
+  const waiting = entry.kind === 'item' && !settled && !lead.clearedAt;
+  const childFirst = typeof lead.metadata?.childFirst === 'string' ? lead.metadata.childFirst : '';
+  const enrolled = waiting && lead.eventType === 'card_refund_still_enrolled' ? link : null;
+  const refundLabel = !waiting ? null
+    : lead.eventType === 'card_refund_whose' ? REFUND_NOTICE_ACTIONS.whose
+      : enrolled ? REFUND_NOTICE_ACTIONS.withdraw(childFirst)
+        : lead.eventType === 'card_refund_failed' && typeof lead.metadata?.refundId === 'string' ? REFUND_NOTICE_ACTIONS.anotherWay : null;
+  const goLabel = handoff ? HANDOFF_ACTIONS.recordIt : refundLabel ?? notificationDestination(link, portal);
+  const goLink = enrolled ? withAnswer(enrolled, 'withdraw') : link;
   const kind = NOTIFICATION_EVENT_LABELS[lead.eventType as NotificationEventType] ?? 'Notification';
   const title = entry.kind === 'bundle'
     ? `${members.length} ${BUNDLE_NOUN[entry.eventType] ?? 'notifications'}`
     : lead.title;
   // Only a single Needs-attention row can be marked Done — the same rule as the row's own Done.
-  const doneable = entry.kind === 'item' && notificationCategory(lead.eventType) === 'act' && !lead.clearedAt && !settled;
+  const doneable = entry.kind === 'item' && notificationCategory(lead.eventType) === 'act' && !lead.clearedAt && !settled && canMarkDone(lead.eventType);
 
   return (
     <>
@@ -120,12 +132,14 @@ export default function NotificationMessage({
       )}
 
       <div className={styles.actions}>
-        {link && goLabel && (
-          <a href={link} className={`${buttons.btn} ${buttons.primary} ${styles.onward}`}>
+        {goLink && goLabel && (
+          <a href={goLink} className={`${buttons.btn} ${buttons.primary} ${styles.onward}`}>
             {goLabel} <ArrowRight size={16} aria-hidden />
           </a>
         )}
         {handoff && <a href={handoffNotReceivedLink(handoff)} className={buttons.btn}>{HANDOFF_ACTIONS.notReceived}</a>}
+        {enrolled && <a href={withAnswer(enrolled, 'link')} className={buttons.btn}>{REFUND_NOTICE_ACTIONS.link}</a>}
+        {enrolled && <a href={withAnswer(enrolled, 'keep')} className={buttons.btn}>{REFUND_NOTICE_ACTIONS.keep(childFirst)}</a>}
         {doneable && (
           <button
             type="button"

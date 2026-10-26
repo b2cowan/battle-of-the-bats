@@ -65,6 +65,11 @@ export const SETTLED_WORDS = {
   onlineItemRecorded: 'It’s on the registration now.',
   onlinePaymentGone: 'The payment’s record is gone.',
   refundRecorded: 'Refund recorded',
+  // 12c words §5: "whose was it?" answered; "still enrolled" answered (the did() shape).
+  refundOnOne: (child: string) => `It’s on ${possessive(child)} registration.`,
+  refundOnMany: 'It’s on their registrations.',
+  payLinkEmailed: (who: string | null, you: boolean) => (you ? 'You emailed the pay link' : who ? `Pay link emailed by ${who}` : 'Pay link emailed'),
+  keptEnrolled: (child: string, who: string | null, you: boolean) => (you ? `You kept ${child} enrolled` : who ? `${who} kept ${child} enrolled` : `${child} stays enrolled`),
 
   // Requests holding a coach's payout (team_request_holding_payout)
   allSettled: (n: number) => (n === 1 ? 'The request is settled.' : n === 2 ? 'Both requests are settled.' : `All ${n} requests are settled.`),

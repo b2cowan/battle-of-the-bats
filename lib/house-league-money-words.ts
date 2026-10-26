@@ -709,6 +709,7 @@ export const CARD_REFUND_WORDS = {
     emailed: 'Family emailed',
     emailedSent: (email: string, day: string) => `${email}, ${day}`,
     emailedNone: 'No email address on file. Tell the family yourself.',
+    emailedWaits: 'Not yet. It goes when you answer on Needs attention.',
     emailedFailed: (day: string) => `Couldn’t be sent ${day}`,
     emailedNotFailed: 'Not emailed. Contact the family to arrange another way.',
     emailedAnotherWay: 'Not emailed by us. You told the family.',
@@ -722,6 +723,41 @@ export const CARD_REFUND_WORDS = {
     failed: (amount: string, to: string, bank: boolean) => `Refund didn’t reach the ${target(bank)} · ${amount} to ${to}`,
     anotherWay: (amount: string) => `Refund sent another way · ${amount}`,
     neverBooked: (amount: string, to: string) => `Card refund ${amount} to ${to} · not on this registration`,
+  },
+  // 12c words §5 `whose.*`: the window behind "Choose the child", and the Fee cell's line while it waits.
+  whose: {
+    title: (amount: string) => `Whose fee was the ${amount} refund?`,
+    lead: (day: string, card: string, reference: string) => `Refunded in Stripe on ${day} to ${card}, reference ${reference}.`,
+    optionSub: (division: string, fee: string) => `${division} · ${fee} received`,
+    split: 'Split it between them',
+    splitSub: (amount: string) => `Amounts that add up to ${amount}`,
+    splitAmount: (childFirst: string) => `Amount for ${childFirst}`,
+    reason: 'Reason',
+    reasonHint: 'The family reads this in their email.',
+    errChoose: 'Choose a child, or split it between them.',
+    errSum: (sum: string, amount: string) => `The amounts add up to ${sum}. They need to add up to ${amount}.`,
+    errOver: (childPossessive: string, fee: string) => `${childPossessive} amount can’t be more than ${fee}.`,
+    errReason: 'Say why only part is refunded.',
+    foot: 'The family is emailed once you save.',
+    save: 'Save',
+    working: 'Saving…',
+    done: (amount: string, children: string, email: string) => `Recorded the ${amount} refund for ${children}. We emailed ${email}.`,
+    // A child still enrolled: the family is emailed once the desk answers "what now?", so the toast stops at what was done.
+    recorded: (amount: string, children: string) => `Recorded the ${amount} refund for ${children}.`,
+    doneNoEmail: (amount: string, children: string) => `Recorded the ${amount} refund for ${children}. There’s no email address on file, so tell the family yourself.`,
+    notMatched: (amount: string) => `${amount} refunded in Stripe on this family’s payment · not matched yet`,
+    notMatchedTip: (amount: string, children: string) =>
+      `${amount} was refunded in Stripe on the payment for ${children}. It goes on one registration once the club says whose it was.`,
+  },
+  // 12c words §5 `attention.enrolled.*`: the answers on Registrations (a question first — it emails the family).
+  enrolled: {
+    withdraw: (childFirst: string) => `Withdraw ${childFirst}`,
+    link: 'Email the pay link',
+    keep: (childFirst: string) => `Keep ${childFirst} enrolled`,
+    body: (amount: string, card: string, day: string, childFirst: string, owing: string) =>
+      `${amount} went back to ${card} on ${day}. It’s recorded, and ${childFirst} owes ${owing} again.`,
+    doneLink: (email: string) => `Emailed ${email} the refund and a pay link.`,
+    doneKeep: (childFirst: string, email: string) => `${childFirst} stays enrolled. We emailed ${email} about the refund.`,
   },
   money: {
     toTarget: (bank: boolean) => (bank ? 'To the bank account' : 'To the card'),

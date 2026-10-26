@@ -3,6 +3,7 @@ import { useRef, type ReactNode } from 'react';
 import { BellOff, CheckCheck, ChevronRight } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
 import {
+  canMarkDone,
   iconFor, notificationTime, BUNDLE_NOUN, groupActivityItems, FEED_CAUGHT_UP, FEED_EMPTY_COPY,
   type ActivityEntry, type FeedEmptyCopy,
 } from '@/lib/notification-view';
@@ -131,6 +132,7 @@ export default function NotificationFeedBody({
                and finishing with something is not the same gesture as opening it. */
             <div className={styles.meta}>
               <span className={styles.itemTime}>{notificationTime(n.createdAt, groupedAt, { withDay: true })}</span>
+              {canMarkDone(n.eventType) && (
               <button
                 type="button"
                 className={styles.clearBtn}
@@ -140,6 +142,7 @@ export default function NotificationFeedBody({
               >
                 Done
               </button>
+              )}
             </div>
           ) : (
             <p className={styles.itemTime}>{notificationTime(n.createdAt, groupedAt)}</p>

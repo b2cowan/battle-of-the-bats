@@ -7386,6 +7386,28 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 **Backfill (migration 345):** every posted receipt allocation became a payment (dated by its ledger line, linked to it), plus one undated "Earlier payment" per team for the rest of its figure; the migration halts if any team's rows would not add up to the figure it carried. Deposit-only teams' `total_paid` was rewritten from the rows (it now counts the deposit).
 
+## `online_refunds_unassigned`
+<!-- dict:table:online_refunds_unassigned -->
+
+**Purpose (migration 384, Stage 12c, 2026-10-26 — plan §0g ruling 5):** a PART refund made in the club's Stripe dashboard on a house-league payment for two or more children, held until a person says whose fee it was ("whose was it?", the `card_refund_whose` notice). **It is in no book until assigned**; the Fee cell's "not matched yet" line on every child of that payment reads it. Answering records one `online_payment_refunds` row per child (one Stripe id, `online_payment_refund_record_dashboard`), books them, emails the family (or asks "what now?" for a child still enrolled) and sets `assigned_at`. RLS on, grants to `anon`/`authenticated` revoked: server-only.
+
+<!-- dict:col:online_refunds_unassigned.id -->
+**`id`** (uuid PK) — the notice's subject (`unassignedRefundId`) and the window's (`?whose=`).
+
+<!-- dict:col:online_refunds_unassigned.org_id -->
+<!-- dict:col:online_refunds_unassigned.online_payment_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, indexed) / **`online_payment_id`** (FK → `online_payments.id`, NO ACTION, indexed) — the club, and the payment refunded.
+
+<!-- dict:col:online_refunds_unassigned.stripe_refund_id -->
+<!-- dict:col:online_refunds_unassigned.amount -->
+<!-- dict:col:online_refunds_unassigned.stripe_created_at -->
+**`stripe_refund_id`** (text, NOT NULL, UNIQUE — a replayed event holds it once) / **`amount`** (numeric(12,2), `> 0`) / **`stripe_created_at`** (timestamptz) — Stripe's refund, what it returned, and when.
+
+<!-- dict:col:online_refunds_unassigned.created_at -->
+<!-- dict:col:online_refunds_unassigned.assigned_at -->
+<!-- dict:col:online_refunds_unassigned.assigned_by -->
+**`created_at`** / **`assigned_at`** (timestamptz; NULL while it waits) / **`assigned_by`** (FK → `auth.users` ON DELETE SET NULL, partial index) — held when, answered when and by whom. The answer claims `assigned_at` first (two desks answering at once record it once) and releases it if recording fails.
+
 ## `tournament_team_entry_adjustments`
 <!-- dict:table:tournament_team_entry_adjustments -->
 
@@ -7701,6 +7723,14 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 <!-- dict:col:online_payment_refunds.resolved_by -->
 **`resolved_by`** (FK → `auth.users` ON DELETE SET NULL, nullable, partial index; migration 383) — who recorded a refund the card sent back as sent another way (`online_payment_league_refund_resolve`, which always took the person and, until 383, never kept them). The record's "recorded by {who}". Guarded.
+
+<!-- dict:col:online_payment_refunds.stripe_created_at -->
+**`stripe_created_at`** (timestamptz, nullable; migration 384) — the refund's own moment at Stripe (Stripe's `created`): the refund email's "On", never the day we heard of it. Set when we ask Stripe, and by `online_payment_refund_record_dashboard` for a refund made in the club's dashboard. NULL on refunds before 384 and on one recorded sent another way (the email then reads `created_at`).
+
+<!-- dict:col:online_payment_refunds.family_answer -->
+<!-- dict:col:online_payment_refunds.family_answer_by -->
+<!-- dict:col:online_payment_refunds.family_answer_at -->
+**`family_answer`** (text, nullable, CHECK `withdraw` | `link` | `keep`) / **`family_answer_by`** (FK → `auth.users` ON DELETE SET NULL, partial index) / **`family_answer_at`** (timestamptz; set exactly when `family_answer` is, CHECK) — migration 384: the desk's answer to "what now?" for a child still enrolled after a refund made in Stripe (Withdraw · Email the pay link · Keep enrolled). The `card_refund_still_enrolled` notice settles on it; the family's email waits for it.
 
 <!-- dict:col:online_payment_refunds.part_refund -->
 **`part_refund`** (boolean, NOT NULL, default false; migration 382) — a tournament team's PART refund: never the fee, booked at Stripe's acceptance by `online_payment_team_refund_book`, lowers the team's entry. Set only by `online_payment_refund_open`; never changes (guard). House-league part refunds leave it false (they are told by their item and amount).
