@@ -8,6 +8,47 @@
 
 ---
 
+### 2026-10-26 — A returned or reversed bank debit's CA$5 is the club's, billed on its next FieldLogicHQ invoice; a free or comped club is not billed
+**Status:** **Decided** (owner, 2026-10-26, at the Club Tier Stage 12c build start — answer 2 in the stage plan §0k, after
+the research on how Stripe charges it; the option chosen was *"Invoice line; comped clubs exempt"*). **Built on dev 2026-10-26
+(Stage 12c Part 6a)**; deployment state lives in the release-history record. Online payments stay off in production until
+counsel signs off, so no club is billed by it yet.
+**Decision:**
+1. **Stripe's CA$5.00 fee for each bank debit that fails or is disputed is the club's cost, not FieldLogicHQ's.** It covers a
+   debit the bank returns while it clears and one reversed after it cleared (a dispute on a bank-debit charge).
+2. **How it is recovered:** each one is recorded against the club and billed as a **"Returned bank debit" line on the club's
+   next FieldLogicHQ invoice.** The family is never charged for it.
+3. **A club with no live paid subscription is not billed.** That covers a comped club (the Founding Season 2027 comp) and
+   operator free time. FieldLogicHQ absorbs the fee until the club pays us.
+4. **The figure is a constant, printed from one place:** `RETURNED_BANK_DEBIT_FEE_CENTS` (500) in `lib/plan-config.ts`,
+   held to the Facts doc by a unit test. No surface types it.
+**Rationale:** Stripe puts payment-failure and dispute fees on the platform on these direct charges (fees_collector =
+application), and the fee payer can't be set per fee. A debit from the club's own account isn't available while Stripe
+carries losses, and Stripe's cost pass-through is a private preview that doesn't name this fee. The invoice line is the
+one recovery path open today. The cost follows the club's own collection choice, and exempting comped clubs keeps the
+comp promise ("free as sold"). Research and options: `CLUB_TIER_STAGE12_PAYMENTS_PLAN.md` §0k.
+**Affects:** the Facts doc facilitated-payments line (already records it) · `lib/plan-config.ts` (the constant) · the club's
+FieldLogicHQ invoice (a new line kind) · in-app help (Payouts and bank debit articles say a returned debit is billed to the
+club, no figure) · no pricing-page fact (facilitated payments are not on the pricing page yet).
+**Handoff:**
+```
+HANDOFF → /marketing
+- The invoice line's wording ("Returned bank debit · date") and the help sentences that explain it: confirm they read
+  plainly to a club treasurer and don't sound like a penalty.
+- When facilitated payments reach the pricing page or a sales surface: say a returned bank debit's fee is billed to the
+  club, print the figure from the constant, never typed.
+HANDOFF → /billing
+- Nothing to build (built in 12c). Before any billing release: the unbilled-fee list is the support console's follow-up;
+  a failed invoice line is not retried by itself.
+OPEN QUESTION (not a decision)
+- Ask Stripe whether the pre-authorized-debit failure fee is pass-through eligible. If it is, pass-through replaces the
+  invoice line and this entry is superseded.
+```
+**Supersedes:** nothing. It completes the 2026-07-28 facilitated-payments entry, which named the rates but not who carries a
+failed debit's fee.
+
+---
+
 ### 2026-10-26 — The Founding Season offer closes early (end of October 25, 2026); every account already in keeps its free season through September 30, 2027 exactly as sold; a new Premium coach pays at sign-up
 **Status:** **Decided** (owner, 2026-10-26 — *"given we are almost at November and no coach has signed on, I think we can go
 ahead and remove all founding season marketing and functionality"*; then, on the three choices put to him, **"Close the
