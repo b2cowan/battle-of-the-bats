@@ -24,7 +24,7 @@ glyph (the console has no per-screen help drawer), the bell, Find. Bookkeeping g
 security review of Find's design. **Owner ruled all 11 asks as recommended 2026-10-25** (see "Owner rulings 2026-10-25"); **Stage 2 build prompt written 2026-10-25:** `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE2_BUILD_PROMPT.md`.
 **Stage 2 BUILT 2026-10-25 on dev** (walk https://claude.ai/artifact/GqozHVh1Bg2FLqSKEM78Xs, ledger §377; committed `4615ec678` · `b6f7afb30` · `c956362f4` 2026-10-25). Migration 365 (the sign-in lookup + `platform_record_opens`) applied to dev 2026-10-25, prod pending as a release step. The gate found nothing beyond A1 that changes who opens or does what; every staff account on dev and prod is confirmed. What the build added to the drawings, all put to the owner as the walk's 13 calls: the menu counts sit beside the page that clears them (so a folded Customers group adds up to Today's), a reason on every person action, Confirm the email on the Account tab, Add an override kept on Access, the Money tab worded without a stage number, "due in the next 30 days" (the real window). Found on the way: the reset-link route mailed whatever email the request carried (now the account's own), a person delete took its email in the address (now the body, checked on the server), and the clubs list's unbounded read would have stopped at the database's default cap (now paged).
 **Stage 4 BUILT 2026-10-25 on dev, committed `6c8f8fb89` (the door, the readers, mig 373) · `5353f2cf3` (the server rules) · `e9bb0b059` (the console) · `a26ec5165` (the customer pages) 2026-10-25** (from `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4_BUILD_PROMPT.md`; gate and owner calls
-in "Stage 4 build gate" below; walk ledger §379). Migration 373 (the fee book reads free time) applied to dev 2026-10-25,
+in "Stage 4 build gate" below; walk ledger §379). **Finish pass done 2026-10-25 (simplify + review + help + strategy): `4071179f0` · `48205738a` · `7bc6b5441`; findings in "Stage 4 finish review" below.** Migration 373 (the fee book reads free time) applied to dev 2026-10-25,
 prod is a release step. The door is `lib/entitlement-grants.ts` (rules `lib/free-time.ts`), guarded by
 `tests/unit/plan-reader-door-guard.test.ts`; the threat map is "Stage 4 threats → guards" below.
 **Stage 4 DRAWN 2026-10-25** (from `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4_DRAWINGS_PROMPT.md`): drawings
@@ -165,7 +165,7 @@ belongs to the bookkeeping session.
 | S2 Find, menu, Today, record — **BUILT 2026-10-25 on dev, walked 2026-10-25 (§377, 60 of 60, all calls accepted)** (drawings Ub7fXLh29SC34Zp4oqKUx1, walk GqozHVh1Bg2FLqSKEM78Xs) | Global Find (server-side, no 1,000 cap), menu by job, one rulebook (matrix = APIs), Today, a record with Story; a person record (new) | Find is a new read surface: drawn and reviewed as a security change. No proxy change. One migration: the read-only lookup over sign-in records |
 | S3 Money | Stripe read on the Money tab, duplicate labels, refund (Q7), reason column in the audit log, bulk = single plan change, M6 | Migration (audit reason). Adversarial review on the refund write |
 | S4b Coaches Portal free time — **PROPOSED 2026-10-25, not ruled** | A Premium Coaches Portal reads free time from the same door S4 builds (liveness today reads the portal's own record, which grants never touch), the door shown on a portal record, and the coach Founding comp moved with the Founding access step. Sequenced by dependency: after S4 is built and walked, and together with the Founding access move (Q4), because both change the portal's own billing record and the coach Founding audience (which today ends with no warning) | /billing (coach billing). Drawn first |
-| S4 Free time — **BUILT + COMMITTED 2026-10-25 (`6c8f8fb89` · `5353f2cf3` · `e9bb0b059` · `a26ec5165`), walk §379 owed** (drawings 5eawvGUPwQVPoWiAV7vQY5, all 11 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4_BUILD_PROMPT.md`; mig 373 prod at release) | `plan_tier` grant (read-time revert, no cron) read through ONE effective-plan door with a build guard (Q1), one Give free time window, Founding as a group in a Free time list (view now, access at the Founding turn-off: Q4), customer billing page shows "Free through" (Q8), `comp_period` no longer offered (Q5), server-side past-expiry check | Prod `ENTITLEMENT_GRANTS_ENABLED=true` confirmed by the owner 2026-10-25. /billing for the customer pages and the effective-plan door. `proxy.ts` is one of the plan readers (its Tournament-tier redirect) |
+| S4 Free time — **BUILT + COMMITTED 2026-10-25 (`6c8f8fb89` · `5353f2cf3` · `e9bb0b059` · `a26ec5165`; finish pass `4071179f0` · `48205738a` · `7bc6b5441`), walk §379 owed** (drawings 5eawvGUPwQVPoWiAV7vQY5, all 11 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4_BUILD_PROMPT.md`; mig 373 prod at release) | `plan_tier` grant (read-time revert, no cron) read through ONE effective-plan door with a build guard (Q1), one Give free time window, Founding as a group in a Free time list (view now, access at the Founding turn-off: Q4), customer billing page shows "Free through" (Q8), `comp_period` no longer offered (Q5), server-side past-expiry check | Prod `ENTITLEMENT_GRANTS_ENABLED=true` confirmed by the owner 2026-10-25. /billing for the customer pages and the effective-plan door. `proxy.ts` is one of the plan readers (its Tournament-tier redirect) |
 | S5 Health | Status (reads on open), Errors restyled with a person link, Feedback reply, Sent email log + delivery callback | Read-only AWS + Supabase keys on prod (owner step). Q6: the stack-health summary, a shared automation change, own commit, only on the owner's word |
 | S6 Club release jobs | Club web addresses list + quota, set up a club from a lead, H03 | Rides the Club release |
 | S7 Growth & product | Leads, Campaigns, Pitch decks list, Plans & pricing, Approval queue, Templates, Export registry. H1 | — |
@@ -280,6 +280,39 @@ Every threat in the drawings' Money and safety list, and what stops it. Unit tes
 - **T15** the customer reads staff notes — the customer route returns plan, last day, own plan, over-limit and Founding's
   day only (`free-time-surfaces`). **T16** the wrong club — the club is the address's id, never the body. **T17** a browser
   reads grants — `org_overrides` stays server-only; the customer reads through its route.
+
+## Stage 4 finish review (2026-10-25: simplify, high-risk review, help, strategy)
+
+Five read-only lenses (the access door; billing actions; write rules and time; SQL fold vs TS fold; customer and console
+surfaces), each finding reopened by hand. Deterministic gate: typecheck clean on these files; the door guard, the 62 Stage 4
+tests and the spelling and dictionary checks pass; the read-only smoke probe passes against the running dev server. The
+suite's other reds are other sessions' (migration table grants, team move, possessive, reference shape, search side, the
+coin toss, family email senders, the bookkeeping css clashes, one house-league route type error).
+
+**Fixed (`4071179f0`):** a cancelled club that holds free time was offered Reactivate for the free plan, not its own (both
+billing pages); the grants lookup sent up to 2,000 ids in one request and dropped its own errors (now chunks of 100, a failed
+read is logged); changing an end date could revive a grant that ran out between read and write; End it now stamped an
+already-ended grant "ended early".
+
+**Reported, not changed (owner calls, none urgent):**
+- **Two staff giving a plan at the same instant can both pass** (Medium): no unique rule on running plan grants, so the
+  Story could show two. Access stays sane (newest wins). Fix is a partial unique index (a migration).
+- **The fee book's SQL cannot see the `ENTITLEMENT_GRANTS_ENABLED` switch** (Medium): with the switch off the app ignores
+  every grant while fees still post to the Accounting book for a club holding free time. Matters only if the switch is used as
+  a kill switch; document it or pass the switch in.
+- **Billing actions still read the door's billing status** (Low-Medium, design): a billing-status grant makes a cancelled
+  club read as active in the checkout, move and cancel preflight code; there is a plan twin (`ownPlanOf`) but no status twin.
+  The console decides whether a status grant may be given to a cancelled club.
+- A club that buys its own plan while free Club time still runs sees "Free through" and no Payment method, Renews or Cancel
+  until the free time ends; the cancel review's "shuts down" list can name sections held only as free time; a plan grant is
+  not refused by a legacy plan row without an end date; the club record sends every override's reason and giver to every
+  console role that can open Clubs (staff only); the customer free-time route needs membership but not an admin role (a
+  deliberate exemption in the billing access guard); the fee-book SQL accepts a non-array `addons` value (hand-edited rows
+  only).
+- Known and unchanged: `cancel/confirm` has no server guard for a club with nothing to cancel; Bulk changes' Subscription
+  status override takes an optional end with no cap (walk call 14 asks the owner).
+- Help: the Bulk changes guide still lists Comp period (the product no longer offers it); the line sits beside another
+  session's uncommitted rename of that section, so it is left for that session.
 
 ## Stage 4 findings (verified against the code 2026-10-25, before drawing)
 
