@@ -28,7 +28,9 @@ export type PayoutsView = {
   isOwner: boolean;
   testMode: boolean;
   rateLabel: string;
-  example: { baseCents: number; feeCents: number };
+  /** 12c Part 6: the bank debit's rate, when the account takes it (or before setup); null prints card only. */
+  bankRateLabel?: string | null;
+  example: { baseCents: number; feeCents: number; bankFeeCents?: number | null };
   feePayer: OnlineFeePayer;
   refundPolicy: string;
   requirementsDue: number;
@@ -39,6 +41,8 @@ export type PayoutsView = {
   disconnectedAt: string | null;
   disconnectedBy: string | null;
   teamsStillOwing: number | null;
+  /** 12c Part 6: bank debits still clearing (the Disconnect window says they finish). */
+  debitsClearing?: number | null;
 };
 
 const PILL_TONE: Record<PayoutsState, ChipTone> = {
@@ -101,7 +105,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
   };
 
   const body =
-    state === 'not_set_up' ? W.notSetUpBody(view.rateLabel)
+    state === 'not_set_up' ? W.notSetUpBody(view.rateLabel, view.bankRateLabel ?? null)
       : state === 'setting_up' ? W.settingUpBody(formatStoredDate(view.connectedAt, { withYear: false }))
         : state === 'taking_payments' ? W.takingBody(clubName)
           : state === 'needs_attention'
@@ -131,7 +135,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
         <h2 id="settings-payouts" className={styles.cardTitle}>{state === 'needs_attention' && view.paymentsOn ? W.needsTitleStillOn : W.title[state]}</h2>
         {view.testMode && <p className={ck.hint}>{W.testLine}</p>}
         <p className={pc.body}>{body}</p>
-        {state !== 'disconnected' && <p className={ck.hint}>{W.ratesLine(view.rateLabel)}</p>}
+        {state !== 'disconnected' && <p className={ck.hint}>{W.ratesLine(view.rateLabel, view.bankRateLabel ?? null)}</p>}
 
         {hasRecord && (
           <PayoutsRecord orgSlug={orgSlug} home={home} view={view} editing={editing && isOwner} onSaved={next => setView(v => (v ? { ...v, ...next } : v))} />
@@ -169,6 +173,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
           orgSlug={orgSlug}
           home={home}
           owing={view.teamsStillOwing ?? 0}
+          clearing={view.debitsClearing ?? 0}
           onClose={() => setDisconnecting(false)}
           onDone={async () => { setDisconnecting(false); setEditing(false); await reload(); }}
         />
@@ -213,7 +218,7 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved }: {
       <dl className={pc.record}>
         <div className={pc.recordRow}>
           <dt>{W.record.feeLabel}</dt>
-          <dd>{W.record.feeRead[view.feePayer]}<span className={ck.hint}> · {W.record.feeRates(view.rateLabel)}</span></dd>
+          <dd>{W.record.feeRead[view.feePayer]}<span className={ck.hint}> · {W.record.feeRates(view.rateLabel, view.bankRateLabel ?? null)}</span></dd>
         </div>
         <div className={pc.recordRow}>
           <dt>{W.record.policyLabel}</dt>
@@ -296,8 +301,9 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
       <div className={pc.before}>
         <section>
           <h3 className={ck.label}>{W.before.costLabel}</h3>
-          <p>{W.before.costRate(view.rateLabel)}</p>
-          <p className={ck.hint}>{W.before.costExample(money(view.example.baseCents / 100), money(view.example.feeCents / 100))}</p>
+          <p>{W.before.costRate(view.rateLabel, view.bankRateLabel ?? null)}</p>
+          <p className={ck.hint}>{W.before.costExample(money(view.example.baseCents / 100), money(view.example.feeCents / 100),
+            view.example.bankFeeCents != null ? money(view.example.bankFeeCents / 100) : null)}</p>
         </section>
         <fieldset className={pc.choice}>
           <legend className={ck.label}>{W.before.whoLabel}</legend>
@@ -332,7 +338,9 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
 }
 
 /** Disconnect (copy §5): asks, with how many teams still owe. Stops new payments; nothing already paid changes. */
-function DisconnectWindow({ orgSlug, home, owing, onClose, onDone }: { orgSlug: string; home: PayoutsHome; owing: number; onClose: () => void; onDone: () => void }) {
+function DisconnectWindow({ orgSlug, home, owing, clearing = 0, onClose, onDone }: {
+  orgSlug: string; home: PayoutsHome; owing: number; clearing?: number; onClose: () => void; onDone: () => void;
+}) {
   const W = payoutsWords(home);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -361,6 +369,7 @@ function DisconnectWindow({ orgSlug, home, owing, onClose, onDone }: { orgSlug: 
     >
       <p>{W.disconnect.stops}</p>
       <p>{W.disconnect.owing(owing)}</p>
+      {clearing > 0 && <p>{W.disconnect.clearing(clearing)}</p>}
       <p>{W.disconnect.past}</p>
       {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
     </KitDialog>

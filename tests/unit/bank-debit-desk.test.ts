@@ -155,3 +155,25 @@ describe('a tournament team while its bank debit clears (words §3.7)', () => {
     assert.match(readCode('lib/team-payments-server.ts'), /status\.in\.\(refunded,reversed\)/);
   });
 });
+
+describe('payouts: both rates, and Disconnect counts what is clearing (words §3.8, §4)', () => {
+  it('every rate line prints both labels while bank debit is offered, card only otherwise', async () => {
+    const { PAYOUTS_WORDS: W } = await import('../../lib/online-payment-words.ts');
+    const { onlineFeeRateLabel } = await import('../../lib/plan-config.ts');
+    const card = onlineFeeRateLabel('card');
+    const bank = onlineFeeRateLabel('bankDebit');
+    assert.equal(W.ratesLine(card, bank), `Processing fee: ${card} per card payment, ${bank} per bank debit.`);
+    assert.equal(W.ratesLine(card), `Processing fee: ${card} per card payment.`);
+    assert.equal(W.before.costRate(card, bank), `${card} per card payment · ${bank} per bank debit`);
+    assert.equal(W.record.feeRates(card, bank), `${card} per card payment · ${bank} per bank debit`);
+    assert.ok(W.notSetUpBody(card, bank).includes(`a processing fee of ${card} and a bank debit ${bank}`));
+    assert.equal(W.disconnect.clearing(1), '1 bank debit is still clearing. It’ll finish, and its money still reaches you.');
+  });
+  it('the route prints the bank rate from the constant, and the example is computed, never typed', () => {
+    const route = readCode('app/api/admin/payouts/route.ts');
+    assert.match(route, /bankRateLabel: bank \? onlineFeeRateLabel\('bankDebit'\) : null/);
+    assert.match(route, /onlineFee\(16_500, facts\?\.feePayer \?\? 'family', 'bankDebit'\)/);
+    assert.match(route, /debitsClearing: isOwner && facts && !facts\.disconnectedAt \? await debitsClearing/);
+    assert.match(readCode('components/admin/kit/club/PayoutsCard.tsx'), /\{clearing > 0 && <p>\{W\.disconnect\.clearing\(clearing\)\}<\/p>\}/);
+  });
+});

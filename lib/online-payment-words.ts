@@ -193,8 +193,10 @@ export const PAYOUTS_WORDS = {
     not_set_up: 'Let teams pay online', setting_up: 'Stripe needs a few more details', taking_payments: 'Teams can pay online',
     needs_attention: 'Online payments are paused', disconnected: 'Online payments are off',
   },
-  notSetUpBody: (rate: string) =>
-    `Payments go straight to your bank account through Stripe. Each card payment has a processing fee of ${rate}, and you choose who pays it. Stripe will ask for your legal name, a signing officer and your bank account.`,
+  // 12c Part 6, words §4: both rates wherever a rate prints, from the two labels; card only when the account takes no bank debit.
+  notSetUpBody: (rate: string, bankRate: string | null = null) => (bankRate
+    ? `Payments go straight to your bank account through Stripe. A card payment has a processing fee of ${rate} and a bank debit ${bankRate}, and you choose who pays it. Stripe will ask for your legal name, a signing officer and your bank account.`
+    : `Payments go straight to your bank account through Stripe. Each card payment has a processing fee of ${rate}, and you choose who pays it. Stripe will ask for your legal name, a signing officer and your bank account.`),
   settingUpBody: (date: string) => `You started on ${date}. Teams keep seeing your “How to pay” text until setup is finished.`,
   takingBody: (clubName: string) => `Payouts go to your bank account on Stripe’s schedule. Receipts go out in the name “${clubName}”.`,
   // Paused: Stripe has switched card payments off, so the pay page shows "How to pay" (`takesPayments` is false).
@@ -216,14 +218,16 @@ export const PAYOUTS_WORDS = {
   // sees it on Stripe's form and can change it there; Stripe reads it for its review of the account.
   stripeProductDescription: (clubName: string) =>
     `${clubName} runs community sports programs. Families and teams pay registration, team and tournament fees online through FieldLogicHQ, and find the club through its members, schools and local sports groups.`,
-  ratesLine: (rate: string) => `Processing fee: ${rate} per card payment.`,
+  ratesLine: (rate: string, bankRate: string | null = null) =>
+    (bankRate ? `Processing fee: ${rate} per card payment, ${bankRate} per bank debit.` : `Processing fee: ${rate} per card payment.`),
   rareDisconnect: 'Disconnect payouts',
   ownerOnly: (home: PayoutsHome) => `The owner sets this up in ${home === 'club' ? 'Settings › Payouts' : 'Settings & access › Payouts'}.`,
   before: {
     title: 'Before you set up payouts',
     costLabel: 'What it costs',
-    costRate: (rate: string) => `${rate} per card payment`,
-    costExample: (base: string, fee: string) => `On a ${base} fee, the card fee is ${fee}.`,
+    costRate: (rate: string, bankRate: string | null = null) => (bankRate ? `${rate} per card payment · ${bankRate} per bank debit` : `${rate} per card payment`),
+    costExample: (base: string, fee: string, bankFee: string | null = null) =>
+      (bankFee ? `On a ${base} fee, the processing fee is ${fee} by card and ${bankFee} by bank debit.` : `On a ${base} fee, the card fee is ${fee}.`),
     whoLabel: 'Who pays it',
     whoTeams: 'Teams pay it',
     whoTeamsHint: 'Added to what the team pays.',
@@ -242,7 +246,7 @@ export const PAYOUTS_WORDS = {
   record: {
     feeLabel: 'Processing fee',
     feeRead: { family: 'Teams pay it: it’s added to what they pay', club: 'The club pays it: it comes out of each payment' },
-    feeRates: (rate: string) => `${rate} per card payment`,
+    feeRates: (rate: string, bankRate: string | null = null) => (bankRate ? `${rate} per card payment · ${bankRate} per bank debit` : `${rate} per card payment`),
     feeEditLabel: 'Who pays the processing fee',
     choice: { family: 'Teams pay it', club: 'The club pays it' },
     choiceHint: {
@@ -262,6 +266,10 @@ export const PAYOUTS_WORDS = {
     stops: 'Teams stop seeing Pay now right away, and pay links already emailed show your “How to pay” text instead.',
     owing: (n: number) =>
       n === 0 ? 'No team owes anything right now.' : n === 1 ? '1 team still owes money; it can pay you another way.' : `${n} teams still owe money; they can pay you another way.`,
+    // 12c Part 6, words §3.8: between owing and past; not shown at 0.
+    clearing: (n: number) => (n === 1
+      ? '1 bank debit is still clearing. It’ll finish, and its money still reaches you.'
+      : `${n} bank debits are still clearing. They’ll finish, and their money still reaches you.`),
     past: 'Payments already made stay in your books. Refunds of them are made in Stripe.',
     cancel: 'Cancel',
     confirm: 'Disconnect',

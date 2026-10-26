@@ -6,7 +6,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { onlineFeeRateLabel } from '@/lib/plan-config';
 import { onlinePaymentsOn, stripeKeyIsTest, ONLINE_PAYMENTS_OFF_ERROR } from '@/lib/online-payments-switch';
 import { canConnectPayouts, canSeePayouts } from '@/lib/online-payment-access';
-import { factsFromRow, payoutsState, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from '@/lib/online-payment-account';
+import { factsFromRow, payoutsState, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow, takesBankDebit } from '@/lib/online-payment-account';
 import { ONLINE_FEE_PAYERS, onlineFee, type OnlineFeePayer } from '@/lib/online-payment-fee';
 import { createClubAccount, dashboardLink, onboardingLink, prefillClubProfile, retrieveAccount } from '@/lib/stripe-connect';
 import { syncPayoutsAccount } from '@/lib/online-payment-landing';
@@ -46,6 +46,12 @@ async function readAccount(orgId: string): Promise<PayoutsAccountRow & {
   return data as never;
 }
 
+/** 12c Part 6 (words §3.8): the club's bank debits still clearing — they finish after a Disconnect, and the window says so. */
+async function debitsClearing(orgId: string): Promise<number> {
+  const { count } = await supabaseAdmin.from('online_payments').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('status', 'clearing');
+  return count ?? 0;
+}
+
 /** Teams that still owe on an event that isn't over — the disconnect window's count. */
 async function teamsStillOwing(orgId: string): Promise<number> {
   const { data: ts } = await supabaseAdmin.from('tournaments').select('id').eq('org_id', orgId).in('status', ['draft', 'active']);
@@ -74,13 +80,18 @@ export const GET = withObservability(async (req: Request) => {
   const row = await readAccount(ctx.org.id);
   const facts = factsFromRow(row);
   const example = onlineFee(16_500, facts?.feePayer ?? 'family');
+  // 12c Part 6 (words §4): both rates print wherever a rate does — before setup (a new account asks for bank debit too), and
+  // on an account that takes it; an account that doesn't prints today's card-only line.
+  const bank = !facts || takesBankDebit(facts);
+  const bankExample = onlineFee(16_500, facts?.feePayer ?? 'family', 'bankDebit');
   return NextResponse.json({
     state: payoutsState(facts),
     isOwner,
     testMode: row ? !row.livemode : stripeKeyIsTest(),
     rateLabel: onlineFeeRateLabel('card'),
+    bankRateLabel: bank ? onlineFeeRateLabel('bankDebit') : null,
     // The "Before" window's one worked line, computed from config — never typed (copy §3).
-    example: { baseCents: example.baseCents, feeCents: example.feeCents },
+    example: { baseCents: example.baseCents, feeCents: example.feeCents, bankFeeCents: bank ? bankExample.feeCents : null },
     feePayer: facts?.feePayer ?? 'family',
     refundPolicy: facts?.refundPolicy ?? '',
     requirementsDue: facts?.requirementsDue.length ?? 0,
@@ -90,6 +101,7 @@ export const GET = withObservability(async (req: Request) => {
     disconnectedAt: row?.disconnected_at ?? null,
     disconnectedBy: row?.disconnected_at ? await nameOf(row.disconnected_by) : null,
     teamsStillOwing: isOwner && facts && !facts.disconnectedAt ? await teamsStillOwing(ctx.org.id) : null,
+    debitsClearing: isOwner && facts && !facts.disconnectedAt ? await debitsClearing(ctx.org.id) : null,
   });
 }, { route: '/api/admin/payouts' });
 
