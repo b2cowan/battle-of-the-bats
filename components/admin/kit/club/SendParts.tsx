@@ -31,11 +31,16 @@ export function SendRows({ children, group }: { children: ReactNode; group?: { r
 /** One row: who, and a second line under it. `pick` makes it a ticked row the sender can untick — or, with `pick.radio`
  *  (the group's name), one of a pick-one set (Email families' Who, Stage 7c). `off` dims a row the send will not reach
  *  (its second line says why). */
-export function SendRow({ title, sub, pick, off }: {
+export function SendRow({ title, sub, pick, off, below }: {
   title: ReactNode;
   sub?: ReactNode;
   pick?: { checked: boolean; onChange: (checked: boolean) => void; radio?: string };
   off?: boolean;
+  /** Controls that belong to the row but are not its label (a search box, buttons): drawn under the row, inside its edge,
+   *  OUTSIDE the label — a `<label>` may hold only the control it names, and a click in a search field must not tick it.
+   *  ⚠ PASS `null`, never `undefined`, on the renders where a row that CAN carry controls has none: the wrapper stays put
+   *  while the prop is defined, so ticking the row's radio doesn't remount it and drop the keyboard's focus. */
+  below?: ReactNode;
 }) {
   const main = (
     <span className={`${s.rowMain}${off ? ` ${s.rowOff}` : ''}`}>
@@ -43,7 +48,7 @@ export function SendRow({ title, sub, pick, off }: {
       {sub && <small>{sub}</small>}
     </span>
   );
-  return pick ? (
+  const row = pick ? (
     <label className={`${s.row} ${s.rowPick}`}>
       <input type={pick.radio ? 'radio' : 'checkbox'} name={pick.radio} checked={pick.checked} onChange={e => pick.onChange(e.target.checked)} />
       {main}
@@ -51,6 +56,7 @@ export function SendRow({ title, sub, pick, off }: {
   ) : (
     <div className={s.row}>{main}</div>
   );
+  return below !== undefined ? <div className={s.rowSet}>{row}{below && <div className={s.rowBelow}>{below}</div>}</div> : row;
 }
 
 /** A standing reason the send can't go, in the lime's place at the foot's LEFT (`KitDialog footerStart`) — amber, the

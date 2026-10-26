@@ -1,11 +1,17 @@
 /* THE ONE CLUB SEND WINDOW'S PARTS (the 2026-10-11 ruling) — who it reaches, a row each; the sample email behind
    "See the email". Moved here from the scheduler's stylesheet (Club Tier Stage 5a) when Message this family became the
    third window to wear them; the rules are the scheduler's, unchanged. */
-.rows { display: grid; gap: 0; margin: 0.2rem 0 0.75rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
-.row { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.55rem 0.75rem; border-top: 1px solid var(--home-line); }
+.rows { --row-pad: 0.75rem; --row-box: 18px; --row-gap: 0.65rem; display: grid; gap: 0; margin: 0.2rem 0 0.75rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.row { display: flex; align-items: flex-start; gap: var(--row-gap, 0.65rem); padding: 0.55rem var(--row-pad, 0.75rem); border-top: 1px solid var(--home-line); }
 .row:first-child { border-top: 0; }
 .rowPick { cursor: pointer; }
-.row input { margin-top: 0.2rem; width: 18px; height: 18px; accent-color: var(--home-olive); }
+/* A row with controls under it (SendRow `below`): the pair is one row of the group — one hairline above it, none between. The
+   controls line up under the row's words (the radio's width and gap in). */
+.rowSet { border-top: 1px solid var(--home-line); }
+.rowSet:first-child { border-top: 0; }
+.rowSet > .row { border-top: 0; }
+.rowBelow { padding: 0 var(--row-pad, 0.75rem) 0.75rem calc(var(--row-pad, 0.75rem) + var(--row-box, 18px) + var(--row-gap, 0.65rem)); }
+.row input { margin-top: 0.2rem; width: var(--row-box, 18px); height: var(--row-box, 18px); accent-color: var(--home-olive); }
 /* A pick-one row's radio wears the checkbox's look (globals.css "Branded Checkbox"): the native radio drew an unticked disc
    MORE filled than the ticked one in the dark theme, beside branded checkboxes. Scoped here — other screens' radios are theirs. */
 .row input[type="radio"] { appearance: none; -webkit-appearance: none; display: grid; place-content: center; flex-shrink: 0; border: 1px solid rgba(var(--blueprint-blue-rgb), 0.42); border-radius: 50%; background: var(--card-bg); cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; }

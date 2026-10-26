@@ -1,0 +1,41 @@
+/* The grouped team picker (Email families, a season with more than a dozen teams). Drawn 2026-10-26: search + "N teams picked",
+   one shelf per division (one open at a time — nothing scrolls inside the window), a flat checkbox list while searching.
+   Pills are the season screens' own (LeagueSeason `.chip`: olive tint, olive edge, olive word; 44px on a phone). */
+
+.picker { display: flex; flex-direction: column; gap: 0.5rem; }
+.bar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem 0.75rem; }
+.bar > :first-child { min-width: 0; }
+
+/* What is picked — never a count of families (the foot says that, once). */
+.sum { display: inline-flex; align-items: center; gap: 0.6rem; margin: 0; font-size: var(--type-body); font-weight: 650; color: var(--home-olive); }
+.toggle:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+
+.shelves { border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); overflow: hidden; }
+.shelf + .shelf { border-top: 1px solid var(--home-line); }
+.shelfHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding-right: 0.6rem; min-height: 2.9rem; }
+.toggle {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 0.5rem; min-height: 2.9rem; padding: 0 0.4rem 0 0.75rem;
+  border: 0; background: none; color: var(--text-primary); font: inherit; font-size: var(--type-body); text-align: left; cursor: pointer;
+}
+.dName { font-weight: 700; }
+.dCount { font-size: var(--type-support); color: var(--text-tertiary); }
+.badge {
+  font-size: var(--type-support); font-weight: 650; color: var(--home-olive); background: var(--home-olive-soft);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.3); border-radius: 999px; padding: 0.05rem 0.55rem;
+}
+.shelfChips { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.1rem 0.75rem 0.75rem; }
+
+.matchLine { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.hit { display: flex; align-items: center; gap: 0.7rem; min-height: 2.9rem; padding: 0 0.75rem; cursor: pointer; }
+.hit + .hit { border-top: 1px solid var(--home-line); }
+.hit input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--home-olive); }
+.hitName { font-size: var(--type-body); color: var(--text-primary); }
+.hitName b { font-weight: 700; background: var(--home-olive-soft); border-radius: 3px; }
+.hit:has(input:checked) .hitName { color: var(--home-olive); font-weight: 650; }
+.hitSub { margin-left: auto; font-size: var(--type-support); color: var(--text-tertiary); text-align: right; }
+.empty { margin: 0; padding: 0.8rem 0.75rem; font-size: var(--type-body); color: var(--text-tertiary); }
+
+@media (max-width: 768px) {
+  .shelfHead, .toggle { min-height: 3.5rem; }
+  .hit { min-height: var(--tap-min, 44px); }
+}

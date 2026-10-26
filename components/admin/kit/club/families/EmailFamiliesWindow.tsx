@@ -34,6 +34,7 @@ import ck from '../ClubKit.module.css';
 import ls from '../league/LeagueSeason.module.css';
 import { repKit, useLatestRead } from '../RepKit';
 import { Statement } from '../schedules/ScheduleParts';
+import TeamPicker, { GROUPED_FROM } from './TeamPicker';
 import { SampleBand, SamplePlatformLine, SendRow, SendRows, SendSample, SendStanding, sendEnvelope } from '../SendParts';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import LoadingState from '@/components/shared/LoadingState';
@@ -131,6 +132,10 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
       if (!current()) return;
       if (!r?.ok) { setFailed(true); return; }
       setSPreview(r.data);
+      // A picked team the list no longer offers (unpublished, or left with no families, while the window was open) is
+      // dropped, not carried unseen: the sender could not see it, untick it, or Clear it, and Send would be refused for it.
+      const offered = new Set(r.data.choices.teams.map(t => t.teamId));
+      setLeagueTeamIds(ids => (ids.every(id => offered.has(id)) ? ids : ids.filter(id => offered.has(id))));
       return;
     }
     const r = await moneyFetch<FamilyEmailPreview>(`${base}${scopeQuery}`).catch(() => null);
@@ -448,6 +453,9 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
     if (!p || !season) return null;
     const c = p.choices;
     const hasTeams = c.teams.length > 0 || p.unpublished.length > 0;
+    // More than a dozen teams: shelves by division with a search, not one block of pills (TeamPicker).
+    const grouped = c.teams.length > GROUPED_FROM;
+    const pickingTeams = sKind === 'season_teams' && c.teams.length > 0;
     const chips = <T extends string>(items: readonly { id: T; name: string; n: number }[], on: readonly T[], flip: (id: T) => void, label: string) => (
       <div className={ls.chips} role="group" aria-label={label}>
         {items.map(x => (
@@ -506,9 +514,12 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
             <SendRow
               pick={{ checked: sKind === 'season_teams', onChange: on => on && pickSeasonKind('season_teams'), radio: 'email-season-who' }}
               title={SW.teams}
-              sub={sKind === 'season_teams' && c.teams.length > 0
-                ? chips(c.teams.map(t => ({ id: t.teamId, name: t.name, n: t.families })), leagueTeamIds, id => toggle(setLeagueTeamIds, id), SW.teams)
-                : SW.teamsSub}
+              sub={!pickingTeams ? SW.teamsSub : grouped ? undefined
+                : chips(c.teams.map(t => ({ id: t.teamId, name: t.name, n: t.families })), leagueTeamIds, id => toggle(setLeagueTeamIds, id), SW.teams)}
+              below={!grouped ? undefined : pickingTeams
+                ? <TeamPicker teams={c.teams} divisions={c.divisions} picked={leagueTeamIds}
+                  onChange={ids => { setLeagueTeamIds(ids); clearRefusal(); }} />
+                : null}
             />
           )}
           {c.statuses.length > 0 && (

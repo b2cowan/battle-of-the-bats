@@ -520,6 +520,22 @@ export const SEASON_EMAIL_WORDS = {
   statusNames: { active: 'Active', review: 'To review', waitlist: 'Waitlist', ended: 'Ended' } as const,
   chip: (name: string, n: number) => `${name} · ${n}`,
   teamHint: 'Families with an active child on the team.',
+  /** The grouped team picker — a season with more than a dozen teams (owner drawing, 2026-10-26). Counts of families live in
+   *  the foot only; the picker says what is picked, never a second count. */
+  teamSearch: 'Search teams',
+  teamsPicked: (n: number) => `${pluralize(n, 'team', 'teams')} picked`,
+  clear: 'Clear',
+  shelfTeams: (n: number) => pluralize(n, 'team', 'teams'),
+  shelfPicked: (n: number) => `${n} picked`,
+  selectAll: 'Select all',
+  selectAllIn: (division: string) => `Select all in ${division}`,
+  clearShelfIn: (division: string) => `Clear ${division}`,
+  teamMatches: (n: number, of: number) => `${n} of ${of} teams match`,
+  noTeamMatches: 'No team matches that.',
+  matchingTeams: 'Matching teams',
+  /** A match's second line: its division, then its families. */
+  matchSub: (division: string, families: number) => `${division} · ${pluralize(families, 'family', 'families')}`,
+  otherDivision: 'Other teams',
   copyCoaches: (teams: number, coaches: number) =>
     `${teams === 1 ? 'Copy the team’s coaches' : 'Copy each team’s coaches'} · ${pluralize(coaches, 'coach', 'coaches')}`,
   copyCoachesSub: 'They get a copy as colleagues and aren’t counted as families.',
