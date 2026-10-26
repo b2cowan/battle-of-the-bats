@@ -14,7 +14,7 @@
 import { useCallback, useState } from 'react';
 import { Check, Pencil, Unplug } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
-import { PAYOUTS_WORDS as W, TERMS_PLACEHOLDER, money, type PayoutsHome } from '@/lib/online-payment-words';
+import { TERMS_PLACEHOLDER, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
 import type { PayoutsState } from '@/lib/online-payment-account';
 import type { OnlineFeePayer } from '@/lib/online-payment-fee';
 import KitDialog from './KitDialog';
@@ -66,6 +66,8 @@ async function post(orgSlug: string, body: Record<string, unknown>): Promise<{ u
 export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
   orgSlug: string; clubName: string; home: PayoutsHome; initial: PayoutsView | null;
 }) {
+  // League and Club name families and teams; Tournament Plus names teams (copy 12a §20, 12b).
+  const W = payoutsWords(home);
   const [view, setView] = useState<PayoutsView | null>(initial);
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,7 +134,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
         {state !== 'disconnected' && <p className={ck.hint}>{W.ratesLine(view.rateLabel)}</p>}
 
         {hasRecord && (
-          <PayoutsRecord orgSlug={orgSlug} view={view} editing={editing && isOwner} onSaved={next => setView(v => (v ? { ...v, ...next } : v))} />
+          <PayoutsRecord orgSlug={orgSlug} home={home} view={view} editing={editing && isOwner} onSaved={next => setView(v => (v ? { ...v, ...next } : v))} />
         )}
 
         {isOwner ? (
@@ -156,6 +158,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
       {before && (
         <BeforeWindow
           orgSlug={orgSlug}
+          home={home}
           clubName={clubName}
           view={view}
           onClose={() => setBefore(false)}
@@ -164,6 +167,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
       {disconnecting && (
         <DisconnectWindow
           orgSlug={orgSlug}
+          home={home}
           owing={view.teamsStillOwing ?? 0}
           onClose={() => setDisconnecting(false)}
           onDone={async () => { setDisconnecting(false); setEditing(false); await reload(); }}
@@ -174,9 +178,10 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
 }
 
 /** The record (copy §4): reads first; the card's pencil flips it whole. The fee choice and the policy autosave and tell nobody. */
-function PayoutsRecord({ orgSlug, view, editing, onSaved }: {
-  orgSlug: string; view: PayoutsView; editing: boolean; onSaved: (next: Partial<PayoutsView>) => void;
+function PayoutsRecord({ orgSlug, home, view, editing, onSaved }: {
+  orgSlug: string; home: PayoutsHome; view: PayoutsView; editing: boolean; onSaved: (next: Partial<PayoutsView>) => void;
 }) {
+  const W = payoutsWords(home);
   const [policy, setPolicy] = useState(view.refundPolicy);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -252,7 +257,8 @@ function PayoutsRecord({ orgSlug, view, editing, onSaved }: {
 }
 
 /** "Before you set up payouts" (copy §3): the fee, who pays it, where the money goes, refunds, the terms — then Stripe. */
-function BeforeWindow({ orgSlug, clubName, view, onClose }: { orgSlug: string; clubName: string; view: PayoutsView; onClose: () => void }) {
+function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: string; home: PayoutsHome; clubName: string; view: PayoutsView; onClose: () => void }) {
+  const W = payoutsWords(home);
   const [feePayer, setFeePayer] = useState<OnlineFeePayer>(view.feePayer);
   const [agreed, setAgreed] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -326,7 +332,8 @@ function BeforeWindow({ orgSlug, clubName, view, onClose }: { orgSlug: string; c
 }
 
 /** Disconnect (copy §5): asks, with how many teams still owe. Stops new payments; nothing already paid changes. */
-function DisconnectWindow({ orgSlug, owing, onClose, onDone }: { orgSlug: string; owing: number; onClose: () => void; onDone: () => void }) {
+function DisconnectWindow({ orgSlug, home, owing, onClose, onDone }: { orgSlug: string; home: PayoutsHome; owing: number; onClose: () => void; onDone: () => void }) {
+  const W = payoutsWords(home);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   async function go() {

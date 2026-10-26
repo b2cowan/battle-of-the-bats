@@ -16,6 +16,8 @@ import { normalizeGuardianEmailRequired } from '@/lib/guardian-email';
 import { recordLeagueMarketingConsent } from '@/lib/org-people';
 import { notify } from '@/lib/notify';
 import { signupNotice, signupSubject, type PlacedChild } from '@/lib/league-signup';
+import { buildLeaguePayView, leagueMailPay } from '@/lib/league-pay-view';
+import { getClubSiteContent } from '@/lib/club-page-meta';
 
 export const dynamic = 'force-dynamic';
 
@@ -202,6 +204,12 @@ export const POST = withObservability(async (req: Request,
 
   // 5. One email per sign-up, and one notice for the club.
   const anyAccepted = placedKids.some(r => r.status === 'active');
+  // 12b: while the club takes card payments, Pay now in the email and the pay block on the confirmation (k2) — for the
+  // whole sign-up, through its first child's link. Pay when accepted: nothing is payable until a child is accepted.
+  const contactEmail = anyAccepted ? (await getClubSiteContent(org.id).catch(() => null))?.contactEmail ?? null : null;
+  const [online, pay] = anyAccepted
+    ? await Promise.all([leagueMailPay(placedKids[0].id!), buildLeaguePayView(placedKids[0].id!, contactEmail)])
+    : [null, null];
   const children: PlacedChild[] = placedKids.map(r => ({
     firstName: r.firstName, lastName: r.lastName, divisionName: r.divisionName, status: r.status, waitlistPosition: r.waitlistPosition, fee: r.fee,
   }));
@@ -215,6 +223,7 @@ export const POST = withObservability(async (req: Request,
       defaultHtml: leagueSignupHtml({
         guardianFirstName: guardianFirst!, seasonName: season.name, clubName: org.name, reference,
         howToPay: anyAccepted ? season.howToPay : null, statusPath: `/${org.slug}/league/${season.slug}/status`, children, face,
+        online,
       }),
       family: face ? {
         face,
@@ -241,6 +250,8 @@ export const POST = withObservability(async (req: Request,
     reference,
     guardianEmail: guardianEmail!,
     howToPay: anyAccepted ? season.howToPay : null,
+    // 12b: the pay block for the confirmation, while the club takes card payments; null keeps today's words (A6).
+    pay: pay?.kind === 'owing' ? pay : null,
     children: results.map(r => ({
       firstName: r.firstName, lastName: r.lastName, outcome: r.outcome, divisionName: r.divisionName,
       waitlistPosition: r.waitlistPosition, fee: r.fee,

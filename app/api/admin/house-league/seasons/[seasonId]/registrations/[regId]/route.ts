@@ -27,6 +27,7 @@ import { systemMailFace } from '@/lib/club-email-context';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { orgDayKey } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
+import { leagueMailPay } from '@/lib/league-pay-view';
 
 
 async function fetchReg(regId: string, seasonId: string) {
@@ -55,7 +56,8 @@ function emailPromoted(
         const { data: div } = await supabaseAdmin.from('league_divisions').select('name').eq('id', next.divisionId).single();
         if (div) divisionName = div.name;
       }
-      const face = await systemMailFace(org);
+      // 12b: Pay now by card while the club takes card payments (the promoted child is accepted, so now owes).
+      const [face, online] = await Promise.all([systemMailFace(org), leagueMailPay(next.id)]);
       await sendTransactionalEmail({
         key: 'league_waitlist_promoted',
         to: next.guardianEmail,
@@ -81,6 +83,7 @@ function emailPromoted(
           clubName:         org.name,
           statusPath:       `/${org.slug}/league/${season.slug}/status`,
           face,
+          online,
         }),
         family: face ? { face, reason: `${next.playerFirstName} was signed up for ${season.name}` } : undefined,
       });
@@ -337,7 +340,8 @@ export const PATCH = withObservability(async (req: Request,
     if (changed && newStatus === 'active') {
       void (async () => {
         try {
-          const face = await faceOnce();
+          // 12b: Pay now by card while the club takes card payments.
+          const [face, online] = await Promise.all([faceOnce(), leagueMailPay(regId)]);
           await sendTransactionalEmail({
             key: 'league_registration_approved',
             to: reg.guardianEmail,
@@ -352,7 +356,7 @@ export const PATCH = withObservability(async (req: Request,
             defaultSubject: `${reg.playerFirstName} is accepted — ${season.name}`,
             defaultHtml: leagueAdminApprovedHtml({
               ...emailBase, divisionName, face,
-              fee: registrationOwes(reg, season), howToPay: season.howToPay, clubName: ctx!.org.name,
+              fee: registrationOwes(reg, season), howToPay: season.howToPay, clubName: ctx!.org.name, online,
             }),
             family: familyOf(face, reg.playerFirstName),
           });

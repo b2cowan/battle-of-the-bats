@@ -3,6 +3,7 @@ import { possessive, registrationReference } from '@/lib/utils';
 import { nameList, ordinal, signupHeadline, signupToPay, type PlacedChild } from './league-signup';
 import { dollarsLine } from './house-league-season';
 import { methodInBrackets } from './house-league-money-words';
+import { LEAGUE_PAY_WORDS } from './league-pay-words';
 import { formatStoredDate } from './timezone';
 import { STAFF_KIND_COPY, staffKindCopyFor, type StaffKind } from '@/lib/coach-capabilities';
 import {
@@ -787,13 +788,30 @@ ${accountNoticeFootnoteHtml({ clubName: face.club.name, reason, replyLine: face.
 export type SignupMailChild = PlacedChild;
 
 
-/** The how-to-pay block (copy §10): the total, the club's own words (escaped), "payable separately". */
-function payBlock(toPay: number, howToPay: string | null, clubName: string): string {
+/** A house-league family can pay this email's amount by card (Club Tier Stage 12b): the pay link, and whether the family
+ *  pays the processing fee (then the email says it is shown before paying). Absent = the club is not taking card
+ *  payments, and the email is today's, word for word (A6). */
+export interface LeagueMailPay { payUrl: string; familyPaysFee: boolean }
+
+/** The how-to-pay block (copy §10): the total, the club's own words (escaped), "payable separately". While the club
+ *  takes card payments (12b copy §3): Pay now, "Pay online by card", the fee line, and the club's words as the OTHER way
+ *  to pay — "payable separately" goes, since beside a Pay button it would read as "not here". */
+function payBlock(toPay: number, howToPay: string | null, clubName: string, online?: LeagueMailPay | null): string {
   if (toPay <= 0) return '';
+  if (online) {
+    const M = LEAGUE_PAY_WORDS.mail;
+    return `<div style="${warmPanelStyle('olive')}">
+      <p style="margin:0;color:${WARM_EMAIL.ink};"><strong>To pay: ${dollarsLine(toPay)}.</strong></p>
+      <p style="margin:0.4rem 0 0;color:${WARM_EMAIL.ink};">${howToPay ? M.payLine : M.payLineOnly}</p>
+      ${online.familyPaysFee ? `<p style="margin:0.4rem 0 0;color:${WARM_EMAIL.secondary};font-size:0.9rem;">${M.feeShown}</p>` : ''}
+      ${howToPay ? `<p style="margin:0.75rem 0 0;color:${WARM_EMAIL.ink};"><strong>${M.otherWaysLabel}</strong></p>
+      <p style="margin:0.25rem 0 0;color:${WARM_EMAIL.ink};">${escapeEmailHtml(howToPay)}</p>` : ''}
+    </div>
+    ${warmEmailButton(M.payButton, online.payUrl)}`;
+  }
   const how = howToPay
     ? `<p style="margin:0.4rem 0 0;color:${WARM_EMAIL.ink};">${escapeEmailHtml(howToPay)}</p>`
     : `<p style="margin:0.4rem 0 0;color:${WARM_EMAIL.ink};">${escapeEmailHtml(clubName)} will tell you how to pay.</p>`;
-  // 12b's online Pay now goes here; until then no button (a dead button in an email reads as broken).
   return `<div style="${warmPanelStyle('olive')}">
       <p style="margin:0;color:${WARM_EMAIL.ink};"><strong>To pay: ${dollarsLine(toPay)}.</strong></p>
       ${how}
@@ -825,6 +843,8 @@ export function leagueSignupHtml(input: {
   statusPath: string;
   children: SignupMailChild[];
   face?: FamilyMailFace | null;
+  /** 12b: Pay now by card, while the club takes card payments. */
+  online?: LeagueMailPay | null;
 }) {
   const p = escapeEmailFields(input);
   const kids = input.children;
@@ -877,7 +897,7 @@ export function leagueSignupHtml(input: {
       <p style="${WARM_EMAIL_STYLE.panelLabel}">${panelLabel}</p>
       <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">${rows}</p>
     </div>
-    ${accepted.length && !free ? payBlock(toPay, input.howToPay, input.clubName) : ''}
+    ${accepted.length && !free ? payBlock(toPay, input.howToPay, input.clubName, input.online) : ''}
     ${freeNote}${waitNote}${allWaitNote}
     ${refBlock(input.reference, input.statusPath)}
     ${accepted.length ? `<p>We look forward to seeing ${escapeEmailHtml(nameList(accepted.map(c => c.firstName)))} on the field.</p>` : ''}
@@ -887,10 +907,10 @@ export function leagueSignupHtml(input: {
 // ── House League admin-triggered status-change emails ─────────────────────────
 
 /** The price block on a single-child acceptance (staff Approve, a promotion): "To pay" + the club's words, or "free". */
-function acceptedPay(fee: number | null, howToPay: string | null, clubName: string): string {
+function acceptedPay(fee: number | null, howToPay: string | null, clubName: string, online?: LeagueMailPay | null): string {
   if (fee == null) return '';
   if (fee === 0) return '<p>There is nothing to pay: this season is free.</p>';
-  return payBlock(fee, howToPay, clubName);
+  return payBlock(fee, howToPay, clubName, online);
 }
 
 export function leagueAdminApprovedHtml(input: {
@@ -911,6 +931,8 @@ export function leagueAdminApprovedHtml(input: {
   contactEmail?: string;
   /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
   face?: FamilyMailFace | null;
+  /** 12b: Pay now by card, while the club takes card payments. */
+  online?: LeagueMailPay | null;
 }) {
   const p = escapeEmailFields(input);
   const ref = input.reference ?? registrationReference(input.registrationId);
@@ -927,7 +949,7 @@ export function leagueAdminApprovedHtml(input: {
         Price: <strong>${dollarsLine(input.fee)}</strong>` : ''}
       </p>
     </div>
-    ${acceptedPay(input.fee ?? null, input.howToPay ?? null, input.clubName ?? (input.face?.club.name ?? 'the club'))}
+    ${acceptedPay(input.fee ?? null, input.howToPay ?? null, input.clubName ?? (input.face?.club.name ?? 'the club'), input.online)}
     ${input.statusPath ? refBlock(ref, input.statusPath) : `<p>Reference: <strong style="${DATA_FACE}">${escapeEmailHtml(ref)}</strong></p>`}
     <p>We look forward to seeing ${p.playerFirstName} on the field.</p>
   `, input.face, `${input.playerFirstName} was signed up for ${input.seasonName}`);
@@ -981,6 +1003,8 @@ export function leagueWaitlistPromotedHtml(input: {
   contactEmail?: string;
   /** The club this notice wears (The public face, warm: S3b): its band, a footnote and the reply line. Omitted, the plain card. */
   face?: FamilyMailFace | null;
+  /** 12b: Pay now by card, while the club takes card payments. */
+  online?: LeagueMailPay | null;
 }) {
   const p = escapeEmailFields(input);
   const ref = input.reference ?? registrationReference(input.registrationId);
@@ -997,7 +1021,7 @@ export function leagueWaitlistPromotedHtml(input: {
         Price: <strong>${dollarsLine(input.fee)}</strong>` : ''}
       </p>
     </div>
-    ${acceptedPay(input.fee ?? null, input.howToPay ?? null, input.clubName ?? (input.face?.club.name ?? 'the club'))}
+    ${acceptedPay(input.fee ?? null, input.howToPay ?? null, input.clubName ?? (input.face?.club.name ?? 'the club'), input.online)}
     ${input.statusPath ? refBlock(ref, input.statusPath) : `<p>Reference: <strong style="${DATA_FACE}">${escapeEmailHtml(ref)}</strong></p>`}
     <p>We look forward to seeing ${p.playerFirstName} on the field.</p>
   `, input.face, `${input.playerFirstName} was signed up for ${input.seasonName}`);

@@ -1,7 +1,8 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { loadLeaguePayFacts, type LeaguePayFacts } from './league-pay-facts';
-import { leaguePayToken } from './league-pay-link';
+import { leaguePayToken, leaguePayUrl } from './league-pay-link';
+import type { LeagueMailPay } from './email';
 import { LEAGUE_PAY_WORDS as LW } from './league-pay-words';
 import { toCents } from './online-payment-fee';
 
@@ -119,6 +120,18 @@ export function viewFromFacts(f: LeaguePayFacts, token: string, receipts: League
     totalCents: kind === 'owing' && f.fee ? f.fee.totalCents : 0,
     receipts,
   };
+}
+
+/**
+ * Pay now in a family email (12b copy §3: the sign-up, approval and waitlist-promotion emails): the sign-up's pay link and
+ * whether the family pays the processing fee — only while the club takes card payments and something is owed, so an
+ * email never carries a button that leads nowhere. Null keeps today's email, word for word (A6).
+ */
+export async function leagueMailPay(registrationId: string): Promise<LeagueMailPay | null> {
+  const f = await loadLeaguePayFacts(registrationId).catch(() => null);
+  if (!f || f.refusal !== null) return null;
+  const payUrl = leaguePayUrl(process.env.NEXT_PUBLIC_APP_URL ?? '', { orgSlug: f.org.slug, seasonSlug: f.season.slug, registrationId });
+  return payUrl ? { payUrl, familyPaysFee: f.account?.feePayer === 'family' } : null;
 }
 
 /** The pay block for the sign-up a registration belongs to; null when the club is not taking card payments (or no

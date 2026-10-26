@@ -45,6 +45,9 @@ export const ONLINE_NOTICE_WORDS = {
   stripeNeedsTitle: 'Stripe needs something to keep online payments on',
   stripeNeedsBodyPaused:
     'Online payments are paused. Stripe needs something more from you. Teams see your “How to pay” text until it’s done. Nothing already paid is affected.',
+  // Copy 12a §20 (held for 12b): League and Club name families and teams.
+  stripeNeedsBodyPausedFamilies:
+    'Online payments are paused. Stripe needs something more from you. Families and teams see your “How to pay” text until it’s done. Nothing already paid is affected.',
   // Derived (not in the copy): Stripe asks ahead of a deadline while payments still work.
   stripeNeedsBodyStillOn: (byDeadline: string) =>
     `Stripe needs something more from you${byDeadline}. Online payments stay on until then. Nothing already paid is affected.`,
@@ -240,6 +243,47 @@ export const PAYOUTS_WORDS = {
     link: 'Let them pay online',
   },
 } as const;
+
+/**
+ * The words above, saying who actually pays (copy 12a §20, held for 12b; owner §0c): on League and Club (the card in
+ * Settings › Payouts) families pay house-league fees online too, so "teams" becomes "families and teams". Tournament
+ * Plus keeps "teams". One setting either way — only the words change.
+ */
+const PAYOUTS_WORDS_FAMILIES = {
+  ...PAYOUTS_WORDS,
+  tile: { ...PAYOUTS_WORDS.tile, sub: { ...PAYOUTS_WORDS.tile.sub, not_set_up: 'Let families and teams pay online by card' } },
+  title: { ...PAYOUTS_WORDS.title, not_set_up: 'Let families and teams pay online', taking_payments: 'Families and teams can pay online' },
+  settingUpBody: (date: string) => `You started on ${date}. Families and teams keep seeing your “How to pay” text until setup is finished.`,
+  needsBody: 'Stripe needs something more from you. Until then families and teams see your “How to pay” text instead of Pay now. Nothing already paid is affected.',
+  disconnectedBody: (date: string, name: string | null) =>
+    `Disconnected ${date}${name ? ` by ${name}` : ''}. Payments already made stay in your books; refunds of them are made in Stripe. Families and teams see your “How to pay” text.`,
+  before: {
+    ...PAYOUTS_WORDS.before,
+    whoTeams: 'Families and teams pay it',
+    whoTeamsHint: 'Added to what the family or team pays.',
+    whoClubHint: 'Families and teams pay the fee alone; the processing fee comes out of each payment.',
+  },
+  record: {
+    ...PAYOUTS_WORDS.record,
+    feeRead: { ...PAYOUTS_WORDS.record.feeRead, family: 'Families and teams pay it: it’s added to what they pay' },
+    choice: { ...PAYOUTS_WORDS.record.choice, family: 'Families and teams pay it' },
+    choiceHint: {
+      family: 'Added to what the family or team pays. You receive the full fee.',
+      club: 'Families and teams pay the fee alone. The processing fee comes out of each payment and shows in your books as Payment processing.',
+    },
+    policyHint: 'One or two sentences families and teams see beside Pay.',
+    policyEmpty: 'None written. Families and teams won’t see a Refund policy link.',
+  },
+  disconnect: { ...PAYOUTS_WORDS.disconnect, stops: 'Families and teams stop seeing Pay now right away, and pay links already emailed show your “How to pay” text instead.' },
+  status: { ...PAYOUTS_WORDS.status, offBody: (date: string) => `The owner disconnected payouts on ${date}. Families and teams see the club’s payment instructions.` },
+  quiet: { ...PAYOUTS_WORDS.quiet, line: 'Families and teams pay you directly, outside FieldLogicHQ.' },
+};
+
+/** The Payouts words for where the card lives: 'club' (League and Club) names families and teams; 'tournament'
+ *  (Tournament Plus) names teams. */
+export function payoutsWords(home: PayoutsHome): typeof PAYOUTS_WORDS_FAMILIES {
+  return home === 'club' ? PAYOUTS_WORDS_FAMILIES : PAYOUTS_WORDS;
+}
 
 /** The team's pay page and the pay block (copy §8, §9, §13 and §18). */
 export const PAY_WORDS = {

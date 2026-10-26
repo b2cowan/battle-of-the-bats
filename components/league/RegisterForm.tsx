@@ -10,6 +10,8 @@ import type { Cutoff } from '@/lib/born-years';
 import styles from './register.module.css';
 import formKit from '@/components/public/ClubForm.module.css';
 import kit from '@/components/public/ClubKit.module.css';
+import LeaguePayBlock from '@/components/public/LeaguePayBlock';
+import type { LeaguePayView } from '@/lib/league-pay-view';
 
 /**
  * THE FAMILY'S SIGN-UP FORM (Club Tier Stage 9b-1, Part 5; drawing §4, words HOUSE_LEAGUE_STAGE9B1_COPY.md §7–§8; owner Q5,
@@ -18,8 +20,9 @@ import kit from '@/components/public/ClubKit.module.css';
  * happen: a spot and its price (the early bird applied, or when it ended), or the waitlist and nothing to pay. Two
  * divisions for one age group: the family picks, seeing each one's note and room. No division takes the birth year: the
  * form says so with the club's contact, and that child is left out (the others can still sign up). The total counts only
- * children who will be accepted; payment stays "payable separately" until online payment exists. After Sign up: the
- * reference, each child's tag ("Accepted", never "Approved"), and the club's how-to-pay words.
+ * children who will be accepted. After Sign up: the reference, each child's tag ("Accepted", never "Approved"), and the
+ * club's how-to-pay words — or, while the club takes card payments (12b, drawn k2), THE one pay block: Pay by card for
+ * every accepted child at once. When it doesn't, today's words and no button at all (A6).
  */
 
 type Child = { key: number; firstName: string; lastName: string; dob: string; divisionId: string; jersey: string; position: string; notes: string; more: boolean };
@@ -31,6 +34,8 @@ type Result = {
   guardianEmail: string;
   howToPay: string | null;
   children: (PlacedChild & { outcome: 'active' | 'pending_review' | 'waitlisted' | 'duplicate' | 'nofit' })[];
+  /** 12b: the pay block while the club takes card payments and something is owed; null keeps today's words. */
+  pay?: LeaguePayView | null;
 };
 
 interface Props {
@@ -406,13 +411,14 @@ function Confirmation({ result, seasonName, orgName, statusHref, forecast }: {
         })}
       </div>
 
-      {accepted.length > 0 && !free && toPay > 0 ? (
+      {result.pay ? (
+        <LeaguePayBlock pay={result.pay} returnedSession={null} left={false} />
+      ) : accepted.length > 0 && !free && toPay > 0 ? (
         <div className={kit.card}>
           <div className={styles.resultHead}><strong>To pay</strong><strong>{dollarsLine(toPay)}</strong></div>
           {accepted.length > 1 && <p className={styles.fitDim}>{accepted.map(c => `${c.firstName} · ${dollarsLine(c.fee ?? 0)}`).join('; ')}</p>}
           {result.howToPay && <p>How to pay: {result.howToPay}</p>}
           <p className={styles.fitDim}>Payable separately to {orgName}.</p>
-          <button type="button" className={`${kit.btn} ${kit.btnSecondary}`} disabled title="Online payment isn’t available yet. Use the instructions above." style={{ opacity: 0.5 }}>Pay now</button>
         </div>
       ) : placed.some(c => c.status === 'pending_review') ? (
         <div className={kit.card}>

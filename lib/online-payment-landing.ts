@@ -110,7 +110,10 @@ export async function syncPayoutsAccount(stripeAccountId: string): Promise<Payou
       org, userIds: await payoutsPeople(org), eventType: 'payouts_need_attention',
       subjectKey: 'stripeAccountId', subjectId: stripeAccountId,
       title: W.stripeNeedsTitle,
-      body: row.card_payments_status === 'active' ? W.stripeNeedsBodyStillOn(deadline) : W.stripeNeedsBodyPaused,
+      body: row.card_payments_status === 'active'
+        ? W.stripeNeedsBodyStillOn(deadline)
+        // A League or Club's families pay online too (copy §20); Tournament Plus names teams.
+        : org.planId === 'tournament' || org.planId === 'tournament_plus' ? W.stripeNeedsBodyPaused : W.stripeNeedsBodyPausedFamilies,
       link: payoutsHref(org),
     });
   }

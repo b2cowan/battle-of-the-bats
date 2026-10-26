@@ -13,7 +13,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatStoredDate } from '@/lib/timezone';
-import { PAYOUTS_WORDS as W, type PayoutsHome } from '@/lib/online-payment-words';
+import { payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
 import { payoutsPath } from '@/lib/online-payment-account';
 import { loadPayouts, type PayoutsView } from './PayoutsCard';
 import { RepChip } from './RepKit';
@@ -25,6 +25,7 @@ export default function PayoutsStatusLine({ orgSlug, planId, home, treasurerLine
   /** False where the treasurer's line has another home (a League or Club's Teams page: it lives on Accounting). */
   treasurerLine?: boolean;
 }) {
+  const W = payoutsWords(home);
   const [view, setView] = useState<PayoutsView | null>(null);
   useEffect(() => {
     if (!orgSlug) return;

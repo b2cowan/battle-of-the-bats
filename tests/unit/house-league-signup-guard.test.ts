@@ -57,10 +57,24 @@ describe('the family’s words', () => {
       assert.match(body.slice(0, 3000), /acceptedPay\(input\.fee/, name);
     }
   });
-  it('the form keeps "payable separately" and draws no live Pay now (that is online payment, later)', () => {
+  it('12b: the confirmation draws THE one pay block while the club takes card payments, and no greyed Pay now ever (A6)', () => {
+    // Not taking payments: today's words, word for word, and no button at all.
     assert.match(FORM, /Payable separately to \{orgName\}/);
-    assert.match(FORM, /disabled title="Online payment isn’t available yet/);
+    assert.doesNotMatch(FORM + STATUS, /Online payment isn’t available yet|disabled title=/);
+    assert.match(FORM, /\{result\.pay \? \(\s*<LeaguePayBlock pay=\{result\.pay\}/);
     assert.doesNotMatch(FORM + STATUS, /12b|coming soon/i);
+  });
+  it('12b: the sign-up, approval and promotion emails carry Pay now only while the club takes card payments', () => {
+    const block = EMAIL.slice(EMAIL.indexOf('function payBlock('), EMAIL.indexOf('function refBlock('));
+    assert.match(block, /if \(online\) \{/);
+    assert.match(block, /warmEmailButton\(M\.payButton, online\.payUrl\)/);
+    // Without it, today's panel: the club's words and "payable separately".
+    assert.match(block, /Payable separately to \$\{escapeEmailHtml\(clubName\)\}/);
+    assert.match(EMAIL, /payBlock\(toPay, input\.howToPay, input\.clubName, input\.online\)/);
+    assert.equal((EMAIL.match(/input\.clubName \?\? \(input\.face\?\.club\.name \?\? 'the club'\), input\.online\)/g) ?? []).length, 2);
+    // The routes ask the one helper (null unless the club takes card payments and something is owed).
+    assert.match(ROUTE, /leagueMailPay\(placedKids\[0\]\.id!\)/);
+    assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts'), /leagueMailPay\(next\.id\)[\s\S]*leagueMailPay\(regId\)/);
   });
 });
 
