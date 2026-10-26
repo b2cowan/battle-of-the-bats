@@ -196,6 +196,11 @@ folds with its section). **One closing answer per table**; a row that merely res
 deleted, not styled quieter (QA §132/§142). A footnote stack under the table, in caption type, holds
 the basis, the caveats and the doors — never a sentence inside a money column.
 
+- **A footnote sits 0.75rem below the table** (owner, 2026-10-26: the Email families note touched its
+  table card). The club kit's `ck.hint` is margin-less on purpose, so a note that follows a table, list
+  or card composes it with **`ck.tableNote`** (`${ck.hint} ${ck.tableNote}`), which carries the gap.
+  Never hand-roll a per-screen margin for it, and never lean on the screen's parent for the gap.
+
 - **A band row may carry a total IN ITS WORDS** (owner, Club Tier Stage 3a Ask 5d, 2026-09-30):
   "Overdue · 2 · $900.00", "Waiting on you · 3 · $555.00". The band is still a label — the figure
   is part of its sentence, never a figure column inside the band, and never a second closing row.

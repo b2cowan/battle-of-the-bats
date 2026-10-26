@@ -226,6 +226,12 @@ button.row:hover, a.row:hover { background: var(--home-olive-soft); }
 .select option,
 .select optgroup { background: var(--home-card); color: var(--text-primary); }
 .hint { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+/* A note UNDER a table, list or card: compose with .hint (`${ck.hint} ${ck.tableNote}`). .hint is margin-less on
+   purpose (it also sits inside forms and windows that space it themselves), so a note that follows a card must
+   carry its own gap or it touches the card's edge. 0.75rem is the lede's step above the table. */
+p.tableNote, div.tableNote { margin: 0.75rem 0 0; }
+/* The mirror: a note ABOVE a table or list card (`${ck.hint} ${ck.noteAbove}`). */
+p.noteAbove, div.noteAbove { margin: 0 0 0.75rem; }
 @media (max-width: 768px) {
   .input, .select { min-height: var(--tap-min, 44px); }
 }

@@ -84,7 +84,7 @@ export default function CoachNamesPanel({ orgSlug, policy, isOwner, onSave }: {
   const shown = pending ?? policy;
   return (
     <div>
-      <p className={ck.hint}>{W.lead}</p>
+      <p className={`${ck.hint} ${ck.noteAbove}`}>{W.lead}</p>
       <SendRows group={{ radio: true, label: W.groupLabel }}>
         {COACH_NAMES_CHOICES.map(c => (
           <SendRow key={c.value} title={c.name} sub={c.sub}

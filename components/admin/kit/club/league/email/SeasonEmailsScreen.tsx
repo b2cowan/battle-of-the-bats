@@ -101,7 +101,7 @@ export default function SeasonEmailsScreen() {
       ) : (
         <>
           <EmailLogList rows={history.rows} earlier={history.earlier} isPhone={isPhone} label={SW.historyTitle} onOpen={setOpen} />
-          <p className={ck.hint}>{SW.footnote}</p>
+          <p className={`${ck.hint} ${ck.tableNote}`}>{SW.footnote}</p>
         </>
       )}
       {open && (

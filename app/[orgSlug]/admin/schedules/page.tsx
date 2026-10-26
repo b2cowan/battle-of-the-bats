@@ -184,7 +184,7 @@ export default function SchedulesPage() {
         <EmptyCard icon={<ClipboardList size={28} aria-hidden />} title={W.emptyTitle}>{W.emptyBody}</EmptyCard>
       ) : (
         <>
-          {read!.nothingToSchedule && <p className={ck.hint}>{R.nothingToSchedule}</p>}
+          {read!.nothingToSchedule && <p className={`${ck.hint} ${ck.noteAbove}`}>{R.nothingToSchedule}</p>}
           {table}
         </>
       )}

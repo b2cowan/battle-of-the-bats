@@ -5369,6 +5369,8 @@ a.oneChip:hover { border-color: currentColor; }
 }
 
 .formHint { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.4; }
+/* "Whole debts only" under the payback list: the field's 0.35rem gap alone left it nearly touching the list card. */
+.debtList + .formHint { margin-top: 0.4rem; }
 /* formHintConsequence — a hint that STATES WHAT THE FORM IS ABOUT TO DO rather than labelling a
    field ("no cash leaves the team — the team owes this family instead"). It is a sentence or more,
    usually with the outcome bolded, and the coach has to actually read it, so it takes one step more
