@@ -8,13 +8,16 @@ import { findClubs, findPeople, personAuthStatus } from '@/lib/platform-people-l
 import { planLabel, subscriptionStatusLabel } from '@/lib/platform-labels';
 import { roleEmailLabel } from '@/lib/member-access';
 import { isDemoOrgSlug } from '@/lib/demo-org';
+import { getStripe } from '@/lib/stripe';
+import { findStripeItem } from '@/lib/console-money-stripe';
+import { stripeKeyIsLive } from '@/lib/online-payments-switch';
 import {
   checkFindWords,
+  invoiceNumberQuery,
   runFind,
   FIND_FAILED,
   type FindPersonClub,
   type FindReaders,
-  type FindStripeKind,
   type FindStripeRow,
 } from '@/lib/platform-find';
 
@@ -99,10 +102,10 @@ const readers: FindReaders = {
     const rows: FindStripeRow[] = [];
     const seen = new Set<string>();
     // One gate for all three sources: a demo sandbox never shows, and a club found twice shows once.
-    const add = (org: OrgCols | null, k: FindStripeKind) => {
+    const add = (org: OrgCols | null, k: FindStripeRow['kind'], extra: Partial<FindStripeRow> = {}) => {
       if (!org || seen.has(org.id) || isDemoOrgSlug(org.slug)) return;
       seen.add(org.id);
-      rows.push({ orgId: org.id, orgName: org.name, planLabel: planLabel(org.plan_id ?? 'tournament'), number, kind: k });
+      rows.push({ orgId: org.id, orgName: org.name, planLabel: planLabel(org.plan_id ?? 'tournament'), number, kind: k, ...extra });
     };
     const orgCols = 'id, name, slug, plan_id';
     if (kind === 'customer' || kind === 'subscription') {
@@ -116,7 +119,7 @@ const readers: FindReaders = {
       for (const w of (workspaces.data ?? []) as unknown as Array<{ organizations: OrgCols | null }>) {
         add(w.organizations, kind);
       }
-    } else {
+    } else if (kind === 'payment' && !number.startsWith('py_')) {
       const column = number.startsWith('ch_') ? 'stripe_charge_id' : 'stripe_payment_intent_id';
       const { data, error } = await supabaseAdmin
         .from('online_payments')
@@ -126,6 +129,29 @@ const readers: FindReaders = {
       if (error) throw new Error(FIND_FAILED);
       for (const p of (data ?? []) as unknown as Array<{ organizations: OrgCols | null }>) {
         add(p.organizations, 'payment');
+      }
+    }
+    // Not a family payment: a club's own subscription charge, payment or invoice (Stage 3, owner Q5). ONE exact read of
+    // that item on our own Stripe account, then its club by its customer — exactly one club, in this site's mode. "Not
+    // found" and "found but not ours" read the same. The number's shape was checked before this (stripeNumberKind).
+    if (rows.length === 0 && (kind === 'payment' || kind === 'invoice' || kind === 'invoice_number')) {
+      // Stripe unreachable must not cost the person the clubs and people they also searched for (an invoice's printed
+      // number looks like "U12-2026"): the Stripe group is then simply empty. Nothing is logged on Find's path (A3).
+      const item = await findStripeItem(getStripe(), number, kind, kind === 'invoice_number' ? invoiceNumberQuery(number) : null)
+        .catch(() => null);
+      if (item && item.livemode === stripeKeyIsLive()) {
+        const [orgsRes, portalsRes] = await Promise.all([
+          supabaseAdmin.from('organizations').select(orgCols).eq('stripe_customer_id', item.customerId).limit(2),
+          supabaseAdmin.from('team_workspaces').select('billing_owner_org_id').eq('stripe_customer_id', item.customerId),
+        ]);
+        if (orgsRes.error || portalsRes.error) throw new Error(FIND_FAILED);
+        const orgs = (orgsRes.data ?? []) as OrgCols[];
+        // Exactly one club, or none: a customer two clubs share (or a portal another club pays for) is never shown as either's.
+        const shared = ((portalsRes.data ?? []) as Array<{ billing_owner_org_id: string | null }>).some(w => w.billing_owner_org_id !== orgs[0]?.id);
+        add(orgs.length === 1 && !shared ? orgs[0] : null, kind === 'payment' ? 'charge' : 'invoice', {
+          number: kind === 'invoice_number' ? number.toUpperCase() : number,
+          amountCents: item.amountCents, currency: item.currency, at: item.at, chargeId: item.chargeId,
+        });
       }
     }
     return rows;

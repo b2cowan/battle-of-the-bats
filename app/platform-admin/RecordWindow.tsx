@@ -13,7 +13,7 @@ import styles from './record.module.css';
 
 export default function RecordWindow({
   title, sentence, sentenceAfter = false, children, footNote, cancelLabel = 'Cancel', confirmLabel, danger = false, askWhy = true,
-  whyPlaceholder, confirmBlocked = false, confirmHidden = false, onConfirm, onClose,
+  whyPlaceholder, whyMax = 1000, confirmBlocked = false, confirmHidden = false, onConfirm, onClose,
 }: {
   title: string;
   sentence: ReactNode;
@@ -28,6 +28,8 @@ export default function RecordWindow({
   /** Every live change asks why; a note is its own why. */
   askWhy?: boolean;
   whyPlaceholder?: string;
+  /** The longest Why the server takes. */
+  whyMax?: number;
   /** Something else the window needs first (a typed web name). */
   confirmBlocked?: boolean;
   /** No main action yet (absent beats disabled): a window that refuses its first choice and offers the others. */
@@ -83,7 +85,7 @@ export default function RecordWindow({
               value={reason}
               onChange={e => setReason(e.target.value)}
               placeholder={whyPlaceholder ?? 'Why are you making this change?'}
-              maxLength={1000}
+              maxLength={whyMax}
               required
               aria-required
             />

@@ -13,6 +13,7 @@ import { effectiveOrgFactsOf } from '@/lib/entitlement-grants';
 import { freeTimeDoorFacts } from '@/lib/free-time-writes';
 import { earliestLastDay, grantablePlansAbove, isGrantRunning, lastDayOfInstant, latestLastDay } from '@/lib/free-time';
 import { isFoundingSeasonCompExpiry } from '@/lib/plan-config';
+import { stripeStillBills } from '@/lib/stripe-billing-state';
 import ClubRecord, { type ClubRecordProps } from './ClubRecord';
 
 /**
@@ -90,10 +91,11 @@ export default async function ClubRecordPage({ params, searchParams }: {
   const auth = await requirePlatformAreaView('organizations');
   const { id } = await params;
   const { via } = await searchParams;
+  const readsStripe = hasPlatformPower(auth.role, 'find_stripe');
 
   // Every read at once; the members' sign-in facts chain straight off the members read. Opening the record is the read
   // that matters after a complaint (A3): its trail row is written alongside, best effort, never a gate.
-  const [orgRes, { memberRows, people }, tournamentsRes, teamCountRes, overridesRes, ownAddress, teamMoves, story] = await Promise.all([
+  const [orgRes, { memberRows, people }, tournamentsRes, teamCountRes, overridesRes, ownAddress, teamMoves, story, , doorFacts] = await Promise.all([
     supabaseAdmin
       .from('organizations')
       .select('id, name, slug, plan_id, tournament_limit, team_limit, subscription_status, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, account_kind')
@@ -109,8 +111,9 @@ export default async function ClubRecordPage({ params, searchParams }: {
     supabaseAdmin.from('org_overrides').select('id, type, value, target, starts_at, expires_at, reason, created_by, created_at, revoked_at, revoked_by').eq('org_id', id).order('created_at', { ascending: false }),
     clubDomainStore.getByOrg(id).catch(() => null),
     getTeamMoves(id),
-    buildClubStory(id),
+    buildClubStory(id, { money: readsStripe }),
     recordOpened({ actorUserId: auth.user.id, actorEmail: auth.user.email, kind: 'club', recordId: id, viaFind: via === 'find' }),
+    hasPlatformPower(auth.role, 'club_billing') ? freeTimeDoorFacts(id, { id: auth.user.id, email: auth.user.email ?? '' }) : Promise.resolve(null),
   ]);
   const org = orgRes.data;
   if (!org) notFound();
@@ -132,16 +135,18 @@ export default async function ClubRecordPage({ params, searchParams }: {
   const plan = (org.plan_id ?? 'tournament') as OrgPlan;
   // The band follows the plan the club is on RIGHT NOW (a Club grant reads as a Club band); the title's chip, the
   // pencil and Money keep the plan it holds.
-  const [now, doorFacts] = await Promise.all([
-    effectiveOrgFactsOf(org),
-    hasPlatformPower(auth.role, 'club_billing') ? freeTimeDoorFacts(id, auth.user.id) : Promise.resolve(null),
-  ]);
+  const now = await effectiveOrgFactsOf(org);
   const isClubBand = now.planId === 'club' || now.planId === 'club_large';
   const tournaments = ((tournamentsRes.data ?? []) as Array<{ id: string; name: string; status: string; start_date: string | null; end_date: string | null }>)
     .map(t => ({ id: t.id, name: t.name, status: t.status, startDate: t.start_date, endDate: t.end_date }));
   const overrides = overrideRows((overridesRes.data ?? []) as OverrideRow[]);
 
   const status = org.subscription_status ?? 'active';
+  // The Money tab names running free time on our side only (it is not Stripe's to agree with).
+  const runningGrant = overrides.find(o => o.running && o.type === 'plan_tier' && o.lastDay);
+  const runningFounding = overrides.find(o => o.running && o.founding && o.lastDay);
+  const freeRow = runningGrant ?? runningFounding;
+  const freeThrough = freeRow ? { lastDay: freeRow.lastDay!, what: runningGrant ? 'free time' : 'Founding Season' } : null;
   const props: ClubRecordProps = {
     org: {
       id: org.id,
@@ -155,6 +160,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
       currentPeriodEnd: org.current_period_end,
       stripeCustomerId: org.stripe_customer_id,
       stripeSubscriptionId: org.stripe_subscription_id,
+      paysThroughStripe: stripeStillBills({ stripeSubscriptionId: org.stripe_subscription_id, subscriptionStatus: org.subscription_status }),
       tournamentLimit: getEffectiveTournamentLimit(plan, org.tournament_limit),
       teamLimit: plan === 'club' || plan === 'club_large' ? getEffectiveTeamLimit(plan, org.team_limit) : null,
       storedTeamLimit: org.team_limit,
@@ -194,6 +200,18 @@ export default async function ClubRecordPage({ params, searchParams }: {
       sections: hasPlatformPower(auth.role, 'club_sections'),
       delete: hasPlatformPower(auth.role, 'delete_records'),
       emailOwner: hasPlatformPower(auth.role, 'email_owner'),
+    },
+    money: {
+      readsStripe,
+      // Our side of the comparison: the plan the club PAYS for and the stored billing columns; free time shown, never compared.
+      ours: {
+        planId: plan,
+        status,
+        currentPeriodEnd: org.current_period_end,
+        subscriptionId: org.stripe_subscription_id,
+        customerId: org.stripe_customer_id,
+        freeThrough,
+      },
     },
   };
   return <ClubRecord {...props} />;

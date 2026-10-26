@@ -25,6 +25,8 @@ import { aRole, humanize, limitWords, sectionLabel } from './platform-labels';
 import { obj, planName, putBackOf, str, whyFields, type AuditRow, type PutBack, type StoryEntry } from './platform-story-view';
 import { possessive } from './utils';
 import { freeTimeStoryEntries } from './free-time-story';
+import { formatCents } from './console-money';
+import { CONSOLE_REFUND_TAIL } from './console-money-story';
 
 // The shape and the on-screen filter are plain (the record filters on screen); this module builds the entries.
 export type { PutBack, PutBackKind, StoryEntry, StoryKind } from './platform-story-view';
@@ -61,13 +63,17 @@ function afterBulkAddons(before: Set<string>, newValue: unknown): Set<string> {
   return after;
 }
 
-/** The club's Story, newest first. */
-export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
-  const [orgRes, auditRes, overridesRes, notesRes, eventsRes, orgAuditRes, membersRes, emailsRes, feedbackRes] = await Promise.all([
+/**
+ * The club's Story, newest first. `money` (a role with the Stripe-reading power, owner A2/Q4): the customer's purchases
+ * and the refunds made in this console join it, from what we keep, so they show even when Stripe is down. Stripe's own
+ * charges and dashboard refunds are merged in on screen from the Money tab's live read (`lib/console-money-story.ts`).
+ */
+export async function buildClubStory(orgId: string, opts: { money?: boolean } = {}): Promise<StoryEntry[]> {
+  const [orgRes, auditRes, overridesRes, notesRes, eventsRes, orgAuditRes, membersRes, emailsRes, feedbackRes, refundsRes] = await Promise.all([
     supabaseAdmin.from('organizations')
       .select('id, name, plan_id, enabled_addons, created_at, subscription_status, stripe_subscription_id, current_period_end')
       .eq('id', orgId).maybeSingle(),
-    supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, field, old_value, new_value, created_at')
+    supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, field, old_value, new_value, reason, created_at')
       .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('org_overrides').select('id, type, value, target, starts_at, expires_at, reason, created_by, created_at, revoked_at, revoked_by')
       .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
@@ -75,7 +81,8 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
       .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('platform_events').select('id, event_type, source, actor_email, previous_plan_id, plan_id, occurred_at')
       .eq('org_id', orgId)
-      .in('event_type', ['plan_downgraded', 'subscription_canceled', 'subscription_past_due', 'subscription_recovered'])
+      .in('event_type', ['plan_downgraded', 'subscription_canceled', 'subscription_past_due', 'subscription_recovered',
+        ...(opts.money ? ['subscription_started'] : [])])
       .order('occurred_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('org_audit_log').select('id, actor_id, target_id, action, payload, created_at')
       .eq('org_id', orgId)
@@ -88,6 +95,10 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
       .eq('recipient_org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('feedback_submissions').select('id, user_email, submitter_name, type, title, body, status, triaged_by, created_at')
       .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
+    opts.money
+      ? supabaseAdmin.from('platform_refunds').select('id, stripe_charge_id, stripe_refund_id, amount_cents, currency, actor_email, reason, completed_at, created_at')
+        .eq('org_id', orgId).eq('status', 'done').order('created_at', { ascending: false }).limit(SOURCE_CAP)
+      : Promise.resolve({ data: [] as unknown[] }),
   ]);
   const org = orgRes.data as {
     id: string; name: string; plan_id: string | null; enabled_addons: string[] | null; created_at: string;
@@ -162,7 +173,7 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
           : samePlan
             ? `Tournament limit changed: ${limitOf(oldV?.tournament_limit)} → ${limitOf(newV.tournament_limit)}`
             : `Plan changed: ${planName(fromPlan)} → ${planName(toPlan)}`;
-      const entry: StoryEntry = { key, at: r.created_at, kind: 'staff', title, sub: subs.join(' · ') || undefined, who, ...whyFields(r.new_value, false) };
+      const entry: StoryEntry = { key, at: r.created_at, kind: 'staff', title, sub: subs.join(' · ') || undefined, who, ...whyFields(r, true) };
       // ⚖ NOTHING THAT REACHED STRIPE IS PUT BACK (rule R5). The plan-change rule restores the plan and limits only, so the
       // door is offered only where that puts the club back exactly: no live Stripe subscription now (a club that started
       // paying since — Stripe moves the plan without a Story entry), none cut by this change (it cannot be re-attached),
@@ -209,7 +220,7 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
           title: undoing ? `Put back: ${label} ${on ? 'on' : 'off'} again` : `Section turned ${on ? 'on' : 'off'}: ${label}`,
           sub: undoing ? undoesSub(undoing) : r.action.startsWith('bulk_') ? 'From Bulk changes' : undefined,
           who,
-          ...whyFields(r.new_value, true),
+          ...whyFields(r, true),
         };
         // Only the newest entry for a section, and only while the club is still as that entry left it.
         markPutBack(entry, !seenSection.has(section) && currentAddons.has(section) === on ? {
@@ -228,32 +239,32 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
       const to = str(obj(r.new_value)?.value) ?? '';
       const from = str(r.old_value) ?? '';
       entries.push(r.field === 'slug'
-        ? { key, at: r.created_at, kind: 'staff', title: 'Web name changed:', codes: [from, to], who, ...whyFields(r.new_value, false) }
-        : { key, at: r.created_at, kind: 'staff', title: `Name changed: ${from} → ${to}`, who, ...whyFields(r.new_value, false) });
+        ? { key, at: r.created_at, kind: 'staff', title: 'Web name changed:', codes: [from, to], who, ...whyFields(r, true) }
+        : { key, at: r.created_at, kind: 'staff', title: `Name changed: ${from} → ${to}`, who, ...whyFields(r, true) });
       continue;
     }
     if (r.action === 'transfer_org_ownership') {
       const to = emailOf(str(obj(r.new_value)?.newOwnerUserId)) ?? 'another member';
-      entries.push({ key, at: r.created_at, kind: 'staff', title: `Owner changed to ${to}`, sub: 'The previous owner became an admin', who, ...whyFields(r.new_value, false) });
+      entries.push({ key, at: r.created_at, kind: 'staff', title: `Owner changed to ${to}`, sub: 'The previous owner became an admin', who, ...whyFields(r, true) });
       continue;
     }
     if (r.action === 'release_club_web_address') {
       const address = str(obj(r.old_value)?.address) ?? 'its own web address';
-      entries.push({ key, at: r.created_at, kind: 'staff', title: `Own web address released: ${address}`, who, ...whyFields(r.new_value, false) });
+      entries.push({ key, at: r.created_at, kind: 'staff', title: `Own web address released: ${address}`, who, ...whyFields(r, true) });
       continue;
     }
     if (r.action === 'cancel_subscription') {
       const until = str(obj(r.new_value)?.retentionUntil);
-      entries.push({ key, at: r.created_at, kind: 'staff', title: 'Subscription cancelled', sub: until ? `Its data is kept until ${consoleDay(until)}` : undefined, who, ...whyFields(r.new_value, true) });
+      entries.push({ key, at: r.created_at, kind: 'staff', title: 'Subscription cancelled', sub: until ? `Its data is kept until ${consoleDay(until)}` : undefined, who, ...whyFields(r, true) });
       continue;
     }
     if (r.action === 'cancel_subscription_stripe_failed') {
-      entries.push({ key, at: r.created_at, kind: 'staff', title: 'Stripe did not stop the subscription', sub: 'It needs cancelling in Stripe by hand', who, why: null });
+      entries.push({ key, at: r.created_at, kind: 'staff', title: 'Stripe did not stop the subscription', sub: 'It needs cancelling in Stripe by hand', who, ...whyFields(r, true) });
       continue;
     }
     if (r.action === 'extend_billing_retention') {
       const days = obj(r.new_value)?.days;
-      entries.push({ key, at: r.created_at, kind: 'staff', title: `Retention extended${typeof days === 'number' ? ` by ${days} days` : ''}`, who, ...whyFields(r.new_value, false) });
+      entries.push({ key, at: r.created_at, kind: 'staff', title: `Retention extended${typeof days === 'number' ? ` by ${days} days` : ''}`, who, ...whyFields(r, true) });
       continue;
     }
   }
@@ -277,12 +288,28 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
 
   // ── The customer's own billing ───────────────────────────────────────────────────────────────────────────────────
   for (const e of (eventsRes.data ?? []) as Array<{ id: string; event_type: string; source: string | null; actor_email: string | null; previous_plan_id: string | null; plan_id: string | null; occurred_at: string }>) {
-    const who = e.source === 'stripe' ? 'Stripe' : e.actor_email ?? 'The customer';
+    const who = e.source === 'stripe' && e.event_type !== 'subscription_started' ? 'Stripe' : e.actor_email ?? 'The customer';
+    if (e.event_type === 'subscription_started') {
+      // A first purchase (Stage 3). An upgrade is already "Moved up" from the club's own log, so plan_upgraded is not read.
+      entries.push({ key: `event:${e.id}`, at: e.occurred_at, kind: 'billing', title: `Bought ${planName(e.plan_id)}`, who, why: null, moneyEvent: 'bought' });
+      continue;
+    }
     const title = e.event_type === 'plan_downgraded' ? `Downgraded: ${planName(e.previous_plan_id)} → ${planName(e.plan_id)}`
       : e.event_type === 'subscription_canceled' ? (e.source === 'stripe' ? 'Subscription ended in Stripe' : 'Subscription cancelled by the customer')
       : e.event_type === 'subscription_past_due' ? 'A payment was missed'
       : 'Payment recovered';
-    entries.push({ key: `event:${e.id}`, at: e.occurred_at, kind: 'billing', title, who, why: null });
+    const moneyEvent = e.event_type === 'subscription_past_due' ? 'missed' as const : e.event_type === 'subscription_recovered' ? 'recovered' as const
+      : e.event_type === 'plan_downgraded' ? 'moved' as const : undefined;
+    entries.push({ key: `event:${e.id}`, at: e.occurred_at, kind: 'billing', title, who, why: null, ...(moneyEvent ? { moneyEvent } : {}) });
+  }
+
+  // ── Refunds made in this console (Stage 3): a fact, never Put it back; the card is never named ───────────────────
+  for (const f of (refundsRes.data ?? []) as Array<{ id: string; stripe_charge_id: string; stripe_refund_id: string | null; amount_cents: number; currency: string; actor_email: string; reason: string; completed_at: string | null; created_at: string }>) {
+    entries.push({
+      key: `refund:${f.stripe_refund_id ?? f.id}`, at: f.completed_at ?? f.created_at, kind: 'billing',
+      title: `Refunded ${formatCents(f.amount_cents, f.currency)}${CONSOLE_REFUND_TAIL}`, sub: 'To the card it came from · the plan did not change',
+      who: f.actor_email, why: f.reason, chargeId: f.stripe_charge_id,
+    });
   }
 
   // ── People, team moves and the customer's plan moves (the club's own log) ─────────────────────────────────────────
@@ -304,7 +331,7 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
     } else if (r.action === 'team_moved_into_club') {
       entries.push({ key, at: r.created_at, kind: 'people', title: `Team moved in: ${str(p.teamName) ?? 'a team'}`, sub: 'With its staff and every team record', who: str(p.actorEmail) ?? actor, why: null });
     } else if (r.action === 'plan_moved_up' || r.action === 'plan_move_scheduled') {
-      entries.push({ key, at: r.created_at, kind: 'billing', title: `${r.action === 'plan_moved_up' ? 'Moved up' : 'Plan move scheduled'}: ${planName(p.from)} → ${planName(p.to)}`, who: actor, why: null });
+      entries.push({ key, at: r.created_at, kind: 'billing', title: `${r.action === 'plan_moved_up' ? 'Moved up' : 'Plan move scheduled'}: ${planName(p.from)} → ${planName(p.to)}`, who: actor, why: null, moneyEvent: 'moved' });
     } else if (r.action === 'payouts_connected' || r.action === 'payouts_disconnected') {
       entries.push({ key, at: r.created_at, kind: 'billing', title: r.action === 'payouts_connected' ? 'Family payments connected' : 'Family payments disconnected', who: actor, why: null });
     }
@@ -388,7 +415,7 @@ export async function buildPersonStory(
   const named = [`new_value->>userId.eq.${person.id}`]
     .concat([person.id, email].flatMap(v => [`new_value.eq.${JSON.stringify(JSON.stringify(v))}`, `old_value.eq.${JSON.stringify(JSON.stringify(v))}`]));
   const [auditRes, notesRes, orgAuditRes] = await Promise.all([
-    supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, field, old_value, new_value, created_at')
+    supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, field, old_value, new_value, reason, created_at')
       .is('org_id', null).in('action', Object.keys(PERSON_ACTIONS)).or(named.join(','))
       .order('created_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('platform_user_notes').select('id, body, created_by_email, created_at')
@@ -408,7 +435,7 @@ export async function buildPersonStory(
         str(n?.nameTo) ? `Name ${str(n?.nameFrom) ?? 'none'} → ${n?.nameTo}` : null].filter(Boolean);
       if (parts.length) sub = parts.join(' · ');
     }
-    entries.push({ key: `audit:${r.id}`, at: r.created_at, kind: 'staff', title: def.title, sub, who: r.actor_email ?? 'Staff', ...whyFields(r.new_value, true) });
+    entries.push({ key: `audit:${r.id}`, at: r.created_at, kind: 'staff', title: def.title, sub, who: r.actor_email ?? 'Staff', ...whyFields(r, true) });
   }
   for (const n of (notesRes.data ?? []) as Array<{ id: string; body: string; created_by_email: string | null; created_at: string }>) {
     entries.push({ key: `note:${n.id}`, at: n.created_at, kind: 'notes', title: 'Note', sub: n.body, who: n.created_by_email ?? 'Staff', why: null });

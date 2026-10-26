@@ -19,13 +19,15 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type Keyboard
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft, Building2, ChevronRight, CreditCard, Search, User } from 'lucide-react';
 import { readConsoleRecent, handListSearch, type RecentRecord } from '@/lib/console-recent';
-import { consoleAgo, consoleDay } from '@/lib/console-dates';
+import { consoleAgo, consoleDate, consoleDay } from '@/lib/console-dates';
+import { formatCents } from '@/lib/console-money';
 import { FIND_FAILED, FIND_MIN_CHARS, type FindAnswer } from '@/lib/platform-find';
 import styles from './find.module.css';
 
 type Item = { key: string; href: string; onOpen?: () => void };
 
-const CLUB_HREF = (id: string, money = false) => `/platform-admin/orgs/${id}?${money ? 'tab=money&' : ''}via=find`;
+const CLUB_HREF = (id: string, money = false, chargeId?: string | null) =>
+  `/platform-admin/orgs/${id}?${money ? 'tab=money&' : ''}${chargeId ? `charge=${encodeURIComponent(chargeId)}&` : ''}via=find`;
 const PERSON_HREF = (id: string) => `/platform-admin/customer-users/${id}?via=find`;
 
 function signedIn(iso: string | null): string {
@@ -146,7 +148,7 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
     if (answer.people && answer.people.total > answer.people.rows.length) {
       out.push({ key: 'more-people', href: '/platform-admin/customer-users', onOpen: () => handListSearch('people', trimmed) });
     }
-    for (const s of answer.stripe?.rows ?? []) out.push({ key: `s-${s.orgId}`, href: CLUB_HREF(s.orgId, true) });
+    for (const s of answer.stripe?.rows ?? []) out.push({ key: `s-${s.orgId}`, href: CLUB_HREF(s.orgId, true, s.chargeId) });
     return out;
   }, [open, asking, recent, showAnswer, answer, trimmed]);
 
@@ -226,13 +228,13 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
   } else if (open && failed) {
     body = <div className={styles.msg} role="presentation"><strong>{failed}</strong></div>;
   } else if (open && showAnswer && answer) {
-    if (!hasAnyRow && answer.chargeNotKept) {
+    if (!hasAnyRow && answer.stripeNotFound) {
       body = (
         <div className={styles.msg} role="presentation">
-          <strong>No family payment has this number.</strong>
+          <strong>Nothing matches “{answered}”.</strong>
           <span>
-            Charges on a club&apos;s own subscription are kept in Stripe only, so Find cannot match them yet. Search the customer
-            number (<code className={styles.code}>cus_…</code>) or the email on the receipt.
+            Not a family payment and not one of our clubs’ Stripe numbers. A test-mode number is never found on the live site,
+            or the reverse.
           </span>
         </div>
       );
@@ -323,8 +325,11 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
                   <span className={styles.text}>
                     <span className={styles.title}>{s.orgName}</span>
                     <span className={styles.sub}>
-                      {s.kind === 'customer' ? 'Stripe customer' : s.kind === 'subscription' ? 'Stripe subscription' : 'Family payment'}
-                      {' '}<code className={styles.code}>{s.number}</code> · {s.planLabel}
+                      {s.kind === 'customer' ? 'Stripe customer' : s.kind === 'subscription' ? 'Stripe subscription'
+                        : s.kind === 'charge' ? 'Stripe charge' : s.kind === 'invoice' ? 'Stripe invoice' : 'Family payment'}
+                      {' '}<code className={styles.code}>{s.number}</code>
+                      {s.amountCents != null && <> · {formatCents(s.amountCents, s.currency)}</>}
+                      {s.at && <> · {consoleDate(s.at)}</>} · {s.planLabel}
                     </span>
                   </span>
                   <ChevronRight size={14} className={styles.chev} aria-hidden />
@@ -335,7 +340,11 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
           {trimmedGroups
             ? <div className={styles.foot}>Searching clubs and people. Your role does not search Stripe numbers.</div>
             : onlyStripe
-              ? <div className={styles.foot}>Enter opens the club. Its Money tab holds the Stripe numbers.</div>
+              ? <div className={styles.foot}>{answer.stripe?.rows.some(r => r.kind === 'charge')
+                  ? 'Enter opens the club. Its Money tab opens on this charge.'
+                  : answer.stripe?.rows.some(r => r.kind === 'invoice')
+                    ? 'Enter opens the club. Its Money tab opens on this invoice’s charge.'
+                    : 'Enter opens the club. Its Money tab holds the Stripe numbers.'}</div>
               : keyFoot}
         </>
       );

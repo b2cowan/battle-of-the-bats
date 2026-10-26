@@ -13,16 +13,20 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Check, Mail, Pencil, X } from 'lucide-react';
+import { Check, Flag, Mail, Pencil, X } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { filterStory, type StoryEntry, type StoryKind } from '@/lib/platform-story-view';
-import { consoleDate, consoleDay } from '@/lib/console-dates';
+import { consoleClock, consoleDate, consoleDay } from '@/lib/console-dates';
 import { rememberConsoleRecent } from '@/lib/console-recent';
 import { cap, CLUB_SECTIONS, humanize, limitWords, sectionLabel, STORY_KINDS } from '@/lib/platform-labels';
 import { daysLeft, formatShortDay, freeThroughShort, type GiveBlock, type PlanBlock } from '@/lib/free-time';
 import { possessive } from '@/lib/utils';
 import StoryTable from '../../StoryTable';
+import { mergeMoneyIntoStory } from '@/lib/console-money-story';
+import type { OurMoneyRecord } from '@/lib/console-money';
+import { PAYING_CLUB_PLAN_REFUSAL } from '@/lib/stripe-billing-state';
+import MoneyTab, { useClubMoney } from './MoneyTab';
 import RecordWindow from '../../RecordWindow';
 import { BlockLine, ChangeEndWindow, EndNowWindow, GiveWindow, freeTimeSubject, freeTimeTitle } from './FreeTimeWindows';
 import { errorOf, sendJson } from '../../console-fetch';
@@ -31,7 +35,9 @@ import { subscriptionStatusChip } from '../../chips';
 import kit from '../../console.module.css';
 import styles from '../../record.module.css';
 
-const NOT_IN_STORY = 'Not in the Story yet: Stripe’s charges and refunds, purchases the customer makes in Stripe, and account emails such as password resets.';
+const NOT_IN_STORY = 'Not in the Story yet: account emails such as password resets.';
+/** For a role without the Stripe-reading power (A2): the money entries it does not see, said once (drawing D). */
+const MONEY_ROLES_LINE = 'Money entries (charges, refunds and their reasons) are shown to Super admin, Billing and Support.';
 
 type Tab = 'story' | 'money' | 'access' | 'people';
 const TABS: Array<{ key: Tab; label: string }> = [
@@ -47,6 +53,8 @@ export type ClubRecordProps = {
   org: {
     id: string; name: string; slug: string; planId: string; planLabel: string; status: string; statusLabel: string;
     createdAt: string; currentPeriodEnd: string | null; stripeCustomerId: string | null; stripeSubscriptionId: string | null;
+    /** A subscription not yet cancelled in Stripe: the plan and tournament limit change there, never here (owner Q9). */
+    paysThroughStripe: boolean;
     tournamentLimit: number; teamLimit: number | null; storedTeamLimit: number | null; isClubBand: boolean;
     enabledAddons: string[]; planSections: string[];
     /** The plan the club is on RIGHT NOW (free time included) and its limits: the band follows these. */
@@ -72,6 +80,8 @@ export type ClubRecordProps = {
   story: { entries: StoryEntry[]; total: number };
   planOptions: Array<{ id: string; label: string; tournamentLimit: number; teamLimit: number }>;
   can: { support: boolean; billing: boolean; sections: boolean; delete: boolean; emailOwner: boolean };
+  /** The Money tab (Stage 3): our record's side, and whether this role reads Stripe's (A2). */
+  money: { readsStripe: boolean; ours: OurMoneyRecord };
   /** Giving free time (a giver only): what the console knows before the click, and the window's bounds. */
   freeTime: {
     block: GiveBlock | null;
@@ -113,6 +123,8 @@ export default function ClubRecord(props: ClubRecordProps) {
   const tabParam = search.get('tab');
   const asked = tabParam ? (OLD_TABS[tabParam] ?? tabParam) : null;
   const tab: Tab = TABS.some(t => t.key === asked) ? (asked as Tab) : 'story';
+  /** Find opens a charge on the Money tab: `?tab=money&charge=ch_…` (the charge route checks it is this club's). */
+  const chargeParam = search.get('charge');
   const canEdit = can.support || can.billing || can.sections;
 
   const [editing, setEditing] = useState(false);
@@ -142,13 +154,15 @@ export default function ClubRecord(props: ClubRecordProps) {
   const [form, setForm] = useState(initial);
   const startEditing = () => { setForm(initial); setNotice(null); setEditing(true); };
 
+  /** The plan and tournament limit change here only when Stripe does not bill the club (owner Q9). */
+  const canMovePlan = can.billing && !org.paysThroughStripe;
   const plan = props.planOptions.find(p => p.id === form.planId);
   const targetIsClubBand = form.planId === 'club' || form.planId === 'club_large';
   const changes = {
     name: can.support && form.name.trim() !== initial.name,
     slug: can.support && form.slug.trim().toLowerCase() !== initial.slug,
-    plan: can.billing && form.planId !== initial.planId,
-    tournamentLimit: can.billing && form.tournamentLimit.trim() !== initial.tournamentLimit,
+    plan: canMovePlan && form.planId !== initial.planId,
+    tournamentLimit: canMovePlan && form.tournamentLimit.trim() !== initial.tournamentLimit,
     teamLimit: can.billing && targetIsClubBand && form.teamLimit.trim() !== initial.teamLimit,
   };
   const sectionsOn = can.sections ? form.sections.filter(k => !initial.sections.includes(k)) : [];
@@ -233,7 +247,12 @@ export default function ClubRecord(props: ClubRecordProps) {
     setStorySource(props.story);
     setFullStory(null);
   }
-  const wantsWhole = !!storyWords.trim() || !!storyKind || storyShown > STORY_PAGE;
+  // Stripe's side, read ONCE for the Money tab and the Story alike, and only for a role with the Stripe-reading power.
+  const moneyWanted = props.money.readsStripe && (tab === 'money' || tab === 'story');
+  const club = useClubMoney(org.id, moneyWanted);
+  const moneyRead = club.money?.state === 'read' ? club.money : null;
+  // Merging Stripe's charges needs the whole Story: it is asked for alongside the Stripe read, not after it.
+  const wantsWhole = !!storyWords.trim() || !!storyKind || storyShown > STORY_PAGE || moneyWanted;
   useEffect(() => {
     if (!wantsWhole || fullStory || props.story.entries.length >= props.story.total) return;
     let live = true;
@@ -244,7 +263,11 @@ export default function ClubRecord(props: ClubRecordProps) {
     });
     return () => { live = false; };
   }, [wantsWhole, fullStory, props.story, org.id]);
-  const storySourceEntries = fullStory ?? props.story.entries;
+  const storyBase = fullStory ?? props.story.entries;
+  const storySourceEntries = useMemo(
+    () => (moneyRead ? mergeMoneyIntoStory(storyBase, moneyRead.read, org.stripeSubscriptionId, moneyRead.portalSubscriptionIds) : storyBase),
+    [moneyRead, storyBase, org.stripeSubscriptionId],
+  );
   const storyMatches = filterStory(storySourceEntries, { kind: storyKind || null, words: storyWords });
   const storyTotal = fullStory || wantsWhole ? storyMatches.length : props.story.total;
   const story = { entries: storyMatches.slice(0, storyShown), total: storyTotal };
@@ -390,7 +413,7 @@ export default function ClubRecord(props: ClubRecordProps) {
             <div className={styles.editGrid}>
               <label className={kit.fieldGroup}>
                 <span className={kit.label}>Plan</span>
-                {can.billing ? (
+                {canMovePlan ? (
                   <select
                     className={`${kit.select} ${changes.plan ? styles.changed : ''}`}
                     value={form.planId}
@@ -406,7 +429,7 @@ export default function ClubRecord(props: ClubRecordProps) {
               <div className={styles.editPair}>
                 <label className={kit.fieldGroup}>
                   <span className={kit.label}>Tournament limit</span>
-                  {can.billing
+                  {canMovePlan
                     ? <input className={`${kit.field} ${changes.tournamentLimit ? styles.changed : ''}`} inputMode="numeric" placeholder="No limit" value={form.tournamentLimit}
                         onChange={e => setForm(f => ({ ...f, tournamentLimit: e.target.value.replace(/[^0-9]/g, '') }))} />
                     : <span className={styles.readValue}>{limitText(org.tournamentLimit)}</span>}
@@ -422,6 +445,12 @@ export default function ClubRecord(props: ClubRecordProps) {
                 )}
               </div>
             </div>
+            {can.billing && org.paysThroughStripe && (
+              <p className={styles.refuseLine}>
+                <Flag size={15} aria-hidden className={styles.refuseIcon} />
+                <span>{PAYING_CLUB_PLAN_REFUSAL}</span>
+              </p>
+            )}
             <div className={kit.fieldGroup}>
               <span className={kit.label}>Sections</span>
               <div className={styles.sections}>
@@ -470,6 +499,12 @@ export default function ClubRecord(props: ClubRecordProps) {
             ))}
           </div>
 
+          {tab === 'story' && club.money?.state === 'unreachable' && (
+            <div className={`${kit.callout} ${kit.calloutWarn}`}>
+              <span>Stripe’s charges could not be read at {consoleClock(club.money.readAt)}. Everything we keep is below, including refunds made in this console.</span>
+              <span className={kit.calloutEnd}><button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={club.readAgain}>Read again</button></span>
+            </div>
+          )}
           {tab === 'story' && (
             <div className={kit.card}>
               <div className={kit.toolbar}>
@@ -492,38 +527,28 @@ export default function ClubRecord(props: ClubRecordProps) {
               {story.entries.length < story.total && (
                 <div className={styles.more}><button type="button" className="btn btn-secondary btn-sm" onClick={() => setStoryShown(n => n + STORY_PAGE)}>Show more</button></div>
               )}
-              <div className={styles.tline}>{NOT_IN_STORY}</div>
+              <div className={styles.tline}>{NOT_IN_STORY}{props.money.readsStripe ? '' : ` ${MONEY_ROLES_LINE}`}</div>
             </div>
           )}
 
           {tab === 'money' && (
-            <section className={kit.section}>
-              <div className={`${kit.card} ${kit.cardPad}`}>
-                <div className={styles.facts}>
-                  <div className={styles.fact}><span className={kit.bandLabel}>Plan</span><span className={styles.factValue}>{org.planLabel}</span></div>
-                  <div className={styles.fact}><span className={kit.bandLabel}>State</span><span className={styles.factValue}>{org.statusLabel}</span></div>
-                  <div className={styles.fact}>
-                    <span className={kit.bandLabel}>{org.status === 'canceled' ? 'Ended' : 'Renews or ends'}</span>
-                    <span className={styles.factValue}>{org.currentPeriodEnd ? consoleDate(org.currentPeriodEnd) : 'Not set'}</span>
-                  </div>
-                  <div className={styles.fact}>
-                    <span className={kit.bandLabel}>Stripe customer</span>
-                    {org.stripeCustomerId
-                      ? <span className={styles.factLine}><code className={kit.code}>{org.stripeCustomerId}</code>
-                          <a className={`${kit.door} ${kit.doorSm}`} href={`${props.stripeBase}/customers/${org.stripeCustomerId}`} target="_blank" rel="noreferrer">Open in Stripe</a></span>
-                      : <span className={`${styles.factValue} ${kit.muted}`}>None</span>}
-                  </div>
-                  <div className={styles.fact}>
-                    <span className={kit.bandLabel}>Stripe subscription</span>
-                    {org.stripeSubscriptionId
-                      ? <span className={styles.factLine}><code className={kit.code}>{org.stripeSubscriptionId}</code>
-                          <a className={`${kit.door} ${kit.doorSm}`} href={`${props.stripeBase}/subscriptions/${org.stripeSubscriptionId}`} target="_blank" rel="noreferrer">Open in Stripe</a></span>
-                      : <span className={`${styles.factValue} ${kit.muted}`}>None</span>}
-                  </div>
-                </div>
-              </div>
-              <p className={kit.caption}>Charges, refunds and invoices are not shown here yet.</p>
-            </section>
+            <MoneyTab
+              key={chargeParam ?? ''}
+              orgId={org.id}
+              orgName={org.name}
+              ours={props.money.ours}
+              readsStripe={props.money.readsStripe}
+              stripeBase={props.stripeBase}
+              club={club}
+              openChargeId={chargeParam}
+              onChargeClosed={() => {
+                if (!chargeParam) return;
+                const params = new URLSearchParams(search.toString());
+                params.delete('charge');
+                router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+              }}
+              onRefunded={() => router.refresh()}
+            />
           )}
 
           {tab === 'access' && (

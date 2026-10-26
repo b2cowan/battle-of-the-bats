@@ -1,0 +1,43 @@
+/* The Money tab and its charge window (Support console Stage 3, drawings A–C). Everything else is the console kit. */
+
+/* Ours beside Stripe's: the row's name wears the kit eyebrow (`kit.eye`); it only needs its width here. */
+.rowHead { white-space: nowrap; width: 11rem; }
+
+/* A "Differs" chip is a button: it says what a difference means (every highlight opens on click). */
+.chipButton { cursor: pointer; font-family: inherit; }
+
+/* The line under a flagged charge, and at the top of its window. Red only for a real double charge (D-1). */
+.flag {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.bad { color: var(--danger); }
+
+.openBtn {
+  min-width: var(--tap-min, 44px);
+  background: none;
+  border: 0;
+  color: var(--home-olive);
+  font-size: var(--type-heading);
+  cursor: pointer;
+}
+
+/* The charge window's facts: a name column and a value column. */
+.lines {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) minmax(0, 1fr);
+  gap: 0.55rem 1.25rem;
+  margin: 0;
+}
+.lines dt { padding-top: 0.15rem; } /* each name wears the kit eyebrow (`kit.eye`) */
+.lines dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.refundLine { display: block; }
+
+.amount { max-width: 10rem; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 640px) {
+  .lines { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
+  .lines dd { margin-bottom: 0.45rem; }
+}

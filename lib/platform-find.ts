@@ -48,14 +48,25 @@ export type FindPersonRow = {
   clubs: FindPersonClub[];
 };
 
-export type FindStripeKind = 'customer' | 'subscription' | 'payment';
+/**
+ * What a typed Stripe number is (Support console Stage 3, owner Q5): a customer or subscription (matched on our own
+ * columns), a payment (`ch_`/`py_`/`pi_`: a family payment first, then one exact Stripe read), an invoice (`in_`), or an
+ * invoice's PRINTED number (`A1B2C3D4-0007`, through Stripe's Search). Card digits are never one.
+ */
+export type FindStripeKind = 'customer' | 'subscription' | 'payment' | 'invoice' | 'invoice_number';
 
 export type FindStripeRow = {
   orgId: string;
   orgName: string;
   planLabel: string;
   number: string;
-  kind: FindStripeKind;
+  /** `payment` is a family payment; `charge` and `invoice` are the club's own subscription, read from Stripe. */
+  kind: 'customer' | 'subscription' | 'payment' | 'charge' | 'invoice';
+  /** A subscription charge or invoice: its amount and day, and the charge the Money tab opens on. */
+  amountCents?: number;
+  currency?: string;
+  at?: string;
+  chargeId?: string | null;
 };
 
 export type FindGroup<T> = { rows: T[]; total: number };
@@ -66,8 +77,8 @@ export type FindAnswer = {
   clubs?: FindGroup<FindClubRow>;
   people?: FindGroup<FindPersonRow>;
   stripe?: FindGroup<FindStripeRow>;
-  /** A whole `ch_`/`pi_` number that is no family payment: kept in Stripe only until Stage 3 (state 4). */
-  chargeNotKept?: boolean;
+  /** A Stripe-shaped number that is neither a family payment nor one of our clubs' (or is the other mode's). */
+  stripeNotFound?: boolean;
 };
 
 export type FindReaders = {
@@ -86,15 +97,27 @@ export function findGroupsFor(role: PlatformRole): FindGroupKey[] {
   return groups;
 }
 
-const STRIPE_NUMBER = /^(cus|sub|pi|ch)_[A-Za-z0-9]{6,}$/;
+const STRIPE_NUMBER = /^(cus|sub|pi|ch|py|in)_[A-Za-z0-9]{6,64}$/;
+/**
+ * An invoice's printed number: a prefix of letters and digits, a dash, its sequence. The shape is checked BEFORE any
+ * query is built, so a quote, a space, `OR` or any other search syntax never reaches Stripe (T20).
+ */
+const INVOICE_NUMBER = /^[A-Za-z0-9]{3,12}-[0-9]{4,8}$/;
 
 /** The kind of a whole Stripe number, or null when the words are not one. */
 export function stripeNumberKind(words: string): FindStripeKind | null {
+  if (INVOICE_NUMBER.test(words)) return 'invoice_number';
   const match = STRIPE_NUMBER.exec(words);
   if (!match) return null;
   if (match[1] === 'cus') return 'customer';
   if (match[1] === 'sub') return 'subscription';
+  if (match[1] === 'in') return 'invoice';
   return 'payment';
+}
+
+/** Stripe's Search query for an invoice's printed number, or null when the words are not one (never built otherwise). */
+export function invoiceNumberQuery(words: string): string | null {
+  return INVOICE_NUMBER.test(words) ? `number:"${words.toUpperCase()}"` : null;
 }
 
 export type FindInputVerdict = { ok: true; words: string } | { ok: false; reason: 'too_short' | 'too_long' };
@@ -128,7 +151,7 @@ export async function runFind(role: PlatformRole, words: string, readers: FindRe
   if (searched.includes('stripe')) {
     const rows = (stripeRows ?? []).slice(0, FIND_ROWS_PER_GROUP);
     answer.stripe = { rows, total: rows.length };
-    if (stripeKind === 'payment' && rows.length === 0) answer.chargeNotKept = true;
+    if (stripeKind && stripeKind !== 'customer' && stripeKind !== 'subscription' && rows.length === 0) answer.stripeNotFound = true;
   }
   return answer;
 }

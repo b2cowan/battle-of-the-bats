@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requirePlatformAreaApi } from '@/lib/platform-auth';
+import { hasPlatformPower, requirePlatformAreaApi } from '@/lib/platform-auth';
 import { withObservability } from '@/lib/observability';
 import { buildClubStory } from '@/lib/platform-story';
 
@@ -13,6 +13,6 @@ export const GET = withObservability(async (_req: Request, { params }: { params:
   const auth = await requirePlatformAreaApi('organizations', 'view');
   if (auth.response) return auth.response;
   const { id } = await params;
-  const entries = await buildClubStory(id);
+  const entries = await buildClubStory(id, { money: hasPlatformPower(auth.role, 'find_stripe') });
   return NextResponse.json({ entries, total: entries.length }, { headers: { 'Cache-Control': 'no-store' } });
 }, { route: '/api/platform-admin/orgs/[id]/story' });

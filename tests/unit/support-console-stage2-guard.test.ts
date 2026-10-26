@@ -132,11 +132,13 @@ describe('3 · each role is answered from the rulebook, and a hidden group is ne
     assert.ok(!calls.includes('stripe'));
   });
 
-  it('a pasted charge number that is no family payment gets the "kept in Stripe only" sentence (A10)', async () => {
+  // Stage 3 reads Stripe for a subscription's charge (owner Q5), so "kept in Stripe only" became "nothing matches": a number
+  // that is neither a family payment nor one of our clubs' reads the same as one that does not exist.
+  it('a pasted charge number found nowhere reads as not found (Stage 3 replaced A10’s state)', async () => {
     const { readers } = spyReaders();
     readers.stripe = async () => [];
     const answer = await runFind('billing', 'ch_3PfQ2kL8mZ', readers);
-    assert.equal(answer.chargeNotKept, true);
+    assert.equal(answer.stripeNotFound, true);
   });
 });
 
