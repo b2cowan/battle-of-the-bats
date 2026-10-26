@@ -3,12 +3,12 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import ExportMenu from '@/components/admin/ExportMenu';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
-import { fmtAbsoluteDate, fmtSince, fmtDaysLeft } from '@/lib/format-date';
+import { fmtAbsoluteDate, fmtSince } from '@/lib/format-date';
+import { daysLeft, formatShortDay, lastDayOfInstant } from '@/lib/free-time';
 import { pluralize } from '@/lib/utils';
 // One definition of how a saved card reads, shared with the account's own billing page — the two
 // surfaces that show a customer's card must never describe it differently.
@@ -46,6 +46,8 @@ type Props = {
   nextYearLabel: string;
   freeSeasonEndsIso: string;
   cardWindowOpen: boolean;
+  /** A Founding account that also has staff free time running, by org id: "Club free through Apr 30, 2027". */
+  staffFreeTime?: Record<string, string>;
 };
 
 const KIND_LABEL: Record<FoundingAccountRow['kind'], string> = {
@@ -65,8 +67,13 @@ function nextSeasonLabelFor(row: FoundingAccountRow): string | null {
     : row.nextSeasonPlanLabel;
 }
 
-export default function FoundingSeasonDeskClient({
-  rows, totals, freeSeasonEndsLabel, nextYearLabel, freeSeasonEndsIso, cardWindowOpen,
+/**
+ * The Founding Season view of the Free time list (Support console Stage 4; it was the Founding season desk, and keeps
+ * that desk's whole job: its band, its summer note, and its card, 2028-choice and owner-last-seen columns). Read only.
+ * The end reads as the LAST free day ("Sep 30, 2027", owner ruling Q8), never the instant after it.
+ */
+export default function FoundingSeasonDesk({
+  rows, totals, freeSeasonEndsLabel, nextYearLabel, freeSeasonEndsIso, cardWindowOpen, staffFreeTime,
 }: Props) {
   const [search, setSearch] = useState('');
   const [kindFilter, setKindFilter] = useState('');
@@ -86,6 +93,7 @@ export default function FoundingSeasonDeskClient({
   }), [rows, search, kindFilter, noCardOnly, noChoiceOnly]);
 
   const anyFilter = Boolean(search || kindFilter || noCardOnly || noChoiceOnly);
+  const foundingDaysLeft = daysLeft(lastDayOfInstant(freeSeasonEndsIso));
 
   function buildExportRows() {
     return filtered.map(row => ({
@@ -93,7 +101,7 @@ export default function FoundingSeasonDeskClient({
       slug: row.slug,
       kindLabel: KIND_LABEL[row.kind],
       planLabel: row.planLabel,
-      freeThroughLabel: `${fmtAbsoluteDate(row.freeThrough)}${row.isLegacyExpiry ? ' (legacy)' : ''}`,
+      freeThroughLabel: `${formatShortDay(lastDayOfInstant(row.freeThrough))}${row.isLegacyExpiry ? ' (legacy)' : ''}`,
       cardLabel: cardLabelFor(row) ?? 'None',
       cardSavedLabel: row.cardOnFileAt ? fmtAbsoluteDate(row.cardOnFileAt) : '',
       nextSeasonLabel: nextSeasonLabelFor(row) ?? 'None',
@@ -118,8 +126,6 @@ export default function FoundingSeasonDeskClient({
 
   return (
     <div className={kit.page}>
-      <AdminPageHeader title="Founding season" />
-
       <section className={kit.band} aria-label="Founding season snapshot">
         <div className={`${kit.bandCell} ${kit.bandGood}`}>
           <span className={kit.bandLabel}>Founding accounts</span>
@@ -143,11 +149,12 @@ export default function FoundingSeasonDeskClient({
           </span>
         </div>
         <div className={kit.bandCell}>
-          <span className={kit.bandLabel}>Free season ends</span>
+          <span className={kit.bandLabel}>Free through</span>
           <strong className={`${kit.bandValue} ${kit.bandValueSm}`}>{freeSeasonEndsLabel}</strong>
           {/* Clock-dependent, so it is read on the CLIENT — a server render would bake in the day
               the page was built. Same rule the console's other freshness figures follow. */}
-          <span className={kit.bandNote}>{fmtDaysLeft(freeSeasonEndsIso).trim() || '(ended)'}</span>
+          {/* Counted to the LAST free day, as the club record's Free time row counts it (Support console Stage 4). */}
+          <span className={kit.bandNote}>{foundingDaysLeft >= 0 ? `${foundingDaysLeft} day${foundingDaysLeft === 1 ? '' : 's'} left` : 'ended'}</span>
         </div>
       </section>
 
@@ -238,7 +245,7 @@ export default function FoundingSeasonDeskClient({
               <tr>
                 <th>Account</th>
                 <th>Kind</th>
-                <th>Plan</th>
+                <th>Free on</th>
                 <th>Free through</th>
                 <th>Card on file</th>
                 <th>{nextYearLabel} choice</th>
@@ -254,7 +261,7 @@ export default function FoundingSeasonDeskClient({
                   <tr key={row.orgId}>
                     {/* The lead cell is the card's title on a phone and takes no label. */}
                     <td className="table-cards-title">
-                      <Link href={`/platform-admin/orgs/${row.orgId}?tab=billing`} className={kit.nameLink}>
+                      <Link href={`/platform-admin/orgs/${row.orgId}?tab=access`} className={kit.nameLink}>
                         {row.name}
                       </Link>
                       <span className={`${kit.sub} ${kit.code}`}>{row.slug}</span>
@@ -264,9 +271,17 @@ export default function FoundingSeasonDeskClient({
                         {KIND_LABEL[row.kind]}
                       </span>
                     </td>
-                    <td data-label="Plan" className={kit.muted}>{row.planLabel}</td>
+                    <td data-label="Free on">
+                      <span className={kit.muted}>{row.planLabel}</span>
+                      {/* A club marked Founding but on the free plan holds the mark without Tournament Plus: a row to heal at
+                          the Founding turn-off decision, shown, never acted on here. */}
+                      {row.kind === 'organization' && row.planId === 'tournament' && (
+                        <span className={`${kit.sub} ${styles.flagLine}`}>Marked Founding, on the free plan</span>
+                      )}
+                      {staffFreeTime?.[row.orgId] && <span className={kit.sub}>{staffFreeTime[row.orgId]}</span>}
+                    </td>
                     <td data-label="Free through">
-                      {fmtAbsoluteDate(row.freeThrough)}
+                      {formatShortDay(lastDayOfInstant(row.freeThrough))}
                       {/* ⚠ A row migration 279 never reached still carries the pre-2026-09-07
                           instant. Recognition tolerates it — the account IS in the cohort — but
                           this desk is the only surface anyone would ever notice it on. */}

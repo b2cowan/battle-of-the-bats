@@ -5,8 +5,9 @@
  * ⚖ EVERY QUEUE IS REAL (A5). Eleven are the counts Overview's Action queue already computed (owner inactive, missing
  * owner, retention, past due — "N since your last visit" is its reason, not a row — trials ending, overrides ending, new
  * leads, campaigns past due and due soon, the approval queue); two are new but read data we keep: error groups first
- * seen since the last visit, and feedback marked new. Nothing invented: "Free time ending" waits for Stage 4, and
- * Overrides ending stands in until then.
+ * seen since the last visit, and feedback marked new. Nothing invented. Support console Stage 4 replaced "Overrides
+ * ending" with **Free time ending** (owner ruling Q7): every timed grant, 14 days, counting CLUBS, from the same list
+ * the Free time page's "Ending in 14 days" filter shows (`lib/free-time-list.ts`), so the two numbers cannot differ.
  *
  * ⚖ ROLES TRIM IT. A role sees only the queues whose list it can open — the menu's rule. A queue it can read but not
  * clear still shows, its list opening read-only.
@@ -20,6 +21,7 @@ import type { PlatformRole } from './platform-auth';
 import { getCommandCenterStats } from './platform-metrics';
 import { classifyCampaignSend, UPCOMING_WINDOW_DAYS } from './marketing-schedule';
 import { tournamentToday } from './timezone';
+import { freeTimeEndingCount, getStaffFreeTime } from './free-time-list';
 
 export type WaitingGroupKey = 'customers' | 'health' | 'growth' | 'product';
 
@@ -54,6 +56,7 @@ type QueueDef = Omit<WaitingQueue, 'count' | 'why'> & { why: string | ((ctx: { s
 const QUEUES: QueueDef[] = [
   { key: 'owner_inactive', group: 'customers', label: 'Owner inactive', why: 'The owner has not signed in for 30 days', clearLabel: 'owner inactive', href: '/platform-admin/orgs?filter=owner_inactive', entry: 'organizations' },
   { key: 'retention', group: 'customers', label: 'Retention', why: 'A cancelled club whose kept data runs out within 30 days', clearLabel: 'retention', href: '/platform-admin/retention', entry: 'retention' },
+  { key: 'free_time_ending', group: 'customers', label: 'Free time ending', why: 'A club whose free time ends in the next 14 days: a plan, sections or a billing status', clearLabel: 'free time ending in 14 days', href: '/platform-admin/free-time?view=staff&ending=14', entry: 'free_time' },
   { key: 'missing_owner', group: 'customers', label: 'Missing owner', why: 'A club with nobody as its owner', clearLabel: 'missing owner', href: '/platform-admin/orgs?filter=no_owner', entry: 'organizations' },
   {
     key: 'past_due', group: 'customers', label: 'Past due',
@@ -61,7 +64,6 @@ const QUEUES: QueueDef[] = [
     clearLabel: 'past due', href: '/platform-admin/orgs?status=past_due', entry: 'organizations',
   },
   { key: 'trials_ending', group: 'customers', label: 'Trials ending', why: 'A trial that ends in the next 14 days', clearLabel: 'trials ending in 14 days', href: '/platform-admin/orgs?filter=trial_ending', entry: 'organizations' },
-  { key: 'overrides_ending', group: 'customers', label: 'Overrides ending', why: 'An override that ends in the next 14 days', clearLabel: 'overrides ending in 14 days', href: '/platform-admin/orgs?filter=expiring_overrides', entry: 'organizations' },
   { key: 'new_errors', group: 'health', label: 'New errors', why: 'An error first seen since your last visit', clearLabel: 'new errors', href: '/platform-admin/observability', entry: 'observability' },
   { key: 'new_feedback', group: 'health', label: 'New feedback', why: 'A message from inside the product nobody has triaged', clearLabel: 'new feedback', href: '/platform-admin/feedback', entry: 'feedback' },
   { key: 'campaigns_past_due', group: 'growth', label: 'Campaigns past due', why: 'A planned campaign whose send date has passed', clearLabel: 'campaigns past due', href: '/platform-admin/email', entry: 'email' },
@@ -140,7 +142,7 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
   const dayAgo = new Date(nowMs - 86_400_000).toISOString(); // utc-intentional: an instant window
   const sinceIso = since ?? dayAgo;
 
-  const [stats, campaigns, approvals, newErrors, newFeedback] = await Promise.all([
+  const [stats, campaigns, approvals, newErrors, newFeedback, freeTimeEnding] = await Promise.all([
     getCommandCenterStats({ since }),
     wants('campaigns_past_due') || wants('campaigns_due_soon') ? campaignAlerts() : Promise.resolve({ pastDue: 0, dueSoon: 0 }),
     wants('approval_queue')
@@ -152,6 +154,7 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
     wants('new_feedback')
       ? headCount(supabaseAdmin.from('feedback_submissions').select('id', { count: 'exact', head: true }).eq('status', 'new'))
       : Promise.resolve(0),
+    wants('free_time_ending') ? getStaffFreeTime().then(freeTimeEndingCount).catch(() => 0) : Promise.resolve(0),
   ]);
 
   const counts: Record<string, number> = {
@@ -160,7 +163,7 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
     missing_owner: stats.alerts.orgsWithoutOwner,
     past_due: stats.alerts.pastDue,
     trials_ending: stats.alerts.trialEndingSoon,
-    overrides_ending: stats.alerts.overridesExpiringSoon,
+    free_time_ending: freeTimeEnding,
     new_errors: newErrors,
     new_feedback: newFeedback,
     campaigns_past_due: campaigns.pastDue,

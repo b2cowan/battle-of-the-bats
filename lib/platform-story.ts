@@ -21,9 +21,10 @@
 import { supabaseAdmin } from './supabase-admin';
 import { peopleByIds } from './platform-people-lookup';
 import { consoleClock, consoleDay } from './console-dates';
-import { aRole, humanize, limitWords, overrideWhat, planLabel, sectionLabel } from './platform-labels';
-import type { PutBack, StoryEntry } from './platform-story-view';
+import { aRole, humanize, limitWords, sectionLabel } from './platform-labels';
+import { obj, planName, putBackOf, str, whyFields, type AuditRow, type PutBack, type StoryEntry } from './platform-story-view';
 import { possessive } from './utils';
+import { freeTimeStoryEntries } from './free-time-story';
 
 // The shape and the on-screen filter are plain (the record filters on screen); this module builds the entries.
 export type { PutBack, PutBackKind, StoryEntry, StoryKind } from './platform-story-view';
@@ -32,28 +33,7 @@ export { filterStory } from './platform-story-view';
 const SOURCE_CAP = 500;
 const THE_PRODUCT = 'The product';
 
-type AuditRow = {
-  id: number | string;
-  actor_email: string | null;
-  action: string;
-  field: string | null;
-  old_value: unknown;
-  new_value: unknown;
-  created_at: string;
-};
 
-function obj(v: unknown): Record<string, unknown> | null {
-  return v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
-}
-function str(v: unknown): string | null {
-  return typeof v === 'string' && v.trim() ? v : null;
-}
-function reasonOf(v: unknown): string | null {
-  return str(obj(v)?.reason);
-}
-function putBackOf(v: unknown): string | null {
-  return str(obj(v)?.put_back_of);
-}
 function list(v: unknown): string[] {
   if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string');
   const o = obj(v);
@@ -61,16 +41,8 @@ function list(v: unknown): string[] {
   if (o && Array.isArray(o.enabled_addons)) return o.enabled_addons.filter((x): x is string => typeof x === 'string');
   return [];
 }
-function whyFields(v: unknown, keptSinceStage2: boolean): Pick<StoryEntry, 'why' | 'whyNotRecorded'> {
-  const reason = reasonOf(v);
-  if (reason) return { why: reason };
-  return keptSinceStage2 ? { why: null, whyNotRecorded: true } : { why: null };
-}
 function when(iso: string): string {
   return `${consoleDay(iso)} at ${consoleClock(iso)}`;
-}
-function planName(id: unknown): string {
-  return typeof id === 'string' && id ? planLabel(id) : 'no plan';
 }
 function limitOf(v: unknown): string {
   return limitWords(typeof v === 'number' ? v : null);
@@ -286,40 +258,13 @@ export async function buildClubStory(orgId: string): Promise<StoryEntry[]> {
     }
   }
 
-  // ── Overrides (org_overrides; the ending's reason from its revoke entry) ─────────────────────────────────────────
-  const revokeReasons = new Map<string, unknown>();
-  for (const r of audit) if (r.action === 'revoke_override' && typeof r.old_value === 'string') revokeReasons.set(r.old_value, r.new_value);
-  const nowMs = Date.now();
-  for (const o of (overridesRes.data ?? []) as Array<{
-    id: string; type: string; value: string | null; target: { addons?: string[] } | null; starts_at: string | null; expires_at: string | null;
-    reason: string | null; created_by: string | null; created_at: string; revoked_at: string | null; revoked_by: string | null;
-  }>) {
-    const what = overrideWhat(o.type, o.value, o.target?.addons ?? []);
-    const ends = o.expires_at ? `until ${consoleDay(o.expires_at)}` : 'no end date';
-    const running = !o.revoked_at && (!o.starts_at || Date.parse(o.starts_at) <= nowMs) && (!o.expires_at || Date.parse(o.expires_at) > nowMs);
-    const key = `override:${o.id}`;
-    const entry: StoryEntry = {
-      key, at: o.created_at, kind: 'staff', title: `Override applied: ${what}`, sub: running ? `Running, ${ends}` : ends,
-      who: o.created_by ?? 'Staff', why: o.reason ?? null, whyNotRecorded: !o.reason,
-    };
-    markPutBack(entry, running ? {
-      kind: 'override',
-      title: `End the override for ${org.name}`,
-      sentence: `The ${what.toLowerCase()} override for ${org.name} ends now instead of ${o.expires_at ? `on ${consoleDay(o.expires_at)}` : 'running with no end date'}.`,
-      overrideId: o.id,
-    } : null);
-    entries.push(entry);
-    if (o.revoked_at) {
-      const revoke = revokeReasons.get(o.id);
-      entries.push({
-        key: `override-ended:${o.id}`, at: o.revoked_at, kind: 'staff',
-        title: putBackOf(revoke) ? `Put back: override ended: ${what}` : `Override ended: ${what}`,
-        who: o.revoked_by ?? 'Staff', ...whyFields(revoke, true),
-      });
-    } else if (o.expires_at && Date.parse(o.expires_at) <= nowMs) {
-      entries.push({ key: `override-ran-out:${o.id}`, at: o.expires_at, kind: 'staff', title: `Override ran out: ${what}`, who: THE_PRODUCT, why: null });
-    }
-  }
+  // ── Free time (org_overrides, and the audit entries that change or end it): lib/free-time-story.ts ──────────────
+  entries.push(...freeTimeStoryEntries({
+    org,
+    overrides: (overridesRes.data ?? []) as Parameters<typeof freeTimeStoryEntries>[0]['overrides'],
+    audit,
+    putBackAt,
+  }));
 
   // ── Notes ────────────────────────────────────────────────────────────────────────────────────────────────────────
   for (const n of (notesRes.data ?? []) as Array<{ id: string; body: string; created_by_email: string | null; created_at: string; deleted_at: string | null; deleted_by_email: string | null }>) {

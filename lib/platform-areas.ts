@@ -107,7 +107,7 @@ export type PlatformArea =
   | 'change_requests'
   | 'plans_pricing'
   | 'bulk_operations'
-  | 'founding_season'
+  | 'free_time'
   | 'platform_users'
   | 'audit'
   | 'observability'
@@ -136,14 +136,14 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
 
   retention:       { viewRoles: ['super_admin', 'billing', 'support'], powers: ['retention'] },
   bulk_operations: { viewRoles: ['super_admin', 'billing', 'product'], powers: ['bulk_plan_status', 'bulk_sections'] },
-  /* Every account on a free Founding Season, and what it has done about the season ending.
-     ⚠ NO WRITES, DELIBERATELY (owner-approved 2026-09-07). Every action this desk implies —
-     change a plan, cancel, send the reminder — already lives in Bulk changes, the club record
-     and Campaigns, and it links to them. A read-only desk cannot convert the wrong account by
-     accident, and how the October 2027 turn-off actually runs is a Phase 3 decision due May
-     2027. PRODUCT can see it because "did they choose a plan?" is a roadmap question before it
-     is a billing one. */
-  founding_season: { viewRoles: ['super_admin', 'billing', 'product'], powers: [] },
+  /* Free time (Support console Stage 4): everyone with free time running, in three views — Everyone, Founding Season
+     (the Founding desk, whole) and Given by staff. It replaced the Founding season desk's menu entry.
+     ⚠ NO WRITES, DELIBERATELY: nothing on the list acts (no bulk end, no bulk extend). The Founding desk was read-only on
+     purpose (owner-approved 2026-09-07) and a group-wide change to Founding Season is its turn-off decision, not a support
+     action. Free time is given, changed and ended on a club's record, by the plan-and-billing power (owner ruling Q2), so
+     that is the write side the eye reads. SUPPORT sees it because "when does my free time end" is a support question;
+     PRODUCT because "did they choose a plan?" is a roadmap question before it is a billing one. */
+  free_time: { viewRoles: ['super_admin', 'billing', 'support', 'product'], powers: ['club_billing'] },
 
   plans_pricing:   { viewRoles: ['super_admin', 'product', 'billing'], powers: ['catalog'] },
   change_requests: { viewRoles: ['super_admin', 'product', 'billing'], powers: ['catalog'] },

@@ -13,14 +13,16 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Check, Mail, Pencil, X } from 'lucide-react';
+import { Check, Flag, Lock, Mail, Pencil, Users, X } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import DateInput from '@/components/shared/DateInput';
 import { filterStory, type StoryEntry, type StoryKind } from '@/lib/platform-story-view';
 import { consoleDate, consoleDay } from '@/lib/console-dates';
 import { rememberConsoleRecent } from '@/lib/console-recent';
-import { cap, CLUB_SECTIONS, humanize, limitWords, overrideWhat, sectionLabel, STORY_KINDS } from '@/lib/platform-labels';
+import { cap, CLUB_SECTIONS, humanize, limitWords, planLabel, sectionLabel, STORY_KINDS } from '@/lib/platform-labels';
+import { addCalendarDays } from '@/lib/timezone';
+import { daysLeft, formatLongDay, formatShortDay, freeThroughShort, type GiveBlock, type PlanBlock } from '@/lib/free-time';
 import { possessive } from '@/lib/utils';
 import StoryTable from '../../StoryTable';
 import RecordWindow from '../../RecordWindow';
@@ -48,6 +50,8 @@ export type ClubRecordProps = {
     createdAt: string; currentPeriodEnd: string | null; stripeCustomerId: string | null; stripeSubscriptionId: string | null;
     tournamentLimit: number; teamLimit: number | null; storedTeamLimit: number | null; isClubBand: boolean;
     enabledAddons: string[]; planSections: string[];
+    /** The plan the club is on RIGHT NOW (free time included) and its limits: the band follows these. */
+    nowPlanId: string; nowPlanLabel: string; nowTournamentLimit: number; nowTeamLimit: number | null;
   };
   stripeBase: string;
   ownerEmail: string | null;
@@ -57,15 +61,31 @@ export type ClubRecordProps = {
   members: Array<{ userId: string; email: string; name: string | null; role: string; status: string; lastSignInAt: string | null }>;
   tournaments: Array<{ id: string; name: string; status: string; startDate: string | null; endDate: string | null }>;
   overrides: Array<{
-    id: string; type: string; value: string | null; addons: string[]; expiresAt: string | null; reason: string | null;
-    createdBy: string | null; createdAt: string; endedAt: string | null; running: boolean;
+    id: string; type: string; value: string | null; addons: string[]; plan: string | null; expiresAt: string | null;
+    /** The last free day (`YYYY-MM-DD`, Eastern) the end stands for. */
+    lastDay: string | null;
+    /** A comp period carrying Founding Season's end: read-only, given at sign-up. */
+    founding: boolean;
+    reason: string | null; createdBy: string | null; createdAt: string; endedAt: string | null; running: boolean;
   }>;
   ownAddress: { address: string; status: string } | null;
   teamMoves: Array<{ id: string; teamName: string; at: string; state: 'moved' | 'waiting_on_coach' | 'waiting_on_club' }>;
   story: { entries: StoryEntry[]; total: number };
   planOptions: Array<{ id: string; label: string; tournamentLimit: number; teamLimit: number }>;
   can: { support: boolean; billing: boolean; sections: boolean; delete: boolean; emailOwner: boolean };
+  /** Giving free time (a giver only): what the console knows before the click, and the window's bounds. */
+  freeTime: {
+    block: GiveBlock | null;
+    planBlock: PlanBlock | null;
+    plansAbove: Array<{ id: string; label: string }>;
+    earliest: string;
+    latest: string;
+    capMonths: number;
+    superAdmin: boolean;
+  } | null;
 };
+
+type FreeTimeRow = ClubRecordProps['overrides'][number];
 
 type Window =
   | { kind: 'save' }
@@ -74,7 +94,9 @@ type Window =
   | { kind: 'note' }
   | { kind: 'makeOwner'; member: ClubRecordProps['members'][number] }
   | { kind: 'release' }
-  | { kind: 'override' }
+  | { kind: 'give' }
+  | { kind: 'changeEnd'; row: FreeTimeRow }
+  | { kind: 'endNow'; row: FreeTimeRow }
   | { kind: 'cancel' }
   | { kind: 'delete' }
   | null;
@@ -236,29 +258,46 @@ export default function ClubRecord(props: ClubRecordProps) {
       <span className={kit.bandNote}>{props.ownerEmail ? (props.ownerLastSignIn ? `owner signed in ${consoleDay(props.ownerLastSignIn)}` : 'owner never signed in') : 'nobody is the owner'}</span>
     </div>
   );
+  // The band takes the shape of the plan the club is on RIGHT NOW: a Club grant shows Teams beside Tournaments, as a Club
+  // does. Its figures are worked out from the plan settings, never written as new words.
+  const onFreePlan = org.nowPlanId !== org.planId;
   const teamsCell = (
     <div className={kit.bandCell}>
       <span className={kit.bandLabel}>Teams</span>
-      <span className={kit.bandValue}>{props.teamCount}{org.teamLimit != null && org.teamLimit < 9999 ? ` of ${org.teamLimit}` : ''}</span>
-      <span className={kit.bandNote}>on the {org.planLabel} plan</span>
+      <span className={kit.bandValue}>{props.teamCount}{org.nowTeamLimit != null && org.nowTeamLimit < 9999 ? ` of ${org.nowTeamLimit}` : ''}</span>
+      <span className={kit.bandNote}>{onFreePlan ? `on ${org.nowPlanLabel}, while it is free` : `on the ${org.planLabel} plan`}</span>
     </div>
   );
   const tournamentsCell = (
     <div className={kit.bandCell}>
       <span className={kit.bandLabel}>Tournaments</span>
-      <span className={kit.bandValue}>{org.tournamentLimit < 9999 ? `${props.slotsHeld} of ${org.tournamentLimit}` : props.tournaments.length}</span>
-      <span className={kit.bandNote}>{org.tournamentLimit >= 9999 ? `no limit on ${org.planLabel}` : `the ${org.planLabel} limit`}</span>
+      <span className={kit.bandValue}>{org.nowTournamentLimit < 9999 ? `${props.slotsHeld} of ${org.nowTournamentLimit}` : props.tournaments.length}</span>
+      <span className={kit.bandNote}>{org.nowTournamentLimit >= 9999 ? `no limit on ${org.nowPlanLabel}` : `the ${org.nowPlanLabel} limit`}</span>
     </div>
   );
-  const runningOverrides = props.overrides.filter(o => o.running);
-  const overridesCell = (
+  // Free time: the staff grants running, and Founding Season. The title's chip names the staff grant that ends first.
+  const runningFree = props.overrides.filter(o => o.running && (o.type !== 'comp_period' || o.founding));
+  const staffFree = runningFree.filter(o => o.type !== 'comp_period' && o.lastDay).sort((a, b) => a.lastDay!.localeCompare(b.lastDay!));
+  const foundingRow = runningFree.find(o => o.founding) ?? null;
+  const firstEnding = staffFree[0] ?? null;
+  const freeTimeCell = (
+    <div className={`${kit.bandCell}${runningFree.length ? ` ${kit.bandGood}` : ''}`}>
+      <span className={kit.bandLabel}>Free time</span>
+      <span className={kit.bandValue}>{runningFree.length}</span>
+      <span className={kit.bandNote}>
+        {firstEnding ? `${freeTimeSubject(firstEnding, org.planLabel)} ends first, ${formatShortDay(firstEnding.lastDay!)}`
+          : foundingRow ? 'Founding Season' : 'none running'}
+      </span>
+    </div>
+  );
+  // When nothing renews, the last figure says what is true: free through Founding Season's last day.
+  const renewsCell = foundingRow && !org.stripeSubscriptionId && foundingRow.lastDay ? (
     <div className={kit.bandCell}>
-      <span className={kit.bandLabel}>Overrides</span>
-      <span className={kit.bandValue}>{runningOverrides.length}</span>
-      <span className={kit.bandNote}>running now</span>
+      <span className={kit.bandLabel}>Billing</span>
+      <span className={`${kit.bandValueText} ${styles.quietValue}`}>{freeThroughShort(foundingRow.lastDay)}</span>
+      <span className={kit.bandNote}>Founding Season, no Stripe subscription</span>
     </div>
-  );
-  const renewsCell = (
+  ) : (
     <div className={kit.bandCell}>
       <span className={kit.bandLabel}>{org.status === 'canceled' ? 'Ended' : org.status === 'trialing' ? 'Trial ends' : 'Renews'}</span>
       {org.currentPeriodEnd
@@ -290,6 +329,13 @@ export default function ClubRecord(props: ClubRecordProps) {
         titleChips={<>
           <span className={kit.chip}>{org.planLabel}</span>
           <span className={`${kit.chip} ${subscriptionStatusChip(org.status)}`}>{org.statusLabel}</span>
+          {firstEnding && (
+            <>
+              <button type="button" className={`${kit.chip} ${kit.chipOk} ${styles.ftChip}`} onClick={() => setTab('access')}
+                title="Open the Free time list">Free time</button>
+              <span className={styles.ftBeside}>{freeTimeSubject(firstEnding, org.planLabel)} free through {formatShortDay(firstEnding.lastDay!)}</span>
+            </>
+          )}
         </>}
         actions={(canEdit || can.emailOwner || can.support) ? (
           <span className={styles.headActions}>
@@ -410,7 +456,9 @@ export default function ClubRecord(props: ClubRecordProps) {
         <>
           <div className={kit.band}>
             {membersCell}
-            {org.isClubBand ? <>{teamsCell}{tournamentsCell}</> : <>{tournamentsCell}{overridesCell}</>}
+            {org.isClubBand && teamsCell}
+            {tournamentsCell}
+            {freeTimeCell}
             {renewsCell}
           </div>
 
@@ -480,7 +528,8 @@ export default function ClubRecord(props: ClubRecordProps) {
           )}
 
           {tab === 'access' && (
-            <AccessTab {...props} onAddOverride={() => setWin({ kind: 'override' })} onRelease={() => setWin({ kind: 'release' })}
+            <AccessTab {...props} onGive={() => setWin({ kind: 'give' })} onChangeEnd={row => setWin({ kind: 'changeEnd', row })}
+              onEndNow={row => setWin({ kind: 'endNow', row })} onRelease={() => setWin({ kind: 'release' })}
               onCancel={() => setWin({ kind: 'cancel' })} onDelete={() => setWin({ kind: 'delete' })} />
           )}
 
@@ -521,9 +570,11 @@ export default function ClubRecord(props: ClubRecordProps) {
         <RecordWindow
           title={win.entry.putBack.title}
           sentence={win.entry.putBack.sentence}
-          whyPlaceholder="Why are you putting this back?"
+          whyPlaceholder={win.entry.putBack.kind === 'override' ? 'Why are you ending it early?' : 'Why are you putting this back?'}
           footNote="Writes a new entry in the Story."
-          confirmLabel="Put it back"
+          // Ending free time from the Story is the Access list's End it now window (one window for one act).
+          cancelLabel={win.entry.putBack.kind === 'override' ? 'Keep it' : undefined}
+          confirmLabel={win.entry.putBack.kind === 'override' ? 'End it now' : 'Put it back'}
           onConfirm={act(`/api/platform-admin/orgs/${org.id}/put-back`, 'POST', 'It could not be put back.', reason => ({ key: win.entry.key, reason }))}
           onClose={() => setWin(null)}
         />
@@ -550,9 +601,16 @@ export default function ClubRecord(props: ClubRecordProps) {
           onClose={() => setWin(null)}
         />
       )}
-      {win?.kind === 'override' && (
-        <OverrideWindow orgId={org.id} orgName={org.name} planSections={org.planSections}
+      {win?.kind === 'give' && props.freeTime && (
+        <GiveWindow org={org} freeTime={props.freeTime} rows={props.overrides} onChangeEnd={row => setWin({ kind: 'changeEnd', row })}
           onDone={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
+      )}
+      {win?.kind === 'changeEnd' && props.freeTime && (
+        <ChangeEndWindow org={org} row={win.row} freeTime={props.freeTime}
+          onDone={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
+      )}
+      {win?.kind === 'endNow' && (
+        <EndNowWindow org={org} row={win.row} onDone={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
       )}
       {win?.kind === 'cancel' && (
         <CancelWindow orgId={org.id} orgName={org.name} hasStripe={!!org.stripeSubscriptionId}
@@ -568,13 +626,14 @@ export default function ClubRecord(props: ClubRecordProps) {
 
 // ── Access: plan and limits, sections, overrides, the own web address; the rare doors end it ─────────────────────────
 function AccessTab(props: ClubRecordProps & {
-  onAddOverride: () => void; onRelease: () => void; onCancel: () => void; onDelete: () => void;
+  onGive: () => void; onChangeEnd: (row: FreeTimeRow) => void; onEndNow: (row: FreeTimeRow) => void;
+  onRelease: () => void; onCancel: () => void; onDelete: () => void;
 }) {
   const { org, can } = props;
-  const [showPast, setShowPast] = useState(false);
-  const running = props.overrides.filter(o => o.running);
-  const past = props.overrides.filter(o => !o.running);
-  const what = (o: ClubRecordProps['overrides'][number]) => overrideWhat(o.type, o.value, o.addons);
+  // Running free time only: ended free time stays in the Story, not here. Founding first is not a rule; soonest end is.
+  const running = props.overrides.filter(o => o.running).sort((a, b) => (a.lastDay ?? '9999').localeCompare(b.lastDay ?? '9999'));
+  const giver = can.billing && props.freeTime;
+  const block = props.freeTime?.block ?? null;
   const canCancel = can.billing && org.status !== 'canceled' && (org.planId !== 'tournament' || !!org.stripeSubscriptionId);
   return (
     <div className={kit.page}>
@@ -610,41 +669,48 @@ function AccessTab(props: ClubRecordProps & {
         </div>
       </section>
 
-      <section className={kit.section}>
+      <section className={kit.section} id="free-time">
         <div className={styles.blockHead}>
-          <h2 className={kit.sectionTitle}>Overrides</h2>
-          {can.billing && <button type="button" className={kit.door} onClick={props.onAddOverride}>Add an override</button>}
+          <h2 className={kit.sectionTitle}>Free time</h2>
+          {giver && !block && <button type="button" className="btn btn-secondary btn-sm" onClick={props.onGive}>Give free time</button>}
         </div>
+        {giver && block && <BlockLine block={block} />}
         <div className={`${kit.card} ${kit.cardPad}`}>
-          {running.length === 0 && <p className={kit.caption}>Nothing is overridden right now.</p>}
+          {running.length === 0 && <p className={kit.caption}>No free time running.</p>}
           <div className={styles.list}>
-            {running.map(o => (
-              <div key={o.id} className={styles.listRow}>
-                <span className={styles.listMain}>{what(o)}
-                  <span className={styles.listSub}>{o.expiresAt ? `Until ${consoleDate(o.expiresAt)}` : 'No end date'} · {o.reason ?? 'No reason kept'} · by {o.createdBy ?? 'staff'}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-          {past.length > 0 && (
-            <>
-              <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={() => setShowPast(v => !v)}>
-                {showPast ? 'Hide' : 'Show'} {past.length} past override{past.length === 1 ? '' : 's'}
-              </button>
-              {showPast && (
-                <div className={styles.list}>
-                  {past.map(o => (
-                    <div key={o.id} className={styles.listRow}>
-                      <span className={styles.listMain}>{what(o)}
-                        <span className={styles.listSub}>{o.endedAt ? `Ended ${consoleDate(o.endedAt)}` : 'Not started yet'} · applied {consoleDate(o.createdAt)} by {o.createdBy ?? 'staff'}</span>
-                      </span>
-                    </div>
-                  ))}
+            {running.map(o => {
+              const left = o.lastDay ? daysLeft(o.lastDay) : null;
+              const leftText = left == null ? null : left === 0 ? 'last day' : `${left} day${left === 1 ? '' : 's'} left`;
+              const isStaff = o.type !== 'comp_period';
+              return (
+                <div key={o.id} className={styles.listRow}>
+                  <span className={styles.listMain}>
+                    <strong>{freeTimeTitle(o, org)}</strong>
+                    <span className={styles.listSub}>
+                      {o.type === 'comp_period' && !o.founding
+                        ? <>{o.lastDay ? `Until ${formatShortDay(o.lastDay)}` : 'No end date'} · {o.reason ?? 'No reason kept'}</>
+                        : <>
+                          {o.lastDay ? freeThroughShort(o.lastDay) : 'No end date'}
+                          {leftText && <> · <span className={left != null && left < 14 ? styles.soon : undefined}>{leftText}</span></>}
+                          {o.founding
+                            ? <> · given at {org.planId === 'team' ? 'checkout' : 'sign-up'} · the club’s own plan, ending with the Founding Season</>
+                            : <> · {o.reason ?? 'No reason kept'} · by {o.createdBy ?? 'staff'}</>}
+                        </>}
+                    </span>
+                  </span>
+                  {giver && !block && isStaff && (
+                    <span className={styles.rowDoors}>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => props.onChangeEnd(o)}>Change the end date</button>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => props.onEndNow(o)}>End it now</button>
+                    </span>
+                  )}
                 </div>
-              )}
-            </>
+              );
+            })}
+          </div>
+          {running.some(o => o.type !== 'comp_period') && (
+            <p className={kit.caption}>End it now here and Put it back on the Story open the same window. Ended free time stays in the Story, not here.</p>
           )}
-          {running.length > 0 && <p className={kit.caption}>An override that is running can be ended early from its entry on the Story.</p>}
         </div>
       </section>
 
@@ -778,46 +844,132 @@ function NoteWindow({ orgId, orgName, onDone, onClose }: { orgId: string; orgNam
   );
 }
 
-// ── Add an override ──────────────────────────────────────────────────────────────────────────────────────────────────
-function OverrideWindow({ orgId, orgName, planSections, onDone, onClose }: {
-  orgId: string; orgName: string; planSections: string[]; onDone: () => void; onClose: () => void;
+// ── Free time: the words, the line where the door would be, and its three windows ──────────────────────────────────
+/** What a running grant gives, in a few words: "Club", "Accounting, House league", "Billing status". */
+function freeTimeSubject(o: FreeTimeRow, ownPlanLabel: string): string {
+  if (o.type === 'plan_tier') return planLabel(o.plan ?? '');
+  if (o.type === 'module_addon') return o.addons.map(sectionLabel).join(', ') || 'Sections';
+  if (o.type === 'subscription_status') return 'Billing status';
+  return ownPlanLabel;
+}
+
+/** An Access row's title: "Club · the whole plan", "Accounting", "Billing status: active", "Tournament Plus · Founding Season". */
+function freeTimeTitle(o: FreeTimeRow, org: ClubRecordProps['org']): string {
+  if (o.type === 'plan_tier') return `${planLabel(o.plan ?? '')} · the whole plan`;
+  if (o.type === 'module_addon') return o.addons.map(sectionLabel).join(', ') || 'Sections';
+  if (o.type === 'subscription_status') return `Billing status: ${(o.value ?? 'active').replace(/_/g, ' ')}`;
+  return o.founding ? `${org.planLabel} · Founding Season` : 'Billing tag, gives nothing';
+}
+
+/** "April 1" (or "January 1, 2027" when the year turns): the first day back on the club's own plan. */
+function dayAfterWords(lastDay: string): string {
+  const next = addCalendarDays(lastDay, 1);
+  const long = formatLongDay(next);
+  return next.slice(0, 4) === lastDay.slice(0, 4) ? long.replace(/, \d{4}$/, '') : long;
+}
+
+/** "March 31": a last free day inside a sentence that already names the year. */
+const monthDay = (day: string) => formatLongDay(day).replace(/, \d{4}$/, '');
+
+function BlockLine({ block }: { block: GiveBlock }) {
+  const Icon = block.kind === 'switch' ? Lock : block.kind === 'own_club' ? Users : Flag;
+  return (
+    <p className={`${styles.refuseLine}${block.tone === 'red' ? ` ${styles.refuseLineBad}` : ''}`}>
+      <Icon size={15} aria-hidden className={styles.refuseIcon} />
+      <span><strong>{block.lead}</strong>{block.rest}</span>
+    </p>
+  );
+}
+
+type FreeTimeBounds = NonNullable<ClubRecordProps['freeTime']>;
+type GiveKind = 'plan_tier' | 'module_addon' | 'subscription_status';
+
+const GIVE_CHOICES: Array<{ kind: GiveKind; label: string; sub: string }> = [
+  { kind: 'plan_tier', label: 'A whole plan', sub: 'Every part of the product treats the club as on that plan' },
+  { kind: 'module_addon', label: 'Sections', sub: 'One or more sections its plan does not include' },
+  { kind: 'subscription_status', label: 'Billing status', sub: 'Reads as active while unpaid, to keep a club open' },
+];
+
+function GiveWindow({ org, freeTime, rows, onChangeEnd, onDone, onClose }: {
+  org: ClubRecordProps['org']; freeTime: FreeTimeBounds; rows: FreeTimeRow[];
+  onChangeEnd: (row: FreeTimeRow) => void; onDone: () => void; onClose: () => void;
 }) {
-  const [type, setType] = useState<'module_addon' | 'subscription_status' | 'comp_period'>('module_addon');
-  const [value, setValue] = useState('active');
+  const planBlock = freeTime.planBlock;
+  const [kind, setKind] = useState<GiveKind | null>(planBlock ? null : 'plan_tier');
+  const [plan, setPlan] = useState(freeTime.plansAbove[0]?.id ?? '');
   const [addons, setAddons] = useState<string[]>([]);
-  const [ends, setEnds] = useState('');
-  const offered = CLUB_SECTIONS.filter(s => !planSections.includes(s.key));
-  const what = type === 'module_addon'
-    ? (addons.length ? `${addons.map(sectionLabel).join(', ')} turn${addons.length === 1 ? 's' : ''} on` : 'Pick the sections to turn on')
-    : type === 'subscription_status' ? `The subscription reads as ${humanize(value).toLowerCase()}` : 'It is marked as comped (a billing tag; it gives no access)';
+  const [lastDay, setLastDay] = useState('');
+  const offered = CLUB_SECTIONS.filter(s => !org.planSections.includes(s.key));
+  const planName = freeTime.plansAbove.find(p => p.id === plan)?.label ?? '';
+  const founding = rows.find(o => o.running && o.founding && o.lastDay) ?? null;
+  const grantedRow = planBlock?.kind === 'granted' ? rows.find(o => o.id === planBlock.overrideId) ?? null : null;
+  const b = (text: string) => <strong>{text}</strong>;
+  const through = lastDay ? formatLongDay(lastDay) : null;
+
+  let sentence: ReactNode = 'Choose what to give and its last free day.';
+  if (kind && through) {
+    if (kind === 'plan_tier') {
+      const stillFounding = founding && founding.lastDay! > lastDay
+        ? <>, still free through {formatLongDay(founding.lastDay!)} under Founding Season</> : null;
+      sentence = <>{org.name} gets {b(`${planName} through ${through}`)}. On {dayAfterWords(lastDay)} it goes back to {b(org.planLabel)} by
+        itself{stillFounding}. Nothing is charged, nothing is deleted, and the owner is not emailed. Their Plan &amp; billing page
+        says “Free through {through}”.</>;
+    } else if (kind === 'module_addon') {
+      const names = addons.map(sectionLabel).join(', ');
+      sentence = names
+        ? <>{org.name} gets {b(`${names} through ${through}`)}, then {addons.length === 1 ? 'it turns' : 'they turn'} off by itself. Nothing
+          is charged or deleted, and the owner is not emailed.</>
+        : 'Choose the sections to give.';
+    } else {
+      sentence = <>{org.name} reads as {b(`active through ${through}`)} while unpaid, then goes back to its own billing status by itself.
+        Nothing is charged or deleted, and the owner is not emailed.</>;
+    }
+  }
+  const ready = !!kind && !!lastDay && (kind !== 'plan_tier' || !!plan) && (kind !== 'module_addon' || addons.length > 0);
+
   return (
     <RecordWindow
-      title={`Add an override to ${orgName}`}
-      sentence={<>{what} for {orgName}, {ends ? <>until <strong>{consoleDate(ends)}</strong></> : <strong>with no end date</strong>}.</>}
-      confirmBlocked={type === 'module_addon' && addons.length === 0}
-      footNote="It shows on the Story, and can be ended early from there."
-      confirmLabel="Add the override"
+      title={`Give free time to ${org.name}`}
+      sentence={sentence}
+      sentenceAfter
+      whyPlaceholder="Why are you giving this?"
+      footNote={!kind && planBlock ? 'Sections and billing status can still be given.'
+        : kind === 'module_addon' ? 'Sections, as today, now with an end.'
+        : 'Shows on the Story, and can be ended early or given a new end date from there.'}
+      confirmLabel="Give free time"
+      confirmHidden={!kind}
+      confirmBlocked={!ready}
       onConfirm={async reason => {
-        const body: Record<string, unknown> = { type, reason };
-        if (type === 'subscription_status') body.value = value;
-        if (type === 'module_addon') body.target = { addons };
-        if (ends) body.expires_at = new Date(`${ends}T23:59:00`).toISOString();
-        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/overrides`, 'POST', body);
-        if (!ok) return errorOf(data, 'The override could not be added.');
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${org.id}/overrides`, 'POST', {
+          kind, plan: kind === 'plan_tier' ? plan : undefined, addons: kind === 'module_addon' ? addons : undefined, last_day: lastDay, reason,
+        });
+        if (!ok) return errorOf(data, 'Nothing was given. The server could not save it. Your answers are kept; try again.');
         onDone();
         return null;
       }}
       onClose={onClose}
     >
-      <label className={kit.fieldGroup}>
-        <span className={kit.label}>Kind</span>
-        <select className={kit.select} value={type} onChange={e => setType(e.target.value as typeof type)}>
-          <option value="module_addon">Feature access (timed)</option>
-          <option value="subscription_status">Subscription status</option>
-          <option value="comp_period">Comp period</option>
-        </select>
-      </label>
-      {type === 'module_addon' && (
+      <div className={kit.fieldGroup} role="radiogroup" aria-label="What">
+        <span className={kit.label}>What</span>
+        <div className={styles.choices}>
+          {planBlock && (
+            <p className={styles.refuseLine}>
+              <Flag size={15} aria-hidden className={styles.refuseIcon} />
+              <span>
+                {planBlock.sentence}
+                {grantedRow && <> <button type="button" className={kit.door} onClick={() => onChangeEnd(grantedRow)}>Change the end date</button></>}
+              </span>
+            </p>
+          )}
+          {GIVE_CHOICES.filter(c => !(planBlock && c.kind === 'plan_tier')).map(c => (
+            <label key={c.kind} className={`${styles.choice}${kind === c.kind ? ` ${styles.choiceOn}` : ''}`}>
+              <input type="radio" name="free-time-kind" checked={kind === c.kind} onChange={() => setKind(c.kind)} />
+              <span><span className={styles.choiceLabel}>{c.label}</span><span className={styles.choiceSub}>{c.sub}</span></span>
+            </label>
+          ))}
+        </div>
+      </div>
+      {kind === 'module_addon' && (
         <div className={kit.fieldGroup}>
           <span className={kit.label}>Sections<span className={kit.req} aria-hidden>*</span></span>
           <div className={styles.sections}>
@@ -832,20 +984,116 @@ function OverrideWindow({ orgId, orgName, planSections, onDone, onClose }: {
           </div>
         </div>
       )}
-      {type === 'subscription_status' && (
-        <label className={kit.fieldGroup}>
-          <span className={kit.label}>Reads as</span>
-          <select className={kit.select} value={value} onChange={e => setValue(e.target.value)}>
-            {['active', 'trialing', 'past_due', 'canceled'].map(v => <option key={v} value={v}>{humanize(v)}</option>)}
-          </select>
-        </label>
+      {kind && (
+        <div className={styles.windowGrid}>
+          {kind === 'plan_tier' && (
+            <label className={kit.fieldGroup}>
+              <span className={kit.label}>Plan<span className={kit.req} aria-hidden>*</span></span>
+              <select className={kit.select} value={plan} onChange={e => setPlan(e.target.value)}>
+                {freeTime.plansAbove.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+              </select>
+              <span className={kit.hint}>{freeTime.plansAbove.map(p => p.label).join(' or ')}</span>
+            </label>
+          )}
+          <FreeThroughField value={lastDay} onChange={setLastDay} freeTime={freeTime} />
+        </div>
       )}
-      <div className={kit.fieldGroup}>
-        <span className={kit.label}>Ends on</span>
-        <DateInput className={kit.field} value={ends} onChange={setEnds} aria-label="Ends on" />
-        <span className={kit.hint}>Leave it empty for no end date. It ends at the end of that day.</span>
-      </div>
     </RecordWindow>
+  );
+}
+
+/** The shared date field: days before tomorrow and past the giver's limit greyed out in its calendar. */
+function FreeThroughField({ value, onChange, freeTime }: { value: string; onChange: (v: string) => void; freeTime: FreeTimeBounds }) {
+  const over = !!value && value > freeTime.latest;
+  return (
+    <div className={kit.fieldGroup}>
+      <span className={kit.label}>Free through<span className={kit.req} aria-hidden>*</span></span>
+      <DateInput className={kit.field} value={value} onChange={onChange} min={freeTime.earliest} max={freeTime.latest} aria-label="Free through" required />
+      {over
+        ? <span className={kit.fieldError}>You can give up to {freeTime.capMonths} months, through {formatLongDay(freeTime.latest)}.{freeTime.superAdmin ? '' : ' Longer needs a super admin.'}</span>
+        : <span className={kit.hint}>The last free day; it ends that midnight, Eastern</span>}
+    </div>
+  );
+}
+
+function ChangeEndWindow({ org, row, freeTime, onDone, onClose }: {
+  org: ClubRecordProps['org']; row: FreeTimeRow; freeTime: FreeTimeBounds; onDone: () => void; onClose: () => void;
+}) {
+  const [lastDay, setLastDay] = useState(row.lastDay ?? '');
+  const [stale, setStale] = useState<string | null>(null);
+  const subject = freeTimeSubject(row, org.planLabel);
+  const was = row.lastDay ?? '';
+  const afterwards = row.type === 'plan_tier' ? <>Then back to {org.planLabel} by itself.</>
+    : row.type === 'module_addon' ? <>Then it turns off by itself.</> : <>Then back to its own billing status by itself.</>;
+
+  if (stale) {
+    return (
+      <RecordWindow
+        title={`Change the end of ${possessive(org.name)} free time`}
+        sentence={<span className={styles.refuseLine}><Flag size={15} aria-hidden className={styles.refuseIcon} /><span>{stale}</span></span>}
+        askWhy={false}
+        footNote="Nothing was changed."
+        confirmLabel="Look again"
+        onConfirm={async () => { onDone(); return null; }}
+        onClose={onClose}
+      />
+    );
+  }
+  return (
+    <RecordWindow
+      title={`Change the end of ${possessive(org.name)} free time`}
+      sentence={lastDay && lastDay !== was
+        ? <>{possessive(org.name)} <strong>{subject}</strong> free time now runs <strong>through {formatLongDay(lastDay)}</strong> instead
+          of {monthDay(was)}. {afterwards} The owner is not emailed.</>
+        : 'Choose the new last free day.'}
+      sentenceAfter
+      footNote={`A new Story entry; Put it back restores ${monthDay(was)}.`}
+      confirmLabel="Change the end date"
+      confirmBlocked={!lastDay || lastDay === was}
+      onConfirm={async reason => {
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${org.id}/overrides/${row.id}`, 'PATCH', {
+          expected_expires_at: row.expiresAt, last_day: lastDay, reason,
+        });
+        if (!ok) {
+          const error = errorOf(data, 'Nothing was changed. The server could not save it.');
+          if (/changed this free time while you had it open/.test(error)) { setStale(error); return null; }
+          return error;
+        }
+        onDone();
+        return null;
+      }}
+      onClose={onClose}
+    >
+      <FreeThroughField value={lastDay} onChange={setLastDay} freeTime={freeTime} />
+    </RecordWindow>
+  );
+}
+
+function EndNowWindow({ org, row, onDone, onClose }: {
+  org: ClubRecordProps['org']; row: FreeTimeRow; onDone: () => void; onClose: () => void;
+}) {
+  const subject = freeTimeSubject(row, org.planLabel);
+  const insteadOf = row.lastDay ? <> instead of on {formatLongDay(row.lastDay)}</> : null;
+  const then = row.type === 'plan_tier'
+    ? <>It goes back to {org.planLabel} at once; anyone using the tools that come only with {subject} is moved out on their next click.</>
+    : row.type === 'module_addon' ? <>{row.addons.length === 1 ? 'It turns' : 'They turn'} off at once.</>
+    : <>The club reads its own billing status again at once.</>;
+  return (
+    <RecordWindow
+      title={`End ${possessive(org.name)} free time now`}
+      sentence={<>{possessive(org.name)} <strong>{subject}</strong> free time ends <strong>now</strong>{insteadOf}. {then} Nothing is deleted.</>}
+      whyPlaceholder="Why are you ending it early?"
+      footNote="Writes a new entry in the Story."
+      cancelLabel="Keep it"
+      confirmLabel="End it now"
+      onConfirm={async reason => {
+        const { ok, data } = await sendJson(`/api/platform-admin/orgs/${org.id}/overrides/${row.id}`, 'DELETE', { reason });
+        if (!ok) return errorOf(data, 'Nothing was ended. The server could not save it.');
+        onDone();
+        return null;
+      }}
+      onClose={onClose}
+    />
   );
 }
 

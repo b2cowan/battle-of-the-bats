@@ -130,6 +130,16 @@ const ENFORCED_PATTERNS = [
     pattern: /\bfinancial[\s\u00a0\u202f-]+years?\b/gi,
     right: '"fiscal year" — the club\'s period (FISCAL_YEAR_WORD, lib/club-fiscal-year.ts)',
   },
+  /* ⚖ FREE TIME ENDS "FREE THROUGH {LAST FREE DAY}" (owner ruling Q8, Support console Stage 4, 2026-10-25): the one
+     phrase for a free-time end, to the customer and in the console, the last free day itself (September 30, 2027 for
+     Founding Season, never October 1). "Free until {a date}" is the other spelling: it leaves the reader to guess whether
+     that day is free. Only before a date, so "free until then" stays ordinary English. Built from freeThroughShort() /
+     formatLongDay() in lib/free-time.ts. */
+  {
+    id: 'free-through',
+    pattern: /\bfree[\s\u00a0]+until[\s\u00a0]+(?:\{|\$\{|\d|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?[\s\u00a0]+\d)/gi,
+    right: '"Free through {last free day}" — freeThroughShort() / formatLongDay() in lib/free-time.ts (owner ruling Q8)',
+  },
   /* ⚖ "REP TEAMS" IS "Rep teams" (owner, Nav Consistency Ask A4, 2026-10-17; gated on the owner's yes at the build's
      start): sentence case like every other menu label (House league, Practice plans, Staff kit), on every screen,
      help article, plan list and marketing page. A CASE rule, so a shape — the word list above matches without case.

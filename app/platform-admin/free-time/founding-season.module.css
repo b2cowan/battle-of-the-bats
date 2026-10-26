@@ -24,3 +24,6 @@
 @media (max-width: 640px) {
   .table td { white-space: normal; }
 }
+
+/* A Founding mark held on the free plan (Support console Stage 4): shown, healed at the Founding turn-off. */
+.flagLine { color: var(--warning); font-weight: 600; }

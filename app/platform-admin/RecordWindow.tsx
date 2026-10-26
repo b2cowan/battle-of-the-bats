@@ -12,11 +12,14 @@ import kit from './console.module.css';
 import styles from './record.module.css';
 
 export default function RecordWindow({
-  title, sentence, children, footNote, cancelLabel = 'Cancel', confirmLabel, danger = false, askWhy = true,
-  whyPlaceholder, confirmBlocked = false, onConfirm, onClose,
+  title, sentence, sentenceAfter = false, children, footNote, cancelLabel = 'Cancel', confirmLabel, danger = false, askWhy = true,
+  whyPlaceholder, confirmBlocked = false, confirmHidden = false, onConfirm, onClose,
 }: {
   title: string;
   sentence: ReactNode;
+  /** The sentence after the fields and the Why, for a window whose sentence is built FROM its fields (Give free time):
+   *  it is read last, as the confirm, and it changes as they do. */
+  sentenceAfter?: boolean;
   children?: ReactNode;
   footNote?: ReactNode;
   cancelLabel?: string;
@@ -27,6 +30,8 @@ export default function RecordWindow({
   whyPlaceholder?: string;
   /** Something else the window needs first (a typed web name). */
   confirmBlocked?: boolean;
+  /** No main action yet (absent beats disabled): a window that refuses its first choice and offers the others. */
+  confirmHidden?: boolean;
   /** Resolves to an error sentence to show, or null when done (the caller closes the window). */
   onConfirm: (reason: string) => Promise<string | null>;
   onClose: () => void;
@@ -56,19 +61,19 @@ export default function RecordWindow({
       footer={(
         <>
           <DialogCancel className="btn btn-secondary">{cancelLabel}</DialogCancel>
-          <button
+          {!confirmHidden && <button
             type="button"
             className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`}
             onClick={() => void confirm()}
             disabled={!ready || busy}
           >
             {busy ? 'Working…' : confirmLabel}
-          </button>
+          </button>}
         </>
       )}
     >
       <div className={styles.windowBody}>
-        <div className={styles.sentence}>{sentence}</div>
+        {!sentenceAfter && <div className={styles.sentence}>{sentence}</div>}
         {children}
         {askWhy && (
           <label className={kit.fieldGroup}>
@@ -84,6 +89,7 @@ export default function RecordWindow({
             />
           </label>
         )}
+        {sentenceAfter && <div className={styles.sentence}>{sentence}</div>}
         {error && <p className={kit.fieldError} role="alert">{error}</p>}
       </div>
     </KitDialog>

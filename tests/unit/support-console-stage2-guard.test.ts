@@ -320,7 +320,8 @@ describe('9 · the menu by job', () => {
   it('the entries and their nine new names', () => {
     const labels = baseMenuGroups(true).map(g => `${g.label}: ${g.items.map(i => i.label).join(', ')}`);
     assert.deepEqual(labels, [
-      'Customers: Clubs & portals, People, Founding season, Retention',
+      // Stage 4 renamed Founding season → Free time, in the same place (owner ruling Q4).
+      'Customers: Clubs & portals, People, Free time, Retention',
       'Health: Errors, Feedback',
       'Growth: Leads, Campaigns, Pitch decks',
       'Product: Plans & pricing, Approval queue, Bulk changes, Email templates, Export registry',
@@ -358,9 +359,11 @@ describe('9 · the menu by job', () => {
     const eyes = (role: PlatformRole) => baseMenuGroups(true).flatMap(g => g.items)
       .filter(i => canViewPlatformArea(role, i.area) && isPlatformAreaReadOnly(role, i.area)).map(i => i.label);
     assert.deepEqual(eyes('super_admin'), []);
-    assert.deepEqual(eyes('support'), ['Retention', 'Errors']);
+    // Stage 4: Free time's write side is the plan-and-billing power (it is given on the record), so Support and Product
+    // read it with the eye.
+    assert.deepEqual(eyes('support'), ['Free time', 'Retention', 'Errors']);
     assert.deepEqual(eyes('billing'), ['People', 'Plans & pricing', 'Approval queue']);
-    assert.deepEqual(eyes('product'), ['People']);
+    assert.deepEqual(eyes('product'), ['People', 'Free time']);
     assert.deepEqual(eyes('growth'), ['Clubs & portals', 'People']);
     assert.deepEqual(eyes('read_only'), ['Clubs & portals', 'People']);
   });
@@ -381,14 +384,19 @@ describe('9 · the menu by job', () => {
 describe('10 · Put it back only on plan/limit, section and running-override entries', () => {
   const story = readCode('lib/platform-story.ts');
   const view = readCode('lib/platform-story-view.ts');
-  it('the three kinds, and nothing else', () => {
+  // Free time's entries moved to their own module in Stage 4 (lib/free-time-story.ts), the Story still calls it.
+  const freeTime = readCode('lib/free-time-story.ts');
+  it('the four kinds, and nothing else', () => {
     const kinds = [...view.matchAll(/\| \{ kind: '(\w+)'/g)].map(m => m[1]);
-    assert.deepEqual(kinds.sort(), ['override', 'plan', 'section'], 'PutBack is a union of exactly these three');
-    const offers = [...story.matchAll(/markPutBack\(entry, [^;]*?\{\s*kind: '(\w+)'/g)].map(m => m[1]);
-    assert.deepEqual([...new Set(offers)].sort(), ['override', 'plan', 'section']);
+    // Stage 4 added override_end: a free-time change undone restores the earlier last day (T10).
+    assert.deepEqual(kinds.sort(), ['override', 'override_end', 'plan', 'section'], 'PutBack is a union of exactly these four');
+    const offers = [...(story + freeTime).matchAll(/markPutBack\((?:entry|given), [^;]*?\{\s*kind: '(\w+)'/g)].map(m => m[1]);
+    assert.deepEqual([...new Set(offers)].sort(), ['override', 'override_end', 'plan', 'section']);
+    assert.match(story, /freeTimeStoryEntries\(/);
   });
-  it('an override is offered only while running; a plan only on the newest plan entry still in force', () => {
-    assert.match(story, /markPutBack\(entry, running \? \{\s*kind: 'override'/);
+  it('free time is offered only while running, on its newest entry; a plan only on the newest plan entry still in force', () => {
+    assert.match(freeTime, /markPutBack\(given, running && !newestChange && o\.expires_at \? \{\s*kind: 'override'/);
+    assert.match(freeTime, /if \(c === newestChange && running && o\.expires_at\) \{/);
     assert.match(story, /r\.id === newestPlanId && org\.plan_id === toPlan/);
   });
   it('nothing that reached Stripe is put back: no plan door with a Stripe subscription now or cut by the change, or a billing state the undo cannot restore', () => {

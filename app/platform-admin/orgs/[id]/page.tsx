@@ -9,6 +9,10 @@ import { buildClubStory } from '@/lib/platform-story';
 import { recordOpened } from '@/lib/platform-record-opens';
 import { planLabel, subscriptionStatusLabel } from '@/lib/platform-labels';
 import { holdsSlot } from '@/lib/tournament-slot';
+import { effectiveOrgFactsOf } from '@/lib/entitlement-grants';
+import { freeTimeDoorFacts } from '@/lib/free-time-writes';
+import { earliestLastDay, grantablePlansAbove, isGrantRunning, lastDayOfInstant, latestLastDay } from '@/lib/free-time';
+import { isFoundingSeasonCompExpiry } from '@/lib/plan-config';
 import ClubRecord, { type ClubRecordProps } from './ClubRecord';
 
 /**
@@ -54,23 +58,28 @@ async function getTeamMoves(orgId: string): Promise<ClubRecordProps['teamMoves']
 }
 
 type OverrideRow = {
-  id: string; type: string; value: string | null; target: { addons?: string[] } | null; starts_at: string | null; expires_at: string | null;
+  id: string; type: string; value: string | null; target: { addons?: string[]; plan?: string } | null; starts_at: string | null; expires_at: string | null;
   reason: string | null; created_by: string | null; created_at: string; revoked_at: string | null; revoked_by: string | null;
 };
 
-/** Overrides as the record reads them: running now, or when each ended (revoked, or ran out). */
-function overrideRows(rows: OverrideRow[], nowMs = Date.now()): ClubRecordProps['overrides'] {
+/** Free time as the record reads it: running now, or when each ended (revoked, or ran out). The end is read as the last
+ *  free day (owner ruling Q8); a comp period carrying Founding Season's end is Founding Season. */
+function overrideRows(rows: OverrideRow[], now = new Date()): ClubRecordProps['overrides'] {
+  const nowMs = now.getTime();
   return rows.map(o => ({
     id: o.id,
     type: o.type,
     value: o.value,
     addons: o.target?.addons ?? [],
+    plan: o.target?.plan ?? null,
     expiresAt: o.expires_at,
+    lastDay: o.expires_at ? lastDayOfInstant(o.expires_at) : null,
+    founding: o.type === 'comp_period' && !!o.expires_at && isFoundingSeasonCompExpiry(o.expires_at),
     reason: o.reason,
     createdBy: o.created_by,
     createdAt: o.created_at,
     endedAt: o.revoked_at ?? (o.expires_at && Date.parse(o.expires_at) <= nowMs ? o.expires_at : null),
-    running: !o.revoked_at && (!o.starts_at || Date.parse(o.starts_at) <= nowMs) && (!o.expires_at || Date.parse(o.expires_at) > nowMs),
+    running: isGrantRunning(o, now),
   }));
 }
 
@@ -121,7 +130,13 @@ export default async function ClubRecordPage({ params, searchParams }: {
   const ownerLastSignIn = owners.map(o => o.lastSignInAt).filter((v): v is string => !!v).sort().at(-1) ?? null;
 
   const plan = (org.plan_id ?? 'tournament') as OrgPlan;
-  const isClubBand = plan === 'club' || plan === 'club_large';
+  // The band follows the plan the club is on RIGHT NOW (a Club grant reads as a Club band); the title's chip, the
+  // pencil and Money keep the plan it holds.
+  const [now, doorFacts] = await Promise.all([
+    effectiveOrgFactsOf(org),
+    hasPlatformPower(auth.role, 'club_billing') ? freeTimeDoorFacts(id, auth.user.id) : Promise.resolve(null),
+  ]);
+  const isClubBand = now.planId === 'club' || now.planId === 'club_large';
   const tournaments = ((tournamentsRes.data ?? []) as Array<{ id: string; name: string; status: string; start_date: string | null; end_date: string | null }>)
     .map(t => ({ id: t.id, name: t.name, status: t.status, startDate: t.start_date, endDate: t.end_date }));
   const overrides = overrideRows((overridesRes.data ?? []) as OverrideRow[]);
@@ -141,9 +156,13 @@ export default async function ClubRecordPage({ params, searchParams }: {
       stripeCustomerId: org.stripe_customer_id,
       stripeSubscriptionId: org.stripe_subscription_id,
       tournamentLimit: getEffectiveTournamentLimit(plan, org.tournament_limit),
-      teamLimit: isClubBand ? getEffectiveTeamLimit(plan, org.team_limit) : null,
+      teamLimit: plan === 'club' || plan === 'club_large' ? getEffectiveTeamLimit(plan, org.team_limit) : null,
       storedTeamLimit: org.team_limit,
       isClubBand,
+      nowPlanId: now.planId,
+      nowPlanLabel: planLabel(now.planId),
+      nowTournamentLimit: now.tournamentLimit,
+      nowTeamLimit: isClubBand ? now.teamLimit : null,
       enabledAddons: org.enabled_addons ?? [],
       planSections: (PLAN_CONFIG[plan]?.moduleEntitlements ?? []) as string[],
     },
@@ -160,6 +179,15 @@ export default async function ClubRecordPage({ params, searchParams }: {
     teamMoves,
     story: { entries: story.slice(0, STORY_PAGE), total: story.length },
     planOptions: Object.entries(PLAN_CONFIG).map(([key, c]) => ({ id: key, label: c.label, tournamentLimit: c.tournamentLimit, teamLimit: c.teamLimit })),
+    freeTime: doorFacts && {
+      block: doorFacts.block,
+      planBlock: doorFacts.planBlock,
+      plansAbove: grantablePlansAbove(plan).map(p => ({ id: p, label: planLabel(p) })),
+      earliest: earliestLastDay(),
+      latest: latestLastDay(auth.role) ?? earliestLastDay(),
+      capMonths: auth.role === 'super_admin' ? 12 : 6,
+      superAdmin: auth.role === 'super_admin',
+    },
     can: {
       support: hasPlatformPower(auth.role, 'club_support'),
       billing: hasPlatformPower(auth.role, 'club_billing'),

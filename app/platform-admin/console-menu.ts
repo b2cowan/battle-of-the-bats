@@ -15,7 +15,7 @@ import type { PlatformRole } from '../../lib/platform-auth';
 
 /** A lucide icon, by name — the rail maps each to its component. */
 export type MenuIcon =
-  | 'today' | 'clubs' | 'people' | 'founding' | 'retention' | 'errors' | 'feedback' | 'leads' | 'campaigns' | 'decks'
+  | 'today' | 'clubs' | 'people' | 'free_time' | 'retention' | 'errors' | 'feedback' | 'leads' | 'campaigns' | 'decks'
   | 'plans' | 'approval' | 'bulk' | 'templates' | 'export' | 'staff' | 'audit' | 'terminal' | 'wallet';
 
 export type MenuItem = { href: string; label: string; icon: MenuIcon; area: PlatformArea };
@@ -33,8 +33,9 @@ export function baseMenuGroups(devTools: boolean): MenuGroup[] {
       items: [
         { href: '/platform-admin/orgs', label: 'Clubs & portals', icon: 'clubs', area: 'organizations' },
         { href: '/platform-admin/customer-users', label: 'People', icon: 'people', area: 'customer_users' },
-        // A list of customers on a free season, so it sits with Customers; Stage 4 turns it into Free time.
-        { href: '/platform-admin/founding-season', label: 'Founding season', icon: 'founding', area: 'founding_season' },
+        // Everyone with free time running, Founding Season among them (Support console Stage 4; it replaced the Founding
+        // season desk's entry, in the same place).
+        { href: '/platform-admin/free-time', label: 'Free time', icon: 'free_time', area: 'free_time' },
         { href: '/platform-admin/retention', label: 'Retention', icon: 'retention', area: 'retention' },
       ],
     },

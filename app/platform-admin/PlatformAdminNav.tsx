@@ -25,7 +25,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Inbox, Building2, Users, Sparkles, ArchiveRestore, AlertTriangle, MessageSquare, Target, Send, Presentation, Tag,
+  Inbox, Building2, Users, Gift, ArchiveRestore, AlertTriangle, MessageSquare, Target, Send, Presentation, Tag,
   ClipboardCheck, Layers, FileText, Download, ShieldCheck, ScrollText, Terminal, HelpCircle, Wallet, Eye, ChevronRight,
 } from 'lucide-react';
 import { CollapseSidebarRow, SidebarStripTip } from '@/components/shared/SidebarStrip';
@@ -42,7 +42,7 @@ const HELP_HREF = '/platform-admin/help';
 
 /** The icon dictionary's glyph for each entry (NAV_STANDARD N5): the tray is Today's; the house stays Home's. */
 const ICONS: Record<MenuIcon, typeof Inbox> = {
-  today: Inbox, clubs: Building2, people: Users, founding: Sparkles, retention: ArchiveRestore, errors: AlertTriangle,
+  today: Inbox, clubs: Building2, people: Users, free_time: Gift, retention: ArchiveRestore, errors: AlertTriangle,
   feedback: MessageSquare, leads: Target, campaigns: Send, decks: Presentation, plans: Tag, approval: ClipboardCheck,
   bulk: Layers, templates: FileText, export: Download, staff: ShieldCheck, audit: ScrollText, terminal: Terminal, wallet: Wallet,
 };

@@ -108,7 +108,7 @@ describe('the support console wears the house look (Stage 1)', () => {
     assert.deepEqual(all.filter(h => extras.includes(h)).sort(), [...extras].sort(), 'Dev tools and Bookkeeping are still the two flagged entries');
     const hrefs = all.filter(h => !extras.includes(h));
     assert.deepEqual(hrefs, [
-      '/platform-admin', '/platform-admin/orgs', '/platform-admin/customer-users', '/platform-admin/founding-season',
+      '/platform-admin', '/platform-admin/orgs', '/platform-admin/customer-users', '/platform-admin/free-time',
       '/platform-admin/retention', '/platform-admin/observability', '/platform-admin/feedback',
       '/platform-admin/early-access', '/platform-admin/email', '/platform-admin/pitch-deck-studio',
       '/platform-admin/plans-pricing', '/platform-admin/change-requests', '/platform-admin/bulk-operations',

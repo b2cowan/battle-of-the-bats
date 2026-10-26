@@ -2,7 +2,7 @@
  * A Story's shape and its filter — plain, with no database client, so the record screen filters on screen and the
  * builder (`lib/platform-story.ts`) and the Put it back route share one type.
  */
-import type { StoryKind } from './platform-labels';
+import { planLabel, type StoryKind } from './platform-labels';
 
 export type { StoryKind } from './platform-labels';
 
@@ -13,9 +13,44 @@ export type { StoryKind } from './platform-labels';
 export type PutBack =
   | { kind: 'plan'; title: string; sentence: string; planId: string; tournamentLimit: number; teamLimit?: number | null }
   | { kind: 'section'; title: string; sentence: string; section: string; on: boolean }
-  | { kind: 'override'; title: string; sentence: string; overrideId: string };
+  | { kind: 'override'; title: string; sentence: string; overrideId: string }
+  /** Free time's newest change, undone: back to the last free day before it (ended now if that day has passed). */
+  | { kind: 'override_end'; title: string; sentence: string; overrideId: string; expectedExpiresAt: string; lastDay: string };
 
 export type PutBackKind = PutBack['kind'];
+
+/** A `platform_audit_log` row as the Story reads it. */
+export type AuditRow = {
+  id: number | string;
+  actor_email: string | null;
+  action: string;
+  field: string | null;
+  old_value: unknown;
+  new_value: unknown;
+  created_at: string;
+};
+
+export function obj(v: unknown): Record<string, unknown> | null {
+  return v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+}
+export function str(v: unknown): string | null {
+  return typeof v === 'string' && v.trim() ? v : null;
+}
+function reasonOf(v: unknown): string | null {
+  return str(obj(v)?.reason);
+}
+export function putBackOf(v: unknown): string | null {
+  return str(obj(v)?.put_back_of);
+}
+/** An entry's Why: the reason kept, else "Not recorded" for a change kept since Stage 2, else "—". */
+export function whyFields(v: unknown, keptSinceStage2: boolean): Pick<StoryEntry, 'why' | 'whyNotRecorded'> {
+  const reason = reasonOf(v);
+  if (reason) return { why: reason };
+  return keptSinceStage2 ? { why: null, whyNotRecorded: true } : { why: null };
+}
+export function planName(id: unknown): string {
+  return typeof id === 'string' && id ? planLabel(id) : 'no plan';
+}
 
 export type StoryEntry = {
   /** Stable key — also what a Put it back names (`audit:<id>`, `audit:<id>:<section>`, `override:<id>`, …). */

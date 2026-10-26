@@ -97,3 +97,40 @@ input.changed, select.changed { border-color: var(--home-olive); }
 .sentence strong { color: var(--text-primary); font-weight: 650; }
 .windowBody { display: grid; gap: 0.9rem; }
 .footNote { font-size: var(--type-body); color: var(--text-tertiary); }
+
+/* ── Free time (Support console Stage 4) ── */
+/* The title's short "Free time" chip opens the Access list (every highlight is clickable); the plan and day sit beside it
+   in the body face (D-4). */
+.ftChip { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; color: var(--home-olive); }
+.ftChip:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.ftBeside { font-size: var(--type-body); color: var(--text-secondary); white-space: nowrap; }
+/* One line where the door would be when the console knows before the click (D-3): red when nobody here may give it,
+   amber when the club's own state is the reason. Also the window's line in place of the plan fields. */
+.refuseLine {
+  display: flex; gap: 0.55rem; align-items: flex-start;
+  padding: 0.6rem 0.8rem; border-radius: 8px; font-size: var(--type-body); line-height: 1.45;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--warning) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning) 32%, transparent);
+}
+.refuseLine strong { color: var(--text-primary); font-weight: 650; }
+.refuseLineBad {
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 32%, transparent);
+}
+.refuseIcon { flex: none; margin-top: 0.15rem; color: var(--warning); }
+.refuseLineBad .refuseIcon { color: var(--danger); }
+/* A pick-one as radio rows (D5): each row a label and its line. */
+.choices { display: grid; gap: 0.5rem; }
+.choice {
+  display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--home-line-strong); background: var(--card-bg);
+}
+.choice input { margin-top: 0.2rem; accent-color: var(--home-olive); }
+.choiceOn { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.choiceLabel { display: block; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.choiceSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.windowGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.9rem; }
+@media (max-width: 640px) { .windowGrid { grid-template-columns: minmax(0, 1fr); } }
+.rowDoors { display: inline-flex; gap: 0.5rem; flex-wrap: wrap; }
+.soon { color: var(--warning); font-weight: 650; }
