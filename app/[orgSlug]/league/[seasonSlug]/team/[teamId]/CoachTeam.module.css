@@ -1,0 +1,143 @@
+/* A house-league coach's team page (Club Tier 9c, copy §10). Phone first: one column of player cards; a desk widens
+   the column and lays each family on one line. Every colour is the club frame's (--club-*). */
+
+.page {
+  --league-measure: 720px;
+  padding-top: 1.5rem;
+  padding-bottom: 3rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.25rem;
+  font: 600 0.875rem var(--club-text-face);
+  color: var(--club-soft);
+}
+
+.notice {
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-ground);
+  font: 400 0.875rem var(--club-text-face);
+  color: var(--club-text);
+}
+
+.switcher {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.switcherLabel {
+  font: 600 0.875rem var(--club-text-face);
+  color: var(--club-soft);
+}
+.switcher a {
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.section {
+  margin-top: 2rem;
+}
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.sectionTitle {
+  margin: 0 0 0.5rem;
+  font: 700 1.125rem var(--club-text-face);
+  color: var(--club-text);
+}
+.sectionHead .sectionTitle {
+  margin: 0;
+}
+.count {
+  margin-left: 0.25rem;
+  font-weight: 600;
+  color: var(--club-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.player {
+  padding: 1rem 1.25rem;
+}
+.playerName {
+  font: 700 1rem var(--club-text-face);
+  color: var(--club-text);
+}
+.family {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.4rem;
+  font: 400 0.875rem var(--club-text-face);
+  color: var(--club-soft);
+}
+.contact {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--club-ink);
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+.link {
+  color: var(--club-ink);
+  font-weight: 600;
+}
+
+.foot {
+  margin: 2.5rem 0 0;
+  font: 400 0.875rem var(--club-text-face);
+  color: var(--club-soft);
+}
+.foot a {
+  color: var(--club-ink);
+}
+
+.copyRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+.copied {
+  margin: 0;
+  font: 400 0.875rem var(--club-text-face);
+  color: var(--club-soft);
+}
+.fallback {
+  width: 100%;
+  min-height: 88px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-card);
+  color: var(--club-text);
+  font: 400 0.875rem var(--club-text-face);
+}
+
+@media (min-width: 768px) {
+  .family {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0 1.25rem;
+    align-items: center;
+  }
+}

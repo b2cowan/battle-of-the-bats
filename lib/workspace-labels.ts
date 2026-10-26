@@ -12,6 +12,7 @@ export const WORKSPACE_KIND_LABEL: Record<UserAccessContextKind, string> = {
   tournament_official: 'Tournament',
   coaches_basic: 'Coaches Portal',
   coaches_premium: 'Coaches Portal',
+  house_league_coach: 'Team page',
   fan: 'Following',
 };
 

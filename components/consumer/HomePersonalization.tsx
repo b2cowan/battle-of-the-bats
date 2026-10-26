@@ -30,6 +30,7 @@ const KIND_ICON: Record<UserAccessContextKind, LucideIcon> = {
   tournament_official: ClipboardCheck,
   coaches_basic: Trophy,
   coaches_premium: Users,
+  house_league_coach: Users,
   fan: Star,
 };
 // One shared kind→label vocabulary with the Workspaces popover doors (lib/workspace-labels)

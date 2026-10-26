@@ -5,6 +5,7 @@ import { withObservability, captureError, captureAndJson } from '@/lib/observabi
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { authAccountExistsForEmail } from '@/lib/auth-account-lookup';
 import { getAssistantInviteByToken } from '@/lib/assistant-invites';
+import { leagueCoachInviteProvesEmail } from '@/lib/house-league-coach-invites';
 import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 import {
   sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect, verificationReturnPath,
@@ -36,11 +37,13 @@ const ipLimiter = new FixedWindowRateLimiter(15 * MINUTE, 15);      // per sourc
 const emailLimiter = new FixedWindowRateLimiter(60 * MINUTE, 5);    // per address being signed up
 const globalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 60);   // spoofing-proof ceiling across all callers
 
-/** Does this request already prove the inbox? A live assistant invitation addressed to this email. */
+/** Does this request already prove the inbox? A live assistant (or house-league coach) invitation addressed to this email. */
 async function inviteProvesEmail(inviteToken: unknown, email: string): Promise<boolean> {
   if (typeof inviteToken !== 'string' || !inviteToken) return false;
   const invite = await getAssistantInviteByToken(inviteToken);
-  return !!invite && invite.status === 'pending' && !invite.expired && invite.invitedEmail.trim().toLowerCase() === email;
+  if (invite) return invite.status === 'pending' && !invite.expired && invite.invitedEmail.trim().toLowerCase() === email;
+  // A house-league coach's invite (Club Tier 9c) proves the inbox the same way: it was emailed to this address.
+  return leagueCoachInviteProvesEmail(inviteToken, email);
 }
 
 export const POST = withObservability(async (req: NextRequest) => {

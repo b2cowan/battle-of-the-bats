@@ -1,0 +1,119 @@
+import { notFound, redirect } from 'next/navigation';
+import Link from 'next/link';
+import type { Metadata } from 'next';
+import { getAuthenticatedUser } from '@/lib/api-auth';
+import { readCoachTeamPage } from '@/lib/house-league-coach';
+import { coachTeamPath } from '@/lib/house-league-coach-invites';
+import { formatStoredDate } from '@/lib/timezone';
+import { coachesLine } from '@/lib/house-league-teams-words';
+import CopyEmails from './CopyEmails';
+import column from '../../../league-column.module.css';
+import kit from '@/components/public/ClubKit.module.css';
+import styles from './CoachTeam.module.css';
+
+export const dynamic = 'force-dynamic';
+
+/** A coach's team page is private: never indexed, never cached. The tab names the team. */
+export const metadata: Metadata = { title: 'Your team', robots: { index: false, follow: false } };
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * A HOUSE-LEAGUE COACH'S TEAM PAGE (Club Tier Stage 9c, Part 5; rulings 9c·1, 9c·9; copy §10).
+ *
+ * A coach's whole product: their team's players and each family's name, email and phone, the season's schedule one tap
+ * away, and who enters scores. It lives beside the season's public pages but is signed in and answered by the coach
+ * column of the one gate (lib/house-league-coach.ts) — a person who never coached this team gets a 404, not even its
+ * name. No admin, no Coaches Portal, no rating, no fee.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+export default async function CoachTeamPage({ params }: { params: Promise<{ orgSlug: string; seasonSlug: string; teamId: string }> }) {
+  const { orgSlug, seasonSlug, teamId } = await params;
+  const user = await getAuthenticatedUser();
+  if (!user) redirect(`/auth/login?next=${encodeURIComponent(coachTeamPath(orgSlug, seasonSlug, teamId))}`);
+  const page = await readCoachTeamPage(user.id, orgSlug, teamId);
+  if (!page || page.team.seasonSlug !== seasonSlug) notFound();
+  const { team, view } = page;
+  const contact = page.contactEmail
+    ? <>Contact {team.orgName} at <a href={`mailto:${page.contactEmail}`}>{page.contactEmail}</a>.</>
+    : null;
+
+  if (view === 'gone') {
+    return (
+      <div className={`container ${column.column} ${styles.page}`}>
+        <h1 className={kit.title}>{team.teamName}</h1>
+        <p className={kit.sub}>You’re no longer a coach of {team.teamName}.{contact ? <> Questions? {contact}</> : null}</p>
+      </div>
+    );
+  }
+  if (view === 'ended') {
+    return (
+      <div className={`container ${column.column} ${styles.page}`}>
+        <h1 className={kit.title}>{team.teamName}</h1>
+        <p className={kit.sub}>{team.seasonName} has finished.</p>
+      </div>
+    );
+  }
+
+  const others = page.myTeams.filter(t => t.teamId !== team.teamId);
+  const scheduleHref = `/${orgSlug}/league/${seasonSlug}/schedule`;
+  return (
+    <div className={`container ${column.column} ${styles.page}`}>
+      {others.length > 0 && (
+        <nav className={styles.switcher} aria-label="Your teams">
+          <span className={styles.switcherLabel}>Your teams</span>
+          {page.myTeams.map(t => (
+            t.teamId === team.teamId
+              ? <span key={t.teamId} className={`${kit.chip} ${kit.chipOk}`} aria-current="page">{t.teamName}</span>
+              : <Link key={t.teamId} href={coachTeamPath(t.orgSlug, t.seasonSlug, t.teamId)} className={`${kit.chip} ${kit.chipNeutral}`}>{t.teamName}</Link>
+          ))}
+        </nav>
+      )}
+
+      <p className={styles.eyebrow}>{team.divisionName} · {team.seasonName}</p>
+      <h1 className={kit.title}>{team.teamName}</h1>
+      {page.coaches.length > 0 && <p className={kit.sub}>{coachesLine(page.coaches)}</p>}
+      {view === 'finished' && page.openUntil && (
+        <p className={styles.notice}>{team.seasonName} has finished. This page stays until {formatStoredDate(page.openUntil, { withYear: false })}.</p>
+      )}
+
+      <section className={styles.section} aria-labelledby="coach-players">
+        <div className={styles.sectionHead}>
+          <h2 id="coach-players" className={styles.sectionTitle}>Players <span className={styles.count}>{page.players.length}</span></h2>
+          {page.players.length > 0 && <CopyEmails emails={[...new Set(page.players.map(p => p.guardianEmail.trim().toLowerCase()).filter(Boolean))]} />}
+        </div>
+        {page.players.length === 0 ? (
+          <p className={kit.sub}>No players on this team right now.</p>
+        ) : (
+          <ul className={styles.players}>
+            {page.players.map(p => (
+              <li key={p.id} className={`${kit.card} ${styles.player}`}>
+                <div className={styles.playerName}>{p.firstName} {p.lastName}</div>
+                <div className={styles.family}>
+                  <span>{p.guardianName}</span>
+                  <a href={`mailto:${p.guardianEmail}`} aria-label={`Email ${p.guardianName}`} className={styles.contact}>{p.guardianEmail}</a>
+                  {p.guardianPhone && (
+                    <a href={`tel:${p.guardianPhone.replace(/[^\d+]/g, '')}`} aria-label={`Call ${p.guardianName}`} className={styles.contact}>{p.guardianPhone}</a>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className={styles.section} aria-labelledby="coach-schedule">
+        <h2 id="coach-schedule" className={styles.sectionTitle}>Schedule</h2>
+        <p className={kit.sub}>Your games aren’t listed on this page yet. <Link href={scheduleHref} className={styles.link}>See the season’s schedule</Link></p>
+      </section>
+
+      <section className={styles.section} aria-labelledby="coach-scores">
+        <h2 id="coach-scores" className={styles.sectionTitle}>Scores</h2>
+        <p className={kit.sub}>The club enters scores for now.</p>
+      </section>
+
+      <p className={styles.foot}>
+        Fees, ratings and other teams aren’t shown here.{contact ? <> Questions about the team? {contact}</> : null}
+      </p>
+    </div>
+  );
+}

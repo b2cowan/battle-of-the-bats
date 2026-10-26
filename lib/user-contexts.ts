@@ -11,6 +11,8 @@ import { WORKSPACE_KIND_LABEL } from './workspace-labels';
 import { getBillingHref } from './billing-urls';
 import { officialHome, volunteerHome, volunteerJobOf } from './volunteer-jobs';
 import { volunteerDuties } from './volunteer-words';
+import { getCoachTeamCards } from './house-league-coach';
+import { coachTeamPath as leagueCoachTeamPath } from './house-league-coach-invites';
 import type { OrgAccountKind, OrgPlan } from './types';
 
 export type OrgRelation = {
@@ -40,6 +42,8 @@ export type UserAccessContextKind =
   | 'tournament_official'
   | 'coaches_basic'
   | 'coaches_premium'
+  /** A house-league team's coach (Club Tier 9c): one card per team, opening that team's page — never the Coaches Portal. */
+  | 'house_league_coach'
   | 'fan';
 
 export type UserAccessContext = {
@@ -584,10 +588,13 @@ export async function getUserAccessContexts(user: {
   id: string;
   email?: string | null;
 }): Promise<UserAccessContext[]> {
-  const [members, registrationSummary, fanSummary] = await Promise.all([
+  const [members, registrationSummary, fanSummary, leagueTeams] = await Promise.all([
     getActiveMembershipRows(user.id),
     getBasicCoachTournamentSummary({ userId: user.id, email: user.email }),
     getFanFollowSummary(user.id),
+    // Club Tier 9c: built from the coach's own rows (league_team_coaches), not a role, so a registrar who coaches a
+    // team keeps their desk card and gains this one. A read that fails costs the card, never the sign-in.
+    getCoachTeamCards(user.id).catch(() => []),
   ]);
 
   const assignmentEntries = await Promise.all(
@@ -621,6 +628,21 @@ export async function getUserAccessContexts(user: {
       firstTeamName: assignments[0]?.teamName,
     });
     if (coachContext) contexts.push(coachContext);
+  }
+
+  for (const team of leagueTeams) {
+    contexts.push({
+      id: `league-coach:${team.teamId}`,
+      kind: 'house_league_coach',
+      title: team.teamName,
+      subtitle: `${team.orgName} · ${team.divisionName}`,
+      detail: team.seasonName,
+      badgeLabel: 'Coach',
+      destination: leagueCoachTeamPath(team.orgSlug, team.seasonSlug, team.teamId),
+      sortOrder: 25,
+      orgId: team.orgId,
+      orgSlug: team.orgSlug,
+    });
   }
 
   const tournamentContext = buildTournamentRegistrationContext(registrationSummary);

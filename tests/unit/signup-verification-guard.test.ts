@@ -51,7 +51,11 @@ describe('the coach sign-up', () => {
   it('verifies unless off or a live invitation addressed to this email proves the inbox — before any account is made', () => {
     const gate = at(route, 'if (shouldRequireEmailVerification() && !(await inviteProvesEmail(body.inviteToken, email))) {');
     assert.ok(gate < at(route, 'supabaseAdmin.auth.admin.createUser('), 'the instant path comes after the verify branch');
-    assert.match(route, /return !!invite && invite\.status === 'pending' && !invite\.expired && invite\.invitedEmail\.trim\(\)\.toLowerCase\(\) === email;/);
+    assert.match(route, /if \(invite\) return invite\.status === 'pending' && !invite\.expired && invite\.invitedEmail\.trim\(\)\.toLowerCase\(\) === email;/);
+    // Club Tier 9c: a house-league coach's invite proves the inbox on the same terms (live, unexpired, this address).
+    assert.match(route, /return leagueCoachInviteProvesEmail\(inviteToken, email\);/);
+    assert.match(readCode('lib/house-league-coach-invites.ts'),
+      /invite\.status === 'pending' && !invite\.expired && invite\.invitedEmail === email\.trim\(\)\.toLowerCase\(\)/);
   });
   it('answers an existing account as before, never generating a signup link over it', () => {
     assert.ok(at(route, "if (await authAccountExistsForEmail(email)) return json({ error: 'email_exists' }, 409);") < at(route, "type: 'signup',"));

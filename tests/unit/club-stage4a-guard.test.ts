@@ -22,7 +22,9 @@ import { readCode, readSource, filesUnder } from './_source-code.ts';
 const ORG = 'app/[orgSlug]';
 /** Not club pages: the tournament subtree (a dynamic segment), and the signed-in tools. */
 const NOT_CLUB = [`${ORG}/[tournamentSlug]/`, `${ORG}/admin/`, `${ORG}/coaches/`, `${ORG}/check-in/`, `${ORG}/official/`,
-  `${ORG}/scorekeeper/`];
+  `${ORG}/scorekeeper/`,
+  // Club Tier 9c: a house-league coach's team page — signed in, answered by the coach column of the gate, never public.
+  `${ORG}/league/[seasonSlug]/team/`];
 
 const CLUB_ROUTES = [...filesUnder(ORG, '.tsx'), ...filesUnder(ORG, '.ts')]
   .filter(f => /\/(page\.tsx|route\.ts)$/.test(f))
