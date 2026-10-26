@@ -358,7 +358,7 @@ export function freeTimeBlockOf(club: Pick<ClubFacts, 'name' | 'planId' | 'accou
     return { tone: 'red', kind: 'switch', lead: 'Free time is switched off on this server', rest: ', so anything given here would do nothing. An engineer can switch it on.' };
   }
   if (ctx.staffIsMember) {
-    return { tone: 'red', kind: 'own_club', lead: `You're a member of ${club.name}`, rest: ", so you can't give it free time. Another staff member can." };
+    return { tone: 'red', kind: 'own_club', lead: `You belong to ${club.name}`, rest: ", so you can't give it free time. Another staff member can." };
   }
   if (club.accountKind === 'team_workspace' || club.planId === 'team') {
     return { tone: 'amber', kind: 'portal', lead: "A Coaches Portal can't be given free time yet.", rest: ' A portal reads its own billing, not free time. Its Founding Season stays as it is.' };

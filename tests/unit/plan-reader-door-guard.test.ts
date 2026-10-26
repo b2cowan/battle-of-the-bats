@@ -114,6 +114,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'app/coaches/tournaments/[teamId]/page.tsx': ['identity', "plan_id 'team' = the portal stub"],
   // ── another table ──
   'lib/plan-config-db.ts': ['other', 'plan_config_overrides.plan_id'],
+  'lib/console-money-store.ts': ['other', "stripe_prices.plan_id: the Money tab's price → plan map, never an org's plan (Support console Stage 3)"],
   'lib/plan-module-entitlements.ts': ['other', 'plan_config_overrides.plan_id'],
   'lib/stripe-prices.ts': ['other', 'stripe_prices.plan_id'],
   'lib/stripe-price-validation.ts': ['other', 'stripe_prices.plan_id'],

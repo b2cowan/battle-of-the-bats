@@ -58,6 +58,12 @@ export type PlatformPower =
   | 'find_stripe'
   /** Run a scheduled job by hand, and sweep the error store. */
   | 'run_jobs'
+  /**
+   * Refund a club's subscription charge from its Money tab (Support console Stage 3, owner Q1 2026-10-26): Super admin
+   * and Billing. Support reads Stripe (`find_stripe`) and hands a refund on. Billing's older-than-6-months and
+   * sixth-in-24-hours limits are the refund route's, not this list's.
+   */
+  | 'refund'
   /** The dev-only seed console (and only where NEXT_PUBLIC_ENABLE_DEV_TOOLS is on). */
   | 'dev_tools';
 
@@ -87,6 +93,7 @@ export const PLATFORM_POWERS: Record<PlatformPower, readonly PlatformRole[]> = {
   staff:            ['super_admin'],
   records_opened:   ['super_admin'],
   find_stripe:      ['super_admin', 'billing', 'support'],
+  refund:           ['super_admin', 'billing'],
   run_jobs:         ['super_admin'],
   dev_tools:        ['super_admin'],
 };

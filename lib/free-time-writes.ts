@@ -5,6 +5,7 @@ import { isDemoOrgId } from './demo-org-server';
 import { hasLiveSubscription } from './plan-move';
 import { grantsEnabled } from './entitlement-grants';
 import { endClubOverride } from './club-record-changes';
+import { staffBelongsToClub, type StaffIdentity } from './staff-own-club';
 import {
   decideGive,
   endInstantForLastDay,
@@ -87,25 +88,18 @@ export async function readClubFacts(orgId: string, opts: { withGrant?: boolean }
   };
 }
 
-/** Is this staff member a member of the club, in any role or state? By membership, on the server (T1). */
-async function staffBelongsTo(orgId: string, userId: string): Promise<boolean> {
-  const { count, error } = await supabaseAdmin
-    .from('organization_members')
-    .select('id', { count: 'exact', head: true })
-    .eq('organization_id', orgId)
-    .eq('user_id', userId);
-  if (error) throw error;
-  return (count ?? 0) > 0;
-}
-
-export async function readGiveContext(orgId: string, staffUserId: string): Promise<GiveContext> {
-  const [staffIsMember, isDemo] = await Promise.all([staffBelongsTo(orgId, staffUserId), isDemoOrgId(orgId)]);
+/**
+ * Does this staff member belong to the club in any way (T1)? The ONE wider check (Stage 3, owner Q1): a member, an
+ * invite, a team coach, a Coaches Portal the club pays for, the owner's or the Stripe customer's email.
+ */
+export async function readGiveContext(orgId: string, staff: StaffIdentity): Promise<GiveContext> {
+  const [staffIsMember, isDemo] = await Promise.all([staffBelongsToClub(orgId, staff), isDemoOrgId(orgId)]);
   return { switchOn: grantsEnabled(), staffIsMember, isDemo };
 }
 
 /** For the record: why the door is absent (one line), and why a whole plan cannot be given (in the window). */
-export async function freeTimeDoorFacts(orgId: string, staffUserId: string): Promise<{ block: GiveBlock | null; planBlock: PlanBlock | null; ownPlan: OrgPlan } | null> {
-  const [club, ctx] = await Promise.all([readClubFacts(orgId), readGiveContext(orgId, staffUserId)]);
+export async function freeTimeDoorFacts(orgId: string, staff: StaffIdentity): Promise<{ block: GiveBlock | null; planBlock: PlanBlock | null; ownPlan: OrgPlan } | null> {
+  const [club, ctx] = await Promise.all([readClubFacts(orgId), readGiveContext(orgId, staff)]);
   if (!club) return null;
   return { block: freeTimeBlockOf(club, ctx), planBlock: planGrantBlockOf(club), ownPlan: club.planId };
 }
@@ -116,7 +110,7 @@ export type GiveInput = { orgId: string; kind: unknown; plan?: unknown; addons?:
 export async function giveFreeTime(input: GiveInput): Promise<Refusal | { ok: true; override: { id: string } }> {
   const club = await readClubFacts(input.orgId);
   if (!club) return { ok: false, status: 404, error: 'Club not found.' };
-  const ctx = await readGiveContext(club.id, input.actor.id);
+  const ctx = await readGiveContext(club.id, input.actor);
   const decision = decideGive(
     { kind: input.kind, plan: input.plan, addons: input.addons, lastDay: input.lastDay, reason: input.reason, role: input.actor.role },
     club,
@@ -135,11 +129,16 @@ export async function giveFreeTime(input: GiveInput): Promise<Refusal | { ok: tr
     })
     .select('id')
     .single();
+  // Two staff giving a plan at the same instant: the database's one-plan-grant-at-a-time rule (mig 380, Q8) refuses the
+  // second, and it reads as the refusal the window would have shown had it seen the first.
+  if (error?.code === '23P01') {
+    return { ok: false, status: 409, error: `${club.name} already has a plan given as free time. Give it more time from that entry instead of a second grant.` };
+  }
   if (error || !created) return { ok: false, status: 500, error: 'Nothing was given. The server could not save it. Your answers are kept; try again.' };
 
   await writePlatformAuditLog(input.actor.email, club.id, 'create_override', 'type', null, {
-    ...decision.row, last_day: decision.lastDay, reason: decision.reason, override_id: created.id,
-  });
+    ...decision.row, last_day: decision.lastDay, override_id: created.id,
+  }, { reason: decision.reason });
   return { ok: true, override: { id: created.id } };
 }
 
@@ -160,7 +159,7 @@ export type ChangeInput = {
  */
 export async function changeFreeTimeEnd(input: ChangeInput): Promise<Refusal | { ok: true }> {
   const refuse = (status: number, error: string): Refusal => ({ ok: false, status, error });
-  const [club, ctx] = await Promise.all([readClubFacts(input.orgId, { withGrant: false }), readGiveContext(input.orgId, input.actor.id)]);
+  const [club, ctx] = await Promise.all([readClubFacts(input.orgId, { withGrant: false }), readGiveContext(input.orgId, input.actor)]);
   if (!club) return refuse(404, 'Club not found.');
   const block = freeTimeBlockOf(club, ctx);
   if (block) return refuse(block.kind === 'switch' ? 409 : 403, `${block.lead}${block.rest}`);
@@ -204,8 +203,8 @@ export async function changeFreeTimeEnd(input: ChangeInput): Promise<Refusal | {
   }
 
   await writePlatformAuditLog(input.actor.email, club.id, 'change_override_end', 'expires_at', row.expires_at, {
-    override_id: row.id, expires_at: expiresAt, last_day: lastDay, was_last_day: lastDayOfInstant(row.expires_at), reason, ...input.extra,
-  });
+    override_id: row.id, expires_at: expiresAt, last_day: lastDay, was_last_day: lastDayOfInstant(row.expires_at), ...input.extra,
+  }, { reason });
   return { ok: true };
 }
 

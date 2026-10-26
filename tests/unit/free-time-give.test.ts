@@ -41,7 +41,7 @@ describe('giving free time: every refusal', () => {
   });
 
   it('a club the staff member belongs to (T1)', () => {
-    assert.equal(refusal(decideGive(PLAN, CLUB, { ...OPEN, staffIsMember: true }, NOW)), "You're a member of UAT Test Org, so you can't give it free time. Another staff member can.");
+    assert.equal(refusal(decideGive(PLAN, CLUB, { ...OPEN, staffIsMember: true }, NOW)), "You belong to UAT Test Org, so you can't give it free time. Another staff member can.");
   });
 
   it('a public demo club (T12)', () => {

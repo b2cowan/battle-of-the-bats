@@ -21,6 +21,14 @@ export function stripeKeyIsTest(key: string | undefined = process.env.STRIPE_SEC
   return !!key && key.startsWith('sk_test_');
 }
 
+/**
+ * True when the server's Stripe key is a LIVE key (`sk_live_`, or a restricted `rk_live_`). A Stripe object is this site's
+ * only when its `livemode` matches (the support console's Money tab, refunds and Find, Stage 3).
+ */
+export function stripeKeyIsLive(key: string | undefined = process.env.STRIPE_SECRET_KEY): boolean {
+  return !!key && /^(sk|rk)_live_/.test(key);
+}
+
 /** The one question every online-payments door asks. */
 export function onlinePaymentsOn(env: Record<string, string | undefined> = process.env): boolean {
   if (env.ONLINE_PAYMENTS_ENABLED !== 'true') return false;
