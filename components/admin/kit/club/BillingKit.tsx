@@ -39,6 +39,7 @@ import PlanMoveDialog, { CONTACT_HREF } from './PlanMoveDialog';
 import FreeTimeBand, { useCustomerFreeTime } from '@/components/admin/FreeTimeBand';
 import { freeTimeCopy } from '@/lib/free-time-copy';
 import { ownPlanOf } from '@/lib/free-time';
+import { subscriptionStatusLabel } from '@/lib/platform-labels';
 import ck from './ClubKit.module.css';
 import styles from './Billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
@@ -60,12 +61,8 @@ type MoveInfo = { live: boolean; scheduledMove: { toPlan: OrgPlan; effectiveAt: 
 type Preflight = { retentionDays: number; tournaments: unknown[]; cancelled: { at: string | null; keptUntil: string | null } | null };
 type Gating = Partial<Record<OrgPlan, boolean>>;
 
-const STATUS_CHIP: Record<string, { tone: 'good' | 'warn' | 'danger'; label: string }> = {
-  active: { tone: 'good', label: 'Active' },
-  trialing: { tone: 'good', label: 'Trial' },
-  past_due: { tone: 'warn', label: 'Past due' },
-  canceled: { tone: 'danger', label: 'Cancelled' },
-};
+/** The chip's tone per billing status; its words are the product's one set (owner Q10). */
+const STATUS_TONE: Record<string, 'good' | 'warn' | 'danger'> = { active: 'good', trialing: 'good', past_due: 'warn', canceled: 'danger' };
 
 export default function BillingKit() {
   const { currentOrg, userRole, refresh, loading } = useOrg();
@@ -246,7 +243,8 @@ export default function BillingKit() {
   }
 
   // ── Live ─────────────────────────────────────────────────────────────────────────────────────
-  const status = STATUS_CHIP[currentOrg.subscriptionStatus] ?? STATUS_CHIP.active;
+  const statusKey = currentOrg.subscriptionStatus in STATUS_TONE ? currentOrg.subscriptionStatus : 'active';
+  const status = { tone: STATUS_TONE[statusKey], label: subscriptionStatusLabel(statusKey) };
   const renewal = currentOrg.currentPeriodEnd ? formatStoredDate(currentOrg.currentPeriodEnd, { longMonth: true }) : null;
   const scheduled = moveInfo?.scheduledMove ?? null;
 

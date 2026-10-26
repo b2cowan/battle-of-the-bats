@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { PLAN_CONFIG } from '@/lib/plan-config';
-import { applyOperatorPlanChange, PlanUpdateError } from '@/lib/operator-plan-change';
+import { applyOperatorPlanChange, PlanRefusedError, PlanUpdateError } from '@/lib/operator-plan-change';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -45,6 +45,7 @@ export const PATCH = withObservability(async (req: NextRequest,
       audit: { action: 'update_org_plan_and_limit' },
     });
   } catch (err) {
+    if (err instanceof PlanRefusedError) return NextResponse.json({ error: err.message }, { status: 409 });
     if (err instanceof PlanUpdateError) return NextResponse.json({ error: 'Update failed' }, { status: 500 });
     throw err;
   }

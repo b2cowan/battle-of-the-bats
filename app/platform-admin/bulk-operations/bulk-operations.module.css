@@ -110,6 +110,7 @@
 }
 
 .resultOk,
+.resultSkip,
 .resultFail {
   display: grid;
   gap: 0.2rem;
@@ -119,18 +120,26 @@
   background: color-mix(in srgb, var(--home-olive) 6%, transparent);
 }
 
+/* Skipped on purpose (a paying club's plan, the staff member's own club): nothing went wrong, so it is not red. */
+.resultSkip {
+  border-color: var(--border);
+  background: transparent;
+}
+
 .resultFail {
   border-color: color-mix(in srgb, var(--danger) 35%, transparent);
   background: color-mix(in srgb, var(--danger) 6%, transparent);
 }
 
 .resultOk strong,
+.resultSkip strong,
 .resultFail strong {
   font-size: var(--type-body);
   color: var(--text-primary);
 }
 
 .resultOk span,
+.resultSkip span,
 .resultFail span {
   font-size: var(--type-support);
   color: var(--text-secondary);

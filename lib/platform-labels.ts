@@ -17,12 +17,16 @@ export function humanize(s: string | null | undefined): string {
   return cap((s ?? '').replace(/_/g, ' '));
 }
 
-/** A subscription status word as the console prints it. */
+/**
+ * A billing status word as a person reads it — the console and both customer billing pages (Support console Stage 3, owner
+ * Q10: "Cancelled" and "Trial" everywhere a person reads them). The stored values (`canceled`, `trialing`) are Stripe's and
+ * never change; only the words do.
+ */
 export const SUBSCRIPTION_STATUS_LABELS: Record<string, string> = {
   active:   'Active',
-  trialing: 'Trialing',
+  trialing: 'Trial',
   past_due: 'Past due',
-  canceled: 'Canceled',
+  canceled: 'Cancelled',
 };
 
 /** A subscription status as the console prints it: the known four by name, anything else (incomplete, unpaid) humanized. */
@@ -63,7 +67,7 @@ export function sectionLabel(key: string): string {
 
 /** An override's kind, as the record and the Story both name it. */
 export const OVERRIDE_LABELS: Record<string, string> = {
-  subscription_status: 'Subscription status',
+  subscription_status: 'Billing status',
   comp_period: 'Comp period',
   module_addon: 'Feature access',
   plan_tier: 'Plan tier',

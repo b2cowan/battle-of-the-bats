@@ -144,6 +144,15 @@ const ENFORCED_PATTERNS = [
      start): sentence case like every other menu label (House league, Practice plans, Staff kit), on every screen,
      help article, plan list and marketing page. A CASE rule, so a shape — the word list above matches without case.
      Identifiers never wore this spelling (`rep-teams`, `module_rep_teams`, `rep_teams`). */
+  /* "Cancelled", one spelling wherever a person reads it (Support console Stage 3, owner Q10 2026-10-26: "Cancelled + Trial
+     everywhere a person reads them; gated"). Case-SENSITIVE on purpose: the stored value `canceled` is Stripe's and stays,
+     and so do identifiers (`canceledCount`, `isCanceled`). The displayed lowercase word was swept by hand; a help article's
+     hidden search synonym keeps `canceled` with `spelling-ok`, so someone typing the US spelling still finds it. */
+  {
+    id: 'cancelled-spelling',
+    pattern: /\bCanceled\b/g,
+    right: '"Cancelled" — the one spelling a person reads (the stored value `canceled` is unchanged)',
+  },
   {
     id: 'rep-teams-case',
     pattern: /\bRep Teams\b/g,

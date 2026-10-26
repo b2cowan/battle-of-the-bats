@@ -4,6 +4,8 @@ import { getEffectiveTournamentLimit } from './plan-config';
 import { archiveOverCapTournamentsForPlanChange, isLowerPlan } from './billing-retention';
 import { isClubPlan } from './module-entitlements';
 import { applyPlanChangeSideEffects, hadSubscriptionBefore, hasLiveSubscription } from './plan-move';
+import { PAYING_CLUB_PLAN_REFUSAL, isEndedSubscriptionStatus, stripeStillBills } from './stripe-billing-state';
+import { getStripe } from './stripe';
 import { getPlanConfigOverride } from './plan-config-db';
 import { restoreAfterReactivation } from './billing-reactivation';
 import type { OrgPlan } from './types';
@@ -19,7 +21,17 @@ import type { OrgPlan } from './types';
  * (applyPlanChangeSideEffects) → the reactivation restore (A07) → the over-cap archive → the audit trail.
  * A failure AFTER the plan is saved is reported in `warnings` (or `archiveWarning`), never swallowed and
  * never turned into a failure of the change itself. A failed plan write throws PlanUpdateError.
+ *
+ * M6 (Support console Stage 3, owner Q9 2026-10-26): a club that Stripe still bills — a subscription not yet cancelled
+ * in Stripe, whatever its billing status — is refused before anything is written (PlanRefusedError) when the change
+ * moves its plan or its tournament limit. Our columns are not what Stripe charges for, and the webhook writes Stripe's
+ * plan and tournament limit back at every subscription event, so a staff change here was silently undone while Stripe
+ * kept charging the old price. A custom team limit alone (a Club · Association deal) is never written by the webhook, so
+ * it still saves on a paying club. The owner moves plan on their Plan & billing page (which
+ * moves Stripe), or staff cancel the subscription first. Every caller (the pencil, Put it back, Bulk changes, the plan
+ * route) obeys it because the refusal lives here.
  */
+
 
 export type OperatorPlanCurrent = {
   plan_id: string;
@@ -63,6 +75,22 @@ export type OperatorPlanChangeResult = {
 
 export class PlanUpdateError extends Error {}
 
+/** Has Stripe ended this subscription (cancelled, abandoned, or gone)? Unknown counts as not ended: the change is refused. */
+async function subscriptionEndedInStripe(subscriptionId: string): Promise<boolean> {
+  try {
+    const sub = await getStripe().subscriptions.retrieve(subscriptionId, {}, { timeout: 8000, maxNetworkRetries: 1 });
+    return isEndedSubscriptionStatus(sub.status);
+  } catch (err) {
+    const e = err as { statusCode?: number; code?: string };
+    return e.statusCode === 404 || e.code === 'resource_missing';
+  }
+}
+/** A staff plan change the rule refuses before writing anything; `message` is the sentence the person reads. */
+export class PlanRefusedError extends Error {
+  readonly code = 'paying_through_stripe' as const;
+  constructor() { super(PAYING_CLUB_PLAN_REFUSAL); }
+}
+
 export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): Promise<OperatorPlanChangeResult> {
   const { orgId, planId, reason, actor } = input;
   const extra = input.audit.extra ?? {};
@@ -78,10 +106,21 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
     .select('plan_id, tournament_limit, team_limit, subscription_status, stripe_customer_id, stripe_subscription_id, subscription_period, current_period_end')
     .eq('id', orgId)
     .single<OperatorPlanCurrent>();
-
   const currentEffectiveLimit = current
     ? getEffectiveTournamentLimit(current.plan_id as OrgPlan, current.tournament_limit)
     : null;
+
+  // Q9: while Stripe bills the club, its plan and tournament limit change in Stripe, never here. Our record says so first;
+  // when it does, Stripe is asked, because a missed webhook leaves a subscription Stripe already ended reading as live
+  // here — and refusing that club for good would leave staff only the destructive cancel. Stripe unreachable: refused.
+  const billedPerRecord = !!current
+    && stripeStillBills({ stripeSubscriptionId: current.stripe_subscription_id, subscriptionStatus: current.subscription_status });
+  let subscriptionEnded = !billedPerRecord;
+  if (current && billedPerRecord && (current.plan_id !== planId || currentEffectiveLimit !== effectiveTournamentLimit)) {
+    subscriptionEnded = await subscriptionEndedInStripe(current.stripe_subscription_id!);
+    if (!subscriptionEnded) throw new PlanRefusedError();
+  }
+
   const { count: nonArchivedTournamentCount } = await supabaseAdmin
     .from('tournaments')
     .select('*', { count: 'exact', head: true })
@@ -102,9 +141,12 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
   };
   if (teamLimitProvided) updatePayload.team_limit = normalizedTeamLimit;
 
+  // The free plan resets the billing columns. It drops our link to a subscription only when that subscription has ended
+  // (Q9: a link to one Stripe still bills is never dropped — and such a club cannot reach this line). Kept, an ended
+  // subscription's id beside an "active" status would read as live everywhere (checkout, moves, this rule).
   if (planId === 'tournament') {
     updatePayload.subscription_status = 'active';
-    updatePayload.stripe_subscription_id = null;
+    if (subscriptionEnded) updatePayload.stripe_subscription_id = null;
     updatePayload.subscription_period = null;
     updatePayload.current_period_end = null;
   }
@@ -205,7 +247,7 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
       archivedTournaments = archived.map(t => ({ id: t.id, name: t.name }));
       if (archivedTournaments.length > 0) {
         await writePlatformAuditLog(actor, orgId, 'update_plan', 'archived_over_cap_tournaments',
-          null, { count: archivedTournaments.length, tournaments: archivedTournaments, ...extra });
+          null, { count: archivedTournaments.length, tournaments: archivedTournaments, ...extra }, { reason });
       }
     } catch (archiveErr) {
       // The plan change itself already succeeded and must not be reported as a failure. Set a warning and
@@ -232,47 +274,46 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
       plan_id: planId,
       tournament_limit: effectiveTournamentLimit,
       non_archived_tournaments: nonArchivedTournamentCount ?? 0,
-      reason,
       free_plan_billing_reset: planId === 'tournament',
       ...extra,
-    });
+    }, { reason });
   if (current?.tournament_limit !== effectiveTournamentLimit) {
     await writePlatformAuditLog(actor, orgId, 'update_plan', 'tournament_limit',
-      current?.tournament_limit, effectiveTournamentLimit);
+      current?.tournament_limit, effectiveTournamentLimit, { reason });
   }
   if (sideEffects.clearedTeamLimit) {
     await writePlatformAuditLog(actor, orgId, 'update_plan', 'team_limit',
-      current?.team_limit ?? null, null);
+      current?.team_limit ?? null, null, { reason });
   }
   // ⚠ Keep this row's action + field exactly: the "no second trial" check above counts them.
   if (clubTrialDays > 0) {
     await writePlatformAuditLog(actor, orgId, 'update_plan', 'club_trial',
-      null, { days: clubTrialDays, endsAt: updatePayload.current_period_end, ...extra });
+      null, { days: clubTrialDays, endsAt: updatePayload.current_period_end, ...extra }, { reason });
   }
   if (sideEffects.revokedComps > 0) {
     await writePlatformAuditLog(actor, orgId, 'update_plan', 'founding_comp_revoked',
-      null, { rows: sideEffects.revokedComps, ...extra });
+      null, { rows: sideEffects.revokedComps, ...extra }, { reason });
   }
   if (teamLimitProvided && (current?.team_limit ?? null) !== normalizedTeamLimit) {
     await writePlatformAuditLog(actor, orgId, 'update_plan', 'team_limit',
-      current?.team_limit ?? null, normalizedTeamLimit);
+      current?.team_limit ?? null, normalizedTeamLimit, { reason });
   }
   if (planId === 'tournament') {
     if (current?.subscription_status !== 'active') {
       await writePlatformAuditLog(actor, orgId, 'update_plan', 'subscription_status',
-        current?.subscription_status, 'active');
+        current?.subscription_status, 'active', { reason });
     }
-    if (current?.stripe_subscription_id) {
+    if (current?.stripe_subscription_id && subscriptionEnded) {
       await writePlatformAuditLog(actor, orgId, 'update_plan', 'stripe_subscription_id',
-        current?.stripe_subscription_id, null);
+        current.stripe_subscription_id, null, { reason });
     }
     if (current?.subscription_period) {
       await writePlatformAuditLog(actor, orgId, 'update_plan', 'subscription_period',
-        current?.subscription_period, null);
+        current?.subscription_period, null, { reason });
     }
     if (current?.current_period_end) {
       await writePlatformAuditLog(actor, orgId, 'update_plan', 'current_period_end',
-        current?.current_period_end, null);
+        current?.current_period_end, null, { reason });
     }
   }
 

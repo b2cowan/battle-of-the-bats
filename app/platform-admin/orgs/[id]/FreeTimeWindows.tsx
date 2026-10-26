@@ -7,7 +7,7 @@
 import { useState, type ReactNode } from 'react';
 import { Flag, Lock, Users } from 'lucide-react';
 import DateInput from '@/components/shared/DateInput';
-import { CLUB_SECTIONS, planLabel, sectionLabel } from '@/lib/platform-labels';
+import { CLUB_SECTIONS, planLabel, sectionLabel, subscriptionStatusLabel } from '@/lib/platform-labels';
 import { dayAfterWords, formatLongDay, monthDayOf, type GiveBlock } from '@/lib/free-time';
 import { possessive } from '@/lib/utils';
 import RecordWindow from '../../RecordWindow';
@@ -27,11 +27,11 @@ export function freeTimeSubject(o: FreeTimeRow, ownPlanLabel: string): string {
   return ownPlanLabel;
 }
 
-/** An Access row's title: "Club · the whole plan", "Accounting", "Billing status: active", "Tournament Plus · Founding Season". */
+/** An Access row's title: "Club · the whole plan", "Accounting", "Billing status: Active", "Tournament Plus · Founding Season". */
 export function freeTimeTitle(o: FreeTimeRow, org: ClubRecordProps['org']): string {
   if (o.type === 'plan_tier') return `${planLabel(o.plan ?? '')} · the whole plan`;
   if (o.type === 'module_addon') return o.addons.map(sectionLabel).join(', ') || 'Sections';
-  if (o.type === 'subscription_status') return `Billing status: ${(o.value ?? 'active').replace(/_/g, ' ')}`;
+  if (o.type === 'subscription_status') return `Billing status: ${subscriptionStatusLabel(o.value ?? 'active')}`;
   return o.founding ? `${org.planLabel} · Founding Season` : 'Billing tag, gives nothing';
 }
 

@@ -5,7 +5,7 @@ import { PLAN_CONFIG, getEffectiveTournamentLimit } from '@/lib/plan-config';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
 import { applyClubIdentity, applyClubSections } from '@/lib/club-record-changes';
-import { applyOperatorPlanChange, PlanUpdateError } from '@/lib/operator-plan-change';
+import { applyOperatorPlanChange, PlanRefusedError, PlanUpdateError } from '@/lib/operator-plan-change';
 
 /**
  * The club record's one pencil, saved (Support console Stage 2, owner ruling A6 — "one pencil for the whole record; the
@@ -98,6 +98,7 @@ export const PATCH = withObservability(async (req: Request, { params }: { params
         warnings.push(`Archived over the new limit: ${result.archivedTournaments.map(t => t.name).join(', ')}.`);
       }
     } catch (err) {
+      if (err instanceof PlanRefusedError) return fail(409, err.message);
       return fail(500, err instanceof PlanUpdateError ? 'The plan could not be saved.' : 'The plan could not be saved.');
     }
     saved.push('plan and limits');

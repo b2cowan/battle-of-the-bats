@@ -104,6 +104,7 @@ export function hasLiveSubscription(org: MoveOrg): boolean {
     && LIVE_STATUSES.has(org.subscriptionStatus ?? '');
 }
 
+
 async function loadLiveSubscription(org: MoveOrg): Promise<LiveSub | MoveRefusal> {
   if (!hasLiveSubscription(org)) {
     return {

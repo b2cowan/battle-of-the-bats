@@ -62,7 +62,7 @@ const CHANGE_REQUEST_STATUSES = [
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
   { value: 'implemented', label: 'Implemented' },
-  { value: 'canceled', label: 'Canceled' },
+  { value: 'canceled', label: 'Cancelled' },
 ];
 
 const STATUS_VIEW_OPTIONS = [

@@ -4,7 +4,7 @@ import { withObservability } from '@/lib/observability';
 import type { OrgPlan } from '@/lib/types';
 import { buildClubStory } from '@/lib/platform-story';
 import { applyClubSections, endClubOverride } from '@/lib/club-record-changes';
-import { applyOperatorPlanChange } from '@/lib/operator-plan-change';
+import { applyOperatorPlanChange, PlanRefusedError } from '@/lib/operator-plan-change';
 import { changeFreeTimeEnd } from '@/lib/free-time-writes';
 import { earliestLastDay } from '@/lib/free-time';
 
@@ -72,7 +72,8 @@ export const POST = withObservability(async (req: Request, { params }: { params:
       audit: { action: 'update_org_plan_and_limit', extra },
     });
     return NextResponse.json({ ok: true, warnings: [...result.warnings, ...(result.archiveWarning ? [result.archiveWarning] : [])] });
-  } catch {
+  } catch (err) {
+    if (err instanceof PlanRefusedError) return NextResponse.json({ error: err.message }, { status: 409 });
     return NextResponse.json({ error: 'The plan could not be put back.' }, { status: 500 });
   }
 }, { route: '/api/platform-admin/orgs/[id]/put-back' });

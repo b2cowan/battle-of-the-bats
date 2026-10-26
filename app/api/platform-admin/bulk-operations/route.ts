@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { PLAN_CONFIG } from '@/lib/plan-config';
-import { applyOperatorPlanChange } from '@/lib/operator-plan-change';
+import { applyOperatorPlanChange, PlanRefusedError } from '@/lib/operator-plan-change';
+import { endInstantForLastDay, formatLongDay, lastDayRefusal } from '@/lib/free-time';
+import { clubsStaffBelongsTo } from '@/lib/staff-own-club';
+import { subscriptionStatusLabel } from '@/lib/platform-labels';
 import { isClubPlan } from '@/lib/module-entitlements';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { hasPlatformPower, requireAnyPlatformPower } from '@/lib/platform-auth';
@@ -31,6 +34,8 @@ type BulkResult = {
   name: string;
   slug: string;
   ok: boolean;
+  /** Nothing was done to this club, on purpose (its own line says why); counted with the failures. */
+  skipped?: boolean;
   message: string;
 };
 
@@ -95,7 +100,10 @@ export const POST = withObservability(async (req: Request) => {
   const targetPlan = cleanString(body.target_plan, 80);
   const targetModule = cleanString(body.target_module, 80);
   const moduleOperation = cleanString(body.module_operation, 40) as ModuleOperation;
-  const expiresAt = cleanString(body.expires_at, 80);
+  // Bulk changes' billing status override follows free time's rules (Support console Stage 3, owner Q7): a last free day
+  // is required (the end is midnight Eastern after it), within the role's cap (Billing 6 months, Super admin 12), and a
+  // club the staff member belongs to is skipped. The server decides all three; the window's greyed days are a courtesy.
+  const lastDay = cleanString(body.last_day, 10);
 
   // Comp period is no longer given (Support console Stage 4, owner ruling Q5): it never gave a club anything, and offering
   // it beside things that do is how a club ends up "comped" and charged. Founding Season's own rows are written at sign-up.
@@ -122,8 +130,11 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Reason is required' }, { status: 400 });
   }
   if (actionType === 'subscription_status_override' && !VALID_STATUSES.has(targetStatus)) {
-    return NextResponse.json({ error: 'Choose a valid subscription status' }, { status: 400 });
+    return NextResponse.json({ error: 'Choose a valid billing status' }, { status: 400 });
   }
+  const dayRefusal = actionType === 'subscription_status_override' ? lastDayRefusal(lastDay, auth.role) : null;
+  if (dayRefusal) return NextResponse.json({ error: dayRefusal }, { status: 400 });
+  const expiresAt = actionType === 'subscription_status_override' ? endInstantForLastDay(lastDay) : null;
   if (actionType === 'plan_change' && !isOrgPlan(targetPlan)) {
     return NextResponse.json({ error: 'Choose a valid target plan' }, { status: 400 });
   }
@@ -151,7 +162,8 @@ export const POST = withObservability(async (req: Request) => {
     target_plan: actionType === 'plan_change' ? targetPlan : null,
     target_module: actionType === 'module_addon_enablement' ? targetModule : null,
     module_operation: actionType === 'module_addon_enablement' ? moduleOperation : null,
-    expires_at: expiresAt || null,
+    expires_at: expiresAt,
+    last_day: actionType === 'subscription_status_override' ? lastDay : null,
   };
 
   const { data: operation, error: operationError } = await supabaseAdmin
@@ -180,16 +192,26 @@ export const POST = withObservability(async (req: Request) => {
     ? (await getPlanConfigOverride(targetPlan as OrgPlan)).trialDays
     : undefined;
 
+  // The clubs the staff member belongs to (the one wider check), asked once for the whole batch.
+  const ownClubs = actionType === 'subscription_status_override'
+    ? await clubsStaffBelongsTo(orgs.map(o => o.id), { id: auth.user.id, email: auth.user.email ?? '' })
+    : new Set<string>();
+
   for (const org of (orgs as OrgRow[])) {
     try {
       if (actionType === 'subscription_status_override') {
+        if (ownClubs.has(org.id)) {
+          results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: false, skipped: true,
+            message: "Skipped: you belong to this club, so you can't give it a billing status. Another staff member can." });
+          continue;
+        }
         const { error } = await supabaseAdmin
           .from('org_overrides')
           .insert({
             org_id: org.id,
             type: 'subscription_status',
             value: targetStatus,
-            expires_at: expiresAt || null,
+            expires_at: expiresAt,
             reason,
             created_by: auth.user.email!,
           });
@@ -199,10 +221,11 @@ export const POST = withObservability(async (req: Request) => {
           bulk_operation_id: operation.id,
           type: 'subscription_status',
           value: targetStatus,
-          expires_at: expiresAt || null,
-          reason,
-        });
-        results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: true, message: `Status override set to ${targetStatus}` });
+          expires_at: expiresAt,
+          last_day: lastDay,
+        }, { reason });
+        results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: true,
+          message: `Billing status reads ${subscriptionStatusLabel(targetStatus)} through ${formatLongDay(lastDay)}` });
       }
 
       if (actionType === 'plan_change') {
@@ -266,8 +289,7 @@ export const POST = withObservability(async (req: Request) => {
             enabled_addons: nextAddons,
             module_key: targetModule,
             module_operation: moduleOperation,
-            reason,
-          });
+          }, { reason });
           results.push({
             orgId: org.id,
             name: org.name,
@@ -280,6 +302,12 @@ export const POST = withObservability(async (req: Request) => {
         }
       }
     } catch (err) {
+      // A paying club's plan changes in Stripe, never here (owner Q9): the club is skipped with the one sentence, and the
+      // batch carries on.
+      if (err instanceof PlanRefusedError) {
+        results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: false, skipped: true, message: `Skipped: ${err.message}` });
+        continue;
+      }
       results.push({
         orgId: org.id,
         name: org.name,
@@ -319,9 +347,8 @@ export const POST = withObservability(async (req: Request) => {
     target_count: results.length,
     success_count: successCount,
     failure_count: failureCount,
-    reason,
     parameters,
-  });
+  }, { reason });
 
   return NextResponse.json({ ok: failureCount === 0, operation: updatedOperation, results });
 }, { route: '/api/platform-admin/bulk-operations' });

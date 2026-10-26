@@ -1,5 +1,6 @@
 import { getPlatformAdminContext, hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { earliestLastDay, latestLastDay } from '@/lib/free-time';
 import BulkOperationsClient from './BulkOperationsClient';
 
 export const metadata = { title: 'Bulk changes — Support console' };
@@ -74,6 +75,11 @@ export default async function BulkOperationsPage() {
       recentOperations={recentOperations}
       canManageBilling={auth ? hasPlatformPower(auth.role, 'bulk_plan_status') : false}
       canManageProduct={auth ? hasPlatformPower(auth.role, 'bulk_sections') : false}
+      freeThrough={{
+        earliest: earliestLastDay(),
+        latest: (auth && latestLastDay(auth.role)) || earliestLastDay(),
+        role: auth?.role ?? 'read_only',
+      }}
     />
   );
 }

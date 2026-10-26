@@ -96,7 +96,9 @@ input.changed, select.changed { border-color: var(--home-olive); }
 }
 .sentence strong { color: var(--text-primary); font-weight: 650; }
 .windowBody { display: grid; gap: 0.9rem; }
-.footNote { font-size: var(--type-body); color: var(--text-tertiary); }
+/* A window's foot sentence wears the product's foot-note face (the kit's: support size, quiet ink), never the body size
+   (Support console Stage 3; the 2026-10-25 defect). `tests/unit/console-window-foot-guard.test.ts` holds it. */
+.footNote { align-self: center; font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
 
 /* ── Free time (Support console Stage 4) ── */
 /* The title's short "Free time" chip opens the Access list (every highlight is clickable); the plan and day sit beside it

@@ -199,7 +199,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
           <strong>Needs attention.</strong>{' '}
           {pastDueCount > 0 || canceledCount > 0
             ? 'Accounts with billing or access risk are ready for review.'
-            : 'No past-due or canceled accounts in the current directory.'}
+            : 'No past-due or cancelled accounts in the current directory.'}
         </span>
         <span className={kit.calloutEnd}>
           {pastDueCount > 0 && (
@@ -209,7 +209,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
           )}
           {canceledCount > 0 && (
             <button type="button" onClick={() => setStatusFilter('canceled')} className="btn btn-secondary btn-sm">
-              Canceled ({canceledCount})
+              Cancelled ({canceledCount})
             </button>
           )}
           {pastDueCount === 0 && canceledCount === 0 && <span className={kit.chipOk + ' ' + kit.chip}>Clear</span>}

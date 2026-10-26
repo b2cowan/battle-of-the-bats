@@ -207,7 +207,7 @@ const CHANGE_REQUEST_STATUSES = [
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
   { value: 'implemented', label: 'Implemented' },
-  { value: 'canceled', label: 'Canceled' },
+  { value: 'canceled', label: 'Cancelled' },
 ];
 
 const PRIORITIES = [
@@ -256,7 +256,7 @@ function statusBreakdown(impact: PlanImpact | undefined) {
     ['Active', impact.active],
     ['Trial', impact.trialing],
     ['Past due', impact.past_due],
-    ['Canceled', impact.canceled],
+    ['Cancelled', impact.canceled],
   ].filter(([, count]) => Number(count) > 0);
 
   if (impact.other > 0) parts.push(['Other', impact.other]);
@@ -1773,7 +1773,7 @@ export default function PlansPricingClient({
           <strong className={kit.bandValue}>{paidAccounts}</strong>
         </div>
         <div className={`${kit.bandCell} ${riskAccounts > 0 ? kit.bandWarn : ''}`}>
-          <span className={kit.bandLabel}>Past due / canceled</span>
+          <span className={kit.bandLabel}>Past due / cancelled</span>
           <strong className={kit.bandValue}>{riskAccounts}</strong>
         </div>
       </section>

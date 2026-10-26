@@ -2,7 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { listDemoOrgIdsQuietly } from './demo-org-server';
 import { daysLeft, isEndingSoon, isGrantRunning, lastDayOfInstant } from './free-time';
-import { planLabel, sectionLabel } from './platform-labels';
+import { planLabel, sectionLabel, subscriptionStatusLabel } from './platform-labels';
 
 /**
  * Free time given by staff, one row per club (Support console Stage 4; drawings C2 and E1). The Free time list's "Given
@@ -36,7 +36,7 @@ type Row = {
 function freeOnWords(r: Row): string {
   if (r.type === 'plan_tier') return `${planLabel(r.target?.plan ?? '')}, the whole plan`;
   if (r.type === 'module_addon') return (r.target?.addons ?? []).map(sectionLabel).join(', ') || 'Sections';
-  return `Billing status: ${(r.value ?? 'active').replace(/_/g, ' ')}`;
+  return `Billing status: ${subscriptionStatusLabel(r.value ?? 'active')}`;
 }
 
 export async function getStaffFreeTime(now: Date = new Date()): Promise<StaffFreeTimeClub[]> {

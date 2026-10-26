@@ -10,6 +10,7 @@ import kit from '../console.module.css';
 import { SUBSCRIPTION_STATUS_LABELS, humanize } from '../chips';
 import styles from './bulk-operations.module.css';
 import DateInput from '@/components/shared/DateInput';
+import { formatLongDay, lastDayRefusal } from '@/lib/free-time';
 
 type BulkActionType = 'subscription_status_override' | 'plan_change' | 'module_addon_enablement';
 type ModuleOperation = 'enable' | 'disable';
@@ -19,8 +20,12 @@ type ApplyResult = {
   name: string;
   slug: string;
   ok: boolean;
+  skipped?: boolean;
   message: string;
 };
+
+/** The days a billing status override may run through, for this role (free time's caps, owner Q7). */
+type FreeThroughBounds = { earliest: string; latest: string; role: string };
 
 const PLAN_LABELS: Record<string, string> = {
   tournament: 'Tournament',
@@ -32,7 +37,7 @@ const PLAN_LABELS: Record<string, string> = {
 };
 
 const ACTION_LABELS: Record<BulkActionType, string> = {
-  subscription_status_override: 'Subscription status override',
+  subscription_status_override: 'Billing status override',
   plan_change: 'Plan change',
   module_addon_enablement: 'Module add-on',
 };
@@ -63,11 +68,13 @@ export default function BulkOperationsClient({
   recentOperations,
   canManageBilling,
   canManageProduct,
+  freeThrough,
 }: {
   orgs: BulkOrgRow[];
   recentOperations: BulkOperationRow[];
   canManageBilling: boolean;
   canManageProduct: boolean;
+  freeThrough: FreeThroughBounds;
 }) {
   const [search, setSearch] = useState('');
   const [planFilter, setPlanFilter] = useState('');
@@ -78,7 +85,7 @@ export default function BulkOperationsClient({
   const [targetPlan, setTargetPlan] = useState('tournament_plus');
   const [targetModule, setTargetModule] = useState(MODULE_OPTIONS[0].value);
   const [moduleOperation, setModuleOperation] = useState<ModuleOperation>('enable');
-  const [expiresAt, setExpiresAt] = useState('');
+  const [lastDay, setLastDay] = useState('');
   const [reason, setReason] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -110,7 +117,7 @@ export default function BulkOperationsClient({
   const moduleLabel = MODULE_OPTIONS.find(module => module.value === targetModule)?.label ?? targetModule;
 
   const previewCopy = actionType === 'subscription_status_override'
-    ? `Create a subscription status override set to ${SUBSCRIPTION_STATUS_LABELS[targetStatus] ?? targetStatus}.`
+    ? `Billing status reads ${SUBSCRIPTION_STATUS_LABELS[targetStatus] ?? targetStatus}${lastDay ? ` through ${formatLongDay(lastDay)}` : ''}. The club's real billing is unchanged.`
     : actionType === 'module_addon_enablement'
       ? `${MODULE_OPERATION_LABELS[moduleOperation]} ${moduleLabel} as an extra feature for these organizations only.`
       : `Change base plan to ${PLAN_LABELS[targetPlan] ?? targetPlan}.`;
@@ -161,6 +168,10 @@ export default function BulkOperationsClient({
       setError('Choose a module add-on.');
       return;
     }
+    if (actionType === 'subscription_status_override' && !lastDay) {
+      setError('Choose the last free day.');
+      return;
+    }
     if (!confirming) {
       setConfirming(true);
       return;
@@ -178,7 +189,7 @@ export default function BulkOperationsClient({
           target_plan: targetPlan,
           target_module: targetModule,
           module_operation: moduleOperation,
-          expires_at: expiresAt || null,
+          last_day: actionType === 'subscription_status_override' ? lastDay : null,
           reason,
         }),
       });
@@ -187,7 +198,9 @@ export default function BulkOperationsClient({
 
       setResults(json.results ?? []);
       setOperations(prev => [json.operation, ...prev].slice(0, 8));
-      setSaved(`${json.operation.success_count} succeeded / ${json.operation.failure_count} failed`);
+      const applied: ApplyResult[] = json.results ?? [];
+      const skipped = applied.filter(r => r.skipped).length;
+      setSaved(`${json.operation.success_count} succeeded / ${json.operation.failure_count - skipped} failed${skipped ? ` / ${skipped} skipped` : ''}`);
       resetAfterApply();
     } catch (err) {
       setError((err as Error).message);
@@ -318,7 +331,7 @@ export default function BulkOperationsClient({
                   setConfirming(false);
                 }}
               >
-                <option value="subscription_status_override">Subscription status override</option>
+                <option value="subscription_status_override">Billing status override</option>
                 <option value="plan_change">Plan change</option>
                 <option value="module_addon_enablement" disabled={!canManageProduct}>
                   Module add-on enablement{canManageProduct ? '' : ' (requires product access)'}
@@ -328,7 +341,7 @@ export default function BulkOperationsClient({
 
             {actionType === 'subscription_status_override' && (
               <label className={kit.fieldGroup}>
-                <span className={kit.label}>Target status</span>
+                <span className={kit.label}>Billing status</span>
                 <select className={`${kit.select} ${kit.wide}`} value={targetStatus} onChange={event => setTargetStatus(event.target.value)}>
                   {STATUSES.map(status => <option key={status} value={status}>{SUBSCRIPTION_STATUS_LABELS[status]}</option>)}
                 </select>
@@ -404,12 +417,19 @@ export default function BulkOperationsClient({
 
             {actionType === 'subscription_status_override' && (
               <label className={kit.fieldGroup}>
-                <span className={kit.label}>Optional expiry</span>
+                <span className={kit.label}>Free through<span className={kit.req} aria-hidden="true"> *</span></span>
                 <DateInput
                   className={`${kit.field} ${kit.wide}`}
-                  value={expiresAt}
-                  onChange={v => setExpiresAt(v)}
+                  value={lastDay}
+                  onChange={v => { setLastDay(v); setConfirming(false); }}
+                  min={freeThrough.earliest}
+                  max={freeThrough.latest}
+                  aria-label="Free through"
+                  required
                 />
+                {lastDay && lastDayRefusal(lastDay, freeThrough.role)
+                  ? <span className={kit.fieldError}>{lastDayRefusal(lastDay, freeThrough.role)}</span>
+                  : <span className={kit.hint}>The last day it applies; it ends that midnight, Eastern. A club you belong to is skipped.</span>}
               </label>
             )}
 
@@ -472,7 +492,7 @@ export default function BulkOperationsClient({
           <h2 className={kit.sectionTitle}>Latest operation</h2>
           <div className={`${kit.card} ${kit.cardPad} ${styles.resultGrid}`}>
             {results.map(result => (
-              <div key={result.orgId} className={result.ok ? styles.resultOk : styles.resultFail}>
+              <div key={result.orgId} className={result.ok ? styles.resultOk : result.skipped ? styles.resultSkip : styles.resultFail}>
                 <strong>{result.name}</strong>
                 <span>{result.message}</span>
               </div>

@@ -28,15 +28,11 @@ import { holdsSlot } from '@/lib/tournament-slot';
 import FreeTimeBand, { useCustomerFreeTime } from '@/components/admin/FreeTimeBand';
 import { freeTimeCopy } from '@/lib/free-time-copy';
 import { ownPlanOf } from '@/lib/free-time';
+// The billing status's words are the product's one set (Support console Stage 3, owner Q10: "Trial", "Cancelled").
+import { subscriptionStatusLabel } from '@/lib/platform-labels';
 import styles from './billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
-const STATUS_LABEL: Record<SubscriptionStatus, string> = {
-  active:   'Active',
-  trialing: 'Trialing',
-  past_due: 'Past due',
-  canceled: 'Canceled',
-};
 
 const STATUS_BADGE: Record<SubscriptionStatus, string> = {
   active:   'badge-success',
@@ -660,13 +656,13 @@ function BillingPagePlans() {
               </div>
             </div>
           </div>
-          <span className={`badge ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
+          <span className={`badge ${STATUS_BADGE[status]}`}>{subscriptionStatusLabel(status)}</span>
         </div>
 
         <p className={`${styles.statusNote} ${styles.statusNoteDanger}`}>
           {isTeamWorkspaceBilling
-            ? 'Your Premium Coaches Portal subscription has been canceled. Premium tools are inactive, premium team data remains in retention, and Basic tournament records stay available.'
-            : 'Your subscription has been canceled. Public pages and modules are suspended while retained data remains restorable during the retention window.'}
+            ? 'Your Premium Coaches Portal subscription has been cancelled. Premium tools are inactive, premium team data remains in retention, and Basic tournament records stay available.'
+            : 'Your subscription has been cancelled. Public pages and modules are suspended while retained data remains restorable during the retention window.'}
         </p>
 
         {isTeamWorkspaceBilling && (
@@ -816,7 +812,7 @@ function BillingPagePlans() {
             <div className={styles.planMetaCopy}>{PLAN_META_COPY[currentPlanKey]}</div>
           </div>
         </div>
-        <span className={`badge ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
+        <span className={`badge ${STATUS_BADGE[status]}`}>{subscriptionStatusLabel(status)}</span>
       </div>
 
       {freeCopy && <FreeTimeBand band={freeCopy.band} />}
@@ -1406,7 +1402,7 @@ function BillingPagePlans() {
               <p>
                 {isTeamWorkspaceBilling
                   ? 'Basic tournament records remain available, but these Premium areas stop being active.'
-                  : 'Based on your current plan, these areas will be unavailable while the account is canceled.'}
+                  : 'Based on your current plan, these areas will be unavailable while the account is cancelled.'}
               </p>
               <ul className={styles.impactList}>
                 {cancelPreflight.shutsDown.map(item => <li key={item}>{item}</li>)}
