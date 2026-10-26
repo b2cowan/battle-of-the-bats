@@ -16,7 +16,7 @@ import {
 } from './league-money';
 import { leaguePrice, registrationOwes, type LeaguePrice } from './league-price';
 import { formatStoredDate, orgDayKey } from './timezone';
-import { BULK_WORDS, END_WORDS, REGS_WORDS, REG_RECORD_WORDS, methodWord } from './house-league-money-words';
+import { BULK_WORDS, END_WORDS, REGS_WORDS, MONEY_REFUSAL, REG_RECORD_WORDS, paymentMethodWord } from './house-league-money-words';
 
 // ── What the screen reads ───────────────────────────────────────────────────────────────────────
 
@@ -84,15 +84,8 @@ export function clip(text: string, max: number): string {
   return t.length <= max ? t : `${t.slice(0, max - 1).trimEnd()}…`;
 }
 
-/** 1st, 2nd, 3rd, 4th… */
-export function ordinal(n: number): string {
-  const v = n % 100;
-  const suffix = ['th', 'st', 'nd', 'rd'];
-  return `${n}${suffix[(v - 20) % 10] ?? suffix[v] ?? suffix[0]}`;
-}
-
 /** A method as a short word on a staff line: the label, or nothing when it was not recorded. */
-const how = (m: string | null | undefined) => (m ? methodWord(m) : null);
+const how = (m: string | null | undefined) => (m ? paymentMethodWord(m) : null);
 
 // ── The tabs ────────────────────────────────────────────────────────────────────────────────────
 
@@ -274,8 +267,6 @@ export function matchesSearch(r: LeagueRegistration, query: string): boolean {
   return [playerName(r), guardianName(r), r.guardianEmail].some(s => s.toLowerCase().includes(q));
 }
 
-export type FeePick = 'owing' | 'received' | 'refunded';
-
 /** The Fee filter: several picks widen it (any of them). */
 export function matchesFee(fee: FeeState, picks: ReadonlySet<string>): boolean {
   if (picks.size === 0) return true;
@@ -299,16 +290,10 @@ export function spotsLeft(d: Pick<RegsDivision, 'capacity' | 'heldCount'>): numb
   return d.capacity == null ? null : Math.max(0, d.capacity - d.heldCount);
 }
 
-/** What this child would pay in `division`, for the day they signed up (an early bird still applies). */
-export function priceIn(
-  division: Pick<RegsDivision, 'price' | 'earlyPrice'>,
-  season: Pick<RegsSeason, 'registrationFee' | 'earlyBirdUntil'>,
-  reg: Pick<LeagueRegistration, 'registeredAt'>,
-): LeaguePrice | null {
-  return leaguePrice({ price: division.price, earlyPrice: division.earlyPrice }, season, orgDayKey(reg.registeredAt));
-}
-
-/** What a sign-up on `day` (a plain YYYY-MM-DD) would pay in `division`. */
+/**
+ * What a sign-up on `day` (a plain YYYY-MM-DD) would pay in `division`. For a child already signed up, pass the day they
+ * signed up (`orgDayKey(reg.registeredAt)`): an early bird still applies.
+ */
 export function priceOn(
   division: Pick<RegsDivision, 'price' | 'earlyPrice'>,
   season: Pick<RegsSeason, 'registrationFee' | 'earlyBirdUntil'>,
@@ -400,17 +385,15 @@ export function bulkResult(p: {
   const D = BULK_WORDS.done;
   const why = reasonsLine(p.tally);
   let text: string;
-  switch (p.verb) {
-    case 'approve': text = failed ? D.approve.partial(p.ok, failed, why) : D.approve.clean(p.ok); break;
-    case 'promote': text = failed ? D.promote.partial(p.ok, failed, why) : D.promote.clean(p.ok); break;
-    case 'waitlist': text = failed ? D.waitlist.partial(p.ok, failed, why) : D.waitlist.clean(p.ok); break;
-    case 'markReceived': text = failed ? D.markReceived.partial(p.ok, failed, why) : D.markReceived.clean(p.ok); break;
-    case 'move': {
-      const to = p.division ?? '';
-      text = failed ? D.move.partial(p.ok, to, failed, why) : D.move.clean(p.ok, to);
-      if (p.kept) text += ` ${D.move.kept(p.kept)}`;
-      break;
-    }
+  if (p.verb === 'move') {
+    // Move names the destination, and says so when paid children kept their price.
+    const to = p.division ?? '';
+    text = failed ? D.move.partial(p.ok, to, failed, why) : D.move.clean(p.ok, to);
+    if (p.kept) text += ` ${D.move.kept(p.kept)}`;
+  } else {
+    // The four status-like verbs word a clean and a partial result the same way.
+    const said = D[p.verb];
+    text = failed ? said.partial(p.ok, failed, why) : said.clean(p.ok);
   }
   return { text, partial: failed > 0 || (p.kept ?? 0) > 0, failed };
 }
@@ -445,7 +428,7 @@ export function registrationHistory(
       ? H.corrected(c.oldAmount != null ? money(c.oldAmount) : '—', money(c.newAmount), c.reason ?? '')
       : H.moved(c.oldAmount != null ? money(c.oldAmount) : '—', money(c.newAmount)));
   }
-  if (reg.endedAt && (reg.status === 'declined' || reg.status === 'withdrawn')) {
+  if (reg.endedAt && !isOpenReg(reg)) {
     add(reg.endedAt, H.ended[endedKind(reg)]);
     if (reg.endMoney === 'kept') add(reg.endedAt, H.kept(money(receivedOf(lines)), reg.endMoneyReason ?? ''));
   }
@@ -468,6 +451,24 @@ export function endWaitlistLine(
   const next = firstWaiting(regs, reg.divisionId, reg.id);
   if (!next) return null;
   return autoPromote ? END_WORDS.waitlistNext(next.playerFirstName) : END_WORDS.waitlistManual;
+}
+
+/**
+ * The refusal for a refund's date (an ending's refund, or a price lowered on a paid registration), or null when it stands:
+ * a date, not after today, not before the payment it returns. The same words the route refuses with.
+ */
+export function refundDayError(day: string, today: string, lastPaymentDay: string | null): string | null {
+  if (!day) return MONEY_REFUSAL.date;
+  if (day > today) return MONEY_REFUSAL.futureRefund;
+  if (lastPaymentDay && day < lastPaymentDay) return MONEY_REFUSAL.beforePayment;
+  return null;
+}
+
+/** The refusal for the date a fee was received (a date, not after today), or null when it stands. */
+export function receiveDayError(day: string, today: string): string | null {
+  if (!day) return MONEY_REFUSAL.date;
+  if (day > today) return MONEY_REFUSAL.futurePayment;
+  return null;
 }
 
 /** A typed price in dollars: 0 or more, at most two decimals, at most $100,000 — or null (the route's own rule). */

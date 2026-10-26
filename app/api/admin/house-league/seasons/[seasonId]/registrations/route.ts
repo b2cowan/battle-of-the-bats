@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import { getLeagueSeasonById } from '@/lib/db';
+import { getLeagueSeasonById, mapLeagueRegistration } from '@/lib/db';
 import { placeLeagueRegistration } from '@/lib/league-registration-place';
 import { leaguePrice } from '@/lib/league-price';
 import { isCalendarDate, tournamentToday } from '@/lib/timezone';
@@ -20,9 +20,6 @@ export const GET = withObservability(async (req: Request,
   if (err) return err;
 
   const { seasonId } = await params;
-  const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
-  if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-
   const status     = url.searchParams.get('status')     ?? '';
   const divisionId = url.searchParams.get('divisionId') ?? '';
   const search     = url.searchParams.get('search')     ?? '';
@@ -42,21 +39,24 @@ export const GET = withObservability(async (req: Request,
     );
   }
 
-  const { data, error } = await q;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  const registrations = (data ?? []).map(mapRegistration);
-
   // The money on every row (Club Tier 9b-2): each registration's book lines and its price history, read one way — the
   // screen turns them into the Fee cell through lib/league-money.ts. Readers of the season read the fee as before.
-  const [lines, changes] = await Promise.all([
+  // Read beside the season check; nothing is returned until it passes.
+  const [season, { data, error }, lines, changes] = await Promise.all([
+    getLeagueSeasonById(seasonId, ctx!.org.id),
+    q,
     loadSeasonMoneyLines(ctx!.org.id, seasonId),
     supabaseAdmin.from('league_registration_price_changes')
       .select('registration_id, kind, old_amount, new_amount, reason, changed_by, changed_at')
       .eq('org_id', ctx!.org.id).eq('season_id', seasonId).order('changed_at', { ascending: true }),
   ]);
+  if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (changes.error) return NextResponse.json({ error: changes.error.message }, { status: 500 });
-  const money = Object.fromEntries([...lines].filter(([id]) => registrations.some(r => r.id === id)));
+
+  const registrations = (data ?? []).map(mapLeagueRegistration);
+  const shown = new Set(registrations.map(r => r.id));
+  const money = Object.fromEntries([...lines].filter(([id]) => shown.has(id)));
   const priceChanges = (changes.data ?? []).map(c => ({
     registrationId: c.registration_id as string, kind: c.kind as 'corrected' | 'moved',
     oldAmount: c.old_amount != null ? Number(c.old_amount) : null, newAmount: Number(c.new_amount),
@@ -66,44 +66,6 @@ export const GET = withObservability(async (req: Request,
   return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday() });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations' });
 
-// Camel-case mapping (mirrors mapLeagueRegistration in lib/db.ts)
-function mapRegistration(row: any) {
-  return {
-    id:                  row.id,
-    seasonId:            row.season_id,
-    divisionId:          row.division_id ?? null,
-    playerFirstName:     row.player_first_name,
-    playerLastName:      row.player_last_name,
-    playerDateOfBirth:   row.player_date_of_birth ?? null,
-    playerJerseyPref:    row.player_jersey_pref ?? null,
-    playerPositionPref:  row.player_position_pref ?? null,
-    playerNotes:         row.player_notes ?? null,
-    guardianFirstName:   row.guardian_first_name,
-    guardianLastName:    row.guardian_last_name,
-    guardianEmail:       row.guardian_email,
-    guardianPhone:       row.guardian_phone ?? null,
-    status:              row.status,
-    waitlistPosition:    row.waitlist_position ?? null,
-    teamId:              row.team_id ?? null,
-    registrationFeePaid: row.registration_fee_paid,
-    feeEntryId:          row.fee_entry_id ?? null,
-    adminNotes:          row.admin_notes ?? null,
-    source:              row.source,
-    waiverAcceptedAt:    row.waiver_accepted_at ?? null,
-    signupRef:           row.signup_ref ?? null,
-    signupPosition:      row.signup_position ?? null,
-    feeAmount:           row.fee_amount != null ? Number(row.fee_amount) : null,
-    acceptedAt:          row.accepted_at ?? null,
-    endedAt:             row.ended_at ?? null,
-    spotReleased:        row.spot_released ?? false,
-    endMoney:            row.end_money ?? null,
-    endMoneyReason:      row.end_money_reason ?? null,
-    withdrawRequestedAt: row.withdraw_requested_at ?? null,
-    withdrawRequestNote: row.withdraw_request_note ?? null,
-    registeredAt:        row.registered_at,
-    updatedAt:           row.updated_at,
-  };
-}
 
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
@@ -190,7 +152,7 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Division not found' }, { status: 404 });
   }
   const { data: row } = await supabaseAdmin.from('league_registrations').select('*').eq('id', result.placed.id).single();
-  const registration = mapRegistration(row);
+  const registration = mapLeagueRegistration(row);
 
   // Notify org admins of new house league registration (fire-and-forget)
   notify({

@@ -14,7 +14,7 @@ import { repKit } from '../../RepKit';
 import { DayField, FormError, MethodField, TextField, moneyKit } from '../../money/MoneyKit';
 import { MONEY_REFUSAL, PRICE_WORDS } from '@/lib/house-league-money-words';
 import { formatLeagueMoney, lastPayment, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
-import { parsePrice, regDay, type PriceChange } from '@/lib/house-league-registrations';
+import { parsePrice, refundDayError, regDay, type PriceChange } from '@/lib/house-league-registrations';
 import type { DuesPaymentMethod, LeagueRegistration } from '@/lib/types';
 import { patchRegistration } from './api';
 
@@ -70,9 +70,8 @@ export default function PriceWindow({
     if (next === price) { setError(MONEY_REFUSAL.priceSame); return; }
     if (!reason.trim()) { setError(MONEY_REFUSAL.priceReason); return; }
     if (lower) {
-      if (!day) { setError(MONEY_REFUSAL.date); return; }
-      if (day > today) { setError(MONEY_REFUSAL.futureRefund); return; }
-      if (last && day < last.day) { setError(MONEY_REFUSAL.beforePayment); return; }
+      const dayError = refundDayError(day, today, last?.day ?? null);
+      if (dayError) { setError(dayError); return; }
     }
     setBusy(true); setError('');
     const r = await patchRegistration(orgQuery, seasonId, reg.id, {

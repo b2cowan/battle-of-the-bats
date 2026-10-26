@@ -11,6 +11,7 @@ import {
 import { orgDayKey } from '@/lib/timezone';
 import { endedKind, guardianName, playerName, type RegTab } from '@/lib/house-league-registrations';
 import { REGS_WORDS } from '@/lib/house-league-money-words';
+import { pluralize } from '@/lib/utils';
 import type { LeagueRegistration } from '@/lib/types';
 
 export interface ExportRow { reg: LeagueRegistration; division: string; fee: string }
@@ -113,7 +114,7 @@ export async function exportPdf(p: {
   const q = p.query.trim();
   const tabLabel = REGS_WORDS.tab[p.tab].toLowerCase();
   const listLabel = q ? [tabLabel, `matching “${q}”`].join(', ') : tabLabel;
-  const count = (n: number) => `${n} ${n === 1 ? 'player' : 'players'}`;
+  const count = (n: number) => pluralize(n, 'player');
 
   await downloadPDF(
     buildFilename({ org: p.orgSlug, dataset: 'registrations', scope: p.tab }, 'pdf'),

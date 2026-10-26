@@ -4,7 +4,7 @@ import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { canMarkLeagueFeePaid, endLeagueRegistration, writeLeagueMoney, type EndMoney, type LeagueMoneyMove, type LeagueMoneyRefusal } from '@/lib/league-fee-paid';
 import { MONEY_REFUSAL } from '@/lib/house-league-money-words';
 import { moveRefused } from '@/lib/club-money-route';
-import { getLeagueSeasonById } from '@/lib/db';
+import { getLeagueSeasonById, mapLeagueRegistration } from '@/lib/db';
 import { changeLeagueDivision, moveLeagueRegistration } from '@/lib/league-registration-place';
 import { leaguePrice, priceFromBody, registrationOwes } from '@/lib/league-price';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -25,46 +25,9 @@ import { clearSettled } from '@/lib/needs-attention';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { systemMailFace } from '@/lib/club-email-context';
 import type { LeagueRegistrationStatus } from '@/lib/types';
-import { orgDayKey, tournamentToday } from '@/lib/timezone';
+import { orgDayKey } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
 
-function mapRow(row: any) {
-  return {
-    id:                  row.id,
-    seasonId:            row.season_id,
-    divisionId:          row.division_id ?? null,
-    playerFirstName:     row.player_first_name,
-    playerLastName:      row.player_last_name,
-    playerDateOfBirth:   row.player_date_of_birth ?? null,
-    playerJerseyPref:    row.player_jersey_pref ?? null,
-    playerPositionPref:  row.player_position_pref ?? null,
-    playerNotes:         row.player_notes ?? null,
-    guardianFirstName:   row.guardian_first_name,
-    guardianLastName:    row.guardian_last_name,
-    guardianEmail:       row.guardian_email,
-    guardianPhone:       row.guardian_phone ?? null,
-    status:              row.status as LeagueRegistrationStatus,
-    waitlistPosition:    row.waitlist_position ?? null,
-    teamId:              row.team_id ?? null,
-    registrationFeePaid: row.registration_fee_paid,
-    feeEntryId:          row.fee_entry_id ?? null,
-    adminNotes:          row.admin_notes ?? null,
-    source:              row.source,
-    waiverAcceptedAt:    row.waiver_accepted_at ?? null,
-    signupRef:           row.signup_ref ?? null,
-    signupPosition:      row.signup_position ?? null,
-    feeAmount:           row.fee_amount != null ? Number(row.fee_amount) : null,
-    acceptedAt:          row.accepted_at ?? null,
-    endedAt:             row.ended_at ?? null,
-    spotReleased:        row.spot_released ?? false,
-    endMoney:            row.end_money ?? null,
-    endMoneyReason:      row.end_money_reason ?? null,
-    withdrawRequestedAt: row.withdraw_requested_at ?? null,
-    withdrawRequestNote: row.withdraw_request_note ?? null,
-    registeredAt:        row.registered_at,
-    updatedAt:           row.updated_at,
-  };
-}
 
 async function fetchReg(regId: string, seasonId: string) {
   const { data } = await supabaseAdmin
@@ -73,7 +36,7 @@ async function fetchReg(regId: string, seasonId: string) {
     .eq('id', regId)
     .eq('season_id', seasonId)
     .single();
-  return data ? mapRow(data) : null;
+  return data ? mapLeagueRegistration(data) : null;
 }
 
 /** The waitlist moved up (inside the same locked database step that freed the spot, mig 362): tell that family. */
@@ -235,13 +198,10 @@ export const PATCH = withObservability(async (req: Request,
   // ── money ────────────────────────────────────────────────────────────────────
   // ONE write, shared with the family record's Record a payment (Club Tier Stage 5c Part A; rebuilt 9b-2 — lib/league-fee-paid.ts):
   // received (a day and how), undo, a corrected price. The fiscal year's lock and the line live there. It stays open on a
-  // finished season (Q16). `feePaid` is the old tick's shape (true = the whole balance received today; false = undo).
-  // An ending's money answer rides with its status (below); only a status-less body is a money press.
-  if (('money' in body || 'feePaid' in body) && !('status' in body)) {
+  // finished season (Q16). An ending's money answer rides with its status (below); only a status-less body is a money press.
+  if ('money' in body && !('status' in body)) {
     if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
-    const move: LeagueMoneyMove | null = 'money' in body
-      ? readMoneyMove(body.money)
-      : body.feePaid ? { kind: 'receive', day: tournamentToday(), method: null } : { kind: 'undo' };
+    const move: LeagueMoneyMove | null = readMoneyMove(body.money);
     if (!move) return NextResponse.json({ error: MONEY_REFUSAL.changed, code: 'bad_money' }, { status: 400 });
     const wrote = await writeLeagueMoney(ctx!, { seasonId, regId }, move);
     if ('refused' in wrote) return moveRefused(wrote.refused);
@@ -461,44 +421,25 @@ export const PATCH = withObservability(async (req: Request,
       void (async () => {
         try {
           const face = await faceOnce();
-          if (newStatus === 'withdrawn' && !released && mailMoney) {
-            await sendTransactionalEmail({
-              key: 'league_registration_withdrawn',
-              to: reg.guardianEmail,
-              vars: {
-                guardianFirstName: reg.guardianFirstName,
-                playerFirstName:   reg.playerFirstName,
-                playerLastName:    reg.playerLastName,
-                seasonName:        season.name,
-                divisionName,
-              },
-              defaultSubject: `Registration update — ${season.name}`,
-              defaultHtml: leagueRegistrationWithdrawnHtml({ ...emailBase, divisionName, face, money: mailMoney }),
-              family: familyOf(face, reg.playerFirstName),
-            });
-            return;
-          }
-          if (released) {
-            await sendTransactionalEmail({
+          const mail = released
+            ? {
               key: 'league_spot_released',
-              to: reg.guardianEmail,
-              vars: {
-                guardianFirstName: reg.guardianFirstName,
-                playerFirstName:   reg.playerFirstName,
-                playerLastName:    reg.playerLastName,
-                seasonName:        season.name,
-                divisionName,
-              },
-              defaultSubject: `${possessive(reg.playerFirstName)} spot was released — ${season.name}`,
-              defaultHtml: leagueSpotReleasedHtml({
-                ...emailBase, divisionName, face, fee: registrationOwes(reg, season), note: familyNote, money: mailMoney,
-              }),
-              family: familyOf(face, reg.playerFirstName),
-            });
-            return;
-          }
+              subject: `${possessive(reg.playerFirstName)} spot was released — ${season.name}`,
+              html: leagueSpotReleasedHtml({ ...emailBase, divisionName, face, fee: registrationOwes(reg, season), note: familyNote, money: mailMoney }),
+            }
+            : newStatus === 'declined'
+              ? {
+                key: 'league_registration_declined',
+                subject: `Registration update — ${season.name}`,
+                html: leagueRegistrationDeclinedHtml({ ...emailBase, divisionName, face, note: familyNote, money: mailMoney }),
+              }
+              : {
+                key: 'league_registration_withdrawn',
+                subject: `Registration update — ${season.name}`,
+                html: leagueRegistrationWithdrawnHtml({ ...emailBase, divisionName, face, money: mailMoney! }),
+              };
           await sendTransactionalEmail({
-            key: 'league_registration_declined',
+            key: mail.key,
             to: reg.guardianEmail,
             vars: {
               guardianFirstName: reg.guardianFirstName,
@@ -507,8 +448,8 @@ export const PATCH = withObservability(async (req: Request,
               seasonName:        season.name,
               divisionName,
             },
-            defaultSubject: `Registration update — ${season.name}`,
-            defaultHtml: leagueRegistrationDeclinedHtml({ ...emailBase, divisionName, face, note: familyNote, money: mailMoney }),
+            defaultSubject: mail.subject,
+            defaultHtml: mail.html,
             family: familyOf(face, reg.playerFirstName),
           });
         } catch (e) { console.error('[email] house-league ending email failed', e); }

@@ -26,7 +26,7 @@
  * Pure and client-safe: no database, no Date. Money in cents through the figures.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-import { clubMovement, countsAsActual, isFeeRefund, netForYear, sumMoney } from './club-money-figures';
+import { clubActualMovement, countsAsActual, netForYear, sumMoney } from './club-money-figures';
 import { shiftMonthsBack, shiftMonthsOn, type FiscalSetting, type FiscalYear } from './club-fiscal-year';
 import {
   allocationYearKey, fileClubLine, loopIndex, EARLIER_BILLS_PREFIX,
@@ -80,9 +80,8 @@ function fileYear(
   for (const l of lines) {
     if (l.entryDate < span.from || l.entryDate > span.to || !countsAsActual(l)) continue;
     const { filing, source } = fileClubLine(l, loop);
-    // A house-league refund nets its season's fees (9b-2), as on the Statement.
-    const refund = isFeeRefund(l);
-    const dir = refund ? 'in' : clubMovement(l) as 'in' | 'out';
+    // The one actual-movement rule, as on the Statement (a house-league refund nets its season's fees, 9b-2).
+    const { side: dir, amount } = clubActualMovement(l)!;
     let itemId = filing.itemId, itemName = filing.itemName ?? filing.categoryName;
     if (source?.kind === 'allocation') {
       const a = byId.get(source.allocationId);
@@ -93,7 +92,7 @@ function fileYear(
     const cat = book.get(ck) ?? { categoryId: filing.categoryId, categoryName: filing.categoryName, items: new Map() };
     const ik = itemId ?? `name:${itemName}`;
     const item = cat.items.get(ik) ?? { itemId, itemName, c: [0, 0] as [number, number] };
-    item.c[side] += refund ? -toCents(l.amount) : toCents(l.amount);
+    item.c[side] += toCents(amount);
     cat.items.set(ik, item);
     book.set(ck, cat);
   }

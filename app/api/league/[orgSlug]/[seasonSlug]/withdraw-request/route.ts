@@ -6,7 +6,7 @@ import { withObservability } from '@/lib/observability';
 import { throttlePublicForm } from '@/lib/public-form-throttle';
 import { registrationReference } from '@/lib/utils';
 import { notify } from '@/lib/notify';
-import { houseLeagueDeskUserIds } from '@/lib/house-league-notify';
+import { houseLeagueDeskUserIds } from '@/lib/notify-recipients';
 import { ASK_WORDS } from '@/lib/house-league-money-words';
 
 export const dynamic = 'force-dynamic';

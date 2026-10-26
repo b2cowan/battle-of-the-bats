@@ -16,8 +16,11 @@ import ck from '../../ClubKit.module.css';
 import { FormError } from '../../money/MoneyKit';
 import { MOVE_WORDS } from '@/lib/house-league-money-words';
 import { formatLeagueMoney } from '@/lib/league-money';
+import { ordinal } from '@/lib/league-signup';
+import { joinWithAnd } from '@/lib/utils';
+import { orgDayKey } from '@/lib/timezone';
 import {
-  firstWaiting, ordinal, owesNow, priceIn, priceOn, spotsLeft, whyOf,
+  firstWaiting, owesNow, priceOn, spotsLeft, whyOf,
   type Refusal, type RegsDivision, type RegsSeason, type WhyTally, tallyWhy, type Why,
 } from '@/lib/house-league-registrations';
 import type { LeagueRegistration } from '@/lib/types';
@@ -74,7 +77,7 @@ export default function MoveWindow({
   // Who moves, who is already there, and what each would pay in the destination (for the day they signed up).
   const movers = dest ? targets.filter(t => t.reg.divisionId !== dest.id) : targets;
   const priced = dest ? movers.map(t => {
-    const next = priceIn(dest, season, t.reg)?.amount ?? null;
+    const next = priceOn(dest, season, orgDayKey(t.reg.registeredAt))?.amount ?? null;
     const now = owesNow(t.reg, season);
     return { t, next, now, differs: next != null && next !== now };
   }) : [];
@@ -93,7 +96,7 @@ export default function MoveWindow({
   const optionLabel = (d: RegsDivision) => {
     if (spotsLeft(d) === 0 && (many || !isHeld(one.reg))) return MOVE_WORDS.optionFull(d.name);
     const left = spotsLeft(d);
-    const price = !many ? priceIn(d, season, one.reg) : null;
+    const price = !many ? priceOn(d, season, orgDayKey(one.reg.registeredAt)) : null;
     return MOVE_WORDS.optionSpot(d.name, left == null ? null : MOVE_WORDS.spotsLeft(left), price ? (price.amount > 0 ? money(price.amount) : 'Free') : null);
   };
 
@@ -201,8 +204,5 @@ export default function MoveWindow({
 
 /** "Henry", "Henry and Ava", "Henry, Ava and Sam", "Henry, Ava, Sam and 4 more" (copy §0). */
 function joinNames(names: readonly string[]): string {
-  const shown = names.length > 3 ? names.slice(0, 3) : names;
-  const rest = names.length - shown.length;
-  const head = shown.length > 1 ? `${shown.slice(0, -1).join(', ')} and ${shown[shown.length - 1]}` : shown[0] ?? '';
-  return rest > 0 ? `${shown.join(', ')} and ${rest} more` : head;
+  return names.length > 3 ? joinWithAnd([...names.slice(0, 3), `${names.length - 3} more`]) : joinWithAnd(names);
 }

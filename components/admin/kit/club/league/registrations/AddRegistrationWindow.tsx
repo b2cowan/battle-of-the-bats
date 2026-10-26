@@ -8,11 +8,12 @@ import { useState } from 'react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { repKit } from '../../RepKit';
-import { FormError, jsonInit, moneyFetch, refusalText } from '../../money/MoneyKit';
+import { FormError } from '../../money/MoneyKit';
 import DateInput from '@/components/shared/DateInput';
-import { ADD_REG_WORDS as W, MONEY_REFUSAL } from '@/lib/house-league-money-words';
+import { ADD_REG_WORDS as W } from '@/lib/house-league-money-words';
 import type { RegsDivision } from '@/lib/house-league-registrations';
 import type { LeagueRegistrationStatus } from '@/lib/types';
+import { postJson } from './api';
 import css from './Registrations.module.css';
 
 interface Form {
@@ -57,27 +58,22 @@ export default function AddRegistrationWindow({ seasonName, divisions, today, or
       return;
     }
     setBusy(true); setError('');
-    try {
-      const r = await moneyFetch(`/api/admin/house-league/seasons/${seasonId}/registrations${orgQuery}`, jsonInit('POST', {
-        divisionId: form.divisionId,
-        playerFirstName: form.playerFirstName.trim(),
-        playerLastName: form.playerLastName.trim(),
-        playerDateOfBirth: form.playerDateOfBirth || null,
-        playerJerseyPref: form.playerJerseyPref || null,
-        playerPositionPref: form.playerPositionPref || null,
-        playerNotes: form.playerNotes || null,
-        guardianFirstName: form.guardianFirstName.trim(),
-        guardianLastName: form.guardianLastName.trim(),
-        guardianEmail: form.guardianEmail.trim(),
-        guardianPhone: form.guardianPhone || null,
-        status: form.status,
-      }));
-      if (!r.ok) { setError(refusalText(r.data, MONEY_REFUSAL.failed)); setBusy(false); return; }
-      onAdded(W.done(`${form.playerFirstName.trim()} ${form.playerLastName.trim()}`));
-    } catch {
-      setError(MONEY_REFUSAL.failed);
-      setBusy(false);
-    }
+    const r = await postJson(`/api/admin/house-league/seasons/${seasonId}/registrations${orgQuery}`, {
+      divisionId: form.divisionId,
+      playerFirstName: form.playerFirstName.trim(),
+      playerLastName: form.playerLastName.trim(),
+      playerDateOfBirth: form.playerDateOfBirth || null,
+      playerJerseyPref: form.playerJerseyPref || null,
+      playerPositionPref: form.playerPositionPref || null,
+      playerNotes: form.playerNotes || null,
+      guardianFirstName: form.guardianFirstName.trim(),
+      guardianLastName: form.guardianLastName.trim(),
+      guardianEmail: form.guardianEmail.trim(),
+      guardianPhone: form.guardianPhone || null,
+      status: form.status,
+    });
+    if (!r.ok) { setError(r.error); setBusy(false); return; }
+    onAdded(W.done(`${form.playerFirstName.trim()} ${form.playerLastName.trim()}`));
   }
 
   return (

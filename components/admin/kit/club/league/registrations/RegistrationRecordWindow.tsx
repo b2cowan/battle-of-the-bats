@@ -11,7 +11,7 @@ import ck from '../../ClubKit.module.css';
 import { Facts } from '../../money/MoneyKit';
 import { REG_RECORD_WORDS as W, REGS_WORDS } from '@/lib/house-league-money-words';
 import { formatLeagueMoney, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
-import { endedKind, owesNow, regDay, registrationHistory, type PriceChange, type RegsSeason, type RowActionKey } from '@/lib/house-league-registrations';
+import { endedKind, isOpenReg, owesNow, regDay, registrationHistory, type PriceChange, type RegsSeason, type RowActionKey } from '@/lib/house-league-registrations';
 import type { LeagueRegistration } from '@/lib/types';
 import FeeCell from './FeeCell';
 import { Note, type RegRowModel } from './RegistrationsList';
@@ -46,7 +46,7 @@ export default function RegistrationRecordWindow({
 
   const details = [
     [F.division, model.division ?? REGS_WORDS.noDivision] as const,
-    reg.status !== 'declined' && reg.status !== 'withdrawn' && model.division ? [F.team, teamName ?? REGS_WORDS.notPlaced] as const : null,
+    isOpenReg(reg) && model.division ? [F.team, teamName ?? REGS_WORDS.notPlaced] as const : null,
     reg.status === 'waitlisted' && reg.waitlistPosition != null ? [F.position, REGS_WORDS.waitingPosition(reg.waitlistPosition)] as const : null,
     [F.guardian, model.guardian] as const,
     [F.email, reg.guardianEmail.trim() ? reg.guardianEmail : REGS_WORDS.noEmail] as const,
@@ -54,7 +54,7 @@ export default function RegistrationRecordWindow({
     reg.playerDateOfBirth ? [F.born, regDay(reg.playerDateOfBirth, today)] as const : null,
     [reg.source === 'admin_manual' ? F.addedByHand : F.signedUp, regDay(reg.registeredAt, today)] as const,
     reg.acceptedAt ? [F.accepted, regDay(reg.acceptedAt, today)] as const : null,
-    reg.endedAt && (reg.status === 'declined' || reg.status === 'withdrawn')
+    reg.endedAt && !isOpenReg(reg)
       ? [F.ended, `${W.timeline.ended[endedKind(reg)]} ${regDay(reg.endedAt, today)}`] as const : null,
     reg.signupRef ? [F.reference, reg.signupRef] as const : null,
     reg.playerNotes ? [F.notes, reg.playerNotes] as const : null,

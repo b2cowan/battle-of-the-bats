@@ -769,32 +769,40 @@ export function countsAsActual(l: ClubBookMovementFacts & { bookKind: string }):
   return m === 'in' || m === 'out';
 }
 
+type ActualLine = ClubBookMovementFacts & { bookKind: string; sourceModule?: string | null };
+
+/**
+ * A line's ACTUAL movement — the side of the year's figures it counts on, and its signed amount; null when it counts
+ * nowhere (`countsAsActual`). THE one place a house-league refund nets its fees (9b-2, `isFeeRefund`): money IN, negative.
+ * The band (`spent`, `bandCollected`), the Statement and Months (lib/club-budget-report.ts) and Against last year read it,
+ * so none of them special-cases a refund.
+ */
+export function clubActualMovement(l: ActualLine): { side: 'in' | 'out'; amount: number } | null {
+  if (!countsAsActual(l)) return null;
+  if (isFeeRefund(l)) return { side: 'in', amount: -l.amount };
+  return { side: clubMovement(l) as 'in' | 'out', amount: l.amount };
+}
+
 /**
  * SPENT. The Actual of Total expenses: every posted money-out line in the year on the club's Club
  * books, on the plan or off it, money paid to teams on request included. A transfer between the
- * club's own books is not spending. A tournament's and the house league's books keep their own
- * money until Stages 7 and 9 decide how it joins the budget.
+ * club's own books is not spending; nor is a house-league refund (it nets the fees, `clubActualMovement`).
  */
-export function spent(lines: readonly (ClubBookMovementFacts & { bookKind: string; sourceModule?: string | null })[]): number {
+export function spent(lines: readonly ActualLine[]): number {
   let c = 0;
-  // A house-league refund nets the fees it returns (Collected), never spending (`isFeeRefund`).
-  for (const l of lines) if (countsAsActual(l) && clubMovement(l) === 'out' && !isFeeRefund(l)) c += cents(l.amount);
+  for (const l of lines) { const m = clubActualMovement(l); if (m?.side === 'out') c += cents(m.amount); }
   return dollars(c);
 }
 
 /**
  * COLLECTED — the BAND's scope (Budget vs. Actual). The Actual of Total revenue: every money-in line
- * posted in the year on the club's Club books, received allocations included. (The LOOP's Collected —
- * what the club has received against allocations — is `clubBillFigures(...).collected`; two scopes,
+ * posted in the year on the club's Club books, received allocations included, net of house-league refunds. (The LOOP's
+ * Collected — what the club has received against allocations — is `clubBillFigures(...).collected`; two scopes,
  * two functions, by Ask 2.)
  */
-export function bandCollected(lines: readonly (ClubBookMovementFacts & { bookKind: string; sourceModule?: string | null })[]): number {
+export function bandCollected(lines: readonly ActualLine[]): number {
   let c = 0;
-  for (const l of lines) {
-    if (!countsAsActual(l)) continue;
-    if (clubMovement(l) === 'in') c += cents(l.amount);
-    else if (isFeeRefund(l)) c -= cents(l.amount);   // net of house-league refunds (9b-2)
-  }
+  for (const l of lines) { const m = clubActualMovement(l); if (m?.side === 'in') c += cents(m.amount); }
   return dollars(c);
 }
 

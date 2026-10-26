@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { fetchAll, fetchAllIn } from './supabase-paging';
 import type { LeagueMoneyLine } from './league-money';
 import { hasModuleEntitlement, type EntitlementOrg } from './module-entitlements';
 
@@ -46,11 +47,9 @@ export async function loadSeasonMoneyLines(orgId: string, seasonId: string): Pro
     .eq('org_id', orgId).eq('entity_type', 'league_season').eq('entity_id', seasonId).maybeSingle();
   if (bookError) throw bookError;
   if (!book) return new Map();
-  const { data, error } = await supabaseAdmin.from('accounting_entries').select(SELECT)
+  return group(await fetchAll<Record<string, unknown>>((from, to) => supabaseAdmin.from('accounting_entries').select(SELECT)
     .eq('ledger_id', book.id).eq('source_module', 'league_registration')
-    .order('entry_date', { ascending: true }).order('created_at', { ascending: true });
-  if (error) throw error;
-  return group((data ?? []) as Record<string, unknown>[]);
+    .order('entry_date', { ascending: true }).order('created_at', { ascending: true }).order('id').range(from, to)));
 }
 
 /** What each of an org's house-league registrations has received (posted in − posted out), in cents — for readers that
@@ -59,30 +58,23 @@ export async function loadOrgLeagueReceivedCents(orgId: string): Promise<Map<str
   const { data: books, error: bookError } = await supabaseAdmin.from('accounting_ledgers').select('id')
     .eq('org_id', orgId).eq('entity_type', 'league_season');
   if (bookError) throw bookError;
+  const rows = await fetchAllIn<Record<string, unknown>>((books ?? []).map(b => b.id as string), (chunk, from, to) =>
+    supabaseAdmin.from('accounting_entries').select('id, source_entity_id, entry_type, amount')
+      .in('ledger_id', chunk).eq('source_module', 'league_registration').eq('status', 'posted')
+      .in('entry_type', ['income', 'expense']).order('id').range(from, to));
   const out = new Map<string, number>();
-  const ids = (books ?? []).map(b => b.id as string);
-  if (ids.length === 0) return out;
-  const PAGE = 1000;
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabaseAdmin.from('accounting_entries').select('id, source_entity_id, entry_type, amount')
-      .in('ledger_id', ids).eq('source_module', 'league_registration').eq('status', 'posted')
-      .in('entry_type', ['income', 'expense']).order('id').range(from, from + PAGE - 1);
-    if (error) throw error;
-    for (const r of data ?? []) {
-      const c = Math.round(Number(r.amount) * 100) * (r.entry_type === 'income' ? 1 : -1);
-      out.set(r.source_entity_id as string, (out.get(r.source_entity_id as string) ?? 0) + c);
-    }
-    if (!data || data.length < PAGE) break;
+  for (const r of rows) {
+    const c = Math.round(Number(r.amount) * 100) * (r.entry_type === 'income' ? 1 : -1);
+    out.set(r.source_entity_id as string, (out.get(r.source_entity_id as string) ?? 0) + c);
   }
   return out;
 }
 
-/** The lines of some registrations (any seasons), by registration. */
+/** The lines of some registrations (any seasons), by registration. A registration's lines all ride in one chunk, so each
+ *  list keeps the read's order. */
 export async function loadRegistrationMoneyLines(regIds: readonly string[]): Promise<Map<string, LeagueMoneyLine[]>> {
-  if (regIds.length === 0) return new Map();
-  const { data, error } = await supabaseAdmin.from('accounting_entries').select(SELECT)
-    .eq('source_module', 'league_registration').in('source_entity_id', [...regIds])
-    .order('entry_date', { ascending: true }).order('created_at', { ascending: true });
-  if (error) throw error;
-  return group((data ?? []) as Record<string, unknown>[]);
+  return group(await fetchAllIn<Record<string, unknown>>(regIds, (chunk, from, to) =>
+    supabaseAdmin.from('accounting_entries').select(SELECT)
+      .eq('source_module', 'league_registration').in('source_entity_id', chunk)
+      .order('entry_date', { ascending: true }).order('created_at', { ascending: true }).order('id').range(from, to)));
 }

@@ -219,14 +219,20 @@ export interface LeagueFeeLine {
   /** The latest correction's reason ("Price corrected · {reason}"), when the price was corrected. */
   corrected: string | null;
 }
+/** A registration's money facts, attached once by the org world's load (`LEAGUE_FEE_FACTS`). */
+export interface LeagueFeeFacts { receivedCents: number; priceChanged: boolean; corrected: string | null }
+/** The one key the world's load attaches a registration's money facts under (a symbol, so it never meets a column). */
+export const LEAGUE_FEE_FACTS = Symbol('leagueFeeFacts');
+
 export function leagueFeeLine(r: any): LeagueFeeLine {
   const fee = leagueRegOwes(r);
-  const changed = typeof r.__priceChanged === 'boolean' ? r.__priceChanged : false;
-  const corrected = typeof r.__corrected === 'string' ? r.__corrected : null;
-  const fixedOn = !changed && r.registered_at ? orgDayKey(r.registered_at) : null;
+  // A row read outside the world (no facts) falls back to the paid flag, as before 9b-2.
+  const facts = r[LEAGUE_FEE_FACTS] as LeagueFeeFacts | undefined;
+  const corrected = facts?.corrected ?? null;
+  const fixedOn = !facts?.priceChanged && r.registered_at ? orgDayKey(r.registered_at) : null;
   if (fee == null) return { feeCents: null, paidCents: 0, balanceCents: 0, fixedOn, corrected };
   const feeCents = toCents(fee);
-  const paidCents = typeof r.__receivedCents === 'number' ? r.__receivedCents : r.registration_fee_paid === true ? feeCents : 0;
+  const paidCents = facts ? facts.receivedCents : r.registration_fee_paid === true ? feeCents : 0;
   const owes = r.status === undefined || r.status === 'active';
   return { feeCents, paidCents, balanceCents: owes ? Math.max(0, feeCents - paidCents) : 0, fixedOn, corrected };
 }
@@ -278,20 +284,25 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
     unless(opts.forDuplicates, () => orgRows<any>('rep_player_continuity_links', 'id, current_roster_id, current_registration_id, prior_roster_id, prior_registration_id', orgId,
       q => q.eq('status', 'confirmed'))),
   ]);
-  // What the season books have received for each registration (9b-2): the fee line reads it, never the paid flag alone.
-  const received = opts.forDuplicates ? new Map<string, number>() : await loadOrgLeagueReceivedCents(orgId);
-  for (const r of leagueRegs) r.__receivedCents = received.get(r.id) ?? 0;
-  // A price changed since sign-up (9b-2): the line says "Price corrected · {reason}" or nothing, never "fixed at sign-up".
-  if (!opts.forDuplicates && leagueRegs.length) {
-    const changes = await orgRows<any>('league_registration_price_changes', 'id, registration_id, kind, reason, changed_at', orgId);
-    const latest = new Map<string, any>();
-    for (const c of changes) { const was = latest.get(c.registration_id); if (!was || c.changed_at > was.changed_at) latest.set(c.registration_id, c); }
-    for (const r of leagueRegs) {
-      const c = latest.get(r.id);
-      if (!c) continue;
-      r.__priceChanged = true;
-      if (c.kind === 'corrected') r.__corrected = c.reason ?? '';
-    }
+  // 9b-2's two money reads, together (not on the duplicates path, which shows no money).
+  const [received, changes] = opts.forDuplicates || leagueRegs.length === 0
+    ? [new Map<string, number>(), [] as any[]]
+    : await Promise.all([
+      loadOrgLeagueReceivedCents(orgId),
+      orgRows<any>('league_registration_price_changes', 'id, registration_id, kind, reason, changed_at', orgId),
+    ]);
+  const latestChange = new Map<string, any>();
+  for (const c of changes) { const was = latestChange.get(c.registration_id); if (!was || c.changed_at > was.changed_at) latestChange.set(c.registration_id, c); }
+  // Each registration's money facts (9b-2), one typed record the fee line reads (`LEAGUE_FEE_FACTS`): what the season books
+  // received, and whether the price changed since sign-up.
+  for (const r of leagueRegs) {
+    const c = latestChange.get(r.id);
+    const facts: LeagueFeeFacts = {
+      receivedCents: received.get(r.id) ?? 0,
+      priceChanged: !!c,
+      corrected: c?.kind === 'corrected' ? (c.reason ?? '') : null,
+    };
+    if (!opts.forDuplicates) r[LEAGUE_FEE_FACTS] = facts;
   }
   const byKey = <T>(rows: T[], key: (r: T) => string | null | undefined) => {
     const m = new Map<string, T[]>();

@@ -4,7 +4,7 @@ import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getDivisionsForSeason, getLeagueSeasonById, getRegistrationsForSeason } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { seasonCharges } from '@/lib/league-price';
-import { feeState, seasonMoney } from '@/lib/league-money';
+import { feeState, isOwing, seasonMoney } from '@/lib/league-money';
 import { filesToClubStatement, loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { daysBetweenDateStrings, orgDayKey, tournamentToday } from '@/lib/timezone';
@@ -79,18 +79,18 @@ export const GET = withObservability(async (_req: Request,
   ].sort((a, b) => b.at.localeCompare(a.at));
 
   // The Still owing tab lists players, not lines (copy §10.2).
-  const owing = regs.map(r => ({ r, s: feeState(r, season, lines.get(r.id) ?? [], today) }))
-    .filter(x => x.s.kind === 'owing' || x.s.kind === 'part')
-    .map(({ r, s }) => {
+  const owing = regs.flatMap(r => {
+      const s = feeState(r, season, lines.get(r.id) ?? [], today);
+      if (!isOwing(s)) return [];
       // Owing since acceptance — a part-paid child too (its fee cell shows no count, but this list is how long they've owed).
       const acceptedDay = r.acceptedAt ? orgDayKey(r.acceptedAt) : null;
       const days = acceptedDay ? Math.max(0, daysBetweenDateStrings(acceptedDay, today)) : null;
-      return {
+      return [{
         regId: r.id, player: `${r.playerFirstName} ${r.playerLastName}`,
         division: r.divisionId ? divName.get(r.divisionId) ?? null : null,
-        owing: s.kind === 'owing' || s.kind === 'part' ? s.owing : 0,
+        owing: s.owing,
         acceptedDay, days, late: days != null && days >= season.owingAmberDays,
-      };
+      }];
     })
     .sort((a, b) => (b.days ?? -1) - (a.days ?? -1));
 

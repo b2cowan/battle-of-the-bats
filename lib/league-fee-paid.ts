@@ -89,8 +89,10 @@ export async function writeLeagueMoney(
   const bad = move.kind === 'undo' ? null : moveInputRefusal(day, method, move.kind !== 'price');
   if (bad) return { refusal: bad };
 
-  const setting = await loadFiscalSetting(orgId);
-  const recorded = move.kind === 'undo' || (move.kind !== 'receive' && day) ? await latestPaymentDay(target.regId) : null;
+  const [setting, recorded] = await Promise.all([
+    loadFiscalSetting(orgId),
+    move.kind === 'undo' || (move.kind !== 'receive' && day) ? latestPaymentDay(target.regId) : null,
+  ]);
   // A refund returns money already received: never dated before that payment (copy err.date.beforePayment).
   if (move.kind !== 'undo' && move.kind !== 'receive' && day && recorded && day < recorded) return { refusal: 'before_payment' };
   const closed = move.kind === 'undo'
@@ -139,9 +141,9 @@ export async function endLeagueRegistration(
   if (refund) {
     const bad = moveInputRefusal(refund.day, refund.method, true);
     if (bad) return { refusal: bad };
-    const paidOn = await latestPaymentDay(target.regId);
+    const [paidOn, setting] = await Promise.all([latestPaymentDay(target.regId), loadFiscalSetting(orgId)]);
     if (paidOn && refund.day < paidOn) return { refusal: 'before_payment' };
-    const closed = refuseIfClosed(await loadFiscalSetting(orgId), [refund.day], { canMove: true, kind: 'date' });
+    const closed = refuseIfClosed(setting, [refund.day], { canMove: true, kind: 'date' });
     if (closed) return { refused: closed };
   }
   const { data, error } = await supabaseAdmin.rpc('league_registration_close', {

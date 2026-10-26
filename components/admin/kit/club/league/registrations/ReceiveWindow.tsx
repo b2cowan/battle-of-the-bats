@@ -12,9 +12,9 @@ import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { repKit } from '../../RepKit';
 import { DayField, FormError, MethodField, moneyKit } from '../../money/MoneyKit';
-import { BULK_WORDS, MONEY_REFUSAL, RECV_WORDS } from '@/lib/house-league-money-words';
+import { BULK_WORDS, RECV_WORDS } from '@/lib/house-league-money-words';
 import { formatLeagueMoney } from '@/lib/league-money';
-import { regDay, type Refusal } from '@/lib/house-league-registrations';
+import { receiveDayError, regDay, type Refusal } from '@/lib/house-league-registrations';
 import type { DuesPaymentMethod, LeagueRegistration } from '@/lib/types';
 import { patchRegistration } from './api';
 
@@ -63,8 +63,8 @@ export default function ReceiveWindow({
 
   async function go() {
     if (busy) return;
-    if (!day) { setError(MONEY_REFUSAL.date); return; }
-    if (day > today) { setError(MONEY_REFUSAL.futurePayment); return; }
+    const dayError = receiveDayError(day, today);
+    if (dayError) { setError(dayError); return; }
     setBusy(true); setError('');
     const out: ReceiveOutcome = { done: [], refused: [] };
     for (const t of targets) {

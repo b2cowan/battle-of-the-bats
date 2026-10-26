@@ -23,7 +23,7 @@ import { EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/c
 import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import s from '@/components/admin/kit/club/league/SeasonMoney.module.css';
 import { formatLeagueMoney, type SeasonMoney } from '@/lib/league-money';
-import { MONEY_PAGE_WORDS as W, methodWord } from '@/lib/house-league-money-words';
+import { MONEY_PAGE_WORDS as W, paymentMethodWord } from '@/lib/house-league-money-words';
 import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import { buildFilename, downloadCSVBlob, downloadXLSX, generateCSV } from '@/lib/export';
 
@@ -94,7 +94,7 @@ export default function MoneyPage() {
     ...read.lines.map((l): Row => ({
       key: l.id, day: l.day, player: l.player ?? '—',
       what: l.kind === 'voided' ? W.what.voided : l.kind === 'refund' ? W.what.refund(l.refundWhy) : W.what.fee(l.priceKind),
-      how: methodWord(l.method),
+      how: paymentMethodWord(l.method),
       amount: l.kind === 'refund' ? money(-l.amount) : money(l.amount),
       // The export's number: a refund negative, a voided line counted nowhere (its What says so).
       value: l.kind === 'voided' ? null : l.kind === 'refund' ? -l.amount : l.amount,

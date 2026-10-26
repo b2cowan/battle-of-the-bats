@@ -2363,7 +2363,8 @@ function mapLeagueTeam(row: any): LeagueTeam {
   };
 }
 
-function mapLeagueRegistration(row: any): LeagueRegistration {
+/** A league_registrations row as the app reads it — the ONE mapper (the registrations routes import it; 9b-2). */
+export function mapLeagueRegistration(row: any): LeagueRegistration {
   return {
     id:                  row.id,
     seasonId:            row.season_id,

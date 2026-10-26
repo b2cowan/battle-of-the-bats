@@ -16,7 +16,7 @@ import ck from '../../ClubKit.module.css';
 import { DayField, FormError, MethodField, TextField, moneyKit } from '../../money/MoneyKit';
 import { END_WORDS, MONEY_REFUSAL, methodInBrackets, type EndMode } from '@/lib/house-league-money-words';
 import { formatLeagueMoney, lastPayment, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
-import { endWaitlistLine, guardianName, regDay } from '@/lib/house-league-registrations';
+import { endWaitlistLine, guardianName, refundDayError, regDay } from '@/lib/house-league-registrations';
 import type { DuesPaymentMethod, LeagueRegistration } from '@/lib/types';
 import { patchRegistration } from './api';
 import css from './Registrations.module.css';
@@ -78,9 +78,8 @@ export default function EndWindow({
   async function go() {
     if (busy || needsChoice) return;
     if (hasMoney && answer === 'refunded') {
-      if (!day) { setError(MONEY_REFUSAL.date); return; }
-      if (day > today) { setError(MONEY_REFUSAL.futureRefund); return; }
-      if (last && day < last.day) { setError(MONEY_REFUSAL.beforePayment); return; }
+      const dayError = refundDayError(day, today, last?.day ?? null);
+      if (dayError) { setError(dayError); return; }
     }
     if (hasMoney && answer === 'kept' && !keptReason.trim()) { setError(MONEY_REFUSAL.keptReason(amount)); return; }
     setBusy(true); setError('');

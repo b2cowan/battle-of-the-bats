@@ -4,10 +4,10 @@
  * screen, a route and an email read the same string. Methods are worded by `DUES_PAYMENT_METHOD_LABEL`, never typed here.
  */
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from './types';
-import { possessive } from './utils';
+import { joinWithAnd, pluralize, possessive } from './utils';
 
 /** A stored method as staff read it: the label, or "Not recorded". */
-export function methodWord(m: string | null | undefined): string {
+export function paymentMethodWord(m: string | null | undefined): string {
   if (!m) return 'Not recorded';
   if (m === 'online_card') return 'Online, card';
   return DUES_PAYMENT_METHOD_LABEL[m as DuesPaymentMethod] ?? m;
@@ -16,13 +16,13 @@ export function methodWord(m: string | null | undefined): string {
 /** " (E-Transfer)" after a date in a sentence; nothing for Other or Not recorded (copy §0). */
 export function methodInBrackets(m: string | null | undefined): string {
   if (!m || m === 'other') return '';
-  return ` (${methodWord(m)})`;
+  return ` (${paymentMethodWord(m)})`;
 }
 
 /** The owing threshold on the season's Registration block (copy §9, 9b·8). */
 export const OWING_WORDS = {
   label: 'Owing turns amber',
-  value: (n: number) => `After ${n === 1 ? '1 day' : `${n} days`}.`,
+  value: (n: number) => `After ${pluralize(n, 'day')}.`,
   sub: 'Counted from the day the child was accepted.',
   editLabel: 'Turn owing amber after',
   suffix: 'days',
@@ -68,7 +68,7 @@ export const MONEY_PAGE_WORDS = {
   noAccess: 'You don’t have access to this page.',
   band: {
     owed: 'Owed', received: 'Received', owing: 'Still owing',
-    players: (n: number) => (n === 1 ? '1 player' : `${n} players`),
+    players: (n: number) => pluralize(n, 'player'),
     afterRefunds: (amount: string) => `after ${amount} refunded`,
     aria: (owed: string, received: string, owing: string) => `Owed ${owed}. Received ${received}. Still owing ${owing}.`,
   },
@@ -82,7 +82,7 @@ export const MONEY_PAGE_WORDS = {
     kept: (reason: string) => `Kept by the club · ${reason}`,
     voided: 'Voided · marked received by mistake',
   },
-  since: (day: string, days: number | null) => (days == null ? `Accepted ${day}` : `Accepted ${day} · ${days === 1 ? '1 day' : `${days} days`}`),
+  since: (day: string, days: number | null) => (days == null ? `Accepted ${day}` : `Accepted ${day} · ${pluralize(days, 'day')}`),
   sinceUnknown: 'Not known',
   empty: {
     all: { title: 'No money recorded yet', body: 'A fee shows here when you mark a registration received.' },
@@ -100,7 +100,7 @@ export const TILE_WORDS = {
   owed: 'Owed',
   owing: 'Still owing',
   aria: (label: string, amount: string, players: number) =>
-    `${label} ${amount}, ${players === 1 ? '1 player' : `${players} players`}. Open Money.`,
+    `${label} ${amount}, ${pluralize(players, 'player')}. Open Money.`,
 } as const;
 
 /** The refusals of the one money writer and the ending (copy §16). */
@@ -131,9 +131,7 @@ export const MONEY_REFUSAL = {
    `methodInBrackets`), so no screen assembles a sentence and no possessive is hand-built.
    ══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-const nPlayers = (n: number) => (n === 1 ? '1 player' : `${n} players`);
-const nFamilies = (n: number) => (n === 1 ? '1 family' : `${n} families`);
-const nDays = (n: number) => (n === 1 ? '1 day' : `${n} days`);
+const nFamilies = (n: number) => pluralize(n, 'family', 'families');
 
 /** Which ending a window is: the club says no, the child leaves, or an unpaid spot goes back. */
 export type EndMode = 'declined' | 'withdrawn' | 'released';
@@ -148,9 +146,9 @@ export const REGS_WORDS = {
   noAccess: 'You don’t have access to this page.',
   tabsLabel: 'Registrations',
   tab: { review: 'To review', active: 'Active', waitlist: 'Waitlist', ended: 'Ended' },
-  reviewAria: (n: number) => `${n === 1 ? '1 registration' : `${n} registrations`} to review`,
+  reviewAria: (n: number) => `${pluralize(n, 'registration')} to review`,
   scopeAll: 'All divisions',
-  scopeToReview: (n: number) => `${n === 1 ? '1 registration' : `${n} registrations`} to review`,
+  scopeToReview: (n: number) => `${pluralize(n, 'registration')} to review`,
   scopeElsewhere: 'Registrations to review in another division',
   search: 'Search players or parents',
   filter: 'Filter',
@@ -184,7 +182,7 @@ export const REGS_WORDS = {
     nothingOwed: 'Nothing owed yet',
     onceAccepted: (amount: string) => `${amount} once accepted`,
     owing: (amount: string) => `${amount} owing`,
-    owingDays: (amount: string, days: number) => `${amount} owing · ${nDays(days)}`,
+    owingDays: (amount: string, days: number) => `${amount} owing · ${pluralize(days, 'day')}`,
     acceptedToday: 'Accepted today',
     accepted: (day: string) => `Accepted ${day}`,
     received: (amount: string) => `${amount} received`,
@@ -269,9 +267,8 @@ export const BULK_WORDS = {
   /** A batch refused whole by a closed fiscal year: nothing was recorded (copy §2.2, §16 `err.closed.batch`). */
   closedBatch: (rest: string) => `Nothing was recorded. ${rest}`,
   why: {
-    full: (names: string[]) => (names.length === 1 ? `${names[0]} is full` : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]} are full`),
+    full: (names: string[]) => `${joinWithAnd(names)} ${names.length === 1 ? 'is' : 'are'} full`,
     fullN: (n: number, names: string[]) => `${n} ${n === 1 ? 'is' : 'are'} full in ${names.join(', ')}`,
-    alreadyDone: { approve: 'already accepted', waitlist: 'already on the waitlist', move: 'already moved' },
     received: 'already received',
     free: 'no fee to receive',
     notAccepted: 'still in review',
@@ -300,9 +297,9 @@ export const RECV_WORDS = {
   bulk: {
     title: (n: number) => `Mark ${n} fees received`,
     totalLabel: 'Total',
-    total: (amount: string, n: number) => `${amount} across ${nPlayers(n)}`,
+    total: (amount: string, n: number) => `${amount} across ${pluralize(n, 'player')}`,
     hint: 'Each player’s whole balance is recorded. One date and one way for all of them.',
-    foot: (n: number, amount: string) => `Records ${n === 1 ? '1 payment' : `${n} payments`}, ${amount} in all, in the season’s book.`,
+    foot: (n: number, amount: string) => `Records ${pluralize(n, 'payment')}, ${amount} in all, in the season’s book.`,
     submit: (n: number) => `Mark ${n} received`,
   },
 } as const;
@@ -396,7 +393,7 @@ export const MOVE_WORDS = {
   toLabel: 'Move to',
   choose: 'Choose a division',
   optionSpot: (division: string, spots: string | null, price: string | null) => [division, spots, price].filter(Boolean).join(' · '),
-  spotsLeft: (n: number) => (n === 1 ? '1 spot left' : `${n} spots left`),
+  spotsLeft: (n: number) => `${pluralize(n, 'spot')} left`,
   optionFull: (division: string) => `${division} · full, joins the waitlist`,
   fullLine: (division: string, name: string, place: string) => `${division} is full. ${name} joins its waitlist, ${place} in line.`,
   priceLead: (division: string, price: string, name: string, was: string) => `${division} charges ${price}. ${name} signed up at ${was}.`,
@@ -466,14 +463,14 @@ export const REGS_EMAIL_WORDS = {
   status: 'Status',
   statusOptions: { active: 'Active', waitlisted: 'Waitlisted', pending_review: 'To review', declined: 'Declined' },
   toOne: (email: string) => `Sends to ${email}.`,
-  toSeason: (n: number) => (n > 0 ? `Sending to ${n === 1 ? '1 guardian' : `${n} guardians`}.` : 'No recipients match this selection.'),
+  toSeason: (n: number) => (n > 0 ? `Sending to ${pluralize(n, 'guardian')}.` : 'No recipients match this selection.'),
   cancel: 'Cancel',
   send: 'Send',
   sendN: (n: number) => `Send to ${n}`,
   working: 'Sending…',
   needBoth: 'Write a subject and a message.',
   failed: 'That didn’t go through. Please try again.',
-  sentSeason: (sent: number, skipped: number) => `Sent to ${sent === 1 ? '1 guardian' : `${sent} guardians`}.${skipped ? ` ${skipped} skipped.` : ''}`,
+  sentSeason: (sent: number, skipped: number) => `Sent to ${pluralize(sent, 'guardian')}.${skipped ? ` ${skipped} skipped.` : ''}`,
 } as const;
 
 /** Add a registration by hand (today's form, on a window). */

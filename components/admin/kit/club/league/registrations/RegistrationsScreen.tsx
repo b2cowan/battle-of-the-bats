@@ -44,9 +44,10 @@ import {
   type EndMode,
 } from '@/lib/house-league-money-words';
 import { formatLeagueMoney, lastPayment, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
+import { orgDayKey } from '@/lib/timezone';
 import {
-  bulkActions, bulkResult, endedKind, feeCell, matchesFee, matchesSearch, owesNow, phoneDetail, playerName, guardianName,
-  priceIn, REG_TABS, regDay, regTab, rowActions, seasonHasFees, tallyWhy, whyOf, isRegTab,
+  bulkActions, bulkResult, endedKind, feeCell, isOpenReg, matchesFee, matchesSearch, owesNow, phoneDetail, playerName, guardianName,
+  priceOn, REG_TABS, regDay, regTab, rowActions, seasonHasFees, tallyWhy, whyOf, isRegTab,
   type BulkKey, type PriceChange, type RegRights, type RegTab, type RegsDivision, type RegsRead, type RegsSeason,
   type RowActionKey, type Why,
 } from '@/lib/house-league-registrations';
@@ -85,6 +86,12 @@ type Act =
 
 interface TeamLite { id: string; name: string }
 
+/** The row action that opens the ending window, and which ending it is. */
+const END_MODE = { release: 'released', withdraw: 'withdrawn', decline: 'declined' } as const;
+
+/** What a reload reads again: the season's own facts and divisions' counts, and the season's teams. The registrations always. */
+interface LoadScope { season?: boolean; teams?: boolean }
+
 export default function RegistrationsScreen() {
   const { currentOrg, loading: orgLoading } = useOrg();
   const { seasonId } = useParams<{ seasonId: string }>();
@@ -121,27 +128,31 @@ export default function RegistrationsScreen() {
   const [landed, setLanded] = useState<RegTab | null>(null);
 
   const beginRead = useLatestRead();
-  const load = useCallback(async () => {
+  // The first read (and a retry) reads everything. A reload after a press reads the registrations, and the season only when
+  // that press can have moved a division's counts (a Move, a status change or ending, an add); the teams never change here.
+  const load = useCallback(async ({ season: withSeason = true, teams: withTeams = true }: LoadScope = {}) => {
     if (!orgSlug || !seasonId) return;
     const current = beginRead();
     const [seasonRes, regsRes, teamsRes] = await Promise.all([
-      moneyFetch<{ season?: RegsSeason & Record<string, unknown>; divisions?: RegsDivision[] }>(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`).catch(() => null),
+      withSeason ? moneyFetch<{ season?: RegsSeason & Record<string, unknown>; divisions?: RegsDivision[] }>(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`).catch(() => null) : null,
       moneyFetch<RegsRead>(`/api/admin/house-league/seasons/${seasonId}/registrations${orgQuery}`).catch(() => null),
-      moneyFetch<{ teams?: TeamLite[] }>(`/api/admin/house-league/seasons/${seasonId}/teams${orgQuery}`).catch(() => null),
+      withTeams ? moneyFetch<{ teams?: TeamLite[] }>(`/api/admin/house-league/seasons/${seasonId}/teams${orgQuery}`).catch(() => null) : null,
     ]);
     if (!current()) return;
     if (seasonRes?.status === 404) { setFailed('missing'); return; }
-    if (!seasonRes?.ok || !regsRes?.ok || !seasonRes.data.season) { setFailed('error'); return; }
-    const s = seasonRes.data.season;
-    setSeason({
-      id: s.id, name: s.name, status: s.status, registrationFee: s.registrationFee ?? null, owingAmberDays: s.owingAmberDays ?? 14,
-      autoPromoteWaitlist: !!s.autoPromoteWaitlist, autoApproveUnderCapacity: !!s.autoApproveUnderCapacity, earlyBirdUntil: s.earlyBirdUntil ?? null,
-    });
-    setDivisions((seasonRes.data.divisions ?? []).map(d => ({
-      id: d.id, name: d.name, capacity: d.capacity ?? null, price: d.price ?? null, earlyPrice: d.earlyPrice ?? null,
-      heldCount: d.heldCount ?? 0, waitlistCount: d.waitlistCount ?? 0,
-    })));
-    setTeams((teamsRes?.ok ? teamsRes.data.teams ?? [] : []).map(t => ({ id: t.id, name: t.name })));
+    if (!regsRes?.ok || (withSeason && (!seasonRes?.ok || !seasonRes.data.season))) { setFailed('error'); return; }
+    if (withSeason && seasonRes?.ok && seasonRes.data.season) {
+      const s = seasonRes.data.season;
+      setSeason({
+        id: s.id, name: s.name, status: s.status, registrationFee: s.registrationFee ?? null, owingAmberDays: s.owingAmberDays ?? 14,
+        autoPromoteWaitlist: !!s.autoPromoteWaitlist, autoApproveUnderCapacity: !!s.autoApproveUnderCapacity, earlyBirdUntil: s.earlyBirdUntil ?? null,
+      });
+      setDivisions((seasonRes.data.divisions ?? []).map(d => ({
+        id: d.id, name: d.name, capacity: d.capacity ?? null, price: d.price ?? null, earlyPrice: d.earlyPrice ?? null,
+        heldCount: d.heldCount ?? 0, waitlistCount: d.waitlistCount ?? 0,
+      })));
+    }
+    if (withTeams) setTeams((teamsRes?.ok ? teamsRes.data.teams ?? [] : []).map(t => ({ id: t.id, name: t.name })));
     setRead({
       registrations: regsRes.data.registrations ?? [], money: regsRes.data.money ?? {},
       priceChanges: regsRes.data.priceChanges ?? [], today: regsRes.data.today,
@@ -152,6 +163,7 @@ export default function RegistrationsScreen() {
 
   // ── Derived ────────────────────────────────────────────────────────────────────────────────────
   const regs = useMemo(() => read?.registrations ?? [], [read]);
+  const regById = useMemo(() => new Map(regs.map(r => [r.id, r])), [regs]);
   const today = read?.today ?? '';
   const rights: RegRights = useMemo(() => ({
     register: !!access?.register, takeFees: !!access?.takeFees, run: !!access?.run, email: !!access?.email,
@@ -218,21 +230,17 @@ export default function RegistrationsScreen() {
   const searchField = useToolbarSearch({ value: query, onChange: q => { setQuery(q); setShown(PAGE); setSelected(new Set()); }, label: REGS_WORDS.search });
 
   const itemFor = useCallback((key: RowActionKey, reg: LeagueRegistration, fee: ReturnType<typeof feeCell>, division: string | null): MenuItem => {
-    const name = playerName(reg);
     const M = REGS_WORDS.menu;
-    const balance = fee.state.kind === 'owing' || fee.state.kind === 'part' ? fee.state.owing : 0;
+    // Three items word their hint from the row, and approve is the primary's word; every other item is its label and a fixed hint.
     switch (key) {
       case 'approve': return { key, label: REGS_WORDS.act.approve };
-      case 'markReceived': return { key, label: M.markReceived.label, hint: M.markReceived.hint(formatLeagueMoney(balance)) };
-      case 'move': return { key, label: M.move.label, hint: M.move.hint };
-      case 'correct': return { key, label: M.correct.label, hint: M.correct.hint };
-      case 'release': return { key, label: M.release.label, hint: M.release.hint };
-      case 'withdraw': return { key, label: M.withdraw.label, hint: M.withdraw.hint };
-      case 'decline': return { key, label: M.decline.label, hint: M.decline.hint };
-      case 'email': return { key, label: M.email.label, hint: M.email.hint };
-      case 'undo': return { key, label: M.undo.label, hint: M.undo.hint };
-      case 'waitlist': return { key, label: M.waitlist.label, hint: M.waitlist.hint(name) };
-      case 'promote': return { key, label: M.promote.label, hint: M.promote.hint(name, division ?? REGS_WORDS.noDivision) };
+      case 'markReceived': {
+        const balance = fee.state.kind === 'owing' || fee.state.kind === 'part' ? fee.state.owing : 0;
+        return { key, label: M.markReceived.label, hint: M.markReceived.hint(formatLeagueMoney(balance)) };
+      }
+      case 'waitlist': return { key, label: M.waitlist.label, hint: M.waitlist.hint(playerName(reg)) };
+      case 'promote': return { key, label: M.promote.label, hint: M.promote.hint(playerName(reg), division ?? REGS_WORDS.noDivision) };
+      default: return { key, label: M[key].label, hint: M[key].hint };
     }
   }, []);
 
@@ -241,7 +249,7 @@ export default function RegistrationsScreen() {
     const fee = fees.get(reg.id)!;
     const division = divisionName(reg.divisionId);
     const team = teamName(reg.teamId);
-    const ended = reg.status === 'declined' || reg.status === 'withdrawn';
+    const ended = !isOpenReg(reg);
     const kind = endedKind(reg);
     const playerSub = ended && reg.endedAt
       ? REGS_WORDS.player[kind](regDay(reg.endedAt, today))
@@ -281,13 +289,14 @@ export default function RegistrationsScreen() {
     for (const id of ids) { if (on) next.add(id); else next.delete(id); }
     return next;
   });
-  const afterWrite = () => { void load(); announceSeasonsChanged(); };
+  /** A press landed: read the registrations again, and the season too when `counts` (a division's room can have moved). */
+  const afterWrite = (counts: boolean) => { void load({ season: counts, teams: false }); announceSeasonsChanged(); };
   const clearSelection = () => setSelected(new Set());
-  const nameOf = (id: string) => { const r = regs.find(x => x.id === id); return r ? playerName(r) : ''; };
+  const nameOf = (id: string) => { const r = regById.get(id); return r ? playerName(r) : ''; };
 
   /** A batch's result: a clean one fades, a partial one stays until dismissed and keeps its stayed rows ticked. */
-  function present(r: { text: string; partial: boolean }, stayed: readonly string[]) {
-    afterWrite();
+  function present(r: { text: string; partial: boolean }, stayed: readonly string[], counts: boolean) {
+    afterWrite(counts);
     if (r.partial) { setResult({ text: r.text, stayed: stayed.length }); setSelected(new Set(stayed)); } else { setResult(null); say(r.text); clearSelection(); }
   }
 
@@ -314,12 +323,12 @@ export default function RegistrationsScreen() {
       if (r.status === 409 && !full) void load();
       return;
     }
-    afterWrite();
+    afterWrite(true);
     say(BULK_WORDS.done[verb].clean(1));
   }
 
   async function runBulkStatus(verb: 'approve' | 'promote' | 'waitlist', ids: readonly string[]) {
-    const rows = ids.map(id => regs.find(r => r.id === id)).filter((r): r is LeagueRegistration => !!r);
+    const rows = ids.map(id => regById.get(id)).filter((r): r is LeagueRegistration => !!r);
     let ok = 0;
     const whys: Why[] = [];
     const stayed: string[] = [];
@@ -330,12 +339,12 @@ export default function RegistrationsScreen() {
       stayed.push(reg.id);
     }
     setAct(null);
-    present(bulkResult({ verb, ok, tally: tallyWhy(whys) }), stayed);
+    present(bulkResult({ verb, ok, tally: tallyWhy(whys) }), stayed, true);
   }
 
   // ── Mark received ──────────────────────────────────────────────────────────────────────────────
   const receiveTargets = (ids: readonly string[]): ReceiveTarget[] => ids.flatMap(id => {
-    const reg = regs.find(r => r.id === id);
+    const reg = regById.get(id);
     const fee = reg ? fees.get(reg.id) : undefined;
     if (!reg || !fee || (fee.state.kind !== 'owing' && fee.state.kind !== 'part')) return [];
     const last = lastPayment(linesOf(reg.id));
@@ -359,40 +368,36 @@ export default function RegistrationsScreen() {
     const whys: Why[] = [];
     const stayed: string[] = [];
     for (const id of requested) {
-      const reg = regs.find(r => r.id === id);
+      const reg = regById.get(id);
       if (!reg || out.done.includes(id)) continue;
       const refused = out.refused.find(x => x.id === id);
       whys.push(refused ? whyOf(refused.refusal, { division: divisionName(reg.divisionId), free: owesNow(reg, season!) <= 0 }) : skipWhy(reg));
       stayed.push(id);
     }
-    if (requested.length === 1 && out.done.length === 1) { afterWrite(); say(RECV_WORDS.done(nameOf(requested[0]))); clearSelection(); return; }
-    present(bulkResult({ verb: 'markReceived', ok: out.done.length, tally: tallyWhy(whys) }), stayed);
+    if (requested.length === 1 && out.done.length === 1) { afterWrite(false); say(RECV_WORDS.done(nameOf(requested[0]))); clearSelection(); return; }
+    present(bulkResult({ verb: 'markReceived', ok: out.done.length, tally: tallyWhy(whys) }), stayed, false);
   }
 
   // ── Move ───────────────────────────────────────────────────────────────────────────────────────
   const moveTargets = (ids: readonly string[]): MoveTarget[] => ids.flatMap(id => {
-    const reg = regs.find(r => r.id === id);
+    const reg = regById.get(id);
     return reg ? [{ reg, name: playerName(reg), from: divisionName(reg.divisionId), received: receivedOf(linesOf(reg.id)) }] : [];
   });
 
   function finishMove(out: MoveOutcome, requested: readonly string[]) {
     setAct(null);
-    if (requested.length === 1 && out.done.length === 1) { afterWrite(); say(MOVE_WORDS.done(playerName(out.done[0]), out.division)); clearSelection(); return; }
-    present(bulkResult({ verb: 'move', ok: out.done.length, tally: out.tally, division: out.division, kept: out.kept }), out.stayed);
+    if (requested.length === 1 && out.done.length === 1) { afterWrite(true); say(MOVE_WORDS.done(playerName(out.done[0]), out.division)); clearSelection(); return; }
+    present(bulkResult({ verb: 'move', ok: out.done.length, tally: out.tally, division: out.division, kept: out.kept }), out.stayed, true);
   }
 
   // ── Row and bulk actions ───────────────────────────────────────────────────────────────────────
   function pickRow(reg: LeagueRegistration, key: RowActionKey) {
     switch (key) {
-      case 'approve': void statusOne(reg, 'approve'); break;
-      case 'promote': void statusOne(reg, 'promote'); break;
-      case 'waitlist': void statusOne(reg, 'waitlist'); break;
+      case 'approve': case 'promote': case 'waitlist': void statusOne(reg, key); break;
       case 'markReceived': openReceive([reg.id]); break;
       case 'move': setAct({ kind: 'move', ids: [reg.id], targets: moveTargets([reg.id]) }); break;
       case 'correct': setAct({ kind: 'price', id: reg.id }); break;
-      case 'release': setAct({ kind: 'end', id: reg.id, mode: 'released' }); break;
-      case 'withdraw': setAct({ kind: 'end', id: reg.id, mode: 'withdrawn' }); break;
-      case 'decline': setAct({ kind: 'end', id: reg.id, mode: 'declined' }); break;
+      case 'release': case 'withdraw': case 'decline': setAct({ kind: 'end', id: reg.id, mode: END_MODE[key] }); break;
       case 'email': setAct({ kind: 'email', ids: [reg.id] }); break;
       case 'undo': { const payment = lastPayment(linesOf(reg.id)); if (payment) setAct({ kind: 'undo', id: reg.id, payment }); break; }
     }
@@ -410,7 +415,7 @@ export default function RegistrationsScreen() {
   }
 
   // ── The record's neighbours ────────────────────────────────────────────────────────────────────
-  const openReg = openId ? regs.find(r => r.id === openId) ?? null : null;
+  const openReg = openId ? regById.get(openId) ?? null : null;
   const openAt = openId ? tabRegs.findIndex(r => r.id === openId) : -1;
   const stepTo = (r: LeagueRegistration): KitStep => ({ name: playerName(r), onStep: () => setOpenId(r.id) });
   const recordSteps = openAt >= 0 ? {
@@ -481,7 +486,6 @@ export default function RegistrationsScreen() {
   })();
 
   const raised = openId != null;
-  const actReg = (id: string) => regs.find(r => r.id === id);
   const picked = selectedRegs.length;
 
   return (
@@ -616,12 +620,12 @@ export default function RegistrationsScreen() {
           onDone={out => finishReceive(out, act.ids)}
         />
       )}
-      {act?.kind === 'end' && actReg(act.id) && (
+      {act?.kind === 'end' && regById.has(act.id) && (
         <EndWindow
-          reg={actReg(act.id)!}
+          reg={regById.get(act.id)!}
           name={nameOf(act.id)}
           mode={act.mode}
-          division={divisionName(actReg(act.id)!.divisionId) ?? REGS_WORDS.noDivision}
+          division={divisionName(regById.get(act.id)!.divisionId) ?? REGS_WORDS.noDivision}
           regs={regs}
           lines={linesOf(act.id)}
           autoPromote={season.autoPromoteWaitlist}
@@ -631,14 +635,14 @@ export default function RegistrationsScreen() {
           raised={raised}
           onClose={() => setAct(null)}
           onChanged={() => void load()}
-          onDone={(done) => { setAct(null); afterWrite(); say(done.said); setSelected(prev => { const n = new Set(prev); n.delete(act.id); return n; }); }}
+          onDone={(done) => { setAct(null); afterWrite(true); say(done.said); setSelected(prev => { const n = new Set(prev); n.delete(act.id); return n; }); }}
         />
       )}
-      {act?.kind === 'price' && actReg(act.id) && (() => {
-        const reg = actReg(act.id)!;
+      {act?.kind === 'price' && regById.has(act.id) && (() => {
+        const reg = regById.get(act.id)!;
         const changes = changesByReg.get(reg.id) ?? [];
         const division = divisions.find(d => d.id === reg.divisionId);
-        const early = division ? priceIn(division, season, reg) : null;
+        const early = division ? priceOn(division, season, orgDayKey(reg.registeredAt)) : null;
         const price = owesNow(reg, season);
         const kind = changes.some(c => c.kind === 'corrected') ? 'corrected' : early?.early && early.amount === price ? 'early' : 'regular';
         return (
@@ -655,7 +659,7 @@ export default function RegistrationsScreen() {
             raised={raised}
             onClose={() => setAct(null)}
             onChanged={() => void load()}
-            onDone={said => { setAct(null); afterWrite(); say(said); }}
+            onDone={said => { setAct(null); afterWrite(false); say(said); }}
           />
         );
       })()}
@@ -685,15 +689,16 @@ export default function RegistrationsScreen() {
           seasonId={seasonId}
           onClose={() => setAct(null)}
           onChanged={() => void load()}
-          onDone={said => { setAct(null); afterWrite(); say(said); }}
+          onDone={said => { setAct(null); afterWrite(false); say(said); }}
         />
       )}
       {(act?.kind === 'email' || act?.kind === 'seasonEmail') && (
         <EmailWindow
           seasonName={season.name}
-          audience={act.kind === 'email' ? { kind: 'selected', regs: act.ids.map(actReg).filter((r): r is LeagueRegistration => !!r) } : { kind: 'season' }}
+          audience={act.kind === 'email' ? { kind: 'selected', regs: act.ids.map(id => regById.get(id)).filter((r): r is LeagueRegistration => !!r) } : { kind: 'season' }}
           allRegs={regs}
           divisions={divisions}
+          teams={teams}
           orgQuery={orgQuery}
           seasonId={seasonId}
           raised={raised}
@@ -718,7 +723,7 @@ export default function RegistrationsScreen() {
           orgQuery={orgQuery}
           seasonId={seasonId}
           onClose={() => setAct(null)}
-          onAdded={said => { setAct(null); afterWrite(); say(said); }}
+          onAdded={said => { setAct(null); afterWrite(true); say(said); }}
         />
       )}
 

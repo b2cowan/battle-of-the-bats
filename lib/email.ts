@@ -1019,19 +1019,12 @@ export function leagueRegistrationDeclinedHtml(input: {
   money?: EndedMoneyLine | null;
 }) {
   const p = escapeEmailFields(input);
-  // The club's own address when it has a public contact (or the caller passed one); otherwise the club by name. The platform's
-  // inbox is no longer a place a declined family is sent (S3b, copy item 9). With no club at all the old line stands.
-  const club = input.face ? escapeEmailHtml(input.face.club.name) : null;
-  const contact = p.contactEmail ?? (input.face?.contact ? escapeEmailHtml(input.face.contact) : club ? null : ADMIN_EMAIL);
-  const contactLine = contact
-    ? `Please contact ${club ? `${club} at ` : ''}<a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a> for more information.`
-    : `Please contact ${club} for more information.`;
   return familyNotice(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration update</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We’re sorry: <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not accepted.</p>
     ${noteAndMoney(input.note ?? null, input.money ?? null)}
-    <p>${contactLine}</p>
+    <p>${pleaseContactLine(input.face, p.contactEmail)}</p>
   `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
 }
 
@@ -1040,11 +1033,26 @@ export type EndedMoneyLine =
   | { answer: 'refunded'; amount: number; day: string; method: string | null }
   | { answer: 'kept'; amount: number; reason: string };
 
-/** The released email's last line (copy `mail.released.contact`): the club's own address when it has a public contact,
- *  otherwise the club by name — never the platform's inbox (S3b, copy item 9); with no club at all the old line. */
-function releasedContactLine(face: FamilyMailFace | null | undefined, contactEmail: string | undefined): string {
+/** Who a house-league family email sends the family to: the club's own address when it has a public contact (or the caller
+ *  passed one), otherwise the club by name — never the platform's inbox (S3b, copy item 9); with no club at all the old
+ *  line stands. `contactEmail` arrives escaped. */
+function familyContact(face: FamilyMailFace | null | undefined, contactEmail: string | undefined) {
   const club = face ? escapeEmailHtml(face.club.name) : null;
   const contact = contactEmail ?? (face?.contact ? escapeEmailHtml(face.contact) : club ? null : ADMIN_EMAIL);
+  return { club, contact };
+}
+
+/** The declined and withdrawn emails' last line. */
+function pleaseContactLine(face: FamilyMailFace | null | undefined, contactEmail: string | undefined): string {
+  const { club, contact } = familyContact(face, contactEmail);
+  return contact
+    ? `Please contact ${club ? `${club} at ` : ''}<a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a> for more information.`
+    : `Please contact ${club} for more information.`;
+}
+
+/** The released email's last line (copy `mail.released.contact`). */
+function releasedContactLine(face: FamilyMailFace | null | undefined, contactEmail: string | undefined): string {
+  const { club, contact } = familyContact(face, contactEmail);
   return contact
     ? `If you think this is a mistake, contact ${club ? `${club} at ` : ''}<a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a>.`
     : `If you think this is a mistake, contact ${club}.`;
@@ -1075,17 +1083,12 @@ export function leagueRegistrationWithdrawnHtml(input: {
   face?: FamilyMailFace | null;
 }) {
   const p = escapeEmailFields(input);
-  const club = input.face ? escapeEmailHtml(input.face.club.name) : null;
-  const contact = p.contactEmail ?? (input.face?.contact ? escapeEmailHtml(input.face.contact) : club ? null : ADMIN_EMAIL);
-  const contactLine = contact
-    ? `Please contact ${club ? `${club} at ` : ''}<a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a> for more information.`
-    : `Please contact ${club} for more information.`;
   return familyNotice(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration update</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p><strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> has been withdrawn.</p>
     ${noteAndMoney(null, input.money)}
-    <p>${contactLine}</p>
+    <p>${pleaseContactLine(input.face, p.contactEmail)}</p>
   `, input.face, `${input.playerFirstName} was registered for ${input.seasonName}`);
 }
 

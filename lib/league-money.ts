@@ -76,6 +76,13 @@ export function receivedOf(lines: readonly LeagueMoneyLine[]): number {
   return dollars(c);
 }
 
+/** Posted money given back, in dollars (cent-exact). */
+export function refundedOf(lines: readonly LeagueMoneyLine[]): number {
+  let c = 0;
+  for (const l of lines) if (l.status === 'posted' && l.dir === 'out') c += cents(l.amount);
+  return dollars(c);
+}
+
 const latest = (lines: readonly LeagueMoneyLine[], dir: 'in' | 'out') =>
   lines.filter(l => l.status === 'posted' && l.dir === dir)
     .sort((a, b) => (a.day === b.day ? a.createdAt.localeCompare(b.createdAt) : a.day.localeCompare(b.day)))
@@ -99,8 +106,7 @@ export function feeState(
     if (reg.endMoney === 'kept' && got > 0) return { kind: 'kept', kept: got, reason: reg.endMoneyReason ?? '' };
     const refund = lastRefund(lines);
     if (refund) {
-      const refunded = dollars(lines.filter(l => l.status === 'posted' && l.dir === 'out').reduce((s, l) => s + cents(l.amount), 0));
-      return { kind: 'refunded', refunded, last: refund };
+      return { kind: 'refunded', refunded: refundedOf(lines), last: refund };
     }
     if (got > 0) return { kind: 'kept', kept: got, reason: reg.endMoneyReason ?? '' };
     return { kind: 'endedNone' };
@@ -117,7 +123,7 @@ export function feeState(
 }
 
 /** Is this registration owing (the Paid / Owing filter's "Owing")? */
-export const isOwing = (s: FeeState) => s.kind === 'owing' || s.kind === 'part';
+export const isOwing = (s: FeeState): s is Extract<FeeState, { kind: 'owing' | 'part' }> => s.kind === 'owing' || s.kind === 'part';
 
 export interface SeasonMoney {
   /** The price fixed on each accepted registration. */
@@ -145,7 +151,7 @@ export function seasonMoney(
     const got = cents(receivedOf(lines));
     received += got;
     if (got > 0) receivedPlayers += 1;
-    refunded += lines.filter(l => l.status === 'posted' && l.dir === 'out').reduce((s, l) => s + cents(l.amount), 0);
+    refunded += cents(refundedOf(lines));
     if (reg.status !== 'active') continue;
     const price = cents(registrationOwes(reg, season) ?? 0);
     if (price <= 0) continue;

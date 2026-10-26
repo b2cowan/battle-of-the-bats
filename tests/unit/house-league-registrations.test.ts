@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import {
-  bulkActions, bulkResult, feeCell, ordinal, parsePrice, rowActions, tallyWhy, whyOf, matchesFee, regTab,
+  bulkActions, bulkResult, feeCell, parsePrice, receiveDayError, refundDayError, rowActions, tallyWhy, whyOf, matchesFee, regTab,
 } from '../../lib/house-league-registrations.ts';
+import { MONEY_REFUSAL } from '../../lib/house-league-money-words.ts';
 import { feeState, type LeagueMoneyLine } from '../../lib/league-money.ts';
 import type { LeagueRegistration } from '../../lib/types.ts';
 
@@ -108,8 +109,17 @@ describe('a batch says what stayed, and why (copy §2.2)', () => {
     assert.equal(r.text, '4 moved to Division B. 2 kept their price: paid. Correct one at a time.');
     assert.equal(r.partial, true);
   });
+  it('a refund or receipt date is refused in the route’s own words', () => {
+    assert.equal(refundDayError('2026-10-20', TODAY, '2026-10-20'), null);
+    assert.equal(refundDayError('2026-10-20', TODAY, null), null);
+    assert.equal(refundDayError('', TODAY, null), MONEY_REFUSAL.date);
+    assert.equal(refundDayError('2026-10-26', TODAY, null), MONEY_REFUSAL.futureRefund);
+    assert.equal(refundDayError('2026-10-19', TODAY, '2026-10-20'), MONEY_REFUSAL.beforePayment);
+    assert.equal(receiveDayError(TODAY, TODAY), null);
+    assert.equal(receiveDayError('', TODAY), MONEY_REFUSAL.date);
+    assert.equal(receiveDayError('2026-10-26', TODAY), MONEY_REFUSAL.futurePayment);
+  });
   it('small helpers', () => {
-    assert.deepEqual([1, 2, 3, 4, 11, 22].map(ordinal), ['1st', '2nd', '3rd', '4th', '11th', '22nd']);
     assert.deepEqual(['120', '$1,200.50', '12.345', '-5', '', 'abc'].map(parsePrice), [120, 1200.5, null, null, null, null]);
   });
 });

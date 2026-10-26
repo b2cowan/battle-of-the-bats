@@ -7,7 +7,7 @@ import { throttlePublicForm } from '@/lib/public-form-throttle';
 import { registrationReference } from '@/lib/utils';
 import { registrationOwes } from '@/lib/league-price';
 import { loadRegistrationMoneyLines } from '@/lib/league-money-read';
-import { lastPayment, lastRefund, receivedOf } from '@/lib/league-money';
+import { lastPayment, lastRefund, receivedOf, refundedOf } from '@/lib/league-money';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,10 +85,12 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ registrations: [] });
   }
 
-  const divisions = await getDivisionsForSeason(season.id);
-  const divisionMap = Object.fromEntries(divisions.map(d => [d.id, d.name]));
   // Each child's money, from the season's book: received (in − out), the last payment's day, and any refund.
-  const lines = await loadRegistrationMoneyLines(named.map((r: any) => String(r.id)));
+  const [divisions, lines] = await Promise.all([
+    getDivisionsForSeason(season.id),
+    loadRegistrationMoneyLines(named.map((r: any) => String(r.id))),
+  ]);
+  const divisionMap = Object.fromEntries(divisions.map(d => [d.id, d.name]));
 
   const registrations = named.map((r: any) => {
     const fee = registrationOwes({ feeAmount: r.fee_amount != null ? Number(r.fee_amount) : null }, season);
@@ -111,7 +113,7 @@ export const POST = withObservability(async (req: Request,
       paid: (fee ?? 0) > 0 && received >= (fee ?? 0),
       owing: !ended && r.status === 'active' ? Math.max(0, Math.round(((fee ?? 0) - received) * 100) / 100) : 0,
       paidOn: last?.day ?? null,
-      refund: refund ? { amount: mine.filter(l => l.status === 'posted' && l.dir === 'out').reduce((s, l) => s + l.amount, 0), day: refund.day, method: refund.method } : null,
+      refund: refund ? { amount: refundedOf(mine), day: refund.day, method: refund.method } : null,
       kept: ended && r.end_money === 'kept' && received > 0 ? { amount: received, reason: r.end_money_reason ?? '' } : null,
       withdrawRequestedAt: r.withdraw_requested_at ?? null,
     };

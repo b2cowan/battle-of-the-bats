@@ -6,14 +6,15 @@
  * address); a registration with none has nothing to send, so the button is absent rather than disabled.
  * The send is the season's email route; 'selected' reaches only this season's ticked registrations.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { repKit } from '../../RepKit';
-import { FormError, TextField, jsonInit, moneyFetch, refusalText } from '../../money/MoneyKit';
+import { FormError, TextField } from '../../money/MoneyKit';
 import { BULK_WORDS, REGS_EMAIL_WORDS as W } from '@/lib/house-league-money-words';
 import type { RegsDivision } from '@/lib/house-league-registrations';
-import type { LeagueRegistration, LeagueRegistrationStatus, LeagueTeam } from '@/lib/types';
+import type { LeagueRegistration, LeagueRegistrationStatus } from '@/lib/types';
+import { postJson } from './api';
 
 export type EmailAudience =
   | { kind: 'selected'; regs: readonly LeagueRegistration[] }
@@ -23,12 +24,14 @@ type Scope = 'all' | 'division' | 'team' | 'status';
 type SeasonStatusPick = 'active' | 'waitlisted' | 'pending_review' | 'declined';
 
 export default function EmailWindow({
-  seasonName, audience, allRegs, divisions, orgQuery, seasonId, raised, onClose, onSent,
+  seasonName, audience, allRegs, divisions, teams, orgQuery, seasonId, raised, onClose, onSent,
 }: {
   seasonName: string;
   audience: EmailAudience;
   allRegs: readonly LeagueRegistration[];
   divisions: readonly RegsDivision[];
+  /** The season's teams, which the screen already read. */
+  teams: readonly { id: string; name: string }[];
   orgQuery: string;
   seasonId: string;
   raised: boolean;
@@ -41,22 +44,10 @@ export default function EmailWindow({
   const [divisionId, setDivisionId] = useState('');
   const [teamId, setTeamId] = useState('');
   const [status, setStatus] = useState<SeasonStatusPick>('active');
-  const [teams, setTeams] = useState<LeagueTeam[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   const selected = audience.kind === 'selected' ? audience.regs : null;
-
-  // The team list is read only when "By team" is chosen.
-  useEffect(() => {
-    if (scope !== 'team' || teams) return;
-    let live = true;
-    void fetch(`/api/admin/house-league/seasons/${seasonId}/teams${orgQuery}`)
-      .then(r => r.json())
-      .then(d => { if (live) setTeams(d.teams ?? []); })
-      .catch(() => { if (live) setTeams([]); });
-    return () => { live = false; };
-  }, [scope, teams, seasonId, orgQuery]);
 
   const reach = useMemo(() => {
     if (selected) {
@@ -89,18 +80,13 @@ export default function EmailWindow({
         teamId: scope === 'team' ? teamId : undefined,
         status: scope === 'status' ? status : undefined,
       };
-    try {
-      const r = await moneyFetch<{ sent?: number; skipped?: number }>(`/api/admin/house-league/seasons/${seasonId}/email${orgQuery}`, jsonInit('POST', body));
-      if (!r.ok) { setError(refusalText(r.data, W.failed)); setBusy(false); return; }
-      const sent = r.data.sent ?? 0;
-      const skipped = r.data.skipped ?? 0;
-      onSent(selected
-        ? (skipped > 0 ? BULK_WORDS.done.email.partial(sent, skipped) : BULK_WORDS.done.email.clean(sent))
-        : W.sentSeason(sent, skipped));
-    } catch {
-      setError(W.failed);
-      setBusy(false);
-    }
+    const r = await postJson<{ sent?: number; skipped?: number }>(`/api/admin/house-league/seasons/${seasonId}/email${orgQuery}`, body, W.failed);
+    if (!r.ok) { setError(r.error); setBusy(false); return; }
+    const sent = r.data.sent ?? 0;
+    const skipped = r.data.skipped ?? 0;
+    onSent(selected
+      ? (skipped > 0 ? BULK_WORDS.done.email.partial(sent, skipped) : BULK_WORDS.done.email.clean(sent))
+      : W.sentSeason(sent, skipped));
   }
 
   return (
@@ -152,7 +138,7 @@ export default function EmailWindow({
               <span className={ck.label}>{W.team}</span>
               <select id="regs-mail-team" className={ck.select} value={teamId} onChange={e => setTeamId(e.target.value)}>
                 <option value="">{W.teamPick}</option>
-                {(teams ?? []).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </label>
           )}

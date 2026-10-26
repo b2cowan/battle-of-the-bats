@@ -33,6 +33,18 @@ export async function patchRegistration(orgQuery: string, seasonId: string, regI
   }
 }
 
+/** A POST read once: the route's answer, or the server's sentence (else `failed`) — it never throws. */
+export type Posted<T> = { ok: true; data: T } | { ok: false; error: string };
+
+export async function postJson<T = Record<string, unknown>>(url: string, body: unknown, failed: string = MONEY_REFUSAL.failed): Promise<Posted<T>> {
+  try {
+    const r = await moneyFetch<T>(url, jsonInit('POST', body));
+    return r.ok ? { ok: true, data: r.data } : { ok: false, error: refusalText(r.data, failed) };
+  } catch {
+    return { ok: false, error: failed };
+  }
+}
+
 /** A closed fiscal year refused the press (the whole batch stops: every line is dated the same). */
 export const isClosedYear = (p: Patched) => !p.ok && p.code === 'year_closed';
 
