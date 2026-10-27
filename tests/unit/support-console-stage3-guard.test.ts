@@ -388,7 +388,9 @@ describe('6 · Stripe is read only for its readers, never stored, and its outage
     for (const f of ['app/platform-admin/audit/page.tsx', 'app/api/platform-admin/audit/export/route.ts']) {
       const code = readCode(f);
       assert.match(code, /const readsMoney = hasPlatformPower\(auth\.role, 'find_stripe'\)/, f);
-      assert.match(code, /isMoneyEntry\(\w+\.action\)[^\n]*reason: MONEY_ENTRY_HIDDEN, oldValue: null, newValue: null/, f);
+      // Stage 7 Part 0 folded the refund rule and the lead rule into one filter; its behaviour is pinned there.
+      assert.match(code, /hiddenEntryLine\(\w+\.action, \{ money: readsMoney, leads: readsLeads \}\)/, f);
+      assert.match(code, /hidden \? \{ \.\.\.\w+, reason: hidden, oldValue: null, newValue: null \}/, f);
     }
   });
 

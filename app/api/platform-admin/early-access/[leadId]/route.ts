@@ -5,6 +5,7 @@ import {
   cleanOptionalDate,
   EARLY_ACCESS_SELECT,
   isEarlyAccessStatus,
+  leadAuditValues,
 } from '@/lib/early-access-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { requirePlatformPower } from '@/lib/platform-auth';
@@ -111,13 +112,15 @@ export const PATCH = withObservability(async (req: NextRequest,
     return NextResponse.json({ error: 'Unable to update early-access lead' }, { status: 500 });
   }
 
+  // Field names and the step only: the Audit log is every role's, a lead's details are not (Stage 7 Part 0).
+  const audit = leadAuditValues(current as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>);
   await writePlatformAuditLog(
     auth.user.email!,
     null,
     'update_early_access_lead',
     leadId,
-    current,
-    data,
+    audit.oldValue,
+    audit.newValue,
   );
 
   return NextResponse.json({ ok: true, lead: data });

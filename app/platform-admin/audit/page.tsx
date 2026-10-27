@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import { canViewPlatformArea } from '@/lib/platform-areas';
 import { auditDoors, isScheduledEntry } from '@/lib/platform-audit-doors';
-import { auditReasonText, isMoneyEntry, MONEY_ENTRY_HIDDEN } from '@/lib/platform-audit-reason';
+import { auditReasonText, hiddenEntryLine } from '@/lib/platform-audit-reason';
 import { reasonOfRow } from '@/lib/platform-story-view';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import kit from '../console.module.css';
@@ -203,11 +203,14 @@ export default async function AuditLogPage({
   const hasPrev = offset > 0;
 
   const readsMoney = hasPlatformPower(auth.role, 'find_stripe');
+  const readsLeads = hasPlatformPower(auth.role, 'growth');
   const rowViews: AuditRowView[] = rows.map(raw => {
-    const row = !readsMoney && isMoneyEntry(raw.action) ? { ...raw, reason: MONEY_ENTRY_HIDDEN, oldValue: null, newValue: null } : raw;
+    // A refund's details are the Stripe readers', a lead's the growth power's; the rest see that one was made.
+    const hidden = hiddenEntryLine(raw.action, { money: readsMoney, leads: readsLeads });
+    const row = hidden ? { ...raw, reason: hidden, oldValue: null, newValue: null } : raw;
     const scheduled = isScheduledEntry(row.action, row.actorEmail);
-    // A hidden money reason reads in the quiet ink, like "Not recorded": it is a fact about the entry, not the reason.
-    const why = row !== raw ? { text: MONEY_ENTRY_HIDDEN, notRecorded: true } : auditReasonText(row.action, row.reason);
+    // A hidden entry's line reads in the quiet ink, like "Not recorded": it is a fact about the entry, not the reason.
+    const why = hidden ? { text: hidden, notRecorded: true } : auditReasonText(row.action, row.reason);
     const orgFilterHref = row.orgId && row.orgName ? buildAuditHref(filters, { orgId: row.orgId, offset: 0 }) : null;
     return {
       id: row.id,

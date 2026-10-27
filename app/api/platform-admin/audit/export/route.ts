@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hasPlatformPower, requirePlatformAreaApi } from '@/lib/platform-auth';
-import { isMoneyEntry, MONEY_ENTRY_HIDDEN } from '@/lib/platform-audit-reason';
+import { hiddenEntryLine } from '@/lib/platform-audit-reason';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
 import { withObservability } from '@/lib/observability';
@@ -40,6 +40,7 @@ export const GET = withObservability(async (req: NextRequest) => {
   const auth = await requirePlatformAreaApi('audit', 'view');
   if (auth.response) return auth.response;
   const readsMoney = hasPlatformPower(auth.role, 'find_stripe');
+  const readsLeads = hasPlatformPower(auth.role, 'growth');
 
   const sp = req.nextUrl.searchParams;
   const qText = sp.get('q')?.trim().toLowerCase() ?? '';
@@ -77,8 +78,12 @@ export const GET = withObservability(async (req: NextRequest) => {
       oldValue: row.old_value,
       newValue: row.new_value,
     }))
-    // A refund's reason and details are for the roles that read Stripe (A2); the others see that one was made.
-    .map(row => (readsMoney || !isMoneyEntry(row.action) ? row : { ...row, reason: MONEY_ENTRY_HIDDEN, oldValue: null, newValue: null }))
+    // A refund's reason and details are for the roles that read Stripe (A2), a lead's for the growth power (Stage 7
+    // Part 0); the others see that one was made.
+    .map(row => {
+      const hidden = hiddenEntryLine(row.action, { money: readsMoney, leads: readsLeads });
+      return hidden ? { ...row, reason: hidden, oldValue: null, newValue: null } : row;
+    })
     .filter(row => {
       if (!qText) return true;
       return row.actorEmail.toLowerCase().includes(qText) ||

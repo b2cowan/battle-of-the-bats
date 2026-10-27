@@ -131,6 +131,21 @@ export function cleanOptionalDate(value: unknown): string | null {
   return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null;
 }
 
+/**
+ * What a lead edit's audit entry keeps (Support console Stage 7 Part 0, owner Q10 2026-10-27): which fields changed and
+ * the step before and after, never a value a stranger typed or a staff member wrote (name, email, organization, words,
+ * notes). The Audit log is open to every staff role; a lead's details are the growth power's alone.
+ */
+export function leadAuditValues(before: Record<string, unknown>, after: Record<string, unknown>) {
+  const changed = Object.keys(after)
+    .filter(key => key !== 'updated_at' && JSON.stringify(before[key] ?? null) !== JSON.stringify(after[key] ?? null))
+    .sort();
+  return {
+    oldValue: { internal_status: before.internal_status ?? null },
+    newValue: { changed, internal_status: after.internal_status ?? null },
+  };
+}
+
 export function toCsvCell(value: unknown): string {
   if (value == null) return '';
   const text = Array.isArray(value) ? value.join('; ') : String(value);

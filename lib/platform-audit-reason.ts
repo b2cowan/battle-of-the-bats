@@ -30,6 +30,23 @@ export function isMoneyEntry(action: string): boolean {
 }
 export const MONEY_ENTRY_HIDDEN = 'Shown to Super admin, Billing and Support';
 
+/**
+ * A lead's entries (Stage 7 Part 0, owner Q10 2026-10-27): entries written before Part 0 hold the whole lead (a
+ * stranger's name, address, organization and words, and staff notes), so every lead entry's details are read only by the
+ * growth power (Super admin, Product, Growth). Every other role sees the entry, its action, actor and time.
+ */
+export function isLeadEntry(action: string): boolean {
+  return action === 'update_early_access_lead';
+}
+export const LEAD_ENTRY_HIDDEN = 'Lead details are shown to the roles that work leads.';
+
+/** The one line that stands in for an entry's reason and details when this reader may not see them, else null. */
+export function hiddenEntryLine(action: string, reads: { money: boolean; leads: boolean }): string | null {
+  if (!reads.money && isMoneyEntry(action)) return MONEY_ENTRY_HIDDEN;
+  if (!reads.leads && isLeadEntry(action)) return LEAD_ENTRY_HIDDEN;
+  return null;
+}
+
 /** The words in an entry's Reason cell: the reason, "Not recorded" for a staff change without one, else null ("—"). */
 export function auditReasonText(action: string, reason: string | null | undefined): { text: string | null; notRecorded: boolean } {
   const r = typeof reason === 'string' ? reason.trim() : '';
