@@ -5,7 +5,7 @@ import { withObservability } from '@/lib/observability';
 import { isCronRequest } from '@/lib/cron-auth';
 import { bookLostDisputesSweep, sendDisputeReminders } from '@/lib/online-payment-landing';
 import {
-  remindUnpaidFeeInvoices, retryFailedFees, sendMonthlyFeeInvoices, sweepDisputeFees, syncOpenFeeInvoices,
+  releaseStrandedSubscriptionFees, remindUnpaidFeeInvoices, retryFailedFees, sendMonthlyFeeInvoices, sweepDisputeFees, syncOpenFeeInvoices,
 } from '@/lib/platform-stripe-fees';
 
 /**
@@ -16,9 +16,11 @@ import {
  *   2. Stripe's dispute fees posted after the events stopped (an answering fee, or its return on a win);
  *   3. a retry of every fee whose billing failed (a passing Stripe error);
  *   4. Stripe's own state of every invoice still open (a missed webhook never leaves one unpaid on our side);
- *   5. the club's own monthly invoice, gathering last month's fees — sent on the 1st, or the first run after it;
- *   6. the ONE reminder on an invoice past due (§7 ruling 3). Nothing switches off by itself;
- *   7. (Part 4b) a card dispute lost before its payment landed, whose booking at the landing failed.
+ *   5. (ruling 6) a fee whose line is still pending on a subscription that can no longer carry it, taken off it and
+ *      returned to unbilled, before
+ *   6. the club's own monthly invoice, gathering last month's fees — sent on the 1st, or the first run after it;
+ *   7. the ONE reminder on an invoice past due (§7 ruling 3). Nothing switches off by itself;
+ *   8. (Part 4b) a card dispute lost before its payment landed, whose booking at the landing failed.
  * One step's failure never stops the next.
  *
  * Callers: the pg_cron scheduler (daily, via x-cron-secret) or a person with `run_jobs`, by hand.
@@ -47,6 +49,7 @@ export const POST = withObservability(async (req: Request) => {
   await run('dispute_fees', () => sweepDisputeFees(now));
   await run('retry_fees', () => retryFailedFees());
   await run('sync_invoices', () => syncOpenFeeInvoices());
+  await run('stranded_fees', () => releaseStrandedSubscriptionFees(now));
   await run('monthly_invoices', () => sendMonthlyFeeInvoices(now));
   await run('invoice_reminders', () => remindUnpaidFeeInvoices(now));
   await run('lost_disputes', () => bookLostDisputesSweep(now));

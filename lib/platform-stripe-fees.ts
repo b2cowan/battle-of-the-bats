@@ -225,7 +225,9 @@ export async function billFee(feeId: string): Promise<BillOutcome> {
     const item = already ?? await stripe.invoiceItems.create({
       customer: ride.customer, subscription: ride.subscription, amount: signedCents(f), currency: 'cad',
       description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
-    }, { idempotencyKey: `stripe-fee:${f.id}` });
+    // Keyed by the subscription too: a fee released from one it could no longer ride (ruling 6) and put on a new one within
+    // Stripe's 24 hours must not be handed the deleted line back.
+    }, { idempotencyKey: `stripe-fee:${f.id}:${ride.subscription}` });
     await supabaseAdmin.from('platform_stripe_fees')
       .update({ stripe_invoice_item_id: item.id, billed_at: new Date().toISOString(), billed_on: 'subscription', bill_error: null })
       .eq('id', f.id).is('billed_at', null);
@@ -543,6 +545,58 @@ export async function sweepDisputeFees(now: Date = new Date()): Promise<void> {
   const { data: feeRows } = await supabaseAdmin.from('platform_stripe_fees').select('online_payment_id').eq('kind', 'returned').in('online_payment_id', returnedIds);
   const recorded = new Set(((feeRows ?? []) as Array<{ online_payment_id: string }>).map(r => r.online_payment_id));
   for (const id of returnedIds) if (!recorded.has(id)) await recordReturnedDebitFee(id);
+}
+
+/** Stripe's invoice item, or null once Stripe no longer has it (deleted). */
+async function readInvoiceItem(id: string): Promise<Stripe.InvoiceItem | null> {
+  try {
+    const item = await stripe.invoiceItems.retrieve(id);
+    return (item as { deleted?: boolean }).deleted ? null : item;
+  } catch (err) {
+    if ((err as { code?: string }).code === 'resource_missing') return null;
+    throw err;
+  }
+}
+
+/**
+ * A fee left on a subscription that can no longer carry it (owner ruling 6, 2026-10-27; the /review of 12d-1's Low): put
+ * on a subscription that was then cancelled, discounted, moved off Canadian dollars or replaced before its invoice, the
+ * line stays pending in Stripe and no invoice takes it (ours exclude pending lines). The daily job reads each such line,
+ * deletes it while it is still pending, reads it again, and only then returns the fee to unbilled, so the club's own
+ * monthly invoice bills it once, never twice. A line already on an invoice is that invoice's and is left alone. Runs
+ * before the monthly invoice. A yearly plan's line can wait up to a year, so a year and a month are read.
+ */
+export async function releaseStrandedSubscriptionFees(now: Date = new Date()): Promise<number> {
+  const since = new Date(now.getTime() - 400 * 86_400_000).toISOString();
+  const { data } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
+    .eq('billed_on', 'subscription').eq('livemode', LIVE_KEY()).gte('billed_at', since)
+    .order('billed_at', { ascending: false }).limit(500);
+  const rides = new Map<string, Promise<{ customer: string; subscription: string } | null>>();
+  let released = 0;
+  for (const f of (data ?? []) as FeeRow[]) {
+    const itemId = f.stripe_invoice_item_id;
+    if (!itemId) continue;
+    try {
+      const before = await readInvoiceItem(itemId);
+      if (before?.invoice) continue; // on an invoice: billed there
+      if (before) {
+        if (!rides.has(f.org_id)) rides.set(f.org_id, subscriptionToRide(f.org_id));
+        const ride = await rides.get(f.org_id)!;
+        if (ride && before.parent?.subscription_details?.subscription === ride.subscription) continue; // still rides
+        await stripe.invoiceItems.del(itemId);
+        // Read again: a line Stripe put on an invoice in the meantime stays billed there.
+        if (await readInvoiceItem(itemId)) continue;
+      }
+      const { error } = await supabaseAdmin.from('platform_stripe_fees')
+        .update({ stripe_invoice_item_id: null, billed_at: null, billed_on: null, bill_error: null })
+        .eq('id', f.id).eq('billed_on', 'subscription').eq('stripe_invoice_item_id', itemId);
+      if (error) throw error;
+      released += 1;
+    } catch (err) {
+      console.error('[platform-stripe-fees] a pending subscription line wasn’t released:', f.id, errText(err));
+    }
+  }
+  return released;
 }
 
 /** The daily job's retry of every fee whose billing failed (a passing Stripe error), a few times before a person looks. */

@@ -172,7 +172,7 @@ describe('the webhook and the landing (§0k)', () => {
     assert.doesNotMatch(fee, /exempt_reason: '(comped|no_subscription)'|exempt\('comped'\)/);
     assert.doesNotMatch(fee, /subscription_status/, 'never the stored status (plan-reader door guard)');
     assert.match(fee, /invoiceItems\.create\(\{[\s\S]*?subscription: ride\.subscription/);
-    assert.match(fee, /idempotencyKey: `stripe-fee:\$\{f\.id\}`/);
+    assert.match(fee, /idempotencyKey: `stripe-fee:\$\{f\.id\}:\$\{ride\.subscription\}`/);
   });
 
   it('12d-1 Part 4: the foreign-card rate matches the Facts doc, its canonical record', () => {

@@ -56,7 +56,34 @@ describe('ruling 3: a returned debit is billed at Stripe\'s own figure, nothing 
   });
 });
 
-describe('ruling 5: one "Email the pay link" after a lost card dispute warns, never skips; the bulk send still skips', () => {
+describe('ruling 6: a fee left pending on a subscription that can no longer carry it goes to the club’s own invoice, once', () => {
+  const release = /export async function releaseStrandedSubscriptionFees[\s\S]*?\n}\n/.exec(readCode(FEES))?.[0] ?? '';
+
+  it('a line already on an invoice, or still on a subscription that rides, is left alone', () => {
+    assert.match(release, /\.eq\('billed_on', 'subscription'\)\.eq\('livemode', LIVE_KEY\(\)\)\.gte\('billed_at', since\)/);
+    assert.match(release, /if \(before\?\.invoice\) continue;/);
+    assert.match(release, /if \(ride && before\.parent\?\.subscription_details\?\.subscription === ride\.subscription\) continue;/);
+  });
+
+  it('read before and after: deleted from Stripe, read again, and only then returned to unbilled (never billed twice)', () => {
+    const del = release.indexOf('invoiceItems.del(itemId)');
+    const again = release.indexOf('if (await readInvoiceItem(itemId)) continue;');
+    const back = release.indexOf('.update({ stripe_invoice_item_id: null, billed_at: null, billed_on: null, bill_error: null })');
+    assert.ok(del > 0 && again > del && back > again, 'delete, read again, then unbill');
+    // The unbill is a compare-and-set on the very line it deleted, and clears the three columns the table ties together.
+    assert.match(release, /\.eq\('id', f\.id\)\.eq\('billed_on', 'subscription'\)\.eq\('stripe_invoice_item_id', itemId\)/);
+  });
+
+  it('the daily job runs it before the monthly invoice, which then bills the fee on the club’s own invoice', () => {
+    const daily = readCode('app/api/platform-admin/stripe-fees-daily/route.ts');
+    const stranded = daily.indexOf("run('stranded_fees'");
+    assert.ok(stranded > 0 && stranded < daily.indexOf("run('monthly_invoices'"));
+    // A fee put back on a NEW subscription within Stripe's 24 hours is never handed the deleted line back.
+    assert.match(readCode(FEES), /idempotencyKey: `stripe-fee:\$\{f\.id\}:\$\{ride\.subscription\}`/);
+  });
+});
+
+describe('ruling 5:one "Email the pay link" after a lost card dispute warns, never skips; the bulk send still skips', () => {
   const RECEIPT = readCode('lib/online-payment-receipt.ts');
 
   it('house league: the bulk send skips the family; one send asks, and goes when the desk says so', () => {
