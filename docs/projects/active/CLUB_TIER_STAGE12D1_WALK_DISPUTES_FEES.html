@@ -75,13 +75,14 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   <header style="display:flex;flex-direction:column;gap:6px">
     <span class="label">Owner QA walk · Club Tier · Stage 12d-1 · §396</span>
     <h1>Disputes and Stripe fees</h1>
-    <p class="sub">Written 2026-10-27. One purpose: a card dispute is seen and answered by the one person who can, and every Stripe fee a club’s payments cause reaches that club’s bill, a club with no subscription included.</p>
+    <p class="sub">Written 2026-10-27; steps C7–C8, E8–E9 and part F added the same day for the owner’s rulings on Part 4’s asks (Part 5b). One purpose: a card dispute is seen and answered by the one person who can, and every Stripe fee a club’s payments cause reaches that club’s bill, a club with no subscription included.</p>
   </header>
 
   <section class="card">
     <h2>What this walk is for</h2>
     <p>Until now a card dispute was dropped without a word. You check that it shows on the payment, quietly for the desk and in amber for the owner who set up payouts; that only the owner gets <strong>Answer in Stripe</strong>; that <strong>Copy the facts</strong> holds what we know; that no refund is offered while it is open; and what a win and a loss do (parts A to D).</p>
     <p>Then the money it costs: a card issued outside the club’s country, a dispute fee Stripe charged FieldLogicHQ, and the club’s own monthly invoice, which UAT Rep Club gets because it has no subscription for the fees to ride on, just like a complimentary club (part E).</p>
+    <p>Last, a family’s dispute is lost: “Email families who owe” leaves the family out, and one <strong>Email the pay link</strong> asks before it sends (part F; a team’s is C7–C8).</p>
   </section>
 
   <section class="card">
@@ -93,6 +94,8 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       <li>“Fraud” never appears. Nothing is sent to the family or team.</li>
       <li>Every fee on the club’s list names a receipt and a day, never a child; the amounts come from Stripe or the published rate and are never typed.</li>
       <li>The club’s own invoice arrives, is paid on Stripe’s page, and reads paid.</li>
+      <li>After a lost dispute, the bulk send leaves the family or team out; one Email the pay link asks first and sends when told to.</li>
+      <li>An answering fee Stripe gives back goes against the invoice that charged it, and never waits for a later fee.</li>
     </ul>
   </section>
 
@@ -100,7 +103,9 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
     <h2>Not in this walk</h2>
     <ul>
       <li>Paid twice: walk §395.</li>
-      <li>A bank debit that comes back, and its fee on the club’s invoice: it can’t be produced on localhost (as in 12c). It goes in the Amplify end-to-end pass.</li>
+      <li>A bank debit that comes back, and its fee on the club’s invoice: it can’t be produced on localhost (as in 12c). It goes in the Amplify end-to-end pass. Since the owner’s ruling 3 it is billed at Stripe’s own figure, and not at all when Stripe charges nothing.</li>
+      <li>A cancelled club still seeing its Stripe fees list (ruling 2): cancelling UAT Rep Club would close every other walk on it. It goes in the end-to-end pass.</li>
+      <li>A fee taken off a subscription that was cancelled or discounted before its invoice (ruling 6): UAT Rep Club has no subscription. The end-to-end pass.</li>
       <li>The email three days before an answer is due, and the unpaid invoice’s reminder: both are the daily job’s (running on dev since 2026-10-27), and both are emails, so they go in the Amplify end-to-end pass.</li>
       <li>Emails, beyond the held boxes. Localhost cannot send.</li>
       <li>The Payouts tab, leaving, and the payments terms: those are 12d-2.</li>
@@ -136,7 +141,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
     <h2>Where and on what</h2>
     <dl class="facts">
       <dt>Payouts</dt><dd>UAT Rep Club’s test Stripe account is connected and taking payments. It has no FieldLogicHQ subscription, so its Stripe fees go on an invoice of its own.</dd>
-      <dt>House league</dt><dd><strong>2026 Fall House League</strong>, U9 Rookie (born 2014 or 2015). Sign-up: <code>/uat-rep-club/league/2026-fall-house-league/register</code>. Registrations: <code>/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/registrations</code>; Money: the same ending <code>/money</code>. The walk signs up <em>Lou Disputewalk</em> and <em>Ivy Askwalk</em>.</dd>
+      <dt>House league</dt><dd><strong>2026 Fall House League</strong>, U9 Rookie (born 2014 or 2015). Sign-up: <code>/uat-rep-club/league/2026-fall-house-league/register</code>. Registrations: <code>/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/registrations</code>; Money: the same ending <code>/money</code>. The walk signs up <em>Lou Disputewalk</em>, <em>Ivy Askwalk</em> and <em>Max Lostwalk</em>.</dd>
       <dt>Tournament</dt><dd><strong>UAT Rep Club Invitational 2026</strong>, division 15U. The walk adds <em>Walk Lost Team</em> and <em>Walk Abroad Team</em> (“Add team” › “Add team manually”, 15U, “Unpaid”, an email you can read).</dd>
       <dt>Plan &amp; billing</dt><dd><code>/uat-rep-club/admin/org/billing</code> (the owner’s page).</dd>
     </dl>
@@ -185,7 +190,9 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       { who: O, do: 'Reload Walk Lost Team’s record.', see: 'The deposit row carries an amber “Disputed” chip with “Answer by …” under it. The amber block sits under the payments, with both buttons. The row’s ⋯ offers no refund to the card. Copy the facts reads “For: Walk Lost Team’s deposit for UAT Rep Club Invitational 2026.” and “Registered (day) by ….”' },
       { who: O, do: 'Answer in Stripe with <code>losing_evidence</code> (or the helper with <code>lose</code>).', see: 'Window 1 prints <code>charge.dispute.closed</code>.' },
       { who: O, do: 'Reload the record.', see: 'The deposit row is struck through: “Taken back by the bank, (day)”, and it is still there (nothing deleted). The summary owes the deposit again. The block reads “Dispute lost” with an amber pill “Owing again”: “Lost (day). The bank took back receipt N. It’s out of the tournament’s book, and Walk Lost Team owes $… again.”' },
-      { who: O, do: 'Open Needs attention.', see: 'An amber item “Walk Lost Team’s dispute was lost”: “The bank took back receipt N on (day). It’s out of the tournament’s book, and Walk Lost Team owes $… again. We haven’t emailed the team.” (The owner’s earlier dispute item has settled.)', call: 'Builder’s call: the settled line “The dispute was lost.” is derived (owed to /marketing).' }
+      { who: O, do: 'Open Needs attention.', see: 'An amber item “Walk Lost Team’s dispute was lost”: “The bank took back receipt N on (day). It’s out of the tournament’s book, and Walk Lost Team owes $… again. We haven’t emailed the team.” (The owner’s earlier dispute item has settled.)', call: 'Builder’s call: the settled line “The dispute was lost.” is derived (owed to /marketing).' },
+      { who: O, do: 'In Walk Lost Team’s record, on the deposit’s Still due row, open ⋯ › <strong>Email the pay link</strong>. Then press <strong>Cancel</strong>.', see: 'A question window “Email the pay link anyway?”: “The bank took this team’s card payment back, and the club lost the dispute. Payment reminders leave the team out so someone can talk to them first. You can still send the pay link.”, with Cancel and <strong>Email the pay link</strong>. Cancel closes it; nothing was sent (no “Pay link sent” line).', call: 'Builder’s call: the owner’s ruling 5 was the family’s single send; a team’s asks the same way, since the payment reminders already leave a team out after a lost dispute.' },
+      { who: O, do: 'Open ⋯ › <strong>Email the pay link</strong> again and press <strong>Email the pay link</strong> in the window.', see: '“Pay link sent to (the team’s email).” The record reads “Pay link sent”. It went because you said so: the ask warns, it never skips.' }
     ]},
     { id: 'D', title: 'A bank only asking', steps: [
       { who: F, do: 'Sign up ONE child, <em>Ivy Askwalk</em>, and pay by card with <code>4000 0000 0000 1976</code>.', see: '“Paid, thank you”; window 1 prints <code>charge.dispute.created</code>.' },
@@ -198,7 +205,15 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       { who: O, do: 'Run the monthly step (see “Before you start”), then reload Plan &amp; billing.', see: 'The command prints <code>{ sent: 1, failed: 0 }</code> or more (other clubs on dev may have fees). The rows now read “Invoice N · due (a day 30 days on)”, and <strong>Pay the invoice</strong> appears once.', call: 'Builder’s call: the club’s own invoice is due in 30 days (our choice, not Stripe’s).' },
       { who: O, opts: HELD, do: 'The invoice email to the owner (check your inbox).', see: 'Held. When sent: subject “Invoice N from FieldLogicHQ: Stripe fees for UAT Rep Club”, the lead “Stripe charged FieldLogicHQ $… in fees on UAT Rep Club’s online payments, and we pass them on to every club, on every plan. Your plan doesn’t change.”, the lines, Total and Due, a reason naming only the kinds on it, “Pay the invoice”, and “Questions: hello@fieldlogichq.ca.”' },
       { who: O, do: 'Press <strong>Pay the invoice</strong> and read Stripe’s page; pay it with <code>4242 4242 4242 4242</code>. Then reload Plan &amp; billing.', see: 'Stripe’s invoice page lists the same lines (by receipt, no child), the memo “Stripe fees on UAT Rep Club’s online payments. Your plan doesn’t change; Stripe’s fees are passed on to every club.” and “Questions: hello@fieldlogichq.ca.” Window 3 prints <code>invoice.paid</code> and <code>[200]</code>. The rows read “Invoice N · paid (day)” and Pay the invoice is gone.' },
-      { who: PA, do: 'In platform admin, open UAT Rep Club › Money.', see: 'The invoice shows as a Stripe-fees invoice, paid, never with the “not the subscription’s” warning; the club’s fees list beside it. Nothing about the club changed when the invoice was open.' }
+      { who: PA, do: 'In platform admin, open UAT Rep Club › Money.', see: 'The invoice shows as a Stripe-fees invoice, paid, never with the “not the subscription’s” warning; the club’s fees list beside it. Nothing about the club changed when the invoice was open.' },
+      { who: O, opts: HELD, do: 'Only if step A9 said the fee goes on a FieldLogicHQ invoice: on Plan &amp; billing, find Lou’s “Card dispute answering fee” and “Card dispute answering fee returned” rows (Lou’s dispute was won in part B).', see: 'Both sat on the same invoice and cancelled out: each reads “Invoice N · due …” or “· paid …”, the returned one as “−$…”. If they were the invoice’s only lines, it closed at nothing owed, read paid, and no email went. Held when step A9 said Stripe took the fee from the club’s own balance (then neither row exists, which is right).', call: 'Builder’s call (ruling 7): when the fee and its return fall on one invoice still to come, they net there; a month where they cancel out is finalized at nothing owed (Stripe marks it paid) instead of waiting for a later fee.' },
+      { who: O, opts: HELD, do: 'A returned answering fee whose invoice had already gone out.', see: 'Held: it can’t be produced on localhost (the win would have to land after the 1st’s invoice). When it happens, the row reads “Returned (day)” and its “−$…”. On an unpaid invoice what you owe goes down by it; on a paid one it goes back to the card that paid. Stripe sends no email; that line is the notice. The end-to-end pass.', call: 'Builder’s call: Stripe’s own credit-note email is off; the Plan &amp; billing line is the club’s only notice.' }
+    ]},
+    { id: 'F', title: 'A family’s dispute is lost, and one pay link', steps: [
+      { who: F, do: 'Sign up ONE child, <em>Max Lostwalk</em>, in U9 Rookie, with your email. Pay by card with <code>4000 0000 0000 0259</code>.', see: '“Paid, thank you”; window 1 prints <code>charge.dispute.created</code>.' },
+      { who: O, do: 'Open Max’s record, press <strong>Answer in Stripe</strong> and answer with <code>losing_evidence</code> (or the helper with <code>lose</code>).', see: 'Window 1 prints <code>charge.dispute.closed</code>. Max’s Fee cell reads “$… owing · dispute lost”, with “Taken back by the bank (day) · receipt N” under it.' },
+      { who: R, do: 'On Registrations select Max and one other owing child, and press <strong>Email families who owe</strong>.', see: 'A partial result: “1 pay link sent; 1 skipped: a dispute was lost.” Max stays selected; his family got nothing.' },
+      { who: R, do: 'Open Max’s row ⋯ › <strong>Email the pay link</strong>. Read the window, then press <strong>Email the pay link</strong>.', see: '“Email the pay link anyway?”: “The bank took this family’s card payment back, and the club lost the dispute. Email families who owe leaves them out so someone can talk to them first. You can still send the pay link.” Then it sends: “Pay link sent to (the guardian’s email).” The bulk send still leaves the family out next time.', call: 'Owner ruling 5 (2026-10-27): one send after a lost dispute warns, never skips. A refund’s “Email the pay link” answer and the price-raise email don’t ask (each is already the desk’s choice).' }
     ]}
   ];
 
