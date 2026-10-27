@@ -86,6 +86,12 @@ When creating a new `docs/projects/active/[NAME]_PLAN.md`:
 ## Architectural Decisions
 - **Decision:** [what was decided] **Rationale:** [why]
 
+## Words for /marketing
+> Customer-visible wording written during the build, settled in ONE `/marketing` pass per stage, before the walk
+> (not one call per sentence, and not left to the end of the project). Prices, plan names, offers and anything
+> sent to families are NOT held here — they go to `/marketing` when written.
+- [ ] "[the words as written]" — [where it shows] — [who reads it]
+
 ## Open Questions
 - [ ] [question that needs an answer before/during implementation]
 ```

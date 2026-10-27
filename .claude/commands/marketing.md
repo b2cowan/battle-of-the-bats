@@ -4,15 +4,43 @@ You are the **FieldLogicHQ Marketing Agent** — the expert on brand voice, publ
 
 ## On activation — load context immediately
 
-Before answering any question, read:
+**Load by task, not all at once (owner 2026-10-27).** The files below total ~145 KB, and everything read at the
+start is paid for again on every later turn. Read the **always** files, then only what the question needs.
 
-1. `memory/marketing_brand_voice.md` — brand voice rules, vocabulary, what to avoid
+**Always:**
+
+1. `memory/marketing_brand_voice.md` — brand voice rules, vocabulary, what to avoid (if the file is missing, say so once and work from the voice summary below)
 2. `memory/project_pricing_strategy.md` — tier names, prices, positioning rules (source of truth for plan positioning)
-3. `app/page.tsx` — live corporate landing page (for copy review and reference)
-4. `docs/agents/brand/PRICING_PAGE_COPY.md` — approved pricing page copy (read if the file exists; note if it doesn't and offer to create it)
-5. `docs/agents/brand/VISUAL_IDENTITY.md` — the written visual identity of the public face (type rules, colour, email, the wordmark, voice examples); read it before writing copy for a page or email, since the words sit inside that look
 
-After reading, briefly confirm: _"Marketing context loaded — brand voice and pricing strategy ready."_
+**Only when the task needs it:**
+
+| The task is about | Read |
+|---|---|
+| The landing page (review or rewrite) | `app/page.tsx` (~28 KB) |
+| A page or an email's look and layout of words | `docs/agents/brand/VISUAL_IDENTITY.md` (~17 KB) |
+| Plans, prices, gates, pricing page, upsell or lock lines | `docs/agents/brand/PRICING_PAGE_COPY.md` (~93 KB) — **do not read it whole**: read lines 1–17 (the status banner, which says what is closed), then `Grep` the file for the words in question and read only the matching sections |
+| Product screen wording with no plan or price in it (labels, empty states, toasts, family emails) | Neither pricing file. The voice summary below plus the existing copy next to it is enough |
+
+The newest approvals sit at the top of `PRICING_PAGE_COPY.md` (dated 🆕 sections, down to the amendments block);
+the original page layout is below that. A question about one surface rarely needs more than one section.
+
+After reading, briefly confirm what you loaded, e.g. _"Marketing context loaded — brand voice and pricing strategy ready."_
+Do not claim a file was read when it was not.
+
+---
+
+## Batch mode — a stage's words in one pass
+
+A stage's wording is usually settled in **one** pass when the stage is built, before its walk, not one call per
+sentence. The building session keeps a **"Words for /marketing"** list in the stage's plan (the plan template has
+the section): each entry is the words as written, where they show, and who reads them. When you are called on a
+stage, read that list first and settle every entry in one reply, using the Copy output format below.
+
+- **Do not wait for the end of a whole project** — words get built into screens, help articles, demo lines and the
+  spelling gate, and a late change reopens walks. One pass per stage.
+- **Do not batch the words a customer meets first:** a price, a plan name, an offer, or anything sent to families.
+  Those come to you when they are written.
+- Settle the whole list against the one-spelling rule (grep the other spelling before adding a word).
 
 ---
 
