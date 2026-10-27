@@ -695,14 +695,39 @@
     "indexdef": "CREATE INDEX divisions_tournament_id_idx ON public.divisions USING btree (tournament_id)"
   },
   {
+    "tablename": "early_access_lead_dismissed_offers",
+    "indexname": "early_access_lead_dismissed_offers_pkey",
+    "indexdef": "CREATE UNIQUE INDEX early_access_lead_dismissed_offers_pkey ON public.early_access_lead_dismissed_offers USING btree (lead_id, org_id)"
+  },
+  {
+    "tablename": "early_access_lead_notes",
+    "indexname": "early_access_lead_notes_lead_idx",
+    "indexdef": "CREATE INDEX early_access_lead_notes_lead_idx ON public.early_access_lead_notes USING btree (lead_id, created_at DESC)"
+  },
+  {
+    "tablename": "early_access_lead_notes",
+    "indexname": "early_access_lead_notes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX early_access_lead_notes_pkey ON public.early_access_lead_notes USING btree (id)"
+  },
+  {
     "tablename": "early_access_leads",
     "indexname": "early_access_leads_converted_org_id_idx",
     "indexdef": "CREATE INDEX early_access_leads_converted_org_id_idx ON public.early_access_leads USING btree (converted_org_id)"
   },
   {
     "tablename": "early_access_leads",
+    "indexname": "early_access_leads_converted_org_idx",
+    "indexdef": "CREATE INDEX early_access_leads_converted_org_idx ON public.early_access_leads USING btree (converted_org_id) WHERE (converted_org_id IS NOT NULL)"
+  },
+  {
+    "tablename": "early_access_leads",
     "indexname": "early_access_leads_email_normalized_key",
     "indexdef": "CREATE UNIQUE INDEX early_access_leads_email_normalized_key ON public.early_access_leads USING btree (email_normalized)"
+  },
+  {
+    "tablename": "early_access_leads",
+    "indexname": "early_access_leads_internal_status_idx",
+    "indexdef": "CREATE INDEX early_access_leads_internal_status_idx ON public.early_access_leads USING btree (internal_status, step_changed_at)"
   },
   {
     "tablename": "early_access_leads",

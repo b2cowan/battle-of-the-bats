@@ -3474,6 +3474,114 @@
     "ordinal_position": 21
   },
   {
+    "table_name": "early_access_lead_dismissed_offers",
+    "column_name": "lead_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "early_access_lead_dismissed_offers",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "early_access_lead_dismissed_offers",
+    "column_name": "dismissed_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "early_access_lead_dismissed_offers",
+    "column_name": "dismissed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "early_access_lead_notes",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "early_access_lead_notes",
+    "column_name": "lead_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "early_access_lead_notes",
+    "column_name": "body",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "early_access_lead_notes",
+    "column_name": "author_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "early_access_lead_notes",
+    "column_name": "from_old_box",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "early_access_lead_notes",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "early_access_lead_notes",
+    "column_name": "removed_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "early_access_lead_notes",
+    "column_name": "removed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
     "table_name": "early_access_leads",
     "column_name": "id",
     "data_type": "uuid",
@@ -3715,6 +3823,96 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 27
+  },
+  {
+    "table_name": "early_access_leads",
+    "column_name": "source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 28
+  },
+  {
+    "table_name": "early_access_leads",
+    "column_name": "source_words",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 29
+  },
+  {
+    "table_name": "early_access_leads",
+    "column_name": "lost_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
+  },
+  {
+    "table_name": "early_access_leads",
+    "column_name": "link_method",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 31
+  },
+  {
+    "table_name": "early_access_leads",
+    "column_name": "linked_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 32
+  },
+  {
+    "table_name": "early_access_leads",
+    "column_name": "linked_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 33
+  },
+  {
+    "table_name": "early_access_leads",
+    "column_name": "signed_up_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 34
+  },
+  {
+    "table_name": "early_access_leads",
+    "column_name": "step_changed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 35
+  },
+  {
+    "table_name": "early_access_leads",
+    "column_name": "heard_from",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 36
+  },
+  {
+    "table_name": "early_access_leads",
+    "column_name": "ref_tag",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 37
   },
   {
     "table_name": "email_batches",

@@ -1390,6 +1390,66 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "early_access_lead_dismissed_offers",
+    "constraint_name": "early_access_lead_dismissed_offers_lead_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "lead_id",
+    "foreign_table": "early_access_leads",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "early_access_lead_dismissed_offers",
+    "constraint_name": "early_access_lead_dismissed_offers_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "early_access_lead_dismissed_offers",
+    "constraint_name": "early_access_lead_dismissed_offers_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "lead_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "early_access_lead_dismissed_offers",
+    "constraint_name": "early_access_lead_dismissed_offers_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "org_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "early_access_lead_notes",
+    "constraint_name": "early_access_lead_notes_lead_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "lead_id",
+    "foreign_table": "early_access_leads",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "early_access_lead_notes",
+    "constraint_name": "early_access_lead_notes_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "early_access_leads",
     "constraint_name": "early_access_leads_converted_org_id_fkey",
     "constraint_type": "FOREIGN KEY",

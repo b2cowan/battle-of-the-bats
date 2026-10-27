@@ -1,16 +1,72 @@
 {
   "generated": "2026-10-27",
-  "total": 1014,
+  "total": 1062,
   "counts": {
-    "tables": 36,
-    "columns": 508,
-    "indexes": 162,
-    "constraints": 151,
-    "rls": 157
+    "tables": 38,
+    "columns": 530,
+    "indexes": 167,
+    "constraints": 156,
+    "rls": 171
   },
   "items": [
     {
       "key": "check:only-dev:club_schedule_slot_programs.club_schedule_slot_programs_program_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_lead_notes.early_access_lead_notes_author_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_lead_notes.early_access_lead_notes_body_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_lead_notes.early_access_lead_notes_removed_has_no_text",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_lead_notes.early_access_lead_notes_signed",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_leads.early_access_leads_heard_from_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_leads.early_access_leads_internal_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_leads.early_access_leads_link_facts_together",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_leads.early_access_leads_link_method_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_leads.early_access_leads_lost_has_reason",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_leads.early_access_leads_lost_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_leads.early_access_leads_ref_tag_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_leads.early_access_leads_signed_up_is_linked",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_leads.early_access_leads_source_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_leads.early_access_leads_source_words_check",
       "sig": ""
     },
     {
@@ -651,6 +707,94 @@
     },
     {
       "key": "column:only-dev:club_schedule_slot_programs.slot_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_dismissed_offers.dismissed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_dismissed_offers.dismissed_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_dismissed_offers.lead_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_dismissed_offers.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_notes.author_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_notes.body",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_notes.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_notes.from_old_box",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_notes.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_notes.lead_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_notes.removed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_lead_notes.removed_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_leads.heard_from",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_leads.link_method",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_leads.linked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_leads.linked_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_leads.lost_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_leads.ref_tag",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_leads.signed_up_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_leads.source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_leads.source_words",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_leads.step_changed_at",
       "sig": ""
     },
     {
@@ -2682,6 +2826,26 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:early_access_lead_dismissed_offers.early_access_lead_dismissed_offers_lead_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:early_access_lead_dismissed_offers.early_access_lead_dismissed_offers_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:early_access_lead_dismissed_offers.early_access_lead_dismissed_offers_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:early_access_lead_notes.early_access_lead_notes_lead_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:early_access_lead_notes.early_access_lead_notes_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:family_email_recipients.family_email_recipients_org_id_fkey",
       "sig": ""
     },
@@ -3291,6 +3455,26 @@
     },
     {
       "key": "index:only-dev:club_schedule_slot_programs_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:early_access_lead_dismissed_offers_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:early_access_lead_notes_lead_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:early_access_lead_notes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:early_access_leads_converted_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:early_access_leads_internal_status_idx",
       "sig": ""
     },
     {
@@ -3923,6 +4107,14 @@
     },
     {
       "key": "table:only-dev:club_schedule_slot_programs",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:early_access_lead_dismissed_offers",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:early_access_lead_notes",
       "sig": ""
     },
     {

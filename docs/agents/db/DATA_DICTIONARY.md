@@ -9527,8 +9527,8 @@ The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the sma
 
 **Gotchas (read first):**
 1. **`internal_status` is the real state machine; `status` is a dead duplicate.** Both insert paths stamp `status='new'` ([route.ts:106](../../../app/api/early-access/route.ts#L106) + [basic-coach-interest.ts:150](../../../lib/basic-coach-interest.ts#L150)) once; the PATCH only ever writes `internal_status` ([[leadId]/route.ts:61](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L61)); the list filter maps the `status` query param onto `internal_status` ([route.ts:38](../../../app/api/platform-admin/early-access/route.ts#L38)); `earlyAccessByStatus` groups by `internal_status` ([lib/platform-metrics.ts:238](../../../lib/platform-metrics.ts#L238)). A fresh lead's `internal_status='new'` comes from the **column default**, not the insert.
-2. **`converted_org_id` is the conversion source of truth.** `convertedLeads`/`conversionRate` count `converted_org_id` non-null ([lib/platform-metrics.ts:243](../../../lib/platform-metrics.ts#L243)); setting `internal_status='converted'` is **rejected** without a valid org ([[leadId]/route.ts:92](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L92)). The org is validated against `organizations` before write ([:77](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L77)); FK is `ON DELETE SET NULL`.
-3. **Every triage PATCH writes a `platform_audit_log` row** (`action='update_early_access_lead'`, before/after snapshot, [[leadId]/route.ts:115](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L115)) — the lead's mutation history lives in the audit log, not on the row. PATCH needs `manage_growth` **or** `manage_product` ([:32](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L32)); list/export need only any platform-admin role.
+2. **Signed up = `linked_at` set (Stage 7, [mig 398](../../../supabase/migrations/398_support_console_leads_pipeline.sql)), NOT `converted_org_id`.** A CHECK pins `internal_status='converted'` ⇔ `linked_at` set, and the link facts (`link_method`, `linked_at`, `signed_up_at`) arrive together. `converted_org_id` is ON DELETE SET NULL, so a deleted club leaves the dated facts behind and the lead stays counted ("Signed up, club since deleted"). A link is made only by a staff member's press (an offered match or by hand; owner Q2 2026-10-27), never automatically.
+3. **Every triage PATCH writes a `platform_audit_log` row** (`action='update_early_access_lead'`, `field` = the lead id). Since Stage 7 Part 0 (`c6e3d3720`, 2026-10-27) it holds **which fields changed and the step before/after, never a value** (`leadAuditValues` in [lib/early-access-admin.ts](../../../lib/early-access-admin.ts)); entries before that hold the whole lead, and every lead entry's details are filtered to the `growth` power when read (`hiddenEntryLine`, [lib/platform-audit-reason.ts](../../../lib/platform-audit-reason.ts)). Notes live in `early_access_lead_notes`, not on the row. PATCH needs the `growth` power.
 4. **The public form's `'coaches_portal'` plan-interest is silently dropped.** [app/pricing/page.tsx:63](../../../app/pricing/page.tsx#L63) passes it, but the POST allowlist is `PLAN_OPTIONS = {league, club}` ([route.ts:5](../../../app/api/early-access/route.ts#L5)) and `cleanList` filters it out — `'coaches_portal'` never persists.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted — `created_at` drives `newLeads7` + date-range filters + the default sort and is exported as the `submitted_at` header; `updated_at` is code-maintained, set on all three write paths, and selected but **never consumed**):
@@ -9582,10 +9582,10 @@ The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the sma
 **`metadata`** (jsonb, NN, default `{}`) — **FULLY DEAD.** No writer sets it (absent from both insert helpers), no reader selects it (absent from `EARLY_ACCESS_SELECT`); relies on the DB default forever. No key catalog exists in code.
 
 <!-- dict:col:early_access_leads.internal_status -->
-**`internal_status`** (text, NN, default `'new'`) — **the live triage state machine.** 8-value TS union `EARLY_ACCESS_STATUSES` ([lib/early-access-admin.ts:1](../../../lib/early-access-admin.ts#L1)): `new | qualified | contacted | pilot_candidate | waiting_for_launch | converted | not_a_fit | do_not_contact`, validated by `isEarlyAccessStatus` at the PATCH (no DB CHECK). Written by the PATCH ([[leadId]/route.ts:61](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L61); forced `'contacted'` on `markContacted`, `'converted'` requires an org); grouped by the growth metrics; rendered/filtered in the triage UI.
+**`internal_status`** (text, NN, default `'new'`) — **the live pipeline step.** Seven values, DB CHECK since [mig 398](../../../supabase/migrations/398_support_console_leads_pipeline.sql): `new | contacted | qualified | pilot_candidate | waiting_for_launch | converted | lost`. ⚠ Stored values keep their spelling: `converted` reads "Signed up", `pilot_candidate` reads "Pilot". `lost` ⇔ `lost_reason` set (CHECK); `converted` ⇔ `linked_at` set (CHECK). The old `not_a_fit` and `do_not_contact` became `lost` with those reasons in mig 398. Written by the PATCH only.
 
 <!-- dict:col:early_access_leads.internal_notes -->
-**`internal_notes`** (text, nullable, max 4000) — private triage notes (separate from the public `notes`); edited in the triage drawer, exported as `internal_notes`.
+**`internal_notes`** (text, nullable) — **retired by [mig 398](../../../supabase/migrations/398_support_console_leads_pipeline.sql):** every lead's old notes box was copied into `early_access_lead_notes` as its first note (`from_old_box`) and the column emptied. Nothing writes or reads it after Stage 7; a later migration drops it.
 
 <!-- dict:col:early_access_leads.last_contacted_at -->
 **`last_contacted_at`** (tstz, nullable) — set when the admin uses `markContacted` ([[leadId]/route.ts:67](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L67)); rendered as "Last contacted" + exported.
@@ -9594,7 +9594,7 @@ The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the sma
 **`last_contacted_by`** (text, nullable, no FK) — email of the platform admin who marked contacted ([[leadId]/route.ts:68](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L68)). **Selected but never surfaced** — present in `EARLY_ACCESS_SELECT`, but never rendered or exported (effectively write-only).
 
 <!-- dict:col:early_access_leads.converted_org_id -->
-**`converted_org_id`** (uuid, nullable; FK→`organizations(id)` ON DELETE SET NULL) — the org this lead became, **set only by the manual admin PATCH** ([[leadId]/route.ts:65](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L65)) after org validation; the conversion-metric key. Never written by any signup/billing automation; org deletion nulls it but leaves `converted_at`. Links to `/platform-admin/orgs/{id}` in the UI.
+**`converted_org_id`** (uuid, nullable; FK→`organizations(id)` ON DELETE SET NULL) — the club or Coaches Portal org (a portal's `team_workspaces.workspace_org_id`) the lead was linked to, set only by a staff member's press. **Not the signed-up test** (gotcha 2): a club's deletion nulls it and leaves `linked_at`.
 
 <!-- dict:col:early_access_leads.converted_at -->
 **`converted_at`** (tstz, nullable) — when the lead was marked converted; **idempotent** (`current.converted_at ?? now`, so re-saving keeps the original, [[leadId]/route.ts:98](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L98)); nulled when the org link is explicitly cleared.
@@ -9603,7 +9603,37 @@ The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the sma
 **`follow_up_due_at`** (**date**, nullable) — next follow-up date (YYYY-MM-DD, not a timestamp); the client compares the string `<= today` to highlight overdue follow-ups ([EarlyAccessClient.tsx:466](../../../app/platform-admin/early-access/EarlyAccessClient.tsx#L466)), which works only because both are `YYYY-MM-DD`.
 
 <!-- dict:col:early_access_leads.next_action -->
-**`next_action`** (text, nullable, max 500) — free-text next-step note; edited in the triage drawer, exported.
+**`next_action`** (text, nullable, max 500) — free-text next-step note; edited on the lead page, exported.
+
+<!-- dict:col:early_access_leads.source -->
+**`source`** (text, nullable = "Not set"; CHECK) — where the lead came from, staff's short list (owner Q4 B): `referral_club | tournament | search | social | event | pitch_deck | other`. Filled from `heard_from` when staff have set none; never overwritten by a form.
+
+<!-- dict:col:early_access_leads.source_words -->
+**`source_words`** (text, nullable, 1–500) — staff's own words beside the source.
+
+<!-- dict:col:early_access_leads.lost_reason -->
+**`lost_reason`** (text, nullable; CHECK) — required on a Lost lead and only there: `not_a_fit | chose_another_tool | price | not_this_season | no_reply | asked_not_to_contact`. `asked_not_to_contact` empties the export's email cell and keeps the lead out of Copy emails.
+
+<!-- dict:col:early_access_leads.link_method -->
+**`link_method`** (text, nullable; CHECK `offered | by_hand`) — how the club was linked: an offered match a person confirmed, or picked by hand. Legacy links became `by_hand` in mig 398.
+
+<!-- dict:col:early_access_leads.linked_by -->
+**`linked_by`** (text, nullable) — the staff address that linked it; null on a link made before mig 398 (not recorded then).
+
+<!-- dict:col:early_access_leads.linked_at -->
+**`linked_at`** (tstz, nullable) — **the signed-up fact** (gotcha 2). Cleared with the other link facts when staff unlink.
+
+<!-- dict:col:early_access_leads.signed_up_at -->
+**`signed_up_at`** (tstz, nullable) — the club's or portal's **creation** time, copied at the link (owner S7-D4: Time to sign up counts to creation, not the link), so it survives the club's deletion.
+
+<!-- dict:col:early_access_leads.step_changed_at -->
+**`step_changed_at`** (tstz, NN, default `now()`) — when the step last moved; "stuck" = 30 days with no step change, note or follow-up (Q9 c). Back-filled in mig 398 from the edit log, else `created_at`.
+
+<!-- dict:col:early_access_leads.heard_from -->
+**`heard_from`** (text, nullable; format CHECK `^[a-z][a-z_]{1,39}$`) — the visitor's answer to "How did you hear about us?" (Stage 7 C), kept as given; the list and each answer's one staff source live in code.
+
+<!-- dict:col:early_access_leads.ref_tag -->
+**`ref_tag`** (text, nullable; format CHECK `^[a-z0-9][a-z0-9-]{0,31}$`) — the tag on a link we handed out (Stage 7 D). Only tags on the list in code are stored; a known address keeps its first tag.
 
 ### Functions & mechanics (not tables — not coverage-checked, documented for completeness)
 
@@ -9614,7 +9644,53 @@ The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the sma
 
 ---
 
-*End of CRM (Phase 9 — 1 table, the smallest domain. Service-role-only, RLS-enabled-zero-policies; `internal_status` (not `status`) is the live triage field and `converted_org_id` (not the status string) is the conversion source of truth; `metadata` + 4 write-only columns are dead. Cross-references — not redocuments — `organizations` (the `converted_org_id` FK), `platform_audit_log` (the durable mutation trail), and the free-tier `basic-coach-interest` writer.)*
+## `early_access_lead_notes`
+<!-- dict:table:early_access_lead_notes -->
+
+**Purpose:** a lead's dated, signed notes (Stage 7 Q9 b, [mig 398](../../../supabase/migrations/398_support_console_leads_pipeline.sql)); the lead page's timeline reads them with the edit log. Service role only (RLS on, no policies). **A note is never edited:** the trigger `early_access_lead_notes_never_edited` refuses every change but one removal, which drops the text and keeps who and when ("A note was removed").
+
+**Fields** (boilerplate `id`, `created_at` omitted — `created_at` is the note's date):
+
+<!-- dict:col:early_access_lead_notes.lead_id -->
+**`lead_id`** (uuid, NN; FK→`early_access_leads(id)` ON DELETE CASCADE).
+
+<!-- dict:col:early_access_lead_notes.body -->
+**`body`** (text, 1–4000) — the words; null exactly when removed (CHECK).
+
+<!-- dict:col:early_access_lead_notes.author_email -->
+**`author_email`** (text, lowercase) — the signing staff address; null only on a note from the old notes box.
+
+<!-- dict:col:early_access_lead_notes.from_old_box -->
+**`from_old_box`** (bool, NN, default false) — the note was the lead's old `internal_notes`, signed "from the old notes box".
+
+<!-- dict:col:early_access_lead_notes.removed_by -->
+**`removed_by`** (text) — the Super admin who removed it.
+
+<!-- dict:col:early_access_lead_notes.removed_at -->
+**`removed_at`** (tstz) — when; set with `removed_by` and a null `body` (CHECK).
+
+## `early_access_lead_dismissed_offers`
+<!-- dict:table:early_access_lead_dismissed_offers -->
+
+**Purpose:** "Not this club" (Stage 7 Part 4): a club staff dismissed as a lead's offered match is never offered for that lead again. PK `(lead_id, org_id)`. Service role only.
+
+<!-- dict:col:early_access_lead_dismissed_offers.lead_id -->
+**`lead_id`** (uuid, NN; FK→`early_access_leads(id)` ON DELETE CASCADE).
+
+<!-- dict:col:early_access_lead_dismissed_offers.org_id -->
+**`org_id`** (uuid, NN; FK→`organizations(id)` ON DELETE CASCADE).
+
+<!-- dict:col:early_access_lead_dismissed_offers.dismissed_by -->
+**`dismissed_by`** (text, NN) — the staff address.
+
+<!-- dict:col:early_access_lead_dismissed_offers.dismissed_at -->
+**`dismissed_at`** (tstz, NN, default `now()`).
+
+- **`platform_lead_account_dates(p_emails text[])`** ([mig 398](../../../supabase/migrations/398_support_console_leads_pipeline.sql); SECURITY DEFINER, search path pinned, service role only, at most 200 addresses) — each account's created, confirmation-sent, confirmed and last-sign-in times for the given addresses, for the offered match's "best signal, safe side" rule (owner 2026-10-27: nothing records who confirmed an address, so only an account that was sent our confirmation email and has signed in since, with no console confirm or address change, is offered). Never a password, token or metadata.
+
+---
+
+*End of CRM (Phase 9, widened by Stage 7 to 3 tables + 1 function. Service-role-only, RLS-enabled-zero-policies; `internal_status` (not `status`) is the live triage field and `converted_org_id` (not the status string) is the conversion source of truth; `metadata` + 4 write-only columns are dead. Cross-references — not redocuments — `organizations` (the `converted_org_id` FK), `platform_audit_log` (the durable mutation trail), and the free-tier `basic-coach-interest` writer.)*
 
 ---
 

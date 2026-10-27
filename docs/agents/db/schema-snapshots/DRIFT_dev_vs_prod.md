@@ -2,19 +2,21 @@
 
 **Generated:** 2026-10-27 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 1014 divergence(s)** across dev/prod.
+**⚠️ 1062 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 36 | 0 | — |
-| Columns | 507 | 1 | 0 |
-| Indexes | 160 | 0 | 2 |
-| Constraints | 151 | 0 | — |
-| RLS / CHECK | 157 | 0 | 0 (RLS state) |
+| Tables | 38 | 0 | — |
+| Columns | 529 | 1 | 0 |
+| Indexes | 165 | 0 | 2 |
+| Constraints | 156 | 0 | — |
+| RLS / CHECK | 171 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (36)
+### Only in DEV (38)
 - `club_schedule_slot_programs`
+- `early_access_lead_dismissed_offers`
+- `early_access_lead_notes`
 - `family_email_recipients`
 - `family_email_sends`
 - `league_placement_emails`
@@ -55,11 +57,33 @@
 _none_
 
 ## Columns
-### Only in DEV (507)
+### Only in DEV (529)
 - `club_schedule_slot_programs.created_at`
 - `club_schedule_slot_programs.org_id`
 - `club_schedule_slot_programs.program`
 - `club_schedule_slot_programs.slot_id`
+- `early_access_lead_dismissed_offers.dismissed_at`
+- `early_access_lead_dismissed_offers.dismissed_by`
+- `early_access_lead_dismissed_offers.lead_id`
+- `early_access_lead_dismissed_offers.org_id`
+- `early_access_lead_notes.author_email`
+- `early_access_lead_notes.body`
+- `early_access_lead_notes.created_at`
+- `early_access_lead_notes.from_old_box`
+- `early_access_lead_notes.id`
+- `early_access_lead_notes.lead_id`
+- `early_access_lead_notes.removed_at`
+- `early_access_lead_notes.removed_by`
+- `early_access_leads.heard_from`
+- `early_access_leads.link_method`
+- `early_access_leads.linked_at`
+- `early_access_leads.linked_by`
+- `early_access_leads.lost_reason`
+- `early_access_leads.ref_tag`
+- `early_access_leads.signed_up_at`
+- `early_access_leads.source`
+- `early_access_leads.source_words`
+- `early_access_leads.step_changed_at`
 - `family_email_recipients.family_name`
 - `family_email_recipients.id`
 - `family_email_recipients.org_id`
@@ -571,10 +595,15 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (160)
+### Only in DEV (165)
 - `accounting_entries_league_registration_idx`
 - `club_schedule_slot_programs_org_idx`
 - `club_schedule_slot_programs_pkey`
+- `early_access_lead_dismissed_offers_pkey`
+- `early_access_lead_notes_lead_idx`
+- `early_access_lead_notes_pkey`
+- `early_access_leads_converted_org_idx`
+- `early_access_leads_internal_status_idx`
 - `family_email_recipients_org_idx`
 - `family_email_recipients_pkey`
 - `family_email_recipients_send_idx`
@@ -745,10 +774,15 @@ _none_
   - prod: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (151)
+### Only in DEV (156)
 - `club_schedule_slot_programs.club_schedule_slot_programs_org_id_fkey`
 - `club_schedule_slot_programs.club_schedule_slot_programs_pkey`
 - `club_schedule_slot_programs.club_schedule_slot_programs_slot_id_fkey`
+- `early_access_lead_dismissed_offers.early_access_lead_dismissed_offers_lead_id_fkey`
+- `early_access_lead_dismissed_offers.early_access_lead_dismissed_offers_org_id_fkey`
+- `early_access_lead_dismissed_offers.early_access_lead_dismissed_offers_pkey`
+- `early_access_lead_notes.early_access_lead_notes_lead_id_fkey`
+- `early_access_lead_notes.early_access_lead_notes_pkey`
 - `family_email_recipients.family_email_recipients_org_id_fkey`
 - `family_email_recipients.family_email_recipients_pkey`
 - `family_email_recipients.family_email_recipients_send_id_fkey`
@@ -905,8 +939,22 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (157)
+### CHECK only in DEV (171)
 - `club_schedule_slot_programs.club_schedule_slot_programs_program_check`
+- `early_access_lead_notes.early_access_lead_notes_author_email_check`
+- `early_access_lead_notes.early_access_lead_notes_body_check`
+- `early_access_lead_notes.early_access_lead_notes_removed_has_no_text`
+- `early_access_lead_notes.early_access_lead_notes_signed`
+- `early_access_leads.early_access_leads_heard_from_check`
+- `early_access_leads.early_access_leads_internal_status_check`
+- `early_access_leads.early_access_leads_link_facts_together`
+- `early_access_leads.early_access_leads_link_method_check`
+- `early_access_leads.early_access_leads_lost_has_reason`
+- `early_access_leads.early_access_leads_lost_reason_check`
+- `early_access_leads.early_access_leads_ref_tag_check`
+- `early_access_leads.early_access_leads_signed_up_is_linked`
+- `early_access_leads.early_access_leads_source_check`
+- `early_access_leads.early_access_leads_source_words_check`
 - `family_email_recipients.family_email_recipients_family_name_check`
 - `family_email_recipients.family_email_recipients_person_ids_check`
 - `family_email_recipients.family_email_recipients_status_check`

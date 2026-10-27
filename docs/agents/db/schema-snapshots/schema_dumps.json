@@ -3476,6 +3476,114 @@
         "column_default": null
       },
       {
+        "table_name": "early_access_lead_dismissed_offers",
+        "pos": 1,
+        "column_name": "lead_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_lead_dismissed_offers",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_lead_dismissed_offers",
+        "pos": 3,
+        "column_name": "dismissed_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_lead_dismissed_offers",
+        "pos": 4,
+        "column_name": "dismissed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "early_access_lead_notes",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "early_access_lead_notes",
+        "pos": 2,
+        "column_name": "lead_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_lead_notes",
+        "pos": 3,
+        "column_name": "body",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_lead_notes",
+        "pos": 4,
+        "column_name": "author_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_lead_notes",
+        "pos": 5,
+        "column_name": "from_old_box",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "early_access_lead_notes",
+        "pos": 6,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "early_access_lead_notes",
+        "pos": 7,
+        "column_name": "removed_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_lead_notes",
+        "pos": 8,
+        "column_name": "removed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "early_access_leads",
         "pos": 1,
         "column_name": "id",
@@ -3713,6 +3821,96 @@
         "table_name": "early_access_leads",
         "pos": 27,
         "column_name": "next_action",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_leads",
+        "pos": 28,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_leads",
+        "pos": 29,
+        "column_name": "source_words",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_leads",
+        "pos": 30,
+        "column_name": "lost_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_leads",
+        "pos": 31,
+        "column_name": "link_method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_leads",
+        "pos": 32,
+        "column_name": "linked_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_leads",
+        "pos": 33,
+        "column_name": "linked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_leads",
+        "pos": 34,
+        "column_name": "signed_up_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_leads",
+        "pos": 35,
+        "column_name": "step_changed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "early_access_leads",
+        "pos": 36,
+        "column_name": "heard_from",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "early_access_leads",
+        "pos": 37,
+        "column_name": "ref_tag",
         "data_type": "text",
         "udt_name": "text",
         "is_nullable": "YES",
@@ -27343,6 +27541,27 @@
         "constraint_name": "age_groups_tournament_id_fkey"
       },
       {
+        "table_name": "early_access_lead_dismissed_offers",
+        "column_name": "lead_id",
+        "foreign_table": "early_access_leads",
+        "foreign_column": "id",
+        "constraint_name": "early_access_lead_dismissed_offers_lead_id_fkey"
+      },
+      {
+        "table_name": "early_access_lead_dismissed_offers",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "early_access_lead_dismissed_offers_org_id_fkey"
+      },
+      {
+        "table_name": "early_access_lead_notes",
+        "column_name": "lead_id",
+        "foreign_table": "early_access_leads",
+        "foreign_column": "id",
+        "constraint_name": "early_access_lead_notes_lead_id_fkey"
+      },
+      {
         "table_name": "early_access_leads",
         "column_name": "converted_org_id",
         "foreign_table": "organizations",
@@ -32863,14 +33082,39 @@
         "indexdef": "CREATE INDEX divisions_tournament_id_idx ON public.divisions USING btree (tournament_id)"
       },
       {
+        "tablename": "early_access_lead_dismissed_offers",
+        "indexname": "early_access_lead_dismissed_offers_pkey",
+        "indexdef": "CREATE UNIQUE INDEX early_access_lead_dismissed_offers_pkey ON public.early_access_lead_dismissed_offers USING btree (lead_id, org_id)"
+      },
+      {
+        "tablename": "early_access_lead_notes",
+        "indexname": "early_access_lead_notes_lead_idx",
+        "indexdef": "CREATE INDEX early_access_lead_notes_lead_idx ON public.early_access_lead_notes USING btree (lead_id, created_at DESC)"
+      },
+      {
+        "tablename": "early_access_lead_notes",
+        "indexname": "early_access_lead_notes_pkey",
+        "indexdef": "CREATE UNIQUE INDEX early_access_lead_notes_pkey ON public.early_access_lead_notes USING btree (id)"
+      },
+      {
         "tablename": "early_access_leads",
         "indexname": "early_access_leads_converted_org_id_idx",
         "indexdef": "CREATE INDEX early_access_leads_converted_org_id_idx ON public.early_access_leads USING btree (converted_org_id)"
       },
       {
         "tablename": "early_access_leads",
+        "indexname": "early_access_leads_converted_org_idx",
+        "indexdef": "CREATE INDEX early_access_leads_converted_org_idx ON public.early_access_leads USING btree (converted_org_id) WHERE (converted_org_id IS NOT NULL)"
+      },
+      {
+        "tablename": "early_access_leads",
         "indexname": "early_access_leads_email_normalized_key",
         "indexdef": "CREATE UNIQUE INDEX early_access_leads_email_normalized_key ON public.early_access_leads USING btree (email_normalized)"
+      },
+      {
+        "tablename": "early_access_leads",
+        "indexname": "early_access_leads_internal_status_idx",
+        "indexdef": "CREATE INDEX early_access_leads_internal_status_idx ON public.early_access_leads USING btree (internal_status, step_changed_at)"
       },
       {
         "tablename": "early_access_leads",
@@ -38203,6 +38447,102 @@
         "table_name": "divisions",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "early_access_lead_dismissed_offers",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_lead_notes",
+        "detail": "early_access_lead_notes_author_email_check",
+        "check_clause": "((author_email IS NULL) OR (author_email = lower(author_email)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_lead_notes",
+        "detail": "early_access_lead_notes_body_check",
+        "check_clause": "((body IS NULL) OR ((length(body) >= 1) AND (length(body) <= 4000)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_lead_notes",
+        "detail": "early_access_lead_notes_removed_has_no_text",
+        "check_clause": "(((removed_at IS NULL) AND (removed_by IS NULL) AND (body IS NOT NULL)) OR ((removed_at IS NOT NULL) AND (removed_by IS NOT NULL) AND (body IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_lead_notes",
+        "detail": "early_access_lead_notes_signed",
+        "check_clause": "(from_old_box OR (author_email IS NOT NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "early_access_lead_notes",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_leads",
+        "detail": "early_access_leads_heard_from_check",
+        "check_clause": "((heard_from IS NULL) OR (heard_from ~ '^[a-z][a-z_]{1,39}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_leads",
+        "detail": "early_access_leads_internal_status_check",
+        "check_clause": "(internal_status = ANY (ARRAY['new'::text, 'contacted'::text, 'qualified'::text, 'pilot_candidate'::text, 'waiting_for_launch'::text, 'converted'::text, 'lost'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_leads",
+        "detail": "early_access_leads_link_facts_together",
+        "check_clause": "(((linked_at IS NULL) AND (link_method IS NULL) AND (signed_up_at IS NULL) AND (converted_org_id IS NULL) AND (linked_by IS NULL)) OR ((linked_at IS NOT NULL) AND (link_method IS NOT NULL) AND (signed_up_at IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_leads",
+        "detail": "early_access_leads_link_method_check",
+        "check_clause": "((link_method IS NULL) OR (link_method = ANY (ARRAY['offered'::text, 'by_hand'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_leads",
+        "detail": "early_access_leads_lost_has_reason",
+        "check_clause": "((internal_status = 'lost'::text) = (lost_reason IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_leads",
+        "detail": "early_access_leads_lost_reason_check",
+        "check_clause": "((lost_reason IS NULL) OR (lost_reason = ANY (ARRAY['not_a_fit'::text, 'chose_another_tool'::text, 'price'::text, 'not_this_season'::text, 'no_reply'::text, 'asked_not_to_contact'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_leads",
+        "detail": "early_access_leads_ref_tag_check",
+        "check_clause": "((ref_tag IS NULL) OR (ref_tag ~ '^[a-z0-9][a-z0-9-]{0,31}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_leads",
+        "detail": "early_access_leads_signed_up_is_linked",
+        "check_clause": "((internal_status = 'converted'::text) = (linked_at IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_leads",
+        "detail": "early_access_leads_source_check",
+        "check_clause": "((source IS NULL) OR (source = ANY (ARRAY['referral_club'::text, 'tournament'::text, 'search'::text, 'social'::text, 'event'::text, 'pitch_deck'::text, 'other'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_leads",
+        "detail": "early_access_leads_source_words_check",
+        "check_clause": "((source_words IS NULL) OR ((length(source_words) >= 1) AND (length(source_words) <= 500)))"
       },
       {
         "kind": "RLS",
