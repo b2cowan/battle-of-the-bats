@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-26",
-  "total": 730,
+  "generated": "2026-10-27",
+  "total": 866,
   "counts": {
-    "tables": 24,
-    "columns": 371,
-    "indexes": 118,
-    "constraints": 109,
-    "rls": 108
+    "tables": 31,
+    "columns": 434,
+    "indexes": 138,
+    "constraints": 129,
+    "rls": 134
   },
   "items": [
     {
@@ -158,6 +158,26 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:online_payment_clear_decisions.online_payment_clear_decisions_choice_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_clear_decisions.online_payment_clear_decisions_keep_reason_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_clear_decisions.online_payment_clear_decisions_outcome_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_clear_decisions.online_payment_clear_decisions_outcome_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_clear_decisions.online_payment_clear_decisions_reason_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:online_payment_items.online_payment_items_amount_chk",
       "sig": ""
     },
@@ -282,6 +302,10 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:org_payment_accounts.org_payment_accounts_bank_debit_status_chk",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:org_payment_accounts.org_payment_accounts_card_payments_status_chk",
       "sig": ""
     },
@@ -342,6 +366,82 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:platform_account_email_events.platform_account_email_events_bounce_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_account_email_events.platform_account_email_events_event_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_account_email_events.platform_account_email_events_state_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_account_emails.platform_account_emails_bounce_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_account_emails.platform_account_emails_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_account_emails.platform_account_emails_recipient_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_account_emails.platform_account_emails_resend_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_account_emails.platform_account_emails_state_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_bill_error_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_billed_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_exempt_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_exempt_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_feedback_replies.platform_feedback_replies_attempt_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_feedback_replies.platform_feedback_replies_body_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_feedback_replies.platform_feedback_replies_signed_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_feedback_replies.platform_feedback_replies_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_feedback_replies.platform_feedback_replies_to_email_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:platform_record_opens.platform_record_opens_record_kind_check",
       "sig": ""
     },
@@ -383,6 +483,10 @@
     },
     {
       "key": "check:only-dev:platform_refunds.platform_refunds_stripe_request_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_status_reading.platform_status_reading_id_check",
       "sig": ""
     },
     {
@@ -918,6 +1022,54 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:online_payment_clear_decisions.choice",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_clear_decisions.decided_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_clear_decisions.decided_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_clear_decisions.fee_back",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_clear_decisions.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_clear_decisions.online_payment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_clear_decisions.online_payment_item_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_clear_decisions.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_clear_decisions.outcome",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_clear_decisions.outcome_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_clear_decisions.reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_clear_decisions.refund_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:online_payment_items.amount",
       "sig": ""
     },
@@ -1394,6 +1546,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:org_payment_accounts.bank_debit_status",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:org_payment_accounts.card_payments_reason",
       "sig": ""
     },
@@ -1554,7 +1710,179 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:platform_account_email_events.bounce_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_email_events.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_email_events.email_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_email_events.event_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_email_events.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_email_events.occurred_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_email_events.state",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_emails.asked_by_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_emails.bounce_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_emails.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_emails.feedback_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_emails.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_emails.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_emails.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_emails.recipient_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_emails.resend_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_emails.state",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_account_emails.state_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:platform_audit_log.reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_debit_fees.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_debit_fees.bill_error",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_debit_fees.billed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_debit_fees.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_debit_fees.exempt_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_debit_fees.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_debit_fees.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_debit_fees.livemode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_debit_fees.online_payment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_debit_fees.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_debit_fees.stripe_invoice_item_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.account_email_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.attempt",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.body",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.claimed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.feedback_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.finished_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.sending_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.signed_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.staff_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.staff_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_feedback_replies.to_email",
       "sig": ""
     },
     {
@@ -1655,6 +1983,34 @@
     },
     {
       "key": "column:only-dev:platform_refunds.stripe_request_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_sent_email_searches.actor_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_sent_email_searches.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_sent_email_searches.searched_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_status_reading.claimed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_status_reading.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_status_reading.read_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_status_reading.reading",
       "sig": ""
     },
     {
@@ -2082,6 +2438,30 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:online_payment_clear_decisions.online_payment_clear_decisions_decided_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_clear_decisions.online_payment_clear_decisions_online_payment_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_clear_decisions.online_payment_clear_decisions_online_payment_item_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_clear_decisions.online_payment_clear_decisions_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_clear_decisions.online_payment_clear_decisions_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_clear_decisions.online_payment_clear_decisions_refund_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:online_payment_items.online_payment_items_entry_fk",
       "sig": ""
     },
@@ -2214,6 +2594,54 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:platform_account_email_events.platform_account_email_events_email_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_account_email_events.platform_account_email_events_event_id_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_account_email_events.platform_account_email_events_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_account_emails.platform_account_emails_feedback_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_account_emails.platform_account_emails_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_account_emails.platform_account_emails_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_debit_fees.platform_debit_fees_online_payment_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_debit_fees.platform_debit_fees_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_debit_fees.platform_debit_fees_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_feedback_replies.platform_feedback_replies_account_email_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_feedback_replies.platform_feedback_replies_feedback_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_feedback_replies.platform_feedback_replies_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:platform_record_opens.platform_record_opens_pkey",
       "sig": ""
     },
@@ -2227,6 +2655,14 @@
     },
     {
       "key": "constraint:only-dev:platform_refunds.platform_refunds_stripe_refund_id_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_sent_email_searches.platform_sent_email_searches_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_status_reading.platform_status_reading_pkey",
       "sig": ""
     },
     {
@@ -2363,11 +2799,11 @@
     },
     {
       "key": "index:changed:notifications_org_needs_attention_idx",
-      "sig": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+      "sig": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
     },
     {
       "key": "index:changed:notifications_user_needs_attention_idx",
-      "sig": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+      "sig": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
     },
     {
       "key": "index:only-dev:accounting_entries_league_registration_idx",
@@ -2523,6 +2959,18 @@
     },
     {
       "key": "index:only-dev:notifications_one_open_online_payments_notice",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_clear_decisions_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_clear_decisions_open_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_clear_decisions_pkey",
       "sig": ""
     },
     {
@@ -2706,6 +3154,62 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:platform_account_email_events_email_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_account_email_events_event_id_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_account_email_events_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_account_emails_created_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_account_emails_feedback_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_account_emails_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_account_emails_recipient_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_account_emails_state_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_debit_fees_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_debit_fees_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_debit_fees_unbilled_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_feedback_replies_feedback_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_feedback_replies_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_feedback_replies_staff_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:platform_record_opens_opened_at_idx",
       "sig": ""
     },
@@ -2735,6 +3239,18 @@
     },
     {
       "key": "index:only-dev:platform_refunds_stripe_refund_id_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_sent_email_searches_actor_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_sent_email_searches_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_status_reading_pkey",
       "sig": ""
     },
     {
@@ -2866,6 +3382,10 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:online_payment_clear_decisions",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:online_payment_items",
       "sig": ""
     },
@@ -2894,11 +3414,35 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:platform_account_email_events",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:platform_account_emails",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:platform_debit_fees",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:platform_feedback_replies",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:platform_record_opens",
       "sig": ""
     },
     {
       "key": "table:only-dev:platform_refunds",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:platform_sent_email_searches",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:platform_status_reading",
       "sig": ""
     },
     {

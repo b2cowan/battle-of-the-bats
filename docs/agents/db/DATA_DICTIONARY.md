@@ -8446,7 +8446,7 @@ The narrative spine tying together the already-documented columns. All paths use
 
 # Domain: Platform admin
 
-The **platform control plane** — the tables behind `/platform-admin/` that FieldLogicHQ staff (not org tenants) use to govern the whole fleet: who may operate the platform and what they did (`platform_users` / `platform_audit_log` / `platform_user_notes` / `platform_admin_visits` / `platform_record_opens`, the trail of records opened, mig 365), a durable **business-event** telemetry log (`platform_events` — distinct from Observability's *error* log), the **plans & catalog control plane** with its human-in-the-loop change-approval gate (`plan_gating` / `plan_config_overrides` / `platform_plan_*` / `platform_addon_catalog` / `platform_catalog_change_requests` / `_change_applications` / `_campaigns`), and platform ops + the org-scoped data-import staging (`platform_bulk_operations` / `platform_metric_snapshots` / `import_batches` / `import_batch_rows`). 18 tables, three labeled sub-domains below.
+The **platform control plane** — the tables behind `/platform-admin/` that FieldLogicHQ staff (not org tenants) use to govern the whole fleet: who may operate the platform and what they did (`platform_users` / `platform_audit_log` / `platform_user_notes` / `platform_admin_visits` / `platform_record_opens`, the trail of records opened, mig 365; the Stage 5 Health tables `platform_account_emails` / `platform_account_email_events` / `platform_feedback_replies` / `platform_status_reading` / `platform_sent_email_searches`, mig 389), a durable **business-event** telemetry log (`platform_events` — distinct from Observability's *error* log), the **plans & catalog control plane** with its human-in-the-loop change-approval gate (`plan_gating` / `plan_config_overrides` / `platform_plan_*` / `platform_addon_catalog` / `platform_catalog_change_requests` / `_change_applications` / `_campaigns`), and platform ops + the org-scoped data-import staging (`platform_bulk_operations` / `platform_metric_snapshots` / `import_batches` / `import_batch_rows`). 23 tables, three labeled sub-domains below.
 
 > _Last verified: 2026-06-10 @ snapshot 2026-06-10, commit `cbcf7c7` (branch `feat/free-tier-coaches`). **`file:line` refs reflect the WORKING TREE at authoring**, which carries uncommitted edits in several cited files (`lib/platform-auth.ts` +20 at L123 = the new `requireSuperAdmin`, so the RBAC cites at L10–95 are above it and identical to `cbcf7c7`; `lib/import/types.ts` +2 at L61 = `emailsSent?`; plus `app/api/admin/tournaments/route.ts`, `app/api/admin/teams/route.ts`, `.../registrations/import/commit/route.ts`, `components/admin/import/TournamentTeamsImportDialog.tsx`) — line numbers in those files may differ by a few lines from `cbcf7c7`; the schema/RLS/grant/trigger facts are commit-independent. Live probes (2026-06-10, dev+prod `information_schema`/`pg_class`/`pg_policies`/`pg_trigger`/`role_table_grants`): all 17 tables are **column-, CHECK-, UNIQUE-, FK-identical dev↔prod (ZERO structural drift)**; **RLS ENABLED with ZERO policies and ZERO triggers** on every one of the 17 in both envs; **prod grants `anon`+`authenticated` full `SELECT/INSERT/UPDATE/DELETE` on 16 of the 17 (all but `plan_gating`, which is `service_role`-only) while dev grants only `REFERENCES/TRIGGER/TRUNCATE`** (the security headline below); content/row-counts probed (see per-table dead/unused notes)._
 
@@ -8599,7 +8599,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **`actor_email`** (text, NOT NULL) — the staff member's email, lowercased on write; what the Audit log's "Records opened" view shows.
 
 <!-- dict:col:platform_record_opens.record_kind -->
-**`record_kind`** (text, NOT NULL, CHECK `club` | `person`) — `club` = an `organizations` row (clubs, tournament hosts, coaches portals); `person` = an `auth.users` account.
+**`record_kind`** (text, NOT NULL, CHECK `club` | `person` | `email`) — `club` = an `organizations` row (clubs, tournament hosts, coaches portals); `person` = an `auth.users` account; `email` = a `platform_account_emails` row opened from Health › Sent emails (mig 389, Stage 5, T17).
 
 <!-- dict:col:platform_record_opens.record_id -->
 **`record_id`** (uuid, NOT NULL, no FK) — the organization id or the account id. No FK on purpose: a deleted club or person keeps its trail rows until they age out.
@@ -8661,6 +8661,169 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **`completed_at`** (timestamptz, nullable) — when Stripe's answer (or recovery) completed the row.
 
 **The read-only lookup over sign-in records (same migration, functions only — invisible to the column snapshots).** `platform_people_search(p_query, p_status, p_exclude_emails, p_clubs, p_offset, p_limit)` (the People list: ranked, paged, ≤100 a page, `total_count` for the pager), `platform_find_people(p_query, p_exclude_emails)` (Find's People group: 2–120 characters, `LIMIT 8` in SQL), `platform_people_by_ids(p_ids)` (owners/members by account id, ≤1,000 per call — the caller chunks) and `platform_find_clubs(p_query, p_exclude_slugs)` (Find's Clubs group: name, web name, own web address, owner email; `LIMIT 8`). All `SECURITY DEFINER`, `search_path = ''`, schema-qualified; they return **exactly** id, email, name (metadata `display_name` → `full_name` → `name`), last sign-in, created, banned-until, email-confirmed-at (clubs: id, name, slug, plan, status, kind, own address, one owner email). LIKE wildcards in the words are escaped. Staff accounts (`platform_users` + the bootstrap emails the caller passes) are left out. **Execute is revoked from PUBLIC, anon and authenticated and granted to service_role only** (rule 7; `tests/unit/support-console-stage2-guard.test.ts`, and a dev call with the anon key returned 42501 for all four on 2026-10-25). They end the 1,000-account cap the console's single `listUsers` pages had (Customer users, the clubs list's owner sign-ins, Today's owner-inactive count, the Founding Season desk). **Mig 367 (2026-10-25, /review fix)** replaced `platform_find_clubs` with the same signature and grants: a club's matched owner is the EXACT email searched when one of its owners has it, then the alphabetically first containing the words — 365 took the first containing them, so `owner@x` showed `coowner@x` and missed the exact-match rank.
+
+### `platform_account_emails`
+<!-- dict:table:platform_account_emails -->
+
+**Purpose:** the support console's **log of the account and tournament-registration emails we sent** (mig 389, Support console Stage 5, owner Q6/Q8/G1/G2 2026-10-26) — the answer to "I never got the email". One row per email, written by the shared sender (`lib/email.ts` → `lib/email-log.ts`) **before** the email leaves; the Resend delivery callback (`/api/webhooks/resend`) then moves it forward. Read on a person's **Emails** tab, **Health › Sent emails**, Find's **Sent emails** group and the person Story's email rows, by the `sent_log` power (Super admin, Support, Billing); emails to staff accounts by Super admin only (filtered in the query).
+
+**Gotchas (read first):**
+1. **Never the subject, the body or a link** (threat T13). Subjects carry club and team names (family subjects a child's); a reset or invite link is a key to the account. The row keeps a **kind**, and the console shows that kind's fixed label from `lib/email-kinds.ts` — never the key, never the subject.
+2. **Which emails:** only kinds of class `account` or `registration` in `lib/email-kinds.ts`. Family, team-business, inbox, alert and test kinds write no row (G2; a club's family email is in the club's own Families › Emails — each email lands in exactly one log). The campaign sender (`lib/email-sender.ts`, `email_sends`) is a separate log (Stage 7).
+3. **The row's `id` rides on the email as the Resend tag `flhq_row`** (with `flhq_site` = the observability env). The callback finds the row by that tag, never by the mail service's id, so a callback can arrive before `resend_id` is stored.
+4. **Moves forward only.** `platform_account_email_event()` (callbacks) and `platform_account_email_settle()` (the sender's own outcome) compare `platform_account_email_rank()`: `unconfirmed` 0 < `sent` 1 < `delayed` 2 < `delivered` 3 < the finals `bounced` / `complained` / `failed` / `not_sent` 4. A late, lower state is added to the timeline but never overwrites; `unconfirmed` only ever replaces `sent`.
+5. **A log failure never blocks the email** (T24): the sender writes the row best-effort and counts a failure in the server log only (never error capture, whose alerts are emails).
+6. **90 days, pruned on write** (no scheduled job); the timeline goes with it (`ON DELETE CASCADE`).
+7. **Service role only** (RLS on, no policies; rule 7).
+
+**Fields:**
+
+<!-- dict:col:platform_account_emails.id -->
+**`id`** (uuid, PK, default gen_random_uuid()) — the row number; the email's `flhq_row` tag.
+
+<!-- dict:col:platform_account_emails.kind -->
+**`kind`** (text, NOT NULL, CHECK `^[a-z][a-z_]{1,59}$`) — a key of `EMAIL_KINDS` (class account or registration). Read through `emailKindLabel()`.
+
+<!-- dict:col:platform_account_emails.recipient_email -->
+**`recipient_email`** (text, NOT NULL, lowercased by CHECK) — the address it went to. Matched to an account at read time (an invite often goes to an address with no account: "no account" on Sent emails).
+
+<!-- dict:col:platform_account_emails.org_id -->
+**`org_id`** (uuid, nullable, FK → `organizations` ON DELETE SET NULL) — the club the email was about, when the sender knows; "None" otherwise.
+
+<!-- dict:col:platform_account_emails.asked_by_user_id -->
+**`asked_by_user_id`** (uuid, nullable, no FK [cross-schema to `auth.users`]) — the person whose action sent it (an inviter, a club admin, the staff member who replied); NULL for the product's own sends. The email window's "Asked for by".
+
+<!-- dict:col:platform_account_emails.feedback_id -->
+**`feedback_id`** (uuid, nullable, FK → `feedback_submissions` ON DELETE SET NULL) — set on the "Feedback received" and reply emails, so the feedback record's conversation shows them.
+
+<!-- dict:col:platform_account_emails.resend_id -->
+**`resend_id`** (text, nullable) — the mail service's number (Resend id), shown in the email's window. NULL until Resend answered, or when it never did.
+
+<!-- dict:col:platform_account_emails.state -->
+**`state`** (text, NOT NULL, default `sent`) — `sent` | `unconfirmed` | `delayed` | `delivered` | `bounced` | `complained` | `failed` | `not_sent`. The console's words: Sent · Not confirmed · Delayed · Delivered · Bounced · Marked as spam · Failed · Not sent. `not_sent` = Resend suppressed it (the address bounced or complained before) or this site has no mail key; `failed` = Resend refused or could not send it.
+
+<!-- dict:col:platform_account_emails.state_at -->
+**`state_at`** (timestamptz, NOT NULL) — when the current state happened (the callback payload's `created_at`, or our own clock for a sender outcome).
+
+<!-- dict:col:platform_account_emails.bounce_reason -->
+**`bounce_reason`** (text, nullable, CHECK) — `address_does_not_exist` | `mailbox_full` | `refused_by_server` | `suppressed` | `other`, mapped from Resend's bounce type/subtype. Never Resend's own words.
+
+<!-- dict:col:platform_account_emails.created_at -->
+**`created_at`** (timestamptz, NOT NULL, default now()) — when we handed it to the mail service ("Sent"). Drives the 90-day prune and every newest-first read.
+
+### `platform_account_email_events`
+<!-- dict:table:platform_account_email_events -->
+
+**Purpose:** the timeline of one logged email: one row per Resend delivery callback that matched a `platform_account_emails` row (mig 389). Written **only** by `platform_account_email_event()`, in the same database step that moves the email forward — so a callback's number is "handled" only once its change is saved (T9), and a repeat (same `svix-id`) inserts nothing and changes nothing. A callback that matches no row keeps **nothing**, not even its number (T11). This table is the handled-numbers record; it lives as long as the email (90 days).
+
+**Fields** (`id` is a bigint identity; append-only):
+
+<!-- dict:col:platform_account_email_events.email_id -->
+**`email_id`** (uuid, NOT NULL, FK → `platform_account_emails` ON DELETE CASCADE) — the email.
+
+<!-- dict:col:platform_account_email_events.event_id -->
+**`event_id`** (text, NOT NULL, UNIQUE) — the callback's `svix-id`. Resend reuses it on a retry.
+
+<!-- dict:col:platform_account_email_events.state -->
+**`state`** (text, NOT NULL) — what the callback said, in our words (`email.sent` → sent, `delivery_delayed` → delayed, `delivered`, `bounced`, `complained`, `failed`, `suppressed` → not_sent). Opens and clicks are never subscribed.
+
+<!-- dict:col:platform_account_email_events.occurred_at -->
+**`occurred_at`** (timestamptz, NOT NULL) — the payload's `created_at` (Resend does not promise order; the timeline sorts by this).
+
+<!-- dict:col:platform_account_email_events.bounce_reason -->
+**`bounce_reason`** (text, nullable) — as on the email.
+
+<!-- dict:col:platform_account_email_events.created_at -->
+**`created_at`** (timestamptz, NOT NULL, default now()) — when the callback arrived.
+
+### `platform_feedback_replies`
+<!-- dict:table:platform_feedback_replies -->
+
+**Purpose:** a staff reply to a feedback item, sent by email (mig 389, Support console Stage 5, owner Q5 2026-10-26). From "FieldLogicHQ support" at the no-reply address, Reply-To the admin inbox, signed with the staff member's first name. Written by the reply route (`reply` power: Super admin, Support); shown in the feedback record's conversation to every feedback reader.
+
+**Gotchas (read first):**
+1. **The id is made by the reply window** (the reply's own number) and, with `attempt`, is Resend's `Idempotency-Key` (`feedback-reply-{id}-{attempt}`): a retry after no answer repeats the same key, which Resend sends at most once within 24 h (T22).
+2. **The address is the server's** — the account behind the feedback, re-read at send time; the browser never names it (T18).
+3. **Words fixed once written** (trigger `platform_feedback_replies_guard`): body, address, person and signature never change. State: `draft` → `sending` (one server, by a conditional update) → `sent` / `failed` / `unknown`; only `failed` (attempt + 1) and `unknown` (same attempt) go back to `sending`, and not more than a day after `sending_at`.
+4. **The reply's words ARE kept** (they are ours, and the conversation shows them); the account-email log keeps none.
+
+**Fields:**
+
+<!-- dict:col:platform_feedback_replies.id -->
+**`id`** (uuid, PK, no default) — the reply's own number, from the window.
+
+<!-- dict:col:platform_feedback_replies.feedback_id -->
+**`feedback_id`** (uuid, NOT NULL, FK → `feedback_submissions` ON DELETE CASCADE).
+
+<!-- dict:col:platform_feedback_replies.staff_user_id -->
+**`staff_user_id`** (uuid, NOT NULL, no FK) — who sent it; the daily limit counts this person's rows in the last 24 hours.
+
+<!-- dict:col:platform_feedback_replies.staff_email -->
+**`staff_email`** (text, NOT NULL) — the staff member's email (the audit entry's actor).
+
+<!-- dict:col:platform_feedback_replies.signed_name -->
+**`signed_name`** (text, NOT NULL, default '') — the first name it was signed with; empty = "FieldLogicHQ support" alone.
+
+<!-- dict:col:platform_feedback_replies.to_email -->
+**`to_email`** (text, NOT NULL, lowercased) — the address it went to (the feedback's own `user_email`, confirmed to still be the account's).
+
+<!-- dict:col:platform_feedback_replies.body -->
+**`body`** (text, NOT NULL, 1–4,000 characters) — the staff member's plain-text words, before the signature and the quoted message.
+
+<!-- dict:col:platform_feedback_replies.status -->
+**`status`** (text, NOT NULL, default `draft`) — `draft` | `sending` | `sent` | `failed` | `unknown` (see gotcha 3). The conversation shows `unknown` as "Not confirmed".
+
+<!-- dict:col:platform_feedback_replies.attempt -->
+**`attempt`** (smallint, NOT NULL, default 1, 1–20) — rises only after a definite refusal.
+
+<!-- dict:col:platform_feedback_replies.account_email_id -->
+**`account_email_id`** (uuid, nullable, FK → `platform_account_emails` ON DELETE SET NULL) — the logged email of the latest attempt, for its delivery state.
+
+<!-- dict:col:platform_feedback_replies.created_at -->
+**`created_at`** (timestamptz, NOT NULL, default now()) — when Send was pressed.
+
+<!-- dict:col:platform_feedback_replies.sending_at -->
+**`sending_at`** (timestamptz, nullable) — when it first moved to `sending`; a retry more than a day later is refused.
+
+<!-- dict:col:platform_feedback_replies.claimed_at -->
+**`claimed_at`** (timestamptz, nullable) — when the current (or last) claim took the reply (added by the build's /review, 2026-10-26). Only the request holding that claim may finish the attempt; a `sending` reply whose claim is over two minutes old reads Not confirmed and may be taken over under the same once-only key, and the stale request can no longer finish it.
+
+<!-- dict:col:platform_feedback_replies.finished_at -->
+**`finished_at`** (timestamptz, nullable) — when the latest attempt ended (sent, failed or unknown).
+
+### `platform_status_reading`
+<!-- dict:table:platform_status_reading -->
+
+**Purpose:** Status's one shared reading of the outside providers (mig 389, Stage 5, T6). One row (`id = 1`). `platform_status_claim(p_min_age_seconds, p_claim_seconds)` lets exactly one server read Amplify, the staging site and Supabase at most once every 30 seconds for all staff together; the others serve this row. The database's clock decides.
+
+**Fields:**
+
+<!-- dict:col:platform_status_reading.id -->
+**`id`** (smallint, PK, default 1, CHECK `id = 1`) — the single row.
+
+<!-- dict:col:platform_status_reading.reading -->
+**`reading`** (jsonb, nullable) — the provider lines in the route's fixed shape: per line a verdict word, numbers and times. **Never** a log line, a setting, a web address, a commit message or a provider's error text (T2; `tests/unit/support-console-stage5-status-guard.test.ts`).
+
+<!-- dict:col:platform_status_reading.read_at -->
+**`read_at`** (timestamptz, nullable) — when the reading was taken ("Read at 9:42 a.m.").
+
+<!-- dict:col:platform_status_reading.claimed_at -->
+**`claimed_at`** (timestamptz, nullable) — when a server last claimed the next reading; another claim waits 15 seconds.
+
+### `platform_sent_email_searches`
+<!-- dict:table:platform_sent_email_searches -->
+
+**Purpose:** one row per Health › Sent emails search by address, counted for the daily limit per staff member (mig 389, Stage 5, T17). **Never the words typed** (A3). Kept 2 days, pruned on write.
+
+**Fields** (`id` is a bigint identity):
+
+<!-- dict:col:platform_sent_email_searches.actor_user_id -->
+**`actor_user_id`** (uuid, NOT NULL, no FK) — the staff member.
+
+<!-- dict:col:platform_sent_email_searches.searched_at -->
+**`searched_at`** (timestamptz, NOT NULL, default now()) — when.
+
+**The health read function (mig 389, function only — invisible to the column snapshots).** `platform_health_counts()` returns `{in_use, max, stuck, jobs}`: client connections in use, `max_connections`, client sessions active or idle-in-transaction for over 5 minutes, and per scheduled job (`cron.job`) its name, active flag, last run time and status, and 24-hour run and failure counts (`jobs` is null where the cron schema is absent). **Never** a job's command (it carries the app's job secret), a run's message, or a session's query, user or address (T7; the Stage 5 guard reads the function text). `SECURITY DEFINER`, `search_path = ''`, execute revoked from PUBLIC, anon and authenticated, granted to service_role only (a dev call as anon returned 42501 on 2026-10-26). `platform_status_counts(p_env)` (plain, service_role only) returns Status's and Today's cheap numbers in one call: `errors_by_hour` and `calls_by_hour` (index 0 = the last hour, 1–7 = the same hour on each of the seven days before — "a usual hour" is their middle value), `calls_by_day` / `errors_by_day` (24-hour windows, same indexing; from `request_metrics_rollup`), `top_group` (the last hour's most frequent `error_events.group_id` and its count) and `counted_at` (`observability_cron_heartbeat` `metrics_fold`). `platform_accounts_for_emails(p_emails text[])` (`SECURITY DEFINER` — it reads `auth.users`; `search_path = ''`; service_role only) returns, of up to 200 addresses, the ones that belong to an account, lowercased, and nothing else: Sent emails' "no account" in one call a page. The same migration adds the helper functions `platform_account_email_rank`, `platform_account_email_event`, `platform_account_email_settle` and `platform_status_claim` (service_role only), and widens `platform_record_opens.record_kind` with `email`.
 
 ### `platform_events`
 <!-- dict:table:platform_events -->

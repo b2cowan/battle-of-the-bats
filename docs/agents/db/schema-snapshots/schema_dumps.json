@@ -8327,6 +8327,114 @@
         "column_default": null
       },
       {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 3,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 4,
+        "column_name": "online_payment_item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 5,
+        "column_name": "choice",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 6,
+        "column_name": "fee_back",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 7,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 8,
+        "column_name": "decided_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 9,
+        "column_name": "decided_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 10,
+        "column_name": "outcome",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 11,
+        "column_name": "outcome_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "pos": 12,
+        "column_name": "refund_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "online_payment_items",
         "pos": 1,
         "column_name": "id",
@@ -10361,6 +10469,15 @@
         "column_default": null
       },
       {
+        "table_name": "org_payment_accounts",
+        "pos": 27,
+        "column_name": "bank_debit_status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_people",
         "pos": 1,
         "column_name": "id",
@@ -12350,6 +12467,168 @@
         "column_default": null
       },
       {
+        "table_name": "platform_account_email_events",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_email_events",
+        "pos": 2,
+        "column_name": "email_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_email_events",
+        "pos": 3,
+        "column_name": "event_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_email_events",
+        "pos": 4,
+        "column_name": "state",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_email_events",
+        "pos": 5,
+        "column_name": "occurred_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_email_events",
+        "pos": 6,
+        "column_name": "bounce_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_email_events",
+        "pos": 7,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_account_emails",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "platform_account_emails",
+        "pos": 2,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_emails",
+        "pos": 3,
+        "column_name": "recipient_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_emails",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_emails",
+        "pos": 5,
+        "column_name": "asked_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_emails",
+        "pos": 6,
+        "column_name": "feedback_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_emails",
+        "pos": 7,
+        "column_name": "resend_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_emails",
+        "pos": 8,
+        "column_name": "state",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'sent'::text"
+      },
+      {
+        "table_name": "platform_account_emails",
+        "pos": 9,
+        "column_name": "state_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_account_emails",
+        "pos": 10,
+        "column_name": "bounce_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_account_emails",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "platform_addon_catalog",
         "pos": 1,
         "column_name": "id",
@@ -13106,6 +13385,105 @@
         "column_default": "now()"
       },
       {
+        "table_name": "platform_debit_fees",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "platform_debit_fees",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_debit_fees",
+        "pos": 3,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_debit_fees",
+        "pos": 4,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_debit_fees",
+        "pos": 5,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_debit_fees",
+        "pos": 6,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "platform_debit_fees",
+        "pos": 7,
+        "column_name": "exempt_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_debit_fees",
+        "pos": 8,
+        "column_name": "stripe_invoice_item_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_debit_fees",
+        "pos": 9,
+        "column_name": "billed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_debit_fees",
+        "pos": 10,
+        "column_name": "bill_error",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_debit_fees",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "platform_email_templates",
         "pos": 1,
         "column_name": "key",
@@ -13356,6 +13734,132 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 2,
+        "column_name": "feedback_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 3,
+        "column_name": "staff_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 4,
+        "column_name": "staff_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 5,
+        "column_name": "signed_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "''::text"
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 6,
+        "column_name": "to_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 7,
+        "column_name": "body",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 8,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 9,
+        "column_name": "attempt",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 10,
+        "column_name": "account_email_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 12,
+        "column_name": "sending_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 13,
+        "column_name": "finished_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "pos": 14,
+        "column_name": "claimed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "platform_metric_snapshots",
@@ -13784,6 +14288,69 @@
         "table_name": "platform_refunds",
         "pos": 18,
         "column_name": "completed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_sent_email_searches",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_sent_email_searches",
+        "pos": 2,
+        "column_name": "actor_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_sent_email_searches",
+        "pos": 3,
+        "column_name": "searched_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_status_reading",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
+        "table_name": "platform_status_reading",
+        "pos": 2,
+        "column_name": "reading",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_status_reading",
+        "pos": 3,
+        "column_name": "read_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_status_reading",
+        "pos": 4,
+        "column_name": "claimed_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "YES",
@@ -26922,6 +27489,41 @@
         "constraint_name": "notifications_user_id_fkey"
       },
       {
+        "table_name": "online_payment_clear_decisions",
+        "column_name": "decided_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "online_payment_clear_decisions_decided_by_fkey"
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_clear_decisions_online_payment_id_fkey"
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "column_name": "online_payment_item_id",
+        "foreign_table": "online_payment_items",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_clear_decisions_online_payment_item_id_fkey"
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_clear_decisions_org_id_fkey"
+      },
+      {
+        "table_name": "online_payment_clear_decisions",
+        "column_name": "refund_id",
+        "foreign_table": "online_payment_refunds",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_clear_decisions_refund_id_fkey"
+      },
+      {
         "table_name": "online_payment_items",
         "column_name": "entry_id",
         "foreign_table": "accounting_entries",
@@ -27531,6 +28133,27 @@
         "constraint_name": "organization_members_user_id_fkey"
       },
       {
+        "table_name": "platform_account_email_events",
+        "column_name": "email_id",
+        "foreign_table": "platform_account_emails",
+        "foreign_column": "id",
+        "constraint_name": "platform_account_email_events_email_id_fkey"
+      },
+      {
+        "table_name": "platform_account_emails",
+        "column_name": "feedback_id",
+        "foreign_table": "feedback_submissions",
+        "foreign_column": "id",
+        "constraint_name": "platform_account_emails_feedback_id_fkey"
+      },
+      {
+        "table_name": "platform_account_emails",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "platform_account_emails_org_id_fkey"
+      },
+      {
         "table_name": "platform_audit_log",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -27552,11 +28175,39 @@
         "constraint_name": "platform_catalog_change_requests_target_version_id_fkey"
       },
       {
+        "table_name": "platform_debit_fees",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "platform_debit_fees_online_payment_id_fkey"
+      },
+      {
+        "table_name": "platform_debit_fees",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "platform_debit_fees_org_id_fkey"
+      },
+      {
         "table_name": "platform_events",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "platform_events_org_id_fkey"
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "column_name": "account_email_id",
+        "foreign_table": "platform_account_emails",
+        "foreign_column": "id",
+        "constraint_name": "platform_feedback_replies_account_email_id_fkey"
+      },
+      {
+        "table_name": "platform_feedback_replies",
+        "column_name": "feedback_id",
+        "foreign_table": "feedback_submissions",
+        "foreign_column": "id",
+        "constraint_name": "platform_feedback_replies_feedback_id_fkey"
       },
       {
         "table_name": "platform_refunds",
@@ -32309,7 +32960,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_one_open_online_payments_notice",
-        "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text])))"
+        "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text])))"
       },
       {
         "tablename": "notifications",
@@ -32319,7 +32970,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_org_needs_attention_idx",
-        "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+        "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
       },
       {
         "tablename": "notifications",
@@ -32329,7 +32980,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_user_needs_attention_idx",
-        "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+        "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
       },
       {
         "tablename": "notifications",
@@ -32340,6 +32991,21 @@
         "tablename": "observability_cron_heartbeat",
         "indexname": "observability_cron_heartbeat_pkey",
         "indexdef": "CREATE UNIQUE INDEX observability_cron_heartbeat_pkey ON public.observability_cron_heartbeat USING btree (job_name)"
+      },
+      {
+        "tablename": "online_payment_clear_decisions",
+        "indexname": "online_payment_clear_decisions_key",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_clear_decisions_key ON public.online_payment_clear_decisions USING btree (online_payment_id, COALESCE(online_payment_item_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+      },
+      {
+        "tablename": "online_payment_clear_decisions",
+        "indexname": "online_payment_clear_decisions_open_idx",
+        "indexdef": "CREATE INDEX online_payment_clear_decisions_open_idx ON public.online_payment_clear_decisions USING btree (online_payment_id) WHERE (outcome IS NULL)"
+      },
+      {
+        "tablename": "online_payment_clear_decisions",
+        "indexname": "online_payment_clear_decisions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_clear_decisions_pkey ON public.online_payment_clear_decisions USING btree (id)"
       },
       {
         "tablename": "online_payment_items",
@@ -32444,7 +33110,7 @@
       {
         "tablename": "online_payments",
         "indexname": "online_payments_one_open_per_signup",
-        "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_signup ON public.online_payments USING btree (season_id, signup_key) WHERE ((status = ANY (ARRAY['open'::text, 'clearing'::text])) AND (flow = 'league_signup'::text) AND (season_id IS NOT NULL))"
+        "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_signup ON public.online_payments USING btree (season_id, signup_key) WHERE ((status = 'open'::text) AND (flow = 'league_signup'::text) AND (season_id IS NOT NULL))"
       },
       {
         "tablename": "online_payments",
@@ -33077,6 +33743,46 @@
         "indexdef": "CREATE UNIQUE INDEX plan_gating_pkey ON public.plan_gating USING btree (plan_key)"
       },
       {
+        "tablename": "platform_account_email_events",
+        "indexname": "platform_account_email_events_email_idx",
+        "indexdef": "CREATE INDEX platform_account_email_events_email_idx ON public.platform_account_email_events USING btree (email_id, occurred_at)"
+      },
+      {
+        "tablename": "platform_account_email_events",
+        "indexname": "platform_account_email_events_event_id_key",
+        "indexdef": "CREATE UNIQUE INDEX platform_account_email_events_event_id_key ON public.platform_account_email_events USING btree (event_id)"
+      },
+      {
+        "tablename": "platform_account_email_events",
+        "indexname": "platform_account_email_events_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_account_email_events_pkey ON public.platform_account_email_events USING btree (id)"
+      },
+      {
+        "tablename": "platform_account_emails",
+        "indexname": "platform_account_emails_created_idx",
+        "indexdef": "CREATE INDEX platform_account_emails_created_idx ON public.platform_account_emails USING btree (created_at DESC)"
+      },
+      {
+        "tablename": "platform_account_emails",
+        "indexname": "platform_account_emails_feedback_idx",
+        "indexdef": "CREATE INDEX platform_account_emails_feedback_idx ON public.platform_account_emails USING btree (feedback_id) WHERE (feedback_id IS NOT NULL)"
+      },
+      {
+        "tablename": "platform_account_emails",
+        "indexname": "platform_account_emails_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_account_emails_pkey ON public.platform_account_emails USING btree (id)"
+      },
+      {
+        "tablename": "platform_account_emails",
+        "indexname": "platform_account_emails_recipient_idx",
+        "indexdef": "CREATE INDEX platform_account_emails_recipient_idx ON public.platform_account_emails USING btree (recipient_email, created_at DESC)"
+      },
+      {
+        "tablename": "platform_account_emails",
+        "indexname": "platform_account_emails_state_idx",
+        "indexdef": "CREATE INDEX platform_account_emails_state_idx ON public.platform_account_emails USING btree (state, created_at DESC)"
+      },
+      {
         "tablename": "platform_addon_catalog",
         "indexname": "idx_platform_addon_catalog_status_label",
         "indexdef": "CREATE INDEX idx_platform_addon_catalog_status_label ON public.platform_addon_catalog USING btree (status, label)"
@@ -33192,6 +33898,21 @@
         "indexdef": "CREATE INDEX platform_catalog_change_requests_target_version_id_idx ON public.platform_catalog_change_requests USING btree (target_version_id)"
       },
       {
+        "tablename": "platform_debit_fees",
+        "indexname": "platform_debit_fees_key",
+        "indexdef": "CREATE UNIQUE INDEX platform_debit_fees_key ON public.platform_debit_fees USING btree (online_payment_id, kind)"
+      },
+      {
+        "tablename": "platform_debit_fees",
+        "indexname": "platform_debit_fees_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_debit_fees_pkey ON public.platform_debit_fees USING btree (id)"
+      },
+      {
+        "tablename": "platform_debit_fees",
+        "indexname": "platform_debit_fees_unbilled_idx",
+        "indexdef": "CREATE INDEX platform_debit_fees_unbilled_idx ON public.platform_debit_fees USING btree (org_id) WHERE ((billed_at IS NULL) AND (exempt_reason IS NULL))"
+      },
+      {
         "tablename": "platform_email_templates",
         "indexname": "platform_email_templates_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_email_templates_pkey ON public.platform_email_templates USING btree (key)"
@@ -33215,6 +33936,21 @@
         "tablename": "platform_events",
         "indexname": "platform_events_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_events_pkey ON public.platform_events USING btree (id)"
+      },
+      {
+        "tablename": "platform_feedback_replies",
+        "indexname": "platform_feedback_replies_feedback_idx",
+        "indexdef": "CREATE INDEX platform_feedback_replies_feedback_idx ON public.platform_feedback_replies USING btree (feedback_id, created_at)"
+      },
+      {
+        "tablename": "platform_feedback_replies",
+        "indexname": "platform_feedback_replies_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_feedback_replies_pkey ON public.platform_feedback_replies USING btree (id)"
+      },
+      {
+        "tablename": "platform_feedback_replies",
+        "indexname": "platform_feedback_replies_staff_idx",
+        "indexdef": "CREATE INDEX platform_feedback_replies_staff_idx ON public.platform_feedback_replies USING btree (staff_user_id, created_at DESC)"
       },
       {
         "tablename": "platform_metric_snapshots",
@@ -33290,6 +34026,21 @@
         "tablename": "platform_refunds",
         "indexname": "platform_refunds_stripe_refund_id_key",
         "indexdef": "CREATE UNIQUE INDEX platform_refunds_stripe_refund_id_key ON public.platform_refunds USING btree (stripe_refund_id)"
+      },
+      {
+        "tablename": "platform_sent_email_searches",
+        "indexname": "platform_sent_email_searches_actor_idx",
+        "indexdef": "CREATE INDEX platform_sent_email_searches_actor_idx ON public.platform_sent_email_searches USING btree (actor_user_id, searched_at DESC)"
+      },
+      {
+        "tablename": "platform_sent_email_searches",
+        "indexname": "platform_sent_email_searches_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_sent_email_searches_pkey ON public.platform_sent_email_searches USING btree (id)"
+      },
+      {
+        "tablename": "platform_status_reading",
+        "indexname": "platform_status_reading_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_status_reading_pkey ON public.platform_status_reading USING btree (id)"
       },
       {
         "tablename": "platform_user_notes",
@@ -37204,6 +37955,42 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "online_payment_clear_decisions",
+        "detail": "online_payment_clear_decisions_choice_check",
+        "check_clause": "(choice = ANY (ARRAY['send_back'::text, 'keep'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_clear_decisions",
+        "detail": "online_payment_clear_decisions_keep_reason_chk",
+        "check_clause": "((choice <> 'keep'::text) OR (reason IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_clear_decisions",
+        "detail": "online_payment_clear_decisions_outcome_check",
+        "check_clause": "((outcome IS NULL) OR (outcome = ANY (ARRAY['sent_back'::text, 'kept'::text, 'returned'::text, 'failed'::text, 'void'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_clear_decisions",
+        "detail": "online_payment_clear_decisions_outcome_chk",
+        "check_clause": "((outcome IS NULL) = (outcome_at IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_clear_decisions",
+        "detail": "online_payment_clear_decisions_reason_check",
+        "check_clause": "((reason IS NULL) OR ((char_length(btrim(reason)) >= 1) AND (char_length(btrim(reason)) <= 500)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "online_payment_clear_decisions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "online_payment_items",
         "detail": "online_payment_items_amount_chk",
         "check_clause": "((amount > (0)::numeric) AND (amount <= (1000000)::numeric) AND (fee_share >= (0)::numeric))"
@@ -37537,6 +38324,12 @@
         "table_name": "org_payees",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_payment_accounts",
+        "detail": "org_payment_accounts_bank_debit_status_chk",
+        "check_clause": "((bank_debit_status IS NULL) OR (bank_debit_status = ANY (ARRAY['active'::text, 'pending'::text, 'restricted'::text, 'unsupported'::text])))"
       },
       {
         "kind": "CHECK",
@@ -38014,6 +38807,66 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "platform_account_email_events",
+        "detail": "platform_account_email_events_bounce_reason_check",
+        "check_clause": "((bounce_reason IS NULL) OR (bounce_reason = ANY (ARRAY['address_does_not_exist'::text, 'mailbox_full'::text, 'refused_by_server'::text, 'suppressed'::text, 'other'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_account_email_events",
+        "detail": "platform_account_email_events_event_id_check",
+        "check_clause": "(event_id ~ '^[A-Za-z0-9_-]{6,80}$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_account_email_events",
+        "detail": "platform_account_email_events_state_check",
+        "check_clause": "(state = ANY (ARRAY['sent'::text, 'delayed'::text, 'delivered'::text, 'bounced'::text, 'complained'::text, 'failed'::text, 'not_sent'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_account_email_events",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_account_emails",
+        "detail": "platform_account_emails_bounce_reason_check",
+        "check_clause": "((bounce_reason IS NULL) OR (bounce_reason = ANY (ARRAY['address_does_not_exist'::text, 'mailbox_full'::text, 'refused_by_server'::text, 'suppressed'::text, 'other'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_account_emails",
+        "detail": "platform_account_emails_kind_check",
+        "check_clause": "(kind ~ '^[a-z][a-z_]{1,59}$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_account_emails",
+        "detail": "platform_account_emails_recipient_email_check",
+        "check_clause": "((recipient_email = lower(recipient_email)) AND ((length(recipient_email) >= 3) AND (length(recipient_email) <= 320)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_account_emails",
+        "detail": "platform_account_emails_resend_id_check",
+        "check_clause": "((resend_id IS NULL) OR (resend_id ~ '^[A-Za-z0-9-]{8,64}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_account_emails",
+        "detail": "platform_account_emails_state_check",
+        "check_clause": "(state = ANY (ARRAY['sent'::text, 'unconfirmed'::text, 'delayed'::text, 'delivered'::text, 'bounced'::text, 'complained'::text, 'failed'::text, 'not_sent'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_account_emails",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "platform_addon_catalog",
         "detail": "platform_addon_catalog_pricing_model_check",
         "check_clause": "(pricing_model = ANY (ARRAY['included'::text, 'flat'::text, 'per_team'::text, 'per_seat'::text, 'custom'::text]))"
@@ -38121,6 +38974,48 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "platform_debit_fees",
+        "detail": "platform_debit_fees_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_debit_fees",
+        "detail": "platform_debit_fees_bill_error_check",
+        "check_clause": "((bill_error IS NULL) OR (char_length(bill_error) <= 500))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_debit_fees",
+        "detail": "platform_debit_fees_billed_chk",
+        "check_clause": "((stripe_invoice_item_id IS NULL) = (billed_at IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_debit_fees",
+        "detail": "platform_debit_fees_exempt_chk",
+        "check_clause": "((exempt_reason IS NULL) OR (billed_at IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_debit_fees",
+        "detail": "platform_debit_fees_exempt_reason_check",
+        "check_clause": "((exempt_reason IS NULL) OR (exempt_reason = ANY (ARRAY['comped'::text, 'no_subscription'::text, 'test_mode'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_debit_fees",
+        "detail": "platform_debit_fees_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['returned'::text, 'reversed'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_debit_fees",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "platform_email_templates",
         "detail": "ENABLED",
@@ -38129,6 +39024,42 @@
       {
         "kind": "RLS",
         "table_name": "platform_events",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_feedback_replies",
+        "detail": "platform_feedback_replies_attempt_check",
+        "check_clause": "((attempt >= 1) AND (attempt <= 20))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_feedback_replies",
+        "detail": "platform_feedback_replies_body_check",
+        "check_clause": "((length(btrim(body)) >= 1) AND (length(btrim(body)) <= 4000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_feedback_replies",
+        "detail": "platform_feedback_replies_signed_name_check",
+        "check_clause": "(length(signed_name) <= 80)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_feedback_replies",
+        "detail": "platform_feedback_replies_status_check",
+        "check_clause": "(status = ANY (ARRAY['draft'::text, 'sending'::text, 'sent'::text, 'failed'::text, 'unknown'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_feedback_replies",
+        "detail": "platform_feedback_replies_to_email_check",
+        "check_clause": "(to_email = lower(to_email))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_feedback_replies",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -38172,7 +39103,7 @@
         "kind": "CHECK",
         "table_name": "platform_record_opens",
         "detail": "platform_record_opens_record_kind_check",
-        "check_clause": "(record_kind = ANY (ARRAY['club'::text, 'person'::text]))"
+        "check_clause": "(record_kind = ANY (ARRAY['club'::text, 'person'::text, 'email'::text]))"
       },
       {
         "kind": "RLS",
@@ -38243,6 +39174,24 @@
       {
         "kind": "RLS",
         "table_name": "platform_refunds",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_sent_email_searches",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_status_reading",
+        "detail": "platform_status_reading_id_check",
+        "check_clause": "(id = 1)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_status_reading",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -40170,7 +41119,7 @@
         "kind": "CHECK",
         "table_name": "tournament_team_payments",
         "detail": "tournament_team_payments_status_chk",
-        "check_clause": "(status = ANY (ARRAY['posted'::text, 'removed'::text, 'refunded'::text]))"
+        "check_clause": "(status = ANY (ARRAY['posted'::text, 'removed'::text, 'refunded'::text, 'reversed'::text]))"
       },
       {
         "kind": "RLS",

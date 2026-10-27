@@ -3060,6 +3060,66 @@
     "update_rule": null
   },
   {
+    "table_name": "online_payment_clear_decisions",
+    "constraint_name": "online_payment_clear_decisions_decided_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "decided_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_clear_decisions",
+    "constraint_name": "online_payment_clear_decisions_online_payment_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_id",
+    "foreign_table": "online_payments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_clear_decisions",
+    "constraint_name": "online_payment_clear_decisions_online_payment_item_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_item_id",
+    "foreign_table": "online_payment_items",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_clear_decisions",
+    "constraint_name": "online_payment_clear_decisions_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_clear_decisions",
+    "constraint_name": "online_payment_clear_decisions_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "online_payment_clear_decisions",
+    "constraint_name": "online_payment_clear_decisions_refund_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "refund_id",
+    "foreign_table": "online_payment_refunds",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "online_payment_items",
     "constraint_name": "online_payment_items_entry_fk",
     "constraint_type": "FOREIGN KEY",
@@ -4470,6 +4530,66 @@
     "update_rule": null
   },
   {
+    "table_name": "platform_account_email_events",
+    "constraint_name": "platform_account_email_events_email_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "email_id",
+    "foreign_table": "platform_account_emails",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_account_email_events",
+    "constraint_name": "platform_account_email_events_event_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "event_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_account_email_events",
+    "constraint_name": "platform_account_email_events_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_account_emails",
+    "constraint_name": "platform_account_emails_feedback_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "feedback_id",
+    "foreign_table": "feedback_submissions",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_account_emails",
+    "constraint_name": "platform_account_emails_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_account_emails",
+    "constraint_name": "platform_account_emails_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "platform_addon_catalog",
     "constraint_name": "platform_addon_catalog_addon_key_key",
     "constraint_type": "UNIQUE",
@@ -4590,6 +4710,36 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "platform_debit_fees",
+    "constraint_name": "platform_debit_fees_online_payment_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_id",
+    "foreign_table": "online_payments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_debit_fees",
+    "constraint_name": "platform_debit_fees_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_debit_fees",
+    "constraint_name": "platform_debit_fees_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "platform_email_templates",
     "constraint_name": "platform_email_templates_pkey",
     "constraint_type": "PRIMARY KEY",
@@ -4612,6 +4762,36 @@
   {
     "table_name": "platform_events",
     "constraint_name": "platform_events_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_feedback_replies",
+    "constraint_name": "platform_feedback_replies_account_email_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "account_email_id",
+    "foreign_table": "platform_account_emails",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_feedback_replies",
+    "constraint_name": "platform_feedback_replies_feedback_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "feedback_id",
+    "foreign_table": "feedback_submissions",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_feedback_replies",
+    "constraint_name": "platform_feedback_replies_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
@@ -4714,6 +4894,26 @@
     "constraint_name": "platform_refunds_stripe_refund_id_key",
     "constraint_type": "UNIQUE",
     "column_name": "stripe_refund_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_sent_email_searches",
+    "constraint_name": "platform_sent_email_searches_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_status_reading",
+    "constraint_name": "platform_status_reading_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
     "foreign_table": null,
     "foreign_column": null,
     "delete_rule": null,
