@@ -242,6 +242,12 @@ team) was not ruled: it is ask **9d2·15**, open.
 - **Deferred, not ruled (owner 2026-10-27):** whether families hear when a team is first given its practice time (raised by
   9d2·2's alternative: a practice *change* emails families, but practices are never on the public page). Left for the work on
   how the club connects to families; 11b's coach practice email stands as drawn.
+- **9d2·16 — OPEN (raised 2026-10-27 by drawing 9d2·15, frame k5).** The club takes back house-league time with games or
+  practices on it. Recommended: the window names what is on it first; published games leave their week for Needs a new date
+  and wait in the division's Changes to send (families hear once, from the convenor; 9d2·10, ·13); draft games come off the
+  draft; until the league admin sends, families see the old dates; games already played stay; practices on it go, and their
+  coaches and families hear in Send the changes (9d2·2). Unused time goes back with no
+  question. Alternative: refuse while published games are on it.
 
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
@@ -634,5 +640,7 @@ open it, and the menu's top level is Stage 13's.
 - **2026-10-27 — 9d2·15 RULED (House league as a whole) and drawn.** The club never divides house league's time by division;
   that is the convenor's job. Frames k1–k5 added on the same page (the owner gives House league time in the club's
   Schedules; the convenor's House league's time window divides it; Generate games step 1 picks from it; the empty state; the
-  owner who runs the league). The first-practice family notice is deferred to the families-connection work. **Next:**
+  owner who runs the league; k5 the club taking time back, **ask 9d2·16 open**). The drawing also corrects h4 to 9d2·2 (a
+  practice change reaches that team's families) and the gate table (giving or taking house league's time is owner and admin
+  only; dividing it is the league admin's too). The first-practice family notice is deferred to the families-connection work. **Next:**
   /marketing on the words, then the 11b build prompt.
