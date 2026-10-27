@@ -28,6 +28,7 @@ import { freeTimeStoryEntries } from './free-time-story';
 import { formatCents } from './console-money';
 import { CONSOLE_REFUND_TAIL } from './console-money-story';
 import { hasPlatformPower } from './platform-areas';
+import { LEAD_ACTIONS } from './platform-audit-reason';
 import type { PlatformRole } from './platform-auth';
 import { listSentEmails } from './sent-log';
 import { SENT_STATES } from './sent-log-words';
@@ -72,13 +73,16 @@ function afterBulkAddons(before: Set<string>, newValue: unknown): Set<string> {
  * and the refunds made in this console join it, from what we keep, so they show even when Stripe is down. Stripe's own
  * charges and dashboard refunds are merged in on screen from the Money tab's live read (`lib/console-money-story.ts`).
  */
-export async function buildClubStory(orgId: string, opts: { money?: boolean } = {}): Promise<StoryEntry[]> {
+export async function buildClubStory(orgId: string, opts: { money?: boolean; leads?: boolean } = {}): Promise<StoryEntry[]> {
+  // A lead's entries name a lead: a role without the growth power never reads them, filtered in the database (Stage 7).
+  const auditQuery = supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, field, old_value, new_value, reason, created_at')
+    .eq('org_id', orgId);
   const [orgRes, auditRes, overridesRes, notesRes, eventsRes, orgAuditRes, membersRes, emailsRes, feedbackRes, refundsRes] = await Promise.all([
     supabaseAdmin.from('organizations')
       .select('id, name, plan_id, enabled_addons, created_at, subscription_status, stripe_subscription_id, current_period_end')
       .eq('id', orgId).maybeSingle(),
-    supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, field, old_value, new_value, reason, created_at')
-      .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
+    (opts.leads ? auditQuery : auditQuery.not('action', 'in', `(${[...LEAD_ACTIONS].join(',')})`))
+      .order('created_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('org_overrides').select('id, type, value, target, starts_at, expires_at, reason, created_by, created_at, revoked_at, revoked_by')
       .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('org_internal_notes').select('id, body, created_by_email, created_at, deleted_at, deleted_by_email')
@@ -247,6 +251,17 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean } = 
         : { key, at: r.created_at, kind: 'staff', title: `Name changed: ${from} → ${to}`, who, ...whyFields(r, true) });
       continue;
     }
+    // A lead's link (Stage 7): read only by the growth power, filtered in the database read above.
+    if (r.action === 'link_early_access_lead') {
+      const how = str(obj(r.new_value)?.method) === 'offered' ? 'the offered match (same email)' : 'by hand';
+      entries.push({ key, at: r.created_at, kind: 'staff', title: 'Arrived as a lead: linked to its lead', sub: `Linked ${how}`, who, why: null });
+      continue;
+    }
+    if (r.action === 'unlink_early_access_lead') {
+      entries.push({ key, at: r.created_at, kind: 'staff', title: 'Unlinked from its lead', who, why: null });
+      continue;
+    }
+    if (r.action === 'dismiss_early_access_offer') continue;
     if (r.action === 'transfer_org_ownership') {
       const to = emailOf(str(obj(r.new_value)?.newOwnerUserId)) ?? 'another member';
       entries.push({ key, at: r.created_at, kind: 'staff', title: `Owner changed to ${to}`, sub: 'The previous owner became an admin', who, ...whyFields(r, true) });

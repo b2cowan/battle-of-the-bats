@@ -1,0 +1,41 @@
+/* A lead's page (Support console Stage 7 Part 4; drawings A and C). The card, band label, chips, fields, callouts and
+   notices are the console's shared recipes; the pencil and caption are the record's (`../../record.module.css`). */
+
+.meta { margin: 0; color: var(--text-secondary); font-size: var(--type-body); overflow-wrap: anywhere; }
+
+/* The offered match: one sentence left, its two doors right. */
+.offer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.offerActions { display: inline-flex; gap: 0.5rem; flex-wrap: wrap; }
+.signedUp { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 1.25rem; align-items: start; }
+
+/* About this lead: label left, value right. */
+.facts { display: grid; gap: 0.8rem; margin: 0; }
+.fact { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 0.75rem; align-items: baseline; }
+.fact dd { margin: 0; min-width: 0; overflow-wrap: anywhere; color: var(--text-primary); }
+.fact dd > span { display: block; }
+.words { font-style: italic; color: var(--text-secondary); }
+
+/* The timeline: when on the left, the fixed sentence and any words below it. */
+.timeline { list-style: none; margin: 0; padding: 0.25rem 1rem; display: grid; }
+.turn { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 0.75rem; padding: 0.7rem 0; border-top: 1px solid var(--home-line); }
+.turn:first-child { border-top: 0; }
+.when { font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+.what { display: grid; gap: 0.2rem; min-width: 0; }
+.body { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text-secondary); }
+.quiet { color: var(--text-tertiary); }
+.remove { justify-self: start; }
+
+/* The club picker's results. */
+.picks { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.35rem; }
+.pick { width: 100%; display: grid; gap: 0.15rem; text-align: left; padding: 0.6rem 0.75rem; border: 1px solid var(--home-line);
+  border-radius: 8px; background: var(--card-bg, transparent); color: inherit; font: inherit; cursor: pointer; min-height: 44px; }
+.pick:hover, .pick:focus-visible { border-color: var(--home-olive); background: var(--home-olive-soft); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .fact, .turn { grid-template-columns: 1fr; gap: 0.15rem; }
+}

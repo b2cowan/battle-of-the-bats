@@ -37,6 +37,7 @@ const NO_REASON_FILES: Record<string, string> = {
   'app/api/platform-admin/company-users/route.ts': 'staff roles: a reason arrives when Stage 8 draws Staff',
   'app/api/platform-admin/company-users/[id]/route.ts': 'staff roles: a reason arrives when Stage 8 draws Staff',
   'app/api/platform-admin/early-access/[leadId]/route.ts': 'work tool: a lead edit is the record itself',
+  'lib/lead-writes.ts': 'work tool: a lead’s link, offer, notes, Copy emails and export (Stage 7; a lead is not yet a customer, owner Q6)',
   'app/api/platform-admin/feedback/[id]/escalate/route.ts': 'work tool: triage status',
   'app/api/platform-admin/feedback/[id]/status/route.ts': 'work tool: triage status',
   'app/api/platform-admin/observability/[groupId]/status/route.ts': 'work tool: triage status',

@@ -13,6 +13,6 @@ export const GET = withObservability(async (_req: Request, { params }: { params:
   const auth = await requirePlatformAreaApi('organizations', 'view');
   if (auth.response) return auth.response;
   const { id } = await params;
-  const entries = await buildClubStory(id, { money: hasPlatformPower(auth.role, 'find_stripe') });
+  const entries = await buildClubStory(id, { money: hasPlatformPower(auth.role, 'find_stripe'), leads: hasPlatformPower(auth.role, 'growth') });
   return NextResponse.json({ entries, total: entries.length }, { headers: { 'Cache-Control': 'no-store' } });
 }, { route: '/api/platform-admin/orgs/[id]/story' });

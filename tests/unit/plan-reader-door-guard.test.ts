@@ -78,6 +78,9 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/platform-events.ts': ['writer', 'event rows carry the plan and status columns'],
   // ── stored on purpose ──
   'lib/platform-metrics.ts': ['stored', 'revenue and customer counts: free time is never revenue (/billing 2026-10-25)'],
+  'lib/lead-book.ts': ['stored', 'Stage 7 "pays now" (owner Q2): the club’s OWN plan, status and subscription, with free time read through the door and never counted as paying; and an offered club’s plan name'],
+  'lib/lead-timeline.ts': ['stored', 'Stage 7: the plan named on the subscription-start fact a linked club’s billing records hold'],
+  'app/platform-admin/early-access/[leadId]/page.tsx': ['stored', 'Stage 7: the linked club’s own plan and trial, in words ("on a League Plus trial until Nov 25"); whether it pays is `readPaying`'],
   'lib/needs-attention.ts': ['stored', '"card payment failed" is about a real card, so it reads the stored status'],
   'lib/email-sender.ts': ['stored', 'the Founding email audience targets purchase intent (stored plan)'],
   'app/api/admin/email/send/route.ts': ['stored', 'the Founding email audience (stored plan)'],
@@ -90,7 +93,6 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'app/platform-admin/orgs/[id]/page.tsx': ['stored', 'the record shows the stored plan beside free time'],
   'app/platform-admin/customer-users/people-rows.ts': ['stored', 'the console shows the stored plan'],
   'app/platform-admin/customer-users/[id]/page.tsx': ['stored', 'the console shows the stored plan'],
-  'app/platform-admin/early-access/page.tsx': ['stored', 'console counts'],
   'app/platform-admin/plans-pricing/page.tsx': ['stored', 'console counts per plan'],
   'app/platform-admin/plans-pricing/PlansPricingClient.tsx': ['stored', 'console plan catalogue'],
   'app/platform-admin/bulk-operations/page.tsx': ['stored', 'bulk changes act on the stored plan'],

@@ -1,164 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  EARLY_ACCESS_FEATURE_LABELS,
-  EARLY_ACCESS_PLAN_LABELS,
-  EARLY_ACCESS_SELECT,
-  EARLY_ACCESS_STATUS_LABELS,
-  isEarlyAccessStatus,
-  parseEarlyAccessFilters,
-  toCsvCell,
-} from '@/lib/early-access-admin';
-import { requirePlatformAreaApi } from '@/lib/platform-auth';
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import ExcelJS from 'exceljs';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { withObservability } from '@/lib/observability';
 import { tournamentToday } from '@/lib/timezone';
+import { buildXLSXWorkbook } from '@/lib/export/xlsx';
+import { generateCSV } from '@/lib/export/csv';
+import { formulaSafeRow } from '@/lib/export/formula-safe';
+import { consoleDate } from '@/lib/console-dates';
+import { EARLY_ACCESS_STATUS_LABELS, leadPageLabel } from '@/lib/early-access-admin';
+import { featureWords, lostWords, planWords, sourceWords } from '@/lib/lead-views';
+import { askedNotToBeContacted, listFromParams, readList, recordExport } from '@/lib/lead-writes';
 
-type LeadExportRow = {
-  created_at: string;
-  name: string;
-  email: string;
-  organization_name: string | null;
-  role: string | null;
-  sports: string | null;
-  plan_interest: string[];
-  features_interested: string[];
-  internal_status: string;
-  release_notifications_consent: boolean;
-  last_contacted_at: string | null;
-  converted_at: string | null;
-  converted_org_id: string | null;
-  follow_up_due_at: string | null;
-  next_action: string | null;
-  notes: string | null;
-  internal_notes: string | null;
-};
+/**
+ * Tools › Export (Support console Stage 7 Part 9; owner Q10 + build gate §6-5, "as drawn"). Super admin, Product and
+ * Growth only. Every lead in the list the screen shows — no 1,000-row cap. The audit entry (who, when, how many, which
+ * list) is written BEFORE the file is built; if it cannot be written, nothing is sent. Every cell a stranger's words can
+ * reach is made formula-safe, and a lead who asked not to be contacted has an empty email cell.
+ */
+const HEADERS = ['Arrived', 'Name', 'Email', 'Organization', 'Role', 'Sport or program', 'Plans', 'Features', 'Step',
+  'Why it was lost', 'Source', 'Source detail', 'Arrived from', 'Said yes to release emails', 'Last contacted', 'Next action',
+  'Follow-up', 'Signed up', 'In their words'];
 
 export const GET = withObservability(async (req: NextRequest) => {
-  const auth = await requirePlatformAreaApi('early_access', 'view');
+  const auth = await requirePlatformPower('growth');
   if (auth.response) return auth.response;
 
-  const { searchParams } = new URL(req.url);
-  const filters = parseEarlyAccessFilters(searchParams);
+  const sp = req.nextUrl.searchParams;
+  const format = sp.get('format') === 'csv' ? 'csv' : 'xlsx';
+  const params = listFromParams(sp);
+  const list = await readList(params);
+  if (list.kind === 'not_read') return NextResponse.json({ error: 'The leads could not be read just now. Nothing was exported.' }, { status: 503 });
 
-  let query = supabaseAdmin
-    .from('early_access_leads')
-    .select(EARLY_ACCESS_SELECT)
-    .order('created_at', { ascending: false })
-    .limit(1000);
-
-  if (filters.q) {
-    const pattern = `%${filters.q}%`;
-    query = query.or([
-      `name.ilike.${pattern}`,
-      `email.ilike.${pattern}`,
-      `organization_name.ilike.${pattern}`,
-      `role.ilike.${pattern}`,
-      `sports.ilike.${pattern}`,
-      `notes.ilike.${pattern}`,
-    ].join(','));
-  }
-  if (filters.plan) query = query.contains('plan_interest', [filters.plan]);
-  if (filters.feature) query = query.contains('features_interested', [filters.feature]);
-  if (filters.status) query = query.eq('internal_status', filters.status);
-  if (filters.consent === 'yes') query = query.eq('release_notifications_consent', true);
-  if (filters.consent === 'no') query = query.eq('release_notifications_consent', false);
-  if (filters.dateFrom) query = query.gte('created_at', `${filters.dateFrom}T00:00:00.000Z`);
-  if (filters.dateTo) query = query.lte('created_at', `${filters.dateTo}T23:59:59.999Z`);
-
-  const { data, error } = await query;
-  if (error) {
-    console.error('[platform-admin] early-access export error:', error);
-    return NextResponse.json({ error: 'Unable to export early-access leads' }, { status: 500 });
+  if (!(await recordExport(auth.user.email!, params, list.value.length, format))) {
+    return NextResponse.json({ error: 'The export could not be recorded in the audit log, so nothing was sent.' }, { status: 503 });
   }
 
-  const rows = (data ?? []) as unknown as LeadExportRow[];
-  const header = [
-    'submitted_at',
-    'name',
-    'email',
-    'organization',
-    'role',
-    'sport_or_program',
-    'plans',
-    'features',
-    'status',
-    'consent',
-    'last_contacted_at',
-    'converted_at',
-    'converted_org_id',
-    'follow_up_due_at',
-    'next_action',
-    'lead_notes',
-    'internal_notes',
-  ];
-
+  const rows = list.value.map(l => formulaSafeRow([
+    consoleDate(l.createdAt),
+    l.name,
+    askedNotToBeContacted(l) ? '' : l.email,
+    l.organizationName ?? '',
+    l.role ?? '',
+    l.sports ?? '',
+    planWords(l.plans),
+    featureWords(l.features) ?? '',
+    EARLY_ACCESS_STATUS_LABELS[l.step],
+    lostWords(l.lostReason) ?? '',
+    sourceWords(l.source),
+    l.sourceWords ?? '',
+    leadPageLabel(l.sourcePath),
+    l.consent ? 'Yes' : 'No',
+    l.lastContactedAt ? consoleDate(l.lastContactedAt) : '',
+    l.nextAction ?? '',
+    l.followUpDueAt ?? '',
+    l.linkedAt ? consoleDate(l.signedUpAt) : '',
+    l.words ?? '',
+  ]));
   const date = tournamentToday();
-  const format = searchParams.get('format') ?? 'xlsx';
 
-  function buildCellValues(row: LeadExportRow): (string | null)[] {
-    return [
-      row.created_at,
-      row.name,
-      row.email,
-      row.organization_name,
-      row.role,
-      row.sports,
-      row.plan_interest.map(plan => EARLY_ACCESS_PLAN_LABELS[plan] ?? plan).join('; ') || null,
-      row.features_interested.map(feature => EARLY_ACCESS_FEATURE_LABELS[feature] ?? feature).join('; ') || null,
-      isEarlyAccessStatus(row.internal_status)
-        ? EARLY_ACCESS_STATUS_LABELS[row.internal_status]
-        : row.internal_status,
-      row.release_notifications_consent ? 'yes' : 'no',
-      row.last_contacted_at,
-      row.converted_at,
-      row.converted_org_id,
-      row.follow_up_due_at,
-      row.next_action,
-      row.notes,
-      row.internal_notes,
-    ];
-  }
-
-  if (format === 'xlsx') {
-    const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'FieldLogicHQ';
-    workbook.created = new Date();
-    const ws = workbook.addWorksheet('Early Access Leads');
-
-    const headerRow = ws.addRow(header);
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
-
-    rows.forEach(row => ws.addRow(buildCellValues(row).map(c => c ?? '')));
-
-    ws.columns.forEach((col, i) => {
-      const headerLen = (header[i] ?? '').length;
-      let maxData = 0;
-      rows.forEach(r => { const l = String(buildCellValues(r)[i] ?? '').length; if (l > maxData) maxData = l; });
-      col.width = Math.min(Math.max(headerLen, maxData) + 2, 60);
-    });
-    ws.views = [{ state: 'frozen', ySplit: 1 }];
-
-    const buffer = await workbook.xlsx.writeBuffer();
-    return new NextResponse(buffer as ArrayBuffer, {
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="early-access-leads-${date}.xlsx"`,
-      },
+  if (format === 'csv') {
+    return new NextResponse(generateCSV(HEADERS, rows), {
+      headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="leads-${date}.csv"`, 'Cache-Control': 'no-store' },
     });
   }
-
-  // Default: CSV
-  const csv = [
-    header.map(toCsvCell).join(','),
-    ...rows.map(row => buildCellValues(row).map(toCsvCell).join(',')),
-  ].join('\n');
-
-  return new NextResponse(csv, {
+  const buffer = await buildXLSXWorkbook(HEADERS, rows, 'Leads').xlsx.writeBuffer();
+  return new NextResponse(buffer as ArrayBuffer, {
     headers: {
-      'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="early-access-leads-${date}.csv"`,
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="leads-${date}.xlsx"`,
+      'Cache-Control': 'no-store',
     },
   });
 }, { route: '/api/platform-admin/early-access/export' });

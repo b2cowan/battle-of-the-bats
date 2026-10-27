@@ -341,18 +341,18 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Early Access Leads',
     module: 'platform_admin',
     page: 'Leads',
-    file: 'app/platform-admin/early-access/EarlyAccessClient.tsx',
+    file: 'app/platform-admin/early-access/LeadsScreen.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     audiences: ['platform_admin'],
     includesSensitiveFields: true,
     sensitiveFieldPolicy: 'included_justified',
     sensitiveFieldJustification:
-      'Platform admin role has full data access by design; early access leads are prospective customers whose contact data is the primary operational value of this export. The export is server-side and only accessible to authenticated platform admin users.',
+      'Super admin, Product and Growth only (the growth power; Support console Stage 7, owner build gate 2026-10-27). Leads are prospective customers whose contact data is the export’s purpose. Server-side, every row, audited before the file is sent (nothing is sent if the entry cannot be written), formula-safe in every column, and a lead who asked not to be contacted has an empty email cell.',
     respectsCurrentFilters: true,
     serverSide: true,
     helpSummary:
-      'Server-side export of early access lead data including contact info, interest level, status, consent, and notes. Supports format=xlsx|csv query param.',
+      'Every lead in the list on screen (its scope and filter): contact, interest, step and why it was lost, source, page, consent, next action, follow-up and sign-up. Staff notes are not in the file. Supports format=xlsx|csv.',
   },
 
   {

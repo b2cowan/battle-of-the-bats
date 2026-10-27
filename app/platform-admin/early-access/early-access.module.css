@@ -1,115 +1,38 @@
-/* The early-access pipeline's own parts. The page column, band, cards, toolbar, fields, chips, tables and notices are the
-   console's shared recipes (`../console.module.css`); the buttons are the product's global kit. */
+/* Leads' own parts (Support console Stage 7; drawings A–C). The page column, band, cards, fields, chips, tables and
+   notices are the console's shared recipes (`../console.module.css`); the toolbar's tools are the product's shared
+   toolbar (`AdminToolbar.module.css`); the buttons are the product's global kit. */
 
-/* ── Conversion breakdown rows ── */
-.conversionList { display: grid; gap: 0.45rem; }
-.conversionItem {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 0.65rem;
-  font-size: var(--type-body);
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-.conversionItem span { min-width: 0; overflow-wrap: anywhere; }
-.conversionItem strong { color: var(--home-olive); }
-.conversionItem em { color: var(--text-tertiary); font-style: normal; }
+/* ── The toolbar: which list on the left, Search · Filter · Tools on the right ── */
+.toolbar { padding: 0.75rem 1rem; border-bottom: 1px solid var(--home-line); flex-wrap: wrap; gap: 0.5rem; }
+.period { width: auto; min-width: 12rem; }
+.scope { position: relative; display: inline-flex; align-items: center; }
+/* The scope picker is rounded (it picks which list) and carries the amber count, as the Teams division picker does (S7-D1). */
+.scopeSelect { border-radius: 999px; padding-right: 3.25rem; width: auto; }
+.scopeCount { position: absolute; right: 1.9rem; pointer-events: none; }
+.search { display: inline-flex; }
+.search input { width: 14rem; max-width: 100%; }
+.filterPanel { display: grid; gap: 0.75rem; min-width: 16rem; padding: 0.85rem; }
 
-/* ── The list beside its lead detail ── */
-.workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 1.1rem;
-  align-items: start;
-}
-@media (max-width: 1100px) {
-  .workspace { grid-template-columns: minmax(0, 1fr); }
-}
+/* ── The band's cells are doors to their step ── */
+.bandCell { text-decoration: none; color: inherit; }
+.bandCell:hover { background: var(--home-olive-soft); }
+.bandCell:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
 
-/* The list shares its row with the lead detail, so its cells take a tighter side padding and let long lines wrap. */
-.leadTable th, .leadTable td { padding-inline: 0.6rem; overflow-wrap: break-word; }
-.breakAny { overflow-wrap: anywhere; }
-.leadTable th:first-child, .leadTable td:first-child { padding-left: 1rem; }
-.leadTable th:last-child, .leadTable td:last-child { padding-right: 1rem; }
-.leadRow td { vertical-align: top; }
-/* Selection is a state and keeps its tint; hover on a row that opens nothing does not (table standard, register F-03). */
-.selectedRow td { background: var(--home-olive-soft); }
-.orgButton {
-  border: 0;
-  background: transparent;
-  color: var(--text-primary);
-  font: inherit;
-  font-weight: 600;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
-  text-decoration: underline;
-  text-decoration-color: var(--home-line-strong);
-  text-underline-offset: 3px;
-}
-.orgButton:hover { color: var(--home-olive); text-decoration-color: var(--home-olive); }
-.primaryText { font-weight: 600; color: var(--text-primary); }
-.metaOk { color: var(--home-olive); }
-.metaWarn { color: var(--warning); }
-.metaBad { color: var(--danger); }
+/* ── The list ── */
+.flag { margin-top: 0.3rem; display: inline-flex; }
+.stuck { color: var(--warning); font-weight: 600; }
+.due { color: var(--warning); font-weight: 600; }
+.quietLine { padding: 0 1rem; color: var(--text-tertiary); }
+.empty { display: grid; gap: 0.35rem; padding: 2.5rem 1rem; text-align: center; color: var(--text-secondary); }
+.empty strong { color: var(--text-primary); font-size: var(--type-title); }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 0.6rem 1rem;
-  border-top: 1px solid var(--home-line);
-}
+/* ── Numbers' definitions ── */
+.definitions { display: grid; gap: 0.6rem; margin: 0; }
+.definitions div { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 0.75rem; }
+.definitions dt { font-weight: 700; color: var(--text-primary); }
+.definitions dd { margin: 0; color: var(--text-secondary); }
 
-/* ── Lead detail ── */
-.detailPanel { display: grid; gap: 0.9rem; position: sticky; top: calc(var(--chrome-bar-h) + 1rem); }
-@media (max-width: 1100px) {
-  .detailPanel { position: static; }
+@media (max-width: 640px) {
+  .definitions div { grid-template-columns: 1fr; gap: 0.15rem; }
+  .search input { width: 100%; }
 }
-.emptyDetail {
-  min-height: 260px;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 0.6rem;
-  color: var(--text-tertiary);
-  text-align: center;
-  font-size: var(--type-body);
-}
-.emptyDetail p { margin: 0; }
-.detailHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.8rem; }
-.closeButton {
-  width: 2rem;
-  height: 2rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: 0;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.closeButton:hover { color: var(--text-primary); }
-
-.detailList { margin: 0; display: grid; gap: 0.55rem; font-size: var(--type-body); }
-.detailList div { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 0.5rem; }
-.detailList dt { color: var(--text-tertiary); font-size: var(--type-support); font-weight: 650; }
-.detailList dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
-
-.notesBlock {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.75rem;
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-  background: var(--home-olive-soft);
-}
-.notesBlock p { margin: 0; color: var(--text-primary); font-size: var(--type-body); line-height: 1.55; }
-
-.dimDisabled:disabled { opacity: 0.45; cursor: not-allowed; }
-
-.templates { display: grid; gap: 0.45rem; }
-.templates button { justify-content: flex-start; }

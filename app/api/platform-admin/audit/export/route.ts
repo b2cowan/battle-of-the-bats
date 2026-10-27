@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hasPlatformPower, requirePlatformAreaApi } from '@/lib/platform-auth';
 import { hiddenEntryLine } from '@/lib/platform-audit-reason';
+import { formulaSafeRow } from '@/lib/export/formula-safe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
 import { withObservability } from '@/lib/observability';
@@ -94,8 +95,9 @@ export const GET = withObservability(async (req: NextRequest) => {
   const date   = tournamentToday();
   const format = sp.get('format') ?? 'csv';
 
+  // Every cell formula-safe: an entry can hold a stranger's words (Stage 7 Part 9, threat 3).
   function rowValues(row: (typeof rows)[number]): (string | null)[] {
-    return [
+    return formulaSafeRow([
       row.id,
       row.createdAt,
       row.actorEmail,
@@ -110,7 +112,7 @@ export const GET = withObservability(async (req: NextRequest) => {
       row.newValue !== null && row.newValue !== undefined
         ? typeof row.newValue === 'string' ? row.newValue : JSON.stringify(row.newValue)
         : null,
-    ];
+    ]);
   }
 
   if (format === 'xlsx') {

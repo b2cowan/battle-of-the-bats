@@ -111,7 +111,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
     supabaseAdmin.from('org_overrides').select('id, type, value, target, starts_at, expires_at, reason, created_by, created_at, revoked_at, revoked_by').eq('org_id', id).order('created_at', { ascending: false }),
     clubDomainStore.getByOrg(id).catch(() => null),
     getTeamMoves(id),
-    buildClubStory(id, { money: readsStripe }),
+    buildClubStory(id, { money: readsStripe, leads: hasPlatformPower(auth.role, 'growth') }),
     recordOpened({ actorUserId: auth.user.id, actorEmail: auth.user.email, kind: 'club', recordId: id, viaFind: via === 'find' }),
     hasPlatformPower(auth.role, 'club_billing') ? freeTimeDoorFacts(id, { id: auth.user.id, email: auth.user.email ?? '' }) : Promise.resolve(null),
   ]);
