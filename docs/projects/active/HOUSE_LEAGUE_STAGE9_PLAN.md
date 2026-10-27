@@ -725,3 +725,36 @@ open it, and the menu's top level is Stage 13's.
   page. **Owed:** the dev server restart before the owner tests (new files); `/docs` (Part 6); the 11b walk at the end of 11b.
   **Next:** Part 4 (Practice time), `CLUB_TIER_STAGE11B_PART4_BUILD_PROMPT.md`. Offered to the owner 2026-10-27, not ruled:
   walk Parts 3 and 4 together right after Part 4 (the prompt asks at hand-off).
+- **2026-10-27 · 11b Part 4 (Practice time): BUILT, /review done** (prompt `CLUB_TIER_STAGE11B_PART4_BUILD_PROMPT.md`; no
+  migration — migs 392–393's step was already there). Commits: `6b61e109b` (the planner, `lib/league-practice-time.ts`, pure,
+  tested with the drawing's numbers; `partsShapes` split out of `partsWords`) · `f64c23958` (the route: GET `read`, POST `run`
+  on the season; the server re-reads, refuses `changed` unless it is what the window `saw` — slots and teams — and plans
+  again; the client's rows are never sent) · `20d7c2b70` (the window, h1; Tools › Practice time after House league's time;
+  "+ Give U12 more time" opens House league's time on that piece, new `openOn`, and Practice time comes back) · `42f77b4c6`
+  (h2 a practice's window, read first, one component for 9d-2a's views; "From {schedule}" on the card; a hand-booked
+  practice's pencil, a series asking This practice only / This & future first; the clash line checks exactly the dates an
+  edit moves) · `ddf7b76fa` (11b·C, the coach's team page lists practices from today on; the page itself gained only its
+  import and one line — another session's roster edits to it stayed uncommitted) · `fb86d7c96` (guards: league-season-scope,
+  a record window's width) · `60aee2636` (the /review fixes). **Verified on DEV end to end** (`.probe/11b4/e2e.ts`, rolled
+  back): the drawing's numbers wrote 40 practices in their slots, a second hand-out wrote nothing twice, 2 at once replaced
+  the plan, and **Part 3's red question for real** — giving back Wednesdays on one facility removed exactly the 20 practices
+  on it. Dev holds no house-league time, so the window itself has not been seen with data.
+  **Found and fixed on the way:** today's cancel route would cancel a practice handed out from the club's time; it (and the
+  new edit) now refuses one (9d2·5). **/review (4 lenses) — fixed:** High: the planner counted every part that ever appears
+  as a week's time, so a slot moved mid-season promised 1 a week while each team practised half the weeks — each run of
+  weeks with the same parts is now planned on its own, the window's figures the typical week's; a slot ending at midnight;
+  "Every Monday" only when weekly; a series edit keeps each practice's own notes unless changed; an impossible date is
+  refused in words; a failed series edit re-reads; the scope step's width and Cancel; House league's time on a piece shows
+  only loading until read; Tools never reopens Practice time. **Recorded, not changed (Low):** a slot that starts in the
+  seconds between the read and the step is still planned over; the `saw` check compares ids, not a slot's times (the club's
+  edits remove and re-add slots); a hand-out re-run revives a club practice the club cancelled only if that slot is still the
+  division's practice time; the series edit is a loop, not one transaction (a retry heals); the coach page lists at most 200.
+  **Builder's calls, said at hand-off:** short time is one ring over every seat (every team goes without equally; a team
+  moves parts while time is short) rather than naming teams; h2's source line and hint reuse the rep coach's words ("Only the
+  club can move or remove this practice") — the drawing's caption asks for one spelling; the clubs' slots are the unit, so
+  a 60-minute practice on the club's 90-minute slots fits once per slot. **Owner asks:** (1) teams at once FILLS the time —
+  with room for it, 2 at once gives every team 2 a week rather than 1 a week on half the time; a "Practices a week" choice is
+  not drawn; (2) walk Parts 3 and 4 together now. **Owed:** /marketing's one pass on the [marketing] words, then the settled
+  set appended to `HOUSE_LEAGUE_STAGE9D2_11B_COPY.md`; the k2 row figure's practice count ("12 hours · 10 practices a week",
+  copy ruling 9) is not built; the dev server restart (new files); `/docs` (Part 6). **Next:** Part 5 (Send the changes'
+  house-league rows and the emails).

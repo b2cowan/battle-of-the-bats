@@ -1481,7 +1481,11 @@ division as a sharing group, and the absent state without the club scheduler. To
 and admin only. **2026-10-27 · Part 3 built** (`HOUSE_LEAGUE_STAGE9_PLAN.md` §9 has the commits): a league admin reads a
 club schedule through a HOUSE-LEAGUE route (an allow-list projection, rep names only with Rep teams and within the
 member's groups) and changes one date of house-league time there; the scheduler's gate is unchanged. Its one write,
-`league_slot_uses_apply` (migs 394, 397), locks the schedule before the slots, as Send the changes does.
+`league_slot_uses_apply` (migs 394, 397), locks the schedule before the slots, as Send the changes does. **2026-10-27 ·
+Part 4 built** (Practice time, h1 + h2 + 11b·C; `HOUSE_LEAGUE_STAGE9_PLAN.md` §9 has the commits): its own planner, not this
+engine — the club's slots are already cut, Practice time cuts pieces INSIDE a slot, gives every team the same number a week,
+and rotates early and late times within a team's part. Teams at once is Practice time's (11b·B), never the sharing rules.
+A practice handed out from the club's time is refused cancel and edit from the house-league side.
 
 **Gates to add:** a "one model of time" guard (no second slot table); the screens guards; the arithmetic of a permit's
 use recomputed from rows (the `check:club-money-arithmetic` pattern) for the Held / Booked / Unused band.
