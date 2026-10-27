@@ -28,6 +28,8 @@ import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
 import { cancelScheduledEmail } from '@/lib/email-sender';
 import { notify } from '@/lib/notify';
+import { syncFeeInvoiceFromEvent } from '@/lib/platform-stripe-fees';
+import { FEE_INVOICE_META } from '@/lib/online-payment-words';
 import { orgOwnerUserIds } from '@/lib/notify-recipients';
 import { clearSettled } from '@/lib/needs-attention';
 import type { OrgPlan } from '@/lib/types';
@@ -90,6 +92,14 @@ export const POST = withObservability(async (req: Request) => {
     : eventObject.customer?.id ?? null;
 
   if (!customerId) {
+    return new Response('ok', { status: 200 });
+  }
+
+  // 12d-1 Part 4: a club's own invoice of Stripe fees is written to its own row and NOTHING else. Read before the switch,
+  // because the invoice cases below would read its payment as the subscription's (a comped club with no subscription would
+  // turn "active", and a failed fee payment "past due").
+  if (event.type.startsWith('invoice.') && (event.data.object as Stripe.Invoice).metadata?.[FEE_INVOICE_META]) {
+    await syncFeeInvoiceFromEvent(event.data.object as Stripe.Invoice);
     return new Response('ok', { status: 200 });
   }
 

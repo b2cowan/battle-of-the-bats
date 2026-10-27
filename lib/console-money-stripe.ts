@@ -5,6 +5,7 @@ import {
   REFUND_WORDS, decideRefund, formatCents, cardWords, remainingCents, stripeReasonFor, stripeRefusalWords,
   type MoneyCharge, type MoneyInvoice, type MoneyRead, type MoneyRefund, type MoneySubscription, type RefundAsk,
 } from './console-money';
+import { FEE_INVOICE_META } from './online-payment-words';
 
 /**
  * The Money tab's server half (Support console Stage 3; owner Q1–Q4 2026-10-26; drawings A–C, G, H). Stripe is read live
@@ -77,6 +78,7 @@ export function toMoneyInvoice(inv: Stripe.Invoice, prices: PriceMap): MoneyInvo
     cycle: plan?.cycle ?? null,
     fromPlanId: credit ? priceOf(credit)?.planId ?? null : null,
     description: subscriptionId ? null : (charged?.description ?? null),
+    feeInvoice: !!inv.metadata?.[FEE_INVOICE_META],
   };
 }
 

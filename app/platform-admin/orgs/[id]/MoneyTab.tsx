@@ -24,6 +24,7 @@ import { errorOf, sendJson } from '../../console-fetch';
 import kit from '../../console.module.css';
 import styles from '../../record.module.css';
 import money from './money.module.css';
+import StripeFeesPanel from './StripeFeesPanel';
 
 /** What the server knows of this person and club before any click (the refund route asks the same rule with them). */
 type RefundGate = { role: string; ownClub: boolean; demoClub: boolean; refundsLast24h: number };
@@ -62,9 +63,11 @@ export function useClubMoney(orgId: string, enabled: boolean) {
 const YEAR_MS = 365 * 86_400_000;
 
 export default function MoneyTab({
-  orgId, orgName, ours, readsStripe, stripeBase, club, openChargeId, onChargeClosed, onRefunded,
+  orgId, orgName, ours, readsStripe, billsClub = false, stripeBase, club, openChargeId, onChargeClosed, onRefunded,
 }: {
   orgId: string;
+  /** 12d-1 Part 4: may bill the club (`club_billing`), so the fees panel's Retry shows. */
+  billsClub?: boolean;
   orgName: string;
   ours: OurMoneyRecord;
   readsStripe: boolean;
@@ -248,6 +251,9 @@ export default function MoneyTab({
           )}
         </>
       )}
+
+      {/* 12d-1 Part 4: the Stripe fees the club's online payments caused, billed to the club; ours, read from our rows. */}
+      <StripeFeesPanel orgId={orgId} canRetry={billsClub} />
 
       <p className={kit.caption}>Families’ payments to this club are the club’s own money, on its own Stripe account. They are never shown or refunded here.</p>
 

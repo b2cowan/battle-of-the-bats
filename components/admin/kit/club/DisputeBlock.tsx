@@ -15,7 +15,7 @@ import { Copy } from 'lucide-react';
 import { Facts } from './money/MoneyKit';
 import { RepChip } from './RepKit';
 import { disputeChip, disputeOutcome, isInquiry, type DisputeRecord } from '@/lib/online-payment-dispute';
-import { DISPUTE_WORDS as D, PAYOUTS_WORDS, disputeDue, disputeWhyFull, money } from '@/lib/online-payment-words';
+import { DISPUTE_WORDS as D, PAYOUTS_WORDS, STRIPE_FEE_WORDS, disputeDue, disputeWhyFull, money } from '@/lib/online-payment-words';
 import { CARD_REFUND_WORDS } from '@/lib/house-league-money-words';
 import { formatStoredDate } from '@/lib/timezone';
 import { childList } from '@/lib/league-pay-words';
@@ -123,6 +123,10 @@ export default function DisputeBlock({ d, orgSlug, team, isPhone = false }: {
       ? [D.answeredLabel, day(d.answeredAt)]
       : d.dueBy ? [pastDue ? D.wasDueLabel : D.answerByLabel, disputeDue(d.dueBy, { clock: true })] : null,
     d.showFee && d.feePaidFrom === 'club' && d.stripeFee != null ? [D.fee, D.feeFromClub(money(d.stripeFee))] : null,
+    // 12d-1 Part 4 (ruling 5): a fee Stripe charged FieldLogicHQ is billed to the club, on the invoice that carries it.
+    d.showFee && d.feePaidFrom === 'platform' && d.stripeFee != null
+      ? [D.fee, d.feeWhere === 'next' ? STRIPE_FEE_WORDS.disputeFeeNext(money(d.stripeFee)) : STRIPE_FEE_WORDS.disputeFeeOwn(money(d.stripeFee))]
+      : null,
     [D.ref, <Reference key="ref" value={d.stripeDisputeId} isPhone={isPhone} />],
   ];
   const heading = inquiry ? D.headingInquiry : D.heading;

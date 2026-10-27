@@ -533,8 +533,10 @@ export default function RegistrationsScreen() {
     const stayed: string[] = [...skipped];
     let failed = 0;
     for (const reg of families.values()) {
-      const r = await patchRegistration(orgQuery, seasonId, reg.id, { payLink: true });
-      if (r.ok) sent += 1; else { stayed.push(reg.id); failed += 1; }
+      const r = await patchRegistration(orgQuery, seasonId, reg.id, { payLink: true, bulk: true });
+      if (r.ok) sent += 1;
+      else if (r.code === 'dispute_lost') { stayed.push(reg.id); disputeSkipped += 1; } // a lost sibling (12d-1 Part 4)
+      else { stayed.push(reg.id); failed += 1; }
     }
     markBusy(ids, false);
     const P = REGS_WORDS.payLink;

@@ -203,6 +203,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
     },
     money: {
       readsStripe,
+      billsClub: hasPlatformPower(auth.role, 'club_billing'),
       // Our side of the comparison: the plan the club PAYS for and the stored billing columns; free time shown, never compared.
       ours: {
         planId: plan,

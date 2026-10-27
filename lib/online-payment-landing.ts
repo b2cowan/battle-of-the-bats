@@ -8,7 +8,7 @@ import { canConnectPayouts, canRefundLeagueOnline, canRefundOnline, isPayoutsTre
 import { factsFromStripe, factsFromRow, payoutsPath, payoutsState, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from './online-payment-account';
 import { listRefunds, requestBankDebit, retrieveAccount, retrieveCheckout, retrieveDispute, refundToCard } from './stripe-connect';
 import { disputeFromStripe, isDisputeOpen, isInquiry, refundBlockedByDispute } from './online-payment-dispute';
-import { disputeOpenedEmailHtml } from './online-dispute-email';
+import { disputeOpenedEmailHtml, disputeReminderEmailHtml } from './online-dispute-email';
 import { sendEmail } from './email';
 import { sendOnlineReceiptOnce, sendRefundEmail } from './online-payment-receipt';
 import { claimRefundEmail, sendLeagueRefundEmail } from './online-refund-email';
@@ -16,7 +16,7 @@ import { childList } from './league-pay-words';
 import { pinLeagueRefund, pinTeamRefund } from './online-refund-pinning';
 import { bankReturnReason } from './bank-debit';
 import { sendDebitReturnedEmail, sendDebitReversedEmail, sendDebitStartedEmail } from './bank-debit-email';
-import { recordDebitFee } from './platform-debit-fee';
+import { platformDisputeFees, recordDisputeFees, recordForeignCardFee, recordReturnedDebitFee } from './platform-stripe-fees';
 import { possessive } from './utils';
 import { DEBIT_NOTICE_WORDS as DW, DISPUTE_WORDS, LEAGUE_ONLINE_NOTICE_WORDS as LW, OVER_WORDS as OW, cardLabel, disputeDue, disputeWhyFull, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney, reasonFull } from './online-payment-words';
 import { formatStoredDate } from './timezone';
@@ -305,10 +305,11 @@ const DEBIT_COLUMNS = 'id, org_id, flow, team_id, tournament_id, season_id, tota
 
 /**
  * After a debit came back (returned while clearing, or reversed after it cleared): the desk's notice (one per debit,
- * naming every child, words §3.6), Stripe's failure fee recorded against the club (§0k answer 2), and — for a return —
- * any decision made while it cleared stamped 'returned' (nothing was taken, so nothing is sent back or kept).
+ * naming every child, words §3.6), Stripe's fee recorded against the club (§0k answer 2), and — for a return — any
+ * decision made while it cleared stamped 'returned' (nothing was taken, so nothing is sent back or kept). A reversal's fee
+ * is Stripe's own figure on the dispute (12d-1 ruling 5); a return's is the published one (Stripe reports none).
  */
-async function afterDebitBack(opId: string, kind: 'returned' | 'reversed'): Promise<void> {
+async function afterDebitBack(opId: string, kind: 'returned' | 'reversed', stripeDisputeId: string | null = null): Promise<void> {
   const { data } = await supabaseAdmin.from('online_payments').select(DEBIT_COLUMNS).eq('id', opId).maybeSingle();
   const op = data as DebitRow | null;
   if (!op) return;
@@ -317,7 +318,8 @@ async function afterDebitBack(opId: string, kind: 'returned' | 'reversed'): Prom
       .eq('online_payment_id', op.id).is('outcome', null);
   }
   await raiseDebitNotice(op, kind);
-  await recordDebitFee({ orgId: op.org_id, onlinePaymentId: op.id, kind, livemode: op.livemode });
+  if (kind === 'returned') await recordReturnedDebitFee({ orgId: op.org_id, onlinePaymentId: op.id, livemode: op.livemode });
+  else if (stripeDisputeId) await recordDisputeFees({ orgId: op.org_id, onlinePaymentId: op.id, rail: 'bank_debit', stripeDisputeId, disputeId: null, livemode: op.livemode });
 }
 
 async function raiseDebitNotice(op: DebitRow, kind: 'returned' | 'reversed'): Promise<void> {
@@ -391,7 +393,20 @@ export async function reverseDebit(stripeAccountId: string, dispute: Stripe.Disp
   if (error) throw new Error(error.message);
   // A redelivery owes the notice and the fee again (each once-only); never the family's email twice.
   if (!(res as { already?: boolean } | null)?.already) await sendDebitReversedEmail(op.id as string);
-  await afterDebitBack(op.id as string, 'reversed');
+  await afterDebitBack(op.id as string, 'reversed', dispute.id);
+}
+
+/**
+ * 12d-1 Part 4: a reversed debit's fee is read from FieldLogicHQ's balance on EVERY dispute event, not only `created`, so a
+ * fee Stripe posts after the first event is still recorded (each kind once).
+ */
+export async function recordDebitDisputeFee(stripeAccountId: string, dispute: Pick<Stripe.Dispute, 'id' | 'charge'>): Promise<void> {
+  const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
+  if (!chargeId) return;
+  const { data: op } = await supabaseAdmin.from('online_payments').select('id, org_id, rail, status, stripe_account_id, livemode')
+    .eq('stripe_charge_id', chargeId).maybeSingle();
+  if (!op || op.stripe_account_id !== stripeAccountId || op.rail !== 'bank_debit' || op.status !== 'reversed') return;
+  await recordDisputeFees({ orgId: op.org_id as string, onlinePaymentId: op.id as string, rail: 'bank_debit', stripeDisputeId: dispute.id, disputeId: null, livemode: !!op.livemode });
 }
 
 // ── A card dispute (12d-1 Part 3) ───────────────────────────────────────────────────────────────
@@ -483,13 +498,23 @@ export async function applyCardDispute(stripeAccountId: string, event: Pick<Stri
     console.error('[online-payment-landing] a dispute in a status this code doesn’t know:', dispute.id, dispute.status);
     return;
   }
+  // Part 4 (ruling 5): a fee Stripe charged FieldLogicHQ for this dispute, read from the platform's balance. Recorded on the
+  // dispute as the platform's when the club's balance showed none, and billed to the club at Stripe's figure below.
+  const platformFees = await platformDisputeFees(dispute.id).catch((e: unknown) => {
+    console.error('[online-payment-landing] the platform’s dispute fees weren’t read:', dispute.id, e instanceof Error ? e.message : String(e));
+    return null;
+  });
+  const platformFee = read.stripeFee == null && platformFees && platformFees.dispute > 0 ? platformFees.dispute / 100 : null;
   const { data: res, error } = await supabaseAdmin.rpc('online_payment_dispute_apply', {
     p_online_payment: op.id, p_dispute: dispute.id, p_status: read.status, p_reason: read.reason, p_amount: read.amount,
-    p_held: read.held, p_due_by: read.dueBy, p_answered: read.answered, p_stripe_fee: read.stripeFee,
-    p_fee_paid_from: read.feePaidFrom, p_livemode: read.livemode, p_opened_at: read.openedAt,
+    p_held: read.held, p_due_by: read.dueBy, p_answered: read.answered, p_stripe_fee: platformFee ?? read.stripeFee,
+    p_fee_paid_from: platformFee != null ? 'platform' : read.feePaidFrom, p_livemode: read.livemode, p_opened_at: read.openedAt,
   });
   if (error) throw new Error(error.message);
   const out = res as { disputeId: string; lostNow?: boolean; wonBack?: boolean; over?: number };
+  if (platformFees) {
+    await recordDisputeFees({ orgId: op.org_id, onlinePaymentId: op.id, rail: 'card', stripeDisputeId: dispute.id, disputeId: out.disputeId, livemode: op.livemode, fees: platformFees });
+  }
   await afterDisputeApplied(op.id, out);
 }
 
@@ -623,6 +648,44 @@ async function sendDisputeOpenedEmail(org: Organization, op: DisputedPay, d: Dis
   } catch (e) {
     console.error('[online-payment-landing] the dispute email was not sent:', d.id, e instanceof Error ? e.message : String(e));
   }
+}
+
+/**
+ * §1.6 email 2 (12d-1 Part 4, the daily job): the person who answers is reminded three days before the answer is due, once,
+ * and only while the dispute is open and unanswered. Decided from the rows (open, unanswered, due within three days, never
+ * reminded), so a rerun sends nothing twice. Stripe's own read of "answered" is the dispute row's, kept by every event.
+ */
+export async function sendDisputeReminders(now: Date = new Date()): Promise<number> {
+  const soon = new Date(now.getTime() + 3 * 86_400_000).toISOString();
+  const { data } = await supabaseAdmin.from('online_payment_disputes')
+    .select('id, org_id, online_payment_id, status, due_by, answered')
+    .in('status', ['warning_needs_response', 'needs_response']).eq('answered', false).is('reminder_emailed_at', null)
+    .gt('due_by', now.toISOString()).lte('due_by', soon).limit(200);
+  let sent = 0;
+  for (const d of (data ?? []) as Array<{ id: string; org_id: string; online_payment_id: string; due_by: string }>) {
+    try {
+      const [org, { data: opData }, answerer] = await Promise.all([
+        orgById(d.org_id),
+        supabaseAdmin.from('online_payments').select(DISPUTED_PAY_COLUMNS).eq('id', d.online_payment_id).maybeSingle(),
+        disputeAnswerer(d.org_id),
+      ]);
+      const op = opData as DisputedPay | null;
+      if (!org || !op || !answerer.email) continue;
+      const who = await disputeWho(op);
+      const html = disputeReminderEmailHtml({
+        club: org.name, forWhom: who.many ?? who.name, record: who.many ? null : who.record, receiptNo: String(op.receipt_no ?? ''),
+        dueBy: d.due_by, test: !op.livemode,
+        link: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}${recordHref(org, op, who.firstReg && !who.many ? { regId: who.firstReg } : undefined)}`,
+      });
+      const res = await sendEmail(answerer.email, html.subject, html.html, { kind: 'card_dispute_reminder', orgId: org.id, idempotencyKey: `dispute-reminder:${d.id}` });
+      if (res.status !== 'sent') continue;
+      await supabaseAdmin.from('online_payment_disputes').update({ reminder_emailed_at: new Date().toISOString() }).eq('id', d.id).is('reminder_emailed_at', null);
+      sent += 1;
+    } catch (e) {
+      console.error('[online-payment-landing] the dispute reminder was not sent:', d.id, e instanceof Error ? e.message : String(e));
+    }
+  }
+  return sent;
 }
 
 /** What Stripe holds: its own figure, or — read before Stripe attached the withdrawal — the disputed amount, which a
@@ -787,6 +850,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     // and those steps left a "send it back" answer waiting forever). Each is once-only, so a plain replay changes nothing.
     if (op.flow === 'league_signup') await raiseLeagueUnrecorded(op);
     else await raiseOverpaid(op.id); // 12d-1: the row is the truth, so a replay still owes the item a crash missed
+    await recordForeignCardFee(op.id); // 12d-1 Part 4: once; a crash before it is caught here
     await carryOutDecisions(op.id);
     await sendOnlineReceiptOnce(op.id);
     return 'already';
@@ -817,6 +881,9 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
   // 12d-1: the card's country, written once Stripe says it is paid, before the landing (a payment that can't be recorded
   // is still the club's cost on a card from outside its country; Part 4 bills from it).
   await writeCardCountry(op.id, card);
+  // 12d-1 Part 4: Stripe's extra cost on a card issued outside the club's country is the club's, recorded now that Stripe
+  // says it is paid (recorded or not); the family's total is unchanged.
+  await recordForeignCardFee(op.id);
   if (op.flow === 'league_signup') return landLeague(op, paidAt, card, mismatch);
 
   const { data: landed, error: landError } = mismatch

@@ -33,6 +33,7 @@ import { ownPlanOf } from '@/lib/free-time';
 import { subscriptionStatusLabel } from '@/lib/platform-labels';
 import styles from './billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import StripeFeesList from '@/components/admin/kit/club/StripeFeesList';
 
 
 const STATUS_BADGE: Record<SubscriptionStatus, string> = {
@@ -820,6 +821,9 @@ function BillingPagePlans() {
       </div>
 
       {freeCopy && <FreeTimeBand band={freeCopy.band} />}
+
+      {/* 12d-1 Part 4: the Stripe fees the club's online payments caused, on every plan; absent until there is one. */}
+      {!isTeamWorkspaceBilling && canManageBilling && <StripeFeesList slug={currentOrg.slug} />}
 
       {isFoundingSeason && (
         <div className={styles.foundingSeasonBanner}>

@@ -29,7 +29,7 @@ const rec = (over: Partial<DisputeRecord> = {}): DisputeRecord => ({
   id: 'd1', status: 'needs_response', reason: 'fraudulent', amount: 150, held: 150, dueBy: '2026-11-11T23:59:00Z', answered: false,
   answeredAt: null, openedAt: '2026-11-01T15:00:00Z', closedAt: null, stripeFee: 15, feePaidFrom: 'club', stripeDisputeId: 'du_1',
   lostBookedAt: null, wonBackAt: null, openedEmailedAt: null, receiptNo: 1041, answererName: 'Sam Lee', youAnswer: false, canCopy: true,
-  showFee: false, factsList: '', factsText: '', refundedOn: null, children: [], paidAgain: [], owesAgain: '', book: 'season', ...over,
+  showFee: false, feeWhere: null, factsList: '', factsText: '', refundedOn: null, children: [], paidAgain: [], owesAgain: '', book: 'season', ...over,
 });
 
 describe('the Fee cell through a dispute’s life (words §1.1)', () => {

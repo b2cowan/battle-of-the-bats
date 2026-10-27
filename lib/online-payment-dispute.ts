@@ -38,7 +38,7 @@ export type DisputeRead = {
   /** Stripe's dispute fee as Stripe charged it on the club's balance; null until Stripe reports one. */
   stripeFee: number | null;
   /** 'club' when that fee came off the club's own Stripe balance (the sandbox's card case, ruling 5): recorded, never
-   *  invoiced. A fee Stripe charges FieldLogicHQ instead is read from the platform's balance by Part 4. */
+   *  invoiced. A fee Stripe charges FieldLogicHQ instead is read from the platform's balance (`platformDisputeFees`). */
   feePaidFrom: 'club' | null;
   livemode: boolean;
   openedAt: string;
@@ -111,6 +111,9 @@ export type DisputeRecord = DisputeView & {
   youAnswer: boolean;
   canCopy: boolean;
   showFee: boolean;
+  /** `{invoiceWhere}` for a fee Stripe charged FieldLogicHQ (12d-1 Part 4): the next subscription invoice, or the club's
+   *  own; null when there is no such fee or this reader doesn't read the fee line. */
+  feeWhere: 'next' | 'own' | null;
   /** `{factsList}` (the sentence under the buttons) and the text "Copy the facts" puts on the clipboard (§1.3). */
   factsList: string;
   factsText: string;

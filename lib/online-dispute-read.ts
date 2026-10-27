@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { disputeAnswerer } from './online-payment-landing';
+import { invoiceWhere } from './platform-stripe-fees';
 import { clubPublicContact } from './club-email-context';
 import { childList } from './league-pay-words';
 import { currentDispute, isDisputeOpen, type DisputeRecord, type DisputeView } from './online-payment-dispute';
@@ -91,6 +92,7 @@ export async function readDisputes(p: {
   const club = (org?.name as string | undefined) ?? '';
   const policy = ((acct?.refund_policy as string | null) ?? '').trim() || null;
   const firstNames = (ids: readonly string[]) => ids.map(id => regs.get(id)?.player_first_name ?? '').filter(Boolean);
+  let feeWhere: 'next' | 'own' | undefined;
 
   for (const op of pays.values()) {
     const views: Array<DisputeView & { row: Row }> = rows.filter(r => r.online_payment_id === op.id).map(r => ({
@@ -142,6 +144,8 @@ export async function readDisputes(p: {
     ].filter((x): x is string => !!x);
     const youAnswer = answerer.ids.includes(p.viewer.userId);
     const canCopy = p.viewer.canCopy || youAnswer;
+    // Stripe's answer, read once per screen and only when a fee line needs it (an extra read never takes a screen down).
+    if (youAnswer && view.feePaidFrom === 'platform' && feeWhere === undefined) feeWhere = await invoiceWhere(p.orgId).catch(() => 'own' as const);
     out.set(op.id, {
       ...view,
       // What this reader may not use is never sent (/review 2026-10-27): the clipboard text carries the payer's details,
@@ -153,6 +157,7 @@ export async function readDisputes(p: {
       youAnswer,
       canCopy,
       showFee: youAnswer,
+      feeWhere: youAnswer && view.feePaidFrom === 'platform' ? feeWhere ?? 'own' : null,
       factsList: canCopy ? childList(facts) : '',
       factsText: !canCopy ? '' : disputeFactsText({
         test: !op.livemode, receiptNo, amount, paidDay: day(op.paid_on, true) ?? '', cardLast4: op.card_last4,

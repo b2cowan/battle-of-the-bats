@@ -12,6 +12,8 @@ import { createClubAccount, dashboardLink, onboardingLink, prefillClubProfile, r
 import { syncPayoutsAccount } from '@/lib/online-payment-landing';
 import { stripeProfileFor } from '@/lib/online-payment-profile';
 import { PAYMENTS_TERMS_VERSION } from '@/lib/online-payment-words';
+import { effectiveOrgFactsForId } from '@/lib/entitlement-grants';
+import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -102,8 +104,19 @@ export const GET = withObservability(async (req: Request) => {
     disconnectedBy: row?.disconnected_at ? await nameOf(row.disconnected_by) : null,
     teamsStillOwing: isOwner && facts && !facts.disconnectedAt ? await teamsStillOwing(ctx.org.id) : null,
     debitsClearing: isOwner && facts && !facts.disconnectedAt ? await debitsClearing(ctx.org.id) : null,
+    // 12d-1 Part 4 (words §3.4): a club that pays nothing for its plan reads "Your plan doesn't change" beside the
+    // other-fees line, so a Stripe fee is never read as its comp being withdrawn. An extra read: a failure omits it.
+    planFree: await planIsFree(ctx.org.id),
   });
 }, { route: '/api/admin/payouts' });
+
+async function planIsFree(orgId: string): Promise<boolean> {
+  const [facts, founding] = await Promise.all([
+    effectiveOrgFactsForId(orgId).catch(() => null),
+    workspaceHoldsFoundingComp(orgId).catch(() => false),
+  ]);
+  return !!facts?.freeTime || founding;
+}
 
 export const PATCH = withObservability(async (req: Request) => {
   const body = await req.json().catch(() => ({}));

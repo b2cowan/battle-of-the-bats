@@ -29,6 +29,7 @@ const NO_REASON_FILES: Record<string, string> = {
   'app/api/platform-admin/dues-reminders/route.ts': 'product job (scheduler sweep)',
   'app/api/platform-admin/insights-digest/route.ts': 'product job (scheduler sweep)',
   'app/api/platform-admin/schedule-change-notices/route.ts': 'product job (scheduler sweep)',
+  'app/api/platform-admin/orgs/[id]/money/stripe-fees/[feeId]/retry/route.ts': 'work tool: re-runs the product’s own billing of a Stripe fee that failed (12d-1 Part 4); the amount and the decision are the product’s, and the fee’s stored error is the reason',
   'app/api/platform-admin/metrics/snapshot/route.ts': 'product job (a person presses run)',
   'app/api/platform-admin/observability/sweep/route.ts': 'product job (a person presses run)',
   'lib/team-workspace-provisioning.ts': 'product job (checkout / webhook; the actor is the customer)',

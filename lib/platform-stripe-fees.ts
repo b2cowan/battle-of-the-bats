@@ -1,0 +1,520 @@
+import 'server-only';
+import type Stripe from 'stripe';
+import { supabaseAdmin, getOrgOwnerEmail } from './supabase-admin';
+import { stripe } from './stripe';
+import { RETURNED_BANK_DEBIT_FEE_CENTS } from './plan-config';
+import { foreignCardFeeCents } from './online-payment-fee';
+import { ensureStripeCustomer } from './billing-setup';
+import { sendEmail, escapeHtml } from './email';
+import { warmEmailButton, warmEmailDocument, warmEmailParagraph, warmEmailSmall } from './email-envelope-warm';
+import { emailFactsPanel } from './online-refund-block';
+import {
+  FEE_INVOICE_META, ONLINE_EMAIL_WORDS as E, PLATFORM_CONTACT_EMAIL, STRIPE_FEE_WORDS as W, isFeeCredit, money, type StripeFeeKind,
+} from './online-payment-words';
+import { addCalendarMonths, formatStoredDate, orgMonthKey, zonedWallClockToUtc } from './timezone';
+
+/**
+ * EVERY STRIPE FEE A CLUB'S ONLINE PAYMENTS CAUSE, RECOVERED FROM THE CLUB (Club Tier Stage 12c Part 6, as the returned-
+ * debit fee; widened by 12d-1 Part 4). Owner rulings: a comp covers the subscription and nothing else, so every club pays,
+ * comped and free included (2026-10-26); "bill only what Stripe charged us" (12d-1 ruling 5); a club with no subscription
+ * invoice to ride on gets ONE invoice of its own a month, sent on the 1st, in our email (2026-10-27).
+ *
+ * One path for every kind (`platform_stripe_fees`, mig 390):
+ *   - recorded once per payment, kind (and dispute), at Stripe's own figure where Stripe gives one, else at the published
+ *     rate held in `lib/plan-config.ts` (`amount_source = 'rate'`);
+ *   - billed at once as a line on a live, undiscounted, CAD subscription's next invoice; otherwise left for the club's own
+ *     monthly invoice (`sendMonthlyFeeInvoices`, the daily job);
+ *   - `test_mode` is the one exemption left (a test payment never reaches a live invoice).
+ * A credit (a returned answering fee) is a negative line on whichever invoice carries it. Never throws into a money path:
+ * a failure is stored on the row (`bill_error`) and retried by the daily job and from platform admin.
+ */
+
+const LIVE_KEY = () => (process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_live_');
+/** Ours, not Stripe's: how long a club has to pay its own invoice. Printed from Stripe's due date, never typed. */
+const FEE_INVOICE_DAYS_DUE = 30;
+const LIVE_SUBSCRIPTION = new Set(['active', 'trialing', 'past_due']);
+
+type FeeRow = {
+  id: string; org_id: string; online_payment_id: string; kind: StripeFeeKind; amount: number; livemode: boolean;
+  exempt_reason: string | null; billed_at: string | null; billed_on: string | null; fee_invoice_id: string | null;
+  bill_error: string | null; bill_attempts: number; created_at: string; dispute_id: string | null; amount_source: 'stripe' | 'rate';
+  stripe_invoice_item_id: string | null;
+};
+const FEE_COLUMNS = 'id, org_id, online_payment_id, kind, amount, livemode, exempt_reason, billed_at, billed_on, fee_invoice_id, bill_error, bill_attempts, created_at, dispute_id, amount_source, stripe_invoice_item_id';
+
+const errText = (err: unknown) => (err instanceof Error ? err.message : String(err)).slice(0, 500);
+const signedCents = (f: Pick<FeeRow, 'kind' | 'amount'>) => Math.round(Number(f.amount) * 100) * (isFeeCredit(f.kind) ? -1 : 1);
+
+// ── Recording ───────────────────────────────────────────────────────────────────────────────────
+
+/** Record one fee and bill it. A replay (the row's key exists) writes nothing. Never throws. */
+export async function recordStripeFee(p: {
+  orgId: string; onlinePaymentId: string; kind: StripeFeeKind; amountCents: number; source: 'stripe' | 'rate';
+  livemode: boolean; disputeId?: string | null;
+}): Promise<void> {
+  if (!(p.amountCents > 0)) return;
+  try {
+    const { data: row, error } = await supabaseAdmin.from('platform_stripe_fees')
+      .insert({
+        org_id: p.orgId, online_payment_id: p.onlinePaymentId, kind: p.kind, amount: p.amountCents / 100, livemode: p.livemode,
+        amount_source: p.source, dispute_id: p.disputeId ?? null,
+      })
+      .select('id').maybeSingle();
+    if (error) {
+      if (error.code === '23505') return; // recorded already (a replayed event)
+      throw error;
+    }
+    if (row) await billFee(row.id as string);
+  } catch (err) {
+    console.error('[platform-stripe-fees] not recorded:', p.kind, p.onlinePaymentId, errText(err));
+  }
+}
+
+/** 12c: Stripe's fee for a RETURNED (failed) bank debit, from the published figure (Stripe reports none per debit). */
+export async function recordReturnedDebitFee(p: { orgId: string; onlinePaymentId: string; livemode: boolean }): Promise<void> {
+  await recordStripeFee({ ...p, kind: 'returned', amountCents: RETURNED_BANK_DEBIT_FEE_CENTS, source: 'rate' });
+}
+
+/**
+ * What Stripe charged FieldLogicHQ for a dispute: the PLATFORM's balance transactions whose source is the dispute (the
+ * sandbox showed a bank debit's CA$5 there, "Dispute fee"; a card dispute's fee came off the club's own balance instead and
+ * is never billed, ruling 5). An answering ("countered") fee is told apart by its description; a positive amount is a fee
+ * Stripe gave back (the answering fee, on a win). Cents.
+ */
+export async function platformDisputeFees(stripeDisputeId: string): Promise<{ dispute: number; answer: number; returned: number }> {
+  const out = { dispute: 0, answer: 0, returned: 0 };
+  const page = await stripe.balanceTransactions.list({ source: stripeDisputeId, limit: 100 });
+  for (const t of page.data) {
+    if (t.reporting_category !== 'fee' && t.type !== 'stripe_fee') continue;
+    if (t.amount > 0) out.returned += t.amount;
+    else if (/counter|answer|response/i.test(t.description ?? '')) out.answer += -t.amount;
+    else out.dispute += -t.amount;
+  }
+  return out;
+}
+
+/**
+ * Record a dispute's fees that Stripe charged FieldLogicHQ, at Stripe's figures. A card dispute's go on its dispute row's
+ * kinds; a bank debit's dispute is the reversed debit's fee (`reversed`, 12c's kind). Read on every dispute event and by
+ * the daily job, so a fee Stripe posts later is still found; each kind is written once.
+ */
+export async function recordDisputeFees(p: {
+  orgId: string; onlinePaymentId: string; rail: 'card' | 'bank_debit'; stripeDisputeId: string; disputeId: string | null;
+  livemode: boolean; fees?: { dispute: number; answer: number; returned: number };
+}): Promise<void> {
+  try {
+    const fees = p.fees ?? await platformDisputeFees(p.stripeDisputeId);
+    const base = { orgId: p.orgId, onlinePaymentId: p.onlinePaymentId, livemode: p.livemode, source: 'stripe' as const };
+    if (p.rail === 'bank_debit') {
+      await recordStripeFee({ ...base, kind: 'reversed', amountCents: fees.dispute });
+      return;
+    }
+    if (!p.disputeId) return;
+    await recordStripeFee({ ...base, kind: 'dispute', amountCents: fees.dispute, disputeId: p.disputeId });
+    await recordStripeFee({ ...base, kind: 'dispute_answer', amountCents: fees.answer, disputeId: p.disputeId });
+    await recordStripeFee({ ...base, kind: 'dispute_answer_returned', amountCents: fees.returned, disputeId: p.disputeId });
+  } catch (err) {
+    console.error('[platform-stripe-fees] the dispute’s fees weren’t read:', p.stripeDisputeId, errText(err));
+  }
+}
+
+/**
+ * Stripe's extra cost on a card issued outside the club's country (owner 2026-10-27): the card's country against the
+ * club's connected account's country, never a typed "CA". Stripe gives no per-charge figure, so it is the published rate
+ * (`FOREIGN_CARD_EXTRA_BPS`) on what the card was charged. Called once Stripe says the card is paid (both flows, and their
+ * replays), whether or not the payment could be recorded; a refund leaves it billed (held ruling). The family's total
+ * never changes.
+ */
+export async function recordForeignCardFee(onlinePaymentId: string): Promise<void> {
+  try {
+    const { data: op } = await supabaseAdmin.from('online_payments')
+      .select('id, org_id, rail, card_country, total_amount, livemode')
+      .eq('id', onlinePaymentId).maybeSingle();
+    if (!op || op.rail !== 'card' || !op.card_country) return;
+    const { data: acct } = await supabaseAdmin.from('org_payment_accounts').select('country').eq('org_id', op.org_id).maybeSingle();
+    const home = ((acct?.country as string | null) ?? '').toUpperCase();
+    if (!home || home === String(op.card_country).toUpperCase()) return;
+    await recordStripeFee({
+      orgId: op.org_id as string, onlinePaymentId: op.id as string, kind: 'foreign_card', source: 'rate',
+      amountCents: foreignCardFeeCents(Math.round(Number(op.total_amount) * 100)), livemode: !!op.livemode,
+    });
+  } catch (err) {
+    console.error('[platform-stripe-fees] the foreign-card fee wasn’t recorded:', onlinePaymentId, errText(err));
+  }
+}
+
+
+// ── Billing one fee ─────────────────────────────────────────────────────────────────────────────
+
+export type BillOutcome = 'billed' | 'own_invoice' | 'test_mode' | 'error' | 'done';
+
+/** Where a fee goes, decided from Stripe's own answer at billing time (a comp is never a Stripe object, plan §0). */
+async function subscriptionToRide(orgId: string): Promise<{ customer: string; subscription: string } | null> {
+  const { data: org } = await supabaseAdmin.from('organizations').select('stripe_customer_id, stripe_subscription_id').eq('id', orgId).maybeSingle();
+  if (!org?.stripe_customer_id || !org.stripe_subscription_id) return null;
+  const sub = await stripe.subscriptions.retrieve(org.stripe_subscription_id as string);
+  if (!LIVE_SUBSCRIPTION.has(sub.status) || sub.cancel_at_period_end) return null;
+  // A discount applies to every line on its invoice, the fee included: such a club gets its own invoice (build prompt).
+  if ((sub.discounts?.length ?? 0) > 0) return null;
+  // FieldLogicHQ bills in Canadian dollars; a fee on a subscription in another currency would be a wrong amount.
+  if (sub.currency !== 'cad') throw new Error(`The subscription bills in ${sub.currency}, not CAD.`);
+  return { customer: org.stripe_customer_id as string, subscription: sub.id };
+}
+
+async function lineFor(f: Pick<FeeRow, 'online_payment_id' | 'kind' | 'created_at'>): Promise<string> {
+  const { data: op } = await supabaseAdmin.from('online_payments').select('receipt_no').eq('id', f.online_payment_id).maybeSingle();
+  const receipt = op?.receipt_no != null ? String(op.receipt_no) : null;
+  return W.line(f.kind, receipt, formatStoredDate(f.created_at, { withYear: false }));
+}
+
+/**
+ * Bill one recorded fee: a line on the subscription's next invoice, or left for the club's own monthly invoice. Idempotent
+ * (Stripe's key is the fee's id, and a billed or exempt row is never billed again). Platform admin's Retry calls this.
+ */
+export async function billFee(feeId: string): Promise<BillOutcome> {
+  const { data } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS).eq('id', feeId).maybeSingle();
+  const f = data as FeeRow | null;
+  if (!f || f.billed_at || f.exempt_reason || f.fee_invoice_id) return 'done';
+  if (f.livemode !== LIVE_KEY()) {
+    await supabaseAdmin.from('platform_stripe_fees').update({ exempt_reason: 'test_mode', bill_error: null }).eq('id', f.id).is('billed_at', null);
+    return 'test_mode';
+  }
+  try {
+    const ride = await subscriptionToRide(f.org_id);
+    if (!ride) {
+      await supabaseAdmin.from('platform_stripe_fees').update({ bill_error: null }).eq('id', f.id);
+      return 'own_invoice';
+    }
+    const item = await stripe.invoiceItems.create({
+      customer: ride.customer, subscription: ride.subscription, amount: signedCents(f), currency: 'cad',
+      description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
+    }, { idempotencyKey: `stripe-fee:${f.id}` });
+    await supabaseAdmin.from('platform_stripe_fees')
+      .update({ stripe_invoice_item_id: item.id, billed_at: new Date().toISOString(), billed_on: 'subscription', bill_error: null })
+      .eq('id', f.id).is('billed_at', null);
+    return 'billed';
+  } catch (err) {
+    await supabaseAdmin.from('platform_stripe_fees')
+      .update({ bill_error: errText(err), bill_attempts: (f.bill_attempts ?? 0) + 1 }).eq('id', f.id);
+    return 'error';
+  }
+}
+
+// ── The club's own monthly invoice ──────────────────────────────────────────────────────────────
+
+type InvoiceRow = {
+  id: string; org_id: string; livemode: boolean; period_start: string; stripe_customer_id: string; stripe_invoice_id: string | null;
+  invoice_number: string | null; status: string; amount_due: number | null; hosted_invoice_url: string | null; due_at: string | null;
+  finalized_at: string | null; emailed_at: string | null; reminded_at: string | null; paid_at: string | null;
+};
+const INVOICE_COLUMNS = 'id, org_id, livemode, period_start, stripe_customer_id, stripe_invoice_id, invoice_number, status, amount_due, hosted_invoice_url, due_at, finalized_at, emailed_at, reminded_at, paid_at';
+
+/** The 1st this month (org zone) as an instant, and the month the invoice sent on it bills. */
+export function feeInvoicePeriod(now: Date = new Date()): { cutoff: string; periodStart: string; firstOfThis: string } {
+  const firstOfThis = `${orgMonthKey(now.toISOString())}-01`;
+  return { cutoff: zonedWallClockToUtc(firstOfThis, '00:00')!, periodStart: addCalendarMonths(firstOfThis, -1), firstOfThis };
+}
+
+/**
+ * THE MONTHLY INVOICE (owner 2026-10-27: one a month, sent on the 1st). Every fee recorded before this month's 1st that no
+ * subscription invoice took is gathered on one invoice per club, finalized with Stripe's own email off, and emailed by us.
+ * Decided from the rows on every run, so a run that stopped part-way finishes on the next one and nothing is billed twice
+ * (one invoice per club and month; one line per fee, read back from Stripe before adding). A month whose credits cover its
+ * fees sends nothing; its rows wait for the next.
+ */
+export async function sendMonthlyFeeInvoices(now: Date = new Date()): Promise<{ sent: number; failed: number }> {
+  const live = LIVE_KEY();
+  const { cutoff, periodStart } = feeInvoicePeriod(now);
+  const { data } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
+    .is('billed_at', null).is('exempt_reason', null).eq('livemode', live).lt('created_at', cutoff)
+    .order('created_at').limit(1000);
+  const byOrg = new Map<string, FeeRow[]>();
+  for (const f of (data ?? []) as FeeRow[]) byOrg.set(f.org_id, [...(byOrg.get(f.org_id) ?? []), f]);
+  let sent = 0; let failed = 0;
+  for (const [orgId, fees] of byOrg) {
+    try {
+      if (await invoiceOneClub(orgId, fees, periodStart, live)) sent += 1;
+    } catch (err) {
+      failed += 1;
+      console.error('[platform-stripe-fees] the monthly invoice failed:', orgId, errText(err));
+      await supabaseAdmin.from('platform_fee_invoices').update({ send_error: errText(err), updated_at: new Date().toISOString() })
+        .eq('org_id', orgId).eq('livemode', live).eq('period_start', periodStart).neq('status', 'paid');
+    }
+  }
+  return { sent, failed };
+}
+
+async function invoiceOneClub(orgId: string, candidates: FeeRow[], periodStart: string, live: boolean): Promise<boolean> {
+  // A fee not yet on any invoice may ride a subscription the club has since started; the rest gather here. A fee already
+  // claimed by this month's draft (a run that stopped part-way) is finished with it.
+  const fees: FeeRow[] = [];
+  for (const f of candidates) {
+    if (f.fee_invoice_id) { fees.push(f); continue; }
+    const outcome = await billFee(f.id);
+    if (outcome === 'own_invoice') fees.push(f);
+  }
+  let row = await invoiceRow(orgId, live, periodStart);
+  if (row && row.status !== 'draft') {
+    // This month's invoice already went: anything left waits for the next one (and finishes its email/stamp if owed).
+    if (!row.emailed_at && row.status === 'open') await emailFeeInvoice(row.id);
+    return false;
+  }
+  const ours = fees.filter(f => !f.fee_invoice_id || f.fee_invoice_id === row?.id);
+  if (ours.reduce((s, f) => s + signedCents(f), 0) <= 0) return false;
+
+  const { data: org } = await supabaseAdmin.from('organizations').select('id, name, stripe_customer_id, account_kind').eq('id', orgId).maybeSingle();
+  if (!org) return false;
+  const customer = (org.stripe_customer_id as string | null)
+    ?? await ensureStripeCustomer({ id: orgId, stripeCustomerId: null, accountKind: (org.account_kind as string | null) ?? null }, await getOrgOwnerEmail(orgId));
+  if (!row) {
+    const { error } = await supabaseAdmin.from('platform_fee_invoices')
+      .insert({ org_id: orgId, livemode: live, period_start: periodStart, stripe_customer_id: customer });
+    if (error && error.code !== '23505') throw error;
+    row = await invoiceRow(orgId, live, periodStart);
+    if (!row) throw new Error('The invoice row wasn’t written.');
+  }
+
+  let invoiceId = row.stripe_invoice_id;
+  if (!invoiceId) {
+    const inv = await stripe.invoices.create({
+      customer: row.stripe_customer_id, collection_method: 'send_invoice', days_until_due: FEE_INVOICE_DAYS_DUE, auto_advance: false,
+      pending_invoice_items_behavior: 'exclude', currency: 'cad',
+      description: W.memo(org.name as string), footer: W.footer(PLATFORM_CONTACT_EMAIL),
+      metadata: { [FEE_INVOICE_META]: row.id, org_id: orgId },
+    }, { idempotencyKey: `fee-invoice:${row.id}` });
+    invoiceId = inv.id!;
+    await supabaseAdmin.from('platform_fee_invoices').update({ stripe_invoice_id: invoiceId, updated_at: new Date().toISOString() }).eq('id', row.id);
+  }
+
+  // One line per fee: read back what Stripe already holds before adding (a run that stopped after a line was added).
+  const existing = await stripe.invoiceItems.list({ invoice: invoiceId, limit: 100 });
+  const onInvoice = new Map(existing.data.map(i => [i.metadata?.platform_stripe_fee_id ?? '', i.id]));
+  for (const f of ours) {
+    const { error: claimError } = await supabaseAdmin.from('platform_stripe_fees').update({ fee_invoice_id: row.id })
+      .eq('id', f.id).is('billed_at', null).or(`fee_invoice_id.is.null,fee_invoice_id.eq.${row.id}`);
+    if (claimError) throw claimError;
+    const itemId = onInvoice.get(f.id) ?? (await stripe.invoiceItems.create({
+      customer: row.stripe_customer_id, invoice: invoiceId, amount: signedCents(f), currency: 'cad',
+      description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: orgId },
+    }, { idempotencyKey: `stripe-fee:${f.id}:${invoiceId}` })).id;
+    await supabaseAdmin.from('platform_stripe_fees')
+      .update({ stripe_invoice_item_id: itemId, billed_at: new Date().toISOString(), billed_on: 'own_invoice', bill_error: null })
+      .eq('id', f.id).is('billed_at', null);
+  }
+
+  // Finalized with Stripe's own email off (auto_advance false, never sendInvoice): the email is ours.
+  const final = await stripe.invoices.finalizeInvoice(invoiceId, { auto_advance: false });
+  await writeInvoiceState(row.id, final);
+  await emailFeeInvoice(row.id);
+  return true;
+}
+
+async function invoiceRow(orgId: string, live: boolean, periodStart: string): Promise<InvoiceRow | null> {
+  const { data } = await supabaseAdmin.from('platform_fee_invoices').select(INVOICE_COLUMNS)
+    .eq('org_id', orgId).eq('livemode', live).eq('period_start', periodStart).maybeSingle();
+  return data as InvoiceRow | null;
+}
+
+const STRIPE_STATUS: Record<string, InvoiceRow['status']> = { draft: 'draft', open: 'open', paid: 'paid', void: 'void', uncollectible: 'uncollectible' };
+const iso = (unix: number | null | undefined) => (unix ? new Date(unix * 1000).toISOString() : null);
+
+/** Stripe's invoice, as our row holds it (the finalize, the billing webhook and the daily job's re-read all write here). */
+async function writeInvoiceState(rowId: string, inv: Stripe.Invoice): Promise<void> {
+  const status = STRIPE_STATUS[inv.status ?? ''] ?? 'open';
+  const paidAt = status === 'paid' ? (iso(inv.status_transitions?.paid_at) ?? new Date().toISOString()) : null;
+  await supabaseAdmin.from('platform_fee_invoices').update({
+    status, invoice_number: inv.number ?? null, amount_due: (inv.amount_due ?? 0) / 100, hosted_invoice_url: inv.hosted_invoice_url ?? null,
+    due_at: iso(inv.due_date), finalized_at: iso(inv.status_transitions?.finalized_at) ?? (status === 'draft' ? null : new Date().toISOString()),
+    paid_at: paidAt, send_error: null, updated_at: new Date().toISOString(),
+  }).eq('id', rowId);
+}
+
+/** The billing webhook's door: a fee invoice's event (recognised by its metadata) is written here and nowhere else, so
+ *  it never touches the club's subscription status. Returns whether the invoice was a fee invoice. */
+export async function syncFeeInvoiceFromEvent(inv: Stripe.Invoice): Promise<boolean> {
+  const rowId = inv.metadata?.[FEE_INVOICE_META];
+  if (!rowId) return false;
+  // The event's copy may be older than Stripe's; re-read it.
+  const fresh = inv.id ? await stripe.invoices.retrieve(inv.id) : inv;
+  await writeInvoiceState(rowId, fresh);
+  return true;
+}
+
+/** The daily job's re-read of every invoice still open, so a missed event never leaves one unpaid on our side. */
+export async function syncOpenFeeInvoices(): Promise<void> {
+  const { data } = await supabaseAdmin.from('platform_fee_invoices').select('id, stripe_invoice_id')
+    .eq('status', 'open').eq('livemode', LIVE_KEY()).not('stripe_invoice_id', 'is', null).limit(500);
+  for (const r of (data ?? []) as Array<{ id: string; stripe_invoice_id: string }>) {
+    try { await writeInvoiceState(r.id, await stripe.invoices.retrieve(r.stripe_invoice_id)); }
+    catch (err) { console.error('[platform-stripe-fees] couldn’t re-read the invoice:', r.id, errText(err)); }
+  }
+}
+
+async function invoiceLines(rowId: string): Promise<Array<{ kind: StripeFeeKind; line: string; cents: number }>> {
+  const { data } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS).eq('fee_invoice_id', rowId).order('created_at');
+  const fees = (data ?? []) as FeeRow[];
+  return Promise.all(fees.map(async f => ({ kind: f.kind, line: await lineFor(f), cents: signedCents(f) })));
+}
+
+/** Our email for the invoice (words §1.7), once: sent under a once-only key, then stamped. */
+async function emailFeeInvoice(rowId: string): Promise<void> {
+  const { data } = await supabaseAdmin.from('platform_fee_invoices').select(INVOICE_COLUMNS).eq('id', rowId).maybeSingle();
+  const row = data as InvoiceRow | null;
+  if (!row || row.emailed_at || row.status !== 'open' || !row.hosted_invoice_url) return;
+  try {
+    const [to, { data: org }, lines] = await Promise.all([
+      getOrgOwnerEmail(row.org_id),
+      supabaseAdmin.from('organizations').select('name').eq('id', row.org_id).maybeSingle(),
+      invoiceLines(row.id),
+    ]);
+    if (!to) throw new Error('The club has no owner email.');
+    const club = (org?.name as string | null) ?? '';
+    const amount = money(Number(row.amount_due ?? 0));
+    const dueFull = formatStoredDate(row.due_at, { withYear: true });
+    const test = !row.livemode;
+    const subject = `${test ? E.testPrefix : ''}${W.emailSubject(row.invoice_number ?? '', club)}`;
+    const html = warmEmailDocument([
+      `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(W.emailPreheader(amount, dueFull))}</div>`,
+      warmEmailParagraph(escapeHtml(W.emailLead(amount, club, lines.length === 1))),
+      emailFactsPanel([
+        ...lines.map(l => [l.line, l.cents < 0 ? W.credit(money(-l.cents / 100)) : money(l.cents / 100)] as const),
+        [W.total, amount] as const,
+        [W.due, dueFull] as const,
+      ]),
+      warmEmailParagraph(escapeHtml(W.emailWhy([...new Set(lines.map(l => l.kind))]))),
+      warmEmailButton(W.emailButton, row.hosted_invoice_url),
+      warmEmailSmall(escapeHtml(W.emailSecure)),
+      warmEmailSmall(escapeHtml(W.emailQuestions(PLATFORM_CONTACT_EMAIL))),
+      test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
+    ].filter(Boolean).join('\n'));
+    const sent = await sendEmail(to, subject, html, { kind: 'stripe_fee_invoice', orgId: row.org_id, idempotencyKey: `fee-invoice-email:${row.id}` });
+    if (sent.status !== 'sent') throw new Error(`The email was ${sent.status}.`);
+    await supabaseAdmin.from('platform_fee_invoices').update({ emailed_at: new Date().toISOString(), send_error: null }).eq('id', row.id).is('emailed_at', null);
+  } catch (err) {
+    await supabaseAdmin.from('platform_fee_invoices').update({ send_error: errText(err) }).eq('id', row.id);
+  }
+}
+
+/** The one reminder on an unpaid invoice past its due date (§7 ruling 3). Nothing switches off; nothing says it will. */
+export async function remindUnpaidFeeInvoices(now: Date = new Date()): Promise<number> {
+  const { data } = await supabaseAdmin.from('platform_fee_invoices').select(INVOICE_COLUMNS)
+    .eq('status', 'open').eq('livemode', LIVE_KEY()).is('reminded_at', null).not('emailed_at', 'is', null)
+    .lt('due_at', now.toISOString()).limit(200);
+  let n = 0;
+  for (const row of (data ?? []) as InvoiceRow[]) {
+    if (!row.hosted_invoice_url) continue;
+    try {
+      const to = await getOrgOwnerEmail(row.org_id);
+      if (!to) continue;
+      const amount = money(Number(row.amount_due ?? 0));
+      const test = !row.livemode;
+      const html = warmEmailDocument([
+        warmEmailParagraph(escapeHtml(W.reminderLead(row.invoice_number ?? '', amount, formatStoredDate(row.due_at, { withYear: true })))),
+        warmEmailButton(W.emailButton, row.hosted_invoice_url),
+        warmEmailSmall(escapeHtml(W.emailQuestions(PLATFORM_CONTACT_EMAIL))),
+        test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
+      ].filter(Boolean).join('\n'));
+      const sent = await sendEmail(to, `${test ? E.testPrefix : ''}${W.reminderSubject(row.invoice_number ?? '')}`, html,
+        { kind: 'stripe_fee_invoice_reminder', orgId: row.org_id, idempotencyKey: `fee-invoice-reminder:${row.id}` });
+      if (sent.status !== 'sent') continue;
+      await supabaseAdmin.from('platform_fee_invoices').update({ reminded_at: new Date().toISOString() }).eq('id', row.id).is('reminded_at', null);
+      n += 1;
+    } catch (err) {
+      console.error('[platform-stripe-fees] the reminder failed:', row.id, errText(err));
+    }
+  }
+  return n;
+}
+
+/**
+ * The daily job's re-read of recent disputes for a fee Stripe charged FieldLogicHQ after the events stopped (an answering
+ * fee, or its return on a win, can post days later): card disputes opened or closed in the last 60 days whose fee wasn't
+ * the club's, and bank debits reversed in that time. Each kind is written once, so a rerun records nothing twice.
+ */
+export async function sweepDisputeFees(now: Date = new Date()): Promise<void> {
+  const since = new Date(now.getTime() - 60 * 86_400_000).toISOString();
+  const live = LIVE_KEY();
+  const [{ data: disputes }, { data: debits }] = await Promise.all([
+    supabaseAdmin.from('online_payment_disputes')
+      .select('id, org_id, online_payment_id, stripe_dispute_id, fee_paid_from, livemode, closed_at')
+      .eq('livemode', live).gte('opened_at', new Date(now.getTime() - 240 * 86_400_000).toISOString())
+      .or('fee_paid_from.is.null,fee_paid_from.eq.platform').order('opened_at', { ascending: false }).limit(500),
+    supabaseAdmin.from('online_payments').select('id, org_id, stripe_dispute_id, livemode')
+      .eq('rail', 'bank_debit').eq('status', 'reversed').eq('livemode', live).gte('reversed_at', since)
+      .not('stripe_dispute_id', 'is', null).limit(500),
+  ]);
+  for (const d of (disputes ?? []) as Array<{ id: string; org_id: string; online_payment_id: string; stripe_dispute_id: string; livemode: boolean; closed_at: string | null }>) {
+    if (d.closed_at && d.closed_at < since) continue;
+    await recordDisputeFees({ orgId: d.org_id, onlinePaymentId: d.online_payment_id, rail: 'card', stripeDisputeId: d.stripe_dispute_id, disputeId: d.id, livemode: d.livemode });
+  }
+  for (const o of (debits ?? []) as Array<{ id: string; org_id: string; stripe_dispute_id: string; livemode: boolean }>) {
+    await recordDisputeFees({ orgId: o.org_id, onlinePaymentId: o.id, rail: 'bank_debit', stripeDisputeId: o.stripe_dispute_id, disputeId: null, livemode: o.livemode });
+  }
+}
+
+/** The daily job's retry of every fee whose billing failed (a passing Stripe error), a few times before a person looks. */
+export async function retryFailedFees(): Promise<number> {
+  const { data } = await supabaseAdmin.from('platform_stripe_fees').select('id')
+    .is('billed_at', null).is('exempt_reason', null).is('fee_invoice_id', null).not('bill_error', 'is', null)
+    .lt('bill_attempts', 5).limit(200);
+  let n = 0;
+  for (const r of (data ?? []) as Array<{ id: string }>) if ((await billFee(r.id)) === 'billed') n += 1;
+  return n;
+}
+
+// ── Reading ─────────────────────────────────────────────────────────────────────────────────────
+
+export type ClubFeeView = {
+  id: string; kind: StripeFeeKind; line: string; createdAt: string; amount: number; credit: boolean; source: 'stripe' | 'rate';
+  /** How it is billed, as the reader's sentence's key. */
+  state: 'next' | 'waiting' | 'own_open' | 'own_paid' | 'own_overdue' | 'credit' | 'test' | 'error' | 'legacy_exempt';
+  invoiceNo: string | null; invoiceDay: string | null; payUrl: string | null; billError: string | null; billedAt: string | null;
+};
+
+/**
+ * A club's Stripe fees, newest first, for Settings › Plan & billing (the owner) and platform admin's panel. Starts from
+ * the small table (the club's own fees) and reads at most `limit`; a failure reads as an empty list on the screen's side.
+ */
+export async function readClubFees(orgId: string, opts: { limit?: number; now?: Date } = {}): Promise<ClubFeeView[]> {
+  const now = opts.now ?? new Date();
+  const { data, error } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
+    .eq('org_id', orgId).order('created_at', { ascending: false }).limit(opts.limit ?? 50);
+  if (error) throw error;
+  const fees = (data ?? []) as FeeRow[];
+  if (!fees.length) return [];
+  const invIds = [...new Set(fees.map(f => f.fee_invoice_id).filter((x): x is string => !!x))];
+  const opIds = [...new Set(fees.map(f => f.online_payment_id))];
+  const [{ data: invData }, { data: opData }] = await Promise.all([
+    invIds.length ? supabaseAdmin.from('platform_fee_invoices').select(INVOICE_COLUMNS).in('id', invIds) : Promise.resolve({ data: [] }),
+    supabaseAdmin.from('online_payments').select('id, receipt_no').in('id', opIds),
+  ]);
+  const invs = new Map(((invData ?? []) as InvoiceRow[]).map(i => [i.id, i]));
+  // A fee still waiting goes on the invoice sent on the next 1st.
+  const nextFirst = addCalendarMonths(feeInvoicePeriod(now).firstOfThis, 1);
+  const receipts = new Map(((opData ?? []) as Array<{ id: string; receipt_no: number | null }>).map(o => [o.id, o.receipt_no]));
+  return fees.map(f => {
+    const inv = f.fee_invoice_id ? invs.get(f.fee_invoice_id) : undefined;
+    const receipt = receipts.get(f.online_payment_id);
+    let state: ClubFeeView['state'];
+    if (f.exempt_reason === 'test_mode') state = 'test';
+    else if (f.exempt_reason) state = 'legacy_exempt';
+    else if (f.bill_error && !f.billed_at) state = 'error';
+    else if (inv && inv.status === 'paid') state = 'own_paid';
+    else if (inv && inv.status === 'open') state = inv.due_at && inv.due_at < now.toISOString() ? 'own_overdue' : 'own_open';
+    else if (f.billed_on === 'subscription') state = isFeeCredit(f.kind) ? 'credit' : 'next';
+    else state = 'waiting';
+    return {
+      id: f.id, kind: f.kind, line: W.line(f.kind, receipt != null ? String(receipt) : null, formatStoredDate(f.created_at, { withYear: false })),
+      createdAt: f.created_at, amount: Number(f.amount), credit: isFeeCredit(f.kind), source: f.amount_source, state,
+      invoiceNo: inv?.invoice_number ?? null,
+      invoiceDay: inv ? (inv.status === 'paid' ? inv.paid_at : inv.due_at) : state === 'waiting' ? nextFirst : null,
+      payUrl: inv && inv.status === 'open' ? inv.hosted_invoice_url : null,
+      billError: f.bill_error, billedAt: f.billed_at,
+    };
+  });
+}
+
+/** `{invoiceWhere}` for one club, from Stripe's answer: its next subscription invoice, or one of its own. */
+export async function invoiceWhere(orgId: string): Promise<'next' | 'own'> {
+  try { return (await subscriptionToRide(orgId)) ? 'next' : 'own'; } catch { return 'own'; }
+}

@@ -43,6 +43,7 @@ import { subscriptionStatusLabel } from '@/lib/platform-labels';
 import ck from './ClubKit.module.css';
 import styles from './Billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import StripeFeesList from './StripeFeesList';
 
 const BANDS: OrgPlan[] = ['club', 'club_large'];
 
@@ -399,6 +400,9 @@ export default function BillingKit() {
       </CoachCard>
 
       {freeCopy && <FreeTimeBand band={freeCopy.band} />}
+
+      {/* ── Stripe fees (12d-1 Part 4): every plan, comped and free included; absent until there is one ─────── */}
+      <StripeFeesList slug={slug} />
 
       {/* ── Club's two sizes (D7) ────────────────────────────────────────────────────────────── */}
       <section className={ck.section} aria-labelledby="billing-bands">

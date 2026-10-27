@@ -77,6 +77,10 @@ export const EMAIL_KINDS = {
   club_payment_handoff_coach:           { klass: 'team', label: 'Club payment hand-off' },
   // 12d-1: the club's own business to the one person who can answer it (the logged list is the owner's G1 37; unchanged).
   card_dispute_opened:                  { klass: 'team', label: 'Card dispute opened' },
+  card_dispute_reminder:                { klass: 'team', label: 'Card dispute due soon' },
+  // 12d-1 Part 4: a club's own monthly invoice of Stripe fees and its one reminder (unlogged for the same reason).
+  stripe_fee_invoice:                   { klass: 'team', label: 'Stripe fees invoice' },
+  stripe_fee_invoice_reminder:          { klass: 'team', label: 'Stripe fees invoice reminder' },
   // ── family: never logged here ──────────────────────────────────────────────
   family_announcement:                  { klass: 'family', label: 'Team announcement' },
   family_game_update:                   { klass: 'family', label: 'Game update' },

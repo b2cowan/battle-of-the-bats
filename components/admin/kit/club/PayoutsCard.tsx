@@ -43,6 +43,9 @@ export type PayoutsView = {
   teamsStillOwing: number | null;
   /** 12c Part 6: bank debits still clearing (the Disconnect window says they finish). */
   debitsClearing?: number | null;
+  /** 12d-1 Part 4: the club pays nothing for its plan (free time or the Founding comp), so the other-fees line adds
+   *  "Your plan doesn't change" (words §3.4 `record.otherFeesPlan`). */
+  planFree?: boolean;
 };
 
 const PILL_TONE: Record<PayoutsState, ChipTone> = {
@@ -218,7 +221,11 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved }: {
       <dl className={pc.record}>
         <div className={pc.recordRow}>
           <dt>{W.record.feeLabel}</dt>
-          <dd>{W.record.feeRead[view.feePayer]}<span className={ck.hint}> · {W.record.feeRates(view.rateLabel, view.bankRateLabel ?? null)}</span></dd>
+          <dd>
+            {W.record.feeRead[view.feePayer]}<span className={ck.hint}> · {W.record.feeRates(view.rateLabel, view.bankRateLabel ?? null)}</span>
+            {/* 12d-1 words §3.4: under the rates line. */}
+            <span className={`${ck.hint} ${pc.otherFees}`}>{W.record.otherFees}{view.planFree ? ` ${W.record.otherFeesPlan}` : ''}</span>
+          </dd>
         </div>
         <div className={pc.recordRow}>
           <dt>{W.record.policyLabel}</dt>
@@ -302,6 +309,7 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
         <section>
           <h3 className={ck.label}>{W.before.costLabel}</h3>
           <p>{W.before.costRate(view.rateLabel, view.bankRateLabel ?? null)}</p>
+          <p className={ck.hint}>{W.before.otherFees}{view.planFree ? ` ${W.record.otherFeesPlan}` : ''}</p>
           <p className={ck.hint}>{W.before.costExample(money(view.example.baseCents / 100), money(view.example.feeCents / 100),
             view.example.bankFeeCents != null ? money(view.example.bankFeeCents / 100) : null)}</p>
         </section>

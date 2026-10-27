@@ -6,7 +6,7 @@ import { readCode } from './_source-code.ts';
 import { bankReturnReason } from '../../lib/bank-debit.ts';
 import { payOptions } from '../../lib/team-pay-options.ts';
 import { onlineFee } from '../../lib/online-payment-fee.ts';
-import { ONLINE_PAYMENT_RATES, RETURNED_BANK_DEBIT_FEE_CENTS } from '../../lib/plan-config.ts';
+import { FOREIGN_CARD_EXTRA_BPS, ONLINE_PAYMENT_RATES, RETURNED_BANK_DEBIT_FEE_CENTS } from '../../lib/plan-config.ts';
 import { refusalMessage } from '../../lib/team-pay-refusal.ts';
 import { BANK_REASON_WORDS, reasonFull, reasonShort } from '../../lib/online-payment-words.ts';
 
@@ -136,7 +136,7 @@ describe('the webhook and the landing (§0k)', () => {
     const rev = /export async function reverseDebit[\s\S]*?\n}\n/.exec(land)?.[0] ?? '';
     assert.match(rev, /op\.rail !== 'bank_debit'/, 'a card dispute is 12d\'s');
     // A redelivery never emails the family twice, but still owes the desk's notice and the fee (each once-only).
-    assert.match(rev, /if \(!\(res as \{ already\?: boolean \} \| null\)\?\.already\) await sendDebitReversedEmail\(op\.id as string\);\s*await afterDebitBack\(op\.id as string, 'reversed'\);/);
+    assert.match(rev, /if \(!\(res as \{ already\?: boolean \} \| null\)\?\.already\) await sendDebitReversedEmail\(op\.id as string\);\s*await afterDebitBack\(op\.id as string, 'reversed', dispute\.id\);/);
     // A dispute before its debit landed is retried, never consumed (found by the payment intent when there is no charge yet —
     // review 2026-10-26); one whose landing failed has nothing to retry for and is acknowledged.
     assert.match(rev, /if \(!op\.landed_at\) \{[\s\S]*?op\.status === 'open' \|\| op\.status === 'clearing'\) throw new Error/);
@@ -144,7 +144,9 @@ describe('the webhook and the landing (§0k)', () => {
     assert.match(land, /await sendDebitReturnedEmail\(opId\);\s*await afterDebitBack\(opId, 'returned'\)/);
     const after = /async function afterDebitBack[\s\S]*?\n}\n/.exec(land)?.[0] ?? '';
     assert.match(after, /outcome: 'returned'/);
-    assert.match(after, /recordDebitFee\(/);
+    // 12d-1 Part 4: a return's fee is the published one; a reversal's is Stripe's own figure on the dispute (ruling 5).
+    assert.match(after, /if \(kind === 'returned'\) await recordReturnedDebitFee\(/);
+    assert.match(after, /else if \(stripeDisputeId\) await recordDisputeFees\(\{[^}]*rail: 'bank_debit'/);
   });
 
   it('Part 6: a decision made while it cleared is carried out once, from the database, after each landing', () => {
@@ -157,14 +159,22 @@ describe('the webhook and the landing (§0k)', () => {
     assert.equal((land.match(/await carryOutDecisions\(op\.id\)/g) ?? []).length, 3, 'both flows, and the replay');
   });
 
-  it('Part 6: Stripe\'s failure fee is the constant, billed on the club\'s subscription, never on a comped club', () => {
-    const fee = readCode('lib/platform-debit-fee.ts');
-    assert.match(fee, /RETURNED_BANK_DEBIT_FEE_CENTS/);
+  it('Part 6 (12d-1 Part 4): a returned debit\'s fee is the constant, and every club is billed it, comped and free included', () => {
+    const fee = readCode('lib/platform-stripe-fees.ts');
+    assert.match(fee, /kind: 'returned', amountCents: RETURNED_BANK_DEBIT_FEE_CENTS, source: 'rate'/);
     assert.doesNotMatch(fee, /amount: \d|\b5\.00\b/, 'the figure is printed from the constant');
-    assert.match(fee, /facts\?\.freeTime \|\| \(await workspaceHoldsFoundingComp\(orgId\)[\s\S]*?return exempt\('comped'\)/, 'free is read through the door');
+    // Owner 2026-10-26: a comp covers the subscription only. No comped or no-subscription exemption is written any more.
+    assert.doesNotMatch(fee, /exempt_reason: '(comped|no_subscription)'|exempt\('comped'\)/);
     assert.doesNotMatch(fee, /subscription_status/, 'never the stored status (plan-reader door guard)');
-    assert.match(fee, /invoiceItems\.create\(\{[\s\S]*subscription: sub\.id/);
-    assert.match(fee, /idempotencyKey: `debit-fee:\$\{feeId\}`/);
+    assert.match(fee, /invoiceItems\.create\(\{[\s\S]*?subscription: ride\.subscription/);
+    assert.match(fee, /idempotencyKey: `stripe-fee:\$\{f\.id\}`/);
+  });
+
+  it('12d-1 Part 4: the foreign-card rate matches the Facts doc, its canonical record', () => {
+    const facts = readFileSync(join(import.meta.dirname, '..', '..', 'docs/agents/strategy/PLAN_PRICING_FACTS.md'), 'utf8');
+    const m = /a card issued outside the club's country[^.]*?\+(\d+(?:\.\d+)?)% of the charge/i.exec(facts);
+    assert.ok(m, 'the Facts doc names the rate');
+    assert.equal(Math.round(Number(m![1]) * 100), FOREIGN_CARD_EXTRA_BPS);
   });
 
   it('Part 6: the returned-debit fee constant matches the Facts doc, its canonical record', () => {

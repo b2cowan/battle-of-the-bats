@@ -180,6 +180,13 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   // 12c Part 6: a team whose bank debit is clearing has paid, as far as it can tell — never dunned while it is on its way.
   const { data: clearingRows } = await supabaseAdmin.from('online_payments').select('team_id').eq('tournament_id', tournamentId).eq('status', 'clearing');
   const clearingTeams = new Set(((clearingRows ?? []) as Array<{ team_id: string | null }>).map(r => r.team_id).filter(Boolean));
+  // 12d-1 Part 4 (words §1.5): a team that took its money back through its bank after a lost card dispute hears from a
+  // person, not a reminder. Started from the small table: this tournament's disputes lost and not won back.
+  const { data: lostRows } = await supabaseAdmin.from('online_payment_disputes')
+    .select('online_payments!inner(team_id, tournament_id)').eq('org_id', ctx.org.id).eq('status', 'lost')
+    .not('lost_booked_at', 'is', null).is('won_back_at', null).eq('online_payments.tournament_id', tournamentId);
+  const lostTeams = new Set(((lostRows ?? []) as unknown as Array<{ online_payments: { team_id: string | null } | { team_id: string | null }[] }>)
+    .flatMap(r => (Array.isArray(r.online_payments) ? r.online_payments : [r.online_payments])).map(o => o.team_id).filter(Boolean));
   let emailsSent = 0;
   let skippedCount = 0;
   let skippedNoEmailCount = 0;
@@ -196,7 +203,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     // Our own team owes no entry fee (owner 2026-10-21), whatever the tournament charges.
     // A team that owes money but has no email on file is its own reason: "no payment is due" would be
     // untrue for it, and the admin's fix (add an address) is different from "nothing to do".
-    const owes = team.status === 'accepted' && !!due && due.amount > 0 && !ourTeams.has(team.id) && !clearingTeams.has(team.id);
+    const owes = team.status === 'accepted' && !!due && due.amount > 0 && !ourTeams.has(team.id) && !clearingTeams.has(team.id) && !lostTeams.has(team.id);
     if (owes && !recipient) {
       skippedNoEmailCount++;
       skippedCount++;

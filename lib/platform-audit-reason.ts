@@ -17,6 +17,8 @@ const NO_REASON = new Set([
   'clear_feedback_escalation', 'update_feedback_status', 'update_error_group_status', 'update_early_access_lead',
   // Staff roles: a reason arrives when Stage 8 draws Staff.
   'invite_platform_user', 'update_platform_user', 'remove_platform_user',
+  // 12d-1 Part 4: the Stripe-fees job, and a retry of a fee that couldn't be billed (the fee's own error is its reason).
+  'stripe_fees_sweep', 'retry_stripe_fee',
 ]);
 
 /**

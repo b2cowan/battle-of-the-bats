@@ -81,7 +81,7 @@ export type ClubRecordProps = {
   planOptions: Array<{ id: string; label: string; tournamentLimit: number; teamLimit: number }>;
   can: { support: boolean; billing: boolean; sections: boolean; delete: boolean; emailOwner: boolean };
   /** The Money tab (Stage 3): our record's side, and whether this role reads Stripe's (A2). */
-  money: { readsStripe: boolean; ours: OurMoneyRecord };
+  money: { readsStripe: boolean; billsClub?: boolean; ours: OurMoneyRecord };
   /** Giving free time (a giver only): what the console knows before the click, and the window's bounds. */
   freeTime: {
     block: GiveBlock | null;
@@ -538,6 +538,7 @@ export default function ClubRecord(props: ClubRecordProps) {
               orgName={org.name}
               ours={props.money.ours}
               readsStripe={props.money.readsStripe}
+              billsClub={props.money.billsClub}
               stripeBase={props.stripeBase}
               club={club}
               openChargeId={chargeParam}

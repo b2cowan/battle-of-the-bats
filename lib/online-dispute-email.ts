@@ -39,3 +39,17 @@ export function disputeOpenedEmailHtml(p: {
   ].filter(Boolean).join('\n'));
   return { subject, html };
 }
+
+/** §1.6 email 2: three days before the answer is due, only while it is unanswered (the daily job). The same envelope. */
+export function disputeReminderEmailHtml(p: {
+  club: string; forWhom: string; record: string | null; receiptNo: string; dueBy: string; link: string; test: boolean;
+}): { subject: string; html: string } {
+  const subject = `${p.test ? E.testPrefix : ''}${M.reminder.subject(disputeDue(p.dueBy), p.club)}`;
+  const html = warmEmailDocument([
+    warmEmailParagraph(escapeHtml(M.reminder.lead(p.receiptNo, p.forWhom, disputeDue(p.dueBy, { clock: true, year: true })))),
+    warmEmailParagraph(escapeHtml(M.reminder.after)),
+    warmEmailButton(M.button(p.record), p.link),
+    p.test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
+  ].filter(Boolean).join('\n'));
+  return { subject, html };
+}

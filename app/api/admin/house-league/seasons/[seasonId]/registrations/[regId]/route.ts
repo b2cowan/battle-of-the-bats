@@ -273,8 +273,9 @@ export const PATCH = withObservability(async (req: Request,
   // children; refused, in words, when the club isn't taking card payments or nothing is owing.
   if (body.payLink === true) {
     if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
-    const sent = await sendLeaguePayLink(regId);
-    if ('error' in sent) return NextResponse.json({ error: sent.error, code: 'pay_link' }, { status: 409 });
+    // 12d-1 Part 4: the bulk "Email families who owe" says so, and a family after a lost card dispute is left out.
+    const sent = await sendLeaguePayLink(regId, null, null, { bulk: body.bulk === true });
+    if ('error' in sent) return NextResponse.json({ error: sent.error, code: 'disputeLost' in sent ? 'dispute_lost' : 'pay_link' }, { status: 409 });
     const updated = await fetchReg(regId, seasonId);
     return NextResponse.json({ registration: updated, sentTo: sent.sentTo });
   }

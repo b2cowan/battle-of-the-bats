@@ -1,0 +1,34 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   SETTINGS › PLAN & BILLING: the club's Stripe fees (Club Tier Stage 12d-1 Part 4). One row per fee: what it was and how
+   it is billed on the left, the amount (and Pay the invoice) on the right; the two stack on a phone. TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--home-line);
+}
+.row:last-child { border-bottom: 0; }
+.what { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.line { color: var(--text-primary); font-size: var(--type-body); overflow-wrap: anywhere; }
+.billed { color: var(--text-tertiary); font-size: var(--type-support); }
+.warn { color: var(--warning); }
+.side { display: flex; flex-direction: column; align-items: flex-end; gap: 0.15rem; flex-shrink: 0; }
+.amount { color: var(--text-primary); font-size: var(--type-body); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 640px) {
+  .row { flex-direction: column; gap: 0.35rem; }
+  .side { align-items: flex-start; }
+  .side a { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}

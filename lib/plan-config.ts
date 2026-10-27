@@ -569,12 +569,21 @@ export const ONLINE_PAYMENT_RATES = {
 export type OnlinePaymentRail = keyof typeof ONLINE_PAYMENT_RATES;
 
 /**
- * Stripe's fee for each returned or reversed bank debit (CA$5.00, stripe.com/en-ca pricing, read 2026-10-26), which Stripe
- * charges the platform and the owner ruled is the club's (plan §0k answer 2): billed as a "Returned bank debit" line on the
- * club's next FieldLogicHQ invoice; a comped or free club is not billed. Canonical record: the Facts doc's facilitated-
- * payments section. Never typed elsewhere.
+ * Stripe's fee for each returned bank debit (CA$5.00, stripe.com/en-ca pricing, read 2026-10-26), which Stripe charges the
+ * platform and the owner ruled is the club's (plan §0k answer 2), every club included (Stage 12d, 2026-10-26): billed on the
+ * club's next FieldLogicHQ invoice, or on its own monthly invoice. A REVERSED debit is billed at Stripe's own figure, read
+ * from the platform's balance (12d-1 ruling 5); this constant is for a return, where Stripe reports no per-debit figure.
+ * Canonical record: the Facts doc's facilitated-payments section. Never typed elsewhere.
  */
 export const RETURNED_BANK_DEBIT_FEE_CENTS = 500;
+
+/**
+ * Stripe's extra fee on a card issued outside the club's country (+0.8% of the charge, stripe.com/en-ca pricing, read
+ * 2026-10-27), which Stripe charges the platform and the owner ruled is the club's, never the family's (Stage 12d,
+ * 2026-10-27). Stripe gives no per-charge figure for it (plan §0, sandbox probe), so it is billed from this published rate
+ * (the ruled fallback). Canonical record: the Facts doc's facilitated-payments section. Never typed elsewhere.
+ */
+export const FOREIGN_CARD_EXTRA_BPS = 80;
 
 /** "3.5% + $1.50" — the rate as a customer reads it, printed from the constant above. */
 export function onlineFeeRateLabel(rail: OnlinePaymentRail): string {

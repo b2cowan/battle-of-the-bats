@@ -8,7 +8,7 @@ import { loadTeamPayFacts } from './team-pay-facts';
 import { refusalMessage } from './team-pay-view';
 import { teamPayUrl } from './team-pay-link';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
-import { BANK_DEBIT_EMAIL_WORDS as D, ONLINE_EMAIL_WORDS as E, REFUND_BLOCK_WORDS, SCOPE_LINE, SCOPE_WORDS, cardLabel, money, receiptLabel } from './online-payment-words';
+import { BANK_DEBIT_EMAIL_WORDS as D, DISPUTE_WORDS, ONLINE_EMAIL_WORDS as E, REFUND_BLOCK_WORDS, SCOPE_LINE, SCOPE_WORDS, cardLabel, money, receiptLabel } from './online-payment-words';
 import { refundBlockHtml, type RefundBlockInput } from './online-refund-block';
 import { registrationReference } from './utils';
 import { stampRefundEmailed } from './online-refund-email';
@@ -243,9 +243,16 @@ export async function sendLeaguePayLink(
   registrationId: string,
   raised?: { child: string; from: string; to: string; diff: string } | null,
   refunded?: { child: string; childFirst: string; owing: string; blockHtml: string } | null,
-): Promise<{ sentTo: string; sentAt: string } | { error: string }> {
+  opts: { bulk?: boolean } = {},
+): Promise<{ sentTo: string; sentAt: string } | { error: string; disputeLost?: true }> {
   const facts = await loadLeaguePayFacts(registrationId);
   if (!facts) return { error: 'That registration couldn’t be found.' };
+  // 12d-1 Part 4 (words §1.5): "Email families who owe" leaves out a family with any child still owing after a lost card
+  // dispute — it took its money back through its bank, and hears from a person, not a reminder. On the server, so a lost
+  // SIBLING is caught too (the bulk send picks one child per sign-up). A desk member's single send is their own choice.
+  if (opts.bulk && facts.shares.length && await anyLostDispute(facts.shares.map(s => s.registrationId))) {
+    return { error: DISPUTE_WORDS.bulkWhy, disputeLost: true };
+  }
   if (facts.refusal === 'clearing') {
     // 12c Part 6 (words §3.2): every child still owing is on a bank debit on its way.
     return { error: REGS_WORDS.payLink.clearingLink(childList(facts.children.filter(c => c.clearingCents > 0).map(c => `${c.firstName} ${c.lastName}`))) };
@@ -278,6 +285,16 @@ export async function sendLeaguePayLink(
   const sentAt = new Date().toISOString();
   await supabaseAdmin.from('league_registrations').update({ pay_link_sent_at: sentAt }).in('id', facts.shares.map(s => s.registrationId));
   return { sentTo: facts.guardianEmail, sentAt };
+}
+
+/** A card dispute lost (and not won back since) on a payment for any of these children. Small: a family's children. */
+async function anyLostDispute(registrationIds: readonly string[]): Promise<boolean> {
+  const { data: items } = await supabaseAdmin.from('online_payment_items').select('online_payment_id').in('registration_id', [...registrationIds]);
+  const payIds = [...new Set(((items ?? []) as Array<{ online_payment_id: string }>).map(i => i.online_payment_id))];
+  if (!payIds.length) return false;
+  const { count } = await supabaseAdmin.from('online_payment_disputes').select('id', { count: 'exact', head: true })
+    .in('online_payment_id', payIds).eq('status', 'lost').not('lost_booked_at', 'is', null).is('won_back_at', null);
+  return (count ?? 0) > 0;
 }
 
 /**

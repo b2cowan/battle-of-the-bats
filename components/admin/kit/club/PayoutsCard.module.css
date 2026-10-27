@@ -32,3 +32,6 @@
   .choiceRow, .terms { min-height: 44px; }
 }
 .statusLine { margin: 0 0 0.75rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.4rem; }
+
+/* 12d-1 words §3.4: the other-Stripe-fees line under the rates, its own line inside the fee row. */
+.otherFees { display: block; margin-top: 0.25rem; }

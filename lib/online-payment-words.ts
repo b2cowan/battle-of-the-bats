@@ -236,6 +236,8 @@ export const PAYOUTS_WORDS = {
     costRate: (rate: string, bankRate: string | null = null) => (bankRate ? `${rate} per card payment · ${bankRate} per bank debit` : `${rate} per card payment`),
     costExample: (base: string, fee: string, bankFee: string | null = null) =>
       (bankFee ? `On a ${base} fee, the processing fee is ${fee} by card and ${bankFee} by bank debit.` : `On a ${base} fee, the card fee is ${fee}.`),
+    // 12d-1 words §3.4 (§7 ruling 7): directly under the rates, before the example.
+    otherFees: 'Stripe may charge other fees on your payments, such as for a card dispute, a returned bank debit or a card issued outside your country. FieldLogicHQ passes them on to you on an invoice.',
     whoLabel: 'Who pays it',
     whoTeams: 'Teams pay it',
     whoTeamsHint: 'Added to what the team pays.',
@@ -255,6 +257,9 @@ export const PAYOUTS_WORDS = {
     feeLabel: 'Processing fee',
     feeRead: { family: 'Teams pay it: it’s added to what they pay', club: 'The club pays it: it comes out of each payment' },
     feeRates: (rate: string, bankRate: string | null = null) => (bankRate ? `${rate} per card payment · ${bankRate} per bank debit` : `${rate} per card payment`),
+    // 12d-1 words §3.4: under the rates line. `otherFeesPlan` is appended for a club that pays nothing for its plan.
+    otherFees: 'Other Stripe fees, such as for disputes, returned bank debits and cards issued outside your country, are billed to the club.',
+    otherFeesPlan: 'Your plan doesn’t change.',
     feeEditLabel: 'Who pays the processing fee',
     choice: { family: 'Teams pay it', club: 'The club pays it' },
     choiceHint: {
@@ -862,11 +867,114 @@ export const DISPUTE_EMAIL_WORDS = {
   // Siblings: §1.4's "Open the registrations" (the link opens the season's list).
   button: (recordPossessive: string | null) => (recordPossessive ? `Open ${recordPossessive} record` : 'Open the registrations'),
   noChange: 'If the club wins, nothing changes in your books.',
+  // §1.6 email 2: three days before the answer is due, only while unanswered (the daily job, 12d-1 Part 4).
+  reminder: {
+    subject: (due: string, club: string) => `Answer by ${due}: a card dispute for ${club}`,
+    lead: (receiptNo: string, forWhom: string, dueFull: string) => `The dispute on receipt ${receiptNo} for ${forWhom} is due to be answered in Stripe on ${endSentence(dueFull)}`,
+    after: 'If it isn’t answered by then, the bank decides without the club’s side.',
+  },
 } as const;
 
-/** The line on the club's FieldLogicHQ invoice for Stripe's returned-debit fee (§0k answer 2; words via /marketing). */
+/** The line on the club's FieldLogicHQ invoice for Stripe's returned-debit fee (§0k answer 2; words via /marketing). The
+ *  receipt joins it in 12d-1 (words §1.7 `invoice.line.returnedDebit`) so every Stripe-fee line reads in one shape. */
 export const RETURNED_DEBIT_FEE_WORDS = {
-  invoiceLine: (day: string) => `Returned bank debit · ${day}`,
+  invoiceLine: (day: string, receiptNo: string | null = null) => (receiptNo ? `Returned bank debit · receipt ${receiptNo} · ${day}` : `Returned bank debit · ${day}`),
+} as const;
+
+/** The kinds of Stripe fee a club is billed (`platform_stripe_fees.kind`, mig 390). A returned answering fee is a credit. */
+export type StripeFeeKind = 'returned' | 'reversed' | 'dispute' | 'dispute_answer' | 'dispute_answer_returned' | 'foreign_card';
+export const isFeeCredit = (kind: string) => kind === 'dispute_answer_returned';
+/** The metadata key on FieldLogicHQ's own Stripe-fees invoice (its `platform_fee_invoices` id): how the billing webhook
+ *  and platform admin's Money tab know one. Here, not in the server module, so the Money tab's pure reader can use it. */
+export const FEE_INVOICE_META = 'fieldlogichq_fee_invoice_id';
+
+/** The platform's club-facing address on FieldLogicHQ's own invoice and its email (`{supportEmail}`, words §1.7): the
+ *  reply-to every FieldLogicHQ email already carries. */
+export const PLATFORM_CONTACT_EMAIL = 'hello@fieldlogichq.ca';
+
+/**
+ * EVERY STRIPE FEE A CLUB IS BILLED (12d-1 Part 4; words CLUB_TIER_STAGE12D_COPY.md §1.7, §3.4, §6.1). A comp covers the
+ * subscription and nothing else (owner 2026-10-26), so these read the same on every plan except for which invoice carries
+ * them. No rate and no Stripe amount is typed here: every figure is Stripe's, or printed from a plan-config constant.
+ */
+export const STRIPE_FEE_WORDS = {
+  // §1.7 the invoice lines (the same on a subscription invoice and an invoice of its own; no child's name ever).
+  line: (kind: StripeFeeKind, receiptNo: string | null, day: string): string => {
+    const r = receiptNo ? ` · receipt ${receiptNo}` : '';
+    switch (kind) {
+      case 'returned':
+      case 'reversed': return RETURNED_DEBIT_FEE_WORDS.invoiceLine(day, receiptNo);
+      case 'dispute': return `Card dispute fee${r} · ${day}`;
+      case 'dispute_answer': return `Card dispute answering fee${r} · ${day}`;
+      case 'dispute_answer_returned': return `Card dispute answering fee returned${r} · ${day}`;
+      case 'foreign_card': return `Extra fee for a card issued outside your country${r} · ${day}`;
+    }
+  },
+  // §1.7 the dispute fee on the record, when Stripe charged it to FieldLogicHQ (ruling 5: billed at Stripe's figure).
+  disputeFeeNext: (fee: string) => `Stripe’s dispute fee, ${fee}, goes on your next FieldLogicHQ invoice.`,
+  disputeFeeOwn: (fee: string) => `Stripe’s dispute fee, ${fee}, goes on a FieldLogicHQ invoice. Your plan doesn’t change; Stripe’s fees are passed on to every club.`,
+  // §1.7 `{invoiceWhere}`.
+  invoiceWhereNext: 'on your next FieldLogicHQ invoice',
+  invoiceWhereOwn: 'on a FieldLogicHQ invoice of its own',
+  // §1.7 the invoice of its own: Stripe's fields.
+  memo: (club: string) => `Stripe fees on ${possessive(club)} online payments. Your plan doesn’t change; Stripe’s fees are passed on to every club.`,
+  footer: (email: string) => `Questions: ${email}.`,
+  // §1.7 its email (FieldLogicHQ's own envelope; Stripe's own invoice email is off for these, §7 ruling 2).
+  emailSubject: (invoiceNo: string, club: string) => `Invoice ${invoiceNo} from FieldLogicHQ: Stripe fees for ${club}`,
+  emailPreheader: (amount: string, dueFull: string) => `${amount} in Stripe fees on your online payments. Due ${endSentence(dueFull)}`,
+  emailLead: (amount: string, club: string, one: boolean) => (one
+    ? `Stripe charged FieldLogicHQ a ${amount} fee on a payment to ${club}, and we pass it on to every club, on every plan. Your plan doesn’t change.`
+    : `Stripe charged FieldLogicHQ ${amount} in fees on ${possessive(club)} online payments, and we pass them on to every club, on every plan. Your plan doesn’t change.`),
+  total: 'Total',
+  due: 'Due',
+  credit: (amount: string) => `−${amount}`,
+  /** "Stripe charges these fees when …": only the kinds on this invoice, joined with commas and "or". */
+  emailWhy: (kinds: readonly StripeFeeKind[]) => {
+    const reasons = [
+      kinds.some(k => k.startsWith('dispute')) ? 'a card payment is disputed' : null,
+      kinds.some(k => k === 'returned' || k === 'reversed') ? 'a bank debit comes back' : null,
+      kinds.includes('foreign_card') ? 'a card issued outside your country is used' : null,
+    ].filter((x): x is string => !!x);
+    const joined = reasons.length <= 1 ? (reasons[0] ?? '') : `${reasons.slice(0, -1).join(', ')} or ${reasons[reasons.length - 1]}`;
+    return `Stripe charges ${reasons.length === 1 && kinds.length === 1 ? 'this fee' : 'these fees'} when ${joined}.`;
+  },
+  emailButton: 'Pay the invoice',
+  emailSecure: 'You pay on Stripe’s secure page.',
+  emailQuestions: (email: string) => `Questions: ${email}.`,
+  // §1.7 `ownInvoice.reminder.*` (drafted held; the one reminder is ruled, §7 ruling 3). Nothing says what happens next.
+  reminderSubject: (invoiceNo: string) => `Reminder: invoice ${invoiceNo} from FieldLogicHQ`,
+  reminderLead: (invoiceNo: string, amount: string, dueFull: string) => `Invoice ${invoiceNo} for ${amount} was due on ${dueFull}. You can pay it on Stripe’s secure page.`,
+  // Settings › Plan & billing (12d-1 ruling 4: what, when, billed / unpaid, Pay the invoice). Derived from §1.7 and §6.1;
+  // owed to /marketing.
+  listHeading: 'Stripe fees',
+  listLead: 'Stripe charges these fees on your online payments, and FieldLogicHQ passes them on to every club.',
+  listPlan: 'Your plan doesn’t change.',
+  billedNext: 'On your next FieldLogicHQ invoice',
+  billedWaiting: (dayFirst: string) => `On your ${dayFirst} invoice`,
+  billedOwn: (invoiceNo: string, day: string) => `Invoice ${invoiceNo} · due ${day}`,
+  billedOwnPaid: (invoiceNo: string, day: string) => `Invoice ${invoiceNo} · paid ${day}`,
+  billedOwnUnpaid: (invoiceNo: string, day: string) => `Invoice ${invoiceNo} · unpaid since ${day}`,
+  billedCredit: 'Credited to your account',
+  billedTest: 'Not billed: test mode',
+  billedError: 'Couldn’t be billed yet',
+  payInvoice: 'Pay the invoice',
+  // §6.1 platform admin's panel (`pa.fee.*`).
+  paHeading: 'Fees billed to the club',
+  paFor: 'For',
+  paBilled: 'Billed',
+  paDate: 'Date',
+  paFee: 'Fee',
+  paNext: (month: string) => `On the ${month} invoice`,
+  paCredit: 'Credited',
+  paError: 'Couldn’t be billed',
+  paRetry: 'Retry',
+  paRetried: 'Billed',
+  paRetryFailed: 'Still couldn’t be billed. The error is below.',
+  paFromRate: 'From the published rate',
+  paLegacy: 'Not billed: from before every club paid Stripe’s fees',
+  paNone: 'No Stripe fees yet.',
+  /** The fee invoice's own charge on the Money tab (a fee invoice is never "made in Stripe's dashboard"). */
+  paCharge: (invoiceNo: string | null) => `Stripe fees on online payments${invoiceNo ? ` · invoice ${invoiceNo}` : ''}`,
 } as const;
 
 /** The four bank-debit emails (words §2.4). A team's version swaps the children for the team, "spot" for "place". */

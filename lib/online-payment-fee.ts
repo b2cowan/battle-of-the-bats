@@ -12,7 +12,7 @@
  * Either way the application fee FieldLogicHQ takes is the whole fee: FieldLogicHQ pays Stripe's own processing fee out
  * of it (the 2026-07-28 model, plan §0c).
  */
-import { ONLINE_PAYMENT_RATES, type OnlinePaymentRail } from './plan-config';
+import { FOREIGN_CARD_EXTRA_BPS, ONLINE_PAYMENT_RATES, type OnlinePaymentRail } from './plan-config';
 
 export type OnlineFeePayer = 'family' | 'club';
 
@@ -79,6 +79,14 @@ export function toCents(dollars: number | string): number {
   const n = typeof dollars === 'string' ? Number(dollars) : dollars;
   if (!Number.isFinite(n)) throw new Error('Not an amount');
   return Math.round(n * 100);
+}
+
+/**
+ * Stripe's extra on a card issued outside the club's country (12d-1 Part 4), billed to the CLUB from the published rate on
+ * what the card was charged, rounded to the cent. Never added to what a family or team pays.
+ */
+export function foreignCardFeeCents(chargedCents: number): number {
+  return Math.round((chargedCents * FOREIGN_CARD_EXTRA_BPS) / 10000);
 }
 
 /** Cents → the dollars the books store. */
