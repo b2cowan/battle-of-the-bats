@@ -581,7 +581,7 @@ Finds the whole sign-up by reference and email; works in every season status.
 | `status.child.tag.*` | Accepted · Received · Waitlist · 1st · Declined · Withdrawn | Replaces today's "Confirmed" / "Pending review" / "Waitlisted". |
 | `status.child.division` | Division | Row label; value is the division name. |
 | `status.child.fee.label` | Fee | |
-| `status.child.fee.toPay` | $150 to pay | Amber. |
+| `status.child.fee.toPay` | $150 | Amber, the amount alone (owner 2026-10-26: the "To pay" card below says what it is). |
 | `status.child.fee.paid` | $150 · paid Oct 24 | |
 | `status.child.fee.free` | Free | |
 | `status.child.fee.received` | $150 once accepted | Received child. |

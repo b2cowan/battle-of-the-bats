@@ -94,7 +94,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
     <h2>Before you start: two Stripe listen windows (parts D and E only)</h2>
     <p>Part D takes one card payment and part E one refund, so window 1 is needed then. The account events window is only needed if you want to watch Stripe react to a Disconnect in part F, so it is optional.</p>
     <p class="label">Window 1: payments and refunds</p>
-    <pre>C:\tools\stripe\stripe.exe listen --events-from @accounts --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired,refund.created,refund.updated,refund.failed --forward-to localhost:3000/api/payments/connect-webhook</pre>
+    <pre>C:\tools\stripe\stripe.exe listen --events-from "@accounts" --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired,refund.created,refund.updated,refund.failed --forward-to localhost:3000/api/payments/connect-webhook</pre>
     <p class="label">Window 2 (optional): the club's account</p>
     <pre>C:\tools\stripe\stripe.exe listen --events-from "@self" --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events</pre>
   </section>
@@ -115,8 +115,8 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   var OWNER = 'Club owner, computer';
   var PARTS = [
     { id: 'A', title: 'The card today', steps: [
-      { who: OWNER, do: 'Sign in as the club owner and open <code>/uat-rep-club/admin/org/settings</code>. Scroll to the Payouts card.', see: 'Pill “Taking payments”, title “Teams can pay online”, a “Test mode” chip and the line “No real money moves while payouts are in test mode.” Body “Payouts go to the bank account ending …, on Stripe’s schedule. Receipts go out in the name “UAT Rep Club”.” “Processing fee: 3.5% + $1.50 per card payment.” Buttons “Open Stripe” and a quiet “Disconnect payouts”.' },
-      { who: OWNER, do: 'Look at the card’s record (who pays the fee, the refund policy, the bank account).', see: 'Processing fee: “Teams pay it: it’s added to what they pay” with the rate. Refund policy: “None written. Teams won’t see a Refund policy link.” Bank account ending … and Open Stripe.' }
+      { who: OWNER, do: 'Sign in as the club owner and open <code>/uat-rep-club/admin/org/settings</code>. Scroll to the Payouts card.', see: 'Pill “Taking payments”, title “Teams can pay online”, a “Test mode” chip and the line “No real money moves while payouts are in test mode.” Body “Payouts go to your bank account on Stripe’s schedule. Receipts go out in the name “UAT Rep Club”.” “Processing fee: 3.5% + $1.50 per card payment.” Buttons “Open Stripe” and a quiet “Disconnect payouts”.' },
+      { who: OWNER, do: 'Look at the card’s record (who pays the fee and the refund policy).', see: 'Processing fee: “Teams pay it: it’s added to what they pay” with the rate. Refund policy: “None written. Teams won’t see a Refund policy link.” No bank account line: the card shows only the fee, the refund policy and the Open Stripe button.' }
     ] },
     { id: 'B', title: 'The record: change the fee choice and write a refund policy', steps: [
       { who: OWNER, do: 'Press the record’s pencil.', see: 'The whole record turns to editing. Under “Who pays the processing fee” two choices: “Teams pay it” (“Added to what the team pays. You receive the full entry fee.”) and “The club pays it” (“Teams pay the entry fee alone. The processing fee comes out of each payment and shows in your books as Payment processing.”). “A change applies to payments started from now on. Anything already paid stays as it was.”' },
@@ -125,7 +125,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       { who: OWNER, do: 'Press ✓ to finish, then reload the page.', see: 'The record reads “The club pays it: it comes out of each payment”, and the refund policy sentence you typed. Both survived the reload.' }
     ] },
     { id: 'C', title: 'The treasurer and the quiet line', steps: [
-      { who: 'Treasurer, computer', do: 'Sign out, sign in as the treasurer and open <code>/uat-rep-club/admin/accounting</code>.', see: 'The line “Taking payments · Online payments go to the bank account ending …” with Open Stripe. Nothing about who pays the fee.' },
+      { who: 'Treasurer, computer', do: 'Sign out, sign in as the treasurer and open <code>/uat-rep-club/admin/accounting</code>.', see: 'The line “Taking payments · Online payments go to the club’s bank account.” with Open Stripe. Nothing about who pays the fee.' },
       { who: 'Treasurer, computer', do: 'Try to open <code>/uat-rep-club/admin/org/settings</code>.', see: 'The treasurer can’t open the club’s Settings (they are owner-only). Note exactly what happens: a message, a redirect or an empty page.' },
       { who: OWNER, do: 'Sign out and sign back in as the club owner.', see: 'You’re back in as the owner.' }
     ] },

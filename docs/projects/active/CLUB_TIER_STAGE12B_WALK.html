@@ -79,14 +79,26 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
 
   <section class="card">
     <h2>Before you start</h2>
-    <p>Setup, not checked.</p>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
     <dl class="facts">
-      <dt>Where</dt><dd>Dev on Amplify, or local at <code>http://localhost:3000</code>, with online payments switched on and a pay-link secret set.</dd>
-      <dt>Payouts</dt><dd>The test Stripe account from the 12a walks is connected on the Club-plan club. Settings › Payouts reads "Families and teams can pay online".</dd>
-      <dt>Webhooks</dt><dd>Both Stripe listen windows are running locally (or the staging webhook is on).</dd>
-      <dt>Season</dt><dd>A house-league season with a price of $150, How to pay text written, and registration open.</dd>
-      <dt>Sign in as</dt><dd>Owner, registrar and treasurer. Plus a family on a phone, using any email you can read.</dd>
+      <dt>Where</dt><dd><code>http://localhost:3000</code> with <code>npm run dev</code> running. Use local, not Amplify, because the Stripe listen windows below forward to your own computer. <code>PAY_LINK_SECRET</code> (32+ characters) must be set in <code>.env.local</code>.</dd>
+      <dt>Webhooks</dt><dd>Window 1, needed for every card payment and refund:<pre>C:\tools\stripe\stripe.exe listen --events-from "@accounts" --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired,refund.created,refund.updated,refund.failed --forward-to localhost:3000/api/payments/connect-webhook</pre>Window 2, optional (the club's account events):<pre>C:\tools\stripe\stripe.exe listen --events-from "@self" --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events</pre></dd>
       <dt>Test card</dt><dd><code>4242 4242 4242 4242</code>, any future date, any three digits.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Which club, which login</h2>
+    <p>Parts A–I and J's setup use the <strong>Club-plan club</strong>. Part K uses the <strong>League Plus club</strong>. Sign out between logins, or use a private window per person.</p>
+    <dl class="facts">
+      <dt>Club-plan club</dt><dd><strong>UAT Rep Club</strong>, at <code>http://localhost:3000/uat-rep-club/admin</code>. If it looks wrong or empty, rebuild it with <code>node scripts/seed-club-fixture.mjs</code> first (this resets the password for every account below).</dd>
+      <dt>Owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>Treasurer</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>Payouts</dt><dd>The test Stripe account from the 12a walks (§376) is connected on UAT Rep Club. As the owner, open <code>/uat-rep-club/admin/org/settings</code> › Payouts. It must read "Taking payments" (and "Families and teams can pay online"). If it reads "Disconnected", press "Set up payouts again" first.</dd>
+      <dt>Season</dt><dd><strong>2026 Fall House League</strong> (price $150, registration open), at <code>/uat-rep-club/admin/house-league</code>. The seed does not write the How to pay text, so as the owner or registrar open the season and, in the Registration block, check "How to pay" has text (for example "E-transfer to treasurer@uat-rep-club.local"). Write it if blank. The family sign-up page is <code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/register</code> (open it on your phone via your computer's network address, or in a phone-sized window).</dd>
+      <dt>Family</dt><dd>No login. On a phone, sign up on the page above with any email you can read. Use a different address per sign-up so each email is separate.</dd>
+      <dt>League Plus club</dt><dd><strong>Dev League Org</strong>, at <code>http://localhost:3000/dev-league-org/admin</code>. Owner login <code>owner@dev.local</code> · <code>devpass123</code>. Its season is <strong>Dev House League 2026</strong> (seeded as Active, $150). Before part K, as that owner: set the season's registration open, write its How to pay text, and connect the same test Stripe account under Settings › Payouts. If the club is missing, a platform admin can seed it from the dev tools (plan: League).</dd>
     </dl>
   </section>
 
@@ -108,10 +120,10 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
 <script>
 (function () {
   var KEY = 'club-tier-12b-card-payments-walk-v1';
-  var F = 'A family, phone', O = 'Owner, computer', R = 'Registrar, computer', RP = 'Registrar, phone', T = 'Treasurer, computer', L = 'Owner, League Plus club';
+  var F = 'A family, phone, no login', O = 'Owner, computer · uat-club-owner@uat-rep-club.local', R = 'Registrar, computer · uat-club-registrar@uat-rep-club.local', RP = 'Registrar, phone · uat-club-registrar@uat-rep-club.local', T = 'Treasurer, computer · uat-club-treasurer@uat-rep-club.local', L = 'Owner of Dev League Org (League Plus) · owner@dev.local';
   var PARTS = [
     { id: 'A', title: 'One child', steps: [
-      { who: F, do: 'Sign up one child into a division that has room and accepts on its own.', see: 'The confirmation shows "To pay now" with the child’s line and a "Pay $X by card" button. Under the button: "includes a $Y processing fee". The refund policy link shows if the club wrote one. Below that, "Or pay another way" with the club’s How to pay text.' },
+      { who: F, do: 'On /uat-rep-club/league/2026-fall-house-league/register sign up one child into a division that has room and accepts on its own. (If every division reviews first, switch the season to accept on its own: season page › Registration, as the registrar.)', see: 'The confirmation shows "To pay now" with the child’s line and a "Pay $X by card" button. Under the button: "includes a $Y processing fee". The refund policy link shows if the club wrote one. Below that, "Or pay another way" with the club’s How to pay text.' },
       { who: F, do: 'Press the pay button.', see: 'The button reads "Opening the secure payment page…". Then Stripe opens in the club’s name, with a "Processing fee" line and your email already filled in.' },
       { who: F, do: 'Pay with the test card.', see: 'You land back on the status page, which reads "Confirming your payment". Then it shows the receipt: "Paid, thank you", the card’s last four digits and a receipt number. It never says "Paid" before the payment is confirmed.' },
       { who: F, do: 'Open the receipt email.', see: 'It arrives in the club’s name. It shows the child’s line, the processing fee, the total and a "View your receipt" button.' },
@@ -119,10 +131,10 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
     ]},
     { id: 'B', title: 'Siblings in one checkout', steps: [
       { who: F, do: 'Sign up two children together, then press the pay button.', see: 'One button for both children’s total. Stripe shows two child lines and one processing fee line.' },
-      { who: R, do: 'Pay with the test card, then open Registrations.', see: 'Both rows read "received · Online, card · receipt N", with the same receipt number.' }
+      { who: R, do: 'Pay with the test card. Then sign in as the registrar and open the season’s Registrations (UAT Rep Club › House league › 2026 Fall House League › Registrations).', see: 'Both rows read "received · Online, card · receipt N", with the same receipt number.' }
     ]},
     { id: 'C', title: 'Approval and promotion emails', steps: [
-      { who: R, do: 'Use a season that reviews first. Sign a child up as a family, then approve that child as the registrar. Open the family’s email.', see: 'It has a Pay now button, the line "Pay online by card, or pay another way below" and the line "The processing fee is shown before you pay". The club’s How to pay text sits under "Other ways to pay".' },
+      { who: R, do: 'Use the same 2026 Fall House League, switched to review first (season page › Registration). Sign a child up as a family, then approve that child as the registrar. Open the family’s email.', see: 'It has a Pay now button, the line "Pay online by card, or pay another way below" and the line "The processing fee is shown before you pay". The club’s How to pay text sits under "Other ways to pay".' },
       { who: F, do: 'Press Pay now in that email.', see: 'The status page opens unlocked, with no email or reference asked. Pay with the test card and the receipt shows.' },
       { who: R, do: 'Fill a division. Put one child on the waitlist. Then withdraw a placed child so the first waiting child moves up. Open the family’s email.', see: 'The promotion email has a Pay now button.' }
     ]},
@@ -132,7 +144,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       { who: O, do: 'Reconnect payouts and switch online payments back on.', see: 'Settings › Payouts reads "Families and teams can pay online" again. Keep it this way for the rest of the walk.' }
     ]},
     { id: 'E', title: 'The desk', steps: [
-      { who: R, do: 'On a computer, open Registrations. On an owing row, open ⋯ and press "Email the pay link".', see: 'The hint reads "Opens their status page to pay by card". A toast says "Pay link sent to {email}". The row now reads "Pay link sent" with today’s date.' },
+      { who: R, do: 'On a computer, open the season’s Registrations (UAT Rep Club › House league › 2026 Fall House League). On an owing row, open ⋯ and press "Email the pay link".', see: 'The hint reads "Opens their status page to pay by card". A toast says "Pay link sent to {email}". The row now reads "Pay link sent" with today’s date.' },
       { who: F, do: 'Open the pay link email.', see: 'It shows "Amount due" and a Pay now button.' },
       { who: R, do: 'Select two siblings who both owe. In the bulk bar press "Email the pay link".', see: 'One email goes to the family, and the toast reads "1 pay link sent."' },
       { who: RP, do: 'On a phone, open ⋯ on a row that was paid by card.', see: 'There is no "Undo: marked received by mistake". A card payment is a real payment.' },
@@ -154,16 +166,16 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       { who: R, do: 'On another card-paid child, raise the price.', see: 'The window says the family will owe $X more, and "We’ll email them a pay link for it." Press "Save and email". The family gets a pay link for the difference.' }
     ]},
     { id: 'I', title: 'The books', steps: [
-      { who: T, do: 'On the Club plan, open the season’s Money page.', see: 'The Received caption ends "{amount} of it by card". Card lines read "Online, card · receipt N". The treasurer sees the payouts status line, and no refund button anywhere: the treasurer logs the accounting and does not refund.' },
-      { who: O, do: 'On a club where payouts are not set up, open the season’s Money page.', see: 'You see "Families and teams pay you directly, outside FieldLogicHQ." with a link, "Let them pay online · Settings › Payouts".' },
-      { who: O, do: 'In Settings › Payouts choose "The club pays it". Then have a family pay a new registration by card. Open the Money page, then the Statement.', see: 'The family is charged only the price. The Money page shows a line "Payment processing · {child}". The Statement shows a Payment processing cost, and the fees income is the price only.' },
+      { who: T, do: 'Open the 2026 Fall House League › Money page in UAT Rep Club.', see: 'The Received caption ends "{amount} of it by card". Card lines read "Online, card · receipt N". The treasurer sees the payouts status line, and no refund button anywhere: the treasurer logs the accounting and does not refund.' },
+      { who: O, do: 'Do this on Dev League Org BEFORE you connect its payouts for part K (sign in as owner@dev.local, open Dev House League 2026 › Money). You will not see this line there afterwards.', see: 'You see "Families and teams pay you directly, outside FieldLogicHQ." with a link, "Let them pay online · Settings › Payouts".' },
+      { who: O, do: 'Back in UAT Rep Club, in Settings › Payouts choose "The club pays it". Then have a family pay a new registration by card. Open the Money page, then the Statement.', see: 'The family is charged only the price. The Money page shows a line "Payment processing · {child}". The Statement shows a Payment processing cost, and the fees income is the price only.' },
       { who: R, do: 'Refund a card payment with the fee box on (as the registrar). Then, as the treasurer, open the Money page and the Statement.', see: 'A line "Payment processing · fee given back" appears. Fees income nets the refund. It is never counted under spending.' }
     ]},
     { id: 'J', title: 'Tournament pay page re-check', steps: [
-      { who: F, do: 'Open a tournament team’s pay link and pay a deposit or the full amount.', see: 'It shows deposit or full, pays, confirms and shows the receipt exactly as in the 12a walk.' }
+      { who: F, do: 'As the owner, open UAT Rep Club › Tournaments › Registrations, choose UAT Rep Club Invitational, open a team that owes, and use ⋯ › Email the pay link to an address you can read. Then, as that team, open the link and pay a deposit or the full amount.', see: 'It shows deposit or full, pays, confirms and shows the receipt exactly as in the 12a walk.' }
     ]},
     { id: 'K', title: 'League Plus', steps: [
-      { who: L, do: 'On the League Plus club, have a family pay a house-league fee by card. Then open the season’s Money page.', see: 'The same family payment works. The season’s Money page is the book. There is no treasurer view, because League Plus has no Accounting.' }
+      { who: L, do: 'Make sure Dev League Org has the setup in “Which club, which login”. Sign up a family on /dev-league-org/league/dev-league-2026/register and pay by card. Then, as owner@dev.local, open Dev House League 2026 › Money.', see: 'The same family payment works. The season’s Money page is the book. There is no treasurer view, because League Plus has no Accounting.' }
     ]}
   ];
 

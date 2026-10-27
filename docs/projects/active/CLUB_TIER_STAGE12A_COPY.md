@@ -71,7 +71,7 @@ naturally. In 12a the only payer is a team, so every variant says "teams" (famil
 | **Taking payments** | | |
 | `payouts.taking.pill` | Taking payments | |
 | `payouts.taking.title` | Teams can pay online | |
-| `payouts.taking.body` | Payouts go to the bank account ending {last4}, on Stripe’s schedule. Receipts go out in the name “{clubName}”. | Dropped the drawing's "two business days": the schedule is Stripe's setting, not ours |
+| `payouts.taking.body` | Payouts go to your bank account on Stripe’s schedule. Receipts go out in the name “{clubName}”. | Dropped the drawing's "two business days": the schedule is Stripe's setting, not ours |
 | `payouts.taking.button` | Open Stripe | |
 | **Needs attention** | | |
 | `payouts.needsAttention.pill` | Needs attention | |
@@ -140,7 +140,7 @@ Reads first; the pencil flips the whole record. The choice autosaves and tells n
 | `record.policyHint` | One or two sentences teams see beside Pay. | |
 | `record.policyPlaceholder` | For example: refunded in full until {date}, then not refunded. | The only example is a shape with a token; the club writes its own |
 | `record.policyEmpty` | None written. Teams won’t see a Refund policy link. | Reading state when blank (A9: absent when blank) |
-| `record.bank` | Bank account ending {last4} | |
+| `record.bank` | (not built: owner ruled the bank account’s last digits out, 2026-10-25) | |
 | `record.openStripe` | Open Stripe | |
 
 ## 5 · Disconnect (the window)
@@ -167,7 +167,7 @@ nothing to tell them yet.
 | key | string | note |
 |---|---|---|
 | `status.takingLead` | Taking payments | Bold lead |
-| `status.takingBody` | Online payments go to the bank account ending {last4}. | |
+| `status.takingBody` | Online payments go to the club’s bank account. | |
 | `status.takingLink` | Open Stripe | |
 | `status.needsLead` | Needs attention | Amber pill, not text in a name |
 | `status.needsBody` | Online payments are paused: Stripe needs something from the owner. | Stripe's requirement is the owner's to read, so no `{requirement}` here |

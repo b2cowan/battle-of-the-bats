@@ -94,7 +94,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
     <h2>Before you start: two Stripe listen windows</h2>
     <p>Open two PowerShell windows and run one line in each. The Stripe CLI won't carry both kinds of event in one window. The CLI isn't on your PATH, so these use its full location.</p>
     <p class="label">Window 1: payments and refunds</p>
-    <pre>C:\tools\stripe\stripe.exe listen --events-from @accounts --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired,refund.created,refund.updated,refund.failed --forward-to localhost:3000/api/payments/connect-webhook</pre>
+    <pre>C:\tools\stripe\stripe.exe listen --events-from "@accounts" --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired,refund.created,refund.updated,refund.failed --forward-to localhost:3000/api/payments/connect-webhook</pre>
     <p class="label">Window 2: the club's account</p>
     <pre>C:\tools\stripe\stripe.exe listen --events-from "@self" --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events</pre>
     <p class="sub">Both print the same signing secret. Your local settings already hold it for both doors, so there's nothing to paste. If the CLI asks you to log in, run <code>C:\tools\stripe\stripe.exe login</code> once, or add <code>--api-key</code> with your test secret key.</p>

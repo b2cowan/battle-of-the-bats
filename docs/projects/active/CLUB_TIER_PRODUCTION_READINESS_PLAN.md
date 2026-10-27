@@ -2534,8 +2534,9 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 > **✅ STAGE 7 CLOSED 2026-10-22 (owner).** All four parts are built and owner-walked: 7a tournament money (§354 ✅, all seven parts), 7b Add our teams
 > (§358 ✅ 28/28), 7c Email families (§359 ✅ 40/40) and 7d the coach's Tournaments (§361 ✅ 35/35). Closed on the owner's instruction. The items below
 > travel with it as follow-ups; none holds the stage, and none is recorded as done.
-> - **7c:** `/review`, `/docs` and `/marketing` are not recorded as run (`CLUB_TIER_STAGE7C_NEXT_STEPS_PROMPT.md` is the prompt, and it is stale: 7c is committed). Also open: the house-league season email onto the batched sender, and widening Families' "this season" to a registration-closed season.
-> - **7d:** the three head-coach-rule questions and the six `/design` points put to the owner (see the 7d close-out log); the roster-submit rule's browser check; the `/marketing` rewording of "Only the head coach can change who coaches at this event."
+> - **✅ Owner, 2026-10-26: the 7c and 7d follow-ups below that were "not recorded as run" were run and are complete** (stated by the owner; the record of each run was not re-checked then).
+> - **7c:** ~~`/review`, `/docs` and `/marketing` are not recorded as run~~ **complete (owner, 2026-10-26)** (`CLUB_TIER_STAGE7C_NEXT_STEPS_PROMPT.md` is the prompt, and it is stale: 7c is committed). Also open: the house-league season email onto the batched sender, and widening Families' "this season" to a registration-closed season.
+> - **7d:** ~~the three head-coach-rule questions and the six `/design` points put to the owner (see the 7d close-out log); the roster-submit rule's browser check; the `/marketing` rewording of "Only the head coach can change who coaches at this event."~~ **complete (owner, 2026-10-26).**
 > - **7b:** the coaches-portal "Add my team" window still offers Paid/Unpaid; the bulk Mark paid email path was not traced for our team.
 > - **7a:** walk §354 Part 5 passed 9 of 11 and the paste did not say which two items were left unticked.
 > - **Production:** migrations 342, 346, 347 and 348 (this stage) are on dev only, in `MANUAL_PROD_STEPS.json`, to be applied in order before the code ships.
@@ -2988,6 +2989,16 @@ drawn with Stage 10. Independent of Stages 7–9.
 slots (block, team or program, locked), a send log; the team-schedule link per Ask 1; dictionary + snapshots.
 **Not in the first cut (proposed):** families requesting or swapping slots, coaches trading slots with each other, a
 public schedule page, paying for time per slot, any optimizer beyond the listed rules.
+
+> **📌 REVIEW OWED AFTER STAGE 11 CLOSES — scheduling as a whole (owner, 2026-10-27; a note, not a ruling).**
+> Raised while asking why *House league's time* and *Practice time* are two separate Tools entries. The owner's concern:
+> combining house league and rep teams, and games and practices, in one scheduling world **is confusing for the user**.
+> **Nothing changes now.** When Stage 11 (11b, then 9d-2a/9d-2b) is done and its walks have run, hold a review of how
+> scheduling reads end to end, **and the owner supplies his opinions at that point** — do not pre-decide the answer or
+> start redrawing before then. Questions the review should put to a real walk, not argue in advance: does one schedule
+> surface for house league + rep + games + practices read as one thing or as four? is the club → house league (whole) →
+> division → team chain (House league's time, then Practice time) understood by a league admin without being told?
+> what would a split by audience (rep scheduling vs house-league scheduling) cost against what it buys?
 
 ### Stage 12 — Payments processing: families pay online (⚖ added by the owner 2026-10-19; inside the release, no date)
 > **Why this stage exists:** the owner, 2026-10-19 — *"will release when the product is fully ready, and that includes payments

@@ -1,6 +1,24 @@
 # Owner bookkeeping: easier daily work — PM brief
 
-**Status:** A stand-in accountant reviewed the whole build on 2026-10-25 and the owner accepted the review the same day ([review](https://claude.ai/artifact/Stn2GmaBENDZYSUwmVkhCS)). The reviewed build is committed as a baseline. Next: a short set of fixes, then the outside accountant, then the owner's decisions on the business account and where the real books live. [Browser review and live checklist](BOOKKEEPING_OWNER_EXPERIENCE_REVIEW.html) · [implementation plan](BOOKKEEPING_OWNER_EXPERIENCE_PLAN.md) · [fixes build prompt](BOOKKEEPING_ACCOUNTANT_FIXES_BUILD_PROMPT.md). The previous bookkeeping build's [closure record](../archive/BOOKKEEPING_CLOSURE_RECORD.md) remains authoritative for its completed and unfinished gates.
+**Status (2026-10-27):** The owner re-evaluated the whole tool and ruled a new six-stage plan ([hub](https://claude.ai/artifact/6zJfxoAFpi9uZKqYDUfnNx); plan §3 and §12). Next: build Stage 1. The section below replaces the earlier order.
+
+## The re-evaluation (owner, 2026-10-27)
+
+**What was wrong:** an ordinary purchase needed 732px of scrolling on a phone just to reach Save. Most of that was page headings, not fields. Voiding opened the entire correction form. The Ledger was a plain list with no account, no balance and no filters. Reports answered only "what did I spend in this period".
+
+**What changes, in order:**
+1. **Easy to use.** One short page heading and four tabs. Adding, correcting and viewing an expense happen in the product's standard window, with Save always on screen. Expenses becomes a scannable table with search by amount. A repeat purchase can be copied, and a likely duplicate gets a warning. Void becomes a one-question confirmation. US-dollar purchases take the receipt's amount and what the card charged, and the rate is worked out and kept. Bookkeeping takes the console's look.
+2. **Real books now.** The business pays from a personal card or account. Each one gets a register of only its business purchases, ticked against its statement, and a month can be closed. A running "your money in the business" figure shows what the owner has funded. Adding a business account or card later is one step, and it then gets a full running balance.
+3. **Reports that answer questions.** Month by month, period against period, money position, and a tax-year statement laid out by the self-employment form's lines (it also becomes the accountant package's first page).
+4. **GST/HST capture**, in its own design session.
+5. **The real books go live:** production storage and backups, the May–October backfill, and October closed.
+6. **Stripe income**, once the Revenue contract is accepted and before the first live charge.
+
+**Why it matters:** nothing that moves the business's money today is outside the tool, so the books can be complete now instead of waiting for Stripe. The everyday task, recording a purchase, stops fighting the owner.
+
+**Success:** a purchase is recorded without scrolling on a phone; every business line on a statement is ticked; October is closed; and the tax-year statement can be handed over with its receipts.
+
+**Earlier status (2026-10-25):** A stand-in accountant reviewed the whole build on 2026-10-25 and the owner accepted the review the same day ([review](https://claude.ai/artifact/Stn2GmaBENDZYSUwmVkhCS)). The reviewed build is committed as a baseline. Next: a short set of fixes, then the outside accountant, then the owner's decisions on the business account and where the real books live. [Browser review and live checklist](BOOKKEEPING_OWNER_EXPERIENCE_REVIEW.html) · [implementation plan](BOOKKEEPING_OWNER_EXPERIENCE_PLAN.md) · [fixes build prompt](BOOKKEEPING_ACCOUNTANT_FIXES_BUILD_PROMPT.md). The previous bookkeeping build's [closure record](../archive/BOOKKEEPING_CLOSURE_RECORD.md) remains authoritative for its completed and unfinished gates.
 
 ## What the accountant review changed (owner, 2026-10-25)
 

@@ -21,11 +21,11 @@
 - **12b BUILT 2026-10-25** (owner rulings §0e; words `CLUB_TIER_STAGE12B_COPY.md`), committed `aba98a7e6` (Part 1, mig 374,
   /dba + /review) · `40f7c5731` (Part 2) · `87cf762eb` (Part 3) · `7c69367b2` (Part 4) · `3ae979ef6` (Part 5, mig 375) ·
   `b3cb15e2b` (Part 6) · `1a2ca5bd4` (/review of Parts 2–6, mig 376, help). Migrations 374–376 applied to dev 2026-10-25
-  (declared prod-pending, after 361–363 and 368–372); scripts/house-league-money-check.sql 34/34 on dev. Walk §380 owed.
+  (declared prod-pending, after 361–363 and 368–372); scripts/house-league-money-check.sql 34/34 on dev. **Walked 2026-10-26 (owner, ledger §380): 21 of 33 passed, no failures; the 12 email steps are held for the one end-to-end pass on Amplify dev.**
   **Owner calls 2026-10-26 (§0f):** the treasurer does not refund, in either flow (built, same day); a PARTIAL refund of a
   tournament team's card payment moves to **12c** (§4). **Not built, named:** the Families record's "Paid online · card ·
   receipt" line (b4) — the record window had another session's edit in flight; "View the payment" in the row ⋯ (b3) —
-  the receipt number is on the row.
+  the receipt number is on the row. **Both moved into 12c (owner, 2026-10-26, §0j).**
 - **12c BUILT 2026-10-26** (prompt `CLUB_TIER_STAGE12C_BUILD_PROMPT.md`; rulings §0g–§0k; words
   `CLUB_TIER_STAGE12C_PARTREFUND_BANKDEBIT_COPY.md`), committed `293990174` (Part 1, mig 382, /review) · `855175d74`
   (Part 2, mig 383) · `5f3af63d4` (Part 3, mig 384) · `171a4ea91` (Part 4) · `960f2fd77` (Part 5, mig 386, /review) ·
@@ -259,7 +259,7 @@
   balance is never billed). Tests: the done list is covered (107 pass; nothing added). Not done: `check:layout` (aborted at
   the memory floor, then every screen "Page not found"); `check:demos` red since 12c Part 4 (`registration-attention.ts`'s
   extensionless import), not 12d-1's, for the owner. Walks: ledger §395 paid twice
-  (https://claude.ai/artifact/GmV1oKgXPb1RmVRNSeHw2i), §396 disputes and fees
+  (https://claude.ai/artifact/GmV1oKgXPb1RmVRNSeHw2i; WALKED 2026-10-27, 26 of 26, no changes asked), §396 disputes and fees
   (https://claude.ai/artifact/RKnhTRAFymveVggrXCUTnG).
   **Part 5b (2026-10-27): the owner's rulings 2, 3, 5, 6, 7 built, reviewed and committed, then the help and walk §396
   trued up.** Ruling 2 `3cd0731f1` (a cancelled club's owner sees the Stripe fees list on both Plan & billing pages; its
@@ -616,6 +616,158 @@ Asked from `CLUB_TIER_STAGE12B_BUILD_PROMPT.md` "Before any code", after a censu
 - **A partial refund of a tournament team's card payment is built in 12c** (§4), with that stage's other change to how a
   team's payments move. Until then a team's card payment is refunded in full only (12a), as the help says.
 
+## 0g · Rulings after the 12b walk — a refund must be visible (owner, 2026-10-26; folded into 12c)
+
+**What the walk found (dev data, kidten cowan, 2026-10-26).** A child was declined while the family's Checkout was open;
+the card payment then arrived for a registration already ended (`land_error` "ended", no book line) and was refunded
+to the card through the "couldn't go on this row" door. The refund succeeded (Stripe refund id recorded, fee share
+returned as a "Payment processing" cost), but it reversed no book line, so the registration's Fee column read "—" and
+nothing anywhere said the family had paid and been refunded. Not a recording bug: the book is right (nothing came in,
+nothing went out against the child). The gap is that the refund lives only in `online_payment_refunds`, which no screen reads.
+
+**Owner asks, all agreed:**
+1. **A card refund is visible on the registration.** Amount, date, status (Pending / Refunded / Failed) and Stripe's
+   refund reference, for refunds that never reached the book as well as ones that did. Fee column if there is room
+   (e.g. "Refunded $156.75" with the date beneath); the full detail (reference with copy, card, fee share, who, when)
+   in the row's record window. The Fee column never reads "—" for a child who paid.
+2. **A refund made in the club's Stripe dashboard on a house-league payment is recorded automatically** (today it raises
+   a Needs-attention item for a person; tournaments already auto-record a full dashboard refund).
+3. **A house-league refund email to the family**, in the club's name: amount, date, card, reference, the club's contact.
+   Today only tournament refunds send one (`sendRefundEmail`), so a refunded family hears nothing from us. Not Stripe's
+   own email: it is not sent in test mode and follows each club's Stripe settings.
+
+Needs a drawing round (record window + Fee cell + email) and a PM brief line before build; /design first.
+
+**RULED 2026-10-26 (owner paste-back): all six asks as recommended.**
+1. The refund sits on the Fee cell's existing two lines: the card's amount and any status on the second line; an amber pill
+   only when a refund failed.
+2. The first line keeps the fee figure ("$150.00 refunded"); the card's amount is on the second line.
+3. One refund block (amount, card, date, Stripe reference, receipt) in all four house-league emails that carry a refund; the
+   two silent cases (the "couldn't go on this registration" refund, a refund made in Stripe) get the refund email; the
+   ending email's misdated sentence is replaced.
+4. The Money tab's Refunds list stays the book; one closing line under it names a card refund that never entered the book
+   and opens that registration.
+5. A refund made in Stripe records itself whenever it can be pinned on one child (the whole payment, or any amount on a
+   one-child payment), whatever the registration's state. A person is asked only "whose was it?" (a part refund on a
+   payment for two or more children) or "what now?" (an enrolled child whose fee went back).
+6. The family is emailed when Stripe accepts the refund (finished or pending at the bank); never for a refund we couldn't
+   confirm with Stripe; never to the family for a failed one (the desk contacts them).
+
+**Words written 2026-10-26 by /marketing: `CLUB_TIER_STAGE12C_REFUND_VISIBLE_COPY.md`** (15 decisions; 3 word questions to
+the owner in its §7: the dotted third line in two new places, F6 reaching the tournament's walked 12a words, an "Email the
+family" door on a failed refund). **The three RULED 2026-10-26 as recommended:** keep the dotted third line in both new
+places; "Record the refund sent another way" in BOTH flows (the tournament's walked 12a words change too); no "Email the
+family" door on a failed refund for now. **Gate item 1 (§0j) is closed: drawn, ruled, worded.** The owner chose to draw gate
+items 2 and 3 (the tournament part refund, the bank-debit re-check) next, in one round, before one 12c build prompt. Code
+finding beside it: the tournament refund email dates the refund at sending (`sendRefundEmail` uses now), the F3 class.
+
+**Drawn 2026-10-26:** https://claude.ai/artifact/RsE8QFyhsi72wjoKqn9VJR (source
+`CLUB_TIER_STAGE12C_REFUND_VISIBLE_DRAWINGS.html`; prompt `CLUB_TIER_STAGE12C_REFUND_VISIBLE_DRAWING_PROMPT.md`). Frames a–f
+(Fee cell, record window, Money › Refunds, the family email, Needs attention, a club with no card payments), desktop and
+390. **Census at `a126ea000` corrected this section's premises** (the drawings' Start tab has the table):
+- A refund that reached the book already reads "$X refunded · {date} · Online, card" on the row and in the record
+  (`feeCell`/`feeState`); "—" is only a payment that never went on the registration. **Worse than "—":** a refund the card
+  sent back still reads "refunded", and a part refund with the rest kept reads only "kept" (the refund line is never shown).
+- **"Today only tournament refunds send one" is wrong.** House league emails a refund in two of four ways: the ending email
+  carries one sentence, and a price correction has its own email. The "couldn't go on this registration" door and a refund
+  made in Stripe send nothing. The ending's sentence "We refunded the $X you paid on {day}" passes the refund day as the
+  payment day (route `[regId]` PATCH, `cardMail.day = tournamentToday()`).
+- A dashboard refund's item is titled "A house-league card payment couldn't be recorded" and asks for a by-hand record that
+  an ended, kept row has no door for. House-league payment items open the season's Registrations page, not the row.
+- The tournament team's payment row already shows refund status (no visibility gap; no Stripe reference either).
+Asks (recommendations): 1 the refund on the cell's existing second line, an amber pill only for Failed (as the tournament
+row already does) · 2 the first line keeps
+the fee figure, the card's amount on the second · 3 one refund block in all four emails · 4 Money keeps the book, one closing
+line names a refund that never entered it · 5 a dashboard refund records itself whenever it can be pinned on one child, a
+person only for "whose was it?" and "still enrolled" (pushes back on the prompt's "ended + full only") · 6 email when Stripe
+accepts, never for an unconfirmed or failed refund.
+
+## 0h · The tournament partial refund is drawn and ruled before the 12c build starts (owner, 2026-10-26)
+
+The tournament team's partial card refund stays in 12c (§0f, §4). The owner ruled that **when 12c kicks off it is drawn and ruled
+before any 12c build begins**: a drawing round of its own (the team's payment row showing "refunded so far", and the team's refund
+window with an amount field), with the owner's rulings recorded, then built together with the rest of 12c. It is **not** part of
+the refund-visibility drawing round (§0g), which was already under way and draws the house-league side only. Sequenced by
+dependency: the 12c kickoff must put this drawing first.
+
+## 0i · Bank-debit sandbox check (2026-10-26, owner asked for it; the 12c opening step)
+
+Probe `.probe/s12c-bank-debit-check.cjs`, test key only, on the one connected account the 12a walk made (already onboarded,
+card payments active). Reading the account showed no `acss_debit_payments` at all. **Requesting it on the preview API
+version came back `active` straight away, with no requirements due; a re-read confirmed it.** The request was then
+withdrawn (`requested: false`) and the account read back to card only, as it was. Nothing in our database was written.
+
+What this settles: Canadian bank debit can be turned on for a club's Express account by a request, with nothing extra from the
+club in the sandbox. What it does **not** settle: a real debit's whole path (the agreement the family signs, Processing until it
+clears, a returned debit), and whether a live account faces Stripe review or a separate requirement. Both are 12c build
+questions; the live side waits on the counsel gate like the rest of Stage 12.
+
+## 0j · What the 12c build prompt must contain (owner, 2026-10-26)
+
+**The two 12b "homeless" items join 12c:** the Families record's "Paid online · card · receipt" line (b4) and "View the payment"
+in the registration row ⋯ (b3). Drawn in the Stage 12 drawings, not built in 12b (§0f). They should be checked against the
+refund-visibility drawing (§0g), which redraws the same record window.
+
+**The 12c build prompt opens with a drawing gate, and no build part starts until each item is drawn and ruled by the owner:**
+1. **The refund-visibility drawing (§0g)**, now running as its own round: ruled, then its words through `/marketing`.
+2. **The tournament partial refund (§0h):** a drawing round of its own at the 12c kickoff (the team's payment row showing
+   "refunded so far", and the team's refund window with an amount field), ruled.
+3. **A re-check of the Stage 12 bank-debit drawings** against what was built after they were drawn (A14 the club-pays-the-fee
+   option, the treasurer ruling, the shared pay block): the bank button on the pay block, the "Processing" state, the fourth
+   Money figure while clearing, a returned debit. Redraw what no longer matches, and rule it. §0i settled that the sandbox
+   turns bank debit on with no extra step.
+
+The kickoff may draw 2 and 3 in one round. Written as a gate on purpose, so the build prompt cannot be started from a stale
+drawing.
+
+**Gate item 1 closed 2026-10-26** (§0g: drawn, ruled, worded). **Items 2 and 3 RULED 2026-10-26 (owner paste-back): all
+ten asks as recommended.**
+1. A team's part refund never includes the processing fee; the fee box shows only with "All of it" (as house league, §0e).
+2. A team's part refund needs a reason, and it goes in the team's refund email.
+3. **A part refund lowers that team's entry by the same amount**, shown on the team's record with its reason (NEW: a
+   per-team entry adjustment), so the team owes the lower entry less what it paid net of refunds: the refund is never owed
+   back. A full refund still makes the team owe, as today. **Correction, 2026-10-26:** the ask said "a deposit-only team's
+   balance drops"; that was an arithmetic slip in the drawing (/marketing caught it: entry $360 − $60 net paid = $300, the
+   balance unchanged, not $260). The ruled intent stands; the drawing is corrected.
+4. A part refund made in Stripe on a team payment records itself ("made in Stripe") and lowers the entry the same way.
+5. **"Clearing" replaces A11's "Processing"** for a bank debit on its way, everywhere (the Money figure, the row, the
+   family's page); "Payment processing" stays the cost line's word only.
+6. While a debit clears: no Pay buttons for that child or team, no Mark received, no pay link, no "email families who owe";
+   the family sees "clearing" and the club's contact.
+7. Declined or withdrawn while a debit clears: the ending happens now and decides up front what happens when it clears —
+   send it back (by itself, with the fee when the club ends it, A2) or keep it with a reason. Nothing is picked on open.
+8. Family emails for a bank debit: one when it starts (not a receipt), the receipt when it clears (the receipt number given
+   then), one if it's returned while clearing, one if it's reversed after it cleared.
+9. Club pays the fee (A14): both buttons stay; the bank one says it takes up to 5 business days.
+10. A tournament's "paying in full saves" names both rails, computed.
+Owner design notes with the paste-back: in a smaller window the reference's Copy is the symbol alone; a pay button's label
+is one row ("Pay $156.75 by card"), the fee as the note under it.
+**Words written 2026-10-26 by /marketing: `CLUB_TIER_STAGE12C_PARTREFUND_BANKDEBIT_COPY.md`; its §7 questions RULED as
+recommended the same day.** **The 12c drawing gate (§0j) is closed: all three items drawn, ruled and worded.**
+**12c build prompt written 2026-10-26: `CLUB_TIER_STAGE12C_BUILD_PROMPT.md`** (eight parts; Stripe's pre-authorized-debit
+facts and three owner proposals — the per-team entry adjustment's shape, a returned debit's cost, the async landing order —
+come before any code). Found beside
+it, for the build: the tournament help still says the treasurer can email the pay link (against §0f); 12a's
+`confirmingBody` / `notFinishedBody` say "Stripe" to a family.
+
+**Drawn 2026-10-26:** https://claude.ai/artifact/8TkVVEikg16YNS9eqb3HNE (source `CLUB_TIER_STAGE12C_PARTREFUND_BANKDEBIT_DRAWINGS.html`).
+Census at `a126ea000`:
+- **Team part refund:** the database refuses any amount on a team refund (mig 376, "A team's card payment is refunded in
+  full"); one pending/succeeded refund per payment; the team's paid figure sums whole `posted` rows (`team_payments_refresh`,
+  mig 345); a deposit and a balance are two rows, each refunded whole; "View the payment" shows no refunds; the tournament
+  help says "full refunds only"; a dashboard part refund raises an item. House league's 12b part-refund rules (amount ≤ left,
+  reason required, no fee on a part refund) are the model. **There is no per-team fee** (`paymentLine` / `owedAmount` read the
+  tournament's one `FeeSchedule`), so §4's "refunded so far" amount alone makes a part-refunded team owe the refund again.
+  Ask 3 A recommends the part refund also lowers that team's entry (a NEW per-team adjustment, beyond §4's row as written);
+  B keeps §4 as written (the team owes it again).
+- **Bank debit: nothing built** (checkout is `payment_method_types: ['card']`; only the bank rate constant exists). Since the
+  October drawings: "Payment processing" is now a cost line on the same Money page that A11's "Processing" figure would join
+  (ask 5 recommends "Clearing", a change to a ruled word); the pay view reads "owing" from the book, so a clearing debit
+  would show Pay again (ask 6); a decline while a debit clears becomes the common case (ask 7); a returned debit's notice
+  goes to the flow's desk, not "the convenor" (§0f); the Money band's Received caption already carries "of it by card".
+  Named for the build, not drawn: Stripe's account verification for some banks, and what a returned debit costs the club
+  (Stripe's current docs, then /billing).
+
 ## 0k · The 12c build start: Stripe's bank-debit facts and the owner's four answers (2026-10-26)
 
 **Stripe facts, read on docs.stripe.com / stripe.com/en-ca on 2026-10-26** (pages: /payments/acss-debit,
@@ -743,7 +895,7 @@ registration (house league) or from the payment's row (tournaments, A12), card f
 |---|---|---|---|
 | **12a** foundation + the tournament card flow | **Proves itself on a tournament team paying by card (owner, 2026-10-25)**: the team pay page with deposit or full (A7), Pay in the acceptance email and the balance reminder, online rows and a full refund from the row (A12), landing through the tournament writer with a new online method value. Payouts card, five states, both homes, with the A14 who-pays choice and the A9 refund-policy sentence; the "Before you set up payouts" window; onboarding via Account Links + return; the gate + launch switch; pay block; Checkout for card; receipt page + email; online-payment record; Connect webhook (own secret, idempotent); full refund; test mode | `org_payment_accounts` (org, Stripe account id, state, charges/payouts enabled, requirements due, connected/disconnected by/at); `online_payments` (org, flow, payer email, base, fee, total, rail, state, processor ids, receipt no., timestamps); `online_payment_items` (payment → registration or team, amount); `online_payment_refunds` (amount, fee included, reason, by, processor id, state); `stripe_connect_events` (idempotency log) | 7–9 d |
 | **12b** house league | every Stage 9 ghost; Pay now in approval and promotion emails; Email the pay link; no longer payable; refund in the end window; partial refund (L1); Families lines — **BUILT 2026-10-25 (§0 state; Families lines and the tournament partial refund named, not built)** | migs 374 (items, the league landing), 375 (refunds in part), 376 (refund cap) — dev only | 5–7 d |
-| **12c** bank debit | bank debit for both flows at once (L2): the debit agreement, Processing until it clears with the spot held (A4), a fourth "Processing" figure on the Money band while clearing (A11), a returned debit's fresh Pay and self-clearing item. ⚖ The tournament card flow moved into 12a (owner, 2026-10-25). **+ A partial refund of a tournament team's card payment (L1 for tournaments, owner 2026-10-26, §0f):** a team's paid figure counts whole payment rows today, so it needs a "refunded so far" amount on the team's payment row (the team payments refresh sums amount less it), the refund functions taking an amount, and an amount field in the team's refund window — **BUILT 2026-10-26 (§0 state)** | migs 382 (a team payment's refunded-so-far + entry-adjustment list, the clearing state), 383 (a refund remembers when it came back and who was told), 384 (a refund made in Stripe records itself), 386 (a club account takes bank debit), 387 (the desk: decisions, reversal, the returned-debit fee), 388 (a decision and a reversal hold their ground) | 3–5 d (+1–2 d) |
+| **12c** bank debit | bank debit for both flows at once (L2): the debit agreement, Processing until it clears with the spot held (A4), a fourth "Processing" figure on the Money band while clearing (A11), a returned debit's fresh Pay and self-clearing item. ⚖ The tournament card flow moved into 12a (owner, 2026-10-25). **+ A partial refund of a tournament team's card payment (L1 for tournaments, owner 2026-10-26, §0f):** a team's paid figure counts whole payment rows today, so it needs a "refunded so far" amount on the team's payment row (the team payments refresh sums amount less it), the refund functions taking an amount, and an amount field in the team's refund window. **+ the two 12b homeless items (§0j) + a drawing gate before any build (§0j) + A refund you can see (owner 2026-10-26, §0g):** the refund's amount, date, status and Stripe reference on the registration (Fee cell and record window), a house-league refund made in Stripe's dashboard recorded automatically, and a house-league refund email to the family — **BUILT 2026-10-26 (§0 state)** | migs 382 (a team payment's refunded-so-far + entry-adjustment list, the clearing state), 383 (a refund remembers when it came back and who was told), 384 (a refund made in Stripe records itself), 386 (a club account takes bank debit), 387 (the desk: decisions, reversal, the returned-debit fee), 388 (a decision and a reversal hold their ground) | 3–5 d (+1–2 d) |
 | **12d** hardening | **card disputes** (today a card dispute is dropped without a word; only a bank debit's is handled) and the dispute fees Stripe bills the platform (Stripe covers negative balances); **paid twice** (house league already refuses and raises an item, generically titled; **a tournament team's overpayment books silently**, census 2026-10-26); a payouts list for matching the bank; "+ GST/HST" rider; international cards; platform-admin oversight; offboarding with registrations still to pay (the Disconnect window doesn't count house league; downgrade, cancel and deletion say nothing); help; **the terms: the agree box, refusal and who/when/version are already built — only the read-out, "agree again" and counsel's text remain** — **DRAWN 2026-10-26, asks open (§0 state)** — **BUILT: 12d-1 2026-10-27 (disputes, paid twice, every club pays its Stripe fees) and 12d-2 2026-10-27 (payouts tab, leaving, terms, the console); Stage 12's build is complete (§0 state). Counsel's terms text remains.** | 390, 391, 395, 396, 399 (12d-1); 401, 403 (12d-2) — dev only | 10–15 d |
 
 The 12a–12c total of 16–22 days matches the scoping plan's first-build estimate (15–22). 12d matches its 10–15. Every

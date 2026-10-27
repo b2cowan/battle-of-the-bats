@@ -107,6 +107,22 @@ copy, inconsistent assembly, DB-vs-Stripe divergence), several **live on custome
 headline: the **plan-limits override table is a ghost control** — shown on Plans & Pricing, never read
 by enforcement. Copy-side items route to `/marketing`.
 
+### 1.9 One-off invoices must not touch the subscription — review owed, not urgent (owner 2026-10-26)
+Direction from the owner: a one-off Stripe invoice (implementation help, special support, an extra
+tournament setup) is a charge **outside** the subscription and should leave the org's subscription
+status and renewal date alone. **Read from the code, not yet reproduced:** the billing webhook's
+`invoice.payment_succeeded` handler treats every paid invoice as a subscription payment — it sets the org
+`active`, overwrites `current_period_end` from the invoice's period, clears a failed-payment notice, and
+can count a recovery. A one-off invoice would take that path. Review as part of the billing work:
+confirm by test, then decide the rule (e.g. act only on invoices that belong to the org's subscription),
+and cover `invoice.payment_failed` the same way. Also open: invoice PDFs are not stored in our system
+(Stripe holds them; the billing portal lists invoices) — whether a customer should see one-off invoices
+in-product is a separate call. Raised while setting up the Support console Stage 3 money walk (§384).
+**First look, 2026-10-26 — inconclusive.** After the $25.00 one-off invoice on UAT Test Org, the console's
+renewal date still read the trial's end (Nov 9, 2026); that figure is our stored value, so it was not
+overwritten. Unproven either way: the test Stripe's webhook may never have reached the dev database. Check
+the invoice's delivery in Stripe's test webhook log before calling the handler safe.
+
 ---
 
 ## 2. Decisions required from you

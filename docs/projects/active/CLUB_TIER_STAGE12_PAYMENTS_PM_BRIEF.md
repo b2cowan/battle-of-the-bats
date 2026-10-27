@@ -37,14 +37,30 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
 2. **One checkout for everything.** Every program uses the same pay block. Card is the main button and bank debit sits
    beside it, and each shows its fee and total before paying. Stripe's own secure page takes the payment, then a receipt
    arrives in the club's name. Paying by e-Transfer is still offered underneath.
-3. **12b · House league — built 2026-10-25, walk owed.** Pay now appears on the sign-up confirmation, the status page,
+3. **12b · House league — built 2026-10-25, walked 2026-10-26 (every card step passed; the email steps wait for the one end-to-end test).** Pay now appears on the sign-up confirmation, the status page,
    and the sign-up, approval and waitlist emails; brothers and sisters pay in one checkout, and the pay link opens the
    family's page without a password. Convenors see "Online, card" beside "by hand", email the pay link, and refund to
    the card from the ending or the price correction, all of it or part. Part-refunds for tournament teams come in 12c.
 4. **Tournaments, built with 12a** (moved forward 2026-10-25 so 12a can be tried end to end). Once the organizer
    accepts a team, it pays its deposit or full entry by card from the acceptance email, and pays the balance from the
    reminder email.
-5. **12c · Bank debit,** for house league and tournaments at once.
+5. **12c · Bank debit,** for house league and tournaments at once. **Also (owner, 2026-10-26): a refund you can see.**
+   A refunded child shows the amount, date, status and Stripe's reference on the registration, with the full detail in
+   the window that opens from the row, so the club can tell a parent "we refunded you $X on Y, here is the reference".
+   A refund made in Stripe's own dashboard is recorded without anyone typing it, and the family gets a refund email in
+   the club's name (today two of the four ways a house-league refund happens send nothing). **Also in 12c (owner, 2026-10-26):** a family's record shows "Paid
+   online · card · receipt", the registration's menu gets "View the payment", and a club can refund part of a tournament
+   team's card payment. Before any of 12c is built, its screens are drawn and ruled by the owner first: the refund
+   visibility, the tournament part-refund, and a re-check of the bank-debit drawings.
+   **Refund visibility drawn 2026-10-26, asks open** (https://claude.ai/artifact/RsE8QFyhsi72wjoKqn9VJR). What changes,
+   by person: the **registrar** reads every card refund on the child's row (the amount that went to the card, the date, and
+   "pending" or an amber "didn't reach the card" when it isn't finished) and the full detail with a copyable Stripe
+   reference in the child's record; a refund the card sent back no longer says "refunded". The **club admin** who
+   refunds in Stripe's dashboard sees it recorded on the row and in the book within a minute, and is asked only "whose
+   was it?" or "what now?" when the product can't tell. The **family** gets one refund email in the club's name for
+   every refund, naming the card, the date and a reference, and none for a refund that didn't happen. Correction from
+   the code: house-league families already get a refund sentence in the ending email and an email for a price
+   correction; the two silent cases are the "couldn't go on this registration" refund and a refund made in Stripe.
    **Built 2026-10-26; both walks done 2026-10-26 (ledger §389 refunds 44 of 44, §390 bank debit 32 of 32; held steps wait for the Amplify dev pass).** What a person sees now: a **family**
    can pay by bank debit as well as by card once the club's Stripe account is approved for it. The debit takes days to
    clear, the child's spot is held meanwhile, and the family can't pay twice. If the bank sends it back, the family is

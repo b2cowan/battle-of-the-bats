@@ -40,6 +40,12 @@ binding — weight them accordingly, and say so when citing one.
 **Rationale:** the drawings' reasons beside each question; the code facts are in the plan's "Stage 5 findings".
 **Applies to:** the Health group of the support console (Status, Errors, Feedback), the sent-email log and its delivery callback, the platform powers rulebook.
 
+### 2026-10-26 — A HOUSE-LEAGUE COACH'S TEAM PAGE: THE ROSTER IS ONE TABLE, AND "MY TEAM" IS A DOOR IN THE CLUB SITE'S PERSON MENU (owner, "I agree with your recommendations", drawing https://claude.ai/artifact/NGxurc9isvN5QSja2EvszB)
+
+**Decision:** (1) The roster is ONE card holding a row per player, not a card each: on a desk a table (Player, Parent or guardian, Email, Phone) with the addresses written out; on a phone the player and parent on the left and a mail and a phone symbol (44px each) on the right, no phone symbol when there is no number. Copy emails keeps its word on a phone. (2) The roster stays above Schedule and Scores today, because both are placeholders; once games exist (9d/9e) the page opens on the next game, then Schedule and Scores side by side, then the roster. The end state was drawn as an order, not as a spec of what each section holds. (3) "My team" is the first row of the person menu on the club's own site, for a signed-in house-league coach: "My team" for one team, "My team · {team}" for several in that club; only that club's teams. (4) After a division is published its four-step checklist is hidden; before, it stays. (5) A child's fee on the family status page is the amount alone in the normal text colour, and the "To pay" card below says what it is.
+**Rationale:** the cards cost about 1,800px for 15 players (a 44px email line and a 44px phone line stacked on each); a table answers the coach's question in one line per player. A coach who closes the invite email had no way back to the team.
+**Applies to:** `app/[orgSlug]/league/[seasonSlug]/team/[teamId]`, the shared `AccountMenu` (new `teamDoors` prop, club site only), the house-league Teams screen, the family status page.
+
 ### 2026-10-26 — SUPPORT CONSOLE STAGE 3 (MONEY), TWELVE ASKS RULED AS RECOMMENDED (owner, paste-back from the drawings https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX, every recommended box ticked)
 
 **Decision (as ruled, the paste-back's words):**
