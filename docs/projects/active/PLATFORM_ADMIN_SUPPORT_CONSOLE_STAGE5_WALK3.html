@@ -1,0 +1,284 @@
+<title>Support Console Status and Errors Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: "is the platform healthy right now?" is answered on one page, honestly, and Errors says who an error hit.
+   Checkable walk with a paste-back; the console walks' look, so it reads the same as Stages 1 to 4. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ol, .card ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.role { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.role b { font-size: 14px; }
+.role span { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.as { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+.step { display: grid; gap: 2px; padding-block: 4px; border-top: 1px solid var(--line); }
+.step:first-of-type { border-top: 0 }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+label.chk .do { display: block; }
+label.chk .see { display: block; color: var(--soft); font-size: 14px; margin-top: 2px; }
+label.chk.held { margin-left: 28px; min-height: 26px; font-size: 13px; color: var(--dim); }
+label.chk.held input { width: 15px; height: 15px; margin-top: 3px; }
+.tag-held { font: 600 10.5px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); background: var(--amber-soft); border-radius: 4px; padding: 2px 5px; margin-left: 6px; white-space: nowrap; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 240px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Support console · stage 5 · status and errors · owner walk 3 of 3 · 2026-10-26 · ledger §393</p>
+  <h1>Support Console Status and Errors Walk</h1>
+  <p>One question: <b>can any staff member open one page and learn whether the platform is healthy right now, with every line either read or honestly marked “Not checked”, and can support see who an error hit?</b> Status is new (13 checks in three bands); Today’s health line reads from it; Errors keeps everything it had and gains sentence titles, the house clock and a table of who each error hit. Tick what holds, and write what does not. Your ticks stay in this browser; the paste-back at the foot gathers them for the chat. Walk 1 (§391) is the sent-email log; walk 2 (§392) is feedback and the reply.</p>
+</header>
+
+<div class="card signin">
+  <h2>Before you start (about 5 minutes, plus an 11-minute wait you can fill with the other sections)</h2>
+  <p>The console is at <code>http://localhost:3000/platform-admin/login</code>. Walk as <b>Super admin</b> unless a section says otherwise; use a private window for each other role. For the phone section, use your browser’s device toolbar at <b>390 wide</b>.</p>
+  <div class="roles">
+    <div class="role"><b>Super admin</b><span>your own account, or uat-platform@fieldlogichq.ca</span></div>
+    <div class="role"><b>Support</b><span>support@dev.local</span></div>
+    <div class="role"><b>Billing</b><span>billing@dev.local</span></div>
+    <div class="role"><b>Product</b><span>product@dev.local</span></div>
+    <div class="role"><b>Growth</b><span>growth@dev.local</span></div>
+    <div class="role"><b>Read only</b><span>readonly@dev.local</span></div>
+  </div>
+  <ol>
+    <li><b>What dev can and cannot show.</b> Five of Status’s lines need a key that the site holds only in production: the two builds (an Amplify key) and the three Supabase lines (a read-only Supabase token). Dev has neither, so on dev those five say <b>Not checked: “This site has no key for …”</b>. That is the honest wording this walk checks. Their real answers (a passed build, “the database, sign-in, data, file storage and live updates are all answering”, the gateway count) are marked <span class="tag-held">release check</span>: tick “Held” and they are checked once at the release, after the owner steps set the keys.</li>
+    <li><b>What dev can show.</b> The other eight lines are read live from dev’s own records and database (and the staging site over the internet), so their numbers are real. Dev’s database may hold no scheduled jobs; if so the Scheduled jobs line is Not checked too, and the callout says six, not five.</li>
+    <li><b>Errors need something to look at.</b> Dev already holds error groups from earlier testing. Section 6 and 7 read what is there; a state that dev does not hold (a deleted account, for example) carries a “Held” box.</li>
+  </ol>
+  <p class="hint">⚠ Nothing here changes data. Status reads and shows; Errors is read-only in this walk. The drawings this walk checks against: <a href="https://claude.ai/artifact/BQmiMi3jXGKBwXQHr8UugB">Support Console Stage 5</a>, drawings A, C and G.</p>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <button class="btn-doc" type="button" id="make">Copy my answers</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  // A step is [do, see] or [do, see, true] where true marks a release check (it also gets a “Held” box).
+  var S = [
+    ["desk", "The Status desk", "the menu › Health › Status", "Super admin", [
+      ["Open the menu’s Health group, then open Status.",
+       "Status is the first entry in Health (above Errors, Feedback and Sent emails). The page is headed “Status” with a quiet chip naming the site: on dev it should read “Staging” (it reads “Production” only on the production site’s database)."],
+      ["Look at the top right of the header.",
+       "Briefly “Reading…” (while the outside lines are read), then quiet text “Read at 9:42 a.m.” in the house clock (no leading zero), and a white “Read again” button, not a lime one."],
+      ["Look at the callout under the header.",
+       "One sentence of truth with a coloured rail. With five checks Not checked and the rest fine on dev it is amber and reads like “5 not checked. Some checks could not be read. 8 checks are fine.” (the numbers move with dev’s state; call 1). If something is red or amber for a real reason, its name and a door sit at the right."],
+      ["Look at the table card.",
+       "A toolbar “13 checks” and, at the right, “Each is read when this page opens”. Columns Check · Verdict · What it says · What to do · Read from, under three band rows: “The sites”, “The app”, “The database”. In order: Production build, Staging build, Staging site · Errors, Error rate, Traffic, Counts up to date · Database answers, Connections, Scheduled jobs, Database services, Gateway errors, Staging database. Verdicts are chips: Fine, Look at it, Act now, Not checked."],
+      ["Read the foot of the card.",
+       "Exactly: “Not judged here: week-over-week trends, database advisors and agent tooling. Those are in the owner’s morning check.”"],
+      ["Press Read again.",
+       "The button greys and the header says “Reading…”, then “Read at …” returns. Nothing jumps, and no line ever shows a blank where its answer should be."]
+    ]],
+    ["notchecked", "Lines that cannot be read say so", "Status", "Super admin", [
+      ["Read Production build and Staging build.",
+       "Verdict “Not checked”. What it says: “This site has no key for Amplify.” What to do: “An owner step; see the help.” Read from: Amplify. Neither says Fine."],
+      ["Read Database services, Gateway errors and Staging database.",
+       "Each “Not checked”: “This site has no key for Supabase.” with the same “An owner step; see the help.” Read from: Supabase."],
+      ["Read Staging site.",
+       "Read for real over the internet: “Answered in 0.4 seconds” (Fine) or, if your connection is off, “The staging site did not answer within 5 seconds.” (Look at it). It is never left blank."],
+      ["Count the rows.",
+       "All 13 are there. A line that could not be read is never hidden and never Fine."],
+      ["With the keys set (the release): the builds read “Passed Oct 26 at 8:14 a.m. · build 412”; Database services reads “The database, sign-in, data, file storage and live updates are all answering”; Gateway errors reads “No server errors at Supabase’s gateway in the last hour”; Staging database reads “All services answering”.",
+       "All five Fine, with the real build numbers and times, read from Amplify and Supabase. Held at the release.", true],
+      ["With a deliberately wrong key (the release): a refused key reads “Supabase refused our token. It may have expired or been removed.” with “Tell the owner: the token needs replacing.”",
+       "Held at the release.", true]
+    ]],
+    ["cheap", "The lines dev can read: real numbers", "Status", "Super admin", [
+      ["Read Database answers.",
+       "“Answered in 41 milliseconds” style, Fine. Slower than half a second it would say “Answered in … milliseconds; it usually takes under half a second.” (Look at it)."],
+      ["Read Connections.",
+       "“21 of 60 in use; nothing stuck” style (your numbers), Fine."],
+      ["Read Scheduled jobs.",
+       "“9 jobs; every run in the last 24 hours finished” style. If dev has no scheduled jobs it reads “This database has no scheduled jobs to read.” as Not checked; either is right. Say which in the notes."],
+      ["Read Counts up to date, then open Errors in another tab and read its chip at the top right (“Counts up to date N minutes ago”).",
+       "Status says “Brought up to date N minutes ago; it runs every 5”. N matches the Errors chip to within a minute. If the counting job is late (more than 15 minutes) the line is “Look at it” and says so."],
+      ["Read Errors, Error rate and Traffic.",
+       "Errors: “N in the last hour; a usual hour has M”. Error rate: “0.4% of 4,557 API calls in 24 hours; a usual day is 0.3%” style. Traffic: “312 calls in the last hour; a usual hour has 280” style. The error rate matches the “Error rate” figure on the Errors screen for the last 24 hours."],
+      ["If any line says “Look at it” or “Act now”, press the door in its “What to do” cell.",
+       "“Errors ›” opens the Errors list, or “Open the issue ›” opens that one issue. Each Look/Act line has exactly one thing to do. If every line is Fine, tick Held.", true]
+    ]],
+    ["stale", "A stale page says its age; Today reads from here", "Status, then Today", "Super admin", [
+      ["Leave Status open, do the other sections, and come back after 11 minutes without reloading.",
+       "The header’s time has turned amber and reads “Read 11 minutes ago” instead of “Read at …”. A stale page never looks fresh."],
+      ["Press Read again.",
+       "It goes back to “Read at {now}” in the normal colour."],
+      ["Open Today (the first menu entry).",
+       "Above the queues, one health line with a coloured dot: “Status: all fine.” or, if one of the seven lines Today can read (our records and our database) is Not checked or worse, “Status: 1 not checked. Some checks could not be read.” — then, quieter, “Builds and database services are read when Status opens.” and at the right a door “Status ›”. It no longer says “Builds and the databases are not checked here yet.”"],
+      ["Press “Status ›”.",
+       "Status opens. Today never reads Amplify or Supabase itself (it stays as fast as it was); that is why the builds are not in its sentence."]
+    ]],
+    ["roles", "Every role sees Status", "Status as each role", "Support · Billing · Product · Growth · Read only", [
+      ["As Support, Billing and Product, open the menu’s Health group and then Status.",
+       "Status is first in Health for each, and the page is the same 13 checks. Nothing on it names a customer, a club or a person."],
+      ["As Growth and Read only, do the same.",
+       "Health holds Status (and for Growth and Read only nothing else); the page is the same."],
+      ["As each role, open Today.",
+       "The same health line with its “Status ›” door."],
+      ["As Billing, Growth or Read only (they do not read Errors), look at any Look-at-it or Act-now line on Status.",
+       "No “Errors ›” or “Open the issue ›” door: the line keeps its words and its thing to do, with nowhere to go. Not expected on dev (it needs a real Look/Act on Errors). Held unless you meet it.", true]
+    ]],
+    ["phone", "Status on a phone", "Status at 390 wide", "Super admin", [
+      ["Narrow the window to 390 wide and open Status.",
+       "The table is gone. Under small headings “The sites”, “The app”, “The database” each check is a card: its name, its verdict chip, the sentence, and the thing to do only when there is one. No “Read from”. No sideways scrolling."],
+      ["Look at the top right of the header.",
+       "“Read again” is a refresh symbol (a circular arrow, no border or word, about 44 pixels), and it spins while reading. The time sits beside it."],
+      ["A card with somewhere to go (a Look-at-it Errors line).",
+       "The whole card is one tap with a › at its right. If every line is Fine, tick Held.", true],
+      ["Read the callout and the foot.",
+       "The same sentence and the same “Not judged here …” line as on the desk, wrapped, not cut off."]
+    ]],
+    ["errors", "Errors: the list", "the menu › Health › Errors", "Super admin · Product · Support", [
+      ["Open Errors.",
+       "The heading “Errors”, a chip at the top right “Counts up to date N minutes ago”, a window select, and the four-figure band (Captured errors, Error rate, Open issues, Affected orgs), the chart, the panels, filters and Export as before."],
+      ["Read the line under the band.",
+       "Exactly one sentence (plus a second only if the breakdown is sampled): “The error rate counts API calls. Errors on pages and in browsers are in Captured errors but have no call count to divide by.” No counts in it and no promise that coverage “expands in later phases”."],
+      ["Read the Issue column.",
+       "Titles read as sentences, for example “TypeError on the Registrations page” or “Error in the Teams call”, with the error’s name in small type under it. The exact route stays in its own Route column in the data face."],
+      ["Read the Last seen column on rows from this morning.",
+       "A morning time has no leading zero: “Oct 26, 9:12 a.m.”, never “09:12 a.m.” (the same on Feedback)."],
+      ["As Billing, Growth and Read only, look for Errors.",
+       "No Errors entry in the menu; typing {{http://localhost:3000/platform-admin/observability}} sends them to Today."]
+    ]],
+    ["issue", "An issue: who it hit", "Errors › any issue with samples", "Super admin · Product · Support", [
+      ["Open an issue.",
+       "A page titled with the sentence, chips for severity, status and environment, a small line “{error name} · fp …”, and the band Route · Occurrences · Affected orgs · First seen (“Oct 26”, “at 9:02 a.m.”) · Last seen."],
+      ["Find “Recent samples”.",
+       "A table, not a stack of cards: When · Who · Club · Source (Server or Client) · Status code · ›."],
+      ["Find a sample made by a customer.",
+       "Who shows their name as a link with their address and role under it (“jamie@… · administrator”); Club is a link. The name opens the person’s record, the club opens the club’s record."],
+      ["Click anywhere else on that row.",
+       "A window titled “Oct 26, 9:12 a.m. · a sample” with Who, Club, Source (“Server · status code 500”), Request, Route, Message, “Stack trace (redacted)” and “Request context (redacted)”. Its foot: “Emails in the message are removed before it is kept.” and Close. No IP address and no browser anywhere."],
+      ["Find a sample with nobody signed in (a public page, or a browser error before sign-in).",
+       "Who reads “Nobody signed in” in the quiet face, Club “None”, no link. If dev has none, tick Held.", true],
+      ["Find a sample made by a staff member. As Super admin it links to them; open the same issue as Product or Support.",
+       "Product and Support read “A staff account” with “Only Super admin opens staff records” under it: no name, no address, no link. If no staff sample exists on dev, tick Held.", true],
+      ["Find a sample whose account has since been deleted.",
+       "Who reads “No longer has an account” with the stored address under it as plain text and no link. Dev rarely holds one: tick Held.", true],
+      ["If the sign-in records cannot be read when the page loads.",
+       "The Who cell reads “Could not read this account” in the quiet face with no link (call 2). Cannot be provoked on dev; held.", true],
+      ["On an issue with related feedback, click a row in “Related feedback”.",
+       "It opens that item’s own record (walk 2), not the Feedback list. If the issue has none, tick Held.", true]
+    ]]
+  ];
+  var CALLS = [
+    ["A callout with only Not checked lines is amber, not olive",
+     "If no line is Look at it or Act now but some could not be read, the callout still takes the amber rail and says “N not checked.” with “Some checks could not be read.” — it is olive only when every check was actually read and is fine. So on dev, with five lines honestly Not checked, the page is amber. Accept it, or say Not checked alone should read as quiet."],
+    ["“Could not read this account” on an Errors sample",
+     "When the sign-in records cannot be read while a sample’s person is being looked up, the sample says “Could not read this account” in the quiet face, with no link, instead of guessing between a customer, a staff account and a deleted one. You cannot see this on dev; accept it, or say it should fall back to the stored address."],
+    ["Found writing this walk, and fixed: Status doors for roles that cannot open Errors",
+     "A Look-at-it or Act-now line used to carry an “Errors ›” or “Open the issue ›” door for every role, which only sent Billing, Growth and Read only back to Today. The door is now left out for those roles; the line keeps its words. Tick to accept."]
+  ];
+  var KEY = 'pas5-walk3-status';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\{\{([^}]+)\}\}/g, '<code>$1</code>'); }
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[4].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = 'H' + (i + 1) + ' ' + s[1].split(':')[0].split(',')[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card"><div class="sec-head"><span class="n">H' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="route">' + esc(s[2]) + '</span></div><span class="as">As ' + esc(s[3]) + '</span>';
+    s[4].forEach(function (t, k) {
+      h += '<div class="step"><label class="chk"><input type="checkbox" id="c-' + id + '-' + k + '" data-k="' + id + '.' + k + '"> <span><span class="do">' + (k + 1) + '. ' + esc(t[0]) + (t[2] ? ' <span class="tag-held">release check</span>' : '') + '</span><span class="see">You should see: ' + esc(t[1]) + '</span></span></label>';
+      if (t[2]) h += '<label class="chk held"><input type="checkbox" id="h-' + id + '-' + k + '" data-k="' + id + '.' + k + '.h"> <span>Held: checked at the release instead</span></label>';
+      h += '</div>';
+    });
+    h += '<textarea id="n-' + id + '" aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" id="c-call-' + k + '" data-k="call.' + k + '"> <span>' + (k + 1) + '. <b>' + esc(c[0]) + '.</b> ' + esc(c[1]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea id="n-calls" aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function stepDone(id, k) { return !!(state[id + '.' + k] || state[id + '.' + k + '.h']); }
+  function progress() {
+    var done = 0;
+    S.forEach(function (s) { s[4].forEach(function (t, k) { if (stepDone(s[0], k)) done++; }); });
+    document.getElementById('prog').textContent = done + ' of ' + total + ' done';
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Support console stage 5 walk 3, status and errors (§393): my results'];
+    S.forEach(function (s, i) {
+      var miss = [], held = [], ok = 0;
+      s[4].forEach(function (t, k) {
+        if (state[s[0] + '.' + k]) ok++;
+        else if (state[s[0] + '.' + k + '.h']) held.push(k + 1);
+        else miss.push(k + 1);
+      });
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', 'H' + (i + 1) + ' ' + s[1] + ': ' + ok + '/' + s[4].length + ' ticked' + (held.length ? ', held for the release check: ' + held.join(', ') : '') + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (k + 1) + '. ' + (state['call.' + k] ? '[accepted] ' : '[not ticked] ') + c[0] + '.'); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Copy my answers'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>
