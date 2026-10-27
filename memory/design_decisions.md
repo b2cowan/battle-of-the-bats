@@ -7,6 +7,18 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-27 — SUPPORT CONSOLE STAGE 7 (GROWTH), ELEVEN ASKS RULED, EVERY RECOMMENDED BOX TICKED PLUS Q4 C AND D (owner, paste-back from the drawings https://claude.ai/artifact/QTrwrgyGqgBZugpGfvpJHM)
+
+**Decision (as ruled):** the growth screens only; Signed up = a person-confirmed offered match or a hand link; Pays = own plan not Tournament, billing active, a real subscription; read live, no job; a lead's source from staff (B), a public "How did you hear about us?" question (C) and link tags (D); Campaigns keeps its name, the catalogue list becomes Promotions; no reason and no confirm window on a lead edit; no rulebook change; Pitch decks restyle only; seven steps with Lost and a required reason, signed notes, stuck at 30 days, Today's five growth rows; the Audit log lead fix now, on its own. Full text: the plan's "Owner rulings 2026-10-27 (Stage 7 drawings)".
+
+**Where written rules meet (S7-D1 to S7-D6, all as recommended):**
+- **S7-D1** A count in a scope picker: the picker is rounded (it picks which list) and carries the amber pill, the Teams division picker's shape. Why: the toolbar rule puts "Needs you" in the scope picker; the waiting-count rule forbids "· 8" in a name.
+- **S7-D2** A page of figures (Leads' Numbers) has no Search: the period picker left, Filter and Tools right. Why: there is nothing to search; "every view keeps the same line" yields here only.
+- **S7-D3** Two "which list" pickers on the left: the view switch first, the scope picker after it, the scope picker only where the view has a list.
+- **S7-D4** "Time to sign up" counts to the day the club or portal was created, not the day staff linked it. Why: a late link would stretch the figure.
+- **S7-D5** Export inside Tools: Tools' Export item opens the one export window, Excel first, so "Export is one button" holds one step later.
+- **S7-D6** Business numbers sits in the Growth menu for every role (for Support, Billing and Read only it is the Growth group's only entry); Today's foot link stays.
+
 ### 2026-10-26 — SUPPORT CONSOLE STAGE 5 BUILD GATE, FOUR ASKS RULED AS RECOMMENDED (owner, in the build session)
 
 **Decision (as ruled):** G1 the 37 logged email kinds and their labels approved as listed (one home: `lib/email-kinds.ts`); G2 team-business mail to coaches and club staff not logged in Stage 5 (each still carries a kind); G3 the Status thresholds accepted as proposed (one home: `lib/platform-status-lines.ts` THRESHOLDS); G4 a reply moves New or Triaged to Acknowledged, Acknowledged and Resolved stay, "up to 14 hours" dropped from Delayed, the reply email's foot/signature/quote line as /marketing wrote them, the two missing prod-step entries added. Full text: the plan's "Owner rulings 2026-10-26 (Stage 5 build gate)". S5-D1's rewording of the June 26 red rule is applied in that entry below.

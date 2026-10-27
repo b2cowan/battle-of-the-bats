@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Audit log lead walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: the Audit log shows a lead edit's details only to the roles that work leads.
+   Checkable walk with a paste-back; the console walks' look, so it reads the same as Stages 1 to 5. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8; --red: #8a2a1c; --red-soft: #f6e2dd;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1a16; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1a16; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ol, .card ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+.role { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.role b { font-size: 14px; }
+.role span { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.as { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+.step { display: grid; gap: 2px; padding-block: 4px; border-top: 1px solid var(--line); }
+.step:first-of-type { border-top: 0 }
+.who { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); margin: 6px 0 0 28px; }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+label.chk .do { display: block; }
+label.chk .see { display: block; color: var(--soft); font-size: 14px; margin-top: 2px; }
+label.chk.held { margin-left: 28px; min-height: 26px; font-size: 13px; color: var(--dim); }
+label.chk.held input { width: 15px; height: 15px; margin-top: 3px; }
+.tag-held { font: 600 10.5px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); background: var(--amber-soft); border-radius: 4px; padding: 2px 5px; margin-left: 6px; white-space: nowrap; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.verdict { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.verdict .vl { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin-right: 4px; }
+.vb { font: 600 13px/1 var(--font-body); min-height: 36px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.vb[aria-pressed="true"][data-v="pass"] { background: var(--olive-soft); border-color: var(--olive); color: var(--olive); }
+.vb[aria-pressed="true"][data-v="issue"] { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+.vb[aria-pressed="true"][data-v="call"] { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 260px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Support console · stage 7 · part 0 · owner walk · 2026-10-27 · ledger §394</p>
+  <h1>Audit log lead walk</h1>
+  <p>One question: <b>when staff edit an early-access lead, does the Audit log keep only which fields changed and the step, and show even that only to the roles that work leads?</b> The Audit log is open to every staff role, and a lead is a stranger’s name, address and words plus our own notes. Growth, Product and Super admin read the entry’s details; Support, Billing and Read only see that an edit happened, who made it and when, and one quiet line in place of the rest. That holds in the table, the entry window, its Copy, “Same moment” and the Export. Tick what holds, and write what does not. Your ticks stay in this browser; the paste-back at the foot gathers them for the chat.</p>
+</header>
+
+<div class="card signin">
+  <h2>Sign in as (about 15 minutes; keep this page private, it holds passwords)</h2>
+  <p>The console is at <code>http://localhost:3000/platform-admin/login</code> (the dev server must be up). Use one private window per role so you can keep two roles open side by side. These are dev-only accounts.</p>
+  <div class="roles">
+    <div class="role"><b>Growth</b><span>growth@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Support</b><span>support@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Billing</b><span>billing@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Read only</b><span>readonly@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Product</b><span>product@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Super admin (optional)</b><span>uat-platform@fieldlogichq.ca<br>UATPassword2026!</span></div>
+  </div>
+  <ol>
+    <li><b>Dev holds no leads yet.</b> Section 1 makes one through the public form, so the walk has something to look at. Use the made-up address <code>walk-s7-p0@example.com</code>; nothing is sent to it.</li>
+    <li><b>Words to look for.</b> The test lead uses three things that must <i>never</i> turn up in an Audit log entry: the name <b>Walk S7 Zero</b>, the address <b>walk-s7-p0@example.com</b>, and the marker <b>WALKSECRET</b> (typed into the visitor’s words and the staff notes). If you see any of them in an entry, that is a failure.</li>
+    <li><b>Entries written before this change</b> held the whole lead. Dev has none and cannot be made to have one, so that rule is not walked here; it is pinned by an automated test in the build (the Stage 7 audit guard).</li>
+    <li>This walk writes one lead and one Audit log entry on dev. Nothing else changes.</li>
+  </ol>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <p class="hint">A verdict is your opinion and the count is the evidence; the paste-back prints both.</p>
+    <button class="btn-doc" type="button" id="make">Build summary</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  // A step is [do, see] or [do, see, true]; true marks a step dev may not be able to show (it also gets a “Held” box).
+  // An optional fourth item is a “who” label, shown above the step when the account changes.
+  var S = [
+    ["lead", "Make a test lead and work it", "start/club, then Leads", "Growth", [
+      ["In any browser window, open {{http://localhost:3000/start/club}} and press “Talk to us about Club”. In the form that opens, fill Name “Walk S7 Zero”, Email “walk-s7-p0@example.com”, Organization “Walk Test Club”, and in “What would make this useful for you?” type “WALKSECRET the visitor’s own words”. Press “Join early access”.",
+       "A line under the form: “You’re on the early-access list. We’ll follow up when these workflows are ready.” No error."],
+      ["Sign in as Growth at {{http://localhost:3000/platform-admin/login}}. In the menu, open Growth › Leads. Find “Walk Test Club” in the list and press its name.",
+       "The lead’s panel opens at the right with Walk S7 Zero (walk-s7-p0@example.com) under Contact, and a Status of New.", false, "Growth"],
+      ["In the panel set Status to Contacted, Follow-up due to any date a week from now, Next action to “Call the president”, and Internal notes to “WALKSECRET staff note”. Press Save.",
+       "The Save finishes with no error message, and the list row now reads Contacted."],
+      ["Reload the page and open “Walk Test Club” again.",
+       "Status Contacted, the follow-up date, the next action and the notes are all still there. This is the one edit the next section looks for."]
+    ]],
+    ["growth", "The Audit log as Growth: details shown, but never the words", "the menu › Records › Audit log", "Growth", [
+      ["Open Records › Audit log. Look at the newest row.",
+       "A row by growth@dev.local, Action “Update early access lead”, Org “-”, Reason “-”. Nothing about a name, address or organization anywhere in the row."],
+      ["Open the Action dropdown, choose “Update early access lead”, and press Filter.",
+       "The list narrows to lead entries. “1 entries” if this is the first lead edit on dev."],
+      ["Click the row to open its window.",
+       "A window titled “Update early access lead” with the eyebrow “Audit entry”. Superuser growth@dev.local, Org None, Reason “-”, Action key update_early_access_lead. Field holds a long string of letters and numbers: the lead’s own reference number, not anything the visitor typed."],
+      ["Read the Old value and New value panes.",
+       "Old value holds only the step before: “internal_status”: “new”. New value holds the field names that changed, as a list (the four you changed: follow_up_due_at, internal_notes, internal_status, next_action) and “internal_status”: “contacted”. If your list differs from what you changed, write down which names are missing or extra."],
+      ["Look the whole window over for the three words.",
+       "No Walk S7 Zero, no walk-s7-p0@example.com, no Walk Test Club, no WALKSECRET, no “Call the president”, and no date. The entry names fields, never values."],
+      ["Press Copy in the window, then paste into any text box.",
+       "The button reads “Copied”. The pasted text starts “Update early access lead (update_early_access_lead)”, lists Superuser, Org, Reason, Field, and the same Old value and New value as the window, and again none of the words."],
+      ["Close the window. Open the Export menu above the table and choose CSV. Open the downloaded file in a text editor or Excel, and search it for “WALKSECRET” and “walk-s7-p0”.",
+       "The lead row’s old_value reads {“internal_status”:“new”} and its new_value carries the changed list and “contacted”. Neither search finds anything in the whole file."]
+    ]],
+    ["support", "The same entry as Support, Billing, Read only and Product", "Audit log", "Support first, then the others", [
+      ["Sign in as Support in a private window. Look at the menu, then type {{http://localhost:3000/platform-admin/early-access}} in the address bar.",
+       "There is no Growth group and no Leads in the menu, and the Leads page does not open for Support: you are sent back to Today. (It was this way before this change; this step shows the lead is still closed to Support.)", false, "Support"],
+      ["Open Records › Audit log, choose Action “Update early access lead”, press Filter. Read the row.",
+       "The row is there: its time, growth@dev.local and “Update early access lead”. The Reason cell reads, in the quiet grey style, “Lead details are shown to the roles that work leads.” Nothing else about the lead."],
+      ["Click the row to open its window.",
+       "Reason is the same grey line. Field still shows the lead’s reference number (the same string Growth saw; it says nothing about the person). Old value and New value both read “-”. There is no field list and no step. Action key still reads update_early_access_lead."],
+      ["Press Copy and paste into any text box.",
+       "The pasted text has “Reason: Lead details are shown to the roles that work leads.”, “Old value: -” and “New value: -”, and none of the words."],
+      ["Look for a “Same moment” block at the foot of the window.",
+       "That block only appears when the same person made two changes in the same second, which hand-editing cannot do. If it is absent, that is expected: tick Held. If it is there, it names only action labels, never values.", true],
+      ["Close the window. Open the Export menu and choose CSV. Open the file and find the lead row. Search the whole file for “WALKSECRET” and “walk-s7-p0”.",
+       "In the lead row the reason column holds “Lead details are shown to the roles that work leads.” and old_value and new_value are empty (no field list, no step). Neither search finds anything."],
+      ["Still as Support, set Action to “Refunded a charge” and press Filter. If dev holds a refund entry, open one; if the list is empty, tick Held.",
+       "Support still reads the refund’s own reason and values, not the lead line. The refund rule is unchanged.", true],
+      ["Sign in as Billing, then as Read only (a private window each). For each, filter Action to “Update early access lead” and open the row. As Read only, also filter to “Refunded a charge” and open one.",
+       "Billing and Read only both read the grey lead line, with Old value and New value “-”. Billing reads a refund’s own details. Read only reads, for the refund, “Shown to Super admin, Billing and Support”: a different line, and still as before.", false, "Billing and Read only"],
+      ["Sign in as Product (and, if you like, as Super admin) and open the same lead entry.",
+       "Product sees what Growth saw: the field list and the step from new to contacted, and no words. Product is one of the three roles that work leads.", false, "Product"]
+    ]],
+    ["help", "The help article says it", "Console Help › Audit log", "Any role", [
+      ["Open {{http://localhost:3000/platform-admin/help/platform-admin}}. Find “How to investigate account changes”, open it, and open its section “Everything: the Audit log”. Read the paragraph under the numbered steps.",
+       "After the refund sentence it now reads: “A lead edit records which fields changed and the step, never the lead’s words; its details are shown only to Super admin, Product and Growth, and other roles see Lead details are shown to the roles that work leads.” The refund sentence before it is unchanged."],
+      ["Read that sentence against what you saw in sections 2 and 3.",
+       "It says what you saw: Growth and Product read the fields and the step; Support, Billing and Read only read the one line. Anything it claims that you did not see, write down."]
+    ]]
+  ];
+  var CALLS = [
+    ["A lead edit’s Reason cell is a dash for the roles that can read it",
+     "Growth, Product and Super admin see “-” in Reason for a lead entry (a lead edit is one of the console’s work tools, so it never asks for a reason), the same as notes and decks. Only the other three roles see the grey “Lead details are shown to the roles that work leads.” line there. Accept it, or say Growth should see a reason or a different word."],
+    ["Support, Billing and Read only still see that a lead was edited, by whom and when",
+     "Their line replaces the details, not the entry: the row, its action label, the actor’s address and the time stay. The alternative is hiding the row itself. Accept it, or say the row should go too."],
+    ["An old full-lead entry’s rule is tested by the build, not walked",
+     "Entries written before this change held the whole lead (name, address, notes). Dev holds none and cannot be made to, so those entries are covered by an automated test that makes sure their details reach only Super admin, Product and Growth. Tick to accept that, or say you want it walked on production data."]
+  ];
+  var KEY = 'pas7p0-walk-audit-lead';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\{\{([^}]+)\}\}/g, '<code>$1</code>'); }
+  var VERDICTS = [["pass", "Passes"], ["issue", "Issue"], ["call", "Needs a call"]];
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[4].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = (i + 1) + ' ' + s[1].split(':')[0].split(',')[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card"><div class="sec-head"><span class="n">' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="route">' + esc(s[2]) + '</span></div><span class="as">As ' + esc(s[3]) + '</span>';
+    s[4].forEach(function (t, k) {
+      h += '<div class="step">';
+      if (t[3]) h += '<div class="who">Now as ' + esc(t[3]) + '</div>';
+      h += '<label class="chk"><input type="checkbox" id="c-' + id + '-' + k + '" data-k="' + id + '.' + k + '"> <span><span class="do">' + (k + 1) + '. ' + esc(t[0]) + (t[2] ? ' <span class="tag-held">may not show on dev</span>' : '') + '</span><span class="see">You should see: ' + esc(t[1]) + '</span></span></label>';
+      if (t[2]) h += '<label class="chk held"><input type="checkbox" id="h-' + id + '-' + k + '" data-k="' + id + '.' + k + '.h"> <span>Held: could not be shown on dev</span></label>';
+      h += '</div>';
+    });
+    h += '<div class="verdict" role="group" aria-label="Verdict for ' + esc(s[1]) + '"><span class="vl">Verdict</span>';
+    VERDICTS.forEach(function (v) { h += '<button type="button" class="vb" data-part="' + id + '" data-v="' + v[0] + '" aria-pressed="false">' + v[1] + '</button>'; });
+    h += '</div>';
+    h += '<textarea id="n-' + id + '" aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" id="c-call-' + k + '" data-k="call.' + k + '"> <span>' + (k + 1) + '. <b>' + esc(c[0]) + '.</b> ' + esc(c[1]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea id="n-calls" aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function stepDone(id, k) { return !!(state[id + '.' + k] || state[id + '.' + k + '.h']); }
+  function progress() {
+    var done = 0;
+    S.forEach(function (s) { s[4].forEach(function (t, k) { if (stepDone(s[0], k)) done++; }); });
+    document.getElementById('prog').textContent = done + ' of ' + total + ' done';
+  }
+  function paintVerdicts() {
+    document.querySelectorAll('.vb').forEach(function (b) {
+      b.setAttribute('aria-pressed', state['v.' + b.getAttribute('data-part')] === b.getAttribute('data-v') ? 'true' : 'false');
+    });
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('.vb').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var p = b.getAttribute('data-part'), v = b.getAttribute('data-v');
+      state['v.' + p] = state['v.' + p] === v ? '' : v; save(); paintVerdicts();
+    });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  paintVerdicts();
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Support console stage 7 part 0, audit log lead walk (§394): my results'];
+    var all = 0, allTotal = 0;
+    S.forEach(function (s, i) {
+      var miss = [], held = [], ok = 0;
+      s[4].forEach(function (t, k) {
+        if (state[s[0] + '.' + k]) ok++;
+        else if (state[s[0] + '.' + k + '.h']) held.push(k + 1);
+        else miss.push(k + 1);
+      });
+      all += ok; allTotal += s[4].length;
+      var vd = state['v.' + s[0]] || 'no verdict';
+      var vtext = vd === 'pass' ? 'PASS' : vd === 'issue' ? 'ISSUE' : vd === 'call' ? 'NEEDS A CALL' : 'NO VERDICT';
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', (i + 1) + ' ' + s[1] + ': [' + vtext + '] ' + ok + '/' + s[4].length + ' ticked' + (held.length ? ', held (not shown on dev): ' + held.join(', ') : '') + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.splice(1, 0, 'Checked ' + all + ' of ' + allTotal);
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (k + 1) + '. ' + (state['call.' + k] ? '[accepted] ' : '[not ticked] ') + c[0] + '.'); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Build summary'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>
+</body>
+</html>

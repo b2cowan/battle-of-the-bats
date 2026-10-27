@@ -177,12 +177,13 @@ belongs to the bookkeeping session.
 | S2 Find, menu, Today, record — **BUILT 2026-10-25 on dev, walked 2026-10-25 (§377, 60 of 60, all calls accepted)** (drawings Ub7fXLh29SC34Zp4oqKUx1, walk GqozHVh1Bg2FLqSKEM78Xs) | Global Find (server-side, no 1,000 cap), menu by job, one rulebook (matrix = APIs), Today, a record with Story; a person record (new) | Find is a new read surface: drawn and reviewed as a security change. No proxy change. One migration: the read-only lookup over sign-in records |
 | S3 Money — **BUILT + COMMITTED 2026-10-26 (`270211ca0` · `4bfc9ca41` · `6c6d0da7e` · `d77ee9da9` · `e764efd90` · docs `bc9616345`); walks §384 + §385 both ✅ 2026-10-26; mig 380 prod at release** (DRAWN + RULED 2026-10-26, all 12 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_BUILD_PROMPT.md`) (drawings FdTWB58ne1jgsBXSwutdLX, source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_DRAWINGS.html`, captures `.probe/pasc/cap-s3/` via `capture-s3b.mjs`, render check `render-s3.mjs`; see "Stage 3 findings") | Stripe read on the Money tab, duplicate labels, refund (Q7), reason column in the audit log, bulk = single plan change (closed; the shared rule carries M6), M6 (widened: every staff plan change on a paying club) | Migration (audit reason + a refunds record + one running plan grant per club if ask 8). Adversarial review on the refund write. No webhook change unless ask 4 = B |
 | S4b Coaches Portal free time — **PROPOSED 2026-10-25, not ruled** | A Premium Coaches Portal reads free time from the same door S4 builds (liveness today reads the portal's own record, which grants never touch), the door shown on a portal record, and the coach Founding comp moved with the Founding access step. Sequenced by dependency: after S4 is built and walked, and together with the Founding access move (Q4), because both change the portal's own billing record and the coach Founding audience (which today ends with no warning) | /billing (coach billing). Drawn first |
-| S4 Free time — **BUILT + COMMITTED 2026-10-25 (`6c8f8fb89` · `5353f2cf3` · `e9bb0b059` · `a26ec5165`; finish pass `4071179f0` · `48205738a` · `7bc6b5441`), walk §379 owed** (drawings 5eawvGUPwQVPoWiAV7vQY5, all 11 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4_BUILD_PROMPT.md`; mig 373 prod at release) | `plan_tier` grant (read-time revert, no cron) read through ONE effective-plan door with a build guard (Q1), one Give free time window, Founding as a group in a Free time list (view now, access at the Founding turn-off: Q4), customer billing page shows "Free through" (Q8), `comp_period` no longer offered (Q5), server-side past-expiry check | Prod `ENTITLEMENT_GRANTS_ENABLED=true` confirmed by the owner 2026-10-25. /billing for the customer pages and the effective-plan door. `proxy.ts` is one of the plan readers (its Tournament-tier redirect) |
-| S5 Health — **BUILT 2026-10-26 on dev (gate G1–G4 ruled; mig 389 dev; committed e0fc859d8 · ea0a5ff06 · 202cc2907 · 83b658dfb · df4cbfb7a · 806a477ef + help + fixes; walks owed: §391 https://claude.ai/artifact/8qgZHaUXyygTUssRxJ4dHz · §392 https://claude.ai/artifact/Rd7zbLU8X31somGq8d21dA · §393 https://claude.ai/artifact/VmRfEkbaGrMfvYSr8zoAQ5)**; drawn + ruled 2026-10-26, build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE5_BUILD_PROMPT.md` (drawings BQmiMi3jXGKBwXQHr8UugB, source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE5_DRAWINGS.html`; see "Stage 5 findings") | Status (reads on open), Errors restyled with a person link, Feedback record page + Reply, Sent email log + delivery callback, a kind on every send | One migration (joins 365/367/373/380); Resend webhook + signing secret, AWS list-builds key and a scoped read-only Supabase token are release owner steps (`/release`). Morning check stays on the owner's PC unchanged (Q2 = B) |
+| S4 Free time — **BUILT + COMMITTED 2026-10-25 (`6c8f8fb89` · `5353f2cf3` · `e9bb0b059` · `a26ec5165`; finish pass `4071179f0` · `48205738a` · `7bc6b5441`), walk §379 ✅ (owner, in chat 2026-10-27)** (drawings 5eawvGUPwQVPoWiAV7vQY5, all 11 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4_BUILD_PROMPT.md`; mig 373 prod at release) | `plan_tier` grant (read-time revert, no cron) read through ONE effective-plan door with a build guard (Q1), one Give free time window, Founding as a group in a Free time list (view now, access at the Founding turn-off: Q4), customer billing page shows "Free through" (Q8), `comp_period` no longer offered (Q5), server-side past-expiry check | Prod `ENTITLEMENT_GRANTS_ENABLED=true` confirmed by the owner 2026-10-25. /billing for the customer pages and the effective-plan door. `proxy.ts` is one of the plan readers (its Tournament-tier redirect) |
+| S5 Health — **BUILT 2026-10-26 on dev (gate G1–G4 ruled; mig 389 dev; committed e0fc859d8 · ea0a5ff06 · 202cc2907 · 83b658dfb · df4cbfb7a · 806a477ef + help + fixes; all three walks done 2026-10-27: §391 31/32 https://claude.ai/artifact/8qgZHaUXyygTUssRxJ4dHz · §392 25/30 https://claude.ai/artifact/Rd7zbLU8X31somGq8d21dA · §393 37/44 https://claude.ai/artifact/VmRfEkbaGrMfvYSr8zoAQ5, no failures, 13 steps Held to the release)**; drawn + ruled 2026-10-26, build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE5_BUILD_PROMPT.md` (drawings BQmiMi3jXGKBwXQHr8UugB, source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE5_DRAWINGS.html`; see "Stage 5 findings") | Status (reads on open), Errors restyled with a person link, Feedback record page + Reply, Sent email log + delivery callback, a kind on every send | One migration (joins 365/367/373/380); Resend webhook + signing secret, AWS list-builds key and a scoped read-only Supabase token are release owner steps (`/release`). Morning check stays on the owner's PC unchanged (Q2 = B) |
 | S6 Club release jobs | Club web addresses list + quota, set up a club from a lead, H03 | Rides the Club release |
-| S7 Growth & product | Leads, Campaigns, Pitch decks list, Plans & pricing, Approval queue, Templates, Export registry. H1 | — |
+| S7 Growth & product — **CHOSEN NEXT 2026-10-27 (owner); DRAWN 2026-10-27: https://claude.ai/artifact/QTrwrgyGqgBZugpGfvpJHM (source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE7_DRAWINGS.html`); RULED 2026-10-27 (all eleven, every recommended box + Q4 C and D; "Owner rulings 2026-10-27 (Stage 7 drawings)"); build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE7_BUILD_PROMPT.md` (Part 0, the Audit log fix, ships first on its own); findings in "Stage 7 findings"** | **Job (owner, 2026-10-27): a growth person can see where every lead lands, gets metrics on historical conversions, and can input information to track and improve future growth opportunities.** Leads, Campaigns, Pitch decks list, Plans & pricing, Approval queue, Templates, Export registry. H1. The prompt puts to the owner whether the catalogue four (Plans & pricing, Approval queue, Templates, Export registry) belong in this stage at all | A conversion history, a lead source and any public capture are asks; a daily snapshot would be a shared automation change (owner's word, own commit) |
 | S8 Records | Staff + roles (Q1, M3), audit search server-side (M4), Help | A role change is a security change, drawn first |
 | S9 Company accounting review | The two walks over Bookkeeping: record a purchase, find a receipt, correct an entry, a period's spending, the accountant's package | Trigger (owner, 2026-10-25, R9 in `BOOKKEEPING_OWNER_EXPERIENCE_PLAN.md` §11): **S9a** after the first real expense-and-owner close has been handed to the outside accountant; **S9b** after the first full month with live Stripe income has been closed |
+| S10 Plans & pricing — **LOGGED 2026-10-27 (owner), not drawn; the owner picks it up when ready, after S7; where it sits in the order is not ruled** (drawings prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE10_DRAWINGS_PROMPT.md`; see "Stage 10 findings") | **Job (owner, 2026-10-27): change what we sell without a developer and without surprising a customer.** A guided price-change workflow (who is affected, the policy for existing customers, the new price created in Stripe, the customer notice, the timeline); trial periods added, changed and removed with what they apply to; a Stripe link the console can read, so a missing or wrong price is seen before a customer hits it; a "what changed and when" record; and a **checklist for adding a new plan, enforced by the build**. **Ruled OUT by the owner: a full plan builder** (adding a plan stays a code change; the checklist makes it hard to get wrong). Takes over S7's catalogue four (Plans & pricing, Approval queue, Templates, Export registry) if the owner rules S7 ask 1 = A, plus the old H8 price guard | /billing (the rules), /marketing (the customer notice and the pricing words), /strategy (the policy decisions are business decisions: log them). Any Stripe write is a new capability for the console's key (ask). A migration is likely (a price-change record) and joins 365/367/373/380/389 at release |
 
 Open TODO lines:
 - **In:** timed grants (S4, with the tier trial), and observability and feedback screens (S5).
@@ -303,6 +304,91 @@ Ten asks; the full wording is in `memory/design_decisions.md` 2026-10-26 "SUPPOR
   is a rule against `hour: '2-digit'` on a 12-hour clock. No public-address route guard existed; Stage 5 adds one.
   Resend shows a webhook's secret only after it exists, so "secret first" is "the route answers not-ready until the
   secret is set" (Resend retries ~27 h).
+
+## Owner rulings 2026-10-27 (Stage 7 drawings; paste-back, every recommended box ticked, plus Q4 C and D)
+
+Recorded as ticked; the drawings: https://claude.ai/artifact/QTrwrgyGqgBZugpGfvpJHM. Build prompt:
+`PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE7_BUILD_PROMPT.md`.
+
+- **Q1 A:** the growth screens only; the catalogue four stay as built apart from menu place and the Promotions name.
+- **Q2:** Signed up = an offered match a person confirms, or by hand; an owner or admin who joined, with a
+  self-confirmed address. Pays = own plan not Tournament, billing active, a real subscription; trial, free time and
+  Founding comp are not paying.
+- **Q3 A:** read live from dated facts; no new job.
+- **Q4:** B (staff record a source, short list, and their words on the lead) **and C** (a "How did you hear about us?"
+  question on the public form) **and D** (a tag on the links we hand out, kept with the lead). C and D were not the
+  recommendation; both are customer-facing release items.
+- **Q5:** Campaigns keeps its name + one line; the catalogue list becomes Promotions; no lead link.
+- **Q6:** no reason on a lead edit; no confirm window, the check mark saves a lead at once. (The third box, the export's
+  roles and the empty email cell for "Asked not to be contacted", was not ticked: the build gate asks.)
+- **Q7:** no rulebook change: Super admin, Product, Growth read and edit leads; others see counts only.
+- **Q8:** not now: restyle only; staff note "sent the deck" on the lead.
+- **Q9:** (a) seven steps; Lost with a required reason; Not a fit and Do not contact become reasons. (b) Notes become
+  dated, signed timeline entries (one migration). (c) Stuck = 30 days with no step change, note or follow-up; Waiting
+  for launch excluded; not a Today queue. (d) Today's growth rows: New leads, Follow-ups due, Sign-up to confirm,
+  Campaigns past due, Campaigns due soon.
+- **Q10:** Audit log: lead entries keep field names only; old entries' details shown only to Super admin, Product,
+  Growth: **fix NOW on its own**. Public form: a known address never turns a no into a yes nor overwrites a worked lead;
+  Copy emails moves to the server (rides S7). Today's campaign rows count live campaigns only (rides S7). The export
+  audited, uncapped, formula-safe (rides S7). Findings: the coaches page's interest form refuses every visitor when the
+  Coaches Portal is closed for sale (fix before it is ever gated); the public early-access form has no rate limit or
+  captcha (a later public-route pass); two public slides say 9 AM / 9 PM (to /marketing; the spelling gate misses a time
+  with no minutes); no way to delete a lead on request (Stage 8); the snapshot button writes a row nothing reads (decide
+  with Business numbers' own pass).
+- **Q11:** S7-D1 to S7-D6 all as recommended.
+- **Open at the build gate (raised 2026-10-27, not ruled):** the drawings' threat 10 tied the public-route pass to C or D;
+  recommended that the repo's existing public-form throttle rides S7's public-form part, the captcha staying later.
+  C and D were drawn as options only: a frame J (the question, the lead page's form answer and tag, Numbers' By link
+  tag) is needed before they are built.
+- **Build gate answers (owner, 2026-10-27, the build session):** §6-3 frame J was not drawn: the build session draws it
+  on the drawings page and brings it back before Part 8. §6-4 the repo's existing public-form throttle goes on the
+  early-access route inside Part 8; the captcha stays later. §6-5 as drawn: Super admin, Product and Growth export; the
+  email cell is empty for "Asked not to be contacted". **Census 2c: the code CANNOT tell an address its owner confirmed
+  from one staff or a script confirmed** (nothing records who confirmed; console Confirm email, dev-mode and seed
+  creates, and the coach invite-token sign-up all confirm without a Supabase link). Owner chose **the best signal, safe
+  side:** offer only an owner or admin who was sent our confirmation email and has signed in since, with no console
+  `confirm_email` / `update_user` entry for that account; when it cannot tell, no offer (staff can still link by hand).
+  Sign-up flows untouched; the Stage 7 migration adds the one read of the account's confirmation dates.
+- **Part 0 built and committed `c6e3d3720` 2026-10-27:** a lead edit's entry keeps the changed field names and the step
+  before/after (the drawings' "field names and the step"), old entries' details reach the growth power only (page,
+  entry window, Copy, Same moment, export; one filter `hiddenEntryLine` shared with refunds). Guard
+  `tests/unit/support-console-stage7-audit-guard.test.ts`. No migration; reaches prod at the next release on its own.
+- **§4 re-run (2026-10-27), rows that moved or were wider than written:** the "paying" rule is a private constant inside
+  `classifyGrowthMove` (`lib/plan-growth.ts:32,55`), not lines 43-52, and ⚠ **it is not Q2's rule:** its
+  `PAYING_NOW_STATUSES` is `['active', 'trialing']` (right for its job: a subscription STARTS when its trial does),
+  while Q2 says a trial is not paying. Part 2 adds one exported "pays now" rule beside it in the same module (own plan
+  not Tournament, status active, a real subscription id past `incomplete`, no free-time grant) built on the same
+  private helpers, and the guard pins that a trialing club is not paying. A **second
+  lead writer** exists: `lib/basic-coach-interest.ts:114-154` (a coach team's interest button) merges into the same row;
+  Part 8's overwrite rule covers it too. The public route answers a database error with Supabase's own message (73, 111).
+  Business numbers lists 5 of the 8 steps. The link picker includes demo clubs and goes silently empty on a failed read.
+  The lead id is never format-checked (`[leadId]/route.ts`). Staff detection (`isPlatformAdminEmail`) reads a failed
+  lookup as "not staff": the match must refuse there instead. Outreach templates sit at `EarlyAccessClient.tsx:67-71`.
+- **§6-6 `/marketing` words (2026-10-27, the build session's helper; customer copy of C is a release item):** steps,
+  the six Lost reasons and the staff source list confirmed as drawn. **The visitor's question** "How did you hear
+  about us?" (optional, first option "Choose one"): Another club or team told me → Referral from a club · Someone else
+  told me → Other · I came across it at a tournament → A tournament on FieldLogicHQ · I searched online → Search ·
+  Social media → Social media · An event or conference → An event or conference · Someone sent me a presentation →
+  A pitch deck · Something else → Other. (The drawn "A friend or another club" split: a friend is not a club.) The
+  lead page shows "From the form: {the visitor's words}". **Timeline templates:** "{actor} moved it from {old} to
+  {new}" (also for New → Contacted when no source is set in the same edit), "{actor} marked it {step} and set the
+  source: {source}", "A club signed up with this email: {club}, on a {plan} trial. Not linked yet.", "{actor} linked
+  {club}, the offered match (same email). Step: Signed up", "{actor} linked {club} by hand", "Filled the form again, on
+  the {page} page", "The club started paying: {plan}, {monthly|yearly}", "A note was removed" (capitalised; never the
+  text); sub-lines "Next action: {text} · Follow-up {date}" and "Follow-up and next action cleared". Campaigns' line
+  and Promotions ("For the record · not linked to checkout or Stripe"; "No promotions yet."; an approval request
+  reads "Promotion") as drawn. Numbers' definitions as drawn, minus the "(question 11)" cross-reference; "3 of the 11"
+  and "May 20" are computed, never typed.
+- **§6-7 the migration: `398_support_console_leads_pipeline.sql`** (396 and 397 were taken by Club Tier the same
+  hour). Written 2026-10-27, NOT applied until the owner's go after the gate. Dev rows each data move touches: **0**
+  (0 leads, 0 lead edit entries; `.probe/pasc/s7-mig396-counts.mjs`, SELECT only). Builder's calls in it, beyond §7
+  Part 1's list: **Signed up ⇔ `linked_at`** (not the club id: `converted_org_id` is ON DELETE SET NULL, so a deleted
+  club leaves the dated facts behind, "Signed up, club since deleted"); **`signed_up_at`** = the club's or portal's
+  creation time copied at the link (S7-D4 survives a deletion); **`step_changed_at`** (stuck needs it; back-filled from
+  the edit log, whose entries carry the step on both sides before and after Part 0); `heard_from` and `ref_tag` are
+  format-checked in the database with their lists in code; the old notes box is emptied once copied; the lead table's
+  browser-role grants are revoked (prod still had them in 2026-06; RLS made them harmless); `platform_lead_account_dates`
+  is the one account read the match needs.
 
 ## Stage 5 build (2026-10-26) — what was built, and the threats → guards
 
@@ -525,6 +611,101 @@ already-ended grant "ended early".
   status override takes an optional end with no cap (walk call 14 asks the owner).
 - Help: the Bulk changes guide still lists Comp period (the product no longer offers it); the line sits beside another
   session's uncommitted rename of that section, so it is left for that session.
+
+## Stage 10 findings (a helper's census of 2026-10-27; ✔ = re-checked by hand the same day, the rest NOT yet)
+
+Owner's questions, 2026-10-27: how easy is it to set up a new subscription model, change prices (and what workflow
+follows: marketing, emails to existing customers, timing), change trials, and sync with Stripe? The owner ruled this its
+own stage and ruled a **full plan builder out** ("a rare occurrence"); a checklist is wanted.
+
+- **Prices are code-only.** Plan names, prices, bands, limits and trial days live in the plan config; about 65 files read
+  it, so display surfaces follow. The DB holds the gating switch, a small override (tournament limit, seat limit, trial
+  days only) and the Stripe price slots, never a dollar amount.
+- ✔ **Stripe price IDs are rows pasted in by hand**, one per plan, cycle and environment (sandbox or live, chosen by the
+  key's prefix). Nothing in the app creates a Stripe product or price (searched for create calls: none). The console
+  checks a pasted price against Stripe (hard-blocks inactive, one-time or wrong-interval; only WARNS on a wrong amount).
+- ✔ **The webhook finds a plan from the price ID alone** (`getPlanFromPriceId`, no environment). **Swapping the ID in a
+  slot orphans every subscriber on the old price.** Keeping existing customers safe today depends on someone knowing to
+  keep the old row. No runbook exists. (Report-only finding: nobody pays today, so nothing is broken yet.)
+- ✔ **Trial days are applied at checkout only** (`trial_period_days`), withheld when the customer has had a subscription
+  before. Length is changeable without a deploy through an approval request. No per-customer or per-promotion trial.
+  Stripe owns when a trial ends; there is no cron.
+- ✔ **Pricing promos recorded in Plans & pricing (the `platform_catalog_campaigns` table) are read by nothing at
+  checkout** (only the Plans & pricing page and its own route touch the table). A "trial" promotion records but does
+  nothing. This is the shown-versus-enforced rule (R7) and belongs on the ladder as a found-along-the-way. No coupon or
+  promotion code reaches checkout either.
+- **No price-change handling for existing customers:** no price kept on the club, no grandfathering, no effective date,
+  no price-change email. Request types for pricing, grandfathering and trial exist in the approval queue only as labels.
+  The owner's decisions log rules "no grandfathering" for the invite-only event and notes there are no paying customers
+  to grandfather. The Founding lock-in price is dormant. (Not re-checked.)
+- **No guard ties plan prices to `PLAN_PRICING_FACTS.md`.** The only tests that read the Facts doc check the online-payment
+  fee rates. Agreement is a manual checklist at the bottom of the Facts doc. A help article is reported to hardcode a
+  price (not re-checked).
+- ✔ **`docs/agents/ops/stripe-setup-guide.md` is stale:** it still describes Pro and Elite plans and `STRIPE_PRICE_*`
+  settings that no app code reads. Rewrite or retire it in this stage.
+- Plans & pricing and the Approval queue exist and work as a request-and-approve loop for gating, price-ID swaps and
+  config overrides. It is a 2,800-line client screen; prices and plans cannot be edited from it.
+
+**What else a person who runs pricing would want (raised 2026-10-27, recorded here so the drawings session covers each;
+none is ruled, each is an ask or a drawing, not a given).**
+1. **Notice and consent for existing customers:** how much notice, and whether any Canadian consumer or tax rule applies
+   to these plans. The owner checks that with their advisor; the plan asserts no law. Drawn in B and C; ask 1.
+2. **Sandbox and live Stripe parity:** the same product must exist in both, and they drift apart easily. Drawn in A and E.
+3. **Monthly and annual:** one price change touches both cycles; a plan may have only one. Drawn in A and B.
+4. **Upgrade and downgrade rules:** what a customer is charged when they move mid-period, and what they are told. New
+   drawing K; ask 11.
+5. **Failed payments and win-back:** what happens when a card fails (the reminders, how long a club keeps access), and
+   whether there is a returning-customer offer. New drawing K; ask 11. Check what Stripe and the webhook already do before
+   drawing anything.
+6. **Add-ons and the Coaches Portal:** each has its own price and Founding rules. In or out of the workflow is ask 8.
+7. **Promo codes at checkout:** wanted or not, and how they stack with free time. Drawing G; ask 4.
+8. **Founding Season's dormant lock-in price:** what happens to it at a price change. Ask 6.
+9. **A price-agreement build check:** fails when the strategy doc and the plan config disagree (none exists today). In
+   the checklist drawing F; ask 7.
+10. **A trial-end report:** how many trials ended, converted or lapsed, read live. New drawing K; ask 11. Shares its
+    definition of "converted" with Stage 7's numbers; do not define it twice.
+11. **Stale setup guide:** rewrite or retire the Stripe setup guide (it describes plans that no longer exist). Ask 9.
+12. **Also draw, from the owner's questions:** a **rollback** (what undoing a price change does and does not undo) and a
+    **record of what changed, who approved it and when** (drawing B and H).
+
+## Stage 7 findings (verified against the code and dev's data 2026-10-27, before drawing)
+
+Three helpers read the code and ran read-only counts on dev; the lines each drawing turns on were opened by hand.
+Drawings: `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE7_DRAWINGS.html` (assembled from Stage 5's head/scripts by
+`assemble-s7.cjs` in that session's scratchpad; captures `.probe/pasc/cap-s7/` via `capture-s7.mjs`; render
+`render-s7.mjs`).
+
+- **Dev has 0 leads** (`early_access_leads` empty). Every drawn figure is example data; the email-match rate cannot be
+  measured on dev (a counts-only prod read is put to the owner, ask 2).
+- **Today's campaign rows count retired campaigns.** `campaignAlerts()` (`lib/platform-waiting.ts:80`) reads every
+  `platform_email_templates` row with category `marketing`; the Campaigns board filters to `LIVE_MARKETING_CAMPAIGNS`
+  (`lib/marketing-email-defaults.ts:429`). On 10-27 Today showed "past due 5, due soon 1", all six retired spotlight
+  emails. Fix = filter to `LIVE_MARKETING_EMAIL_KEYS` (ask 10).
+- **Purchases ARE in `platform_events`** (`subscription_started`, `plan_upgraded`; `lib/platform-events.ts:7`) but only
+  since commit `6de082f2f` 2026-10-25; not back-filled. Leads and their edit log (`update_early_access_lead` audit rows
+  with before/after) both start 2026-05-20 (`19913af85`), so a lead timeline and every lead trend read live.
+- **Three definitions/limits:** Leads' band counts the ≤100 loaded rows, opens filtered to New, and calls a lead
+  converted on `converted_org_id || converted_at` (`EarlyAccessClient.tsx:126,182`); `getCommandCenterStats` reads the
+  newest 5,000 and counts `converted_org_id` only (`lib/platform-metrics.ts:182,304`); the export caps at 1,000 and
+  writes no audit row (`early-access/export/route.ts:48`).
+- **One person = one lead:** `email_normalized` is unique and a re-submission updates the row (`submission_count`;
+  `app/api/early-access/route.ts:66-111`). Only the latest submission is dated.
+- **Linking:** staff pick from ≤1,000 orgs incl. sandboxes (`early-access/page.tsx:5-20`); "converted" refuses without
+  a club (`[leadId]/route.ts:91`); a club can be linked without the step, and then `converted_at` stays null.
+- **"Paying" rule already exists:** `lib/plan-growth.ts:43-52` (a Founding comp is active with no subscription id; only
+  active/trialing with a live subscription count). Free time = `org_overrides` grants (`lib/free-time.ts`).
+- **No source, no tags:** no utm/referrer anywhere; `source_path` = path + #hash; `metadata` jsonb has no writer; legacy
+  `status` always 'new'. The public form trims lengths, has a honeypot, no rate limit, no captcha.
+- **Latent public bug:** `/for-coaches` passes plan `coaches_portal` + features the server drops
+  (`app/for-coaches/page.tsx:77-78` vs `app/api/early-access/route.ts:6-15`), so every submit 400s. Reached only when the
+  team plan is gated (`checkoutOpen` false).
+- **"Campaign" names two things:** the Founding Season email screen (12 labels) and `platform_catalog_campaigns`, a
+  promo list in Plans & pricing linked to nothing (8 labels). Neither touches leads.
+- **Pitch decks:** own stylesheet; `/pitch/[slug]` records nothing; `pitch_page_pulls` = which slides a walkthrough
+  shows, not views. Two public slides print "9 AM"/"9 PM" (`lib/walkthrough-content.ts:552,613`).
+- **Business numbers** is open to every role, not in the menu; its snapshot button writes `platform_metric_snapshots`
+  rows that nothing reads back. Retention = kept data, not churn.
+- **Route rename cost:** early-access 8 code places, email 8, pitch-deck-studio 4 (+ help, docs). Recommend labels only.
 
 ## Stage 5 findings (verified against the code and the AWS, Supabase and Resend docs 2026-10-26, before drawing)
 

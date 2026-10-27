@@ -26700,3 +26700,20 @@ republished; tick positions unchanged).
 
 **Not run by the builder:** the walk; any real Amplify or Supabase reading; `check:layout` on Status at 390 wide.
 <!-- /§393 -->
+
+## §394 · Support console · Stage 7 Part 0, the Audit log and a lead — **a lead edit's Audit log entry keeps only which fields changed and the step before and after (never a name, address, organization, the visitor's words or staff notes), and every lead entry's details (old value, new value, reason) are shown only to Super admin, Product and Growth; Support, Billing and Read only see the entry, its action label, the actor and the time, with the Reason cell reading, in the quiet grey style, "Lead details are shown to the roles that work leads." and Old and New value "-"; the rule holds in the table, the entry window, its Copy, "Same moment" and the Export (CSV and Excel); refund entries are unchanged ("Shown to Super admin, Billing and Support"); the Audit log help article gained one sentence about it**
+<!-- §394 -->
+**Built:** 2026-10-27 on dev (Stage 7 Part 0; owner ruling Q10 2026-10-27; guard 1 of the Stage 7 build prompt). **Committed 2026-10-27:** `c6e3d3720`. No migration. One filter (`hiddenEntryLine`) now serves both the refund rule and the lead rule, on the Audit log page and its export route; the lead edit writes `{ changed: [field names], internal_status }` as New value and `{ internal_status }` as Old value (`leadAuditValues`).
+
+**The walk:** [Audit log lead walk](PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE7_P0_WALK.html), https://claude.ai/artifact/KaNbQydpHEGTvBLq4SWuLk. One purpose: the Audit log as each staff role sees a lead entry. 4 sections, 22 steps (2 that dev may not be able to show), 3 calls the build made. Sections: (1) make a test lead through the public form and edit it as Growth; (2) the Audit log as Growth: the field list and the step New to Contacted, no name or address, Copy, Export; (3) the same entry as Support, then Billing, Read only and Product: the one quiet line, "-", Copy, Export, a refund entry unchanged, the Leads page still closed to Support; (4) the help sentence.
+
+**Sign in:** `http://localhost:3000/platform-admin/login` as `growth@dev.local`, `support@dev.local`, `billing@dev.local`, `readonly@dev.local`, `product@dev.local` (all `devpass123`, from `scripts/seed-platform-staff.mjs`); Super admin `uat-platform@fieldlogichq.ca` (`UAT_PLATFORM_ADMIN_PASSWORD` in `.env.local`) is optional.
+
+**What dev can and cannot show:** dev held 0 leads and 0 lead entries on 2026-10-27, so the walk makes one lead through the public form (`/start/club`, address `walk-s7-p0@example.com`, marker `WALKSECRET`) and reads the one entry the edit writes. **Entries written before Part 0 (the whole lead in Old and New value) cannot be made on dev and are not walked:** their rule (details reach only Super admin, Product and Growth) is pinned by `tests/unit/support-console-stage7-audit-guard.test.ts`. "Same moment" needs two changes by one person in the same second, which hand-editing cannot make; its step carries a Held box (the block lists only action labels and field names, never values). The refund-unchanged step needs a refund entry on dev; it carries a Held box for when there is none. The entry window's Field shows the lead's reference number to every role (it always held the lead id; it carries nothing the visitor typed).
+
+**Proven by the builder:** `support-console-stage7-audit-guard.test.ts` (the lead filter on the page and the export, the entry shape, the old-entry rule), `support-console-stage3-guard.test.ts` (updated for the shared filter).
+
+**Not run by the builder:** the walk; an Excel export of a lead row (the walk opens the CSV; the Excel path shares the same filter in the same route).
+
+**Status: walk owed.**
+<!-- /§394 -->
