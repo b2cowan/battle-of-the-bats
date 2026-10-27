@@ -470,6 +470,10 @@
     "399_a_returned_answering_fee_is_a_credit_note.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 12d-1 owner ruling 7 (Part 5b): a returned answering fee goes back against the invoice that carried the answering fee, as a Stripe credit note. Needs 390 first. Visible: column platform_stripe_fees.stripe_credit_note_id, unique partial index platform_stripe_fees_credit_note_key, CHECK platform_stripe_fees_credit_note_chk. INVISIBLE to check:migrations: platform_stripe_fees_billed_chk and platform_stripe_fees_billed_on_chk REPLACED (billed exactly when a line OR a credit note is held; billed_on gains credit_note). Additive, no row change, re-runnable. Apply to prod BEFORE the promote that ships the 12d-1 code (it reads the new column). Verify on prod: SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'platform_stripe_fees_billed_on_chk' -> contains 'credit_note'. Applied to DEV 2026-10-27."
+    },
+    "400_send_the_changes_tells_house_league_families.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 11b Part 5 (the club's Send the changes moves house-league practices and tells their families). Needs 385 and 392-393 first. Visible: CHECK league_season_notices_kind_check REPLACED (teams_published, practices_changed); column league_season_notices.club_schedule_send_id (FK club_schedule_sends ON DELETE SET NULL); partial index league_season_notices_send_idx. Additive, no row change, re-runnable. Apply to prod BEFORE the promote that ships 11b Part 5 (the send writes a practices_changed row). Verify on prod: SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'league_season_notices_kind_check' -> contains 'practices_changed'. Applied to DEV 2026-10-27; scripts/club-stage11b-check.sql passed (T1-T14) and .probe/11b5/e2e.sql passed."
     }
   }
 }

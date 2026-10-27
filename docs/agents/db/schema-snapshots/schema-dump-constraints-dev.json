@@ -2931,6 +2931,16 @@
   },
   {
     "table_name": "league_season_notices",
+    "constraint_name": "league_season_notices_club_schedule_send_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "club_schedule_send_id",
+    "foreign_table": "club_schedule_sends",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_season_notices",
     "constraint_name": "league_season_notices_created_by_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "created_by",

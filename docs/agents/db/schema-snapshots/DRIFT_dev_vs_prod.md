@@ -2,14 +2,14 @@
 
 **Generated:** 2026-10-27 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 1065 divergence(s)** across dev/prod.
+**⚠️ 1068 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 38 | 0 | — |
-| Columns | 530 | 1 | 0 |
-| Indexes | 166 | 0 | 2 |
-| Constraints | 156 | 0 | — |
+| Columns | 531 | 1 | 0 |
+| Indexes | 167 | 0 | 2 |
+| Constraints | 157 | 0 | — |
 | RLS / CHECK | 172 | 0 | 0 (RLS state) |
 
 ## Tables
@@ -57,7 +57,7 @@
 _none_
 
 ## Columns
-### Only in DEV (530)
+### Only in DEV (531)
 - `club_schedule_slot_programs.created_at`
 - `club_schedule_slot_programs.org_id`
 - `club_schedule_slot_programs.program`
@@ -176,6 +176,7 @@ _none_
 - `league_season_fee_words.item_id`
 - `league_season_fee_words.org_id`
 - `league_season_fee_words.season_id`
+- `league_season_notices.club_schedule_send_id`
 - `league_season_notices.created_at`
 - `league_season_notices.created_by`
 - `league_season_notices.division_id`
@@ -596,7 +597,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (166)
+### Only in DEV (167)
 - `accounting_entries_league_registration_idx`
 - `club_schedule_slot_programs_org_idx`
 - `club_schedule_slot_programs_pkey`
@@ -640,6 +641,7 @@ _none_
 - `league_season_notices_org_idx`
 - `league_season_notices_pkey`
 - `league_season_notices_season_idx`
+- `league_season_notices_send_idx`
 - `league_slot_uses_division_idx`
 - `league_slot_uses_org_idx`
 - `league_slot_uses_pkey`
@@ -776,7 +778,7 @@ _none_
   - prod: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (156)
+### Only in DEV (157)
 - `club_schedule_slot_programs.club_schedule_slot_programs_org_id_fkey`
 - `club_schedule_slot_programs.club_schedule_slot_programs_pkey`
 - `club_schedule_slot_programs.club_schedule_slot_programs_slot_id_fkey`
@@ -819,6 +821,7 @@ _none_
 - `league_season_fee_words.league_season_fee_words_org_id_fkey`
 - `league_season_fee_words.league_season_fee_words_pkey`
 - `league_season_fee_words.league_season_fee_words_season_id_fkey`
+- `league_season_notices.league_season_notices_club_schedule_send_id_fkey`
 - `league_season_notices.league_season_notices_created_by_fkey`
 - `league_season_notices.league_season_notices_division_id_fkey`
 - `league_season_notices.league_season_notices_org_id_fkey`

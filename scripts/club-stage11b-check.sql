@@ -3,7 +3,8 @@
 -- slot between the two holders; another club's season can't take a use; Practice time writes one practice per slot per
 -- team and a second hand-out writes none twice; Send the changes carries a use and its practices to where the time moved
 -- and refuses a live practice left on time house league no longer has. Part 3 (migs 394, 397): one Save applies whole or
--- not at all; a change names what it saw and what it gives; a no-op changes nothing.
+-- not at all; a change names what it saw and what it gives; a no-op changes nothing. Part 5 (T14): the step takes the
+-- TypeScript plan's p_league whole — carry, move, cancel.
 -- Run: node scripts/db-query.mjs --dev -f scripts/club-stage11b-check.sql
 -- The final exception rolls back every fixture row; the run passes only when it ends in CLUB_STAGE11B_PASSED.
 DO $c11b$
@@ -12,6 +13,7 @@ DECLARE
   v_a uuid; v_b uuid; v_c uuid; v_d uuid; v_moved uuid; v_e uuid; v_f uuid; v_g uuid; v_season_b uuid; v_div_b uuid;
   v_season uuid; v_other_season uuid; v_div uuid; v_div2 uuid; v_t1 uuid; v_t2 uuid; v_send uuid;
   v_res jsonb; v_n integer; v_code text; v_p uuid; v_at timestamptz;
+  v_h1 uuid; v_h1b uuid; v_h2 uuid; v_p1 uuid; v_p2 uuid; v_p3 uuid;
 BEGIN
   INSERT INTO organizations(name, slug, plan_id)
   VALUES ('CHECK 11b', 'check-11b-' || substr(md5(random()::text), 1, 10), 'club') RETURNING id INTO v_org;
@@ -303,6 +305,54 @@ BEGIN
   IF NOT (v_res->>'ok')::boolean OR (v_res->>'practicesRemoved')::integer <> 0
      OR NOT EXISTS (SELECT 1 FROM league_practices WHERE club_schedule_slot_id = v_g) THEN
     RAISE EXCEPTION 'FAIL T13: a no-op change removed practices (%)', v_res; END IF;
+
+  -- T14 · Part 5: the step takes `p_league` in the exact shape lib/club-schedule-league-plan.ts produces — a use carried,
+  -- practices moved by the slot's shift with the plan's `location` (no venue: the slot's), and a practice on time taken
+  -- back cancelled — all in one send.
+  INSERT INTO club_schedule_slots(org_id, schedule_id, org_venue_id, starts_at, ends_at)
+  VALUES (v_org, v_sched, v_venue, v_at + interval '49 days', v_at + interval '49 days 3 hours') RETURNING id INTO v_h1;
+  INSERT INTO club_schedule_slots(org_id, schedule_id, org_venue_id, starts_at, ends_at)
+  VALUES (v_org, v_sched, v_venue, v_at + interval '50 days', v_at + interval '50 days 3 hours') RETURNING id INTO v_h2;
+  INSERT INTO club_schedule_slot_programs(slot_id, program, org_id) VALUES (v_h1, 'house_league', v_org), (v_h2, 'house_league', v_org);
+  v_res := league_slot_uses_set(v_org, v_season, NULL, ARRAY[v_h1, v_h2], v_div, 'practices');
+  INSERT INTO league_practices(season_id, division_id, team_id, org_id, scheduled_at, ends_at, status, club_schedule_slot_id)
+  VALUES (v_season, v_div, v_t1, v_org, v_at + interval '49 days', v_at + interval '49 days 90 minutes', 'scheduled', v_h1)
+  RETURNING id INTO v_p1;
+  INSERT INTO league_practices(season_id, division_id, team_id, org_id, scheduled_at, ends_at, status, club_schedule_slot_id)
+  VALUES (v_season, v_div, v_t2, v_org, v_at + interval '49 days 90 minutes', v_at + interval '49 days 3 hours', 'scheduled', v_h1)
+  RETURNING id INTO v_p2;
+  INSERT INTO league_practices(season_id, division_id, team_id, org_id, scheduled_at, ends_at, status, club_schedule_slot_id)
+  VALUES (v_season, v_div, v_t1, v_org, v_at + interval '50 days', v_at + interval '50 days 1 hour', 'scheduled', v_h2)
+  RETURNING id INTO v_p3;
+  -- The club's edits, as a save and a hand edit leave them: h1 moved 90 minutes later (soft-removed, a new slot house
+  -- league holds with no use yet), h2 taken back (live, no program).
+  UPDATE club_schedule_slots SET removed_at = now() WHERE id = v_h1;
+  INSERT INTO club_schedule_slots(org_id, schedule_id, org_venue_id, starts_at, ends_at)
+  VALUES (v_org, v_sched, v_venue, v_at + interval '49 days 90 minutes', v_at + interval '49 days 270 minutes') RETURNING id INTO v_h1b;
+  INSERT INTO club_schedule_slot_programs(slot_id, program, org_id) VALUES (v_h1b, 'house_league', v_org);
+  DELETE FROM club_schedule_slot_programs WHERE slot_id = v_h2;
+  INSERT INTO club_schedule_sends(org_id, schedule_id, kind) VALUES (v_org, v_sched, 'changes') RETURNING id INTO v_send;
+  SELECT version INTO v_ver FROM club_schedules WHERE id = v_sched;
+  v_res := club_schedule_apply_changes(v_org, v_sched, NULL, v_ver, '[]'::jsonb, '[]'::jsonb, '{}'::uuid[], NULL, v_send,
+    '{}'::jsonb, '[]'::jsonb, jsonb_build_object(
+      'uses', jsonb_build_array(jsonb_build_object('from', v_h1, 'to', v_h1b)),
+      'cancel', jsonb_build_array(v_p3),
+      'updates', jsonb_build_array(
+        jsonb_build_object('practiceId', v_p1, 'slotId', v_h1b, 'scheduledAt', v_at + interval '49 days 90 minutes',
+                           'endsAt', v_at + interval '49 days 3 hours', 'location', 'CHECK park — moved'),
+        jsonb_build_object('practiceId', v_p2, 'slotId', v_h1b, 'scheduledAt', v_at + interval '49 days 3 hours',
+                           'endsAt', v_at + interval '49 days 270 minutes', 'location', 'CHECK park — moved'))));
+  IF NOT (v_res->>'ok')::boolean OR (v_res->'league'->>'moved')::integer <> 2 OR (v_res->'league'->>'cancelled')::integer <> 1
+     OR (v_res->'league'->>'uses')::integer <> 1 THEN
+    RAISE EXCEPTION 'FAIL T14: the plan''s p_league (%)', v_res; END IF;
+  IF (SELECT count(*) FROM league_practices WHERE club_schedule_slot_id = v_h1b AND status = 'scheduled' AND location = 'CHECK park — moved'
+        AND org_venue_id = v_venue) <> 2
+     OR (SELECT scheduled_at FROM league_practices WHERE id = v_p1) <> v_at + interval '49 days 90 minutes'
+     OR (SELECT status FROM league_practices WHERE id = v_p3) <> 'cancelled'
+     OR EXISTS (SELECT 1 FROM club_schedule_slots WHERE id = v_h1)
+     OR EXISTS (SELECT 1 FROM league_slot_uses WHERE slot_id = v_h2)
+     OR NOT EXISTS (SELECT 1 FROM league_slot_uses WHERE slot_id = v_h1b AND division_id = v_div AND kind = 'practices') THEN
+    RAISE EXCEPTION 'FAIL T14: the moved, cancelled and carried rows'; END IF;
 
   -- T9 · a finished season divides nothing and hands out nothing.
   UPDATE league_seasons SET status = 'completed' WHERE id = v_season;

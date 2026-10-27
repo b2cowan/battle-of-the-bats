@@ -1555,6 +1555,11 @@
     "indexdef": "CREATE INDEX league_season_notices_season_idx ON public.league_season_notices USING btree (season_id, created_at DESC)"
   },
   {
+    "tablename": "league_season_notices",
+    "indexname": "league_season_notices_send_idx",
+    "indexdef": "CREATE INDEX league_season_notices_send_idx ON public.league_season_notices USING btree (club_schedule_send_id) WHERE (club_schedule_send_id IS NOT NULL)"
+  },
+  {
     "tablename": "league_seasons",
     "indexname": "league_seasons_org_id_slug_key",
     "indexdef": "CREATE UNIQUE INDEX league_seasons_org_id_slug_key ON public.league_seasons USING btree (org_id, slug)"

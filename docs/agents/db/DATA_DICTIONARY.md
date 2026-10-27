@@ -6930,8 +6930,8 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:table:league_season_notices -->
 
 **Purpose:** one row per **automatic notice** the product sent many families of a house-league season at once (Club Tier
-Stage 9d-1, 9d1·4, argument 4, **mig 385**): Publish teams now (`teams_published`), 9d-2's schedule notices later (they
-widen `kind`). The season's Email families history lists each as one row tagged **Automatic**. ⚠ **Never counted toward
+Stage 9d-1, 9d1·4, argument 4, **mig 385**): Publish teams (`teams_published`), the club's Send the changes moving
+practices (`practices_changed`, mig 400), 9d-2's game notices later (they widen `kind`). The season's Email families history lists each as one row tagged **Automatic**. ⚠ **Never counted toward
 any allowance and never in `family_email_sends`** (9d1·7). Written by `league_division_publish` inside its transaction
 (only when the Publish wrote at least one family email); its family emails point at it through
 `league_placement_emails.notice_id`. **Service-role only** (RLS enabled, no policies).
@@ -6945,7 +6945,15 @@ any allowance and never in `family_email_sends`** (9d1·7). Written by `league_d
 was about.
 
 <!-- dict:col:league_season_notices.kind -->
-**`kind`** (text NOT NULL, CHECK `teams_published`) — what the notice was.
+**`kind`** (text NOT NULL, CHECK `teams_published` · `practices_changed`) — what the notice was. **`practices_changed`**
+(**mig 400**, Club Tier Stage 11b Part 5, ruling 9d2·2): the club's Send the changes moved or cancelled this season's
+house-league practices and emailed the teams' families (one service notice per household); one row per season a send
+touched, written by `lib/club-schedule-league-mail.ts` AFTER the send's step landed, its counts set from the emails'
+outcomes. `division_id` is set only when the changed teams are all of one division.
+
+<!-- dict:col:league_season_notices.club_schedule_send_id -->
+**`club_schedule_send_id`** (uuid, FK → `club_schedule_sends` ON DELETE SET NULL, **mig 400**; partial index) — for
+`practices_changed`, the club's send that wrote it; null for every other kind.
 
 <!-- dict:col:league_season_notices.family_count -->
 <!-- dict:col:league_season_notices.reached_count -->

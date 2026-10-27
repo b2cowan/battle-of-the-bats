@@ -1,11 +1,11 @@
 {
   "generated": "2026-10-27",
-  "total": 1065,
+  "total": 1068,
   "counts": {
     "tables": 38,
-    "columns": 531,
-    "indexes": 168,
-    "constraints": 156,
+    "columns": 532,
+    "indexes": 169,
+    "constraints": 157,
     "rls": 172
   },
   "items": [
@@ -1167,6 +1167,10 @@
     },
     {
       "key": "column:only-dev:league_season_fee_words.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_notices.club_schedule_send_id",
       "sig": ""
     },
     {
@@ -2990,6 +2994,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_season_notices.league_season_notices_club_schedule_send_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:league_season_notices.league_season_notices_created_by_fkey",
       "sig": ""
     },
@@ -3623,6 +3631,10 @@
     },
     {
       "key": "index:only-dev:league_season_notices_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_season_notices_send_idx",
       "sig": ""
     },
     {

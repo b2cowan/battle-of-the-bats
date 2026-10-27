@@ -130,8 +130,8 @@ season_id (uuid) → league_seasons.id NOT NULL, org_id (uuid) → organizations
 - Indexes: league_season_fee_words_category_idx, league_season_fee_words_item_uniq, league_season_fee_words_org_idx
 
 ### league_season_notices
-id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, kind NOT NULL, family_count (integer), reached_count (integer), failed_count (integer), created_by (uuid), created_at
-- Indexes: league_season_notices_division_idx, league_season_notices_org_idx, league_season_notices_season_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, kind NOT NULL, family_count (integer), reached_count (integer), failed_count (integer), created_by (uuid), created_at, club_schedule_send_id (uuid) → club_schedule_sends.id
+- Indexes: league_season_notices_division_idx, league_season_notices_org_idx, league_season_notices_season_idx, league_season_notices_send_idx
 
 ### league_seasons
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at, owing_amber_days, finished_at
@@ -658,8 +658,8 @@ id (bigint) NOT NULL, actor_user_id (uuid) NOT NULL, searched_at
 id, reading (jsonb), read_at, claimed_at
 
 ### platform_stripe_fees
-id (uuid), org_id (uuid) → organizations.id NOT NULL, online_payment_id (uuid) → online_payments.id NOT NULL, kind NOT NULL, amount (numeric) NOT NULL, livemode (boolean), exempt_reason, stripe_invoice_item_id, billed_at, bill_error, created_at, dispute_id (uuid) → online_payment_disputes.id, amount_source, billed_on, fee_invoice_id (uuid) → platform_fee_invoices.id, bill_attempts (integer)
-- Indexes: platform_stripe_fees_dispute_idx, platform_stripe_fees_invoice_idx, platform_stripe_fees_key, platform_stripe_fees_org_idx, platform_stripe_fees_unbilled_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, online_payment_id (uuid) → online_payments.id NOT NULL, kind NOT NULL, amount (numeric) NOT NULL, livemode (boolean), exempt_reason, stripe_invoice_item_id, billed_at, bill_error, created_at, dispute_id (uuid) → online_payment_disputes.id, amount_source, billed_on, fee_invoice_id (uuid) → platform_fee_invoices.id, bill_attempts (integer), stripe_credit_note_id
+- Indexes: platform_stripe_fees_credit_note_key, platform_stripe_fees_dispute_idx, platform_stripe_fees_invoice_idx, platform_stripe_fees_key, platform_stripe_fees_org_idx, platform_stripe_fees_unbilled_idx
 
 ### platform_user_notes
 id (uuid), user_id (uuid) NOT NULL, body NOT NULL, created_by_email NOT NULL, created_at
@@ -679,9 +679,16 @@ user_id (uuid) NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, event
 
 ## Module: CRM / Leads
 
+### early_access_lead_dismissed_offers
+lead_id (uuid) → early_access_leads.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, dismissed_by NOT NULL, dismissed_at
+
+### early_access_lead_notes
+id (uuid), lead_id (uuid) → early_access_leads.id NOT NULL, body, author_email, from_old_box (boolean), created_at, removed_by, removed_at
+- Indexes: early_access_lead_notes_lead_idx
+
 ### early_access_leads
-id (uuid), created_at, updated_at, last_submitted_at, submission_count (integer), status, name NOT NULL, email NOT NULL, email_normalized NOT NULL, organization_name, role, sports, plan_interest, features_interested, notes, source_path, user_agent, release_notifications_consent (boolean), metadata (jsonb), internal_status, internal_notes, last_contacted_at, last_contacted_by, converted_org_id (uuid) → organizations.id, converted_at, follow_up_due_at, next_action
-- Indexes: early_access_leads_converted_org_id_idx, early_access_leads_email_normalized_key, idx_early_access_leads_converted_at, idx_early_access_leads_created_at, idx_early_access_leads_features_interested, idx_early_access_leads_follow_up_due_at, idx_early_access_leads_internal_status, idx_early_access_leads_plan_interest, idx_early_access_leads_status
+id (uuid), created_at, updated_at, last_submitted_at, submission_count (integer), status, name NOT NULL, email NOT NULL, email_normalized NOT NULL, organization_name, role, sports, plan_interest, features_interested, notes, source_path, user_agent, release_notifications_consent (boolean), metadata (jsonb), internal_status, internal_notes, last_contacted_at, last_contacted_by, converted_org_id (uuid) → organizations.id, converted_at, follow_up_due_at, next_action, source, source_words, lost_reason, link_method, linked_by, linked_at, signed_up_at, step_changed_at, heard_from, ref_tag
+- Indexes: early_access_leads_converted_org_id_idx, early_access_leads_converted_org_idx, early_access_leads_email_normalized_key, early_access_leads_internal_status_idx, idx_early_access_leads_converted_at, idx_early_access_leads_created_at, idx_early_access_leads_features_interested, idx_early_access_leads_follow_up_due_at, idx_early_access_leads_internal_status, idx_early_access_leads_plan_interest, idx_early_access_leads_status
 
 ### email_batches
 id (uuid), email_key NOT NULL, subject NOT NULL, triggered_by NOT NULL, recipient_count (integer), suppressed_count (integer), sent_count (integer), failed_count (integer), status, started_at, completed_at, created_at
@@ -999,7 +1006,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **243 tables** across 10 modules.
+Total: **245 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 16 tables
@@ -1009,5 +1016,5 @@ Total: **243 tables** across 10 modules.
 - Stripe / Billing: 2 tables
 - Organization / Platform Core: 8 tables
 - Platform Admin: 29 tables
-- CRM / Leads: 3 tables
+- CRM / Leads: 5 tables
 - Other: 77 tables
