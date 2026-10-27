@@ -94,6 +94,18 @@ describe('the scheduler rides League Plus and both Club bands, checked on the se
     // The rep teams' Send the changes measures rep practices only; house league's half is its own.
     assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'planChanges'), /teamsOnly\(ids\)/);
   });
+  it('⚖ Stage 11b Part 5: house league\'s half is the plan the owner saw, and its people hear only after the step', () => {
+    const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
+    // The step gets the previewed plan (never a fresh one), and a plan that changed under the window is read again.
+    assert.match(send, /p_league: half\?\.step \?\? null/);
+    assert.match(send, /body\.leagueSeen[\s\S]*half\?\.seen/);
+    // Coaches, families and league admins hear after the one step has landed — never inside its transaction.
+    assert.ok(send.indexOf('club_schedule_apply_changes') < send.indexOf('tellHouseLeague('), 'house league hears after the step');
+    // The families' email is a service notice through the batched sender, never the suppression-dropping audience.
+    const mail = readCode('lib/club-schedule-league-mail.ts');
+    assert.match(mail, /sendFamilyServiceBatch\(/);
+    assert.doesNotMatch(mail, /familyAudience|sendEmail\(/);
+  });
   it('every admin scheduler route passes through the gate', () => {
     for (const f of ['app/api/admin/schedules/route.ts', 'app/api/admin/schedules/generate/route.ts',
       'app/api/admin/schedules/[scheduleId]/route.ts', 'app/api/admin/schedules/[scheduleId]/send/route.ts']) {

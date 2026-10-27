@@ -11,7 +11,8 @@ import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 //      team (its head coaches and staff with schedule access, its slots as a pattern, its bill — or, for changes, what
 //      changes and the money it settles); the teams nobody can be told about, with the reason; anything that blocks the
 //      send, in words; "Last sent … by …". The club's coaches only, never the venue (owner 2026-10-12, walk §300 W7).
-// POST ?orgSlug=  { kind, version, teamIds, replyBy?, billCorrections? } — send to the teams the preview named.
+// POST ?orgSlug=  { kind, version, teamIds, replyBy?, billCorrections?, leagueTeamIds?, leagueSeen? } — send to the teams
+//      the preview named; on Send the changes, `leagueSeen` is the house-league plan the window showed (Stage 11b Part 5).
 //      The server recomputes everything; a send the sender didn't preview (a newer version) is refused; a double press
 //      inside a minute is refused (the claim). 409 `changed` · `just_sent` · a blocker's own code; the database step's
 //      refusals in words (`season_closed`, `year_closed`, `over_line`).
@@ -48,6 +49,9 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     kind: p.kind, scheduleId: p.scheduleId, version: p.version, statement: p.statement, teams: shownTeams, unreachable: p.unreachable,
     blockers: p.blockers, correctionBlocked: p.correctionBlocked, replyBy: p.replyBy, lastSent: p.lastSent,
     handedBack: p.handedBack, recipientCount: p.recipientCount,
+    // Stage 11b Part 5 (h4): the house-league teams' rows, coaches and family counts, their emails, and the plan's
+    // fingerprint the POST returns (no money in any of it).
+    league: p.league,
     // Stage 11d, Ask 8: a loss is settled at the send (credited, or owed back) — never "owed back: its coach asks".
     correction: money && p.correction ? { billed: Object.fromEntries(p.correction.gains), lost: Object.fromEntries(p.correction.losses) } : null,
   });

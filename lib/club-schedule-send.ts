@@ -11,7 +11,7 @@ import { isScheduleBuilder } from './club-schedule-gate';
 import { escapeHtml, sendEmail, wrap, SITE_URL } from './email';
 import { WARM_EMAIL } from './email-envelope-warm';
 import { joinWithAnd } from './utils';
-import { addCalendarDays, isCalendarDate, mondayOfDay, tournamentToday, utcToZonedInputs } from './timezone';
+import { addCalendarDays, isCalendarDate, mondayOfDay, timesInZoneSentence, tournamentToday, utcToZonedInputs } from './timezone';
 import { fiscalYearOf } from './club-fiscal-year';
 import { isClosedYearError, loadFiscalSetting } from './club-fiscal-year-server';
 import { lineAllocated, sumMoney } from './club-money-figures';
@@ -35,7 +35,20 @@ import {
   type ClubTeam, type LoadedSchedule, type SchedulerCtx,
 } from './club-schedule-server';
 import type { NotificationEventType } from './types';
-import { teamsOnly } from './club-schedule-holders';
+import { HOUSE_LEAGUE, teamsOnly } from './club-schedule-holders';
+import { usesOf } from './league-time-server';
+import { coachTeamPath } from './house-league-coach-invites';
+import { formatVenueLocation } from './venue-label';
+import { weekdayOf } from './permit-time';
+import {
+  isEmptyLeagueStep, leagueFingerprint, leagueRows, planLeagueChanges,
+  type LeagueSlot, type LeagueStepArg, type PracticeFace,
+} from './club-schedule-league-plan';
+import {
+  LEAGUE_ADMIN_NOTICE, familyRowLines, leagueCoachEmail, leagueGroupLine, leagueRowLine,
+  type FamilyPart, type LeaguePlace,
+} from './club-schedule-league-words';
+import { familySample, readHouseholds, sendPracticeChangeNotices, type Household } from './club-schedule-league-mail';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -112,6 +125,24 @@ export interface SendPreview {
   handedBack: { teamId: string; teamName: string; lines: string[] }[];
   /** People who'd be emailed. */
   recipientCount: number;
+  /** Stage 11b Part 5 (h4): Send the changes' house-league rows — null when nothing house-league changes. */
+  league: { teams: PreviewLeagueTeam[]; seen: string; familySample: EmailWords | null } | null;
+}
+
+/** A house-league team whose practices the send moves or cancels (h4). */
+export interface PreviewLeagueTeam {
+  teamId: string;
+  teamName: string;
+  seasonId: string;
+  divisionName: string;
+  /** "Sundays from Nov 8: Field 1 → Field 3, 11:00 a.m. → 12:30 p.m." */
+  lines: string[];
+  /** "House league · U9 Rookie · 2 coaches and 11 families". */
+  group: string;
+  coaches: { userId: string | null; name: string | null; email: string }[];
+  families: number;
+  /** The house-league coach's email. */
+  sample: EmailWords;
 }
 
 // ── Who is told ──────────────────────────────────────────────────────────────────────────────────
@@ -153,6 +184,7 @@ interface Context {
   orgName: string;
   orgSlug: string;
   senderId: string;
+  senderEmail: string | null;
   loaded: LoadedSchedule;
   teams: ClubTeam[];
   places: ClubPlaces;
@@ -176,7 +208,8 @@ async function contextFor(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<C
   ]);
   const { slots, assignments, stored } = liveSlots(loaded, prices.weightOf);
   return {
-    orgId, orgName: sctx.ctx.org.name, orgSlug: sctx.ctx.org.slug, senderId: sctx.ctx.user.id, loaded, teams, places, slots, assignments,
+    orgId, orgName: sctx.ctx.org.name, orgSlug: sctx.ctx.org.slug, senderId: sctx.ctx.user.id, senderEmail: sctx.ctx.user.email ?? null,
+    loaded, teams, places, slots, assignments,
     slotIdOf: new Map(stored.map(s => [s.key, s.id])), weightOf: prices.weightOf, fullHour: prices.fullHour,
     venueAddress: new Map(venues.map(v => [v.id, v.address])),
   };
@@ -316,6 +349,157 @@ function planChanges(c: Context, practices: readonly Practice[]): ChangesPlan {
 
 const clockOf = (ms: number) => { const z = utcToZonedInputs(new Date(ms).toISOString()); return { day: z.date, time: z.time }; };
 
+// ── Send the changes: house league's half (Stage 11b Part 5; h4, k5; 9d2·2, 9d2·13, 9d2·16) ─────────
+
+/** The house-league half as the send needs it: the window's rows, the step's `p_league`, and who hears. */
+interface LeagueHalf {
+  teams: PreviewLeagueTeam[];
+  /** The plan's fingerprint (`leagueFingerprint`): the press must find the plan the window showed. */
+  seen: string;
+  step: LeagueStepArg;
+  households: Household[];
+  /** A changed team's part of a family's email, or null for a team the send doesn't change. */
+  partOf: (teamId: string, child: string) => FamilyPart | null;
+  familySample: EmailWords | null;
+  seasons: Map<string, string>;
+  /** Per season, its one division when the changed teams are all of one (the history row names it). */
+  divisionOf: Map<string, string | null>;
+  /** Per season, the practices the plan moves and cancels (the league admins' notice). */
+  counts: Map<string, { moved: number; cancelled: number }>;
+}
+
+/**
+ * Plan house league's half (lib/club-schedule-league-plan.ts) from the schedule as sent — its uses and practices — and
+ * as it is now, and name it: each team's rows, its coaches (never the sender) and its households. Null when no use or
+ * practice sits on the schedule's time; a half with no teams when only a use follows its time (the step still needs it,
+ * or the use would go with its removed slot). Until the send the house-league schedule keeps the old time.
+ */
+async function leagueHalf(c: Context): Promise<LeagueHalf | null> {
+  const slotIds = c.loaded.slots.map(s => s.id);
+  if (!slotIds.length) return null;
+  const [uses, practices] = await Promise.all([
+    usesOf(c.orgId, slotIds),
+    fetchAllIn<{ id: string; team_id: string; season_id: string; division_id: string | null; club_schedule_slot_id: string; scheduled_at: string; ends_at: string | null; status: string }>(slotIds, (ch, a, b) => supabaseAdmin
+      .from('league_practices').select('id, team_id, season_id, division_id, club_schedule_slot_id, scheduled_at, ends_at, status')
+      .eq('org_id', c.orgId).in('club_schedule_slot_id', ch).order('id').range(a, b)),
+  ]);
+  if (!uses.size && !practices.length) return null;
+
+  const slots: LeagueSlot[] = c.loaded.slots.map(s => ({
+    id: s.id, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), venueId: s.venueId, facilityId: s.facilityId,
+    removed: s.removed, houseLeague: s.teamIds.includes(HOUSE_LEAGUE),
+  }));
+  const slotById = new Map(slots.map(s => [s.id, s]));
+  const placeOf = (f: { venueId: string; facilityId: string | null }): LeaguePlace => ({
+    venue: c.places.venueName.get(f.venueId) ?? '', facility: f.facilityId ? c.places.facilityName.get(f.facilityId) ?? null : null,
+  });
+  // The display cache, as Practice time writes it (lib/league-practice-time-server.ts): "venue — facility".
+  const locationOf = (slotId: string) => {
+    const p = placeOf(slotById.get(slotId)!);
+    return p.venue && p.facility ? formatVenueLocation(p.venue, p.facility) : p.facility ?? p.venue;
+  };
+  const nowMs = Date.now();
+  const sent = practices.map(p => ({
+    id: p.id, teamId: p.team_id, seasonId: p.season_id, divisionId: p.division_id, slotId: p.club_schedule_slot_id,
+    startMs: Date.parse(p.scheduled_at), endMs: Date.parse(p.ends_at ?? p.scheduled_at), cancelled: p.status === 'cancelled',
+  }));
+  const plan = planLeagueChanges({
+    slots, practices: sent, nowMs, locationOf,
+    uses: [...uses.values()].map(u => ({ slotId: u.slot_id, seasonId: u.season_id, divisionId: u.division_id, kind: u.kind })),
+    weekOfMs: ms => mondayOfDay(utcToZonedInputs(new Date(ms).toISOString()).date),
+  });
+  if (isEmptyLeagueStep(plan.step)) return null;
+
+  const iso = (ms: number) => new Date(ms).toISOString();
+  const faceOf = (startMs: number, endMs: number, slotId: string): PracticeFace => {
+    const s = slotById.get(slotId)!, z = utcToZonedInputs(iso(startMs));
+    return { day: z.date, weekday: weekdayOf(z.date), startClock: z.time, endClock: utcToZonedInputs(iso(endMs)).time, venueId: s.venueId, facilityId: s.facilityId };
+  };
+  const changed = new Set(plan.changes.map(ch => ch.practiceId));
+  const stays = sent.filter(p => !p.cancelled && p.startMs > nowMs && !changed.has(p.id) && slotById.has(p.slotId))
+    .map(p => ({ teamId: p.teamId, face: faceOf(p.startMs, p.endMs, p.slotId) }));
+  const rows = leagueRows(plan.changes, faceOf, stays);
+  const teamIds = [...new Set(rows.map(r => r.teamId))];
+
+  const [teamRows, coachRows, households] = await Promise.all([
+    fetchAllIn<{ id: string; name: string; season_id: string; division_id: string | null }>(teamIds, (ch, a, b) => supabaseAdmin
+      .from('league_teams').select('id, name, season_id, division_id').in('id', ch).order('id').range(a, b)),
+    fetchAllIn<{ team_id: string; name: string | null; email: string | null; user_id: string | null }>(teamIds, (ch, a, b) => supabaseAdmin
+      .from('league_team_coaches').select('team_id, name, email, user_id').in('team_id', ch).is('removed_at', null).order('created_at').order('id').range(a, b)),
+    readHouseholds(teamIds),
+  ]);
+  const seasonIds = [...new Set(teamRows.map(t => t.season_id))];
+  const divisionIds = [...new Set(teamRows.map(t => t.division_id).filter((d): d is string => !!d))];
+  const [seasonRows, divisionRows] = await Promise.all([
+    fetchAllIn<{ id: string; name: string; slug: string }>(seasonIds, (ch, a, b) => supabaseAdmin
+      .from('league_seasons').select('id, name, slug').eq('org_id', c.orgId).in('id', ch).order('id').range(a, b)),
+    fetchAllIn<{ id: string; name: string }>(divisionIds, (ch, a, b) => supabaseAdmin
+      .from('league_divisions').select('id, name').in('id', ch).order('id').range(a, b)),
+  ]);
+  const teamOf = new Map(teamRows.map(t => [t.id, t]));
+  const seasonOf = new Map(seasonRows.map(s => [s.id, s]));
+  const divisionName = new Map(divisionRows.map(d => [d.id, d.name]));
+  const sender = (c.senderEmail ?? '').trim().toLowerCase();
+  const zone = timesInZoneSentence();
+
+  const linesOf = new Map<string, string[]>(), familyLinesOf = new Map<string, string[]>(), firstDayOf = new Map<string, string>();
+  for (const r of rows) {
+    (linesOf.get(r.teamId) ?? linesOf.set(r.teamId, []).get(r.teamId)!).push(leagueRowLine(r, placeOf));
+    (familyLinesOf.get(r.teamId) ?? familyLinesOf.set(r.teamId, []).get(r.teamId)!).push(...familyRowLines(r, placeOf));
+    const first = firstDayOf.get(r.teamId);
+    if (!first || r.days[0] < first) firstDayOf.set(r.teamId, r.days[0]);
+  }
+  const partOf = (teamId: string, child: string): FamilyPart | null => {
+    const t = teamOf.get(teamId);
+    return t && familyLinesOf.has(teamId) ? { child, team: t.name, lines: familyLinesOf.get(teamId)!, firstDay: firstDayOf.get(teamId)! } : null;
+  };
+
+  const teams: PreviewLeagueTeam[] = [];
+  for (const teamId of teamIds) {
+    const t = teamOf.get(teamId);
+    const season = t ? seasonOf.get(t.season_id) : undefined;
+    if (!t || !season) continue;
+    // One row per coach address, never the sender's own (a sender who also coaches the team is told by sending).
+    const seen = new Set<string>();
+    const coaches = coachRows.filter(x => x.team_id === teamId && x.email?.trim() && x.user_id !== c.senderId).flatMap(x => {
+      const email = x.email!.trim().toLowerCase();
+      if (email === sender || seen.has(email)) return [];
+      seen.add(email);
+      return [{ userId: x.user_id, name: x.name, email }];
+    });
+    const families = households.filter(h => h.children.some(ch => ch.teamId === teamId)).length;
+    const division = t.division_id ? divisionName.get(t.division_id) ?? '' : '';
+    const lines = linesOf.get(teamId) ?? [];
+    teams.push({
+      teamId, teamName: t.name, seasonId: t.season_id, divisionName: division, lines, coaches, families,
+      group: leagueGroupLine(division, coaches.length, families),
+      sample: leagueCoachEmail({
+        orgName: c.orgName, scheduleName: c.loaded.row.name, teamName: t.name, recipientNames: coaches.map(x => x.name),
+        lines, familiesTold: families > 0, link: coachTeamPath(c.orgSlug, season.slug, teamId), zoneSentence: zone,
+      }),
+    });
+  }
+  teams.sort((a, b) => a.divisionName.localeCompare(b.divisionName) || a.teamName.localeCompare(b.teamName));
+
+  const divisionOf = new Map<string, string | null>();
+  for (const s of seasonIds) {
+    const ids = [...new Set(teamRows.filter(t => t.season_id === s).map(t => t.division_id))];
+    divisionOf.set(s, ids.length === 1 ? ids[0] : null);
+  }
+  const counts = new Map<string, { moved: number; cancelled: number }>();
+  for (const ch of plan.changes) {
+    const s = teamOf.get(ch.teamId)?.season_id;
+    if (!s) continue;
+    const n = counts.get(s) ?? counts.set(s, { moved: 0, cancelled: 0 }).get(s)!;
+    if (ch.kind === 'moved') n.moved += 1; else n.cancelled += 1;
+  }
+  return {
+    teams, seen: leagueFingerprint(plan.step), step: plan.step, households, partOf,
+    familySample: familySample(households, partOf, c.orgName, zone),
+    seasons: new Map(seasonRows.map(s => [s.id, s.name])), divisionOf, counts,
+  };
+}
+
 /**
  * ⚖ A HAND-BACK IS NEVER THE CLUB TAKING TIME (Stage 11d, Asks 8 and 9; S11D-03's hidden owed-back). A team's measure
  * at Send the changes adds back the priced minutes of every slot it handed back — a plain hand-back's (the team still
@@ -384,7 +568,7 @@ async function lastSends(orgId: string, scheduleId: string) {
 
 // ── The preview ──────────────────────────────────────────────────────────────────────────────────
 
-export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, kind: SendKind, opts: { replyBy?: string | null } = {}): Promise<SendPreview & { plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> }; lost?: Map<string, LostTime> }> {
+export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, kind: SendKind, opts: { replyBy?: string | null } = {}): Promise<SendPreview & { plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> }; lost?: Map<string, LostTime>; half?: LeagueHalf | null }> {
   const [c, { last, told }] = await Promise.all([contextFor(sctx, loaded), lastSends(sctx.ctx.org.id, loaded.row.id)]);
   const row = loaded.row;
   const blockers: SendPreview['blockers'] = [];
@@ -503,15 +687,21 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
   }
 
   const finalRows = kind === 'final' ? scheduled.flatMap(t => t.season ? c.slots.filter(s => (c.assignments.get(s.key) ?? []).includes(t.id)).map(s => rowFor(c, s, t.id, t.season!.id)) : []) : undefined;
+  // House league's half (Stage 11b Part 5): only a final schedule's changes move its practices.
+  const half = kind === 'changes' && row.state === 'final' ? await leagueHalf(c) : null;
+  const leagueTeams = half?.teams ?? [];
   const changedTeams = plan ? plan.byTeam.size : 0;
   const statement = kind === 'review' ? W.reviewStatement(replyBy)
     : kind === 'final' ? W.finalStatement(c.slots.filter(s => teamsOnly(c.assignments.get(s.key) ?? []).length).length, scheduled.length)
-    : W.changesStatement(changedTeams, handedBack.map(h => h.teamName));
+    : W.changesStatement(changedTeams, handedBack.map(h => h.teamName), leagueTeams.length);
   return {
     kind, scheduleId: row.id, version: row.version, statement, teams, unreachable, blockers, correctionBlocked, replyBy,
     lastSent: last ? { at: last.sent_at, by: nameOf(last.sent_by), kind: last.kind } : null,
-    handedBack, recipientCount: teams.reduce((n, t) => n + t.recipients.length, 0),
-    plan, finalRows, splits, rate, teamValues, correction, lost,
+    handedBack,
+    // People who'd be emailed: the rep teams' coaches, and each house-league team's coaches and households (9d2·2).
+    recipientCount: teams.reduce((n, t) => n + t.recipients.length, 0) + leagueTeams.reduce((n, t) => n + t.coaches.length + t.families, 0),
+    league: half ? { teams: leagueTeams, seen: half.seen, familySample: half.familySample } : null,
+    plan, finalRows, splits, rate, teamValues, correction, lost, half,
   };
 }
 
@@ -532,12 +722,24 @@ const json = (status: number, body: object) => ({ ok: false as const, response: 
  */
 export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, kind: SendKind, body: {
   version?: unknown; teamIds?: unknown; replyBy?: unknown; billCorrections?: unknown;
+  /** Stage 11b Part 5: the house-league teams to email (absent: every one the preview named), and the plan it showed. */
+  leagueTeamIds?: unknown; leagueSeen?: unknown;
 }): Promise<SendResult> {
   const row = loaded.row;
   if (Number(body.version) !== row.version) return json(409, { error: R.changed, code: 'changed', version: row.version });
   if (!Array.isArray(body.teamIds) || !body.teamIds.every(x => typeof x === 'string')) return json(400, { error: R.noTeamsMatch, code: 'teams_required' });
   const preview = await previewSend(sctx, loaded, kind, { replyBy: typeof body.replyBy === 'string' ? body.replyBy : null });
   if (preview.blockers.length) return json(409, { error: preview.blockers[0].error, code: preview.blockers[0].code, blockers: preview.blockers });
+  // ⚖ THE PLAN THE OWNER SAW: a league admin's hand-out moves no schedule version, so the house-league half is compared by
+  // its fingerprint — a plan that changed under the window is read again, never sent unseen.
+  const half = preview.half ?? null;
+  if (kind === 'changes' && (typeof body.leagueSeen === 'string' ? body.leagueSeen : '') !== (half?.seen ?? '')) {
+    return json(409, { error: R.changed, code: 'changed', version: row.version });
+  }
+  const leagueConfirmed = new Set(Array.isArray(body.leagueTeamIds)
+    ? body.leagueTeamIds.filter((x): x is string => typeof x === 'string')
+    : (half?.teams ?? []).map(t => t.teamId));
+  const leagueTeams = (half?.teams ?? []).filter(t => leagueConfirmed.has(t.teamId));
   const billCorrectionsOn = body.billCorrections !== false;
   if (kind === 'changes' && billCorrectionsOn && preview.correctionBlocked) {
     return json(409, { error: preview.correctionBlocked.error, code: preview.correctionBlocked.code, correction: true });
@@ -562,6 +764,7 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
   let allocationId: string | null = null;
   let version = row.version;
   let written: { slotIds: string[]; teamIds: Set<string> | null } = { slotIds: [], teamIds: null };
+  let leagueDone: { moved: number; cancelled: number; uses: number } | null = null;
   // Each step marks the claimed log row landed and writes its money (the next Send the changes' baseline) itself — never
   // after the emails, where a failure left `{}` and the next send billed every team its whole share again (/review).
   if (kind === 'review') {
@@ -611,17 +814,21 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
         today: tournamentToday(),
       },
       p_losses: losses,
+      // House league's half (Stage 11b Part 5): the plan the preview showed; null when nothing house-league changes.
+      p_league: half?.step ?? null,
     });
     if (error && isClosedYearError(error)) { await release(); return json(409, { error: HAND_BACK_WORDS.refuse.yearClosed(null), code: 'year_closed', correction: true }); }
     // The step's own 'changed: …' refusals (a slot gone, a loss's team or season, a team paid since the preview): read the
     // send again — never a raw error (/review 2026-10-13).
     if (error && /changed:/.test(error.message ?? '')) { await release(); return { ok: false, response: stepRefusal({ code: 'changed' }, teamName) }; }
     if (error) { await release(); throw error; }
-    const r = data as { ok: boolean; code?: string; teamId?: string; left?: number; allocationId?: string | null };
+    const r = data as { ok: boolean; code?: string; teamId?: string; left?: number; allocationId?: string | null; league?: { moved: number; cancelled: number; uses: number } };
     if (!r.ok) { await release(); return { ok: false, response: stepRefusal(r, teamName) }; }
     allocationId = r.allocationId ?? null;
     version = row.version + 1;
     written = { slotIds: [...new Set([...plan.inserts.map(x => x.slotId), ...plan.updates.map(x => x.slotId)])], teamIds: new Set(plan.byTeam.keys()) };
+    // What house league's half did, as the step counted it (the plan asked; the step may skip a practice deleted since).
+    if (half && r.league) leagueDone = r.league;
   }
 
   // What it wrote, checked (6a): every writer of a booking's time or place answers with the one clash rule's findings.
@@ -636,15 +843,74 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
   // The bells ("Your club"): every staff member who sees the schedule, whether or not they have an email.
   await tellTeams(sctx, row.name, kind, teams.map(t => t.teamId), preview);
 
+  // House league's half, AFTER the step committed (never inside it): each confirmed team's coaches, its families, and
+  // the league admins (Stage 11b Part 5; 9d2·2, 9d2·13).
+  const league = half && leagueDone ? await tellHouseLeague(sctx, row.name, half, leagueTeams, sendId) : { people: 0, failed: 0, teams: 0 };
+
   // The log, completed with who was actually told (its money landed with the step).
-  const changesLog = kind === 'changes' ? [...(preview.plan?.byTeam ?? new Map())].map(([teamId, list]) => ({ teamId, changes: list.length })) : [];
+  const changesLog = kind === 'changes' ? [
+    ...[...(preview.plan?.byTeam ?? new Map())].map(([teamId, list]) => ({ teamId, changes: list.length })),
+    ...leagueTeams.map(t => ({ leagueTeamId: t.teamId, changes: t.lines.length })),
+  ] : [];
   const { error: logError } = await supabaseAdmin.from('club_schedule_sends').update({
-    team_ids: reached, people_count: sent, failed_count: results.length - sent,
+    team_ids: reached, people_count: sent + league.people, failed_count: results.length - sent + league.failed,
     reply_by: preview.replyBy, changes: changesLog,
   }).eq('id', sendId);
   if (logError) console.error('[club-schedule-send] the send log could not be completed (the send went):', logError);
 
-  return { ok: true, teams: reached.length, people: sent, failed: results.length - sent, allocationId, version, checks };
+  return { ok: true, teams: reached.length + league.teams, people: sent + league.people, failed: results.length - sent + league.failed, allocationId, version, checks };
+}
+
+/**
+ * Who hears of house league's half (Stage 11b Part 5), once the step has landed:
+ *   · each confirmed team's coaches (`league_team_coaches`, not removed, with an address; never the sender) — the h4 email,
+ *     colleague mail, reply-to the sender;
+ *   · its families — one service notice per household per season, with one Automatic row per season on its history;
+ *   · the league admins (9d2·13) — a bell per season, to its house-league schedule. Best-effort, as every club notice.
+ * Dev sends no email: the counts here, the notice rows and the server log say what would have gone.
+ */
+async function tellHouseLeague(sctx: SchedulerCtx, scheduleName: string, half: LeagueHalf, teams: readonly PreviewLeagueTeam[], sendId: string): Promise<{ people: number; failed: number; teams: number }> {
+  const org = sctx.ctx.org;
+  const coachSends = teams.flatMap(t => t.coaches.map(p => ({ teamId: t.teamId, email: p.email, subject: t.sample.subject, html: emailHtml(t.sample) })));
+  const results = await inParallel(coachSends, 5, s => sendEmail(s.email, s.subject, s.html, { kind: 'club_schedule_league_coach', replyTo: sctx.ctx.user.email ?? null }));
+  const coachesSent = results.filter(r => r.status === 'sent').length;
+  const told = new Set(coachSends.filter((s, i) => results[i].status === 'sent').map(s => s.teamId));
+
+  const confirmed = new Set(teams.map(t => t.teamId));
+  const households = half.households.filter(h => h.children.some(c => confirmed.has(c.teamId)));
+  const families = await sendPracticeChangeNotices({
+    org,
+    seasons: half.seasons, divisionOf: half.divisionOf, households,
+    partOf: (teamId, child) => (confirmed.has(teamId) ? half.partOf(teamId, child) : null),
+    zoneSentence: timesInZoneSentence(), actorId: sctx.ctx.user.id, sendId,
+  });
+  if (families.sent) for (const t of teams) if (t.families) told.add(t.teamId);
+
+  try {
+    const { data, error } = await supabaseAdmin.from('organization_members').select('user_id')
+      .eq('organization_id', org.id).eq('status', 'active').eq('role', 'league_admin');
+    if (error) throw error;
+    const userIds = (data ?? []).map(m => m.user_id as string);
+    if (userIds.length) {
+      for (const [seasonId] of half.seasons) {
+        const mine = half.teams.filter(t => t.seasonId === seasonId);
+        if (!mine.length) continue;
+        await notify({
+          orgId: org.id, eventType: 'club_schedule_league_changes', userIds, excludeUserIds: [sctx.ctx.user.id],
+          title: LEAGUE_ADMIN_NOTICE.title(scheduleName),
+          body: LEAGUE_ADMIN_NOTICE.body({ divisions: [...new Set(mine.map(t => t.divisionName).filter(Boolean))], ...(half.counts.get(seasonId) ?? { moved: 0, cancelled: 0 }) }),
+          link: `/${org.slug}/admin/house-league/seasons/${seasonId}/schedule`, metadata: { seasonId, sendId },
+        });
+      }
+    }
+  } catch (e) {
+    console.error('[club-schedule-send] the league admins\' notice failed (the send went):', e);
+  }
+  return {
+    people: coachesSent + families.sent,
+    failed: (results.length - coachesSent) + families.failed,
+    teams: told.size,
+  };
 }
 
 /** The practices a send wrote, checked by the one clash rule (and the permit's answer) in one read — never fatal. */
@@ -670,7 +936,8 @@ export function emailHtml(w: EmailWords): string {
   const lists = w.lists.map(l => `${l.title ? `<p style="margin:0 0 0.35rem;font-weight:700;">${escapeHtml(l.title)}</p>` : ''}<ul style="margin:0 0 0.75rem;padding-left:1.25rem;">${l.items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>`).join('');
   const link = w.link ? `<p style="margin:1rem 0;"><a href="${escapeHtml(`${SITE_URL}${w.link.path}`)}" style="color:${WARM_EMAIL.olive};font-weight:700;">${escapeHtml(w.link.label)}</a></p>` : '';
   const also = w.alsoLink ? `<p style="margin:0 0 1rem;"><a href="${escapeHtml(`${SITE_URL}${w.alsoLink.path}`)}" style="color:${WARM_EMAIL.secondary};">${escapeHtml(w.alsoLink.label)}</a></p>` : '';
-  return wrap(`${p(w.greeting)}${w.paragraphs.map(p).join('')}${lists}${link}${also}${w.outro ? p(w.outro) : ''}`);
+  const foot = w.foot ? `<p style="margin:1rem 0 0;font-size:0.85rem;color:${WARM_EMAIL.secondary};">${escapeHtml(w.foot)}</p>` : '';
+  return wrap(`${p(w.greeting)}${w.paragraphs.map(p).join('')}${lists}${link}${also}${w.outro ? p(w.outro) : ''}${foot}`);
 }
 
 /** The notices: a review, the final schedule (and its bill), the changes — to each team's people who see the schedule. */
@@ -759,5 +1026,13 @@ export async function changesSummary(sctx: SchedulerCtx, loaded: LoadedSchedule)
   const [c, practices] = await Promise.all([contextFor(sctx, loaded), readPractices(orgId, loaded.slots.map(s => s.id))]);
   const plan = planChanges(c, practices);
   const name = teamNamer(c.teams);
-  return { teams: [...plan.byTeam].map(([teamId, list]) => ({ teamId, teamName: name(teamId), lines: list.map(ch => changeLine(ch, clockOf)) })) };
+  // Stage 11b Part 5: house league's practices wait for the send too — without them a change that touches only house
+  // league read "nothing waits to be sent", and its callout had no Send the changes.
+  const half = await leagueHalf(c);
+  return {
+    teams: [
+      ...[...plan.byTeam].map(([teamId, list]) => ({ teamId, teamName: name(teamId), lines: list.map(ch => changeLine(ch, clockOf)) })),
+      ...(half?.teams ?? []).map(t => ({ teamId: t.teamId, teamName: t.teamName, lines: t.lines })),
+    ],
+  };
 }

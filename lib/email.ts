@@ -1308,6 +1308,32 @@ export function leagueTeamMovedHtml(input: {
 }
 
 /**
+ * THE FAMILIES' PRACTICE-CHANGE EMAIL (Club Tier Stage 11b Part 5, ruling 9d2·2): one per household per Send the changes,
+ * one part per child, each Now / Was. A SERVICE notice, as the placement email (`sendFamilyServiceBatch`). No button, by
+ * ruling: families have no page that shows practices. The words are built in lib/club-schedule-league-words.ts
+ * (`familyEmailWords`); `reason` is the season sentence (`seasonEmailReason`).
+ */
+export function leaguePracticesChangedHtml(input: {
+  greeting: string;
+  parts: readonly { title: string | null; items: readonly string[] }[];
+  outro: string | null;
+  foot: string | null;
+  reason: string;
+  face?: FamilyMailFace | null;
+}) {
+  const p = escapeEmailFields(input);
+  // The parts are a list, so each line is escaped here (escapeEmailFields escapes the top-level strings).
+  const parts = input.parts.map(part => `${part.title ? `<p style="margin:0 0 0.35rem;">${escapeEmailHtml(part.title)}</p>` : ''}
+    <ul style="margin:0 0 1rem;padding-left:1.2rem;color:${WARM_EMAIL.ink};">${part.items.map(i => `<li style="margin:0 0 0.25rem;">${escapeEmailHtml(i)}</li>`).join('')}</ul>`).join('');
+  return familyNotice(`
+    <p>${p.greeting}</p>
+    ${parts}
+    ${p.outro ? `<p>${p.outro}</p>` : ''}
+    ${p.foot ? `<p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">${p.foot}</p>` : ''}
+  `, input.face, input.reason);
+}
+
+/**
  * The house-league coach invite (Club Tier 9c, copy §9.3): the club's rep coach invite's pattern (`clubCoachInviteHtml`) —
  * the button, the 7-day foot, "you can safely ignore this email" — for a team page, never the Coaches Portal.
  */

@@ -27,6 +27,7 @@ export const EVENT_ICONS: Record<string, string> = {
   coach_access_requested:            '🔑',
   house_league_registration_new:     '📋',
   house_league_withdraw_request:     '↩️',
+  club_schedule_league_changes:      '🔁',
   chat_message:                      '💬',
   chat_mention:                      '📣',
   tryout_offer_response:             '🤝',

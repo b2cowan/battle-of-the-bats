@@ -139,6 +139,11 @@ const STAYS: Record<string, string> = {
   club_schedule_sends: 'a club schedule’s send log; a Coaches Portal holds none',
   club_schedule_hand_backs: 'a team’s hand-back of a club schedule’s practices, and its ask for money back (Club Tier 11d); a Coaches Portal holds none',
   club_schedule_hand_back_slots: 'the slots a club schedule hand-back reached; a Coaches Portal holds none',
+  // Club Tier Stage 11b (migs 392–393): house league as a holder of the club's time. A Coaches Portal has no club
+  // schedule and no house league, so nothing moves.
+  club_schedule_slot_programs: 'which club schedule slots house league holds (Club Tier 11b); a Coaches Portal holds none',
+  league_slot_uses: 'how a league admin divided house league’s club time (Club Tier 11b); a Coaches Portal has no house league',
+  league_practice_time: 'a house-league division’s Practice time settings (Club Tier 11b); a Coaches Portal has no house league',
   rep_allocation_credits: 'a CLUB’s credit on a team’s bill (Club Tier 11d); a coach’s own org never bills a team, so it has none to move',
   rep_allocation_credit_parts: 'how a club’s credit was applied to a bill’s payments; a coach’s own org has none',
   rep_team_groups: 'the org’s own groups; the club files the team under its groups (the team’s group is cleared)',

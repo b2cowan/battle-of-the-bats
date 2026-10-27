@@ -79,7 +79,8 @@ interface Before { slotId: string; teamIds: string[]; locked: boolean; movedByHa
 
 /** A change line after its team's name: "gains Sun, …", "no longer Sun, …" — a moved line starts with its day, which keeps
  *  its capital ("15U AAA · Sun, Dec 13, …"; it read "sun, Dec 13" — found building Stage 11d part B). */
-const lowerFirst = (s: string) => (s && !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun),/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+// A weekday keeps its capital: "Sun, Jan 10" and house league's "Sundays from Nov 8" (Stage 11b Part 5).
+const lowerFirst = (s: string) => (s && !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 
 export default function SchedulePage() {
   const { currentOrg, loading: orgLoading } = useOrg();

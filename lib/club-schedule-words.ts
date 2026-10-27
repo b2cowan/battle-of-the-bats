@@ -47,8 +47,18 @@ export const SCHEDULE_WORDS = {
     `Sending makes ${pluralize(slots, 'slot')} real bookings: on ${pluralize(teams, 'team')}’ schedules, on the club calendar and in the clash check. Families see their team’s slots on the team’s schedule. Nothing is emailed to a family.`,
   reviewStatement: (replyBy: string | null) =>
     `Each team’s coaches see their slots and their bill${replyBy ? `, and reply by ${formatShortWeekdayDate(replyBy)}` : ''}. Nothing is booked or billed yet. You finalize when you’re ready, whether or not every team has replied.`,
-  changesStatement: (changedTeams: number, handedBack: string[]) =>
-    `The changes reach ${pluralize(changedTeams, 'team')}’ schedules. Only those teams’ coaches are told${handedBack.length ? `; ${joinWithAnd(handedBack)} handed ${handedBack.length === 1 ? 'its slot' : 'their slots'} back ${handedBack.length === 1 ? 'itself' : 'themselves'}` : ''}. Nothing else on the schedule moves.`,
+  // [marketing] Stage 11b Part 5: house-league teams' practices, and their families, join the statement ("Only those teams'
+  // coaches are told" was untrue once families of a house-league team hear too, 9d2·2).
+  changesStatement: (changedTeams: number, handedBack: string[], leagueTeams = 0) => {
+    const reach = [
+      changedTeams || !leagueTeams ? `${possessive(pluralize(changedTeams, 'team'))} schedules` : '',
+      leagueTeams ? `${possessive(pluralize(leagueTeams, 'house-league team'))} practices` : '',
+    ].filter(Boolean);
+    const told = leagueTeams
+      ? `Their coaches are told, and the ${leagueTeams === 1 ? 'house-league team’s' : 'house-league teams’'} families`
+      : 'Only those teams’ coaches are told';
+    return `The changes reach ${joinWithAnd(reach)}. ${told}${handedBack.length ? `; ${joinWithAnd(handedBack)} handed ${handedBack.length === 1 ? 'its slot' : 'their slots'} back ${handedBack.length === 1 ? 'itself' : 'themselves'}` : ''}. Nothing else on the schedule moves.`;
+  },
 } as const;
 
 /** [marketing] Why a send can't go, or a write was refused — one sentence each, the routes' `error`. */
@@ -186,7 +196,7 @@ export function patternLine(p: SlotPattern, place: string, allDays?: readonly st
 }
 
 /** Every date a week apart from `first` to `last` (the run a weekly pattern spans). */
-function weeklyDays(first: string, last: string): string[] {
+export function weeklyDays(first: string, last: string): string[] {
   const out: string[] = [];
   const d = new Date(`${first}T12:00:00Z`);
   for (let i = 0; i < 80; i++) {
@@ -253,6 +263,8 @@ export interface EmailWords {
   /** A second way on, after the first (Families' hand-off: Record it, then Not received — Club Tier Stage 5c). */
   alsoLink?: { label: string; path: string } | null;
   outro: string | null;
+  /** A small last line (the house-league coach's "Times in Eastern time.", Stage 11b Part 5). */
+  foot?: string | null;
 }
 
 const firstNames = (names: readonly (string | null)[]) => {
@@ -733,7 +745,9 @@ export const SCHEDULE_SCREEN_WORDS = {
   takeBackClearTitle: (day: string, start: string) => `Clear ${day} at ${start}?`,
   takeBackPractices: (teams: string[]) =>
     `House league uses this time: the ${joinWithAnd(teams.map(possessive))} practices. Their coaches and families are told when you send the changes.`,
-  takeBackWait: 'Nothing changes until you send the changes.',
+  // k5's foot, settled: "U12's league admins are told then." returns now that Send the changes tells them (Part 5).
+  takeBackWait: (division: string | null) =>
+    `Nothing changes until you send the changes.${division ? ` ${possessive(division)} league admins are told then.` : ''}`,
   giveItTo: (to: string) => `Give it to ${to}`,
   lockSlot: 'Lock this slot',
   unlockSlot: 'Unlock this slot',
@@ -824,6 +838,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   emailHint: 'Each team’s coaches get one email listing that team’s slots; a reply comes to you.',
   reviewHint: 'Each team’s coaches get one email with their slots and their bill; a reply comes to you.',
   changesHint: 'Each team’s coaches get one email listing what changed for that team; a reply comes to you.',
+  // Stage 11b Part 5 (h4, settled): the sentence changesHint gains when house league is in the send.
+  changesHintLeague: 'A house-league team’s families get one email too. House league’s game changes go out from the season.',
   lastSent: (day: string, by: string | null) => `Last sent ${day}${by ? ` by ${by}` : ''}.`,
   notSentYet: 'Not sent yet.',
   seeEmail: (who: string) => `See ${possessive(who)} email`,

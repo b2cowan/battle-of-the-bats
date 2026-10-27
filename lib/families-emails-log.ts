@@ -3,6 +3,8 @@ import { supabaseAdmin } from './supabase-admin';
 import { getLeagueEmailLog, resolvePersonNamer } from './db';
 import { personDisplayName } from './families-read';
 import { CLUB_EMAIL_STOPPED_AFTER_MS, SEASON_EMAIL_WORDS as SW, familiesNamed } from './families-words';
+import { PRACTICES_CHANGED_NOTICE } from './club-schedule-league-words';
+import { pluralize } from './utils';
 
 /**
  * THE EMAILS TAB (Club Tier Stage 7c — Ask 7 A, drawing 5): every email the club sent from Families, newest first. Two
@@ -44,6 +46,8 @@ export interface EmailLogRow {
   counts: { families: number; reached: number; optedOut: number; failed: number; coaches: number } | null;
   /** An old row's "11 sent · 2 didn't go" (counted per child). */
   oldReached?: string;
+  /** A notice's own kind: Publish teams (9c), or a practice change the club's Send the changes made (Stage 11b Part 5). */
+  noticeKind?: 'teams_published' | 'practices_changed';
   state: 'sending' | 'stopped' | 'done';
 }
 
@@ -228,9 +232,13 @@ export async function readSeasonHistory(orgId: string, seasonId: string): Promis
     })),
     ...(notices.data ?? []).map((n): EmailLogRow => {
       const division = n.division_id ? divisionOf.get(n.division_id) ?? null : null;
+      const practices = n.kind === 'practices_changed';
       return {
-        key: `notice:${n.id}`, kind: 'notice', id: n.id, sentAt: n.created_at, subject: SW.teamsPublished(division), seasonId,
-        to: division ?? SW.everyone, by: nameOf(n.created_by), state: 'done',
+        key: `notice:${n.id}`, kind: 'notice', id: n.id, sentAt: n.created_at, seasonId,
+        subject: practices ? PRACTICES_CHANGED_NOTICE.subject(division) : SW.teamsPublished(division),
+        noticeKind: practices ? 'practices_changed' : 'teams_published',
+        // A practice change reaches the families of the teams it touched, never the whole season.
+        to: division ?? (practices ? pluralize(n.family_count, 'family', 'families') : SW.everyone), by: nameOf(n.created_by), state: 'done',
         counts: { families: n.family_count, reached: n.reached_count, optedOut: 0, failed: n.failed_count, coaches: 0 },
       };
     }),

@@ -149,7 +149,7 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
           </>
         )}>
         <p>{W.takeBackPractices(slot.houseLeague!.practiceTeams)}</p>
-        <p className={sch.quiet}>{W.takeBackWait}</p>
+        <p className={sch.quiet}>{W.takeBackWait(slot.houseLeague!.division)}</p>
       </KitDialog>
     );
   }

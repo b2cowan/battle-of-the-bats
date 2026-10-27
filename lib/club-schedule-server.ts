@@ -432,7 +432,7 @@ export interface SlotView {
   clash: boolean;
   /** A slot House league holds (Stage 11b): how its league admins used it ("U12 games", "U12 practice time" — null: Not
    *  given yet), and the teams with a practice on it still to come (k5 names them before the club takes it back). */
-  houseLeague?: { use: string | null; practiceTeams: string[] } | null;
+  houseLeague?: { use: string | null; division: string | null; practiceTeams: string[] } | null;
 }
 
 export interface BillView {
@@ -563,8 +563,8 @@ export interface ScheduleAsk {
 
 /** House league's slots as the club's schedule reads them (Stage 11b): each one's use ("U12 games"), and the teams with a
  *  live practice on it still to come. The club never divides house league's time; it only reads how it was divided. */
-async function houseLeagueSlots(orgId: string, slotIds: readonly string[]): Promise<Map<string, { use: string | null; practiceTeams: string[] }>> {
-  const out = new Map<string, { use: string | null; practiceTeams: string[] }>();
+async function houseLeagueSlots(orgId: string, slotIds: readonly string[]): Promise<Map<string, { use: string | null; division: string | null; practiceTeams: string[] }>> {
+  const out = new Map<string, { use: string | null; division: string | null; practiceTeams: string[] }>();
   if (!slotIds.length) return out;
   const now = new Date().toISOString();
   const [uses, practices] = await Promise.all([
@@ -574,8 +574,12 @@ async function houseLeagueSlots(orgId: string, slotIds: readonly string[]): Prom
       .from('league_practices').select('club_schedule_slot_id, league_teams ( name )').eq('org_id', orgId).in('club_schedule_slot_id', c)
       .eq('status', 'scheduled').gt('scheduled_at', now).order('id').range(a, b)),
   ]);
-  for (const id of slotIds) out.set(id, { use: null, practiceTeams: [] });
-  for (const u of uses) out.get(u.slot_id)!.use = u.league_divisions ? houseLeagueUse(u.league_divisions.name, u.kind) : null;
+  for (const id of slotIds) out.set(id, { use: null, division: null, practiceTeams: [] });
+  for (const u of uses) {
+    const slot = out.get(u.slot_id)!;
+    slot.use = u.league_divisions ? houseLeagueUse(u.league_divisions.name, u.kind) : null;
+    slot.division = u.league_divisions?.name ?? null;
+  }
   for (const p of practices) if (p.league_teams) out.get(p.club_schedule_slot_id)!.practiceTeams.push(p.league_teams.name);
   for (const v of out.values()) v.practiceTeams = [...new Set(v.practiceTeams)].sort((x, y) => x.localeCompare(y, 'en-CA', { numeric: true }));
   return out;
@@ -644,7 +648,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
         handedBack: s.handedBack ? { at: s.handedBack.at, teamId: s.handedBack.teamId } : null,
         heldBy: h ? { ownerName: h.ownerName, kind: h.kind ?? null } : null,
         clash: !!h && s.teamIds.length > 0,
-        houseLeague: s.teamIds.some(isProgramHolder) ? houseLeagueOf.get(s.id) ?? { use: null, practiceTeams: [] } : null,
+        houseLeague: s.teamIds.some(isProgramHolder) ? houseLeagueOf.get(s.id) ?? { use: null, division: null, practiceTeams: [] } : null,
       };
     }),
     fairness: {

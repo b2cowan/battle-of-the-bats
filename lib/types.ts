@@ -3375,6 +3375,9 @@ export type NotificationEventType =
   | 'house_league_registration_new'
   // A family asked to withdraw a child (Club Tier 9b-2, the status page): a Needs-attention kind, clears when it ends.
   | 'house_league_withdraw_request'
+  // The club's Send the changes moved or cancelled house-league practices (Club Tier 11b Part 5, ruling 9d2·13): the league
+  // admins are told in the bell. A 'know' kind; TS-union change only (no DB CHECK on event_type).
+  | 'club_schedule_league_changes'
   // Coach Chat (Project 1 — Tournament Chat). These default push ON (the chat-app model).
   | 'chat_message'
   // A targeted @mention — a DISTINCT, higher-priority event so it still reaches a coach who has muted

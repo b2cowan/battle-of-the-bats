@@ -13,7 +13,8 @@
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { FAMILY_EMAILS_TAB_WORDS as W, SEASON_EMAIL_WORDS as SW } from '@/lib/families-words';
+import { CLUB_EMAIL_CAP, FAMILY_EMAILS_TAB_WORDS as W, SEASON_EMAIL_WORDS as SW } from '@/lib/families-words';
+import { PRACTICES_CHANGED_NOTICE } from '@/lib/club-schedule-league-words';
 import type { ClubEmailRecord, EmailLogRow } from '@/lib/families-emails-log';
 import LoadingState from '@/components/shared/LoadingState';
 import KitDialog, { DialogCancel } from '../KitDialog';
@@ -215,6 +216,9 @@ export function EmailRecord({ row, eyebrow, detailUrl, resend, teamsHref, onClos
             : <p className={fam.emailBody}>{body}</p>}
           <p className={ck.hint}>{r.state === 'stopped' && detail ? SW.stoppedNote(detail.missed) : W.reachedNote}</p>
         </>
+      ) : r.kind === 'notice' && r.noticeKind === 'practices_changed' ? (
+        // The club's Send the changes (Stage 11b Part 5): no Teams door — the teams didn't change, their practices did.
+        <p className={`${ck.hint} ${fam.readAfter}`}>{PRACTICES_CHANGED_NOTICE.body(CLUB_EMAIL_CAP)}</p>
       ) : r.kind === 'notice' ? (
         <p className={`${ck.hint} ${fam.readAfter}`}>
           {SW.automaticBody(r.to === SW.everyone ? null : r.to)}

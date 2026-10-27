@@ -55,6 +55,11 @@ interface Preview {
   handedBack: { teamId: string; teamName: string; lines: string[] }[];
   recipientCount: number;
   correction: { billed: Record<string, number>; lost: Record<string, number> } | null;
+  /** Stage 11b Part 5 (h4): the house-league teams whose practices move or are cancelled, and the plan the POST returns. */
+  league: {
+    teams: { teamId: string; teamName: string; lines: string[]; group: string; coaches: { userId: string | null; name: string | null; email: string }[]; families: number; sample: EmailWords }[];
+    seen: string;
+  } | null;
 }
 
 
@@ -96,7 +101,11 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
   const shown = preview && preview.kind === kind ? preview : null;
   const teams = shown?.teams ?? [];
   const ticked = teams.filter(t => !unticked.has(t.teamId));
-  const people = ticked.reduce((n, t) => n + t.recipients.length, 0);
+  // A house-league team's row reaches its coaches and its households (9d2·2); unticked, neither is emailed (its practices
+  // still move — the send is the schedule's, the email is the row's).
+  const league = shown?.league?.teams ?? [];
+  const leagueTicked = league.filter(t => !unticked.has(t.teamId));
+  const people = ticked.reduce((n, t) => n + t.recipients.length, 0) + leagueTicked.reduce((n, t) => n + t.coaches.length + t.families, 0);
   const oneWeekday = oneWeekdayOf(view.slots);
   // A one-weekday schedule counts each team's DAYS ("25 Sundays" — a team can hold two slots a Sunday).
   const daysOf = useMemo(() => {
@@ -104,7 +113,11 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
     for (const x of view.slots) for (const t of x.teamIds) (out.get(t) ?? out.set(t, new Set()).get(t)!).add(x.day);
     return out;
   }, [view.slots]);
-  const sample = teams[0] ?? null;
+  // With no rep team in the send, the sample is the first house-league coach's email.
+  const sample: PreviewTeam | null = teams[0] ?? (league[0] ? {
+    teamId: league[0].teamId, teamName: league[0].teamName, slots: 0, lines: league[0].lines, bill: null, billedCents: null, lost: null,
+    recipients: league[0].coaches.map(c => ({ userId: c.userId ?? '', name: c.name, email: c.email, isHeadCoach: false })), sample: league[0].sample,
+  } : null);
   const sampleName = sample ? (sample.recipients.find(r => r.isHeadCoach)?.name ?? sample.recipients[0]?.name ?? sample.teamName) : null;
   const blocked = (shown?.blockers.length ?? 0) > 0 || (kind === 'changes' && corrections && !!shown?.correctionBlocked);
 
@@ -115,6 +128,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
       const r = await moneyFetch<{ teams: number; people: number; failed: number; version: number; checks: { clashes: number } }>(url, jsonInit('POST', {
         kind, version: view.schedule.version, teamIds: ticked.map(t => t.teamId), replyBy: kind === 'review' ? replyBy : null,
         billCorrections: kind === 'changes' ? corrections : undefined,
+        ...(kind === 'changes' ? { leagueTeamIds: leagueTicked.map(t => t.teamId), leagueSeen: shown.league?.seen ?? '' } : {}),
       }));
       if (!r.ok) { if (isStale(r.data)) onStale?.(); setError(refusalText(r.data, R.notSaved)); void load(); setBusy(false); return; }
       const text = [W.sentNotice(r.data.people, r.data.teams, r.data.failed), r.data.checks.clashes ? W.sentClash(r.data.checks.clashes) : ''].filter(Boolean).join(' ');
@@ -188,7 +202,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
               {shown.blockers.map(b => <span key={b.code + b.error} className={repKit.calloutSub}>{b.error}</span>)}
             </Callout>
           )}
-          {teams.length > 0 && (
+          {(teams.length > 0 || league.length > 0) && (
             <>
               <p className={repKit.factsLabel}>{head}</p>
               <SendRows>
@@ -208,6 +222,16 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
             <Callout tone="warn" role="note" icon={<AlertTriangle size={16} aria-hidden />}>
               <b>{W.nobodyHead(shown.unreachable.length)}</b>
               {shown.unreachable.map(u => <span key={u.teamId} className={repKit.calloutSub}>{u.sentence}</span>)}
+                {/* h4: "Reds · Sundays from Nov 8: Field 1 → Field 3, …" over "House league · U9 Rookie · 2 coaches and 11 families". */}
+                {league.map(t => (
+                  <SendRow key={t.teamId}
+                    title={<><b>{t.teamName}</b> · {t.lines.join('; ')}</>}
+                    sub={t.group}
+                    pick={{
+                      checked: !unticked.has(t.teamId),
+                      onChange: checked => setUnticked(u => { const n = new Set(u); if (checked) n.delete(t.teamId); else n.add(t.teamId); return n; }),
+                    }} />
+                ))}
             </Callout>
           )}
           {kind === 'changes' && shown.correction && (Object.keys(shown.correction.billed).length > 0 || Object.keys(shown.correction.lost).length > 0) && (
@@ -229,6 +253,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
               <EmailWordsSample w={sample.sample} />
             </SendSample>
           )}
+            {league.length > 0 && <>{W.changesHintLeague}{' '}</>}
         </>
       )}
     </KitDialog>

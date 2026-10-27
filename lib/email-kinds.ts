@@ -72,6 +72,8 @@ export const EMAIL_KINDS = {
   practice_plan_staff:                  { klass: 'team', label: 'Practice plan' },
   club_money_reminder_coach:            { klass: 'team', label: 'Club money reminder' },
   club_schedule_coach:                  { klass: 'team', label: 'Club schedule' },
+  // 11b Part 5: Send the changes tells a house-league team's coaches when the club moved or cancelled its practices.
+  club_schedule_league_coach:           { klass: 'team', label: 'Club schedule, house league' },
   club_guardian_email_ask:              { klass: 'team', label: 'Guardian email request' },
   family_email_coach_copy:              { klass: 'team', label: 'Copy of a family email' },
   club_payment_handoff_coach:           { klass: 'team', label: 'Club payment hand-off' },
@@ -87,6 +89,7 @@ export const EMAIL_KINDS = {
   family_message:                       { klass: 'family', label: 'Message to a family' },
   family_club_email:                    { klass: 'family', label: 'Club email to families' },
   house_league_placement:               { klass: 'family', label: 'House league placement' },
+  house_league_practice_change:         { klass: 'family', label: 'House league practice change' },
   basic_coach_announcement:             { klass: 'family', label: 'Coach announcement' },
   dues_reminder:                        { klass: 'family', label: 'Dues reminder' },
   league_payment_receipt:               { klass: 'family', label: 'League payment receipt' },
