@@ -38,6 +38,7 @@ import type { NotificationEventType } from './types';
 import { HOUSE_LEAGUE, teamsOnly } from './club-schedule-holders';
 import { usesOf } from './league-time-server';
 import { coachTeamPath } from './house-league-coach-invites';
+import { LEAGUE_RUNNER_ROLES } from './house-league-access';
 import { formatVenueLocation } from './venue-label';
 import { weekdayOf } from './permit-time';
 import {
@@ -881,7 +882,8 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
  *   · each confirmed team's coaches (`league_team_coaches`, not removed, with an address; never the sender) — the h4 email,
  *     colleague mail, reply-to the sender;
  *   · its families — one service notice per household per season, with one Automatic row per season on its history;
- *   · the league admins (9d2·13) — a bell per season, to its house-league schedule. Best-effort, as every club notice.
+ *   · whoever runs house league — league admins (9d2·13), owners and admins (owner 2026-10-27) — a bell per season, to
+ *     its house-league schedule. Best-effort, as every club notice.
  * Dev sends no email: the counts here, the notice rows and the server log say what would have gone.
  */
 async function tellHouseLeague(sctx: SchedulerCtx, scheduleName: string, half: LeagueHalf, teams: readonly PreviewLeagueTeam[], sendId: string): Promise<{ people: number; failed: number; teams: number }> {
@@ -902,8 +904,10 @@ async function tellHouseLeague(sctx: SchedulerCtx, scheduleName: string, half: L
   if (families.sent) for (const t of teams) if (t.families) told.add(t.teamId);
 
   try {
+    // Everyone who runs house league — owners and admins as well as league admins (owner 2026-10-27: a club whose owner
+    // runs house league with no league admin is told too); never the sender (`excludeUserIds`).
     const { data, error } = await supabaseAdmin.from('organization_members').select('user_id')
-      .eq('organization_id', org.id).eq('status', 'active').eq('role', 'league_admin');
+      .eq('organization_id', org.id).eq('status', 'active').in('role', [...LEAGUE_RUNNER_ROLES]);
     if (error) throw error;
     const userIds = (data ?? []).map(m => m.user_id as string);
     if (userIds.length) {

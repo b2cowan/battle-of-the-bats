@@ -42,7 +42,7 @@ import type { LeagueSeasonStatus, OrgRole } from './types';
  */
 
 /** The roles that run the league: they edit its seasons, divisions, teams and schedule. Q17: club admin = league admin. */
-const LEAGUE_RUNNER_ROLES: readonly OrgRole[] = ['owner', 'admin', 'league_admin'];
+export const LEAGUE_RUNNER_ROLES: readonly OrgRole[] = ['owner', 'admin', 'league_admin'];
 /** The roles that work its registrations, fees and family email: the runners plus the registrar. */
 const LEAGUE_DESK_ROLES: readonly OrgRole[] = [...LEAGUE_RUNNER_ROLES, 'league_registrar'];
 
