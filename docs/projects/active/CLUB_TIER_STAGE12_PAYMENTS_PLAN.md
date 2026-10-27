@@ -196,6 +196,22 @@
   list is the owner's 37). Derived words owed to `/marketing`: the inquiry's tap tip, the siblings' email act/button.
   Deferred to `/dba` (migrations) and the rest: `CLUB_TIER_STAGE12D1_PART4_PROMPT.md` "What Part 3 learned". Layout
   check skipped (UAT fixture, as Part 2).
+  **Part 4 (every club pays its Stripe fees) committed `296ca4014` (billing, screens, help, Facts doc) and `378dc1fb0`
+  (the daily job, its own commit) 2026-10-27, no schema change beyond mig 395 (a pg_cron schedule).** Builder's calls for
+  the walk: a returned debit keeps the published CA$5, a reversed one is billed at Stripe's own figure (ruling 5); the
+  foreign-card extra is +0.8% from `FOREIGN_CARD_EXTRA_BPS` (Facts doc), recorded once Stripe says paid (recorded or not);
+  the club's own invoice is due in 30 days (ours, not Stripe's); a month whose credits cover its fees sends nothing; the
+  fees list shows on Plan & billing for every plan (absent until a fee exists); the platform panel's Retry is
+  `club_billing` and is a work tool on the audit-reason list; the two new emails are unlogged (`team` class, as Part 3's);
+  the bulk "Email families who owe" leaves out a whole family when any owing child's card dispute was lost (a single send
+  stays the desk's choice). **Mig 395 is written, NOT applied** (watched automation: the owner's yes for dev is asked).
+  **Owner asks from Part 4:** (1) apply 395 on dev; (2) a cancelled club reading its fee list needs a billing-rail
+  exemption (today it is emailed the invoice and its Pay button, and the list is absent while cancelled); (3) the
+  returned-debit CA$5 is billed from the constant though the sandbox showed Stripe charging nobody for a failed debit —
+  under ruling 5 it would stop until Stripe confirms; (4) `hello@fieldlogichq.ca` as `{supportEmail}` on the invoice.
+  Derived words owed to `/marketing`: the Plan & billing list (`STRIPE_FEE_WORDS.list*`, `billed*`), `paLegacy`,
+  `paFromRate`. Not done in Part 4, handed on: the `/dba` migration for Part 3's deferred SQL items and `/review` on the
+  whole of 12d-1 (`CLUB_TIER_STAGE12D1_PART4B_PROMPT.md`).
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
