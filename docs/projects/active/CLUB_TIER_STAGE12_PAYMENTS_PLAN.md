@@ -212,6 +212,29 @@
   Derived words owed to `/marketing`: the Plan & billing list (`STRIPE_FEE_WORDS.list*`, `billed*`), `paLegacy`,
   `paFromRate`. Not done in Part 4, handed on: the `/dba` migration for Part 3's deferred SQL items and `/review` on the
   whole of 12d-1 (`CLUB_TIER_STAGE12D1_PART4B_PROMPT.md`).
+  **Part 4b committed `50e66927c` (mig 396, dev applied; prod pending in MANUAL_PROD_STEPS) and `a5da8b0e4` (the /review)
+  2026-10-27.** Of the five deferred items: open dispute statuses are ordered (a slow `needs_response` after
+  `under_review` is stale); `online_payment_over_left` shares the team's surplus across its extras (kept first, then newest
+  landed, each capped by what of its own payment is still received); a card dispute lost before its payment landed is
+  booked at the landing (fresh or replayed, both flows; a failure there is logged and the daily job's `lost_disputes`
+  step sweeps payments landed in the last week). **Not built, from the code:** "a refused returned line rolls back the
+  dispute write" cannot happen — `club_league_money('reverse')` (mig 387) refuses only a non-positive amount or a missing
+  date, and books past what is still received by design; and a `warning_closed` inquiry is final (Stripe, How disputes
+  work → Inquiries: "open for 120 days without escalation… the card network won't escalate it"), so mig 391 was right.
+  A payment the desk records BY HAND after a lost dispute is not linked to it and stays the desk's. Dev checks T4c, T6b,
+  T15 added to `scripts/online-payments-12d1-check.sql`; 12c and 12d-1 checks pass on dev.
+  **/review of 12d-1** (four lenses on Part 4 + 4b; Parts 1–3 had their own): fixed — the club's own invoice stamped fees
+  billed as each line went on, so a run that stopped before the finalize or email stranded it for good (High); a failed
+  invoice email was never resent nor reminded; a non-CAD or deleted subscription failed a fee for good; subscription
+  lines and a stored-late draft are read back past Stripe's 24-hour key; the notifications guard (red since `717f6811b`).
+  Refuted: a dispute fee billed when the club's balance paid it. **Recorded, not fixed (Low/advisory):** a fee put on a
+  subscription that is then cancelled or discounted before its invoice stays pending and is never invoiced (our own
+  invoices exclude pending items); a credits-only month's credit waits for a later fee that may never come, while the
+  list says "next 1st"; a small fee invoice may sit under Stripe's minimum card charge; the panel's Retry records no staff
+  reason (Part 4's call); Payouts tells a non-owner whether the plan is free; `writeInvoiceState` is not monotonic (the
+  daily re-read heals it); over-left orders a won-back extra by its original landing; two overlapping monthly runs can
+  write a spurious `send_error`. **Migration number:** another session's untracked `396_support_console_leads_pipeline.sql`
+  collides with this 396 and needs renumbering by its owner.
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
