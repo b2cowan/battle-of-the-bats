@@ -23,6 +23,9 @@ import { filesUnder, readCode } from './_source-code.ts';
 
 const LANDING = 'lib/online-payment-landing.ts';
 const WEBHOOKS = ['app/api/payments/connect-webhook/route.ts', 'app/api/payments/connect-account-events/route.ts'];
+/** 12d-1 Part 4: the daily job acts only on money already taken (a dispute's due date, Stripe's fees already charged), so,
+ *  like the webhooks, it keeps running when the switch goes off. It opens no pay page and takes no money. */
+const AFTER_THE_MONEY = ['app/api/platform-admin/stripe-fees-daily/route.ts'];
 const MIG = 'supabase/migrations/358_a_club_takes_payments_online.sql';
 const MIG_12B = 'supabase/migrations/374_a_family_pays_house_league_fees_by_card.sql';
 /** Both landings and the refund functions: only the named landing module calls them. */
@@ -172,7 +175,7 @@ describe('every online-payments door reads the launch switch', () => {
       return /from ['"]@\/lib\/(stripe-connect|online-payment-landing)['"]|from ['"](\.\.\/)+lib\/(stripe-connect|online-payment-landing)['"]/.test(code);
     });
     for (const f of doors) {
-      if (WEBHOOKS.includes(f)) continue;
+      if (WEBHOOKS.includes(f) || AFTER_THE_MONEY.includes(f)) continue;
       assert.match(readCode(f), /onlinePaymentsOn\(/, `${f} opens an online-payments door without reading the switch`);
     }
   });
