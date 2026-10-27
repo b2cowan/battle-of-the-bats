@@ -112,11 +112,11 @@ export function EmailWordsSample({ w }: { w: EmailWords }) {
       ))}
       {w.link && <p><u>{w.link.label}</u></p>}
       {w.outro && <p>{w.outro}</p>}
+      {w.foot && <p><small>{w.foot}</small></p>}
     </>
   );
 }
 
-      {w.foot && <p><small>{w.foot}</small></p>}
 /** The sample email, behind its door ("See the email", "See 15U AAA’s email"). */
 export function SendSample({ summary, children }: { summary: ReactNode; children: ReactNode }) {
   return (

@@ -215,13 +215,6 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
                       onChange: checked => setUnticked(u => { const n = new Set(u); if (checked) n.delete(t.teamId); else n.add(t.teamId); return n; }),
                     }} />
                 ))}
-              </SendRows>
-            </>
-          )}
-          {shown.unreachable.length > 0 && (
-            <Callout tone="warn" role="note" icon={<AlertTriangle size={16} aria-hidden />}>
-              <b>{W.nobodyHead(shown.unreachable.length)}</b>
-              {shown.unreachable.map(u => <span key={u.teamId} className={repKit.calloutSub}>{u.sentence}</span>)}
                 {/* h4: "Reds · Sundays from Nov 8: Field 1 → Field 3, …" over "House league · U9 Rookie · 2 coaches and 11 families". */}
                 {league.map(t => (
                   <SendRow key={t.teamId}
@@ -232,6 +225,13 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
                       onChange: checked => setUnticked(u => { const n = new Set(u); if (checked) n.delete(t.teamId); else n.add(t.teamId); return n; }),
                     }} />
                 ))}
+              </SendRows>
+            </>
+          )}
+          {shown.unreachable.length > 0 && (
+            <Callout tone="warn" role="note" icon={<AlertTriangle size={16} aria-hidden />}>
+              <b>{W.nobodyHead(shown.unreachable.length)}</b>
+              {shown.unreachable.map(u => <span key={u.teamId} className={repKit.calloutSub}>{u.sentence}</span>)}
             </Callout>
           )}
           {kind === 'changes' && shown.correction && (Object.keys(shown.correction.billed).length > 0 || Object.keys(shown.correction.lost).length > 0) && (
@@ -246,6 +246,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
           )}
           <p className={ck.hint}>
             {kind === 'review' ? W.reviewHint : kind === 'changes' ? W.changesHint : W.emailHint}{' '}
+            {league.length > 0 && <>{W.changesHintLeague}{' '}</>}
             {shown.lastSent ? W.lastSent(formatStoredDate(shown.lastSent.at), shown.lastSent.by) : W.notSentYet}
           </p>
           {sample?.sample && (
@@ -253,7 +254,6 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
               <EmailWordsSample w={sample.sample} />
             </SendSample>
           )}
-            {league.length > 0 && <>{W.changesHintLeague}{' '}</>}
         </>
       )}
     </KitDialog>
