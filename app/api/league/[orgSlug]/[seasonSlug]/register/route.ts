@@ -253,7 +253,7 @@ export const POST = withObservability(async (req: Request,
     // 12b: the pay block for the confirmation, while the club takes card payments; null keeps today's words (A6).
     pay: pay?.kind === 'owing' ? pay : null,
     children: results.map(r => ({
-      firstName: r.firstName, lastName: r.lastName, outcome: r.outcome, divisionName: r.divisionName,
+      firstName: r.firstName, lastName: r.lastName, outcome: r.outcome, status: r.status, divisionName: r.divisionName,
       waitlistPosition: r.waitlistPosition, fee: r.fee,
     })),
     // The old single-child reply, kept for any caller that reads it.

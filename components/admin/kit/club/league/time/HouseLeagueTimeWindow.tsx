@@ -152,7 +152,7 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
         labelOfUse={labelOfUse} onStage={setStage} onOpen={use => push({ kind: 'piece', use, stage: {} })} />
     );
     if (canDivide) {
-      footerStart = count ? W.piece.changes(count) : W.nothingSaved;
+      footerStart = <span>{count ? W.piece.changes(count) : W.nothingSaved}</span>;
       footer = <>
         <button type="button" className="btn btn-outline" onClick={up} disabled={busy}>{W.piece.cancel}</button>
         <button type="button" className="btn btn-lime" onClick={() => void savePiece()} disabled={busy || !count}>{W.piece.save}</button>
@@ -194,7 +194,7 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
           {schedulesHref && <Link href={schedulesHref} className="btn btn-lime">{W.giveSome}</Link>}
         </>
       : <button type="button" className="btn btn-lime" onClick={onClose}>{W.done}</button>;
-    footerStart = time && !empty ? W.foot : null;
+    footerStart = time && !empty ? <span>{W.foot}</span> : null;
     body = <>
       {!time && !failed && <LoadingState inline label="Loading house league’s time…" />}
       {empty && (schedulesHref

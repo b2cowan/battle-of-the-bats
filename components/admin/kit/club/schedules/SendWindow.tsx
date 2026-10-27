@@ -32,7 +32,7 @@ import { isStale, oneWeekdayOf, type ScheduleView } from '@/lib/club-schedule-vi
 import type { SendKind } from '@/lib/club-schedule-send';
 import { HAND_BACK_WORDS, type CreditMove } from '@/lib/club-hand-back-words';
 import { Statement } from './ScheduleParts';
-import { EmailWordsSample, SendRow, SendRows, SendSample } from '../SendParts';
+import { EmailWordsSample, MailView, SendDoor, SendRow, SendRows, useSendLevel } from '../SendParts';
 import sch from './Schedules.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import DateInput from '@/components/shared/DateInput';
@@ -144,6 +144,8 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
   const statement = shown?.statement ?? '';
   const cut = statement.indexOf('. ');
   const title = kind === 'changes' ? W.changesTitle : start === 'final' ? W.finalizeTitle : kind === 'review' ? W.reviewTitle : W.sendTitle;
+  const lv = useSendLevel(title);
+  const mail = lv.level === 'email' && sample?.sample ? sample : null;
   const lime = !shown ? W.sendTo(0)
     : kind === 'review' ? W.sendToCoaches(people)
     : kind === 'changes' ? W.sendToPeople(people)
@@ -164,6 +166,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
   return (
     <KitDialog
       kind="form"
+      {...(mail ? lv.dialog : {})}
       eyebrow={view.schedule.name}
       title={title}
       onClose={onClose}
@@ -176,7 +179,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
       )}
     >
       <FormError>{error}</FormError>
-      {start === 'draft' && (
+      {start === 'draft' && !mail && (
         <label className={ck.field} htmlFor="send-kind">
           <span className={ck.label}>{W.sendHow}</span>
           <select id="send-kind" className={ck.select} value={kind} onChange={e => setKind(e.target.value as SendKind)}>
@@ -190,6 +193,10 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
         <p className={repKit.formError}>{W.previewFailed2} <button type="button" className={repKit.inlineLink} onClick={() => void load()}>{W.tryAgain}</button></p>
       ) : !shown ? (
         <LoadingState inline label="Loading the preview…" />
+      ) : mail?.sample ? (
+        <MailView to={mail.recipients.map(r => r.name ?? r.email).join(', ')} subject={mail.sample.subject}>
+          <EmailWordsSample w={mail.sample} />
+        </MailView>
       ) : (
         <>
           <Statement lead={cut > 0 ? statement.slice(0, cut + 1) : statement} rest={cut > 0 ? statement.slice(cut + 2) : undefined} />
@@ -251,11 +258,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
             {league.length > 0 && <>{W.changesHintLeague}{' '}</>}
             {shown.lastSent ? W.lastSent(formatStoredDate(shown.lastSent.at), shown.lastSent.by) : W.notSentYet}
           </p>
-          {sample?.sample && (
-            <SendSample summary={W.seeEmail(sampleName ?? sample.teamName)}>
-              <EmailWordsSample w={sample.sample} />
-            </SendSample>
-          )}
+          {sample?.sample && <SendDoor onOpen={() => lv.open('email')}>{W.seeEmail(sampleName ?? sample.teamName)}</SendDoor>}
         </>
       )}
     </KitDialog>

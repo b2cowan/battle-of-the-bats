@@ -407,9 +407,9 @@ export default function TeamsScreen() {
         <CreateTeamsWindow divisionId={division.id} divisionName={division.name} existing={board.teams.map(t => t.name)} routes={routes}
           onDone={() => { setAct(null); reload(); }} onClose={() => setAct(null)} />
       )}
-      {act?.kind === 'team' && teamFor && (
+      {act?.kind === 'team' && teamFor && rights.run && (
         <TeamWindow team={teamFor} divisionName={division.name} published={published}
-          playerCount={players.filter(p => p.teamId === teamFor.id).length} routes={routes} startEditing={(act.how === 'edit' || act.how === 'coach') && rights.run} blankCoach={act.how === 'coach'} startDeleting={act.how === 'delete' && rights.run}
+          playerCount={players.filter(p => p.teamId === teamFor.id).length} routes={routes} blankCoach={act.how === 'coach'} startDeleting={act.how === 'delete' && rights.run}
           onChanged={reload} onClose={() => setAct(null)} />
       )}
       {act?.kind === 'move' && playerFor && (

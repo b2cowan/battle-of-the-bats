@@ -17,7 +17,7 @@ import { AlertTriangle } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { Callout, RepChip, repKit } from '../RepKit';
-import { SendSample } from '../SendParts';
+import { MailView, SendDoor, useSendLevel } from '../SendParts';
 import { reminderEmailLines, reminderEmailSubject } from '@/lib/club-money-words';
 import { pluralize, possessive } from '@/lib/utils';
 import { FormError, day, daysLateWords, jsonInit, money, moneyFetch, moneyKit, refusalText } from './MoneyKit';
@@ -44,6 +44,7 @@ export default function RemindersWindow({ q, orgName, senderName, team, raised =
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const url = `/api/admin/accounting/reminders?${q}${team ? `&teamId=${encodeURIComponent(team.id)}` : ''}`;
+  const lv = useSendLevel(team ? `Remind ${team.name}` : 'Send reminders');
 
   const load = useCallback(async () => {
     const r = await moneyFetch<ReminderPreview>(url).catch(() => null);
@@ -81,9 +82,12 @@ export default function RemindersWindow({ q, orgName, senderName, team, raised =
   const sampleLines = sample ? reminderEmailLines({ orgName, teamName: sample.teamName, senderName, lines: sample.lines }) : null;
   const sampleName = sample?.recipients.find(r => r.isHeadCoach)?.name ?? sample?.recipients[0]?.name ?? sample?.teamName;
 
+  const showMail = lv.level === 'email' && !!sample && !!sampleLines;
+
   return (
     <KitDialog
       kind="form"
+      {...(showMail ? lv.dialog : {})}
       eyebrow={team ? 'A team’s bill' : 'Allocations'}
       title={team ? `Remind ${team.name}` : 'Send reminders'}
       raised={raised}
@@ -104,6 +108,14 @@ export default function RemindersWindow({ q, orgName, senderName, team, raised =
         <p className={repKit.formError}>The preview didn’t load. <button type="button" className={repKit.inlineLink} onClick={() => void load()}>Try again</button></p>
       ) : !preview ? (
         <LoadingState inline label="Loading the reminders…" />
+      ) : showMail ? (
+        <MailView from={orgName} to={sample!.recipients.map(r => r.name ?? r.email).join(', ')}
+          subject={reminderEmailSubject({ orgName, teamName: sample!.teamName })}>
+          <p>{sampleLines!.intro}</p>
+          <ul>{sampleLines!.items.map(i => <li key={i}>{i}</li>)}</ul>
+          <p>{sampleLines!.total}</p>
+          <p>{sampleLines!.outro}</p>
+        </MailView>
       ) : (
         <>
           <div className={ck.field}>
@@ -144,15 +156,7 @@ export default function RemindersWindow({ q, orgName, senderName, team, raised =
             Each coach gets one email listing what their team owes; a reply comes to you.
             {preview.lastSent ? ` Last sent ${day(preview.lastSent.at)}${preview.lastSent.by ? ` by ${preview.lastSent.by}` : ''}.` : ' None sent yet.'}
           </p>
-          {sample && sampleLines && (
-            <SendSample summary={`See ${possessive(sampleName)} email`}>
-              <p><b>{reminderEmailSubject({ orgName, teamName: sample.teamName })}</b></p>
-              <p>{sampleLines.intro}</p>
-              <ul>{sampleLines.items.map(i => <li key={i}>{i}</li>)}</ul>
-              <p>{sampleLines.total}</p>
-              <p>{sampleLines.outro}</p>
-            </SendSample>
-          )}
+          {sample && sampleLines && <SendDoor onOpen={() => lv.open('email')}>{`See ${possessive(sampleName)} email`}</SendDoor>}
         </>
       )}
     </KitDialog>

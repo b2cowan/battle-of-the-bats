@@ -493,7 +493,7 @@
 .checks svg { flex: 0 0 auto; margin-top: 0.2rem; }
 .checkOk { color: var(--badge-success-ink); }
 .checkWarn { color: var(--badge-warning-ink); }
-.preview { display: flex; flex-direction: column; gap: 0.5rem; }
+.preview { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
 .previewBody { padding: 0.75rem; border-radius: 8px; background: var(--home-paper); font-size: var(--type-support); color: var(--text-primary); }
 .previewBody p { margin: 0 0 0.4rem; }
 .previewBody ul { margin: 0; padding-left: 1.1rem; }

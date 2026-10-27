@@ -1084,9 +1084,12 @@ html[data-user-theme="warm"]:has([data-coach-warm-enabled]) body { background: #
 /* The PAGE scrollbar lives on <html>, outside every warm wrapper, so the --home-* ink its thumb reads (see
    "Scrollbar" below) is not in scope there and fell back to translucent white — white on cream, an invisible
    handle (owner, 2026-10-23, the marketing home). A page that paints the cream gives <html> the same two warm
-   tokens the thumb asks for. Marketing only: the coach and sign-up warm pages follow the user's setting, and
-   their own wrappers already carry the tokens for the scrollers inside them. */
-html:has([data-warm-base="marketing"]) {
+   tokens the thumb asks for. The admin, coach and guest warm pages need it too (owner, 2026-10-26: no handle on
+   a long admin board) — their wrappers carry the tokens for the scrollers INSIDE them, never for <html>'s own.
+   Dark keeps the white fallback, which is visible on its ground. */
+html:has([data-warm-base="marketing"]),
+html[data-user-theme="warm"]:has([data-coach-warm-enabled]),
+html:has([data-guest-kit]) {
   --home-line-strong: rgba(70, 55, 30, 0.20);
   --home-line-rgb: 70, 55, 30;
 }

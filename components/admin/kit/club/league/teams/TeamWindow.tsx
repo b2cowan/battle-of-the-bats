@@ -1,7 +1,9 @@
 'use client';
 /**
- * A TEAM AND ITS COACHES (Club Tier Stage 9c, Part 3; copy §2; rulings 9c·1, 9c·10). The record reads first and edits
- * whole (pencil ↔ ✓): the name, the colour and the coaches, each a name and an email. Before the division is published a
+ * A TEAM AND ITS COACHES (Club Tier Stage 9c, Part 3; copy §2; rulings 9c·1, 9c·10). The window IS the form (owner
+ * 2026-10-26: the read-only view is retired — the Teams page is the read view, and a card's pencil is the only door, so
+ * only someone who can edit ever opens it): the name, the colour and the coaches, each a name and an email, saved at ✓,
+ * which closes the window. Before the division is published a
  * coach waits ("Invited when you publish"); after it, adding one or removing one tells somebody, so each is held behind
  * its own question at ✓ (house rule: a change that tells someone is held). An expired invite offers Send again.
  * Create teams is its own small window (copy §2: today's fields and words).
@@ -27,14 +29,12 @@ type Ask =
   | { kind: 'email'; fix: Fix }
   | { kind: 'remove'; id: string; name: string };
 
-export default function TeamWindow({ team, divisionName, published, playerCount, routes, startEditing, blankCoach, startDeleting, onChanged, onClose }: {
+export default function TeamWindow({ team, divisionName, published, playerCount, routes, blankCoach, startDeleting, onChanged, onClose }: {
   team: BoardTeam;
   divisionName: string;
   published: boolean;
   playerCount: number;
   routes: TeamsRoutes;
-  /** Opened from a card's pencil or "No coach yet": straight to the form, with no read-only step first. */
-  startEditing: boolean;
   /** Opened from "No coach yet": an empty coach row is waiting. */
   blankCoach: boolean;
   /** Opened from a card's trash can: straight to the delete question, with no team window behind it. */
@@ -42,11 +42,10 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
   onChanged: () => void;
   onClose: () => void;
 }) {
-  const [editing, setEditing] = useState(startEditing);
   const [name, setName] = useState(team.name);
   const [colour, setColour] = useState<string | null>(team.color);
   const [removed, setRemoved] = useState<ReadonlySet<string>>(new Set());
-  const [adds, setAdds] = useState<NewCoach[]>(startEditing && blankCoach && team.coaches.length === 0 ? [{ key: 1, first: '', last: '', email: '' }] : []);
+  const [adds, setAdds] = useState<NewCoach[]>(blankCoach && team.coaches.length === 0 ? [{ key: 1, first: '', last: '', email: '' }] : []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [edits, setEdits] = useState<Record<string, Fix>>({});
   const [error, setError] = useState<string | null>(null);
@@ -140,7 +139,7 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
     finish();
   }
   function finish() {
-    setRemoved(new Set()); setAdds([]); setEdits({}); setEditing(false); onChanged();
+    setRemoved(new Set()); setAdds([]); setEdits({}); onChanged(); onClose();
   }
 
   async function answer(ask: Ask) {
@@ -214,96 +213,78 @@ export default function TeamWindow({ team, divisionName, published, playerCount,
         onClose={onClose}
         busy={busy}
         size="medium"
-        dirty={editing && dirty}
-        edit={{ editing, label: W.team.editLabel, disabled: busy, onToggle: () => (editing ? void save() : setEditing(true)) }}
+        dirty={dirty}
+        edit={{ editing: true, label: W.team.editLabel, disabled: busy, onToggle: () => void save() }}
       >
-        {!editing ? (
-          <dl className={css.facts}>
-            <dt>{W.team.name}</dt><dd>{team.name}</dd>
-            <dt>{W.team.colour}</dt>
-            <dd>{team.color ? <span className={css.dot} style={{ background: team.color }} aria-label={team.color} role="img" /> : W.team.noColour}</dd>
-            <dt>{W.team.coaches}</dt>
-            <dd>
-              {team.coaches.length === 0 ? <span className={css.amberText}>{W.team.noCoachRead}</span> : (
-                <ul className={css.coachList}>
-                  {team.coaches.map(c => (
-                    <li key={c.id}>
-                      <span className={css.kidName}>{c.name}</span> · {c.email}
-                      <div className={css.kidSub}>{stateLine(c)}</div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </dd>
-          </dl>
-        ) : (
-          <div className={css.form}>
-            <div className={ck.field}>
-              <label className={ck.label} htmlFor="team-name">{W.team.name}</label>
-              <input id="team-name" className={ck.input} value={name} maxLength={80} onChange={e => setName(e.target.value)} />
+        <div className={css.form}>
+          <div className={ck.field}>
+            <label className={ck.label} htmlFor="team-name">{W.team.name}</label>
+            <input id="team-name" className={ck.input} value={name} maxLength={80} onChange={e => setName(e.target.value)} />
+          </div>
+          <div className={ck.field}>
+            <label className={ck.label} htmlFor="team-colour">{W.team.colour}</label>
+            <div className={css.colourRow}>
+              <input id="team-colour" type="color" className={css.colour}
+                value={colour ?? '#000000' /* token-exempt: a colour input's empty value, never drawn */}
+                onChange={e => setColour(e.target.value)} />
+              {colour && <button type="button" className="btn btn-outline" onClick={() => setColour(null)}>{W.team.noColour}</button>}
             </div>
-            <div className={ck.field}>
-              <label className={ck.label} htmlFor="team-colour">{W.team.colour}</label>
-              <div className={css.colourRow}>
-                <input id="team-colour" type="color" className={css.colour}
-                  value={colour ?? '#000000' /* token-exempt: a colour input's empty value, never drawn */}
-                  onChange={e => setColour(e.target.value)} />
-                {colour && <button type="button" className="btn btn-outline" onClick={() => setColour(null)}>{W.team.noColour}</button>}
-              </div>
-            </div>
-            <div className={ck.field}>
-              <span className={ck.label}>{W.team.coaches}</span>
-              {team.coaches.filter(c => !removed.has(c.id)).map(c => {
-                const d = draftOf(c);
-                return (
-                  <div key={c.id} className={css.coachNew}>
-                    <div className={css.coachNewFields}>
-                      <input className={ck.input} aria-label={`${W.team.coachFirst} (${c.name})`} placeholder={W.team.coachFirst} value={d.first} maxLength={120}
-                        onChange={e => setDraft(c, { first: e.target.value })} />
-                      <input className={ck.input} aria-label={`${W.team.coachLast} (${c.name})`} placeholder={W.team.coachLast} value={d.last} maxLength={120}
-                        onChange={e => setDraft(c, { last: e.target.value })} />
-                      {c.state === 'joined'
-                        ? <p className={`${ck.hint} ${css.coachNewEmail}`}>{c.email} · {W.team.joinedEmail}</p>
-                        : (
+          </div>
+          <div className={ck.field}>
+            <span className={ck.label}>{W.team.coaches}</span>
+            {team.coaches.filter(c => !removed.has(c.id)).map(c => {
+              const d = draftOf(c);
+              return (
+                <div key={c.id} className={css.coachNew}>
+                  <div className={css.coachNewFields}>
+                    <input className={ck.input} aria-label={`${W.team.coachFirst} (${c.name})`} placeholder={W.team.coachFirst} value={d.first} maxLength={120}
+                      onChange={e => setDraft(c, { first: e.target.value })} />
+                    <input className={ck.input} aria-label={`${W.team.coachLast} (${c.name})`} placeholder={W.team.coachLast} value={d.last} maxLength={120}
+                      onChange={e => setDraft(c, { last: e.target.value })} />
+                    {c.state === 'joined'
+                      ? <p className={`${ck.hint} ${css.coachNewEmail}`}>{c.email} · {W.team.joinedEmail}</p>
+                      : (
+                        <>
                           <input className={`${ck.input} ${css.coachNewEmail}`} aria-label={`${W.team.coachEmail} (${c.name})`} placeholder={W.team.coachEmail} type="email" value={d.email} maxLength={254}
                             onChange={e => setDraft(c, { email: e.target.value })} />
-                        )}
-                    </div>
-                    <button type="button" className={css.iconBtn} aria-label={W.team.removeCoach(c.name)}
-                      onClick={() => setRemoved(prev => new Set(prev).add(c.id))}><X size={16} aria-hidden /></button>
-                    {errors[c.id] && <p className={css.error} role="alert">{errors[c.id]}</p>}
+                          {/* The invite's state (and Send again) used to live on the read-only view; it reads here now. */}
+                          <div className={`${css.kidSub} ${css.coachNewEmail}`}>{stateLine(c)}</div>
+                        </>
+                      )}
                   </div>
-                );
-              })}
-              {adds.map(a => (
-                <div key={a.key} className={css.coachNew}>
-                  <div className={css.coachNewFields}>
-                    <input className={ck.input} aria-label={W.team.coachFirst} placeholder={W.team.coachFirst} value={a.first} maxLength={120}
-                      onChange={e => setAdds(list => list.map(x => (x.key === a.key ? { ...x, first: e.target.value } : x)))} />
-                    <input className={ck.input} aria-label={W.team.coachLast} placeholder={W.team.coachLast} value={a.last} maxLength={120}
-                      onChange={e => setAdds(list => list.map(x => (x.key === a.key ? { ...x, last: e.target.value } : x)))} />
-                    <input className={`${ck.input} ${css.coachNewEmail}`} aria-label={W.team.coachEmail} placeholder={W.team.coachEmail} type="email" value={a.email} maxLength={254}
-                      onChange={e => setAdds(list => list.map(x => (x.key === a.key ? { ...x, email: e.target.value } : x)))} />
-                  </div>
-                  <button type="button" className={css.iconBtn} aria-label={W.team.removeCoach(coachName(a) || W.team.coach)}
-                    onClick={() => setAdds(list => list.filter(x => x.key !== a.key))}><X size={16} aria-hidden /></button>
-                  {errors[a.key] && <p className={css.error} role="alert">{errors[a.key]}</p>}
+                  <button type="button" className={css.iconBtn} aria-label={W.team.removeCoach(c.name)}
+                    onClick={() => setRemoved(prev => new Set(prev).add(c.id))}><X size={16} aria-hidden /></button>
+                  {errors[c.id] && <p className={css.error} role="alert">{errors[c.id]}</p>}
                 </div>
-              ))}
-              <button type="button" className={css.addLink} onClick={() => setAdds(list => [...list, { key: Date.now(), first: '', last: '', email: '' }])}>
-                <Plus size={14} aria-hidden />{hasCoach ? W.team.addAnotherCoach : W.team.addCoach}
-              </button>
-              {firstNew && <p className={ck.hint}>{published ? W.team.hintAfter(firstNew.first.trim()) : W.team.hintBefore(firstNew.first.trim(), divisionName)}</p>}
-            </div>
-            {error && <p className={css.error} role="alert">{error}</p>}
-            {!published && playerCount === 0 && (
-              <div className={css.rareDoor}>
-                <button type="button" className={css.inlineLink} onClick={() => setDeleting(true)}>{W.team.deleteTeam}</button>
+              );
+            })}
+            {adds.map(a => (
+              <div key={a.key} className={css.coachNew}>
+                <div className={css.coachNewFields}>
+                  <input className={ck.input} aria-label={W.team.coachFirst} placeholder={W.team.coachFirst} value={a.first} maxLength={120}
+                    onChange={e => setAdds(list => list.map(x => (x.key === a.key ? { ...x, first: e.target.value } : x)))} />
+                  <input className={ck.input} aria-label={W.team.coachLast} placeholder={W.team.coachLast} value={a.last} maxLength={120}
+                    onChange={e => setAdds(list => list.map(x => (x.key === a.key ? { ...x, last: e.target.value } : x)))} />
+                  <input className={`${ck.input} ${css.coachNewEmail}`} aria-label={W.team.coachEmail} placeholder={W.team.coachEmail} type="email" value={a.email} maxLength={254}
+                    onChange={e => setAdds(list => list.map(x => (x.key === a.key ? { ...x, email: e.target.value } : x)))} />
+                </div>
+                <button type="button" className={css.iconBtn} aria-label={W.team.removeCoach(coachName(a) || W.team.coach)}
+                  onClick={() => setAdds(list => list.filter(x => x.key !== a.key))}><X size={16} aria-hidden /></button>
+                {errors[a.key] && <p className={css.error} role="alert">{errors[a.key]}</p>}
               </div>
-            )}
+            ))}
+            <button type="button" className={css.addLink} onClick={() => setAdds(list => [...list, { key: Date.now(), first: '', last: '', email: '' }])}>
+              <Plus size={14} aria-hidden />{hasCoach ? W.team.addAnotherCoach : W.team.addCoach}
+            </button>
+            {firstNew && <p className={ck.hint}>{published ? W.team.hintAfter(firstNew.first.trim()) : W.team.hintBefore(firstNew.first.trim(), divisionName)}</p>}
           </div>
-        )}
-        {!editing && error && <p className={css.error} role="alert">{error}</p>}
+          {error && <p className={css.error} role="alert">{error}</p>}
+          {!published && playerCount === 0 && (
+            <div className={css.rareDoor}>
+              <button type="button" className={css.inlineLink} onClick={() => setDeleting(true)}>{W.team.deleteTeam}</button>
+            </div>
+          )}
+        </div>
       </KitDialog>
 
       {ask && asked && (

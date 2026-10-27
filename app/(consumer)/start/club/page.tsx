@@ -25,7 +25,7 @@ export default async function StartClubPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.container}>
+      <div className={`${styles.container} ${styles.containerNarrow}`}>
         <header className={styles.header}>
           <div className={styles.iconWrap}>
             <Building2 size={21} strokeWidth={1.8} aria-hidden />

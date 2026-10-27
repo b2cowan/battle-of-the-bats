@@ -38,10 +38,13 @@ export default function TeamPayContent({ token, view, returnedSession, left }: {
   const { confirming, slow } = usePaymentConfirming(s => `/api/pay/team/${token}/status?session=${encodeURIComponent(s)}`, returnedSession);
 
   if (view.kind === 'invalid') {
-    return <div className={reg.errorCard}><p>{view.message}</p></div>;
+    return <div className="page-content"><div className={styles.page}><div className={reg.errorCard}><p>{view.message}</p></div></div></div>;
   }
 
+  // `page-content` is what every other tournament page wraps in: it pads the page below the fixed event header (date and
+  // countdown line) and the ticker, which otherwise print over the heading.
   return (
+    <div className="page-content">
     <div className={styles.page}>
       <div className={reg.formCard}>
         <PayFrame>
@@ -84,6 +87,7 @@ export default function TeamPayContent({ token, view, returnedSession, left }: {
           )}
         </PayFrame>
       </div>
+    </div>
     </div>
   );
 }

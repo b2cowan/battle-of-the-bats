@@ -415,7 +415,7 @@ function Confirmation({ result, seasonName, orgName, statusHref, forecast }: {
       </div>
 
       {result.pay ? (
-        <LeaguePayBlock pay={result.pay} returnedSession={null} left={false} />
+        <LeaguePayBlock pay={result.pay} returnedSession={null} left={false} centered />
       ) : accepted.length > 0 && !free && toPay > 0 ? (
         <div className={kit.card}>
           <div className={styles.resultHead}><strong>To pay</strong><strong>{dollarsLine(toPay)}</strong></div>
@@ -434,9 +434,9 @@ function Confirmation({ result, seasonName, orgName, statusHref, forecast }: {
         <p className={styles.fitDim}>Nothing to pay unless a spot opens. We’ll email you if one does.</p>
       ) : null}
 
-      <p className={formKit.successBody}>We’ve emailed this to <strong>{result.guardianEmail}</strong>. Keep your reference to check your status.</p>
+      <p className={formKit.successBody} style={{ marginTop: '1.5rem' }}>We’ve emailed this to <strong>{result.guardianEmail}</strong>. Keep your reference to check your status.</p>
       <p className={styles.fitDim}>Didn’t get it? Check your spam folder, or look up your status with your reference.</p>
-      <p className={styles.successStatusLink}><a href={statusHref}>Check your status →</a></p>
+      <p className={styles.successStatusLink}><a href={statusHref}>Check your registration →</a></p>
     </div>
   );
 }

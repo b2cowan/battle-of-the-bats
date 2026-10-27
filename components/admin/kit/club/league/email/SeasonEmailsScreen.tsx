@@ -92,7 +92,7 @@ export default function SeasonEmailsScreen() {
     <div className={repKit.page}>
       {header}
       <p className={fam.lede}>{isPhone ? allowance.charAt(0).toUpperCase() + allowance.slice(1) : SW.historyLede(season.name, allowance)}</p>
-      {finished && <p className={ck.hint}>{SW.finished}</p>}
+      {finished && <p className={`${ck.hint} ${fam.finishedNote}`}>{SW.finished}</p>}
       {failed && <p className={repKit.formError}>{SW.loadFailed} <button type="button" className={repKit.inlineLink} onClick={() => void load()}>{EW.tryAgain}</button></p>}
       {!history.hasFamilies ? (
         <EmptyCard title={finished ? SW.noFamiliesDone(season.name) : SW.noFamiliesTitle(season.name)}>{finished ? undefined : SW.noFamiliesBody}</EmptyCard>

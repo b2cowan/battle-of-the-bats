@@ -22,22 +22,35 @@
 .rowMain { flex: 1; min-width: 0; font-size: var(--type-body); color: var(--text-primary); overflow-wrap: anywhere; }
 .rowMain small { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
 .rowOff { color: var(--text-secondary); }
-.sample { margin: 0.25rem 0 0.75rem; padding: 0.75rem 0.9rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--surface-2); font-size: var(--type-support); color: var(--text-secondary); }
-.sample p { margin: 0 0 0.5rem; }
-.sample ul { margin: 0 0 0.5rem; padding-left: 1.1rem; }
-.details { margin: 0 0 0.5rem; }
-.details > summary { cursor: pointer; min-height: var(--admin-control-h); display: inline-flex; align-items: center; }
+/* The door to a level ("See the email", "See who gets it") — a plain link on its own line. */
+.door { margin: 0 0 0.5rem; }
+.door > button { cursor: pointer; min-height: var(--admin-control-h); display: inline-flex; align-items: center; }
+/* Two doors on one line: the first at the left, the second at the right (a lone door stays left). */
+.doors { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; column-gap: 1rem; margin: 0 0 0.5rem; }
+.doors > .door { margin: 0; }
+/* The sample email as a mail app draws it: From / To / Subject on a header, the message under it. The body keeps the old
+   sample card's padding, which the club's band (below) cancels to run flush across. */
+.mail { margin: 0.25rem 0 0.75rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--surface-2); overflow: hidden; }
+.mailHead { margin: 0; padding: 0.35rem 0.9rem; border-bottom: 1px solid var(--home-line); background: var(--card-bg); font-size: var(--type-support); }
+.mailHead > div { display: flex; gap: 0.75rem; padding: 0.3rem 0; }
+.mailHead dt { flex: none; width: 4.25rem; color: var(--text-tertiary); }
+.mailHead dd { flex: 1; min-width: 0; margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.mailBody { padding: 0.75rem 0.9rem; font-size: var(--type-body); color: var(--text-secondary); }
+.mailBody p { margin: 0 0 0.5rem; }
+.mailBody ul { margin: 0 0 0.5rem; padding-left: 1.1rem; }
+.mailBody .sampleBand { border-radius: 0; }
 
 /* A standing reason in Send's place, at the foot's left (the 2026-10-12 rulings): amber, the count first. */
 .standing { margin: 0; align-self: center; min-width: 0; font-size: var(--type-support); font-weight: 600; line-height: 1.35; color: var(--warning-light); }
 /* The family envelope inside a sample: the club as its kicker, the message as typed, the footer lines. */
 .envelopeKicker { display: block; margin: 0 0 0.4rem; font-size: var(--type-label); font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); } /* type-ok: eyebrow — a sample of the family email's own kicker (lib/family-email.ts), matched to the email, not the kit */
 .envelopeBody { white-space: pre-wrap; overflow-wrap: anywhere; }
-.sample .envelopeFoot { margin: 0.75rem 0 0; color: var(--text-tertiary); }
+.mailBody .envelopeFoot { margin: 0.75rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
 
 @media (max-width: 768px) {
   .row { min-height: var(--tap-min, 44px); }
-  .details > summary { min-height: var(--tap-min, 44px); }
+  .door > button { min-height: var(--tap-min, 44px); }
+  .mailHead dt { width: 3.5rem; }
 }
 
 /* The club's band inside a sample (The public face, warm: S3b): the same strip the real family email wears, drawn from the same

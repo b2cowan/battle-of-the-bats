@@ -30,8 +30,8 @@ const clubDay = (iso: string | null) => {
 };
 
 /** The block's colour frame: the tournament's theme by default, the club's inside a club page. */
-export function PayFrame({ inClub = false, children }: { inClub?: boolean; children: ReactNode }) {
-  return <div className={`${styles.block} ${inClub ? styles.inClub : ''}`}>{children}</div>;
+export function PayFrame({ inClub = false, centered = false, children }: { inClub?: boolean; centered?: boolean; children: ReactNode }) {
+  return <div className={`${styles.block} ${inClub ? styles.inClub : ''} ${centered ? styles.centered : ''}`}>{children}</div>;
 }
 
 /**

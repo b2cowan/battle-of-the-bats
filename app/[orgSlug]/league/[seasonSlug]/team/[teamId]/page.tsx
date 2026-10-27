@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Mail, Phone } from 'lucide-react';
 import type { Metadata } from 'next';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { readCoachTeamPage } from '@/lib/house-league-coach';
@@ -85,20 +86,29 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
         {page.players.length === 0 ? (
           <p className={kit.sub}>No players on this team right now.</p>
         ) : (
-          <ul className={styles.players}>
-            {page.players.map(p => (
-              <li key={p.id} className={`${kit.card} ${styles.player}`}>
-                <div className={styles.playerName}>{p.firstName} {p.lastName}</div>
-                <div className={styles.family}>
-                  <span>{p.guardianName}</span>
-                  <a href={`mailto:${p.guardianEmail}`} aria-label={`Email ${p.guardianName}`} className={styles.contact}>{p.guardianEmail}</a>
+          <div className={styles.roster}>
+            <div className={styles.rosterHead} aria-hidden>
+              <span>Player</span><span>Parent or guardian</span><span>Email</span><span>Phone</span>
+            </div>
+            <ul className={styles.players}>
+              {page.players.map(p => (
+                <li key={p.id} className={styles.player}>
+                  <span className={styles.playerName}>{p.firstName} {p.lastName}</span>
+                  <span className={styles.parent}>{p.guardianName}</span>
+                  <a href={`mailto:${p.guardianEmail}`} aria-label={`Email ${p.guardianName}`} className={`${styles.contact} ${styles.mail}`}>
+                    <Mail size={22} strokeWidth={1.8} className={styles.contactIcon} aria-hidden />
+                    <span className={styles.contactText}>{p.guardianEmail}</span>
+                  </a>
                   {p.guardianPhone && (
-                    <a href={`tel:${p.guardianPhone.replace(/[^\d+]/g, '')}`} aria-label={`Call ${p.guardianName}`} className={styles.contact}>{p.guardianPhone}</a>
+                    <a href={`tel:${p.guardianPhone.replace(/[^\d+]/g, '')}`} aria-label={`Call ${p.guardianName}`} className={`${styles.contact} ${styles.tel}`}>
+                      <Phone size={22} strokeWidth={1.8} className={styles.contactIcon} aria-hidden />
+                      <span className={styles.contactText}>{p.guardianPhone}</span>
+                    </a>
                   )}
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 

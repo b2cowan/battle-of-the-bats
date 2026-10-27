@@ -36,6 +36,20 @@ function whenNext(nextAt: string | null): string {
   return orgDayKey(nextAt) === tournamentToday() ? `at ${when}` : `tomorrow at ${when}`;
 }
 
+/** The send windows' two levels — the sample email drawn as a mail app draws it, and the list of who gets it (2026-10-26).
+ *  ⚠ Drafts: /marketing's to settle, like the rest of this file. */
+export const SEND_VIEW_WORDS = {
+  /** The back arrow's name for a window the sender is writing in. */
+  backToMessage: 'Your message',
+  from: 'From',
+  to: 'To',
+  subject: 'Subject',
+  mailNote: 'This is how it will arrive. Nothing has been sent.',
+  search: 'Search the list',
+  matching: (shown: number, of: number) => `${shown} of ${of}`,
+  noMatch: (text: string) => `Nobody matches “${text}”.`,
+};
+
 export const FAMILY_MESSAGE_WORDS = {
   door: 'Message this family',
   title: 'Message this family',
@@ -382,7 +396,6 @@ export const FAMILY_EMAIL_WORDS = {
   lastSent: 'Last sent',
   lastSentValue: (at: string, by: string | null, subject: string, families: number) =>
     `${formatStoredDate(at, { withYear: !inThisYear(at) })}${by ? ` by ${by}` : ''} · “${subject}” · ${pluralize(families, 'family', 'families')}`,
-  neverSent: 'Not sent from here yet',
   /** The foot's sentence, left of the buttons: who it reaches, then who it won't. */
   reach: (n: number, optedOut: number) =>
     `${pluralize(n, 'family', 'families')} ${n === 1 ? 'gets' : 'get'} it.${optedOut > 0 ? ` ${optedOut} opted out and won’t.` : ''}`,
@@ -395,11 +408,11 @@ export const FAMILY_EMAIL_WORDS = {
   /** × with words typed (Registrations' words, kept by 9d-1). */
   discardAsk: 'Close without sending? What you typed won’t be kept.',
   messagePlaceholder: 'Write your message here…',
-  /** "See who gets it" (/ux, 9d-1). */
+  /** "See who gets it" (/ux, 9d-1) — its own level behind a back (2026-10-26), with a count and a search. */
   seeWho: 'See who gets it',
+  whoHead: (n: number) => `Who gets it · ${pluralize(n, 'family', 'families')}`,
+  toFamilies: (n: number) => pluralize(n, 'family', 'families'),
   optedOutTag: 'Opted out',
-  moreFamilies: (n: number) => `and ${n} more ${n === 1 ? 'family' : 'families'}`,
-  showAll: 'Show all',
   sent: (reached: number, of: number) => `Sent. Reached ${reached} of ${pluralize(of, 'family', 'families')}.`,
   coachesCopied: (n: number) => `${pluralize(n, 'head coach', 'head coaches')} copied.`,
   capReason: (nextAt: string | null) =>

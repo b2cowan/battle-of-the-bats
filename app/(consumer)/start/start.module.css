@@ -39,6 +39,11 @@
   max-width: 760px;
 }
 
+/* A door that is only a paragraph and two buttons (Club) — no form to give the width to. */
+.containerNarrow {
+  max-width: 520px;
+}
+
 .header {
   text-align: center;
   margin-bottom: 1.6rem;

@@ -35,14 +35,16 @@ import ls from '../league/LeagueSeason.module.css';
 import { repKit, useLatestRead } from '../RepKit';
 import { Statement } from '../schedules/ScheduleParts';
 import TeamPicker, { GROUPED_FROM } from './TeamPicker';
-import { SampleBand, SamplePlatformLine, SendRow, SendRows, SendSample, SendStanding, sendEnvelope } from '../SendParts';
+import { MailView, SampleBand, SamplePlatformLine, SendDoor, SendDoors, SendRow, SendRows, SendStanding, SendWhoList, sendEnvelope, useSendLevel } from '../SendParts';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import LoadingState from '@/components/shared/LoadingState';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import {
-  ALLOWANCE_WORDS, CLUB_EMAIL_CAP, FAMILY_EMAIL_WORDS as W, FAMILY_LIST_WORDS as LW, SEASON_EMAIL_WORDS as SW, type AllowanceOwner,
+  ALLOWANCE_WORDS, CLUB_EMAIL_CAP, FAMILY_EMAIL_WORDS as W, FAMILY_LIST_WORDS as LW, SEASON_EMAIL_WORDS as SW, SEND_VIEW_WORDS as VW,
+  type AllowanceOwner,
 } from '@/lib/families-words';
+import { familySenderName } from '@/lib/email-club-identity';
 import type { FamilyListKey } from '@/lib/families-lists';
 import { familyEnvelopeFooterWords } from '@/lib/family-mail-footer';
 import type { FamilyEmailPreview } from '@/lib/families-email';
@@ -67,8 +69,6 @@ export interface SeasonDoor {
   registrationsHref: string;
   teamsHref: string;
 }
-
-const SEE_WHO_FIRST = 10;
 
 export default function EmailFamiliesWindow({ q, initialList, season, onClose, onShowNoFamily, onSent }: {
   /** `orgSlug=…` */
@@ -101,7 +101,7 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
   const [message, setMessage] = useState('');
   const [preview, setPreview] = useState<FamilyEmailPreview | null>(null);
   const [sPreview, setSPreview] = useState<SeasonEmailPreview | null>(null);
-  const [seeAll, setSeeAll] = useState(false);
+  const lv = useSendLevel(VW.backToMessage);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -259,10 +259,10 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
 
   const clearRefusal = () => { setStanding(null); setError(''); };
   const pickKind = (next: ClubKind) => { setKind(next); clearRefusal(); };
-  const pickSeasonKind = (next: SeasonKind) => { setSKind(next); setSeeAll(false); clearRefusal(); };
+  const pickSeasonKind = (next: SeasonKind) => { setSKind(next); clearRefusal(); };
   const toggle = <T extends string>(set: (f: (xs: T[]) => T[]) => void, id: T) => {
     set(xs => (xs.includes(id) ? xs.filter(x => x !== id) : [...xs, id]));
-    setSeeAll(false); clearRefusal();
+    clearRefusal();
   };
   const toggleTeam = (id: string, on: boolean) => {
     setTeamIds(ids => (on ? [...new Set([...ids, id])] : ids.filter(x => x !== id)));
@@ -288,10 +288,17 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
 
   const title = season ? (one ? SW.oneTitle : ticked ? SW.tickedTitle(families + (sPreview?.optedOut ?? 0)) : W.title) : W.title;
 
+  // The two levels behind the form (SendParts `useSendLevel`): drawn instead of it, the form's state kept in this window.
+  const canSeeWho = !!season && ready && !one && (sPreview?.who.length ?? 0) > 0;
+  const showMail = lv.level === 'email' && !!footer && !!orgName;
+  const showWho = lv.level === 'who' && canSeeWho;
+  const showForm = !showMail && !showWho;
+
   return (
     <KitDialog
       kind="form"
       size="medium"
+      {...(showForm ? {} : lv.dialog)}
       eyebrow={season ? season.name : W.eyebrow}
       title={title}
       onClose={onClose}
@@ -318,8 +325,23 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
         <p className={repKit.formError}>{W.loadFailed} <button type="button" className={repKit.inlineLink} onClick={() => void load()}>{W.tryAgain}</button></p>
       ) : !loaded ? (
         <LoadingState inline label="Loading who this reaches…" />
+      ) : showMail ? (
+        <MailView from={familySenderName(orgName)} subject={subject.trim() || W.subject}
+          to={one ? one.addresses.join(', ') : W.toFamilies(families)} onTo={canSeeWho ? () => lv.open('who') : undefined}>
+          {club ? <SampleBand club={club} /> : <span className={sendEnvelope.kicker}>{orgName}</span>}
+          <p className={sendEnvelope.body}>{message.trim() || W.message}</p>
+          <p className={sendEnvelope.foot}>{footer!.sentBy}<br />{replyLine && <>{replyLine}<br /></>}<u>{footer!.unsubscribe}</u></p>
+          {club && <SamplePlatformLine clubName={club.name} />}
+        </MailView>
+      ) : showWho ? (
+        <SendWhoList head={W.whoHead(families)} items={sPreview!.who.map(f => {
+          const last = f.children[0]?.last ?? '';
+          const firsts = joinWithAnd(f.children.map(k => k.first));
+          const teams = [...new Set(f.children.map(k => k.team).filter((t): t is string => !!t))].join(', ');
+          return { title: `${`${firsts} ${last}`.trim()}${teams ? ` · ${teams}` : ''}`, sub: f.optedOut ? W.optedOutTag : undefined, off: f.optedOut };
+        })} />
       ) : season ? seasonWho() : clubWho()}
-      {loaded && (
+      {loaded && showForm && (
         <>
           <label className={ck.field} htmlFor="email-families-subject" style={{ marginTop: '0.9rem' }}>
             <span className={ck.label}>{W.subject}<span className={ck.required} aria-hidden>*</span></span>
@@ -339,20 +361,12 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
               {!typed && <> <button type="button" className={repKit.inlineLink} onClick={onShowNoFamily}>{W.showThem}</button></>}
             </p>
           )}
-          {season && ready && !one && sPreview!.who.length > 0 && seeWho()}
-          {footer && (
-            <SendSample summary={W.seeEmail}>
-              {club ? <SampleBand club={club} /> : <span className={sendEnvelope.kicker}>{orgName}</span>}
-              <p><b>{subject.trim() || W.subject}</b></p>
-              <p className={sendEnvelope.body}>{message.trim() || W.message}</p>
-              <p className={sendEnvelope.foot}>{footer.sentBy}<br />{replyLine && <>{replyLine}<br /></>}<u>{footer.unsubscribe}</u></p>
-              {club && <SamplePlatformLine clubName={club.name} />}
-            </SendSample>
-          )}
-          {!one && (
-            <p className={ck.hint}>
-              {last ? `${W.lastSent} ${W.lastSentValue(last.at, last.by, last.subject, last.families)}.` : `${W.neverSent}.`}
-            </p>
+          <SendDoors>
+            {canSeeWho && <SendDoor onOpen={() => lv.open('who')}>{W.seeWho}</SendDoor>}
+            {footer && <SendDoor onOpen={() => lv.open('email')}>{W.seeEmail}</SendDoor>}
+          </SendDoors>
+          {!one && last && (
+            <p className={ck.hint}>{`${W.lastSent} ${W.lastSentValue(last.at, last.by, last.subject, last.families)}.`}</p>
           )}
         </>
       )}
@@ -547,34 +561,6 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
           </SendRows>
         )}
       </>
-    );
-  }
-
-  // "See who gets it" (/ux): each family once, its children and team; an opted-out family tagged.
-  function seeWho() {
-    const who = sPreview!.who;
-    const shown = seeAll ? who : who.slice(0, SEE_WHO_FIRST);
-    return (
-      <SendSample summary={W.seeWho}>
-        <SendRows>
-          {shown.map((f, i) => {
-            const last = f.children[0]?.last ?? '';
-            const firsts = joinWithAnd(f.children.map(k => k.first));
-            const teams = [...new Set(f.children.map(k => k.team).filter((t): t is string => !!t))].join(', ');
-            return (
-              <SendRow key={i} off={f.optedOut}
-                title={<>{`${firsts} ${last}`.trim()}{teams && ` · ${teams}`}</>}
-                sub={f.optedOut ? W.optedOutTag : undefined} />
-            );
-          })}
-        </SendRows>
-        {!seeAll && who.length > SEE_WHO_FIRST && (
-          <p className={ck.hint}>
-            {W.moreFamilies(who.length - SEE_WHO_FIRST)}{' '}
-            <button type="button" className={repKit.inlineLink} onClick={() => setSeeAll(true)}>{W.showAll}</button>
-          </p>
-        )}
-      </SendSample>
     );
   }
 }

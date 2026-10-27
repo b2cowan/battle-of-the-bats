@@ -65,36 +65,64 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The roster: ONE card holding a row per player (owner 2026-10-26). Phone: the player and parent on the left, a mail and a
+   phone symbol (44px each) on the right. Desk: a table, with the addresses written out. */
+.roster {
+  border: 1px solid var(--club-line);
+  border-radius: 12px;
+  background: var(--club-card);
+  overflow: hidden;
+}
+.rosterHead {
+  display: none;
+}
 .players {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .player {
-  padding: 1rem 1.25rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px 44px;
+  grid-template-areas:
+    'name mail tel'
+    'parent mail tel';
+  column-gap: 0.25rem;
+  align-items: center;
+  min-height: 64px;
+  padding: 0.5rem 0.25rem 0.5rem 1rem;
+  border-top: 1px solid var(--club-line);
+  box-sizing: border-box;
+}
+.player:first-child {
+  border-top: 0;
 }
 .playerName {
+  grid-area: name;
   font: 700 1rem var(--club-text-face);
   color: var(--club-text);
 }
-.family {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  margin-top: 0.4rem;
+.parent {
+  grid-area: parent;
   font: 400 0.875rem var(--club-text-face);
   color: var(--club-soft);
 }
 .contact {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  min-height: 44px;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   color: var(--club-ink);
-  text-decoration: underline;
-  overflow-wrap: anywhere;
+}
+.mail {
+  grid-area: mail;
+}
+.tel {
+  grid-area: tel;
+}
+.contactText {
+  display: none;
 }
 
 .link {
@@ -134,10 +162,45 @@
 }
 
 @media (min-width: 768px) {
-  .family {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0 1.25rem;
-    align-items: center;
+  .rosterHead,
+  .player {
+    display: grid;
+    grid-template-columns: 170px 160px minmax(0, 1fr) 112px;
+    grid-template-areas: 'name parent mail tel';
+    column-gap: 1rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+  .rosterHead {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid var(--club-line);
+    font: 700 0.75rem var(--club-text-face);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--club-soft);
+  }
+  .player {
+    min-height: 44px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .playerName {
+    font-size: 0.9375rem;
+  }
+  .contact {
+    justify-content: flex-start;
+    width: auto;
+    height: auto;
+    min-height: 44px;
+    font: 400 0.875rem var(--club-text-face);
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+  }
+  .contactIcon {
+    display: none;
+  }
+  .contactText {
+    display: inline;
   }
 }

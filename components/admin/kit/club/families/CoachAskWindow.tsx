@@ -12,7 +12,7 @@ import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { repKit, useDeferredLoad, useLatestRead } from '../RepKit';
 import { Statement } from '../schedules/ScheduleParts';
-import { EmailWordsSample, SendSample, SendStanding } from '../SendParts';
+import { EmailWordsSample, MailView, SendDoor, SendStanding, useSendLevel } from '../SendParts';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import LoadingState from '@/components/shared/LoadingState';
 import { FAMILY_COACH_ASK_WORDS as W } from '@/lib/families-words';
@@ -31,6 +31,7 @@ export default function CoachAskWindow({ q, onClose }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [sent, setSent] = useState<string | null>(null);
+  const lv = useSendLevel(W.title);
 
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
@@ -65,10 +66,13 @@ export default function CoachAskWindow({ q, onClose }: {
 
   const standing = preview && !sent ? (teams.length === 0 ? W.nothing : reachable.length === 0 ? W.nobodyReachable : null) : null;
 
+  const mail = lv.level === 'email' ? sample : null;
+
   return (
     <KitDialog
       kind="form"
       size="medium"
+      {...(mail ? lv.dialog : {})}
       eyebrow={W.eyebrow}
       title={W.title}
       onClose={onClose}
@@ -90,6 +94,10 @@ export default function CoachAskWindow({ q, onClose }: {
         <p className={repKit.formError}>{W.loadFailed} <button type="button" className={repKit.inlineLink} onClick={() => void load()}>Try again</button></p>
       ) : !preview ? (
         <LoadingState inline label="Loading who this reaches…" />
+      ) : mail ? (
+        <MailView to={mail.coaches.map(c => c.name ?? c.email).join(', ')} subject={mail.sample.subject}>
+          <EmailWordsSample w={mail.sample} />
+        </MailView>
       ) : (
         <>
           <Statement lead={W.statement} />
@@ -119,11 +127,7 @@ export default function CoachAskWindow({ q, onClose }: {
               </table>
             </div>
           )}
-          {sample && (
-            <SendSample summary={W.seeEmail(sample.teamName)}>
-              <EmailWordsSample w={sample.sample} />
-            </SendSample>
-          )}
+          {sample && <SendDoor onOpen={() => lv.open('email')}>{W.seeEmail(sample.teamName)}</SendDoor>}
           <dl className={`${fam.read} ${fam.readAfter}`}>
             <dt>{W.lastSent}</dt>
             <dd className={preview.lastSent ? undefined : fam.quiet}>{preview.lastSent ? W.lastSentValue(preview.lastSent.at, preview.lastSent.by) : W.never}</dd>

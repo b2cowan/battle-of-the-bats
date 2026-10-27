@@ -193,7 +193,7 @@ const familiesHelp: HelpPageContent = {
                 they aren&rsquo;t zero. A child who isn&rsquo;t back this season shows the season they were last in.
               </p>
               <p>
-                A house-league child shows the registration fee in the same three columns, with a line under the season saying <em>Price fixed at sign-up</em> and the day. Dues is the price fixed on that registration, not the season&rsquo;s
+                A house-league child shows the registration fee in the same three columns, with a line under the season saying <em>Price set at sign-up</em> and the day. Dues is the price fixed on that registration, not the season&rsquo;s
                 current price, and Paid is what the season&rsquo;s book has received for it after any refund. A child who
                 has ended owes nothing. When the club takes card payments, a card payment from the family&rsquo;s status
                 page lands here by itself. Money received by hand goes in with <strong>Record a payment</strong> at the

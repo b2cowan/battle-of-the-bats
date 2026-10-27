@@ -62,10 +62,8 @@ export const FAMILY_ONLINE_WORDS = {
 
 /** A house-league child's line on the family's record in Families (copy §13). */
 export const FAMILY_LINE_WORDS = {
-  fixed: (day: string) => `Price fixed at sign-up, ${day}`,
+  fixed: (day: string) => `Price set at sign-up · ${day}`,
   corrected: (reason: string) => (reason ? `Price corrected · ${reason}` : 'Price corrected'),
-  ghost: 'Pay link',
-  ghostTip: 'Online payment isn’t available yet. Record the payment by hand.',
 } as const;
 
 /** The season's Money page (copy §10). */

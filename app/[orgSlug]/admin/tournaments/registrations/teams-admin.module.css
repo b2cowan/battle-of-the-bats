@@ -309,17 +309,19 @@
 /* A heading, not a <p>: the window's `.modal p` rule (margin 0 0 0.5rem) outranks a module class on a paragraph and
    silently dropped the space above, so each label sat closer to the list above it than to its own. */
 .paySub { margin: 1.1rem 0 0.35rem; font-size: var(--type-support); line-height: 1.3; font-weight: 650; color: var(--text-secondary); }
-.payRows { display: flex; flex-direction: column; border-top: 1px solid var(--home-line); }
+/* A hairline sits BETWEEN two rows only (owner 2026-10-26): the record window's section rules are the only full-width
+   lines, so a one-row list carries none and a row rule never reads as a section break. */
+.payRows { display: flex; flex-direction: column; }
 .payRow {
   display: grid;
   grid-template-columns: 3.5rem minmax(0, 1fr) auto 2.25rem;
   align-items: center;
   gap: 0.5rem;
   min-height: 2.5rem;
-  border-bottom: 1px solid var(--home-line);
   font-size: var(--type-body);
   color: var(--text-primary);
 }
+.payRow + .payRow { border-top: 1px solid var(--home-line); }
 .payDueRow { grid-template-columns: minmax(0, 1fr) auto auto; gap: 0.85rem; padding: 0.25rem 0; }
 .payDate { font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .payHow { font-size: var(--type-support); color: var(--text-tertiary); }

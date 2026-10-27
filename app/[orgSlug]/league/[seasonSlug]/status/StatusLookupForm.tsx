@@ -81,7 +81,8 @@ function feeLine(r: Registration): { text: string; sub?: string; owing: boolean 
   if (r.owing > 0 && r.received > 0) {
     return { text: `${dollarsLine(r.owing)} to pay`, sub: `The price is now ${dollarsLine(r.fee)}. ${dollarsLine(r.received)} received${r.paidOn ? ` ${clubDay(r.paidOn)}` : ''}.`, owing: true };
   }
-  if (r.owing > 0) return { text: `${dollarsLine(r.fee)} to pay`, owing: true };
+  // Just the amount, in amber: the "To pay" card below says what it is and how to pay it.
+  if (r.owing > 0) return { text: dollarsLine(r.fee), owing: true };
   const paid = r.paidOn ? `${dollarsLine(r.received || r.fee)} · paid ${clubDay(r.paidOn)}` : `${dollarsLine(r.received || r.fee)} · paid`;
   // A price lowered after a payment: the refund of the difference (§14.4 `status.child.fee.partRefund`).
   return { text: paid, sub: r.refund ? `${dollarsLine(r.refund.amount)} refunded ${clubDay(r.refund.day)}.` : undefined, owing: false };
@@ -289,7 +290,7 @@ export default function StatusLookupForm({
                 )}
                 <div style={row}>
                   <span style={{ color: 'var(--club-soft)' }}>Fee</span>
-                  <span style={{ color: fee.owing ? 'var(--badge-warning-ink, var(--club-text))' : 'var(--club-text)', fontWeight: fee.owing ? 650 : 400, textAlign: 'right' }}>{fee.text}</span>
+                  <span style={{ color: 'var(--club-text)', fontWeight: fee.owing ? 650 : 400, textAlign: 'right' }}>{fee.text}</span>
                 </div>
                 {fee.sub && <p style={{ ...soft, textAlign: 'right' }}>{fee.sub}</p>}
                 {(r.withdrawRequestedAt || asked === r.child) && !ended(r) && (

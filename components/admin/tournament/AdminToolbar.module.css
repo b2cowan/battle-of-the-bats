@@ -193,6 +193,16 @@
   transform: translateX(var(--panel-shift-x, 0px));
   overscroll-behavior: contain;
 }
+/* A filter menu whose button sits at the toolbar's right end (the Leads screen): it hangs from the button's right
+   edge instead of its left, so it opens inward rather than off the page. `useViewportFit` nudges it the rest of the way. */
+.regFilterPanel.panelEnd {
+  left: auto;
+  right: 0;
+  max-width: min(24rem, calc(100vw - 2rem));
+  max-height: min(34rem, var(--panel-max-h, calc(100dvh - 12rem)));
+  transform: translateX(var(--panel-shift-x, 0px));
+  overscroll-behavior: contain;
+}
 .filterPanel .regFilterList + .regFilterHeader { margin-top: 0.35rem; padding-top: 0.6rem; border-top: 1px solid var(--home-line); }
 .filterOn { font-family: var(--font-data); font-weight: 700; }
 .filterReset {

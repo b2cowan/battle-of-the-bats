@@ -249,7 +249,7 @@ export default async function LeagueSeasonPage({
                 padding: '1rem 1.25rem',
                 fontSize: '0.875rem',
                 color: 'var(--club-soft)',
-                marginBottom: (finished || season.status === 'active') ? '1.25rem' : 0,
+                marginBottom: '1.25rem',
               }}
             >
               {regLine}
@@ -258,24 +258,32 @@ export default async function LeagueSeasonPage({
               {season.status === 'archived' && 'This season has been archived.'}
             </div>
 
-            {/* Quick-access links for active, completed, and archived seasons */}
-            {(season.status === 'active' || finished) && (
-              <div className={kit.btnRow}>
+            {/* Quick-access links once registration has closed: the schedule always (teams are set before the first game),
+                the standings once games are being played. */}
+            <div className={kit.btnRow}>
+              {(season.status === 'active' || finished) && (
                 <Link
                   href={href(`/league/${seasonSlug}/standings`)}
                   className={`${kit.btn} ${finished ? kit.btnPrimary : kit.btnSecondary}`}
                 >
                   {finished ? 'Final standings →' : 'Standings →'}
                 </Link>
-                <Link
-                  href={href(`/league/${seasonSlug}/schedule`)}
-                  className={`${kit.btn} ${kit.btnSecondary}`}
-                >
-                  Schedule
-                </Link>
-              </div>
-            )}
+              )}
+              <Link
+                href={href(`/league/${seasonSlug}/schedule`)}
+                className={`${kit.btn} ${kit.btnSecondary}`}
+              >
+                Schedule
+              </Link>
+            </div>
           </div>
+        )}
+
+        {/* A family who already signed up finds their child's status here, whatever state the season is in. Hidden only before registration opens, when nobody can have signed up yet. */}
+        {!(season.registrationOpenAt && new Date(season.registrationOpenAt) > new Date()) && (
+          <p style={{ marginTop: '1.25rem', fontSize: '0.875rem', color: 'var(--club-soft)' }}>
+            Already registered? <Link href={href(`/league/${seasonSlug}/status`)}>Check your registration</Link>
+          </p>
         )}
       </div>
     </div>

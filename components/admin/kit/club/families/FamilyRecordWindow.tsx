@@ -398,11 +398,11 @@ function ChildTable({ lines, chips }: { lines: readonly FamilyChildLine[]; chips
       <table className={repKit.table}>
         <thead>
           <tr>
-            <th scope="col" style={{ width: '28%' }}>{W.colChild}</th>
+            <th scope="col" style={{ width: '20%' }}>{W.colChild}</th>
             <th scope="col">{W.colWhere}</th>
-            <th scope="col" className={repKit.num} style={{ width: '13%' }}>{W.colDues}</th>
-            <th scope="col" className={repKit.num} style={{ width: '13%' }}>{W.colPaid}</th>
-            <th scope="col" className={repKit.num} style={{ width: '14%' }}>{W.colBalance}</th>
+            <th scope="col" className={repKit.num} style={{ width: '12%' }}>{W.colDues}</th>
+            <th scope="col" className={repKit.num} style={{ width: '12%' }}>{W.colPaid}</th>
+            <th scope="col" className={repKit.num} style={{ width: '13%' }}>{W.colBalance}</th>
           </tr>
         </thead>
         <tbody>
@@ -416,7 +416,7 @@ function ChildTable({ lines, chips }: { lines: readonly FamilyChildLine[]; chips
                   {/* 9b-2 (copy §13): a house-league fee is the price fixed when the family signed up. */}
                   {l.league?.feeCents != null && (l.league.corrected != null
                     ? <span className={fam.ladder}>{FAMILY_LINE_WORDS.corrected(l.league.corrected)}</span>
-                    : l.league.fixedOn && <span className={fam.ladder}>{FAMILY_LINE_WORDS.fixed(formatStoredDate(l.league.fixedOn))}</span>)}
+                    : l.league.fixedOn && <span className={fam.ladder}>{FAMILY_LINE_WORDS.fixed(formatStoredDate(l.league.fixedOn, { withYear: false }))}</span>)}
                   {/* 12c Part 7 (12b's b4): how the fee was paid online, or the pay link while it is owed. */}
                   {l.league?.online && l.league.paidCents > 0
                     ? <span className={fam.ladder}>{FAMILY_ONLINE_WORDS.paidOnline(formatStoredDate(l.league.online.day, { withYear: false }), l.league.online.rail === 'bank_debit' ? 'bank debit' : 'card', String(l.league.online.receiptNo ?? ''))}</span>
@@ -428,14 +428,6 @@ function ChildTable({ lines, chips }: { lines: readonly FamilyChildLine[]; chips
                     <td className={repKit.num}>{cents(f.paid)}</td>
                     <td className={repKit.num}>
                       {cents(f.balance)}
-                      {/* The pay link's place (Stage 12 fills it): greyed, a tooltip says how to record it by hand. */}
-                      {l.league && f.balance > 0 && (
-                        <span className={fam.ladder}>
-                          <button type="button" className="btn btn-outline" disabled title={FAMILY_LINE_WORDS.ghostTip} aria-label={`${FAMILY_LINE_WORDS.ghost}: ${FAMILY_LINE_WORDS.ghostTip}`}>
-                            {FAMILY_LINE_WORDS.ghost}
-                          </button>
-                        </span>
-                      )}
                     </td>
                   </>
                 ) : (

@@ -23,12 +23,12 @@ import {
 } from './PayBlock';
 import kit from './ClubKit.module.css';
 
-export default function LeaguePayBlock({ pay, returnedSession, left }: {
-  pay: LeaguePayView; returnedSession: string | null; left: boolean;
+export default function LeaguePayBlock({ pay, returnedSession, left, centered = false }: {
+  pay: LeaguePayView; returnedSession: string | null; left: boolean; centered?: boolean;
 }) {
   const { confirming, slow } = usePaymentConfirming(s => `/api/pay/league/${pay.token}/status?session=${encodeURIComponent(s)}`, returnedSession);
   return (
-    <PayFrame inClub>
+    <PayFrame inClub centered={centered}>
       {pay.testMode && <TestLine text={W.testLine} />}
       {confirming ? (
         <div className={kit.card}><ConfirmingState slow={slow} payerEmail={pay.payerEmail} /></div>

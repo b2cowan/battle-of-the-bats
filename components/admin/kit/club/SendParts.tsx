@@ -3,19 +3,24 @@
  * THE ONE CLUB SEND WINDOW'S PARTS (the 2026-10-11 ruling: one window and one log shape for everything the club sends).
  * Send the schedule (`schedules/SendWindow.tsx`), Send reminders (`money/RemindersWindow.tsx`) and Message this family
  * (`families/MessageFamilyWindow.tsx`) all wear them: who it reaches, a row each — ticked where the sender chooses —
- * and the sample email behind "See …'s email". Extracted in Club Tier Stage 5a so the third window wears the shape
+ * and the sample email in its own level ("See …'s email" → `MailView`). Extracted in Club Tier Stage 5a so the third window wears the shape
  * rather than drawing a third copy (memory `feedback_shared_component_over_shared_class`).
  *
  * The rest of the shape is the kit's own: `KitDialog` (eyebrow · title · × · footer, a standing reason in `footerStart`),
  * `Statement` (what sending does — `schedules/ScheduleParts`), the `ck.hint` line with "Last sent … by …", and the
  * lime that counts who it reaches.
  */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { EmailWords } from '@/lib/club-schedule-words';
 import { clubBand, platformLineWords, type ClubEmailFacts } from '@/lib/email-club-identity';
 import { BRAND_NAME, BRAND_NAME_HQ } from '@/lib/brand-mark';
+import { SEND_VIEW_WORDS } from '@/lib/families-words';
 import { repKit } from './RepKit';
+import ck from './ClubKit.module.css';
 import s from './SendParts.module.css';
+
+/** A who-gets-it list longer than this earns a search. */
+const WHO_SEARCH_FROM = 8;
 
 /** Who the send reaches — a framed list of rows. `group` names a pick-one set (`radio`, named by the heading `labelledBy`)
  *  or a ticked set (`label`) for a screen reader; a plain list needs none. */
@@ -96,12 +101,11 @@ export function SamplePlatformLine({ clubName }: { clubName: string }) {
   return <p className={s.samplePlatform}>{w.lead}<b>{BRAND_NAME}<i>{BRAND_NAME_HQ}</i></b>{w.tail}</p>;
 }
 
-/** A colleague email's words drawn inside a sample (`SendSample`) — Send the schedule's and Ask the coaches' (both build
- *  the scheduler's `EmailWords`, the shape the house mail renders). */
+/** A colleague email's words drawn inside a sample (`MailView`) — Send the schedule's and Ask the coaches' (both build
+ *  the scheduler's `EmailWords`, the shape the house mail renders). The subject is the mail view's own header line. */
 export function EmailWordsSample({ w }: { w: EmailWords }) {
   return (
     <>
-      <p><b>{w.subject}</b></p>
       <p>{w.greeting}</p>
       {w.paragraphs.map(p => <p key={p}>{p}</p>)}
       {w.lists.map((l, i) => (
@@ -117,12 +121,79 @@ export function EmailWordsSample({ w }: { w: EmailWords }) {
   );
 }
 
-/** The sample email, behind its door ("See the email", "See 15U AAA’s email"). */
-export function SendSample({ summary, children }: { summary: ReactNode; children: ReactNode }) {
+/**
+ * A LEVEL INSIDE THE SEND WINDOW (owner, 2026-10-26: "who gets it … opening it in line does not seem built for purpose";
+ * the sample "might look better … like an actual email from an email app"). "See the email" and "See who gets it" take the
+ * window's place behind a named back — the kit's level idiom (`KitDialog back`, Stage 3d), never a second window over a
+ * form with words typed in it. The form's state lives in the window, so it is all still there on the way back.
+ * Spread `dialog` onto the `KitDialog`; draw the level instead of the form when `level` is not `'form'`.
+ */
+export type SendLevel = 'form' | 'email' | 'who';
+export function useSendLevel(backLabel: string) {
+  const [level, setLevel] = useState<SendLevel>('form');
+  const dialog = level === 'form' ? {} : { back: { label: backLabel, onBack: () => setLevel('form') }, levelKey: level };
+  return { level, open: setLevel, dialog };
+}
+
+/** Two `SendDoor`s on one line — the first at the left, the second at the right ("See who gets it" · "See the email"). */
+export function SendDoors({ children }: { children: ReactNode }) {
+  return <div className={s.doors}>{children}</div>;
+}
+
+/** The door to a level: a plain link in the form ("See the email", "See 15U AAA’s email", "See who gets it"). */
+export function SendDoor({ onOpen, children }: { onOpen: () => void; children: ReactNode }) {
   return (
-    <details className={s.details}>
-      <summary className={repKit.inlineLink}>{summary}</summary>
-      <div className={s.sample}>{children}</div>
-    </details>
+    <div className={s.door}>
+      <button type="button" className={repKit.inlineLink} onClick={onOpen}>{children}</button>
+    </div>
+  );
+}
+
+/**
+ * The sample email as a mail app shows it: From / To / Subject, then the message as it will arrive. `to` opens the list
+ * of who gets it when the window has one (`onTo`). The subject is the header's line, so the body leads with the club.
+ */
+export function MailView({ from, to, onTo, subject, children }: {
+  from?: ReactNode; to: ReactNode; onTo?: () => void; subject: ReactNode; children: ReactNode;
+}) {
+  return (
+    <>
+      <p className={ck.hint}>{SEND_VIEW_WORDS.mailNote}</p>
+      <div className={s.mail}>
+        <dl className={s.mailHead}>
+          {from && <div><dt>{SEND_VIEW_WORDS.from}</dt><dd>{from}</dd></div>}
+          <div>
+            <dt>{SEND_VIEW_WORDS.to}</dt>
+            <dd>{onTo ? <button type="button" className={repKit.inlineLink} onClick={onTo}>{to}</button> : to}</dd>
+          </div>
+          <div><dt>{SEND_VIEW_WORDS.subject}</dt><dd><b>{subject}</b></dd></div>
+        </dl>
+        <div className={s.mailBody}>{children}</div>
+      </div>
+    </>
+  );
+}
+
+/** Who gets it, however many: a count, a search once the list is long, then a row each. Each row's `title` is what the search reads. */
+export function SendWhoList({ head, items }: { head: string; items: { title: string; sub?: string; off?: boolean }[] }) {
+  const [text, setText] = useState('');
+  const t = text.trim().toLowerCase();
+  const shown = t ? items.filter(i => i.title.toLowerCase().includes(t)) : items;
+  return (
+    <>
+      <p className={repKit.factsLabel}>{head}</p>
+      {items.length > WHO_SEARCH_FROM && (
+        <>
+          <input type="search" className={ck.input} value={text} onChange={e => setText(e.target.value)}
+            placeholder={SEND_VIEW_WORDS.search} aria-label={SEND_VIEW_WORDS.search} data-autofocus="" />
+          {t && <p className={ck.hint} role="status">{shown.length === 0 ? SEND_VIEW_WORDS.noMatch(text.trim()) : SEND_VIEW_WORDS.matching(shown.length, items.length)}</p>}
+        </>
+      )}
+      {shown.length > 0 && (
+        <SendRows>
+          {shown.map((i, n) => <SendRow key={n} title={i.title} sub={i.sub} off={i.off} />)}
+        </SendRows>
+      )}
+    </>
   );
 }

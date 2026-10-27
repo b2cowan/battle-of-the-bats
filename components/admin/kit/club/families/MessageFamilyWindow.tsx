@@ -18,12 +18,12 @@ import KitDialog, { DialogCancel } from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { repKit, useLatestRead } from '../RepKit';
 import { Statement } from '../schedules/ScheduleParts';
-import { SampleBand, SamplePlatformLine, SendRow, SendRows, SendSample, SendStanding, sendEnvelope } from '../SendParts';
+import { MailView, SampleBand, SamplePlatformLine, SendDoor, SendRow, SendRows, SendStanding, sendEnvelope, useSendLevel } from '../SendParts';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import LoadingState from '@/components/shared/LoadingState';
-import { FAMILY_MESSAGE_WORDS as W } from '@/lib/families-words';
+import { FAMILY_MESSAGE_WORDS as W, SEND_VIEW_WORDS as VW } from '@/lib/families-words';
 import { familyEnvelopeFooterWords } from '@/lib/family-mail-footer';
-import type { ClubEmailFacts } from '@/lib/email-club-identity';
+import { familySenderName, type ClubEmailFacts } from '@/lib/email-club-identity';
 
 interface Read {
   familyName: string;
@@ -56,6 +56,7 @@ export default function MessageFamilyWindow({ q, personId, familyName, raised = 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [standing, setStanding] = useState<string | null>(null);
+  const lv = useSendLevel(VW.backToMessage);
 
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
@@ -103,10 +104,13 @@ export default function MessageFamilyWindow({ q, personId, familyName, raised = 
   // lime is absent and the reason stands in its place, as for a send that lost a race.
   const held = standing ?? (read && reach === 0 ? W.optedOutRace : read?.state.capped ? W.capRace(read.state.nextAt) : null);
 
+  const showMail = lv.level === 'email' && !!read && !!footer;
+
   return (
     <KitDialog
       kind="form"
       raised={raised}
+      {...(showMail ? lv.dialog : {})}
       eyebrow={familyName}
       title={W.title}
       onClose={onClose}
@@ -130,6 +134,14 @@ export default function MessageFamilyWindow({ q, personId, familyName, raised = 
         <p className={repKit.formError}>{W.previewFailed} <button type="button" className={repKit.inlineLink} onClick={() => void load()}>{W.tryAgain}</button></p>
       ) : !read ? (
         <LoadingState inline label="Loading this family…" />
+      ) : showMail ? (
+        <MailView from={familySenderName(read.orgName)} subject={subject.trim() || W.subject}
+          to={read.recipients.filter(r => !r.optedOut).map(r => r.name).join(', ')}>
+          {read.club ? <SampleBand club={read.club} /> : <span className={sendEnvelope.kicker}>{read.orgName}</span>}
+          <p className={sendEnvelope.body}>{message.trim() || W.message}</p>
+          <p className={sendEnvelope.foot}>{footer!.sentBy}<br />{read.replyLine && <>{read.replyLine}<br /></>}<u>{footer!.unsubscribe}</u></p>
+          {read.club && <SamplePlatformLine clubName={read.club.name} />}
+        </MailView>
       ) : (
         <>
           <Statement lead={W.statement(read.orgName)} />
@@ -153,15 +165,7 @@ export default function MessageFamilyWindow({ q, personId, familyName, raised = 
             <textarea id="family-message-body" className={ck.textarea} value={message} maxLength={5000} rows={7}
               onChange={e => { setMessage(e.target.value); setError(''); }} aria-required />
           </label>
-          {footer && (
-            <SendSample summary={W.seeEmail}>
-              {read.club ? <SampleBand club={read.club} /> : <span className={sendEnvelope.kicker}>{read.orgName}</span>}
-              <p><b>{subject.trim() || W.subject}</b></p>
-              <p className={sendEnvelope.body}>{message.trim() || W.message}</p>
-              <p className={sendEnvelope.foot}>{footer.sentBy}<br />{read.replyLine && <>{read.replyLine}<br /></>}<u>{footer.unsubscribe}</u></p>
-              {read.club && <SamplePlatformLine clubName={read.club.name} />}
-            </SendSample>
-          )}
+          {footer && <SendDoor onOpen={() => lv.open('email')}>{W.seeEmail}</SendDoor>}
         </>
       )}
     </KitDialog>
