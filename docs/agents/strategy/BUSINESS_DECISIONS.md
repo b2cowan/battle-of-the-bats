@@ -8,8 +8,120 @@
 
 ---
 
+### 2026-10-27 — A card from outside the club's country: the club is billed Stripe's extra cost, never the family; comped clubs get their own invoice for Stripe fees
+**Status:** **Decided** (owner, 2026-10-27, Club Tier Stage 12d, round 3). **Decided, not built**: the 12d-1 build carries
+it. Online payments stay off in production until counsel signs off.
+**Decision:**
+1. **Stripe's extra cost on a card issued outside the club's country is billed to the club** (customer words: "outside your country", owner 2026-10-27, since clubs may be US-based later), as one more line on the same bill as the
+   dispute and returned-debit fees, from Stripe's own figure, every club included. **The family is never charged more:**
+   no surcharge, no card-first pay step. This supersedes point 2 of the 2026-10-26 GST/HST entry below.
+2. **The payments terms must say these charges are possible.** Owner: *"this is not something we should cover and they
+   should understand there could be additional charges if they run a tournament and host a team from another country. In
+   fact, I believe this assumption is common, let's just make sure our terms explain that these additional charges are
+   possible."*
+3. **A club with no subscription invoice to ride on (comped, free) gets its own invoice for its Stripe fees, paid
+   through Stripe and tracked in platform admin like other payments.** An unpaid one shows there; nothing switches off by
+   itself.
+**Rationale:** the foreign-card extra arrives only after the card is entered. Stripe bills it to the platform, never the
+cardholder, and the hosted pay page fixes the price before the card is typed. Charging the family would mean a new pay
+step plus the card networks' surcharge rules (and Quebec's ban). Billing the club gets the same money back with neither
+problem, and follows the 2026-10-26 rule that every Stripe fee a club's payments cause is the club's.
+**Affects:** the Facts doc facilitated-payments riders (the foreign-card rider changes; counsel's surcharge question no
+longer covers a charge by card country) · the 12d-1 build (one more fee kind; the standalone invoice) · counsel's terms
+brief (plan §6) · help.
+**Handoff:**
+```
+HANDOFF → /plan: done (CLUB_TIER_STAGE12D1_BUILD_PROMPT.md carries all three points).
+HANDOFF → counsel (owner step, plan §6): the terms name the Stripe costs billed to the club, comped and free included.
+HANDOFF → /marketing: the invoice line and help sentences for the foreign-card cost (in CLUB_TIER_STAGE12D_COPY.md).
+```
+**Supersedes:** point 2 of "2026-10-26 — GST/HST on the processing fee is paused; a card from outside Canada is charged
+more (gated)…".
+
+---
+
+### 2026-10-26 — A comp covers the subscription only: every Stripe fee a club causes is the club's, comped or not; card dispute fees are invoiced like the returned bank debit fee
+**Status:** **Decided** (owner, 2026-10-26, Club Tier Stage 12d asks 1 + the follow-up, two rounds the same day). **Decided,
+not built**: the 12d build carries it. Online payments stay off in production until counsel signs off, so no club is billed
+by it yet.
+**Decision:**
+1. **A comp (the Founding Season 2027 comp, operator free time, any free plan) covers the FieldLogicHQ subscription and
+   nothing else.** Owner: *"comped clubs do not get any reprieve on Stripe fees in any capacity, we are only comping their
+   subscription."*
+2. **A card dispute's Stripe fees are the club's**, billed to the club, **free and comped clubs included**: Stripe's fee when
+   a dispute arrives (never returned) and its fee when the club answers (Stripe returns that one on a win, and it then comes
+   off the club's bill). The amount is Stripe's own figure at the time, never typed. The family is never charged.
+3. **The CA$5 returned or reversed bank debit fee is billed to comped and free clubs too**, which supersedes point 3 of the
+   entry below. Points 1, 2 and 4 of that entry stand.
+**Rationale:** owner: *"we especially don't want to give free clubs incentive to rack up many $15 charges on us with no
+ability for us to recoup since we are comping them."* Stripe bills every dispute fee to the platform on these direct
+charges (fees_collector = application), so an exempt club's disputes are a cost FieldLogicHQ can't recover. The comp was
+sold as a free subscription; Stripe's per-event fees were never part of it. Research: `CLUB_TIER_STAGE12_PAYMENTS_PLAN.md`
+§0 state (12d) and the 12d drawings' D3 page.
+**Affects:** the Facts doc facilitated-payments line · `lib/platform-debit-fee.ts` (today stamps a comped club
+`exempt_reason = 'comped'` and a club with no subscription `no_subscription`: both must bill) · the club's FieldLogicHQ
+invoicing (a comped club has no subscription invoice until its comp ends, so it needs its own invoice) · in-app help (three
+articles say a comped club isn't billed) · no pricing-page fact (facilitated payments are not on it yet).
+**Handoff:**
+```
+HANDOFF → /plan (the 12d build prompt)
+- Remove the comped / no-subscription exemption; bill a club with no live subscription on a standalone invoice; decide what
+  an unpaid one does (default to propose: it shows on the platform team's Online payments view; nothing switches off by
+  itself). Card dispute fees ride the same mechanism, from Stripe's figure, with the won answering fee credited back.
+HANDOFF → /docs (in the same build, never before it: today's help is true to today's code)
+- house-league.tsx (the bank-debit article), org.tsx (Payouts article + its searchText), tournaments.tsx (the bank-debit
+  note + searchText): "a club on a complimentary plan isn't billed" comes out; dispute fees are explained the same way.
+HANDOFF → /marketing
+- The dispute-fee invoice line and the help sentences: read plainly, not as a penalty; a comped club's owner should not
+  read it as the comp being withdrawn ("your subscription stays free; Stripe's fees are passed on").
+- Founding Season surfaces: check nothing sold the comp as covering payment fees (owed; not checked in this session).
+```
+**Supersedes:** point 3 only of "2026-10-26 — A returned or reversed bank debit's CA$5 is the club's… a free or comped club
+is not billed".
+
+---
+
+### 2026-10-26 — GST/HST on the processing fee is paused; a card from outside Canada is charged more (gated); US clubs get their own review
+**Status:** **Decided; point 2 SUPERSEDED 2026-10-27** by "A card from outside the club's country: the club is billed…" above (the
+club pays Stripe's extra, never the family; its gates below no longer apply). Points 1 and 3 stand.
+**Decision:**
+1. **No GST/HST on the online-payment processing fee for now.** FieldLogicHQ is pre-revenue and well below the $30,000
+   small-supplier threshold. Nothing changes on the pay button, the receipt, the Payouts card or the set-up window. The
+   accountant questions stay drafted (12d drawings, D1) for when it's reopened.
+2. **A card issued outside Canada is charged more** than the published card rate, to cover Stripe's extra percentage for
+   international cards (+0.8% read 2026-10-26, which FieldLogicHQ otherwise pays out of the fee). The amount is computed
+   from Stripe's figure, never typed in copy.
+3. **Clubs located in the US (USD cards paying USD clubs) get their own review** before any takes payments: the account
+   set-up, fee treatment and tax would differ. Task list line added 2026-10-26.
+**Rationale:** at today's rates an $800 card payment leaves FieldLogicHQ about $3.14 after Stripe's costs, and a foreign
+card's extra turns it to about −$3.50 (computed on the 12d drawings' D2 page from `lib/plan-config.ts`). Tax inside the fee
+would take it to about −$0.25, which is why the question matters once FieldLogicHQ is registered.
+**Revisit trigger (recommended by the session, NOT ruled):** the threshold counts the whole processing fee FieldLogicHQ
+takes, not its margin after Stripe, so fee revenue alone reaches $30,000 at roughly $850,000 of card payments. Reopen
+D1 before then.
+**Affects:** the Facts doc facilitated-payments line (two riders close, one becomes a gated decision) · the pay flow (point 2
+needs the card known before the total is shown, which Stripe's hosted Checkout doesn't do) · counsel's memo.
+**Handoff:**
+```
+GATES on point 2 (each must pass before it is built; if either fails, the fallback is to absorb the cost and count it)
+- /billing: confirm in Stripe's current docs that the extra can be added after the card is entered on our flow. Stripe's
+  surcharge feature (read 2026-10-26) is a public preview, Canada credit cards only, max 2.4%, "consistently across card
+  networks or card products", and not in hosted Checkout.
+- counsel: the card-surcharge question already owed (a card-only family fee may be a surcharge under the card networks'
+  Canadian rules) now also covers a charge by card country, and the Quebec position.
+HANDOFF → /plan
+- The 12d build prompt leaves point 2 out of the main build; it becomes its own part once the gates pass.
+HANDOFF → /marketing (when point 2 is built)
+- The family's words for the extra, shown before they confirm; never a typed figure.
+```
+**Supersedes:** nothing; it settles two riders of "2026-07-28 — Facilitated payments…" (the GST/HST display and the
+international-card surcharge-or-absorb policy).
+
+---
+
 ### 2026-10-26 — A returned or reversed bank debit's CA$5 is the club's, billed on its next FieldLogicHQ invoice; a free or comped club is not billed
-**Status:** **Decided** (owner, 2026-10-26, at the Club Tier Stage 12c build start — answer 2 in the stage plan §0k, after
+**Status:** **Decided; point 3 SUPERSEDED 2026-10-26** by "A comp covers the subscription only…" above (comped and free
+clubs are billed too). (owner, 2026-10-26, at the Club Tier Stage 12c build start — answer 2 in the stage plan §0k, after
 the research on how Stripe charges it; the option chosen was *"Invoice line; comped clubs exempt"*). **Built on dev 2026-10-26
 (Stage 12c Part 6a)**; deployment state lives in the release-history record. Online payments stay off in production until
 counsel signs off, so no club is billed by it yet.

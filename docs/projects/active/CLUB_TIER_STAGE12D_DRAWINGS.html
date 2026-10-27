@@ -1,0 +1,1175 @@
+<title>Payments Hardening Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700&display=swap">
+
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the club admin kit (Warm, Inter).
+   Same shape as the Stage 12 drawings: tabs per frame, before beside after, asks + paste-back at the end.
+   Every fee figure is computed on load from the card line of the facilitated-payments rate (350 bps + 150 cents,
+   lib/plan-config.ts ONLINE_PAYMENT_RATES, matching PLAN_PRICING_FACTS.md), half-up to the cent. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.doc{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:24px;margin:36px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:18px;margin:24px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px;max-width:82ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 12px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+.thm{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.thm button{border-radius:0;min-height:36px;font-size:13px}
+.thm button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+section.pane[hidden]{display:none}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul,.verdict ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.cap{font-size:13.5px;line-height:1.5;color:var(--muted);max-width:86ch;margin:8px 0}
+.fl{font:700 11px/1 var(--f-mono);letter-spacing:.03em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid var(--flag);color:var(--flag);background:var(--flag-soft);min-height:24px;vertical-align:1px;white-space:nowrap}
+.fl.fix{border-color:var(--fix);color:var(--fix);background:var(--fix-soft)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:22px;vertical-align:1px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)} .mk.pv{color:var(--ask)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{color:var(--ink);padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700}
+.sp-cap{font:600 12px/1.35 var(--f-mono);letter-spacing:.04em;color:var(--muted);margin:14px 0 6px}
+.spec{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:10px 0}
+.spec>.col{min-width:0;display:flex;flex-direction:column;gap:6px;max-width:100%}
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:260px;font:12.5px/1.5 var(--f-mono)}
+/* note dialog */
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:10px 8px 10px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .xb{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+dialog.note .nb p{margin:0}
+
+/* ===== the product kit, for specimens (Warm default; .dk = Dark) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--red-soft:rgba(176,58,34,.10);--amber:#835006;--amber-soft:#FBEFD9;--green:#34662A;--green-soft:#E6F0E2;--blue:#1D4A8A;--blue-soft:#E3ECF8;--grid:rgba(70,55,30,.06);--dimbg:rgba(36,30,21,.28);--hl:rgba(75,46,131,.09);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak.dk{--paper:#0A0A0A;--card:#141A22;--ink:#F1F5F9;--soft:rgba(255,255,255,.72);--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
+  --olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--red:#F08A74;--red-soft:rgba(240,138,116,.14);--amber:#F2B55A;--amber-soft:rgba(242,181,90,.14);--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--blue:#9CC2F5;--blue-soft:rgba(156,194,245,.13);--grid:rgba(255,255,255,.03);--dimbg:rgba(0,0,0,.6);--hl:rgba(187,166,238,.10)}
+.ak *{box-sizing:border-box}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%;margin:6px 0}
+.dt{width:1440px}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ph{width:390px;max-width:100%;flex:none;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+.ak .tb{display:flex;align-items:center;gap:10px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .tb .lg{width:18px;height:18px;background:var(--olive);border-radius:4px}
+.ak .tb .ar{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .tb .sp{flex:1}
+.ak .tb .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;font:700 11px/1 'Inter';color:var(--soft)}
+.ak .shell{display:flex;min-height:640px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px;display:flex;align-items:center;gap:8px;min-height:38px}
+.ak .sb .it.sub{padding-left:26px;font-size:13.5px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .it i{width:14px;height:14px;border-radius:4px;background:currentColor;opacity:.28;flex:none}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .mn{flex:1;min-width:0;padding:22px 0 50px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.ak .pg{width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.ak .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .ph1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ak .ph1 h1{font:700 28px/1.1 'Barlow Condensed',sans-serif;margin:2px 0 0;letter-spacing:.005em}
+.ak .ph1 .sp{flex:1}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .btn.pri{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .btn.ic{width:40px;padding:0;justify-content:center}
+.ak .btn.sm{min-height:36px;font-size:13.5px}
+.ak .utabs{display:flex;gap:18px;border-bottom:1px solid var(--line)}
+.ak .utabs span{min-height:44px;display:inline-flex;align-items:center;gap:6px;font:600 14px/1 'Inter';color:var(--soft);border-bottom:2px solid transparent}
+.ak .utabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .utabs .c{font:700 11px/1 'Inter';background:var(--line);border-radius:999px;padding:3px 7px}
+.ak .utabs .c.am{background:var(--amber-soft);color:var(--amber)}
+.ak .tbar{display:flex;gap:8px;align-items:center}
+.ak .tbar .sp{flex:1}
+.ak .fld{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px solid var(--line2);border-radius:8px;background:var(--card);font:500 14px/1.3 'Inter';color:var(--ink);gap:8px}
+.ak .fld.srch{min-width:240px;color:var(--dim)}
+.ak .chev{width:8px;height:8px;border:solid var(--dim);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-4px;flex:none}
+.ak .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak table.kt{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink)}
+.ak table.kt th{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 16px;border-bottom:1px solid var(--line);position:relative}
+.ak table.kt td{padding:12px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:top;color:var(--ink)}
+.ak table.kt tr:last-child td{border-bottom:0}
+.ak table.kt td.r{text-align:right;white-space:nowrap}
+.ak table.kt tr.hl td{background:var(--hl)}
+.ak .nm{font:650 14.5px/1.3 'Inter';color:var(--olive)}
+.ak .s2{display:block;font-size:12.5px;color:var(--dim);margin-top:2px;line-height:1.4}
+.ak .pill{display:inline-flex;align-items:center;gap:6px;font:600 12.5px/1 'Inter';border-radius:999px;padding:5px 10px;white-space:nowrap}
+.ak .pill.ok{color:var(--green);background:var(--green-soft)}
+.ak .pill.am{color:var(--amber);background:var(--amber-soft)}
+.ak .pill.bad{color:var(--amber);background:var(--amber-soft);border:0;cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;font-family:'Inter',sans-serif}
+.ak .pill.bad.ro{cursor:default;text-decoration:none}
+.ak .cpy{width:44px;height:44px;display:inline-grid;place-items:center;font-size:18px;color:var(--soft);flex:none}
+.ak .pmoney{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .pmoney>div{padding:10px 10px;border-left:1px solid var(--line);min-width:0}
+.ak .pmoney>div:first-child{border-left:0}
+.ak .pmoney .k{font:600 10px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.ak .pmoney .v{font:700 16px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:3px}
+.ak .pmoney .h{font-size:11.5px;color:var(--soft);line-height:1.35;margin-top:2px}
+.ak .na .bb .btn{min-height:44px}
+.ak .pill.q{color:var(--soft);border:1px solid var(--line2)}
+.ak .fee b{font-weight:650}
+.ak .fee .s2{white-space:nowrap}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:none}
+.ak .tip{display:inline-flex;align-items:center;justify-content:center;min-height:24px;font:600 12.5px/1.3 'Inter';color:var(--soft);border-bottom:1px dotted var(--dim);margin-top:2px}
+.ak .foot{font-size:13px;color:var(--dim)}
+.ak .band{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{padding:12px 16px;border-left:1px solid var(--line);min-width:0}
+.ak .band>div:first-child{border-left:0}
+.ak .band .k{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .band .v{font:700 22px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:4px}
+.ak .band .v.am{color:var(--amber)}
+.ak .band .h{font-size:12px;color:var(--soft)}
+.ak .out{color:var(--red);font-weight:650}
+.ak .rare{font-size:13.5px;color:var(--soft);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line);background:var(--card)}
+.ak .rare .lnk{text-decoration:underline}
+/* phone */
+.ak .pbar{height:52px;display:flex;align-items:center;gap:6px;padding:0 6px 0 4px;background:var(--card);border-bottom:1px solid var(--line);font:700 16px/1 'Inter'}
+.ak .pbar .sp{flex:1}
+.ak .pbk{width:44px;height:44px;display:grid;place-items:center;font-size:20px;color:var(--soft)}
+.ak .ptitle{padding:12px 16px 4px;background:var(--card)}
+.ak .ptitle b{font:700 22px/1.1 'Barlow Condensed',sans-serif;display:block}
+.ak .ptabs{display:flex;gap:6px;overflow-x:auto;padding:8px 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;background:var(--card)}
+.ak .ptabs>span{flex:none;font:600 14px/1 'Inter';color:var(--soft);padding:0 14px;min-height:44px;display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid var(--line2)}
+.ak .ptabs>span.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ak .ptabs .c{font:700 11px/1 'Inter';border-radius:999px;padding:3px 6px;background:var(--line)}
+.ak .ptabs .c.am{background:var(--amber-soft);color:var(--amber)}
+.ak .plist{display:flex;flex-direction:column;gap:8px;padding:12px 12px 20px}
+.ak .prow{background:var(--card);border:1px solid var(--line);border-radius:10px;display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:4px;padding:10px 4px 10px 12px;min-height:64px}
+.ak .prow.hl{background:linear-gradient(var(--hl),var(--hl)),var(--card)}
+.ak .prow b{font:650 15px/1.3 'Inter';color:var(--olive);display:block}
+.ak .prow .d{font-size:13px;color:var(--soft);margin-top:2px;line-height:1.4}
+.ak .prow .d2{font-size:12.5px;color:var(--dim);margin-top:2px;line-height:1.4}
+.ak .prow .dots{width:44px;height:44px;display:grid;place-items:center;font:700 18px/1 'Inter';color:var(--soft);align-self:start}
+.ak .prow .pill{margin-top:6px;min-height:28px}
+.ak .bnav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--card);height:62px}
+.ak .bnav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/1 'Inter';color:var(--soft)}
+.ak .bnav span i{width:20px;height:20px;border-radius:5px;border:1.5px solid currentColor;display:block}
+.ak .bnav span.on{color:var(--olive)}
+/* windows */
+.ak.win{padding:36px 28px;background:var(--dimbg)}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);width:640px;max-width:100%;margin:0 auto;display:flex;flex-direction:column}
+.ak .dlg.sm{width:480px}
+.ak .dlg .dh{display:flex;align-items:flex-start;padding:16px 8px 8px 20px;gap:8px}
+.ak .dlg .dh .t{flex:1;min-width:0}
+.ak .dlg .dh h4{font:700 19px/1.25 'Inter';margin:2px 0 0}
+.ak .dlg .dh .xx{font-size:22px;color:var(--dim);width:44px;height:44px;display:grid;place-items:center;flex:none}
+.ak .dlg .db{padding:4px 20px 18px;display:flex;flex-direction:column;gap:14px;color:var(--soft);font-size:14px}
+.ak .dlg .df{display:flex;align-items:center;gap:10px;padding:12px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.ak .dlg .df .s{flex:1;font-size:13px;color:var(--dim);min-width:160px}
+.ak .dlg .steps{display:flex;align-items:center;gap:10px;padding:10px 20px;border-top:1px solid var(--line);font-size:13px;color:var(--dim)}
+.ak .dlg .steps .sp{flex:1;text-align:center}
+.ak .sec h5{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:0 0 8px}
+.ak .facts{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 18px;font-size:14px;align-items:baseline}
+.ak .facts>span:nth-child(odd){color:var(--dim)}
+.ak .facts>span:nth-child(even){color:var(--ink)}
+.ak .rf{border:1px solid var(--line2);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:var(--card)}
+.ak .rf.hl{background:linear-gradient(var(--hl),var(--hl)),var(--card)}
+.ak .rf .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ak .rf .top b{font:650 15px/1.3 'Inter';color:var(--ink);flex:1;min-width:0}
+.ak .ref{display:inline-flex;align-items:center;gap:6px;font:500 13px/1 'IBM Plex Mono',monospace;color:var(--ink)}
+.ak .copy{display:inline-flex;align-items:center;justify-content:center;min-height:32px;min-width:44px;padding:0 10px;border:1px solid var(--line2);border-radius:7px;font:600 12.5px/1 'Inter';color:var(--ink);background:var(--card)}
+.ak .hist{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--ink)}
+.ak .hist>div{display:grid;grid-template-columns:70px minmax(0,1fr);gap:10px}
+.ak .hist>div>span:first-child{color:var(--dim)}
+.ak .hist .nw{background:var(--hl);border-radius:6px;padding:2px 6px;margin:-2px -6px}
+.ak .todo{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.ak .todo b{color:var(--ink);font-weight:600}
+.ak .fsw{display:flex;flex-direction:column;background:var(--card);min-height:760px}
+.ak .fsw .fh{display:flex;align-items:center;gap:4px;min-height:56px;padding:0 4px;border-bottom:1px solid var(--line)}
+.ak .fsw .fh .t{flex:1;min-width:0}
+.ak .fsw .fh b{font:700 17px/1.2 'Inter';display:block}
+.ak .fsw .fb{padding:14px 16px 20px;display:flex;flex-direction:column;gap:14px;color:var(--soft);font-size:14px}
+.ak .fsw .facts{grid-template-columns:118px minmax(0,1fr);gap:8px 12px}
+.ak .na{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;padding:14px 16px;border-top:1px solid var(--line);border-left:3px solid var(--amber);background:var(--card);align-items:start}
+.ak .na:first-child{border-top:0}
+.ak .na .ico{width:36px;height:36px;border-radius:9px;background:var(--amber-soft);color:var(--amber);display:grid;place-items:center;font:700 15px/1 'Inter'}
+.ak .na b{font:650 14.5px/1.35 'Inter';color:var(--ink);display:block}
+.ak .na .d{font-size:13.5px;color:var(--soft);margin-top:3px;line-height:1.45}
+.ak .na .bb{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.ak .na .tm{font-size:12px;color:var(--dim);white-space:nowrap}
+.ak .gone{padding:22px 16px;text-align:center;color:var(--dim);font-size:14px;background:var(--card)}
+.ak .rad{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-top:1px solid var(--line);min-height:44px}
+.ak .rad:first-child{border-top:0}
+.ak .rad .dot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);flex:none;margin-top:2px;position:relative}
+.ak .rad.on .dot{border-color:var(--olive)}
+.ak .rad.on .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--olive)}
+.ak .rad b{display:block;font:600 14px/1.35 'Inter';color:var(--ink)}
+.ak .rad .s3{display:block;font-size:12.5px;color:var(--dim)}
+.ak .radios{border:1px solid var(--line);border-radius:8px}
+/* email */
+.mail{background:#FFFFFF;color:#241E15;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:560px;max-width:100%;font:15px/1.55 'Inter',system-ui,sans-serif}
+.mail .mh{padding:12px 16px;border-bottom:1px solid #E6E0D4;background:#F8F4ED;font-size:13.5px;color:#4A4235;display:flex;flex-direction:column;gap:2px}
+.mail .mh b{color:#241E15}
+.mail .mb{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.mail .mb p{margin:0}
+.mail .blk{border:1px solid #E6E0D4;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:#FCFAF6}
+.mail .ln{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums;font-size:14px}
+.mail .ln span:first-child{color:#615A54}
+.mail .mono{font:500 13px/1.3 'IBM Plex Mono',monospace}
+.mail .old{background:#F7E2DC;color:#5e1d0e;border-radius:6px;padding:8px 10px;font-size:14px}
+.mail .tst{font:700 10.5px/1 'IBM Plex Mono',monospace;color:#1D4A8A;background:#E3ECF8;border-radius:4px;padding:3px 5px}
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:14px;margin:10px 0}
+.states>div{min-width:0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+@media (max-width:600px){.doc h1{font-size:25px}.tabs{position:static}}
+</style>
+<style>
+/* This round's additions.
+   The family's pay page is a club's public face: fixed light, wearing the club's (or tournament's) theme colour, which a
+   frame sets as --pay-accent. Shapes follow the built pay block: a left-aligned button with its icon, the fee as a note line
+   under it (full width at 640 and below), states as a heading + sentence, the receipt as an outlined card. */
+.pub{--pay-ink:#1B1B1B;--pay-soft:#3F3F3F;--pay-dim:#666;--pay-line:rgba(0,0,0,.14);--pay-accent:#1F3A8A;--pay-info:#1D4A8A;
+  background:#F5F4F0;color:var(--pay-ink);font:15px/1.5 'Inter',system-ui,sans-serif}
+.pub.trn{--pay-accent:#4A1A6E}
+.pub .nv{background:var(--pay-accent);color:#fff;display:flex;align-items:center;gap:10px;padding:0 16px;height:56px;font:700 19px/1 'Barlow Condensed',sans-serif}
+.pub .in{padding:16px;display:flex;flex-direction:column;gap:14px}
+.pub .blk2{background:#fff;border:1px solid var(--pay-line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.pub .pk{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--pay-dim)}
+.pub .pline{display:flex;justify-content:space-between;gap:10px;font-size:14px;font-variant-numeric:tabular-nums}
+.pub .pline.t{font-weight:700;font-size:15px;border-top:1px solid var(--pay-line);padding-top:8px}
+.pub .prow2{display:flex;flex-direction:column;gap:4px}
+.pub .pbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;border-radius:8px;background:var(--pay-accent);color:#fff;font:650 15.5px/1.2 'Inter';padding:0 14px;box-sizing:border-box;border:1.5px solid var(--pay-accent)}
+.pub .pbtn.alt{background:#fff;color:var(--pay-accent)}
+.pub .pbtn svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pub .pbtn .lbl{white-space:normal;text-align:center}
+.pub .note{font-size:13px;color:var(--pay-dim);line-height:1.45;margin:0}
+.pub .state h2{margin:0 0 4px;font:700 18px/1.3 'Inter';color:var(--pay-ink)}
+.pub .state h2.info{color:var(--pay-info)}
+.pub .state p{margin:0;color:var(--pay-soft);font-size:14.5px}
+.pub .receipt{padding:14px;border:1px solid var(--pay-line);border-radius:8px;display:flex;flex-direction:column;gap:6px;background:#fff}
+.pub .receipt h2{margin:0;font:700 18px/1.3 'Inter'}
+.pub .rd{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;font-size:14px;min-height:44px}
+.pub .rd+.rd{border-top:1px solid var(--pay-line)}
+.pub .o{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--pay-accent);flex:none;margin-top:2px;position:relative}
+.pub .o.on::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--pay-accent)}
+.pub .rds{border:1px solid var(--pay-line);border-radius:10px;background:#fff}
+.pub .save{border-left:3px solid var(--pay-accent);padding:4px 10px;font-size:13.5px;color:var(--pay-soft);margin:0}
+/* the kit: the info (sent, awaiting the other side) chip, as RepChip tone="info" — --info-light ink on an --info-rgb fill */
+.ak{--info-ink:#1D4A8A;--info-fill:rgba(29,74,138,.08)}
+.ak.dk{--info-ink:#9CC2F5;--info-fill:rgba(156,194,245,.12)}
+.ak .chip{display:inline-flex;align-items:center;font:600 12px/1 'Inter';border-radius:999px;padding:5px 9px;white-space:nowrap}
+.ak .chip.ok{color:var(--green);background:var(--green-soft)}
+.ak .chip.am{color:var(--amber);background:var(--amber-soft)}
+.ak .chip.info{color:var(--info-ink);background:var(--info-fill)}
+.ak .tg{font:500 12.5px/1.4 'Inter';color:var(--soft);display:block;margin-top:3px}
+.ak .amt{font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ak .prw{display:grid;grid-template-columns:70px minmax(0,1fr) auto 44px;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.ak .prw:first-child{border-top:0}
+.ak .prw.hl{background:var(--hl)}
+.ak .prw .dots{width:44px;height:44px;display:grid;place-items:center;border-radius:8px;color:var(--soft);font-weight:700}
+.ak .prw .lab{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ak .amtf{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ak .chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--ink)}
+.ak .chk .bx{width:20px;height:20px;border:1.5px solid var(--line2);border-radius:5px;flex:none;margin-top:1px;display:grid;place-items:center;font:700 12px/1 'Inter';color:var(--card)}
+.ak .chk .bx.on{background:var(--olive);border-color:var(--olive)}
+.ak .sumln{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ak .sumln b{flex:1;font:650 15px/1.3 'Inter'}
+.ak .sumln b .rest{font-weight:500;color:var(--soft)}
+.ak .bandnote{font-size:12.5px;color:var(--soft);padding:8px 16px}
+.ak .pmoney{display:grid;grid-template-columns:1fr 1fr;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .pmoney>div{padding:10px 12px;border-top:1px solid var(--line);min-width:0}
+.ak .pmoney>div:nth-child(odd){border-right:1px solid var(--line)}
+.ak .pmoney>div:nth-child(-n+2){border-top:0}
+.ak .pmoney .k{font:600 10.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.ak .pmoney .v{font:700 17px/1.2 'Inter';font-variant-numeric:tabular-nums;margin-top:3px}
+.ak .pmoney .h{font-size:11.5px;color:var(--soft);margin-top:2px}
+</style>
+<style>
+/* Stage 12d additions. The kit above is spliced from the 12c page's two style blocks (lines 6-329), unchanged.
+   Figures: every fee is computed on load from lib/plan-config.ts ONLINE_PAYMENT_RATES; Stripe's own costs are Stripe's
+   published figures, each named with the date it was read, and kept in one object in the script (S). */
+.find{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--flag);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.find h3{margin:0 0 6px;color:var(--flag)}
+.find ol,.find ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.dec{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--ask);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.dec h3{margin:0 0 6px}
+.need{background:var(--ask-soft);border:1px solid var(--line);border-radius:12px;padding:14px 20px;margin:18px 0}
+.need h3{margin:0 0 6px}
+.need ul{margin:4px 0 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.need li::before{content:"☐";margin-right:8px;color:var(--ask);font-weight:700}
+.sheet{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:14px 18px;margin:14px 0}
+.sheet ol{margin:6px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.sheet pre{white-space:pre-wrap;font:13px/1.5 var(--f-mono);margin:0;max-height:none}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+td.num,th.num{text-align:right}
+.neg{color:var(--flag);font-weight:700}
+.src{font-size:12.5px;color:var(--muted)}
+/* kit additions */
+.ak .coll{border-top:1px solid var(--line);background:var(--card)}
+.ak .coll .ch{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 16px}
+.ak .coll .ch b{font:650 14.5px/1.3 'Inter';color:var(--ink)}
+.ak .coll .ch .rest{font-size:13px;color:var(--soft);flex:1;min-width:0}
+.ak .coll .ch .tw2{width:44px;height:44px;display:grid;place-items:center;color:var(--soft);font-size:15px}
+.ak .po{display:grid;grid-template-columns:110px 110px minmax(0,1fr) 120px 44px;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums}
+.ak .po.hd{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding-block:8px}
+.ak .po .r{text-align:right;font-weight:650}
+
+.ak .pin{padding:4px 16px 12px 16px}
+.ak .pin table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+.ak .pin th{font:600 10.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line2)}
+.ak .pin td{padding:7px 8px;border-bottom:1px solid var(--line);color:var(--ink)}
+.ak .pin td.r,.ak .pin th.r{text-align:right;white-space:nowrap}
+.ak .pin tr.sum td{font-weight:700;border-bottom:0}
+.ak .warnln{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:var(--amber-soft);color:var(--ink);font-size:13.5px;line-height:1.45}
+.ak .warnln .i{color:var(--amber);font-weight:700}
+.ak .infoln{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:var(--info-fill);color:var(--ink);font-size:13.5px;line-height:1.45}
+.ak .ul{display:flex;flex-direction:column;gap:6px;margin:0;padding-left:18px;color:var(--soft);font-size:14px}
+.ak .ul b{color:var(--ink);font-weight:600}
+.ak .slot{border:1.5px dashed var(--line2);border-radius:8px;padding:12px;color:var(--dim);font:500 13px/1.4 'IBM Plex Mono',monospace}
+.ak .pa-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.ak .pa-tabs span{min-height:44px;display:inline-flex;align-items:center;padding:0 12px;font:600 14px/1 'Inter';color:var(--soft);border-bottom:2px solid transparent}
+.ak .pa-tabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .lst{display:grid;gap:0}
+.ak .lst>div{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 130px 120px;gap:12px;padding:11px 16px;border-top:1px solid var(--line);font-size:14px;align-items:start}
+.ak .lst>div.hd{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);border-top:0;padding-block:9px}
+.ak .lst .r{text-align:right;font-variant-numeric:tabular-nums}
+.ak .secth{display:flex;align-items:center;gap:10px;padding:12px 16px 10px}
+.ak .secth b{font:700 15px/1.3 'Inter';flex:1}
+.pub .tax{font-size:13px;color:var(--pay-dim)}
+.ak .btn.dng{background:var(--red);border-color:var(--red);color:#fff}
+.ak .ico svg,.ak .warnln svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ak .warnln .i{display:inline-flex}
+.ak .po.open,.ak .pin{background:var(--olive-soft)}
+.ak .sumln{flex-wrap:wrap}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M9.5 21V10M14.5 21V10M19 21V10M2 10l10-6 10 6z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0zM12 9v4M12 17h.01"/></symbol>
+</defs></svg>
+
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · Club Tier · Stage 12d · hardening · drawing round · 2026-10-26</p>
+<h1>Disputes, paid twice, payouts, leaving, terms and oversight</h1>
+<p class="lede">The last Stage 12 round before online payments can go to counsel and then to production. Six frames and three decision pages. Nothing here is built. <b>All 13 asks ruled 2026-10-26.</b></p>
+
+<div class="verdict"><h3>Ruled 2026-10-26: all 13 asks</h3><ul>
+  <li><b>As recommended (2–7, 10–13):</b> the family isn't emailed about a dispute; the book line stays while it's open, a lost dispute returns it and the child or team owes again; a downgrade stops online payments on the move date and never disconnects; a Payouts tab in Accounting (on the owner's card for a club without Accounting); new terms are a notice and an owner item, payments stay on; platform admin is read only, a club tab and one Health list; an overpaid team is booked and flagged with a refund door; every ending closes open pay pages; recording by hand warns and closes the open page; one Copy of the facts for Stripe.</li>
+  <li><b>Ask 1 · dispute fees:</b> the club is invoiced from Stripe's own figure, the answering fee returned on a win comes off. <b>Free and comped clubs are not exempt.</b> Owner, widening it: <i>comped clubs get no reprieve on Stripe fees in any capacity; only their subscription is comped.</i> So the  returned bank debit fee is billed to comped clubs too, changing the 12c rule.</li>
+  <li><b>Ask 8 · GST/HST: (a), no tax on the fee for now.</b> Paused: FieldLogicHQ is pre-revenue and well below the 0,000 small-supplier threshold. <i>My note, not ruled:</i> the threshold counts the whole fee FieldLogicHQ takes, so revisit as fee revenue grows.</li>
+  <li><b>Ask 9 · foreign cards: (b), charge more,</b> plus a later review of US clubs paying in US dollars (on the task list). <i>Checks before it's built:</i> whether Stripe can add it in our pay flow, and counsel's surcharge answer.</li>
+</ul><p class="cap" style="margin:8px 0 0">Words next, through /marketing, then the 12d build prompt. Plan §0 state holds the rulings.</p></div>
+
+<div class="find"><h3>Found first: a tournament team can pay twice, and nothing says so</h3>
+<p style="margin:0 0 6px">I read the code that books a team's online payment. It records the amount the pay page was opened with, and never compares it with what the team still owes. House league is safe: its writer refuses a second payment and raises an item with a refund door. A team is not.</p>
+<ol>
+  <li><b>The ordinary way it happens.</b> The team's contact opens Pay now and leaves the pay page open (an open page lasts up to a day). Meanwhile the treasurer records the team's e-transfer. The desk only refuses a hand-recorded payment while a <i>bank debit</i> is clearing, not while a pay page is open. The contact then finishes the pay page. Stripe takes the money, our books record it, the receipt goes out, and the team has paid twice. No item, no flag.</li>
+  <li><b>The same shape after a price change.</b> A page opened before the entry fee was lowered, or before a part refund, can still be paid at the old amount.</li>
+  <li><b>What does not overpay:</b> two devices pressing Pay (they get the same single page), and a card payment while a bank debit clears (refused).</li>
+</ol>
+<p style="margin:8px 0 0">So frame 2 opens with a fix in two halves: <b>a payment recorded by hand closes any open pay page for that team or child</b> (ask 12), and <b>a payment that lands on a team that owes less is booked and flagged, with a refund door</b> (ask 10).</p></div>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="start" aria-selected="true">Start</button>
+  <button role="tab" data-pane="dispute" aria-selected="false">1 · Card dispute</button>
+  <button role="tab" data-pane="twice" aria-selected="false">2 · Paid twice</button>
+  <button role="tab" data-pane="payouts" aria-selected="false">3 · Payouts list</button>
+  <button role="tab" data-pane="leave" aria-selected="false">4 · Leaving</button>
+  <button role="tab" data-pane="terms" aria-selected="false">5 · Terms</button>
+  <button role="tab" data-pane="pa" aria-selected="false">6 · Platform admin</button>
+  <button role="tab" data-pane="d1" aria-selected="false">D1 · GST/HST</button>
+  <button role="tab" data-pane="d2" aria-selected="false">D2 · Foreign cards</button>
+  <button role="tab" data-pane="d3" aria-selected="false">D3 · Dispute cost</button>
+  <button role="tab" data-pane="flow" aria-selected="false">Journeys &amp; reviews</button>
+  <button role="tab" data-pane="asks" aria-selected="false">Asks &amp; paste-back</button>
+  <span class="sp"></span>
+  <span class="thm" role="group" aria-label="Drawing theme"><button type="button" data-thm="warm" aria-pressed="true">Warm</button><button type="button" data-thm="dark" aria-pressed="false">Dark</button></span>
+</nav>
+<div class="dt-tools"><button type="button" class="btn-d" data-fit>Show at true size</button><span class="zl">Desk drawings are scaled to fit your screen.</span></div>
+
+<!-- ===================================================================== START -->
+<section class="pane" data-pane="start">
+<h2 style="margin-top:12px">What the census corrected</h2>
+<p class="cap">The plan's 12d row lists eight items. A code read on 2026-10-26, with the decisive lines opened again for this page, found the gap is smaller in some places and bigger in others.</p>
+<div class="tw"><table class="t"><thead><tr><th>Item</th><th>What the code does today</th><th>So this page</th></tr></thead><tbody>
+<tr><td>Card disputes</td><td><b>Ignored, not errored.</b> A card dispute arrives and is dropped without a word: no item, no email, nothing on the registration. Only a bank debit's dispute is handled (12c). Stripe takes the money from the club's balance anyway.</td><td>Draws it (frame 1). The biggest real gap.</td></tr>
+<tr><td>Paid twice</td><td>House league refuses a second payment and raises an item, but its title is generic ("couldn't be recorded"). <b>A team's overpayment books silently</b> (above).</td><td>Frame 2, team first.</td></tr>
+<tr><td>Terms</td><td><b>Already built:</b> the agree box, the refusal without it, and who agreed, when and to which version are stored. Missing: counsel's text (a placeholder shows) and anywhere that shows who agreed.</td><td>Frame 5 draws only the read-out and "agree again".</td></tr>
+<tr><td>Payouts list</td><td>Absent. The card has an Open Stripe door.</td><td>Frame 3.</td></tr>
+<tr><td>Leaving</td><td>Disconnect counts teams owing and debits clearing, <b>not house-league families still owing</b>. Downgrade, cancel and the deletion request say nothing about payments; the account stays connected and keeps landing money.</td><td>Frame 4.</td></tr>
+<tr><td>Platform admin</td><td>Nothing reads online payments, the club's payments account, or Stripe's event log (which records errors nobody reads). The Find box finds a pasted Stripe number. <b>The Stage 5 console drawings have no home for this</b>; nothing to merge with.</td><td>Frame 6.</td></tr>
+<tr><td>Losses wording</td><td>The prompt asked me to correct any plan text saying "the platform carries losses". <b>There is none.</b> The plan already says Stripe covers a club's losses and FieldLogicHQ pays Stripe's fees; the code agrees.</td><td>Nothing to correct; D3 states the consequence.</td></tr>
+<tr><td>GST/HST, foreign cards, negative balance</td><td>Absent.</td><td>Decision pages D1, D2, D3.</td></tr>
+</tbody></table></div>
+
+<h2>Stripe facts this page rests on (read 2026-10-26)</h2>
+<div class="tw"><table class="t"><thead><tr><th>Fact</th><th>What Stripe's current pages say</th><th>Why it matters here</th></tr></thead><tbody>
+<tr><td>A card dispute's fees</td><td><b>CA$15.00 when the dispute arrives</b>, never returned. <b>Another CA$15.00 when the club answers it</b>, returned if the club wins. (stripe.com/en-ca/pricing; docs.stripe.com/disputes/how-disputes-work)</td><td>A dispute costs $15 untouched, $15 answered and won, $30 answered and lost.</td></tr>
+<tr><td>Who pays those fees</td><td>With our set-up (FieldLogicHQ pays Stripe's fees), <b>the platform is billed every dispute fee</b>. The disputed money itself is taken from the club's Stripe balance. (docs.stripe.com/connect/disputes; direct-charges fee-payer table)</td><td>Ask 1.</td></tr>
+<tr><td>Who answers a dispute</td><td>An Express account's owner answers in Stripe's Express dashboard, and Stripe requires that view when Stripe covers losses. <b>Flag:</b> Stripe's risk page says this combination is in public preview on a preview API version. The build must confirm our clubs actually see it.</td><td>Push-back 2: we link out. Only the person who set up payouts can sign in there.</td></tr>
+<tr><td>Dispute outcomes</td><td>Events for opened, updated, closed, money taken and money returned. A due date for the answer, 7 to 21 days depending on the card network. An early "inquiry" stage on some cards takes no money. <b>A lost dispute can later turn to won.</b></td><td>Frame 1's states.</td></tr>
+<tr><td>Cards from outside Canada</td><td><b>+0.8%</b> on top of Stripe's card rate. (+2% only when a currency is converted; we charge in Canadian dollars and pay clubs in Canadian dollars.)</td><td>D2.</td></tr>
+<tr><td>Surcharges</td><td>A preview feature; in Canada credit cards only, at most 2.4%, shown before paying, <b>applied consistently across card networks and products</b>. Quebec's ban could not be confirmed on an official page.</td><td>D2 option b.</td></tr>
+<tr><td>Blocking foreign cards</td><td>A Radar custom rule can block cards issued outside Canada. It needs Radar's paid tier, and on direct charges it is the club account's Radar unless the platform takes control. The payer sees only "Your card was declined."</td><td>D2 option c.</td></tr>
+<tr><td>What is inside a payout</td><td>The payments inside a payout can be listed, <b>for automatic payouts only</b>.</td><td>Frame 3: a manual payout shows no breakdown.</td></tr>
+<tr><td>Tax on Stripe's fees</td><td>Stripe's payment processing fees are tax exempt; its software products are taxed.</td><td>D1, question 6.</td></tr>
+</tbody></table></div>
+
+<div class="verdict push"><h3>Where I push back, before the work</h3><ol>
+  <li><b>A payouts list is worth building even though Stripe has one.</b> Stripe's list cannot name the child or team, or our receipt number, and a treasurer matches a bank line to people, not to Stripe ids. Without it, a $1,284.50 deposit means a trip through Stripe and a spreadsheet. Settings is the owner's alone, so the list goes where the treasurer already works: a Payouts tab in Accounting (frame 3, ask 5). It also feeds the bank reconciliation project already on the list, which should read the same payouts rather than build a second copy.</li>
+  <li><b>No dispute workflow we cannot finish.</b> The club answers in Stripe with its evidence. We show the dispute, hold the book line, say when the answer is due, and link out. Nothing in the product submits evidence. Doing more means building Stripe's evidence form into our product: file uploads, per-reason fields, the due-date clock and Stripe's review states, for something a club meets a few times a year. The one cheap thing I would add is a <b>Copy</b> of the facts we already hold (sign-up, receipt, emails), ready to paste into Stripe (ask 13).</li>
+  <li><b>The book line stays while a dispute is open.</b> A lost dispute writes a returned line beside the receipt, exactly as 12c does for a reversed bank debit. A won one goes back to plain paid. Taking it off the book at once is drawn small in frame 1 and rejected: most disputes the club answers well come back, and taking money off and back on writes two lines for nothing (ask 3).</li>
+  <li><b>A downgrade stops online payments; it does not disconnect.</b> Pay now stops being offered; debits clearing, refunds and disputes still finish; the owner is told what is outstanding. Disconnecting is never a side effect of billing (ask 4).</li>
+  <li><b>The person who can answer a dispute is one person.</b> Only the person who set up payouts (here, the owner) can sign in to Stripe's dashboard. The registrar who sees "disputed" on Henry's row cannot act on it. So the item goes to the desk and the owner, and the desk's copy names who answers it. Amber goes only to that person, with an email on the day it opens and three days before it's due.</li>
+  <li><b>Refusing foreign cards strands a US team.</b> Bank debit needs a Canadian bank account, and e-transfer is Canadian too. Option c in D2 leaves a US team with a cheque. That is why I recommend absorbing the cost and counting it (D2, ask 9).</li>
+  <li><b>Disconnecting leaves open pay pages payable.</b> A card page opened before a disconnect can still be paid afterwards. The money reaches the club, but the club has just said it doesn't want online payments. I recommend disconnect closes open pages (ask 11).</li>
+</ol></div>
+
+<div class="card"><h3>How to read this</h3><ul>
+  <li>Before is drawn from the code on dev; after is the end state at true size. Tags: <button class="mk new" data-note="NEW marks something the product does not have today.">NEW</button> <button class="mk res" data-note="RESTYLED marks something that exists today and is redrawn.">RESTYLED</button> <button class="mk unc" data-note="UNCHANGED marks something kept as it is.">UNCHANGED</button> <button class="mk pv" data-note="Every word on this page is provisional. Final words go through /marketing after you rule, before any code.">PROVISIONAL</button>. Every tag opens a note.</li>
+  <li><b>Every fee is computed</b> on load from the two rates as the code holds them (card <span data-r="card"></span>, bank debit <span data-r="bank"></span>, on the base, half up to the cent). Stripe's own costs used on D1 to D3 are Stripe's published figures, each named with the date read. No rate of ours is typed on this page.</li>
+  <li>Fixture: Northfield Minor Ball. Its house league, the 2026 Fall House League, charges <span data-c="base:15000"></span>; Henry Kim's family paid by card on Oct 2 (receipt 1041). Its tournament, the Northfield Fall Classic, has a <span data-c="base:40000"></span> entry with a <span data-c="base:10000"></span> deposit; the team is the Riverside Rockets 12U. Owner Sam Patel, treasurer Dana Ortiz, registrar Priya Nair. The family pays the fee (the default) unless a frame says so. Dates run past today so every state can be shown.</li>
+  <li>Settled and not reopened: direct charges, FieldLogicHQ never holds the money; Stripe covers losses and FieldLogicHQ pays Stripe's fees; a returned bank debit's CA$5 is the club's, on its next invoice, free and comped clubs exempt; the family pays the fee by default; the treasurer logs and never refunds; counsel's gate.</li>
+  <li><code>/ux</code> and <code>/design</code> ran on this page before the hand-off; what they changed is on the Journeys &amp; reviews tab.</li>
+</ul></div>
+</section>
+
+
+<!-- ===================================================================== 1 DISPUTE -->
+<section class="pane" data-pane="dispute" hidden>
+<h2 style="margin-top:12px">1 · A card payment is disputed</h2>
+<p class="cap">Who sees it: the people who refund in that flow (house league: the desk; a tournament: whoever runs tournaments) and the owner. Who can answer it: <b>only the person who set up payouts</b>, because only they can sign in to Stripe. Here that is Sam Patel, the owner. The treasurer sees the row and the Money note, as for every payment, and gets no door. The family is not told by us (ask 2): their bank started it and tells them. <b>Amber goes only to the person who can act</b>; everyone else sees the same facts in the quiet info chip.</p>
+
+<p class="sp-cap">BEFORE · today a card dispute changes nothing on screen</p>
+<div class="dt-wrap fit"><div class="dt ak" data-k style="padding:24px 0 40px"><div class="pg">
+  <div class="ph1"><div><div class="ey">2026 Fall House League</div><h1>Registrations</h1></div></div>
+  <div class="panel"><table class="kt"><thead><tr><th>Player</th><th>Division</th><th>Status</th><th>Fee</th><th></th></tr></thead><tbody>
+    <tr><td><span class="nm">Ava Chen</span></td><td>U10 Division A</td><td><span class="pill ok">Accepted</span></td><td class="fee"><b>$150.00 paid</b><span class="s2">Card · Oct 20 · receipt 1082</span></td><td class="r">⋯</td></tr>
+    <tr class="hl"><td><span class="nm">Henry Kim</span><span class="s2">Grace Kim</span></td><td>U10 Division A</td><td><span class="pill ok">Accepted</span></td><td class="fee"><b>$150.00 paid</b><span class="s2">Card · Oct 2 · receipt 1041</span></td><td class="r">⋯</td></tr>
+    <tr><td><span class="nm">Theo Grant</span></td><td>U8 Division B</td><td><span class="pill ok">Accepted</span></td><td class="fee"><span class="pill am">$150.00 owing · 12 days</span></td><td class="r">⋯</td></tr>
+  </tbody></table></div>
+</div></div></div>
+<p class="cap">Henry's row on Oct 28, the day the cardholder's bank opened the dispute and Stripe took <span data-c="tot:15000"></span> out of the club's balance. The club finds out from Stripe's email to Sam, or from a payout that's short. <button class="mk unc" data-note="Today's Registrations table and Fee cell for a paid child, drawn from 12b and 12c.">UNCHANGED</button></p>
+
+<h3>After · the same table, the day it opens</h3>
+<div class="dt-wrap fit"><div class="dt ak" data-k style="padding:24px 0 40px"><div class="pg">
+  <div class="ph1"><div><div class="ey">2026 Fall House League</div><h1>Registrations</h1></div></div>
+  <div class="panel"><table class="kt"><thead><tr><th>Player</th><th>Division</th><th>Status</th><th>Fee</th><th></th></tr></thead><tbody>
+    <tr><td><span class="nm">Ava Chen</span></td><td>U10 Division A</td><td><span class="pill ok">Accepted</span></td><td class="fee"><b>$150.00 paid</b><span class="s2">Card · Oct 20 · receipt 1082</span></td><td class="r">⋯</td></tr>
+    <tr class="hl"><td><span class="nm">Henry Kim</span><span class="s2">Grace Kim</span></td><td>U10 Division A</td><td><span class="pill ok">Accepted</span></td><td class="fee"><b>$150.00 paid</b> <span class="chip info">Disputed</span><span class="s2">Sam Patel answers by Nov 11</span></td><td class="r">⋯</td></tr>
+    <tr><td><span class="nm">Theo Grant</span></td><td>U8 Division B</td><td><span class="pill ok">Accepted</span></td><td class="fee"><span class="pill am">$150.00 owing · 12 days</span></td><td class="r">⋯</td></tr>
+  </tbody></table></div>
+</div></div></div>
+<p class="cap"><button class="mk new" data-note="An info chip and one second line, as 12c's clearing state. The row is the desk's, and the desk can't act, so it's info for everyone; the owner's amber is in Needs attention and the owner's email. The chip opens the record at the Fee section.">NEW</button> <button class="mk pv" data-note="Provisional words. A dispute reason is Stripe's code, said plainly: fraudulent → says they didn't make this payment; product not received → says they didn't get what they paid for; duplicate → says they were charged twice; credit not processed → says a promised refund didn't arrive; unrecognized or general → doesn't recognize this payment.">PROVISIONAL</button> The second line fits the Fee column at 1440; the held amount moves to the record. Still paid, still in the book (ask 3).</p>
+
+<h3>The Fee cell through a dispute's life</h3>
+<div class="states">
+  <div><p class="sp-cap" style="margin-top:0">Inquiry: the bank asks, no money taken</p>
+  <div class="ak panel" data-k style="padding:12px 16px"><div class="fee"><b>$150.00 paid</b> <span class="chip info">Bank asking</span><span class="s2">Sam Patel answers by Nov 4</span></div></div>
+  <p class="cap">Some cards start with an inquiry. Nothing is taken. It raises the owner's item and email like a dispute, because answering can stop one.</p></div>
+  <div><p class="sp-cap" style="margin-top:0">Answered, waiting on the bank</p>
+  <div class="ak panel" data-k style="padding:12px 16px"><div class="fee"><b>$150.00 paid</b> <span class="chip info">Disputed · with the bank</span><span class="s2">Answered Nov 3</span></div></div>
+  <p class="cap">Nobody here has anything to do. The bank decides; this can take weeks.</p></div>
+  <div><p class="sp-cap" style="margin-top:0">Not answered by the due date</p>
+  <div class="ak panel" data-k style="padding:12px 16px"><div class="fee"><b>$150.00 paid</b> <span class="chip info">Disputed · not answered</span><span class="s2">Was due Nov 11</span></div></div>
+  <p class="cap">Stripe sends it to the bank without the club's side; it usually ends lost.</p></div>
+  <div><p class="sp-cap" style="margin-top:0">Won, or withdrawn by the cardholder</p>
+  <div class="ak panel" data-k style="padding:12px 16px"><div class="fee"><b>$150.00 paid</b><span class="s2">Card · receipt 1041 · dispute won Dec 14</span></div></div>
+  <p class="cap">Back to plain paid; the money returns to the club's balance. A family that calls to say it was a mistake is told to withdraw it with their bank; Stripe then closes it as won.</p></div>
+  <div><p class="sp-cap" style="margin-top:0">Lost</p>
+  <div class="ak panel" data-k style="padding:12px 16px"><div class="fee"><button class="pill bad">$150.00 owing · lost dispute</button><span class="s2">Receipt 1041 returned to the card Dec 14</span></div></div>
+  <p class="cap">Amber, because now the desk has something to do: collect it. As 12c's reversed bank debit, a returned line beside the receipt, never a deleted one.</p></div>
+  <div><p class="sp-cap" style="margin-top:0">Phone · the desk's row</p>
+  <div class="ph ak" data-k style="width:100%"><div class="plist"><div class="prow hl"><div><b>Henry Kim</b><div class="d">U10 Division A</div><div style="margin-top:6px"><span class="chip info">Disputed</span></div><div class="d2">$150.00 paid · Sam Patel answers by Nov 11</div></div><span class="dots">⋯</span></div></div></div></div>
+</div>
+
+<h3>After · the record, Fee section <button class="mk new" data-note="A dispute block in the record's Fee section, under 12c's 'To the card' block. Reads first; nothing to edit. Answer in Stripe is shown only to the person who set up payouts; everyone else sees who answers.">NEW</button></h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 560px;max-width:640px"><p class="sp-cap" style="margin-top:0">Sam (owner, set up payouts) · desktop window</p>
+  <div class="ak win" data-k style="padding:24px;border-radius:10px"><div class="dlg">
+    <div class="dh"><div class="t"><div class="ey">2026 Fall House League · U10 Division A</div><h4>Henry Kim</h4></div><span class="xx">×</span></div>
+    <div class="db">
+      <div class="sec"><h5>Fee</h5><div class="facts"><span>Fee</span><span>$150.00 · paid Oct 2 by card, Visa •••• 4242 · receipt 1041</span><span>Paid by</span><span>Grace Kim · <span data-c="tot:15000"></span> with the <span data-c="fee:15000"></span> processing fee</span></div></div>
+      <div class="rf"><div class="top"><b>The cardholder's bank is disputing this payment</b><span class="chip info">Answer by Nov 11</span></div>
+        <div class="facts" style="grid-template-columns:150px minmax(0,1fr)"><span>Opened</span><span>Oct 28</span><span>Why</span><span>The cardholder says they didn't make this payment</span><span>Held by Stripe</span><span><span data-c="tot:15000"></span>, taken from the club's Stripe balance until the bank decides</span><span>Answer by</span><span>Nov 11 at 7:59 p.m.</span><span>Dispute fee</span><span>$15.00 goes on your next FieldLogicHQ invoice. Answering adds $15.00, which comes back if you win.</span><span>Stripe reference</span><span class="ref">du_1QX4…8kL2 <span class="cpy" aria-label="Copy">⧉</span></span></div>
+        <div class="row"><span class="btn pri">Answer in Stripe</span><span class="btn">Copy the facts for Stripe</span></div>
+        <p class="s2" style="margin:0">Stripe asks for your side with evidence. The copy holds what we have: the sign-up on Sep 14 by Grace Kim, the refund policy shown beside Pay, and receipt 1041 emailed to grace.kim@example.ca on Oct 2.</p>
+      </div>
+    </div>
+  </div></div>
+  <p class="cap">The fee line follows the ruling on ask 1: every club is invoiced, free and comped clubs included. A comped club reads "$15.00 goes on a FieldLogicHQ invoice", since it has no subscription invoice until its comp ends. The Copy follows ask 13. If Stripe doesn't open: "Stripe didn't open. Try again." in place, as Open Stripe does today.</p></div>
+  <div class="col" style="flex:1 1 360px;max-width:420px"><p class="sp-cap" style="margin-top:0">Priya (registrar) · phone · 390</p>
+  <div class="ph ak" data-k><div class="fsw" style="min-height:560px">
+    <div class="fh"><span class="pbk">←</span><div class="t"><b>Henry Kim</b><span class="s2" style="margin:0">U10 Division A</span></div></div>
+    <div class="fb">
+      <div class="facts"><span>Fee</span><span>$150.00 · paid Oct 2 by card · receipt 1041</span></div>
+      <div class="rf"><div class="top"><b>The cardholder's bank is disputing this payment</b></div>
+        <span class="chip info" style="align-self:flex-start">Sam Patel answers by Nov 11</span>
+        <div class="facts"><span>Why</span><span>The cardholder says they didn't make this payment</span><span>Held by Stripe</span><span><span data-c="tot:15000"></span></span></div>
+        <p class="s2" style="margin:0">Only Sam Patel, who set up payouts, can sign in to Stripe. We emailed Sam on Oct 28. If the family calls, they can withdraw it with their bank.</p>
+        <span class="btn" style="min-height:44px;justify-content:center">Copy the facts for Stripe</span>
+      </div>
+      <p class="s2" style="margin:0">No refund while it's open: Stripe has already taken the money back, and a refund on top would pay the family twice.</p>
+    </div></div></div>
+  <p class="cap">The treasurer sees the same read-only block without Copy. If the person who set up payouts has left the club: "Sam Patel set up payouts and is no longer a member. Only Stripe can change who signs in." How Stripe changes an Express account's representative is a check for the build.</p></div>
+</div>
+
+<h3>After · Needs attention, and the owner's email <button class="mk new" data-note="One item per dispute. The owner's copy carries the action; the desk's copy says who answers. It clears itself when the dispute is answered or its due date passes. A won dispute raises nothing; a lost one raises one item that clears when the child is paid or excused. The owner is emailed when it opens and three days before it's due, because a deadline in an app nobody opens is no deadline.">NEW</button></h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 480px;max-width:620px"><p class="sp-cap" style="margin-top:0">Opened · Sam's copy</p>
+  <div class="ak panel" data-k><div class="na"><span class="ico"><svg><use href="#i-warn"/></svg></span><div><b>Henry Kim's card payment is disputed</b><div class="d">Grace Kim's bank is disputing receipt 1041 (<span data-c="tot:15000"></span>): the cardholder says they didn't make this payment. Stripe has taken <span data-c="tot:15000"></span> from the club's Stripe balance until the bank decides. Answer in Stripe by Nov 11.</div><div class="bb"><span class="btn sm pri">Answer in Stripe</span><span class="btn sm">Open Henry's record</span></div></div><span class="tm">Oct 28</span></div></div>
+  <p class="sp-cap">Opened · everyone else who refunds in house league</p>
+  <div class="ak panel" data-k><div class="na" style="border-left-color:var(--info-ink)"><span class="ico" style="background:var(--info-fill);color:var(--info-ink)">i</span><div><b>Henry Kim's card payment is disputed</b><div class="d">Grace Kim's bank is disputing receipt 1041 (<span data-c="tot:15000"></span>). Sam Patel answers it in Stripe by Nov 11. If the club wins, nothing changes here.</div><div class="bb"><span class="btn sm">Open Henry's record</span></div></div><span class="tm">Oct 28</span></div></div>
+  <p class="sp-cap">Lost · to the desk and the owner</p>
+  <div class="ak panel" data-k><div class="na"><span class="ico"><svg><use href="#i-warn"/></svg></span><div><b>Henry Kim's dispute was lost</b><div class="d">The bank returned receipt 1041 to the card on Dec 14. It's out of the season's book, and Henry owes $150.00 again. We haven't emailed the family.</div><div class="bb"><span class="btn sm">Open Henry's record</span></div></div><span class="tm">Dec 14</span></div></div>
+  <p class="cap">Clears itself when Henry is paid or excused. "Email families who owe" leaves Henry out until then: a family that just took its money back through the bank hears from a person, not a reminder.</p></div>
+  <div class="col" style="flex:1 1 420px;max-width:560px"><p class="sp-cap" style="margin-top:0">The owner's email, when it opens <button class="mk pv" data-note="Provisional. A second email three days before the due date if it isn't answered: 'Henry Kim's dispute is due Nov 11'. Sent to the person who set up payouts and to the owner if they differ. A suspended club's owner still gets both.">PROVISIONAL</button></p>
+  <div class="mail"><div class="mh"><span><b>From</b> FieldLogicHQ</span><span><b>To</b> sam.patel@northfieldminorball.ca</span><span><b>Subject</b> A card payment to Northfield Minor Ball is disputed</span></div>
+    <div class="mb"><p>Grace Kim's bank is disputing a <span data-c="tot:15000"></span> card payment for Henry Kim (receipt 1041, Oct 2). The cardholder says they didn't make this payment.</p>
+      <div class="blk"><div class="ln"><span>Held by Stripe</span><span data-c="tot:15000"></span></div><div class="ln"><span>Answer by</span><span>Nov 11 at 7:59 p.m.</span></div></div>
+      <p>Answer it in Stripe with your evidence. Henry's record has the facts to copy.</p></div></div>
+  <ul class="cap" style="padding-left:18px;display:flex;flex-direction:column;gap:5px">
+    <li><b>A team:</b> "Riverside Rockets 12U's card payment is disputed", to whoever runs tournaments and the owner, opening the team's record at Payments, where the row carries the same chip.</li>
+    <li><b>Siblings on one payment:</b> the dispute is on the whole payment. The item names both children; each child's Fee cell carries the chip. A lost dispute returns both shares.</li>
+    <li><b>A partly refunded payment:</b> the held figure is what Stripe says it took, never our arithmetic.</li>
+    <li><b>Already refunded in full:</b> the item says "This payment was refunded on Oct 20; tell Stripe that in your answer," and the book doesn't change.</li>
+    <li><b>Lost, collected another way, then turned to won:</b> the child has paid twice. Frame 2's item, with 12c's "Record the refund sent another way", since the second payment was a cheque or e-transfer.</li>
+  </ul></div>
+</div>
+
+<h3>After · the Money band while a dispute is open <button class="mk new" data-note="A band note, never a tile: the book hasn't changed while it's open (ask 3), so no figure moves. It shows only while there is one, and links to the disputed rows.">NEW</button></h3>
+<div class="ak" data-k style="max-width:1040px;background:none"><div class="band"><div><div class="k">Owed</div><div class="v">$12,600.00</div><div class="h">84 players</div></div><div><div class="k">Received</div><div class="v">$11,250.00</div><div class="h">75 players · after $515.00 refunded</div></div><div><div class="k">Still owing</div><div class="v am">$1,350.00</div><div class="h">9 players</div></div></div>
+<div class="bandnote"><span class="lnk">1 card payment is disputed.</span> Stripe is holding <span data-c="tot:15000"></span> from the club's balance until the bank decides; it stays in Received until then.</div></div>
+
+<h3>Rejected · take it off the book the moment it opens <button class="mk unc" data-note="Drawn small so you can see what you'd be choosing. Rejected: a dispute the club answers well often comes back, and the book would read owing for weeks over money that may return.">REJECTED</button></h3>
+<div class="ak panel" data-k style="width:400px;max-width:100%;padding:12px 16px"><div class="fee"><button class="pill bad">$150.00 owing · disputed</button><span class="s2">Receipt 1041 returned Oct 28 · back if the club wins</span></div></div>
+<p class="cap">Henry would count as owing while the club argues he paid. Two book lines (off, then on) for every dispute won.</p>
+
+<h3>What a dispute costs, and who pays (ask 1)</h3>
+<div class="tw"><table class="t" style="min-width:640px"><thead><tr><th>How it ends</th><th class="num">Stripe bills FieldLogicHQ</th><th>Under ask 1 A, the club's next invoice</th></tr></thead><tbody>
+<tr><td>The club doesn't answer</td><td class="num">$15.00</td><td>"Card dispute fee · Oct 28 · $15.00"</td></tr>
+<tr><td>The club answers and wins</td><td class="num">$15.00 (Stripe returns the second $15.00)</td><td>$15.00</td></tr>
+<tr><td>The club answers and loses</td><td class="num">$30.00</td><td>$30.00</td></tr>
+</tbody></table></div>
+<p class="cap">For scale: on this <span data-c="base:15000"></span> card payment, FieldLogicHQ keeps <b data-k2="keep:15000:card"></b> after Stripe's costs (D1 shows the arithmetic). One unanswered dispute costs what we keep on about <b data-k2="per:15000"></b> such payments. The invoice amount is Stripe's own figure at the time, never typed, as the returned-debit line is. Ruled 10-26: free and comped clubs are invoiced too.</p>
+<p class="cap"><b>For the build to check in Stripe's docs:</b> whether Stripe takes the whole <span data-c="tot:15000"></span> from the club (our <span data-c="fee:15000"></span> included) while FieldLogicHQ keeps the fee. If so, a lost dispute costs the club our fee too, and the lost line has to say whether that fee goes back to the club.</p>
+</section>
+
+<!-- ===================================================================== 2 PAID TWICE -->
+<section class="pane" data-pane="twice" hidden>
+<h2 style="margin-top:12px">2 · Paid twice</h2>
+<div class="find" style="margin-top:8px"><h3>The team finding, again, because it shapes this frame</h3><p style="margin:0">A team can be overpaid today, silently: a pay page left open while the desk records an e-transfer, then finished. So this frame has two halves. <b>Stop it</b> at the desk (ask 12) and <b>catch it</b> when it lands anyway (ask 10). House league already catches it; it only needs a plain label.</p></div>
+
+<h3>Stop it · the desk records a payment while a pay page is open (ask 12)</h3>
+<p class="cap">Where: the team's record › Payments, which records in place (no window). The Riverside Rockets paid the <span data-c="base:10000"></span> deposit online; their contact opened the pay page for the <span data-c="base:30000"></span> balance at 2:14 p.m.; at 3:05 p.m. Dana records their e-transfer.</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 480px;max-width:600px"><p class="sp-cap" style="margin-top:0">BEFORE · Record the balance, today</p>
+  <div class="ak panel" data-k>
+    <div class="sumln"><b>Owes $300.00 <span class="rest">· paid $100.00 of $400.00</span></b></div>
+    <div style="padding:10px 16px 0" class="ey">Received</div>
+    <div class="prw"><span>Sep 18</span><span class="lab">Deposit · Online, card · receipt 1061<span class="chip ok">In ledger</span></span><span class="amt">$100.00</span><span class="dots">⋯</span></div>
+    <div style="padding:10px 16px 0;border-top:1px solid var(--line)" class="ey">Still due</div>
+    <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line)"><b style="font:650 14px/1.3 'Inter'">Record the balance</b>
+      <div class="facts" style="grid-template-columns:120px minmax(0,1fr);align-items:center"><span>Amount *</span><span class="fld">$300.00</span><span>Paid on *</span><span class="fld">Oct 26, 2026</span><span>How it arrived</span><span class="fld">E-transfer <span class="chev"></span></span></div>
+      <span class="s2" style="margin:0">Any date up to today. Posts one line to the tournament's book, dated the day you pick.</span>
+      <div class="row"><span class="btn pri">Record</span><span class="btn" style="border-color:transparent">Cancel</span></div></div>
+  </div>
+  <p class="cap">No word about the pay page open since 2:14 p.m. <button class="mk unc" data-note="Today's in-place record form, drawn from the team record's Payments section. It refuses only while a bank debit clears.">UNCHANGED</button></p></div>
+  <div class="col" style="flex:1 1 480px;max-width:600px"><p class="sp-cap" style="margin-top:0">AFTER · the form says it, and recording closes the page</p>
+  <div class="ak panel" data-k>
+    <div class="sumln"><b>Owes $300.00 <span class="rest">· paid $100.00 of $400.00</span></b></div>
+    <div style="padding:10px 16px 0" class="ey">Received</div>
+    <div class="prw"><span>Sep 18</span><span class="lab">Deposit · Online, card · receipt 1061<span class="chip ok">In ledger</span></span><span class="amt">$100.00</span><span class="dots">⋯</span></div>
+    <div style="padding:10px 16px 0;border-top:1px solid var(--line)" class="ey">Still due</div>
+    <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line)"><b style="font:650 14px/1.3 'Inter'">Record the balance</b>
+      <div class="warnln"><span class="i"><svg><use href="#i-warn"/></svg></span><span>The team's contact opened a pay page for $300.00 at 2:14 p.m. Recording this closes it, so the team can't pay twice.</span></div>
+      <div class="facts" style="grid-template-columns:120px minmax(0,1fr);align-items:center"><span>Amount *</span><span class="fld">$300.00</span><span>Paid on *</span><span class="fld">Oct 26, 2026</span><span>How it arrived</span><span class="fld">E-transfer <span class="chev"></span></span></div>
+      <span class="s2" style="margin:0">Any date up to today. Posts one line to the tournament's book, dated the day you pick.</span>
+      <div class="row"><span class="btn pri">Record</span><span class="btn" style="border-color:transparent">Cancel</span></div></div>
+  </div>
+  <p class="cap"><button class="mk new" data-note="A warning line inside the form, shown only while a pay page for this team or child is open. Recording by hand (Record, Mark paid, house league's Mark received) closes the open page. If the hand payment covers only part, the team's pay link stays good for what's left: it always opens at what is owed now.">NEW</button> A contact who returns to the closed page lands on the team's own pay page, which says "Paid in full". Stripe's bare "expired" page is only seen from an old browser tab.</p></div>
+</div>
+
+<h3>Catch it · a team payment lands on a team that owes less (ask 10)</h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 480px;max-width:600px"><p class="sp-cap" style="margin-top:0">BEFORE · the record after the second payment</p>
+  <div class="ak panel" data-k>
+    <div class="sumln"><b>Paid <span class="rest">· $700.00 received of $400.00</span></b></div>
+    <div class="prw"><span>Sep 18</span><span class="lab">Deposit · Online, card · receipt 1061<span class="chip ok">In ledger</span></span><span class="amt">$100.00</span><span class="dots">⋯</span></div>
+    <div class="prw"><span>Oct 26</span><span class="lab">Balance · E-transfer<span class="chip ok">In ledger</span></span><span class="amt">$300.00</span><span class="dots">✎</span></div>
+    <div class="prw"><span>Oct 26</span><span class="lab">Balance · Online, card · receipt 1093<span class="chip ok">In ledger</span></span><span class="amt">$300.00</span><span class="dots">⋯</span></div>
+  </div>
+  <p class="cap">Drawn from the figures the code writes; the summary's exact words for a team paid past its entry weren't checked. What's missing is the point: no flag, no item. <button class="mk unc" data-note="Today: the online landing records the payment, the team's total rises past the entry, the receipt is emailed. Nothing is raised. Hand-recorded rows carry a pencil; online rows the ⋯ menu, where Refund to the card lives.">UNCHANGED</button></p></div>
+  <div class="col" style="flex:1 1 480px;max-width:600px"><p class="sp-cap" style="margin-top:0">AFTER · booked, and flagged (ask 10 A)</p>
+  <div class="ak panel" data-k>
+    <div class="sumln" style="flex-wrap:wrap"><b>Paid <span class="rest">· $700.00 received of $400.00</span></b><button class="pill bad">$300.00 paid twice</button></div>
+    <div class="prw"><span>Sep 18</span><span class="lab">Deposit · Online, card · receipt 1061<span class="chip ok">In ledger</span></span><span class="amt">$100.00</span><span class="dots">⋯</span></div>
+    <div class="prw"><span>Oct 26</span><span class="lab">Balance · E-transfer<span class="chip ok">In ledger</span></span><span class="amt">$300.00</span><span class="dots">✎</span></div>
+    <div class="prw hl"><span>Oct 26</span><span class="lab">Balance · Online, card · receipt 1093<span class="chip ok">In ledger</span><span class="tg" style="flex-basis:100%">Paid after the team had already paid in full. Refund it from ⋯.</span></span><span class="amt">$300.00</span><span class="dots">⋯</span></div>
+  </div>
+  <p class="cap"><button class="mk new" data-note="An amber pill on the summary for the people who refund (it opens the row); the treasurer sees the same words as a plain line. The card row's third line names it. The refund door is the card row's ⋯ › Refund to the card, as 12c built: the refund always comes from the card payment, whichever arrived first, because only it can go back by itself.">NEW</button> Why book it rather than refuse it: the money is in the club's Stripe balance either way, and the book should say what Stripe says. 12c's refund takes it back out.</p></div>
+</div>
+<div class="spec">
+  <div class="col" style="flex:1 1 480px;max-width:600px"><p class="sp-cap" style="margin-top:0">Needs attention · to whoever runs tournaments and the owner</p>
+  <div class="ak panel" data-k><div class="na"><span class="ico"><svg><use href="#i-warn"/></svg></span><div><b>Riverside Rockets 12U paid $300.00 twice</b><div class="d">A card payment of <span data-c="tot:30000"></span> (receipt 1093) landed on Oct 26 after the team had already paid in full. The money is in the club's Stripe balance. Refund it to the card.</div><div class="bb"><span class="btn sm pri">Refund to the card</span><span class="btn sm">Open the team</span></div></div><span class="tm">Oct 26</span></div></div></div>
+  <div class="col" style="flex:1 1 420px;max-width:560px"><p class="sp-cap" style="margin-top:0">Refund to the card · 12c's window, already set</p>
+  <div class="ak win" data-k style="padding:20px;border-radius:10px"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Refund Riverside Rockets 12U's balance payment?</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="radios"><div class="rad on"><span class="dot"></span><span><b>All of it to the card, Visa •••• 4242</b><span class="s3">Paid twice: the team had already paid by e-transfer</span></span></div><div class="rad"><span class="dot"></span><span><b>Part of it</b></span></div></div>
+      <div class="chk"><span class="bx on">✓</span><span>Include the <span data-c="fee:30000"></span> processing fee · <span data-c="tot:30000"></span> back</span></div></div>
+    <div class="df"><span class="s">The team's contact is emailed.</span><span class="btn">Cancel</span><span class="btn pri">Refund and email</span></div>
+  </div></div></div>
+</div>
+<ul class="cap" style="padding-left:18px;display:flex;flex-direction:column;gap:5px">
+  <li><b>More than owed but not all of it twice</b> (owed $100.00, paid $300.00): the pill reads "$200.00 paid twice", and the window opens on <b>Part of it</b> at $200.00 with the reason "Paid twice". A part refund never includes the fee (12c's rule).</li>
+  <li><b>The whole payment was extra:</b> All of it, with the fee box ticked, since the team shouldn't pay a processing fee on money it didn't owe. Unticking it stays the refunder's call.</li>
+  <li><b>The club keeps it or settles it another way:</b> the row's ⋯ also offers "Keep it as a credit" (with a reason) and 12c's "Record the refund sent another way". Never for a Stripe refund that failed (12c's rule stands).</li>
+  <li><b>The pill and the item clear themselves</b> when the extra is refunded or kept, or the entry is raised so nothing is extra.</li>
+  <li><b>Option B, refuse at landing like house league:</b> the payment isn't booked and the item carries the refund. It works, but the book disagrees with Stripe until someone acts, and the team's record doesn't show the money at all.</li>
+  <li><b>Phone:</b> the summary wraps, the pill on its own line under "Paid"; the rows are 12c's payment rows.</li>
+</ul>
+
+<h3>House league · the item gets a plain label <button class="mk res" data-note="Same item, same people (the desk), same refund door. Only the title and the why change when the reason is 'already received'. Other reasons keep today's 'couldn't be recorded'.">RESTYLED</button></h3>
+<div class="spec">
+  <div class="col" style="flex:1 1 440px;max-width:560px"><p class="sp-cap" style="margin-top:0">BEFORE</p>
+  <div class="ak panel" data-k><div class="na"><span class="ico"><svg><use href="#i-warn"/></svg></span><div><b>A card payment for Henry Kim couldn't be recorded</b><div class="d">Grace Kim paid <span data-c="tot:15000"></span> by card on Oct 26 for Henry Kim, but it couldn't go on the registration: the fee was already marked received. The money is in the club's Stripe balance. Refund it to the card.</div><div class="bb"><span class="btn sm">Open Henry's record</span></div></div><span class="tm">Oct 26</span></div></div></div>
+  <div class="col" style="flex:1 1 440px;max-width:560px"><p class="sp-cap" style="margin-top:0">AFTER</p>
+  <div class="ak panel" data-k><div class="na"><span class="ico"><svg><use href="#i-warn"/></svg></span><div><b>Henry Kim's fee was paid twice</b><div class="d">Grace Kim paid <span data-c="tot:15000"></span> by card on Oct 26, after Henry's fee was already marked received. The money is in the club's Stripe balance. Refund it to the card.</div><div class="bb"><span class="btn sm pri">Refund to the card</span><span class="btn sm">Open Henry's record</span></div></div><span class="tm">Oct 26</span></div></div></div>
+</div>
+</section>
+
+
+<!-- ===================================================================== 3 PAYOUTS -->
+<section class="pane" data-pane="payouts" hidden>
+<h2 style="margin-top:12px">3 · The payouts list: match a bank line to people</h2>
+<p class="cap">Who: Dana the treasurer, with the bank statement open, sees "STRIPE 1,284.50" on Oct 24 and needs to know whose money that was. Today she can't find out: Stripe's dashboard is the owner's, and <b>Settings, where the Payouts card lives, is the owner's alone</b>. So the list goes where Dana already works (ask 5 A): a <b>Payouts</b> tab at the end of the Accounting tab row. A club without Accounting has only its owner doing this job, so there the same list sits collapsed on the Payouts card. Read only, newest first.</p>
+
+<p class="sp-cap">BEFORE · Accounting, today (no payouts anywhere in the product)</p>
+<div class="ak panel" data-k style="max-width:1040px;padding:0 16px"><div class="utabs"><span class="on">Overview</span><span>Budget</span><span>Ledger</span><span>Budget vs. Actual</span></div></div>
+<p class="cap"><button class="mk unc" data-note="Today's Accounting tab row for a club with no rep teams (Teams, Allocations and Payment requests appear only when it runs rep teams).">UNCHANGED</button> Dana's only route to a payout's contents is to ask Sam to open Stripe.</p>
+
+<h3>After · Accounting › Payouts, one payout opened (1440) <button class="mk new" data-note="A new last tab in the Accounting row, for everyone who reads Accounting (owner, club admin, treasurer). Present only while the club takes, or has taken, online payments. Each payout opens to what's inside it; each name opens its record read only for the treasurer. Export is one button.">NEW</button> <button class="mk pv" data-note="Provisional words.">PROVISIONAL</button></h3>
+<div class="dt-wrap fit"><div class="dt ak" data-k style="padding:24px 0 40px"><div class="pg">
+  <div class="ph1"><div><div class="ey">Northfield Minor Ball</div><h1>Accounting</h1></div><span class="sp"></span><span class="btn">Export</span></div>
+  <div class="utabs"><span>Overview</span><span>Budget</span><span>Ledger</span><span>Budget vs. Actual</span><span class="on">Payouts</span></div>
+  <div class="tbar"><span class="fld">Since Sep 1, 2026 <span class="chev"></span></span><span class="fld srch">Find an amount, a name or a receipt</span><span class="sp"></span><span class="foot">Paid out to the bank account ending 3391</span></div>
+  <div class="panel">
+    <div class="po hd"><span>Sent</span><span class="hide-s">Arrives</span><span>Status</span><span class="r">Amount</span><span></span></div>
+    <div class="po"><span>Oct 27</span><span class="hide-s">Oct 28</span><span><span class="chip info">On its way</span></span><span class="r">$600.00</span><span class="tw2"><span class="chev" style="transform:rotate(-45deg)"></span></span></div>
+    <div class="po open"><span>Oct 23</span><span class="hide-s">Oct 24</span><span><span class="chip ok">Paid</span> <span class="s2" style="display:inline">· 9 payments, 1 refund</span></span><span class="r">$1,284.50</span><span class="tw2"><span class="chev"></span></span></div>
+    <div class="pin"><table><thead><tr><th>Date</th><th>Who</th><th>What</th><th>Receipt</th><th class="r">Amount</th></tr></thead><tbody>
+      <tr><td>Oct 21</td><td><span class="lnk">Henry and Lily Grant</span></td><td>House league · card</td><td>1084</td><td class="r">$300.00</td></tr>
+      <tr><td>Oct 21</td><td><span class="lnk">Riverside Rockets 12U</span></td><td>Fall Classic balance · card</td><td>1086</td><td class="r">$300.00</td></tr>
+      <tr><td>Oct 20</td><td><span class="lnk">Ava Chen</span></td><td>House league · card</td><td>1082</td><td class="r">$150.00</td></tr>
+      <tr><td>Oct 20</td><td><span class="lnk">Theo Grant</span></td><td>Refund to the card</td><td>1079</td><td class="r">−$150.00</td></tr>
+      <tr><td>Oct 19</td><td><span class="lnk">Maya Singh</span></td><td>House league · bank debit</td><td>1078</td><td class="r">$150.00</td></tr>
+      <tr><td colspan="5" class="s2" style="color:var(--dim)">… every payment is listed; five more rows here …</td></tr>
+      <tr class="sum"><td colspan="4">Paid to the bank account ending 3391 on Oct 24</td><td class="r">$1,284.50</td></tr>
+    </tbody></table>
+    <p class="s2" style="margin:6px 0 0">Amounts are what reached the club: after the processing fee when the club pays it.</p></div>
+    <div class="po"><span>Oct 20</span><span class="hide-s">Oct 21</span><span><span class="chip ok">Paid</span></span><span class="r">$2,450.00</span><span class="tw2"><span class="chev" style="transform:rotate(-45deg)"></span></span></div>
+    <div class="po"><span>Oct 16</span><span class="hide-s">—</span><span><span class="chip info">Didn't arrive</span> <span class="s2" style="display:inline">· the bank account is closed · Sam Patel fixes it in Stripe</span></span><span class="r">$918.25</span><span class="tw2"><span class="chev" style="transform:rotate(-45deg)"></span></span></div>
+  </div>
+</div></div></div>
+<p class="cap">Dana sees "Didn't arrive" as info, because the fix is Sam's; Sam sees it as an amber pill that opens Stripe. It clears when Stripe's next payout to a working account succeeds and carries the money. The Find box matches the amount on her statement ("1284.50" finds the Oct 23 payout).</p>
+
+<div class="spec">
+  <div class="col"><p class="sp-cap" style="margin-top:0">Phone · 390, one payout opened</p>
+  <div class="ph ak" data-k><div class="pbar"><span class="pbk">☰</span>Accounting<span class="sp"></span><span class="pbk" aria-label="Export">⇩</span></div>
+    <div class="ptabs"><span>Overview</span><span>Budget</span><span>Ledger</span><span class="on">Payouts</span></div>
+    <div style="padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--paper)">
+      <div class="prow"><div><b style="color:var(--ink)">$600.00 · arrives Oct 28</b><div class="d"><span class="chip info">On its way</span></div></div><span class="dots"><span class="chev" style="transform:rotate(-45deg)"></span></span></div>
+      <div class="prow" style="background:linear-gradient(var(--olive-soft),var(--olive-soft)),var(--card)"><div><b style="color:var(--ink)">$1,284.50 · Oct 24</b><div class="d"><span class="chip ok">Paid</span> 9 payments, 1 refund</div></div><span class="dots"><span class="chev"></span></span></div>
+      <div class="panel" style="padding:4px 12px">
+        <div class="hist" style="padding:8px 0"><div><span>Oct 21</span><span>Henry and Lily Grant · 1084 · <b>$300.00</b></span></div><div><span>Oct 21</span><span>Riverside Rockets 12U · 1086 · <b>$300.00</b></span></div><div><span>Oct 20</span><span>Ava Chen · 1082 · <b>$150.00</b></span></div><div><span>Oct 20</span><span>Theo Grant · refund · <b>−$150.00</b></span></div><div><span>Oct 19</span><span>Maya Singh · 1078 · <b>$150.00</b></span></div></div></div>
+    </div></div></div>
+  <div class="col" style="flex:1 1 420px;max-width:600px"><p class="sp-cap" style="margin-top:0">A club without Accounting · the owner's Payouts card, closed</p>
+  <div class="ak panel" data-k>
+    <div style="padding:16px 20px 12px;display:flex;flex-direction:column;gap:6px"><div class="row" style="gap:10px"><span class="ey">Payouts</span><span class="chip ok">Taking payments</span></div><b style="font:700 19px/1.3 'Inter'">Teams can pay online</b><span style="color:var(--soft)">Processing fee: <span data-r="card"></span> per card payment, <span data-r="bank"></span> per bank debit.</span></div>
+    <div style="padding:0 20px 14px"><span class="btn pri">Open Stripe</span></div>
+    <div class="coll"><div class="ch"><b>Payouts to your bank</b><span class="rest">$600.00 on its way · last paid $1,284.50 on Oct 24</span><span class="tw2"><span class="chev" style="transform:rotate(-45deg)"></span></span></div></div>
+    <div style="padding:10px 20px 16px;display:flex;gap:8px;align-items:center;color:var(--soft);font-size:13.5px"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 5l-3 3M5 19l3-3M8.5 8.5l7 7M7 12l5 5-2 2a3.5 3.5 0 01-5-5zM17 12l-5-5 2-2a3.5 3.5 0 015 5z"/></svg><span class="lnk" style="color:var(--soft);text-decoration:underline">Disconnect payouts</span></div>
+  </div>
+  <p class="cap">Closed every time it opens; the same list opens inside it. Disconnect still ends the card's body, as built.</p>
+  <ul class="cap" style="padding-left:18px;display:flex;flex-direction:column;gap:6px">
+    <li><b>Nothing paid out yet:</b> "No payouts yet. Stripe sends the first one on its schedule after the first payment."</li>
+    <li><b>Loading:</b> the screen's one loading line ("Loading payouts"). <b>Stripe didn't answer:</b> "Stripe didn't answer. Try again." with a Try again button; nothing stale is shown as current.</li>
+    <li><b>A dispute's money taken:</b> "Henry Kim · dispute · −<span data-c="tot:15000"></span>"; when won, "dispute won · +<span data-c="tot:15000"></span>" in a later payout.</li>
+    <li><b>A payment made in Stripe directly</b> (not from FieldLogicHQ): "Not from FieldLogicHQ · $45.00". We name what we know and never guess.</li>
+    <li><b>A manual payout</b> (pressed in Stripe): "Stripe lists what's inside automatic payouts only." Stripe's own limit.</li>
+    <li><b>Export:</b> one row per payment with its payout's date and amount beside it, for the chosen dates. If it fails: "The export didn't finish. Try again."</li>
+    <li><b>Test mode:</b> test payouts show with the Test mode chip; the export names it in its file name.</li>
+    <li><b>The bank reconciliation project</b> already on the list should read these same payouts, not build a second copy.</li>
+  </ul></div>
+</div>
+</section>
+
+
+<!-- ===================================================================== 4 LEAVING -->
+<section class="pane" data-pane="leave" hidden>
+<h2 style="margin-top:12px">4 · Leaving: disconnect, downgrade, cancel, delete</h2>
+<p class="cap">Who: the owner, who alone can do any of these. The rule underneath (ask 4): <b>stopping online payments never disconnects the club's Stripe account.</b> The account is the club's. Its money keeps paying out to the club's bank. What follows a payment already made (a refund, a dispute, a clearing debit) keeps working in the product while the account is connected: the Payouts card stays as a short wind-down card, the refund doors on payments already made stay, and the items keep arriving.</p>
+
+<h3>a · Disconnect payouts? (ask 11)</h3>
+<div class="spec">
+  <div class="col"><p class="sp-cap" style="margin-top:0">BEFORE</p>
+  <div class="ak win" data-k style="padding:20px;border-radius:10px"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Disconnect payouts?</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">Families and teams stop seeing Pay now right away, and pay links already emailed show your "How to pay" text instead.</p><p style="margin:0">No team owes anything right now.</p><p style="margin:0">Payments already made stay in your books. Refunds of them are made in Stripe.</p></div>
+    <div class="df"><span class="s"></span><span class="btn">Cancel</span><span class="btn dng">Disconnect</span></div>
+  </div></div>
+  <p class="cap">"No team owes anything" while 23 families still owe their house-league fee. <button class="mk unc" data-note="Today's window. It counts tournament teams still owing and debits clearing; house league isn't counted at all.">UNCHANGED</button></p></div>
+  <div class="col"><p class="sp-cap" style="margin-top:0">AFTER · with things outstanding</p>
+  <div class="ak win" data-k style="padding:20px;border-radius:10px"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Disconnect payouts?</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">Families and teams stop seeing Pay now right away, and pay links already emailed show your "How to pay" text instead.</p>
+      <ul class="ul"><li><b>23 families</b> still owe a house-league fee, and <b>2 teams</b> still owe the Fall Classic. They can pay you another way.</li><li><b>3 pay pages</b> are open right now. They close when you disconnect.</li><li><b>2 bank debits</b> are still clearing. They'll finish, and their money still reaches you.</li><li><b>1 card dispute</b> is open. Answer it in Stripe by Nov 11; Stripe holds its money until the bank decides.</li></ul>
+      <p style="margin:0">Payments already made stay in your books. Refunds of them are made in Stripe, and your Stripe account stays yours.</p></div>
+    <div class="df"><span class="s"></span><span class="btn">Cancel</span><span class="btn dng">Disconnect</span></div>
+  </div></div>
+  <p class="cap"><button class="mk res" data-note="Same window, four counted lines, each only when its count is above zero. With nothing outstanding it reads 'Nobody owes anything right now.' The pay-pages line follows ask 11; the dispute line follows frame 1. The house-league count is a correction, not an ask.">RESTYLED</button> If the club's "How to pay" text is empty, the window adds "Your How to pay text is empty, so families will see no way to pay. <span class="lnk">Write it now</span>" above the list.</p></div>
+</div>
+
+<h3>b · Downgrade to a plan without online payments</h3>
+<div class="spec">
+  <div class="col"><p class="sp-cap" style="margin-top:0">BEFORE · Move to Tournament?</p>
+  <div class="ak win" data-k style="padding:20px;border-radius:10px"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Move to Tournament?</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">Northfield Minor Ball moves to Tournament on November 30 and can hold up to the plan's team limit from then. You keep League until then, with no credit for the rest of this period. From then it's the Tournament price.</p></div>
+    <div class="df"><span class="s"></span><span class="btn">Cancel</span><span class="btn pri">Move to Tournament</span></div>
+  </div></div>
+  <p class="cap">Says nothing about payments. After November 30 the card and Pay now are hidden, but the account stays connected and money keeps landing. <button class="mk unc" data-note="Today's plan-move window. The team limit and price are printed from the plan config in the product; this drawing names them in words rather than typing a figure.">UNCHANGED</button></p></div>
+  <div class="col"><p class="sp-cap" style="margin-top:0">AFTER</p>
+  <div class="ak win" data-k style="padding:20px;border-radius:10px"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Move to Tournament?</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">Northfield Minor Ball moves to Tournament on November 30 and can hold up to the plan's team limit from then. You keep League until then, with no credit for the rest of this period. From then it's the Tournament price.</p>
+      <div class="sec"><h5>Online payments stop on November 30</h5><ul class="ul"><li>Families and teams see your "How to pay" text instead of Pay now, and pay pages still open then close. <b>23 families</b> and <b>2 teams</b> still owe today.</li><li>Bank debits still clearing finish and reach you. Refunds and disputes of payments already made keep working here, as now.</li><li>Your payouts stay connected, so moving back up turns online payments on again.</li></ul></div></div>
+    <div class="df"><span class="s"></span><span class="btn">Cancel</span><span class="btn pri">Move to Tournament</span></div>
+  </div></div>
+  <p class="cap"><button class="mk res" data-note="A section added to the plan-move window, only when the move loses online payments and the club takes them. A move between two plans that both include online payments shows nothing new. Which plans include them is the Facts doc's; the window reads the gate.">RESTYLED</button> Endings the owner didn't choose (a comped period ending, a suspension for a failed subscription payment) send the owner the same section as a notice and an email seven days before.</p></div>
+</div>
+
+<h3>c · Cancel and suspend, and d · Ask us to delete</h3>
+<div class="spec">
+  <div class="col"><p class="sp-cap" style="margin-top:0">c · AFTER · the section added under today's notice</p>
+  <div class="ak win" data-k style="padding:20px;border-radius:10px"><div class="dlg">
+    <div class="dh"><div class="t"><h4>Cancel and suspend Northfield Minor Ball?</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="warnln" style="background:var(--red-soft)"><span class="i" style="color:var(--red)"><svg><use href="#i-warn"/></svg></span><span>Northfield Minor Ball is suspended the moment you confirm: your public site, house league and tournaments go offline, and families opening your pages will see that they aren't available.</span></div>
+      <div class="sec"><h5>Online payments stop now</h5><ul class="ul"><li>Nobody can pay you online; pay pages still open close. <b>23 families</b> and <b>2 teams</b> still owe today.</li><li><b>2 bank debits</b> are still clearing. They finish and reach your bank.</li><li>Your Stripe account stays yours: money in it keeps paying out to your bank. Refunds and the <b>1 open dispute</b> are answered in Stripe while you're suspended.</li></ul></div>
+      <p style="margin:0">Everything is kept for 90 days. Reactivating brings it all back: the public site, every team's coach portal and your tournaments.</p>
+      <div class="sec"><h5>Why are you cancelling?</h5><span class="fld" style="display:flex;color:var(--dim)">For your records and ours. You can leave it empty.</span></div></div>
+    <div class="df"><span class="s"></span><span class="btn">Keep League</span><span class="btn dng">Cancel and suspend</span></div>
+  </div></div>
+  <p class="cap"><button class="mk res" data-note="Today's window keeps its words and its boxed red notice; the section is added only when the club takes online payments. A suspended club's records are kept, so a lost dispute or a returned debit still writes its line, and the owner's emails still go out.">RESTYLED</button> While suspended, the owner can't open the product, so the dispute email is the owner's notice.</p></div>
+  <div class="col"><p class="sp-cap" style="margin-top:0">d · AFTER</p>
+  <div class="ak win" data-k style="padding:20px;border-radius:10px"><div class="dlg sm">
+    <div class="dh"><div class="t"><h4>Ask us to delete Northfield Minor Ball?</h4></div><span class="xx">×</span></div>
+    <div class="db"><p style="margin:0">We'll contact you to confirm before anything is deleted. Deleting removes your organization and all its data for good.</p>
+      <div class="sec"><h5>Your online payments</h5><ul class="ul"><li><b>1 card dispute</b> is open and <b>2 bank debits</b> are still clearing. We wait for them before deleting.</li><li>We disconnect your payouts before deleting. Your Stripe account stays yours, with any money in it.</li><li>Your payment records here are deleted with everything else. Export them first from Accounting.</li></ul></div></div>
+    <div class="df"><span class="s"></span><span class="btn">Cancel</span><span class="btn dng">Send deletion request</span></div>
+  </div></div>
+  <p class="cap"><button class="mk res" data-note="A section added when the club has ever taken online payments. On the platform team's side the club's Online payments tab (frame 6) shows what's open, and the deletion waits until disputes close and debits clear. How long we must keep payment records is a counsel question, already owed.">RESTYLED</button> The reason box is unchanged and left out.</p></div>
+</div>
+</section>
+
+
+<!-- ===================================================================== 5 TERMS -->
+<section class="pane" data-pane="terms" hidden>
+<h2 style="margin-top:12px">5 · The payments terms: who agreed, and agreeing again</h2>
+<p class="cap">The agree box is built (the "Before you set up payouts" window, the refusal without it, and the stored who, when and version). This frame adds where you can see it, and what happens when the terms change. The terms' text is counsel's; its slot stays empty here. Settings is the owner's, so the read-out is the owner's too; the platform team sees it on frame 6.</p>
+<div class="spec">
+  <div class="col" style="flex:1 1 520px;max-width:700px"><p class="sp-cap" style="margin-top:0">BEFORE · the Payouts card's record</p>
+  <div class="ak panel" data-k style="padding:16px 20px"><div class="facts"><span>Processing fee</span><span>Families and teams pay it: it's added to what they pay · <span data-r="card"></span> per card payment · <span data-r="bank"></span> per bank debit</span><span>Refund policy</span><span>Refunded in full until Sep 30, then not refunded.</span></div></div>
+  <p class="sp-cap">AFTER · one row more <button class="mk new" data-note="A read-out row under Refund policy. Read only: agreeing happens only in a window. Read the terms opens the version that was agreed, not the newest.">NEW</button></p>
+  <div class="ak panel" data-k style="padding:16px 20px"><div class="facts"><span>Processing fee</span><span>Families and teams pay it: it's added to what they pay · <span data-r="card"></span> per card payment · <span data-r="bank"></span> per bank debit</span><span>Refund policy</span><span>Refunded in full until Sep 30, then not refunded.</span><span>Payments terms</span><span>Agreed by Sam Patel on Sep 18, 2026, version of Sep 1, 2026 · <span class="lnk">Read the terms</span></span></div></div>
+  <p class="sp-cap">Today, before counsel's text exists</p>
+  <div class="ak panel" data-k style="padding:16px 20px"><div class="facts"><span>Payments terms</span><span>Agreed by Sam Patel on Sep 18, 2026, to the draft. You'll be asked again when the final terms are ready.</span></div></div>
+  <p class="cap">Every club that connects before counsel's text arrives agrees to the placeholder. The code already marks that version as one to ask again.</p></div>
+  <div class="col" style="flex:1 1 420px;max-width:560px"><p class="sp-cap" style="margin-top:0">The terms changed (ask 6 A): a notice on the card, an item and an email</p>
+  <div class="ak panel" data-k style="padding:16px 20px;display:flex;flex-direction:column;gap:10px"><div class="warnln"><span class="i"><svg><use href="#i-warn"/></svg></span><span>The payments terms changed on Dec 1. Online payments stay on. Agree to the new terms before you set up payouts again or change who pays the fee.</span></div><span class="btn pri" style="align-self:flex-start">Read and agree</span></div>
+  <div class="ak panel" data-k style="margin-top:8px"><div class="na"><span class="ico"><svg><use href="#i-warn"/></svg></span><div><b>New payments terms to agree to</b><div class="d">FieldLogicHQ's payments terms changed on Dec 1. Online payments stay on while you read them.</div><div class="bb"><span class="btn sm">Read and agree</span></div></div><span class="tm">Dec 1</span></div></div>
+  <p class="cap">Owner only, with one email the day they change and one reminder after 14 days. The item clears itself when the owner agrees. The platform team's Health list shows every club not on the current version, so nobody is stuck unseen.</p></div>
+</div>
+<div class="spec">
+  <div class="col" style="flex:1 1 480px;max-width:640px"><p class="sp-cap" style="margin-top:0">Read and agree · ticked</p>
+  <div class="ak win" data-k style="padding:20px;border-radius:10px"><div class="dlg">
+    <div class="dh"><div class="t"><h4>The new payments terms</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="sec"><h5>What changed</h5><div class="slot">[Counsel's summary of the change goes here]</div></div>
+      <div class="sec"><h5>The terms</h5><div class="slot" style="min-height:90px">[PAYMENTS TERMS — counsel to write]</div></div>
+      <div class="chk"><span class="bx on">✓</span><span>I agree to the FieldLogicHQ payments terms for Northfield Minor Ball.</span></div></div>
+    <div class="df"><span class="s"></span><span class="btn">Not now</span><span class="btn pri">Agree</span></div>
+  </div></div>
+  <p class="cap">Untick it and Agree is gone (absent beats disabled). <b>The built set-up window disables its button instead</b>; I recommend both follow one rule, absent, changed in the same build (ask 6 says so).</p></div>
+  <div class="col" style="flex:1 1 380px;max-width:520px"><p class="sp-cap" style="margin-top:0">Edges</p>
+  <ul class="cap" style="padding-left:18px;display:flex;flex-direction:column;gap:6px;margin-top:0">
+    <li><b>The owner who agreed has left the club.</b> The read-out keeps their name: it records who agreed. The new owner sees the card's read-out, and is asked only when the terms change.</li>
+    <li><b>A club that disconnects and sets up again</b> agrees to the newest version in the built window, as today.</li>
+    <li><b>Ask 6 B</b> pauses Pay now until the owner agrees: the strongest legal position, and the likeliest to switch a club's payments off over a weekend. <b>6 C</b> gives a notice and a date, then pauses. Counsel may need B or C for some changes; that's their call.</li>
+  </ul></div>
+</div>
+</section>
+
+
+<!-- ===================================================================== 6 PLATFORM ADMIN -->
+<section class="pane" data-pane="pa" hidden>
+<h2 style="margin-top:12px">6 · Platform admin: an Online payments tab, read only</h2>
+<p class="cap">Who: the platform team, answering a club that says "a family paid and it isn't there", and checking each morning that nothing is stuck. Today none of this is readable without Stripe's dashboard and the database. Stage 5's console drawings have no home for it, so this is new, not a merge. <b>Read only</b> (ask 7): any change to a club's payments would need a new entry in the platform's rulebook of powers, and I recommend none. The tab shows whenever the club has ever connected an account, including after a downgrade or cancel, because that is when its open disputes matter most. It is its own tab, not part of Money: Money is the club's subscription to us, this is the club's own customers' money.</p>
+<p class="sp-cap">AFTER · a club's record, a fifth tab (1440). Drawn in the console's admin kit; Warm is its default, the toggle above shows Dark.</p>
+<div class="dt-wrap fit"><div class="dt ak" data-k style="padding:0">
+  <div class="tb"><span class="lg"></span>FieldLogicHQ<span class="ar">PLATFORM</span><span class="sp"></span><span class="fld srch" style="min-height:34px">Find a club, person or Stripe number</span><span class="ic">BC</span></div>
+  <div class="shell">
+  <div class="sb"><div class="it"><i></i>Today</div><div class="grp">Customers</div><div class="it on"><i></i>Clubs &amp; portals</div><div class="it"><i></i>People</div><div class="it"><i></i>Free time</div><div class="it"><i></i>Retention</div><div class="grp">Health</div><div class="it"><i></i>Status</div><div class="it"><i></i>Errors</div><div class="it"><i></i>Online payments <span class="pill am" style="margin-left:auto;padding:3px 8px">4</span></div><div class="it"><i></i>Feedback</div><div class="it"><i></i>Sent emails</div></div>
+  <div class="mn" style="padding-top:22px"><div class="pg">
+    <div class="ph1"><div><div class="ey">Club · League</div><h1>Northfield Minor Ball</h1></div></div>
+    <div class="utabs"><span>Story <span class="c">12</span></span><span>Money</span><span>Access</span><span>People &amp; tournaments <span class="c">48</span></span><span class="on">Online payments <span class="c am">3</span></span></div>
+    <div class="band"><div><div class="k">Account</div><div class="v" style="font-size:17px"><span class="chip ok">Taking payments</span></div><div class="h">Connected Sep 18 by Sam Patel</div></div><div><div class="k">Terms</div><div class="v" style="font-size:17px">Draft</div><div class="h">Agreed Sep 18 · ask again at final</div></div><div><div class="k">Last 30 days</div><div class="v">$14,820.00</div><div class="h">96 payments · 4 refunds</div></div><div><div class="k">Clearing</div><div class="v"><span class="lnk" style="color:var(--ink)">$600.00</span></div><div class="h">2 bank debits</div></div><div><div class="k">Open disputes</div><div class="v am"><span class="lnk" style="color:var(--amber)">1</span></div><div class="h">$15.00 in Stripe's fees so far</div></div></div>
+    <div class="panel"><div class="secth"><b>Open disputes</b></div><div style="overflow-x:auto"><div class="lst" style="min-width:640px"><div class="hd"><span>Payment</span><span>Why</span><span>Answer by</span><span class="r">Held</span></div><div><span><span class="nm">Receipt 1041 · house league</span><span class="s2">du_1QX4…8kL2 · <span class="lnk">Show the player</span></span></span><span>Didn't make this payment</span><span>Nov 11</span><span class="r"><span data-c="tot:15000"></span></span></div></div></div></div>
+    <div class="panel"><div class="secth"><b>Stripe messages we couldn't process</b><span class="pill am">2</span></div><div style="overflow-x:auto"><div class="lst" style="min-width:640px"><div class="hd"><span>Message</span><span>Error</span><span>Received</span><span class="r">Tries</span></div><div><span><span class="nm" style="color:var(--ink)">refund.updated</span><span class="s2">evt_1QX…a19</span></span><span>Refund not found for re_1QX…77c</span><span>Oct 25, 9:12 p.m.</span><span class="r">6</span></div><div><span><span class="nm" style="color:var(--ink)">checkout.session.completed</span><span class="s2">evt_1QX…c02</span></span><span>The team is no longer in the tournament.</span><span>Oct 24, 3:40 p.m.</span><span class="r">3</span></div></div></div></div>
+    <div class="panel"><div class="secth"><b>Fees billed to the club</b></div><div style="overflow-x:auto"><div class="lst" style="min-width:640px"><div class="hd"><span>For</span><span>Billed</span><span>Date</span><span class="r">Fee</span></div><div><span>Returned bank debit · receipt 1077</span><span>On the November invoice</span><span>Oct 29</span><span class="r">$5.00</span></div><div><span>Card dispute · receipt 1041</span><span>On the November invoice (ask 1 A)</span><span>Oct 28</span><span class="r">$15.00</span></div></div></div></div>
+  </div></div>
+</div></div></div>
+<div class="spec">
+  <div class="col" style="flex:1 1 480px;max-width:640px"><p class="sp-cap" style="margin-top:0">Health › Online payments, every club (ask 7 A)</p>
+  <div class="ak panel" data-k style="max-width:640px"><div class="secth"><b>Needs a look</b></div><div style="overflow-x:auto"><div class="lst" style="min-width:560px"><div class="hd"><span>Club</span><span>What</span><span>Since</span><span class="r"></span></div>
+    <div><span class="nm">Northfield Minor Ball</span><span>1 open dispute, due Nov 11</span><span>Oct 28</span><span class="r"></span></div>
+    <div><span class="nm">Lakeshore Lynx</span><span>Disconnected with 1 dispute open</span><span>Oct 21</span><span class="r"></span></div>
+    <div><span class="nm">Bayview Baseball</span><span>Stripe closed the account</span><span>Oct 19</span><span class="r"></span></div>
+    <div><span class="nm">Northfield Minor Ball</span><span>2 Stripe messages failed</span><span>Oct 24</span><span class="r"></span></div></div></div></div>
+  <p class="cap">The rail's amber count is this list's length, as every console count sits on the entry that clears it. A row leaves when it clears: the dispute closes, the message is processed, the account reconnects. A message still failing after 30 days moves to a "Stopped retrying" list under it, so it never becomes permanent noise; nobody needs a write to clear it. Clubs not on the current terms join this list once counsel's version exists.</p></div>
+  <div class="col" style="flex:1 1 380px;max-width:520px"><p class="sp-cap" style="margin-top:0">Empty and edge states</p>
+  <ul class="cap" style="padding-left:18px;display:flex;flex-direction:column;gap:6px;margin-top:0">
+    <li><b>A club that never connected:</b> the tab is absent. Its plan line on Story already says whether online payments are included.</li>
+    <li><b>Disconnected, downgraded or cancelled:</b> the Account tile says so with the date and who; open disputes and clearing debits still list, because they still finish.</li>
+    <li><b>Stripe closed the account:</b> an amber line, "Stripe closed this account on Oct 19".</li>
+    <li><b>Test mode:</b> the tab says so first; nothing in it is real money.</li>
+    <li><b>Nothing failing:</b> the messages panel is absent, not an empty table.</li>
+    <li><b>Children's names:</b> shown by receipt; the name opens on "Show the player", and that view goes in the console's audit log. Never a card or bank number.</li>
+    <li><b>For the build:</b> the new rail entry needs its area in the console's areas list and a waiting-count source, as every rail entry has.</li>
+  </ul></div>
+</div>
+</section>
+
+
+<!-- ===================================================================== D1 GST/HST -->
+<section class="pane" data-pane="d1" hidden>
+<h2 style="margin-top:12px">D1 · GST/HST on the processing fee</h2>
+<div class="dec"><h3>The question, plainly</h3><p style="margin:0">When a family pays the club online, FieldLogicHQ keeps a processing fee. If that fee is something FieldLogicHQ sells, sales tax may be owed on it. If so, either the family pays the tax on top, or the tax comes out of what FieldLogicHQ keeps. This page does not say which is true. That is the accountant's answer. It shows what each answer looks like on screen and in the margin, and ends with the questions to forward.</p></div>
+
+<h3>What FieldLogicHQ keeps today, before any tax</h3>
+<div class="tw"><table class="t" id="d1t" style="min-width:860px"></table></div>
+<p class="src">Our fee: <code>lib/plan-config.ts</code> rates, on the base, family pays (the default). Stripe's costs: card 2.9% + $0.30 and bank debit 1% + $0.40 capped at $5.00, on what the family is charged; the payout fee 0.25% of what reaches the club (stripe.com/en-ca pricing, confirmed live 2026-07-28 in the scoping plan). Left out, because they're shared across payments: $0.25 per payout and $2.00 a month per active club account. Tax is shown at Ontario's 13% HST as the one example; Quebec adds its own sales tax (QST), and the rate depends on where the supply is made (question 3).</p>
+
+<h3>(a) No tax on the fee <button class="mk unc" data-note="Nothing changes anywhere. The fee is not taxable, or FieldLogicHQ is under the small-supplier line.">NOTHING CHANGES</button></h3>
+<p class="cap">The pay button, the receipt, the Payouts card and the set-up window stay exactly as built.</p>
+
+<h3>(b) "+ GST/HST" on top of the fee</h3>
+<div class="spec">
+  <div class="col"><p class="sp-cap" style="margin-top:0">The family's pay block · 390</p>
+  <div class="ph pub"><div class="nv">Northfield Minor Ball</div><div class="in">
+    <div class="prow2"><span class="pbtn"><svg><use href="#i-card"/></svg><span class="lbl">Pay <span data-c="ttot:15000"></span> by card</span></span><p class="note">Includes a <span data-c="fee:15000"></span> processing fee and <span data-c="tax:15000"></span> HST on it.</p></div>
+  </div></div></div>
+  <div class="col"><p class="sp-cap" style="margin-top:0">The receipt</p>
+  <div class="ph pub"><div class="in"><div class="receipt"><h2>Paid · receipt 1041</h2>
+    <div class="pline"><span>Henry Kim · 2026 Fall House League</span><span>$150.00</span></div>
+    <div class="pline"><span>Processing fee</span><span data-c="fee:15000"></span></div>
+    <div class="pline"><span>HST 13% on the processing fee</span><span data-c="tax:15000"></span></div>
+    <div class="pline t"><span>Paid by card</span><span data-c="ttot:15000"></span></div>
+    <p class="note">The processing fee and its tax are charged by FieldLogicHQ, GST/HST no. [our number]. The registration fee is Northfield Minor Ball's.</p></div></div></div></div>
+  <div class="col" style="flex:1 1 360px;max-width:520px"><p class="sp-cap" style="margin-top:0">The club's side</p>
+  <div class="ak panel" data-k style="padding:14px 16px;display:flex;flex-direction:column;gap:8px"><span class="ey">Payouts card · rate line</span><span>Processing fee: <span data-r="card"></span> per card payment, <span data-r="bank"></span> per bank debit, plus GST/HST.</span></div>
+  <div class="ak panel" data-k style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;margin-top:8px"><span class="ey">Before you set up payouts · What it costs</span><span><span data-r="card"></span> per card payment · <span data-r="bank"></span> per bank debit, plus GST/HST</span><span class="s2">On a $165.00 fee, the processing fee is <span data-c="fee:16500"></span> by card plus <span data-c="tax:16500"></span> HST in Ontario.</span></div>
+  <p class="cap">The family's total rises by the tax. A one-row pay button still fits. When the club pays the fee (A14), the tax is the club's, and a registered club may claim it back (question 5).</p></div>
+</div>
+
+<h3>(c) The tax is inside the fee</h3>
+<p class="cap">Nothing changes on any screen: the family, the receipt and the club see what they see today. FieldLogicHQ remits a share of what it keeps, so the margin shrinks. The table above's last column shows it: computed as 13/113 of our fee, the share of a tax-inclusive price that is tax.</p>
+<div class="tw"><table class="t" id="d1c" style="min-width:620px"></table></div>
+<p class="cap" id="d1cnote"></p>
+
+<div class="sheet"><h3 style="margin-top:0">For the accountant (ready to forward)</h3>
+<pre id="acct">FieldLogicHQ online payments: GST/HST questions
+
+Context. FieldLogicHQ is software for community sport clubs. Clubs can take registration fees online through Stripe. The money goes straight to the club's own Stripe account; FieldLogicHQ never holds it. On each payment FieldLogicHQ takes a processing fee (a percentage plus a flat amount), deducted automatically by Stripe as an "application fee". By default the family pays this fee on top of the club's fee; a club can choose to absorb it. FieldLogicHQ pays Stripe's own processing costs out of that fee. The receipt is issued in the club's name.
+
+1. Is FieldLogicHQ registered for GST/HST today, or under the small-supplier threshold? (We can check our registration; nothing in our records says whether we charge tax on our own subscriptions.)
+2. Is the processing fee a taxable supply made by FieldLogicHQ, or an exempt financial service? And who is the customer for it: the club (the merchant) or the family who pays it?
+3. If it is taxable: do we charge tax on top of the fee, or treat the fee as tax-inclusive and remit a share? Which province's rate applies when a family in one province pays a club in another? How does Quebec's QST apply?
+4. What must the receipt show? The receipt is in the club's name, but the fee is ours. Who issues the tax line, and does our registration number go on it?
+5. When the club absorbs the fee (it comes out of each payout), and when we bill a club a returned bank debit fee (CA$5.00 on its next FieldLogicHQ invoice): is each a taxable supply to the club, and does the tax go on that invoice?
+6. Stripe says its payment processing fees to us are tax exempt, and its software products are taxed. Does that change our net, and can we claim input tax credits on anything Stripe bills us?</pre>
+<div class="row" style="margin-top:8px"><button class="btn-d pri" id="cpacct">Copy the questions</button><span class="muted" id="cpacctm"></span></div></div>
+
+<div class="need"><h3>What I need from you</h3><ul>
+  <li>Forward the questions above to the accountant.</li>
+  <li>Tell me (a), (b) or (c) once they answer, and the province they treat as the place of supply.</li>
+  <li>If (b): our GST/HST registration number for the receipt.</li>
+  <li>Until then, ask 8 stays open and nothing in 12d's build depends on it.</li>
+</ul></div>
+</section>
+
+<!-- ===================================================================== D2 FOREIGN CARDS -->
+<section class="pane" data-pane="d2" hidden>
+<h2 style="margin-top:12px">D2 · Cards from outside Canada</h2>
+<div class="dec"><h3>The question, plainly</h3><p style="margin:0">A US team at a cross-border tournament pays with a US card. Stripe charges FieldLogicHQ 0.8% more on that card, out of the fee we keep. On a large payment that can be more than we keep. You decide the policy. <code>/billing</code> and <code>/strategy</code> own any number that changes.</p></div>
+<div class="tw"><table class="t" id="d2t" style="min-width:720px"></table></div>
+<p class="src">Same arithmetic as D1: our rates from <code>lib/plan-config.ts</code>; Stripe's card cost and payout fee as on D1; the extra for a card issued outside Canada, +0.8% of what the family is charged (stripe.com/en-ca/pricing, read 2026-10-26). Bank debit is not affected: it needs a Canadian bank account.</p>
+
+<div class="spec" style="margin-top:18px">
+  <div class="col" style="flex:1 1 300px;max-width:400px"><p class="sp-cap" style="margin-top:0">(a) Absorb it, and count it (recommended)</p>
+  <div class="ph pub trn"><div class="nv">Northfield Fall Classic</div><div class="in">
+    <div class="prow2"><span class="pbtn"><svg><use href="#i-card"/></svg><span class="lbl">Pay <span data-c="tot:30000"></span> by card</span></span><p class="note">Includes a <span data-c="fee:30000"></span> processing fee.</p></div></div></div>
+  <p class="cap">The family sees nothing new. The platform team sees "Cards from outside Canada: 4 this month, cost us <span data-k2="intl4:30000"></span>" on Health › Online payments, so the decision can be revisited with real numbers.</p></div>
+  <div class="col" style="flex:1 1 300px;max-width:400px"><p class="sp-cap" style="margin-top:0">(b) Charge more for a foreign card</p>
+  <div class="ph pub trn"><div class="nv">Northfield Fall Classic</div><div class="in">
+    <div class="blk2"><span class="pk">Card ending 0019 · issued in the United States</span><p class="note" style="color:var(--pay-ink)">Cards from outside Canada add <span data-c="intl:30000"></span>.</p><span class="pbtn"><span class="lbl">Pay <span data-c="itot:30000"></span></span></span></div></div></div>
+  <p class="cap">Only possible after the card is entered, so our pay page would show the fee first and a second amount later. Stripe's surcharge feature is a preview, credit cards only in Canada, and must be applied <b>consistently across card networks and products</b>. A surcharge by country looks hard to square with that. Not found in Stripe's hosted checkout page, which is what we use.</p></div>
+  <div class="col" style="flex:1 1 300px;max-width:400px"><p class="sp-cap" style="margin-top:0">(c) Refuse foreign cards</p>
+  <div class="ph pub trn"><div class="nv">Northfield Fall Classic</div><div class="in">
+    <div class="prow2"><span class="pbtn"><svg><use href="#i-card"/></svg><span class="lbl">Pay <span data-c="tot:30000"></span> by card</span></span><p class="note">Cards issued in Canada only. Paying from outside Canada? See How to pay.</p></div></div></div>
+  <p class="cap">A Radar rule can block them; it needs Radar's paid tier and control of each club's Radar. A blocked family sees only "Your card was declined", so the warning must come before. And the other ways are Canadian too: bank debit needs a Canadian account, e-transfer is Canadian. A US team is left with a cheque.</p></div>
+</div>
+<div class="need"><h3>What I need from you</h3><ul>
+  <li>Pick one: (a) absorb and count it, (b) charge more for a foreign card, or (c) refuse foreign cards (ask 9).</li>
+  <li>Add to counsel's memo, already owed: is a card-only fee the family pays a surcharge under the card networks' Canadian rules? If it is, the club paying the fee (A14) is the way around it, and (b) is a surcharge outright.</li>
+  <li>If (b) or (c): <code>/billing</code> checks it against Stripe's current docs before anything is drawn further.</li>
+</ul></div>
+</section>
+
+<!-- ===================================================================== D3 DISPUTE COST -->
+<section class="pane" data-pane="d3" hidden>
+<h2 style="margin-top:12px">D3 · Negative balances and what disputes cost</h2>
+<div class="dec"><h3>What the code does</h3><ul style="margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+  <li><b>Stripe covers a club's losses.</b> If a club's Stripe balance goes below zero and Stripe can't recover it from the club's bank, the loss is Stripe's, not FieldLogicHQ's. Stripe's risk team manages that risk.</li>
+  <li><b>FieldLogicHQ pays Stripe's fees,</b> including every fee a dispute brings. The disputed money itself comes out of the club's balance.</li>
+  <li>So the money question is not "who covers a bad club" but <b>"who pays the dispute fees"</b>, and today that's FieldLogicHQ, every time.</li>
+</ul></div>
+<h3>A bad month, computed</h3>
+<div class="tw"><table class="t" id="d3t" style="min-width:640px"></table></div>
+<p class="cap" id="d3note"></p>
+<div class="card"><h3>Where it can't be passed on</h3><ul>
+  <li><b>A club that disconnects or cancels with disputes open.</b> The disputes still run, and Stripe still bills us. A disconnected club still has an invoice to bill; <b>a cancelled club has none</b>, so those fees are ours.</li>
+  <li><b>A free or comped club</b> (Founding Season 2027): ruled 10-26, invoiced too, so a comped club has no reason to run up fees we can't recover. It has no subscription invoice until its comp ends, so it gets its own invoice.</li>
+  <li><b>A won dispute:</b> Stripe returns only the answering fee. The first $15.00 is gone whatever happens.</li>
+</ul></div>
+<div class="need"><h3>What I need from you</h3><ul>
+  <li><b>Ruled 10-26:</b> the club is invoiced for Stripe's dispute fees, free and comped clubs included, from Stripe's own figure; the answering fee Stripe returns on a win comes off the bill.</li><li>Still yours: should the $5 returned bank debit fee follow the same rule? It exempts comped clubs today.</li>
+  <li>Whether to tell <code>/strategy</code> this is a cost line worth watching (the Health › Online payments tab can count it).</li>
+</ul></div>
+</section>
+
+<!-- ===================================================================== JOURNEYS -->
+<section class="pane" data-pane="flow" hidden>
+<h2 style="margin-top:12px">Journeys</h2>
+<div class="card"><h3>Priya, the registrar, finds a child's payment disputed</h3><p>Henry's row shows a quiet "Disputed" chip, "Sam Patel answers by Nov 11" › Henry's record › the dispute block: why, how much Stripe holds, the due date, and that only Sam can sign in to Stripe. Priya can copy the facts for Stripe and send them to Sam. Nothing else is hers to do; the book doesn't change. What goes wrong: Sam doesn't answer (Sam's reminder email three days before; then "not answered"); it's lost (one amber item, Henry owes again, she collects another way, and the reminder email skips Henry); the family calls (tell them to withdraw it with their bank); she looks for Refund (not offered while it's open, and the record says why).</p></div><div class="card"><h3>Sam, the owner, downgrades with a debit clearing</h3><p>Billing › Move to Tournament › the window says online payments stop on November 30, 23 families and 2 teams still owe, open pay pages close, the clearing debits finish, payouts stay connected › confirm. On the date, Pay now becomes How to pay; the debits land; the Payouts card stays as a wind-down card while anything is open. What goes wrong: How to pay is empty (the window says so and offers Write it now); a dispute arrives after the move (an item and an email, answered in Stripe); Sam moves back up (online payments come back with nothing to set up).</p></div><div class="card"><h3>Dana, the treasurer, matches a payout to the bank</h3><p>Bank statement: "STRIPE 1,284.50, Oct 24" › Accounting › Payouts › types 1284.50 › the Oct 23 payout › 9 payments and 1 refund by name and receipt › Export if she wants it in her sheet. Under a minute, without Stripe or Sam. What goes wrong: a payout didn't arrive (info for Dana naming Sam, amber for Sam with the Stripe door); a manual payout (no breakdown, Stripe's limit, said plainly); a payment made in Stripe directly (named as not from FieldLogicHQ); Stripe doesn't answer (Try again).</p></div>
+<h2>What the reviews changed</h2>
+<div class="tw"><table class="t"><thead><tr><th>Review</th><th>Finding</th><th>What I did</th></tr></thead><tbody id="reviews">
+<tr><td>/ux</td><td>A dispute's deadline lived only in an in-app item; a suspended club's owner can't open the product</td><td>An owner email when it opens and three days before it's due; frame 4c says the email is the suspended owner's notice</td></tr><tr><td>/ux</td><td>The dispute window carried design notes as club copy ("ask 1 decides who pays it")</td><td>The fee line now says what the club pays under ask 1 A; a free or comped club's line drawn; notes moved to captions</td></tr><tr><td>/ux + /design</td><td>Amber shown to people who can't act (the desk's dispute pill, Didn't arrive for the treasurer, the owner's date pill beside the real button)</td><td>Amber only for the person who can act; everyone else gets the info chip; the date beside Answer in Stripe is an info chip</td></tr><tr><td>/ux</td><td>Who can answer was ambiguous; sign-in failures and the connector leaving weren't drawn</td><td>Named "only the person who set up payouts"; Try again in place; the left-the-club case stated, with Stripe's process a build check</td></tr><tr><td>/ux + /design</td><td>The lost item had a manual Done, against the self-clearing ruling</td><td>Done removed; it clears when the child is paid or excused; Email families who owe skips that child</td></tr><tr><td>/ux</td><td>Won after collected another way, withdrawn disputes, and the family who calls had no path</td><td>All three stated in frame 1</td></tr><tr><td>/ux</td><td>A downgrade hid the screens open disputes and refunds still need; platform admin's tab hid a downgraded club</td><td>Wind-down rule stated: the card, refund doors and items stay while connected; the platform tab shows whenever an account was ever connected</td></tr><tr><td>/ux</td><td>An empty How to pay; pay pages left open past a downgrade or cancel; endings the owner didn't choose</td><td>Write it now in the window; ask 11 widened to every ending; a notice and email seven days before an ending the owner didn't choose</td></tr><tr><td>/ux</td><td>The delete window hid what's open</td><td>Counts in the owner's window; the deletion waits until disputes close and debits clear</td></tr><tr><td>/ux</td><td>Payouts: no loading, error or date range; newest-first broken; the summary ignored the payout on its way</td><td>Dates picker, Find by amount, loading and Try again, export failure; ordered newest first; the summary names the payout on its way</td></tr><tr><td>/ux</td><td>Paid twice: which row gets the refund, no way to keep it, a part hand payment closing the page</td><td>The refund always comes from the card row; Keep it as a credit and Record the refund sent another way; the pay link stays good for what's left</td></tr><tr><td>/ux</td><td>Terms had no escalation; platform admin couldn't see who's stuck</td><td>An email and a 14-day reminder; clubs not on the current version join the Health list</td></tr><tr><td>/ux</td><td>Failing Stripe messages would never leave a read-only list; children's names on the console</td><td>After 30 days they move to Stopped retrying; names behind Show the player, logged; Fees billed panel added</td></tr><tr><td>/design</td><td>Record a payment was drawn as a window; the product records in place, Record then a plain Cancel, pencils on hand rows</td><td>Redrawn from the built Payments section; the refund door is the card row's ⋯</td></tr><tr><td>/design</td><td>Settings is the owner's alone, so the treasurer could never reach a list on the Payouts card</td><td>The list moved to a Payouts tab in Accounting (ask 5 rewritten); the card keeps it only for a club without Accounting</td></tr><tr><td>/design</td><td>Destructive confirms drawn lime; the cancel notice drawn as red text</td><td>Red buttons for Disconnect, Cancel and suspend, Send deletion request; the boxed notice</td></tr><tr><td>/design</td><td>Platform admin chrome: fixed Dark, missing Today, Retention, the top strip, rail and tab counts, clickable tiles</td><td>All added; the frame follows the page's theme toggle; tiles link; why it isn't part of Money stated</td></tr><tr><td>/design</td><td>Fragments instead of whole screens; no phone for the dispute rows</td><td>The dispute is drawn in the full Registrations table, before and after, plus the desk's phone row; Payouts as the full Accounting page and phone</td></tr><tr><td>/design</td><td>The plan move used {plan} placeholders and short months; the cancel window lost its reason box</td><td>Real plan names, "November 30", the built sentences; the reason box drawn</td></tr><tr><td>/design</td><td>Two rules for one control: the terms window hid Agree, the built set-up window disables it</td><td>The ticked state drawn; one rule (absent) for both, in ask 6</td></tr><tr><td>/design</td><td>Text glyphs for the warning and chevrons; a doubled border on the band; the review purple used as a product state; receipt numbers out of date order</td><td>The warning icon and kit chevrons; the band unboxed; the olive tint; Henry's receipt is 1041</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ===================================================================== ASKS -->
+<section class="pane" data-pane="asks" hidden>
+<h2 style="margin-top:12px">Asks</h2>
+<p class="cap">One box per option. Tick one, or write your own under it. Copy the paste-back at the end into the chat. Ask 8 waits for the accountant.</p>
+<div id="asks"></div>
+<div class="paste"><b>Paste-back</b><textarea id="pb" readonly aria-label="Paste-back summary"></textarea><div class="row"><button class="btn-d pri" id="cp">Copy the paste-back</button><span class="muted" id="cpm"></span></div></div>
+</section>
+
+<dialog class="note" id="nd"><div class="nh"><h3 id="ndt"></h3><button class="xb" aria-label="Close" id="ndx">×</button></div><div class="nb"><p id="ndb"></p></div></dialog>
+</div>
+
+
+<script>
+(function(){
+/* Our two rates as lib/plan-config.ts ONLINE_PAYMENT_RATES holds them (card 350 bps + 150 cents, bank debit 250 bps + 100
+   cents), half-up, on the base. S = Stripe's own published costs, never ours: card 2.9% + 30 cents, international +0.8%,
+   bank debit 1% + 40 cents capped at 500, payout 0.25% (scoping plan, confirmed live 2026-07-28; +0.8% and the CA$15.00
+   dispute fees read 2026-10-26). Ontario HST 13% is the one tax example. */
+var R={card:[350,150],bank:[250,100]};
+var S={card:[290,30],intl:80,bank:[100,40,500],payout:25,dispute:1500,tax:1300};
+function hu(x,bps){return Math.floor((x*bps+5000)/10000)}
+function fee(b,r){var x=R[r||'card'];return hu(b,x[0])+x[1]}
+function stripe(t,r,intl){if(r==='bank')return Math.min(hu(t,S.bank[0])+S.bank[1],S.bank[2]);return hu(t,S.card[0])+S.card[1]+(intl?hu(t,S.intl):0)}
+function keep(b,r,intl){var f=fee(b,r),t=b+f;return f-stripe(t,r,intl)-hu(b,S.payout)}
+function taxOn(f){return hu(f,S.tax)}
+function taxIn(f){return Math.round(f*13/113)}
+function m(c){var s=c<0?'−':'';c=Math.abs(c);return s+'$'+(c/100).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function mc(c){return '<span class="'+(c<0?'neg':'')+'">'+m(c)+'</span>'}
+function lab(r){var x=R[r];return (x[0]/100)+'% + $'+(x[1]/100).toFixed(2)}
+function rl(r){return r==='bank'?'bank debit':'card'}
+
+document.querySelectorAll('[data-c]').forEach(function(el){
+  var p=el.getAttribute('data-c').split(':'),k=p[0],b=+p[1],f=fee(b);
+  var v={base:b,fee:f,tot:b+f,bfee:fee(b,'bank'),btot:b+fee(b,'bank'),tax:taxOn(f),ttot:b+f+taxOn(f),intl:hu(b+f,S.intl),itot:b+f+hu(b+f,S.intl)}[k];
+  el.textContent=m(v);
+});
+document.querySelectorAll('[data-r]').forEach(function(el){el.textContent=lab(el.getAttribute('data-r'))});
+document.querySelectorAll('[data-k2]').forEach(function(el){
+  var p=el.getAttribute('data-k2').split(':'),k=p[0],b=+p[1];
+  if(k==='keep')el.textContent=m(keep(b,p[2]||'card'));
+  if(k==='per')el.textContent=String(Math.ceil(S.dispute/keep(b,'card')));
+  if(k==='intl4')el.textContent=m(4*hu(b+fee(b),S.intl));
+});
+
+var ROWS=[[15000,'card'],[15000,'bank'],[40000,'card'],[80000,'card'],[80000,'bank']];
+function th(a){return '<thead><tr>'+a.map(function(x,i){return '<th'+(i?' class="num"':'')+'>'+x+'</th>'}).join('')+'</tr></thead>'}
+var t1=th(['Payment','Our fee','Family pays','Stripe processing','Stripe payout fee','FieldLogicHQ keeps','(b) HST added for the family'])+'<tbody>';
+var t1c=th(['Payment','Keeps today','(c) HST inside our fee','Keeps under (c)'])+'<tbody>';
+ROWS.forEach(function(r){var b=r[0],f=fee(b,r[1]),t=b+f,k=keep(b,r[1]),ti=taxIn(f);
+  t1+='<tr><td>'+m(b)+' by '+rl(r[1])+'</td><td class="num">'+m(f)+'</td><td class="num">'+m(t)+'</td><td class="num">'+m(stripe(t,r[1]))+'</td><td class="num">'+m(hu(b,S.payout))+'</td><td class="num"><b>'+mc(k)+'</b></td><td class="num">+'+m(taxOn(f))+'</td></tr>';
+  t1c+='<tr><td>'+m(b)+' by '+rl(r[1])+'</td><td class="num">'+mc(k)+'</td><td class="num">'+m(ti)+'</td><td class="num"><b>'+mc(k-ti)+'</b></td></tr>'});
+document.getElementById('d1t').innerHTML=t1+'</tbody>';
+document.getElementById('d1c').innerHTML=t1c+'</tbody>';
+var k8=keep(80000,'card'),k8c=k8-taxIn(fee(80000));
+document.getElementById('d1cnote').textContent='At today’s rates, an $800.00 card payment keeps '+m(k8)+' and, with the tax inside, '+m(k8c)+'. (The scoping plan’s “−$2.40” was at the old 3.25% rate and taxed the fee on top; it no longer applies.) Bank debit stays well above zero either way, because Stripe’s bank cost is capped.';
+
+var t2=th(['Card payment','Keeps, Canadian card','Extra on a foreign card','Keeps, foreign card'])+'<tbody>';
+[15000,40000,80000,150000].forEach(function(b){var k=keep(b,'card'),x=hu(b+fee(b),S.intl);t2+='<tr><td>'+m(b)+'</td><td class="num">'+mc(k)+'</td><td class="num">'+m(x)+'</td><td class="num"><b>'+mc(k-x)+'</b></td></tr>'});
+document.getElementById('d2t').innerHTML=t2+'</tbody>';
+
+var kh=keep(15000,'card'),kt=keep(40000,'card');
+var t3=th(['A month with 3 card disputes, ending','Stripe bills FieldLogicHQ','= what we keep on this many $150 house-league card payments','= this many $400 team card payments'])+'<tbody>';
+[['unanswered',3*S.dispute],['answered and won',3*S.dispute],['answered and lost',6*S.dispute]].forEach(function(r){t3+='<tr><td>'+r[0]+'</td><td class="num">'+m(r[1])+'</td><td class="num">'+Math.ceil(r[1]/kh)+'</td><td class="num">'+Math.ceil(r[1]/kt)+'</td></tr>'});
+document.getElementById('d3t').innerHTML=t3+'</tbody>';
+document.getElementById('d3note').textContent='FieldLogicHQ keeps '+m(kh)+' on a $150.00 card payment and '+m(kt)+' on a $400.00 one, after Stripe’s costs (D1). One dispute fee is $15.00; answering adds $15.00, returned only if the club wins.';
+
+var tabs=[].slice.call(document.querySelectorAll('.tabs [role=tab]')),panes=[].slice.call(document.querySelectorAll('section.pane'));
+function show(id){
+  if(!panes.some(function(p){return p.dataset.pane===id}))id='start';
+  tabs.forEach(function(t){t.setAttribute('aria-selected',String(t.dataset.pane===id))});
+  panes.forEach(function(p){p.hidden=p.dataset.pane!==id});
+  try{history.replaceState(null,'','#'+id)}catch(e){}
+  fit();
+}
+tabs.forEach(function(t){t.addEventListener('click',function(){show(t.dataset.pane);window.scrollTo(0,0)})});
+var trueSize=false,fb=document.querySelector('[data-fit]'),zl=document.querySelector('.zl');
+function fit(){document.querySelectorAll('.dt-wrap').forEach(function(w){if(trueSize){w.classList.remove('fit');return}w.classList.add('fit');w.style.setProperty('--z',Math.min(1,w.clientWidth/1440).toFixed(4))})}
+fb.addEventListener('click',function(){trueSize=!trueSize;fb.textContent=trueSize?'Scale to fit':'Show at true size';zl.textContent=trueSize?'True size: 1440 wide; scroll sideways inside each drawing.':'Desk drawings are scaled to fit your screen.';fit()});
+window.addEventListener('resize',fit);
+document.querySelectorAll('[data-thm]').forEach(function(b){b.addEventListener('click',function(){var dk=b.dataset.thm==='dark';document.querySelectorAll('[data-thm]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});document.querySelectorAll('[data-k]').forEach(function(k){k.classList.toggle('dk',dk)})})});
+var dlg=document.getElementById('nd');
+function open(t,b){document.getElementById('ndt').textContent=t;document.getElementById('ndb').textContent=b;try{dlg.showModal()}catch(e){dlg.setAttribute('open','')}}
+document.getElementById('ndx').addEventListener('click',function(){dlg.close?dlg.close():dlg.removeAttribute('open')});
+dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close()});
+document.addEventListener('click',function(e){var n=e.target.closest('[data-note]');if(n)open(n.textContent.trim(),n.getAttribute('data-note'));var p=e.target.closest('.ak .pill.bad');if(p&&!n)open(p.textContent.trim(),'Clickable in the product: it opens the record at the payment it names.')});
+
+function copyFrom(el,msg,val){var done=function(){msg.textContent='Copied.'},fall=function(){var r=document.createRange();r.selectNodeContents(el);var s=getSelection();s.removeAllRanges();s.addRange(r);msg.textContent='Selected. Press Ctrl+C (or long-press Copy).'};try{navigator.clipboard.writeText(val).then(done,fall)}catch(e){fall()}}
+document.getElementById('cpacct').addEventListener('click',function(){var el=document.getElementById('acct');copyFrom(el,document.getElementById('cpacctm'),el.textContent)});
+
+var ASKS=[
+ {id:1,t:"Who pays a card dispute's Stripe fees",d:"RULED 10-26: the club is invoiced, free and comped clubs included (A without its exemption). Frame 1, D3. Stripe bills FieldLogicHQ CA$15.00 when a dispute arrives (never returned) and CA$15.00 more when the club answers (returned if it wins).",o:[
+  ["A","The returned bank debit rule: billed to the club on its next invoice, the amount from Stripe's own figure at the time, free and comped clubs exempt; when Stripe returns the answering fee on a win, it comes off the club's bill too",1],
+  ["B","FieldLogicHQ absorbs dispute fees"],
+  ["C","The club pays the first fee only; FieldLogicHQ absorbs the answering fee, so a club never pays more for fighting a dispute"]]},
+ {id:2,t:"Is the family told of a dispute",d:"Frame 1. Their bank started it and tells them.",o:[
+  ["A","No email from us",1],
+  ["B","A plain email to the family that the payment is disputed"]]},
+ {id:3,t:"Where the book stands during a card dispute",d:"Frame 1, push-back 3.",o:[
+  ["A","The book line stays while it's open; lost writes a returned line beside the receipt (as 12c's reversed debit) and the child or team owes again; won goes back to plain paid",1],
+  ["B","Off the book the moment it opens, back on if won"]]},
+ {id:4,t:"What a downgrade does to online payments",d:"Frame 4, push-back 4.",o:[
+  ["A","One rule: online payments stop being offered on the move date; clearing debits, refunds and disputes still finish; the owner is told what's outstanding; payouts stay connected",1],
+  ["B","A downgrade also disconnects payouts"]]},
+ {id:5,t:"A payouts list",d:"Frame 3, push-back 1. Settings is the owner's alone, so a list on the Payouts card is never the treasurer's.",o:[
+  ["A","Yes: a Payouts tab at the end of Accounting for everyone who reads Accounting, each payout opening to the payments by name and receipt, with dates, Find and Export; a club without Accounting gets the same list collapsed on the owner's Payouts card",1],
+  ["B","Yes, on the Payouts card only (the owner only)"],
+  ["C","No: Open Stripe is enough"]]},
+ {id:6,t:"When the payments terms change",d:"Frame 5. Counsel may need B or C for some changes. Whichever you pick, Agree appears only once the box is ticked, in this window and in the built set-up window (which disables its button today).",o:[
+  ["A","A notice on the card and an owner item; payments stay on; the new version is required to set up again, reconnect or change who pays the fee",1],
+  ["B","Pay now pauses until the owner agrees"],
+  ["C","A notice with a date, then Pay now pauses"]]},
+ {id:7,t:"The platform-admin view",d:"Frame 6. A write would need a new entry in the platform's rulebook of powers.",o:[
+  ["A","Read only: an Online payments tab on the club's record and one Health › Online payments list across clubs",1],
+  ["B","Read only, the club's tab only"],
+  ["C","With actions (needs a powers entry and its own drawing)"]]},
+ {id:8,t:"GST/HST on the processing fee",d:"RULED 10-26: paused; pre-revenue and below the small-supplier threshold. D1.",o:[
+  ["A","(a) No tax on the fee"],
+  ["B","(b) + GST/HST on top, shown before paying and on the receipt"],
+  ["C","(c) Tax inside the fee; FieldLogicHQ remits a share"],
+  ["D","Still waiting for the accountant"]]},
+ {id:9,t:"Cards issued outside Canada",d:"RULED 10-26: (b), plus a later review of US clubs paying in US dollars. D2.",o:[
+  ["A","(a) Absorb the extra cost and count how often it happens",1],
+  ["B","(b) Charge more for a foreign card"],
+  ["C","(c) Refuse foreign cards"]]},
+ {id:10,t:"A team payment that lands for more than the team owes",d:"Frame 2. Today it books silently.",o:[
+  ["A","Book it, flag it on the record and as an item, with a refund door set to the extra (the whole payment with its fee when all of it was extra)",1],
+  ["B","Refuse it at landing like house league: not booked, an item carries the refund"]]},
+ {id:11,t:"Ending online payments closes pay pages already open",d:"Frame 4. Disconnect, a downgrade on its date, and cancel. The Disconnect window also gains the house-league count; that's a correction, not an ask.",o:[
+  ["A","Yes: every ending closes them, and its window counts them",1],
+  ["B","No: an open page can still be paid; the money reaches the club"]]},
+ {id:12,t:"A payment recorded by hand while a pay page is open",d:"Frame 2. Applies to Record a payment, Mark paid, and house league's Mark received.",o:[
+  ["A","The window warns, and recording closes the open page",1],
+  ["B","Warn only"],
+  ["C","Nothing new; the overpayment is caught after (ask 10)"]]},
+ {id:13,t:"Copy the facts for Stripe",d:"Frame 1, push-back 2. Nothing is ever submitted from the product.",o:[
+  ["A","Yes: one Copy of the facts we hold (sign-up, refund policy shown, receipt and its email), beside Answer in Stripe",1],
+  ["B","No: link out to Stripe only"]]}
+];
+var host=document.getElementById('asks');
+ASKS.forEach(function(a){
+  var h='<div class="ask"><h3><span class="no">Ask '+a.id+'</span>'+a.t+'</h3><p class="cap" style="margin:2px 0">'+a.d+'</p><div class="opts">';
+  a.o.forEach(function(o){var id='a'+a.id+o[0];h+='<label class="'+(o[2]?'rec':'')+'" for="'+id+'"><input type="checkbox" id="'+id+'" data-a="'+a.id+'" data-o="'+o[0]+'"><span><b>'+o[0]+'</b> · '+o[1]+'</span></label>'});
+  h+='</div><textarea id="n'+a.id+'" placeholder="Your own answer, or a note"></textarea></div>';
+  host.insertAdjacentHTML('beforeend',h);
+});
+host.addEventListener('change',function(e){var c=e.target;if(c.dataset.a&&c.checked){host.querySelectorAll('[data-a="'+c.dataset.a+'"]').forEach(function(x){if(x!==c)x.checked=false})}pb()});
+host.addEventListener('input',pb);
+function pb(){
+  var out=['Stage 12d · hardening · owner answers (drawings 2026-10-26)'];
+  ASKS.forEach(function(a){
+    var c=host.querySelector('[data-a="'+a.id+'"]:checked'),n=document.getElementById('n'+a.id).value.trim();
+    var opt=c?a.o.filter(function(o){return o[0]===c.dataset.o})[0]:null;
+    out.push('Ask '+a.id+' ('+a.t+'): '+(opt?opt[0]+(opt[2]?' (recommended)':'')+' · '+opt[1]:'not answered')+(n?'\n   Note: '+n:''));
+  });
+  document.getElementById('pb').value=out.join('\n');
+}
+pb();
+document.getElementById('cp').addEventListener('click',function(){var t=document.getElementById('pb'),msg=document.getElementById('cpm');var done=function(){msg.textContent='Copied.'},fall=function(){t.focus();t.select();msg.textContent='Selected. Press Ctrl+C (or long-press Copy).'};try{navigator.clipboard.writeText(t.value).then(done,fall)}catch(e){fall()}});
+show((location.hash||'').slice(1)||'start');
+})();
+</script>

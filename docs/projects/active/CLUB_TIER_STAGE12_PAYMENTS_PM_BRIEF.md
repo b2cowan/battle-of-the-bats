@@ -59,6 +59,20 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
    Each returned or reversed debit costs the club $5, billed on its next FieldLogicHQ invoice; a free or comped club is
    not billed. Success: a walk where every debit state reads right without a phone call.
 6. **12d · Hardening.** Disputes, matching payouts to the bank, the tax display, and help articles.
+   **Drawn 2026-10-26, ruled 2026-10-26/27, worded 2026-10-27; built in two parts, 12d-1 then 12d-2**
+   (https://claude.ai/artifact/WutBgX8o56jBWN2zXXvZvg). What changes, by person: a
+   **registrar** sees a disputed card payment on the child's row and record (quietly, with who answers it), is told when a
+   dispute is lost, and is warned before recording a payment while a family's pay page is open; a **club owner** is told
+   and emailed when a dispute opens and before it's due, answers it in Stripe, sees who agreed to the payments terms, and is
+   told what's still owing or clearing before disconnecting, downgrading, cancelling or asking to delete; a **treasurer**
+   matches each Stripe payout on the bank statement to names and receipts in Accounting › Payouts; the **platform team**
+   gets a read-only Online payments view per club and one list across clubs of disputes, failed Stripe messages and
+   closed accounts. Found first: a tournament team can be charged twice today without anyone being told. **Decided:**
+   no GST/HST on the fee for now. A comp covers the subscription only, so every Stripe fee a club's payments cause is
+   billed to the club, free and comped clubs included: card disputes, a returned bank debit, and a card issued outside
+   the club's country. A club without a subscription invoice gets its own invoice. The family is never charged more,
+   and the terms will say these charges are possible. Success: no payment moves in Stripe that the club can't see and
+   act on in the product, and no Stripe fee is left for FieldLogicHQ to absorb.
 
 ## Who sees what
 

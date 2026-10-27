@@ -43,6 +43,76 @@
   re-checking their right days later. **Not run by the builder:** a debit paid, returned and reversed through Stripe's own
   Checkout (a browser and a forwarded webhook; walk §390 drives them), and `check:layout` (the UAT club owner's session lands
   on "Page not found" on every admin screen, the hub included).
+- **12d drawn 2026-10-26; all 13 asks ruled 2026-10-26 (rulings below)**: https://claude.ai/artifact/WutBgX8o56jBWN2zXXvZvg (source
+  `docs/projects/active/CLUB_TIER_STAGE12D_DRAWINGS.html`, prompt `CLUB_TIER_STAGE12D_DRAWING_PROMPT.md`). Six frames
+  (card dispute, paid twice, payouts list, leaving, terms read-out, platform-admin Online payments tab) + three decision
+  pages (D1 GST/HST with a forwardable accountant sheet, D2 cards from outside Canada, D3 dispute cost); /ux + /design ran
+  and are reported on the page. **Found first: a tournament team's online payment books silently past what the team owes**
+  — `online_payment_land` (mig 382) passes the stored base to `tournament_team_payment_record` (mig 345), whose only amount
+  check is >0 and ≤1,000,000; the desk's hand-recording refuses only while a debit is `clearing`, not while a Checkout
+  session is `open`, so "contact opens Pay now, desk records the e-transfer, contact finishes the page" overpays with no
+  item (asks 10 + 12). Stripe facts read 2026-10-26 (on the page's Start tab): CA$15 dispute fee never returned + CA$15
+  answering fee returned on a win, both billed to the platform under `fees_collector: 'application'`; Express-dashboard
+  dispute management with Stripe-covered losses is a public preview (build to confirm); payout contents listable for
+  automatic payouts only. Two placements changed by review: the payouts list is an Accounting › Payouts tab (Settings is
+  owner-only, so the treasurer never sees the Payouts card), and amber goes only to the person who can answer a dispute
+  (only the person who set up payouts can sign in to Stripe). No plan text said "the platform carries losses"; nothing to
+  correct.
+  **⚖ Owner rulings 2026-10-26 (the three decision pages; asks 2–7 and 10–13 still open):**
+  - **Ask 8 · GST/HST on the processing fee: paused.** "We are pre revenue and well below the 30k threshold." Nothing
+    changes on any screen. *Revisit trigger (recommended, not ruled):* the threshold counts the whole application fee
+    FieldLogicHQ takes (not its margin after Stripe), so fee revenue reaches it at roughly $850,000 of card volume.
+  - **Ask 9 · Cards from outside Canada: (b), charge more for a foreign card**, plus a note to review the set-up later for
+    clubs located in the US (USD cards paying USD clubs, where the fee treatment would differ). *Checks before build
+    (owed, not ruled):* Stripe's surcharge is a preview (Canada: credit cards only, max 2.4%, "consistently across card
+    networks or card products") and is not in hosted Checkout, so the pay flow becomes card-first; counsel's card-surcharge
+    question (§6) now covers it.
+  - **Ask 1 · Card dispute fees: the club is invoiced, free and comped clubs INCLUDED** ("we especially don't want to give
+    free clubs incentive to rack up many $15 charges on us with no ability for us to recoup since we are comping them").
+    Amount = Stripe's own figure at the time; the answering fee Stripe returns on a win comes off the club's bill.
+    *Open for the build:* a comped club has no subscription invoice until its comp ends (`billDebitFee` exempts
+    `comped` / `no_subscription` for exactly this reason), so it needs a standalone invoice, and what happens when one goes
+    unpaid. *Owner's call, asked:* whether the CA$5 returned bank debit fee (§0k answer 2, comped clubs exempt) should
+    follow the same rule — not changed. **→ Answered in round 2: yes.**
+  **⚖ Owner rulings 2026-10-26, round 2 (paste-back): ALL 13 ASKS RULED.**
+  - **Comped clubs, widened (owner):** "comped clubs do not get any reprieve on Stripe fees in any capacity, we are only
+    comping their subscription." So the **CA$5 returned bank debit fee is billed to comped clubs too**, which CHANGES §0k
+    answer 2 (built in 12c: `billDebitFee` stamps `exempt_reason = 'comped'`); 12d's build removes that exemption. Ask 1:
+    A, with free and comped clubs NOT exempt (owner note: "as discussed").
+  - **As recommended:** 2 (no family email from us) · 3 (book line stays while open; lost = a returned line beside the
+    receipt and the child or team owes again; won = plain paid) · 4 (one downgrade rule; payouts stay connected) · 5 (an
+    Accounting › Payouts tab for everyone who reads Accounting; the same list collapsed on the owner's Payouts card for a club
+    without Accounting) · 6 (new terms: a notice + an owner item, payments stay on; the new version required to set up
+    again, reconnect or change who pays the fee; Agree absent until ticked in both windows) · 7 (read only: a club tab + one
+    Health list) · 10 (book an overpaid team payment, flag it, refund door set to the extra) · 11 (every ending closes open
+    pay pages and counts them) · 12 (recording by hand warns and closes the open page) · 13 (one Copy of the facts for
+    Stripe).
+  - **Ask 8: (a) no tax on the fee**, the paste-back's form of round 1's "pause". **Ask 9: (b)**, as in round 1.
+  **⚖ Owner ruling 2026-10-27 (round 3):** a club with no subscription invoice to ride on (comped, free) is sent **its own
+  invoice**, "that they pay via Stripe that we track in platform admin like other payments." This closes round 1's open
+  mechanism question for both the dispute fees and the CA$5 returned-debit fee. It was the recommendation he agreed to, so
+  an unpaid one shows in platform admin and **nothing switches off by itself**. Not ruled: whether a standalone invoice goes
+  out per fee or gathers them.
+  **⚖ Owner ruling 2026-10-27 (ask 9 changed): bill the CLUB for a foreign card's extra cost**, on the same Stripe-fees
+  bill, from Stripe's own figure. It **replaces ask 9's (b)**: the family is never charged more, so there is no surcharge
+  and no card-first pay step. Owner: "this is not something we should cover and they should understand there could be
+  additional charges if they run a tournament and host a team from another country ... let's just make sure our terms
+  explain that these additional charges are possible." → counsel's terms must say so (§6).
+  **⚖ Owner 2026-10-27, the words' §7 (`CLUB_TIER_STAGE12D_COPY.md`) plus two held items: all as recommended.**
+  - **Wording:** say "a card issued outside **your country**", never "outside Canada" ("we may have club owners from the
+    US").
+  - **The rulings, as numbered in the words file's §7:**
+    1. A won dispute's returned fee is "credited to your account".
+    2. A comped club's own invoice comes in our email (Stripe's own invoice email off).
+    3. An unpaid one gets one reminder email and a Health row.
+    4. "Fraud" is never printed.
+    5. A club keeping a team's overpayment is a note ("Keep it"), not a credit.
+    6. The Payouts tab is hidden for a club that never connected.
+    7. One "other Stripe fees may be billed to you" line near the rates, in the set-up window and on the Payouts card.
+  - **The two held items:** a lost dispute does **not** return FieldLogicHQ's fee (same as §0c). A refunded payment
+    leaves Stripe's foreign-card extra the club's.
+  The build is split in two (12d-1: overpayment, disputes, billing every club; 12d-2: payouts
+  tab, leaving, terms, platform-admin view): `CLUB_TIER_STAGE12D1_BUILD_PROMPT.md`, `CLUB_TIER_STAGE12D2_BUILD_PROMPT.md`.
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
@@ -387,7 +457,7 @@ registration (house league) or from the payment's row (tournaments, A12), card f
 | **12a** foundation + the tournament card flow | **Proves itself on a tournament team paying by card (owner, 2026-10-25)**: the team pay page with deposit or full (A7), Pay in the acceptance email and the balance reminder, online rows and a full refund from the row (A12), landing through the tournament writer with a new online method value. Payouts card, five states, both homes, with the A14 who-pays choice and the A9 refund-policy sentence; the "Before you set up payouts" window; onboarding via Account Links + return; the gate + launch switch; pay block; Checkout for card; receipt page + email; online-payment record; Connect webhook (own secret, idempotent); full refund; test mode | `org_payment_accounts` (org, Stripe account id, state, charges/payouts enabled, requirements due, connected/disconnected by/at); `online_payments` (org, flow, payer email, base, fee, total, rail, state, processor ids, receipt no., timestamps); `online_payment_items` (payment → registration or team, amount); `online_payment_refunds` (amount, fee included, reason, by, processor id, state); `stripe_connect_events` (idempotency log) | 7–9 d |
 | **12b** house league | every Stage 9 ghost; Pay now in approval and promotion emails; Email the pay link; no longer payable; refund in the end window; partial refund (L1); Families lines — **BUILT 2026-10-25 (§0 state; Families lines and the tournament partial refund named, not built)** | migs 374 (items, the league landing), 375 (refunds in part), 376 (refund cap) — dev only | 5–7 d |
 | **12c** bank debit | bank debit for both flows at once (L2): the debit agreement, Processing until it clears with the spot held (A4), a fourth "Processing" figure on the Money band while clearing (A11), a returned debit's fresh Pay and self-clearing item. ⚖ The tournament card flow moved into 12a (owner, 2026-10-25). **+ A partial refund of a tournament team's card payment (L1 for tournaments, owner 2026-10-26, §0f):** a team's paid figure counts whole payment rows today, so it needs a "refunded so far" amount on the team's payment row (the team payments refresh sums amount less it), the refund functions taking an amount, and an amount field in the team's refund window — **BUILT 2026-10-26 (§0 state)** | migs 382 (a team payment's refunded-so-far + entry-adjustment list, the clearing state), 383 (a refund remembers when it came back and who was told), 384 (a refund made in Stripe records itself), 386 (a club account takes bank debit), 387 (the desk: decisions, reversal, the returned-debit fee), 388 (a decision and a reversal hold their ground) | 3–5 d (+1–2 d) |
-| **12d** hardening | disputes and negative balance, paid twice, a payouts list for matching the bank, "+ GST/HST" rider, international cards, platform-admin oversight, offboarding with registrations still to pay, help, the terms | disputes, payouts | 10–15 d |
+| **12d** hardening | **card disputes** (today a card dispute is dropped without a word; only a bank debit's is handled) and the dispute fees Stripe bills the platform (Stripe covers negative balances); **paid twice** (house league already refuses and raises an item, generically titled; **a tournament team's overpayment books silently**, census 2026-10-26); a payouts list for matching the bank; "+ GST/HST" rider; international cards; platform-admin oversight; offboarding with registrations still to pay (the Disconnect window doesn't count house league; downgrade, cancel and deletion say nothing); help; **the terms: the agree box, refusal and who/when/version are already built — only the read-out, "agree again" and counsel's text remain** — **DRAWN 2026-10-26, asks open (§0 state)** | disputes, payouts | 10–15 d |
 
 The 12a–12c total of 16–22 days matches the scoping plan's first-build estimate (15–22). 12d matches its 10–15. Every
 migration updates `docs/agents/db/DATA_DICTIONARY.md` and refreshes both snapshots in the same unit of work.
@@ -412,7 +482,10 @@ default; club-pays = families see the base amount, the fee is a "Payment process
 - Counsel session (memo ready). **No record found that it is booked**; confirm. **Add to the memo:** is a fee the family
   pays only when paying by card a card surcharge under the card networks' Canadian rules (cap, notice, Quebec)? If yes,
   A14's club-pays mode is the fallback.
-- Accountant: the GST/HST display.
+  **Add to the terms brief (owner 2026-10-27):** the payments terms must tell the club that Stripe costs its payments cause
+  are billed to it, comped and free clubs included: a returned bank debit, a card dispute, and a card issued outside
+  Canada (for example, a team from another country paying a tournament). The product never surcharges the family.
+- Accountant: the GST/HST display (paused 2026-10-26, ask 8).
 - Insurance broker quote.
 - Enabling Connect on the platform's Stripe account, in test mode. This is an external sign-up; ask before doing it.
 
