@@ -5,7 +5,7 @@ import { withObservability } from '@/lib/observability';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { onlinePaymentsOn, ONLINE_PAYMENTS_OFF_ERROR } from '@/lib/online-payments-switch';
 import { canRefundOnline } from '@/lib/online-payment-access';
-import { keepOverpayment, recordRefundAnotherWay, refundOnlinePayment, refundTeamPart, resolveLeagueRefundAnotherWay, settleDecisionAfterSave } from '@/lib/online-payment-landing';
+import { DisputeOpenError, keepOverpayment, recordRefundAnotherWay, refundOnlinePayment, refundTeamPart, resolveLeagueRefundAnotherWay, settleDecisionAfterSave } from '@/lib/online-payment-landing';
 import { clearSettled } from '@/lib/needs-attention';
 import { OVER_WORDS } from '@/lib/online-payment-words';
 import { sendTeamPayLink } from '@/lib/online-payment-receipt';
@@ -127,6 +127,8 @@ export const POST = withObservability(async (req: Request, { params }: { params:
       if (outcome.state !== 'failed') await clearSettled({ orgIds: [ctx.org.id], kinds: ['online_payment_over'] });
       return json(outcome, outcome.state === 'failed' ? 502 : 200);
     } catch (e) {
+      // 12d-1 (words §1.2 `dispute.noRefund`): no refund while a dispute on the payment is open.
+      if (e instanceof DisputeOpenError) return json({ error: e.message }, 409);
       const message = e instanceof Error ? e.message : '';
       if (message.includes('already being refunded')) return json({ error: 'This payment is already being refunded.' }, 409);
       if (message.includes('can no longer be refunded') || message.includes('already refunded')) return json({ error: 'This payment was already refunded.' }, 409);

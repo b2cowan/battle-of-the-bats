@@ -6,7 +6,10 @@ import { clearSettled } from './needs-attention';
 import { getOrganizationBySlugForServer } from './server-organizations';
 import { canConnectPayouts, canRefundLeagueOnline, canRefundOnline, isPayoutsTreasurer } from './online-payment-access';
 import { factsFromStripe, factsFromRow, payoutsPath, payoutsState, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from './online-payment-account';
-import { listRefunds, requestBankDebit, retrieveAccount, retrieveCheckout, refundToCard } from './stripe-connect';
+import { listRefunds, requestBankDebit, retrieveAccount, retrieveCheckout, retrieveDispute, refundToCard } from './stripe-connect';
+import { disputeFromStripe, isDisputeOpen, isInquiry, refundBlockedByDispute } from './online-payment-dispute';
+import { disputeOpenedEmailHtml } from './online-dispute-email';
+import { sendEmail } from './email';
 import { sendOnlineReceiptOnce, sendRefundEmail } from './online-payment-receipt';
 import { claimRefundEmail, sendLeagueRefundEmail } from './online-refund-email';
 import { childList } from './league-pay-words';
@@ -15,7 +18,7 @@ import { bankReturnReason } from './bank-debit';
 import { sendDebitReturnedEmail, sendDebitReversedEmail, sendDebitStartedEmail } from './bank-debit-email';
 import { recordDebitFee } from './platform-debit-fee';
 import { possessive } from './utils';
-import { DEBIT_NOTICE_WORDS as DW, LEAGUE_ONLINE_NOTICE_WORDS as LW, OVER_WORDS as OW, cardLabel, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney, reasonFull } from './online-payment-words';
+import { DEBIT_NOTICE_WORDS as DW, DISPUTE_WORDS, LEAGUE_ONLINE_NOTICE_WORDS as LW, OVER_WORDS as OW, cardLabel, disputeDue, disputeWhyFull, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney, reasonFull } from './online-payment-words';
 import { formatStoredDate } from './timezone';
 import type { Organization, OrgRole } from './types';
 
@@ -68,7 +71,7 @@ async function raiseOnce(p: {
   org: Organization; userIds: string[];
   eventType: 'payouts_need_attention' | 'online_payment_not_recorded' | 'card_refund_failed'
     | 'card_refund_whose' | 'card_refund_still_enrolled' | 'card_refund_unmatched' | 'debit_returned' | 'debit_reversed'
-    | 'online_payment_over';
+    | 'online_payment_over' | 'card_disputed' | 'card_dispute_lost';
   subjectKey: string; subjectId: string; title: string; body: string; link: string;
   /** More facts the notice's resolver reads (never part of its one-open-copy key, mig 366/374). */
   extra?: Record<string, string>;
@@ -389,6 +392,238 @@ export async function reverseDebit(stripeAccountId: string, dispute: Stripe.Disp
   // A redelivery owes the notice and the fee again (each once-only); never the family's email twice.
   if (!(res as { already?: boolean } | null)?.already) await sendDebitReversedEmail(op.id as string);
   await afterDebitBack(op.id as string, 'reversed');
+}
+
+// ── A card dispute (12d-1 Part 3) ───────────────────────────────────────────────────────────────
+
+type DisputedPay = {
+  id: string; org_id: string; flow: 'tournament_team' | 'league_signup'; team_id: string | null; tournament_id: string | null;
+  season_id: string | null; stripe_account_id: string; rail: string; status: string; landed_at: string | null;
+  receipt_no: number | null; total_amount: number; paid_on: string | null; description: string; livemode: boolean;
+};
+const DISPUTED_PAY_COLUMNS = 'id, org_id, flow, team_id, tournament_id, season_id, stripe_account_id, rail, status, landed_at, receipt_no, total_amount, paid_on, description, livemode';
+
+type DisputeRow = {
+  id: string; status: string; reason: string | null; amount: number; held: number; due_by: string | null; answered: boolean;
+  stripe_fee: number | null; fee_paid_from: string | null; opened_emailed_at: string | null;
+  lost_booked_at: string | null; won_back_at: string | null; taken_back: { amount?: number; children?: Array<{ registrationId: string; amount: number }> } | null;
+};
+
+/**
+ * Who answers a dispute (words §1, ask 3): the person who set up payouts — only they can sign in to Stripe — the owner in
+ * the usual case (`canConnectPayouts`). The owner who connected leads when there is more than one. `name` is how the club
+ * holds them; `email` their sign-in.
+ */
+export async function disputeAnswerer(orgId: string): Promise<{ ids: string[]; userId: string | null; name: string | null; email: string | null }> {
+  const [members, { data: acct }] = await Promise.all([
+    activeMembers(orgId),
+    supabaseAdmin.from('org_payment_accounts').select('connected_by').eq('org_id', orgId).maybeSingle(),
+  ]);
+  const ids = [...new Set(members.filter(m => canConnectPayouts(m)).map(m => m.user_id))];
+  const lead = ids.find(id => id === acct?.connected_by) ?? ids[0] ?? null;
+  if (!lead) return { ids, userId: null, name: null, email: null };
+  const [{ data: m }, { data: u }] = await Promise.all([
+    supabaseAdmin.from('organization_members').select('display_name').eq('organization_id', orgId).eq('user_id', lead).maybeSingle(),
+    supabaseAdmin.auth.admin.getUserById(lead),
+  ]);
+  const email = u?.user?.email ?? null;
+  const metaName = (u?.user?.user_metadata as { full_name?: string; name?: string } | undefined);
+  const name = (m?.display_name as string | null) || metaName?.full_name || metaName?.name || email;
+  return { ids, userId: lead, name: name ?? null, email };
+}
+
+/** The words' "who": a child, the children, or the team; and the payer whose bank it is. */
+async function disputeWho(op: DisputedPay): Promise<{
+  name: string; who: string; many: string | null; payer: string; record: string; team: boolean; regIds: string[]; firstReg: string | null;
+}> {
+  if (op.flow === 'tournament_team') {
+    const { data: team } = op.team_id ? await supabaseAdmin.from('teams').select('name').eq('id', op.team_id).maybeSingle() : { data: null };
+    const name = (team?.name as string | undefined) ?? op.description.split(' · ')[0];
+    return { name, who: possessive(name), many: null, payer: DISPUTE_WORDS.payerUnknown, record: possessive(name), team: true, regIds: [], firstReg: null };
+  }
+  const { data: items } = await supabaseAdmin.from('online_payment_items').select('registration_id').eq('online_payment_id', op.id).order('created_at');
+  const regIds = [...new Set(((items ?? []) as Array<{ registration_id: string | null }>).map(i => i.registration_id).filter((x): x is string => !!x))];
+  const { data: regs } = regIds.length
+    ? await supabaseAdmin.from('league_registrations').select('id, player_first_name, player_last_name, guardian_first_name, guardian_last_name').in('id', regIds)
+    : { data: [] };
+  const byId = new Map(((regs ?? []) as Array<Record<string, string | null>>).map(r => [r.id as string, r]));
+  const kids = regIds.map(id => byId.get(id)).filter((r): r is Record<string, string | null> => !!r);
+  const first = kids[0];
+  const full = first ? `${first.player_first_name ?? ''} ${first.player_last_name ?? ''}`.trim() : op.description.split(' · ')[0];
+  const guardian = first ? [first.guardian_first_name, first.guardian_last_name].filter(Boolean).join(' ') : '';
+  const many = kids.length > 1 ? childList(kids.map(k => k.player_first_name ?? '').filter(Boolean)) : null;
+  return {
+    name: full, who: possessive(full), many, payer: guardian ? possessive(guardian) : DISPUTE_WORDS.payerUnknown,
+    record: possessive(full), team: false, regIds, firstReg: regIds[0] ?? null,
+  };
+}
+
+/**
+ * A card dispute's event (`charge.dispute.*`, any order, any replay): the dispute is re-read from Stripe, never trusted
+ * from the event, and written by THE one function (`online_payment_dispute_apply`, mig 391): stale reads change nothing,
+ * a loss is booked once, a win after a loss is put back once. A bank debit's dispute is 12c's (`reverseDebit`) and is left
+ * alone here. Then: the items (§1.4), the email to the person who answers (§1.6, once), and a new extra on a team after a
+ * loss turned to a win (Part 2's item).
+ */
+export async function applyCardDispute(stripeAccountId: string, event: Pick<Stripe.Dispute, 'id' | 'charge' | 'payment_intent'>): Promise<void> {
+  // Which payment: the event's charge or intent (never changes). Its STATE is re-read below.
+  const chargeId = typeof event.charge === 'string' ? event.charge : event.charge?.id;
+  const intentId = typeof event.payment_intent === 'string' ? event.payment_intent : event.payment_intent?.id;
+  if (!chargeId && !intentId) return;
+  let op = chargeId ? (await supabaseAdmin.from('online_payments').select(DISPUTED_PAY_COLUMNS).eq('stripe_charge_id', chargeId).maybeSingle()).data as DisputedPay | null : null;
+  if (!op && intentId) op = (await supabaseAdmin.from('online_payments').select(DISPUTED_PAY_COLUMNS).eq('stripe_payment_intent_id', intentId).maybeSingle()).data as DisputedPay | null;
+  if (!op || op.stripe_account_id !== stripeAccountId || op.rail !== 'card') return;
+  // Paid at Stripe but not landed yet: throw, so Stripe redelivers once the landing is in (the line a loss takes back must
+  // exist). A payment whose landing failed is recorded as it stands: the "isn't in the record" item already has the desk.
+  if (!op.landed_at && op.status === 'open') throw new Error('This card payment has not landed yet; the dispute will be retried.');
+  const dispute = await retrieveDispute(stripeAccountId, event.id);
+  const read = disputeFromStripe(dispute);
+  if (!read) {
+    console.error('[online-payment-landing] a dispute in a status this code doesn’t know:', dispute.id, dispute.status);
+    return;
+  }
+  const { data: res, error } = await supabaseAdmin.rpc('online_payment_dispute_apply', {
+    p_online_payment: op.id, p_dispute: dispute.id, p_status: read.status, p_reason: read.reason, p_amount: read.amount,
+    p_held: read.held, p_due_by: read.dueBy, p_answered: read.answered, p_stripe_fee: read.stripeFee,
+    p_fee_paid_from: read.feePaidFrom, p_livemode: read.livemode, p_opened_at: read.openedAt,
+  });
+  if (error) throw new Error(error.message);
+  const out = res as { disputeId: string; lostNow?: boolean; wonBack?: boolean; over?: number };
+  await afterDisputeApplied(op.id, out);
+}
+
+/** Everything after the dispute's write, each step once-only or read from the rows, so a replay owes nothing twice. */
+async function afterDisputeApplied(onlinePaymentId: string, out: { disputeId: string; lostNow?: boolean; wonBack?: boolean; over?: number }): Promise<void> {
+  const [{ data: opData }, { data: dData }] = await Promise.all([
+    supabaseAdmin.from('online_payments').select(DISPUTED_PAY_COLUMNS).eq('id', onlinePaymentId).maybeSingle(),
+    supabaseAdmin.from('online_payment_disputes')
+      .select('id, status, reason, amount, held, due_by, answered, stripe_fee, fee_paid_from, opened_emailed_at, lost_booked_at, won_back_at, taken_back')
+      .eq('id', out.disputeId).maybeSingle(),
+  ]);
+  const op = opData as DisputedPay | null;
+  const d = dData as DisputeRow | null;
+  if (!op || !d) return;
+  const org = await orgById(op.org_id);
+  if (!org) return;
+  if (isDisputeOpen(d.status)) {
+    await raiseDisputed(org, op, d);
+    if (!d.opened_emailed_at) await sendDisputeOpenedEmail(org, op, d);
+  }
+  if (out.lostNow) await raiseDisputeLost(org, op, d);
+  // A loss later turned to a win puts the money back; what the team paid again meanwhile is extra (Part 2's item).
+  if (out.wonBack && op.flow === 'tournament_team' && Number(out.over ?? 0) > 0) await raiseOverpaid(op.id);
+  await clearSettled({ orgIds: [op.org_id], kinds: ['card_disputed', 'card_dispute_lost', 'online_payment_over'] });
+}
+
+/**
+ * "A card payment is disputed" (§1.4), while it is open: the answerer's copy (`answerer: 'yes'`, raised only while
+ * unanswered — it settles once the answer is sent) and the desk's quiet copy with the answerer's name (raised while open;
+ * it settles on the bank's decision). Raised only under the rule's own "waiting" condition, so a settled copy is never
+ * reopened, and `raiseOnce` never doubles an open one (one copy per person per dispute, mig 390).
+ */
+async function raiseDisputed(org: Organization, op: DisputedPay, d: DisputeRow): Promise<void> {
+  const [answerer, who, members] = await Promise.all([disputeAnswerer(org.id), disputeWho(op), activeMembers(org.id)]);
+  const desk = members.filter(m => (op.flow === 'tournament_team' ? canRefundOnline(m, org) : canRefundLeagueOnline(m, org)) && !answerer.ids.includes(m.user_id)).map(m => m.user_id);
+  const inquiry = isInquiry(d.status);
+  const title = who.many ? DISPUTE_WORDS.itemTitleMany(who.many) : DISPUTE_WORDS.itemTitle(who.who);
+  const receipt = String(op.receipt_no ?? '');
+  const amount = formatMoney(Number(d.amount));
+  const due = disputeDue(d.due_by, { clock: true });
+  const link = recordHref(org, op, who.firstReg && !who.many ? { regId: who.firstReg } : undefined);
+  const extra: Record<string, string> = op.team_id ? { teamId: op.team_id } : who.regIds.length ? { registrationIds: who.regIds.join(',') } : {};
+  if (!d.answered) {
+    await raiseOnce({
+      org, userIds: answerer.ids, eventType: 'card_disputed', subjectKey: 'onlineDisputeId', subjectId: d.id, title, link,
+      body: inquiry
+        ? DISPUTE_WORDS.itemBodyInquiry(who.payer, receipt, disputeWhyFull(d.reason), due)
+        : DISPUTE_WORDS.itemBody(who.payer, receipt, amount, disputeWhyFull(d.reason), formatMoney(Number(d.held)), due),
+      extra: { ...extra, answerer: 'yes' },
+    });
+  }
+  const name = answerer.name ?? 'The owner';
+  await raiseOnce({
+    org, userIds: desk, eventType: 'card_disputed', subjectKey: 'onlineDisputeId', subjectId: d.id, title, link,
+    body: inquiry
+      ? DISPUTE_WORDS.itemBodyOthersInquiry(who.payer, receipt, amount, name, due)
+      : DISPUTE_WORDS.itemBodyOthers(who.payer, receipt, amount, name, due),
+    extra,
+  });
+}
+
+/** "The dispute was lost" (§1.4): to the desk and the owner, once, when the loss is booked. It clears itself when the child
+ *  or team is paid in full or ended, or at once if the bank later turns it into a win. */
+async function raiseDisputeLost(org: Organization, op: DisputedPay, d: DisputeRow): Promise<void> {
+  const [answerer, who, members] = await Promise.all([disputeAnswerer(org.id), disputeWho(op), activeMembers(org.id)]);
+  const people = [...new Set([...answerer.ids,
+    ...members.filter(m => (op.flow === 'tournament_team' ? canRefundOnline(m, org) : canRefundLeagueOnline(m, org))).map(m => m.user_id)])];
+  const taken = d.taken_back ?? {};
+  const kids = (taken.children ?? []).filter(c => c.registrationId);
+  const day = formatStoredDate(d.lost_booked_at, { withYear: false });
+  const receipt = String(op.receipt_no ?? '');
+  if (op.flow === 'tournament_team') {
+    const { data: team } = op.team_id ? await supabaseAdmin.from('teams').select('name').eq('id', op.team_id).maybeSingle() : { data: null };
+    const name = (team?.name as string | undefined) ?? op.description.split(' · ')[0];
+    await raiseOnce({
+      org, userIds: people, eventType: 'card_dispute_lost', subjectKey: 'onlineDisputeId', subjectId: d.id,
+      title: DISPUTE_WORDS.lostTitle(who.who),
+      body: DISPUTE_WORDS.lostBody(receipt, day, 'tournament', DW.owesAgain(name, formatMoney(Number(taken.amount ?? d.amount)), false), true),
+      link: recordHref(org, op), extra: op.team_id ? { teamId: op.team_id } : {},
+    });
+    return;
+  }
+  if (!kids.length) return;
+  const { data: regs } = await supabaseAdmin.from('league_registrations').select('id, player_first_name').in('id', kids.map(k => k.registrationId));
+  const firstName = new Map(((regs ?? []) as Array<{ id: string; player_first_name: string }>).map(r => [r.id, r.player_first_name]));
+  const names = kids.map(k => firstName.get(k.registrationId) ?? '').filter(Boolean);
+  const one = kids.length === 1;
+  await raiseOnce({
+    org, userIds: people, eventType: 'card_dispute_lost', subjectKey: 'onlineDisputeId', subjectId: d.id,
+    title: one ? DISPUTE_WORDS.lostTitle(who.who) : DISPUTE_WORDS.lostTitleMany(childList(names)),
+    body: DISPUTE_WORDS.lostBody(receipt, day, 'season',
+      DW.owesAgain(childList(names), formatMoney(kids.reduce((s, k) => s + Number(k.amount), 0)), !one), false),
+    link: recordHref(org, op, one ? { regId: kids[0].registrationId } : undefined),
+    extra: { registrationIds: kids.map(k => k.registrationId).join(',') },
+  });
+}
+
+/**
+ * The email to the person who answers when a dispute opens (§1.6, FieldLogicHQ's own envelope). Once: sent under a
+ * once-only key, then stamped; a failure is logged and the next event tries again. No family is ever emailed (ask 2).
+ * The reminder three days before it is due is the daily job's (Part 4).
+ */
+async function sendDisputeOpenedEmail(org: Organization, op: DisputedPay, d: DisputeRow): Promise<void> {
+  try {
+    const answerer = await disputeAnswerer(org.id);
+    if (!answerer.email) return;
+    const who = await disputeWho(op);
+    const forWhom = who.many ?? who.name;
+    const html = disputeOpenedEmailHtml({
+      club: org.name, payer: who.payer, forWhom, record: who.record, receiptNo: String(op.receipt_no ?? ''),
+      day: formatStoredDate(op.paid_on, { withYear: true }), status: d.status, reason: d.reason, held: Number(d.held),
+      dueBy: d.due_by, stripeFee: d.fee_paid_from === 'club' ? d.stripe_fee : null,
+      link: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}${recordHref(org, op, who.firstReg && !who.many ? { regId: who.firstReg } : undefined)}`,
+      test: !op.livemode,
+    });
+    const sent = await sendEmail(answerer.email, html.subject, html.html, { kind: 'card_dispute_opened', orgId: org.id, idempotencyKey: `dispute-opened:${d.id}` });
+    if (sent.status !== 'sent') return;
+    await supabaseAdmin.from('online_payment_disputes').update({ opened_emailed_at: new Date().toISOString() }).eq('id', d.id).is('opened_emailed_at', null);
+  } catch (e) {
+    console.error('[online-payment-landing] the dispute email was not sent:', d.id, e instanceof Error ? e.message : String(e));
+  }
+}
+
+/**
+ * Refunds wait while a dispute is open (words §1.2 `dispute.noRefund`): Stripe already took the money back, and a refund
+ * on top would pay the family or team twice. Asked by every refund to the card before it opens.
+ */
+export class DisputeOpenError extends Error {}
+async function refuseWhileDisputed(onlinePaymentId: string): Promise<void> {
+  const { data } = await supabaseAdmin.from('online_payment_disputes').select('status, online_payments!inner(flow)').eq('online_payment_id', onlinePaymentId);
+  const rows = (data ?? []) as unknown as Array<{ status: string; online_payments: { flow: string } | { flow: string }[] }>;
+  if (!refundBlockedByDispute(rows)) return;
+  const pay = rows[0]?.online_payments;
+  const flow = Array.isArray(pay) ? pay[0]?.flow : pay?.flow;
+  throw new DisputeOpenError(DISPUTE_WORDS.noRefund(flow === 'tournament_team'));
 }
 
 /** A send-back that couldn't go: the refund-didn't-reach item, for the bank account, to whoever may refund. */
@@ -819,6 +1054,7 @@ async function landRefund(refundId: string, stripeRefundId: string | null): Prom
 export async function refundOnlinePayment(p: {
   onlinePaymentId: string; feeIncluded: boolean; reason: 'organizer_ended' | 'team_left' | null; note: string | null; actorId: string;
 }): Promise<RefundOutcome> {
+  await refuseWhileDisputed(p.onlinePaymentId);
   const { data: refundId, error } = await supabaseAdmin.rpc('online_payment_refund_open', {
     p_online_payment: p.onlinePaymentId, p_fee_included: p.feeIncluded, p_reason: p.reason, p_note: p.note, p_actor: p.actorId, p_origin: 'app',
   });
@@ -857,6 +1093,7 @@ export async function refundOnlinePayment(p: {
 export async function refundTeamPart(p: {
   onlinePaymentId: string; amount: number; partialReason: string; note: string | null; actorId: string;
 }): Promise<RefundOutcome> {
+  await refuseWhileDisputed(p.onlinePaymentId);
   const { data: refundId, error } = await supabaseAdmin.rpc('online_payment_refund_open', {
     p_online_payment: p.onlinePaymentId, p_fee_included: false, p_reason: null, p_note: p.note, p_actor: p.actorId, p_origin: 'app',
     p_item: null, p_amount: p.amount, p_partial_reason: p.partialReason,
@@ -933,6 +1170,7 @@ export async function refundLeagueToCard(p: {
   const { data: item } = await supabaseAdmin.from('online_payment_items').select('online_payment_id').eq('id', p.itemId).maybeSingle();
   if (!item) throw new Error('That card payment couldn’t be found.');
   const onlinePaymentId = item.online_payment_id as string;
+  await refuseWhileDisputed(onlinePaymentId);
   const { data: refundId, error } = await supabaseAdmin.rpc('online_payment_refund_open', {
     p_online_payment: onlinePaymentId, p_fee_included: p.feeIncluded, p_reason: p.reason, p_note: p.note, p_actor: p.actorId, p_origin: 'app',
     p_item: p.itemId, p_amount: p.amount, p_partial_reason: p.partialReason,
@@ -1310,6 +1548,7 @@ async function recordTeamDashboardRefund(op: PayForRefund, refund: Stripe.Refund
 export async function recordRefundAnotherWay(p: {
   onlinePaymentId: string; feeIncluded: boolean; reason: 'organizer_ended' | 'team_left' | null; note: string | null; actorId: string;
 }): Promise<RefundOutcome> {
+  await refuseWhileDisputed(p.onlinePaymentId);
   const { data: refundId, error } = await supabaseAdmin.rpc('online_payment_refund_open', {
     p_online_payment: p.onlinePaymentId, p_fee_included: p.feeIncluded, p_reason: p.reason, p_note: p.note, p_actor: p.actorId, p_origin: 'app',
   });

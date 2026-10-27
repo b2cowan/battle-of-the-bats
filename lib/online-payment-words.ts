@@ -702,6 +702,138 @@ export const PAY_OPEN_WORDS = {
   partNote: (left: string, family: boolean) => `The ${family ? 'family’s' : 'team’s'} pay link still works for the ${left} still owing.`,
 } as const;
 
+/**
+ * The cardholder's reason (12d words §1.2): Stripe's reason, mapped; anything else prints nothing and the sentence ends
+ * after the date. "Fraud" is never printed (§7 ruling 4): a club reads it as an accusation of the family.
+ */
+const DISPUTE_REASON_WORDS: Record<string, { full: string; short: string }> = {
+  fraudulent: { full: ': the cardholder says they didn’t make this payment', short: 'didn’t make it' },
+  unrecognized: { full: ': the cardholder says they didn’t make this payment', short: 'didn’t make it' },
+  duplicate: { full: ': the cardholder says they were charged twice', short: 'charged twice' },
+  credit_not_processed: { full: ': the cardholder says a refund never arrived', short: 'refund never arrived' },
+  product_not_received: { full: ': the cardholder says they didn’t get what they paid for', short: 'not received' },
+  product_unacceptable: { full: ': the cardholder says it wasn’t as described', short: 'not as described' },
+};
+export const disputeWhyFull = (reason: string | null | undefined) => (reason ? DISPUTE_REASON_WORDS[reason]?.full ?? '' : '');
+export const disputeWhyShort = (reason: string | null | undefined) => (reason ? DISPUTE_REASON_WORDS[reason]?.short ?? '' : '');
+
+/** A sentence that ends on a clock ("…7:59 p.m.") absorbs its own full stop (Part 2's lesson, `PAY_OPEN_WORDS.notice`). */
+export const endSentence = (s: string) => (s.endsWith('.') ? s : `${s}.`);
+
+/** `{due}` on a screen ("Nov 11") and with the clock ("Nov 11 at 7:59 p.m."), in the club's zone; `full` adds the year
+ *  (an email, words "Dates"). */
+export function disputeDue(iso: string | null | undefined, opts: { clock?: boolean; year?: boolean } = {}): string {
+  if (!iso) return '';
+  const z = utcToZonedInputs(iso);
+  const day = formatStoredDate(z.date, { withYear: !!opts.year });
+  return opts.clock ? `${day} at ${formatTime(z.time)}` : day;
+}
+
+/**
+ * A CARD PAYMENT IS DISPUTED (Club Tier Stage 12d-1 Part 3; words CLUB_TIER_STAGE12D_COPY.md §1.1–§1.6). Amber and the
+ * button are the answerer's alone (the person who set up payouts, the only one who can sign in to Stripe); everyone else
+ * reads the same facts quietly, with that person's name (D3). Nothing is sent to a family (ask 2).
+ */
+export const DISPUTE_WORDS = {
+  // §1.1 the Fee cell / a team's payment row.
+  chip: { disputed: 'Disputed', inquiry: 'Bank asking', withBank: 'Disputed · with the bank', notAnswered: 'Disputed · not answered' },
+  answerBy: (name: string, due: string) => `${name} answers by ${due}`,
+  answerByYou: (due: string) => `Answer by ${due}`,
+  answered: (day: string) => `Answered ${day}`,
+  wasDue: (day: string) => `Was due ${day}`,
+  wonSub: (day: string) => `dispute won ${day}`,
+  lost: (fee: string) => `${fee} owing · dispute lost`,
+  lostSub: (day: string, receiptNo: string) => `Taken back by the bank ${day} · receipt ${receiptNo}`,
+  teamRowLost: (day: string) => `Taken back by the bank, ${day}`,
+  tip: (held: string, book: 'season' | 'tournament') =>
+    `The cardholder’s bank is disputing this payment. Stripe is holding ${held} from the club’s Stripe balance until the bank decides. The payment stays in the ${book === 'season' ? 'season’s' : 'tournament’s'} book.`,
+  tipAnswered: 'The cardholder’s bank is disputing this payment. Nothing is left for the club to do; the bank decides, and this can take weeks.',
+  // §1.2 the record block.
+  heading: 'The cardholder’s bank is disputing this payment',
+  headingInquiry: 'The cardholder’s bank is asking about this payment',
+  headingWon: 'Dispute won',
+  headingLost: 'Dispute lost',
+  pillAnswerBy: (due: string) => `Answer by ${due}`,
+  pillOwingAgain: 'Owing again',
+  opened: 'Opened',
+  why: 'Why',
+  held: 'Held by Stripe',
+  heldValue: (held: string) => `${held}, taken from the club’s Stripe balance until the bank decides`,
+  heldNone: 'Nothing taken yet',
+  answerByLabel: 'Answer by',
+  answeredLabel: 'Answered',
+  wasDueLabel: 'Was due',
+  fee: 'Dispute fee',
+  // Ruling 6 (owner 2026-10-27): printed only when Stripe reports the figure.
+  feeFromClub: (fee: string) => `Stripe took its dispute fee, ${fee}, from the club’s Stripe balance.`,
+  ref: 'Stripe reference',
+  answer: 'Answer in Stripe',
+  openFailed: 'Stripe didn’t open. Try again.',
+  copy: 'Copy the facts',
+  copyAria: 'Copy the facts for Stripe',
+  copied: 'Copied',
+  factsLead: (facts: string) => `Stripe asks for your side, with evidence. Copy the facts holds what we have: ${facts}.`,
+  factSignup: (day: string, name: string) => `the sign-up on ${day} by ${name}`,
+  factTeamSignup: (day: string, contact: string) => `the team’s registration on ${day} by ${contact}`,
+  factPolicy: 'the refund policy shown beside Pay',
+  factReceipt: (receiptNo: string, email: string, day: string) => `receipt ${receiptNo} emailed to ${email} on ${day}`,
+  onlyAnswerer: (name: string, emailedDay: string | null, team: boolean) =>
+    `Only ${name}, who set up payouts, can sign in to Stripe.${emailedDay ? ` We emailed ${name} on ${emailedDay}.` : ''} If the ${team ? 'team' : 'family'} calls, they can withdraw it with their bank.`,
+  noRefund: (team: boolean) => `No refund while it’s open: Stripe has already taken the money back, and a refund on top would pay the ${team ? 'team' : 'family'} twice.`,
+  refunded: (day: string) => `This payment was refunded on ${day}. Tell Stripe that in your answer.`,
+  won: (day: string) => `Won ${day}. The money is back in the club’s Stripe balance.`,
+  // The team's book is the tournament's (12c's reversed-debit sentence names its book the same way).
+  lostLine: (day: string, receiptNo: string, book: 'season' | 'tournament', owesAgain: string) =>
+    `Lost ${day}. The bank took back receipt ${receiptNo}. It’s out of the ${book === 'season' ? 'season’s' : 'tournament’s'} book, and ${owesAgain}.`,
+  siblings: (children: string) => `This is one payment for ${children}. The dispute is on the whole payment.`,
+  againAfterOther: (childFirst: string) =>
+    `${childFirst} paid again another way after the dispute was lost. If this dispute is now won, ${childFirst} has paid twice.`,
+  // §1.4 Needs attention. `who` is "{childPossessive}" / "{teamNamePossessive}"; `payer` is "{guardianPossessive}".
+  itemTitle: (who: string) => `${who} card payment is disputed`,
+  itemTitleMany: (children: string) => `A card payment for ${children} is disputed`,
+  itemBody: (payer: string, receiptNo: string, amount: string, whyFull: string, held: string, due: string) =>
+    `${payer} bank is disputing receipt ${receiptNo} (${amount})${whyFull}. Stripe has taken ${held} from the club’s Stripe balance until the bank decides. Answer in Stripe by ${endSentence(due)}`,
+  itemBodyInquiry: (payer: string, receiptNo: string, whyFull: string, due: string) =>
+    `${payer} bank is asking about receipt ${receiptNo}${whyFull}. Nothing has been taken. Answering can stop it becoming a dispute. Answer in Stripe by ${endSentence(due)}`,
+  itemBodyOthers: (payer: string, receiptNo: string, amount: string, name: string, due: string) =>
+    `${payer} bank is disputing receipt ${receiptNo} (${amount}). ${name} answers it in Stripe by ${endSentence(due)} If the club wins, nothing changes here.`,
+  itemBodyOthersInquiry: (payer: string, receiptNo: string, amount: string, name: string, due: string) =>
+    `${payer} bank is asking about receipt ${receiptNo} (${amount}). ${name} answers it in Stripe by ${endSentence(due)}`,
+  lostTitle: (who: string) => `${who} dispute was lost`,
+  lostTitleMany: (children: string) => `The dispute for ${children} was lost`,
+  lostBody: (receiptNo: string, day: string, book: 'season' | 'tournament', owesAgain: string, team: boolean) =>
+    `The bank took back receipt ${receiptNo} on ${day}. It’s out of the ${book === 'season' ? 'season’s' : 'tournament’s'} book, and ${owesAgain}. We haven’t emailed the ${team ? 'team' : 'family'}.`,
+  /** "{guardianPossessive}" when the payer is not named. */
+  payerUnknown: 'The cardholder’s',
+  // §1.5 money.
+  band: (n: number, held: string) => (n === 1
+    ? `1 card payment is disputed. Stripe is holding ${held} from the club’s balance until the bank decides; it stays in Received until then.`
+    : `${n} card payments are disputed. Stripe is holding ${held} from the club’s balance until the banks decide; they stay in Received until then.`),
+  moneyLine: (receiptNo: string, whyShort: string) => (whyShort ? `Dispute lost · ${whyShort} · receipt ${receiptNo}` : `Dispute lost · receipt ${receiptNo}`),
+  moneyHow: 'Taken back by the bank',
+  bulkWhy: 'a dispute was lost',
+} as const;
+
+/** §1.6: the email to the person who answers, when a dispute opens (FieldLogicHQ's own envelope). The reminder three days
+ *  before it is due is the daily job's (Part 4). */
+export const DISPUTE_EMAIL_WORDS = {
+  subject: (club: string) => `A card payment to ${club} is disputed`,
+  subjectInquiry: (club: string) => `A bank is asking about a card payment to ${club}`,
+  preheader: (dueFull: string) => `Answer in Stripe by ${endSentence(dueFull)}`,
+  lead: (payer: string, forWhom: string, receiptNo: string, day: string, whyFullSentence: string) =>
+    `${payer} bank is disputing a card payment for ${forWhom} (receipt ${receiptNo}, ${day}).${whyFullSentence}`,
+  leadInquiry: (payer: string, forWhom: string, receiptNo: string, day: string, whyFullSentence: string) =>
+    `${payer} bank is asking about a card payment for ${forWhom} (receipt ${receiptNo}, ${day}).${whyFullSentence} Nothing has been taken.`,
+  /** `{whyFullSentence}`: " The cardholder says they didn’t make this payment." or nothing. */
+  whySentence: (whyFull: string) => (whyFull ? ` The ${whyFull.replace(/^: the /, '')}.` : ''),
+  held: 'Held by Stripe',
+  heldNone: 'Nothing taken',
+  answerBy: 'Answer by',
+  act: (recordPossessive: string) => `Answer it in Stripe with your evidence. ${recordPossessive} record has the facts to copy.`,
+  button: (recordPossessive: string) => `Open ${recordPossessive} record`,
+  noChange: 'If the club wins, nothing changes in your books.',
+} as const;
+
 /** The line on the club's FieldLogicHQ invoice for Stripe's returned-debit fee (§0k answer 2; words via /marketing). */
 export const RETURNED_DEBIT_FEE_WORDS = {
   invoiceLine: (day: string) => `Returned bank debit · ${day}`,

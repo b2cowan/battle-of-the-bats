@@ -209,6 +209,12 @@ export async function retrieveRefund(accountId: string, refundId: string): Promi
   return getStripe().refunds.retrieve(refundId, {}, on(accountId));
 }
 
+/** A dispute on the club's account (12d-1), read fresh on every event: Stripe's events state no order. Its balance
+ *  transactions (always included) say what Stripe took from the club's balance and the fee it charged there. */
+export async function retrieveDispute(accountId: string, disputeId: string): Promise<Stripe.Dispute> {
+  return getStripe().disputes.retrieve(disputeId, {}, on(accountId));
+}
+
 /** A payment's refunds at Stripe (12c): a refund made in Stripe before its payment landed here is recorded once it lands. */
 export async function listRefunds(accountId: string, paymentIntentId: string): Promise<Stripe.Refund[]> {
   const page = await getStripe().refunds.list({ payment_intent: paymentIntentId, limit: 100 }, on(accountId));

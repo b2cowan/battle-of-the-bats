@@ -49,6 +49,7 @@ export const EMAIL_KINDS = {
   billing_retention_warning:            { klass: 'account', label: 'Records retention notice' },
   org_closed:                           { klass: 'account', label: 'Account closed' },
   club_domain_notice:                   { klass: 'account', label: 'Web address update' },
+  card_dispute_opened:                  { klass: 'account', label: 'Card dispute opened' },
   // ── account: feedback ──────────────────────────────────────────────────────
   feedback_receipt:                     { klass: 'account', label: 'Feedback received' },
   feedback_reply:                       { klass: 'account', label: 'Reply to their feedback', story: true },
