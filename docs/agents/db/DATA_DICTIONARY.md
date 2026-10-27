@@ -1708,7 +1708,49 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:club_schedule_slot_teams.slot_id -->
 <!-- dict:col:club_schedule_slot_teams.team_id -->
 <!-- dict:col:club_schedule_slot_teams.org_id -->
-**`slot_id`** (FK → `club_schedule_slots.id` ON DELETE CASCADE) / **`team_id`** (FK → `rep_teams.id` ON DELETE CASCADE) / **`org_id`** — PK (slot, team). At most `settings.teamsAtOnce` teams a slot (`slot_full` — the database's ceiling; since Stage 11c the largest sharing rule's number, and the routes refuse first any slot holding teams of no one rule, more than its rule's number, or two on a half facility); a team never twice at once in one schedule (gotcha 3). A slot with two or more rows is a SHARED slot: the bill and Fair shares count it 1 ÷ its teams. An open slot has no row.
+**`slot_id`** (FK → `club_schedule_slots.id` ON DELETE CASCADE) / **`team_id`** (FK → `rep_teams.id` ON DELETE CASCADE) / **`org_id`** — PK (slot, team). At most `settings.teamsAtOnce` teams a slot (`slot_full` — the database's ceiling; since Stage 11c the largest sharing rule's number, and the routes refuse first any slot holding teams of no one rule, more than its rule's number, or two on a half facility); a team never twice at once in one schedule (gotcha 3). A slot with two or more rows is a SHARED slot: the bill and Fair shares count it 1 ÷ its teams. An open slot has no row. ⚖ **Since mig 392 (Stage 11b, ruling 11b·B) a slot is held by teams OR by house league, never both:** the trigger `club_schedule_slot_teams_no_program` refuses a team on a slot with a `club_schedule_slot_programs` row (`slot_both`), under the slot's row lock.
+
+### House league in the club's time: `club_schedule_slot_programs` + `league_slot_uses` + `league_practice_time`
+<!-- dict:table:club_schedule_slot_programs -->
+<!-- dict:table:league_slot_uses -->
+<!-- dict:table:league_practice_time -->
+
+**Purpose (Club Tier Stage 11b, mig 392 — plan `docs/projects/active/HOUSE_LEAGUE_STAGE9_PLAN.md` §0h, rulings 9d2·5, 9d2·15, 9d2·16, 11b·A–C):** the club has ONE place that controls time. An owner or admin gives a slot to **House league as a whole** (`club_schedule_slot_programs`), never to a division; a league admin divides house league's time (`league_slot_uses`) into a division's **game time** (`games`, which 9d-2a's Generate games fills) or its **practice time** (`practices`), and Practice time hands practice time out to the division's teams as `league_practices` rows carrying `club_schedule_slot_id` (settings in `league_practice_time`). A house-league slot with no use is **"Not given yet"**. Nobody in house league picks an hour the club has not given it.
+
+**Who reads, who writes:** server-only — RLS on, no policies, nothing to `anon`/`authenticated`, `service_role` grants (mig 326's shape). Writes go through SQL steps only: `club_schedule_save` / `club_schedule_edit_slots` (a slot's `program`, beside `teamIds`), `league_slot_uses_set` (the league admin's Give it to; refuses `not_found`, `season_closed`, `changed`), `league_practices_hand_out` (Practice time), `club_schedule_apply_changes` (`p_league`: a use and its practices follow the time; practices on time house league lost are cancelled). Never billed (11b·A): the bill reads rep teams only.
+
+**Gotchas:** (1) **Never both** (11b·B): both holder tables refuse `slot_both`; a save or hand edit removes the holder that goes before adding the one that comes. (2) **A use cascades from the program row**, not the slot: when the club takes a slot back (in place, by a save or hand edit), its use goes at once — but its practices stay until Send the changes, which must cancel them (`p_league.cancel`) or the step refuses `changed`. (3) **A final schedule's soft-removed slot KEEPS its program row** (unlike its team rows) so its use survives until Send the changes carries it to the slot the time moved to (`p_league.uses`); the removed slot's deletion then cascades whatever was not carried. (4) **A use belongs to a SEASON**, not the program: house league's time can span two seasons' dates; `league_slot_uses_set` refuses a slot another season uses. (5) Only a **final** schedule's slots can be divided (a draft's are the club's to change). (6) Taking a slot back from Not given yet, or giving practice time to something else, deletes its practices that haven't started (nothing of a coach's hangs off a house-league practice); started ones keep their link as history.
+
+**`club_schedule_slot_programs` fields:**
+
+<!-- dict:col:club_schedule_slot_programs.slot_id -->
+<!-- dict:col:club_schedule_slot_programs.program -->
+<!-- dict:col:club_schedule_slot_programs.org_id -->
+<!-- dict:col:club_schedule_slot_programs.created_at -->
+**`slot_id`** (PK; FK → `club_schedule_slots.id` ON DELETE CASCADE) / **`program`** (text, CHECK `house_league` — the only program that holds time) / **`org_id`** (FK → `organizations.id` ON DELETE CASCADE; trigger `club_schedule_slot_programs_check`: the slot's own org, else `slot_owner`; no team on it, else `slot_both`) / **`created_at`**. One program per slot.
+
+**`league_slot_uses` fields:**
+
+<!-- dict:col:league_slot_uses.slot_id -->
+<!-- dict:col:league_slot_uses.org_id -->
+<!-- dict:col:league_slot_uses.season_id -->
+<!-- dict:col:league_slot_uses.division_id -->
+<!-- dict:col:league_slot_uses.kind -->
+<!-- dict:col:league_slot_uses.created_by -->
+<!-- dict:col:league_slot_uses.created_at -->
+<!-- dict:col:league_slot_uses.updated_at -->
+**`slot_id`** (PK; FK → `club_schedule_slot_programs.slot_id` ON DELETE CASCADE — gotcha 2) / **`org_id`** / **`season_id`** (FK → `league_seasons.id` ON DELETE CASCADE; must be this club's, else `use_season`) / **`division_id`** (FK → `league_divisions.id` ON DELETE CASCADE; must be the season's, else `use_division`) / **`kind`** (text, CHECK `games|practices` — "U12 games" / "U12 practice time") / **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL) / **`created_at`** / **`updated_at`**. Trigger `league_slot_uses_check` (house league holds the slot, else `use_slot`). Index `(season_id, division_id)`.
+
+**`league_practice_time` fields:**
+
+<!-- dict:col:league_practice_time.season_id -->
+<!-- dict:col:league_practice_time.division_id -->
+<!-- dict:col:league_practice_time.org_id -->
+<!-- dict:col:league_practice_time.practice_minutes -->
+<!-- dict:col:league_practice_time.teams_at_once -->
+<!-- dict:col:league_practice_time.updated_by -->
+<!-- dict:col:league_practice_time.updated_at -->
+**`season_id`** + **`division_id`** (PK; both FK ON DELETE CASCADE) / **`org_id`** / **`practice_minutes`** (integer, CHECK 15–240 — "Each practice") / **`teams_at_once`** (integer, default 1, CHECK 1–4 — "Teams at once", per facility; `league_practices_hand_out` refuses more practices at once on a slot, `slot_full`) / **`updated_by`** / **`updated_at`**. Written by `league_practices_hand_out` with the practices it hands out (frame h1).
 
 **`club_schedule_replies` fields:**
 
@@ -7174,6 +7216,9 @@ Sent and By).
 
 <!-- dict:col:league_practices.org_id -->
 **`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL; index `org_idx` in both envs, mig 078) — denormalized org; now written by `createPractices` from `ctx.org.id` (fixed 2026-06-10 — gotcha 1; was previously unwritten → the write-blocking bug).
+
+<!-- dict:col:league_practices.club_schedule_slot_id -->
+**`club_schedule_slot_id`** (uuid, nullable; **NOT an FK**; partial unique index `league_practices_club_slot_uq (club_schedule_slot_id, team_id) WHERE NOT NULL`; **mig 392**, Club Tier Stage 11b) — the club's slot this practice was handed out from by Practice time ("From {schedule}"; changes only in the club's schedule, 9d2·5). The `rep_team_events.club_schedule_slot_id` shape: not an FK, so a slot's removal never cascades the practice — the club's Send the changes moves it in place or cancels it (`club_schedule_apply_changes` `p_league`), and unlinks a cancelled one before its removed slot goes. One practice per slot per team. Written ONLY by the SQL steps `league_practices_hand_out` and `club_schedule_apply_changes` (TypeScript never writes it, P11-05). NULL on every practice booked by hand (`createPractices`). The clash pool skips a practice's own slot by it (`clubSlotOf`).
 
 **Dev/prod (headline drift):** columns identical; **indexes differ** — dev (mig 077, dev-only): `org_idx`, `recurrence_idx` (PARTIAL), `schedule_idx(season_id, scheduled_at)`, `season_idx`, `team_idx`. Prod: `org_idx`, `recurrence_group_id_idx` (FULL), `season_id_idx`, `team_id_idx` — **no `schedule_idx`**, recurrence index FULL not PARTIAL, three indexes name-shifted. `DRIFT_dev_vs_prod.md`'s "Definition changed (0)" masks the partial-vs-full difference (it diffs by name).
 

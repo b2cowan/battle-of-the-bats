@@ -2,25 +2,28 @@
 
 **Generated:** 2026-10-27 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 963 divergence(s)** across dev/prod.
+**⚠️ 1012 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 33 | 0 | — |
-| Columns | 487 | 1 | 0 |
-| Indexes | 150 | 0 | 2 |
-| Constraints | 137 | 0 | — |
-| RLS / CHECK | 153 | 0 | 0 (RLS state) |
+| Tables | 36 | 0 | — |
+| Columns | 507 | 1 | 0 |
+| Indexes | 158 | 0 | 2 |
+| Constraints | 151 | 0 | — |
+| RLS / CHECK | 157 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (33)
+### Only in DEV (36)
+- `club_schedule_slot_programs`
 - `family_email_recipients`
 - `family_email_sends`
 - `league_placement_emails`
 - `league_player_ratings`
+- `league_practice_time`
 - `league_registration_price_changes`
 - `league_season_fee_words`
 - `league_season_notices`
+- `league_slot_uses`
 - `league_team_coaches`
 - `online_payment_clear_decisions`
 - `online_payment_disputes`
@@ -52,7 +55,11 @@
 _none_
 
 ## Columns
-### Only in DEV (487)
+### Only in DEV (507)
+- `club_schedule_slot_programs.created_at`
+- `club_schedule_slot_programs.org_id`
+- `club_schedule_slot_programs.program`
+- `club_schedule_slot_programs.slot_id`
 - `family_email_recipients.family_name`
 - `family_email_recipients.id`
 - `family_email_recipients.org_id`
@@ -106,6 +113,14 @@ _none_
 - `league_player_ratings.rating`
 - `league_player_ratings.registration_id`
 - `league_player_ratings.season_id`
+- `league_practice_time.division_id`
+- `league_practice_time.org_id`
+- `league_practice_time.practice_minutes`
+- `league_practice_time.season_id`
+- `league_practice_time.teams_at_once`
+- `league_practice_time.updated_at`
+- `league_practice_time.updated_by`
+- `league_practices.club_schedule_slot_id`
 - `league_registration_price_changes.changed_at`
 - `league_registration_price_changes.changed_by`
 - `league_registration_price_changes.id`
@@ -153,6 +168,14 @@ _none_
 - `league_seasons.how_to_pay`
 - `league_seasons.owing_amber_days`
 - `league_seasons.registration_closed_at`
+- `league_slot_uses.created_at`
+- `league_slot_uses.created_by`
+- `league_slot_uses.division_id`
+- `league_slot_uses.kind`
+- `league_slot_uses.org_id`
+- `league_slot_uses.season_id`
+- `league_slot_uses.slot_id`
+- `league_slot_uses.updated_at`
 - `league_team_coaches.accepted_at`
 - `league_team_coaches.created_at`
 - `league_team_coaches.created_by`
@@ -548,8 +571,10 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (150)
+### Only in DEV (158)
 - `accounting_entries_league_registration_idx`
+- `club_schedule_slot_programs_org_idx`
+- `club_schedule_slot_programs_pkey`
 - `family_email_recipients_org_idx`
 - `family_email_recipients_pkey`
 - `family_email_recipients_send_idx`
@@ -567,6 +592,9 @@ _none_
 - `league_player_ratings_org_id_idx`
 - `league_player_ratings_pkey`
 - `league_player_ratings_season_idx`
+- `league_practice_time_org_idx`
+- `league_practice_time_pkey`
+- `league_practices_club_slot_uq`
 - `league_registration_price_changes_org_idx`
 - `league_registration_price_changes_pkey`
 - `league_registration_price_changes_refund_idx`
@@ -581,6 +609,9 @@ _none_
 - `league_season_notices_org_idx`
 - `league_season_notices_pkey`
 - `league_season_notices_season_idx`
+- `league_slot_uses_org_idx`
+- `league_slot_uses_pkey`
+- `league_slot_uses_season_idx`
 - `league_team_coaches_one_per_team`
 - `league_team_coaches_org_id_idx`
 - `league_team_coaches_pkey`
@@ -712,7 +743,10 @@ _none_
   - prod: `CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))`
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (137)
+### Only in DEV (151)
+- `club_schedule_slot_programs.club_schedule_slot_programs_org_id_fkey`
+- `club_schedule_slot_programs.club_schedule_slot_programs_pkey`
+- `club_schedule_slot_programs.club_schedule_slot_programs_slot_id_fkey`
 - `family_email_recipients.family_email_recipients_org_id_fkey`
 - `family_email_recipients.family_email_recipients_pkey`
 - `family_email_recipients.family_email_recipients_send_id_fkey`
@@ -729,6 +763,11 @@ _none_
 - `league_player_ratings.league_player_ratings_pkey`
 - `league_player_ratings.league_player_ratings_registration_id_fkey`
 - `league_player_ratings.league_player_ratings_season_id_fkey`
+- `league_practice_time.league_practice_time_division_id_fkey`
+- `league_practice_time.league_practice_time_org_id_fkey`
+- `league_practice_time.league_practice_time_pkey`
+- `league_practice_time.league_practice_time_season_id_fkey`
+- `league_practice_time.league_practice_time_updated_by_fkey`
 - `league_registration_price_changes.league_registration_price_changes_changed_by_fkey`
 - `league_registration_price_changes.league_registration_price_changes_org_id_fkey`
 - `league_registration_price_changes.league_registration_price_changes_pkey`
@@ -747,6 +786,12 @@ _none_
 - `league_season_notices.league_season_notices_org_id_fkey`
 - `league_season_notices.league_season_notices_pkey`
 - `league_season_notices.league_season_notices_season_id_fkey`
+- `league_slot_uses.league_slot_uses_created_by_fkey`
+- `league_slot_uses.league_slot_uses_division_id_fkey`
+- `league_slot_uses.league_slot_uses_org_id_fkey`
+- `league_slot_uses.league_slot_uses_pkey`
+- `league_slot_uses.league_slot_uses_season_id_fkey`
+- `league_slot_uses.league_slot_uses_slot_id_fkey`
 - `league_team_coaches.league_team_coaches_org_id_fkey`
 - `league_team_coaches.league_team_coaches_pkey`
 - `league_team_coaches.league_team_coaches_season_id_fkey`
@@ -858,7 +903,8 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (153)
+### CHECK only in DEV (157)
+- `club_schedule_slot_programs.club_schedule_slot_programs_program_check`
 - `family_email_recipients.family_email_recipients_family_name_check`
 - `family_email_recipients.family_email_recipients_person_ids_check`
 - `family_email_recipients.family_email_recipients_status_check`
@@ -880,6 +926,8 @@ _none_
 - `league_placement_emails.league_placement_emails_registration_ids_check`
 - `league_placement_emails.league_placement_emails_status_check`
 - `league_player_ratings.league_player_ratings_rating_check`
+- `league_practice_time.league_practice_time_practice_minutes_check`
+- `league_practice_time.league_practice_time_teams_at_once_check`
 - `league_registration_price_changes.league_registration_price_changes_amount_chk`
 - `league_registration_price_changes.league_registration_price_changes_kind_chk`
 - `league_registration_price_changes.league_registration_price_changes_reason_chk`
@@ -892,6 +940,7 @@ _none_
 - `league_season_notices.league_season_notices_reached_count_check`
 - `league_seasons.league_seasons_how_to_pay_check`
 - `league_seasons.league_seasons_owing_amber_days_check`
+- `league_slot_uses.league_slot_uses_kind_check`
 - `league_team_coaches.league_team_coaches_email_check`
 - `league_team_coaches.league_team_coaches_first_name_check`
 - `league_team_coaches.league_team_coaches_last_name_check`

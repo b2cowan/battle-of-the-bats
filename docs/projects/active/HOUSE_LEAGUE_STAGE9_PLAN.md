@@ -251,6 +251,12 @@ team) was not ruled: it is ask **9d2·15**, open.
 - **Follow-up homed 2026-10-27 (owner: "did you make note to follow up on family notifications and calendar access and
   when to address that?"):** the first-practice notice and house league's calendars are **9d-3** in §4, drawn after 9d-2b
   is built and before 9e. The earlier note pointed at "the families-connection work", which had no plan; 9d-3 replaces it.
+- **11b build-start rulings, 2026-10-27 (all three as recommended, plus the UX summary's yes):**
+  - **11b·A** House league's time is **never billed**: house league's share appears on no bill.
+  - **11b·B** A slot is held by house league **or** by rep teams, **never both**. The club's sharing rules do not name House
+    league; "teams at once" inside house league's time is Practice time's. The drawn h5 is not built.
+  - **11b·C** 11b puts the team's **practices** on the house-league coach's team page (upcoming, club ones reading "From
+    {schedule}", hand-booked ones too). 9d-2b adds the games beside them (9d2·7's games half).
 
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 

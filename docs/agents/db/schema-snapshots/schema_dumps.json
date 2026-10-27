@@ -2783,6 +2783,42 @@
         "column_default": "'{}'::jsonb"
       },
       {
+        "table_name": "club_schedule_slot_programs",
+        "pos": 1,
+        "column_name": "slot_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slot_programs",
+        "pos": 2,
+        "column_name": "program",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slot_programs",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slot_programs",
+        "pos": 4,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "club_schedule_slot_teams",
         "pos": 1,
         "column_name": "slot_id",
@@ -6878,6 +6914,69 @@
         "column_default": "now()"
       },
       {
+        "table_name": "league_practice_time",
+        "pos": 1,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_time",
+        "pos": 2,
+        "column_name": "division_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_time",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_time",
+        "pos": 4,
+        "column_name": "practice_minutes",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_time",
+        "pos": 5,
+        "column_name": "teams_at_once",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
+        "table_name": "league_practice_time",
+        "pos": 6,
+        "column_name": "updated_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practice_time",
+        "pos": 7,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "league_practices",
         "pos": 1,
         "column_name": "id",
@@ -7007,6 +7106,15 @@
         "table_name": "league_practices",
         "pos": 15,
         "column_name": "org_venue_facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practices",
+        "pos": 16,
+        "column_name": "club_schedule_slot_id",
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "YES",
@@ -7830,6 +7938,78 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "league_slot_uses",
+        "pos": 1,
+        "column_name": "slot_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_slot_uses",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_slot_uses",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_slot_uses",
+        "pos": 4,
+        "column_name": "division_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_slot_uses",
+        "pos": 5,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_slot_uses",
+        "pos": 6,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_slot_uses",
+        "pos": 7,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_slot_uses",
+        "pos": 8,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "league_team_coaches",
@@ -26981,6 +27161,20 @@
         "constraint_name": "club_schedule_sends_sent_by_fkey"
       },
       {
+        "table_name": "club_schedule_slot_programs",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_slot_programs_org_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_slot_programs",
+        "column_name": "slot_id",
+        "foreign_table": "club_schedule_slots",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_slot_programs_slot_id_fkey"
+      },
+      {
         "table_name": "club_schedule_slot_teams",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -27716,6 +27910,34 @@
         "constraint_name": "league_player_ratings_season_id_fkey"
       },
       {
+        "table_name": "league_practice_time",
+        "column_name": "division_id",
+        "foreign_table": "league_divisions",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_time_division_id_fkey"
+      },
+      {
+        "table_name": "league_practice_time",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_time_org_id_fkey"
+      },
+      {
+        "table_name": "league_practice_time",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_practice_time_season_id_fkey"
+      },
+      {
+        "table_name": "league_practice_time",
+        "column_name": "updated_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_practice_time_updated_by_fkey"
+      },
+      {
         "table_name": "league_practices",
         "column_name": "division_id",
         "foreign_table": "league_divisions",
@@ -27903,6 +28125,41 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "league_seasons_org_id_fkey"
+      },
+      {
+        "table_name": "league_slot_uses",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_slot_uses_created_by_fkey"
+      },
+      {
+        "table_name": "league_slot_uses",
+        "column_name": "division_id",
+        "foreign_table": "league_divisions",
+        "foreign_column": "id",
+        "constraint_name": "league_slot_uses_division_id_fkey"
+      },
+      {
+        "table_name": "league_slot_uses",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_slot_uses_org_id_fkey"
+      },
+      {
+        "table_name": "league_slot_uses",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_slot_uses_season_id_fkey"
+      },
+      {
+        "table_name": "league_slot_uses",
+        "column_name": "slot_id",
+        "foreign_table": "club_schedule_slot_programs",
+        "foreign_column": "slot_id",
+        "constraint_name": "league_slot_uses_slot_id_fkey"
       },
       {
         "table_name": "league_team_coaches",
@@ -32456,6 +32713,16 @@
         "indexdef": "CREATE INDEX club_schedule_sends_sent_by_idx ON public.club_schedule_sends USING btree (sent_by) WHERE (sent_by IS NOT NULL)"
       },
       {
+        "tablename": "club_schedule_slot_programs",
+        "indexname": "club_schedule_slot_programs_org_idx",
+        "indexdef": "CREATE INDEX club_schedule_slot_programs_org_idx ON public.club_schedule_slot_programs USING btree (org_id)"
+      },
+      {
+        "tablename": "club_schedule_slot_programs",
+        "indexname": "club_schedule_slot_programs_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_slot_programs_pkey ON public.club_schedule_slot_programs USING btree (slot_id)"
+      },
+      {
         "tablename": "club_schedule_slot_teams",
         "indexname": "club_schedule_slot_teams_org_idx",
         "indexdef": "CREATE INDEX club_schedule_slot_teams_org_idx ON public.club_schedule_slot_teams USING btree (org_id)"
@@ -33256,6 +33523,16 @@
         "indexdef": "CREATE INDEX league_player_ratings_season_idx ON public.league_player_ratings USING btree (season_id)"
       },
       {
+        "tablename": "league_practice_time",
+        "indexname": "league_practice_time_org_idx",
+        "indexdef": "CREATE INDEX league_practice_time_org_idx ON public.league_practice_time USING btree (org_id)"
+      },
+      {
+        "tablename": "league_practice_time",
+        "indexname": "league_practice_time_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_practice_time_pkey ON public.league_practice_time USING btree (season_id, division_id)"
+      },
+      {
         "tablename": "league_practices",
         "indexname": "idx_league_practices_org_venue",
         "indexdef": "CREATE INDEX idx_league_practices_org_venue ON public.league_practices USING btree (org_venue_id)"
@@ -33264,6 +33541,11 @@
         "tablename": "league_practices",
         "indexname": "idx_league_practices_org_venue_facility",
         "indexdef": "CREATE INDEX idx_league_practices_org_venue_facility ON public.league_practices USING btree (org_venue_facility_id)"
+      },
+      {
+        "tablename": "league_practices",
+        "indexname": "league_practices_club_slot_uq",
+        "indexdef": "CREATE UNIQUE INDEX league_practices_club_slot_uq ON public.league_practices USING btree (club_schedule_slot_id, team_id) WHERE (club_schedule_slot_id IS NOT NULL)"
       },
       {
         "tablename": "league_practices",
@@ -33419,6 +33701,21 @@
         "tablename": "league_seasons",
         "indexname": "league_seasons_pkey",
         "indexdef": "CREATE UNIQUE INDEX league_seasons_pkey ON public.league_seasons USING btree (id)"
+      },
+      {
+        "tablename": "league_slot_uses",
+        "indexname": "league_slot_uses_org_idx",
+        "indexdef": "CREATE INDEX league_slot_uses_org_idx ON public.league_slot_uses USING btree (org_id)"
+      },
+      {
+        "tablename": "league_slot_uses",
+        "indexname": "league_slot_uses_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_slot_uses_pkey ON public.league_slot_uses USING btree (slot_id)"
+      },
+      {
+        "tablename": "league_slot_uses",
+        "indexname": "league_slot_uses_season_idx",
+        "indexdef": "CREATE INDEX league_slot_uses_season_idx ON public.league_slot_uses USING btree (season_id, division_id)"
       },
       {
         "tablename": "league_team_coaches",
@@ -37784,6 +38081,18 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "club_schedule_slot_programs",
+        "detail": "club_schedule_slot_programs_program_check",
+        "check_clause": "(program = 'house_league'::text)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_schedule_slot_programs",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "club_schedule_slot_teams",
         "detail": "ENABLED",
@@ -38355,6 +38664,24 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "league_practice_time",
+        "detail": "league_practice_time_practice_minutes_check",
+        "check_clause": "((practice_minutes >= 15) AND (practice_minutes <= 240))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_practice_time",
+        "detail": "league_practice_time_teams_at_once_check",
+        "check_clause": "((teams_at_once >= 1) AND (teams_at_once <= 4))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_practice_time",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "league_practices",
         "detail": "league_practices_status_check",
         "check_clause": "(status = ANY (ARRAY['scheduled'::text, 'cancelled'::text]))"
@@ -38482,6 +38809,18 @@
       {
         "kind": "RLS",
         "table_name": "league_seasons",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_slot_uses",
+        "detail": "league_slot_uses_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['games'::text, 'practices'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_slot_uses",
         "detail": "ENABLED",
         "check_clause": null
       },

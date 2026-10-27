@@ -1060,6 +1060,36 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "club_schedule_slot_programs",
+    "constraint_name": "club_schedule_slot_programs_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_slot_programs",
+    "constraint_name": "club_schedule_slot_programs_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "slot_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_schedule_slot_programs",
+    "constraint_name": "club_schedule_slot_programs_slot_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "slot_id",
+    "foreign_table": "club_schedule_slots",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "club_schedule_slot_teams",
     "constraint_name": "club_schedule_slot_teams_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -2520,6 +2550,66 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "league_practice_time",
+    "constraint_name": "league_practice_time_division_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "division_id",
+    "foreign_table": "league_divisions",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_practice_time",
+    "constraint_name": "league_practice_time_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_practice_time",
+    "constraint_name": "league_practice_time_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "season_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_practice_time",
+    "constraint_name": "league_practice_time_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "division_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_practice_time",
+    "constraint_name": "league_practice_time_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_practice_time",
+    "constraint_name": "league_practice_time_updated_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "updated_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "league_practices",
     "constraint_name": "league_practices_division_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -2868,6 +2958,66 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
+  },
+  {
+    "table_name": "league_slot_uses",
+    "constraint_name": "league_slot_uses_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_slot_uses",
+    "constraint_name": "league_slot_uses_division_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "division_id",
+    "foreign_table": "league_divisions",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_slot_uses",
+    "constraint_name": "league_slot_uses_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_slot_uses",
+    "constraint_name": "league_slot_uses_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "slot_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_slot_uses",
+    "constraint_name": "league_slot_uses_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_slot_uses",
+    "constraint_name": "league_slot_uses_slot_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "slot_id",
+    "foreign_table": "club_schedule_slot_programs",
+    "foreign_column": "slot_id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
   },
   {
     "table_name": "league_team_coaches",

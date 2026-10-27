@@ -1,14 +1,18 @@
 {
   "generated": "2026-10-27",
-  "total": 963,
+  "total": 1012,
   "counts": {
-    "tables": 33,
-    "columns": 488,
-    "indexes": 152,
-    "constraints": 137,
-    "rls": 153
+    "tables": 36,
+    "columns": 508,
+    "indexes": 160,
+    "constraints": 151,
+    "rls": 157
   },
   "items": [
+    {
+      "key": "check:only-dev:club_schedule_slot_programs.club_schedule_slot_programs_program_check",
+      "sig": ""
+    },
     {
       "key": "check:only-dev:family_email_recipients.family_email_recipients_family_name_check",
       "sig": ""
@@ -94,6 +98,14 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:league_practice_time.league_practice_time_practice_minutes_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_practice_time.league_practice_time_teams_at_once_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:league_registration_price_changes.league_registration_price_changes_amount_chk",
       "sig": ""
     },
@@ -139,6 +151,10 @@
     },
     {
       "key": "check:only-dev:league_seasons.league_seasons_owing_amber_days_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_slot_uses.league_slot_uses_kind_check",
       "sig": ""
     },
     {
@@ -622,6 +638,22 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:club_schedule_slot_programs.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_slot_programs.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_slot_programs.program",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_slot_programs.slot_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:family_email_recipients.family_name",
       "sig": ""
     },
@@ -834,6 +866,38 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_practice_time.division_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_time.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_time.practice_minutes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_time.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_time.teams_at_once",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_time.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practice_time.updated_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practices.club_schedule_slot_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_registration_price_changes.changed_at",
       "sig": ""
     },
@@ -1019,6 +1083,38 @@
     },
     {
       "key": "column:only-dev:league_seasons.registration_closed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_slot_uses.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_slot_uses.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_slot_uses.division_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_slot_uses.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_slot_uses.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_slot_uses.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_slot_uses.slot_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_slot_uses.updated_at",
       "sig": ""
     },
     {
@@ -2574,6 +2670,18 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:club_schedule_slot_programs.club_schedule_slot_programs_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_slot_programs.club_schedule_slot_programs_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_slot_programs.club_schedule_slot_programs_slot_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:family_email_recipients.family_email_recipients_org_id_fkey",
       "sig": ""
     },
@@ -2635,6 +2743,26 @@
     },
     {
       "key": "constraint:only-dev:league_player_ratings.league_player_ratings_season_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_time.league_practice_time_division_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_time.league_practice_time_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_time.league_practice_time_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_time.league_practice_time_season_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_practice_time.league_practice_time_updated_by_fkey",
       "sig": ""
     },
     {
@@ -2707,6 +2835,30 @@
     },
     {
       "key": "constraint:only-dev:league_season_notices.league_season_notices_season_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_slot_uses.league_slot_uses_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_slot_uses.league_slot_uses_division_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_slot_uses.league_slot_uses_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_slot_uses.league_slot_uses_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_slot_uses.league_slot_uses_season_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_slot_uses.league_slot_uses_slot_id_fkey",
       "sig": ""
     },
     {
@@ -3134,6 +3286,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:club_schedule_slot_programs_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_slot_programs_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:family_email_recipients_org_idx",
       "sig": ""
     },
@@ -3202,6 +3362,18 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_practice_time_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practice_time_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practices_club_slot_uq",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:league_registration_price_changes_org_idx",
       "sig": ""
     },
@@ -3255,6 +3427,18 @@
     },
     {
       "key": "index:only-dev:league_season_notices_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_slot_uses_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_slot_uses_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_slot_uses_season_idx",
       "sig": ""
     },
     {
@@ -3730,6 +3914,10 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:club_schedule_slot_programs",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:family_email_recipients",
       "sig": ""
     },
@@ -3746,6 +3934,10 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:league_practice_time",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:league_registration_price_changes",
       "sig": ""
     },
@@ -3755,6 +3947,10 @@
     },
     {
       "key": "table:only-dev:league_season_notices",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:league_slot_uses",
       "sig": ""
     },
     {

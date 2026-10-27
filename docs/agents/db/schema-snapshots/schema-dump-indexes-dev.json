@@ -545,6 +545,16 @@
     "indexdef": "CREATE INDEX club_schedule_sends_sent_by_idx ON public.club_schedule_sends USING btree (sent_by) WHERE (sent_by IS NOT NULL)"
   },
   {
+    "tablename": "club_schedule_slot_programs",
+    "indexname": "club_schedule_slot_programs_org_idx",
+    "indexdef": "CREATE INDEX club_schedule_slot_programs_org_idx ON public.club_schedule_slot_programs USING btree (org_id)"
+  },
+  {
+    "tablename": "club_schedule_slot_programs",
+    "indexname": "club_schedule_slot_programs_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_slot_programs_pkey ON public.club_schedule_slot_programs USING btree (slot_id)"
+  },
+  {
     "tablename": "club_schedule_slot_teams",
     "indexname": "club_schedule_slot_teams_org_idx",
     "indexdef": "CREATE INDEX club_schedule_slot_teams_org_idx ON public.club_schedule_slot_teams USING btree (org_id)"
@@ -1345,6 +1355,16 @@
     "indexdef": "CREATE INDEX league_player_ratings_season_idx ON public.league_player_ratings USING btree (season_id)"
   },
   {
+    "tablename": "league_practice_time",
+    "indexname": "league_practice_time_org_idx",
+    "indexdef": "CREATE INDEX league_practice_time_org_idx ON public.league_practice_time USING btree (org_id)"
+  },
+  {
+    "tablename": "league_practice_time",
+    "indexname": "league_practice_time_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_practice_time_pkey ON public.league_practice_time USING btree (season_id, division_id)"
+  },
+  {
     "tablename": "league_practices",
     "indexname": "idx_league_practices_org_venue",
     "indexdef": "CREATE INDEX idx_league_practices_org_venue ON public.league_practices USING btree (org_venue_id)"
@@ -1353,6 +1373,11 @@
     "tablename": "league_practices",
     "indexname": "idx_league_practices_org_venue_facility",
     "indexdef": "CREATE INDEX idx_league_practices_org_venue_facility ON public.league_practices USING btree (org_venue_facility_id)"
+  },
+  {
+    "tablename": "league_practices",
+    "indexname": "league_practices_club_slot_uq",
+    "indexdef": "CREATE UNIQUE INDEX league_practices_club_slot_uq ON public.league_practices USING btree (club_schedule_slot_id, team_id) WHERE (club_schedule_slot_id IS NOT NULL)"
   },
   {
     "tablename": "league_practices",
@@ -1508,6 +1533,21 @@
     "tablename": "league_seasons",
     "indexname": "league_seasons_pkey",
     "indexdef": "CREATE UNIQUE INDEX league_seasons_pkey ON public.league_seasons USING btree (id)"
+  },
+  {
+    "tablename": "league_slot_uses",
+    "indexname": "league_slot_uses_org_idx",
+    "indexdef": "CREATE INDEX league_slot_uses_org_idx ON public.league_slot_uses USING btree (org_id)"
+  },
+  {
+    "tablename": "league_slot_uses",
+    "indexname": "league_slot_uses_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_slot_uses_pkey ON public.league_slot_uses USING btree (slot_id)"
+  },
+  {
+    "tablename": "league_slot_uses",
+    "indexname": "league_slot_uses_season_idx",
+    "indexdef": "CREATE INDEX league_slot_uses_season_idx ON public.league_slot_uses USING btree (season_id, division_id)"
   },
   {
     "tablename": "league_team_coaches",
