@@ -15,9 +15,9 @@ import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
  */
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  // On the billing rail: a cancelled club is still sent its own invoice (in our email, with Pay the invoice), but reading
-  // this list while cancelled would be a new rail exemption, which is the owner's call (asked at the 12d-1 Part 4 hand-off).
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
+  // Off the billing rail (owner ruling 2, 2026-10-27): a cancelled club is still billed its Stripe fees and emailed its own
+  // invoice, so it reads the list that explains them on the one page it can reach. A read, owner-only, nothing else opens.
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
 

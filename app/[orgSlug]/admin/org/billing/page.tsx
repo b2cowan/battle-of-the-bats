@@ -760,6 +760,9 @@ function BillingPagePlans() {
           </div>
         )}
 
+        {/* 12d-1 ruling 2: a cancelled club is still billed its Stripe fees, so it still reads them; absent until there is one. */}
+        {!isTeamWorkspaceBilling && canManageBilling && <StripeFeesList slug={currentOrg.slug} />}
+
         <FeedbackModal
           isOpen={success !== null}
           onClose={handleSuccessClose}
