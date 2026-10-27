@@ -768,3 +768,42 @@ open it, and the menu's top level is Stage 13's.
   house-league rows and the emails), `CLUB_TIER_STAGE11B_PART5_BUILD_PROMPT.md`. **⚠ Found writing it (dev only):** the club's
   Send the changes never passes the step's house-league argument, so a send that moves, clears or takes back house-league time
   with practices on it is refused as stale on every try — unreachable until Part 4 made practices; Part 5 fixes it first.
+- **2026-10-27 · 11b Part 5 (Send the changes and the emails): BUILT, /review done** (prompt
+  `CLUB_TIER_STAGE11B_PART5_BUILD_PROMPT.md`). Commits: `e1e40b78f` (**mig 400**, applied to DEV 2026-10-27, prod pending in
+  MANUAL_PROD_STEPS: `league_season_notices.kind` gains `practices_changed` + `club_schedule_send_id`; SQL check T14 feeds the
+  step the TS plan's exact `p_league`) · `2372797d4` (the plan, the preview, the send, the emails, the bell) · `5a352df33`
+  (the window and sample hunks re-placed — a zero-context partial commit had put three insertions in the wrong place; the
+  working tree was right) · `84869d691` (the /review fixes). **The stale refusal is fixed:** the send passes `p_league` from
+  the plan the preview showed (a fingerprint compared at the press — a league admin's hand-out moves no schedule version).
+  **The plan** (`lib/club-schedule-league-plan.ts`, pure): `diffAgainstSent` with house league as the one holder and each USE
+  as what was sent — a use on a removed slot pairs with a house-league slot **made since the last send** in the same week
+  (an older one with no use is Not given yet, never a move); time taken back or cleared never carries (9d2·16); practices
+  move by the slot's shift if they fit and the use covers them, else are cancelled (the plan never asks a refused move); a
+  same-time-and-place replacement tells nobody; held practices untouched. **Who hears, after the step:** the house-league
+  coach's email (h4, settled; kind `club_schedule_league_coach`); the families' service notice, one per household per season
+  (kind `house_league_practice_change`, `lib/club-schedule-league-mail.ts`), with **one Automatic row per season** on Email
+  families (argument 7 taken as recommended: a row per send would put another season's families on this season's history);
+  a bell to the club's `league_admin` members (`club_schedule_league_changes`, 9d2·13), so k5's foot says "U12's league
+  admins are told then" again. **Also fixed:** the "Changed since sent" callout counted rep teams only — a change touching
+  only house league read "nothing waits to be sent" with no Send the changes button; the send log names house-league teams.
+  **Verified on DEV end to end** (`.probe/11b5/e2e.ts`, rolled back, h4's numbers): the old send (no `p_league`) refused
+  `changed`; the new one moved 6, cancelled 1, carried 3 uses, wrote the notice row. Dev sends no email: the walk reads the
+  send log, the Email families history row and the server log. **Step 5 (check, don't build):** not yet looked at in a
+  browser — Practices view "From {schedule}", the coach's team page, House league's time and the slot window after a send.
+  **Builder's calls:** "Sundays from Nov 8" only when the change runs to the team's last practice on that pattern, else a
+  range ("Sundays, Nov 8 – 15") — a family must never read later Sundays as moved; unticking a house-league row stops its
+  emails, never its move (the send is the schedule's); a family with children in two seasons hears once per season.
+  **/review (4 lenses) — fixed:** the misplaced commit hunks (Critical/High); pairing onto older undivided time; no-op moves
+  told; a practice with no end cancelled; the callout's read could fail the schedule page and read every family; teams
+  scoped to the club's seasons before coaches and families are read; a real family's names sent to the browser unused;
+  households counted twice; families never tried counted as nothing; ": 2 practices moved"; the statement's verb.
+  **Recorded, not changed (Low/Advisory):** the fingerprint covers the plan, not the audience (a coach removed between
+  preview and press is simply not emailed); the bell reports the plan's counts, not the step's (a practice deleted in the
+  seconds between is still counted); the bell goes to `league_admin` members only — a club whose owner runs house league
+  with no league admin gets no bell, and k5's half-sentence is then untrue (**owner ask**); house-league practices a send
+  moves are not run through the clash check (`checkWritten` reads rep practices); the Families tab's bundle now pulls the
+  scheduler's words module (tree-shaking may or may not drop it); two children with the same first name read alike.
+  **Owed:** /marketing's one pass (`changesStatement`, a cancel's row in both emails, the league admins' bell, the
+  Automatic row's tag words, "Questions? Ask the Reds or Blues coach", a team with nobody to email) then appended to
+  `HOUSE_LEAGUE_STAGE9D2_11B_COPY.md`; the dev server restart (new files); Part 6 (`/docs`); the walk at the end of 11b.
+  ⚠ Deploy order: the send now always passes `p_league`, so prod needs migs 392–393 (and 400) before this code serves.

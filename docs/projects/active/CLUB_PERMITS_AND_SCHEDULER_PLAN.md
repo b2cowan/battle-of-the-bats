@@ -1485,7 +1485,11 @@ member's groups) and changes one date of house-league time there; the scheduler'
 Part 4 built** (Practice time, h1 + h2 + 11b·C; `HOUSE_LEAGUE_STAGE9_PLAN.md` §9 has the commits): its own planner, not this
 engine — the club's slots are already cut, Practice time cuts pieces INSIDE a slot, gives every team the same number a week,
 and rotates early and late times within a team's part. Teams at once is Practice time's (11b·B), never the sharing rules.
-A practice handed out from the club's time is refused cancel and edit from the house-league side.
+A practice handed out from the club's time is refused cancel and edit from the house-league side. **2026-10-27 · Part 5
+built** (`HOUSE_LEAGUE_STAGE9_PLAN.md` §9 has the commits; mig 400): Send the changes carries house league's half in its one
+step (`p_league` from a pure plan beside `planChanges`, which still measures rep practices only), lists each house-league
+team's changes (h4), and after the step emails the house-league coaches and — a service notice — their families, and tells
+the league admins in the bell. The "Changed since sent" callout counts house-league rows too.
 
 **Gates to add:** a "one model of time" guard (no second slot table); the screens guards; the arithmetic of a permit's
 use recomputed from rows (the `check:club-money-arithmetic` pattern) for the Held / Booked / Unused band.
