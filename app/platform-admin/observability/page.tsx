@@ -6,7 +6,8 @@ import {
   normalizeWindow, OBS_WINDOWS, ISSUES_PAGE_SIZE,
   type ObsWindowKey,
 } from '@/lib/observability/dashboard';
-import { fmtAbsoluteDateTime } from '@/lib/format-date';
+import { issueSentence } from '@/lib/observability/issue-title';
+import { consoleWhen } from '@/lib/console-dates';
 import CallsVsErrorsChart from './CallsVsErrorsChart';
 import IssuesExportClient from './IssuesExportClient';
 import IssuesFilterBar from './IssuesFilterBar';
@@ -54,8 +55,13 @@ function buildHref(p: ResolvedParams, extra: Partial<ResolvedParams> = {}): stri
   return `/platform-admin/observability${qs ? `?${qs}` : ''}`;
 }
 
-// Was missing the year (PF-5 drift fix); now normalized via the shared helper.
-const fmtDateTime = (iso: string) => fmtAbsoluteDateTime(iso);
+/** "3 minutes ago" / "2 hours ago": a job's age in words. */
+function agoWords(minutes: number): string {
+  if (minutes < 1) return 'less than a minute ago';
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+}
 
 function fmtMttr(hours: number | null): string {
   if (hours === null) return '—';
@@ -149,10 +155,10 @@ export default async function ObservabilityDashboardPage({
               }
             >
               {freshnessEnabled
-                ? `Last rollup ${mostRecent.minutesAgo}m ago${anyJobError ? ' · job error' : sweepStale ? ' · sweep stale' : ''}`
+                ? `${freshnessStale ? 'Counts last brought up to date' : 'Counts up to date'} ${agoWords(mostRecent.minutesAgo ?? 0)}${anyJobError ? ' · job error' : sweepStale ? ' · sweep stale' : ''}`
                 : anyJobError
-                  ? 'Rollup job failing'
-                  : 'Rollup has not run yet'}
+                  ? 'Counting job failing'
+                  : 'Counts not brought up to date yet'}
             </span>
             <WindowSelect
               value={params.window}
@@ -165,34 +171,31 @@ export default async function ObservabilityDashboardPage({
       {/* ── Figures ────────────────────────────────────────────────────── */}
       <section className={kit.band} aria-label="Headline metrics">
         <div className={kit.bandCell}>
-          <span className={kit.bandLabel}>{`Captured errors · ${OBS_WINDOWS[params.window].label}`}</span>
+          <span className={kit.bandLabel}>{`Captured errors · ${OBS_WINDOWS[params.window].label.toLowerCase()}`}</span>
           <strong className={kit.bandValue}>{data.totalErrors.toLocaleString()}</strong>
-          <span className={kit.bandNote}>All sources</span>
+          <span className={kit.bandNote}>Pages, browsers and calls</span>
         </div>
         <div className={kit.bandCell}>
           <span className={kit.bandLabel}>Error rate</span>
           <strong className={kit.bandValue}>{data.errorRatePct === null ? '—' : `${data.errorRatePct.toFixed(2)}%`}</strong>
-          <span className={kit.bandNote}>Instrumented traffic only</span>
+          <span className={kit.bandNote}>{data.totalCalls > 0 ? `Of ${data.totalCalls.toLocaleString()} API calls` : 'No API calls counted'}</span>
         </div>
         <div className={kit.bandCell}>
           <span className={kit.bandLabel}>Open issues</span>
           <strong className={kit.bandValue}>{data.openIssues.toLocaleString()}</strong>
-          <span className={kit.bandNote}>{`${data.newIssues} new in window`}</span>
+          <span className={kit.bandNote}>{`${data.newIssues.toLocaleString()} new in the window`}</span>
         </div>
         <div className={kit.bandCell}>
           <span className={kit.bandLabel}>Affected orgs</span>
           <strong className={kit.bandValue}>{data.affectedOrgs.toLocaleString()}</strong>
-          <span className={kit.bandNote}>{data.eventsCapped ? 'In window · sampled' : 'In this window'}</span>
+          <span className={kit.bandNote}>{data.eventsCapped ? 'In the window · sampled' : 'In the window'}</span>
         </div>
       </section>
 
       <p className={kit.caption}>
-        Two different measures on purpose: the <strong>error rate</strong> (and the calls-vs-errors chart) covers only
-        instrumented (wrapped) routes, so it can show a true failures-÷-requests rate; <strong>captured errors</strong> and
-        the issue list come from global error capture across all sources, so they are more complete. A 0% instrumented error
-        rate can therefore sit alongside captured errors from routes not yet wrapped (coverage expands in later phases). Open
-        issues include snoozed issues whose snooze has expired.
-        {data.eventsCapped && ' The breakdowns and the Affected-orgs count reflect only the most recent 5,000 events in this window.'}
+        The error rate counts API calls. Errors on pages and in browsers are in Captured errors but have no call count to
+        divide by.
+        {data.eventsCapped && ' The breakdowns and the Affected orgs count reflect only the most recent 5,000 events in this window.'}
       </p>
 
       {/* ── Calls vs errors chart ──────────────────────────────────────── */}
@@ -200,13 +203,10 @@ export default async function ObservabilityDashboardPage({
         <h2 className={kit.sectionTitle}>Calls vs. errors</h2>
         <div className={`${kit.card} ${kit.cardPad}`}>
           <p className={`${kit.caption} ${styles.chartCaption}`}>
-            {data.totalCalls.toLocaleString()} calls · {data.totalErrorsMetric.toLocaleString()} errors (instrumented)
+            {data.totalCalls.toLocaleString()} calls · {data.totalErrorsMetric.toLocaleString()} errors
           </p>
           {data.totalCalls === 0 && data.totalErrorsMetric === 0 ? (
-            <p className={styles.emptyPanel}>
-              No instrumented request metrics in this window yet. Metrics accrue from routes wrapped with{' '}
-              <code className={kit.code}>withObservability</code>; coverage expands in later phases.
-            </p>
+            <p className={styles.emptyPanel}>No API calls were counted in this window.</p>
           ) : (
             <CallsVsErrorsChart data={data.series} />
           )}
@@ -257,7 +257,7 @@ export default async function ObservabilityDashboardPage({
             <div className={styles.mttrValue}>{fmtMttr(data.mttrHours)}</div>
             <div className={styles.mttrSub}>Mean time to resolve · all-time (resolved issues)</div>
             <div className={`${styles.mttrValue} ${styles.mttrSecond}`}>{data.newIssues.toLocaleString()}</div>
-            <div className={styles.mttrSub}>New issues in {OBS_WINDOWS[params.window].label.toLowerCase()}</div>
+            <div className={styles.mttrSub}>New issues in the {OBS_WINDOWS[params.window].label.toLowerCase()}</div>
           </div>
         </section>
       </div>
@@ -266,12 +266,7 @@ export default async function ObservabilityDashboardPage({
       <section className={kit.section}>
         <h2 className={kit.sectionTitle}>Issues</h2>
 
-        <div className={kit.callout}>
-          <span>
-            <strong>What is an issue?</strong>{' '}
-            Each row is one distinct error fingerprint — a flood of identical failures collapses into a single triable issue. This dashboard shows this environment&apos;s errors (production on the live site, dev on the dev site). Use the filters to narrow by severity, status, route, or org. Click an issue to read scrubbed samples and resolve / ignore / snooze it.
-          </span>
-        </div>
+        <p className={kit.caption}>Each row is one distinct error; a flood of identical failures collapses into one issue you can triage.</p>
 
         <div className={kit.card}>
           <IssuesFilterBar
@@ -302,11 +297,12 @@ export default async function ObservabilityDashboardPage({
                   <th className={kit.num}>Count</th>
                   <th className={kit.num}>Orgs</th>
                   <th>Last seen</th>
+                  <th aria-label="Open" />
                 </tr>
               </thead>
               <tbody className={kit.comfortable}>
                 {issues.rows.length === 0 && (
-                  <tr><td colSpan={7} className={kit.empty}>No issues match these filters.</td></tr>
+                  <tr><td colSpan={8} className={kit.empty}>No issues match these filters.</td></tr>
                 )}
                 {issues.rows.map(row => (
                   <tr key={row.id}>
@@ -317,7 +313,7 @@ export default async function ObservabilityDashboardPage({
                     </td>
                     <td className={`table-cards-title ${styles.issueCell}`}>
                       <Link href={`/platform-admin/observability/${row.id}`} className={kit.nameLink}>
-                        {row.title || row.errorName || 'Untitled error'}
+                        {issueSentence(row.title, row.errorName, row.route)}
                       </Link>
                       {row.errorName && row.title && <span className={`${kit.sub} ${kit.code}`}>{row.errorName}</span>}
                     </td>
@@ -326,7 +322,10 @@ export default async function ObservabilityDashboardPage({
                     </td>
                     <td data-label="Count" className={kit.num}>{row.occurrenceCount.toLocaleString()}</td>
                     <td data-label="Orgs" className={kit.num}>{row.distinctOrgCount.toLocaleString()}</td>
-                    <td data-label="Last seen" className={kit.nowrap}>{fmtDateTime(row.lastSeenAt)}</td>
+                    <td data-label="Last seen" className={kit.nowrap}>{consoleWhen(row.lastSeenAt)}</td>
+                    <td className={kit.rowDoor}>
+                      <Link href={`/platform-admin/observability/${row.id}`} className={kit.rowDoorLink} aria-label="Open this issue">›</Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

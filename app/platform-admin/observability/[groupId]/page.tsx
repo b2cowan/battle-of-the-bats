@@ -2,11 +2,13 @@ import Link from 'next/link';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { isPlatformAreaReadOnly } from '@/lib/platform-areas';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import CollapsibleCard from '@/components/admin/CollapsibleCard';
-import { getErrorGroupDetail, type EventSample } from '@/lib/observability/dashboard';
-import { fmtAbsoluteDateTime } from '@/lib/format-date';
+import { getErrorGroupDetail } from '@/lib/observability/dashboard';
+import { issueSentence } from '@/lib/observability/issue-title';
+import { resolveSampleSubjects } from '@/lib/observability/sample-people';
+import { consoleClock, consoleDay, consoleWhen } from '@/lib/console-dates';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import StatusControls from './StatusControls';
+import SamplesTable, { type SampleView } from './SamplesTable';
 import { cap, severityChip, issueStatusChip, feedbackTypeChip, feedbackStatusChip } from '../../chips';
 import kit from '../../console.module.css';
 import styles from '../observability.module.css';
@@ -38,8 +40,6 @@ async function getRelatedFeedback(groupId: string): Promise<RelatedFeedback[]> {
     .limit(25);
   return (data ?? []) as RelatedFeedback[];
 }
-
-const fmtDateTime = (iso: string | null) => fmtAbsoluteDateTime(iso);
 
 function jsonPretty(v: unknown): string {
   if (v === null || v === undefined) return '—';
@@ -76,46 +76,6 @@ function Sparkline({ data }: { data: { label: string; count: number }[] }) {
   );
 }
 
-function EventCard({ ev }: { ev: EventSample }) {
-  const title = `${ev.http_method ? ev.http_method + ' ' : ''}${ev.route ?? '(no route)'}`;
-  return (
-    <CollapsibleCard
-      defaultOpen={false}
-      title={title}
-      meta={
-        <span className={styles.eventSummary}>
-          {ev.status_code != null && <span>{ev.status_code}</span>}
-          <span className={`${kit.chip} ${ev.source === 'client' ? kit.chipInfo : kit.chipQuiet}`}>{cap(ev.source ?? 'server')}</span>
-          <span>{fmtDateTime(ev.occurred_at)}</span>
-        </span>
-      }
-    >
-      <div className={styles.eventBody}>
-        <div className={styles.eventSummary}>
-          {ev.org_slug && <span>org: <strong className={`${styles.eventStrong} ${kit.code}`}>{ev.org_slug}</strong></span>}
-          {ev.user_role && <span>role: {ev.user_role}</span>}
-          {ev.user_email && <span>{ev.user_email}</span>}
-          {ev.request_id && <span>req: <code className={kit.code}>{ev.request_id}</code></span>}
-        </div>
-        {ev.error_message && (
-          <div>
-            <div className={`${kit.eye} ${styles.preLabel}`}>Message</div>
-            <pre className={styles.pre}>{ev.error_message}</pre>
-          </div>
-        )}
-        <div>
-          <div className={`${kit.eye} ${styles.preLabel}`}>Stack trace (redacted)</div>
-          <pre className={styles.pre}>{ev.stack_trace || '—'}</pre>
-        </div>
-        <div>
-          <div className={`${kit.eye} ${styles.preLabel}`}>Request context (redacted)</div>
-          <pre className={styles.pre}>{jsonPretty(ev.request_context)}</pre>
-        </div>
-      </div>
-    </CollapsibleCard>
-  );
-}
-
 export default async function ErrorGroupDetailPage({
   params,
 }: {
@@ -139,12 +99,30 @@ export default async function ErrorGroupDetailPage({
   }
 
   const g = detail.group;
-  const related = await getRelatedFeedback(groupId);
+  const [related, subjects] = await Promise.all([
+    getRelatedFeedback(groupId),
+    resolveSampleSubjects(detail.events, auth.role),
+  ]);
+
+  // The samples arrive ready to draw: the house clock (Toronto zone) and the viewer's links are decided here, on the server.
+  const samples: SampleView[] = detail.events.map(ev => ({
+    id: ev.id,
+    when: consoleWhen(ev.occurred_at),
+    who: subjects.who.get(ev)!,
+    club: subjects.club.get(ev) ?? null,
+    source: cap(ev.source ?? 'server'),
+    statusCode: ev.status_code,
+    route: `${ev.http_method ? ev.http_method + ' ' : ''}${ev.route ?? '(no route)'}`,
+    requestId: ev.request_id,
+    message: ev.error_message,
+    stack: ev.stack_trace,
+    context: jsonPretty(ev.request_context),
+  }));
 
   return (
     <div className={kit.page}>
       <AdminPageHeader
-        title={g.title || g.error_name || 'Untitled error'}
+        title={issueSentence(g.title, g.error_name, g.route)}
         backTo={BACK}
         titleChips={
           <>
@@ -172,23 +150,25 @@ export default async function ErrorGroupDetailPage({
         </div>
         <div className={kit.bandCell}>
           <span className={kit.bandLabel}>First seen</span>
-          <span className={kit.bandValueText}>{fmtDateTime(g.first_seen_at)}</span>
+          <strong className={`${kit.bandValue} ${kit.bandValueSm}`}>{consoleDay(g.first_seen_at)}</strong>
+          <span className={kit.bandNote}>at {consoleClock(g.first_seen_at)}</span>
         </div>
         <div className={kit.bandCell}>
           <span className={kit.bandLabel}>Last seen</span>
-          <span className={kit.bandValueText}>{fmtDateTime(g.last_seen_at)}</span>
+          <strong className={`${kit.bandValue} ${kit.bandValueSm}`}>{consoleDay(g.last_seen_at)}</strong>
+          <span className={kit.bandNote}>at {consoleClock(g.last_seen_at)}</span>
         </div>
         {g.status === 'resolved' && (
           <div className={kit.bandCell}>
             <span className={kit.bandLabel}>Resolved</span>
-            <span className={kit.bandValueText}>{fmtDateTime(g.resolved_at)}{g.resolved_by ? ` · ${g.resolved_by}` : ''}</span>
+            <span className={kit.bandValueText}>{consoleWhen(g.resolved_at)}{g.resolved_by ? ` · ${g.resolved_by}` : ''}</span>
           </div>
         )}
         {g.status === 'snoozed' && (
           <div className={kit.bandCell}>
             <span className={kit.bandLabel}>Snoozed until</span>
             <span className={kit.bandValueText}>
-              {fmtDateTime(g.snooze_until)}
+              {consoleWhen(g.snooze_until)}
               {detail.snoozeExpired && <>{' '}<span className={`${kit.chip} ${kit.chipWarn}`}>Expired</span></>}
             </span>
           </div>
@@ -204,31 +184,25 @@ export default async function ErrorGroupDetailPage({
           <h2 className={kit.sectionTitle}>
             Related feedback <span className={styles.titleCount}>{related.length}</span>
           </h2>
-          <div className={styles.eventList}>
+          <div className={kit.card}>
+            {/* Each row opens the feedback's own record (Stage 5, drawing D). */}
             {related.map(f => (
-              <CollapsibleCard
-                key={f.id}
-                defaultOpen={false}
-                title={f.title ?? f.body.slice(0, 80)}
-                meta={
-                  <span className={styles.eventSummary}>
-                    <span className={`${kit.chip} ${feedbackTypeChip(f.type)}`}>{cap(f.type)}</span>
-                    <span className={`${kit.chip} ${feedbackStatusChip(f.status)}`}>{cap(f.status)}</span>
-                    <span>{f.user_email ?? f.submitter_name ?? 'anonymous'}</span>
-                    <span>{fmtDateTime(f.created_at)}</span>
-                  </span>
-                }
-              >
-                <pre className={styles.pre}>{f.body}</pre>
-              </CollapsibleCard>
+              <Link key={f.id} href={`/platform-admin/feedback/${f.id}`} className={styles.relatedRow}>
+                <span className={styles.relatedTitle}>{f.title ?? f.body.slice(0, 80)}</span>
+                <span className={`${kit.chip} ${feedbackTypeChip(f.type)}`}>{cap(f.type)}</span>
+                <span className={`${kit.chip} ${feedbackStatusChip(f.status)}`}>{cap(f.status)}</span>
+                <span className={kit.countQuiet}>{f.submitter_name ?? f.user_email ?? 'Not signed in'}</span>
+                <span className={kit.countQuiet}>{consoleWhen(f.created_at)}</span>
+                <span className={styles.relatedGo} aria-hidden>›</span>
+              </Link>
             ))}
-            <Link href="/platform-admin/feedback?status=all" className={kit.door}>Open Feedback →</Link>
           </div>
+          <Link href="/platform-admin/feedback?status=all" className={kit.door}>Open Feedback →</Link>
         </section>
       )}
 
       <section className={kit.section}>
-        <h2 className={kit.sectionTitle}>Occurrences · last 14 days (from sampled events)</h2>
+        <h2 className={kit.sectionTitle}>Occurrences · last 14 days (from samples)</h2>
         <div className={`${kit.card} ${kit.cardPad}`}>
           <Sparkline data={detail.daily} />
         </div>
@@ -236,15 +210,16 @@ export default async function ErrorGroupDetailPage({
 
       <section className={kit.section}>
         <h2 className={kit.sectionTitle}>
-          Recent occurrences <span className={styles.titleCount}>{detail.events.length} shown</span>
+          Recent samples <span className={styles.titleCount}>{samples.length} shown</span>
         </h2>
-        {detail.events.length === 0 ? (
+        <p className={kit.caption}>Every time up to 50, then one in ten.</p>
+        {samples.length === 0 ? (
           <div className={`${kit.card} ${kit.cardPad}`}>
-            <p className={styles.emptyPanel}>No sampled occurrences stored for this issue (they may have been purged after 30 days).</p>
+            <p className={styles.emptyPanel}>No samples are stored for this issue (they may have been purged after 30 days).</p>
           </div>
         ) : (
-          <div className={styles.eventList}>
-            {detail.events.map(ev => <EventCard key={ev.id} ev={ev} />)}
+          <div className={kit.card}>
+            <SamplesTable rows={samples} />
           </div>
         )}
       </section>

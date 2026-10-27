@@ -22,6 +22,7 @@ import { reasonOfRow, whyFields } from '../../lib/platform-story-view.ts';
 
 /** Files whose every audit write is a product job or a console work tool: no reason is asked for. */
 const NO_REASON_FILES: Record<string, string> = {
+  'app/api/platform-admin/feedback/[id]/reply/route.ts': 'console work tool: a reply to feedback asks no reason (owner Q5, Stage 5); the reply row keeps its words and who sent it',
   'app/api/platform-admin/club-domains-tick/route.ts': 'product job (scheduler tick)',
   'app/api/platform-admin/coach-sandbox-tick/route.ts': 'product job (scheduler tick)',
   'app/api/platform-admin/demo-sandbox-tick/route.ts': 'product job (scheduler tick)',

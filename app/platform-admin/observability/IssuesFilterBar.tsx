@@ -68,7 +68,7 @@ export default function IssuesFilterBar({
   return (
     // Keyed on applied filters so a new result set (including Clear) resets the uncontrolled inputs.
     <form key={`${q}|${severity}|${status}|${route}|${org}`} onSubmit={onSubmit} className={kit.toolbar}>
-      <input type="search" name="q" defaultValue={q} placeholder="Search title / error / route…" aria-label="Search issues" className={`${kit.search} ${styles.searchField}`} />
+      <input type="search" name="q" defaultValue={q} placeholder="Search title, error or route" aria-label="Search issues" className={`${kit.search} ${styles.searchField}`} />
       <select name="severity" defaultValue={severity} className={kit.select} aria-label="Severity">
         <option value="">All severities</option>
         {severityOptions.map(s => <option key={s} value={s}>{cap(s)}</option>)}

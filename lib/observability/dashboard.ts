@@ -18,9 +18,9 @@ export type ObsSeverity = 'critical' | 'error' | 'warning' | 'info';
 export type ObsStatus = 'open' | 'resolved' | 'ignored' | 'snoozed';
 
 export const OBS_WINDOWS = {
-  '24h': { label: 'Last 24h', ms: 24 * 3_600_000, bucketMs: 3_600_000 },       // 24 hourly buckets
-  '7d':  { label: 'Last 7d',  ms: 7 * 86_400_000, bucketMs: 6 * 3_600_000 },    // 28 six-hour buckets
-  '30d': { label: 'Last 30d', ms: 30 * 86_400_000, bucketMs: 86_400_000 },      // 30 daily buckets
+  '24h': { label: 'Last 24 hours', ms: 24 * 3_600_000, bucketMs: 3_600_000 },       // 24 hourly buckets
+  '7d':  { label: 'Last 7 days', ms: 7 * 86_400_000, bucketMs: 6 * 3_600_000 },    // 28 six-hour buckets
+  '30d': { label: 'Last 30 days', ms: 30 * 86_400_000, bucketMs: 86_400_000 },      // 30 daily buckets
 } as const;
 export type ObsWindowKey = keyof typeof OBS_WINDOWS;
 
@@ -398,7 +398,10 @@ export interface EventSample {
   http_method: string | null;
   status_code: number | null;
   source: string | null;
+  org_id: string | null;
   org_slug: string | null;
+  /** The account number: resolved server-side to a person (lib/observability/sample-people.ts), never shown as it is. */
+  user_id: string | null;
   user_role: string | null;
   user_email: string | null;
   request_id: string | null;
@@ -432,7 +435,7 @@ export async function getErrorGroupDetail(groupId: string): Promise<IssueDetail 
     supabaseAdmin
       .from('error_events')
       .select(
-        'id, occurred_at, route, http_method, status_code, source, org_slug, user_role, user_email, request_id, error_message, stack_trace, request_context',
+        'id, occurred_at, route, http_method, status_code, source, org_id, org_slug, user_id, user_role, user_email, request_id, error_message, stack_trace, request_context',
       )
       .eq('group_id', groupId)
       .order('occurred_at', { ascending: false })

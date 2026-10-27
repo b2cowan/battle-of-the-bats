@@ -1,15 +1,12 @@
 import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
-import { isPlatformAreaReadOnly } from '@/lib/platform-areas';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { fmtAbsoluteDateTime } from '@/lib/format-date';
-import StatusControls from './[id]/StatusControls';
-import EscalateControls from './[id]/EscalateControls';
+import { consoleWhen } from '@/lib/console-dates';
+import FeedbackTable, { type FeedbackListRow } from './FeedbackTable';
 import FeedbackExportClient from './FeedbackExportClient';
-import { cap, feedbackTypeChip, feedbackStatusChip } from '../chips';
+import { cap } from '../chips';
 import kit from '../console.module.css';
-import styles from './feedback.module.css';
 
 const PAGE_SIZE = 100;
 const TYPES = ['bug', 'feature', 'feedback'] as const;
@@ -26,6 +23,7 @@ interface Filters {
 type FeedbackRow = {
   id: string;
   org_id: string | null;
+  user_id: string | null;
   user_email: string | null;
   submitter_name: string | null;
   type: string;
@@ -45,17 +43,11 @@ function orgFromJoin(value: FeedbackRow['organizations']) {
   return value ?? null;
 }
 
-function requestIdOf(context: FeedbackRow['context']): string | null {
-  if (!context || typeof context !== 'object') return null;
-  const v = (context as Record<string, unknown>).requestId;
-  return typeof v === 'string' && v ? v : null;
-}
-
 async function getRows(f: Filters): Promise<FeedbackRow[]> {
   let q = supabaseAdmin
     .from('feedback_submissions')
     .select(
-      'id, org_id, user_email, submitter_name, type, category, title, body, status, severity, context, escalated_at, created_at, organizations(id, name)',
+      'id, org_id, user_id, user_email, submitter_name, type, category, title, body, status, severity, context, escalated_at, created_at, organizations(id, name)',
     )
     .order('created_at', { ascending: false })
     .range(f.offset, f.offset + PAGE_SIZE - 1);
@@ -72,21 +64,22 @@ async function getRows(f: Filters): Promise<FeedbackRow[]> {
   return data as FeedbackRow[];
 }
 
-/** Resolve each bug's last-seen requestId → its error_groups id, in one query, for "View related issue". */
-async function getIssueLinks(rows: FeedbackRow[]): Promise<Map<string, string>> {
-  const reqIds = [...new Set(rows.map(r => requestIdOf(r.context)).filter((v): v is string => !!v))];
-  if (reqIds.length === 0) return new Map();
+/** The newest SENT reply's time for each feedback item on the page, in one query ("Replied" column). */
+async function getLastReplies(rows: FeedbackRow[]): Promise<Map<string, string>> {
+  const ids = rows.map(r => r.id);
+  if (ids.length === 0) return new Map();
   const { data } = await supabaseAdmin
-    .from('error_events')
-    .select('request_id, group_id')
-    .in('request_id', reqIds);
+    .from('platform_feedback_replies')
+    .select('feedback_id, created_at, finished_at')
+    .in('feedback_id', ids)
+    .eq('status', 'sent')
+    .order('created_at', { ascending: false });
   const map = new Map<string, string>();
-  for (const row of (data ?? []) as { request_id: string | null; group_id: string | null }[]) {
-    if (row.request_id && row.group_id && !map.has(row.request_id)) map.set(row.request_id, row.group_id);
+  for (const r of (data ?? []) as { feedback_id: string; created_at: string; finished_at: string | null }[]) {
+    if (!map.has(r.feedback_id)) map.set(r.feedback_id, r.finished_at ?? r.created_at);
   }
   return map;
 }
-
 
 function buildHref(filters: Filters, extra: Partial<Filters> = {}) {
   const next = { ...filters, ...extra };
@@ -104,8 +97,7 @@ export default async function FeedbackTriagePage({
 }: {
   searchParams: Promise<{ type?: string; category?: string; status?: string; offset?: string }>;
 }) {
-  const auth = await requirePlatformAreaView('feedback');
-  const readOnly = isPlatformAreaReadOnly(auth.role, 'feedback');
+  await requirePlatformAreaView('feedback');
 
   const sp = await searchParams;
   const offset = Math.max(0, parseInt(sp.offset ?? '0', 10));
@@ -120,7 +112,25 @@ export default async function FeedbackTriagePage({
   };
 
   const rows = await getRows(filters);
-  const issueLinks = await getIssueLinks(rows);
+  const lastReplies = await getLastReplies(rows);
+  const listRows: FeedbackListRow[] = rows.map(row => {
+    const org = orgFromJoin(row.organizations);
+    const repliedAt = lastReplies.get(row.id);
+    return {
+      id: row.id,
+      when: consoleWhen(row.created_at),
+      type: row.type,
+      category: row.category,
+      org: row.org_id && org ? { id: row.org_id, name: org.name } : null,
+      from: row.user_id ? { name: row.submitter_name || row.user_email || 'Signed-in user', href: `/platform-admin/customer-users/${row.user_id}` } : null,
+      title: row.title || row.body.slice(0, 80),
+      status: row.status,
+      escalated: !!row.escalated_at,
+      replied: repliedAt
+        ? { text: consoleWhen(repliedAt), quiet: false }
+        : { text: row.user_id && row.user_email ? 'Not yet' : 'No address', quiet: true },
+    };
+  });
 
   const hasNext = rows.length === PAGE_SIZE;
   const hasPrev = offset > 0;
@@ -128,13 +138,6 @@ export default async function FeedbackTriagePage({
   return (
     <div className={kit.page}>
       <AdminPageHeader title="Feedback" />
-
-      <div className={kit.callout}>
-        <span>
-          <strong>In-app feedback queue</strong>{' '}
-          {`Bug reports, feature requests, and general feedback submitted from inside the app (admin, coach, scorekeeper, and anonymous). Move each item New → Triaged → Acknowledged → Resolved; a bug that hit a captured error shows a link to the related issue. Feedback is retained indefinitely.${readOnly ? ' Status changes require support or product access.' : ' Use the status dropdown to triage items, and Escalate to product to flag an item the product team needs to act on (filter by Escalated to see the flagged queue); transitions are audit-logged with your email. Error group status changes (in Errors) require product access.'}`}
-        </span>
-      </div>
 
       <div className={kit.card}>
         <form method="GET" action="/platform-admin/feedback" className={kit.toolbar}>
@@ -162,76 +165,7 @@ export default async function FeedbackTriagePage({
           </span>
         </form>
 
-        <div className={`${kit.tableWrap} table-cards`}>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Category</th>
-                <th>Org</th>
-                <th>From</th>
-                <th>Title / Body</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody className={kit.comfortable}>
-              {rows.length === 0 && (
-                <tr><td colSpan={7} className={kit.empty}>No feedback found.</td></tr>
-              )}
-              {rows.map(row => {
-                const org = orgFromJoin(row.organizations);
-                const reqId = requestIdOf(row.context);
-                const groupId = reqId ? issueLinks.get(reqId) : undefined;
-                return (
-                  <tr key={row.id}>
-                    <td data-label="Date" className={kit.nowrap}>{fmtAbsoluteDateTime(row.created_at)}</td>
-                    <td data-label="Type">
-                      <span className={`${kit.chip} ${feedbackTypeChip(row.type)}`}>{cap(row.type)}</span>
-                    </td>
-                    <td data-label="Category" className={kit.muted}>{row.category ?? '—'}</td>
-                    <td data-label="Org">
-                      {row.org_id && org ? (
-                        <Link href={`/platform-admin/orgs/${row.org_id}`} className={kit.nameLink}>{org.name}</Link>
-                      ) : (
-                        <span className={kit.muted}>Platform / anonymous</span>
-                      )}
-                    </td>
-                    <td data-label="From" className={styles.fromCell}>{row.user_email ?? row.submitter_name ?? '—'}</td>
-                    <td className={`table-cards-title ${styles.bodyCell}`}>
-                      <details className={styles.bodyDetails}>
-                        <summary>{row.title ?? row.body.slice(0, 80)}</summary>
-                        <pre>{row.body}</pre>
-                        {groupId ? (
-                          <Link href={`/platform-admin/observability/${groupId}`} className={`${kit.door} ${styles.issueLink}`}>
-                            View related issue →
-                          </Link>
-                        ) : row.type === 'bug' ? (
-                          <span className={`${kit.muted} ${styles.issueLink}`}>No linked error event — correlate manually by org + time in Errors.</span>
-                        ) : null}
-                      </details>
-                    </td>
-                    <td data-label="Status">
-                      <div className={styles.statusCell}>
-                        {readOnly ? (
-                          <span className={`${kit.chip} ${feedbackStatusChip(row.status)}`}>{cap(row.status)}</span>
-                        ) : (
-                          <StatusControls id={row.id} currentStatus={row.status} readOnly={readOnly} />
-                        )}
-                        {row.escalated_at && (
-                          <span className={`${kit.chip} ${kit.chipBad}`} title="Flagged for the product team">Escalated</span>
-                        )}
-                        {!readOnly && (
-                          <EscalateControls id={row.id} escalated={!!row.escalated_at} />
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <FeedbackTable rows={listRows} />
 
         {(hasPrev || hasNext) && (
           <div className={kit.foot}>

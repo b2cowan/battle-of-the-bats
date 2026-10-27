@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requirePlatformAreaApi } from '@/lib/platform-auth';
+import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -17,7 +17,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 type FeedbackRow = { id: string; status: string; org_id: string | null };
 
 export const POST = withObservability(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformAreaApi('feedback', 'write');
+  const auth = await requirePlatformPower('feedback_triage');
   if (auth.response) return auth.response;
 
   const { id } = await ctx.params;
