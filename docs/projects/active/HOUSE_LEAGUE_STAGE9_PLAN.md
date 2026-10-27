@@ -240,14 +240,17 @@ team) was not ruled: it is ask **9d2·15**, open.
   The alternative: the owner or an admin gives time straight to each division and team, and the convenor only pairs teams and
   hands out what each was given.
 - **Deferred, not ruled (owner 2026-10-27):** whether families hear when a team is first given its practice time (raised by
-  9d2·2's alternative: a practice *change* emails families, but practices are never on the public page). Left for the work on
-  how the club connects to families; 11b's coach practice email stands as drawn.
-- **9d2·16 — OPEN (raised 2026-10-27 by drawing 9d2·15, frame k5).** The club takes back house-league time with games or
-  practices on it. Recommended: the window names what is on it first; published games leave their week for Needs a new date
+  9d2·2's alternative: a practice *change* emails families, but practices are never on the public page). 11b's coach practice
+  email stands as drawn. **Its home is 9d-3** (§4), with house league's calendars (the owner asked for both to be followed up).
+- **9d2·16 — RULED 2026-10-27, as recommended** ("i agree with your recommendations"; raised by drawing 9d2·15, frame k5).
+  The club takes back house-league time with games or practices on it: the window names what is on it first; published games leave their week for Needs a new date
   and wait in the division's Changes to send (families hear once, from the convenor; 9d2·10, ·13); draft games come off the
   draft; until the league admin sends, families see the old dates; games already played stay; practices on it go, and their
   coaches and families hear in Send the changes (9d2·2). Unused time goes back with no
-  question. Alternative: refuse while published games are on it.
+  question. (Not taken: refuse while published games are on it.)
+- **Follow-up homed 2026-10-27 (owner: "did you make note to follow up on family notifications and calendar access and
+  when to address that?"):** the first-practice notice and house league's calendars are **9d-3** in §4, drawn after 9d-2b
+  is built and before 9e. The earlier note pointed at "the families-connection work", which had no plan; 9d-3 replaces it.
 
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
@@ -337,6 +340,7 @@ check the snapshot before touching it); the org home's empty-tournaments hero (S
 | **9c** Teams and people — **RULED 2026-10-26 · BUILT 2026-10-26** (commits in the status log; walk §381 ✅ 2026-10-26, 42 of 42) (§0f; drawings https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk, source `HOUSE_LEAGUE_STAGE9C_DRAWINGS.html`; §9) | Ratings (convenor-only) + balanced snake draft; draft per division; coach accounts (if Q7) as a column of 9a's gate; Publish teams with placement notices; the status page shows the team | Q7 Q8 Q9 | M–L |
 | **9d-1** One email composer — **split from 9d 2026-10-26 (owner)** · **DRAWN · RULED · BUILT 2026-10-26** (commits in the status log; walk §388 ✅ 10-26, 35/35) (§0g, all twelve as recommended; drawings https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB, source `HOUSE_LEAGUE_STAGE9D1_DRAWINGS.html`; build prompt `HOUSE_LEAGUE_STAGE9D1_BUILD_PROMPT.md`; §9) | The season's email onto the Families window and the batched sender (Q12b): opened from the season already set to it; division / team / status / "Selected" audiences; the season's own 3 typed sends a day, automatic notices never counted (Q12c); the season's own sent history (the registrar has no Families access); the old Notifications page and "Message registrants" window retire; the green "0 delivered" goes with them | Q12b Q12c (ruled) | M |
 | **9d-2** The schedule — **split from 9d 2026-10-26 (owner)** · **DRAWN 2026-10-26 · RULED 2026-10-27** (§0h: 13 as recommended, ask 2 the alternative, the owner's amendment that house league never picks time the club has not allocated to it; 9d2·15 ruled the same day: the club gives time to House league as a whole, the convenor divides it) (with 11b, one round; drawings https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU, source `HOUSE_LEAGUE_STAGE9D2_DRAWINGS.html`; round 2 the same day: the club's schedule owns every hour, Generate games is match-ups only, List · Week · Month with games and practices together; recommended order now 11b → 9d-2a → 9d-2b, ask 9d2·6; §9) | Generator rebuilt; C1–C12 admin + public; health (Q11); 11b; venue/permit links; Publish schedule + change notices (sent through 9d-1's composer path) | Q11 (ruled) | L |
+| **9d-3** House league's families: practice notices and calendars — **logged 2026-10-27 (owner), not drawn** | The first practice notice to a team's families (deferred from 9d2·2: a practice *change* already emails them). A house-league team's calendar to subscribe to, for its coach and its families: Stage 6d built the feed for rep teams only, so a house-league coach or family has none. What a family's own calendar carries (the public team page stays games-only, ruled; a private family feed is the question 6d parked on its family view, which waits for counsel). | — (drawn after 9d-2b is built: it needs published games, handed-out practices and the change notices; sequenced before 9e) | M |
 | **9e** Game day | Standings by sport pack; score entry (coaches if Q7); rainout as one action | — | S–M |
 | **9f** Season end | Archive; the finished-season record (Q16); Start next season copies forward. Returning families with a pre-filled form wait on Stage 14 | — | M |
 
@@ -644,3 +648,8 @@ open it, and the menu's top level is Stage 13's.
   practice change reaches that team's families) and the gate table (giving or taking house league's time is owner and admin
   only; dividing it is the league admin's too). The first-practice family notice is deferred to the families-connection work. **Next:**
   /marketing on the words, then the 11b build prompt.
+- **2026-10-27 — 9d2·16 RULED as recommended; 9d-3 logged.** All sixteen 9d-2 asks are ruled. The owner asked where family
+  notifications and calendar access are followed up: they had no real home (the note said "the families-connection work",
+  which has no plan). Logged as **9d-3** in §4 (the first practice notice, a house-league team's calendar for its coach and
+  families, what a family's own calendar carries), drawn after 9d-2b and before 9e. **Next:** /marketing on the words, then
+  the 11b build prompt.

@@ -2807,6 +2807,9 @@ week), its own clash check becoming the window's issues. Not ruled — the Stage
 decides it, or leaves the warning box. **⚖ Since ruled (Stage 9 plan §0, 2026-10-24, Q11): the tournament's button, window and
 engine.** The 9d-2 drawings (2026-10-26) found the engine unchanged scores a broken league season 97 and ask for a league rule
 set inside it (ask 9d2·4).
+- **9d-3 logged 2026-10-27 (owner): house league's families, practice notices and calendars.** Stage 6d's calendar feeds were
+  built for rep teams only, so a house-league coach or family has no calendar to subscribe to; and the first practice notice
+  to families was deferred from ask 9d2·2. Drawn after 9d-2b is built, before 9e (`HOUSE_LEAGUE_STAGE9_PLAN.md` §4).
 
 ### Stage 10 — Permits & bookings (⚖ D4 ruled IN scope 2026-09-25; release-gating; end of the walk)
 > **🎨 DRAWN 2026-10-10 with Stage 11 — its own plan now holds it:** `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` (+ `_PM_BRIEF.md`),
@@ -3072,7 +3075,6 @@ unwritten departures.
   "page with tabs" pattern for every club page that has tabs, so there is one look and one scroll behaviour; (d) the portal's own pattern if
   it has one that fits. Whatever is chosen, the season name and its state each appear once.
 - [ ] **Inventory question (owner 2026-10-22, not ruled): does the Club notice belong under a "Communications" home rather than the Public site editor?** The club sidebar has no Communications place today (the Coaches Portal's "Communication" group and tournament admin do), so the question is whether the club gets one: the notice, the family broadcast (Stage 7), anything else that talks to families. Detail and counter-weight: `PUBLIC_SITE_BUILDER_PLAN.md` §7.
-- [ ] **The standard, extended:** new rules for the crossings and for parity go into `NAV_STANDARD.md`; every departure found is
 - [ ] **Inventory question (owner 2026-10-27, not ruled): permits live in an odd place.** A permit is the club's hours at a place,
   and the schedule is cut from it: the club's Schedules warn outside a permit, house league's games and practices come from
   that time (9d2·15: the club allocates a permit's days to house league), and tournament scheduling and the Budget read it too.
@@ -3081,6 +3083,7 @@ unwritten departures.
   recommended starting point; (b) stay under Venues, with a door from Schedules and from each permit warning; (c) a place of
   their own. Whatever is chosen, every "outside the permit" warning opens the permit. Raised in the 9d-2 rulings
   (`HOUSE_LEAGUE_STAGE9_PLAN.md` §0h).
+- [ ] **The standard, extended:** new rules for the crossings and for parity go into `NAV_STANDARD.md`; every departure found is
   either fixed or written into its exceptions with the reason that earns it. **The default is the same everywhere; an exception
   has to name what makes its place different.** The tournament bar following the phase, the free portal's tiles and the closed
   season's one door are the standing examples of an exception that earns it.
