@@ -7,15 +7,15 @@ const platformAdminHelp: HelpPageContent = {
   role: 'Platform Admin',
   searchPlaceholder: 'Search platform admin SOPs',
   intro:
-    'Employee-only workflows for supporting FieldLogicHQ customers. Use this guide when you need to find a club or person, read and change a record, reset access, explain customer-facing docs, apply temporary billing or module exceptions, investigate account history, or manage platform staff access.',
+    'Employee-only workflows for supporting FieldLogicHQ customers. Use this guide when you need to find a club or person, read and change a record, reset access, check whether an email arrived, read platform status, answer feedback, explain customer-facing docs, apply temporary billing or module exceptions, investigate account history, or manage platform staff access.',
   sections: [
     {
       id: 'where-to-work',
       group: 'Orientation',
       heading: 'Where to work first',
       summary: 'Know the menu, Today and Find before you change an account.',
-      keywords: ['overview', 'today', 'organizations', 'clubs & portals', 'customer users', 'people', 'plans pricing', 'plans & pricing', 'bulk operations', 'bulk changes', 'audit', 'audit log', 'support console', 'menu', 'menu by job', 'sidebar', 'collapse sidebar', 'account menu', 'sign out', 'appearance', 'warm', 'dark', 'help', 'private finance', 'business numbers', 'find', 'search', 'recent', 'slash', 'old names', 'renamed', 'observability', 'errors', 'early access', 'leads', 'email campaigns', 'campaigns', 'platform users', 'staff', 'reason', 'why', 'every change keeps its reason', 'waiting', 'amber count', 'view-only', 'eye'],
-      searchText: 'where to work first support console menu by job groups customers health growth product records system private finance bookkeeping owner only today what is waiting on us amber count queue waiting since your last visit totals line business numbers subscription growth usage metric notes find box top strip press slash recent last five records opened cleared at sign-out all in clubs and portals all in people stripe numbers cus sub pi ch py in_ invoice number printed invoice number charge number payment number enter opens the money tab on that charge nothing matches test-mode number card digits are not searched every change keeps its reason why window one sentence confirm eye view-only for your role old names overview organizations customer users observability early access email campaigns bulk operations platform users command center billing & product support & diagnostics governance help at the foot of the menu opens in place collapse sidebar menu button top strip account menu appearance warm dark sign out staff access',
+      keywords: ['overview', 'today', 'organizations', 'clubs & portals', 'customer users', 'people', 'plans pricing', 'plans & pricing', 'bulk operations', 'bulk changes', 'audit', 'audit log', 'support console', 'menu', 'menu by job', 'sidebar', 'collapse sidebar', 'account menu', 'sign out', 'appearance', 'warm', 'dark', 'help', 'private finance', 'business numbers', 'find', 'search', 'recent', 'slash', 'old names', 'renamed', 'observability', 'errors', 'status', 'sent emails', 'early access', 'leads', 'email campaigns', 'campaigns', 'platform users', 'staff', 'reason', 'why', 'every change keeps its reason', 'waiting', 'amber count', 'view-only', 'eye'],
+      searchText: 'where to work first support console menu by job groups customers health growth product records system private finance bookkeeping owner only today what is waiting on us amber count queue waiting since your last visit totals line business numbers subscription growth usage metric notes find box top strip press slash recent last five records opened cleared at sign-out all in clubs and portals all in people stripe numbers cus sub pi ch py in_ invoice number printed invoice number charge number payment number enter opens the money tab on that charge nothing matches test-mode number card digits are not searched every change keeps its reason why window one sentence confirm eye view-only for your role old names overview organizations customer users observability status sent emails early access email campaigns bulk operations platform users command center billing & product support & diagnostics governance help at the foot of the menu opens in place collapse sidebar menu button top strip account menu appearance warm dark sign out staff access',
       links: [
         { label: 'Today', href: '/platform-admin' },
         { label: 'Clubs & portals', href: '/platform-admin/orgs' },
@@ -35,7 +35,7 @@ const platformAdminHelp: HelpPageContent = {
               <HelpDefs>
                 <HelpDef term="Today">What is waiting on us. It sits alone at the top.</HelpDef>
                 <HelpDef term="Customers"><strong>Clubs &amp; portals</strong>, <strong>People</strong>, <strong>Founding season</strong> (accounts on a free season) and <strong>Retention</strong>.</HelpDef>
-                <HelpDef term="Health"><strong>Errors</strong> and <strong>Feedback</strong>.</HelpDef>
+                <HelpDef term="Health"><strong>Status</strong> (is the platform healthy right now), <strong>Errors</strong>, <strong>Feedback</strong> and <strong>Sent emails</strong> (Super admin, Support and Billing only).</HelpDef>
                 <HelpDef term="Growth"><strong>Leads</strong>, <strong>Campaigns</strong> and <strong>Pitch decks</strong>.</HelpDef>
                 <HelpDef term="Product"><strong>Plans &amp; pricing</strong>, <strong>Approval queue</strong>, <strong>Bulk changes</strong>, <strong>Email templates</strong> and <strong>Export registry</strong> (every way data leaves the product, read-only).</HelpDef>
                 <HelpDef term="Records"><strong>Staff</strong> and the <strong>Audit log</strong>.</HelpDef>
@@ -59,7 +59,7 @@ const platformAdminHelp: HelpPageContent = {
                 <li><strong>Growth:</strong> campaigns past due, campaigns due soon and new leads.</li>
                 <li><strong>Product:</strong> the approval queue.</li>
               </ul>
-              <p>Your role decides which queues you see. <em>Since your last visit</em> in the table&rsquo;s header marks what is new since you were last here. A line above the table counts errors in the last 24 hours for roles that can open Errors.</p>
+              <p>Your role decides which queues you see. <em>Since your last visit</em> in the table&rsquo;s header marks what is new since you were last here. A health line above the table gives the worst verdict among the Status checks read from our own records and database (<em>Status: all fine.</em>, or how many to act on or look at) and a <strong>Status &rsaquo;</strong> door to the full page (see <em>How to read Status</em>).</p>
               <p>Under the table, a totals line gives clubs and portals, people, tournaments, teams and about how much a month at list price. Its last door opens <strong>Business numbers</strong> (it is not in the menu): tabs for <strong>Subscription</strong> (plan mix, status by plan, billing events), <strong>Growth</strong>, <strong>Usage</strong> and <strong>Metric notes</strong>.</p>
             </>
           ),
@@ -108,7 +108,7 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'Who can do what in the console',
       summary: 'Which role holds which power, so you know who to hand a request to.',
       keywords: ['roles', 'permissions', 'powers', 'super admin', 'support', 'billing', 'product', 'growth', 'read only', 'who can', 'view-only', 'eye', 'escalate', 'hand off'],
-      searchText: 'who can do what roles powers super admin support billing product growth read only permissions club name web name notes make owner release own web address person actions reset link confirm email sign out everywhere ban edit plan limits overrides cancel subscription sections delete club delete person bulk changes retention errors triage feedback triage catalog growth staff records opened find stripe numbers run jobs billing no longer has support club and person powers',
+      searchText: 'who can do what roles powers super admin support billing product growth read only permissions club name web name notes make owner release own web address person actions reset link confirm email sign out everywhere ban edit plan limits overrides cancel subscription sections delete club delete person bulk changes retention errors triage feedback triage catalog growth staff records opened find stripe numbers run jobs billing no longer has support club and person powers status sent emails sent log reply by email reply to feedback who can reply',
       links: [
         { label: 'Staff', href: '/platform-admin/users' },
       ],
@@ -126,6 +126,9 @@ const platformAdminHelp: HelpPageContent = {
             <HelpDef term="Retention (extend, process)">Super admin and Billing.</HelpDef>
             <HelpDef term="Errors (resolve, ignore, snooze)">Super admin and Product.</HelpDef>
             <HelpDef term="Feedback (triage, escalate)">Super admin, Support, Billing and Product.</HelpDef>
+            <HelpDef term="Reply to feedback by email">Super admin and Support. Billing and Product see no Reply button.</HelpDef>
+            <HelpDef term="Status">Every role reads it.</HelpDef>
+            <HelpDef term="Sent emails (the page, a person&rsquo;s Emails tab, Find&rsquo;s Sent emails group)">Super admin, Support and Billing. Product, Growth and Read only see none of it. Emails to a staff account show to Super admin only.</HelpDef>
             <HelpDef term="Plans &amp; pricing, Approval queue, Email templates (every write)">Super admin and Product. Billing can read Plans &amp; pricing and the Approval queue.</HelpDef>
             <HelpDef term="Leads, Campaigns, Pitch decks (every write)">Super admin, Product and Growth.</HelpDef>
             <HelpDef term="Staff and roles, and Records opened in the Audit log">Super admin only.</HelpDef>
@@ -581,27 +584,95 @@ const platformAdminHelp: HelpPageContent = {
       id: 'feedback-triage',
       group: 'Support SOP',
       heading: 'How to triage customer feedback',
-      summary: 'Work the in-app feedback queue from New to Resolved, pivot to a related error, and flag items for product.',
-      keywords: ['feedback', 'errors', 'triage', 'bug report', 'feature request', 'escalate', 'escalation', 'related issue', 'support queue'],
-      searchText: 'how do i triage customer feedback bug reports feature requests move new triaged acknowledged resolved escalate to product view related issue error group flag for product',
+      summary: 'Work the in-app feedback queue, triage an item on its own page, reply to the customer by email, and flag items for product.',
+      keywords: ['feedback', 'errors', 'triage', 'bug report', 'feature request', 'escalate', 'escalation', 'related issue', 'support queue', 'reply', 'reply by email', 'answer a customer', 'feedback record', 'conversation', 'severity', 'state', 'acknowledged', 'replied', 'no reply button', 'not confirmed'],
+      searchText: 'how do i triage customer feedback bug reports feature requests move new triaged acknowledged resolved escalate to product view related issue error group flag for product feedback record page open a row pencil check mark triage card state severity escalated triaged by the conversation the issue it hit reply by email reply button from fieldlogichq support replies reach the admin inbox signed with first name plain text their message quoted cannot be taken back moves to acknowledged send reply try again not confirmed someone replied while you were writing send mine too too long to retry thirty replies a day no reply button anonymous deleted account address changed unconfirmed locked older than 90 days replied column',
       links: [
         { label: 'Feedback', href: '/platform-admin/feedback' },
         { label: 'Errors', href: '/platform-admin/observability' },
       ],
       content: (
-        <>
-          <p><strong>Feedback</strong> collects bug reports, feature requests, and general feedback submitted from inside the app — admin, coach, volunteer, and anonymous public users. Work it like a queue, oldest-actionable first.</p>
-          <ol>
-            <li>Open <strong>Feedback</strong>. It opens on the <strong>New</strong> status by default so you see what is unworked. Use the type, category, and status filters to narrow; choose <strong>All statuses</strong> to widen back out.</li>
-            <li>Open a row&apos;s title to read the full body. For a bug, look for the <strong>View related issue →</strong> link — it jumps straight to the matching error group on Errors so you can confirm whether the error is already tracked.</li>
-            <li>If a bug shows <em>&ldquo;No linked error event&rdquo;</em>, no captured error was correlated automatically. Correlate manually: note the org and the time, then search Errors by route and org slug around that timestamp.</li>
-            <li>Move the item through its lifecycle with the status dropdown: <strong>New → Triaged → Acknowledged → Resolved</strong>. Triaged means you have read and categorised it; Acknowledged means the customer has had a response or the item is queued for work; Resolved means it is done or won&apos;t-do with a reason recorded elsewhere.</li>
-            <li>When the product team needs to act on an item, click <strong>Escalate to product</strong>. This stamps an <strong>Escalated</strong> badge on the row and adds it to the <em>Escalated</em> filter so product can find the flagged queue. It does <strong>not</strong> send a notification or assign anyone — pair it with your normal product hand-off (standup, ticket, or channel). Click again to clear the flag.</li>
-          </ol>
-          <p>Every status change is audit-logged with your email and a timestamp. Feedback is retained indefinitely. Export the filtered view (XLSX/CSV) when you need to attach a queue snapshot to a report.</p>
-          <p><strong>Permission boundary:</strong> super admin, product, support, and billing can change feedback status and escalate. The <strong>error group</strong> behind a bug is a separate surface — resolving the error group itself (on Errors) is product-only (see <em>How to use the Errors page and resolve error groups</em>).</p>
-        </>
+        <p><strong>Feedback</strong> collects bug reports, feature requests, and general feedback submitted from inside the app &mdash; admin, coach, volunteer, and anonymous public users. Work it like a queue, oldest-actionable first: open an item, triage it, and answer the customer from the same page.</p>
       ),
+      subtopics: [
+        {
+          id: 'feedback-triage-queue',
+          title: 'Work the queue',
+          content: (
+            <>
+              <HelpSteps>
+                <li>Open <strong>Feedback</strong>. It opens on the <strong>New</strong> state so you see what is unworked. Use the <strong>Type</strong>, <strong>Category</strong> and <strong>Status</strong> filters to narrow; choose <strong>All statuses</strong> to widen back out, or <strong>Escalated</strong> to see what is flagged for product.</li>
+                <li>The list reads <strong>Date</strong>, <strong>Type</strong>, <strong>Category</strong>, <strong>Org</strong>, <strong>From</strong>, <strong>Title</strong>, <strong>Status</strong> and <strong>Replied</strong> (when a reply last went out, if one did). Click any row to open that item&rsquo;s own page.</li>
+                <li>On the page, read <strong>The conversation</strong>: the customer&rsquo;s words, then any replies sent from here. For a bug, the card <strong>The issue it hit</strong> has an <strong>Open the issue &rsaquo;</strong> door to the matching error group on Errors.</li>
+                <li>If a bug has no such card, no captured error was matched automatically. Note the club and the time, then search Errors by route and club around that moment.</li>
+              </HelpSteps>
+              <p>Times on both pages are in the console&rsquo;s own clock, for example <em>9:15 a.m.</em> Export the filtered list (XLSX or CSV) when you need a snapshot for a report.</p>
+            </>
+          ),
+        },
+        {
+          id: 'feedback-triage-record',
+          title: 'Triage one item',
+          content: (
+            <>
+              <p>The <strong>Triage</strong> card on the item&rsquo;s page shows its <strong>State</strong>, <strong>Severity</strong>, <strong>Escalated</strong> and <strong>Triaged by</strong>. Roles that may triage see a pencil in the page header; the page reads first and edits only when you ask.</p>
+              <HelpSteps>
+                <li>Click the pencil. State, Severity and Escalated become fields, and nothing changes until you confirm.</li>
+                <li>Set the <strong>State</strong>: <strong>New &rarr; Triaged &rarr; Acknowledged &rarr; Resolved</strong>. Triaged means you have read and sorted it; Acknowledged means the customer has had a response or the item is queued for work; Resolved means it is done or won&rsquo;t-do.</li>
+                <li>Set the <strong>Severity</strong> (Critical, Error, Warning or Info) if it helps. A severity, once set, cannot be cleared.</li>
+                <li>Choose <strong>Yes, to the product team</strong> under <strong>Escalated</strong> when product needs to act, or <strong>No</strong> to clear the flag.</li>
+                <li>Click the check mark. A window states the change in one sentence and ends <em>Nobody is emailed</em>; press <strong>Save changes</strong>. The &times; beside the check mark drops your edits instead.</li>
+              </HelpSteps>
+              <HelpNote variant="info" title="Escalating tells nobody">
+                <p>Escalated only stamps a badge on the item and adds it to the <em>Escalated</em> filter. It sends no notification and assigns no one, so pair it with your normal product hand-off.</p>
+              </HelpNote>
+              <p>Every change is kept in the audit log with your email and the time. The error group behind a bug is a separate surface: resolving it on Errors is Super admin and Product only (see <em>How to use the Errors page and resolve error groups</em>).</p>
+            </>
+          ),
+        },
+        {
+          id: 'feedback-reply',
+          title: 'Reply to the customer by email',
+          content: (
+            <>
+              <p>Super admin and Support see a <strong>Reply</strong> button in the header of an item&rsquo;s page when the customer can be reached. Billing and Product have no Reply button at all.</p>
+              <HelpSteps>
+                <li>Click <strong>Reply</strong>. The window is titled with the customer&rsquo;s name and says <em>This sends an email to &hellip; It cannot be taken back.</em> You never type an address &mdash; the page uses the address on the account behind the feedback.</li>
+                <li>Check the three lines under the sentence: <strong>From</strong> (FieldLogicHQ support), <strong>Replies go to</strong> (the admin inbox) and <strong>Subject</strong> (<em>Re:</em> and the item&rsquo;s title).</li>
+                <li>Write your <strong>Message</strong>, up to 4,000 characters. It goes as plain text, signed with your first name and FieldLogicHQ support, with the customer&rsquo;s own message quoted below yours.</li>
+                <li>Click <strong>Send reply</strong>. It sends at once. When the item was New or Triaged, the sentence also says it moves to Acknowledged, and it does; an item already Acknowledged or Resolved keeps its state.</li>
+              </HelpSteps>
+              <p>The reply then appears in <strong>The conversation</strong> with a word for what happened to it (<em>Sent</em>, <em>Delivered</em>, <em>Bounced</em> and so on; see <em>How to check whether an email reached someone</em>). You may send up to 30 replies in 24 hours.</p>
+              <HelpNote variant="warning" title="The customer&rsquo;s answer does not come back here">
+                <p>A customer who answers your email reaches the admin inbox, not the console. Read it there; the conversation on the page shows only what you sent.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'feedback-reply-trouble',
+          title: 'When Reply is missing or does not go through',
+          content: (
+            <>
+              <p>Where a role may reply but this item cannot be answered, one line of words stands in the Reply button&rsquo;s place instead of a greyed-out one.</p>
+              <HelpDefs>
+                <HelpDef term="Sent without signing in">There is no address to reply to. Triage it as usual.</HelpDef>
+                <HelpDef term="The account no longer exists, is locked, or its address is not confirmed">No address to reply to. Answer from the admin inbox if it still matters.</HelpDef>
+                <HelpDef term="Their address changed after they wrote">Check who they are, then answer from the admin inbox.</HelpDef>
+                <HelpDef term="Older than 90 days">Too old to reply from here. Answer from the admin inbox if it still matters.</HelpDef>
+              </HelpDefs>
+              <p>Once the window is open, it can stop in a few ways. Each says what to do:</p>
+              <HelpDefs>
+                <HelpDef term="The mail service did not take it">Nothing was sent. Your message is kept; press <strong>Try again</strong> in a minute.</HelpDef>
+                <HelpDef term="We did not hear back from the mail service">The window turns amber and says <em>It will not send twice.</em> Trying again within a day is safe: it sends the same words and the mail service sends them at most once. The reply shows as <em>Not confirmed</em> in the conversation until the mail service reports.</HelpDef>
+                <HelpDef term="Too long to retry safely">More than a day has passed. Check the conversation, then send a new reply.</HelpDef>
+                <HelpDef term="Someone replied while you were writing">The window shows their reply. <strong>Cancel</strong> returns to your words, kept, so you can read and adjust; <strong>Send mine too</strong> sends yours as a new reply.</HelpDef>
+                <HelpDef term="You have sent 30 replies in the last 24 hours">The most one person may send. Answer from the admin inbox.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-feedback-escalate-notify',
@@ -617,10 +688,29 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-feedback-no-linked-error',
           question: 'A bug report has no linked error. How do I find the error?',
           answer: (
-            <p>No <code>requestId</code> was captured for that submission, so it could not be auto-correlated. Open <strong>Errors</strong> and search by the bug&apos;s route and org slug around the time the feedback was submitted to find the matching error group manually.</p>
+            <p>No <code>requestId</code> was captured for that submission, so it could not be auto-correlated and the item shows no <strong>The issue it hit</strong> card. Open <strong>Errors</strong> and search by the bug&apos;s route and org slug around the time the feedback was submitted to find the matching error group manually.</p>
           ),
-          answerText: 'No requestId was captured. Search Errors by route and org slug around the submission time to find the error group manually.',
+          answerText: 'No requestId was captured, so there is no The issue it hit card. Search Errors by route and org slug around the submission time to find the error group manually.',
           keywords: ['no linked error', 'correlate manually', 'request id'],
+        },
+        {
+          id: 'faq-feedback-no-reply-button',
+          question: 'There is no Reply button on a feedback item. Why?',
+          answer: (
+            <p>Either your role has no Reply (only Super admin and Support do), or this item cannot be answered from here: it was sent without signing in, the account is gone, locked or unconfirmed, the address changed, or it is older than 90 days. In the second case a line under the title says which, and the answer goes from the admin inbox instead.</p>
+          ),
+          answerText: 'Only Super admin and Support can reply. An item cannot be answered from here if it was sent without signing in, the account is deleted, locked or unconfirmed, the address changed, or it is over 90 days old. A line under the title says which; answer from the admin inbox instead.',
+          keywords: ['no reply button', 'cannot reply', 'reply missing', 'anonymous feedback', 'old feedback'],
+          popular: true,
+        },
+        {
+          id: 'faq-feedback-reply-twice',
+          question: 'Did my reply send twice, or not at all?',
+          answer: (
+            <p>It does not send twice. If the window said <em>We did not hear back from the mail service</em>, press <strong>Try again</strong>: the same words go under the same number, and the mail service sends them at most once. Within a day that is safe. After a day the window says <em>Too long to retry safely</em>, so read the conversation and send a new reply if it never arrived.</p>
+          ),
+          answerText: 'A reply never sends twice. If you did not hear back from the mail service, press Try again within a day: the same words go under the same number and send at most once. After a day, read the conversation and send a new reply if it never arrived.',
+          keywords: ['reply sent twice', 'not confirmed', 'try again', 'duplicate reply', 'retry'],
         },
       ],
     },
@@ -629,8 +719,8 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Support SOP',
       heading: 'How to use the Errors page and resolve error groups',
       summary: 'Read the Errors page (once called Observability), open an error group, and resolve, ignore, or snooze it.',
-      keywords: ['errors', 'observability', 'error tracking', 'error group', 'issue', 'resolve', 'ignore', 'snooze', 'stack trace', 'error rate', 'time window', 'last 24h', 'last 7d', 'last 30d'],
-      searchText: 'how do i use the errors page observability dashboard error tracking error groups issues resolve ignore snooze reopen stack trace error rate freshness affected orgs time window dropdown last 24h last 7d last 30d environment production dev',
+      keywords: ['errors', 'observability', 'error tracking', 'error group', 'issue', 'who an error hit', 'a staff account', 'nobody signed in', 'samples', 'resolve', 'ignore', 'snooze', 'stack trace', 'error rate', 'time window', 'last 24h', 'last 7d', 'last 30d'],
+      searchText: 'how do i use the errors page observability dashboard error tracking error groups issues resolve ignore snooze reopen stack trace error rate freshness affected orgs time window dropdown last 24h last 7d last 30d environment production dev samples table who club source status code who an error hit a staff account only super admin nobody signed in no longer has an account could not read this account error rate counts api calls only',
       links: [
         { label: 'Errors', href: '/platform-admin/observability' },
         { label: 'Feedback', href: '/platform-admin/feedback' },
@@ -649,6 +739,7 @@ const platformAdminHelp: HelpPageContent = {
           <li>The top metric cards show errors in the selected window, error rate (from instrumented routes only), open issues, and affected orgs. Pick the time window (<strong>Last 24h</strong>, <strong>Last 7d</strong>, or <strong>Last 30d</strong>) from the dropdown in the page header. The dashboard shows the errors of the environment you are on (production on the live site, dev on the dev site); there is no environment switch.</li>
           <li>The <strong>freshness chip</strong> reports when the rollup job last ran. A green chip is healthy; an amber chip (&ldquo;job error&rdquo; / &ldquo;sweep stale&rdquo;) or &ldquo;Rollup has not run yet&rdquo; means the data is stale and the cron job needs attention — flag it to engineering rather than trusting the counts.</li>
           <li>The issue list opens on <strong>Open</strong> by default. Search by title, error, or route, and filter by severity, status, route, or org slug. Export (XLSX/CSV) carries the active filters.</li>
+          <li>A line under the cards says the error rate counts API calls only. Errors on pages and in browsers appear in the captured errors but have no call count to divide by, so they are not in the rate.</li>
         </ul>
             </>
           ),
@@ -658,7 +749,25 @@ const platformAdminHelp: HelpPageContent = {
           title: 'Open an issue',
           content: (
             <>
-            <p>Open an issue to read its detail: route and HTTP method, occurrence count, affected orgs, first/last seen, a 14-day occurrence sparkline, scrubbed sample events (stack trace and request context, redacted), and any <strong>related feedback</strong> matched by request ID.</p>
+            <p>Open an issue to read its detail: route and HTTP method, occurrence count, affected orgs, first/last seen, a 14-day occurrence sparkline, scrubbed sample events (stack trace and request context, redacted), and any <strong>related feedback</strong> matched by request ID. The samples are a table of <strong>When</strong>, <strong>Who</strong>, <strong>Club</strong>, <strong>Source</strong> and the status code; click a row for its window.</p>
+            </>
+          ),
+        },
+        {
+          id: 'observability-who-hit',
+          title: 'Who an error hit',
+          content: (
+            <>
+              <p>The <strong>Who</strong> and <strong>Club</strong> columns tell you which customer to look at. Who reads one of six ways:</p>
+              <HelpDefs>
+                <HelpDef term="A name">A customer account. The name links to their person record when your role opens People; under it are their address and role.</HelpDef>
+                <HelpDef term="A staff account">The error hit a staff member. Only Super admin sees the name and opens the record; other roles see these words and no link.</HelpDef>
+                <HelpDef term="No longer has an account">The account was deleted. The address stored with the error is shown as plain text.</HelpDef>
+                <HelpDef term="An address only">Only an address was kept. It is plain text, with no link.</HelpDef>
+                <HelpDef term="Nobody signed in">A public page, or a browser error before sign-in.</HelpDef>
+                <HelpDef term="Could not read this account">The sign-in records could not be read just now. Open the issue again in a minute.</HelpDef>
+              </HelpDefs>
+              <p>The <strong>Club</strong> column names the club, linked to its record, or reads <em>None</em>. Times on Errors are in the console clock, for example <em>9:15 a.m.</em></p>
             </>
           ),
         },
@@ -707,6 +816,196 @@ const platformAdminHelp: HelpPageContent = {
           ),
           answerText: 'Error-group triage is product/super admin only. View-only roles see disabled controls — triage the bug from Feedback and escalate to product.',
           keywords: ['disabled', 'view only', 'read only', 'permission'],
+        },
+      ],
+    },
+    {
+      id: 'status-page',
+      group: 'Support SOP',
+      heading: 'How to read Status',
+      summary: 'Is the platform healthy right now: the thirteen checks, their four verdicts, and what to do about each.',
+      keywords: ['status', 'health', 'platform health', 'is the site up', 'verdict', 'fine', 'look at it', 'act now', 'not checked', 'read again', 'read at', 'build failed', 'production build', 'staging build', 'staging site', 'database', 'connections', 'scheduled jobs', 'gateway errors', 'traffic', 'error rate', 'amplify', 'supabase', 'no key', 'health line'],
+      searchText: 'how do i read status is the platform healthy right now health status page every role thirteen checks three bands the sites the app the database verdicts fine look at it act now not checked reading read at read again refresh symbol on a phone shared reading thirty seconds amber read minutes ago what it says what to do read from production build failed staging build staging site slow errors higher than usual error rate traffic counts up to date database answers connections scheduled jobs database services gateway errors staging database this site has no key for amplify supabase refused our key did not answer within 5 seconds tell the owner tell the developer not judged week over week trends database advisors agent tooling owner morning check today health line status all fine',
+      links: [
+        { label: 'Status', href: '/platform-admin/status' },
+        { label: 'Errors', href: '/platform-admin/observability' },
+      ],
+      content: (
+        <p><strong>Status</strong> answers one question &mdash; is the platform healthy right now &mdash; in one table. It is the first page under <strong>Health</strong>, and every role can read it. It is a reading, not a record: it shows what is true as the page opens, and it never changes anything.</p>
+      ),
+      subtopics: [
+        {
+          id: 'status-page-read',
+          title: 'Read the page',
+          content: (
+            <>
+              <HelpSteps>
+                <li>Open <strong>Health &rsaquo; Status</strong>. A chip beside the title names the site you are on (Production or Staging).</li>
+                <li>Read the line at the top first. It is either <em>All fine.</em> or a count (<em>1 to act on now, 2 to look at</em>), with one sentence on the worst problem and a door to it (<strong>Errors &rsaquo;</strong> or <strong>Open the issue &rsaquo;</strong>).</li>
+                <li>Below it, the table reads <strong>Check</strong>, <strong>Verdict</strong>, <strong>What it says</strong>, <strong>What to do</strong> and <strong>Read from</strong>, in three bands: <strong>The sites</strong> (production build, staging build, staging site), <strong>The app</strong> (errors, error rate, traffic, counts up to date) and <strong>The database</strong> (database answers, connections, scheduled jobs, database services, gateway errors, staging database). A Fine check leaves <em>What to do</em> blank.</li>
+                <li>The header says <strong>Read at 8:14 a.m.</strong> Press <strong>Read again</strong> for a fresh reading; on a phone that button is the refresh symbol. The time turns amber and reads <em>Read N minutes ago</em> once the page has been open more than ten minutes.</li>
+              </HelpSteps>
+              <p>On a phone each check is a card with its verdict, its sentence and what to do; the <em>Read from</em> column is left off. The foot of the page says what is not judged here: week-over-week trends, database advisors and agent tooling stay in the owner&rsquo;s morning check, so an all-fine Status is not the whole story of the stack.</p>
+            </>
+          ),
+        },
+        {
+          id: 'status-page-verdicts',
+          title: 'The four verdicts',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="Fine">Nothing to do.</HelpDef>
+                <HelpDef term="Look at it">Worth a look soon. The sentence says what was found and the next column says what to do (for example, open Errors, or tell the developer).</HelpDef>
+                <HelpDef term="Act now">Something customers can feel. A failed production build is one; a failed staging build is only Look at it.</HelpDef>
+                <HelpDef term="Not checked">The reading could not be taken. It is never shown as Fine, and the top line counts it (<em>2 not checked</em>) in amber.</HelpDef>
+              </HelpDefs>
+              <p>Counts on the app side are judged against a usual hour or a usual day, so a quiet site is not flagged for being small, and a busy one is not flagged for being busy. Staging problems never rise above Look at it.</p>
+            </>
+          ),
+        },
+        {
+          id: 'status-page-unchecked',
+          title: 'When a check says Not checked',
+          content: (
+            <>
+              <p>The sentence says why, and it never repeats the provider&rsquo;s own words.</p>
+              <HelpDefs>
+                <HelpDef term="This site has no key for Amplify (or Supabase)">The console has not been given the key for that provider yet, so that line cannot be read. It is an owner step: tell the owner, and the line stays Not checked until it is done.</HelpDef>
+                <HelpDef term="Amplify (or Supabase) refused our key or token">The key may have expired or been removed. Tell the owner it needs replacing.</HelpDef>
+                <HelpDef term="Did not answer within 5 seconds">Press Read again in a minute.</HelpDef>
+              </HelpDefs>
+              <HelpNote variant="info" title="Read again may show the same reading">
+                <p>Our own records and the database are read every time. The outside providers (Amplify, the staging site, Supabase) are read once for all staff at most every 30 seconds, so a second press inside that time shows the same reading.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'status-page-today',
+          title: 'Status on Today',
+          content: (
+            <>
+              <p>The health line above the table on <strong>Today</strong> shows the worst verdict among the checks read from our own records and database, with a <strong>Status &rsaquo;</strong> door. It says <em>Builds and database services are read when Status opens</em>, because those are not part of the line: an all-fine line on Today does not mean the builds passed. Open Status for the whole reading.</p>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-status-not-checked',
+          question: 'A Status line says "This site has no key". Is something broken?',
+          answer: (
+            <p>No. That line has not been given its provider key on this site yet, so it reads <strong>Not checked</strong> rather than guessing. Tell the owner; every other check still works.</p>
+          ),
+          answerText: 'No. The line has not been given its provider key on this site yet, so it reads Not checked rather than guessing. Tell the owner; every other check still works.',
+          keywords: ['no key', 'not checked', 'amplify key', 'supabase token'],
+          popular: true,
+        },
+        {
+          id: 'faq-status-all-fine',
+          question: 'Status says all fine. Can I tell a customer everything is working?',
+          answer: (
+            <p>It means every check Status makes passed. It does not judge week-over-week trends, database advisors or agent tooling, which stay in the owner&rsquo;s morning check, and it cannot see one customer&rsquo;s own problem. If the customer has a specific failure, look at Errors for their club.</p>
+          ),
+          answerText: 'It means every check Status makes passed. It does not judge trends, database advisors or agent tooling, and it cannot see one customer problem. Look at Errors for their club.',
+          keywords: ['all fine', 'everything working', 'not judged'],
+        },
+      ],
+    },
+    {
+      id: 'sent-emails',
+      group: 'Support SOP',
+      heading: 'How to check whether an email reached someone',
+      summary: 'Find an account email we sent, see what happened to it, and know what to tell the customer.',
+      keywords: ['sent emails', 'email log', 'email did not arrive', 'never got the email', 'reset email', 'confirmation email', 'invite', 'bounced', 'delivered', 'delayed', 'marked as spam', 'not sent', 'failed', 'not confirmed', 'emails tab', 'mail service', 'spam folder', 'no account'],
+      searchText: 'how do i check whether an email reached someone sent emails health sent emails page a persons emails tab finds sent emails group customer says they never got the reset link confirmation link sign in link invitation reply to their feedback registration email what happened sent delivered delayed bounced marked as spam not sent failed not confirmed the mail service number what to do the email itself is not kept search by whole email address filter by what happened last 90 days 200 searches a day recording started nothing before family emails are in the clubs families emails staff accounts super admin only address does not exist mailbox full refused by server suppressed',
+      links: [
+        { label: 'Sent emails', href: '/platform-admin/sent-emails' },
+        { label: 'People', href: '/platform-admin/customer-users' },
+      ],
+      content: (
+        <p>When a customer says an email never came, the <strong>sent-email log</strong> shows whether we sent it and what the mail service says happened to it. Super admin, Support and Billing can read it; for every other role the entry, the tab and the Find group are absent.</p>
+      ),
+      subtopics: [
+        {
+          id: 'sent-emails-where',
+          title: 'Where to look',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="A person's Emails tab">Open the person (Find or <strong>People</strong>) and click <strong>Emails</strong>. Newest first, with the count on the tab. A person with nothing recorded reads <em>No emails recorded for this person.</em></HelpDef>
+                <HelpDef term="Health › Sent emails">Every recorded email, newest first. Search by a <strong>whole</strong> email address (half an address waits and does not search), filter by <strong>what happened</strong>, and page through with Prev and Next. The chip reads <em>Last 90 days</em>.</HelpDef>
+                <HelpDef term="Find">Paste a whole address that no account owns and Find adds a <strong>Sent emails</strong> group; its row opens that email&rsquo;s window. An address that has an account is found as a person instead.</HelpDef>
+                <HelpDef term="The person's Story">Sign-up and sign-in links, password reset and email confirmation links, team sign-in links, invitations and replies to their feedback also appear as rows in the Story.</HelpDef>
+              </HelpDefs>
+              <p>Browsing the page is free. Each search by address counts against a limit of 200 a day per person; at the limit the page says so, and it resets within 24 hours.</p>
+            </>
+          ),
+        },
+        {
+          id: 'sent-emails-window',
+          title: 'Open one email',
+          content: (
+            <>
+              <p>Click a row to open its window. It shows <strong>To</strong> (with <em>no account</em> where nobody owns the address), <strong>Club</strong>, <strong>Asked for by</strong> (when a person set the email going), <strong>Email</strong> (what kind it was), and <strong>Mail service number</strong> (the number to quote if the mail service itself has to be asked).</p>
+              <p>Under <strong>What happened</strong> is a timeline in time order. A bounce, a spam report or a refusal also puts a red line at the top saying what happened, and a <strong>What to do</strong> line says the next step. The foot reads <em>The email itself is not kept</em>: you see that it went and what became of it, never its words.</p>
+            </>
+          ),
+        },
+        {
+          id: 'sent-emails-words',
+          title: 'What the words mean',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="Sent">Handed to the mail service. No word back yet; usually within a minute.</HelpDef>
+                <HelpDef term="Delivered">Their mail server accepted it. It may be in spam. We do not know if it was opened.</HelpDef>
+                <HelpDef term="Delayed">Their mail server is slow to accept it. The mail service keeps trying.</HelpDef>
+                <HelpDef term="Bounced">Refused for good: the address does not exist, or will not take mail. The red line says which (address does not exist, mailbox full, mail server refused it).</HelpDef>
+                <HelpDef term="Marked as spam">The person reported it as spam. The mail service stops sending to them.</HelpDef>
+                <HelpDef term="Not sent">Not sent at all: this address bounced or reported spam before.</HelpDef>
+                <HelpDef term="Failed">The mail service could not send it. Send it again from where it was first sent; if it fails again, tell the developer.</HelpDef>
+                <HelpDef term="Not confirmed">We did not hear back when we sent it. The mail service&rsquo;s own word will settle it, usually within the hour.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'sent-emails-limits',
+          title: 'What is and is not in the log',
+          content: (
+            <>
+              <ul>
+                <li>Only account and tournament-registration emails are recorded: sign-up and sign-in links, resets, confirmations, invitations, access and billing notices, the feedback receipt and replies, and registration emails.</li>
+                <li>Emails a club sends to its families are not here; they are in that club&rsquo;s own <strong>Families &rsaquo; Emails</strong>.</li>
+                <li>Recording started at its release. An email sent before then cannot be checked, and a search that finds nothing says so: <em>Nothing was sent to this address in the last 90 days.</em> Check the spelling with the customer first.</li>
+                <li>Emails are kept 90 days.</li>
+                <li>Emails to a staff account show to Super admin only.</li>
+              </ul>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-sent-delivered-not-found',
+          question: 'The log says Delivered but the customer cannot find the email. What now?',
+          answer: (
+            <p>Delivered means their mail server accepted it, not that it reached the inbox or was opened. Ask them to check spam, junk and promotions folders, and to search for <strong>FieldLogicHQ</strong>. If it is not there, send a fresh reset or invitation from the record and watch the new row.</p>
+          ),
+          answerText: 'Delivered means their mail server accepted it, not that it reached the inbox or was opened. Ask them to check spam, junk and promotions folders. If it is not there, send a fresh reset or invitation and watch the new row.',
+          keywords: ['delivered but not received', 'check spam', 'cannot find email', 'junk folder'],
+          popular: true,
+        },
+        {
+          id: 'faq-sent-no-emails-tab',
+          question: 'There is no Emails tab or Sent emails entry for me. Why?',
+          answer: (
+            <p>The sent-email log is for Super admin, Support and Billing. Product, Growth and Read only roles see no entry, no tab and no Find group &mdash; absent, not greyed out. Ask a colleague with access to look, or ask a Super admin about your role.</p>
+          ),
+          answerText: 'The sent-email log is for Super admin, Support and Billing. Other roles see no entry, tab or Find group. Ask a colleague with access.',
+          keywords: ['no emails tab', 'no sent emails', 'missing', 'permission'],
         },
       ],
     },
