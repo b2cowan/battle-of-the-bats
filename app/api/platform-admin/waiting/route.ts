@@ -12,6 +12,6 @@ export const GET = withObservability(async () => {
   const auth = await requirePlatformPower('view_console');
   if (auth.response) return auth.response;
   const previous = auth.user.email ? await getPreviousPlatformAdminVisit(auth.user.email) : null;
-  const { queues } = await getWaitingSnapshot(auth.role, previous?.visited_at ?? null);
-  return NextResponse.json({ counts: countsByEntry(queues) }, { headers: { 'Cache-Control': 'no-store' } });
+  const { queues, entryCounts } = await getWaitingSnapshot(auth.role, previous?.visited_at ?? null);
+  return NextResponse.json({ counts: countsByEntry(queues, entryCounts) }, { headers: { 'Cache-Control': 'no-store' } });
 }, { route: '/api/platform-admin/waiting' });

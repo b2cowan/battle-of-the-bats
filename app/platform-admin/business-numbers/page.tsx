@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
+import { readLeadSummary } from '@/lib/lead-book';
 import {
   getCommandCenterStats,
   getLatestPlatformMetricSnapshot,
@@ -58,7 +59,8 @@ function BarRow({
 /**
  * Business numbers — Overview's four tabs, moved whole (Support console Stage 2; drawings "Today": "the tabs of plan mix,
  * growth and usage move one door away", "Nothing is deleted"). Plan mix, status by plan, billing events, growth, usage
- * and the metric notes keep every figure they had. Not in the menu: Today's totals line is its door.
+ * and the metric notes keep every figure they had. In the Growth menu for every role (Stage 7, S7-D6); Today's totals
+ * line stays a door to it.
  */
 export const metadata = { title: 'Business numbers — Support console' };
 
@@ -67,18 +69,20 @@ export default async function BusinessNumbersPage() {
   const role = auth.role;
   // Snapshot is a product write — only show the button to roles the API will accept.
   const canSnapshot = hasPlatformPower(role, 'metric_snapshot');
-  const [stats, latestSnapshot] = await Promise.all([
+  // Leads count through the one definition (Stage 7 Part 2), never their own way; the growth power alone gets the
+  // unanswered count and the door to the pipeline (drawing F: other roles get three counts and no door).
+  const worksLeads = hasPlatformPower(role, 'growth');
+  const [stats, latestSnapshot, leadSummary] = await Promise.all([
     getCommandCenterStats(),
     getLatestPlatformMetricSnapshot(),
+    readLeadSummary(),
   ]);
   const orgTotal = stats.totals.organizations;
-  const earlyAccessStatusRows = ['new', 'qualified', 'contacted', 'pilot_candidate', 'converted']
-    .map(status => ({ status, count: stats.growth.earlyAccessByStatus[status] ?? 0 }))
-    .filter(row => row.count > 0 || row.status === 'new');
+  const lead = leadSummary.kind === 'read' ? leadSummary.value : null;
 
   return (
     <div className={kit.page}>
-      <AdminPageHeader title="Business numbers" backTo={{ href: '/platform-admin', label: 'Today' }} />
+      <AdminPageHeader title="Business numbers" />
       <p className={`${kit.caption} ${kit.captionTight}`}>
         {stats.totals.organizations} clubs and portals · {stats.totals.users} people · {stats.totals.tournaments} tournaments
         {' '}· {stats.totals.teams} teams · about ${stats.totals.estimatedMrr.toLocaleString('en-CA')} a month at list price
@@ -214,39 +218,29 @@ export default async function BusinessNumbersPage() {
               <div className={styles.panelHeader}>
                 <div>
                   <div className={kit.eye}>Growth pipeline</div>
-                  <h2 className={styles.sectionTitle}>Early access</h2>
+                  <h2 className={styles.sectionTitle}>Leads and conversion</h2>
                 </div>
                 <Mail size={16} />
               </div>
-              <div className={styles.statRow}>
-                <div><strong>{stats.growth.earlyAccessTotal}</strong><span>Total leads</span></div>
-                <div><strong>{stats.growth.newLeads7}</strong><span>New 7 days</span></div>
-                <div><strong>{stats.growth.conversionRate}%</strong><span>Converted</span></div>
-              </div>
-              <div className={styles.compactList}>
-                {earlyAccessStatusRows.map(row => (
-                  <div key={row.status}>
-                    <span>{statusLabel(row.status)}</span>
-                    <strong>{row.count}</strong>
-                  </div>
-                ))}
-              </div>
-              <div className={styles.sourceList}>
-                <div className={styles.sourceListTitle}>Top source paths</div>
-                {stats.growth.sourcePathRows.length > 0 ? (
-                  stats.growth.sourcePathRows.map(row => (
-                    <div key={row.source}>
-                      <span>{row.source}</span>
-                      <strong>{row.count}</strong>
-                    </div>
-                  ))
-                ) : (
-                  <div><span>No sources yet</span><strong>0</strong></div>
-                )}
-              </div>
-              <div className={styles.panelLinkRow}>
-                <Link href="/platform-admin/early-access">Open pipeline</Link>
-              </div>
+              {lead ? (
+                <div className={styles.statRow}>
+                  <div><strong>{lead.leads}</strong><span>Leads, all time</span></div>
+                  <div><strong>{lead.signedUp}</strong><span>Signed up{lead.rate !== null ? ` · ${lead.rate}%` : ''}</span></div>
+                  <div><strong>{lead.payNow ?? 'Not read'}</strong><span>Pay now</span></div>
+                </div>
+              ) : (
+                <p className={kit.muted}>Not read. The leads could not be read just now.</p>
+              )}
+              {worksLeads && lead && (
+                <div className={styles.compactList}>
+                  <div><span>New, unanswered</span><strong>{lead.unanswered}</strong></div>
+                </div>
+              )}
+              {worksLeads && (
+                <div className={styles.panelLinkRow}>
+                  <Link href="/platform-admin/early-access">Open the pipeline</Link>
+                </div>
+              )}
             </section>
 
             <section className={styles.panel}>

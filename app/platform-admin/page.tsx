@@ -44,8 +44,9 @@ export default async function TodayPage() {
   const groups = WAITING_GROUPS
     .map(key => {
       const all = queues.filter(q => q.group === key);
-      const waiting = all.filter(q => q.count > 0);
-      const clear = all.filter(q => q.count === 0);
+      // A queue that could not be read stays in view with "Not read"; it is never "clear" and never counted.
+      const waiting = all.filter(q => q.count > 0 || q.notRead);
+      const clear = all.filter(q => q.count === 0 && !q.notRead);
       return { key, label: WAITING_GROUP_LABELS[key], all, waiting, clear, total: waiting.reduce((s, q) => s + q.count, 0) };
     })
     .filter(g => g.all.length > 0);
@@ -123,7 +124,7 @@ export default async function TodayPage() {
                         <strong>{q.label}</strong>
                         <span>{q.why}</span>
                       </span>
-                      <span className={frame.count} aria-label={`${q.count} waiting`}>{q.count}</span>
+                      <WaitingCount q={q} />
                       <ChevronRight size={16} className={styles.pchev} aria-hidden />
                     </Link>
                   ))}
@@ -148,6 +149,11 @@ export default async function TodayPage() {
   );
 }
 
+function WaitingCount({ q }: { q: WaitingQueue }) {
+  if (q.notRead) return <span className={kit.countQuiet}>Not read</span>;
+  return <span className={frame.count} aria-label={`${q.count} waiting`}>{q.count}</span>;
+}
+
 function GroupRows({ label, total, waiting, clear, nothing }: {
   label: string;
   total: number;
@@ -164,7 +170,7 @@ function GroupRows({ label, total, waiting, clear, nothing }: {
         <tr key={q.key} className={kit.comfortable}>
           <td className={styles.colQueue}><Link href={q.href} className={kit.nameLink}>{q.label}</Link></td>
           <td className={kit.muted}>{q.why}</td>
-          <td className={kit.num}><span className={frame.count} aria-label={`${q.count} waiting`}>{q.count}</span></td>
+          <td className={kit.num}><WaitingCount q={q} /></td>
           <td className={kit.rowDoor}>
             <Link href={q.href} className={kit.rowDoorLink} aria-label={`Open ${q.label}`} tabIndex={-1}>›</Link>
           </td>

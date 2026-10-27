@@ -1,26 +1,82 @@
+/**
+ * A lead's step (Support console Stage 7, owner Q9 a 2026-10-27): seven, in the order the work happens. ⚠ Stored values
+ * keep their spelling (migration 398 pins them with a CHECK): `converted` reads "Signed up", `pilot_candidate` "Pilot".
+ * A Lost lead always carries one of LOST_REASONS; a Signed up lead is exactly one with a linked club (`linked_at`).
+ */
 export const EARLY_ACCESS_STATUSES = [
   'new',
-  'qualified',
   'contacted',
+  'qualified',
   'pilot_candidate',
   'waiting_for_launch',
   'converted',
-  'not_a_fit',
-  'do_not_contact',
+  'lost',
 ] as const;
 
 export type EarlyAccessStatus = (typeof EARLY_ACCESS_STATUSES)[number];
 
 export const EARLY_ACCESS_STATUS_LABELS: Record<EarlyAccessStatus, string> = {
   new: 'New',
-  qualified: 'Qualified',
   contacted: 'Contacted',
-  pilot_candidate: 'Pilot candidate',
+  qualified: 'Qualified',
+  pilot_candidate: 'Pilot',
   waiting_for_launch: 'Waiting for launch',
-  converted: 'Converted',
-  not_a_fit: 'Not a fit',
-  do_not_contact: 'Do not contact',
+  converted: 'Signed up',
+  lost: 'Lost',
 };
+
+/** The steps staff pick in the edit form. Signed up is not one: it comes only from linking a club. */
+export const PICKABLE_STATUSES = EARLY_ACCESS_STATUSES.filter(s => s !== 'converted');
+
+/** Why a lead was lost (Q9 a; words /marketing 2026-10-27). The last also keeps it out of Copy emails and the export's email cell. */
+export const LOST_REASONS = ['not_a_fit', 'chose_another_tool', 'price', 'not_this_season', 'no_reply', 'asked_not_to_contact'] as const;
+export type LostReason = (typeof LOST_REASONS)[number];
+export const LOST_REASON_LABELS: Record<LostReason, string> = {
+  not_a_fit: 'Not a fit',
+  chose_another_tool: 'Chose another tool',
+  price: 'Price',
+  not_this_season: 'Not this season',
+  no_reply: 'No reply after three tries',
+  asked_not_to_contact: 'Asked not to be contacted',
+};
+
+/** Where a lead came from, staff's short list (Q4 B). Null is "Not set", never a choice. */
+export const LEAD_SOURCES = ['referral_club', 'tournament', 'search', 'social', 'event', 'pitch_deck', 'other'] as const;
+export type LeadSource = (typeof LEAD_SOURCES)[number];
+export const LEAD_SOURCE_LABELS: Record<LeadSource, string> = {
+  referral_club: 'Referral from a club',
+  tournament: 'A tournament on FieldLogicHQ',
+  search: 'Search',
+  social: 'Social media',
+  event: 'An event or conference',
+  pitch_deck: 'A pitch deck',
+  other: 'Other',
+};
+export const SOURCE_NOT_SET = 'Not set';
+
+export function isLostReason(value: unknown): value is LostReason {
+  return typeof value === 'string' && (LOST_REASONS as readonly string[]).includes(value);
+}
+export function isLeadSource(value: unknown): value is LeadSource {
+  return typeof value === 'string' && (LEAD_SOURCES as readonly string[]).includes(value);
+}
+
+/** The page a lead's form sat on, in words (the form sends path + hash; the hash is dropped). */
+export function leadPageLabel(sourcePath: string | null | undefined): string {
+  const path = (sourcePath ?? '').split('#')[0].split('?')[0].replace(/\/+$/, '') || '/';
+  if (path.startsWith('/coaches/team/')) return 'Inside the product (a coach asked)';
+  const named: Record<string, string> = {
+    '/start/league': 'The League Plus page',
+    '/start/club': 'The Club page',
+    '/pricing': 'The pricing page',
+    '/for-clubs': 'For clubs',
+    '/for-leagues': 'For leagues',
+    '/for-coaches': 'For coaches',
+    '/for-tournament-organizers': 'For tournament organizers',
+    '/coaches/start': 'Coach start',
+  };
+  return named[path] ?? 'Other pages';
+}
 
 export const EARLY_ACCESS_PLAN_LABELS: Record<string, string> = {
   team: 'Coaches Portal',
@@ -138,11 +194,15 @@ export function cleanOptionalDate(value: unknown): string | null {
  */
 export function leadAuditValues(before: Record<string, unknown>, after: Record<string, unknown>) {
   const changed = Object.keys(after)
-    .filter(key => key !== 'updated_at' && JSON.stringify(before[key] ?? null) !== JSON.stringify(after[key] ?? null))
+    .filter(key => key !== 'updated_at' && key !== 'step_changed_at' && JSON.stringify(before[key] ?? null) !== JSON.stringify(after[key] ?? null))
     .sort();
+  // The source and the Lost reason are values from fixed lists, never anyone's words, so the timeline can say "set the
+  // source: Referral from a club" (Stage 7 Part 4). Kept only when they changed.
+  const codes = (row: Record<string, unknown>) => Object.fromEntries(
+    (['source', 'lost_reason'] as const).filter(k => changed.includes(k)).map(k => [k, row[k] ?? null]));
   return {
-    oldValue: { internal_status: before.internal_status ?? null },
-    newValue: { changed, internal_status: after.internal_status ?? null },
+    oldValue: { internal_status: before.internal_status ?? null, ...codes(before) },
+    newValue: { changed, internal_status: after.internal_status ?? null, ...codes(after) },
   };
 }
 

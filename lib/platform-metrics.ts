@@ -23,13 +23,6 @@ type MemberRow = {
   status: string | null;
 };
 
-type EarlyAccessLeadRow = {
-  internal_status: string | null;
-  created_at: string;
-  converted_org_id: string | null;
-  source_path: string | null;
-};
-
 type OverrideRow = {
   id: string;
   org_id: string;
@@ -159,7 +152,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
     repTeamsTotal,
     repProgramYearsActive,
     accountingEntriesTotal,
-    earlyLeadsRes,
     retentionAlertCount,
     overridesRes,
     eventsRes,
@@ -191,11 +183,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
     safeCount('rep teams total', exOrg(supabaseAdmin.from('rep_teams').select('*', { count: 'exact', head: true }).eq('is_archived', false))),
     safeCount('rep program years active', exOrg(supabaseAdmin.from('rep_program_years').select('*', { count: 'exact', head: true }).eq('status', 'active'))),
     safeCount('accounting entries total', supabaseAdmin.from('accounting_entries').select('*', { count: 'exact', head: true })),
-    supabaseAdmin
-      .from('early_access_leads')
-      .select('internal_status, created_at, converted_org_id, source_path')
-      .order('created_at', { ascending: false })
-      .limit(5000),
     safeCount(
       'retention alert records',
       supabaseAdmin
@@ -233,7 +220,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   const orgs = ((orgsRes.data ?? []) as OrgMetricRow[]).filter(org => !sandboxOrgIdSet.has(org.id));
   const members = ((membersRes.data ?? []) as MemberRow[])
     .filter(member => !sandboxOrgIdSet.has(member.organization_id));
-  const earlyLeads = ((earlyLeadsRes.data ?? []) as EarlyAccessLeadRow[]);
   const overrides = ((overridesRes.data ?? []) as OverrideRow[])
     .filter(row => !sandboxOrgIdSet.has(row.org_id));
   if (eventsRes.error) console.warn('[platform-admin] platform events metric failed', eventsRes.error);
@@ -313,24 +299,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
     }
   }
 
-  const earlyAccessByStatus = earlyLeads.reduce<Record<string, number>>((acc, lead) => {
-    const status = lead.internal_status ?? 'new';
-    acc[status] = (acc[status] ?? 0) + 1;
-    return acc;
-  }, {});
-  const newLeads7 = earlyLeads.filter(lead => lead.created_at >= sevenDaysAgo).length;
-  const convertedLeads = earlyLeads.filter(lead => lead.converted_org_id).length;
-  const conversionRate = earlyLeads.length > 0 ? Math.round((convertedLeads / earlyLeads.length) * 100) : 0;
-  const sourcePathRows = Object.entries(
-    earlyLeads.reduce<Record<string, number>>((acc, lead) => {
-      const source = lead.source_path || 'Unknown';
-      acc[source] = (acc[source] ?? 0) + 1;
-      return acc;
-    }, {})
-  )
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([source, count]) => ({ source, count }));
+  // Leads are counted in lib/lead-numbers.ts over every lead (Support console Stage 7 Part 2), not here.
 
   function countEvents(eventType: string, since: string) {
     return events.filter(event => event.event_type === eventType && event.occurred_at >= since).length;
@@ -363,12 +332,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       newOrgs30,
       newOrgs90,
       newOrgsByPlan,
-      earlyAccessTotal: earlyLeads.length,
-      newLeads7,
-      convertedLeads,
-      conversionRate,
-      earlyAccessByStatus,
-      sourcePathRows,
     },
     // Free League Starter (§13) — current free-floor org count + the activation/cap funnel over the
     // event window. Beta is flag-gated, so these stay 0 until the flag is enabled for real users.
@@ -431,7 +394,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       pastDue: byStatus.past_due ?? 0,
       newPastDueSinceLastVisit: options.since ? countEvents('subscription_past_due', options.since) : 0,
       trialEndingSoon,
-      newEarlyAccessLeads: earlyAccessByStatus.new ?? 0,
       retentionAlertCount,
       overridesExpiringSoon,
       orgsWithoutOwner,

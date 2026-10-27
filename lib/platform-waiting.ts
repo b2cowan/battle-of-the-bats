@@ -22,6 +22,9 @@ import { getCommandCenterStats } from './platform-metrics';
 import { classifyCampaignSend, UPCOMING_WINDOW_DAYS } from './marketing-schedule';
 import { tournamentToday } from './timezone';
 import { freeTimeEndingCount, getStaffFreeTime } from './free-time-list';
+import { LIVE_MARKETING_EMAIL_KEYS } from './marketing-email-defaults';
+import { readLeadBook, readOffers } from './lead-book';
+import { followUpDue, needsYou } from './lead-numbers';
 
 export type WaitingGroupKey = 'customers' | 'health' | 'growth' | 'product';
 
@@ -48,6 +51,8 @@ export type WaitingQueue = {
   href: string;
   /** The page whose list clears it — gates who sees it, and is the menu entry that carries its count. */
   entry: PlatformArea;
+  /** Its records could not be read: Today says "Not read", never 0 (Stage 7). */
+  notRead?: boolean;
 };
 
 type QueueDef = Omit<WaitingQueue, 'count' | 'why'> & { why: string | ((ctx: { sinceVisit: number }) => string) };
@@ -66,9 +71,13 @@ const QUEUES: QueueDef[] = [
   { key: 'trials_ending', group: 'customers', label: 'Trials ending', why: 'A trial that ends in the next 14 days', clearLabel: 'trials ending in 14 days', href: '/platform-admin/orgs?filter=trial_ending', entry: 'organizations' },
   { key: 'new_errors', group: 'health', label: 'New errors', why: 'An error first seen since your last visit', clearLabel: 'new errors', href: '/platform-admin/observability', entry: 'observability' },
   { key: 'new_feedback', group: 'health', label: 'New feedback', why: 'A message from inside the product nobody has triaged', clearLabel: 'new feedback', href: '/platform-admin/feedback', entry: 'feedback' },
+  // Growth (Stage 7, owner Q9 d): the three lead rows count through the one definition (lib/lead-numbers.ts); stuck is
+  // shown on Leads and is never a row here.
+  { key: 'new_leads', group: 'growth', label: 'New leads', why: 'A lead nobody has answered yet', clearLabel: 'new leads', href: '/platform-admin/early-access', entry: 'early_access' },
+  { key: 'follow_ups_due', group: 'growth', label: 'Follow-ups due', why: 'A lead whose follow-up date has come', clearLabel: 'follow-ups due', href: '/platform-admin/early-access', entry: 'early_access' },
+  { key: 'signup_to_confirm', group: 'growth', label: 'Sign-up to confirm', why: 'A club signed up with a lead’s email; is it theirs?', clearLabel: 'sign-ups to confirm', href: '/platform-admin/early-access', entry: 'early_access' },
   { key: 'campaigns_past_due', group: 'growth', label: 'Campaigns past due', why: 'A planned campaign whose send date has passed', clearLabel: 'campaigns past due', href: '/platform-admin/email', entry: 'email' },
   { key: 'campaigns_due_soon', group: 'growth', label: 'Campaigns due soon', why: `Due in the next ${UPCOMING_WINDOW_DAYS} days`, clearLabel: 'campaigns due soon', href: '/platform-admin/email', entry: 'email' },
-  { key: 'new_leads', group: 'growth', label: 'New leads', why: 'An early-access sign-up nobody has answered yet', clearLabel: 'new leads', href: '/platform-admin/early-access', entry: 'early_access' },
   { key: 'approval_queue', group: 'product', label: 'Approval queue', why: 'A catalogue change waiting for review or to go live', clearLabel: 'the approval queue', href: '/platform-admin/change-requests', entry: 'change_requests' },
 ];
 
@@ -84,9 +93,11 @@ async function campaignAlerts(): Promise<{ pastDue: number; dueSoon: number }> {
     supabaseAdmin.from('email_batches').select('email_key').eq('status', 'complete'),
   ]);
   const sentKeys = new Set((batchRes.data ?? []).map(b => b.email_key as string));
+  // Live campaigns only, the board's own list: a retired email is never "past due" (Stage 7, owner Q10).
+  const live = new Set(LIVE_MARKETING_EMAIL_KEYS);
   let pastDue = 0;
   let dueSoon = 0;
-  for (const row of tmplRes.data ?? []) {
+  for (const row of (tmplRes.data ?? []).filter(r => live.has(r.key as string))) {
     const status = classifyCampaignSend({
       plannedDate: (row.planned_send_date as string | null) ?? null,
       sent: sentKeys.has(row.key as string),
@@ -109,7 +120,28 @@ async function headCount(q: PromiseLike<{ count: number | null }>): Promise<numb
 type WaitingSnapshot = {
   queues: WaitingQueue[];
   stats: Awaited<ReturnType<typeof getCommandCenterStats>>;
+  /** The menu's Leads pill counts "Needs you", not the sum of Today's three lead rows (a lead can sit in two). */
+  entryCounts: Partial<Record<PlatformArea, number>>;
 };
+
+type LeadCounts = { newLeads: number; followUpsDue: number; toConfirm: number; needYou: number } | null;
+
+/** Today's three lead rows and the menu's "Needs you", over every lead. null = the leads could not be read. */
+async function leadCounts(): Promise<LeadCounts> {
+  const book = await readLeadBook();
+  if (book.kind === 'not_read') return null;
+  const offers = await readOffers(book.value);
+  if (offers.kind === 'not_read') return null;
+  const now = new Date();
+  const today = tournamentToday();
+  const leads = book.value;
+  return {
+    newLeads: leads.filter(l => l.step === 'new').length,
+    followUpsDue: leads.filter(l => followUpDue(l, today)).length,
+    toConfirm: leads.filter(l => offers.value.has(l.id)).length,
+    needYou: leads.filter(l => needsYou(l, now, today, offers.value.has(l.id))).length,
+  };
+}
 
 /**
  * One snapshot per role and visit for 30 seconds, per server copy: Today and the menu's counts ask for the same thing in
@@ -142,7 +174,8 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
   const dayAgo = new Date(nowMs - 86_400_000).toISOString(); // utc-intentional: an instant window
   const sinceIso = since ?? dayAgo;
 
-  const [stats, campaigns, approvals, newErrors, newFeedback, freeTimeEnding] = await Promise.all([
+  const wantsLeads = wants('new_leads') || wants('follow_ups_due') || wants('signup_to_confirm');
+  const [stats, campaigns, approvals, newErrors, newFeedback, freeTimeEnding, leads] = await Promise.all([
     getCommandCenterStats({ since }),
     wants('campaigns_past_due') || wants('campaigns_due_soon') ? campaignAlerts() : Promise.resolve({ pastDue: 0, dueSoon: 0 }),
     wants('approval_queue')
@@ -155,6 +188,7 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
       ? headCount(supabaseAdmin.from('feedback_submissions').select('id', { count: 'exact', head: true }).eq('status', 'new'))
       : Promise.resolve(0),
     wants('free_time_ending') ? getStaffFreeTime().then(freeTimeEndingCount).catch(() => 0) : Promise.resolve(0),
+    wantsLeads ? leadCounts().catch(() => null) : Promise.resolve(null),
   ]);
 
   const counts: Record<string, number> = {
@@ -168,7 +202,9 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
     new_feedback: newFeedback,
     campaigns_past_due: campaigns.pastDue,
     campaigns_due_soon: campaigns.dueSoon,
-    new_leads: stats.alerts.newEarlyAccessLeads,
+    new_leads: leads?.newLeads ?? 0,
+    follow_ups_due: leads?.followUpsDue ?? 0,
+    signup_to_confirm: leads?.toConfirm ?? 0,
     approval_queue: approvals,
   };
   const sinceVisit = stats.alerts.newPastDueSinceLastVisit;
@@ -179,7 +215,9 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
       ...q,
       why: typeof q.why === 'function' ? q.why({ sinceVisit }) : q.why,
       count: counts[q.key] ?? 0,
+      ...(LEAD_QUEUES.has(q.key) && wantsLeads && !leads ? { notRead: true } : {}),
     })),
+    entryCounts: wantsLeads && leads ? { early_access: leads.needYou } : {},
   };
 }
 
@@ -189,11 +227,17 @@ export async function countErrorsLastDay(): Promise<number> {
   return headCount(supabaseAdmin.from('error_events').select('id', { count: 'exact', head: true }).gte('occurred_at', dayAgo));
 }
 
-/** The menu's counts: each entry's waiting total (the sum of the queues it clears). Pure. */
-export function countsByEntry(queues: WaitingQueue[]): Partial<Record<PlatformArea, number>> {
+const LEAD_QUEUES = new Set(['new_leads', 'follow_ups_due', 'signup_to_confirm']);
+
+/**
+ * The menu's counts: each entry's waiting total (the sum of the queues it clears), unless the snapshot names the entry's
+ * own count (Leads: "Needs you"). Pure.
+ */
+export function countsByEntry(queues: WaitingQueue[], entryCounts: Partial<Record<PlatformArea, number>> = {}): Partial<Record<PlatformArea, number>> {
   const out: Partial<Record<PlatformArea, number>> = {};
   for (const q of queues) {
-    if (q.count > 0) out[q.entry] = (out[q.entry] ?? 0) + q.count;
+    if (q.count > 0 && entryCounts[q.entry] === undefined) out[q.entry] = (out[q.entry] ?? 0) + q.count;
   }
+  for (const [entry, n] of Object.entries(entryCounts) as [PlatformArea, number][]) if (n > 0) out[entry] = n;
   return out;
 }
