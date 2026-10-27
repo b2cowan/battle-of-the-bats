@@ -142,7 +142,8 @@ club's slot window no longer lists the practice teams of a slot it cleared.
 - `/review` on Part 5 (high-risk: a write across two programs, family email, a migration) — fix or record findings.
 - Records: `HOUSE_LEAGUE_STAGE9_PLAN.md` §9, the scheduler plan's 11b block, memory `project_club_stage9_house_league.md`.
 - New files → the dev server needs a restart before the owner tests; ask first.
-- **Ask the owner at hand-off:** the Part 4 asks still open (a "Practices a week" choice; walking Parts 3 + 4), and whether the
+- **Ask the owner at hand-off:** walking Parts 3 + 4 if still open (Practices a week was ruled and built 2026-10-27, 11b·D;
+  its words join the /marketing pass), and whether the
   11b walk (end of 11b, after Part 6's help) should now be written — it is the next § in `OWNER_QA_LEDGER.md` (check the last
   number) and its contents are in `CLUB_TIER_STAGE11B_BUILD_PROMPT.md`'s definition of done.
 

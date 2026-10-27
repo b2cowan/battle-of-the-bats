@@ -242,6 +242,11 @@ team) was not ruled: it is ask **9d2·15**, open.
 - **Deferred, not ruled (owner 2026-10-27):** whether families hear when a team is first given its practice time (raised by
   9d2·2's alternative: a practice *change* emails families, but practices are never on the public page). 11b's coach practice
   email stands as drawn. **Its home is 9d-3** (§4), with house league's calendars (the owner asked for both to be followed up).
+- **11b·D — RULED 2026-10-27, as recommended** (raised by the Part 4 build): Practice time's **Practices a week** (1, 2 or 3,
+  starting at 1). Every team gets the pick, or as many as the time holds when that is fewer (said in the result line); the
+  rest of the division's practice time stays open, and the earliest evenings fill first. Not taken: "as many as fit" (Part
+  4 as first built: 2 teams at once doubled every team's practices instead of freeing time), or the time given as the only
+  control.
 - **9d2·16 — RULED 2026-10-27, as recommended** ("i agree with your recommendations"; raised by drawing 9d2·15, frame k5).
   The club takes back house-league time with games or practices on it: the window names what is on it first; published games leave their week for Needs a new date
   and wait in the division's Changes to send (families hear once, from the convenor; 9d2·10, ·13); draft games come off the
@@ -752,9 +757,12 @@ open it, and the menu's top level is Stage 13's.
   **Builder's calls, said at hand-off:** short time is one ring over every seat (every team goes without equally; a team
   moves parts while time is short) rather than naming teams; h2's source line and hint reuse the rep coach's words ("Only the
   club can move or remove this practice") — the drawing's caption asks for one spelling; the clubs' slots are the unit, so
-  a 60-minute practice on the club's 90-minute slots fits once per slot. **Owner asks:** (1) teams at once FILLS the time —
-  with room for it, 2 at once gives every team 2 a week rather than 1 a week on half the time; a "Practices a week" choice is
-  not drawn; (2) walk Parts 3 and 4 together now. **Owed:** /marketing's one pass on the [marketing] words, then the settled
+  a 60-minute practice on the club's 90-minute slots fits once per slot. **Owner asks:** (1) ~~teams at once FILLS the time~~
+  **RULED 2026-10-27 as recommended** ("i agree with yoru recommendation"): Practice time gains a third dropdown, **Practices a
+  week** (1–3, starting at 1); every team gets the pick or what fits, the rest stays open; the earliest parts fill first so
+  spare time is whole evenings (2 at once + 1 a week = Mondays, Wednesdays free). Built `29cfecb71`
+  (no migration: the window reopens on what is handed out now, read from the practices). Not drawn — its words are
+  [marketing] drafts; (2) walk Parts 3 and 4 together now — open. **Owed:** /marketing's one pass on the [marketing] words, then the settled
   set appended to `HOUSE_LEAGUE_STAGE9D2_11B_COPY.md`; the k2 row figure's practice count ("12 hours · 10 practices a week",
   copy ruling 9) is not built; the dev server restart (new files); `/docs` (Part 6). **Next:** Part 5 (Send the changes'
   house-league rows and the emails), `CLUB_TIER_STAGE11B_PART5_BUILD_PROMPT.md`. **⚠ Found writing it (dev only):** the club's
