@@ -962,6 +962,9 @@ export const STRIPE_FEE_WORDS = {
   billedOwnPaid: (invoiceNo: string, day: string) => `Invoice ${invoiceNo} · paid ${day}`,
   billedOwnUnpaid: (invoiceNo: string, day: string) => `Invoice ${invoiceNo} · unpaid since ${day}`,
   billedCredit: 'Credited to your account',
+  // Ruling 7: returned against the invoice that carried the answering fee (lowering it while open, to the card once
+  // paid), on its day. Owed to /marketing.
+  billedReturned: (day: string) => `Returned ${day}`,
   billedTest: 'Not billed: test mode',
   billedError: 'Couldn’t be billed yet',
   payInvoice: 'Pay the invoice',

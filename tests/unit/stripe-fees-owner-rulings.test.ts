@@ -20,7 +20,7 @@ describe('the club’s own invoice stamps its fees billed (found building ruling
   });
 });
 
-describe('ruling 2:a cancelled club is still billed, and sees its Stripe fees list', () => {
+describe('ruling 2: a cancelled club is still billed, and sees its Stripe fees list', () => {
   it('the list’s read is off the billing rail, and stays the owner’s', () => {
     const route = readCode('app/api/billing/stripe-fees/route.ts');
     assert.match(route, /getAuthContextWithRole\(\{ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true \}\)/);
@@ -83,7 +83,7 @@ describe('ruling 6: a fee left pending on a subscription that can no longer carr
   });
 });
 
-describe('ruling 5:one "Email the pay link" after a lost card dispute warns, never skips; the bulk send still skips', () => {
+describe('ruling 5: one "Email the pay link" after a lost card dispute warns, never skips; the bulk send still skips', () => {
   const RECEIPT = readCode('lib/online-payment-receipt.ts');
 
   it('house league: the bulk send skips the family; one send asks, and goes when the desk says so', () => {
@@ -113,5 +113,48 @@ describe('ruling 5:one "Email the pay link" after a lost card dispute warns, nev
     assert.match(pay, /if \(error && data\.code === 'dispute_lost_ask'\) \{ setLinkAnyway\(true\); return; \}/);
     assert.match(pay, /<PayLinkAnywayWindow onClose=\{\(\) => setLinkAnyway\(false\)\} send=\{async \(\) => \{ setLinkAnyway\(false\); await emailPayLink\(true\); \}\} \/>/);
     assert.match(readCode('app/api/admin/tournaments/[tournamentId]/registrations/payment-reminders/route.ts'), /!lostTeams\.has\(team\.id\)/);
+  });
+});
+
+describe('ruling 7: a returned answering fee goes back against the invoice that carried the answering fee', () => {
+  const src = readCode(FEES);
+  const credit = /async function billCredit[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+  const against = /async function creditAgainst[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+
+  it('every credit is billed through it, and looks up its own answering fee by the dispute', () => {
+    assert.match(src, /if \(isFeeCredit\(f\.kind\)\) return await billCredit\(f\);/);
+    assert.match(credit, /\.eq\('dispute_id', f\.dispute_id \?\? ''\)\.eq\('kind', 'dispute_answer'\)/);
+  });
+
+  it('the answering fee still to come: the credit waits with it, or rides beside it on the same subscription, and they net', () => {
+    assert.match(credit, /if \(!answer\.billed_at \|\| !answer\.stripe_invoice_item_id\) return waitWithIt\(\);/);
+    assert.match(credit, /if \(!ride \|\| line\.parent\?\.subscription_details\?\.subscription !== ride\.subscription\) return waitWithIt\(\);/);
+    // A subscription's next invoice still a draft takes the credit as a line, never a credit note.
+    assert.match(against, /if \(inv\.status === 'draft'\) \{[\s\S]*?invoice: invoiceId, amount: signedCents\(f\)/);
+  });
+
+  it('on a finished invoice: a credit note on THAT invoice, owed first, then refunded to the card, never waiting for a later fee', () => {
+    assert.match(credit, /return creditAgainst\(f, answer, inv\.stripe_invoice_id as string\);/, 'the club’s own invoice');
+    assert.match(credit, /return creditAgainst\(f, answer, typeof line\.invoice === 'string' \? line\.invoice : line\.invoice\.id!\);/, 'a subscription’s invoice');
+    assert.match(against, /const owed = inv\.status === 'paid' \? 0 : Math\.max\(0, inv\.amount_remaining\);/);
+    assert.match(against, /const refund = Math\.min\(after, Math\.max\(0, inv\.amount_paid\)\);/);
+    assert.match(against, /if \(refund > 0\) params\.refund_amount = refund;/);
+    assert.match(against, /email_type: 'none'/, 'Stripe’s own email is off; the list says it');
+    assert.match(against, /invoice_line_item: carried\.id, amount: cents/, 'against the answering fee’s own line');
+  });
+
+  it('once only: read back by its metadata, created under a key, stored on the row (unique, mig 399)', () => {
+    assert.ok(against.indexOf('creditNotes.list(') > 0 && against.indexOf('creditNotes.list(') < against.indexOf('creditNotes.create('), 'read back first');
+    assert.match(against, /idempotencyKey: `fee-credit:\$\{f\.id\}`/);
+    assert.match(against, /\.update\(\{ stripe_credit_note_id: note\.id, billed_at: new Date\(\)\.toISOString\(\), billed_on: 'credit_note', bill_error: null \}\)/);
+    const mig = readCode('supabase/migrations/399_a_returned_answering_fee_is_a_credit_note.sql');
+    assert.match(mig, /CREATE UNIQUE INDEX IF NOT EXISTS platform_stripe_fees_credit_note_key/);
+    assert.match(mig, /billed_on IN \('subscription', 'own_invoice', 'credit_note'\)/);
+  });
+
+  it('the Plan & billing list reads it as returned on its day, never "next 1st"', () => {
+    assert.match(src, /else if \(f\.billed_on === 'credit_note'\) state = 'returned';/);
+    assert.match(src, /invoiceDay: state === 'returned' \? f\.billed_at/);
+    assert.match(readCode('components/admin/kit/club/StripeFeesList.tsx'), /case 'returned': return W\.billedReturned\(short\(f\.invoiceDay\)\);/);
   });
 });

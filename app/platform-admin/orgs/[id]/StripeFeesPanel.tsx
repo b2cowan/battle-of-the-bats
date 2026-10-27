@@ -25,6 +25,7 @@ function billed(f: ClubFeeView): { text: string; tone: 'quiet' | 'info' | 'warn'
     case 'own_overdue': return { text: W.billedOwnUnpaid(f.invoiceNo ?? '', short(f.invoiceDay)), tone: 'info' };
     case 'own_paid': return { text: W.billedOwnPaid(f.invoiceNo ?? '', short(f.invoiceDay)), tone: 'quiet' };
     case 'credit': return { text: W.paCredit, tone: 'quiet' };
+    case 'returned': return { text: W.billedReturned(short(f.invoiceDay)), tone: 'quiet' };
     case 'test': return { text: W.billedTest, tone: 'quiet' };
     case 'legacy_exempt': return { text: W.paLegacy, tone: 'quiet' };
     case 'error': return { text: W.paError, tone: 'warn' };

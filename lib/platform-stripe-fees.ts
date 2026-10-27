@@ -26,7 +26,8 @@ import { addCalendarMonths, formatStoredDate, orgMonthKey, zonedWallClockToUtc }
  *   - billed at once as a line on a live, undiscounted, CAD subscription's next invoice; otherwise left for the club's own
  *     monthly invoice (`sendMonthlyFeeInvoices`, the daily job);
  *   - `test_mode` is the one exemption left (a test payment never reaches a live invoice).
- * A credit (a returned answering fee) is a negative line on whichever invoice carries it. Never throws into a money path:
+ * A credit (a returned answering fee) goes back against the invoice that carried its answering fee (owner ruling 7): a
+ * negative line beside it while that invoice is still to come, else a Stripe credit note on it. Never throws into a money path:
  * a failure is stored on the row (`bill_error`) and retried by the daily job and from platform admin.
  */
 
@@ -39,9 +40,9 @@ type FeeRow = {
   id: string; org_id: string; online_payment_id: string; kind: StripeFeeKind; amount: number; livemode: boolean;
   exempt_reason: string | null; billed_at: string | null; billed_on: string | null; fee_invoice_id: string | null;
   bill_error: string | null; bill_attempts: number; created_at: string; dispute_id: string | null; amount_source: 'stripe' | 'rate';
-  stripe_invoice_item_id: string | null;
+  stripe_invoice_item_id: string | null; stripe_credit_note_id: string | null;
 };
-const FEE_COLUMNS = 'id, org_id, online_payment_id, kind, amount, livemode, exempt_reason, billed_at, billed_on, fee_invoice_id, bill_error, bill_attempts, created_at, dispute_id, amount_source, stripe_invoice_item_id';
+const FEE_COLUMNS = 'id, org_id, online_payment_id, kind, amount, livemode, exempt_reason, billed_at, billed_on, fee_invoice_id, bill_error, bill_attempts, created_at, dispute_id, amount_source, stripe_invoice_item_id, stripe_credit_note_id';
 
 const errText = (err: unknown) => (err instanceof Error ? err.message : String(err)).slice(0, 500);
 const signedCents = (f: Pick<FeeRow, 'kind' | 'amount'>) => Math.round(Number(f.amount) * 100) * (isFeeCredit(f.kind) ? -1 : 1);
@@ -213,6 +214,7 @@ export async function billFee(feeId: string): Promise<BillOutcome> {
     return 'test_mode';
   }
   try {
+    if (isFeeCredit(f.kind)) return await billCredit(f);
     const ride = await subscriptionToRide(f.org_id);
     if (!ride) {
       await supabaseAdmin.from('platform_stripe_fees').update({ bill_error: null }).eq('id', f.id);
@@ -239,6 +241,108 @@ export async function billFee(feeId: string): Promise<BillOutcome> {
   }
 }
 
+/**
+ * A RETURNED ANSWERING FEE goes back against the invoice that carried the answering fee (owner ruling 7, 2026-10-27):
+ *   - the answering fee not on a finished invoice yet (waiting for the club's own, or a line still pending on the
+ *     subscription it rides): the credit joins it and they net on that invoice, as before;
+ *   - on a finished invoice: a Stripe credit note on THAT invoice (`creditAgainst`).
+ * A credit never waits for a later fee. Throws to `billFee`, which keeps the error on the row for the daily retry.
+ */
+async function billCredit(f: FeeRow): Promise<BillOutcome> {
+  const { data } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
+    .eq('dispute_id', f.dispute_id ?? '').eq('kind', 'dispute_answer').maybeSingle();
+  const answer = data as FeeRow | null;
+  if (!answer || answer.exempt_reason) throw new Error('The answering fee it returns was never billed.');
+  const waitWithIt = async () => {
+    await supabaseAdmin.from('platform_stripe_fees').update({ bill_error: null }).eq('id', f.id);
+    return 'own_invoice' as const;
+  };
+  if (!answer.billed_at || !answer.stripe_invoice_item_id) return waitWithIt();
+  if (answer.billed_on === 'own_invoice') {
+    const { data: inv } = await supabaseAdmin.from('platform_fee_invoices').select('stripe_invoice_id').eq('id', answer.fee_invoice_id ?? '').maybeSingle();
+    if (!inv?.stripe_invoice_id) throw new Error('The invoice that carried the answering fee wasn’t found.');
+    return creditAgainst(f, answer, inv.stripe_invoice_id as string);
+  }
+  // On a subscription: its line says where it is.
+  const line = await readInvoiceItem(answer.stripe_invoice_item_id);
+  // Gone, or pending on a subscription the club no longer rides: the daily job returns the answering fee to unbilled
+  // (ruling 6) and the two net on the club's own invoice.
+  if (!line) return waitWithIt();
+  if (!line.invoice) {
+    const ride = await subscriptionToRide(f.org_id);
+    if (!ride || line.parent?.subscription_details?.subscription !== ride.subscription) return waitWithIt();
+    const item = await stripe.invoiceItems.create({
+      customer: ride.customer, subscription: ride.subscription, amount: signedCents(f), currency: 'cad',
+      description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
+    }, { idempotencyKey: `stripe-fee:${f.id}:${ride.subscription}` });
+    await stampSubscriptionLine(f.id, item.id);
+    return 'billed';
+  }
+  return creditAgainst(f, answer, typeof line.invoice === 'string' ? line.invoice : line.invoice.id!);
+}
+
+async function stampSubscriptionLine(feeId: string, itemId: string): Promise<void> {
+  await supabaseAdmin.from('platform_stripe_fees')
+    .update({ stripe_invoice_item_id: itemId, billed_at: new Date().toISOString(), billed_on: 'subscription', bill_error: null })
+    .eq('id', feeId).is('billed_at', null);
+}
+
+/**
+ * The credit on the invoice that carried the answering fee. Still a draft (a subscription's next invoice, minutes before
+ * it is finalized): a negative line on it. Finished: a Stripe credit note, which first lowers what is still owed and
+ * leaves the rest to be refunded, credited or marked paid outside Stripe (Stripe, Create a credit note: the
+ * `post_payment_amount`) — refunded to the card it was paid with, or to the club's Stripe customer balance past what the
+ * card paid. Stripe's own credit-note email is off: the Plan & billing list says it. Once only: read back by its metadata,
+ * then stored on the credit's row (unique, mig 399).
+ */
+async function creditAgainst(f: FeeRow, answer: FeeRow, invoiceId: string): Promise<BillOutcome> {
+  const inv = await stripe.invoices.retrieve(invoiceId);
+  const cents = -signedCents(f);
+  const customer = typeof inv.customer === 'string' ? inv.customer : inv.customer?.id ?? '';
+  if (inv.status === 'draft') {
+    const already = (await stripe.invoiceItems.list({ invoice: invoiceId, limit: 100 }).autoPagingToArray({ limit: 1000 }))
+      .find(i => i.metadata?.platform_stripe_fee_id === f.id);
+    const item = already ?? await stripe.invoiceItems.create({
+      customer, invoice: invoiceId, amount: signedCents(f), currency: 'cad',
+      description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
+    }, { idempotencyKey: `stripe-fee:${f.id}:${invoiceId}` });
+    await stampSubscriptionLine(f.id, item.id);
+    return 'billed';
+  }
+  if (inv.status === 'void') throw new Error('The invoice that carried the answering fee was voided.');
+  const notes = await stripe.creditNotes.list({ invoice: invoiceId, limit: 100 }).autoPagingToArray({ limit: 1000 });
+  let note = notes.find(n => n.metadata?.platform_stripe_fee_id === f.id) ?? null;
+  if (!note) {
+    // Against the answering fee's own line where Stripe shows it (Stripe recommends it), else as a line of its own.
+    const lines = await stripe.invoices.listLineItems(invoiceId, { limit: 100 }).autoPagingToArray({ limit: 1000 });
+    const carried = lines.find(l => l.parent?.invoice_item_details?.invoice_item === answer.stripe_invoice_item_id);
+    const params: Stripe.CreditNoteCreateParams = {
+      invoice: invoiceId,
+      lines: [carried
+        ? { type: 'invoice_line_item', invoice_line_item: carried.id, amount: cents }
+        : { type: 'custom_line_item', description: await lineFor(f), quantity: 1, unit_amount: cents }],
+      email_type: 'none',
+      metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
+    };
+    // No tax is set on any FieldLogicHQ invoice, so the note's total is the credit. What still is owed takes it first;
+    // the rest goes back to the card, as far as the card paid, and anything past that to the club's Stripe balance.
+    const owed = inv.status === 'paid' ? 0 : Math.max(0, inv.amount_remaining);
+    const after = Math.max(0, cents - owed);
+    const refund = Math.min(after, Math.max(0, inv.amount_paid));
+    if (refund > 0) params.refund_amount = refund;
+    if (after - refund > 0) params.credit_amount = after - refund;
+    note = await stripe.creditNotes.create(params, { idempotencyKey: `fee-credit:${f.id}` });
+  }
+  const { error } = await supabaseAdmin.from('platform_stripe_fees')
+    .update({ stripe_credit_note_id: note.id, billed_at: new Date().toISOString(), billed_on: 'credit_note', bill_error: null })
+    .eq('id', f.id).is('billed_at', null);
+  if (error) throw error;
+  // The club's own invoice reads its new amount owed (or paid) at once, not at the next re-read.
+  const ownRow = inv.metadata?.[FEE_INVOICE_META];
+  if (ownRow) await writeInvoiceState(ownRow, await stripe.invoices.retrieve(invoiceId));
+  return 'billed';
+}
+
 // ── The club's own monthly invoice ──────────────────────────────────────────────────────────────
 
 type InvoiceRow = {
@@ -258,8 +362,8 @@ export function feeInvoicePeriod(now: Date = new Date()): { cutoff: string; peri
  * THE MONTHLY INVOICE (owner 2026-10-27: one a month, sent on the 1st). Every fee recorded before this month's 1st that no
  * subscription invoice took is gathered on one invoice per club, finalized with Stripe's own email off, and emailed by us.
  * Decided from the rows on every run, so a run that stopped part-way finishes on the next one and nothing is billed twice
- * (one invoice per club and month; one line per fee, read back from Stripe before adding). A month whose credits cover its
- * fees sends nothing; its rows wait for the next.
+ * (one invoice per club and month; one line per fee, read back from Stripe before adding). A month whose credit cancels its
+ * answering fee is finalized at nothing owed and sends no email.
  */
 export async function sendMonthlyFeeInvoices(now: Date = new Date()): Promise<{ sent: number; failed: number }> {
   const live = LIVE_KEY();
@@ -309,7 +413,9 @@ async function invoiceOneClub(orgId: string, candidates: FeeRow[], periodStart: 
     return false;
   }
   const ours = fees.filter(f => !f.fee_invoice_id || f.fee_invoice_id === row?.id);
-  if (ours.reduce((s, f) => s + signedCents(f), 0) <= 0) return false;
+  // A credit is here only beside the answering fee it returns (ruling 7), so the two net; when they cancel out, the
+  // invoice is finalized at nothing owed (Stripe marks it paid, and no email goes), never left waiting for a later fee.
+  if (!ours.length || ours.reduce((s, f) => s + signedCents(f), 0) < 0) return false;
 
   const { data: org } = await supabaseAdmin.from('organizations').select('id, name, stripe_customer_id, account_kind').eq('id', orgId).maybeSingle();
   if (!org) return false;
@@ -614,7 +720,7 @@ export async function retryFailedFees(): Promise<number> {
 export type ClubFeeView = {
   id: string; kind: StripeFeeKind; line: string; createdAt: string; amount: number; credit: boolean; source: 'stripe' | 'rate';
   /** How it is billed, as the reader's sentence's key. */
-  state: 'next' | 'waiting' | 'own_open' | 'own_paid' | 'own_overdue' | 'credit' | 'test' | 'error' | 'legacy_exempt';
+  state: 'next' | 'waiting' | 'own_open' | 'own_paid' | 'own_overdue' | 'credit' | 'returned' | 'test' | 'error' | 'legacy_exempt';
   invoiceNo: string | null; invoiceDay: string | null; payUrl: string | null; billError: string | null; billedAt: string | null;
 };
 
@@ -646,6 +752,8 @@ export async function readClubFees(orgId: string, opts: { limit?: number; now?: 
     if (f.exempt_reason === 'test_mode') state = 'test';
     else if (f.exempt_reason) state = 'legacy_exempt';
     else if (f.bill_error && !f.billed_at) state = 'error';
+    // Ruling 7: a credit note returned it against the answering fee's invoice, on its day (never "next 1st").
+    else if (f.billed_on === 'credit_note') state = 'returned';
     else if (inv && inv.status === 'paid') state = 'own_paid';
     else if (inv && inv.status === 'open') state = inv.due_at && inv.due_at < now.toISOString() ? 'own_overdue' : 'own_open';
     else if (f.billed_on === 'subscription') state = isFeeCredit(f.kind) ? 'credit' : 'next';
@@ -654,7 +762,7 @@ export async function readClubFees(orgId: string, opts: { limit?: number; now?: 
       id: f.id, kind: f.kind, line: W.line(f.kind, receipt != null ? String(receipt) : null, formatStoredDate(f.created_at, { withYear: false })),
       createdAt: f.created_at, amount: Number(f.amount), credit: isFeeCredit(f.kind), source: f.amount_source, state,
       invoiceNo: inv?.invoice_number ?? null,
-      invoiceDay: inv ? (inv.status === 'paid' ? inv.paid_at : inv.due_at) : state === 'waiting' ? nextFirst : null,
+      invoiceDay: state === 'returned' ? f.billed_at : inv ? (inv.status === 'paid' ? inv.paid_at : inv.due_at) : state === 'waiting' ? nextFirst : null,
       payUrl: inv && inv.status === 'open' ? inv.hosted_invoice_url : null,
       billError: f.bill_error, billedAt: f.billed_at,
     };

@@ -2776,6 +2776,11 @@
   },
   {
     "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_credit_note_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_credit_note_key ON public.platform_stripe_fees USING btree (stripe_credit_note_id) WHERE (stripe_credit_note_id IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
     "indexname": "platform_stripe_fees_dispute_idx",
     "indexdef": "CREATE INDEX platform_stripe_fees_dispute_idx ON public.platform_stripe_fees USING btree (dispute_id) WHERE (dispute_id IS NOT NULL)"
   },

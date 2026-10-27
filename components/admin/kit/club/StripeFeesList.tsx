@@ -15,7 +15,7 @@ import css from './StripeFeesList.module.css';
 
 type Fee = {
   id: string; line: string; createdAt: string; amount: number; credit: boolean;
-  state: 'next' | 'waiting' | 'own_open' | 'own_paid' | 'own_overdue' | 'credit' | 'test' | 'error';
+  state: 'next' | 'waiting' | 'own_open' | 'own_paid' | 'own_overdue' | 'credit' | 'returned' | 'test' | 'error';
   invoiceNo: string | null; invoiceDay: string | null; payUrl: string | null;
 };
 
@@ -29,6 +29,7 @@ function billedWords(f: Fee): string {
     case 'own_overdue': return W.billedOwn(f.invoiceNo ?? '', short(f.invoiceDay));
     case 'own_paid': return W.billedOwnPaid(f.invoiceNo ?? '', short(f.invoiceDay));
     case 'credit': return W.billedCredit;
+    case 'returned': return W.billedReturned(short(f.invoiceDay));
     case 'test': return W.billedTest;
     case 'error': return W.billedError;
   }

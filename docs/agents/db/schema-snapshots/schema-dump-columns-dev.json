@@ -15219,6 +15219,15 @@
     "ordinal_position": 16
   },
   {
+    "table_name": "platform_stripe_fees",
+    "column_name": "stripe_credit_note_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
     "table_name": "platform_user_notes",
     "column_name": "id",
     "data_type": "uuid",

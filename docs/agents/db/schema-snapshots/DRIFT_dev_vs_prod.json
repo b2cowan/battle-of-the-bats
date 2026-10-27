@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-27",
-  "total": 1062,
+  "total": 1065,
   "counts": {
     "tables": 38,
-    "columns": 530,
-    "indexes": 167,
+    "columns": 531,
+    "indexes": 168,
     "constraints": 156,
-    "rls": 171
+    "rls": 172
   },
   "items": [
     {
@@ -615,6 +615,10 @@
     },
     {
       "key": "check:only-dev:platform_stripe_fees.platform_stripe_fees_billed_on_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_stripe_fees.platform_stripe_fees_credit_note_chk",
       "sig": ""
     },
     {
@@ -2542,6 +2546,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:platform_stripe_fees.stripe_credit_note_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:platform_stripe_fees.stripe_invoice_item_id",
       "sig": ""
     },
@@ -3983,6 +3991,10 @@
     },
     {
       "key": "index:only-dev:platform_status_reading_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_stripe_fees_credit_note_key",
       "sig": ""
     },
     {

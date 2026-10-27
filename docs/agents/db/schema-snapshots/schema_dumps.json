@@ -15221,6 +15221,15 @@
         "column_default": "0"
       },
       {
+        "table_name": "platform_stripe_fees",
+        "pos": 17,
+        "column_name": "stripe_credit_note_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "platform_user_notes",
         "pos": 1,
         "column_name": "id",
@@ -35163,6 +35172,11 @@
       },
       {
         "tablename": "platform_stripe_fees",
+        "indexname": "platform_stripe_fees_credit_note_key",
+        "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_credit_note_key ON public.platform_stripe_fees USING btree (stripe_credit_note_id) WHERE (stripe_credit_note_id IS NOT NULL)"
+      },
+      {
+        "tablename": "platform_stripe_fees",
         "indexname": "platform_stripe_fees_dispute_idx",
         "indexdef": "CREATE INDEX platform_stripe_fees_dispute_idx ON public.platform_stripe_fees USING btree (dispute_id) WHERE (dispute_id IS NOT NULL)"
       },
@@ -40564,13 +40578,19 @@
         "kind": "CHECK",
         "table_name": "platform_stripe_fees",
         "detail": "platform_stripe_fees_billed_chk",
-        "check_clause": "((stripe_invoice_item_id IS NULL) = (billed_at IS NULL))"
+        "check_clause": "((billed_at IS NULL) = ((stripe_invoice_item_id IS NULL) AND (stripe_credit_note_id IS NULL)))"
       },
       {
         "kind": "CHECK",
         "table_name": "platform_stripe_fees",
         "detail": "platform_stripe_fees_billed_on_chk",
-        "check_clause": "(((billed_at IS NULL) = (billed_on IS NULL)) AND ((billed_on IS NULL) OR (billed_on = ANY (ARRAY['subscription'::text, 'own_invoice'::text]))) AND ((billed_on IS DISTINCT FROM 'subscription'::text) OR (fee_invoice_id IS NULL)) AND ((billed_on IS DISTINCT FROM 'own_invoice'::text) OR (fee_invoice_id IS NOT NULL)))"
+        "check_clause": "(((billed_at IS NULL) = (billed_on IS NULL)) AND ((billed_on IS NULL) OR (billed_on = ANY (ARRAY['subscription'::text, 'own_invoice'::text, 'credit_note'::text]))) AND ((billed_on IS DISTINCT FROM 'subscription'::text) OR (fee_invoice_id IS NULL)) AND ((billed_on IS DISTINCT FROM 'own_invoice'::text) OR (fee_invoice_id IS NOT NULL)) AND ((billed_on IS DISTINCT FROM 'credit_note'::text) OR ((stripe_credit_note_id IS NOT NULL) AND (stripe_invoice_item_id IS NULL) AND (fee_invoice_id IS NULL))) AND ((stripe_credit_note_id IS NULL) OR (billed_on = 'credit_note'::text)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_stripe_fees",
+        "detail": "platform_stripe_fees_credit_note_chk",
+        "check_clause": "((stripe_credit_note_id IS NULL) OR (kind = 'dispute_answer_returned'::text))"
       },
       {
         "kind": "CHECK",

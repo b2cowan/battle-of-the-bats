@@ -2,15 +2,15 @@
 
 **Generated:** 2026-10-27 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 1062 divergence(s)** across dev/prod.
+**⚠️ 1065 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 38 | 0 | — |
-| Columns | 529 | 1 | 0 |
-| Indexes | 165 | 0 | 2 |
+| Columns | 530 | 1 | 0 |
+| Indexes | 166 | 0 | 2 |
 | Constraints | 156 | 0 | — |
-| RLS / CHECK | 171 | 0 | 0 (RLS state) |
+| RLS / CHECK | 172 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (38)
@@ -57,7 +57,7 @@
 _none_
 
 ## Columns
-### Only in DEV (529)
+### Only in DEV (530)
 - `club_schedule_slot_programs.created_at`
 - `club_schedule_slot_programs.org_id`
 - `club_schedule_slot_programs.program`
@@ -520,6 +520,7 @@ _none_
 - `platform_stripe_fees.livemode`
 - `platform_stripe_fees.online_payment_id`
 - `platform_stripe_fees.org_id`
+- `platform_stripe_fees.stripe_credit_note_id`
 - `platform_stripe_fees.stripe_invoice_item_id`
 - `rep_program_years.born_from_year`
 - `rep_program_years.born_to_year`
@@ -595,7 +596,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (165)
+### Only in DEV (166)
 - `accounting_entries_league_registration_idx`
 - `club_schedule_slot_programs_org_idx`
 - `club_schedule_slot_programs_pkey`
@@ -731,6 +732,7 @@ _none_
 - `platform_sent_email_searches_actor_idx`
 - `platform_sent_email_searches_pkey`
 - `platform_status_reading_pkey`
+- `platform_stripe_fees_credit_note_key`
 - `platform_stripe_fees_dispute_idx`
 - `platform_stripe_fees_invoice_idx`
 - `platform_stripe_fees_key`
@@ -939,7 +941,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (171)
+### CHECK only in DEV (172)
 - `club_schedule_slot_programs.club_schedule_slot_programs_program_check`
 - `early_access_lead_notes.early_access_lead_notes_author_email_check`
 - `early_access_lead_notes.early_access_lead_notes_body_check`
@@ -1092,6 +1094,7 @@ _none_
 - `platform_stripe_fees.platform_stripe_fees_bill_error_chk`
 - `platform_stripe_fees.platform_stripe_fees_billed_chk`
 - `platform_stripe_fees.platform_stripe_fees_billed_on_chk`
+- `platform_stripe_fees.platform_stripe_fees_credit_note_chk`
 - `platform_stripe_fees.platform_stripe_fees_dispute_chk`
 - `platform_stripe_fees.platform_stripe_fees_exempt_chk`
 - `platform_stripe_fees.platform_stripe_fees_exempt_reason_chk`

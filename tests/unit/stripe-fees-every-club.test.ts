@@ -36,12 +36,12 @@ describe('one billing path for every fee kind', () => {
     assert.match(src, /if \(f\.livemode !== LIVE_KEY\(\)\) \{[\s\S]{0,200}exempt_reason: 'test_mode'/);
   });
 
-  it('a returned answering fee is a credit: a negative line wherever it is billed, and a credits-only month sends nothing', () => {
+  it('a returned answering fee is a credit: a negative line beside its answering fee, and a month they cancel out is finalized at nothing owed (ruling 7)', () => {
     assert.equal(isFeeCredit('dispute_answer_returned'), true);
     assert.equal(isFeeCredit('dispute'), false);
     const src = readCode(FEES);
     assert.match(src, /const signedCents = \(f: [^)]*\) => Math\.round\(Number\(f\.amount\) \* 100\) \* \(isFeeCredit\(f\.kind\) \? -1 : 1\);/);
-    assert.match(src, /if \(ours\.reduce\(\(s, f\) => s \+ signedCents\(f\), 0\) <= 0\) return false;/);
+    assert.match(src, /if \(!ours\.length \|\| ours\.reduce\(\(s, f\) => s \+ signedCents\(f\), 0\) < 0\) return false;/);
   });
 
   it('a dispute is billed only at what Stripe charged FieldLogicHQ, read from the platform balance by the dispute', () => {
