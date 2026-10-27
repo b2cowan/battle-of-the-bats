@@ -2,15 +2,15 @@
 
 **Generated:** 2026-10-27 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 1068 divergence(s)** across dev/prod.
+**⚠️ 1075 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 38 | 0 | — |
-| Columns | 531 | 1 | 0 |
+| Columns | 536 | 1 | 0 |
 | Indexes | 167 | 0 | 2 |
 | Constraints | 157 | 0 | — |
-| RLS / CHECK | 172 | 0 | 0 (RLS state) |
+| RLS / CHECK | 174 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (38)
@@ -57,7 +57,7 @@
 _none_
 
 ## Columns
-### Only in DEV (531)
+### Only in DEV (536)
 - `club_schedule_slot_programs.created_at`
 - `club_schedule_slot_programs.org_id`
 - `club_schedule_slot_programs.program`
@@ -391,6 +391,8 @@ _none_
 - `org_payment_accounts.created_at`
 - `org_payment_accounts.disconnected_at`
 - `org_payment_accounts.disconnected_by`
+- `org_payment_accounts.ending_warned_at`
+- `org_payment_accounts.ending_warned_for`
 - `org_payment_accounts.fee_payer`
 - `org_payment_accounts.livemode`
 - `org_payment_accounts.onboarding_finished_at`
@@ -403,6 +405,9 @@ _none_
 - `org_payment_accounts.terms_agreed_at`
 - `org_payment_accounts.terms_agreed_by`
 - `org_payment_accounts.terms_agreed_by_email`
+- `org_payment_accounts.terms_notice_at`
+- `org_payment_accounts.terms_notice_version`
+- `org_payment_accounts.terms_reminded_at`
 - `org_payment_accounts.terms_version`
 - `org_payment_accounts.updated_at`
 - `org_public_site_content.contacts`
@@ -944,7 +949,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (172)
+### CHECK only in DEV (174)
 - `club_schedule_slot_programs.club_schedule_slot_programs_program_check`
 - `early_access_lead_notes.early_access_lead_notes_author_email_check`
 - `early_access_lead_notes.early_access_lead_notes_body_check`
@@ -1049,9 +1054,11 @@ _none_
 - `org_custom_domains.org_custom_domains_status_check`
 - `org_payment_accounts.org_payment_accounts_bank_debit_status_chk`
 - `org_payment_accounts.org_payment_accounts_card_payments_status_chk`
+- `org_payment_accounts.org_payment_accounts_ending_warned_chk`
 - `org_payment_accounts.org_payment_accounts_fee_payer_chk`
 - `org_payment_accounts.org_payment_accounts_refund_policy_chk`
 - `org_payment_accounts.org_payment_accounts_terms_chk`
+- `org_payment_accounts.org_payment_accounts_terms_notice_chk`
 - `org_public_site_content.org_public_site_content_contacts_cap`
 - `org_public_site_content.org_public_site_content_documents_cap`
 - `org_public_site_content.org_public_site_content_home_section_order_known`

@@ -292,6 +292,80 @@
   inline data, and the check's LANDING_FAILURES matches "Page not found" in `textContent`, so every screen has failed since
   10-23 (not the fixture, not memory); a one-line fix in the shared check (visible text only) is the owner's call.
   `check:demos` red (12c's `registration-attention.ts` import) is still the owner's.
+- **12d-2 build state (opened 2026-10-27; prompt `CLUB_TIER_STAGE12D2_BUILD_PROMPT.md`, committed `4844e54f4`).**
+  **Stripe facts, read 2026-10-27 from Stripe's current docs (API `2026-04-22.dahlia`; our charges are DIRECT charges on
+  the club's account, so every read below carries the club's `Stripe-Account`):**
+  - **Listing payouts:** `GET /v1/payouts` on the club's account, newest first, cursor paging, `limit` 1–100; filters
+    `created`, `arrival_date`, `status` (docs/api/payouts/list).
+  - **What's inside one:** `GET /v1/balance_transactions?payout=po_…` — "For automatic Stripe payouts only". A payout's
+    `reconciliation_status` is `completed` (listable), `in_progress` (Stripe is still matching it; `payout.reconciliation_completed`
+    announces the end) or `not_applicable` (a manual or instant payout: "Stripe can't identify which transactions are
+    included… You're responsible for reconciling payouts you create"). **The tab shows a manual one as its total alone, with
+    the words' manual line** (docs/payouts/reconciliation).
+  - **Tying a line back to our row:** a line's `source` is the charge (`ch_`), refund (`re_`) or dispute (`du_`), expandable
+    (`expand[]=data.source`, four levels at most; expansion is the heavy kind of read). A charge carries its payment intent,
+    which our row stores (`stripe_payment_intent_id`, `stripe_charge_id`); a refund and a dispute carry their charge. The
+    Checkout Session is not reachable by expansion, and we never need it. Types a club's payout holds: `charge` / `payment`
+    (a payment; which one a bank debit is: to confirm by probe), `refund` / `payment_refund`, `payment_failure_refund` (a
+    bank debit that failed after it was counted), `payment_reversal`, `adjustment` with a dispute source (taken for a
+    dispute, and given back on a win), `stripe_fee`, the payout's own `payout` / `payout_failure` / `payout_cancel`, and
+    Stripe's reserve types. **Stripe recommends `reporting_category` over `type` for accounting**; every line we print is
+    named by our row (payment, refund, returned debit, dispute, dispute won, Stripe fee) or "Not from FieldLogicHQ", never
+    a bare Stripe type (docs/reports/balance-transaction-types).
+  - **Dates:** `arrival_date` is "Date that you can expect the payout to arrive in the bank", weekends and holidays allowed
+    for; it is an expectation (`payout.updated` fires when it moves) and the bank may post later. `created` is Stripe's
+    own. **The tab's "Arrives" is `arrival_date`; "Sent" is `created`.**
+  - **Failed or cancelled:** `pending` → `in_transit` → `paid`, or `failed` / `canceled` ("within 5 business days"; "some
+    payouts that fail might initially show as paid, then change to failed"). `failure_code` is an enum, `failure_message`
+    Stripe's text; the money returns to the club's Stripe balance (`payout_failure` / `payout_cancel`), and after a failure
+    the bank account is disabled until it is replaced. Shown as the words' §3.2 "Didn't arrive" with a mapped reason, or no
+    reason (docs/api/payouts/object, docs/connect/manage-connected-account-payouts).
+  - **Limits:** 100 reads a second live, 25 in a sandbox, 25 a second on one endpoint; reads are also counted against a
+    rolling 30-day allowance (at least 10,000 a month), each connected account with its own and the platform's reads on its
+    accounts pooled. A season of a few hundred payments is 3–5 list calls of 100 (docs/rate-limits).
+  - **Closing an open pay page:** `POST /v1/checkout/sessions/:id/expire` works only on an `open` session; afterwards "a
+    customer can't complete" it and sees that it expired; a session already complete (or expired) returns an error. A bank
+    debit's session becomes `complete` the moment the family submits it, so an ending can never cancel a debit already
+    submitted: it clears or returns as it would have. The race (paid at the same moment) is not documented: our expire
+    swallows the error and the webhook lands whatever Stripe completed (docs/api/checkout/sessions/expire,
+    docs/payments/acss-debit).
+  - **Events after an ending:** a direct charge's events reach the Connect endpoint while the account stays connected to
+    the platform, with nothing tied to whether we still offer payments; disputes and debit failures can arrive weeks
+    later. Express accounts cannot be deauthorized by OAuth (Standard only), and no ending here rejects or deletes the
+    account (ask 4), so dispute and refund events keep arriving (docs/connect/webhooks, docs/connect/oauth-reference).
+  - **Test mode payouts:** a payout created by API is MANUAL, so its contents never list. Reading contents in test mode
+    needs an AUTOMATIC payout: the test account on a daily schedule, funds made available at once by the test card
+    `4000000000000077` (to confirm for a CAD Express account), then a wait for `reconciliation_status: completed`
+    (docs/connect/testing, docs/connect/manage-payout-schedule).
+  **⚖ Owner 2026-10-27, the build's four asks (all as recommended, after the UX summary):**
+  1. **The Payouts tab reads Stripe live**, held a few minutes; no stored copy of payouts.
+  2. **The operator's Delete refuses while money is in flight**, naming each (an open dispute, a debit clearing, a Stripe
+     fee unpaid or failed), as the live-subscription check does. The owner's "Ask us to delete" is never refused (drawn).
+  3. **Console: super admin, billing and support** read the club's Online payments tab and Health › Online payments (the
+     roles that already read a club's Stripe records).
+  4. **The daily job gains the drawn emails** (the terms changed + its 14-day reminder; 7 days before an ending the owner
+     didn't choose), in their own commit (owner asked for it, this conversation).
+  **Found by the census, built without a ruling (they implement the drawing):** every online-payment notice is dropped
+  once the plan loses `online_payments` (the notify plan guard), so the wind-down's dispute and refund items would never
+  arrive; Disconnect leaves open pages payable; a Stripe-closed account writes no audit row, so the Story never shows it.
+  **Builder's calls, stated to the owner:** Health › Online payments is ordered most urgent first, no filters; the Story
+  gains "who pays the fee changed", "terms agreed" and "Stripe closed the account" (the drawing names none); the wind-down
+  card's words are derived and owed to `/marketing`; the test club's payout schedule is set to daily in test mode by API
+  (a manual payout never lists its contents).
+  **⚖ Owner 2026-10-27, an ending the owner didn't choose — a failed subscription payment (the drawing could not be built
+  as drawn):** a suspension after a failed payment has no known date (Stripe's retries decide it; the billing webhook
+  stores none), so its warning goes **the day the subscription first goes past due**, without a date: an item, the card's
+  notice and one email (derived words, owed to `/marketing`). A comp ending keeps the drawn "seven days before" (free
+  time's `expires_at`; the Founding comp's `FOUNDING_SEASON_END` for a club that chose no plan).
+  **Builder's facts:** a Checkout page expires at Stripe 24 hours after it opens (we set no `expires_at`). A downgrade
+  reaches its date through the billing webhook's plan write, which closes the club's open pages there; an ending with no
+  event (free time running out) is swept by the daily job (ruling 4). Deleting a club with invoiced fees is safe on dev:
+  `online_payments` cascades first (constraint order), taking its fees before `platform_fee_invoices` meets its
+  `RESTRICT`; every other link into `online_payments` is NO ACTION (checked at statement end). Sandbox probe
+  (`.probe/s12d2-payouts-probe.cjs`, the UAT club's account): a bank debit is a `payment` line (`py_` source), a returned
+  one a `payment_failure_refund` plus an `adjustment` (category `fee`) giving our fee back, a card dispute an `adjustment`
+  (category `dispute`) carrying Stripe's CA$15 as its `fee`, a won one `dispute_reversal`; the account pays out daily
+  with a 7-day delay and has made no payout yet.
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 

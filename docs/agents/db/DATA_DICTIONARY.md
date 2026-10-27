@@ -7667,6 +7667,15 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:org_payment_accounts.terms_agreed_at -->
 **`terms_version` / `terms_agreed_by` / `terms_agreed_by_email` / `terms_agreed_at`** (text; uuid FK → `auth.users.id` ON DELETE SET NULL; text; timestamptz — all nullable) — who agreed to the payments terms, which version, and when. All-or-none for the version, email and time (gotcha 4); `terms_agreed_by` may go NULL when the user is deleted while the email stays.
 
+<!-- dict:col:org_payment_accounts.terms_notice_version -->
+<!-- dict:col:org_payment_accounts.terms_notice_at -->
+<!-- dict:col:org_payment_accounts.terms_reminded_at -->
+**`terms_notice_version` / `terms_notice_at` / `terms_reminded_at`** (text; timestamptz; timestamptz — all nullable; migration 401, Club Tier 12d-2, owner ruling 4 2026-10-27) — the once-only stamps of "the payments terms changed" (words §5.2). The daily job finds a connected club whose `terms_version` is older than the product's current version (`PAYMENTS_TERMS_VERSION`) and, once per version, raises the owner's item and sends one email, stamping the version it told about and when; one reminder goes 14 days after `terms_notice_at` while the club has still not agreed to that version. `org_payment_accounts_terms_notice_chk`: version and time both NULL or both set; a reminder needs a notice. **Agreeing never clears them** — they record what was sent; a later version (a different `terms_notice_version`) tells the club again. The card's notice itself is not stored: it reads `terms_version` against the current version live, so it shows the moment the version changes, a day before the item and email.
+
+<!-- dict:col:org_payment_accounts.ending_warned_for -->
+<!-- dict:col:org_payment_accounts.ending_warned_at -->
+**`ending_warned_for` / `ending_warned_at`** (timestamptz, nullable, both-or-none `org_payment_accounts_ending_warned_chk`; migration 401, Club Tier 12d-2) — the one warning (item + the card's notice + one email, words §4.2 `ending.*`) before online payments stop through an ending the owner did NOT choose. `ending_warned_for` names the ending: a comp's end (free time's `org_overrides.expires_at`, or the Founding comp's end for a club that chose no plan), warned seven days ahead; or the moment a subscription payment first went past due (owner 2026-10-27: that suspension has no known date, so it is warned the day it fails). A different value (a moved end, a new failure) warns again. `ending_warned_at` = when it went.
+
 <!-- dict:col:org_payment_accounts.connected_by -->
 <!-- dict:col:org_payment_accounts.connected_at -->
 <!-- dict:col:org_payment_accounts.disconnected_by -->

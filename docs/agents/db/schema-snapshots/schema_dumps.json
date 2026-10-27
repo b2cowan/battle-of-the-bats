@@ -11144,6 +11144,51 @@
         "column_default": null
       },
       {
+        "table_name": "org_payment_accounts",
+        "pos": 28,
+        "column_name": "terms_notice_version",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 29,
+        "column_name": "terms_notice_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 30,
+        "column_name": "terms_reminded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 31,
+        "column_name": "ending_warned_for",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_payment_accounts",
+        "pos": 32,
+        "column_name": "ending_warned_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_people",
         "pos": 1,
         "column_name": "id",
@@ -39734,6 +39779,12 @@
       {
         "kind": "CHECK",
         "table_name": "org_payment_accounts",
+        "detail": "org_payment_accounts_ending_warned_chk",
+        "check_clause": "((ending_warned_for IS NULL) = (ending_warned_at IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_payment_accounts",
         "detail": "org_payment_accounts_fee_payer_chk",
         "check_clause": "(fee_payer = ANY (ARRAY['family'::text, 'club'::text]))"
       },
@@ -39748,6 +39799,12 @@
         "table_name": "org_payment_accounts",
         "detail": "org_payment_accounts_terms_chk",
         "check_clause": "(((terms_version IS NULL) AND (terms_agreed_at IS NULL) AND (terms_agreed_by_email IS NULL)) OR ((terms_version IS NOT NULL) AND (terms_agreed_at IS NOT NULL) AND (terms_agreed_by_email IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_payment_accounts",
+        "detail": "org_payment_accounts_terms_notice_chk",
+        "check_clause": "(((terms_notice_version IS NULL) = (terms_notice_at IS NULL)) AND ((terms_reminded_at IS NULL) OR (terms_notice_at IS NOT NULL)))"
       },
       {
         "kind": "RLS",

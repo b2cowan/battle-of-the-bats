@@ -474,6 +474,10 @@
     "400_send_the_changes_tells_house_league_families.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 11b Part 5 (the club's Send the changes moves house-league practices and tells their families). Needs 385 and 392-393 first. Visible: CHECK league_season_notices_kind_check REPLACED (teams_published, practices_changed); column league_season_notices.club_schedule_send_id (FK club_schedule_sends ON DELETE SET NULL); partial index league_season_notices_send_idx. Additive, no row change, re-runnable. Apply to prod BEFORE the promote that ships 11b Part 5 (the send writes a practices_changed row). Verify on prod: SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'league_season_notices_kind_check' -> contains 'practices_changed'. Applied to DEV 2026-10-27; scripts/club-stage11b-check.sql passed (T1-T14) and .probe/11b5/e2e.sql passed."
+    },
+    "401_a_club_is_told_once_about_new_terms_and_an_ending.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 12d-2 Part 1 (the once-only stamps of the daily job's terms-changed and ending-warning emails). Visible: columns org_payment_accounts.terms_notice_version, terms_notice_at, terms_reminded_at, ending_warned_for, ending_warned_at; CHECKs org_payment_accounts_terms_notice_chk, org_payment_accounts_ending_warned_chk. Additive, nullable, no row change, re-runnable. Needs 358 (and 390-399 for the 12d-1 code beside it). Apply to prod BEFORE the promote that ships 12d-2. Verify on prod: SELECT count(*) FROM information_schema.columns WHERE table_name = 'org_payment_accounts' AND column_name IN ('terms_notice_version','ending_warned_for') -> 2. Applied to DEV 2026-10-27."
     }
   }
 }

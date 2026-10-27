@@ -11142,6 +11142,51 @@
     "ordinal_position": 27
   },
   {
+    "table_name": "org_payment_accounts",
+    "column_name": "terms_notice_version",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 28
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "terms_notice_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 29
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "terms_reminded_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "ending_warned_for",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 31
+  },
+  {
+    "table_name": "org_payment_accounts",
+    "column_name": "ending_warned_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 32
+  },
+  {
     "table_name": "org_people",
     "column_name": "id",
     "data_type": "uuid",
