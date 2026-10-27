@@ -14,8 +14,8 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Orientation',
       heading: 'Where to work first',
       summary: 'Know the menu, Today and Find before you change an account.',
-      keywords: ['overview', 'today', 'organizations', 'clubs & portals', 'customer users', 'people', 'plans pricing', 'plans & pricing', 'bulk operations', 'bulk changes', 'audit', 'audit log', 'support console', 'menu', 'menu by job', 'sidebar', 'collapse sidebar', 'account menu', 'sign out', 'appearance', 'warm', 'dark', 'help', 'private finance', 'business numbers', 'find', 'search', 'recent', 'slash', 'old names', 'renamed', 'observability', 'errors', 'status', 'sent emails', 'early access', 'leads', 'email campaigns', 'campaigns', 'platform users', 'staff', 'reason', 'why', 'every change keeps its reason', 'waiting', 'amber count', 'view-only', 'eye'],
-      searchText: 'where to work first support console menu by job groups customers health growth product records system private finance bookkeeping owner only today what is waiting on us amber count queue waiting since your last visit totals line business numbers subscription growth usage metric notes find box top strip press slash recent last five records opened cleared at sign-out all in clubs and portals all in people stripe numbers cus sub pi ch py in_ invoice number printed invoice number charge number payment number enter opens the money tab on that charge nothing matches test-mode number card digits are not searched every change keeps its reason why window one sentence confirm eye view-only for your role old names overview organizations customer users observability status sent emails early access email campaigns bulk operations platform users command center billing & product support & diagnostics governance help at the foot of the menu opens in place collapse sidebar menu button top strip account menu appearance warm dark sign out staff access',
+      keywords: ['overview', 'today', 'organizations', 'clubs & portals', 'customer users', 'people', 'plans pricing', 'plans & pricing', 'bulk operations', 'bulk changes', 'audit', 'audit log', 'support console', 'menu', 'menu by job', 'sidebar', 'collapse sidebar', 'account menu', 'sign out', 'appearance', 'warm', 'dark', 'help', 'private finance', 'business numbers', 'find', 'search', 'recent', 'slash', 'old names', 'renamed', 'observability', 'errors', 'status', 'sent emails', 'early access', 'leads', 'email campaigns', 'campaigns', 'platform users', 'staff', 'reason', 'why', 'every change keeps its reason', 'waiting', 'amber count', 'view-only', 'eye', 'new leads', 'follow-ups due', 'sign-up to confirm', 'not read', 'leads and conversion', 'pitch decks'],
+      searchText: 'where to work first support console menu by job groups customers health growth product records system private finance bookkeeping owner only today what is waiting on us amber count queue waiting since your last visit not read could not be read nothing waiting new leads follow-ups due sign-up to confirm totals line business numbers in the growth group of the menu leads and conversion card leads all time signed up pay now new unanswered subscription growth usage metric notes find box top strip press slash recent last five records opened cleared at sign-out all in clubs and portals all in people stripe numbers cus sub pi ch py in_ invoice number printed invoice number charge number payment number enter opens the money tab on that charge nothing matches test-mode number card digits are not searched every change keeps its reason why window one sentence confirm eye view-only for your role old names overview organizations customer users observability status sent emails early access email campaigns bulk operations platform users command center billing & product support & diagnostics governance help at the foot of the menu opens in place collapse sidebar menu button top strip account menu appearance warm dark sign out staff access',
       links: [
         { label: 'Today', href: '/platform-admin' },
         { label: 'Clubs & portals', href: '/platform-admin/orgs' },
@@ -36,7 +36,7 @@ const platformAdminHelp: HelpPageContent = {
                 <HelpDef term="Today">What is waiting on us. It sits alone at the top.</HelpDef>
                 <HelpDef term="Customers"><strong>Clubs &amp; portals</strong>, <strong>People</strong>, <strong>Founding season</strong> (accounts on a free season) and <strong>Retention</strong>.</HelpDef>
                 <HelpDef term="Health"><strong>Status</strong> (is the platform healthy right now), <strong>Errors</strong>, <strong>Feedback</strong> and <strong>Sent emails</strong> (Super admin, Support and Billing only).</HelpDef>
-                <HelpDef term="Growth"><strong>Leads</strong>, <strong>Campaigns</strong> and <strong>Pitch decks</strong>.</HelpDef>
+                <HelpDef term="Growth"><strong>Leads</strong>, <strong>Campaigns</strong>, <strong>Pitch decks</strong> and <strong>Business numbers</strong> (every role can open the last one).</HelpDef>
                 <HelpDef term="Product"><strong>Plans &amp; pricing</strong>, <strong>Approval queue</strong>, <strong>Bulk changes</strong>, <strong>Email templates</strong> and <strong>Export registry</strong> (every way data leaves the product, read-only).</HelpDef>
                 <HelpDef term="Records"><strong>Staff</strong> and the <strong>Audit log</strong>.</HelpDef>
                 <HelpDef term="System"><strong>Dev tools</strong>, only where it is turned on.</HelpDef>
@@ -56,11 +56,21 @@ const platformAdminHelp: HelpPageContent = {
               <ul>
                 <li><strong>Customers:</strong> owner inactive (30 days), retention, missing owner, past due, trials ending and free time ending (both within 14 days).</li>
                 <li><strong>Health:</strong> new errors and new feedback.</li>
-                <li><strong>Growth:</strong> campaigns past due, campaigns due soon and new leads.</li>
+                <li><strong>Growth:</strong> <strong>New leads</strong> (a lead nobody has answered yet), <strong>Follow-ups due</strong> (a lead whose follow-up date has come), <strong>Sign-up to confirm</strong> (a club signed up with a lead&rsquo;s email; is it theirs?), then campaigns past due and campaigns due soon. The three lead rows open Leads and count only for Super admin, Product and Growth.</li>
                 <li><strong>Product:</strong> the approval queue.</li>
               </ul>
+              <p>A queue that could not be read says <strong>Not read</strong> where its count would be. It is never counted as nothing waiting: the line above the table and the group&rsquo;s heading say how many queues were not read, and a screen where every queue failed reads &ldquo;N queues could not be read&rdquo;, not &ldquo;Nothing waiting&rdquo;. Reload to try again.</p>
               <p>Your role decides which queues you see. <em>Since your last visit</em> in the table&rsquo;s header marks what is new since you were last here. A health line above the table gives the worst verdict among the Status checks read from our own records and database (<em>Status: all fine.</em>, or how many to act on or look at) and a <strong>Status &rsaquo;</strong> door to the full page (see <em>How to read Status</em>).</p>
-              <p>Under the table, a totals line gives clubs and portals, people, tournaments, teams and about how much a month at list price. Its last door opens <strong>Business numbers</strong> (it is not in the menu): tabs for <strong>Subscription</strong> (plan mix, status by plan, billing events), <strong>Growth</strong>, <strong>Usage</strong> and <strong>Metric notes</strong>.</p>
+              <p>Under the table, a totals line gives clubs and portals, people, tournaments, teams and about how much a month at list price.</p>
+            </>
+          ),
+        },
+        {
+          id: 'where-to-work-business-numbers',
+          title: 'Business numbers',
+          content: (
+            <>
+              <p><strong>Business numbers</strong> opens from the last door under Today’s table and has its own entry in the Growth group of the menu. It has tabs for <strong>Subscription</strong> (plan mix, status by plan, billing events), <strong>Growth</strong>, <strong>Usage</strong> and <strong>Metric notes</strong>. The Growth tab&rsquo;s <strong>Leads and conversion</strong> card shows leads all time, how many signed up (and the percentage), and how many of those pay now; Super admin, Product and Growth also see the New, unanswered count and a door to the pipeline. These are the same figures as the Numbers view in Leads, counted the same way. If the leads could not be read, the card says <strong>Not read</strong>, never 0.</p>
             </>
           ),
         },
@@ -1391,8 +1401,8 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Product SOP',
       heading: 'How to work with plans, pricing, and feature matrix changes',
       summary: 'Live product packaging changes require the approved catalog workflow — sequenced by customer impact.',
-      keywords: ['plans pricing', 'plans & pricing', 'product catalog', 'feature matrix', 'stripe price', 'approval', 'campaign', 'risk ladder', 'plan config', 'gating', 'stripe mode', 'production', 'test', 'change note', 'catalog records', 'planning'],
-      searchText: 'how do i work with plans pricing feature matrix changes stripe mode production test dropdown product catalog workspace planning feature matrix catalog records change note optional stripe price id',
+      keywords: ['plans pricing', 'plans & pricing', 'product catalog', 'feature matrix', 'stripe price', 'approval', 'campaign', 'risk ladder', 'plan config', 'gating', 'stripe mode', 'production', 'test', 'change note', 'catalog records', 'planning', 'promotions', 'promotion', 'campaign tracking', 'coupon', 'promo'],
+      searchText: 'promotions campaign tracking renamed coupon promo trial launch retention offer for the record not linked to checkout or stripe how do i work with plans pricing feature matrix changes stripe mode production test dropdown product catalog workspace planning feature matrix catalog records change note optional stripe price id',
       links: [
         { label: 'Plans & pricing', href: '/platform-admin/plans-pricing' },
         { label: 'Approval queue', href: '/platform-admin/change-requests' },
@@ -1400,45 +1410,71 @@ const platformAdminHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p><strong>Plans &amp; pricing</strong> is for global product configuration — it changes the product for <em>every</em> customer, which is different from a one-customer override. Treat the controls as a <strong>risk ladder</strong>, from lowest to highest customer impact:</p>
-          <ol>
-            <li><strong>Gating status</strong> (live / early access) — controls whether a plan is offered. Reversible.</li>
-            <li><strong>Config limits</strong> (tournament caps, seat caps, trial days) — affects what customers on the plan can do.</li>
-            <li><strong>Stripe price IDs</strong> — affects real billing; a wrong ID can break checkout or charge the wrong amount.</li>
-            <li><strong>Feature matrix</strong> — which modules each plan actually includes; highest blast radius and least immediately reversible, because it changes what existing customers can <em>do</em>, not just what a plan is advertised as.</li>
-          </ol>
-          <p><strong>Recommended sequence for any change:</strong> verify subscriber impact (use the impact summaries) → create a change request → get it approved → apply. Generated price, gating, and config changes auto-apply on approval through the <strong>Approval queue</strong> (see <em>How to review and action the approval queue</em>).</p>
-          <p><strong>Stripe price change checklist:</strong></p>
-          <ul>
-            <li>Confirm the <code>price_...</code> ID is from the correct Stripe environment — sandbox vs. live. <strong>Stripe mode</strong> is a dropdown (<strong>Production</strong> or <strong>Test</strong>) that switches every price table on the screen, so check it before you edit.</li>
-            <li>The <strong>Change note</strong> on a price edit is optional, but say why the ID is changing for the next person reading the request.</li>
-            <li>Confirm no org is on a Stripe-managed subscription that swapping the price would break.</li>
-            <li>Let the change-request flow validate the ID against Stripe before it applies; do not force a blocked (stale) apply.</li>
-          </ul>
-          <p>The page has two tabs, <strong>Plans</strong> and <strong>Product catalog</strong>. On <strong>Product catalog</strong>, the workspace dropdown switches between <strong>Planning</strong>, <strong>Feature matrix</strong>, and <strong>Catalog records</strong>.</p>
-          <p><strong>When to use which tool:</strong></p>
-          <ul>
-            <li><strong>Plans &amp; pricing</strong> — global changes that should affect every customer.</li>
-            <li><strong>Bulk changes</strong> — the same exception applied to a chosen set of orgs.</li>
-            <li><strong>A club&rsquo;s Access tab and pencil</strong> — a single-customer exception (see <em>How to provide module access</em> and <em>How to temporarily override billing access</em>).</li>
-          </ul>
-          <p>Live feature matrix publishing must come from an approved Feature Matrix request.</p>
+          <p><strong>Plans &amp; pricing</strong> is for global product configuration — it changes the product for <em>every</em> customer, which is different from a one-customer override. Treat the controls as a <strong>risk ladder</strong>, from lowest to highest customer impact, and change them in a set order. Below: the ladder and the order, the Stripe price checklist, and which tool to use for what (including Promotions).</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'plans-pricing-ladder',
+          title: 'The risk ladder and the order to work in',
+          content: (
+            <>
+              <ol>
+                <li><strong>Gating status</strong> (live / early access) — controls whether a plan is offered. Reversible.</li>
+                <li><strong>Config limits</strong> (tournament caps, seat caps, trial days) — affects what customers on the plan can do.</li>
+                <li><strong>Stripe price IDs</strong> — affects real billing; a wrong ID can break checkout or charge the wrong amount.</li>
+                <li><strong>Feature matrix</strong> — which modules each plan actually includes; highest blast radius and least immediately reversible, because it changes what existing customers can <em>do</em>, not just what a plan is advertised as.</li>
+              </ol>
+              <p><strong>Recommended sequence for any change:</strong> verify subscriber impact (use the impact summaries) → create a change request → get it approved → apply. Generated price, gating, and config changes auto-apply on approval through the <strong>Approval queue</strong> (see <em>How to review and action the approval queue</em>).</p>
+            </>
+          ),
+        },
+        {
+          id: 'plans-pricing-stripe',
+          title: 'Stripe price change checklist',
+          content: (
+            <>
+              <ul>
+                <li>Confirm the <code>price_...</code> ID is from the correct Stripe environment — sandbox vs. live. <strong>Stripe mode</strong> is a dropdown (<strong>Production</strong> or <strong>Test</strong>) that switches every price table on the screen, so check it before you edit.</li>
+                <li>The <strong>Change note</strong> on a price edit is optional, but say why the ID is changing for the next person reading the request.</li>
+                <li>Confirm no org is on a Stripe-managed subscription that swapping the price would break.</li>
+                <li>Let the change-request flow validate the ID against Stripe before it applies; do not force a blocked (stale) apply.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'plans-pricing-which',
+          title: 'Which tool, and what Promotions is',
+          content: (
+            <>
+              <p>The page has two tabs, <strong>Plans</strong> and <strong>Product catalog</strong>. On <strong>Product catalog</strong>, the workspace dropdown switches between <strong>Planning</strong>, <strong>Feature matrix</strong>, and <strong>Catalog records</strong>.</p>
+              <p><strong>When to use which tool:</strong></p>
+              <ul>
+                <li><strong>Plans &amp; pricing</strong> — global changes that should affect every customer.</li>
+                <li><strong>Bulk changes</strong> — the same exception applied to a chosen set of orgs.</li>
+                <li><strong>A club&rsquo;s Access tab and pencil</strong> — a single-customer exception (see <em>How to give an unsubscribed account extra features</em> and <em>How to temporarily override billing access</em>).</li>
+              </ul>
+              <p>Live feature matrix publishing must come from an approved Feature Matrix request.</p>
+              <p><strong>Promotions</strong> (on the Product catalog tab, in the Planning workspace) is the list of coupons, promos, trials, launches and retention offers, kept <em>for the record</em>. A promotion here is not linked to checkout or Stripe: adding or changing one never gives a customer a discount. A Promotions request still goes through the Approval queue like any other catalog change. It was called Campaign tracking before; <strong>Campaigns</strong> in the Growth menu is a different thing (planned marketing emails).</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'email-batch-send',
       group: 'Growth SOP',
       heading: 'How to send a batch marketing email',
       summary: 'Trigger a founding-season marketing send safely, with a pre-send review and the confirm modal.',
-      keywords: ['email', 'campaigns', 'email campaigns', 'email dashboard', 'batch send', 'marketing email', 'founding season', 'recipients', 'send history', 'sent history', 'confirm send', 'opt out', 'resend'],
-      searchText: 'how do i send a batch marketing email founding season recipients preview confirm send irreversible cannot be undone send history opted out resubscribe',
+      keywords: ['email', 'campaigns', 'email campaigns', 'email dashboard', 'batch send', 'marketing email', 'founding season', 'recipients', 'send history', 'sent history', 'confirm send', 'opt out', 'resend', 'leads are not emailed'],
+      searchText: 'campaigns are for customers we already have leads are never emailed from here lead outreach templates how do i send a batch marketing email founding season recipients preview confirm send irreversible cannot be undone send history opted out resubscribe',
       links: [
         { label: 'Campaigns', href: '/platform-admin/email' },
       ],
       content: (
         <>
-          <p><strong>Campaigns</strong> triggers the founding-season marketing emails. Sends go to <strong>real customers</strong> and <strong>cannot be recalled</strong>, so the review step matters.</p>
+          <p><strong>Campaigns</strong> is for planned marketing emails to customers we already have, and it triggers the founding-season sends. <strong>Leads are never emailed from here</strong>; a lead gets the outreach templates copied from its own page in Leads. Sends go to <strong>real customers</strong> and <strong>cannot be recalled</strong>, so the review step matters.</p>
           <ol>
             <li>Check the audience stats at the top: <strong>Founding season orgs</strong>, <strong>Active recipients</strong> (founding orgs minus opt-outs), and <strong>Opted out</strong>. <strong>The per-email <em>Recipients</em> column is the only count that tells you who will actually receive that email</strong> — always read that one. It can legitimately be lower than the headline figure: the stats at the top count every account holding a free season, while these campaigns are written for organizations and are sent only to them.</li>
             <li>Click the <strong>Preview</strong> (eye) icon to read the exact email before sending — the preview is rendered by the same code as the send, so what you read is what goes out. The board lists only campaigns that can actually be sent; a retired campaign (one whose product we no longer sell) leaves the board entirely rather than sitting there waiting to be clicked.</li>
@@ -1473,6 +1509,69 @@ const platformAdminHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'pitch-decks',
+      group: 'Growth SOP',
+      heading: 'How to work the Pitch decks room',
+      summary: 'Reorder and publish a standing deck, make a deck of your own with an unlisted link, and edit a page’s pull.',
+      keywords: ['pitch decks', 'pitch deck studio', 'new deck', 'publish', 'running order', 'unlisted link', 'prospect deck', 'club deck', 'pull', 'slide library', 'return to the code default'],
+      searchText: 'how do i work the pitch decks room slide library permanent slide numbers gaps standing deck running order reorder move up move down remove add a slide preview publish this running order live public page present mode pull return to the code default new deck window name purpose create this deck unlisted link unguessable not in search engines never shows the name print to pdf delete a deck kills its link close without saving discard publish this pull saved date',
+      links: [{ label: 'Pitch decks', href: '/platform-admin/pitch-deck-studio' }],
+      content: (
+        <>
+          <p><strong>Pitch decks</strong> (Growth group of the menu) is where every pitch slide lives, how the decks are put together from them, and where each one is published. Super admin, Product and Growth can open it, and the same three can change things. Slides carry <strong>permanent numbers</strong>, so the number line has gaps where a slide was retired.</p>
+        </>
+      ),
+      subtopics: [
+        {
+          id: 'pitch-decks-standing',
+          title: 'A standing deck: reorder and publish',
+          content: (
+            <>
+              <ul>
+                <li><strong>A standing deck is a public page&rsquo;s running order.</strong> Move slides up or down, remove one, or add one from the library; selecting a slide previews it in the real frame. Nothing changes for the public until you press <strong>Publish this running order</strong>, and that button appears only once there is a change to publish and at least one slide. Publishing is immediate: the page, its present mode and its pull follow the new order at once, so the sentence above the button names the page it will change.</li>
+                <li><strong>Return to the code default</strong> appears once a deck has been saved. It removes the saved running order, and the page goes back to the order in the code.</li>
+              </ul>
+              <p>If the deck store cannot be read, a warning says the page is safely on the code running order and that saving is unlikely to work until the store is back. Wait for it to clear before you publish.</p>
+            </>
+          ),
+        },
+        {
+          id: 'pitch-decks-own',
+          title: 'Your own decks: New deck and the unlisted link',
+          content: (
+            <>
+              <ul>
+                <li><strong>New deck</strong> opens a window for a deck of your own: the club deck, or one for a prospect. Give it a <strong>name</strong> (your internal label, never shown on the link), an optional purpose, and at least one slide; <strong>Create this deck</strong> appears only when it has a name and a slide. Closing the window with something typed asks first, and <strong>Discard</strong> forgets it, so the next New deck starts empty.</li>
+                <li><strong>Your decks</strong> lists them. Each has an <strong>unlisted link</strong> from the moment it is created: unguessable, hidden from search engines, and showing the slides only, never the deck&rsquo;s name or a prospect. Open it and print for the PDF leave-behind. <strong>Deleting a deck ends its link.</strong> Your own decks have no code fallback: if one breaks it does not render, and the screen says why.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'pitch-decks-pull',
+          title: 'A page’s pull',
+          content: (
+            <>
+              <ul>
+                <li><strong>A page&rsquo;s pull</strong> (which panels the public page shows) has its own editor with <strong>Publish this pull</strong>, and its own return to the code default. The line above each editor says whether the page is showing a saved version, who saved it and the day, or the code default.</li>
+              </ul>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-pitch-no-publish-button',
+          question: 'There is no Publish button. Why?',
+          answer: (
+            <p>The button appears only when there is something to publish: you have changed the running order (or the pull) and it still has at least one slide, and for a deck of your own it has a name. Make a change and it appears; after you publish it goes away until the next change.</p>
+          ),
+          answerText: 'Publish appears only once there is a change to publish with at least one slide (and a name for your own deck). It goes away after publishing until the next change.',
+          keywords: ['publish missing', 'no publish button', 'create this deck missing'],
+        },
+      ],
+    },
+    {
       id: 'early-access-pipeline',
       group: 'Growth SOP',
       heading: 'How to work the leads pipeline',
@@ -1486,18 +1585,46 @@ const platformAdminHelp: HelpPageContent = {
       content: (
         <>
           <p><strong>Leads</strong> (once called Early access) is where every early-access form and every coach&rsquo;s &ldquo;tell me more&rdquo; lands. It has two views: <strong>Pipeline</strong>, the list, and <strong>Numbers</strong>, what has converted. Super admin, Product and Growth work leads; other roles see three counts on Business numbers and nothing else.</p>
-          <ol>
-            <li><strong>The steps.</strong> A lead moves through seven steps in the order the work happens: <strong>New → Contacted → Qualified → Pilot → Waiting for launch → Signed up</strong>, or <strong>Lost</strong>. The band at the top counts every lead in each step; press a step to list it.</li>
-            <li><strong>Needs you</strong> is the list the screen opens on: a new lead nobody has answered, a follow-up that has come due, a lead <strong>stuck</strong> for 30 days with no step change, note or follow-up (Waiting for launch is never stuck), and a sign-up to confirm. The menu&rsquo;s Leads count is this list. Pick <strong>Every lead</strong> for the rest.</li>
-            <li><strong>A lead&rsquo;s page</strong> reads first. Press the pencil to edit its step, source and source detail, next action and follow-up all at once; the check mark saves at once, and the &#10005; puts everything back. <strong>Lost</strong> needs a reason (Not a fit, Chose another tool, Price, Not this season, No reply after three tries, Asked not to be contacted); the check mark refuses until one is picked.</li>
-            <li><strong>Signed up</strong> is never picked from the list: it comes from linking a club or Coaches Portal. When a club signs up with a lead&rsquo;s email, the page offers it: <strong>Link the club</strong> or <strong>Not this club</strong> (never offered again). Nothing links by itself. To link a club whose address differs, press the pencil, then <strong>Link one by hand</strong>; demo clubs and staff test clubs are never offered. Unlinking puts the step back.</li>
-            <li><strong>Add a note</strong> opens a window. A note is dated and signed with your name and cannot be edited; a Super admin can remove one, which leaves &ldquo;A note was removed&rdquo; and no words. The <strong>timeline</strong> shows every step move, source, link, note and form, newest first.</li>
-            <li><strong>Email</strong> followed by the lead&rsquo;s first name holds the three outreach templates (League Plus early access, Club roadmap update, Feedback call), which copy with the lead&rsquo;s name filled in, and <strong>Mark contacted</strong>, which stamps today and moves a New lead to Contacted.</li>
-          </ol>
-          <p><strong>Numbers</strong> is read live when it opens, over every lead: <strong>Leads arrived</strong> (their first form in the period), <strong>Signed up</strong> (linked to a club or portal by a person), <strong>Pay now</strong> (their own plan is not Tournament, billing is active and a real subscription stands behind it; a trial, free time and a Founding Season comp are not paying), <strong>Time to sign up</strong> (to the day the club or portal was created, not the day it was linked) and <strong>New accounts</strong>. A figure that could not be read says <strong>Not read</strong>, never 0.</p>
-          <p><strong>Tools:</strong> <em>Copy emails</em> copies the addresses of the leads in the list on screen who said yes to release emails, never one who asked not to be contacted. <em>Export</em> takes every lead in the list, Excel first or CSV; a lead who asked not to be contacted has an empty email cell. Both are recorded in the audit log (who, when, how many), never with an address.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'early-access-pipeline-steps',
+          title: 'The steps and Needs you',
+          content: (
+            <>
+              <ul>
+                <li><strong>The steps.</strong> A lead moves through seven steps in the order the work happens: <strong>New → Contacted → Qualified → Pilot → Waiting for launch → Signed up</strong>, or <strong>Lost</strong>. The band at the top counts every lead in each step; press a step to list it.</li>
+                <li><strong>Needs you</strong> is the list the screen opens on: a new lead nobody has answered, a follow-up that has come due, a lead <strong>stuck</strong> for 30 days with no step change, note or follow-up (Waiting for launch is never stuck), and a sign-up to confirm. The menu&rsquo;s Leads count is this list. Pick <strong>Every lead</strong> for the rest.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'early-access-pipeline-lead',
+          title: 'A lead’s page: edit, link a club, notes and email',
+          content: (
+            <>
+              <ul>
+                <li><strong>A lead&rsquo;s page</strong> reads first. Press the pencil to edit its step, source and source detail, next action and follow-up all at once; the check mark saves at once, and the &#10005; puts everything back. <strong>Lost</strong> needs a reason (Not a fit, Chose another tool, Price, Not this season, No reply after three tries, Asked not to be contacted); the check mark refuses until one is picked.</li>
+                <li><strong>Signed up</strong> is never picked from the list: it comes from linking a club or Coaches Portal. When a club signs up with a lead&rsquo;s email, the page offers it: <strong>Link the club</strong> or <strong>Not this club</strong> (never offered again). Nothing links by itself. To link a club whose address differs, press the pencil, then <strong>Link one by hand</strong>; demo clubs and staff test clubs are never offered. Unlinking puts the step back. A lead who <strong>asked not to be contacted</strong> cannot be linked: the link would clear that reason, so change its step first if that has changed. If someone else links or moves the lead while you are linking, nothing is linked and the page asks you to open it again.</li>
+                <li><strong>Add a note</strong> opens a window. A note is dated and signed with your name and cannot be edited; a Super admin can remove one, which leaves &ldquo;A note was removed&rdquo; and no words. The <strong>timeline</strong> shows every step move, source, link, note and form, newest first.</li>
+                <li><strong>Email</strong> followed by the lead&rsquo;s first name holds the three outreach templates (League Plus early access, Club roadmap update, Feedback call), which copy with the lead&rsquo;s name filled in, and <strong>Mark contacted</strong>, which stamps today and moves a New lead to Contacted.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'early-access-pipeline-numbers',
+          title: 'Numbers, Copy emails and Export',
+          content: (
+            <>
+              <p><strong>Numbers</strong> is read live when it opens, over every lead: <strong>Leads arrived</strong> (their first form in the period), <strong>Signed up</strong> (linked to a club or portal by a person), <strong>Pay now</strong> (their own plan is not Tournament, billing is active and a real subscription stands behind it; a trial, free time and a Founding Season comp are not paying), <strong>Time to sign up</strong> (to the day the club or portal was created, not the day it was linked) and <strong>New accounts</strong>. A figure that could not be read says <strong>Not read</strong>, never 0. Days are counted in Eastern time: a lead whose form arrives at 9 p.m. belongs to that day and that month, not the next.</p>
+              <p><strong>Copy emails</strong> and <strong>Export</strong> are in the Tools menu. <em>Copy emails</em> copies the addresses of the leads in the list on screen who said yes to release emails, never one who asked not to be contacted. <em>Export</em> takes every lead in the list, Excel first or CSV; a lead who asked not to be contacted has an empty email cell. Both are recorded in the audit log (who, when, how many), never with an address, and the record is made first: if it cannot be written, the copy or the file is refused and nothing leaves. Only Super admin, Product and Growth see those entries&rsquo; details in the Audit log.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-ea-mark-converted',

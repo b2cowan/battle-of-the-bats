@@ -108,6 +108,7 @@ export default function PlatformAdminHelpPage() {
       steps: [
         { label: 'Manage the early-access lead pipeline', href: '/platform-admin/help/platform-admin#early-access-pipeline' },
         { label: 'Send a batch marketing email', href: '/platform-admin/help/platform-admin#email-batch-send' },
+        { label: 'Reorder and publish a pitch deck, or make a new one', href: '/platform-admin/help/platform-admin#pitch-decks' },
         { label: 'Review growth signals in Business numbers', href: '/platform-admin/business-numbers' },
       ],
     },
