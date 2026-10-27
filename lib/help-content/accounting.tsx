@@ -30,9 +30,9 @@ const accountingHelp: HelpPageContent = {
       id: 'accounting-tabs',
       group: 'Getting started',
       heading: 'Finding your way: one page, its tabs across the top',
-      summary: 'Overview, Budget, Teams, Ledger, Allocations, Payment requests and Budget vs. Actual — tabs across the top of one page.',
-      keywords: ['tabs', 'overview', 'board summary', 'teams tab', 'ledger tab', 'allocations tab', 'payment requests tab', 'budget', 'budget vs actual', 'navigation', 'where is'],
-      searchText: 'accounting tabs overview teams ledger allocations payment requests budget budget vs actual one page tab bar rail where is the ledger where are the teams where are allocations where are payment requests team account inside the teams tab team dropdown payees payees window allocation window opens over the tab where did the payees page go where did the allocation page go where did the back arrow go',
+      summary: 'Overview, Budget, Teams, Ledger, Allocations, Payment requests, Budget vs. Actual and Payouts — tabs across the top of one page.',
+      keywords: ['tabs', 'overview', 'board summary', 'teams tab', 'ledger tab', 'allocations tab', 'payment requests tab', 'budget', 'budget vs actual', 'navigation', 'where is', 'payouts tab', 'payouts', 'bank statement'],
+      searchText: 'payouts tab payouts match a payout to the bank statement stripe payouts only for a club that has connected payouts accounting tabs overview teams ledger allocations payment requests budget budget vs actual one page tab bar rail where is the ledger where are the teams where are allocations where are payment requests team account inside the teams tab team dropdown payees payees window allocation window opens over the tab where did the payees page go where did the allocation page go where did the back arrow go',
       content: (
         <>
           <p>Accounting is one page, and its tabs run across the top:</p>
@@ -44,8 +44,9 @@ const accountingHelp: HelpPageContent = {
             <HelpDef term="Payment requests">What the teams ask of the club, waiting for your answer.</HelpDef>
             <HelpDef term="Budget">The year’s plan, revenue first and then expenses, line by line.</HelpDef>
             <HelpDef term="Budget vs. Actual">The year’s plan against what the club’s books actually moved.</HelpDef>
+            <HelpDef term="Payouts">The last tab. Each Stripe payout to the club’s bank account and what is inside it, so a line on the bank statement can be matched to the payments behind it. See <a href="#payouts-tab">Matching a payout to your bank statement</a>.</HelpDef>
           </HelpDefs>
-          <p><strong>Teams</strong>, <strong>Allocations</strong> and <strong>Payment requests</strong> appear only when your club runs rep teams. <strong>Payees</strong> and an <strong>allocation</strong> open as windows over the tab you are on, and closing one puts you back where you were. A <a href="#team-account">team’s account</a> opens inside the Teams tab: the tabs stay, and a <strong>Team</strong> dropdown moves you to another team.</p>
+          <p><strong>Teams</strong>, <strong>Allocations</strong> and <strong>Payment requests</strong> appear only when your club runs rep teams. <strong>Payouts</strong> appears only once the club has connected payouts for online payments; a club that never did has no Payouts tab. <strong>Payees</strong> and an <strong>allocation</strong> open as windows over the tab you are on, and closing one puts you back where you were. A <a href="#team-account">team’s account</a> opens inside the Teams tab: the tabs stay, and a <strong>Team</strong> dropdown moves you to another team.</p>
         </>
       ),
     },
@@ -599,6 +600,91 @@ const accountingHelp: HelpPageContent = {
           <p>Export from the <strong>Export</strong> menu — Excel and CSV are available on all plans; the <strong>PDF</strong> needs Tournament Plus or above, and is always the whole-year statement.</p>
         </>
       ),
+    },
+    {
+      group: 'The club and its teams',
+      id: 'payouts-tab',
+      heading: 'Matching a payout to your bank statement',
+      summary: 'The Payouts tab lists each Stripe payout to the club’s bank account and what is inside it, so you can reconcile a deposit to the payments, refunds and fees behind it.',
+      keywords: ['payouts', 'payout', 'payouts tab', 'bank statement', 'reconcile', 'reconciliation', 'match a deposit', 'deposit', 'stripe payout', 'on its way', 'didn’t arrive', 'payout failed', 'manual payout', 'find an amount', 'export payouts', 'online payments', 'treasurer'],
+      searchText: 'payouts tab match a stripe payout to the bank statement reconcile deposit what is inside a payout sent arrives status amount on its way paid 9 payments 1 refund didn’t arrive who fixes it in stripe amber pill open stripe clears itself next payout working account find an amount a name or a receipt number 1284.50 export excel csv one row per line payout beside it stripe lists what’s inside automatic payouts only manual payout pressed in stripe lists nothing stripe is still listing what’s inside look again in a few minutes not from fieldlogichq payment made in stripe directly refund to the card refund to the bank account returned by the bank processing fee returned dispute dispute won stripe fee from a payout that didn’t arrive amounts are what reached the club after the processing fee when the club pays it read only treasurer never refunds house league families tournament teams card bank debit a club without accounting payouts to your bank settings payouts card closed disclosure on its way last paid paid out to the bank account ending test mode only for a club that has connected payouts',
+      links: [
+        { label: 'Settings', href: '../org/settings' },
+      ],
+      content: (
+        <>
+          <p>The <strong>Payouts</strong> tab is where you match a line on the bank statement to the payments behind it. Stripe pays the club out in batches; each batch is one payout, and the tab opens it to show who paid. It is read only: nothing on it moves money, and the treasurer never refunds from here.</p>
+          <p>Everyone who can read Accounting can open it. It appears only once the club has connected payouts. Pick a question below.</p>
+        </>
+      ),
+      subtopics: [
+        {
+          id: 'payouts-tab-list',
+          title: 'Read the list of payouts',
+          content: (
+            <>
+              <p>The Payouts tab lists every payout, newest first, under a line that names the bank account it was paid to (<em>Paid out to the bank account ending 1234</em>). It opens on the dates since the first of last month; the date field changes that, and <em>No payouts in these dates</em> means none were sent in the dates you picked.</p>
+              <HelpDefs>
+                <HelpDef term="Sent">The day Stripe sent the payout.</HelpDef>
+                <HelpDef term="Arrives">The day the money reaches the bank account.</HelpDef>
+                <HelpDef term="Status"><strong>On its way</strong>, <strong>Paid</strong> (with a quiet count beside it, such as <em>9 payments, 1 refund</em>), or <strong>Didn&rsquo;t arrive</strong>.</HelpDef>
+                <HelpDef term="Amount">What the bank account received, or will. It is what reached the club: after the processing fee when the club pays it.</HelpDef>
+              </HelpDefs>
+              <HelpNote variant="info" title="New club, empty list">Until the first payment is made, the list reads <em>No payouts yet. Stripe sends the first one on its schedule after the first payment.</em> If Stripe doesn&rsquo;t answer, the tab says so with a <strong>Try again</strong> button; it never shows an old list as if it were current.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'payouts-tab-inside',
+          title: 'See what is inside a payout',
+          content: (
+            <>
+              <p>Open a payout (press its row) to see what it is made of. Each line has a <strong>Date</strong>, <strong>Who</strong>, <strong>What</strong>, <strong>Receipt</strong> and <strong>Amount</strong>, and the last line is the payout&rsquo;s total, <em>Paid to the bank account ending 1234 on</em> its day.</p>
+              <HelpDefs>
+                <HelpDef term="A payment">A family&rsquo;s house-league fee or a team&rsquo;s tournament fee, by name and receipt number, with how it was paid: <em>House league &middot; card</em>, or the tournament, its fee and <em>bank debit</em>.</HelpDef>
+                <HelpDef term="A refund">A negative line: <em>Refund to the card</em> or <em>Refund to the bank account</em>.</HelpDef>
+                <HelpDef term="Returned by the bank">A bank debit the bank took back, and, beside it, <em>Processing fee returned</em> when our processing fee came back with it.</HelpDef>
+                <HelpDef term="Dispute and Dispute won">The day Stripe took the money for a card dispute, and, later, the money coming back if the club won.</HelpDef>
+                <HelpDef term="Stripe fee">A Stripe fee taken from the club&rsquo;s own balance.</HelpDef>
+                <HelpDef term="From a payout that didn&rsquo;t arrive">Money an earlier failed payout left in Stripe, carried by this one.</HelpDef>
+                <HelpDef term="Not from FieldLogicHQ">A payment made in Stripe directly. It is named for what it is, and never guessed to be a person.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'payouts-tab-find',
+          title: 'Find a payout and export the list',
+          content: (
+            <>
+              <p><strong>Find an amount, a name or a receipt</strong> narrows the list. Type the amount as the bank statement prints it, such as <em>1284.50</em>, and the payout of that amount stays (so does a payout holding a single payment of that amount); a family&rsquo;s or team&rsquo;s name, or a receipt number, finds the payout holding that payment.</p>
+              <p><strong>Export</strong> (Excel first, then CSV) writes one row per line, with its payout&rsquo;s dates, status and amount beside it, for the dates and the search on screen. A payout that lists nothing gets one row that says why.</p>
+              <HelpNote variant="info" title="Search the dates you picked">Find and Export only cover the dates in the date field. If a payout isn&rsquo;t found, widen the dates first.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'payouts-tab-limits',
+          title: 'A payout that lists nothing, or didn’t arrive',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="A manual payout">A payout someone pressed in Stripe lists nothing. It reads <em>Stripe lists what&rsquo;s inside automatic payouts only.</em> That is Stripe&rsquo;s own limit.</HelpDef>
+                <HelpDef term="Still matching">A recent payout can read <em>Stripe is still listing what&rsquo;s inside this payout. Look again in a few minutes.</em></HelpDef>
+                <HelpDef term="Didn&rsquo;t arrive">The bank account didn&rsquo;t take the payout, sometimes with a reason such as <em>the bank account is closed</em> or <em>the bank account details aren&rsquo;t valid</em>. The money stays in the club&rsquo;s Stripe balance. The treasurer sees <em>Didn&rsquo;t arrive</em> with the name of the person who fixes it in Stripe, the person who set up payouts. That person sees an amber <strong>Didn&rsquo;t arrive</strong> pill that opens Stripe.</HelpDef>
+              </HelpDefs>
+              <HelpNote variant="info" title="It clears itself">A payout that didn&rsquo;t arrive clears itself when Stripe&rsquo;s next payout to a working account goes through and carries the money. That payout lists the money as <em>From a payout that didn&rsquo;t arrive</em>.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'payouts-tab-no-accounting',
+          title: 'A club without Accounting',
+          content: (
+            <p>A club that doesn&rsquo;t have Accounting has no Payouts tab, so the owner reads the same list on <strong>Settings &rsaquo; Payouts</strong>. The card has a line, <strong>Payouts to your bank</strong>, closed every time the card opens. Its summary answers whether money is coming, for example <em>$600.00 on its way &middot; last paid $1,284.50 on Oct 20</em>, and opening it shows the same list, with the same Find and Export.</p>
+          ),
+        },
+      ],
     },
     {
       group: 'How accounting works',

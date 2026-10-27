@@ -1123,8 +1123,8 @@ const orgHelp: HelpPageContent = {
       id: 'settings',
       heading: 'Settings and your web address',
       summary: 'The owner-only Settings page: your organization’s name, web address, Payouts for online payments, and account deletion. Your public site’s logo, colours, type and switch are in Public site.',
-      keywords: ['settings', 'payouts', 'online payments', 'families pay by card', 'house league pay by card', 'families and teams pay it', 'stripe', 'processing fee', 'bank debit', 'bank debit rate', 'card rate', 'returned bank debit', 'returned bank debit fee', 'web address', 'org slug', 'url slug', 'organization details', 'delete organization', 'open public site', 'public site switch', 'listed in the directory', 'online offline', 'public site editor', 'turn off public site', 'take site offline', 'site isn’t available', 'team pages offline', 'tryouts offline', 'tournament pages stay up', 'logo', 'colours', 'branding', 'where did branding go', 'birthdays count from', 'birthday cut-off', 'cut-off date', 'birth year', 'born', 'age', 'age group', 'january 1', 'september 1'],
-      searchText: 'payouts card settings payouts let teams pay online families pay by card house league registration fees families and teams pay it the club pays it stripe connect processing fee who pays it refund policy disconnect payouts bank debit both rates per card payment per bank debit bank debits still clearing returned bank debit line next fieldlogichq invoice card dispute fee card issued outside your country card from another country foreign card extra fee invoice of its own stripe fees passed on every club owner only org settings owner only organization details name web address url slug org slug change redirect save button delete organization account deletion danger zone your public site door card open public site its logo colours type and whether it is online are set in public site branding logo stock logo colours hero banner banner photo font type moved to public site look visibility card style tournament branding page public site switch online offline listed in the directory discover directory take the club offline what goes offline every club page home teams team pages tryouts tryout sign up league archives team calendars subscribed calendars go empty tournament pages stay up this club’s site isn’t available site isnt available coaches sharing note when birthdays count from per sport month day dropdown default january 1 count softball birthdays from keep january 1 change every team and house-league division shows its birth years re-read one birth year show none until you set it again born sep 1 2013 aug 31 2015 age cut-off birth years owner only',
+      keywords: ['settings', 'payouts', 'online payments', 'families pay by card', 'house league pay by card', 'families and teams pay it', 'stripe', 'processing fee', 'bank debit', 'bank debit rate', 'card rate', 'returned bank debit', 'returned bank debit fee', 'web address', 'org slug', 'url slug', 'organization details', 'delete organization', 'open public site', 'public site switch', 'listed in the directory', 'online offline', 'public site editor', 'turn off public site', 'take site offline', 'site isn’t available', 'team pages offline', 'tryouts offline', 'tournament pages stay up', 'logo', 'colours', 'branding', 'where did branding go', 'birthdays count from', 'birthday cut-off', 'cut-off date', 'birth year', 'born', 'age', 'age group', 'january 1', 'september 1', 'payments terms', 'new payments terms', 'read and agree', 'payouts tab', 'bank statement', 'leaving online payments'],
+      searchText: 'payments terms agreed by read the terms new payments terms to agree to read and agree payouts tab match a payout to the bank statement reconcile payouts to your bank leaving online payments disconnect downgrade cancel delete payouts card settings payouts let teams pay online families pay by card house league registration fees families and teams pay it the club pays it stripe connect processing fee who pays it refund policy disconnect payouts bank debit both rates per card payment per bank debit bank debits still clearing returned bank debit line next fieldlogichq invoice card dispute fee card issued outside your country card from another country foreign card extra fee invoice of its own stripe fees passed on every club owner only org settings owner only organization details name web address url slug org slug change redirect save button delete organization account deletion danger zone your public site door card open public site its logo colours type and whether it is online are set in public site branding logo stock logo colours hero banner banner photo font type moved to public site look visibility card style tournament branding page public site switch online offline listed in the directory discover directory take the club offline what goes offline every club page home teams team pages tryouts tryout sign up league archives team calendars subscribed calendars go empty tournament pages stay up this club’s site isn’t available site isnt available coaches sharing note when birthdays count from per sport month day dropdown default january 1 count softball birthdays from keep january 1 change every team and house-league division shows its birth years re-read one birth year show none until you set it again born sep 1 2013 aug 31 2015 age cut-off birth years owner only',
       content: (
         <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It holds <strong>Organization details</strong> (your organization&rsquo;s name and web address), <strong>When birthdays count from</strong>, a card that points to <strong>Public site</strong>, <strong>Payouts</strong> (letting teams pay online by card), and <strong>Delete organization</strong>. Your public site&rsquo;s logo, colours, type, banner and on/off switch are set in <strong>Public site</strong>, not here.</p>
       ),
@@ -1135,7 +1135,16 @@ const orgHelp: HelpPageContent = {
           content: (
             <>
               <p>On the League and Club plans, <strong>Payouts</strong> is a card on Settings, after <strong>Your public site</strong> and before <strong>Delete organization</strong>. The owner connects the organization&rsquo;s own Stripe account there, chooses who pays the processing fee (<strong>Families and teams pay it</strong> or <strong>The club pays it</strong>; on Tournament Plus the first reads <strong>Teams pay it</strong>), can write a one- or two-sentence <strong>Refund policy</strong> that teams see beside the pay button, and can <strong>Disconnect payouts</strong>. The card prints both rates, <em>Processing fee: &hellip; per card payment, &hellip; per bank debit</em>, from FieldLogicHQ&rsquo;s current rates; an account that doesn&rsquo;t take bank debit shows the card rate alone. <strong>Before you set up payouts</strong> says the same under <em>What it costs</em>, with a worked line for an example fee by card and by bank debit.</p>
-              <p>The choice is one setting for the whole organization. It covers teams paying tournament entry fees and families paying house-league registration fees by card, and house-league families see <strong>Pay now</strong> only once payouts are set up. Only the owner connects; a treasurer sees the state as a line on the Accounting Overview and on a season&rsquo;s Money page. Bank debit is offered to families and teams only once Stripe has approved your account for it. <strong>Disconnect payouts?</strong> says how many bank debits are still clearing; they finish, and their money still reaches you. Stripe can charge other fees on your payments: when a bank debit comes back, when a card payment is disputed, and when a card issued outside your country is used. The card says so under the rates: <em>Other Stripe fees, such as for disputes, returned bank debits and cards issued outside your country, are billed to the club.</em> FieldLogicHQ passes them on to every club on every plan, and the family or team pays the ordinary price; see <a href="../help/org#stripe-fees">Stripe fees on your online payments</a>. It needs a plan that includes online payments, and the card isn&rsquo;t shown where they&rsquo;re not offered. The full guide, including what teams see and how refunds work, is <a href="../help/tournaments#online-payments">Let teams pay online by card</a> in the Tournaments guide.</p>
+              <p>The choice is one setting for the whole organization. It covers teams paying tournament entry fees and families paying house-league registration fees by card, and house-league families see <strong>Pay now</strong> only once payouts are set up. Only the owner connects; a treasurer sees the state as a line on the Accounting Overview and on a season&rsquo;s Money page. Bank debit is offered to families and teams only once Stripe has approved your account for it.</p>
+            </>
+          ),
+        },
+        {
+          id: 'settings-t-payouts-related',
+          title: 'Payouts: terms, the payouts list and Stripe fees',
+          content: (
+            <>
+              <p><strong>Disconnect payouts?</strong> counts what is still outstanding before you confirm; see <a href="#leaving-online-payments">Leaving online payments</a>. The card&rsquo;s record also shows <strong>Payments terms</strong>: who agreed, when and to which version, and it asks you to agree again if FieldLogicHQ&rsquo;s terms change (see <a href="../help/tournaments#online-payments-terms">The payments terms</a>). To match a payout to a line on the bank statement, use the <strong>Payouts</strong> tab in Accounting (see <a href="../help/accounting#payouts-tab">Matching a payout to your bank statement</a>); a club without Accounting finds the same list on this card under <strong>Payouts to your bank</strong>. Stripe can charge other fees on your payments: when a bank debit comes back, when a card payment is disputed, and when a card issued outside your country is used. The card says so under the rates: <em>Other Stripe fees, such as for disputes, returned bank debits and cards issued outside your country, are billed to the club.</em> FieldLogicHQ passes them on to every club on every plan, and the family or team pays the ordinary price; see <a href="../help/org#stripe-fees">Stripe fees on your online payments</a>. It needs a plan that includes online payments, and the card isn&rsquo;t shown where they&rsquo;re not offered. The full guide, including what teams see and how refunds work, is <a href="../help/tournaments#online-payments">Let teams pay online by card</a> in the Tournaments guide.</p>
             </>
           ),
         },
@@ -1252,6 +1261,86 @@ const orgHelp: HelpPageContent = {
                 <HelpDef term="Couldn&rsquo;t be billed yet">FieldLogicHQ sees it and bills it again. There is nothing for you to do.</HelpDef>
                 <HelpDef term="Not billed: test mode">Nothing moves while payouts are in test mode.</HelpDef>
               </HelpDefs>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'leaving-online-payments',
+      heading: 'Leaving online payments: disconnect, a plan move, cancel and delete',
+      summary: 'What happens to Pay now, pay pages, bank debits, refunds and disputes when online payments stop, and why none of it disconnects your Stripe account.',
+      keywords: ['leaving online payments', 'disconnect payouts', 'disconnect', 'online payments stop', 'online payments stop on', 'online payments stop now', 'online payments off', 'downgrade', 'move to a plan without online payments', 'cancel', 'cancel and suspend', 'suspended', 'delete', 'ask us to delete', 'your online payments', 'pay now stops', 'pay pages close', 'how to pay', 'bank debits clearing', 'open card disputes', 'stripe account stays yours', 'payouts stay connected', 'free time ending', 'subscription payment failed', 'needs attention', 'payouts card'],
+      searchText: 'leaving online payments the one rule no ending disconnects your stripe account pay now stops pay pages open close bank debits already clearing finish refunds and disputes of payments already made keep working payouts stay connected disconnect payouts window counts families who still owe a house league fee teams who still owe a tournament fee pay pages open right now bank debits clearing open card disputes answer in stripe by the due date write it now how to pay text empty moving to a plan without online payments online payments stop on date pay now becomes how to pay open pay pages close wind down online payments off open stripe the record the payouts list disconnect moving back up turns online payments on again cancel and suspend online payments stop now stripe account stays yours keeps paying out refunds handled in stripe while suspended ask us to delete request account deletion your online payments we wait for open card disputes and clearing debits we disconnect your payouts before deleting export records from accounting first an ending you did not choose free time running out warned 7 days ahead a subscription payment that failed warned the day it fails notice on the payouts card needs attention item one email downgrade plan billing owner only',
+      links: [
+        { label: 'Plan & billing', href: '../org/billing' },
+        { label: 'Settings', href: '../org/settings' },
+      ],
+      content: (
+        <p>Online payments stop in four ways: the owner disconnects payouts, the club moves to a plan without them, the subscription is cancelled, or the club asks to be deleted. Every one of them tells the owner what is still outstanding first, and every one follows the same rule.</p>
+      ),
+      subtopics: [
+        {
+          id: 'leaving-online-payments-rule',
+          title: 'The one rule: your Stripe account stays yours',
+          content: (
+            <>
+              <p>No ending disconnects the club&rsquo;s Stripe account. When online payments stop:</p>
+              <HelpDefs>
+                <HelpDef term="Stops">Pay now is no longer offered. Families and teams see your <strong>How to pay</strong> text instead, and every pay page that is open closes.</HelpDef>
+                <HelpDef term="Finishes">Bank debits already clearing finish, and their money still reaches you.</HelpDef>
+                <HelpDef term="Keeps working">Refunds, and disputes, of payments already made.</HelpDef>
+                <HelpDef term="Stays connected">Your payouts. Moving back up to a plan with online payments turns them on again.</HelpDef>
+              </HelpDefs>
+              <p>Only the owner disconnects, moves plans or cancels.</p>
+            </>
+          ),
+        },
+        {
+          id: 'leaving-online-payments-disconnect',
+          title: 'Disconnect payouts?',
+          content: (
+            <>
+              <p>The window <strong>Disconnect payouts?</strong> opens from <strong>Disconnect payouts</strong> at the end of the Payouts card. Before you confirm, it tells you:</p>
+              <ul>
+                <li>how many families still owe a house-league fee and how many teams still owe a tournament fee (they can pay you another way);</li>
+                <li>how many pay pages are open right now, and that they close when you disconnect;</li>
+                <li>how many bank debits are still clearing, which finish and still reach you;</li>
+                <li>how many card disputes are open, which you answer in Stripe by their due dates, while Stripe holds their money until the banks decide;</li>
+                <li>that payments already made stay in your books, and that refunds of them are made in Stripe.</li>
+              </ul>
+              <p><strong>Set up payouts again</strong> turns online payments back on.</p>
+            </>
+          ),
+        },
+        {
+          id: 'leaving-online-payments-move',
+          title: 'Moving to a plan without online payments',
+          content: (
+            <>
+              <p>When the club has payouts connected and moves to a plan that doesn&rsquo;t include online payments, the move window on <strong>Plan &amp; billing</strong> adds a section, <strong>Online payments stop on</strong> the move date. It says families and teams see your How to pay text instead of Pay now, that open pay pages close then, how many families and teams still owe today, that bank debits clearing finish, that refunds and disputes keep working, and that your payouts stay connected.</p>
+              <p>On the move date, <strong>Pay now</strong> becomes <strong>How to pay</strong> and open pay pages close. The Payouts card reads <strong>Online payments off</strong>, and keeps <strong>Open Stripe</strong>, the record, the payouts list and <strong>Disconnect payouts</strong>.</p>
+              <HelpNote variant="info" title="An ending you didn&rsquo;t choose">When free time from FieldLogicHQ is running out, or a subscription payment fails, you click nothing, so you are told instead: a notice on the Payouts card, a Needs attention item and one email, <em>Online payments stop on</em> the date. Free time warns you 7 days ahead; a failed subscription payment warns you the day it fails.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'leaving-online-payments-cancel',
+          title: 'Cancel and suspend',
+          content: (
+            <>
+              <p>When payouts are connected, the cancel window adds <strong>Online payments stop now</strong>: nobody can pay you online and open pay pages close. It counts the families and teams who still owe, the pay pages open right now, and the bank debits still clearing, which finish and reach your bank.</p>
+              <p>Your Stripe account stays yours, and money in it keeps paying out to your bank. While you are suspended, refunds and any open disputes are handled in Stripe.</p>
+            </>
+          ),
+        },
+        {
+          id: 'leaving-online-payments-delete',
+          title: 'Ask us to delete',
+          content: (
+            <>
+              <p>When payouts are or were connected, <strong>Request account deletion</strong> in Settings adds <strong>Your online payments</strong>. We wait for open card disputes and bank debits still clearing to finish before deleting. We close the pay pages and disconnect your payouts first, and your Stripe account stays yours, with any money in it.</p>
+              <HelpNote variant="warning" title="Export your records first">Your payment records here are deleted with everything else. Export them first from Accounting.</HelpNote>
             </>
           ),
         },

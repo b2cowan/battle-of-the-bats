@@ -35,7 +35,7 @@ const platformAdminHelp: HelpPageContent = {
               <HelpDefs>
                 <HelpDef term="Today">What is waiting on us. It sits alone at the top.</HelpDef>
                 <HelpDef term="Customers"><strong>Clubs &amp; portals</strong>, <strong>People</strong>, <strong>Founding season</strong> (accounts on a free season) and <strong>Retention</strong>.</HelpDef>
-                <HelpDef term="Health"><strong>Status</strong> (is the platform healthy right now), <strong>Errors</strong>, <strong>Feedback</strong> and <strong>Sent emails</strong> (Super admin, Support and Billing only).</HelpDef>
+                <HelpDef term="Health"><strong>Status</strong> (is the platform healthy right now), <strong>Errors</strong>, <strong>Feedback</strong>, <strong>Sent emails</strong> and <strong>Online payments</strong> (Super admin, Support and Billing only for the last two).</HelpDef>
                 <HelpDef term="Growth"><strong>Leads</strong>, <strong>Campaigns</strong>, <strong>Pitch decks</strong> and <strong>Business numbers</strong> (every role can open the last one).</HelpDef>
                 <HelpDef term="Product"><strong>Plans &amp; pricing</strong>, <strong>Approval queue</strong>, <strong>Bulk changes</strong>, <strong>Email templates</strong> and <strong>Export registry</strong> (every way data leaves the product, read-only).</HelpDef>
                 <HelpDef term="Records"><strong>Staff</strong> and the <strong>Audit log</strong>.</HelpDef>
@@ -55,7 +55,7 @@ const platformAdminHelp: HelpPageContent = {
               <p><strong>Today</strong> is the first page after sign-in: one table of what is waiting on us, grouped like the menu. Each row is a queue, why its items wait, and how many are waiting as an amber count. A row opens the list that clears it; a queue with nothing waiting folds into a quiet <em>Clear: &hellip;</em> line.</p>
               <ul>
                 <li><strong>Customers:</strong> owner inactive (30 days), retention, missing owner, past due, trials ending and free time ending (both within 14 days).</li>
-                <li><strong>Health:</strong> new errors and new feedback.</li>
+                <li><strong>Health:</strong> new errors, new feedback, and, for Super admin, Billing and Support, clubs whose online payments need a look.</li>
                 <li><strong>Growth:</strong> <strong>New leads</strong> (a lead nobody has answered yet), <strong>Follow-ups due</strong> (a lead whose follow-up date has come), <strong>Sign-up to confirm</strong> (a club signed up with a lead&rsquo;s email; is it theirs?), then campaigns past due and campaigns due soon. The three lead rows open Leads and count only for Super admin, Product and Growth.</li>
                 <li><strong>Product:</strong> the approval queue.</li>
               </ul>
@@ -143,6 +143,7 @@ const platformAdminHelp: HelpPageContent = {
             <HelpDef term="Leads, Campaigns, Pitch decks (every write)">Super admin, Product and Growth.</HelpDef>
             <HelpDef term="Staff and roles, and Records opened in the Audit log">Super admin only.</HelpDef>
             <HelpDef term="Find&rsquo;s Stripe numbers">Super admin, Billing and Support.</HelpDef>
+            <HelpDef term="A club&rsquo;s Online payments tab and Health &rsaquo; Online payments">Super admin, Billing and Support. Both are read only for every role.</HelpDef>
           </HelpDefs>
         </>
       ),
@@ -151,7 +152,7 @@ const platformAdminHelp: HelpPageContent = {
       id: 'club-record',
       group: 'Support SOP',
       heading: 'How to read and change a club\'s record',
-      summary: 'The four tabs of a club\'s record, the one pencil, the confirm window, and Put it back.',
+      summary: 'The tabs of a club\'s record, the one pencil, the confirm window, and Put it back.',
       keywords: ['club record', 'organization record', 'org detail', 'story', 'money tab', 'access tab', 'people & tournaments', 'pencil', 'edit club', 'check mark', 'confirm window', 'why', 'reason', 'put it back', 'undo', 'web name', 'rename club', 'change plan', 'tournament limit', 'team limit', 'sections', 'billing', 'entitlements', 'support tab', 'activity', 'band', 'pays through stripe', 'plan changes in stripe', 'first purchase', 'made outside the console'],
       searchText: 'club pays through stripe so its plan changes there stripe still bills subscription not cancelled in stripe plan field replaced by one line bought a plan charged refunds in the story made outside the console club record organization detail story money access people and tournaments tabs one pencil edits the whole record check mark opens confirm window states every change in one sentence asks why reason required kept put it back undo plan change limits section turned on off running override end early never anything that reached stripe or an inbox newest plan entry still in force trial writes a new entry marked put back editing nothing changes until you press the check mark changes held name web name plan tournament limit team limit sections in the plan show more search the story type staff changes billing notes emails people feedback not recorded teams brought in add a note email the owner make owner release this address add an override cancel the subscription delete the club old record billing entitlements support activity',
       links: [
@@ -173,6 +174,7 @@ const platformAdminHelp: HelpPageContent = {
                 <HelpDef term="Money">Our record beside Stripe&rsquo;s live reading, the charges, and refunds for Billing and Super admin (see <em>How to read a club&rsquo;s Money tab and refund a charge</em>).</HelpDef>
                 <HelpDef term="Access">Plan and limits, sections, free time and the club&rsquo;s own web address. <strong>Cancel the subscription</strong> and <strong>Delete the club</strong> end the tab.</HelpDef>
                 <HelpDef term="People &amp; tournaments">Members (each opens that person&rsquo;s record), tournaments that are not archived, and <strong>Teams brought in</strong> when there are any.</HelpDef>
+                <HelpDef term="Online payments">Read only, for a club that has connected payouts, and for Super admin, Billing and Support (see <em>How to read a club&rsquo;s Online payments</em>).</HelpDef>
               </HelpDefs>
               <p>A link written for the old record still lands on the right tab: Billing opens Money; Entitlements and Support open Access; Activity opens Story.</p>
             </>
@@ -375,6 +377,81 @@ const platformAdminHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'club-online-payments',
+      group: 'Support SOP',
+      heading: 'How to read a club\'s Online payments',
+      summary: 'A club\'s Online payments tab, the Health list of clubs whose online payments need a look, and why Delete refuses while money is in flight.',
+      keywords: ['online payments', 'online payments tab', 'health online payments', 'needs a look', 'dispute', 'open dispute', 'card dispute', 'show the player', 'stripe messages', 'stopped retrying', 'fees billed to the club', 'stripe fee', 'terms', 'payments terms', 'clearing', 'bank debit', 'payouts', 'a family paid and it isn\'t there', 'delete refuses', 'money in flight', 'read only'],
+      searchText: 'online payments tab a club says a family paid and it isnt there account terms last 30 days clearing open disputes tiles panel receipt show the player opening a name is logged stripe messages we couldn’t process stopped retrying older than 30 days fees billed to the club retry stays on the money tab health online payments needs a look club what since open disputes by answer by date disconnected with a dispute open stripe closed the account stripe messages failed a stripe fee couldn’t be billed an invoice for stripe fees is unpaid not on the current payments terms a row leaves when it clears today counts the list super admin billing support read only test mode nothing here is real money delete refuses money in flight open dispute clearing debit stripe fee unbilled failed unpaid fee invoice wait for them to finish then delete payouts tab never connected no tab',
+      links: [
+        { label: 'Online payments', href: '/platform-admin/online-payments' },
+        { label: 'Clubs & portals', href: '/platform-admin/orgs' },
+      ],
+      content: (
+        <p>A club&rsquo;s <strong>Online payments</strong> tab answers &ldquo;a family paid and it isn&rsquo;t there&rdquo;, and <strong>Health &rsaquo; Online payments</strong> is the morning check that nothing is stuck. Both are read only, and open to Super admin, Billing and Support. Nothing on either one writes, and a card or bank number is never shown.</p>
+      ),
+      subtopics: [
+        {
+          id: 'club-online-payments-tab',
+          title: 'Read a club\'s Online payments tab',
+          content: (
+            <>
+              <p>Open the club&rsquo;s record and choose <strong>Online payments</strong>. The tab shows only for a club that has connected payouts, and stays after a downgrade or a cancel, because that is when its open disputes matter most. In test mode it opens with <em>Test mode. Nothing here is real money.</em> Five tiles open their panel:</p>
+              <HelpDefs>
+                <HelpDef term="Account">Taking payments, Setting up, Needs attention or Disconnected, with who connected or disconnected it and when, how online payments ended if they did (<em>the plan moved to</em> a plan, or <em>the organization was suspended</em>), and a line when Stripe closed the account.</HelpDef>
+                <HelpDef term="Terms">Draft, Version of a date, or Out of date, with when the owner agreed.</HelpDef>
+                <HelpDef term="Last 30 days">The total, with the count of payments and refunds.</HelpDef>
+                <HelpDef term="Clearing">How many bank debits are still clearing.</HelpDef>
+                <HelpDef term="Open disputes">How many, with the Stripe fees on them so far.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'club-online-payments-panels',
+          title: 'Disputes, Stripe messages and fees',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="Open disputes">One row per payment, by receipt number and where it was (house league, or the tournament), with <strong>Why</strong>, <strong>Answer by</strong> and <strong>Held</strong>. <strong>Show the player</strong> names the child or team; opening a name is logged, and the page says so.</HelpDef>
+                <HelpDef term="Stripe messages we couldn&rsquo;t process">Shown only when a message is failing, with <strong>Message</strong>, <strong>Error</strong>, <strong>Received</strong> and <strong>Tries</strong>. Messages still failing after 30 days fold under <strong>Stopped retrying</strong>, so the panel never becomes permanent noise.</HelpDef>
+                <HelpDef term="Fees billed to the club">Each Stripe fee passed on to the club and where it was billed. <strong>Retry</strong> is not here: it stays on the club&rsquo;s Money tab.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'club-online-payments-health',
+          title: 'Health › Online payments: Needs a look',
+          content: (
+            <>
+              <p><strong>Health &rsaquo; Online payments</strong> lists every club that needs a look, most urgent first, with the club, what is wrong and since when. A row opens that club&rsquo;s Online payments tab. A row is there for:</p>
+              <ul>
+                <li>open disputes, by answer-by date;</li>
+                <li>a club that is disconnected with a dispute still open;</li>
+                <li>Stripe closing the account;</li>
+                <li>Stripe messages that failed;</li>
+                <li>a Stripe fee that couldn&rsquo;t be billed;</li>
+                <li>an invoice for Stripe fees that is unpaid;</li>
+                <li>a club not on the current payments terms, once final terms exist.</li>
+              </ul>
+              <p>A row leaves when it clears: the dispute closes, the message is processed, the account reconnects or the invoice is paid. When nothing is wrong it reads <em>Nothing needs a look.</em> The amber count beside <strong>Online payments</strong> in the menu, and its row in Health on <strong>Today</strong>, count this list.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-online-payments-delete',
+          title: 'Why Delete refuses while money is in flight',
+          content: (
+            <>
+              <p>The <strong>Delete the club</strong> window refuses while the club&rsquo;s online payments have money in flight, and names each: an open card dispute, a bank debit still clearing, a Stripe fee not yet billed, a Stripe fee that couldn&rsquo;t be billed, or an unpaid invoice for Stripe fees. It says to wait for them to finish, then delete; the club&rsquo;s Online payments tab shows each one.</p>
+              <HelpNote variant="info" title="Deleting never closes the Stripe account">Deletion disconnects the club&rsquo;s payouts first, and the Stripe account stays the club&rsquo;s own. Cancelling or moving a club to a plan without online payments never disconnects it either.</HelpNote>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       id: 'reset-password',
       group: 'Support SOP',
       heading: 'How to reset a customer password',
@@ -553,10 +630,10 @@ const platformAdminHelp: HelpPageContent = {
     {
       id: 'module-access',
       group: 'Product SOP',
-      heading: 'How to provide module access for an unsubscribed account',
+      heading: 'How to give an unsubscribed account extra features',
       summary: 'Turn a section on for one club without changing the plan feature matrix.',
-      keywords: ['module', 'addon', 'add-on', 'entitlement', 'section', 'sections', 'unsubscribed', 'house league', 'rep teams', 'accounting', 'public site', 'access tab', 'pencil'],
-      searchText: 'how do i provide access to modules for unsubscribed override billing requirements enable addon module access house league rep teams accounting public site sections in the plan pencil check mark confirm save changes feature access timed override access tab put it back super admin product',
+      keywords: ['extra features', 'extra feature', 'module', 'addon', 'add-on', 'entitlement', 'section', 'sections', 'unsubscribed', 'house league', 'rep teams', 'accounting', 'public site', 'access tab', 'pencil'],
+      searchText: 'how do i give extra features extra feature access to modules for unsubscribed override billing requirements enable addon module access house league rep teams accounting public site sections in the plan pencil check mark confirm save changes feature access timed override access tab put it back super admin product',
       links: [
         { label: 'Clubs & portals', href: '/platform-admin/orgs' },
         { label: 'Plans & pricing', href: '/platform-admin/plans-pricing' },
@@ -574,7 +651,7 @@ const platformAdminHelp: HelpPageContent = {
             <li>Ask the customer to refresh their admin shell. The module should appear in their navigation if their role also has the relevant capability.</li>
           </HelpSteps>
           <p>For a section with an end date, use an override of kind <strong>Feature access (timed)</strong> on the Access tab instead. If the customer needs the account to remain usable while unpaid or past due, pair the section with the right status override. Section access and billing status are separate controls.</p>
-          <p>To remove the exception, use the pencil to untick the section, or press <strong>Put it back</strong> on its Story entry. For many clubs, use <strong>Bulk changes</strong> with <strong>Module add-on</strong>.</p>
+          <p>To remove the exception, use the pencil to untick the section, or press <strong>Put it back</strong> on its Story entry. For many clubs, use <strong>Bulk changes</strong> with <strong>Extra feature</strong>.</p>
         </>
       ),
       faqs: [
@@ -1134,7 +1211,7 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Billing & Product SOP',
       heading: 'How to run guarded bulk changes',
       summary: 'Apply billing or product exceptions to multiple accounts with preview, reason, confirmation, and audit logging.',
-      keywords: ['bulk changes', 'bulk operations', 'bulk', 'comp period', 'plan change', 'module addon', 'subscription status', 'select filtered', 'review bulk operation', 'confirm bulk operation', 'billing status override', 'free through', 'skipped', 'succeeded', 'failed', 'you belong to this club', 'pays through stripe'],
+      keywords: ['bulk changes', 'bulk operations', 'bulk', 'comp period', 'plan change', 'extra feature', 'module addon', 'subscription status', 'select filtered', 'review bulk operation', 'confirm bulk operation', 'billing status override', 'free through', 'skipped', 'succeeded', 'failed', 'you belong to this club', 'pays through stripe'],
       searchText: 'guarded bulk changes billing status override free through last day billing up to 6 months super admin 12 months skipped you belong to this club succeeded failed skipped results plan change skips a club stripe still bills this club pays through stripe so its plan changes there',
       links: [
         { label: 'Bulk changes', href: '/platform-admin/bulk-operations' },
@@ -1146,12 +1223,12 @@ const platformAdminHelp: HelpPageContent = {
           <ol>
             <li>Go to <strong>Bulk changes</strong> and filter by account name, slug, plan, or subscription status.</li>
             <li>Select individual accounts or use <strong>Select filtered</strong> after reviewing the filtered list.</li>
-            <li>Choose the action &mdash; Billing status override, Comp period grant, Plan change, or Module add-on &mdash; and set the target value. A billing status override needs <strong>Free through</strong>, the last day (Billing up to 6 months, Super admin up to 12). Comp periods require an expiration date. Module add-ons require enable or remove.</li>
+            <li>Choose the action &mdash; Billing status override, Comp period grant, Plan change, or Extra feature &mdash; and set the target value. A billing status override needs <strong>Free through</strong>, the last day (Billing up to 6 months, Super admin up to 12). Comp periods require an expiration date. Extra features need you to choose turn on or remove.</li>
             <li>Enter a clear reason. This reason appears in the batch record and audit log.</li>
             <li>Review the preview panel, click <strong>Review bulk operation</strong>, then click <strong>Confirm bulk operation</strong>.</li>
             <li>Review the result list and recent bulk operation table for failures or skipped accounts.</li>
           </ol>
-          <p>Billing actions require billing access. Module add-on actions require product access. A super admin can perform both. On each club&rsquo;s Story a change from here reads <em>From Bulk changes</em>.</p>
+          <p>Billing actions require billing access. Extra feature actions require product access. A super admin can perform both. On each club&rsquo;s Story a change from here reads <em>From Bulk changes</em>.</p>
           <p>The result list shows each club as succeeded, failed or skipped. A club you belong to is skipped (<em>Skipped: you belong to this club&hellip;</em>). A plan change skips a club that Stripe still bills, with the same sentence the pencil shows: <em>This club pays through Stripe, so its plan changes there.</em></p>
         </>
       ),
@@ -1210,7 +1287,7 @@ const platformAdminHelp: HelpPageContent = {
               <HelpSteps>
                 <li>Open <strong>Audit log</strong>.</li>
                 <li>Search by organization name or actor email, then filter by <strong>Action</strong> and the <strong>From</strong> and <strong>To</strong> dates. A club&rsquo;s <strong>Filter</strong> link on a row narrows the log to that club.</li>
-                <li>The table reads <strong>Timestamp</strong>, <strong>Superuser</strong>, <strong>Org</strong>, <strong>Action</strong>, <strong>Reason</strong> and a <strong>&rsaquo;</strong>. Open a row to see its entry window, which holds the <strong>Field</strong>, <strong>Old value</strong> and <strong>New value</strong> (the full JSON when you need before/after details for plan changes, module add-ons, catalog applications, or bulk changes) and the Reason.</li>
+                <li>The table reads <strong>Timestamp</strong>, <strong>Superuser</strong>, <strong>Org</strong>, <strong>Action</strong>, <strong>Reason</strong> and a <strong>&rsaquo;</strong>. Open a row to see its entry window, which holds the <strong>Field</strong>, <strong>Old value</strong> and <strong>New value</strong> (the full JSON when you need before/after details for plan changes, extra features, catalog applications, or bulk changes) and the Reason.</li>
                 <li>Export the result if you need to attach a concise account history to an internal ticket. The export keeps every column and adds Reason.</li>
               </HelpSteps>
               <p>A staff change made without a reason reads <em>Not recorded</em>; the product&rsquo;s own jobs and work tools (notes, decks, triage) show &ldquo;-&rdquo;. Refund entries (<em>Refunded a charge</em>, <em>Refund refused by Stripe</em>, <em>Refund: no answer from Stripe</em>, <em>Refund checked with Stripe</em>) show their reason only to Super admin, Billing and Support; other roles see <em>Shown to Super admin, Billing and Support</em>. A lead edit records which fields changed and the step, never the lead&rsquo;s words; its details are shown only to Super admin, Product and Growth, and other roles see <em>Lead details are shown to the roles that work leads.</em></p>
@@ -1607,8 +1684,11 @@ const platformAdminHelp: HelpPageContent = {
             <>
               <ul>
                 <li><strong>A lead&rsquo;s page</strong> reads first. Press the pencil to edit its step, source and source detail, next action and follow-up all at once; the check mark saves at once, and the &#10005; puts everything back. <strong>Lost</strong> needs a reason (Not a fit, Chose another tool, Price, Not this season, No reply after three tries, Asked not to be contacted); the check mark refuses until one is picked.</li>
-                <li><strong>Signed up</strong> is never picked from the list: it comes from linking a club or Coaches Portal. When a club signs up with a lead&rsquo;s email, the page offers it: <strong>Link the club</strong> or <strong>Not this club</strong> (never offered again). Nothing links by itself. To link a club whose address differs, press the pencil, then <strong>Link one by hand</strong>; demo clubs and staff test clubs are never offered. Unlinking puts the step back. A lead who <strong>asked not to be contacted</strong> cannot be linked: the link would clear that reason, so change its step first if that has changed. If someone else links or moves the lead while you are linking, nothing is linked and the page asks you to open it again.</li>
+                <li><strong>Signed up</strong> is never picked from the list: it comes from linking a club or Coaches Portal. When a club signs up with a lead&rsquo;s email, the page offers it: <strong>Link the club</strong> or <strong>Not this club</strong> (never offered again). Nothing links by itself. To link a club whose address differs, press the pencil, then <strong>Link one by hand</strong>; demo clubs and staff test clubs are never offered. Unlinking puts the step back. A lead who is <strong>Lost because it asked not to be contacted</strong> cannot be linked: the link would clear that reason, so change its step first if that has changed. If a link is refused, the reason shows in the window, under the search. If a club was already there before the lead filled in the form (an existing customer), the page says &ldquo;This club already existed&rdquo; and the club is left out of Time to sign up. If someone else links or moves the lead while you are linking, nothing is linked and the page asks you to open it again.</li>
                 <li><strong>Add a note</strong> opens a window. A note is dated and signed with your name and cannot be edited; a Super admin can remove one, which leaves &ldquo;A note was removed&rdquo; and no words. The <strong>timeline</strong> shows every step move, source, link, note and form, newest first.</li>
+                <li><strong>Asked not to be contacted</strong> is a lasting mark. Saving a lead as Lost with that reason puts a notice at the top of its page, and the mark <em>stays</em> when the step moves later: the lead stays out of Copy emails and has an empty email cell in an export. Only <strong>Allow contact again</strong>, on that notice, lifts it, and it is offered only once the lead is no longer Lost for that reason. The timeline records who lifted it. A second form from the same address never lifts it, and a lead who unticks release emails stays unticked.</li>
+                <li><strong>How they heard of us.</strong> Both public forms (the early-access form and a coach&rsquo;s &ldquo;tell me more&rdquo;) ask an optional &ldquo;How did you hear about us?&rdquo;. It fills the lead&rsquo;s <strong>Source</strong> only until staff set one, and shows as &ldquo;From the form&rdquo;. A link we hand out can carry a <strong>link tag</strong> (for example a mailout or a booth); the lead page shows it as <strong>Link</strong> and Numbers counts leads by tag. Tags are a short fixed list kept in the product, so a new one is a small change a developer makes; anything not on the list is ignored.</li>
+                <li><strong>A second form</strong> from an address that is already a lead is the same lead, dated on the timeline. A &ldquo;yes&rdquo; to release emails never replaces a &ldquo;no&rdquo;; an unticked box always lands; a lead staff are working keeps its fields; the first page, tag and browser never move.</li>
                 <li><strong>Email</strong> followed by the lead&rsquo;s first name holds the three outreach templates (League Plus early access, Club roadmap update, Feedback call), which copy with the lead&rsquo;s name filled in, and <strong>Mark contacted</strong>, which stamps today and moves a New lead to Contacted.</li>
               </ul>
             </>
@@ -1619,7 +1699,7 @@ const platformAdminHelp: HelpPageContent = {
           title: 'Numbers, Copy emails and Export',
           content: (
             <>
-              <p><strong>Numbers</strong> is read live when it opens, over every lead: <strong>Leads arrived</strong> (their first form in the period), <strong>Signed up</strong> (linked to a club or portal by a person), <strong>Pay now</strong> (their own plan is not Tournament, billing is active and a real subscription stands behind it; a trial, free time and a Founding Season comp are not paying), <strong>Time to sign up</strong> (to the day the club or portal was created, not the day it was linked) and <strong>New accounts</strong>. A figure that could not be read says <strong>Not read</strong>, never 0. Days are counted in Eastern time: a lead whose form arrives at 9 p.m. belongs to that day and that month, not the next.</p>
+              <p><strong>Numbers</strong> is read live when it opens, over every lead: <strong>Leads arrived</strong> (their first form in the period), <strong>Signed up</strong> (linked to a club or portal by a person), <strong>Pay now</strong> (their own plan is not Tournament, billing is active and a real subscription stands behind it; a trial, free time and a Founding Season comp are not paying), <strong>Time to sign up</strong> (to the day the club or portal was created, not the day it was linked; a club that already existed before the lead&rsquo;s first form is Signed up but is left out of this figure) and <strong>New accounts</strong>. <strong>Month by month</strong> adds a &ldquo;started a subscription&rdquo; count for each month from the day we began recording subscription starts (October 25, 2026); earlier months show none, and the first month counts only starts from that day. A figure that could not be read says <strong>Not read</strong>, never 0. Days are counted in Eastern time: a lead whose form arrives at 9 p.m. belongs to that day and that month, not the next.</p>
               <p><strong>Copy emails</strong> and <strong>Export</strong> are in the Tools menu. <em>Copy emails</em> copies the addresses of the leads in the list on screen who said yes to release emails, never one who asked not to be contacted. <em>Export</em> takes every lead in the list, Excel first or CSV; a lead who asked not to be contacted has an empty email cell. Both are recorded in the audit log (who, when, how many), never with an address, and the record is made first: if it cannot be written, the copy or the file is refused and nothing leaves. Only Super admin, Product and Growth see those entries&rsquo; details in the Audit log.</p>
             </>
           ),
@@ -1824,6 +1904,7 @@ const platformAdminHelp: HelpPageContent = {
             <li><strong>Delete user accounts if required.</strong> If the deletion is part of a data erasure request and the people have no other clubs, delete their accounts from their person records after the club is removed.</li>
           </HelpSteps>
           <p>If you do not see <strong>Delete the club</strong> at the end of the Access tab, your role is not Super admin &mdash; hand the deletion to one.</p>
+          <p>The window also refuses while the club&rsquo;s online payments have money in flight (an open card dispute, a bank debit still clearing, a Stripe fee unbilled or failed, or an unpaid invoice for Stripe fees) and names each one. Wait for them to finish, then delete; see <em>How to read a club&rsquo;s Online payments</em>.</p>
         </>
       ),
       faqs: [
@@ -1887,21 +1968,21 @@ const platformAdminHelp: HelpPageContent = {
     },
     {
       id: 'faq-unsubscribed-module-temporary',
-      question: 'What is the safest way to give an unsubscribed customer temporary module access?',
+      question: 'What is the safest way to give an unsubscribed customer temporary extra features?',
       answer: (
         <p>Turn the section on for that club with the pencil on its record (or add a timed Feature access override on its Access tab), add a note with approval and review date, and pair it with a status override only if billing status would otherwise block account access.</p>
       ),
       answerText: 'Turn the section on for that club with the pencil, or add a timed Feature access override on its Access tab, document approval and review date, and pair it with a status override only if billing status blocks access.',
-      keywords: ['unsubscribed', 'module access', 'temporary', 'override'],
+      keywords: ['unsubscribed', 'extra features', 'module access', 'temporary', 'override'],
       popular: true,
     },
     {
       id: 'faq-who-can-run-bulk',
-      question: 'Who can run bulk billing or module operations?',
+      question: 'Who can run bulk billing or extra feature operations?',
       answer: (
-        <p>Bulk billing actions require billing access. Bulk module add-on actions require product access. Super admins can run both. Read-only users can review information but cannot apply changes.</p>
+        <p>Bulk billing actions require billing access. Bulk extra feature actions require product access. Super admins can run both. Read-only users can review information but cannot apply changes.</p>
       ),
-      answerText: 'Billing access is required for bulk billing actions. Product access is required for bulk module add-on actions. Super admins can run both.',
+      answerText: 'Billing access is required for bulk billing actions. Product access is required for bulk extra feature actions. Super admins can run both.',
       keywords: ['bulk', 'permission', 'billing', 'product'],
     },
   ],
