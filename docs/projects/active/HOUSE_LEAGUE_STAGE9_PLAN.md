@@ -682,3 +682,26 @@ open it, and the menu's top level is Stage 13's.
   over a taken slot with practices to come refuses `changed`); the take-back question also on Clear this week, a drag and
   Regenerate. **Recorded, not built:** Fair shares' measures and the .ics export read house league as a team; a give-it-all
   whose send is refused lands on the draft without a sentence. **Next: Part 3** (House league's time, the league admin's door).
+- **2026-10-27 · 11b Part 3: drawn, RULED, first half built** (continuation prompt `CLUB_TIER_STAGE11B_PART3_PROMPT.md`).
+  The owner ruled three forks before building: the undrawn parts are **drawn first**; the league admin's view of the club's
+  schedule is **built second, after its drawing**; k4's empty states are **adapted** to House league's time (they were drawn
+  for Generate games). Drawings `HOUSE_LEAGUE_STAGE11B_PART3_DRAWINGS.html`, https://claude.ai/artifact/C7ZbiDmmcxFgKUBte3qrDe
+  (v3; /design + /ux + /marketing ran on v1). **RULED "all recommendations" (owner 2026-10-27), the decisions tab's 11 cards:**
+  (1) a division's piece saves with **one Save** (ticks stage; no autosave per tick); (2) the piece is the **one editor**, a
+  LEVEL inside House league's time with "← House league's time"; Give it to still gives a whole row in one pick and gains
+  **Choose parts…** (asks division + kind in one small step, then opens that piece with nothing new ticked) — Option B not
+  built; (3) **group ticks** per weekday and per stretch, tri-state; (4) a **mixed part** reads "8 of 12 dates" with a half
+  tick; (5) a part another division holds has **no box**, its holder a link to that piece; (6) giving back time with practices
+  still to come **asks first, in red**, names the teams, never promises a notice (Part 5 tells them); (7) Export inside Tools
+  (already ruled in 9d-2); (8) the **time line shows only** when the club has house-league time in a final schedule or the
+  viewer builds Schedules; (9) **hours only** until a length exists (amends the copy file's "hours · count"); (10) the empty
+  states as corrected (an owner/admin whose club gave nothing: "The club hasn't given house league any time yet." + lime "Give
+  house league time"; "no time left" + "Give house league more time" only when all is divided); (11) the league admin's
+  club-schedule view: rep team names never reach them ("A rep team"), a one-date **Use** saving on the spot, no bill / asks /
+  replies / send history, no rail entry. Open points taken as drawn: Save fades until a change. **Owner 2026-10-27, the
+  toolbar:** Part 3 adds **only Tools and the time line** to the house-league Schedule page; the views (List · Week · Month,
+  Week · Month on a phone), the Show filter and the phone's symbol buttons come with **9d-2a's** toolbar rebuild, as 9d2·12
+  ruled — never built twice. **First half committed `cd5d32472`:** the read and the give (`from` required — a give over
+  time someone else changed refuses `changed`), the k2 window with the corrected empty states, the route gated
+  read / run-on-the-season, 14 tests. **Next:** `CLUB_TIER_STAGE11B_PART3_BUILD_PROMPT.md` (the second half: one atomic Save
+  as a new SQL step, the piece level, Choose parts, Tools + the time line, then the league admin's club-schedule view).
