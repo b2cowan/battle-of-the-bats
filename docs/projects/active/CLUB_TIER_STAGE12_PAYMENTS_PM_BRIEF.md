@@ -80,6 +80,19 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
    single pay-link email after a lost dispute asks first, a stranded fee moves to the club's own invoice, and a returned
    answering fee goes back against the invoice that charged it (taken off what is owed, or refunded to the card). The
    disputes walk gained their steps.
+   **12d-2 built and committed 2026-10-27, so Stage 12's build is complete.** A treasurer matches each Stripe payout on
+   the bank statement to the families and teams inside it in Accounting › Payouts (Find by the amount the bank shows,
+   Export); a club without Accounting finds the same list on the owner's Payouts card. Leaving online payments never
+   strands money or a family: Disconnect, a downgrade, a cancel and a deletion request each say what is still owed,
+   open and clearing, close any pay page left open, and keep the Stripe account connected so refunds, disputes and
+   payouts finish; a club moved to a plan without online payments keeps its refunds and its card ("Online payments
+   off"), and a cancelled club's families can't start a new payment. An ending the owner didn't choose (free time
+   running out, a failed subscription payment) is warned on the card, as an item and by email. The payments terms read
+   out who agreed, when and to which version; when they change, the owner is told (notice, item, email, reminder),
+   payments stay on, and the new terms are needed to set up again, reconnect or change who pays the fee; Agree appears
+   only once the box is ticked. The platform team reads each club's online payments on a new tab, read only, and one
+   Health list across clubs shows what needs a look. Left for later: counsel's terms text, and one held owner question
+   (the "How to pay is empty" line on Disconnect).
 
 ## Who sees what
 

@@ -366,6 +366,40 @@
   one a `payment_failure_refund` plus an `adjustment` (category `fee`) giving our fee back, a card dispute an `adjustment`
   (category `dispute`) carrying Stripe's CA$15 as its `fee`, a won one `dispute_reversal`; the account pays out daily
   with a 7-day delay and has made no payout yet.
+  **12d-2 BUILT 2026-10-27 — Stage 12's build is complete.** Committed `ffee7864c` (Part 1, mig 401, /dba) · `038457ed0`
+  (Part 2, Accounting › Payouts) · `2a86c9333` (Part 3, leaving) · `2041bf454` (Part 3's /review) · `d93427656` (Part 4,
+  the terms, mig 403) · `cb658a53f` (puts back the support console's records that d93427656's temporary index carried
+  stale) · `70b7e2302` (the daily job's two owner steps, its own commit, ruling 4) · `e42faf261` (Part 5, the console) ·
+  `2a171752a` (/review of the whole). Migrations 401 (once-only stamps) and 403 (the owners' two Needs attention kinds in the
+  notification indexes) applied to dev 2026-10-27, prod pending in MANUAL_PROD_STEPS. Help: Part 6 (`/docs`).
+  **Builder's calls, for the walk:** the Payouts tab reads "Since" as the shared date field's own range face ("Sep 1 – Oct
+  27"), default the first of last month, and a payout still on its way is kept whatever its arrival; a payout Stripe is
+  still matching says so; Find matches a receipt whole; the treasurer opens a name read only; the wind-down card is
+  "Online payments off" (derived words) and keeps Stripe's needs-attention words beside it; the plan is now checked LAST
+  in both pay facts, so a plan without online payments (or a cancelled club) refuses Pay now and nothing else; a cancelled
+  club's families can no longer open a new page (found by the /review: cancel never touched the plan id); the operator's
+  Delete counts again after closing pages and refuses while a page is open or finishing; Health › Online payments rows are
+  the words' six plus "A Stripe fee couldn't be billed" (the prompt's failed fee billing; clearing debits stay on the club's
+  tab, a debit clearing being normal); the console's "Stripe closed the account" reads the record the closed-account event
+  now writes; agreeing to the terms names the version the window showed (a version published meanwhile is refused).
+  **Held for the owner (built around nothing):** the drawn "Your How to pay text is empty · Write it now" line points at
+  one field the card does not have — How to pay is per season and per tournament. **Derived words owed to `/marketing`:**
+  the payouts list's returned-fee / Stripe fee / refund-back / payout-back lines and its still-matching, didn't-arrive and
+  no-match notes; the wind-down card; the failed-payment warning (title, sentence, subject); the operator's line and the
+  Delete refusal; the ending item's settled lines; the Story titles; the failed-fee Health row; the tab's read failure.
+  **Recorded, not fixed (Low, from the two /reviews):** a pay page whose session is created between an ending's read and
+  its row stays payable until Stripe expires it (a day; the landing records it); closing many pages has no cap beyond its
+  8-second deadline; the owner's deletion window names disputes and debits (as the words do) though the operator's Delete
+  also waits for Stripe fees; a league sign-up with one child owing and a sibling clearing shows no pay block after a
+  downgrade (as before); the console's "Read the terms" shows the current text (one version exists until counsel ships);
+  a payout's lines past 2,000 are cut without a flag; the closed-account record is check-then-insert; the treasurer reads
+  the connecting owner's email when no name is set; payout lines name a house-league child for an Accounting reader on a
+  club whose house league is off. **Not run:** `check:layout` (every UAT screen lands on "Page not found" because of the
+  404 page's eyebrow — not re-seeded, as instructed). **End to end in test mode:** the reads were exercised on the dev
+  server as the UAT club's owner, treasurer and registrar (counts, terms row, payouts list, refusals all as built); the
+  test account was funded so Stripe's daily automatic payout has money — a payout read on the tab and exported waits for
+  that payout; the downgrade/Disconnect with a page open and the terms bump are walk steps (a terms bump is a constant
+  change, never published by the builder).
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
@@ -710,7 +744,7 @@ registration (house league) or from the payment's row (tournaments, A12), card f
 | **12a** foundation + the tournament card flow | **Proves itself on a tournament team paying by card (owner, 2026-10-25)**: the team pay page with deposit or full (A7), Pay in the acceptance email and the balance reminder, online rows and a full refund from the row (A12), landing through the tournament writer with a new online method value. Payouts card, five states, both homes, with the A14 who-pays choice and the A9 refund-policy sentence; the "Before you set up payouts" window; onboarding via Account Links + return; the gate + launch switch; pay block; Checkout for card; receipt page + email; online-payment record; Connect webhook (own secret, idempotent); full refund; test mode | `org_payment_accounts` (org, Stripe account id, state, charges/payouts enabled, requirements due, connected/disconnected by/at); `online_payments` (org, flow, payer email, base, fee, total, rail, state, processor ids, receipt no., timestamps); `online_payment_items` (payment → registration or team, amount); `online_payment_refunds` (amount, fee included, reason, by, processor id, state); `stripe_connect_events` (idempotency log) | 7–9 d |
 | **12b** house league | every Stage 9 ghost; Pay now in approval and promotion emails; Email the pay link; no longer payable; refund in the end window; partial refund (L1); Families lines — **BUILT 2026-10-25 (§0 state; Families lines and the tournament partial refund named, not built)** | migs 374 (items, the league landing), 375 (refunds in part), 376 (refund cap) — dev only | 5–7 d |
 | **12c** bank debit | bank debit for both flows at once (L2): the debit agreement, Processing until it clears with the spot held (A4), a fourth "Processing" figure on the Money band while clearing (A11), a returned debit's fresh Pay and self-clearing item. ⚖ The tournament card flow moved into 12a (owner, 2026-10-25). **+ A partial refund of a tournament team's card payment (L1 for tournaments, owner 2026-10-26, §0f):** a team's paid figure counts whole payment rows today, so it needs a "refunded so far" amount on the team's payment row (the team payments refresh sums amount less it), the refund functions taking an amount, and an amount field in the team's refund window — **BUILT 2026-10-26 (§0 state)** | migs 382 (a team payment's refunded-so-far + entry-adjustment list, the clearing state), 383 (a refund remembers when it came back and who was told), 384 (a refund made in Stripe records itself), 386 (a club account takes bank debit), 387 (the desk: decisions, reversal, the returned-debit fee), 388 (a decision and a reversal hold their ground) | 3–5 d (+1–2 d) |
-| **12d** hardening | **card disputes** (today a card dispute is dropped without a word; only a bank debit's is handled) and the dispute fees Stripe bills the platform (Stripe covers negative balances); **paid twice** (house league already refuses and raises an item, generically titled; **a tournament team's overpayment books silently**, census 2026-10-26); a payouts list for matching the bank; "+ GST/HST" rider; international cards; platform-admin oversight; offboarding with registrations still to pay (the Disconnect window doesn't count house league; downgrade, cancel and deletion say nothing); help; **the terms: the agree box, refusal and who/when/version are already built — only the read-out, "agree again" and counsel's text remain** — **DRAWN 2026-10-26, asks open (§0 state)** | disputes, payouts | 10–15 d |
+| **12d** hardening | **card disputes** (today a card dispute is dropped without a word; only a bank debit's is handled) and the dispute fees Stripe bills the platform (Stripe covers negative balances); **paid twice** (house league already refuses and raises an item, generically titled; **a tournament team's overpayment books silently**, census 2026-10-26); a payouts list for matching the bank; "+ GST/HST" rider; international cards; platform-admin oversight; offboarding with registrations still to pay (the Disconnect window doesn't count house league; downgrade, cancel and deletion say nothing); help; **the terms: the agree box, refusal and who/when/version are already built — only the read-out, "agree again" and counsel's text remain** — **DRAWN 2026-10-26, asks open (§0 state)** — **BUILT: 12d-1 2026-10-27 (disputes, paid twice, every club pays its Stripe fees) and 12d-2 2026-10-27 (payouts tab, leaving, terms, the console); Stage 12's build is complete (§0 state). Counsel's terms text remains.** | 390, 391, 395, 396, 399 (12d-1); 401, 403 (12d-2) — dev only | 10–15 d |
 
 The 12a–12c total of 16–22 days matches the scoping plan's first-build estimate (15–22). 12d matches its 10–15. Every
 migration updates `docs/agents/db/DATA_DICTIONARY.md` and refreshes both snapshots in the same unit of work.
