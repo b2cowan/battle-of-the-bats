@@ -8,12 +8,13 @@
  *  - The OWNER's quiet line, only while payouts are not set up: today's sentence plus "Let them pay online", which opens
  *    the card (A6). Roles that can't connect never see it: it would be a dead end.
  *
- * Reads the same view as the card; renders nothing while online payments aren't offered (switch, plan, role).
+ * Reads the same view as the card; renders nothing while online payments aren't offered (switch, role, or a plan without
+ * them for a club that never connected). A club wound down by a downgrade reads "Online payments off" (12d-2).
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatStoredDate } from '@/lib/timezone';
-import { payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
+import { LEAVING_WORDS, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
 import { payoutsPath } from '@/lib/online-payment-account';
 import { loadPayouts, type PayoutsView } from './PayoutsCard';
 import { RepChip } from './RepKit';
@@ -46,6 +47,15 @@ export default function PayoutsStatusLine({ orgSlug, planId, home, treasurerLine
   }
 
   if (!treasurerLine) return null;
+  // 12d-2 (ask 4): a plan without online payments keeps the account connected — the line says online payments are off,
+  // never "Taking payments" (/review of Part 3).
+  if (view.windDown && view.state !== 'disconnected' && view.state !== 'not_set_up') {
+    return (
+      <p className={`${ck.hint} ${pc.statusLine}`}>
+        <strong>{LEAVING_WORDS.windDown.pill}</strong> · {LEAVING_WORDS.windDown.title}.
+      </p>
+    );
+  }
   if (view.state === 'taking_payments') {
     return (
       <p className={`${ck.hint} ${pc.statusLine}`}>

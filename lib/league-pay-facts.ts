@@ -16,6 +16,7 @@ import type { LeagueSeason, Organization } from './types';
 import { fetchAllIn } from './supabase-paging';
 import type { CardRefund } from './league-card-refunds';
 import type { RegDebit } from './league-debits';
+import { isOrgBillingSuspended } from './org-billing-access';
 
 /**
  * Everything a house-league sign-up's pay block, the pay route and the payment emails need, read once (Club Tier Stage
@@ -428,7 +429,8 @@ export async function loadLeaguePayFacts(registrationId: string): Promise<League
   }
   // 12d-2 (ask 4): a plan without online payments stops Pay now and nothing else — checked LAST, so a wound-down club's
   // family still sees a debit clearing and a fee already paid; one still owing sees the club's “How to pay” text.
-  if (refusal === null && !hasPlanFeature(org.planId, 'online_payments')) refusal = 'switch_off';
+  // A cancelled (suspended) club keeps its plan id, so it is read too (/review of Part 3): a cancel stops online payments now.
+  if (refusal === null && (!hasPlanFeature(org.planId, 'online_payments') || isOrgBillingSuspended(org))) refusal = 'switch_off';
 
   return {
     org, season, anchorId: anchor.id, signupKey: anchor.signup_ref ?? anchor.id, guardianEmail: anchor.guardian_email,

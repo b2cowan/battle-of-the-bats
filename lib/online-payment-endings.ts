@@ -8,6 +8,7 @@ import type { OrgPlan } from './types';
 import { PLAN_CONFIG } from './plan-config';
 import { LEAVING_WORDS } from './online-payment-words';
 import { OPEN_DISPUTE_STATUSES } from './online-payment-dispute';
+import { tournamentTracksPayments } from './tournament-payments-tracked';
 
 /**
  * LEAVING ONLINE PAYMENTS (Club Tier Stage 12d-2 Part 3 — frame 4, words CLUB_TIER_STAGE12D_COPY.md §4; asks 4 and 11).
@@ -56,36 +57,64 @@ async function count(q: PromiseLike<{ count: number | null; error: unknown }>): 
   return n ?? 0;
 }
 
+/** How many ids one `.in()` filter carries: a long list overruns the request (the grants read's reason). */
+const ID_CHUNK = 100;
+/** PostgREST answers at most 1000 rows a request; a season of sign-ups can pass it. */
+const PAGE = 1000;
+
+async function inChunks<T>(ids: readonly string[], read: (chunk: string[]) => PromiseLike<{ data: unknown[] | null; error: unknown }>): Promise<T[]> {
+  const out: T[] = [];
+  for (let i = 0; i < ids.length; i += ID_CHUNK) {
+    const { data, error } = await read(ids.slice(i, i + ID_CHUNK));
+    if (error) throw error;
+    out.push(...((data ?? []) as T[]));
+  }
+  return out;
+}
+
+/** Accepted teams still owing on a tournament that isn't over and tracks payments (a tournament that doesn't is never
+ *  owed online). A team whose bank debit is clearing owes nothing new until it clears or comes back, as a family's. */
 async function teamsOwing(orgId: string): Promise<number> {
-  const { data: ts, error } = await supabaseAdmin.from('tournaments').select('id').eq('org_id', orgId).in('status', ['draft', 'active']);
+  const { data: ts, error } = await supabaseAdmin.from('tournaments').select('id, settings').eq('org_id', orgId).in('status', ['draft', 'active']);
   if (error) throw error;
-  const ids = (ts ?? []).map(t => t.id as string);
+  const ids = (ts ?? []).filter(t => tournamentTracksPayments(t.settings)).map(t => t.id as string);
   if (!ids.length) return 0;
-  return count(supabaseAdmin.from('teams').select('id', { count: 'exact', head: true })
-    .in('tournament_id', ids).eq('status', 'accepted').neq('payment_status', 'paid'));
+  const teams = await inChunks<{ id: string }>(ids, chunk => supabaseAdmin.from('teams').select('id')
+    .in('tournament_id', chunk).eq('status', 'accepted').neq('payment_status', 'paid'));
+  if (!teams.length) return 0;
+  const clearing = await inChunks<{ team_id: string | null }>(teams.map(t => t.id), chunk => supabaseAdmin.from('online_payments')
+    .select('team_id').eq('org_id', orgId).eq('status', 'clearing').in('team_id', chunk));
+  const clearingTeams = new Set(clearing.map(c => c.team_id));
+  return teams.filter(t => !clearingTeams.has(t.id)).length;
 }
 
 /** Families, not children: one sign-up is one family (its reference, else its guardian's email). The registration's
- *  derived `registration_fee_paid` is false while the posted lines don't cover a price above $0 (mig 368). */
+ *  derived `registration_fee_paid` is false while the posted lines don't cover a price above $0 (mig 368). Paged and
+ *  chunked (/review of Part 3): a season of sign-ups passes PostgREST's 1000 rows and a request's length. */
 async function familiesOwing(orgId: string): Promise<number> {
   const { data: seasons, error } = await supabaseAdmin.from('league_seasons').select('id, registration_fee').eq('org_id', orgId).is('finished_at', null);
   if (error) throw error;
   if (!seasons?.length) return 0;
   const seasonFee = new Map(seasons.map(s => [s.id as string, Number(s.registration_fee ?? 0)]));
-  const { data: regs, error: regError } = await supabaseAdmin.from('league_registrations')
-    .select('id, season_id, fee_amount, signup_ref, guardian_email')
-    .in('season_id', [...seasonFee.keys()]).eq('status', 'active').eq('registration_fee_paid', false);
-  if (regError) throw regError;
-  const owing = (regs ?? []).filter(r => Number(r.fee_amount ?? seasonFee.get(r.season_id as string) ?? 0) > 0);
+  type Reg = { id: string; season_id: string; fee_amount: number | null; signup_ref: string | null; guardian_email: string | null };
+  const regs: Reg[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error: regError } = await supabaseAdmin.from('league_registrations')
+      .select('id, season_id, fee_amount, signup_ref, guardian_email')
+      .in('season_id', [...seasonFee.keys()]).eq('status', 'active').eq('registration_fee_paid', false)
+      .order('id').range(from, from + PAGE - 1);
+    if (regError) throw regError;
+    regs.push(...((data ?? []) as Reg[]));
+    if ((data ?? []).length < PAGE) break;
+  }
+  const owing = regs.filter(r => Number(r.fee_amount ?? seasonFee.get(r.season_id) ?? 0) > 0);
   if (!owing.length) return 0;
   // A child whose fee is on a bank debit still clearing owes nothing new until it clears or comes back (12c).
-  const { data: items, error: itemError } = await supabaseAdmin.from('online_payment_items')
-    .select('registration_id, online_payments!inner(status)').in('registration_id', owing.map(r => r.id as string))
-    .eq('online_payments.status', 'clearing');
-  if (itemError) throw itemError;
-  const clearing = new Set((items ?? []).map(i => i.registration_id as string));
-  return new Set(owing.filter(r => !clearing.has(r.id as string))
-    .map(r => (r.signup_ref as string | null) ?? (r.guardian_email as string | null)?.toLowerCase() ?? (r.id as string))).size;
+  const items = await inChunks<{ registration_id: string }>(owing.map(r => r.id), chunk => supabaseAdmin.from('online_payment_items')
+    .select('registration_id, online_payments!inner(status)').in('registration_id', chunk).eq('online_payments.status', 'clearing'));
+  const clearing = new Set(items.map(i => i.registration_id));
+  return new Set(owing.filter(r => !clearing.has(r.id))
+    .map(r => r.signup_ref ?? r.guardian_email?.toLowerCase() ?? r.id)).size;
 }
 
 /** What is still outstanding for the club's online payments. Throws on a failed read. */
@@ -99,11 +128,13 @@ export async function readOutstanding(orgId: string): Promise<PaymentsOutstandin
     countClubPayPages(orgId),
     count(supabaseAdmin.from('online_payments').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('status', 'clearing')),
     supabaseAdmin.from('online_payment_disputes').select('due_by').eq('org_id', orgId).in('status', [...OPEN_DISPUTE_STATUSES]),
+    // A credit owed BACK to the club (a returned answering fee) is not money in flight to us (/review of Part 3).
     count(supabaseAdmin.from('platform_stripe_fees').select('id', { count: 'exact', head: true }).eq('org_id', orgId)
-      .is('billed_at', null).is('exempt_reason', null).is('bill_error', null)),
+      .is('billed_at', null).is('exempt_reason', null).is('bill_error', null).neq('kind', 'dispute_answer_returned')),
     count(supabaseAdmin.from('platform_stripe_fees').select('id', { count: 'exact', head: true }).eq('org_id', orgId)
-      .is('billed_at', null).is('exempt_reason', null).not('bill_error', 'is', null)),
-    count(supabaseAdmin.from('platform_fee_invoices').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('status', 'open')),
+      .is('billed_at', null).is('exempt_reason', null).not('bill_error', 'is', null).neq('kind', 'dispute_answer_returned')),
+    // Unpaid: open, or one Stripe gave up collecting (still owed).
+    count(supabaseAdmin.from('platform_fee_invoices').select('id', { count: 'exact', head: true }).eq('org_id', orgId).in('status', ['open', 'uncollectible'])),
   ]);
   if (disputes.error) throw disputes.error;
   const dues = (disputes.data ?? []).map(d => d.due_by as string | null).filter((d): d is string => !!d).sort();
@@ -174,7 +205,12 @@ export async function closePagesIfPaymentsEnded(orgId: string, where: string, op
 export type EndingSection = { counted: boolean; outstanding: PaymentsOutstanding };
 
 export async function endingSection(orgId: string, opts: { targetPlan?: string; includeDisconnected?: boolean } = {}): Promise<EndingSection | null> {
-  if (opts.targetPlan && hasPlanFeature(opts.targetPlan as Parameters<typeof hasPlanFeature>[0], 'online_payments')) return null;
+  if (opts.targetPlan) {
+    if (hasPlanFeature(opts.targetPlan as OrgPlan, 'online_payments')) return null;
+    // Free time that grants online payments outlives the move (the confirm then closes nothing): no section.
+    const facts = await effectiveOrgFactsForId(orgId).catch(() => null);
+    if (facts?.freeTime && hasPlanFeature(facts.freeTime.plan, 'online_payments')) return null;
+  }
   const { data, error } = await supabaseAdmin.from('org_payment_accounts').select('disconnected_at').eq('org_id', orgId).maybeSingle();
   // The deletion window shows for a club that connected at any time (words §4.4): a dispute can be open after a Disconnect.
   if (error || !data || (data.disconnected_at && !opts.includeDisconnected)) return null;
@@ -198,6 +234,7 @@ export type UpcomingEnding =
   | { kind: 'failed'; at: string };
 
 export const ENDING_WARN_DAYS = 7;
+const PAST_DUE_WITHOUT_EVENT = '1970-01-01T00:00:00.000Z';
 
 /** The ending's notice words (words §4.2 `ending.notice.*`): the card's notice, the owner's item and the email share them. */
 export function endingNotice(e: UpcomingEnding, clubName: string, o: PaymentsOutstanding | null): { title: string; body: string } {
@@ -216,7 +253,8 @@ export async function upcomingEnding(orgId: string, now: Date = new Date()): Pro
   if (facts.subscriptionStatus === 'past_due' && hasPlanFeature(facts.planId, 'online_payments')) {
     const { data } = await supabaseAdmin.from('platform_events').select('created_at').eq('org_id', orgId)
       .eq('event_type', 'subscription_past_due').order('created_at', { ascending: false }).limit(1).maybeSingle();
-    return { kind: 'failed', at: (data?.created_at as string | undefined) ?? now.toISOString() };
+    // No past-due event (an operator's billing-status grant writes none): a fixed key, so the daily job warns once.
+    return { kind: 'failed', at: (data?.created_at as string | undefined) ?? PAST_DUE_WITHOUT_EVENT };
   }
   const ft = facts.freeTime;
   if (ft && hasPlanFeature(ft.plan, 'online_payments') && !hasPlanFeature(facts.ownPlanId, 'online_payments')) {

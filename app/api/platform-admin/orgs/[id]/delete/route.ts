@@ -146,7 +146,19 @@ export const DELETE = withObservability(async (req: NextRequest,
   }
   // We disconnect before deleting (words §4.4): the club's open pay pages close first, so no family pays a club that is
   // gone. The Stripe account itself stays the club's, with any money in it (ask 4).
-  if (outstanding.connected) await closeClubPayPages(id, 'operator delete');
+  if (outstanding.connected) {
+    await closeClubPayPages(id, 'operator delete');
+    // Counted AGAIN after the close (/review of Part 3): a page Stripe was slow to close, or one a family finished a
+    // moment ago (its payment not landed yet), is still open here — deleting now would leave that payment with no
+    // record. So would a dispute or a debit that arrived since the first count. Refuse, naming it; try again later.
+    const again = await readOutstanding(id).catch(() => null);
+    if (!again) return NextResponse.json({ error: 'Couldn’t read this club’s online payments. Try again.' }, { status: 503 });
+    if (again.openPages > 0) {
+      return NextResponse.json({ error: `${again.openPages === 1 ? 'A pay page is' : `${again.openPages} pay pages are`} still open or finishing. Try the delete again in a few minutes.` }, { status: 409 });
+    }
+    const late = moneyInFlight(again);
+    if (late.length) return NextResponse.json({ error: inFlightRefusal(late), inFlight: late }, { status: 409 });
+  }
 
   // Notify the org owner before deletion so they get one last email while the
   // org data (and owner lookup) still exists.

@@ -20,7 +20,7 @@ import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import WebAddressWindow from './WebAddressWindow';
 import { loadPayouts, type PayoutsView } from '@/components/admin/kit/club/PayoutsCard';
-import { PAYOUTS_WORDS as PW } from '@/lib/online-payment-words';
+import { LEAVING_WORDS, PAYOUTS_WORDS as PW } from '@/lib/online-payment-words';
 import styles from './settings-access.module.css';
 
 /** The settings hub's "?" (Tournament admin redesign Stage 5, E6: otherwise unchanged). */
@@ -103,8 +103,12 @@ export default function TournamentSettingsAccessPage() {
       href: `${base}/settings/payouts`,
       icon: Landmark,
       title: PW.tile.title,
-      description: PW.tile.sub[payouts.state],
-      meta: payouts.isOwner ? PW.button[payouts.state] : PW.pill[payouts.state],
+      // 12d-2: a club moved to Tournament keeps its account connected — the tile reads "Online payments off", and its
+      // owner's door is the card's own (Open Stripe), never "Set up payouts" (/review of Part 3).
+      description: payouts.windDown && payouts.state !== 'disconnected' ? LEAVING_WORDS.windDown.pill : PW.tile.sub[payouts.state],
+      meta: payouts.windDown
+        ? (payouts.state === 'disconnected' ? PW.pill.disconnected : LEAVING_WORDS.windDown.pill)
+        : payouts.isOwner ? PW.button[payouts.state] : PW.pill[payouts.state],
       enabled: true,
     }] : []),
   ];

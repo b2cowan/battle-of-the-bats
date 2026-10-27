@@ -38,13 +38,14 @@ async function context(orgSlug: string | null): Promise<PayoutsContext | Respons
   // 12d-2 (ask 4): a plan without online payments still has its account connected — the card stays as the wind-down card
   // (Open Stripe, Disconnect, the record, the payouts list); only setting up (connect) needs the plan. A club that never
   // connected on such a plan has no card at all.
+  // Who may see payouts is asked FIRST, so a role without it learns nothing about the account (/review of Part 3).
+  const member = { role: ctx.role, capabilities: ctx.capabilities };
+  if (!canSeePayouts(member, ctx.org)) return forbidden();
   const planOffers = hasPlanFeature(ctx.org.planId, 'online_payments');
   if (!planOffers) {
     const { data } = await supabaseAdmin.from('org_payment_accounts').select('org_id').eq('org_id', ctx.org.id).maybeSingle();
     if (!data) return refused();
   }
-  const member = { role: ctx.role, capabilities: ctx.capabilities };
-  if (!canSeePayouts(member, ctx.org)) return forbidden();
   return { ctx, isOwner: canConnectPayouts(member), planOffers };
 }
 

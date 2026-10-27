@@ -130,7 +130,8 @@ describe('the wind-down (ask 4): Pay now stops, nothing else', () => {
     for (const f of ['lib/team-pay-facts.ts', 'lib/league-pay-facts.ts']) {
       const src = readCode(f);
       assert.match(src, /if \(!onlinePaymentsOn\(\)\) refusal = 'switch_off';/, f);
-      assert.match(src, /if \(refusal === null && !hasPlanFeature\(org\.planId, 'online_payments'\)\) refusal = 'switch_off';/, f);
+      // A cancelled club keeps its plan id, so its suspension is read too (/review of Part 3).
+      assert.match(src, /if \(refusal === null && \(!hasPlanFeature\(org\.planId, 'online_payments'\) \|\| isOrgBillingSuspended\(org\)\)\) refusal = 'switch_off';/, f);
     }
   });
   it('the Payouts card stays for a connected club on a plan without online payments; only setting up needs the plan', () => {
@@ -139,9 +140,52 @@ describe('the wind-down (ask 4): Pay now stops, nothing else', () => {
     assert.match(route, /case 'connect': \{\s*if \(!c\.planOffers\) return refused\(\);/);
     assert.match(route, /windDown: !c\.planOffers,/);
     const card = readCode('components/admin/kit/club/PayoutsCard.tsx');
-    assert.match(card, /const wind = !!view\.windDown && state !== 'disconnected' && state !== 'not_set_up';/);
+    // Only a club taking payments reads as the wind-down card; Stripe asking for something keeps its words (/review).
+    assert.match(card, /const wind = !!view\.windDown && state === 'taking_payments';/);
+    assert.match(card, /const windLine = !!view\.windDown && \(state === 'needs_attention' \|\| state === 'setting_up'\);/);
   });
   it('Stripe’s return from sign-up is not plan-gated (a needs-attention fix-up after a downgrade comes back)', () => {
     assert.doesNotMatch(readCode('app/api/admin/payouts/return/route.ts'), /hasPlanFeature/);
+  });
+});
+
+describe('the /review of Part 3', () => {
+  it('Delete counts again after closing, and refuses while a page is still open or finishing', () => {
+    const src = readCode('app/api/platform-admin/orgs/[id]/delete/route.ts');
+    assert.match(src, /const again = await readOutstanding\(id\)\.catch\(\(\) => null\);/);
+    assert.match(src, /if \(again\.openPages > 0\) \{/);
+    assert.ok(src.indexOf('const again') < src.indexOf(".delete().eq('org_id', id)"));
+  });
+  it('a credit owed back to the club never blocks a delete; an invoice Stripe gave up on does', () => {
+    const src = readCode(ENDINGS);
+    assert.equal((src.match(/\.neq\('kind', 'dispute_answer_returned'\)/g) ?? []).length, 2);
+    assert.match(src, /\.in\('status', \['open', 'uncollectible'\]\)/);
+  });
+  it('a large club is counted in pages and chunks, never one unbounded list', () => {
+    const src = readCode(ENDINGS);
+    assert.match(src, /\.order\('id'\)\.range\(from, from \+ PAGE - 1\)/);
+    assert.match(src, /inChunks<\{ registration_id: string \}>/);
+    // A team paying by a clearing debit, and a tournament that doesn't track payments, owe nothing new.
+    assert.match(src, /filter\(t => tournamentTracksPayments\(t\.settings\)\)/);
+    assert.match(src, /eq\('status', 'clearing'\)\.in\('team_id', chunk\)/);
+  });
+  it('the downgrade window says nothing stops while free time still grants online payments', () => {
+    assert.match(readCode(ENDINGS), /if \(facts\?\.freeTime && hasPlanFeature\(facts\.freeTime\.plan, 'online_payments'\)\) return null;/);
+  });
+  it('a failed payment with no past-due event is warned once (a fixed key)', () => {
+    assert.match(readCode(ENDINGS), /\?\? PAST_DUE_WITHOUT_EVENT \};/);
+  });
+  it('a plan move never throws for the page closing, and the suspension closes pages after its event', () => {
+    assert.match(readCode('lib/plan-move.ts'), /try \{\s*const \{ closePagesIfPaymentsEnded \} = await import/);
+    const hook = readCode('app/api/billing/webhook/route.ts');
+    assert.ok(hook.indexOf("eventType: 'subscription_canceled'") < hook.indexOf("closePagesIfPaymentsEnded(org.id, 'stripe suspension'"));
+  });
+  it('a downgraded club’s status line and Payouts tile say online payments are off, never "Taking payments"', () => {
+    assert.match(readCode('components/admin/kit/club/PayoutsStatusLine.tsx'), /if \(view\.windDown && view\.state !== 'disconnected'/);
+    assert.match(readCode('app/[orgSlug]/admin/tournaments/settings/page.tsx'), /payouts\.windDown && payouts\.state !== 'disconnected' \? LEAVING_WORDS\.windDown\.pill/);
+  });
+  it('payouts access is asked before the account is read', () => {
+    const src = readCode('app/api/admin/payouts/route.ts');
+    assert.ok(src.indexOf('if (!canSeePayouts(member, ctx.org)) return forbidden();') < src.indexOf("from('org_payment_accounts').select('org_id')"));
   });
 });

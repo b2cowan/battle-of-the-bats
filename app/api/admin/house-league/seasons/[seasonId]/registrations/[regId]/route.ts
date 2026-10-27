@@ -34,7 +34,7 @@ import { sendLeaguePayLink } from '@/lib/online-payment-receipt';
 import { answerStillEnrolled, leagueEndingRefundHtml, leagueRefundMail, sendLeagueRefundEmail, stampRefundEmailed, stillEnrolledRefund } from '@/lib/online-refund-email';
 import type { EmailKind } from '@/lib/email-kinds';
 import { leagueCardShares, refundLeagueToCard, resolveLeagueRefundAnotherWay } from '@/lib/online-payment-landing';
-import { clubPayoutsConnected, clubTakesCards, loadRegistrationDebits, returnedCardRefunds, unrecordedCardShares, isRegClearing } from '@/lib/league-pay-facts';
+import { clubPayoutsConnected, loadRegistrationDebits, returnedCardRefunds, unrecordedCardShares, isRegClearing } from '@/lib/league-pay-facts';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 
 

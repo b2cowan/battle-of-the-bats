@@ -256,9 +256,14 @@ export async function applyPlanChangeSideEffects(p: {
   // 12d-2 (ask 11): a move onto a plan without online payments closes the club's open pay pages on the move date (the
   // webhook's flip for a scheduled down-move, the operator's change). After the comp revoke, so the plan read is final.
   // Loaded here, not at the top: the endings module is server-only, and this one is loaded by unit tests.
+  // Never throws: a load that fails outside the app (a script, a test runner) must not undo a plan already written.
   if (p.fromPlan !== p.toPlan) {
-    const { closePagesIfPaymentsEnded } = await import('./online-payment-endings');
-    await closePagesIfPaymentsEnded(p.orgId, `plan move (${p.actor})`);
+    try {
+      const { closePagesIfPaymentsEnded } = await import('./online-payment-endings');
+      await closePagesIfPaymentsEnded(p.orgId, `plan move (${p.actor})`);
+    } catch (e) {
+      console.error('[plan-move] couldn’t close the open pay pages:', e instanceof Error ? e.message : String(e));
+    }
   }
   return { clearedTeamLimit, revokedComps };
 }

@@ -10,6 +10,7 @@ import { isOurTournamentTeam } from './club-own-tournament-team';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
 import type { PayRefusal } from './team-pay-refusal';
 import type { Organization } from './types';
+import { isOrgBillingSuspended } from './org-billing-access';
 
 /**
  * Everything a tournament team's pay page, the pay route and the payment emails need, read once (Club Tier Stage 12a).
@@ -111,7 +112,8 @@ export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | n
   else if (!options) refusal = 'nothing_owed';
   // 12d-2 (ask 4): a plan without online payments stops Pay now and nothing else. Checked LAST, so a club wound down by
   // a downgrade still shows its clearing debit, its receipts and the desk's refunds; only a new payment is refused.
-  if (refusal === null && !hasPlanFeature(org.planId, 'online_payments')) refusal = 'switch_off';
+  // A cancelled (suspended) club keeps its plan id, so it is read too (/review of Part 3): a cancel stops online payments now.
+  if (refusal === null && (!hasPlanFeature(org.planId, 'online_payments') || isOrgBillingSuspended(org))) refusal = 'switch_off';
 
   return {
     teamId,

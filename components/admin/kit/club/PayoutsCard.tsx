@@ -132,7 +132,10 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
   const hasRecord = state === 'setting_up' || state === 'taking_payments' || state === 'needs_attention';
   // 12d-2 (ask 4, the drawing's wind-down card): the plan no longer offers online payments, but the account stays connected —
   // refunds, disputes and payouts carry on, and nothing here sets up again (that needs the plan).
-  const wind = !!view.windDown && state !== 'disconnected' && state !== 'not_set_up';
+  // Only a club that was taking payments reads as the wind-down card; Stripe asking for something (needs attention,
+  // setting up) keeps its own words and pill, with the wind-down line beside them (/review of Part 3).
+  const wind = !!view.windDown && state === 'taking_payments';
+  const windLine = !!view.windDown && (state === 'needs_attention' || state === 'setting_up');
   const WD = LEAVING_WORDS.windDown;
   const showPrimary = !view.windDown || hasRecord;
 
@@ -163,7 +166,8 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
           </div>
         )}
         <p className={pc.body}>{wind ? `${WD.body} ${LEAVING_WORDS.move.connected}` : body}</p>
-        {state !== 'disconnected' && !wind && <p className={ck.hint}>{W.ratesLine(view.rateLabel, view.bankRateLabel ?? null)}</p>}
+        {windLine && <p className={ck.hint}>{WD.title}. {WD.body}</p>}
+        {state !== 'disconnected' && !view.windDown && <p className={ck.hint}>{W.ratesLine(view.rateLabel, view.bankRateLabel ?? null)}</p>}
 
         {hasRecord && (
           <PayoutsRecord orgSlug={orgSlug} home={home} view={view} editing={editing && isOwner} onSaved={next => setView(v => (v ? { ...v, ...next } : v))} />

@@ -731,8 +731,6 @@ export const POST = withObservability(async (req: Request) => {
               billing_suspension_reason: 'Stripe subscription deleted',
             })
             .eq('stripe_customer_id', customerId);
-          // 12d-2 (ask 11): a suspension the owner didn't choose stops online payments now — open pay pages close.
-          await closePagesIfPaymentsEnded(org.id, 'stripe suspension', { ended: true });
 
           await writePlatformEvent({
             eventType: 'subscription_canceled',
@@ -745,6 +743,10 @@ export const POST = withObservability(async (req: Request) => {
             subscriptionStatus: 'canceled',
             metadata: { stripeCustomerId: customerId, reason: 'Stripe subscription deleted' },
           });
+          // 12d-2 (ask 11): a suspension the owner didn't choose stops online payments now — open pay pages close. LAST, after
+          // the event is written, so a slow Stripe can never cost the event on a retry (/review of Part 3); a suspended club
+          // is refused Pay now by the pay facts whatever happens here.
+          await closePagesIfPaymentsEnded(org.id, 'stripe suspension', { ended: true });
         } else if (existingIntent.intent_type === 'cancellation') {
           // In-app cancellation already applied — org is already suspended. Clear the
           // Stripe subscription fields that only become accurate once Stripe confirms
