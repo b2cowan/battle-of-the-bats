@@ -2,9 +2,9 @@ import 'server-only';
 import type Stripe from 'stripe';
 import { supabaseAdmin, getOrgOwnerEmail } from './supabase-admin';
 import { stripe } from './stripe';
-import { RETURNED_BANK_DEBIT_FEE_CENTS } from './plan-config';
 import { foreignCardFeeCents } from './online-payment-fee';
 import { ensureStripeCustomer } from './billing-setup';
+import { retrieveCheckout } from './stripe-connect';
 import { sendEmail, escapeHtml } from './email';
 import { warmEmailButton, warmEmailDocument, warmEmailParagraph, warmEmailSmall } from './email-envelope-warm';
 import { emailFactsPanel } from './online-refund-block';
@@ -20,8 +20,9 @@ import { addCalendarMonths, formatStoredDate, orgMonthKey, zonedWallClockToUtc }
  * invoice to ride on gets ONE invoice of its own a month, sent on the 1st, in our email (2026-10-27).
  *
  * One path for every kind (`platform_stripe_fees`, mig 390):
- *   - recorded once per payment, kind (and dispute), at Stripe's own figure where Stripe gives one, else at the published
- *     rate held in `lib/plan-config.ts` (`amount_source = 'rate'`);
+ *   - recorded once per payment, kind (and dispute), at Stripe's own figure where Stripe gives one (a returned or reversed
+ *     debit, a dispute: nothing when Stripe charged nothing), else at the published rate held in `lib/plan-config.ts`
+ *     (`amount_source = 'rate'`: the foreign-card extra, which Stripe gives no figure for);
  *   - billed at once as a line on a live, undiscounted, CAD subscription's next invoice; otherwise left for the club's own
  *     monthly invoice (`sendMonthlyFeeInvoices`, the daily job);
  *   - `test_mode` is the one exemption left (a test payment never reaches a live invoice).
@@ -70,9 +71,33 @@ export async function recordStripeFee(p: {
   }
 }
 
-/** 12c: Stripe's fee for a RETURNED (failed) bank debit, from the published figure (Stripe reports none per debit). */
-export async function recordReturnedDebitFee(p: { orgId: string; onlinePaymentId: string; livemode: boolean }): Promise<void> {
-  await recordStripeFee({ ...p, kind: 'returned', amountCents: RETURNED_BANK_DEBIT_FEE_CENTS, source: 'rate' });
+/** A Stripe fee in a balance transaction (a charge, or a refund of one), the way the platform's balance reports it. */
+const isStripeFee = (t: Stripe.BalanceTransaction) => t.reporting_category === 'fee' || t.type === 'stripe_fee';
+
+/**
+ * Stripe's fee for a RETURNED bank debit (failed before it settled), at what Stripe charged FieldLogicHQ: the platform's
+ * balance transactions on the debit's charge, read as a reversed debit's are on its dispute (owner ruling 3, 2026-10-27).
+ * Nothing when Stripe charged nothing (the sandbox showed no fee on a failed debit); the published CA$5 never decides a
+ * bill. Read when the debit comes back and again by the daily job, so a fee Stripe posts later is found; written once.
+ */
+export async function recordReturnedDebitFee(onlinePaymentId: string): Promise<void> {
+  try {
+    const { data: op } = await supabaseAdmin.from('online_payments')
+      .select('id, org_id, rail, status, livemode, stripe_account_id, stripe_checkout_session_id').eq('id', onlinePaymentId).maybeSingle();
+    if (!op || op.rail !== 'bank_debit' || op.status !== 'returned' || !op.stripe_account_id || !op.stripe_checkout_session_id) return;
+    // A returned debit never lands, so its charge is never stored: Stripe's session names it.
+    const session = await retrieveCheckout(op.stripe_account_id as string, op.stripe_checkout_session_id as string);
+    const pi = typeof session.payment_intent === 'object' ? session.payment_intent : null;
+    const chargeId = typeof pi?.latest_charge === 'string' ? pi.latest_charge : pi?.latest_charge?.id;
+    if (!chargeId) return;
+    const page = await stripe.balanceTransactions.list({ source: chargeId, limit: 100 });
+    const charged = page.data.filter(isStripeFee).reduce((s, t) => s - t.amount, 0);
+    await recordStripeFee({
+      orgId: op.org_id as string, onlinePaymentId: op.id as string, kind: 'returned', amountCents: charged, source: 'stripe', livemode: !!op.livemode,
+    });
+  } catch (err) {
+    console.error('[platform-stripe-fees] the returned debit’s fee wasn’t read:', onlinePaymentId, errText(err));
+  }
 }
 
 /**
@@ -85,7 +110,7 @@ export async function platformDisputeFees(stripeDisputeId: string): Promise<{ di
   const out = { dispute: 0, answer: 0, returned: 0 };
   const page = await stripe.balanceTransactions.list({ source: stripeDisputeId, limit: 100 });
   for (const t of page.data) {
-    if (t.reporting_category !== 'fee' && t.type !== 'stripe_fee') continue;
+    if (!isStripeFee(t)) continue;
     if (t.amount > 0) out.returned += t.amount;
     else if (/counter|answer|response/i.test(t.description ?? '')) out.answer += -t.amount;
     else out.dispute += -t.amount;
@@ -488,12 +513,13 @@ export async function remindUnpaidFeeInvoices(now: Date = new Date()): Promise<n
 /**
  * The daily job's re-read of recent disputes for a fee Stripe charged FieldLogicHQ after the events stopped (an answering
  * fee, or its return on a win, can post days later): card disputes opened or closed in the last 60 days whose fee wasn't
- * the club's, and bank debits reversed in that time. Each kind is written once, so a rerun records nothing twice.
+ * the club's, bank debits reversed in that time, and bank debits returned in that time with no fee yet (ruling 3). Each
+ * kind is written once, so a rerun records nothing twice.
  */
 export async function sweepDisputeFees(now: Date = new Date()): Promise<void> {
   const since = new Date(now.getTime() - 60 * 86_400_000).toISOString();
   const live = LIVE_KEY();
-  const [{ data: disputes }, { data: debits }] = await Promise.all([
+  const [{ data: disputes }, { data: debits }, { data: returned }] = await Promise.all([
     supabaseAdmin.from('online_payment_disputes')
       .select('id, org_id, online_payment_id, stripe_dispute_id, fee_paid_from, livemode, closed_at')
       .eq('livemode', live).gte('opened_at', new Date(now.getTime() - 240 * 86_400_000).toISOString())
@@ -501,6 +527,8 @@ export async function sweepDisputeFees(now: Date = new Date()): Promise<void> {
     supabaseAdmin.from('online_payments').select('id, org_id, stripe_dispute_id, livemode')
       .eq('rail', 'bank_debit').eq('status', 'reversed').eq('livemode', live).gte('reversed_at', since)
       .not('stripe_dispute_id', 'is', null).limit(500),
+    supabaseAdmin.from('online_payments').select('id')
+      .eq('rail', 'bank_debit').eq('status', 'returned').eq('livemode', live).gte('returned_at', since).limit(500),
   ]);
   for (const d of (disputes ?? []) as Array<{ id: string; org_id: string; online_payment_id: string; stripe_dispute_id: string; livemode: boolean; closed_at: string | null }>) {
     if (d.closed_at && d.closed_at < since) continue;
@@ -509,6 +537,12 @@ export async function sweepDisputeFees(now: Date = new Date()): Promise<void> {
   for (const o of (debits ?? []) as Array<{ id: string; org_id: string; stripe_dispute_id: string; livemode: boolean }>) {
     await recordDisputeFees({ orgId: o.org_id, onlinePaymentId: o.id, rail: 'bank_debit', stripeDisputeId: o.stripe_dispute_id, disputeId: null, livemode: o.livemode });
   }
+  // A returned debit whose fee is recorded has nothing more to read.
+  const returnedIds = ((returned ?? []) as Array<{ id: string }>).map(o => o.id);
+  if (!returnedIds.length) return;
+  const { data: feeRows } = await supabaseAdmin.from('platform_stripe_fees').select('online_payment_id').eq('kind', 'returned').in('online_payment_id', returnedIds);
+  const recorded = new Set(((feeRows ?? []) as Array<{ online_payment_id: string }>).map(r => r.online_payment_id));
+  for (const id of returnedIds) if (!recorded.has(id)) await recordReturnedDebitFee(id);
 }
 
 /** The daily job's retry of every fee whose billing failed (a passing Stripe error), a few times before a person looks. */

@@ -121,7 +121,9 @@ international-card surcharge-or-absorb policy).
 
 ### 2026-10-26 — A returned or reversed bank debit's CA$5 is the club's, billed on its next FieldLogicHQ invoice; a free or comped club is not billed
 **Status:** **Decided; point 3 SUPERSEDED 2026-10-26** by "A comp covers the subscription only…" above (comped and free
-clubs are billed too). (owner, 2026-10-26, at the Club Tier Stage 12c build start — answer 2 in the stage plan §0k, after
+clubs are billed too); **point 4 SUPERSEDED 2026-10-27** (owner ruling 3, Stage 12d-1: a returned debit is billed at
+Stripe's own figure read from the platform's balance, as a reversed one is, and nothing when Stripe charged nothing; the
+constant is gone; built on dev 2026-10-27, Part 5b). (owner, 2026-10-26, at the Club Tier Stage 12c build start — answer 2 in the stage plan §0k, after
 the research on how Stripe charges it; the option chosen was *"Invoice line; comped clubs exempt"*). **Built on dev 2026-10-26
 (Stage 12c Part 6a)**; deployment state lives in the release-history record. Online payments stay off in production until
 counsel signs off, so no club is billed by it yet.

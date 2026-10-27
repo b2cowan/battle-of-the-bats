@@ -40,3 +40,18 @@ describe('ruling 2:a cancelled club is still billed, and sees its Stripe fees li
     assert.doesNotMatch(readCode(FEES), /subscription_status|subscriptionStatus|isOrgBillingSuspended/);
   });
 });
+
+describe('ruling 3: a returned debit is billed at Stripe\'s own figure, nothing when Stripe charged nothing', () => {
+  it('the debit\'s charge is read from Stripe\'s session (a returned debit never lands, so no charge is stored)', () => {
+    const returned = /export async function recordReturnedDebitFee[\s\S]*?\n}\n/.exec(readCode(FEES))?.[0] ?? '';
+    assert.match(returned, /op\.status !== 'returned'/);
+    assert.match(returned, /retrieveCheckout\(op\.stripe_account_id as string, op\.stripe_checkout_session_id as string\)/);
+    assert.match(returned, /\.filter\(isStripeFee\)\.reduce\(\(s, t\) => s - t\.amount, 0\)/, 'a fee Stripe gave back nets off');
+  });
+
+  it('the daily job reads a returned debit again until its fee is found (Stripe can post it later), never once found', () => {
+    const sweep = /export async function sweepDisputeFees[\s\S]*?\n}\n/.exec(readCode(FEES))?.[0] ?? '';
+    assert.match(sweep, /\.eq\('status', 'returned'\)\.eq\('livemode', live\)\.gte\('returned_at', since\)/);
+    assert.match(sweep, /for \(const id of returnedIds\) if \(!recorded\.has\(id\)\) await recordReturnedDebitFee\(id\);/);
+  });
+});

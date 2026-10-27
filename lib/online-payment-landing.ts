@@ -308,7 +308,7 @@ const DEBIT_COLUMNS = 'id, org_id, flow, team_id, tournament_id, season_id, tota
  * After a debit came back (returned while clearing, or reversed after it cleared): the desk's notice (one per debit,
  * naming every child, words §3.6), Stripe's fee recorded against the club (§0k answer 2), and — for a return — any
  * decision made while it cleared stamped 'returned' (nothing was taken, so nothing is sent back or kept). A reversal's fee
- * is Stripe's own figure on the dispute (12d-1 ruling 5); a return's is the published one (Stripe reports none).
+ * is Stripe's own figure on the dispute (12d-1 ruling 5); a return's is Stripe's own figure on its charge (ruling 3).
  */
 async function afterDebitBack(opId: string, kind: 'returned' | 'reversed', stripeDisputeId: string | null = null): Promise<void> {
   const { data } = await supabaseAdmin.from('online_payments').select(DEBIT_COLUMNS).eq('id', opId).maybeSingle();
@@ -319,7 +319,7 @@ async function afterDebitBack(opId: string, kind: 'returned' | 'reversed', strip
       .eq('online_payment_id', op.id).is('outcome', null);
   }
   await raiseDebitNotice(op, kind);
-  if (kind === 'returned') await recordReturnedDebitFee({ orgId: op.org_id, onlinePaymentId: op.id, livemode: op.livemode });
+  if (kind === 'returned') await recordReturnedDebitFee(op.id);
   else if (stripeDisputeId) await recordDisputeFees({ orgId: op.org_id, onlinePaymentId: op.id, rail: 'bank_debit', stripeDisputeId, disputeId: null, livemode: op.livemode });
 }
 
