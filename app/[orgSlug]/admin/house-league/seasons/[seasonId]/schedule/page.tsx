@@ -935,6 +935,8 @@ export default function SchedulePage() {
   const [practiceTimeOpen, setPracticeTimeOpen] = useState(false);
   const [timeOn, setTimeOn] = useState<LeagueUse | null>(null);
   const [backToPractice, setBackToPractice] = useState(false);
+  /** Tools and the time line open House league's time as itself: never on a piece, never back to Practice time (/review). */
+  const openLeagueTime = () => { setTimeOn(null); setBackToPractice(false); setTimeOpen(true); };
   const loadLeagueTime = useCallback(async () => {
     const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/time${orgQuery}`, { cache: 'no-store' }).catch(() => null);
     // A failed re-read keeps the last good line rather than hiding it (/review).
@@ -1231,6 +1233,8 @@ export default function SchedulePage() {
     const data = res ? await res.json().catch(() => null) : null;
     if (!res?.ok) {
       showError(res?.status === 409 && !data?.code ? `That ${noun.toLowerCase()} is already booked` : 'Could not save practice', data?.error ?? 'Unknown error');
+      // A series that moved part of the way before a failure reads as it now is (/review).
+      void loadPractices(selectedTeamId);
       return;
     }
     setEditingPractice(null);
@@ -1433,7 +1437,7 @@ export default function SchedulePage() {
       {/* The time line (Stage 11b Part 3): where this division's time comes from, and the door to House league's time. */}
       {leagueTime && selectedDivId && showTimeLine(leagueTime, buildsSchedules) && (
         <HouseLeagueTimeLine time={leagueTime} divisionId={selectedDivId}
-          divisionName={divisions.find(d => d.id === selectedDivId)?.name ?? ''} onOpen={() => setTimeOpen(true)} />
+          divisionName={divisions.find(d => d.id === selectedDivId)?.name ?? ''} onOpen={openLeagueTime} />
       )}
 
       {/* Toolbar */}
@@ -1522,7 +1526,7 @@ export default function SchedulePage() {
         <div style={{ marginLeft: 'auto' }}>
           <CoachToolbarMenu label={LEAGUE_TIME_WORDS.tools} icon={<MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
             collapseOnPhone bareOnPhone drawerOnPhone drawerTitle={LEAGUE_TIME_WORDS.tools} triggerClassName={tb.tool}>
-            <CoachToolbarMenuItem icon={<Clock size={15} aria-hidden />} label={LEAGUE_TIME_WORDS.title} onSelect={() => setTimeOpen(true)} />
+            <CoachToolbarMenuItem icon={<Clock size={15} aria-hidden />} label={LEAGUE_TIME_WORDS.title} onSelect={openLeagueTime} />
             {/* Practice time (Part 4): the league's runners on a live season, for the division picked. */}
             {canManage && selectedDiv && (
               <CoachToolbarMenuItem icon={<CalendarClock size={15} aria-hidden />} label={PRACTICE_TIME_WORDS.title} onSelect={() => setPracticeTimeOpen(true)} />

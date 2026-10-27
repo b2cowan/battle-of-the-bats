@@ -16,8 +16,9 @@
  *   4. moves a part's teams through its practices one step a week, so the early and late times are shared ("Teams take
  *      turns at the early and late times, week by week"). A part with room to spare uses its earliest practices: the
  *      open one is the late one, every week.
- *   5. a week missing a slot (the club took a date back) gives a team it leaves short an open seat elsewhere that week,
- *      when one fits.
+ *   5. plans each run of weeks with the same parts on its own (/review 2026-10-27): when the club changes its time
+ *      mid-season (a date taken back, a slot moved or extended), a week is planned with what it has — never a promise
+ *      made on parts that week doesn't hold. The window's figures are the typical week's (the shape most weeks have).
  *
  * ⚖ ITS OWN PLANNER, not the club engine's (lib/club-schedule-engine.ts). The engine cuts a schedule's blocks into slots
  * and shares them by percentage and prime time through a weekly min-cost flow; its turn-taking moves a team's facility
@@ -27,7 +28,7 @@
  * ⚖ Only slots still to come are planned over (the route's read, lib/league-time-server.ts): the step rewrites every
  * practice the rows name, so a started slot is history and is never in a plan.
  */
-import { formatStoredDate, mondayOfDay, utcToZonedInputs } from './timezone.ts';
+import { addCalendarDays, formatStoredDate, mondayOfDay, utcToZonedInputs } from './timezone.ts';
 import { pluralize, possessive } from './utils.ts';
 import { weekdayOf } from './permit-time.ts';
 import { SCHEDULE_COACH_WORDS, SCHEDULE_WORDS } from './club-schedule-words.ts';
@@ -160,7 +161,9 @@ function partsOf(slots: readonly PracticeTimeSlot[], s: PracticeSettings): Part[
   const map = new Map<string, Part>();
   for (const slot of slots) {
     const key = `${slot.weekday}|${slot.start}|${slot.end}|${slot.placeKey}`;
-    const startMin = minutesOf(slot.start), endMin = minutesOf(slot.end);
+    // A slot that ends at midnight reads "00:00": its end is the next day's start.
+    const startMin = minutesOf(slot.start);
+    const endMin = minutesOf(slot.end) <= startMin ? minutesOf(slot.end) + 24 * 60 : minutesOf(slot.end);
     const part = map.get(key) ?? {
       key, order: 0, weekday: slot.weekday, startMin, endMin,
       pieces: Math.max(0, Math.floor((endMin - startMin) / s.practiceMinutes)), seats: 0, byWeek: new Map(),
@@ -212,88 +215,65 @@ export function planPractices(p: {
   const all = partsOf(p.slots, s);
   const tooShort = all.filter(x => x.pieces === 0).length;
   const parts = all.filter(x => x.seats > 0);
-  const seatsAWeek = parts.reduce((n, x) => n + x.seats, 0);
   const slotIds = p.slots.map(x => x.id);
-  const none: PracticePlan = {
-    rows: [], slotIds, seatsAWeek, perTeam: 0, practicesAWeek: 0, openAWeek: seatsAWeek, goWithout: 0, turns: false, tooShort,
-  };
-  if (!teams.length || !seatsAWeek) return none;
 
-  // The same number for every team, as many as the parts allow.
-  let perTeam = Math.floor(seatsAWeek / teams.length);
-  let members: Map<string, string[]> | null = null;
-  while (perTeam > 0 && !(members = membersFor(parts, teams, perTeam))) perTeam -= 1;
-  const short = perTeam === 0;
-  const memberOf = members ?? new Map<string, string[]>();
+  // Each week's SHAPE: the parts it holds. A run of weeks with one shape is planned once, so a team keeps its part
+  // through the run; a week the club changed (a date taken back, a slot moved or extended) is planned with what it has.
+  const shapes = new Map<string, { parts: Part[]; weeks: string[] }>();
+  for (const week of [...new Set(parts.flatMap(x => [...x.byWeek.keys()]))].sort()) {
+    const here = parts.filter(x => x.byWeek.has(week));
+    const key = here.map(x => x.key).join(',');
+    const shape = shapes.get(key) ?? { parts: here, weeks: [] };
+    shape.weeks.push(week);
+    shapes.set(key, shape);
+  }
+  /** One shape's plan: the same number for every team, as many as its parts allow; fewer seats than teams is short. */
+  const planShape = (here: readonly Part[]) => {
+    const seats = here.reduce((n, x) => n + x.seats, 0);
+    let perTeam = teams.length ? Math.floor(seats / teams.length) : 0;
+    let members: Map<string, string[]> | null = null;
+    while (perTeam > 0 && !(members = membersFor(here, teams, perTeam))) perTeam -= 1;
+    return { seats, perTeam, short: perTeam === 0, members: members ?? new Map<string, string[]>() };
+  };
+  // The window's figures are the TYPICAL week's: the shape most weeks have (the earliest on a tie).
+  const typical = [...shapes.values()].sort((a, b) => b.weeks.length - a.weeks.length || a.weeks[0].localeCompare(b.weeks[0]))[0];
+  const seatsAWeek = typical ? typical.parts.reduce((n, x) => n + x.seats, 0) : 0;
+  if (!teams.length || !typical) {
+    return { rows: [], slotIds, seatsAWeek, perTeam: 0, practicesAWeek: 0, openAWeek: seatsAWeek, goWithout: 0, turns: false, tooShort };
+  }
 
   const rows: PlannedPractice[] = [];
-  const weeks = [...new Set(parts.flatMap(x => [...x.byWeek.keys()]))].sort();
-  for (const week of weeks) {
-    const w = weekIndex(week);
-    /** Seats taken this week, per slot; each team's practices this week. */
-    const taken = new Map<string, Set<number>>();
-    const thisWeek = new Map<string, PlannedPractice[]>();
-    const place = (slot: PracticeTimeSlot, seat: number, teamId: string) => {
-      const piece = Math.floor(seat / s.teamsAtOnce);
-      const from = Date.parse(slot.startsAt) + piece * s.practiceMinutes * MIN;
-      const row = { slotId: slot.id, teamId, scheduledAt: new Date(from).toISOString(), endsAt: new Date(from + s.practiceMinutes * MIN).toISOString() };
-      rows.push(row);
-      taken.set(slot.id, (taken.get(slot.id) ?? new Set()).add(seat));
-      thisWeek.set(teamId, [...(thisWeek.get(teamId) ?? []), row]);
-    };
-    if (short) {
-      // Short time: ONE ring of every team over the week's seats, one step a week — each team goes without as often as
-      // any other, and moves through the parts' early and late times as it goes round (a part of its own would leave
-      // the same few teams sharing the gaps all season).
-      const seats = parts.flatMap(part => {
-        const slot = part.byWeek.get(week);
-        return slot ? Array.from({ length: part.seats }, (_, seat) => ({ slot, seat })) : [];
-      });
-      teams.forEach((t, i) => { const at = seats[mod(i + w, teams.length)]; if (at) place(at.slot, at.seat, t.id); });
-      continue;
-    }
-    for (const part of parts) {
-      const slot = part.byWeek.get(week);
-      if (!slot) continue;
-      const m = memberOf.get(part.key) ?? [];
-      if (m.length) {
-        // Room to spare uses the earliest seats; the teams move through them a practice time a week.
-        const step = s.teamsAtOnce % m.length;
-        m.forEach((teamId, i) => place(slot, mod(i + w * step, m.length), teamId));
+  const place = (slot: PracticeTimeSlot, seat: number, teamId: string) => {
+    const from = Date.parse(slot.startsAt) + Math.floor(seat / s.teamsAtOnce) * s.practiceMinutes * MIN;
+    rows.push({ slotId: slot.id, teamId, scheduledAt: new Date(from).toISOString(), endsAt: new Date(from + s.practiceMinutes * MIN).toISOString() });
+  };
+  for (const shape of shapes.values()) {
+    const plan = planShape(shape.parts);
+    for (const week of shape.weeks) {
+      const w = weekIndex(week);
+      if (plan.short) {
+        // Short time: ONE ring of every team over the week's seats, one step a week — each team goes without as often as
+        // any other, and moves through the parts' early and late times as it goes round (a part of its own would leave
+        // the same few teams sharing the gaps all season).
+        const seats = shape.parts.flatMap(part => Array.from({ length: part.seats }, (_, seat) => ({ slot: part.byWeek.get(week)!, seat })));
+        teams.forEach((t, i) => { const at = seats[mod(i + w, teams.length)]; if (at) place(at.slot, at.seat, t.id); });
+        continue;
       }
-    }
-    // A week missing a slot: a team left short takes an open seat that fits.
-    {
-      const order = teams.map((_, i) => teams[mod(i + w, teams.length)]);
-      for (const t of order) {
-        while ((thisWeek.get(t.id)?.length ?? 0) < perTeam) {
-          const mineNow = thisWeek.get(t.id) ?? [];
-          let placed = false;
-          for (const part of parts) {
-            const slot = part.byWeek.get(week);
-            if (!slot || mineNow.some(r => r.slotId === slot.id)) continue;
-            const used = taken.get(slot.id) ?? new Set<number>();
-            for (let seat = 0; seat < part.seats && !placed; seat++) {
-              if (used.has(seat)) continue;
-              const from = Date.parse(slot.startsAt) + Math.floor(seat / s.teamsAtOnce) * s.practiceMinutes * MIN;
-              const to = from + s.practiceMinutes * MIN;
-              if (mineNow.some(r => Date.parse(r.scheduledAt) < to && from < Date.parse(r.endsAt))) continue;
-              place(slot, seat, t.id);
-              placed = true;
-            }
-            if (placed) break;
-          }
-          if (!placed) break;
-        }
+      for (const part of shape.parts) {
+        const m = plan.members.get(part.key) ?? [];
+        // Room to spare uses the earliest seats; the teams move through them a practice time a week.
+        const step = m.length ? s.teamsAtOnce % m.length : 0;
+        m.forEach((teamId, i) => place(part.byWeek.get(week)!, mod(i + w * step, m.length), teamId));
       }
     }
   }
 
-  const practicesAWeek = short ? seatsAWeek : perTeam * teams.length;
-  const turns = short || parts.some(x => Math.ceil((memberOf.get(x.key)?.length ?? 0) / s.teamsAtOnce) > 1);
+  const t = planShape(typical.parts);
+  const practicesAWeek = t.short ? t.seats : t.perTeam * teams.length;
+  const turns = t.short || typical.parts.some(x => Math.ceil((t.members.get(x.key)?.length ?? 0) / s.teamsAtOnce) > 1);
   return {
-    rows, slotIds, seatsAWeek, perTeam, practicesAWeek, openAWeek: seatsAWeek - practicesAWeek,
-    goWithout: short ? teams.length - seatsAWeek : 0, turns, tooShort,
+    rows, slotIds, seatsAWeek, perTeam: t.perTeam, practicesAWeek, openAWeek: seatsAWeek - practicesAWeek,
+    goWithout: t.short ? teams.length - t.seats : 0, turns, tooShort,
   };
 }
 
@@ -354,7 +334,11 @@ export function repeatsWords(practice: LeaguePractice, teamPractices: readonly L
       && p.orgVenueFacilityId === practice.orgVenueFacilityId && p.orgVenueId === practice.orgVenueId && weekdayOf(day(p)) === weekday
     : !!practice.recurrenceGroupId && p.recurrenceGroupId === practice.recurrenceGroupId));
   if (run.length < 2) return null;
-  const last = run.map(day).sort().at(-1)!;
+  // "Every Wednesday" only when it IS every week from the first to the last: a team going round the short-time ring
+  // has some Wednesdays, not every one (/review 2026-10-27).
+  const days = [...new Set(run.map(day))].sort();
+  if (days.some((d, i) => i > 0 && addCalendarDays(days[i - 1], 7) !== d)) return null;
+  const last = days.at(-1)!;
   return `Every ${WEEKDAY[weekday]} to ${formatStoredDate(last, { withYear: false })}`;
 }
 
@@ -380,7 +364,8 @@ export const PRACTICE_WINDOW_WORDS = {
   scopeOne: SERIES_SCOPE_ROWS[0].label('practice'),
   scopeRest: SERIES_SCOPE_ROWS[1].label('practice'),
   scopeNext: 'Edit',
-  close: 'Close',
+  /** Back to the practice, read first (the × closes the window). */
+  scopeCancel: 'Cancel',
   /** The edit form (today's practice form, opened to edit). */
   editTitle: (team: string) => `Edit practice — ${team}`,
   editRestHint: 'Each practice keeps its own date. The time, place and notes change for this one and the ones after it.',

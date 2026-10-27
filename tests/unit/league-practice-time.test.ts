@@ -286,6 +286,40 @@ describe('A practice\'s window (h2): Repeats and From', () => {
   });
 });
 
+describe('Practice time: the club changes its time mid-season (/review 2026-10-27)', () => {
+  it('Mondays for five weeks, then Wednesdays: every team practises every week, never half the weeks', () => {
+    const slots = [...weekly(1, '18:00', '20:00', 'Diamond 1', 5), ...weekly(3, '18:00', '20:00', 'Diamond 1', 5, 5)];
+    const plan = planPractices({ slots, teams: teams(2), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    assert.equal(plan.perTeam, 1);
+    assert.equal(plan.practicesAWeek, 2);
+    for (const week of byWeek(plan.rows)) assert.equal(week.length, 2);
+    for (const t of teams(2)) assert.equal(plan.rows.filter(r => r.teamId === t.id).length, 10, t.name);
+    assertFloors(plan.rows, 1);
+  });
+  it('a one-off Saturday never counts as a week\'s time: the figures are the typical week\'s', () => {
+    const slots = [...weekly(1, '18:00', '20:00', 'Diamond 1', 10), ...weekly(6, '10:00', '12:00', 'Diamond 1', 1)];
+    const plan = planPractices({ slots, teams: teams(4), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    assert.equal(plan.seatsAWeek, 2);
+    assert.equal(plan.perTeam, 0);
+    assert.equal(plan.goWithout, 2);
+  });
+  it('a slot that ends at midnight holds its practices', () => {
+    const slots = weekly(5, '21:00', '00:00', 'Diamond 1', 2);
+    const plan = planPractices({ slots, teams: teams(3), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    assert.equal(plan.tooShort, 0);
+    assert.equal(plan.seatsAWeek, 3);
+    assert.equal(plan.perTeam, 1);
+  });
+  it('Repeats only says "Every Monday" when it is every week', () => {
+    const base = {
+      seasonId: 's', divisionId: 'd', teamId: 't', endsAt: null, location: null, notes: null, status: 'scheduled' as const,
+      createdAt: '', updatedAt: '', orgVenueId: 'v1', orgVenueFacilityId: 'f1', recurrenceGroupId: null, fromSchedule: 'S',
+    };
+    const gappy = [0, 2, 3].map(i => ({ ...base, id: `p${i}`, clubScheduleSlotId: `x${i}`, scheduledAt: new Date(Date.UTC(2027, 5, 7 + i * 7, 22)).toISOString() }));
+    assert.equal(repeatsWords(gappy[0], gappy), null);
+  });
+});
+
 describe('Practice time: settings', () => {
   it('reads the step\'s ranges and nothing else', () => {
     assert.deepEqual(readSettings({ practiceMinutes: 60, teamsAtOnce: 1 }), { practiceMinutes: 60, teamsAtOnce: 1 });

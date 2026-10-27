@@ -183,6 +183,10 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
         setLevels(ls => [...ls.slice(0, -1), { kind: 'piece', use: { divisionId, kind: kind as LeagueUse['kind'] }, stage: {} }]);
       }}>{W.choose.next}</button>
     </>;
+  } else if (level.kind !== 'top') {
+    // Opened on a piece (`openOn`) and still reading: only the loading line, no Back over a level not yet drawn (/review).
+    body = !failed ? <LoadingState inline label="Loading house league’s time…" /> : null;
+    footer = <button type="button" className="btn btn-outline" onClick={onClose}>{W.close}</button>;
   } else {
     footer = empty
       ? <>
@@ -255,7 +259,7 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
     <>
       <KitDialog kind="form" size="medium" eyebrow={level.kind === 'top' ? seasonName : null} title={title} identity={identity}
         onClose={onClose} busy={busy} dirty={staged} footer={footer} footerStart={footerStart}
-        back={below ? { label: levelLabel(below), onBack: up } : undefined} levelKey={levelKey}>
+        back={below && time ? { label: levelLabel(below), onBack: up } : undefined} levelKey={levelKey}>
         {failed && (hasFoot && level.kind !== 'top'
           ? <DialogReason className={repKit.formError}>{failed}</DialogReason>
           : <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{failed}</p>)}

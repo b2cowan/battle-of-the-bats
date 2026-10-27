@@ -54,10 +54,10 @@ export default function PracticeWindow({ practice, teamName, divisionName, teamP
 
   if (asking) {
     return (
-      <KitDialog kind="form" eyebrow={W.eyebrow(divisionName)} title={W.scopeTitle} onClose={onClose}
+      <KitDialog kind="form" size="medium" eyebrow={W.eyebrow(divisionName)} title={W.scopeTitle} onClose={onClose}
         back={{ label: W.title(teamName), onBack: () => setAsking(null) }} levelKey="scope"
         footer={<>
-          <button type="button" className="btn btn-outline" onClick={() => setAsking(null)}>{W.close}</button>
+          <button type="button" className="btn btn-outline" onClick={() => setAsking(null)}>{W.scopeCancel}</button>
           <button type="button" className="btn btn-lime" onClick={() => onEdit(asking)}>{W.scopeNext}</button>
         </>}>
         <fieldset className={p.choices}>
