@@ -183,6 +183,66 @@ Drawings: https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB.
 - **9d1·12** The allowance is any 24 hours, the same rule as the club's, so one engine counts both and the refusal's time is
   exact. The words say so; /marketing settles them. (9d1·8's example sentence said "left today"; 9d1·12 governs its words.)
 
+## 0h · Owner rulings 2026-10-27, the 9d-2 + 11b drawings (by paste-back; 13 as recommended, ask 2 the alternative; one amendment)
+
+Drawings: https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU (version 4).
+
+**⚖ The amendment, in the owner's words (2026-10-27), which governs 9d2·3 and 9d2·5:** *"the club needs to have a single
+place to control times, they might get a permit for a diamond 5 days a week but only want to allocate 2 to house league, we
+can't have the house league people allowed to click any day or time before the club allocates the time they choose to
+allocate to them."* So, of the text below as pasted: a convenor's Generate games step 1 never gives a division time the club
+has not allocated to house league, and a league admin does **not** change *open* time in the club's schedules (9d2·5's "open
+and" is struck). **How** the club allocates to house league (to the program as a whole, or straight to each division and
+team) was not ruled: it is ask **9d2·15**, open.
+
+- **9d2·1** C: a division's schedule is a draft until Publish schedule, which emails its families once. After that, changes
+  wait under Changes to send and go live and are emailed together on ✓. An urgent cancel or postpone sends at once from the
+  game. No unpublish.
+- **9d2·2** As recommended, but a practice change also emails that team's families. (Recommended was: games — a new date or
+  time, a new place, cancelled, postponed, given a new date, added after publishing — email the families of the game's two
+  teams and copy their coaches; one email per household per Send, one part per child; scores and notes don't email.)
+- **9d2·3** Generate games reads the division's game time from the club's schedule (step 1 gives it some if it has none, saved
+  there — **within the amendment above**) and only pairs teams: once or twice through, byes and home and away balanced, game
+  length = the slot's. Blocks: not enough game time. Warns: outside the permit, a booking outside the club's schedule at the
+  place, a team twice in a day, byes back to back. Saves a draft.
+- **9d2·4** B: the same button and window, and the same engine with a league rule set: games per team against the plan, home
+  and away, byes, slot share, twice in a day, and clashes across games and practices. Movement is dropped.
+- **9d2·5** As drawn (**within the amendment above**). A slot can be given to a division as game time, or to a team as
+  practice time. The convenor gives time and hands out practices from the house-league schedule (Generate games step 1;
+  Practice time); the owner sees it all in the club's schedule. A club practice reads "From {schedule}" and changes only there.
+  A league admin opens the club's schedules and changes only ~~open and~~ house-league time; a rep team's slot reads, with no
+  controls and no "ask for it" step. A division is a sharing group. A house-league coach can't hand a practice back.
+- **9d2·6** Three builds, in order. **11b**: house league in the club's schedule (game time for divisions, practice time handed
+  to teams, Practice time from the house-league screen, the league admin's door, sharing groups, the coach's practice email;
+  walk §L-b). **9d-2a**: List · Week · Month with games and practices, read-first windows, Generate games, health, the public
+  schedule, permit links (no migration). **9d-2b**: Publish schedule, Changes to send, the family email, the history's
+  Automatic rows, the coach's page (migrations; needs mig 385 on production).
+- **9d2·7** The coach's team page lists the team's published games and its practices, from today on, in 9d-2b.
+- **9d2·8** Publish schedule is offered only once the division's teams are published.
+- **9d2·9** Before publishing, Delete. After, Cancel only; the game stays struck through and families hear.
+- **9d2·10** A postponed game leaves its week for "Needs a new date" (an amber count on the admin list, words on the public
+  page) and offers "Give it a new date"; it then reads Moved.
+- **9d2·11** The generator lists only divisions with no published games. A published division adds games one at a time.
+- **9d2·12** List · Week · Month (Week and Month on a phone), games and practices together, a Show filter (games, practices) on
+  the right; a night of practices folds into one row in List. (Drawn, round 3, on the house view switch.)
+- **9d2·13** The owner moves a division's game time after its games are published: the games move with the time and wait in
+  the division's Changes to send; the club's Send the changes tells the league admins, and families hear once, from the
+  convenor's send.
+- **9d2·14** The free League plan (parked): Generate games asks when and where once and keeps only the games (no club time is
+  stored); practices by hand. Decided again if the plan is unparked.
+- **9d2·15 — RULED 2026-10-27: House league as a whole.** The owner's words: *"I agree with giving it to house league as a
+  whole, I wouldn't expect them to ever break it out by division at the club level, that is the job of the house league
+  admins/convenors."* The club gives time to the program; dividing it into division game time and team practice time is the
+  convenor's job alone. Drawn the same day as frames k1–k5 on the same page. The question as asked: the owner
+  or an admin gives time to **House league as a whole** (days, hours and places, from a permit), and the convenor divides it
+  into division game time and team practice time; a convenor with none sees that the club hasn't given house league time yet,
+  and who can; an owner or admin running the league allocates and divides in one step (Generate games step 1 stays for them).
+  The alternative: the owner or an admin gives time straight to each division and team, and the convenor only pairs teams and
+  hands out what each was given.
+- **Deferred, not ruled (owner 2026-10-27):** whether families hear when a team is first given its practice time (raised by
+  9d2·2's alternative: a practice *change* emails families, but practices are never on the public page). Left for the work on
+  how the club connects to families; 11b's coach practice email stands as drawn.
+
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
 - The trust list re-verified (§3); the coupling check for a standalone League Plus club; the ledger seam under D1 (C18);
@@ -197,7 +257,7 @@ Drawings: https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB.
 - **Facilitated payments**: see `FACILITATED_PAYMENTS_SCOPING_PLAN.md` and `PLAN_PRICING_FACTS.md`. No price, rate or
   inclusion is restated here.
 - The public team page is games only; practices are never public.
-- **Optional, unruled:** a house-league schedule health score (Q11).
+- **Ruled (§0, 2026-10-24):** the house-league schedule health score is the tournament's button, window and engine (Q11). The 9d-2 drawings found the engine unchanged scores the real 2026 season 97, Healthy (a cancelled game not replayed, a postponed game undated); ask 9d2·4 asks for a league rule set inside that engine, not a reopening.
 
 ## 2 · The payments contract (12b drops in without rework)
 
@@ -269,8 +329,8 @@ check the snapshot before touching it); the org home's empty-tournaments hero (S
 | **9b-1** Sign-up, payments-ready — **BUILT 2026-10-25** (§0d, §9; walk §375 owed) | Create reshaped (Setup = the Overview's Divisions and Registration blocks, extended); price per division + early bird, one resolver; real dates; atomic capacity + waitlist constraint; no duplicate child; approve respects capacity; several children; CASL; DOB picks division; staff notice on every public sign-up. Server and public form only — the Registrations screen is rebuilt once, in 9b-2 | Q5 S1·a S2·b | L |
 | **9b-2** Money, honest — **BUILT 2026-10-25** (§0e, §9; walk §378 ✅ 2026-10-25, 51 of 51) | Frozen price (per-registration correction with a reason; Move division asks to re-price); one ending path with refunds as money out; Money band; Money stays open after Complete; Registrations on the kit (Withdraw, Move division, Release the spot, bulk, Paid/Owing filter, phone rows); the club's own payment instructions until 12b; "Ask to withdraw" on the status page; Statement filing + Walk 7a 7.6; ghost pay spots; Families balance from the frozen price. **12b drawn right after this is ruled.** | Q1 Q2 Q3 Q4 Q6 Q10 Q15 | L |
 | **9c** Teams and people — **RULED 2026-10-26 · BUILT 2026-10-26** (commits in the status log; walk §381 ✅ 2026-10-26, 42 of 42) (§0f; drawings https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk, source `HOUSE_LEAGUE_STAGE9C_DRAWINGS.html`; §9) | Ratings (convenor-only) + balanced snake draft; draft per division; coach accounts (if Q7) as a column of 9a's gate; Publish teams with placement notices; the status page shows the team | Q7 Q8 Q9 | M–L |
-| **9d-1** One email composer — **split from 9d 2026-10-26 (owner)** · **DRAWN · RULED · BUILT 2026-10-26** (commits in the status log; walk §388 owed) (§0g, all twelve as recommended; drawings https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB, source `HOUSE_LEAGUE_STAGE9D1_DRAWINGS.html`; build prompt `HOUSE_LEAGUE_STAGE9D1_BUILD_PROMPT.md`; §9) | The season's email onto the Families window and the batched sender (Q12b): opened from the season already set to it; division / team / status / "Selected" audiences; the season's own 3 typed sends a day, automatic notices never counted (Q12c); the season's own sent history (the registrar has no Families access); the old Notifications page and "Message registrants" window retire; the green "0 delivered" goes with them | Q12b Q12c (ruled) | M |
-| **9d-2** The schedule — **split from 9d 2026-10-26 (owner)** | Generator rebuilt; C1–C12 admin + public; health (Q11); 11b; venue/permit links; Publish schedule + change notices (sent through 9d-1's composer path) | Q11 (ruled) | L |
+| **9d-1** One email composer — **split from 9d 2026-10-26 (owner)** · **DRAWN · RULED · BUILT 2026-10-26** (commits in the status log; walk §388 ✅ 10-26, 35/35) (§0g, all twelve as recommended; drawings https://claude.ai/artifact/Xy8ENL1KbUZVbWpDthD9EB, source `HOUSE_LEAGUE_STAGE9D1_DRAWINGS.html`; build prompt `HOUSE_LEAGUE_STAGE9D1_BUILD_PROMPT.md`; §9) | The season's email onto the Families window and the batched sender (Q12b): opened from the season already set to it; division / team / status / "Selected" audiences; the season's own 3 typed sends a day, automatic notices never counted (Q12c); the season's own sent history (the registrar has no Families access); the old Notifications page and "Message registrants" window retire; the green "0 delivered" goes with them | Q12b Q12c (ruled) | M |
+| **9d-2** The schedule — **split from 9d 2026-10-26 (owner)** · **DRAWN 2026-10-26 · RULED 2026-10-27** (§0h: 13 as recommended, ask 2 the alternative, the owner's amendment that house league never picks time the club has not allocated to it; 9d2·15 ruled the same day: the club gives time to House league as a whole, the convenor divides it) (with 11b, one round; drawings https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU, source `HOUSE_LEAGUE_STAGE9D2_DRAWINGS.html`; round 2 the same day: the club's schedule owns every hour, Generate games is match-ups only, List · Week · Month with games and practices together; recommended order now 11b → 9d-2a → 9d-2b, ask 9d2·6; §9) | Generator rebuilt; C1–C12 admin + public; health (Q11); 11b; venue/permit links; Publish schedule + change notices (sent through 9d-1's composer path) | Q11 (ruled) | L |
 | **9e** Game day | Standings by sport pack; score entry (coaches if Q7); rainout as one action | — | S–M |
 | **9f** Season end | Archive; the finished-season record (Q16); Start next season copies forward. Returning families with a pre-filled form wait on Stage 14 | — | M |
 
@@ -517,5 +577,62 @@ open it, and the menu's top level is Stage 13's.
   "Earlier emails"; dev and prod held 0 rows on 2026-10-26). **Found and recorded:** the admin header has no subtitle (F3), so
   the allowance is the page's first line; the drawn footnote overclaimed (a status email isn't shown on the registration); the
   old help said the season log held approvals and waitlist notices, which it never did; Families' 7c email had no help section
-  (added). **Owed:** the walk (§388, https://claude.ai/artifact/MJ1gaUN1LXvMpsZJtykM2G); mig 385 at the promote that ships
+  (added). **Walked 2026-10-26, §388 35/35, no changes asked.** **Owed:** mig 385 at the promote that ships
   9d-1; /review on the whole.
+- **2026-10-26 — 9d-2 and 11b DRAWN together, asks open (the schedule, and house league's share of the club's time).**
+  From `HOUSE_LEAGUE_STAGE9D2_DRAWING_PROMPT.md` (owner: one drawing round, build 9d-2 first, then 11b). Drawings
+  https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU (source `HOUSE_LEAGUE_STAGE9D2_DRAWINGS.html`, built by `.probe/hl/build9d2.mjs` from `.probe/hl/src9d2/`;
+  captures by `.probe/hl/cap9d2.mjs` and `cap9d2b.mjs`; republish the BUILT `.probe/hl/house-league-9d2.html`). Frames
+  (a)–(k) at desk and phone, 11b's included; /ux and /design ran and their changes are listed on the page's asks tab.
+  **Push-backs on the page:** (1) "Publish schedule" was defined nowhere; recommended C: a division's schedule is a draft
+  until Publish (one email per family), then changes wait under "Changes to send" and go live and are emailed together on
+  ✓ (the club scheduler's "Send the changes" precedent), an urgent cancel sends at once, no unpublish. (2) 11b drawn on the
+  same screen now, built after; 9d-2 recommended as two builds (9d-2a screen/generator/health/public, no migration;
+  9d-2b publish/notices/coach page, needs mig 385 on prod). (3) The tournament engine run unchanged on Dev House League
+  2026 returns 97, Healthy, no issues (`.probe/hl/h9d2.mts`); recommended the same button, window and engine with a
+  league rule set. (4) Change notices: the game's two teams' families + coaches, one email per household per Send;
+  practice changes reach coaches only (Ask 6, "nothing for families yet"). (5) The generator blocks on a checked-surface
+  clash, a team double-booked, or too few slots; everything else warns (the permit rule unchanged).
+  **Asks 9d2·1–11** (publish, notices, generator, health, 11b design, the split, the coach's page lists games and
+  practices, teams before schedule, no delete after publish, postponed needs a date, generator only on unpublished
+  divisions). **Census corrections:** the public query that drops cancelled games is `getGamesForSeason` at
+  `lib/db.ts` ~:2711 (not :2766); §3's "Optional, unruled" Q11 line was stale (fixed above); the club plan's "Not
+  ruled" on the health option is stale (noted there); the coach's team page says "Your games aren't listed on this
+  page yet"; `isScheduleBuilder` admits owner and admin only, so a league admin is refused today although Stage 11
+  Ask 3 rules otherwise (11b's role path). **Fixture notes:** dev games are stored at 10:00 UTC (6:00 a.m. Eastern),
+  a seed artefact; Draft Test 2027 (one U12 division, 10 teams, 101 families, teams published 10-26) is the real
+  generator case; the club's only permit ended 2026-09-30. **Next:** the owner rules the eleven asks, then /marketing
+  on the words, then the 9d-2a build prompt.
+- **2026-10-26 — 9d-2 + 11b drawings ROUND 2 (owner's questions), republished to the same link (version 2).** The owner
+  asked why the generator can't make practices, why games and practices are a toggle, why no Month, and whether two
+  generators duplicate. Answered on the page: round 1's generator had its own days/times/diamonds table, **a second
+  model of the club's time, which Stage 11 forbids** (`CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §5.1), and the convenor would
+  type the same hours twice. **Redrawn:** the club's schedule owns every hour: it gives a division **game time** and its
+  teams **practice time** (practices are generated there, by the tool that already makes them); **Generate games** only
+  pairs teams into the division's game time (step 1 gives a division time if it has none, saved into the club's
+  schedule); **Practice time** hands a division's practice time to its teams from the house-league screen; the views are
+  **List · Week · Month**, games and practices together, a Show filter on the right (as the club calendar and the
+  coach's schedule). **Consequences:** the build order flips to **11b → 9d-2a → 9d-2b** (Generate games reads the time
+  11b gives); `league_games` needs the same slot link as `league_practices`; a slot can go to a division (game time) or a
+  team (practice time); moving a division's game time moves its games into the convenor's Changes to send (ask 9d2·13).
+  **New asks:** 9d2·12 the views, 9d2·13 the owner's game-time move, 9d2·14 the parked free League plan (house league with
+  no club's schedule: ask when and where once, keep only the games). Asks 3, 5, 6 rewritten. Asks now 14, all open.
+- **2026-10-27 — 9d-2 drawings ROUND 3 (owner: "we do not toggle the list/week/month view with pills"), version 3.**
+  Rounds 1 and 2 drew the views as separate rounded pills with a dark fill (the round-1 /design pass). Redrawn to the
+  house switch every calendar renders (`CalendarViewSwitch` → the kit's `ViewSwitch`, §289): one white rounded track on
+  the strong line, the chosen view soft olive, leading the toolbar line with the dates after it; on a phone the current
+  view's glyph in the toolbar row opens a drawer titled View (Week · Month). Show is a quiet `MultiSelectDropdown`
+  (its name alone at rest, as the club calendar's Venue · Program · Team); the generator's Once / Twice is a dropdown
+  field. **Build note:** 9d-2a renders `CalendarViewSwitch` and the phone `CoachToolbarMenu` view drawer, never its own.
+- **2026-10-27 — 9d-2 + 11b RULED by paste-back (§0h).** Thirteen as recommended; 9d2·2 took the alternative (a practice
+  change also emails that team's families). The owner added a rule with the paste: the club has one place to control time,
+  and house league never picks a day or time before the club allocates it (a 5-day permit, 2 days given to house league). That
+  narrows 9d2·3's step 1 and strikes "open" from 9d2·5's league-admin line. It opens **9d2·15**: how the club allocates time to
+  house league (recommended: to House league as a whole, the convenor divides it). **Next:** draw the allocation step
+  (9d2·15), then /marketing on the words, then the 11b build prompt. Permits' place in the navigation went to Stage 13 (the
+  readiness plan).
+- **2026-10-27 — 9d2·15 RULED (House league as a whole) and drawn.** The club never divides house league's time by division;
+  that is the convenor's job. Frames k1–k5 added on the same page (the owner gives House league time in the club's
+  Schedules; the convenor's House league's time window divides it; Generate games step 1 picks from it; the empty state; the
+  owner who runs the league). The first-practice family notice is deferred to the families-connection work. **Next:**
+  /marketing on the words, then the 11b build prompt.

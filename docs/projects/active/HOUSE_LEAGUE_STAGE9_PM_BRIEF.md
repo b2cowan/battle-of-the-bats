@@ -52,7 +52,35 @@
 > they ticked, and each family gets one email. Each season has its own three emails in any 24 hours, apart from the club's;
 > a message to one family and the Publish teams emails never count. A stopped email can be finished for the families it
 > missed. The owner ruled during the build that "everyone in a season" means families with an active child, from Families
-> too. The walk is the next step.
+> too. Walked 2026-10-26, 35 of 35.
+>
+> **9d-2 and 11b drawn together 2026-10-26, asks open.** Drawings: https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU. A convenor
+> builds a whole season's games in one run: several divisions, the days, times and diamonds games can go in, a game length
+> and days off. The run checks itself before saving, refuses only what would be wrong (two games on one diamond at once,
+> not enough room) and only warns about the rest, like a lapsed permit. The games are a draft that families can't see
+> until the convenor publishes a division. Publishing sends each family one email with its child's team's games. After
+> that, a moved or cancelled game waits under "Changes to send", and one send tells only the families of the teams
+> involved, one email per household. A cancellation tonight can go at once. The public schedule shows where every game is,
+> strikes through a cancelled one and says when one is postponed. Coaches see their team's games on their own page. The
+> schedule gets the tournament's health score, rebuilt with league rules: unchanged, it rated the real test season 97
+> while a cancelled game had never been replayed. 11b, drawn on the same screen, shows practice time the club hands to
+> house league from its one schedule; the club owner or a league admin can move it, and the team's coaches are told.
+> Recommended as three builds in order: the screen and the generator, then publishing and the emails, then the club-time
+> half. Eleven asks are open.
+>
+> **Redrawn the same day after the owner's questions.** The first drawing gave the game generator its own days, times
+> and diamonds, so a convenor would have entered the same diamond hours twice, once for games and once for practices,
+> and the two could have double-booked. Now the club's one schedule holds every hour: it gives a division its game time
+> and its teams their practice time, and the game generator only decides who plays whom inside that time. A convenor
+> does both from the house-league schedule without learning the club's scheduler. The schedule shows games and
+> practices together, by list, week or month, like the club's other calendars. Because the games now read the club's
+> time, the club-time half is built first. Fourteen asks are open.
+>
+> **Ruled 2026-10-27.** The owner agreed with all fourteen, with one change (a practice change also emails that team's
+> families) and one rule added: the club decides how much of its time house league gets. A club holding a diamond five days
+> a week may give house league two, and house league's people can only work inside what they were given. One question is
+> left, and the owner answered it the same day: the club gives time to house league as a whole, and dividing it among
+> divisions and teams is the convenor's job. That step is drawn, and the club-time half is built first.
 
 ## What this is
 
@@ -95,7 +123,10 @@ gets sign-ups and money ready for online payment, which is the stage after this 
    division, team, status and picked-family choices, its own three sends a day, and its own sent history. The old
    Notifications page and "Message registrants" window go. Success: one place to email families, and a registrar can still
    email a season without seeing the club's Families book.
-6. **9d-2 · The schedule.** A real schedule generator. An honest public schedule. Families told about changes.
+6. **9d-2 · The schedule.** A real schedule generator. An honest public schedule. Families told about changes. Drawn
+   together with 11b, house league's share of the club's time (the club's one schedule gives house league its hours),
+   which is built first. Success: a convenor builds and publishes a whole season in one sitting, and no family finds a game moved
+   without having been told.
 7. **9e · Game day.** Standings that follow the sport's scoring rules, and scores entered by coaches.
 8. **9f · Season end.** Finishing a season, looking back at past seasons, and starting next season from this one.
 

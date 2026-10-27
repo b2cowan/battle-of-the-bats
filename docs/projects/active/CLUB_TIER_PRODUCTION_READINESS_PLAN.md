@@ -2804,7 +2804,9 @@ the issues with "Show them", team detail, the rules at the end), and the tournam
 warning box from its own check, shown when there are conflicts. The option: give the admin league schedule the same button
 and window, scored by the same engine across divisions (max games a day, least rest, target games per team all fit a league
 week), its own clash check becoming the window's issues. Not ruled — the Stage 9 session draws it beside its C1–C12 and
-decides it, or leaves the warning box.
+decides it, or leaves the warning box. **⚖ Since ruled (Stage 9 plan §0, 2026-10-24, Q11): the tournament's button, window and
+engine.** The 9d-2 drawings (2026-10-26) found the engine unchanged scores a broken league season 97 and ask for a league rule
+set inside it (ask 9d2·4).
 
 ### Stage 10 — Permits & bookings (⚖ D4 ruled IN scope 2026-09-25; release-gating; end of the walk)
 > **🎨 DRAWN 2026-10-10 with Stage 11 — its own plan now holds it:** `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` (+ `_PM_BRIEF.md`),
@@ -2868,7 +2870,11 @@ comes back with this stage, not before.
 > **🔨 11a BUILT 2026-10-11 (rep teams):** part A, the server, committed `60728a7c` · `f5a0a23d` (mig 326 dev only); part B,
 > the screens, built the same day and committed `2adfeb62` · `c46ee0ed` (help) 2026-10-12 (no migration). The definition of done — the owner's dome flow —
 > is QA §300 (fifteen walks, hub v99) — ✅ CLOSED 2026-10-12 (ledger `25d3e82b`; W3 and the re-checks on the owner's word). The record: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` header + §7 "11a part B as
-> built". Next: 11b (house league's half) with Stage 9.
+> built". Next: 11b (house league's half) with Stage 9. **11b DRAWN with 9d-2 on 2026-10-26, NOT BUILT, asks open** (https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU;
+> `HOUSE_LEAGUE_STAGE9_PLAN.md` §9): it is still owed, and the release holds it. Round 2 (same day) recommends building it
+> FIRST: house league's game time and practice time both come from the club's schedule. **Ruled 2026-10-27**
+> (`HOUSE_LEAGUE_STAGE9_PLAN.md` §0h): 11b first; house league works only inside time the club allocates to it; the
+> club gives time to House league as a whole and the convenor divides it (9d2·15, drawn).
 **Owner, 2026-10-08:** *"now that we are adding a calendar feature, I want to add a section of this club project to
 review building a scheduler where org admins can put in parameters and have a schedule generate where they can manually
 adjust after the fact (like tournament admins can). they should be able to keep scheduled groups that they can reference
@@ -3067,6 +3073,14 @@ unwritten departures.
   it has one that fits. Whatever is chosen, the season name and its state each appear once.
 - [ ] **Inventory question (owner 2026-10-22, not ruled): does the Club notice belong under a "Communications" home rather than the Public site editor?** The club sidebar has no Communications place today (the Coaches Portal's "Communication" group and tournament admin do), so the question is whether the club gets one: the notice, the family broadcast (Stage 7), anything else that talks to families. Detail and counter-weight: `PUBLIC_SITE_BUILDER_PLAN.md` §7.
 - [ ] **The standard, extended:** new rules for the crossings and for parity go into `NAV_STANDARD.md`; every departure found is
+- [ ] **Inventory question (owner 2026-10-27, not ruled): permits live in an odd place.** A permit is the club's hours at a place,
+  and the schedule is cut from it: the club's Schedules warn outside a permit, house league's games and practices come from
+  that time (9d2·15: the club allocates a permit's days to house league), and tournament scheduling and the Budget read it too.
+  Yet permits sit inside **Organization › Venues**, where nothing about scheduling points to them. Walk where they belong:
+  (a) beside Schedules, as the first step of the club's time (permits → schedules → what each program is given), the
+  recommended starting point; (b) stay under Venues, with a door from Schedules and from each permit warning; (c) a place of
+  their own. Whatever is chosen, every "outside the permit" warning opens the permit. Raised in the 9d-2 rulings
+  (`HOUSE_LEAGUE_STAGE9_PLAN.md` §0h).
   either fixed or written into its exceptions with the reason that earns it. **The default is the same everywhere; an exception
   has to name what makes its place different.** The tournament bar following the phase, the free portal's tiles and the closed
   season's one door are the standing examples of an exception that earns it.

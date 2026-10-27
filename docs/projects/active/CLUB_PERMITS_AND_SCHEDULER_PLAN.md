@@ -1467,6 +1467,18 @@ arrives; a bill changed while In review isn't flagged to the coaches (part A's d
 
 **11b · House league's half** (with Stage 9): `league_practices.club_schedule_slot_id` + `created_by`; the scheduler's
 house-league writer (move, cancel); the Practices view's "From {schedule}"; the role path for a club admin. Walk §L-b.
+**Status 2026-10-26: 11b DRAWN with 9d-2, NOT BUILT, asks open** (https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU, tab "11b · club time"; ask 9d2·5 its design,
+9d2·6 the build order; **round 2 the same day recommends 11b FIRST**, before 9d-2a and 9d-2b, because house league's
+games now take their hours from the club's schedule too: a slot goes to a division as game time or to a team as practice
+time, and the house-league generator only pairs teams inside the division's game time; `league_games` needs the slot link
+as well). **RULED 2026-10-27** (`HOUSE_LEAGUE_STAGE9_PLAN.md` §0h), 11b first, with the owner's rule that **house league
+never picks time the club has not allocated to it** (a league admin changes house-league time only, never open time); how the
+club allocates is 9d2·15, ruled the same day: **to House league as a whole**; the convenor divides it into division game time
+and team practice time, never the club. Drawn: the Practices view with the From tag, a practice's
+read-first window, house-league teams in the slot window's Change team list by division, a rep team's slot read-only for
+a league admin, the owner's move reaching the house-league coaches (never families) through Send the changes, a
+division as a sharing group, and the absent state without the club scheduler. Today `isScheduleBuilder` admits owner
+and admin only.
 
 **Gates to add:** a "one model of time" guard (no second slot table); the screens guards; the arithmetic of a permit's
 use recomputed from rows (the `check:club-money-arithmetic` pattern) for the Held / Booked / Unused band.
