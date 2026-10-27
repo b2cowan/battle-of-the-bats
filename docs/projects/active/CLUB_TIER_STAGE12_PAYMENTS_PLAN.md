@@ -234,7 +234,18 @@
   reason (Part 4's call); Payouts tells a non-owner whether the plan is free; `writeInvoiceState` is not monotonic (the
   daily re-read heals it); over-left orders a won-back extra by its original landing; two overlapping monthly runs can
   write a spurious `send_error`. **Migration number:** another session's untracked `396_support_console_leads_pipeline.sql`
-  collides with this 396 and needs renumbering by its owner.
+  collides with this 396 and needs renumbering by its owner (resolved: committed as 398).
+  **Owner rulings on Part 4's asks and the /review's calls (2026-10-27, in the Part 4b session):** (1) **mig 395 applied
+  to dev** (`f09401090`; the daily job runs at 11:15 GMT; prod stays a release step). (2) **A cancelled club is still billed
+  and SEES its fee list** on Plan & billing (no reprieve; a billing-rail exemption for the list). (3) **The returned-debit
+  CA$5 stops being billed from the constant**: a returned debit is billed at Stripe's own figure, as a reversed one is
+  (ruling 5), and nothing when Stripe charged nothing. (4) **The invoice's contact address is NOT decided here**: it is
+  one of the company addresses (with noreply and support) the owner will settle in a later company-wide email sweep;
+  `hello@fieldlogichq.ca` stays until then. (5) **The single "Email the pay link" after a lost dispute WARNS, never
+  skips** (the desk member's own choice; the bulk send keeps skipping). (6) **A fee put on a subscription that is
+  cancelled or discounted before its invoice is caught by the club's own monthly invoice** (the pending line removed from
+  Stripe, the fee billed on the own invoice once). (7) A credits-only month: recommendation put to the owner, not ruled.
+  Rulings 2, 3, 5, 6 are built in Part 5, before its help (`CLUB_TIER_STAGE12D1_PART5_PROMPT.md` §0).
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
