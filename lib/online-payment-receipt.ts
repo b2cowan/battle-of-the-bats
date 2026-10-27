@@ -209,7 +209,7 @@ export async function sendRefundEmail(refundId: string, extra?: { lead?: string;
  */
 export async function sendTeamPayLink(
   teamId: string,
-  opts: { despiteLostDispute?: boolean } = {},
+  opts: { askIfLost?: boolean } = {},
 ): Promise<{ sentTo: string; sentAt: string } | { error: string; disputeLost?: 'ask' }> {
   const facts = await loadTeamPayFacts(teamId);
   if (!facts) return { error: 'That team couldn’t be found.' };
@@ -219,7 +219,7 @@ export async function sendTeamPayLink(
   const payLink = teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId });
   if (!payLink) return { error: 'Pay links aren’t set up on this server.' };
   // Owner ruling 5 (2026-10-27): after a lost card dispute the reminders leave the team out; one send asks first.
-  if (!opts.despiteLostDispute && await teamLostDispute(teamId)) return { error: DISPUTE_WORDS.sendAnywayBody(true), disputeLost: 'ask' };
+  if (opts.askIfLost && await teamLostDispute(teamId)) return { error: DISPUTE_WORDS.sendAnywayBody(true), disputeLost: 'ask' };
   const face = await systemMailFace({
     id: facts.org.id, name: facts.org.name, logoUrl: facts.org.logoUrl ?? null,
     themePreset: facts.org.themePreset ?? null, themePrimary: facts.org.themePrimary ?? null, themeAccent: facts.org.themeAccent ?? null,
@@ -248,7 +248,7 @@ export async function sendLeaguePayLink(
   registrationId: string,
   raised?: { child: string; from: string; to: string; diff: string } | null,
   refunded?: { child: string; childFirst: string; owing: string; blockHtml: string } | null,
-  opts: { bulk?: boolean; despiteLostDispute?: boolean } = {},
+  opts: { bulk?: boolean; askIfLost?: boolean } = {},
 ): Promise<{ sentTo: string; sentAt: string } | { error: string; disputeLost?: 'skipped' | 'ask' }> {
   const facts = await loadLeaguePayFacts(registrationId);
   if (!facts) return { error: 'That registration couldn’t be found.' };
@@ -256,6 +256,8 @@ export async function sendLeaguePayLink(
   // dispute — it took its money back through its bank, and hears from a person, not a reminder. On the server, so a lost
   // SIBLING is caught too (the bulk send picks one child per sign-up). A desk member's single send is their own choice,
   // asked first (owner ruling 5, 2026-10-27: it warns, never skips), below the refusals so a send that can't go never asks.
+  // Only the desk's own "Email the pay link" asks (`askIfLost`): a refund's "Email the pay link" answer and the price-raise
+  // email are each already the desk's choice, and send as before (/review of Part 5b).
   const lost = facts.shares.length > 0 && await anyLostDispute(facts.shares.map(s => s.registrationId));
   if (opts.bulk && lost) return { error: DISPUTE_WORDS.bulkWhy, disputeLost: 'skipped' };
   if (facts.refusal === 'clearing') {
@@ -266,7 +268,7 @@ export async function sendLeaguePayLink(
   if (!facts.guardianEmail) return { error: 'This family has no email address.' };
   const payLink = leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId });
   if (!payLink) return { error: 'Pay links aren’t set up on this server.' };
-  if (lost && !opts.despiteLostDispute) return { error: DISPUTE_WORDS.sendAnywayBody(false), disputeLost: 'ask' };
+  if (lost && opts.askIfLost) return { error: DISPUTE_WORDS.sendAnywayBody(false), disputeLost: 'ask' };
   const face = await systemMailFace({
     id: facts.org.id, name: facts.org.name, logoUrl: facts.org.logoUrl ?? null,
     themePreset: facts.org.themePreset ?? null, themePrimary: facts.org.themePrimary ?? null, themeAccent: facts.org.themeAccent ?? null,

@@ -823,11 +823,11 @@ export const DISPUTE_WORDS = {
   moneyHow: 'Taken back by the bank',
   bulkWhy: 'a dispute was lost',
   // Ruling 5 (owner 2026-10-27): one "Email the pay link" after a lost dispute asks first, never skips; the bulk send
-  // still leaves them out. Words owed to /marketing (the dispute words' voice).
+  // still leaves them out. Words: /marketing 2026-10-27 (copy doc §1.5).
   sendAnywayTitle: 'Email the pay link anyway?',
   sendAnywayBody: (team: boolean) => (team
-    ? 'This team took a card payment back through its bank, and the club lost the dispute. Payment reminders leave the team out, so it hears from a person first. You can still send the pay link.'
-    : 'This family took a card payment back through their bank, and the club lost the dispute. Email families who owe leaves them out, so they hear from a person first. You can still send the pay link.'),
+    ? 'The bank took this team’s card payment back, and the club lost the dispute. Payment reminders leave the team out so someone can talk to them first. You can still send the pay link.'
+    : 'The bank took this family’s card payment back, and the club lost the dispute. Email families who owe leaves them out so someone can talk to them first. You can still send the pay link.'),
   sendAnywayGo: 'Email the pay link',
 } as const;
 
@@ -963,7 +963,7 @@ export const STRIPE_FEE_WORDS = {
   billedOwnUnpaid: (invoiceNo: string, day: string) => `Invoice ${invoiceNo} · unpaid since ${day}`,
   billedCredit: 'Credited to your account',
   // Ruling 7: returned against the invoice that carried the answering fee (lowering it while open, to the card once
-  // paid), on its day. Owed to /marketing.
+  // paid), on its day. Words: /marketing 2026-10-27 (copy doc §1.7); the club's only notice (Stripe's email is off).
   billedReturned: (day: string) => `Returned ${day}`,
   billedTest: 'Not billed: test mode',
   billedError: 'Couldn’t be billed yet',

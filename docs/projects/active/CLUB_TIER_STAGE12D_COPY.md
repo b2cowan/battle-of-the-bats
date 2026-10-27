@@ -187,6 +187,10 @@ asks (not a word choice).
 | `money.line.disputeLost` | Dispute lost · receipt {receiptNo} | **new.** The What column of a lost dispute's returned line, out of the book (never by deleting the receipt). On Every line and Still owing; not in Refunds, which is the club's own act. With a reason: "Dispute lost · {whyShort} · receipt {receiptNo}" |
 | `money.how.disputeLost` | Taken back by the bank | **new.** The How column |
 | `regs.bulk.why.disputeLost` | a dispute was lost | **new.** A skipped reason in `regs.bulk.emailLinkPartial` ("{n} pay links sent; {m} skipped: {why}."). "Email families who owe" leaves that child out until paid or excused, so a family that took its money back through its bank hears from a person, not a reminder |
+| `regs.payLink.anyway.title` | Email the pay link anyway? | **new (owner ruling 5, 2026-10-27; /marketing 2026-10-27).** A question window after ONE "Email the pay link" for a family whose card dispute was lost (its own child or a sibling, the server says). Warns, never skips; the bulk send still leaves the family out. The registrar or treasurer |
+| `regs.payLink.anyway.body` | The bank took this family’s card payment back, and the club lost the dispute. Email families who owe leaves them out so someone can talk to them first. You can still send the pay link. | **new.** Same window |
+| `regs.payLink.anyway.go` | Email the pay link | **new.** Primary button, beside Cancel |
+| `team.payLink.anyway.*` | Title and button as above. Body: The bank took this team’s card payment back, and the club lost the dispute. Payment reminders leave the team out so someone can talk to them first. You can still send the pay link. | **new.** The same question on a tournament team’s record (builder’s call: ruling 5’s rule, the team’s side) |
 
 ### 1.6 Emails to the person who answers (the owner; FieldLogicHQ's own envelope, not the club's identity)
 
@@ -265,6 +269,7 @@ own; dates by `formatStoredDate`, no year inside a line):
 | `ownInvoice.email.button` | Pay the invoice | Button to Stripe's hosted invoice page. `ownInvoice.email.secure` "You pay on Stripe’s secure page." under it |
 | `ownInvoice.email.questions` | Questions: {supportEmail}. | |
 | `ownInvoice.reminder.*` | **Held.** Not ruled. If the owner wants one: subject "Reminder: invoice {invoiceNo} from FieldLogicHQ", lead "Invoice {invoiceNo} for {amount} was due on {dueFull}. You can pay it on Stripe’s secure page.", button "Pay the invoice". Nothing in it says what happens next | §7 question 3 |
+| `billing.fees.billed.returned` | Returned {Nov 3} | **new (owner ruling 7, 2026-10-27; /marketing 2026-10-27).** The Plan & billing Stripe fees list’s status line under a returned answering fee given back as a credit note against the invoice that carried the answering fee (lowering it while open, refunded to the card once paid). The club’s only notice: Stripe’s credit-note email is off. A credit that nets with its answering fee on an invoice still to come keeps "On your {Dec 1} invoice" |
 
 ---
 

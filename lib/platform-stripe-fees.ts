@@ -220,25 +220,31 @@ export async function billFee(feeId: string): Promise<BillOutcome> {
       await supabaseAdmin.from('platform_stripe_fees').update({ bill_error: null }).eq('id', f.id);
       return 'own_invoice';
     }
-    // Read back first: Stripe's key lasts 24 hours, and the next try may be the monthly run weeks later (/review 4b).
-    const since = Math.floor(new Date(f.created_at).getTime() / 1000) - 3600;
-    const already = (await stripe.invoiceItems.list({ customer: ride.customer, created: { gte: since }, limit: 100 }).autoPagingToArray({ limit: 1000 }))
-      .find(i => i.metadata?.platform_stripe_fee_id === f.id);
-    const item = already ?? await stripe.invoiceItems.create({
-      customer: ride.customer, subscription: ride.subscription, amount: signedCents(f), currency: 'cad',
-      description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
-    // Keyed by the subscription too: a fee released from one it could no longer ride (ruling 6) and put on a new one within
-    // Stripe's 24 hours must not be handed the deleted line back.
-    }, { idempotencyKey: `stripe-fee:${f.id}:${ride.subscription}` });
-    await supabaseAdmin.from('platform_stripe_fees')
-      .update({ stripe_invoice_item_id: item.id, billed_at: new Date().toISOString(), billed_on: 'subscription', bill_error: null })
-      .eq('id', f.id).is('billed_at', null);
+    await subscriptionLine(f, ride);
     return 'billed';
   } catch (err) {
+    // A runner that lost a race to one that billed it writes nothing on the billed row (/review of Part 5b).
     await supabaseAdmin.from('platform_stripe_fees')
-      .update({ bill_error: errText(err), bill_attempts: (f.bill_attempts ?? 0) + 1 }).eq('id', f.id);
+      .update({ bill_error: errText(err), bill_attempts: (f.bill_attempts ?? 0) + 1 }).eq('id', f.id).is('billed_at', null);
     return 'error';
   }
+}
+
+/**
+ * A fee's line on the subscription it rides, read back first (Stripe's key lasts 24 hours, and the next try may be the
+ * monthly run weeks later, /review 4b), then stamped billed; a refused stamp throws, so it is never read as billed while
+ * the row says otherwise. Keyed by the subscription too: a fee released from one it could no longer ride (ruling 6) and
+ * put on a new one within Stripe's 24 hours is never handed the deleted line back. A credit's line rides here too.
+ */
+async function subscriptionLine(f: FeeRow, ride: { customer: string; subscription: string }): Promise<void> {
+  const since = Math.floor(new Date(f.created_at).getTime() / 1000) - 3600;
+  const already = (await stripe.invoiceItems.list({ customer: ride.customer, created: { gte: since }, limit: 100 }).autoPagingToArray({ limit: 1000 }))
+    .find(i => i.metadata?.platform_stripe_fee_id === f.id);
+  const item = already ?? await stripe.invoiceItems.create({
+    customer: ride.customer, subscription: ride.subscription, amount: signedCents(f), currency: 'cad',
+    description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
+  }, { idempotencyKey: `stripe-fee:${f.id}:${ride.subscription}` });
+  await stampSubscriptionLine(f.id, item.id);
 }
 
 /**
@@ -252,11 +258,18 @@ async function billCredit(f: FeeRow): Promise<BillOutcome> {
   const { data } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
     .eq('dispute_id', f.dispute_id ?? '').eq('kind', 'dispute_answer').maybeSingle();
   const answer = data as FeeRow | null;
-  if (!answer || answer.exempt_reason) throw new Error('The answering fee it returns was never billed.');
   const waitWithIt = async () => {
     await supabaseAdmin.from('platform_stripe_fees').update({ bill_error: null }).eq('id', f.id);
     return 'own_invoice' as const;
   };
+  if (!answer || answer.exempt_reason) {
+    // No answering fee of ours to return it against (a fee Stripe gave back that our reading didn't name as the answering
+    // fee): billed as a credit was before ruling 7, a negative line on the next invoice, never left in an error (/review).
+    const ride = await subscriptionToRide(f.org_id);
+    if (!ride) return waitWithIt();
+    await subscriptionLine(f, ride);
+    return 'billed';
+  }
   if (!answer.billed_at || !answer.stripe_invoice_item_id) return waitWithIt();
   if (answer.billed_on === 'own_invoice') {
     const { data: inv } = await supabaseAdmin.from('platform_fee_invoices').select('stripe_invoice_id').eq('id', answer.fee_invoice_id ?? '').maybeSingle();
@@ -271,20 +284,17 @@ async function billCredit(f: FeeRow): Promise<BillOutcome> {
   if (!line.invoice) {
     const ride = await subscriptionToRide(f.org_id);
     if (!ride || line.parent?.subscription_details?.subscription !== ride.subscription) return waitWithIt();
-    const item = await stripe.invoiceItems.create({
-      customer: ride.customer, subscription: ride.subscription, amount: signedCents(f), currency: 'cad',
-      description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
-    }, { idempotencyKey: `stripe-fee:${f.id}:${ride.subscription}` });
-    await stampSubscriptionLine(f.id, item.id);
+    await subscriptionLine(f, ride);
     return 'billed';
   }
   return creditAgainst(f, answer, typeof line.invoice === 'string' ? line.invoice : line.invoice.id!);
 }
 
 async function stampSubscriptionLine(feeId: string, itemId: string): Promise<void> {
-  await supabaseAdmin.from('platform_stripe_fees')
+  const { error } = await supabaseAdmin.from('platform_stripe_fees')
     .update({ stripe_invoice_item_id: itemId, billed_at: new Date().toISOString(), billed_on: 'subscription', bill_error: null })
     .eq('id', feeId).is('billed_at', null);
+  if (error) throw error;
 }
 
 /**
@@ -310,6 +320,8 @@ async function creditAgainst(f: FeeRow, answer: FeeRow, invoiceId: string): Prom
     return 'billed';
   }
   if (inv.status === 'void') throw new Error('The invoice that carried the answering fee was voided.');
+  const { data: now } = await supabaseAdmin.from('platform_stripe_fees').select('billed_at, fee_invoice_id').eq('id', f.id).maybeSingle();
+  if (!now || now.billed_at || now.fee_invoice_id) return 'done'; // billed or claimed meanwhile by another runner
   const notes = await stripe.creditNotes.list({ invoice: invoiceId, limit: 100 }).autoPagingToArray({ limit: 1000 });
   let note = notes.find(n => n.metadata?.platform_stripe_fee_id === f.id) ?? null;
   if (!note) {
@@ -335,7 +347,7 @@ async function creditAgainst(f: FeeRow, answer: FeeRow, invoiceId: string): Prom
   }
   const { error } = await supabaseAdmin.from('platform_stripe_fees')
     .update({ stripe_credit_note_id: note.id, billed_at: new Date().toISOString(), billed_on: 'credit_note', bill_error: null })
-    .eq('id', f.id).is('billed_at', null);
+    .eq('id', f.id).is('billed_at', null).is('fee_invoice_id', null);
   if (error) throw error;
   // The club's own invoice reads its new amount owed (or paid) at once, not at the next re-read.
   const ownRow = inv.metadata?.[FEE_INVOICE_META];
@@ -621,12 +633,14 @@ export async function remindUnpaidFeeInvoices(now: Date = new Date()): Promise<n
 /**
  * The daily job's re-read of recent disputes for a fee Stripe charged FieldLogicHQ after the events stopped (an answering
  * fee, or its return on a win, can post days later): card disputes opened or closed in the last 60 days whose fee wasn't
- * the club's, bank debits reversed in that time, and bank debits returned in that time with no fee yet (ruling 3). Each
+ * the club's, bank debits reversed in that time, and bank debits returned in the last two weeks with no fee yet (ruling
+ * 3: usually Stripe charges nothing, so each is read at most fourteen times). Each
  * kind is written once, so a rerun records nothing twice.
  */
 export async function sweepDisputeFees(now: Date = new Date()): Promise<void> {
   const since = new Date(now.getTime() - 60 * 86_400_000).toISOString();
   const live = LIVE_KEY();
+  const twoWeeks = new Date(now.getTime() - 14 * 86_400_000).toISOString();
   const [{ data: disputes }, { data: debits }, { data: returned }] = await Promise.all([
     supabaseAdmin.from('online_payment_disputes')
       .select('id, org_id, online_payment_id, stripe_dispute_id, fee_paid_from, livemode, closed_at')
@@ -636,7 +650,7 @@ export async function sweepDisputeFees(now: Date = new Date()): Promise<void> {
       .eq('rail', 'bank_debit').eq('status', 'reversed').eq('livemode', live).gte('reversed_at', since)
       .not('stripe_dispute_id', 'is', null).limit(500),
     supabaseAdmin.from('online_payments').select('id')
-      .eq('rail', 'bank_debit').eq('status', 'returned').eq('livemode', live).gte('returned_at', since).limit(500),
+      .eq('rail', 'bank_debit').eq('status', 'returned').eq('livemode', live).gte('returned_at', twoWeeks).limit(500),
   ]);
   for (const d of (disputes ?? []) as Array<{ id: string; org_id: string; online_payment_id: string; stripe_dispute_id: string; livemode: boolean; closed_at: string | null }>) {
     if (d.closed_at && d.closed_at < since) continue;
@@ -676,7 +690,7 @@ export async function releaseStrandedSubscriptionFees(now: Date = new Date()): P
   const since = new Date(now.getTime() - 400 * 86_400_000).toISOString();
   const { data } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
     .eq('billed_on', 'subscription').eq('livemode', LIVE_KEY()).gte('billed_at', since)
-    .order('billed_at', { ascending: false }).limit(500);
+    .order('billed_at', { ascending: true }).limit(1000);
   const rides = new Map<string, Promise<{ customer: string; subscription: string } | null>>();
   let released = 0;
   for (const f of (data ?? []) as FeeRow[]) {
@@ -688,7 +702,8 @@ export async function releaseStrandedSubscriptionFees(now: Date = new Date()): P
       if (before) {
         if (!rides.has(f.org_id)) rides.set(f.org_id, subscriptionToRide(f.org_id));
         const ride = await rides.get(f.org_id)!;
-        if (ride && before.parent?.subscription_details?.subscription === ride.subscription) continue; // still rides
+        const on = before.parent?.subscription_details?.subscription ?? null;
+        if (ride && (!on || on === ride.subscription)) continue; // still rides (or Stripe didn't say: left alone)
         await stripe.invoiceItems.del(itemId);
         // Read again: a line Stripe put on an invoice in the meantime stays billed there.
         if (await readInvoiceItem(itemId)) continue;
@@ -710,8 +725,13 @@ export async function retryFailedFees(): Promise<number> {
   const { data } = await supabaseAdmin.from('platform_stripe_fees').select('id')
     .is('billed_at', null).is('exempt_reason', null).is('fee_invoice_id', null).not('bill_error', 'is', null)
     .lt('bill_attempts', 5).limit(200);
+  // A credit is tried again every day, error or not (ruling 7: it never waits for a later fee): one whose answering fee
+  // was still being billed when it was recorded is credited the next day, not on the next 1st.
+  const { data: credits } = await supabaseAdmin.from('platform_stripe_fees').select('id')
+    .eq('kind', 'dispute_answer_returned').is('billed_at', null).is('exempt_reason', null).is('fee_invoice_id', null)
+    .is('bill_error', null).limit(200);
   let n = 0;
-  for (const r of (data ?? []) as Array<{ id: string }>) if ((await billFee(r.id)) === 'billed') n += 1;
+  for (const r of [...(data ?? []), ...(credits ?? [])] as Array<{ id: string }>) if ((await billFee(r.id)) === 'billed') n += 1;
   return n;
 }
 

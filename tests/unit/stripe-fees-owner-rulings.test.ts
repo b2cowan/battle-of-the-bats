@@ -51,7 +51,7 @@ describe('ruling 3: a returned debit is billed at Stripe\'s own figure, nothing 
 
   it('the daily job reads a returned debit again until its fee is found (Stripe can post it later), never once found', () => {
     const sweep = /export async function sweepDisputeFees[\s\S]*?\n}\n/.exec(readCode(FEES))?.[0] ?? '';
-    assert.match(sweep, /\.eq\('status', 'returned'\)\.eq\('livemode', live\)\.gte\('returned_at', since\)/);
+    assert.match(sweep, /\.eq\('status', 'returned'\)\.eq\('livemode', live\)\.gte\('returned_at', twoWeeks\)/);
     assert.match(sweep, /for \(const id of returnedIds\) if \(!recorded\.has\(id\)\) await recordReturnedDebitFee\(id\);/);
   });
 });
@@ -62,7 +62,10 @@ describe('ruling 6: a fee left pending on a subscription that can no longer carr
   it('a line already on an invoice, or still on a subscription that rides, is left alone', () => {
     assert.match(release, /\.eq\('billed_on', 'subscription'\)\.eq\('livemode', LIVE_KEY\(\)\)\.gte\('billed_at', since\)/);
     assert.match(release, /if \(before\?\.invoice\) continue;/);
-    assert.match(release, /if \(ride && before\.parent\?\.subscription_details\?\.subscription === ride\.subscription\) continue;/);
+    // Stripe names the subscription on a pending line it was created on (test-mode probe 2026-10-27); a line it didn't
+    // name is left alone while the club rides one.
+    assert.match(release, /if \(ride && \(!on \|\| on === ride\.subscription\)\) continue;/);
+    assert.match(release, /\.order\('billed_at', \{ ascending: true \}\)/, 'oldest first: a yearly line is never pushed off');
   });
 
   it('read before and after: deleted from Stripe, read again, and only then returned to unbilled (never billed twice)', () => {
@@ -89,11 +92,14 @@ describe('ruling 5: one "Email the pay link" after a lost card dispute warns, ne
   it('house league: the bulk send skips the family; one send asks, and goes when the desk says so', () => {
     const league = /export async function sendLeaguePayLink[\s\S]*?\n}\n/.exec(RECEIPT)?.[0] ?? '';
     assert.match(league, /if \(opts\.bulk && lost\) return \{ error: DISPUTE_WORDS\.bulkWhy, disputeLost: 'skipped' \};/);
-    assert.match(league, /if \(lost && !opts\.despiteLostDispute\) return \{ error: DISPUTE_WORDS\.sendAnywayBody\(false\), disputeLost: 'ask' \};/);
+    assert.match(league, /if \(lost && opts\.askIfLost\) return \{ error: DISPUTE_WORDS\.sendAnywayBody\(false\), disputeLost: 'ask' \};/);
     // Asked only once nothing else refuses: a send that can't go never asks first.
     assert.ok(league.indexOf("disputeLost: 'ask'") > league.indexOf('if (!payLink)'), 'after every refusal');
     const route = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
-    assert.match(route, /despiteLostDispute: body\.despiteLostDispute === true/);
+    assert.match(route, /askIfLost: body\.bulk !== true && body\.despiteLostDispute !== true/);
+    // The refund's "Email the pay link" answer and the price-raise email never ask (each is already the desk's choice).
+    assert.equal((route.match(/sendLeaguePayLink\(/g) ?? []).length, 3);
+    assert.equal((route.match(/askIfLost/g) ?? []).length, 1, 'only the desk’s own button asks');
     assert.match(route, /sent\.disputeLost === 'ask' \? 'dispute_lost_ask'/);
     const screen = readCode('components/admin/kit/club/league/registrations/RegistrationsScreen.tsx');
     assert.match(screen, /if \(!r\.ok && r\.code === 'dispute_lost_ask'\) \{ setAct\(\{ kind: 'payLinkAnyway', reg \}\); return; \}/);
@@ -105,7 +111,7 @@ describe('ruling 5: one "Email the pay link" after a lost card dispute warns, ne
 
   it('a tournament team: the reminders skip it; one send asks first, the same way', () => {
     const team = /export async function sendTeamPayLink[\s\S]*?\n}\n/.exec(RECEIPT)?.[0] ?? '';
-    assert.match(team, /if \(!opts\.despiteLostDispute && await teamLostDispute\(teamId\)\) return \{ error: DISPUTE_WORDS\.sendAnywayBody\(true\), disputeLost: 'ask' \};/);
+    assert.match(team, /if \(opts\.askIfLost && await teamLostDispute\(teamId\)\) return \{ error: DISPUTE_WORDS\.sendAnywayBody\(true\), disputeLost: 'ask' \};/);
     assert.ok(team.indexOf("disputeLost: 'ask'") > team.indexOf('if (!payLink)'), 'after every refusal');
     const lost = /async function teamLostDispute[\s\S]*?\n}\n/.exec(RECEIPT)?.[0] ?? '';
     assert.match(lost, /\.eq\('status', 'lost'\)\.not\('lost_booked_at', 'is', null\)\.is\('won_back_at', null\)/, 'as the reminders read it');
@@ -156,5 +162,33 @@ describe('ruling 7: a returned answering fee goes back against the invoice that 
     assert.match(src, /else if \(f\.billed_on === 'credit_note'\) state = 'returned';/);
     assert.match(src, /invoiceDay: state === 'returned' \? f\.billed_at/);
     assert.match(readCode('components/admin/kit/club/StripeFeesList.tsx'), /case 'returned': return W\.billedReturned\(short\(f\.invoiceDay\)\);/);
+  });
+});
+
+describe('the /review of Part 5b', () => {
+  const src = readCode(FEES);
+  it('a credit beside its answering fee on a subscription reads back before it is made (no second line after Stripe’s 24 hours)', () => {
+    const credit = /async function billCredit[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+    assert.doesNotMatch(credit, /invoiceItems\.create\(/, 'only through subscriptionLine');
+    assert.match(credit, /await subscriptionLine\(f, ride\);/);
+  });
+
+  it('a credit note is never made for a credit the club’s own invoice claimed meanwhile; its stamp is a compare-and-set on both', () => {
+    const against = /async function creditAgainst[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+    assert.ok(against.indexOf("if (!now || now.billed_at || now.fee_invoice_id) return 'done';") < against.indexOf('creditNotes.create('));
+    assert.match(against, /\.eq\('id', f\.id\)\.is\('billed_at', null\)\.is\('fee_invoice_id', null\);/);
+  });
+
+  it('a credit is tried again daily, error or not; a runner that lost a race writes no error on a billed fee', () => {
+    const retry = /export async function retryFailedFees[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+    assert.match(retry, /\.eq\('kind', 'dispute_answer_returned'\)\.is\('billed_at', null\)/);
+    const bill = /export async function billFee[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+    assert.match(bill, /bill_attempts: \(f\.bill_attempts \?\? 0\) \+ 1 \}\)\.eq\('id', f\.id\)\.is\('billed_at', null\);/);
+  });
+
+  it('a credit with no answering fee of ours is billed as before, never stuck', () => {
+    const credit = /async function billCredit[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+    assert.doesNotMatch(credit, /throw new Error\('The answering fee it returns was never billed\.'\)/);
+    assert.match(credit, /if \(!answer \|\| answer\.exempt_reason\) \{[\s\S]*?await subscriptionLine\(f, ride\);/);
   });
 });

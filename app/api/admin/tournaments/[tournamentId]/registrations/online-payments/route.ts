@@ -50,7 +50,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     const { data: team } = await supabaseAdmin.from('teams').select('tournament_id').eq('id', body.teamId).maybeSingle();
     if (team?.tournament_id !== tournamentId) return json({ error: 'That team couldn’t be found.' }, 404);
     // Ruling 5: after a lost card dispute, one send asks first and goes on `despiteLostDispute`.
-    const sent = await sendTeamPayLink(body.teamId, { despiteLostDispute: body.despiteLostDispute === true });
+    const sent = await sendTeamPayLink(body.teamId, { askIfLost: body.despiteLostDispute !== true });
     if ('error' in sent) return json({ error: sent.error, ...(sent.disputeLost === 'ask' ? { code: 'dispute_lost_ask' } : {}) }, 409);
     return json(sent);
   }

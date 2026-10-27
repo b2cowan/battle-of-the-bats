@@ -26,7 +26,8 @@ describe('one billing path for every fee kind', () => {
     assert.match(ride, /code === 'resource_missing'\) return null;/);
     const bill = /export async function billFee[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
     assert.match(bill, /if \(!ride\) \{[\s\S]*?return 'own_invoice';/);
-    assert.match(bill, /subscription: ride\.subscription, amount: signedCents\(f\)/);
+    assert.match(bill, /await subscriptionLine\(f, ride\);/);
+    assert.match(src, /subscription: ride\.subscription, amount: signedCents\(f\)/);
   });
 
   it('comped and free clubs are billed: the only exemption written is test mode', () => {
@@ -80,8 +81,10 @@ describe('one billing path for every fee kind', () => {
     const monthly = /export async function sendMonthlyFeeInvoices[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
     assert.match(monthly, /\.eq\('status', 'open'\)\.eq\('livemode', live\)\.is\('emailed_at', null\)/);
     // A subscription line is read back before it is added (Stripe's key lasts 24 hours).
-    const bill = /export async function billFee[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
-    assert.ok(bill.indexOf('invoiceItems.list(') > 0 && bill.indexOf('invoiceItems.list(') < bill.indexOf('invoiceItems.create('), 'read back first');
+    // (Part 5b: every subscription line, a credit's included, goes through one helper that reads back first.)
+    const line = /async function subscriptionLine[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+    assert.ok(line.indexOf('invoiceItems.list(') > 0 && line.indexOf('invoiceItems.list(') < line.indexOf('invoiceItems.create('), 'read back first');
+    assert.match(src, /async function stampSubscriptionLine[\s\S]*?if \(error\) throw error;/, 'a refused stamp is never read as billed');
   });
 
   it('the billing webhook writes a fee invoice to its own row before the subscription cases can read it', () => {
