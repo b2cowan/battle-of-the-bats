@@ -853,6 +853,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     await recordForeignCardFee(op.id); // 12d-1 Part 4: once; a crash before it is caught here
     await carryOutDecisions(op.id);
     await sendOnlineReceiptOnce(op.id);
+    await bookDisputesLostBeforeLanding(stripeAccountId, op.id); // 12d-1 Part 4b: a crash before it is caught here
     return 'already';
   }
   if (op.status === 'returned') return 'returned'; // 12c: a returned debit never lands
@@ -884,7 +885,11 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
   // 12d-1 Part 4: Stripe's extra cost on a card issued outside the club's country is the club's, recorded now that Stripe
   // says it is paid (recorded or not); the family's total is unchanged.
   await recordForeignCardFee(op.id);
-  if (op.flow === 'league_signup') return landLeague(op, paidAt, card, mismatch);
+  if (op.flow === 'league_signup') {
+    const result = await landLeague(op, paidAt, card, mismatch);
+    await bookDisputesLostBeforeLanding(stripeAccountId, op.id);
+    return result;
+  }
 
   const { data: landed, error: landError } = mismatch
     ? { data: null, error: { message: mismatch } }
@@ -919,7 +924,32 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
   // landing's answer (a replay answers `already` without it).
   await raiseOverpaid(op.id);
   if (!(landed as { already?: boolean } | null)?.already) await reconcileDashboardRefunds(stripeAccountId, op.id);
+  await bookDisputesLostBeforeLanding(stripeAccountId, op.id);
   return (landed as { already?: boolean } | null)?.already ? 'already' : 'landed';
+}
+
+/**
+ * 12d-1 Part 4b: a card dispute lost while its payment was not in the record ("isn't in the record") took nothing back —
+ * there was no line to take. Once the payment lands, each such dispute is re-read from Stripe and applied, so the loss is
+ * taken back beside the receipt and the lost item is raised. Booked once (`online_payment_dispute_apply`); a no-op for
+ * every payment that never had one. A payment the desk records by hand another way is not linked to it, so it stays the
+ * desk's (the record shows the lost dispute).
+ */
+async function bookDisputesLostBeforeLanding(stripeAccountId: string, onlinePaymentId: string): Promise<void> {
+  const { data: lost, error } = await supabaseAdmin.from('online_payment_disputes').select('stripe_dispute_id')
+    .eq('online_payment_id', onlinePaymentId).eq('status', 'lost').is('lost_booked_at', null);
+  if (error) throw new Error(error.message);
+  if (!lost?.length) return;
+  const { data: op } = await supabaseAdmin.from('online_payments').select('landed_at, stripe_charge_id, stripe_payment_intent_id')
+    .eq('id', onlinePaymentId).maybeSingle();
+  if (!op?.landed_at || (!op.stripe_charge_id && !op.stripe_payment_intent_id)) return;
+  for (const d of lost) {
+    await applyCardDispute(stripeAccountId, {
+      id: d.stripe_dispute_id as string,
+      charge: (op.stripe_charge_id as string | null) ?? '',
+      payment_intent: (op.stripe_payment_intent_id as string | null) ?? null,
+    });
+  }
 }
 
 /**
@@ -995,8 +1025,8 @@ async function writeCardCountry(opId: string, card: ReturnType<typeof cardOf>): 
 export async function overLeft(onlinePaymentIds: readonly string[]): Promise<Map<string, number>> {
   const ids = [...new Set(onlinePaymentIds)];
   if (!ids.length) return new Map();
-  // The SQL measures the team's whole surplus, capped by this payment's own extra: with two extras on one team, a payment
-  // refunded in full would still read the other's (/review 2026-10-27). A payment that no longer counts has none left.
+  // The SQL shares the team's surplus out across its extras (mig 396), each capped by what of its own payment is still
+  // received; a payment that no longer counts is answered here without the call.
   const { data: gone, error: goneError } = await supabaseAdmin.from('online_payments').select('id')
     .in('id', ids).in('status', ['refunded', 'reversed', 'returned']);
   if (goneError) throw new Error(goneError.message);

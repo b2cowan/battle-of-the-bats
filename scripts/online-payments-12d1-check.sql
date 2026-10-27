@@ -8,7 +8,7 @@ DO $op12d1$
 DECLARE
   v_org uuid; v_event uuid; v_div uuid; v_whole uuid; v_part uuid; v_exact uuid; v_op uuid; v_op2 uuid; v_op3 uuid;
   v_res jsonb; v_err text; v_ok boolean; v_season uuid; v_reg uuid; v_reg2 uuid; v_lop uuid; v_d uuid; v_inv uuid;
-  v_today date := (now() AT TIME ZONE 'America/Toronto')::date; v_n int;
+  v_today date := (now() AT TIME ZONE 'America/Toronto')::date; v_n int; v_two uuid; v_xa uuid; v_xb uuid;
 BEGIN
   INSERT INTO organizations(name, slug, plan_id)
   VALUES ('CHECK 12d1', 'check-12d1-' || substr(md5(random()::text), 1, 10), 'club') RETURNING id INTO v_org;
@@ -93,6 +93,29 @@ BEGIN
   IF (SELECT entry_lowered FROM teams WHERE id = v_part) <> 50 THEN
     RAISE EXCEPTION 'FAIL T4b: an ordinary part refund no longer lowers the entry (%)', (SELECT entry_lowered FROM teams WHERE id = v_part); END IF;
 
+  -- T4c · (mig 396) two extras on one team are counted once: $400 by cheque, then $100 and $60 by card (both extra, $160).
+  -- $50 of the first is refunded (the extra goes back first), so $110 is extra: the newest keeps its $60, the first $50 —
+  -- never $100 + $60 as each read the team's whole surplus before.
+  INSERT INTO teams(tournament_id, division_id, name, email, status, payment_status)
+  VALUES (v_event, v_div, 'Halton Hawks', 'h@example.invalid', 'accepted', 'pending') RETURNING id INTO v_two;
+  PERFORM tournament_team_payment_record(v_two, 400, v_today, 'Payment', 'cheque', NULL);
+  INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
+    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+  VALUES (v_org, 'acct_check12d1', 'tournament_team', v_event, v_two, 'balance', 'Halton Hawks · balance', 100,
+    5, 105, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_xa;
+  PERFORM online_payment_land(v_xa, now() - interval '1 hour', 'pi_d1_xa', 'ch_d1_xa', 'visa', '4242');
+  INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
+    fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+  VALUES (v_org, 'acct_check12d1', 'tournament_team', v_event, v_two, 'balance', 'Halton Hawks · balance', 60,
+    3.60, 63.60, 'family', 0.035, 1.50, 'cs_check12d1_' || gen_random_uuid()) RETURNING id INTO v_xb;
+  PERFORM online_payment_land(v_xb, now(), 'pi_d1_xb', 'ch_d1_xb', 'visa', '4242');
+  IF online_payment_over_left(v_xa) <> 100 OR online_payment_over_left(v_xb) <> 60 THEN
+    RAISE EXCEPTION 'FAIL T4c: two extras before a refund (% and %)', online_payment_over_left(v_xa), online_payment_over_left(v_xb); END IF;
+  v_d := online_payment_refund_open(v_xa, true, NULL, NULL, NULL, 'app', NULL, 50, 'Paid more than the team owed');
+  PERFORM online_payment_team_refund_book(v_d, 're_d1_xa', true);
+  IF online_payment_over_left(v_xa) <> 50 OR online_payment_over_left(v_xb) <> 60 THEN
+    RAISE EXCEPTION 'FAIL T4c: two extras after a part refund (% and %, want 50 and 60)', online_payment_over_left(v_xa), online_payment_over_left(v_xb); END IF;
+
   -- T5 · a card dispute opens (needs_response): recorded once; the book is untouched (ask 3: the line stays while open).
   v_res := online_payment_dispute_apply(v_op3, 'du_d1_one', 'needs_response', 'fraudulent', 415.50, 415.50,
     now() + interval '14 days', false, 15, 'club', false, now());
@@ -111,6 +134,12 @@ BEGIN
   IF NOT (SELECT answered FROM online_payment_disputes WHERE id = v_d) OR (SELECT answered_at FROM online_payment_disputes WHERE id = v_d) IS NULL
      OR (SELECT due_by FROM online_payment_disputes WHERE id = v_d) IS NULL THEN
     RAISE EXCEPTION 'FAIL T6: the answered read'; END IF;
+  -- T6b · (mig 396) a slow needs_response read after under_review changes nothing: the status, the answer and the due date stay.
+  v_res := online_payment_dispute_apply(v_op3, 'du_d1_one', 'needs_response', 'fraudulent', 415.50, 415.50,
+    now() + interval '3 days', false, 15, 'club', false, now());
+  IF NOT (v_res ->> 'stale')::boolean OR (SELECT status FROM online_payment_disputes WHERE id = v_d) <> 'under_review'
+     OR (SELECT due_by FROM online_payment_disputes WHERE id = v_d) < now() + interval '13 days' THEN
+    RAISE EXCEPTION 'FAIL T6b: an open read went backwards (%)', v_res; END IF;
 
   -- T7 · won: plain paid, the book as it was, nothing to put back.
   v_res := online_payment_dispute_apply(v_op3, 'du_d1_one', 'won', 'fraudulent', 415.50, 0, NULL, true, 15, 'club', false, now());
@@ -255,6 +284,12 @@ BEGIN
   BEGIN DELETE FROM platform_fee_invoices WHERE id = v_inv;
   EXCEPTION WHEN foreign_key_violation THEN v_ok := true; END;
   IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T14: an invoice with billed fees deleted'; END IF;
+
+  -- T15 · (mig 396) an inquiry escalated to a chargeback moves forward (the same id, warning_under_review → needs_response).
+  v_res := online_payment_dispute_apply(v_xb, 'du_d1_inq', 'warning_under_review', 'general', 63.60, 0, NULL, true, NULL, NULL, false, now());
+  v_res := online_payment_dispute_apply(v_xb, 'du_d1_inq', 'needs_response', 'general', 63.60, 63.60, now() + interval '14 days', false, 15, 'club', false, now());
+  IF (v_res ->> 'stale')::boolean OR (SELECT status FROM online_payment_disputes WHERE stripe_dispute_id = 'du_d1_inq') <> 'needs_response' THEN
+    RAISE EXCEPTION 'FAIL T15: an escalated inquiry did not move forward (%)', v_res; END IF;
 
   RAISE EXCEPTION 'ONLINE_PAYMENTS_12D1_PASSED';
 END $op12d1$;

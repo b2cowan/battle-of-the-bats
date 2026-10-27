@@ -454,6 +454,10 @@
     "395_the_online_payments_daily_job_is_scheduled.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 12d-1 Part 4: schedules the pg_cron job 'stripe-fees-daily' (15 11 * * *, daily) that calls POST /api/platform-admin/stripe-fees-daily through app_cron_http_tick (the 3-days dispute reminder, the Stripe-fee retries, the club's own monthly Stripe-fees invoice on the 1st and its one reminder). WATCHED AUTOMATION: written 2026-10-27 and NOT applied anywhere; the owner's yes for DEV is asked at the build's hand-off, and the production job needs its own yes at the release that ships 12d-1. No table, column or function change, so check:migrations cannot see it. Apply on prod only AFTER the 12d-1 code is serving on production (the route must exist) and migs 390-391 are applied. Verify after applying: SELECT schedule FROM cron.job WHERE jobname = 'stripe-fees-daily' -> '15 11 * * *'."
+    },
+    "396_a_dispute_moves_forward_and_an_extra_is_counted_once.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 12d-1 Part 4b (the SQL deferred from Part 2 and Part 3 /review). Needs 390 and 391 first. No table, column or index change. INVISIBLE to check:migrations: functions online_payment_dispute_apply (an open read behind the stored open status is stale: changes only read_at) and online_payment_over_left (the team surplus shared across its flagged payments, kept first then newest first, each capped by what of its own payment is still received). Signatures unchanged. Applied to dev 2026-10-27; verify on prod by reading pg_get_functiondef(online_payment_over_left) for \"ROWS BETWEEN UNBOUNDED PRECEDING\"."
     }
   }
 }
