@@ -74,7 +74,7 @@ export default function PracticeWindow({ practice, teamName, divisionName, teamP
   }
 
   return (
-    <KitDialog kind="form" record eyebrow={W.eyebrow(divisionName)} title={W.title(teamName)} onClose={onClose} levelKey="read"
+    <KitDialog kind="form" size="medium" record eyebrow={W.eyebrow(divisionName)} title={W.title(teamName)} onClose={onClose} levelKey="read"
       edit={editable ? { editing: false, label: W.edit, onToggle: () => (series ? setAsking('one') : onEdit('one')) } : undefined}>
       <dl className={s.facts}>
         {when && fact(W.when, when)}

@@ -6,6 +6,7 @@ import { withObservability } from '@/lib/observability';
 import { handOutPractices, readPracticeTime } from '@/lib/league-practice-time-server';
 import { readHandOutBody, PRACTICE_TIME_REFUSALS } from '@/lib/league-practice-time';
 import { isUuid } from '@/lib/utils';
+import { divisionInSeason } from '@/lib/league-season-scope';
 
 /**
  * PRACTICE TIME (Club Tier Stage 11b Part 4, frame h1) — lib/league-practice-time-server.ts holds the rules.
@@ -26,6 +27,9 @@ export const GET = withObservability(async (req: NextRequest, { params }: { para
   if (!season) return NextResponse.json({ error: PRACTICE_TIME_REFUSALS.notFound, code: 'not_found' }, { status: 404 });
   const divisionId = url.searchParams.get('divisionId') ?? '';
   if (!isUuid(divisionId)) return NextResponse.json({ error: PRACTICE_TIME_REFUSALS.badRequest, code: 'bad_request' }, { status: 400 });
+  if (!(await divisionInSeason(season.id, divisionId.toLowerCase()))) {
+    return NextResponse.json({ error: PRACTICE_TIME_REFUSALS.notFound, code: 'not_found' }, { status: 404 });
+  }
   const read = await readPracticeTime(ctx.org.id, season, divisionId.toLowerCase());
   if (!read) return NextResponse.json({ error: PRACTICE_TIME_REFUSALS.notFound, code: 'not_found' }, { status: 404 });
   return NextResponse.json(read);
@@ -43,6 +47,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: { par
   if (refused) return refused;
   const body = readHandOutBody(await req.json().catch(() => null));
   if (!body) return NextResponse.json({ error: PRACTICE_TIME_REFUSALS.badRequest, code: 'bad_request' }, { status: 400 });
+  if (!(await divisionInSeason(season.id, body.divisionId))) {
+    return NextResponse.json({ error: PRACTICE_TIME_REFUSALS.notFound, code: 'not_found' }, { status: 404 });
+  }
   const r = await handOutPractices({ orgId: ctx.org.id, season, actorId: ctx.user.id, body });
   if (!r.ok) return NextResponse.json({ error: r.error, code: r.code }, { status: r.status });
   return NextResponse.json(r);
