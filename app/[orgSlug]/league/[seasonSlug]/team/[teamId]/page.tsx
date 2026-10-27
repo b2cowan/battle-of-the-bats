@@ -7,6 +7,7 @@ import { coachTeamPath } from '@/lib/house-league-coach-invites';
 import { formatStoredDate } from '@/lib/timezone';
 import { coachesLine } from '@/lib/house-league-teams-words';
 import CopyEmails from './CopyEmails';
+import CoachPractices from './CoachPractices';
 import column from '../../../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 import styles from './CoachTeam.module.css';
@@ -103,6 +104,7 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
 
       <section className={styles.section} aria-labelledby="coach-schedule">
         <h2 id="coach-schedule" className={styles.sectionTitle}>Schedule</h2>
+        {view === 'open' && <CoachPractices practices={page.practices} />}
         <p className={kit.sub}>Your games aren’t listed on this page yet. <Link href={scheduleHref} className={styles.link}>See the season’s schedule</Link></p>
       </section>
 

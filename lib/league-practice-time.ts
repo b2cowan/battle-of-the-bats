@@ -392,6 +392,14 @@ export const PRACTICE_WINDOW_WORDS = {
   },
 } as const;
 
+/** [marketing] The house-league coach's team page (11b·C): the team's practices from today on. */
+export const COACH_PRACTICE_WORDS = {
+  heading: 'Practices',
+  none: 'No practices yet.',
+  from: PRACTICE_WINDOW_WORDS.fromCard,
+  cancelled: 'Cancelled',
+} as const;
+
 /** [marketing] The route's refusals, one sentence each. */
 export const PRACTICE_TIME_REFUSALS = {
   notFound: 'That season or division isn’t this club’s.',

@@ -4,6 +4,7 @@ import {
   coachPageOpenUntil, houseLeagueCoachAccess, type HouseLeagueCoachLink, type HouseLeagueCoachView,
 } from './house-league-access';
 import { clubPublicContact } from './club-email-context';
+import { orgDayKey, zonedWallClockToUtc } from './timezone';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -54,6 +55,19 @@ export interface CoachTeamPage {
   contactEmail: string | null;
   /** Every team this person coaches now, for the switcher (copy §10.2), this one included. */
   myTeams: CoachTeamCard[];
+  /** The team's practices from today on (Club Tier Stage 11b Part 4, 11b·C): a live season only. */
+  practices: CoachPractice[];
+}
+
+/** A practice on the coach's page: handed out from the club's time ("From {schedule}") or booked by hand (null). */
+export interface CoachPractice {
+  id: string;
+  startsAt: string;
+  endsAt: string | null;
+  location: string | null;
+  fromSchedule: string | null;
+  fromClub: boolean;
+  cancelled: boolean;
 }
 
 interface LinkRow {
@@ -143,11 +157,12 @@ export async function readCoachTeamPage(
     { status: season.status, finishedAt: season.finished_at }, now);
   if (view === 'none') return null;
 
-  const [coachRows, players, myTeams, contactEmail] = await Promise.all([
+  const [coachRows, players, myTeams, contactEmail, practices] = await Promise.all([
     view === 'gone' ? Promise.resolve([] as { name: string }[]) : readCoachNames(teamId),
     view === 'open' || view === 'finished' ? readTeamPlayers(teamId) : Promise.resolve([] as CoachPlayer[]),
     getCoachTeamCards(userId, now),
     clubPublicContact(card.orgId),
+    view === 'open' ? readTeamPractices(card.orgId, teamId, now) : Promise.resolve([] as CoachPractice[]),
   ]);
   const until = coachPageOpenUntil(season.finished_at, now);
   return {
@@ -155,7 +170,37 @@ export async function readCoachTeamPage(
     openUntil: view === 'finished' && until ? until.toISOString() : null,
     contactEmail,
     myTeams,
+    practices,
   };
+}
+
+/**
+ * The team's practices from the start of today, in the club's zone (11b·C): club ones and hand-booked ones, a cancelled
+ * one marked. Practices are a coach's and the club's, never a family-facing page's (the public schedule shows games).
+ */
+async function readTeamPractices(orgId: string, teamId: string, now: Date): Promise<CoachPractice[]> {
+  const today = orgDayKey(now.toISOString());
+  const from = zonedWallClockToUtc(today, '00:00') ?? now.toISOString();
+  const { data, error } = await supabaseAdmin.from('league_practices')
+    .select('id, scheduled_at, ends_at, location, status, club_schedule_slot_id')
+    .eq('org_id', orgId).eq('team_id', teamId).gte('scheduled_at', from).order('scheduled_at').limit(200);
+  if (error) throw new Error(`Couldn't read the team's practices: ${error.message}`);
+  const rows = (data ?? []) as { id: string; scheduled_at: string; ends_at: string | null; location: string | null; status: string; club_schedule_slot_id: string | null }[];
+  const slotIds = [...new Set(rows.map(r => r.club_schedule_slot_id).filter((x): x is string => !!x))];
+  const scheduleOf = new Map<string, string>();
+  if (slotIds.length) {
+    const { data: slots } = await supabaseAdmin.from('club_schedule_slots').select('id, club_schedules!inner(name)')
+      .eq('org_id', orgId).in('id', slotIds);
+    for (const r of (slots ?? []) as { id: string; club_schedules: { name: string } | { name: string }[] }[]) {
+      const sched = Array.isArray(r.club_schedules) ? r.club_schedules[0] : r.club_schedules;
+      if (sched?.name) scheduleOf.set(r.id, sched.name);
+    }
+  }
+  return rows.map(r => ({
+    id: r.id, startsAt: r.scheduled_at, endsAt: r.ends_at, location: r.location,
+    fromSchedule: r.club_schedule_slot_id ? scheduleOf.get(r.club_schedule_slot_id) ?? null : null,
+    fromClub: !!r.club_schedule_slot_id, cancelled: r.status === 'cancelled',
+  }));
 }
 
 async function readCoachNames(teamId: string): Promise<{ name: string }[]> {
