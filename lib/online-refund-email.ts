@@ -26,7 +26,7 @@ async function orgById(orgId: string): Promise<Organization | null> {
 
 type RefundRow = {
   id: string; online_payment_id: string; online_payment_item_id: string | null; amount: number; fee_refunded: number; status: string;
-  booked_at: string | null; partial_reason: string | null; note: string | null; created_at: string; stripe_refund_id: string | null;
+  booked_at: string | null; partial_reason: string | null; note: string | null; created_at: string; stripe_created_at: string | null; stripe_refund_id: string | null;
 };
 type ItemRow = { id: string; registration_id: string | null; description: string; amount: number; fee_share: number; land_error: string | null };
 type PayRow = {
@@ -62,7 +62,7 @@ const cents = (n: number) => Math.round(Number(n) * 100);
 export async function leagueRefundMail(refundIds: string[]): Promise<LeagueRefundMail | null> {
   if (!refundIds.length) return null;
   const { data: rs } = await supabaseAdmin.from('online_payment_refunds')
-    .select('id, online_payment_id, online_payment_item_id, amount, fee_refunded, status, booked_at, partial_reason, note, created_at, stripe_refund_id')
+    .select('id, online_payment_id, online_payment_item_id, amount, fee_refunded, status, booked_at, partial_reason, note, created_at, stripe_created_at, stripe_refund_id')
     .in('id', refundIds);
   const refunds = ((rs ?? []) as RefundRow[]).filter(r => r.booked_at && r.status !== 'failed' && r.status !== 'canceled');
   if (!refunds.length) return null;
@@ -97,7 +97,8 @@ export async function leagueRefundMail(refundIds: string[]): Promise<LeagueRefun
     refundCents: refunds.reduce((n, r) => n + cents(r.amount), 0),
     children: children.map(c => ({ name: c.name, cents: c.baseCents })),
     bank: pay.rail === 'bank_debit', cardBrand: pay.card_brand, cardLast4: pay.card_last4, bankLast4: pay.bank_last4,
-    refundedAt: refunds.map(r => r.created_at).sort()[0], reference: refunds[0].stripe_refund_id,
+    // The refund's own date, never the day we heard of it (a late webhook, or a refund that waited for "whose was it?").
+    refundedAt: refunds.map(r => r.stripe_created_at ?? r.created_at).sort()[0], reference: refunds[0].stripe_refund_id,
     receiptNo: pay.receipt_no, paidOn: pay.paid_on,
     feeBackCents: feeBack, feeKeptCents: familyPaidFee && feeBack === 0 ? feeShare : 0,
   };
@@ -217,7 +218,7 @@ export async function sendLeagueRefundEmail(refundIds: string[], variant: League
       transactionalFamilyFooterHtml({ orgName: org.name, teamName: seasonName, noticeKind: 'Payment notices', about: 'a refund of a registration fee', replyLine: null }),
     ];
     const subject = `${test ? E.testPrefix : ''}${R.subject(org.name)}`;
-    const result = await sendEmail(to, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), face?.sendOpts ?? {});
+    const result = await sendEmail(to, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), { ...face?.sendOpts, kind: 'league_payment_refund' });
     await stampRefundEmailed(mail.refundIds, result.status !== 'provider_error');
   } catch (err) {
     console.error('[online-refund-email] the refund email was not sent:', err instanceof Error ? err.message : String(err));

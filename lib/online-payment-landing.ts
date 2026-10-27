@@ -144,6 +144,8 @@ type OnlineRow = {
   id: string; org_id: string; flow: 'tournament_team' | 'league_signup'; team_id: string | null; tournament_id: string | null;
   season_id: string | null; status: string; landed_at: string | null;
   stripe_account_id: string; stripe_checkout_session_id: string | null; description: string; total_amount: number;
+  /** 'card' | 'bank_debit' — present on the landing's own read; the notices word the refund for it. */
+  rail?: string | null;
 };
 
 /** Where a payment's record lives: the team's tournament, or the season's Registrations (house league, 12b). A child's
@@ -207,8 +209,8 @@ async function raiseLeagueUnrecorded(op: OnlineRow): Promise<void> {
     await raiseOnce({
       org, userIds: people, eventType: 'online_payment_not_recorded',
       subjectKey: 'onlinePaymentItemId', subjectId: u.id,
-      title: LW.unrecordedTitle(child),
-      body: LW.unrecordedBody(guardian, formatMoney(Number(u.amount)), day ? formatStoredDate(day, { withYear: false }) : null, child, leagueUnrecordedWhy(u.land_error)),
+      title: LW.unrecordedTitle(child, op.rail === 'bank_debit'),
+      body: LW.unrecordedBody(guardian, formatMoney(Number(u.amount)), day ? formatStoredDate(day, { withYear: false }) : null, child, leagueUnrecordedWhy(u.land_error), op.rail === 'bank_debit'),
       link: recordHref(org, op, { regId: u.registration_id }),
     });
   }
@@ -355,13 +357,23 @@ async function raiseDebitNotice(op: DebitRow, kind: 'returned' | 'reversed'): Pr
  */
 export async function reverseDebit(stripeAccountId: string, dispute: Stripe.Dispute): Promise<void> {
   const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
-  if (!chargeId) return;
-  const { data: op } = await supabaseAdmin.from('online_payments').select('id, stripe_account_id, rail, landed_at')
-    .eq('stripe_charge_id', chargeId).maybeSingle();
+  const intentId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id;
+  if (!chargeId && !intentId) return;
+  const COLS = 'id, stripe_account_id, rail, landed_at, status';
+  // The charge is stored only when the debit LANDS; a debit still clearing has its payment intent and no charge yet, so a
+  // dispute that beats the landing is found by the intent (review 2026-10-26: found by charge alone it matched nothing, was
+  // answered 200 and consumed, and the debit later landed as paid).
+  let op = chargeId ? (await supabaseAdmin.from('online_payments').select(COLS).eq('stripe_charge_id', chargeId).maybeSingle()).data : null;
+  if (!op && intentId) op = (await supabaseAdmin.from('online_payments').select(COLS).eq('stripe_payment_intent_id', intentId).maybeSingle()).data;
   if (!op || op.stripe_account_id !== stripeAccountId || op.rail !== 'bank_debit') return;
-  // A dispute before its debit has landed (a landing still waiting on Stripe's retry): throw, so Stripe redelivers it
-  // once the landing is in (review 2026-10-26: answered 200, it was consumed and the debit later landed as paid).
-  if (!op.landed_at) throw new Error('This bank debit has not landed yet; the dispute will be retried.');
+  if (!op.landed_at) {
+    // Still on its way to landing: throw, so Stripe redelivers the dispute once the landing is in.
+    if (op.status === 'open' || op.status === 'clearing') throw new Error('This bank debit has not landed yet; the dispute will be retried.');
+    // Paid but never recorded (its landing failed): there is no book line to return, and Stripe retrying for days cannot
+    // change that — the "isn't in the record" item is already with the desk. Acknowledged, and said in the log.
+    console.error('[online-payment-landing] a dispute on a bank debit that never landed in a record:', op.id, dispute.id);
+    return;
+  }
   const { data: res, error } = await supabaseAdmin.rpc('online_payment_reverse', {
     p_online_payment: op.id, p_dispute: dispute.id, p_reason: bankReturnReason(dispute.reason), p_detail: dispute.reason ?? null,
   });
@@ -557,7 +569,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
         org, userIds: await refundPeople(org), eventType: 'online_payment_not_recorded',
         subjectKey: 'onlinePaymentId', subjectId: op.id,
         title: W.notRecordedTitle,
-        body: W.notRecordedBody(op.description, formatMoney(Number(op.total_amount)), error.message),
+        body: W.notRecordedBody(op.description, formatMoney(Number(op.total_amount)), error.message, bank),
         link: recordHref(org, op),
       });
     }
@@ -599,8 +611,8 @@ async function landLeague(
       await raiseOnce({
         org, userIds: await leagueRefundPeople(org), eventType: 'online_payment_not_recorded',
         subjectKey: 'onlinePaymentId', subjectId: op.id,
-        title: LW.unrecordedSignupTitle,
-        body: LW.unrecordedSignupBody(op.description, formatMoney(Number(op.total_amount)), error.message),
+        title: op.rail === 'bank_debit' ? LW.unrecordedSignupTitleBank : LW.unrecordedSignupTitle,
+        body: LW.unrecordedSignupBody(op.description, formatMoney(Number(op.total_amount)), error.message, op.rail === 'bank_debit'),
         link: recordHref(org, op),
       });
     }
@@ -988,8 +1000,12 @@ export async function applyRefundEvent(stripeAccountId: string, refund: Stripe.R
     }
     return;
   }
-  // A refund made in Stripe that failed or was cancelled moved no money: nothing to record.
-  if (refund.status !== 'succeeded' && refund.status !== 'pending') return;
+  // A refund made in Stripe that failed or was cancelled moved no money: nothing to record. One that was already waiting
+  // for "whose was it?" comes off the list, or it would sit there to be booked later (review 2026-10-26).
+  if (refund.status !== 'succeeded' && refund.status !== 'pending') {
+    await supabaseAdmin.from('online_refunds_unassigned').delete().eq('stripe_refund_id', refund.id).is('assigned_at', null);
+    return;
+  }
   const { data: waiting } = await supabaseAdmin.from('online_refunds_unassigned').select('id').eq('stripe_refund_id', refund.id).maybeSingle();
   if (waiting) return; // already waiting for "whose was it?"
   if (op.flow === 'league_signup') await recordLeagueDashboardRefund(op, refund);
@@ -1016,7 +1032,7 @@ async function raiseUnmatched(stripeAccountId: string, refund: Stripe.Refund): P
   const people = [...new Set([...(await leagueRefundPeople(org)), ...(await refundPeople(org))])];
   await raiseOnce({
     org, userIds: people, eventType: 'card_refund_unmatched', subjectKey: 'unmatchedStripeRefundId', subjectId: refund.id,
-    title: LW.noMatchTitle, body: LW.noMatchBody(formatMoney(refund.amount / 100), formatStoredDate(stripeMoment(refund).slice(0, 10), { withYear: false })),
+    title: LW.noMatchTitle, body: LW.noMatchBody(formatMoney(refund.amount / 100), formatStoredDate(stripeMoment(refund), { withYear: false })),
     link: payoutsHref(org),
   });
 }
@@ -1119,7 +1135,7 @@ export async function recordLeagueRefundRows(
     await raiseOnce({
       org, userIds: people, eventType: 'card_refund_still_enrolled', subjectKey: 'enrolledRefundId', subjectId: r.id as string,
       title: LW.enrolledTitle(`${g!.player_first_name} ${g!.player_last_name}`, g!.player_first_name),
-      body: LW.enrolledBody(formatMoney(Number(r.amount)), card, formatStoredDate(at.slice(0, 10), { withYear: false }), g!.player_first_name, formatMoney(base)),
+      body: LW.enrolledBody(formatMoney(Number(r.amount)), card, formatStoredDate(at, { withYear: false }), g!.player_first_name, formatMoney(base)),
       link: recordHref(org, { tournament_id: null, season_id: op.season_id }, { regId: g!.id, at: 'card' }),
       extra: { registrationId: g!.id, childFirst: g!.player_first_name },
     });

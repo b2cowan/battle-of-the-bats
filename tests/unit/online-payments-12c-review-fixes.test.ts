@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
-import { PRICE_WORDS } from '../../lib/house-league-money-words.ts';
+import { CARD_REFUND_WORDS, PRICE_WORDS } from '../../lib/house-league-money-words.ts';
+import { LEAGUE_ONLINE_NOTICE_WORDS as LW, ONLINE_NOTICE_WORDS as NW } from '../../lib/online-payment-words.ts';
 
 /**
- * Stage 12c, the /review of 2026-10-26: four defects found after the walks, each pinned so it cannot come back.
+ * Stage 12c, the /review of 2026-10-26: defects found after the walks, each pinned so it cannot come back.
  */
 describe('a part refund Stripe refused is not a refund to record "another way"', () => {
   const route = readCode('app/api/admin/tournaments/[tournamentId]/registrations/online-payments/route.ts');
@@ -44,6 +45,56 @@ describe('a replayed landing finishes what a crash left', () => {
     const block = src.slice(at, src.indexOf("return 'already';", at));
     assert.match(block, /await carryOutDecisions\(op\.id\)/);
     assert.match(block, /await sendOnlineReceiptOnce\(op\.id\)/);
+  });
+});
+
+describe('a bank dispute that beats its landing is found by the payment intent, not dropped', () => {
+  const src = readCode('lib/online-payment-landing.ts');
+  const block = src.slice(src.indexOf('export async function reverseDebit'), src.indexOf('await supabaseAdmin.rpc(\'online_payment_reverse\''));
+  it('looks the payment up by charge, then by intent (a clearing debit has no charge yet)', () => {
+    assert.match(block, /eq\('stripe_charge_id', chargeId\)/);
+    assert.match(block, /eq\('stripe_payment_intent_id', intentId\)/);
+  });
+  it('retries a debit still on its way, and acknowledges one that never landed in a record', () => {
+    assert.match(block, /op\.status === 'open' \|\| op\.status === 'clearing'\) throw/);
+    assert.match(block, /console\.error\([^)]*never landed[^)]*\);\s*return;/);
+  });
+});
+
+describe('"Whose was it?" never books a Stripe refund that failed', () => {
+  const route = readCode('app/api/admin/house-league/seasons/[seasonId]/card-refunds/whose/[unassignedId]/route.ts');
+  it('a failed or cancelled refund comes off the list instead of being booked', () => {
+    assert.match(route, /stripe\.status === 'failed' \|\| stripe\.status === 'canceled'[\s\S]*?\.delete\(\)[\s\S]*?W\.errFailed/);
+    assert.ok(route.indexOf("stripe.status === 'failed'") < route.indexOf('recordLeagueRefundRows('), 'checked before anything is recorded');
+    assert.match(CARD_REFUND_WORDS.whose.errFailed, /no money moved/);
+  });
+  it('the refund event takes a held refund off the list when it fails', () => {
+    const src = readCode('lib/online-payment-landing.ts');
+    assert.match(src, /online_refunds_unassigned'\)\.delete\(\)\.eq\('stripe_refund_id', refund\.id\)\.is\('assigned_at', null\)/);
+  });
+  it('a child named twice is one pick, so the limit is checked on all of it and nothing is left in no book', () => {
+    assert.match(route, /merged\.set\(child\.regId, \{ child, cents: \(had\?\.cents \?\? 0\) \+ cents \}\)/);
+  });
+});
+
+describe('the notices say which rail the money came by, and the dates are the org\'s day', () => {
+  it('a bank debit that couldn\'t be recorded is a bank debit refunded to the bank account', () => {
+    assert.match(NW.notRecordedBody('U11 · deposit', '$100', 'x', true), /paid by bank debit[\s\S]*Refund it to the bank account/);
+    assert.match(NW.notRecordedBody('U11 · deposit', '$100', 'x'), /paid by card[\s\S]*Refund it to the card/);
+    assert.equal(LW.unrecordedTitle('Henry Grant', true), 'A bank debit for Henry Grant couldn’t be recorded');
+    assert.equal(LW.unrecordedTitle('Henry Grant'), 'A card payment for Henry Grant couldn’t be recorded');
+    assert.match(LW.unrecordedBody('Pat', '$150', null, 'Henry', 'x', true), /by bank debit[\s\S]*Refund it to the bank account/);
+    assert.match(LW.unrecordedSignupBody('Fall', '$150', 'x', true), /by bank debit[\s\S]*bank account/);
+    assert.doesNotMatch(LW.unrecordedSignupTitleBank, /card/i);
+  });
+  it('no customer-visible date is made by slicing a timestamp\'s UTC day (an evening reads a day late)', () => {
+    const land = readCode('lib/online-payment-landing.ts');
+    assert.doesNotMatch(land, /formatStoredDate\([^)]*\.slice\(0, 10\)/);
+    assert.doesNotMatch(readCode('components/admin/kit/club/league/registrations/RegistrationsScreen.tsx'), /payLinkSentAt\.slice\(0, 10\)/);
+  });
+  it('the house-league refund email dates the refund by Stripe\'s own time, not the day we heard of it', () => {
+    const src = readCode('lib/online-refund-email.ts');
+    assert.match(src, /r\.stripe_created_at \?\? r\.created_at/);
   });
 });
 

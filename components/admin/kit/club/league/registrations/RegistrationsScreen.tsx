@@ -264,7 +264,7 @@ export default function RegistrationsScreen() {
       }
       case 'waitlist': return { key, label: M.waitlist.label, hint: M.waitlist.hint(playerName(reg)) };
       case 'promote': return { key, label: M.promote.label, hint: M.promote.hint(playerName(reg), division ?? REGS_WORDS.noDivision) };
-      case 'payLink': return { key, label: M.payLink.label, hint: reg.payLinkSentAt ? M.payLink.hintSent(regDay(reg.payLinkSentAt.slice(0, 10), today)) : M.payLink.hint };
+      case 'payLink': return { key, label: M.payLink.label, hint: reg.payLinkSentAt ? M.payLink.hintSent(regDay(reg.payLinkSentAt, today)) : M.payLink.hint };
       case 'refundCard': return { key, label: M.refundCard.label, hint: M.refundCard.hint(formatLeagueMoney(read?.unrecordedCard?.[reg.id]?.[0]?.amount ?? 0)) };
       case 'refundAnotherWay': return { key, label: M.refundAnotherWay.label, hint: M.refundAnotherWay.hint(formatLeagueMoney(read?.returnedRefunds?.[reg.id]?.[0]?.amount ?? 0)) };
       case 'viewPayment': {

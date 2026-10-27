@@ -53,8 +53,9 @@ export const ONLINE_NOTICE_WORDS = {
     `Stripe needs something more from you${byDeadline}. Online payments stay on until then. Nothing already paid is affected.`,
   byDeadline: (iso: string) => ` by ${formatStoredDate(iso, { withYear: false })}`,
   notRecordedTitle: 'An online payment isn’t in the team’s record',
-  notRecordedBody: (description: string, amount: string, reason: string) =>
-    `${description}: ${amount} was paid by card, but it couldn’t be added to the team’s record (${reason}). Refund it to the card from the team’s record or in Stripe.`,
+  // 12c: a bank debit lands through the same door once it clears, so the notice says which rail the money came by.
+  notRecordedBody: (description: string, amount: string, reason: string, bank = false) =>
+    `${description}: ${amount} was paid by ${bank ? 'bank debit' : 'card'}, but it couldn’t be added to the team’s record (${reason}). Refund it to the ${bank ? 'bank account' : 'card'} from the team’s record or in Stripe.`,
   refundFailedTitle: 'A refund didn’t reach the card',
   // 12c words §1.6: a team can have a part refund and a later one, so the item names which.
   // 12c words §3.6/§3.9: a refund to a bank account says the account (`card` is then "the account ending 1234").
@@ -97,13 +98,15 @@ export function leagueUnrecordedWhy(refusal: string): string {
 
 /** Needs attention, house league (12b copy §7): one notice per child whose share couldn't land. */
 export const LEAGUE_ONLINE_NOTICE_WORDS = {
-  unrecordedTitle: (child: string) => `A card payment for ${child} couldn’t be recorded`,
-  unrecordedBody: (guardian: string | null, amount: string, date: string | null, child: string, why: string) =>
-    `${guardian ?? 'The family'} paid ${amount} by card${date ? ` on ${date}` : ''} for ${child}, but it couldn’t go on the registration: ${why}. The money is in the club’s Stripe balance. Refund it to the card.`,
+  // 12c: a bank debit lands through the same door once it clears, so these say which rail the money came by.
+  unrecordedTitle: (child: string, bank = false) => `A ${bank ? 'bank debit' : 'card payment'} for ${child} couldn’t be recorded`,
+  unrecordedBody: (guardian: string | null, amount: string, date: string | null, child: string, why: string, bank = false) =>
+    `${guardian ?? 'The family'} paid ${amount} by ${bank ? 'bank debit' : 'card'}${date ? ` on ${date}` : ''} for ${child}, but it couldn’t go on the registration: ${why}. The money is in the club’s Stripe balance. Refund it to the ${bank ? 'bank account' : 'card'}.`,
   // Derived: the whole landing threw (the season is gone, Stripe's amount differs) — no child's share is on a registration.
   unrecordedSignupTitle: 'A house-league card payment couldn’t be recorded',
-  unrecordedSignupBody: (description: string, amount: string, reason: string) =>
-    `${description}: ${amount} was paid by card, but it couldn’t go on the registrations (${reason}). The money is in the club’s Stripe balance. Refund it to the card.`,
+  unrecordedSignupTitleBank: 'A house-league bank debit couldn’t be recorded',
+  unrecordedSignupBody: (description: string, amount: string, reason: string, bank = false) =>
+    `${description}: ${amount} was paid by ${bank ? 'bank debit' : 'card'}, but it couldn’t go on the registrations (${reason}). The money is in the club’s Stripe balance. Refund it to the ${bank ? 'bank account' : 'card'}.`,
   // 12b copy §7: a child's card refund Stripe returned (it was booked when Stripe accepted it).
   refundFailedTitle: (child: string, bank = false) => `${possessive(child)} refund didn’t reach the ${bank ? 'bank account' : 'card'}`,
   refundFailedBody: (amount: string, card: string, bank = false) =>

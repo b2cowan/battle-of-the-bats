@@ -110,9 +110,17 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const body = await req.json().catch(() => ({})) as { picks?: Array<{ regId?: unknown; amount?: unknown }>; reason?: unknown };
   const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
   const amountCents = Math.round(Number(read.u.amount) * 100);
-  const picks = (Array.isArray(body.picks) ? body.picks : [])
-    .map(p => ({ child: read.children.find(c => c.regId === p.regId), cents: Math.round(Number(p.amount) * 100) }))
-    .filter(p => p.child && Number.isFinite(p.cents) && p.cents > 0);
+  // A child named twice is one pick: the limit below is checked on what the child is given in all, and the refund is
+  // recorded once per child (review 2026-10-26: two picks for one child recorded only the first and left the rest in no book).
+  const merged = new Map<string, { child: NonNullable<typeof read.children[number]>; cents: number }>();
+  for (const p of Array.isArray(body.picks) ? body.picks : []) {
+    const child = read.children.find(c => c.regId === p.regId);
+    const cents = Math.round(Number(p.amount) * 100);
+    if (!child || !Number.isFinite(cents) || cents <= 0) continue;
+    const had = merged.get(child.regId);
+    merged.set(child.regId, { child, cents: (had?.cents ?? 0) + cents });
+  }
+  const picks = [...merged.values()];
   if (!picks.length) return NextResponse.json({ error: W.errChoose, code: 'choose' }, { status: 400 });
   const sum = picks.reduce((n, p) => n + p.cents, 0);
   if (sum !== amountCents) return NextResponse.json({ error: W.errSum(money(sum / 100), money(amountCents / 100)), code: 'sum' }, { status: 400 });
@@ -129,6 +137,12 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   let emailed = false;
   try {
     const stripe = await retrieveRefund(read.op.stripe_account_id as string, read.u.stripe_refund_id as string);
+    // A refund that failed or was cancelled after it was held moved no money: booking it would put money out of the
+    // season's book that never left (review 2026-10-26). It comes off the list instead.
+    if (stripe.status === 'failed' || stripe.status === 'canceled') {
+      await supabaseAdmin.from('online_refunds_unassigned').delete().eq('id', read.u.id as string);
+      return NextResponse.json({ error: W.errFailed, code: 'failed' }, { status: 409 });
+    }
     ({ emailed } = await recordLeagueRefundRows(
       g.ctx.org, read.op as Parameters<typeof recordLeagueRefundRows>[1], read.u.stripe_refund_id as string,
       (read.u.stripe_created_at as string | null) ?? (read.u.created_at as string), stripe.status === 'succeeded',

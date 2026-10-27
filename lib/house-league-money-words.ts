@@ -774,6 +774,7 @@ export const CARD_REFUND_WORDS = {
     errSum: (sum: string, amount: string) => `The amounts add up to ${sum}. They need to add up to ${amount}.`,
     errOver: (childPossessive: string, fee: string) => `${childPossessive} amount can’t be more than ${fee}.`,
     errReason: 'Say why only part is refunded.',
+    errFailed: 'Stripe says that refund didn’t go through, so no money moved and there’s nothing to record. It’s been taken off the list.',
     foot: 'The family is emailed once you save.',
     save: 'Save',
     working: 'Saving…',

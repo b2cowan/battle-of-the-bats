@@ -137,8 +137,9 @@ describe('the webhook and the landing (§0k)', () => {
     assert.match(rev, /op\.rail !== 'bank_debit'/, 'a card dispute is 12d\'s');
     // A redelivery never emails the family twice, but still owes the desk's notice and the fee (each once-only).
     assert.match(rev, /if \(!\(res as \{ already\?: boolean \} \| null\)\?\.already\) await sendDebitReversedEmail\(op\.id as string\);\s*await afterDebitBack\(op\.id as string, 'reversed'\);/);
-    // A dispute before its debit landed is retried, never consumed.
-    assert.match(rev, /if \(!op\.landed_at\) throw new Error/);
+    // A dispute before its debit landed is retried, never consumed (found by the payment intent when there is no charge yet —
+    // review 2026-10-26); one whose landing failed has nothing to retry for and is acknowledged.
+    assert.match(rev, /if \(!op\.landed_at\) \{[\s\S]*?op\.status === 'open' \|\| op\.status === 'clearing'\) throw new Error/);
     // A return while clearing: the notice, the fee, and any decision stamped returned (nothing was taken).
     assert.match(land, /await sendDebitReturnedEmail\(opId\);\s*await afterDebitBack\(opId, 'returned'\)/);
     const after = /async function afterDebitBack[\s\S]*?\n}\n/.exec(land)?.[0] ?? '';
