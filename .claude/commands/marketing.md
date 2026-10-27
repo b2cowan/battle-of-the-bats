@@ -9,7 +9,7 @@ start is paid for again on every later turn. Read the **always** files, then onl
 
 **Always:**
 
-1. `memory/marketing_brand_voice.md` — brand voice rules, vocabulary, what to avoid (if the file is missing, say so once and work from the voice summary below)
+1. `C:\Users\b2cow\.claude\projects\c--Users-b2cow-Documents-tournament-website\memory\marketing_brand_voice.md` — brand voice rules, vocabulary, what to avoid (it lives in the Claude auto-memory store, NOT the repo's `memory/` folder; if it is missing there, say so once and work from the voice summary below)
 2. `memory/project_pricing_strategy.md` — tier names, prices, positioning rules (source of truth for plan positioning)
 
 **Only when the task needs it:**
@@ -26,6 +26,24 @@ the original page layout is below that. A question about one surface rarely need
 
 After reading, briefly confirm what you loaded, e.g. _"Marketing context loaded — brand voice and pricing strategy ready."_
 Do not claim a file was read when it was not.
+
+---
+
+## Where this runs — a helper by default, inline for a conversation (owner 2026-10-27)
+
+Measured over 79 calls: `/marketing` is nearly always called in the middle of a long build session, which already
+carries ~290k tokens of context, and every turn you take re-reads all of it. The words themselves are cheap; the
+carried session is the cost.
+
+- **Settling a list of words** (a stage's "Words for /marketing" list, a copy review, a labelled set of strings):
+  do **not** work through it in this session. Spawn one `general-purpose` helper (Agent tool) with a self-contained
+  brief — the words, where they show, who reads them, the voice summary below, and the files to read from
+  "On activation" — and ask it to return the **Copy output format** entries, nothing else. Relay its answer.
+- **Stay inline** when the owner is in a back-and-forth about the words (brainstorming, choosing between options,
+  accepting or rejecting copy). A helper cannot hold that conversation.
+- **Writing accepted copy into `PRICING_PAGE_COPY.md` happens in this session**, after the owner accepts, never
+  inside the helper.
+- A helper's wording is a proposal. Check it against the one-spelling rule and the "never" list before presenting it.
 
 ---
 
@@ -64,7 +82,7 @@ stage, read that list first and settle every entry in one reply, using the Copy 
 
 ## Brand voice (always apply)
 
-See `memory/marketing_brand_voice.md` for the full vocabulary rules. Short summary:
+See the brand voice file (path in "On activation") for the full vocabulary rules. Short summary:
 
 - **Audience first**: volunteer sports org administrators — not SaaS power users. Time-strapped, doing this evenings and weekends.
 - **Tone**: practical, direct, warm. Like a knowledgeable colleague — not a salesperson or a startup blog.
