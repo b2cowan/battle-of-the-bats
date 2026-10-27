@@ -807,3 +807,11 @@ open it, and the menu's top level is Stage 13's.
   Automatic row's tag words, "Questions? Ask the Reds or Blues coach", a team with nobody to email) then appended to
   `HOUSE_LEAGUE_STAGE9D2_11B_COPY.md`; the dev server restart (new files); Part 6 (`/docs`); the walk at the end of 11b.
   ⚠ Deploy order: the send now always passes `p_league`, so prod needs migs 392–393 (and 400) before this code serves.
+- **2026-10-27 · after Part 5 (owner):** (1) the bell reaches **owners and admins as well as league admins**, never the
+  sender — built `b88d488f0`; (2) the dev server restarted; (3) **the 11b walks written now, not after Part 6** (Part 6 is
+  help only) — **§399–§403**, five one-purpose walks in `OWNER_QA_LEDGER.md` (give the time · divide it · Practice time ·
+  Send the changes · a League Plus club), on UAT Rep Club with a league admin and two house-league coaches made for them
+  (`.probe/11b-walk/fixture.mjs`). **Found writing walk 4, fixed `9e1b83a17`:** a drag on the club's grid is a holder swap,
+  so Part 5 read a dragged house-league slot as time taken back and would have cancelled its practices; and time-order
+  pairing let a take-back steal a moved slot's new time. **Next:** Part 6, `CLUB_TIER_STAGE11B_PART6_BUILD_PROMPT.md` (help
+  only; it starts by correcting the Schedules guide's "Only the teams with changes are told").

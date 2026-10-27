@@ -1,0 +1,267 @@
+<title>11b · Giving the time</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 12c walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 11b · §399</span>
+    <h1>The club gives house league its time</h1>
+    <p class="sub">Written 2026-10-27, walk 1 of 5 for Stage 11b (house league in the club’s schedule). One purpose; sign it off on its own.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>An owner gives house league its time from the club’s schedules, the whole of a schedule or a share, and the slot window treats house league as one holder. It ends with the time the next three walks use: <strong>Walk · House league weeknights</strong>, Kinsmen Park, Tuesdays and Thursdays 6:00–9:00 p.m., Nov 2 – Dec 20, all of it house league’s, less one Thursday given to 15U AAA and one Thursday cleared.</p></section>
+  <section class="card"><h2>It passes when</h2><ul><li>House league is one row in New schedule, never divisions; all of it makes no drafts and is final at once.</li><li>Its words say what happens: who divides it, and how many hours.</li><li>A house-league slot reads Held by · House league, and Give it to lists it under Programs.</li><li>Unused house-league time goes to a rep team with no question.</li></ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul><li>Dividing it (walk §400), handing out practices (§401), moving time with practices on it (§402).</li><li>The bill: house league is never billed, and this schedule carries none.</li></ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts"><dt>Run first</dt><dd>This walk first; §400–§402 build on what it makes. Do it once: running it twice makes a second schedule.</dd><dt>Dev server</dt><dd><code>http://localhost:3000</code>, restarted 2026-10-27 after Part 5.</dd></dl></section>
+  <section class="card"><h2>Sign in as</h2><p>One browser window per person (a private window for the second). Dev only, keep this page private.</p><dl class="facts"><dt>Owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd></dl><p class="sub">Sign in at <code>http://localhost:3000/login</code>. If an account is missing, <code>node --env-file=.env.local .probe/11b-walk/fixture.mjs</code> adds it (it never resets a password).</p></section>
+  <section class="card"><h2>Where and on what</h2><dl class="facts"><dt>Club</dt><dd><code>uat-rep-club</code> (UAT Rep Club, the Club plan). House league: <strong>2026 Fall House League</strong>, one division, <strong>U9 Rookie</strong>, teams <strong>Reds</strong> and <strong>Blues</strong>.</dd><dt>Schedules</dt><dd><code>http://localhost:3000/uat-rep-club/admin/schedules</code></dd><dt>Season schedule</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code></dd></dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "s11b-walk1-give-v1";
+  var TITLE = "11b walk §399 · The club gives house league its time (2026-10-27)";
+  var PARTS = [
+ {
+  "id": "A",
+  "title": "Before: house league has no time",
+  "steps": [
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Open the season’s Schedule (<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code>). Open Tools ⋯ › <strong>House league’s time</strong>.",
+    "see": "“The club hasn’t given house league any time yet.” and “Give it some from one of the club’s permits, then come back here.”, with Close and a lime <strong>Give house league time</strong>. Close it."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "New schedule: a share, then all of it",
+  "steps": [
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Schedules › <strong>New schedule</strong> › <strong>Start blank</strong>. Name it <strong>Walk · House league weeknights</strong>; Permit <strong>No permit</strong>; Venue <strong>Kinsmen Park</strong> (Diamond A and Diamond B both ticked); From <strong>Nov 2, 2026</strong> To <strong>Dec 20, 2026</strong>; hours: Days <strong>Tue and Thu</strong>, From <strong>6:00 p.m.</strong> Until <strong>9:00 p.m.</strong>; Slot length <strong>90 minutes</strong>.",
+    "see": "Step 1 of 2 · settings, with the time filled in. Under “Who, and how much”, House league is the last row (under Programs), unticked."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Tick <strong>House league</strong> and <strong>15U AAA</strong> together.",
+    "see": "House league’s row says “Its league admins divide its share.” and the hint “The drafts place house league’s slots like a team’s. Its league admins divide them after you send.” Split the time, the rules and the lime Generate drafts are all still there."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Untick <strong>15U AAA</strong>, so House league is the only tick.",
+    "see": "Split the time, Each team’s time, Practices per team per day, Prime time and the Rules section are gone. Row note: “Its league admins divide it among divisions and teams.” Hint: “All of it goes to house league, so there are no drafts to choose from.” Foot: “House league gets 12 hours a week across 2 facilities, Nov 2 – Dec 20. Its league admins can divide it right away.” The lime reads <strong>Give it to house league</strong>."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Press <strong>Give it to house league</strong>.",
+    "see": "You land on Walk · House league weeknights’s page: Final, no drafts, no bill. Every slot is house league’s."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "A slot house league holds",
+  "steps": [
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Go to the week of Nov 2. Click <strong>Thu, Nov 5 · 6:00 p.m. on Diamond B</strong>.",
+    "see": "Eyebrow “Walk · House league weeknights · a slot”; Held by “House league”; Give it to opens on Nobody (open), then <strong>Rep teams</strong>, then <strong>Programs</strong> › House league, with the hint “Its league admins divide it among divisions and teams.” No Swap with…."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Give it to › Rep teams › <strong>15U AAA</strong>.",
+    "see": "No question: nothing is on the time yet, so unused time goes with no question. The page gains <strong>Changed since sent</strong> and an Unsent change row naming 15U AAA."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Go to the week of Nov 9. Click <strong>Thu, Nov 12 · 7:30 p.m. on Diamond B</strong> › <strong>Clear this slot</strong>.",
+    "see": "No question again; the slot is open. (Walk §402 drags house-league time onto this one.)"
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Press <strong>Send the changes</strong>, read the window, then press its lime.",
+    "see": "Title “Send the changes”; a row for 15U AAA with its coaches; no house-league rows (no house-league practice moved); lime “Send to N people”. After: “Sent to N people on 1 team.” Dev has no email key, so nothing is delivered: a send ends “… couldn’t be delivered.” on dev. That is expected here; who would have been told is what the walk checks."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Back on the season’s Schedule, open Tools ⋯ › House league’s time.",
+    "see": "“Given by the club in Walk · House league weeknights · Nov 3 – Dec 17 · Kinsmen Park. Hours add up across facilities: 3 hours on 2 facilities is 6.”, one stretch “Tue and Thu · 6:00–9:00 p.m. · Diamond A and Diamond B”, one row <strong>Not given yet</strong>. Foot: “Only an owner or an admin changes how much time house league has.”"
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held"). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

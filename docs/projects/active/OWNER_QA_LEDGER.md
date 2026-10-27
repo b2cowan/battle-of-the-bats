@@ -26773,3 +26773,58 @@ republished; tick positions unchanged).
 
 **Not run by the builder:** the export opened in Excel; any role's view in a browser.
 <!-- /§398 -->
+
+## §399 · Club Tier · Stage 11b, walk 1 of 5: the club gives house league its time — **an owner gives house league the club's time from New schedule (all of it: no drafts, final at once; or a share), the slot window lists House league under Programs and reads Held by · House league, and unused house-league time goes to a rep team with no question**
+<!-- §399 -->
+**Built:** Club Tier Stage 11b Parts 1–2 (`076d4551d`, `ac5d68c5e`, review `d60c30d3a`; migs 392–393 on dev, prod pending). Plan `HOUSE_LEAGUE_STAGE9_PLAN.md` §9.
+
+**The walk (checkable):** https://claude.ai/artifact/GDTaU54x9vv7SvrZs6CQRK (source [CLUB_TIER_STAGE11B_WALK_1_GIVE_TIME.html](CLUB_TIER_STAGE11B_WALK_1_GIVE_TIME.html)). One purpose, 10 steps in three parts. **Run first and once:** it makes the schedule walks §400–§402 use (*Walk · House league weeknights*, Kinsmen Park, Tue and Thu 6:00–9:00 p.m., Nov 2 – Dec 20), gives Thu, Nov 5 6:00 p.m. Diamond B to 15U AAA and clears Thu, Nov 12 7:30 p.m. Diamond B.
+
+**Sign in:** `http://localhost:3000`, UAT Rep Club (`uat-rep-club`), owner `uat-club-owner@uat-rep-club.local` · `UATPassword2026!`.
+
+**Not run by the builder:** any of it in a browser. Each walk page was opened as its account by a probe (`.probe/11b-walk/pages.mjs`: served, no "not found"); the screens' data reads were not exercised.
+<!-- /§399 -->
+
+## §400 · Club Tier · Stage 11b, walk 2 of 5: a league admin divides house league's time — **a league admin gives U9 Rookie practice time by parts and games by the whole row with one Save, a one-date Use changes one date (the piece shows the mixed part), the club's schedule shows them a rep slot as "A rep team…" with no controls, and the registrar reads everything and changes nothing**
+<!-- §400 -->
+**Built:** 11b Part 3 (`cd5d32472`, `9e3b703d2`, `89d10dbab`, `c639761a1`, `34c2952cf`, review `ef76f6cdc`; migs 394 + 397 on dev, prod pending).
+
+**The walk (checkable):** https://claude.ai/artifact/8dij9VpsbrWwficEN8NaZC (source [CLUB_TIER_STAGE11B_WALK_2_DIVIDE_TIME.html](CLUB_TIER_STAGE11B_WALK_2_DIVIDE_TIME.html)). One purpose, 11 steps in three parts. Needs §399. Leaves Tuesdays as U9 Rookie practice time and Thursdays as U9 Rookie games.
+
+**Sign in:** league admin `uat-club-league-admin@uat-rep-club.local` (Jordan Pike, role league_admin) and registrar `uat-club-registrar@uat-rep-club.local`, both `UATPassword2026!`. **UAT Rep Club had no league admin:** made 2026-10-27 for these walks by `.probe/11b-walk/fixture.mjs` (dev only, re-runnable, never resets a password). An admin builds Schedules, so it never sees the league admin's view.
+
+**What dev cannot show:** a second division (UAT Rep Club has one), so "a part another division holds" is not walked; games (9d-2a).
+<!-- /§400 -->
+
+## §401 · Club Tier · Stage 11b, walk 3 of 5: Practice time — **a league admin hands U9 Rookie's practice time out in one press; the practices show on the season's Practices view and each coach's team page "From" the club's schedule; a practice from the club's time has no Edit and no Cancel; nobody is emailed by a first hand-out**
+<!-- §401 -->
+**Built:** 11b Part 4 (`6b61e109b`, `f64c23958`, `20d7c2b70`, `42f77b4c6`, `ddf7b76fa`, `fb86d7c96`, review `60aee2636`; Practices a week `29cfecb71`). No migration.
+
+**The walk (checkable):** https://claude.ai/artifact/QksTboq1HZdRhmx32sg7JT (source [CLUB_TIER_STAGE11B_WALK_3_PRACTICE_TIME.html](CLUB_TIER_STAGE11B_WALK_3_PRACTICE_TIME.html)). One purpose, 7 steps in two parts. Needs §399–§400. Step A5 writes down the Reds' Tue, Nov 10 and the Blues' Tue, Nov 17 practices for §402.
+
+**Sign in:** the league admin; the Reds' coach `uat-hl-coach-reds@uat-rep-club.local` (Morgan Reid, accepted, made by the fixture script); the owner. All `UATPassword2026!`.
+<!-- /§401 -->
+
+## §402 · Club Tier · Stage 11b, walk 4 of 5: Send the changes with house league in it — **the owner drags one house-league practice's slot and gives another Tuesday to 15U AAA (the take-back asks first); nothing changes on the house-league side until the send; Send the changes lists each house-league team over "House league · U9 Rookie · N coaches and N families"; after it the Reds' practice has moved, the Blues' is Cancelled, the send log names the teams, everyone who runs house league gets the bell, and the season's Email families shows one Automatic "Practices changed" row**
+<!-- §402 -->
+**Built:** 11b Part 5 (`e1e40b78f` mig 400, `2372797d4`, `5a352df33`, review `84869d691`, records `6c9db2c7f`, the bell to owners and admins `b88d488f0` (owner ruling 2026-10-27), the drag-is-a-move fix `9e1b83a17` (found writing this walk)). Before Part 5 this send refused on every try.
+
+**The walk (checkable):** https://claude.ai/artifact/TT5L6GKhq9nucN749gAsjS (source [CLUB_TIER_STAGE11B_WALK_4_SEND_THE_CHANGES.html](CLUB_TIER_STAGE11B_WALK_4_SEND_THE_CHANGES.html)). One purpose, 12 steps in three parts. Needs §399–§401.
+
+**Sign in:** owner, the Reds' and Blues' coaches (`uat-hl-coach-blues@uat-rep-club.local`, Sam Blake), the league admin. All `UATPassword2026!`.
+
+**Dev sends no email** (no email key): a send ends "… couldn't be delivered." on dev, and the families' Automatic row counts them failed. Who would have been told is read from the Send window, the send log and the Automatic row.
+
+**Found while writing (fixed, `9e1b83a17`):** a drag on the club's grid swaps holders and makes no slot, so Part 5 read a dragged house-league slot as time taken back and would have CANCELLED its practices; and pairing in time order let a Thursday take-back steal a moved Sunday's new slot (the end-to-end probe caught it). Gained time is now read by when house league came to hold it, paired nearest first.
+
+**Proven by the builder:** `tests/unit/club-schedule-league-plan.test.ts` (22), `scripts/club-stage11b-check.sql` T14, `.probe/11b5/e2e.ts` (h4's numbers, rolled back).
+<!-- /§402 -->
+
+## §403 · Club Tier · Stage 11b, walk 5 of 5: a League Plus club with no rep teams — **Schedules is in the rail; New schedule ticks House league for you as the only row and finalizes at once; its seasons can divide the time**
+<!-- §403 -->
+**Built:** 11b Part 2 (League Plus becomes schedulable).
+
+**The walk (checkable):** https://claude.ai/artifact/JkVkTatg9uamwKiT9uFoNk (source [CLUB_TIER_STAGE11B_WALK_5_LEAGUE_PLUS.html](CLUB_TIER_STAGE11B_WALK_5_LEAGUE_PLUS.html)). One purpose, 4 steps. Independent of §399–§402; do it once.
+
+**Sign in:** Dev League Org (`dev-league-org`, League Plus, no rep teams), owner `league-owner@dev.local` · `devpass123`. A probe confirmed its Schedules page loads with something to schedule.
+<!-- /§403 -->
