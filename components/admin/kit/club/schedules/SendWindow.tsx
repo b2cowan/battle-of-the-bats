@@ -57,7 +57,7 @@ interface Preview {
   correction: { billed: Record<string, number>; lost: Record<string, number> } | null;
   /** Stage 11b Part 5 (h4): the house-league teams whose practices move or are cancelled, and the plan the POST returns. */
   league: {
-    teams: { teamId: string; teamName: string; lines: string[]; group: string; coaches: { userId: string | null; name: string | null; email: string }[]; families: number; sample: EmailWords }[];
+    teams: { teamId: string; teamName: string; lines: string[]; group: string; coaches: { userId: string | null; name: string | null; email: string }[]; families: number; households: string[]; sample: EmailWords }[];
     seen: string;
   } | null;
 }
@@ -105,7 +105,9 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
   // still move — the send is the schedule's, the email is the row's).
   const league = shown?.league?.teams ?? [];
   const leagueTicked = league.filter(t => !unticked.has(t.teamId));
-  const people = ticked.reduce((n, t) => n + t.recipients.length, 0) + leagueTicked.reduce((n, t) => n + t.coaches.length + t.families, 0);
+  // A family with children on two ticked teams gets one email: households are counted once (opaque keys from the server).
+  const people = ticked.reduce((n, t) => n + t.recipients.length, 0) + leagueTicked.reduce((n, t) => n + t.coaches.length, 0)
+    + new Set(leagueTicked.flatMap(t => t.households)).size;
   const oneWeekday = oneWeekdayOf(view.slots);
   // A one-weekday schedule counts each team's DAYS ("25 Sundays" — a team can hold two slots a Sunday).
   const daysOf = useMemo(() => {

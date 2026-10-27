@@ -23,7 +23,7 @@ const NOW = ms('2026-11-01', '09:00');
 const DOME = 'v-dome', F1 = 'f-1', F3 = 'f-3';
 
 const slot = (id: string, day: string, start: string, end: string, o: Partial<LeagueSlot> = {}): LeagueSlot =>
-  ({ id, startMs: ms(day, start), endMs: ms(day, end), venueId: DOME, facilityId: F1, removed: false, houseLeague: true, ...o });
+  ({ id, startMs: ms(day, start), endMs: ms(day, end), venueId: DOME, facilityId: F1, removed: false, houseLeague: true, isNew: false, ...o });
 const use = (slotId: string, o: Partial<LeagueUse> = {}): LeagueUse => ({ slotId, seasonId: 'fall', divisionId: 'u9', kind: 'practices', ...o });
 const practice = (id: string, teamId: string, slotId: string, day: string, start: string, end: string, o: Partial<LeaguePractice> = {}): LeaguePractice =>
   ({ id, teamId, seasonId: 'fall', divisionId: 'u9', slotId, startMs: ms(day, start), endMs: ms(day, end), cancelled: false, ...o });
@@ -47,7 +47,7 @@ describe('a practice moves with its slot (h4)', () => {
   // slot (its use waiting on it) and made a new one house league holds with no use yet.
   const slots = [
     slot('a', '2026-11-08', '11:00', '14:00', { removed: true }),
-    slot('a2', '2026-11-08', '12:30', '15:30', { facilityId: F3 }),
+    slot('a2', '2026-11-08', '12:30', '15:30', { facilityId: F3, isNew: true }),
   ];
   const uses = [use('a')];
   const practices = [practice('p1', 'reds', 'a', '2026-11-08', '11:00', '12:30'), practice('p2', 'blues', 'a', '2026-11-08', '12:30', '14:00')];
@@ -73,7 +73,7 @@ describe('a practice moves with its slot (h4)', () => {
 
 describe('a weekly move reads as one row, "from" only when it runs to the end', () => {
   const weeks = ['2026-11-08', '2026-11-15', '2026-11-22'];
-  const slots = weeks.flatMap((d, i) => [slot(`o${i}`, d, '11:00', '14:00'), slot(`n${i}`, d, '12:30', '15:30', { facilityId: F3 })]);
+  const slots = weeks.flatMap((d, i) => [slot(`o${i}`, d, '11:00', '14:00'), slot(`n${i}`, d, '12:30', '15:30', { facilityId: F3, isNew: true })]);
   const practices = weeks.map((d, i) => practice(`p${i}`, 'reds', `o${i}`, d, '11:00', '12:30'));
   const uses = weeks.map((_, i) => use(`o${i}`));
 
@@ -95,7 +95,7 @@ describe('a weekly move reads as one row, "from" only when it runs to the end', 
 
 describe('time house league loses (k5, 9d2·16)', () => {
   it('taken back for a rep team: its practices are cancelled, and its use never carries — even to a slot gained that week', () => {
-    const slots = [slot('b', '2026-11-12', '18:00', '21:00', { houseLeague: false }), slot('free', '2026-11-13', '18:00', '21:00')];
+    const slots = [slot('b', '2026-11-12', '18:00', '21:00', { houseLeague: false }), slot('free', '2026-11-13', '18:00', '21:00', { isNew: true })];
     const p = plan(slots, [use('b')], [practice('p1', 'reds', 'b', '2026-11-12', '18:00', '19:00')]);
     assert.deepEqual(p.step.uses, []);
     assert.deepEqual(p.step.cancel, ['p1']);
@@ -109,17 +109,43 @@ describe('time house league loses (k5, 9d2·16)', () => {
     assert.deepEqual(p.step, { uses: [], cancel: ['p1'], updates: [] });
   });
   it('a moved slot too short for a practice: the use still carries, that practice is cancelled (never a refused move)', () => {
-    const slots = [slot('a', '2026-11-08', '11:00', '14:00', { removed: true }), slot('a2', '2026-11-08', '12:30', '14:00')];
+    const slots = [slot('a', '2026-11-08', '11:00', '14:00', { removed: true }), slot('a2', '2026-11-08', '12:30', '14:00', { isNew: true })];
     const p = plan(slots, [use('a')], [practice('p1', 'reds', 'a', '2026-11-08', '11:00', '12:30'), practice('p2', 'blues', 'a', '2026-11-08', '12:30', '14:00')]);
     assert.deepEqual(p.step.uses, [{ from: 'a', to: 'a2' }]);
     assert.deepEqual(p.step.updates.map(u => u.practiceId), ['p1']);
     assert.deepEqual(p.step.cancel, ['p2']);
   });
   it('a game use carried: a practice on it is never moved onto it', () => {
-    const slots = [slot('a', '2026-11-08', '11:00', '14:00', { removed: true }), slot('a2', '2026-11-08', '12:30', '15:30')];
+    const slots = [slot('a', '2026-11-08', '11:00', '14:00', { removed: true }), slot('a2', '2026-11-08', '12:30', '15:30', { isNew: true })];
     const p = plan(slots, [use('a', { kind: 'games' })], [practice('p1', 'reds', 'a', '2026-11-08', '11:00', '12:30')]);
     assert.deepEqual(p.step.uses, [{ from: 'a', to: 'a2' }]);
     assert.deepEqual(p.step.cancel, ['p1']);
+  });
+});
+
+describe('the /review of Part 5', () => {
+  it('a use never pairs with OLDER time not given yet — only with a slot made since the last send', () => {
+    // Sun's slot moved to Fri; an old undivided Tuesday in the same week sorts first, and must not take the division.
+    const slots = [
+      slot('a', '2026-11-08', '11:00', '14:00', { removed: true }),
+      slot('tue', '2026-11-03', '10:00', '13:00'),
+      slot('fri', '2026-11-06', '11:00', '14:00', { isNew: true }),
+    ];
+    const p = plan(slots, [use('a')], [practice('p1', 'reds', 'a', '2026-11-08', '11:00', '12:30')]);
+    assert.deepEqual(p.step.uses, [{ from: 'a', to: 'fri' }]);
+    assert.equal(p.step.updates[0].slotId, 'fri');
+  });
+  it('a slot replaced at the same time and place: the practice follows the slot, and nobody is told', () => {
+    const slots = [slot('a', '2026-11-08', '11:00', '14:00', { removed: true }), slot('a2', '2026-11-08', '11:00', '13:00', { isNew: true })];
+    const p = plan(slots, [use('a')], [practice('p1', 'reds', 'a', '2026-11-08', '11:00', '12:30')]);
+    assert.deepEqual(p.step.updates.map(u => u.practiceId), ['p1']);
+    assert.deepEqual(p.changes, []);
+  });
+  it('a practice with no end runs to its slot\'s end, and moves with it rather than being cancelled', () => {
+    const slots = [slot('a', '2026-11-08', '11:00', '12:00', { removed: true }), slot('a2', '2026-11-08', '12:00', '13:00', { isNew: true })];
+    const p = plan(slots, [use('a')], [practice('p1', 'reds', 'a', '2026-11-08', '11:00', '12:00', { endMs: null })]);
+    assert.equal(Date.parse(p.step.updates[0].endsAt), ms('2026-11-08', '13:00'));
+    assert.equal(p.changes[0].kind, 'moved');
   });
 });
 

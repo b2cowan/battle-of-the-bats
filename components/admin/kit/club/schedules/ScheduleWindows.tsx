@@ -255,6 +255,8 @@ export function SwapWindow({ view, slot, nameOf, placeOf, onPick, onClose }: {
 
 export interface SendLogRow {
   id: string; kind: 'review' | 'final' | 'changes'; at: string; by: string | null; teamIds: string[]; people: number; failed: number;
+  /** Stage 11b Part 5: the house-league teams a Send the changes told, by name. */
+  leagueTeams?: string[];
 }
 
 export function SendLogWindow({ view, log, nameOf, onClose }: { view: ScheduleView; log: readonly SendLogRow[]; nameOf: (id: string) => string; onClose: () => void }) {
@@ -265,8 +267,8 @@ export function SendLogWindow({ view, log, nameOf, onClose }: { view: ScheduleVi
         <div className={sch.logRows} role="list">
           {log.map(r => (
             <div key={r.id} className={sch.logRow} role="listitem">
-              <b>{sendLogLine({ kind: r.kind, teams: r.teamIds.length, people: r.people })}</b>
-              <small>{W.sendLogSub(at(r.at), r.by, r.kind === 'final' ? '' : r.teamIds.map(nameOf).join(', '))}</small>
+              <b>{sendLogLine({ kind: r.kind, teams: r.teamIds.length + (r.leagueTeams?.length ?? 0), people: r.people })}</b>
+              <small>{W.sendLogSub(at(r.at), r.by, r.kind === 'final' ? '' : [...r.teamIds.map(nameOf), ...(r.leagueTeams ?? [])].join(', '))}</small>
             </div>
           ))}
         </div>

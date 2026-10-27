@@ -55,7 +55,7 @@ export const SCHEDULE_WORDS = {
       leagueTeams ? `${possessive(pluralize(leagueTeams, 'house-league team'))} practices` : '',
     ].filter(Boolean);
     const told = leagueTeams
-      ? `Their coaches are told, and the ${leagueTeams === 1 ? 'house-league team’s' : 'house-league teams’'} families`
+      ? `Their coaches are told, and so ${leagueTeams === 1 ? 'are the house-league team’s' : 'are the house-league teams’'} families`
       : 'Only those teams’ coaches are told';
     return `The changes reach ${joinWithAnd(reach)}. ${told}${handedBack.length ? `; ${joinWithAnd(handedBack)} handed ${handedBack.length === 1 ? 'its slot' : 'their slots'} back ${handedBack.length === 1 ? 'itself' : 'themselves'}` : ''}. Nothing else on the schedule moves.`;
   },

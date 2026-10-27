@@ -58,15 +58,6 @@ export function householdParts(h: Household, partOf: (teamId: string, child: str
   return h.children.map(c => partOf(c.teamId, c.name.split(' ')[0] || c.name)).filter((p): p is FamilyPart => !!p);
 }
 
-/** The window's sample of the families' email: the first household with a changed child (null when none). */
-export function familySample(households: readonly Household[], partOf: (teamId: string, child: string) => FamilyPart | null, club: string, zoneSentence: string) {
-  for (const h of households) {
-    const parts = householdParts(h, partOf);
-    if (parts.length) return familyEmailWords({ club, guardianFirst: h.guardianFirst, parts, zoneSentence });
-  }
-  return null;
-}
-
 export interface FamiliesOutcome { families: number; sent: number; failed: number }
 
 /**
@@ -85,13 +76,14 @@ export async function sendPracticeChangeNotices(p: {
   sendId: string;
 }): Promise<FamiliesOutcome> {
   const outcome: FamiliesOutcome = { families: 0, sent: 0, failed: 0 };
+  const bySeason = new Map<string, { h: Household; parts: FamilyPart[] }[]>();
+  for (const h of p.households) {
+    const parts = householdParts(h, p.partOf);
+    if (parts.length) (bySeason.get(h.seasonId) ?? bySeason.set(h.seasonId, []).get(h.seasonId)!).push({ h, parts });
+  }
+  const total = [...bySeason.values()].reduce((n, list) => n + list.length, 0);
   try {
     const face = await systemMailFace(p.org);
-    const bySeason = new Map<string, { h: Household; parts: FamilyPart[] }[]>();
-    for (const h of p.households) {
-      const parts = householdParts(h, p.partOf);
-      if (parts.length) (bySeason.get(h.seasonId) ?? bySeason.set(h.seasonId, []).get(h.seasonId)!).push({ h, parts });
-    }
     for (const [seasonId, list] of bySeason) {
       const seasonName = p.seasons.get(seasonId) ?? '';
       const { data: notice, error } = await supabaseAdmin.from('league_season_notices').insert({
@@ -121,7 +113,11 @@ export async function sendPracticeChangeNotices(p: {
       }
     }
   } catch (e) {
+    // Every household not yet tried counts as failed, so the send's result never reads clean when families weren't told
+    // (/review 2026-10-27).
     console.error('[club-schedule-league-mail] the families\' emails failed part-way (the send landed):', e instanceof Error ? e.message : String(e));
+    outcome.failed += total - outcome.families;
+    outcome.families = total;
   }
   return outcome;
 }

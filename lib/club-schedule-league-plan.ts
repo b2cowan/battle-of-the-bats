@@ -25,12 +25,13 @@ import { HOUSE_LEAGUE } from './club-schedule-holders';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-/** A slot of the schedule, removed ones included (they are where a moved use waits). */
-export interface LeagueSlot { id: string; startMs: number; endMs: number; venueId: string; facilityId: string | null; removed: boolean; houseLeague: boolean }
+/** A slot of the schedule, removed ones included (they are where a moved use waits). `isNew`: made since the last send —
+ *  only such a slot is where a moved use can have gone (an older one with no use is time not given yet, never a move). */
+export interface LeagueSlot { id: string; startMs: number; endMs: number; venueId: string; facilityId: string | null; removed: boolean; houseLeague: boolean; isNew: boolean }
 /** How a league admin divided a house-league slot (one per slot). */
 export interface LeagueUse { slotId: string; seasonId: string; divisionId: string | null; kind: 'games' | 'practices' }
-/** A house-league practice on the schedule's time. */
-export interface LeaguePractice { id: string; teamId: string; seasonId: string; divisionId: string | null; slotId: string; startMs: number; endMs: number; cancelled: boolean }
+/** A house-league practice on the schedule's time. `endMs` null: no end was stored — read as running to its slot's end. */
+export interface LeaguePractice { id: string; teamId: string; seasonId: string; divisionId: string | null; slotId: string; startMs: number; endMs: number | null; cancelled: boolean }
 
 /** The step's `p_league` (mig 392 §6, made whole by mig 393). */
 export interface LeagueStepArg {
@@ -58,7 +59,10 @@ export function planLeagueChanges(p: {
 }): LeaguePlan {
   const slotById = new Map(p.slots.map(s => [s.id, s]));
   const useBySlot = new Map(p.uses.map(u => [u.slotId, u]));
-  const held = p.slots.filter(s => !s.removed && s.houseLeague);
+  // The time house league holds that the pairing reads: a slot with a use (never gained), and a NEW slot with none (where
+  // a moved use can go). An older slot with no use is Not given yet — pairing to it would carry a division onto time the
+  // club never moved it to (/review 2026-10-27).
+  const held = p.slots.filter(s => !s.removed && s.houseLeague && (useBySlot.has(s.id) || s.isNew));
   // The uses the pairing reads: on a removed slot (it may follow its time) or on time house league still holds (so that
   // slot is never read as gained). A use on time taken back is left out: it never carries (9d2·16).
   const paired = p.uses.filter(u => { const s = slotById.get(u.slotId); return s && (s.removed || s.houseLeague); });
@@ -80,15 +84,19 @@ export function planLeagueChanges(p: {
     const to = toId ? slotById.get(toId) : undefined;
     const use = useBySlot.get(from.id);
     const shift = to ? to.startMs - from.startMs : 0;
-    const startMs = pr.startMs + shift, endMs = pr.endMs + shift;
+    const fromEndMs = pr.endMs ?? from.endMs;
+    const startMs = pr.startMs + shift, endMs = fromEndMs + shift;
     const fits = !!to && !!use && use.kind === 'practices' && use.seasonId === pr.seasonId && use.divisionId === pr.divisionId
       && startMs >= to.startMs && endMs <= to.endMs && endMs > startMs;
     if (fits) {
       step.updates.push({ practiceId: pr.id, slotId: to!.id, scheduledAt: new Date(startMs).toISOString(), endsAt: new Date(endMs).toISOString(), location: p.locationOf(to!.id) });
-      changes.push({ kind: 'moved', practiceId: pr.id, teamId: pr.teamId, fromSlotId: from.id, toSlotId: to!.id, fromStartMs: pr.startMs, fromEndMs: pr.endMs, toStartMs: startMs, toEndMs: endMs });
+      // A slot replaced by one at the same time and place (shortened, or saved again): the practice's link follows the
+      // slot, but nothing a coach or a family reads changed, so nobody is told.
+      const same = shift === 0 && pr.endMs != null && to!.venueId === from.venueId && to!.facilityId === from.facilityId;
+      if (!same) changes.push({ kind: 'moved', practiceId: pr.id, teamId: pr.teamId, fromSlotId: from.id, toSlotId: to!.id, fromStartMs: pr.startMs, fromEndMs, toStartMs: startMs, toEndMs: endMs });
     } else {
       step.cancel.push(pr.id);
-      changes.push({ kind: 'cancelled', practiceId: pr.id, teamId: pr.teamId, slotId: from.id, startMs: pr.startMs, endMs: pr.endMs });
+      changes.push({ kind: 'cancelled', practiceId: pr.id, teamId: pr.teamId, slotId: from.id, startMs: pr.startMs, endMs: fromEndMs });
     }
   }
   return { step, changes };

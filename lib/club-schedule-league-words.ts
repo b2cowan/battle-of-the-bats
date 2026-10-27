@@ -159,6 +159,7 @@ export const LEAGUE_ADMIN_NOTICE = {
   title: (scheduleName: string) => `${scheduleName} changed house league’s practices`,
   body: (p: { divisions: string[]; moved: number; cancelled: number }) => {
     const what = [p.moved ? `${pluralize(p.moved, 'practice')} moved` : '', p.cancelled ? `${pluralize(p.cancelled, 'practice')} cancelled` : ''].filter(Boolean);
-    return `${joinWithAnd(p.divisions)}: ${joinWithAnd(what)}.`;
+    const told = `${joinWithAnd(what)}.`;
+    return p.divisions.length ? `${joinWithAnd(p.divisions)}: ${told}` : told.charAt(0).toUpperCase() + told.slice(1);
   },
 } as const;
