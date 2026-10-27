@@ -34,8 +34,13 @@ function doorLabel(line: StatusLine): string {
   return line.door?.to === 'issue' ? 'Open the issue' : 'Errors';
 }
 
-export default function StatusClient({ initial, site }: { initial: StatusAnswer; site: 'Production' | 'Staging' }) {
-  const [answer, setAnswer] = useState(initial);
+/** A role that cannot open Errors gets no door to it (it would only bounce back to Today); the line's words stay. */
+function forRole(answer: StatusAnswer, canOpenErrors: boolean): StatusAnswer {
+  return canOpenErrors ? answer : { ...answer, lines: answer.lines.map(l => ({ ...l, door: null })) };
+}
+
+export default function StatusClient({ initial, site, canOpenErrors }: { initial: StatusAnswer; site: 'Production' | 'Staging'; canOpenErrors: boolean }) {
+  const [answer, setAnswer] = useState(() => forRole(initial, canOpenErrors));
   // The page opens "Reading…" when the providers are still to be read.
   const [busy, setBusy] = useState(initial.pending);
   const [failed, setFailed] = useState(false);
@@ -46,7 +51,7 @@ export default function StatusClient({ initial, site }: { initial: StatusAnswer;
     try {
       const res = await fetch('/api/platform-admin/status', { cache: 'no-store' });
       if (!res.ok) throw new Error('status');
-      setAnswer((await res.json()) as StatusAnswer);
+      setAnswer(forRole((await res.json()) as StatusAnswer, canOpenErrors));
       setFailed(false);
     } catch {
       setFailed(true);
@@ -54,7 +59,7 @@ export default function StatusClient({ initial, site }: { initial: StatusAnswer;
       setBusy(false);
       setNow(Date.now());
     }
-  }, []);
+  }, [canOpenErrors]);
 
   const read = () => {
     setBusy(true);

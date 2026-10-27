@@ -5,7 +5,7 @@
  */
 import { consoleClock, consoleDay, consoleWhen } from './console-dates';
 import type { SentEmail, SentEmailDetail } from './sent-log';
-import { BOUNCE_EVENT_TAIL, SENT_STATES, type BounceReason, type SentState } from './sent-log-words';
+import { BOUNCE_EVENT_TAIL, NO_MAIL_KEY, SENT_STATES, type BounceReason, type SentState } from './sent-log-words';
 
 /** A Sent emails list row: the email and whether no account has its address. */
 export type SentLogRow = SentEmail & { noAccount: boolean };
@@ -49,7 +49,8 @@ export function laterWords(fromIso: string, toIso: string): string {
 export function timelineLines(d: TimelineSource): TimelineLine[] {
   const stamp = (iso: string) => (consoleDay(iso) === consoleDay(d.sentAt) ? consoleClock(iso) : consoleWhen(iso));
   const tailOf = (state: SentState, reason: BounceReason | null) =>
-    state === 'bounced' || state === 'not_sent' ? BOUNCE_EVENT_TAIL[reason ?? (state === 'not_sent' ? 'suppressed' : 'other')] : SENT_STATES[state].meaning;
+    state === 'not_sent' && !reason ? NO_MAIL_KEY.tail
+      : state === 'bounced' || state === 'not_sent' ? BOUNCE_EVENT_TAIL[reason ?? 'other'] : SENT_STATES[state].meaning;
   const lines: TimelineLine[] = [];
   const events = d.timeline.filter(e => e.state !== 'sent');
   // Not sent and Failed never left: there is no "Sent to the mail service" to claim.

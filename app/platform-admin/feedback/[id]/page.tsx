@@ -46,7 +46,7 @@ type ReplyRow = {
   id: string; staff_email: string; signed_name: string; body: string; status: string;
   account_email_id: string | null; created_at: string;
 };
-type EmailRow = { id: string; kind: string; state: string; state_at: string; created_at: string };
+type EmailRow = { id: string; kind: string; state: string; state_at: string; created_at: string; bounce_reason: string | null };
 
 function requestIdOf(context: FeedbackRow['context']): string | null {
   const v = context && typeof context === 'object' ? (context as Record<string, unknown>).requestId : null;
@@ -95,7 +95,7 @@ export default async function FeedbackRecordPage({ params }: { params: Promise<{
       .limit(200),
     supabaseAdmin
       .from('platform_account_emails')
-      .select('id, kind, state, state_at, created_at')
+      .select('id, kind, state, state_at, created_at, bounce_reason')
       .eq('feedback_id', id)
       .order('created_at', { ascending: true })
       .limit(200),
@@ -131,7 +131,9 @@ export default async function FeedbackRecordPage({ params }: { params: Promise<{
     const state: ConversationTurn['state'] =
       r.status === 'sent' ? stateOf(linked)
       : r.status === 'unknown' ? stateWord('unconfirmed')
-      : r.status === 'failed' ? { word: 'Not sent: the mail service refused it', tone: 'bad', at: null }
+      // A failed reply whose email reads Not sent with no reason never left this site (no mail key), not a refusal.
+      : r.status === 'failed'
+        ? { word: linked?.state === 'not_sent' && !linked.bounce_reason ? 'Not sent: this site has no mail key' : 'Not sent: the mail service refused it', tone: 'bad', at: null }
       : { word: 'Sending', tone: 'plain', at: null };
     turns.push({ key: `reply-${r.id}`, at: r.created_at, when: consoleWhen(r.created_at), who, state, body: r.body });
   }

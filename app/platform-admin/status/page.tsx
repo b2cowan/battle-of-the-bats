@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
+import { canViewPlatformArea } from '@/lib/platform-areas';
 import { consoleSiteName, peekStatus } from '@/lib/platform-status';
 import StatusClient from './StatusClient';
 
@@ -18,7 +19,7 @@ export const dynamic = 'force-dynamic';
  * owner's morning check (Q2 = B; nothing here reads it or touches it).
  */
 export default async function StatusPage() {
-  await requirePlatformAreaView('status');
+  const auth = await requirePlatformAreaView('status');
   const initial = await peekStatus();
-  return <StatusClient initial={initial} site={consoleSiteName()} />;
+  return <StatusClient initial={initial} site={consoleSiteName()} canOpenErrors={canViewPlatformArea(auth.role, 'observability')} />;
 }

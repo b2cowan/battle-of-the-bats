@@ -48,7 +48,10 @@ describe('1 · the words the screens use', () => {
 
   it('flag lines: Bounced and Not sent carry their reason in a list; Marked as spam only in the window', () => {
     assert.equal(listFlag('bounced', 'address_does_not_exist'), 'This address does not exist');
-    assert.equal(listFlag('not_sent', null), 'This address bounced or reported spam before');
+    // The mail service's own Not sent always carries the suppressed reason; Not sent with none never left this site.
+    assert.equal(listFlag('not_sent', 'suppressed'), 'This address bounced or reported spam before');
+    assert.equal(listFlag('not_sent', null), 'This site has no mail key');
+    assert.equal(windowFlag('not_sent', null), 'Not sent: this site has no mail key, so the email never left.');
     assert.equal(listFlag('delivered', null), null);
     assert.equal(listFlag('complained', null), null);
     assert.equal(windowFlag('bounced', 'address_does_not_exist'), 'Bounced: the receiving mail server says this address does not exist.');
