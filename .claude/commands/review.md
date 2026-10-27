@@ -10,11 +10,19 @@ Coverage is never traded away. Every change is still found and triaged. What sca
 
 Do **not** bulk-load memory. Read only what the diff requires.
 
-1. Run `git status` + `git diff` (and `git diff --staged`) to get the actual changed hunks. This is your review surface.
+1. **Scope first, then list — do not dump the diff into this session (owner 2026-10-27).** Everything read here is
+   re-read on every later turn of a ~300k-token session, and several agents share this working copy, so
+   `git diff` of the whole tree pulls in other sessions' files and pays for them all review long.
+   - **Scope = the files this session changed**, or the paths/commit range passed in `$ARGUMENTS`. If you cannot tell
+     which modified files are yours, list them with `git status --short` and ask once before reviewing.
+   - Run `git diff --stat -- <scope>` (and `git diff --staged --stat -- <scope>`) to get files and sizes only.
+     That is enough for Stage 1's tier. **Read a hunk (`git diff -- <file>`) only when you need it** — a trivial-tier
+     read, or the hunk behind a Critical/High finding in Stage 4. The finders read their own hunks.
+   - State the scope in the confirmation line. A review of "everything uncommitted" is never the default.
 2. Read `AGENCY_RULES.md` only if you need platform/tier context for a finding.
 3. Consult a `memory/` topic file **only** when the diff touches that area (e.g. `reference_supabase_rls_grants.md` for new tables/public routes, `feedback_tournament_org_separation.md` for routing, `project_coaches_portal_architecture.md` for coaches write paths). Pull, don't preload.
 
-Confirm briefly: _"Review context loaded — [N] files changed, tier = [trivial/standard/high-risk]. Running deterministic gate first."_
+Confirm briefly: _"Review context loaded — scope: [files/range], [N] files changed, tier = [trivial/standard/high-risk]. Running deterministic gate first."_
 
 ---
 
@@ -100,6 +108,9 @@ Lens menu (choose the ones the diff actually exercises):
 4. **Concurrency/state** — races, stale `.next`/cache assumptions, optimistic UI, polling, double-submit
 5. **Regression/blast-radius** — callers of changed exported symbols, removed/renamed props, behavior changes rippling outward
 
+Give each finder the **scoped file list and the lens, not the diff text** — it reads its own hunks (`git diff -- <file>`)
+and the blast radius itself, so the diff is not copied into this session and again into every brief.
+
 Each finder returns **structured findings only**: `file:line`, claim, severity (Critical/High/Medium/Low/Advisory), confidence. Fan out with parallel `Agent` calls; use a `Workflow` pipeline if the diff is large/high-risk enough to warrant deterministic find→triage→verify staging.
 
 ---
@@ -148,6 +159,13 @@ Deterministic gate: [verify:changed ✓/✗ · typecheck ✓/✗/skipped · lint
 Lenses run: [list]  ·  Findings: [found]→[after dedup]→[verified]; [N] refuted, [N] skipped deep-verify (tier)
 Not covered: [anything deliberately not deep-verified, e.g. "trivial CSS diff — no LLM finders"]
 ```
+
+## Re-review after a fix — the fixed parts only
+
+When `/review` is run again on a diff it already reviewed (typically after applying findings), review **only the
+hunks changed since the last report**, at the tier those hunks earn on their own, and say so in the footer
+("re-review of fixes to: …; the rest was reviewed [when/above]"). Do not re-run the full funnel on unchanged code.
+The Stage 0 gate still runs in full — it is free.
 
 If the user passes `--fix`, after reporting, apply only the **Confirmed** findings to the working tree and re-run the Stage 0 gate. Never auto-apply `Uncertain` findings.
 
