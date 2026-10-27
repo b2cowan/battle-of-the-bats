@@ -154,6 +154,9 @@ button.row:hover, a.row:hover { background: var(--home-olive-soft); }
 .cellTitle { color: var(--text-primary); font-weight: 650; }
 .cellSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
 .rowMuted td { opacity: 0.62; }
+/* A row that opens its record is a pointer shortcut and the only row that tints (table standard §3.6). */
+.table tr.rowOpens { cursor: pointer; }
+.table tr.rowOpens:hover > td { background: var(--home-olive-soft); }
 
 /* ── A collapsed section (details/summary): quieter than the list above it ── */
 .collapse {

@@ -8,6 +8,7 @@ import { consoleDay, consoleClock } from '@/lib/console-dates';
 import { readCheapLines } from '@/lib/platform-status';
 import { summarize } from '@/lib/platform-status-lines';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import LinkRow from './LinkRow';
 import kit from './console.module.css';
 import frame from '@/components/admin/kit/AdminKitFrame.module.css';
 import styles from './today.module.css';
@@ -175,14 +176,14 @@ function GroupRows({ label, words, waiting, clear, nothing }: {
         <td colSpan={4}>{label} · {nothing ?? words}</td>
       </tr>
       {waiting.map(q => (
-        <tr key={q.key} className={kit.comfortable}>
+        <LinkRow key={q.key} href={q.href} className={kit.comfortable}>
           <td className={styles.colQueue}><Link href={q.href} className={kit.nameLink}>{q.label}</Link></td>
           <td className={kit.muted}>{q.why}</td>
           <td className={kit.num}><WaitingCount q={q} /></td>
           <td className={kit.rowDoor}>
             <Link href={q.href} className={kit.rowDoorLink} aria-label={`Open ${q.label}`} tabIndex={-1}>›</Link>
           </td>
-        </tr>
+        </LinkRow>
       ))}
       {clear && (
         <tr className={styles.clear}>

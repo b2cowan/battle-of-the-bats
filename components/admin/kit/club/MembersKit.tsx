@@ -248,7 +248,15 @@ export default function MembersKit() {
           </thead>
           <tbody>
             {rows.map(m => (
-              <tr key={m.id} className={m.status === 'suspended' ? ck.rowMuted : undefined}>
+              <tr
+                key={m.id}
+                className={[m.status === 'suspended' ? ck.rowMuted : '', canManageRow(m) ? ck.rowOpens : ''].filter(Boolean).join(' ') || undefined}
+                onClick={canManageRow(m) ? e => {
+                  if ((e.target as HTMLElement).closest('button, a')) return;
+                  if (window.getSelection()?.toString()) return;
+                  setManageId(m.id);
+                } : undefined}
+              >
                 <td>{personCell(m)}</td>
                 <td>{roleLabel(m.role)}</td>
                 <td>{canOpenCell(m)}</td>

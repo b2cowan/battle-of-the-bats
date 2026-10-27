@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import LinkRow from '../LinkRow';
 import kit from '../console.module.css';
 import styles from './email-templates.module.css';
 
@@ -82,7 +83,7 @@ export default function EmailTemplatesList({ templates }: { templates: TemplateR
             </thead>
             <tbody>
               {rows.map(t => (
-                <tr key={t.key} className={kit.comfortable}>
+                <LinkRow key={t.key} href={`/platform-admin/email-templates/${t.key}`} className={kit.comfortable}>
                   <td className="table-cards-title">
                     <span className={styles.templateLabel}>{t.label}</span>
                     <span className={kit.sub}>{t.description}</span>
@@ -100,7 +101,7 @@ export default function EmailTemplatesList({ templates }: { templates: TemplateR
                       Edit →
                     </Link>
                   </td>
-                </tr>
+                </LinkRow>
               ))}
               {rows.length === 0 && (
                 <tr><td colSpan={4} className={kit.empty}>No templates in this category.</td></tr>

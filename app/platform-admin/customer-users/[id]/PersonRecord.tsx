@@ -23,6 +23,7 @@ import { personStatusChip } from '../../chips';
 import StoryTable from '../../StoryTable';
 import RecordWindow from '../../RecordWindow';
 import { PersonEmailsTab, type PersonEmails } from '../../sent-emails/SentParts';
+import LinkRow from '../../LinkRow';
 import kit from '../../console.module.css';
 import styles from '../../record.module.css';
 
@@ -168,16 +169,19 @@ export default function PersonRecord({ person, clubs, story, emails, can }: Pers
             <div className={kit.card}>
               <div className={kit.tableWrap}>
                 <table className={kit.comfortable}>
-                  <thead><tr><th>Club</th><th>Role</th><th>Status</th><th>Plan</th></tr></thead>
+                  <thead><tr><th>Club</th><th>Role</th><th>Status</th><th>Plan</th><th aria-label="Open" /></tr></thead>
                   <tbody>
-                    {clubs.length === 0 && <tr><td colSpan={4} className={kit.empty}>This person belongs to no club.</td></tr>}
+                    {clubs.length === 0 && <tr><td colSpan={5} className={kit.empty}>This person belongs to no club.</td></tr>}
                     {clubs.map(c => (
-                      <tr key={c.id}>
+                      <LinkRow key={c.id} href={`/platform-admin/orgs/${c.id}`}>
                         <td><Link href={`/platform-admin/orgs/${c.id}`} className={kit.nameLink}>{c.name}</Link><span className={`${kit.sub} ${kit.code}`}>{c.slug}</span></td>
                         <td>{roleLabel(c.role)}</td>
                         <td>{humanize(c.status)}</td>
                         <td>{c.planLabel}</td>
-                      </tr>
+                        <td className={kit.rowDoor}>
+                          <Link href={`/platform-admin/orgs/${c.id}`} className={kit.rowDoorLink} tabIndex={-1} aria-hidden>›</Link>
+                        </td>
+                      </LinkRow>
                     ))}
                   </tbody>
                 </table>

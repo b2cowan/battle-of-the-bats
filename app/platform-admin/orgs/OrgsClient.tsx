@@ -9,6 +9,7 @@ import {
 } from '@/lib/export';
 import { fmtAbsoluteDate } from '@/lib/format-date';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import LinkRow from '../LinkRow';
 import kit from '../console.module.css';
 import { SUBSCRIPTION_STATUS_LABELS, subscriptionStatusChip, subscriptionStatusLabel } from '../chips';
 
@@ -330,7 +331,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
                   </tr>
                 )}
                 {filteredOrgs.map(org => (
-                  <tr key={org.id}>
+                  <LinkRow key={org.id} href={`/platform-admin/orgs/${org.id}`}>
                     <td className="table-cards-title">
                       <Link href={`/platform-admin/orgs/${org.id}`} className={kit.nameLink}>{org.name}</Link>
                       {org.internalNotes && (
@@ -361,7 +362,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
                     </td>
                     <td data-label="Created" className={kit.nowrap}>{fmtDate(org.createdAt)}</td>
                     <td className={kit.rowDoor}><Link href={`/platform-admin/orgs/${org.id}`} tabIndex={-1} aria-hidden="true" className={kit.rowDoorLink}>›</Link></td>
-                  </tr>
+                  </LinkRow>
                 ))}
               </tbody>
             </table>

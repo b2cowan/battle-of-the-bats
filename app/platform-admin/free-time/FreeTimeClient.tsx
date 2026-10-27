@@ -11,6 +11,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { formatShortDay, lastDayOfInstant } from '@/lib/free-time';
 import type { StaffFreeTimeClub } from '@/lib/free-time-list';
 import FoundingSeasonDesk from './FoundingSeasonDesk';
+import LinkRow from '../LinkRow';
 import kit from '../console.module.css';
 import recordStyles from '../record.module.css';
 
@@ -29,12 +30,12 @@ function StaffTable({ clubs, emptyText }: { clubs: StaffFreeTimeClub[]; emptyTex
     <div className={`${kit.tableWrap} table-cards`}>
       <table className={kit.comfortable}>
         <thead>
-          <tr><th>Club</th><th>Free on</th><th>Free through</th><th className={kit.num}>Left</th><th>Given by</th><th>Why</th></tr>
+          <tr><th>Club</th><th>Free on</th><th>Free through</th><th className={kit.num}>Left</th><th>Given by</th><th>Why</th><th aria-label="Open" /></tr>
         </thead>
         <tbody>
-          {clubs.length === 0 && <tr><td colSpan={6} className={kit.empty}>{emptyText}</td></tr>}
+          {clubs.length === 0 && <tr><td colSpan={7} className={kit.empty}>{emptyText}</td></tr>}
           {clubs.map(c => (
-            <tr key={c.orgId}>
+            <LinkRow key={c.orgId} href={`/platform-admin/orgs/${c.orgId}?tab=access`}>
               <td className="table-cards-title">
                 <Link href={`/platform-admin/orgs/${c.orgId}?tab=access`} className={kit.nameLink}>{c.name}</Link>
               </td>
@@ -45,7 +46,10 @@ function StaffTable({ clubs, emptyText }: { clubs: StaffFreeTimeClub[]; emptyTex
               </td>
               <td data-label="Given by">{c.givenBy}</td>
               <td data-label="Why" className={kit.muted}>{c.why || '—'}</td>
-            </tr>
+              <td className={kit.rowDoor}>
+                <Link href={`/platform-admin/orgs/${c.orgId}?tab=access`} className={kit.rowDoorLink} tabIndex={-1} aria-hidden>›</Link>
+              </td>
+            </LinkRow>
           ))}
         </tbody>
       </table>
@@ -130,17 +134,20 @@ export default function FreeTimeClient({ initialView, initialEnding, switchOn, s
             <div className={kit.card}>
               <div className={`${kit.tableWrap} table-cards`}>
                 <table className={kit.comfortable}>
-                  <thead><tr><th>Account</th><th>Free on</th><th>Free through</th></tr></thead>
+                  <thead><tr><th>Account</th><th>Free on</th><th>Free through</th><th aria-label="Open" /></tr></thead>
                   <tbody>
-                    {desk.rows.length === 0 && <tr><td colSpan={3} className={kit.empty}>No founding accounts.</td></tr>}
+                    {desk.rows.length === 0 && <tr><td colSpan={4} className={kit.empty}>No founding accounts.</td></tr>}
                     {desk.rows.map(r => (
-                      <tr key={r.orgId}>
+                      <LinkRow key={r.orgId} href={`/platform-admin/orgs/${r.orgId}?tab=access`}>
                         <td className="table-cards-title">
                           <Link href={`/platform-admin/orgs/${r.orgId}?tab=access`} className={kit.nameLink}>{r.name}</Link>
                         </td>
                         <td data-label="Free on" className={kit.muted}>{r.planLabel}</td>
                         <td data-label="Free through" className={kit.nowrap}>{formatShortDay(lastDayOfInstant(r.freeThrough))}</td>
-                      </tr>
+                        <td className={kit.rowDoor}>
+                          <Link href={`/platform-admin/orgs/${r.orgId}?tab=access`} className={kit.rowDoorLink} tabIndex={-1} aria-hidden>›</Link>
+                        </td>
+                      </LinkRow>
                     ))}
                   </tbody>
                 </table>

@@ -13,6 +13,7 @@ import IssuesExportClient from './IssuesExportClient';
 import IssuesFilterBar from './IssuesFilterBar';
 import WindowSelect from './WindowSelect';
 import { cap, severityChip, issueStatusChip } from '../chips';
+import LinkRow from '../LinkRow';
 import kit from '../console.module.css';
 import styles from './observability.module.css';
 
@@ -305,7 +306,7 @@ export default async function ObservabilityDashboardPage({
                   <tr><td colSpan={8} className={kit.empty}>No issues match these filters.</td></tr>
                 )}
                 {issues.rows.map(row => (
-                  <tr key={row.id}>
+                  <LinkRow key={row.id} href={`/platform-admin/observability/${row.id}`}>
                     <td data-label="Severity"><span className={`${kit.chip} ${severityChip(row.severity)}`}>{cap(row.severity)}</span></td>
                     <td data-label="Status">
                       <span className={`${kit.chip} ${issueStatusChip(row.status)}`}>{cap(row.status)}</span>
@@ -326,7 +327,7 @@ export default async function ObservabilityDashboardPage({
                     <td className={kit.rowDoor}>
                       <Link href={`/platform-admin/observability/${row.id}`} className={kit.rowDoorLink} aria-label="Open this issue">›</Link>
                     </td>
-                  </tr>
+                  </LinkRow>
                 ))}
               </tbody>
             </table>

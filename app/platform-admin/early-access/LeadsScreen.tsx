@@ -19,6 +19,7 @@ import type { BandCell, PipelineRow, StepTone } from '@/lib/lead-views';
 import type { NumbersModel } from '@/lib/lead-numbers-view';
 import type { GroupRow } from '@/lib/lead-numbers';
 import { errorOf, sendJson } from '../console-fetch';
+import LinkRow from '../LinkRow';
 import kit from '../console.module.css';
 import frame from '@/components/admin/kit/AdminKitFrame.module.css';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
@@ -252,7 +253,7 @@ function PipelineTable({ rows, scope }: { rows: PipelineRow[]; scope: 'needs' | 
             <tr><td colSpan={8} className={kit.empty}>{scope === 'needs' ? 'Nothing needs you. Every lead has been answered and none is due.' : 'No leads match.'}</td></tr>
           )}
           {rows.map(r => (
-            <tr key={r.id}>
+            <LinkRow key={r.id} href={`/platform-admin/early-access/${r.id}`}>
               <td className="table-cards-title">
                 <Link href={`/platform-admin/early-access/${r.id}`} className={kit.nameLink}>{r.title}</Link>
                 <span className={kit.sub}>{r.person}</span>
@@ -270,7 +271,7 @@ function PipelineTable({ rows, scope }: { rows: PipelineRow[]; scope: 'needs' | 
               <td className={kit.rowDoor}>
                 <Link href={`/platform-admin/early-access/${r.id}`} className={kit.rowDoorLink} tabIndex={-1} aria-hidden>›</Link>
               </td>
-            </tr>
+            </LinkRow>
           ))}
         </tbody>
       </table>

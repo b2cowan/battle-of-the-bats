@@ -14,6 +14,7 @@ import { pluralize } from '@/lib/utils';
 // surfaces that show a customer's card must never describe it differently.
 import { formatCardOnFile } from '@/lib/billing-format';
 import type { FoundingAccountRow } from '@/lib/founding-season-desk';
+import LinkRow from '../LinkRow';
 import kit from '../console.module.css';
 import styles from './founding-season.module.css';
 
@@ -252,13 +253,14 @@ export default function FoundingSeasonDesk({
                 <th>Owner last seen</th>
                 <th>Used it for</th>
                 <th>Billing contact</th>
+                <th aria-label="Open" />
               </tr>
             </thead>
             <tbody>
               {filtered.map(row => {
                 const card = cardLabelFor(row);
                 return (
-                  <tr key={row.orgId}>
+                  <LinkRow key={row.orgId} href={`/platform-admin/orgs/${row.orgId}?tab=access`}>
                     {/* The lead cell is the card's title on a phone and takes no label. */}
                     <td className="table-cards-title">
                       <Link href={`/platform-admin/orgs/${row.orgId}?tab=access`} className={kit.nameLink}>
@@ -309,7 +311,10 @@ export default function FoundingSeasonDesk({
                     <td data-label="Owner last seen" className={kit.muted}>{fmtSince(row.ownerLastSeenAt, 'Never')}</td>
                     <td data-label="Used it for" className={`${kit.muted} ${styles.wrap}`}>{row.usageLabel}</td>
                     <td data-label="Billing contact" className={`${kit.muted} ${styles.wrap}`}>{row.billingContact ?? '—'}</td>
-                  </tr>
+                    <td className={kit.rowDoor}>
+                      <Link href={`/platform-admin/orgs/${row.orgId}?tab=access`} className={kit.rowDoorLink} tabIndex={-1} aria-hidden>›</Link>
+                    </td>
+                  </LinkRow>
                 );
               })}
             </tbody>

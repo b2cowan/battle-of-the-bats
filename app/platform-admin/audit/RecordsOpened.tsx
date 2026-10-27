@@ -4,6 +4,7 @@ import { listRecordsOpened } from '@/lib/platform-record-opens';
 import { peopleByIds } from '@/lib/platform-people-lookup';
 import { consoleDate, consoleClock } from '@/lib/console-dates';
 import { emailKindLabel } from '@/lib/email-kinds';
+import LinkRow from '../LinkRow';
 import kit from '../console.module.css';
 import styles from './audit.module.css';
 
@@ -37,16 +38,16 @@ export default async function RecordsOpened({ offset, pageHref }: { offset: numb
       </div>
       <div className={`${kit.tableWrap} table-cards`}>
         <table className={kit.comfortable}>
-          <thead><tr><th>When</th><th>Who</th><th>Record</th><th>How</th></tr></thead>
+          <thead><tr><th>When</th><th>Who</th><th>Record</th><th>How</th><th aria-label="Open" /></tr></thead>
           <tbody>
-            {rows.length === 0 && <tr><td colSpan={4} className={kit.empty}>Nobody has opened a record yet.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={5} className={kit.empty}>Nobody has opened a record yet.</td></tr>}
             {rows.map(r => {
               const sent = r.kind === 'email' ? emails.get(r.recordId) : undefined;
               const name = r.kind === 'club' ? clubNames.get(r.recordId) : r.kind === 'email' ? (sent ? emailKindLabel(sent.kind) : undefined) : people.get(r.recordId)?.email;
               const href = r.kind === 'club' ? `/platform-admin/orgs/${r.recordId}`
                 : r.kind === 'email' ? `/platform-admin/sent-emails?email=${r.recordId}` : `/platform-admin/customer-users/${r.recordId}`;
-              return (
-                <tr key={r.id}>
+              const cells = (
+                <>
                   <td className={`${kit.nowrap} table-cards-title`}>{consoleDate(r.openedAt)}<span className={kit.sub}>{consoleClock(r.openedAt)}</span></td>
                   <td data-label="Who">{r.actorEmail}</td>
                   <td data-label="Record">
@@ -54,8 +55,13 @@ export default async function RecordsOpened({ offset, pageHref }: { offset: numb
                     <span className={kit.sub}>{r.kind === 'club' ? 'Club record' : r.kind === 'email' ? `Sent email to ${sent?.recipient_email ?? 'an address'}` : 'Person record'}</span>
                   </td>
                   <td data-label="How">{r.viaFind ? 'From Find' : 'From a list or a link'}</td>
-                </tr>
+                  <td className={kit.rowDoor}>
+                    {name && <Link href={href} className={kit.rowDoorLink} tabIndex={-1} aria-hidden>›</Link>}
+                  </td>
+                </>
               );
+              // A record deleted since opens nothing, so its row neither tints nor clicks.
+              return name ? <LinkRow key={r.id} href={href}>{cells}</LinkRow> : <tr key={r.id}>{cells}</tr>;
             })}
           </tbody>
         </table>
