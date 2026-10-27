@@ -179,6 +179,13 @@
   **Found, not ruled (for the owner at the end of the build):** under ruling 5's principle, 12c's CA$5 for a RETURNED
   (failed) debit is billed from the constant though the sandbox showed Stripe charging nobody for one; a REVERSED debit's
   fee does have Stripe's own figure (the platform balance transaction above), which Part 4 reads instead of the constant.
+  **Part 2 (paid twice) committed `23510b099` 2026-10-27, no schema change.** Built as the words say, with these builder's
+  calls for the walk: the item has one link (items carry no buttons), which opens the team with the refund window set;
+  the census found **nine** hand-recording paths (adds the shared payment and the Families record; team creation has no
+  page to close), all of which close an open page, and the three drawn screens warn; "Keep it"'s title, toast and
+  settled line drop "as a credit" to match ruling 5, and "The dispute was lost." is a derived settled line (both owed to
+  `/marketing`). Layout check skipped (the UAT fixture's screens were missing, untouched ones too). Next:
+  `CLUB_TIER_STAGE12D1_PART3_PROMPT.md`.
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
