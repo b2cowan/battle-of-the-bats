@@ -11,8 +11,8 @@ import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } fro
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { houseLeagueUse } from '@/lib/club-schedule-words';
 import {
-  groupTick, hasNotGiven, hoursAWeek, hoursOf, keyOfUse, leaguePiece, partTick, pieceChanges, pieceDayWords, pieceMinutes,
-  piecePartWords, practicesRemovedBy, rowChanges, toggleParts, LEAGUE_TIME_WORDS as W,
+  askCounts, groupTick, hasNotGiven, hoursAWeek, hoursOf, keyOfUse, leaguePiece, partTick, pieceChanges, pieceDayWords, pieceMinutes,
+  piecePartWords, practicesRemovedBy, pruneStage, rowChanges, toggleParts, LEAGUE_TIME_WORDS as W,
   type LeagueTime, type LeagueTimeChange, type LeagueUse, type PiecePart, type PieceStage, type PieceStretch, type Tick,
 } from '@/lib/league-time';
 import { formatTimeRange } from '@/lib/utils';
@@ -85,47 +85,52 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
   const up = () => { setFailed(null); setLevels(ls => (ls.length > 1 ? ls.slice(0, -1) : ls)); };
   const setStage = (stage: PieceStage) => setLevels(ls => ls.map((l, i) => (i === ls.length - 1 && l.kind === 'piece' ? { ...l, stage } : l)));
 
-  /** One Save: every change or none. True when it landed. */
-  async function save(changes: LeagueTimeChange[], failedWords: string = W.giveFailed): Promise<boolean> {
+  /** One Save: every change or none. Its outcome, with the refusal's code. */
+  async function save(changes: LeagueTimeChange[], failedWords: string = W.giveFailed): Promise<{ ok: boolean; code: string | null }> {
     setBusy(true);
     setFailed(null);
     const r = await fetch(url, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ changes }),
     }).catch(() => null);
-    const data = r ? await r.json().catch(() => null) : null;
-    if (!r?.ok) setFailed((data as { error?: string } | null)?.error ?? failedWords);
+    const data = (r ? await r.json().catch(() => null) : null) as { error?: string; code?: string } | null;
+    if (!r?.ok) setFailed(data?.error ?? failedWords);
     await load();
     setBusy(false);
     if (r?.ok) onChanged?.();
-    return !!r?.ok;
+    return { ok: !!r?.ok, code: data?.code ?? null };
   }
 
   const piece = useMemo(() => (time && level.kind === 'piece' ? leaguePiece(time.sources, level.use) : []), [time, level]);
+  // The level's ticks against the time as it is now: another piece's Save may have taken what a tick here meant to take.
+  const stage = level.kind === 'piece' ? pruneStage(piece, level.stage) : {};
 
   async function savePiece(confirmed = false) {
     if (level.kind !== 'piece' || !time) return;
-    const changes = pieceChanges(piece, level.use, level.stage);
+    const changes = pieceChanges(piece, level.use, stage);
     if (!changes.length) return;
     const removed = practicesRemovedBy(changes, time.practices);
     if (removed.length && !confirmed) {
-      const back = allParts(piece).filter(p => level.stage[p.key] === 'none');
-      const allMine = allParts(piece).filter(p => p.mine.length);
       setAsking({
-        changes, count: removed.length, parts: back.length, all: back.length > 0 && back.length === allMine.length,
+        changes, count: removed.length,
         teams: [...new Set(removed.map(p => p.team).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en-CA', { numeric: true })),
-        minutes: back.reduce((n, p) => n + p.minutes, 0),
+        ...askCounts(piece, stage, new Set(removed.map(p => p.slotId))),
       });
       return;
     }
     setAsking(null);
-    // Landed: back up a level. Refused: the ticks went stale with the time — the level reads again, nothing staged.
-    if (await save(changes, W.piece.saveFailed)) up(); else setStage({});
+    // The level saved is this one, whatever is on top when the answer comes back (the ticks and links wait while busy).
+    const at = levels.length - 1;
+    const r = await save(changes, W.piece.saveFailed);
+    // Landed: back up from it. Refused `changed`: its ticks went stale with the time — it reads again, nothing staged.
+    // Anything else (the network, a server error) keeps the ticks, so the league admin can press Save again.
+    if (r.ok) { setFailed(null); setLevels(ls => ls.slice(0, Math.max(1, at))); }
+    else if (r.code === 'changed') setLevels(ls => ls.map((l, i) => (i === at && l.kind === 'piece' ? { ...l, stage: {} } : l)));
   }
 
   const empty = time !== null && time.sources.length === 0;
   // Everything divided: an owner or an admin can give house league more (k4's own sentence, where it is true).
   const allDivided = !!time && !empty && !hasNotGiven(time.sources);
-  const staged = levels.some(l => l.kind === 'piece' && Object.keys(l.stage).length > 0);
+  const staged = !!time && levels.some(l => l.kind === 'piece' && Object.keys(pruneStage(leaguePiece(time.sources, l.use), l.stage)).length > 0);
 
   // ── The level on screen: its head, body and foot ──────────────────────────────────────────────────────────────
   let title: ReactNode = W.title;
@@ -135,12 +140,12 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
   let footerStart: ReactNode = null;
 
   if (level.kind === 'piece' && time) {
-    const count = Object.keys(level.stage).length;
+    const count = Object.keys(stage).length;
     const division = divisionName.get(level.use.divisionId) ?? W.aDivision;
     title = labelOfUse(level.use);
-    identity = W.piece.figure(pieceMinutes(piece, level.stage));
+    identity = W.piece.figure(pieceMinutes(piece, stage));
     body = (
-      <PieceLevel stretches={piece} stage={level.stage} canTick={canDivide} hint={canDivide ? W.piece.hint(division, level.use.kind) : null}
+      <PieceLevel stretches={piece} stage={stage} busy={busy} canTick={canDivide} hint={canDivide ? W.piece.hint(division, level.use.kind) : null}
         manySources={time.sources.length > 1} nothing={W.piece.nothing(division, level.use.kind)}
         labelOfUse={labelOfUse} onStage={setStage} onOpen={use => push({ kind: 'piece', use, stage: {} })} />
     );
@@ -272,19 +277,21 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
 const allParts = (stretches: readonly PieceStretch[]) => stretches.flatMap(x => x.days.flatMap(d => d.parts));
 
 /** A box that can be some-ticked (a weekday, a stretch, a mixed part). */
-function TickBox({ tick, onToggle, label }: { tick: Tick; onToggle: () => void; label: string }) {
+function TickBox({ tick, onToggle, label, disabled }: { tick: Tick; onToggle: () => void; label: string; disabled: boolean }) {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => { if (ref.current) ref.current.indeterminate = tick === 'mixed'; }, [tick]);
-  return <input ref={ref} type="checkbox" className={screenParts.check22} checked={tick === 'on'} onChange={onToggle} aria-label={label} />;
+  return <input ref={ref} type="checkbox" className={screenParts.check22} checked={tick === 'on'} onChange={onToggle} aria-label={label} disabled={disabled} />;
 }
 
 /**
  * A DIVISION'S PIECE (drawings "A piece's window" b–g): each stretch, its weekdays, their parts. Whoever runs the season
  * ticks; the registrar reads only the parts the piece holds, with no boxes (g).
  */
-function PieceLevel({ stretches, stage, canTick, hint, manySources, nothing, labelOfUse, onStage, onOpen }: {
+function PieceLevel({ stretches, stage, busy, canTick, hint, manySources, nothing, labelOfUse, onStage, onOpen }: {
   stretches: PieceStretch[];
   stage: PieceStage;
+  /** A Save is running: the ticks, the holders' links and the rare door wait for it (/review). */
+  busy: boolean;
   canTick: boolean;
   hint: string | null;
   manySources: boolean;
@@ -307,7 +314,8 @@ function PieceLevel({ stretches, stage, canTick, hint, manySources, nothing, lab
           <section key={x.key} className={s.pieceStretch}>
             <h3 className={s.stretchTitle}>{manySources ? `${x.source} · ${x.title}` : x.title}</h3>
             {parts.map(p => {
-              const all = p.mine.length + p.free.length + p.held.reduce((n, h) => n + h.slotIds.length, 0);
+              // One denominator in both views: the dates this piece could hold (its own and the ones not given yet).
+              const all = p.mine.length + p.free.length;
               return (
                 <div key={p.key} className={s.part}>
                   <span className={s.partText}>{pieceDayWords(p.weekday)} · {piecePartWords(p)}</span>
@@ -326,7 +334,7 @@ function PieceLevel({ stretches, stage, canTick, hint, manySources, nothing, lab
     if (tick === null) {
       const holder = p.held[0]?.use;
       return holder
-        ? <button type="button" className={s.holder} onClick={() => onOpen(holder)}>{W.piece.heldBy(labelOfUse(holder))}</button>
+        ? <button type="button" className={s.holder} disabled={busy} onClick={() => onOpen(holder)}>{W.piece.heldBy(labelOfUse(holder))}</button>
         : null;
     }
     return tick === 'mixed' ? W.piece.ofDates(p.mine.length, p.mine.length + p.free.length) : hoursOf(p.minutes);
@@ -342,7 +350,7 @@ function PieceLevel({ stretches, stage, canTick, hint, manySources, nothing, lab
         return (
           <section key={x.key} className={s.pieceStretch}>
             <div className={s.stretchHead}>
-              {sTick && <TickBox tick={sTick} label={W.piece.tickAll(title)} onToggle={() => onStage(toggleParts(parts, stage))} />}
+              {sTick && <TickBox disabled={busy} tick={sTick} label={W.piece.tickAll(title)} onToggle={() => onStage(toggleParts(parts, stage))} />}
               <h3 className={s.stretchTitle}>{title}</h3>
             </div>
             {x.days.map(d => {
@@ -351,7 +359,7 @@ function PieceLevel({ stretches, stage, canTick, hint, manySources, nothing, lab
               return (
                 <div key={d.weekday} className={s.day}>
                   <div className={s.weekday}>
-                    {dTick ? <TickBox tick={dTick} label={W.piece.tickAll(day)} onToggle={() => onStage(toggleParts(d.parts, stage))} /> : <span className={s.noBox} />}
+                    {dTick ? <TickBox disabled={busy} tick={dTick} label={W.piece.tickAll(day)} onToggle={() => onStage(toggleParts(d.parts, stage))} /> : <span className={s.noBox} />}
                     <span>{day}</span>
                   </div>
                   {d.parts.map(p => {
@@ -360,7 +368,7 @@ function PieceLevel({ stretches, stage, canTick, hint, manySources, nothing, lab
                     const clock = formatTimeRange(p.start, p.end);
                     const changed = p.key in stage;
                     const inner = <>
-                      {tick ? <TickBox tick={tick} label={`${day} · ${piecePartWords(p)}`} onToggle={() => onStage(toggleParts([p], stage))} /> : <span className={s.noBox} />}
+                      {tick ? <TickBox disabled={busy} tick={tick} label={`${day} · ${piecePartWords(p)}`} onToggle={() => onStage(toggleParts([p], stage))} /> : <span className={s.noBox} />}
                       <span className={s.partText}>
                         <span>{clock}<span className={s.placeDesk}> · {p.place}</span></span>
                         <small className={s.partUnder}>{p.place}{words ? <> · {words}</> : null}</small>
@@ -381,7 +389,7 @@ function PieceLevel({ stretches, stage, canTick, hint, manySources, nothing, lab
       })}
       {mineAnywhere && (
         <div className={s.more}>
-          <RecordAction icon={<Undo2 size={13} aria-hidden />}
+          <RecordAction icon={<Undo2 size={13} aria-hidden />} disabled={busy}
             onClick={() => onStage(Object.fromEntries(allParts(stretches).filter(p => p.mine.length).map(p => [p.key, 'none' as const])))}>
             {W.piece.giveAllBack}
           </RecordAction>

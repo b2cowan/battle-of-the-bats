@@ -89,5 +89,7 @@ describe('The route reads the projection, never the club’s schedule view', () 
     assert.ok(!/canOpenModule\(/.test(route));
     assert.ok(/readClubTeams\(p\.orgId, \{ repTeams: true \}\)/.test(server) && /repTeams \?/.test(server),
       'a rep team’s name is read only when the viewer can open Rep teams');
+    assert.ok(server.includes('p.repGroupIds.includes(t.groupId)') && route.includes('repGroupIds: ctx.repGroupIds'),
+      'a member limited to some rep groups reads only those groups’ names');
   });
 });

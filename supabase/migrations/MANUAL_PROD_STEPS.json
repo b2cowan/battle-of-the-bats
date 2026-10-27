@@ -458,6 +458,10 @@
     "396_a_dispute_moves_forward_and_an_extra_is_counted_once.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 12d-1 Part 4b (the SQL deferred from Part 2 and Part 3 /review). Needs 390 and 391 first. No table, column or index change. INVISIBLE to check:migrations: functions online_payment_dispute_apply (an open read behind the stored open status is stale: changes only read_at) and online_payment_over_left (the team surplus shared across its flagged payments, kept first then newest first, each capped by what of its own payment is still received). Signatures unchanged. Applied to dev 2026-10-27; verify on prod by reading pg_get_functiondef(online_payment_over_left) for \"ROWS BETWEEN UNBOUNDED PRECEDING\"."
+    },
+    "397_the_review_of_a_piece_saving_whole.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 11b Part 3, the /review of 394. Needs 394 first. No table, column or index change. INVISIBLE to check:migrations: league_slot_uses_apply REPLACED (same signature): the slots' schedules locked FOR SHARE in id order before the slots (so a Save waits out Send the changes, a save or a hand edit), the season row FOR SHARE before its state is read, both `from` and `to` keys required, a no-op change changes nothing, 'still to come' read on clock_timestamp() after the locks. Re-runnable. Apply to prod right after 394. Verify on prod: SELECT prosrc LIKE '%clock_timestamp%' FROM pg_proc WHERE proname = 'league_slot_uses_apply' -> true. Applied to DEV 2026-10-27; scripts/club-stage11b-check.sql passed (T1-T13)."
     }
   }
 }

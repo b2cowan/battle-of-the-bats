@@ -34,6 +34,9 @@ export const canOpenRepTeams = (member: MemberAccessInput, org: EntitlementOrg) 
 /** The week holding `cursor` (any day), read; null when the schedule isn't this page's to read. */
 export async function readLeagueClubSchedule(p: {
   orgId: string; org: EntitlementOrg; member: MemberAccessInput; season: LeagueSeason; scheduleId: string; cursor: string;
+  /** The rep groups this member is limited to (null = every group): a team outside them is "A rep team", as an
+   *  ungrouped one is (the product's group scope, `inScope` in lib/club-own-teams-entry.ts). */
+  repGroupIds: string[] | null;
 }): Promise<LeagueClubSchedule | null> {
   const loaded = await loadSchedule(p.orgId, p.scheduleId);
   if (!loaded || loaded.row.state !== 'final') return null;
@@ -71,11 +74,14 @@ export async function readLeagueClubSchedule(p: {
       venueId: v, venueName: places.venueName.get(v) ?? '',
       facilities: (places.byVenue.get(v) ?? []).map(f => ({ id: f, name: places.facilityName.get(f) ?? '' })),
     })),
+    placesUsed: [...new Map(live.map(s => [`${s.venueId}|${s.facilityId ?? ''}`, { venueId: s.venueId, facilityId: s.facilityId }])).values()],
     week: from,
     slots: projectClubSlots({
       slots: raw, week: { from, to }, seasonId: p.season.id,
       uses: new Map(uses.map(u => [u.slot_id, { seasonId: u.season_id, use: { divisionId: u.division_id, kind: u.kind } }])),
-      teamName: teams ? new Map(teams.map(t => [t.id, t.name])) : null,
+      teamName: teams
+        ? new Map(teams.filter(t => !p.repGroupIds || (!!t.groupId && p.repGroupIds.includes(t.groupId))).map(t => [t.id, t.name]))
+        : null,
       final: true, now: new Date().toISOString(), inSeason,
     }),
     divisions: divisions.map(d => ({ id: d.id, name: d.name })),

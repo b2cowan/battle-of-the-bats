@@ -141,6 +141,9 @@ export async function saveLeagueTime(p: {
   });
   if (error) {
     if (/\buse_(slot|season|division)\b/.test(error.message ?? '')) return refused(409, 'changed', R.changed);
+    // A deadlock with the club's own writers (rolled back whole), or a division deleted under the Save: the time
+    // changed, so the window reads again (/review 2026-10-27).
+    if (error.code === '40P01' || error.code === '23503') return refused(409, 'changed', R.changed);
     throw error;
   }
   const r = (data ?? {}) as { ok?: boolean; code?: string; slots?: number; practicesRemoved?: number };

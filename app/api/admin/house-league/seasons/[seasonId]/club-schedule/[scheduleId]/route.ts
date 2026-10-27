@@ -24,7 +24,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: { para
   if (!season) return NextResponse.json({ error: LEAGUE_TIME_REFUSALS.notFound, code: 'not_found' }, { status: 404 });
   const week = search.get('week') ?? '';
   const read = await readLeagueClubSchedule({
-    orgId: ctx.org.id, org: ctx.org, member: ctx, season, scheduleId,
+    orgId: ctx.org.id, org: ctx.org, member: ctx, season, scheduleId, repGroupIds: ctx.repGroupIds,
     cursor: /^\d{4}-\d{2}-\d{2}$/.test(week) ? week : tournamentToday(),
   });
   if (!read) return NextResponse.json({ error: LEAGUE_TIME_REFUSALS.scheduleNotFound, code: 'not_found' }, { status: 404 });

@@ -272,11 +272,12 @@ export function readChangesBody(body: unknown): LeagueTimeChange[] | null {
   const seen = new Set<string>();
   for (const c of list) {
     const r = (c ?? {}) as Record<string, unknown>;
-    if (typeof r.slotId !== 'string' || !isUuid(r.slotId) || seen.has(r.slotId) || !('from' in r) || !('to' in r)) return null;
+    const slotId = typeof r.slotId === 'string' ? r.slotId.toLowerCase() : '';
+    if (!isUuid(slotId) || seen.has(slotId) || !('from' in r) || !('to' in r)) return null;
     const from = readUse(r.from), to = readUse(r.to);
     if (from === undefined || to === undefined) return null;
-    seen.add(r.slotId);
-    changes.push({ slotId: r.slotId, from, to });
+    seen.add(slotId);
+    changes.push({ slotId, from, to });
   }
   return changes;
 }
@@ -326,7 +327,8 @@ export function leaguePiece(sources: readonly LeagueTimeSource[], use: LeagueUse
       const parts = new Map<string, PiecePart>();
       for (const row of stretch.rows) {
         for (const p of row.parts) {
-          const key = partKeyWithoutUse(p.key);
+          // The schedule's id leads: a part with no block (`none`) in two schedules is still two parts (/review).
+          const key = `${source.scheduleId}|${partKeyWithoutUse(p.key)}`;
           const part = parts.get(key) ?? {
             key, weekday: p.weekday, start: p.start, end: p.end, place: p.place, minutes: p.minutes, mine: [], free: [], held: [],
           };
@@ -383,6 +385,34 @@ export function stageParts(parts: readonly PiecePart[], stage: PieceStage, to: '
     if (noChange) delete next[p.key]; else next[p.key] = to;
   }
   return next;
+}
+
+/**
+ * A stage held against the time as it is NOW (/review 2026-10-27): another piece's Save can take the free dates a tick
+ * here meant to take, or give back the dates an untick meant to give. A tick that no longer changes anything drops out,
+ * so the count, the dirty ask and the Save read only what a Save would really do.
+ */
+export function pruneStage(stretches: readonly PieceStretch[], stage: PieceStage): PieceStage {
+  const parts = new Map(stretches.flatMap(x => x.days.flatMap(d => d.parts)).map(p => [p.key, p]));
+  const out: Record<string, 'all' | 'none'> = {};
+  for (const [key, to] of Object.entries(stage)) {
+    const p = parts.get(key);
+    if (p && (to === 'all' ? p.free.length : p.mine.length)) out[key] = to;
+  }
+  return out;
+}
+
+/** The question on Save, counted (ruled card 6): the parts whose dates remove practices, their week's minutes, and
+ *  whether they are all of the piece's own time. */
+export function askCounts(stretches: readonly PieceStretch[], stage: PieceStage, removedSlots: ReadonlySet<string>) {
+  const parts = stretches.flatMap(x => x.days.flatMap(d => d.parts));
+  const back = parts.filter(p => stage[p.key] === 'none' && p.mine.some(id => removedSlots.has(id)));
+  const allMine = parts.filter(p => p.mine.length);
+  return {
+    parts: back.length,
+    all: back.length > 0 && allMine.every(p => stage[p.key] === 'none'),
+    minutes: back.reduce((n, p) => n + p.minutes, 0),
+  };
 }
 
 /** The box's own toggle: whatever is ticked (wholly) goes off; anything else comes on. */
@@ -560,6 +590,8 @@ export const LEAGUE_TIME_WORDS = {
     prevWeek: 'Previous week',
     nextWeek: 'Next week',
     loadFailed: 'This schedule didn’t load. Try again.',
+    /** [marketing] a phone's week with no slots (a desk shows the rows, each day "—"). */
+    emptyWeek: 'No time this week.',
     close: 'Close',
   },
   /** Choose parts…'s small step: which piece to open (ruled card 2). The button repeats the title, as the kit's windows do. */

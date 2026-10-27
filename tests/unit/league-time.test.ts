@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  daysAndClocksWords, divisionTimeLine, groupLeagueTime, groupTick, hasNotGiven, hoursAWeek, leaguePiece, leagueTimeMinutes,
+  askCounts, daysAndClocksWords, divisionTimeLine, groupLeagueTime, groupTick, hasNotGiven, hoursAWeek, leaguePiece, leagueTimeMinutes,
   LEAGUE_TIME_WORDS, partsWords, partTick, pieceChanges, pieceDayWords, pieceMinutes, piecePartWords, practicesRemovedBy,
-  readChangesBody, rowChanges, stageParts, timeLineWords, toggleParts,
+  pruneStage, readChangesBody, rowChanges, stageParts, timeLineWords, toggleParts,
   type LeagueTimeSlot,
 } from '../../lib/league-time.ts';
 
@@ -193,6 +193,23 @@ describe('A division’s piece — parts without their use, ticks that stage, on
     // Mondays are all U12 practice time: no box at all.
     assert.equal(groupTick(piece[0].days[0].parts, {}), null);
   });
+  it('a tick another piece’s Save made stale drops out; the question counts only the parts that remove practices (/review)', () => {
+    const free = find(2, '19:30', 'Diamond 1');
+    const staged = toggleParts([free], {});
+    // U14 took those dates since: the tick no longer changes anything.
+    const now = leaguePiece(groupLeagueTime({
+      slots: mixedSlots.map(s => (free.free.includes(s.id) ? { ...s, use: games14 } : s)),
+      schedules: [{ id: SCHEDULE, name: 'Maple Grove · summer 2027', startsOn: '2027-06-01', endsOn: '2027-08-31' }],
+      divisions: [{ id: U12, name: 'U12' }, { id: U14, name: 'U14' }],
+      placeOf: (_v, f) => (f === D1 ? 'Diamond 1' : 'Diamond 2'), venueOf: () => 'Maple Grove Park',
+    }), games12);
+    assert.deepEqual(pruneStage(now, staged), {});
+    assert.deepEqual(pruneStage(piece, staged), staged);
+    const mine = find(2, '18:00', 'Diamond 1');
+    const back = stageParts([mine, find(4, '18:00', 'Diamond 1')], {}, 'none');
+    assert.deepEqual(askCounts(piece, back, new Set([mine.mine[0]])), { parts: 1, all: false, minutes: 90 });
+  });
+
   it('a stage back to how a part already is drops out of the count', () => {
     const p = find(2, '19:30', 'Diamond 1');
     assert.deepEqual(stageParts([p], stageParts([p], {}, 'all'), 'none'), {});

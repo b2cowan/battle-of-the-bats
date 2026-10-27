@@ -39,6 +39,8 @@ export interface LeagueClubSchedule {
   schedule: { id: string; name: string; startsOn: string; endsOn: string };
   /** The places the schedule's slots stand on, as the grid's rows read them. */
   places: { venueId: string; venueName: string; facilities: { id: string; name: string }[] }[];
+  /** Every place the schedule's live slots stand on, so the grid's rows hold still from week to week (/review). */
+  placesUsed: { venueId: string; facilityId: string | null }[];
   /** The week's slots only (Monday to Sunday of `week`). */
   week: string;
   slots: LeagueClubSlot[];

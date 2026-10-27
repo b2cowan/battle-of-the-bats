@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
@@ -37,10 +37,11 @@ export default function LeagueClubSchedulePage() {
   const canRun = !!useSeasonAccess(season)?.run;
   const hasAccess = !!useHouseLeagueAccess()?.read;
   const isPhone = useIsPhone();
-  const [cursor, setCursor] = useState<string | null>(null);
   const [read, setRead] = useState<LeagueClubSchedule | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  /** Only the newest week asked for lands (/review: two quick steps could land out of order). */
+  const asked = useRef(0);
 
   const loadSeason = useCallback(async () => {
     const r = await fetch(`/api/admin/house-league/seasons/${seasonId}?${orgQuery}`).catch(() => null);
@@ -50,6 +51,7 @@ export default function LeagueClubSchedulePage() {
   useDeferredLoad(!!orgQuery, loadSeason);
 
   const loadWeek = useCallback(async (week: string | null) => {
+    const mine = ++asked.current;
     const fetchWeek = async (w: string | null) => {
       const r = await fetch(`/api/admin/house-league/seasons/${seasonId}/club-schedule/${scheduleId}?${orgQuery}${w ? `&week=${w}` : ''}`,
         { cache: 'no-store' }).catch(() => null);
@@ -60,9 +62,9 @@ export default function LeagueClubSchedulePage() {
     // The first read opens on the week holding today while the schedule runs, else its first (the club page's rule).
     if (got.ok && week === null) {
       const first = firstCursor(got.read.schedule.startsOn, got.read.schedule.endsOn, tournamentToday());
-      setCursor(first);
       if (mondayOfDay(first) !== got.read.week) got = await fetchWeek(first);
     }
+    if (mine !== asked.current) return;
     if (!got.ok) { setFailed(got.error ?? W.club.loadFailed); return; }
     setFailed(null);
     setRead(got.read);
@@ -71,16 +73,16 @@ export default function LeagueClubSchedulePage() {
   useDeferredLoad(!!orgQuery, first);
 
   const backHref = `/${orgSlug}/admin/house-league/seasons/${seasonId}/schedule?time=1`;
-  const columns = read && cursor
-    ? gridColumns({ startsOn: read.schedule.startsOn, endsOn: read.schedule.endsOn, oneWeekday: null, cursor })
+  // The headings are the week the server ANSWERED, never a week still on its way: dates and slots always agree.
+  const columns = read
+    ? gridColumns({ startsOn: read.schedule.startsOn, endsOn: read.schedule.endsOn, oneWeekday: null, cursor: read.week })
     : null;
   const step = (dir: -1 | 1) => {
-    if (!read || !cursor) return;
-    const next = stepGrid({ startsOn: read.schedule.startsOn, endsOn: read.schedule.endsOn, oneWeekday: null, cursor }, dir);
-    setCursor(next);
-    void loadWeek(next);
+    if (!read) return;
+    void loadWeek(stepGrid({ startsOn: read.schedule.startsOn, endsOn: read.schedule.endsOn, oneWeekday: null, cursor: read.week }, dir));
   };
-  const rows = useMemo(() => (read ? placeRows(read.places, read.slots) : []), [read]);
+  // The rows are the schedule's places, not the week's: they hold still from week to week (/review).
+  const rows = useMemo(() => (read ? placeRows(read.places, read.placesUsed) : []), [read]);
   const byCell = useMemo(() => slotsByCell(read?.slots ?? []), [read]);
   const divisionName = useMemo(() => new Map((read?.divisions ?? []).map(d => [d.id, d.name])), [read]);
   const today = tournamentToday();
@@ -120,7 +122,7 @@ export default function LeagueClubSchedulePage() {
         <>
           <p className={s.clubFacts}>{[joinWithAnd(venues), scheduleDates(read.schedule.startsOn, read.schedule.endsOn), facilities.join(', ')].filter(Boolean).join(' · ')}</p>
           <div className={s.clubBar}>
-            <ScheduleDateNav view="week" cursor={cursor ?? read.week} onStep={step} range={{
+            <ScheduleDateNav view="week" cursor={read.week} onStep={step} range={{
               long: columns.range, short: columns.rangeShort, canBack: columns.canBack, canForward: columns.canForward,
               prevLabel: W.club.prevWeek, nextLabel: W.club.nextWeek,
             }} />
@@ -133,6 +135,7 @@ export default function LeagueClubSchedulePage() {
           </div>
           {isPhone ? (
             <div className={s.dayList}>
+              {!read.slots.length && <p className={ck.hint}>{W.club.emptyWeek}</p>}
               {columns.days.map(d => {
                 const list = read.slots.filter(x => x.day === d).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
                 return list.length ? (
@@ -164,10 +167,10 @@ export default function LeagueClubSchedulePage() {
           )}
         </>
       )}
-      {open && read && season && (
+      {open && read && (
         <SlotRead key={open.id} slot={open} read={read} scheduleName={read.schedule.name} where={placeOf(open)} who={who(open)}
           canChange={canRun && !isPhone} labelOfUse={labelOfUse} backHref={backHref} orgSlug={currentOrg?.slug ?? orgSlug}
-          seasonId={seasonId} onClose={() => setOpenId(null)} onSaved={() => loadWeek(cursor)} />
+          seasonId={seasonId} onClose={() => setOpenId(null)} onSaved={() => loadWeek(read.week)} />
       )}
     </div>
   );
@@ -219,6 +222,7 @@ function SlotRead({ slot, read, scheduleName, where, who, canChange, labelOfUse,
   function pick(to: LeagueUse | null) {
     if (keyOfUse(to) === keyOfUse(current)) return;
     const change: LeagueTimeChange = { slotId: slot.id, from: current, to };
+    setReason(null);
     setPending(keyOfUse(to));
     const removed = practicesRemovedBy([change], read.practices);
     if (removed.length) {
@@ -249,7 +253,8 @@ function SlotRead({ slot, read, scheduleName, where, who, canChange, labelOfUse,
             <legend className={s.useLabel}>{W.club.use}</legend>
             {options.map(u => (
               <label key={keyOfUse(u)} className={s.choice}>
-                <input type="radio" name={`use-${slot.id}`} checked={chosen === keyOfUse(u)} disabled={saving} onChange={() => pick(u)} />
+                {/* Each its own stop: a radio GROUP fires a change on every arrow key, and each change saves (/review). */}
+                <input type="radio" name={`use-${slot.id}-${keyOfUse(u)}`} checked={chosen === keyOfUse(u)} disabled={saving} onChange={() => pick(u)} />
                 <span>{u ? labelOfUse(u) : W.notGiven}</span>
               </label>
             ))}

@@ -2,13 +2,14 @@
 -- A slot is held by rep teams or by house league, never both; a full slot refuses either; a save and a hand edit move a
 -- slot between the two holders; another club's season can't take a use; Practice time writes one practice per slot per
 -- team and a second hand-out writes none twice; Send the changes carries a use and its practices to where the time moved
--- and refuses a live practice left on time house league no longer has. Part 3 (mig 394): one Save applies whole or not at all.
+-- and refuses a live practice left on time house league no longer has. Part 3 (migs 394, 397): one Save applies whole or
+-- not at all; a change names what it saw and what it gives; a no-op changes nothing.
 -- Run: node scripts/db-query.mjs --dev -f scripts/club-stage11b-check.sql
 -- The final exception rolls back every fixture row; the run passes only when it ends in CLUB_STAGE11B_PASSED.
 DO $c11b$
 DECLARE
   v_org uuid; v_other uuid; v_venue uuid; v_team uuid; v_sched uuid; v_draft uuid; v_ver integer;
-  v_a uuid; v_b uuid; v_c uuid; v_d uuid; v_moved uuid; v_e uuid; v_f uuid; v_season_b uuid; v_div_b uuid;
+  v_a uuid; v_b uuid; v_c uuid; v_d uuid; v_moved uuid; v_e uuid; v_f uuid; v_g uuid; v_season_b uuid; v_div_b uuid;
   v_season uuid; v_other_season uuid; v_div uuid; v_div2 uuid; v_t1 uuid; v_t2 uuid; v_send uuid;
   v_res jsonb; v_n integer; v_code text; v_p uuid; v_at timestamptz;
 BEGIN
@@ -286,6 +287,22 @@ BEGIN
     jsonb_build_object('slotId', v_e, 'from', jsonb_build_object('divisionId', v_div2, 'kind', 'games'),
                        'to', jsonb_build_object('divisionId', v_div_b, 'kind', 'games'))));
   IF v_res->>'code' IS DISTINCT FROM 'not_found' THEN RAISE EXCEPTION 'FAIL T12: another season''s division took time (%)', v_res; END IF;
+
+  -- T13 · the /review of 394 (mig 397): a change missing `from` or `to` is refused; a change to what the slot already
+  -- holds changes nothing, practices included.
+  v_res := league_slot_uses_apply(v_org, v_season, NULL, jsonb_build_array(jsonb_build_object('slotId', v_e, 'from', NULL)));
+  IF v_res->>'code' IS DISTINCT FROM 'bad_request' THEN RAISE EXCEPTION 'FAIL T13: a change with no to (%)', v_res; END IF;
+  v_res := league_slot_uses_apply(v_org, v_season, NULL, jsonb_build_array(jsonb_build_object('slotId', v_e, 'to', NULL)));
+  IF v_res->>'code' IS DISTINCT FROM 'bad_request' THEN RAISE EXCEPTION 'FAIL T13: a change with no from (%)', v_res; END IF;
+  INSERT INTO club_schedule_slots(org_id, schedule_id, org_venue_id, starts_at, ends_at)
+  VALUES (v_org, v_sched, v_venue, v_at + interval '42 days', v_at + interval '42 days 1 hour') RETURNING id INTO v_g;
+  INSERT INTO club_schedule_slot_programs(slot_id, program, org_id) VALUES (v_g, 'house_league', v_org);
+  INSERT INTO league_practices(season_id, division_id, team_id, org_id, scheduled_at, ends_at, status, club_schedule_slot_id)
+  VALUES (v_season, v_div, v_t1, v_org, v_at + interval '42 days', v_at + interval '42 days 1 hour', 'scheduled', v_g);
+  v_res := league_slot_uses_apply(v_org, v_season, NULL, jsonb_build_array(jsonb_build_object('slotId', v_g, 'from', NULL, 'to', NULL)));
+  IF NOT (v_res->>'ok')::boolean OR (v_res->>'practicesRemoved')::integer <> 0
+     OR NOT EXISTS (SELECT 1 FROM league_practices WHERE club_schedule_slot_id = v_g) THEN
+    RAISE EXCEPTION 'FAIL T13: a no-op change removed practices (%)', v_res; END IF;
 
   -- T9 · a finished season divides nothing and hands out nothing.
   UPDATE league_seasons SET status = 'completed' WHERE id = v_season;

@@ -905,7 +905,9 @@ export default function SchedulePage() {
   const [timeOpen, setTimeOpen] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('time') === '1');
   const loadLeagueTime = useCallback(async () => {
     const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/time${orgQuery}`, { cache: 'no-store' }).catch(() => null);
-    setLeagueTime(res?.ok ? await res.json().catch(() => null) : null);
+    // A failed re-read keeps the last good line rather than hiding it (/review).
+    const data = res?.ok ? await res.json().catch(() => null) : null;
+    if (data) setLeagueTime(data as LeagueTime);
   }, [seasonId, orgQuery]);
   useDeferredLoad(!!orgQuery, loadLeagueTime);
   useEffect(() => {
@@ -1311,7 +1313,15 @@ export default function SchedulePage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  if (loading) return <LoadingState label="Loading the schedule…" />;
+  // House league's time, mounted outside the loading swap: the page reads again when its division is first picked, and
+  // a window unmounted by that swap would stand and drop its Back step twice (/review 2026-10-27, ?time=1).
+  const timeWindow = timeOpen && season ? (
+    <HouseLeagueTimeWindow orgSlug={orgSlug} seasonId={seasonId} seasonName={season.name}
+      canDivide={canManage} schedulesHref={buildsSchedules ? `/${orgSlug}/admin/schedules` : null}
+      onClose={() => setTimeOpen(false)} onChanged={() => void loadLeagueTime()} />
+  ) : null;
+
+  if (loading) return <><LoadingState label="Loading the schedule…" />{timeWindow}</>;
 
   if (!hasAccess) {
     return (
@@ -1326,6 +1336,7 @@ export default function SchedulePage() {
   const backHref = `/${orgSlug}/admin/house-league/seasons/${seasonId}`;
 
   return (
+    <>
     <div className={styles.page}>
       {/* Header — today's as `legacy` while the switch is off. On the kit (F3) the season's name (the
           subtitle) is the way up, in the leading corner. */}
@@ -1443,12 +1454,6 @@ export default function SchedulePage() {
           </CoachToolbarMenu>
         </div>
       </div>
-
-      {timeOpen && season && (
-        <HouseLeagueTimeWindow orgSlug={orgSlug} seasonId={seasonId} seasonName={season.name}
-          canDivide={canManage} schedulesHref={buildsSchedules ? `/${orgSlug}/admin/schedules` : null}
-          onClose={() => setTimeOpen(false)} onChanged={() => void loadLeagueTime()} />
-      )}
 
       {/* Schedule health — clashes + what could not be checked (games AND practices) */}
       {health && health.conflicts.length > 0 && (
@@ -1774,5 +1779,8 @@ export default function SchedulePage() {
         onClose={() => setFeedback(f => ({ ...f, isOpen: false }))}
       />
     </div>
+    {/* Second in both returns, so the loading swap keeps it mounted. */}
+    {timeWindow}
+    </>
   );
 }
