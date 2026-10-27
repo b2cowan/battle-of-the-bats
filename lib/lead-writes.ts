@@ -33,7 +33,7 @@ async function leadNow(leadId: string): Promise<LeadNow | null | 'error'> {
 /** A club a staff address owns, or a demo club: never linked, never offered. Throws when it cannot tell. */
 async function refusedClub(orgId: string): Promise<boolean> {
   if (await isDemoOrgId(orgId)) return true;
-  const { data: owners, error } = await supabaseAdmin.from('organization_members').select('user_id').eq('org_id', orgId).eq('role', 'owner');
+  const { data: owners, error } = await supabaseAdmin.from('organization_members').select('user_id').eq('organization_id', orgId).eq('role', 'owner');
   if (error) throw error;
   const ids = ((owners ?? []) as { user_id: string }[]).map(o => o.user_id);
   if (ids.length === 0) return false;

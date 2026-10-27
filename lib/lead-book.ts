@@ -39,7 +39,9 @@ const LEAD_COLUMNS = [
   'id', 'created_at', 'internal_status', 'linked_at', 'signed_up_at', 'converted_org_id', 'link_method', 'plan_interest',
   'features_interested', 'source_path', 'source', 'source_words', 'ref_tag', 'heard_from', 'follow_up_due_at',
   'step_changed_at', 'name', 'email', 'organization_name', 'role', 'next_action', 'release_notifications_consent',
-  'lost_reason', 'sports', 'last_contacted_at', 'notes', 'organizations(name)',
+  // The link by name: "Not this club" (early_access_lead_dismissed_offers) is a second path to organizations, so a bare
+  // `organizations(name)` is ambiguous and the read fails (PGRST201).
+  'lost_reason', 'sports', 'last_contacted_at', 'notes', 'organizations!early_access_leads_converted_org_id_fkey(name)',
 ].join(', ');
 
 type LeadRow = {
@@ -266,25 +268,25 @@ export async function readOffers(leads: { id: string; email: string; step: Early
 
     // An owner or admin who has joined: never an invited coach or volunteer, never a pending invite.
     const { data: members, error: memberError } = await supabaseAdmin.from('organization_members')
-      .select('user_id, org_id, role, status, accepted_at, organizations(id, name, plan_id, subscription_status, created_at)')
+      .select('user_id, organization_id, role, status, accepted_at, organizations(id, name, plan_id, subscription_status, created_at)')
       .in('user_id', eligible.map(a => a.user_id)).in('role', ['owner', 'admin']).eq('status', 'active').not('accepted_at', 'is', null);
     if (memberError) return { kind: 'not_read' };
-    type Member = { user_id: string; org_id: string; organizations: { id: string; name: string; plan_id: string | null; subscription_status: string | null; created_at: string } | { id: string; name: string; plan_id: string | null; subscription_status: string | null; created_at: string }[] | null };
+    type Member = { user_id: string; organization_id: string; organizations: { id: string; name: string; plan_id: string | null; subscription_status: string | null; created_at: string } | { id: string; name: string; plan_id: string | null; subscription_status: string | null; created_at: string }[] | null };
     const memberRows = (members ?? []) as Member[];
-    const orgIds = [...new Set(memberRows.map(m => m.org_id))];
+    const orgIds = [...new Set(memberRows.map(m => m.organization_id))];
 
     // A club a staff address owns is a test club, never offered.
     const { data: owners, error: ownerError } = orgIds.length
-      ? await supabaseAdmin.from('organization_members').select('org_id, user_id').in('org_id', orgIds).eq('role', 'owner')
+      ? await supabaseAdmin.from('organization_members').select('organization_id, user_id').in('organization_id', orgIds).eq('role', 'owner')
       : { data: [], error: null };
     if (ownerError) return { kind: 'not_read' };
-    const ownerIds = [...new Set(((owners ?? []) as { org_id: string; user_id: string }[]).map(o => o.user_id))];
+    const ownerIds = [...new Set(((owners ?? []) as { organization_id: string; user_id: string }[]).map(o => o.user_id))];
     const staffOwned = new Set<string>();
     if (ownerIds.length) {
       const { data: ownerPeople, error } = await supabaseAdmin.rpc('platform_people_by_ids', { p_ids: ownerIds });
       if (error) return { kind: 'not_read' };
       const staffOwners = new Set(((ownerPeople ?? []) as { id: string; email: string }[]).filter(p => staff.has(normalAddress(p.email))).map(p => p.id));
-      for (const o of (owners ?? []) as { org_id: string; user_id: string }[]) if (staffOwners.has(o.user_id)) staffOwned.add(o.org_id);
+      for (const o of (owners ?? []) as { organization_id: string; user_id: string }[]) if (staffOwners.has(o.user_id)) staffOwned.add(o.organization_id);
     }
 
     const { data: dismissed, error: dismissError } = await supabaseAdmin.from('early_access_lead_dismissed_offers')
@@ -299,11 +301,11 @@ export async function readOffers(leads: { id: string; email: string; step: Early
     for (const a of eligible) {
       for (const m of memberRows.filter(r => r.user_id === a.user_id)) {
         const org = Array.isArray(m.organizations) ? m.organizations[0] : m.organizations;
-        if (!org || demo.has(m.org_id) || staffOwned.has(m.org_id)) continue;
+        if (!org || demo.has(m.organization_id) || staffOwned.has(m.organization_id)) continue;
         const key = normalAddress(a.email);
         const list = byAddress.get(key) ?? [];
-        if (!list.some(c => c.orgId === m.org_id)) {
-          list.push({ orgId: m.org_id, name: org.name, planId: org.plan_id, status: org.subscription_status, createdAt: org.created_at, ownerEmail: key });
+        if (!list.some(c => c.orgId === m.organization_id)) {
+          list.push({ orgId: m.organization_id, name: org.name, planId: org.plan_id, status: org.subscription_status, createdAt: org.created_at, ownerEmail: key });
         }
         byAddress.set(key, list);
       }

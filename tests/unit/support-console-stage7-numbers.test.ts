@@ -133,7 +133,9 @@ describe('Stage 7 · the offered match reads an address its owner confirmed (bui
     }
     assert.match(code, /\.in\('action', \['confirm_email', 'update_user'\]\)/);
     assert.match(code, /\.in\('role', \['owner', 'admin'\]\)\.eq\('status', 'active'\)\.not\('accepted_at', 'is', null\)/);
-    assert.match(code, /demo\.has\(m\.org_id\) \|\| staffOwned\.has\(m\.org_id\)/);
+    assert.match(code, /demo\.has\(m\.organization_id\) \|\| staffOwned\.has\(m\.organization_id\)/);
+    // organization_members keys the club as organization_id (a wrong name failed every offer, found by the render probe).
+    assert.doesNotMatch(code, /from\('organization_members'\)[^;]*\b(?:eq|in)\('org_id'/);
     assert.match(code, /!dismissedKey\.has/);
   });
 
