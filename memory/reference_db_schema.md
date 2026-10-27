@@ -109,9 +109,13 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → lea
 registration_id (uuid) → league_registrations.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, rating NOT NULL, rated_by (uuid), rated_at
 - Indexes: league_player_ratings_org_id_idx, league_player_ratings_season_idx
 
+### league_practice_time
+season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, practice_minutes (integer) NOT NULL, teams_at_once (integer), updated_by (uuid), updated_at
+- Indexes: league_practice_time_division_idx, league_practice_time_org_idx
+
 ### league_practices
-id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, team_id (uuid) → league_teams.id NOT NULL, scheduled_at, ends_at, location, notes, status, recurrence_group_id (uuid), created_at, updated_at, org_id (uuid) → organizations.id NOT NULL, org_venue_id (uuid) → org_venues.id, org_venue_facility_id (uuid) → org_venue_facilities.id
-- Indexes: idx_league_practices_org_venue, idx_league_practices_org_venue_facility, league_practices_division_id_idx, league_practices_org_idx, league_practices_recurrence_idx, league_practices_schedule_idx, league_practices_season_idx, league_practices_team_idx
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, team_id (uuid) → league_teams.id NOT NULL, scheduled_at, ends_at, location, notes, status, recurrence_group_id (uuid), created_at, updated_at, org_id (uuid) → organizations.id NOT NULL, org_venue_id (uuid) → org_venues.id, org_venue_facility_id (uuid) → org_venue_facilities.id, club_schedule_slot_id (uuid)
+- Indexes: idx_league_practices_org_venue, idx_league_practices_org_venue_facility, league_practices_club_slot_uq, league_practices_division_id_idx, league_practices_org_idx, league_practices_recurrence_idx, league_practices_schedule_idx, league_practices_season_idx, league_practices_team_idx
 
 ### league_registration_price_changes
 id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, registration_id (uuid) → league_registrations.id NOT NULL, kind NOT NULL, old_amount (numeric), new_amount (numeric) NOT NULL, reason, refund_entry_id (uuid) → accounting_entries.id, changed_by (uuid), changed_at
@@ -132,6 +136,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → lea
 ### league_seasons
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at, owing_amber_days, finished_at
 - Indexes: league_seasons_org_id_slug_key
+
+### league_slot_uses
+slot_id (uuid) → club_schedule_slots.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id NOT NULL, kind NOT NULL, created_by (uuid), created_at, updated_at
+- Indexes: league_slot_uses_division_idx, league_slot_uses_org_idx, league_slot_uses_season_idx
 
 ### league_team_coaches
 id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, team_id (uuid) → league_teams.id NOT NULL, name NOT NULL, email NOT NULL, user_id (uuid), token_hash, invited_at, expires_at, accepted_at, removed_at, invited_by (uuid), created_by (uuid), created_at, updated_at, invite_failed_at, first_name, last_name
@@ -749,6 +757,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → c
 id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, kind NOT NULL, sent_at, sent_by (uuid), team_ids, people_count (integer), failed_count (integer), bookings_email, reply_by, changes (jsonb), team_values (jsonb), billed (jsonb), owed_back (jsonb), allocation_id (uuid) → rep_cost_allocations.id, landed_at, settled (jsonb)
 - Indexes: club_schedule_sends_allocation_idx, club_schedule_sends_org_idx, club_schedule_sends_schedule_idx, club_schedule_sends_sent_by_idx
 
+### club_schedule_slot_programs
+slot_id (uuid) → club_schedule_slots.id NOT NULL, program NOT NULL, org_id (uuid) → organizations.id NOT NULL, created_at
+- Indexes: club_schedule_slot_programs_org_idx
+
 ### club_schedule_slot_teams
 slot_id (uuid) → club_schedule_slots.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL
 - Indexes: club_schedule_slot_teams_org_idx, club_schedule_slot_teams_team_idx
@@ -987,10 +999,10 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **240 tables** across 10 modules.
+Total: **243 tables** across 10 modules.
 
 - Tournament: 17 tables
-- League: 14 tables
+- League: 16 tables
 - Rep Teams: 76 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
@@ -998,4 +1010,4 @@ Total: **240 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 29 tables
 - CRM / Leads: 3 tables
-- Other: 76 tables
+- Other: 77 tables

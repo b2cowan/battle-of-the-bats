@@ -2,13 +2,13 @@
 -- A slot is held by rep teams or by house league, never both; a full slot refuses either; a save and a hand edit move a
 -- slot between the two holders; another club's season can't take a use; Practice time writes one practice per slot per
 -- team and a second hand-out writes none twice; Send the changes carries a use and its practices to where the time moved
--- and refuses a live practice left on time house league no longer has.
+-- and refuses a live practice left on time house league no longer has. Part 3 (mig 394): one Save applies whole or not at all.
 -- Run: node scripts/db-query.mjs --dev -f scripts/club-stage11b-check.sql
 -- The final exception rolls back every fixture row; the run passes only when it ends in CLUB_STAGE11B_PASSED.
 DO $c11b$
 DECLARE
   v_org uuid; v_other uuid; v_venue uuid; v_team uuid; v_sched uuid; v_draft uuid; v_ver integer;
-  v_a uuid; v_b uuid; v_c uuid; v_d uuid; v_moved uuid;
+  v_a uuid; v_b uuid; v_c uuid; v_d uuid; v_moved uuid; v_e uuid; v_f uuid; v_season_b uuid; v_div_b uuid;
   v_season uuid; v_other_season uuid; v_div uuid; v_div2 uuid; v_t1 uuid; v_t2 uuid; v_send uuid;
   v_res jsonb; v_n integer; v_code text; v_p uuid; v_at timestamptz;
 BEGIN
@@ -246,10 +246,54 @@ BEGIN
   v_res := league_practices_hand_out(v_org, v_season, v_div, NULL, ARRAY[v_moved], '[]'::jsonb, '{"practiceMinutes": 999}'::jsonb);
   IF v_res->>'code' IS DISTINCT FROM 'bad_settings' THEN RAISE EXCEPTION 'FAIL T11: 999-minute practices (%)', v_res; END IF;
 
+  -- T12 · one Save, whole (mig 394): a Save that gives one slot and gives another back applies both, removing the
+  -- practices still to come on the time given back; a stale `from` anywhere applies nothing; another season's slot and a
+  -- slot named twice refuse.
+  INSERT INTO club_schedule_slots(org_id, schedule_id, org_venue_id, starts_at, ends_at)
+  VALUES (v_org, v_sched, v_venue, v_at + interval '28 days', v_at + interval '28 days 1 hour') RETURNING id INTO v_e;
+  INSERT INTO club_schedule_slot_programs(slot_id, program, org_id) VALUES (v_e, 'house_league', v_org);
+  v_res := league_slot_uses_apply(v_org, v_season, NULL, jsonb_build_array(
+    jsonb_build_object('slotId', v_e, 'from', NULL, 'to', jsonb_build_object('divisionId', v_div2, 'kind', 'games')),
+    jsonb_build_object('slotId', v_moved, 'from', jsonb_build_object('divisionId', v_div, 'kind', 'practices'), 'to', NULL)));
+  IF NOT (v_res->>'ok')::boolean OR (v_res->>'slots')::integer <> 2 OR (v_res->>'practicesRemoved')::integer < 1 THEN
+    RAISE EXCEPTION 'FAIL T12: the mixed Save (%)', v_res; END IF;
+  IF NOT EXISTS (SELECT 1 FROM league_slot_uses WHERE slot_id = v_e AND division_id = v_div2 AND kind = 'games')
+     OR EXISTS (SELECT 1 FROM league_slot_uses WHERE slot_id = v_moved)
+     OR EXISTS (SELECT 1 FROM league_practices WHERE club_schedule_slot_id = v_moved AND scheduled_at > now()) THEN
+    RAISE EXCEPTION 'FAIL T12: the mixed Save left half of itself'; END IF;
+  v_res := league_slot_uses_apply(v_org, v_season, NULL, jsonb_build_array(
+    jsonb_build_object('slotId', v_moved, 'from', NULL, 'to', jsonb_build_object('divisionId', v_div, 'kind', 'games')),
+    jsonb_build_object('slotId', v_e, 'from', NULL, 'to', jsonb_build_object('divisionId', v_div, 'kind', 'games'))));
+  IF v_res->>'code' IS DISTINCT FROM 'changed' OR (v_res->>'slotId')::uuid IS DISTINCT FROM v_e THEN
+    RAISE EXCEPTION 'FAIL T12: a stale from was not refused (%)', v_res; END IF;
+  IF EXISTS (SELECT 1 FROM league_slot_uses WHERE slot_id = v_moved) THEN
+    RAISE EXCEPTION 'FAIL T12: a refused Save wrote part of itself'; END IF;
+  INSERT INTO league_seasons(org_id, name, slug) VALUES (v_org, 'CHECK fall', 'check-fall') RETURNING id INTO v_season_b;
+  INSERT INTO league_divisions(season_id, name, capacity) VALUES (v_season_b, 'U10', 20) RETURNING id INTO v_div_b;
+  INSERT INTO club_schedule_slots(org_id, schedule_id, org_venue_id, starts_at, ends_at)
+  VALUES (v_org, v_sched, v_venue, v_at + interval '35 days', v_at + interval '35 days 1 hour') RETURNING id INTO v_f;
+  INSERT INTO club_schedule_slot_programs(slot_id, program, org_id) VALUES (v_f, 'house_league', v_org);
+  v_res := league_slot_uses_set(v_org, v_season_b, NULL, ARRAY[v_f], v_div_b, 'games');
+  v_res := league_slot_uses_apply(v_org, v_season, NULL, jsonb_build_array(
+    jsonb_build_object('slotId', v_f, 'from', jsonb_build_object('divisionId', v_div_b, 'kind', 'games'), 'to', NULL)));
+  IF v_res->>'code' IS DISTINCT FROM 'changed' OR NOT EXISTS (SELECT 1 FROM league_slot_uses WHERE slot_id = v_f) THEN
+    RAISE EXCEPTION 'FAIL T12: another season''s slot was taken (%)', v_res; END IF;
+  v_res := league_slot_uses_apply(v_org, v_season, NULL, jsonb_build_array(
+    jsonb_build_object('slotId', v_e, 'from', jsonb_build_object('divisionId', v_div2, 'kind', 'games'), 'to', NULL),
+    jsonb_build_object('slotId', v_e, 'from', jsonb_build_object('divisionId', v_div2, 'kind', 'games'), 'to', NULL)));
+  IF v_res->>'code' IS DISTINCT FROM 'bad_request' THEN RAISE EXCEPTION 'FAIL T12: a slot named twice (%)', v_res; END IF;
+  v_res := league_slot_uses_apply(v_org, v_season, NULL, jsonb_build_array(
+    jsonb_build_object('slotId', v_e, 'from', jsonb_build_object('divisionId', v_div2, 'kind', 'games'),
+                       'to', jsonb_build_object('divisionId', v_div_b, 'kind', 'games'))));
+  IF v_res->>'code' IS DISTINCT FROM 'not_found' THEN RAISE EXCEPTION 'FAIL T12: another season''s division took time (%)', v_res; END IF;
+
   -- T9 · a finished season divides nothing and hands out nothing.
   UPDATE league_seasons SET status = 'completed' WHERE id = v_season;
   v_res := league_slot_uses_set(v_org, v_season, NULL, ARRAY[v_moved], NULL, NULL);
   IF v_res->>'code' IS DISTINCT FROM 'season_closed' THEN RAISE EXCEPTION 'FAIL T9: a finished season changed its time (%)', v_res; END IF;
+  v_res := league_slot_uses_apply(v_org, v_season, NULL, jsonb_build_array(
+    jsonb_build_object('slotId', v_e, 'from', jsonb_build_object('divisionId', v_div2, 'kind', 'games'), 'to', NULL)));
+  IF v_res->>'code' IS DISTINCT FROM 'season_closed' THEN RAISE EXCEPTION 'FAIL T9: a finished season saved a piece (%)', v_res; END IF;
 
   RAISE EXCEPTION 'CLUB_STAGE11B_PASSED';
 END $c11b$;

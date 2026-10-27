@@ -446,6 +446,10 @@
     "393_the_review_of_house_leagues_time.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 11b, the /review of 392. Needs 392 first. Visible: league_slot_uses_slot_id_fkey now references club_schedule_slots (was club_schedule_slot_programs); indexes league_slot_uses_division_idx and league_practice_time_division_idx. INVISIBLE to check:migrations: league_slot_uses_check, club_schedule_apply_changes (same 12-parameter signature; house league's half made whole), league_slot_uses_set and league_practices_hand_out REPLACED (same signatures; slots locked in id order then read again, the slot's own place, bad_settings). Re-runnable. Apply to prod right after 392. Verify on prod: SELECT confrelid::regclass FROM pg_constraint WHERE conname = 'league_slot_uses_slot_id_fkey' -> club_schedule_slots. Applied to DEV 2026-10-27; scripts/club-stage11b-check.sql passed (T1-T11) and check:club-money-atomicity still passes."
+    },
+    "394_house_leagues_time_saves_whole.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 11b Part 3 (a division's piece saves whole). Needs 392 and 393 first. No table, column or index change. INVISIBLE to check:migrations: new function league_slot_uses_apply(uuid, uuid, uuid, jsonb) (SECURITY DEFINER; EXECUTE revoked from PUBLIC, anon and authenticated, service_role only) — every change of a Save or none, each slot locked in id order then read again and refused `changed` unless it still holds what the window saw. league_slot_uses_set is unchanged. Re-runnable. Apply to prod BEFORE the promote that ships 11b Part 3 (the house-league time route calls it). Verify on prod: SELECT count(*) FROM pg_proc WHERE proname = 'league_slot_uses_apply' -> 1. Applied to DEV 2026-10-27; scripts/club-stage11b-check.sql passed (T1-T12)."
     }
   }
 }
