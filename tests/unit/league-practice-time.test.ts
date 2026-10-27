@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  planPractices, readSettings, PRACTICE_TIME_WORDS as W,
+  planPractices, readHandOutBody, readSettings, sameIds, PRACTICE_TIME_WORDS as W,
   type PlannedPractice, type PracticeTimeSlot, type PracticeTimeTeam,
 } from '../../lib/league-practice-time.ts';
 import { partsShapes } from '../../lib/league-time.ts';
@@ -236,6 +236,24 @@ describe('Practice time: two a week, and a week the club took a date back', () =
     assert.equal(weeks[1].length, 9, 'nine seats that week, all used');
     assert.equal(new Set(weeks[1].map(r => r.teamId)).size, 9);
     assertFloors(plan.rows, 1);
+  });
+});
+
+describe('Practice time: a hand-out says what it saw', () => {
+  const D = '11111111-1111-4111-8111-111111111111', S = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', T = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  it('takes a division, the two settings and the slots and teams the window planned over', () => {
+    assert.deepEqual(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1 }, saw: { slotIds: [S.toUpperCase()], teamIds: [T] } }),
+      { divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1 }, saw: { slotIds: [S], teamIds: [T] } });
+  });
+  it('refuses rows (the server plans), a missing saw, bad settings or a bad id', () => {
+    assert.equal(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1 } }), null);
+    assert.equal(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 5, teamsAtOnce: 1 }, saw: { slotIds: [], teamIds: [] } }), null);
+    assert.equal(readHandOutBody({ divisionId: 'u12', settings: { practiceMinutes: 60, teamsAtOnce: 1 }, saw: { slotIds: [], teamIds: [] } }), null);
+    assert.equal(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1 }, saw: { slotIds: ['s1'], teamIds: [] } }), null);
+  });
+  it('compares what it saw in any order', () => {
+    assert.equal(sameIds([S, T], [T.toUpperCase(), S]), true);
+    assert.equal(sameIds([S], [S, T]), false);
   });
 });
 

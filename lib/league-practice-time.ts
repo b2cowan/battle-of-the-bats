@@ -44,6 +44,8 @@ export interface PracticeTimeSlot {
   /** The facility's name (the venue's when the slot is the venue itself), and its identity. */
   place: string;
   placeKey: string;
+  /** The venue's name, for the window's rows (the plan never reads it). */
+  venue?: string;
 }
 
 export interface PracticeTimeTeam { id: string; name: string }
@@ -71,6 +73,42 @@ export interface PracticePlan {
   /** Parts shorter than one practice (they stay open). */
   tooShort: number;
 }
+
+/** What the route answers: the division, its practice time still to come, its teams, and the saved settings (or the
+ *  defaults, `saved` false, before the first hand-out). */
+export interface PracticeTimeRead {
+  division: { id: string; name: string };
+  slots: PracticeTimeSlot[];
+  teams: PracticeTimeTeam[];
+  settings: PracticeSettings;
+  saved: boolean;
+}
+
+/**
+ * A hand-out's body: the division, the two settings, and what the window SAW (its slots and teams). The server plans again
+ * from its own read and refuses `changed` when that read isn't what the window planned over, so the practices written
+ * are the ones the lime counted — never a plan the league admin didn't see.
+ */
+export interface HandOutBody { divisionId: string; settings: PracticeSettings; saw: { slotIds: string[]; teamIds: string[] } }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** A Save names at most this many slots (lib/league-time.ts's MAX_GIVE). */
+const MAX_SLOTS = 2000;
+
+export function readHandOutBody(body: unknown): HandOutBody | null {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const settings = readSettings(b.settings);
+  const saw = (b.saw ?? {}) as Record<string, unknown>;
+  const ids = (v: unknown) => (Array.isArray(v) && v.length <= MAX_SLOTS && v.every(x => typeof x === 'string' && UUID.test(x))
+    ? (v as string[]).map(x => x.toLowerCase()) : null);
+  const slotIds = ids(saw.slotIds), teamIds = ids(saw.teamIds);
+  if (typeof b.divisionId !== 'string' || !UUID.test(b.divisionId) || !settings || !slotIds || !teamIds) return null;
+  return { divisionId: b.divisionId.toLowerCase(), settings, saw: { slotIds, teamIds } };
+}
+
+/** The same ids, in any order. */
+export const sameIds = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && [...a].map(x => x.toLowerCase()).sort().join() === [...b].map(x => x.toLowerCase()).sort().join();
 
 /** Each practice's lengths, and teams at once (the step's floors: 15–240 minutes, 1–4 teams). */
 export const PRACTICE_MINUTES = [30, 45, 60, 75, 90, 120] as const;

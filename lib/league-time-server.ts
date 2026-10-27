@@ -41,7 +41,7 @@ const inSeason = (season: Pick<LeagueSeason, 'seasonStartDate' | 'seasonEndDate'
   (!season.seasonStartDate || day >= season.seasonStartDate) && (!season.seasonEndDate || day <= season.seasonEndDate);
 
 /** House league's live slots of final schedules, still to come, inside the season (ids alone when `ids` narrows it). */
-async function houseLeagueSlotRows(orgId: string, season: LeagueSeason, ids?: readonly string[]): Promise<SlotRow[]> {
+export async function houseLeagueSlotRows(orgId: string, season: LeagueSeason, ids?: readonly string[]): Promise<SlotRow[]> {
   const now = new Date().toISOString();
   const columns = 'id, schedule_id, block_id, org_venue_id, facility_id, starts_at, ends_at, club_schedule_slot_programs!inner(program), club_schedules!inner(state)';
   const rows = ids
@@ -55,7 +55,7 @@ async function houseLeagueSlotRows(orgId: string, season: LeagueSeason, ids?: re
 }
 
 /** Each slot's use, by slot. */
-async function usesOf(orgId: string, slotIds: readonly string[]) {
+export async function usesOf(orgId: string, slotIds: readonly string[]) {
   const rows = await fetchAllIn<{ slot_id: string; season_id: string; division_id: string; kind: LeagueUseKind }>(slotIds, (c, a, b) => supabaseAdmin
     .from('league_slot_uses').select('slot_id, season_id, division_id, kind').eq('org_id', orgId).in('slot_id', c).order('slot_id').range(a, b));
   return new Map(rows.map(r => [r.slot_id, r]));
