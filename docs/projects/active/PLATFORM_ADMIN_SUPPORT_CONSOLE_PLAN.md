@@ -415,8 +415,100 @@ one definition `c1c195f9b`; Leads `90d1f8408`; words and places `3d3cb8f98`; hel
 - **Threats → guards:** `tests/unit/support-console-stage7-guard.test.ts` (THREATS table: 1–3, 5–9, 11–14 guarded;
   4, 10, 16 owed to Part 8; 15 not built per Q8), `-stage7-numbers`, `-stage7-audit-guard`.
 - **Owed:** frame J (drawn on the drawings page, owner OK) → Part 8 (overwrite fix incl. the coach-interest writer,
-  C, D, the throttle, its migration for refills and tags); the two walks; `/simplify`, `/review` (privacy lens),
-  `/docs` beyond the Leads and Audit log articles.
+  C, D, the throttle, its migration for refills and tags); the two walks. (`/simplify`, `/review` and `/docs` were done
+  in the finish pass below.)
+- **The two walks, written 2026-10-27 (owed to the owner; they cover the finish pass, committed `e58bdd3d7`):**
+  walk A, a lead from the form to signed up, ledger §397, https://claude.ai/artifact/BCtrY5GDktYu41oVY4AqGa
+  (`PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE7_WALK_A.html`, 40 steps, 14 calls); walk B, the guard rails, ledger §398,
+  https://claude.ai/artifact/N5HAMnAs71eW97AeEjJkZQ (`…_STAGE7_WALK_B.html`, 35 steps, 7 calls; run after A).
+  Found while writing them, put to the owner as calls, not fixed: **the offered match cannot appear on dev** (dev's
+  sign-up confirms at once and sends no confirmation email, so `selfConfirmed` never holds; walk it on staging or with
+  `REQUIRE_SIGNUP_EMAIL_VERIFICATION=true`); a hand link to a club **older than the lead** reads "0 days after it
+  arrived" and counts 0 in Time to sign up; "Month by month" has no paying figure though its caption speaks of paying
+  by month; a **refused hand link** (asked not to be contacted) leaves the picker open and silent, its reason on the
+  page behind it. Also found: the §394 lead's staff note was written to the old notes column after 398 had emptied it,
+  so no screen shows it (dev only; on production, apply 398 with the deploy, not ahead of it).
+
+### Stage 7 finish pass (2026-10-27) — `/simplify`, `/review` (privacy lens first), `/docs`
+
+Made in the working tree on 2026-10-27, before the walks, so the owner never walks code a review then changes.
+**Committed 2026-10-27 on the owner's OK:** code `e58bdd3d7`, help `8edfbc5da` (HEAD plus this project's hunks; another
+session's "extra feature" wording sweep and a Find wording change were left in the tree). Gate: `tsc` clean, eslint clean on the changed files, 284 guard
+tests pass (the three Stage 7 guards plus support-console stage 2/3, platform-admin stage 1, plan-reader-door,
+platform-audit-reason), `check:spelling` clean, the read-only render probe `.probe/pasc/s7-render.mjs` prints "all good".
+The review ran five lenses (audit/Story privacy, the offered match, egress and route access, correctness and
+performance, the Pitch decks restyle); each finding was opened in the code before it was acted on.
+
+- **`/simplify` (behaviour unchanged):** the staff-address set had three copies (the offered match, the hand-link check,
+  the club picker) and is now `readStaffAddresses()` in `lib/lead-book.ts`, which throws when unread so every caller
+  fails closed; the filter-token cleaner had three copies and is `filterToken()` in `lib/lead-views.ts` (the numbers
+  export's tag cap is now 32, the screen's); the unused `planWords` re-export is gone.
+- **Fixed from `/review`:**
+  - A hand link on a lead who **asked not to be contacted** cleared that reason (the link clears the lost reason), so the
+    person could reappear in Copy emails and the export. `linkLead` now refuses such a lead (409) until its step is
+    changed on purpose.
+  - A second press on Link changed nothing yet wrote an audit entry naming its own club. The link update is now
+    conditioned on the lead being unlinked and on the step it read, returns 409 when nothing changed, and writes the
+    audit entry only on a real change.
+  - **The old paged list route** (`GET /api/platform-admin/early-access`) survived the rebuild with no caller: it read
+    every lead with no audit entry and no do-not-contact blanking. **Deleted**; a guard now fails if it returns.
+  - **Copy emails** wrote its audit entry best-effort after choosing the addresses. It now writes it first with the strict
+    writer and refuses (503) if it cannot, like the export.
+  - **CSV cells with a bare carriage return** were not quoted, so a stranger's text could start a new record that Excel
+    runs as a formula (`lib/export/csv.ts`, shared; the old export quoted every cell).
+  - `?step=<made up>` made Copy emails and the export cover **every** lead while the screen showed Needs you; the scope
+    now reads the validated step.
+  - Lead days were bucketed by the **UTC** day (`created_at.slice(0, 10)`): a 9 p.m. Eastern arrival fell out of "This
+    month" and "Last 30 days" until midnight and could land in the next month. `inPeriod` and the month buckets now use
+    `orgDayKey`.
+  - **Today** said "Nothing waiting" / "Growth · 0 waiting" when a lead read failed (the queue showed "Not read" beneath).
+    The toolbar and each group now say how many queues were not read.
+  - The paged reads gained an `id` tiebreaker (offset paging could skip or repeat a row on equal `created_at`).
+  - A malformed follow-up date cleared the follow-up silently; the lead PATCH now refuses it (400).
+  - Pitch decks: "Discard" in the New deck window did not discard (the draft and a stale refusal came back); Cancel now
+    asks like × does. The restyle itself was diffed against `3d3cb8f98~1`: every save/publish/delete/revert call and
+    guard is identical; no class name resolves to undefined.
+  - New guards: any audit write naming an early-access action must be on `LEAD_ACTIONS` (the privacy filter was a closed
+    list nothing forced a new action into), plus one per fix above.
+- **Reviewed, kept, because …**
+  - A link/unlink entry shows its `org_id` (the club) to every role: the club is a customer, the entry holds nothing about
+    the lead.
+  - Moving a lead off Lost clears "asked not to be contacted": the database requires a reason exactly while Lost, and a
+    step change is a deliberate edit. **Owner question:** a durable do-not-contact flag (a column) so a stray step change
+    cannot lift it? It is a migration, so not done here.
+  - The same club can be linked to two leads (the index is not unique): two forms from one person is plausible, and
+    blocking it is a product call.
+  - "Staff-owned" is matched on the exact normalised address (no `+tag` or dot folding) and on owner rows only: the
+    ruling is "best signal, safe side", and a miss can only fail to offer, never wrongly offer a stranger's club.
+  - The "staff confirmed or changed this account" check depends on `confirm_email` / `update_user` audit entries, which
+    use the best-effort writer; a confirmation made outside the console is invisible (census 2c). Switching those two
+    shared routes to the strict writer is the owner's call.
+  - `readAccounts` calls `isDemoOrgId` per organization: cached after one complete resolution, so free in production
+    (the per-open cost is paging every organization id, fine to about 10–20k).
+  - Low, not changed: `unlinkLead` takes the step to go back to from the link's audit entry (falls back to Pilot; a lead
+    hand-linked before mig 398 has none); the pipeline band counts a demo-linked lead the backfill left behind; clearing a
+    follow-up also resets the stuck clock; `consoleDay` of a bare date on Jan 1 shows the year; "from For clubs" and "0 days
+    ago" copy on the lead page; Business numbers reads the whole lead book for three counts; a `readOffers` failure blanks
+    all three Today lead rows including the two that need no offer.
+- **Open, with the number that makes it matter (not fixed in a finish pass):**
+  - **Prod step for mig 398:** audit rows written **before Part 0** hold the whole lead (name, email, `internal_notes`)
+    and no migration scrubs them; they are hidden from every non-growth role today, and a note moved out of the old box
+    is still in those rows after a Super admin "removes" it, so the remove window's "gone for good" is not true for that
+    note until they are scrubbed. A new migration (not an edit to 398) is the place, before 398 reaches production.
+  - **Scale cliffs, all failing closed as "Not read":** the offered-match and Pay now reads send every id in one request,
+    so past roughly 200 open leads (or 200 signed-up clubs) the request may be refused (the line limit is assumed, not
+    measured on this gateway) and Today's lead rows, the Leads pill and Pay now read "Not read" for good; chunk them with
+    the guards updated. `readLeadBook` reads the whole lead edit log on every Leads/Today/Business numbers load and the
+    audit log has no index on `(action, field, created_at)`: it starts to hurt around 3–5k lead edits (about 10k audit
+    rows); fix with that index and a SQL aggregate, or a `last_follow_up_set_at` column.
+  - **For Part 8:** the public form counts a missing consent field as consent (`!== false`), and a resubmission under the
+    same address overwrites consent, so "said yes" under Copy emails means "did not say no"; that writer is Part 8's.
+- **Help (`/docs`):** `lib/help-content/platform-admin.tsx` — Today's three lead rows and the "Not read" wording,
+  Business numbers (own menu place under Growth, the Leads and conversion card), Campaigns' one line, Promotions (was
+  Campaign tracking) in Plans & pricing, a new **Pitch decks** section (standing deck and the Publish rule, New deck window,
+  unlisted link, pull) with a hub quick link, and the Leads article's new behaviours (no link on an opted-out lead,
+  record-before-copy, Eastern days). Plans & pricing, Leads and Pitch decks converted to sub-topics (over the 350-word
+  standard once extended); "How to temporarily override billing access" (577 words) was already over and is not touched.
 
 ## Stage 5 build (2026-10-26) — what was built, and the threats → guards
 

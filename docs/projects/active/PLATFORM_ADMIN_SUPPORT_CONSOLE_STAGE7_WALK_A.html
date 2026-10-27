@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lead to sign-up walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: a growth person can carry a lead from the public form to signed up and read what it adds up to.
+   Checkable walk with a paste-back; the console walks' look, so it reads the same as Stages 1 to 5 and Part 0. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8; --red: #8a2a1c; --red-soft: #f6e2dd;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1a16; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1a16; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ol, .card ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+.role { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.role b { font-size: 14px; }
+.role span { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.as { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+.step { display: grid; gap: 2px; padding-block: 4px; border-top: 1px solid var(--line); }
+.step:first-of-type { border-top: 0 }
+.who { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); margin: 6px 0 0 28px; }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+label.chk .do { display: block; }
+label.chk .see { display: block; color: var(--soft); font-size: 14px; margin-top: 2px; }
+label.chk.held { margin-left: 28px; min-height: 26px; font-size: 13px; color: var(--dim); }
+label.chk.held input { width: 15px; height: 15px; margin-top: 3px; }
+.tag-held { font: 600 10.5px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); background: var(--amber-soft); border-radius: 4px; padding: 2px 5px; margin-left: 6px; white-space: nowrap; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.verdict { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.verdict .vl { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin-right: 4px; }
+.vb { font: 600 13px/1 var(--font-body); min-height: 36px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.vb[aria-pressed="true"][data-v="pass"] { background: var(--olive-soft); border-color: var(--olive); color: var(--olive); }
+.vb[aria-pressed="true"][data-v="issue"] { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+.vb[aria-pressed="true"][data-v="call"] { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 260px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Support console · stage 7 · walk A of 2 · owner walk · 2026-10-27 · ledger §397</p>
+  <h1>Lead to sign-up walk</h1>
+  <p>One question: <b>can a growth person carry a lead from the public form to signed up, and read what the leads add up to, without a spreadsheet beside them?</b> You make a lead the way a stranger would, then work it as Growth: Today and the menu say it is waiting, the pipeline finds it, its page reads first and the pencil edits the whole lead, Lost refuses without a reason, a note is dated and signed, a club is linked by hand and the page says when it signed up and whether it pays, Numbers counts it, and unlinking puts the step back. Who may see a lead (and the copy and export doors) is walk B, not this one. Tick what holds, and write what does not. Your ticks stay in this browser; the paste-back at the foot gathers them for the chat.</p>
+</header>
+
+<div class="card signin">
+  <h2>Sign in as (about 35 minutes; keep this page private, it holds passwords)</h2>
+  <p>The console is at <code>http://localhost:3000/platform-admin/login</code> (the dev server must be up). The public form is signed out, so use a private window for section 1. These are dev-only accounts.</p>
+  <div class="roles">
+    <div class="role"><b>Growth (the whole walk)</b><span>growth@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Super admin (optional)</b><span>uat-platform@fieldlogichq.ca<br>UATPassword2026!</span></div>
+  </div>
+  <ol>
+    <li><b>Your test lead.</b> Name <b>Alpha Walker</b>, address <code>walk-s7-a@example.com</code> (made up; nothing is sent to it), organization <b>Alpha Walk Club</b>. Dev already holds one other lead, <b>Walk Test Club</b> (from the Part 0 walk, step Contacted). If another session has added leads since, counts move with them: the steps pin what must be <i>equal</i> or <i>one more</i>, and name dev’s figure on 2026-10-27 only as a guide.</li>
+    <li><b>The club you link by hand</b> is <b>UAT Test Org</b> (Tournament Plus, on a trial until Nov 9 on dev). The link is undone in section 11, so the club ends as it started.</li>
+    <li><b>The offered match cannot be shown on dev</b> (section 12 says why); it carries a Held box.</li>
+    <li><b>Built, reviewed and committed.</b> The finish pass (the review’s fixes) was committed on your OK on 2026-10-27; this walk tests it.</li>
+    <li>This walk writes one lead, its edits, one note and one link and unlink, on dev only. Walk B builds on what it leaves, so do it first.</li>
+  </ol>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed. The last three were found while writing this walk: they are questions for you, not fixes.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <p class="hint">A verdict is your opinion and the count is the evidence; the paste-back prints both.</p>
+    <button class="btn-doc" type="button" id="make">Build summary</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  // A step is [do, see] or [do, see, true]; true marks a step dev may not be able to show (it also gets a “Held” box).
+  // An optional fourth item is a “who” label, shown above the step when the account changes.
+  var S = [
+    ["form", "Make a lead the way a stranger would", "start/club, signed out", "nobody (a private window)", [
+      ["In a private window, open {{http://localhost:3000/start/club}} and press “Talk to us about Club”.",
+       "A window with the small heading “Early access” and the title “Tell us what you want to see next”. Club is already ticked under plans, and Accounting, Rep teams and Coach portal under features."],
+      ["Fill Name “Alpha Walker”, Email “walk-s7-a@example.com”, Organization “Alpha Walk Club”, Your role “Registrar”, and in “What would make this useful for you?” type “Alpha walk: we run fourteen rep teams”. Leave “Send me feature and release updates for the areas I selected.” ticked. Press “Join early access”.",
+       "It saves with no error. (Another session is changing this window’s thank-you right now, so it may read “You’re on the list” with a line naming your address, or the older line under the form. Either is fine here; what this walk needs is that it saved.)"]
+    ]],
+    ["today", "Today and the menu say a lead is waiting", "Today, the menu", "Growth", [
+      ["Sign in as Growth at {{http://localhost:3000/platform-admin/login}}. Look at Today’s Growth group.",
+       "A row “New leads”, why “A lead nobody has answered yet”, with an amber count of at least 1 (1 on a dev holding only the two walk leads). Rows with nothing waiting sit in the quiet “Clear: …” line under the group.", false, "Growth"],
+      ["Look at the menu’s Growth group.",
+       "Leads, Campaigns, Pitch decks and Business numbers, in that order. Leads carries an amber count. Write it down: section 3 checks it against the Leads page."],
+      ["Press the “New leads” row.",
+       "The Leads page opens, titled “Leads”, on the Pipeline view with “Needs you” chosen."]
+    ]],
+    ["pipeline", "The pipeline finds it: Needs you, the band, Search and Filter", "Leads › Pipeline", "Growth", [
+      ["Read the Needs you list.",
+       "Alpha Walk Club is in it, with “Alpha Walker · Registrar” under the name, a Step chip reading New, Next action “None yet”, Follow-up “None”, Source “Not set”. The columns are Lead, Interest, Step, Next action, Follow-up, Source, Arrived."],
+      ["Compare three numbers: the amber count beside “Needs you”, the number of rows in the list, and the count on Leads in the menu (from section 2).",
+       "All three are the same number. Walk Test Club is not in the list (it was answered and has no follow-up due)."],
+      ["Read the band of seven tiles above the list.",
+       "New, Contacted, Qualified, Pilot, Waiting for launch, Signed up, Lost, each with its count of every lead on that step, not just this list. New counts at least 1 and its note reads “nobody has answered”. The New tile’s count equals Today’s “New leads” count."],
+      ["Press the New tile.",
+       "The picker switches to “Every lead” and the list shows only New leads: Alpha Walk Club is in it, Walk Test Club is not."],
+      ["Press Filter and then “Clear the filter” to drop the New step, then type “Alpha” in “Search leads”.",
+       "Only Alpha Walk Club. Clear the search and both walk leads show."],
+      ["Press Filter. Set Step to Contacted and look at the list. Then press “Clear the filter”.",
+       "The button reads “Filter · 1” while it is set, and the list shows Walk Test Club only. “Clear the filter” brings both leads back. Each field’s first choice is “Any”."]
+    ]],
+    ["page", "The lead’s page reads first", "a lead’s own page", "Growth", [
+      ["Press Alpha Walk Club in the list.",
+       "Its own page: a back link “Leads”, the title “Alpha Walk Club” with a New chip, and under it “Alpha Walker · walk-s7-a@example.com · arrived Oct 27 from the Club page · 0 days ago” (the date is the day you made the lead)."],
+      ["Read “About this lead”.",
+       "Contact “Alpha Walker · Registrar” with “walk-s7-a@example.com · said yes to release emails” under it; Interest “Club” with the three features under it; Arrived from “The Club page” with /start/club under it; Step New; Source Not set; Next action None; Follow-up None; Last contacted Never; In their words “Alpha walk: we run fourteen rep teams”. Nothing on the page is a box or a list you can change: it reads."],
+      ["Read the Timeline at the right.",
+       "Headed “Timeline”, with “Newest first” beside it. One entry: “Filled the early-access form on the Club page”, with “Asked about …” and the three features under it."]
+    ]],
+    ["contact", "Email Alpha, and Mark contacted", "the lead page’s top bar", "Growth", [
+      ["Open the “Email Alpha” menu at the top right.",
+       "Copy the address (with the address beside it), Copy: League Plus early access, Copy: Club roadmap update, Copy: Feedback call, and Mark contacted (with “Today, by you”)."],
+      ["Choose “Copy: Club roadmap update”, then paste into any text box.",
+       "A short notice “Club roadmap update copied.” The pasted text starts “Subject: FieldLogicHQ Club roadmap update”, then “Hi Alpha,”. Nothing is sent from the console: it only copies."],
+      ["Open the menu again and choose “Mark contacted”.",
+       "A notice “Marked contacted.” The chip turns Contacted, Last contacted reads today’s date followed by “, by Dev Growth”, and the newest timeline entry reads “Dev Growth moved it from New to Contacted”. (On a lead past New, Mark contacted keeps the step: see call 1.)"]
+    ]],
+    ["pencil", "The pencil edits the whole lead; the check mark saves at once", "the lead page", "Growth", [
+      ["Press the pencil at the top right.",
+       "The line “Editing. Nothing changes until you press the check mark. The ✕ puts everything back.” appears. Step, Source, Next action and Follow-up all become fields at once, and two appear that only show while editing: Source detail (“Who told them, or where”) and Club or portal (“Link one by hand”). Last contacted and In their words step aside."],
+      ["Set Step to Qualified, Source to “Referral from a club”, Source detail to “Met at the spring tournament”, Next action to “Send the Club deck”, and Follow-up to today’s date. Press the check mark.",
+       "It saves at once: no window, no question, a notice “Saved.”, and the page reads again. Step Qualified; Source “Referral from a club” with “Met at the spring tournament” under it; Next action “Send the Club deck”; Follow-up today’s date."],
+      ["Read the newest timeline entry.",
+       "“Dev Growth moved it from Contacted to Qualified, and set the source: Referral from a club”, with “Next action changed · Follow-up changed · Source detail changed” under it. It names what changed, never the words you typed."],
+      ["Go back to Leads (Needs you), then to Today.",
+       "Alpha Walk Club is back in Needs you (its follow-up is due) with Follow-up “Today”, Step Qualified and your next action. On Today, “Follow-ups due” (“A lead whose follow-up date has come”) counts it, and “New leads” no longer does."]
+    ]],
+    ["lost", "Lost needs a reason, and says so under the field", "the lead page", "Growth", [
+      ["Open Alpha Walk Club, press the pencil and set Step to Lost.",
+       "A new field “Why it was lost” appears with a required mark, reading “Pick a reason”. Its list holds six: Not a fit, Chose another tool, Price, Not this season, No reply after three tries, Asked not to be contacted."],
+      ["Leave the reason on “Pick a reason” and press the check mark.",
+       "It does not save. The page stays in editing, and under that field a red line reads “Pick why it was lost before saving.”"],
+      ["Press the ✕ instead.",
+       "A window “Discard your changes”: “Your edits are dropped and this lead goes back to reading, exactly as it was. Nothing is saved.”, with Keep editing and Discard changes. Press Discard changes: the lead reads Qualified again and the timeline has no new entry."]
+    ]],
+    ["note", "A note: dated, signed, never edited", "the lead page", "Growth", [
+      ["Press “Add a note”.",
+       "A window “Add a note to Alpha Walk Club” with one field, Note (required), and the line “Dated and signed with your name. It cannot be edited afterwards; a Super admin can remove it.” Buttons Cancel and Add the note."],
+      ["Press “Add the note” with the field empty, then type “Sent the Club deck by email” and press it again.",
+       "Empty, it says “Write the note first.” and nothing is added. With words, the window closes with “Note added.”"],
+      ["Read the newest timeline entry.",
+       "“Dev Growth added a note”, today’s date, and your words under it. There is no way to edit it, and as Growth there is no Remove beside it (only a Super admin gets one; walk B checks that)."]
+    ]],
+    ["link", "Link a club by hand", "the lead page › pencil › Club or portal", "Growth", [
+      ["Press the pencil, then “Link one by hand” beside Club or portal.",
+       "A window “Link a club or portal by hand” with a search box (“Club or portal name”) and the line “Searches by name, like Find. Demo clubs and staff test clubs are never offered.”"],
+      ["Type “Riverdale”.",
+       "“No club by that name.” (Both Riverdale clubs on dev are the demo sandboxes, which are never offered.) If either one is offered, that is a failure: write it down."],
+      ["Clear it and type “UAT Test”. Find the row UAT Test Org and press it.",
+       "The row reads UAT Test Org with “Tournament Plus · trial · joined May 22” under it. Pressing it links at once (no confirm): the window closes with “UAT Test Org is linked. The lead is Signed up.” and the chip reads Signed up."],
+      ["Read the band above “About this lead”, then the page around it.",
+       "“Signed up on May 22, 0 days after it arrived. Linked by Dev Growth on Oct 27. Not paying yet: on a Tournament Plus trial until Nov 9.” (Oct 27 is the day you link.) with a door “UAT Test Org ›”. (The “0 days” is a question for you: see call 13.) About this lead gains “Signed up as UAT Test Org” with “Tournament Plus · trial · linked by hand”; Arrived from is gone, Next action and Follow-up read None, and the meta line loses “· 0 days ago”. The newest timeline entry reads “Dev Growth linked UAT Test Org by hand”, with “Follow-up and next action cleared” under it."],
+      ["Press the pencil once more and look at Step and Club or portal, then press ✕.",
+       "Step reads Signed up with “A linked lead moves only by unlinking its club.” and no list; Club or portal reads “Unlink the club”. ✕ with nothing changed just stops editing."]
+    ]],
+    ["numbers", "Numbers counts it (while it is linked)", "Leads › Numbers", "Growth", [
+      ["Go to Leads and press Numbers in the view switch.",
+       "A period choice “All time · since Oct 27” (also This month, Last 30 days, Last 90 days, This year) and “Read at” a time. No Search."],
+      ["Read the band.",
+       "Leads arrived (“Oct 27 to …”); Signed up with “…% of the leads”, counting at least 1 (your lead); Pay now with “of the … who signed up”, and your lead is not in it (a trial is not paying); Time to sign up “0 days” with “the middle lead; quickest 0, slowest 0” if yours is the only one; New accounts “… came without a lead”."],
+      ["Read the three tables.",
+       "“By the page they arrived from”: a row The Club page with both walk leads and 1 signed up. “By the plan they wanted” (“A lead may pick two”). “By source” (“Recorded by staff”): a row Referral from a club, 1 lead, 1 signed up. Columns Leads, Signed up, Rate, Pay now, and Days on the page and plan tables only."],
+      ["Read “Month by month” and the line under it.",
+       "A row for Oct 2026 reading “… arrived · … signed up so far”. Under it: “Paying by month starts on Oct 25, 2026, the day we began recording when a subscription starts. Until then, Pay now is today’s count only.” (The rows carry no paying figure: see call 14.)"],
+      ["Read the definitions at the foot.",
+       "Leads arrived, Signed up, Pay now, Time to sign up and What it cannot know, each one sentence. Signed up ends “0 of the 1 were offered matches.” when yours is the only signed-up lead (the two numbers are counted, not typed). What it cannot know ends “anything before Oct 27.”, the day of the first lead on dev."]
+    ]],
+    ["unlink", "Unlink puts the step back", "the lead page › pencil", "Growth", [
+      ["Open Alpha Walk Club, press the pencil, then “Unlink the club”.",
+       "A window “Unlink the club”: “The lead goes back to the step it was on before the link, and stops counting as Signed up. The timeline keeps both.” Buttons Keep it linked and Unlink."],
+      ["Press Unlink. Then open Numbers again.",
+       "“Unlinked.” The chip reads Qualified (the step before the link), the signed-up band is gone, Arrived from is back, and the newest timeline entry reads “Dev Growth unlinked UAT Test Org. Step: Qualified”, with the link entry still below it. Next action and Follow-up stay None (the link cleared them). On Numbers, Signed up is one fewer than in section 10."]
+    ]],
+    ["match", "The offered match (cannot be shown on dev)", "a lead page’s amber block", "Growth", [
+      ["Read this, then tick Held unless you have set up what it needs. The page offers a club only when its owner signed up with the lead’s own address, was sent our confirmation email, confirmed it from that email and has signed in since. Dev confirms every new account at once and sends no confirmation email, so on dev that test never passes and no club is ever offered. It can be walked on staging after the release (the sign-up there sends the email), or on dev if the dev server is started with sign-up verification turned on (your call; this walk does not change it).",
+       "Where it can be shown: on the lead with that address, an amber block “A club signed up with this lead’s email. … Is it this lead’s club?”, “Matched because its owner signs in with … Nothing is linked until someone confirms.”, buttons Not this club and Link the club; Today’s “Sign-up to confirm” counts it; Link the club writes “… linked …, the offered match (same email). Step: Signed up”.", true]
+    ]]
+  ];
+  var CALLS = [
+    ["Mark contacted moves only a New lead",
+     "It moves New to Contacted and stamps the date and you. A lead further on keeps its step (a Signed up lead’s step is its link’s, and Lost keeps its reason). Accept, or say it should move other steps too."],
+    ["A lead edit’s Audit log entry keeps the source and Lost reason as fixed codes",
+     "Beside the field names and the step, the entry stores which source or reason was picked (from the fixed lists, never anyone’s words), so the timeline can say “set the source: Referral from a club”. Accept, or say the entry should hold field names only."],
+    ["No “Details” box under Lost",
+     "The drawing showed a free-text box under the reason. There is no place to keep it, so the detail goes in a note. Accept, or ask for the box (a database change)."],
+    ["The timeline says “started a subscription”, not “started paying”",
+     "The event fires when a trial starts too, so “paying” would be wrong for a trial. Accept, or ask for different words."],
+    ["Only the latest refill of the form is dated",
+     "“Filled the form again” shows once, at the latest refill; earlier refills were never kept. Part 8 adds a place for them. Accept for now."],
+    ["The export carries no staff notes",
+     "The leads export holds the visitor’s own words (“In their words”) but never our notes. Accept, or ask for the notes in it."],
+    ["Removing a note is Super admin’s, using the existing delete power",
+     "No new power was made; Growth and Product add notes and cannot remove them. Accept, or say who else may remove."],
+    ["The catalogue four keep their menu places",
+     "Plans & pricing, Approval queue, Email templates and Export registry stay where they were (none was drawn in a new place). Accept, or say where they belong."],
+    ["No “Opened” line on a deck",
+     "A pitch deck does not show when its link was last opened (ruling Q8: no deck opens recorded). Accept."],
+    ["Business numbers loses its back link",
+     "It has its own place in the menu under Growth, so the “back” link at its top was removed. Accept, or ask for it back."],
+    ["Pitch decks: Create this deck appears only once the deck has a name and a slide",
+     "Until then the New deck window shows “Name the deck and add at least one slide to create it.” in its foot instead of a button that cannot act. Accept, or ask for a disabled button."],
+    ["Found while writing: the offered match cannot be walked on dev",
+     "Dev confirms new accounts at once and sends no confirmation email, so the match test (sent our email, confirmed it, signed in since) never passes there. Accept walking it on staging after the release, or say you want dev’s sign-up to send the email for walks (a setting on the dev server, your call)."],
+    ["Found while writing: a club older than the lead reads “0 days after it arrived”",
+     "Linking a lead that arrived today to a club made in May reads “Signed up on May 22, 0 days after it arrived” and counts 0 days in Time to sign up. That is the case of an existing customer filling the form. Accept, or say it should read differently (for example “already a customer when it arrived”) and stay out of Time to sign up."],
+    ["Found while writing: the month-by-month rows show no paying figure",
+     "The line under Month by month says paying by month starts on Oct 25, 2026, but the rows show only arrived and signed up. Accept the line as a note about Pay now, or ask for a paying column on months from Oct 2026."]
+  ];
+  var KEY = 'pas7-walk-a-lead-to-signup';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\{\{([^}]+)\}\}/g, '<code>$1</code>'); }
+  var VERDICTS = [["pass", "Passes"], ["issue", "Issue"], ["call", "Needs a call"]];
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[4].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = (i + 1) + ' ' + s[1].split(':')[0].split(',')[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card"><div class="sec-head"><span class="n">' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="route">' + esc(s[2]) + '</span></div><span class="as">As ' + esc(s[3]) + '</span>';
+    s[4].forEach(function (t, k) {
+      h += '<div class="step">';
+      if (t[3]) h += '<div class="who">Now as ' + esc(t[3]) + '</div>';
+      h += '<label class="chk"><input type="checkbox" id="c-' + id + '-' + k + '" data-k="' + id + '.' + k + '"> <span><span class="do">' + (k + 1) + '. ' + esc(t[0]) + (t[2] ? ' <span class="tag-held">may not show on dev</span>' : '') + '</span><span class="see">You should see: ' + esc(t[1]) + '</span></span></label>';
+      if (t[2]) h += '<label class="chk held"><input type="checkbox" id="h-' + id + '-' + k + '" data-k="' + id + '.' + k + '.h"> <span>Held: could not be shown on dev</span></label>';
+      h += '</div>';
+    });
+    h += '<div class="verdict" role="group" aria-label="Verdict for ' + esc(s[1]) + '"><span class="vl">Verdict</span>';
+    VERDICTS.forEach(function (v) { h += '<button type="button" class="vb" data-part="' + id + '" data-v="' + v[0] + '" aria-pressed="false">' + v[1] + '</button>'; });
+    h += '</div>';
+    h += '<textarea id="n-' + id + '" aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" id="c-call-' + k + '" data-k="call.' + k + '"> <span>' + (k + 1) + '. <b>' + esc(c[0]) + '.</b> ' + esc(c[1]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea id="n-calls" aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function stepDone(id, k) { return !!(state[id + '.' + k] || state[id + '.' + k + '.h']); }
+  function progress() {
+    var done = 0;
+    S.forEach(function (s) { s[4].forEach(function (t, k) { if (stepDone(s[0], k)) done++; }); });
+    document.getElementById('prog').textContent = done + ' of ' + total + ' done';
+  }
+  function paintVerdicts() {
+    document.querySelectorAll('.vb').forEach(function (b) {
+      b.setAttribute('aria-pressed', state['v.' + b.getAttribute('data-part')] === b.getAttribute('data-v') ? 'true' : 'false');
+    });
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('.vb').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var p = b.getAttribute('data-part'), v = b.getAttribute('data-v');
+      state['v.' + p] = state['v.' + p] === v ? '' : v; save(); paintVerdicts();
+    });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  paintVerdicts();
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Support console stage 7, walk A, a lead from the form to signed up (§397): my results'];
+    var all = 0, allTotal = 0;
+    S.forEach(function (s, i) {
+      var miss = [], held = [], ok = 0;
+      s[4].forEach(function (t, k) {
+        if (state[s[0] + '.' + k]) ok++;
+        else if (state[s[0] + '.' + k + '.h']) held.push(k + 1);
+        else miss.push(k + 1);
+      });
+      all += ok; allTotal += s[4].length;
+      var vd = state['v.' + s[0]] || 'no verdict';
+      var vtext = vd === 'pass' ? 'PASS' : vd === 'issue' ? 'ISSUE' : vd === 'call' ? 'NEEDS A CALL' : 'NO VERDICT';
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', (i + 1) + ' ' + s[1] + ': [' + vtext + '] ' + ok + '/' + s[4].length + ' ticked' + (held.length ? ', held (not shown on dev): ' + held.join(', ') : '') + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.splice(1, 0, 'Checked ' + all + ' of ' + allTotal);
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (k + 1) + '. ' + (state['call.' + k] ? '[accepted] ' : '[not ticked] ') + c[0] + '.'); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Build summary'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>
+</body>
+</html>

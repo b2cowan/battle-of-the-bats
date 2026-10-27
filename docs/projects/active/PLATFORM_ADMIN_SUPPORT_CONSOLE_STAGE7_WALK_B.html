@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lead guard rails walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* One purpose: each staff role sees only what it should of a lead, and nothing leaks out of the console.
+   Checkable walk with a paste-back; the console walks' look, so it reads the same as Stages 1 to 5 and Part 0. */
+:root {
+  --ground: #eceee8; --card: #ffffff; --ink: #1f261c; --soft: #46503f; --dim: #69735f; --line: #d5d9cd;
+  --olive: #4b6322; --olive-soft: #e6ecd8; --amber: #7d4c06; --amber-soft: #f6ecd8; --red: #8a2a1c; --red-soft: #f6e2dd;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1a16; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #11140f; --card: #181d15; --ink: #ecf0e6; --soft: #c1c9b6; --dim: #98a28c; --line: #2c3427;
+  --olive: #c4e08c; --olive-soft: #222b1a; --amber: #f0c06a; --amber-soft: #2b2313; --red: #f0a090; --red-soft: #2e1a16; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 90px; display: grid; gap: 22px; }
+.eyebrow { font: 600 11px/1.3 var(--font-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--olive); text-underline-offset: 3px; }
+code { font: 500 13px var(--font-data); background: var(--olive-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; border-radius: 6px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-left: 3px solid var(--olive); }
+.card.rule { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+.card ol, .card ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+.role { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.role b { font-size: 14px; }
+.role span { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.sec { scroll-margin-top: 70px; }
+.sec-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sec-head .n { font: 600 12px/1 var(--font-data); color: var(--olive); }
+.sec-head .route { font: 500 12px var(--font-data); color: var(--dim); overflow-wrap: anywhere; }
+.as { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+.step { display: grid; gap: 2px; padding-block: 4px; border-top: 1px solid var(--line); }
+.step:first-of-type { border-top: 0 }
+.who { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); margin: 6px 0 0 28px; }
+label.chk { display: flex; gap: 10px; align-items: flex-start; min-height: 32px; cursor: pointer; font-size: 14.5px; }
+label.chk input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--olive); flex: none; }
+label.chk .do { display: block; }
+label.chk .see { display: block; color: var(--soft); font-size: 14px; margin-top: 2px; }
+label.chk.held { margin-left: 28px; min-height: 26px; font-size: 13px; color: var(--dim); }
+label.chk.held input { width: 15px; height: 15px; margin-top: 3px; }
+.tag-held { font: 600 10.5px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--amber); background: var(--amber-soft); border-radius: 4px; padding: 2px 5px; margin-left: 6px; white-space: nowrap; }
+textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); resize: vertical; }
+.verdict { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.verdict .vl { font: 600 11px/1 var(--font-data); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin-right: 4px; }
+.vb { font: 600 13px/1 var(--font-body); min-height: 36px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.vb[aria-pressed="true"][data-v="pass"] { background: var(--olive-soft); border-color: var(--olive); color: var(--olive); }
+.vb[aria-pressed="true"][data-v="issue"] { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+.vb[aria-pressed="true"][data-v="call"] { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ground); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bar a { font: 600 12px/1 var(--font-body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.progress { margin-left: auto; font: 600 12px var(--font-data); color: var(--dim); align-self: center; }
+.btn-doc { font: 600 14px/1 var(--font-body); min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive); color: var(--card); cursor: pointer; justify-self: start; }
+.paste textarea { min-height: 260px; font: 13px/1.5 var(--font-data); }
+.hint { font-size: 13px; color: var(--dim); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Support console · stage 7 · walk B of 2 · owner walk · 2026-10-27 · ledger §398</p>
+  <h1>Lead guard rails walk</h1>
+  <p>One question: <b>does each staff role see only what it should of a lead, and does nothing leak out of the console that should not?</b> Support, Billing and Read only work customers, not leads: they get Business numbers’ three counts and no door, no Leads in the menu or at its address, one quiet line for a lead entry in the Audit log, and a club’s Story with no lead in it. Growth, Product and Super admin see all of it. Then the two ways a lead’s address leaves the console, Copy emails and the export: only people who said yes, never someone who asked not to be contacted, and a name typed as a formula stays text. Last, the quieter Stage 7 changes: Campaigns’ one line, Promotions, Pitch decks on the kit, and Today’s campaign rows. Tick what holds, and write what does not. Your ticks stay in this browser; the paste-back at the foot gathers them for the chat.</p>
+</header>
+
+<div class="card signin">
+  <h2>Sign in as (about 35 minutes; keep this page private, it holds passwords)</h2>
+  <p>The console is at <code>http://localhost:3000/platform-admin/login</code> (the dev server must be up). One private window per role lets you keep two roles side by side. These are dev-only accounts.</p>
+  <div class="roles">
+    <div class="role"><b>Growth</b><span>growth@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Support</b><span>support@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Billing</b><span>billing@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Read only</b><span>readonly@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Product</b><span>product@dev.local<br>devpass123</span></div>
+    <div class="role"><b>Super admin</b><span>uat-platform@fieldlogichq.ca<br>UATPassword2026!</span></div>
+  </div>
+  <ol>
+    <li><b>Walk A first.</b> This walk reads what walk A left: the lead <b>Alpha Walk Club</b> with its note, and its link to <b>UAT Test Org</b> and unlink. Section 1 step 1 checks it is there.</li>
+    <li><b>Three leads by section 5.</b> Alpha Walk Club (said yes), <b>Walk Test Club</b> (from the Part 0 walk, said yes; this walk marks it Lost because it asked not to be contacted), and <b>Bravo Walk League</b>, made in section 1, which said no and whose name is typed as <code>=1+1</code>. Counts below are dev’s with exactly these three; if another session added leads, the step says what must hold anyway.</li>
+    <li>You need Excel (or another spreadsheet that opens .xlsx) for section 6.</li>
+    <li><b>Built, reviewed and committed.</b> The finish pass was committed on your OK on 2026-10-27; this walk tests it.</li>
+    <li>This walk writes on dev only: one lead, one lead marked Lost, two Copy emails entries and one export entry in the Audit log, and walk A’s note removed. Nothing is published: section 8 asks you not to press Publish.</li>
+  </ol>
+</div>
+
+<div class="bar" id="bar"><span class="progress" id="prog"></span></div>
+<div id="sections"></div>
+
+<section class="sec" id="rule">
+  <div class="card rule">
+    <h2>Calls the build made that you may want to overrule</h2>
+    <p>Tick the ones you accept; write on the ones you want changed. The last one was found while writing this walk: a question for you, not a fix.</p>
+    <div id="calls"></div>
+  </div>
+</section>
+
+<section class="sec" id="paste">
+  <div class="card paste">
+    <h2>Paste-back</h2>
+    <p class="hint">A verdict is your opinion and the count is the evidence; the paste-back prints both.</p>
+    <button class="btn-doc" type="button" id="make">Build summary</button>
+    <textarea id="out" aria-label="Your answers" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  // A step is [do, see] or [do, see, true]; true marks a step dev may not be able to show (it also gets a “Held” box).
+  // An optional fourth item is a “who” label, shown above the step when the account changes.
+  var S = [
+    ["start", "Before you start, and a lead that said no", "a lead page, then start/league", "Growth, then nobody", [
+      ["Sign in as Growth, open Growth › Leads, choose “Every lead” and open Alpha Walk Club. Read its timeline.",
+       "It holds “Dev Growth added a note”, “Dev Growth linked UAT Test Org by hand” and “Dev Growth unlinked UAT Test Org. Step: Qualified”. If any of the three is missing, walk A is not finished: stop here and finish it first.", false, "Growth"],
+      ["In a private window, open {{http://localhost:3000/start/league}} and press “Express interest in League”. Fill Name “=1+1”, Email “walk-s7-b@example.com”, Organization “Bravo Walk League”, and untick “Send me feature and release updates for the areas I selected.” Press “Join early access”.",
+       "It saves with no error. (Another session is changing this window’s thank-you right now; if its new words are in, the line reads “We’ve saved your request for early access planning. You won’t get release emails, as you asked.”)", false, "nobody (signed out)"]
+    ]],
+    ["support", "Support sees counts, never a lead", "the menu, Today, Business numbers, Audit log, a club’s Story", "Support", [
+      ["Sign in as Support in a private window. Look at the menu’s Growth group and at Today.",
+       "The Growth group holds only Business numbers: no Leads, Campaigns or Pitch decks. Today has no Growth group at all (no New leads, Follow-ups due, Sign-up to confirm or campaign rows).", false, "Support"],
+      ["Type {{http://localhost:3000/platform-admin/early-access}} in the address bar. Then type {{http://localhost:3000/platform-admin/early-access/e93b8cf1-e691-46e0-8382-329ed8f34d80}} (Walk Test Club’s own page).",
+       "Both send you to Today, with no message and no lead shown on the way."],
+      ["Open Business numbers and press its Growth tab.",
+       "It opens on Subscription (Growth is not Support’s default). The Growth tab holds the card “Growth pipeline” · “Leads and conversion” with three counts: Leads, all time (3 with the three walk leads); Signed up; Pay now. There is no “New, unanswered” row and no “Open the pipeline” link: nothing on the card opens a lead."],
+      ["Open Records › Audit log. Set Action to “Linked a club to a lead”, press Filter, and open the row.",
+       "The row by growth@dev.local, with Org UAT Test Org, and in Reason the quiet grey line “Lead details are shown to the roles that work leads.” In the window Old value and New value read “-”, and there is no “Open Leads” door. (The club’s name in Org is kept on purpose: see call 2.)"],
+      ["Set Action to “Added a note to a lead”, press Filter, and open the row.",
+       "The same grey line and “-”. Walk A’s note words (“Sent the Club deck by email”) are nowhere in the row or the window."],
+      ["Open Clubs & portals, find UAT Test Org, open it and press its Story tab.",
+       "No entry about a lead: neither “Arrived as a lead” nor “Unlinked from its lead”. The rest of its Story is as before. (Growth sees those two entries in section 4.)"]
+    ]],
+    ["others", "Billing and Read only, the same", "the menu, Leads’ address, Business numbers, a club’s Story", "Billing, then Read only", [
+      ["Sign in as Billing. Check the menu’s Growth group, type the Leads address from section 2, open Business numbers › Growth, and open UAT Test Org’s Story.",
+       "Exactly what Support saw: Business numbers alone in Growth; the address lands on Today; the card’s three counts with no door and no “New, unanswered”; no lead entry in the Story.", false, "Billing"],
+      ["Sign in as Read only and do the same four checks, then open the Audit log filtered to “Linked a club to a lead”.",
+       "The same again, and the Audit log row carries the grey “Lead details are shown to the roles that work leads.” line.", false, "Read only"]
+    ]],
+    ["growth", "Growth and Product see the lead in full", "Business numbers, Audit log, a club’s Story", "Growth, then Product", [
+      ["As Growth, open Business numbers.",
+       "It opens on the Growth tab by itself. The same card shows the same three counts Support saw, plus a row “New, unanswered” and a link “Open the pipeline”, which opens Leads.", false, "Growth"],
+      ["Open the Audit log, filter Action to “Linked a club to a lead” and open the row.",
+       "No grey line: the entry’s details show, and the window carries an “Open Leads” door."],
+      ["Open UAT Test Org’s Story.",
+       "Two entries by Dev Growth: “Arrived as a lead: linked to its lead” with “Linked by hand” under it, and “Unlinked from its lead”. Neither is a link to the lead (see call 1)."],
+      ["Sign in as Product. Check the menu, open Alpha Walk Club, and look at its note in the timeline.",
+       "Leads, Campaigns, Pitch decks and Business numbers are in Product’s Growth group, and the lead opens. The note shows with its words and no Remove beside it (only a Super admin removes a note).", false, "Product"]
+    ]],
+    ["copy", "Copy emails copies only who said yes", "Leads › Every lead › Tools", "Growth", [
+      ["As Growth, open Leads, choose “Every lead” and clear any filter. Open Tools.",
+       "Two items: “Copy emails” (“Leads in this list who said yes to release emails”) and “Export” (“Every lead in this list; Excel first, or CSV”).", false, "Growth"],
+      ["Choose Copy emails, then paste into any text box.",
+       "A notice “Copied 2 addresses: the leads in this list who said yes to release emails.” The paste holds walk-s7-a@example.com and walk-s7-p0@example.com, and never walk-s7-b@example.com (Bravo said no). With other leads on dev the number grows, but Bravo’s address is still absent."],
+      ["Open Bravo Walk League.",
+       "The title “Bravo Walk League”; Contact reads “=1+1” as plain text with “walk-s7-b@example.com · did not ask for release emails” under it."],
+      ["Open Walk Test Club. Press the pencil, set Step to Lost and “Why it was lost” to “Asked not to be contacted”, and press the check mark.",
+       "“Saved.” The chip reads Lost, “Why it was lost” reads Asked not to be contacted, and the newest timeline entry reads “Dev Growth moved it from Contacted to Lost: Asked not to be contacted”."],
+      ["Go back to Leads › Every lead and choose Tools › Copy emails again. Paste.",
+       "“Copied 1 address: the leads in this list who said yes to release emails.” Only walk-s7-a@example.com. Walk Test Club said yes once, but it asked not to be contacted, so it is never copied: one fewer than in step 2."],
+      ["Open Walk Test Club again, press the pencil, then “Link one by hand”, type “UAT Test” and press UAT Test Org.",
+       "Nothing is linked. The window stays open with no message in it; press Cancel, and a red line on the page reads “This lead asked not to be contacted. Change its step first if that has changed.” The lead is still Lost. (Where that line shows is a question: see call 7.) Press ✕ to stop editing."]
+    ]],
+    ["export", "The export: the right rows, an empty email cell, a formula kept as text", "Leads › Every lead › Tools › Export, then Audit log", "Growth", [
+      ["Still on Leads › Every lead, choose Tools › Export.",
+       "A window “Export leads”: “Every lead in this list. A lead who asked not to be contacted has an empty email cell.”, and that every export is kept in the Audit log. Two buttons, CSV and Excel; Excel is the filled, main one."],
+      ["Press Excel and open the file in Excel.",
+       "A file named leads- and today’s date, .xlsx, with one sheet “Leads”. Headings: Arrived, Name, Email, Organization, Role, Sport or program, Plans, Features, Step, Why it was lost, Source, Source detail, Arrived from, Said yes to release emails, Last contacted, Next action, Follow-up, Signed up, In their words. One row per lead in the list."],
+      ["Read the Walk Test Club row and the Alpha Walk Club row.",
+       "Walk Test Club’s Email cell is empty, Step Lost, Why it was lost “Asked not to be contacted”. Alpha Walk Club has its address, Source “Referral from a club”, Source detail “Met at the spring tournament”. No column holds a staff note: “Sent the Club deck by email” is nowhere in the file."],
+      ["Read the Bravo Walk League row’s Name cell, then click it and look at the formula bar.",
+       "It reads =1+1 as text (Excel may show a small apostrophe in front, which is the guard), never 2, and the formula bar shows text, not a formula. Said yes to release emails reads No."],
+      ["Open Records › Audit log. Filter Action to “Copied lead emails”, then to “Exported leads”.",
+       "Two “Copied lead emails” entries and one “Exported leads” entry, by growth@dev.local, at the times you pressed them. Open each: New value holds only how many and which list (“count”: 2 then 1 with “Every lead”; the export “rows”: 3 and “format”: “xlsx”), never an address or a name."]
+    ]],
+    ["note", "Only a Super admin removes a note", "Alpha Walk Club’s timeline", "Super admin", [
+      ["Sign in as Super admin, open Leads › Every lead › Alpha Walk Club, and find walk A’s note in the timeline.",
+       "The note “Sent the Club deck by email”, by Dev Growth, with a Remove beside it (it was absent for Growth and Product).", false, "Super admin"],
+      ["Press Remove.",
+       "A window “Remove this note”: “The note’s words are gone for good. The timeline keeps who wrote it and when, and says “A note was removed”.” Buttons Keep it and Remove the note."],
+      ["Press Remove the note.",
+       "“The note was removed.” In its place, in quiet grey, “A note was removed”, still dated. The words are gone from the page, and there is no Remove beside it any more."]
+    ]],
+    ["quiet", "Campaigns, Promotions, Pitch decks and Today’s campaign rows", "Campaigns, Today, Pitch decks, Plans & pricing", "Growth, then Product", [
+      ["As Growth, open Growth › Campaigns.",
+       "The title “Campaigns” and under it the one line “Planned marketing emails to customers we already have. Leads are never emailed from here.”", false, "Growth"],
+      ["Compare Today’s Growth group with Campaigns.",
+       "If Today lists “Campaigns past due” with a count, Campaigns shows a section “Past due — send now (…)” with the same number; if Today lists “Campaigns due soon”, Campaigns shows “Upcoming — next 30 days (…)” with the same number. A row in Today’s quiet “Clear: …” line has no section on Campaigns. (Today used to count retired campaigns too; now both count live ones only.)"],
+      ["Open Growth › Pitch decks and press “New deck”.",
+       "A window “New deck” with “Name · internal only, never rendered publicly” (required), “Purpose · what this deck is for”, “Running order · top is first” (“No slides yet — add them from the picker below.”) and “Pick a slide…”. In its foot, “Name the deck and add at least one slide to create it.” and no Create button."],
+      ["Type a name (“Walk B deck”), then pick any slide from “Pick a slide…”.",
+       "With the name alone the foot line stays. Once a slide is in, the foot line goes and “Create this deck” appears."],
+      ["Press Cancel. Then press Discard. Open “New deck” again.",
+       "Cancel does not close it straight away: the foot asks “Close without saving? What you typed won’t be kept.” with Keep writing and Discard. Discard closes it, and the reopened window is empty (no name, no slide). Close it; empty, it closes without asking. Do not create the deck."],
+      ["Under “The decks”, pick any standing deck and find its running order (the list with ↑ ↓ ✕ beside each slide). With nothing changed, look for a Publish button. Then press ↓ on its first slide, look again, and press ↑ on the same slide to put it back.",
+       "Nothing changed: no “Publish this running order”. After ↓ it appears; after ↑ (the order as it was) it is gone again. Do not press Publish: it changes the live public deck."],
+      ["Sign in as Product. Open Plans & pricing, its “Product catalog” tab, and choose Planning.",
+       "The band has a cell “Promotions”. Below, a section “Promotions” with the line “For the record · not linked to checkout or Stripe”, and “No promotions yet.” (dev has none). Nothing on it is called a campaign.", false, "Product"]
+    ]]
+  ];
+  var CALLS = [
+    ["A club’s Story shows its lead to Growth roles only, and the entries are not links",
+     "Support, Billing and Read only see no lead entry at all on a club’s Story (not a quiet line); Growth, Product and Super admin see “Arrived as a lead: linked to its lead” and “Unlinked from its lead”, with no link to the lead’s page. Accept, or ask for a link for the roles that can open it."],
+    ["The Audit log names the club on a lead’s link entry, for every role",
+     "The Org column of a “Linked a club to a lead” entry shows the club to Support, Billing and Read only too: the club is a customer, and the entry holds nothing about the lead. Accept, or ask for it hidden."],
+    ["Business numbers shows every role the three lead counts",
+     "Leads, all time; Signed up; Pay now, with no door. The “New, unanswered” row and “Open the pipeline” are Growth roles only. Accept, or say the counts should be hidden too."],
+    ["The Leads address lands on Today with no message",
+     "A role that cannot open Leads, typing its address or a lead’s, is sent to Today silently, as every closed console page does. Accept, or ask for a line saying why."],
+    ["The export window shows CSV before Excel, with Excel the main button",
+     "The menu says “Excel first, or CSV”; in the window the two buttons sit CSV then Excel, Excel filled. Accept, or ask for Excel on the left."],
+    ["A formula-looking cell is kept as text with an apostrophe in front",
+     "Any cell a stranger typed that starts with =, +, -, @ or a tab is written with a leading apostrophe, so Excel never runs it; Excel may show that apostrophe. Accept."],
+    ["Found while writing: a refused hand link shows its reason behind the window",
+     "When a hand link is refused (the lead asked not to be contacted), the picker window stays open and says nothing; the reason appears on the page behind it, seen only after Cancel. Accept, or ask for the reason inside the window (a small fix)."]
+  ];
+  var KEY = 'pas7-walk-b-guard-rails';
+
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\{\{([^}]+)\}\}/g, '<code>$1</code>'); }
+  var VERDICTS = [["pass", "Passes"], ["issue", "Issue"], ["call", "Needs a call"]];
+  var host = document.getElementById('sections'), bar = document.getElementById('bar'), total = 0;
+  S.forEach(function (s, i) {
+    var id = s[0]; total += s[4].length;
+    var a = document.createElement('a'); a.href = '#' + id; a.textContent = (i + 1) + ' ' + s[1].split(':')[0].split(',')[0]; bar.insertBefore(a, document.getElementById('prog'));
+    var sec = document.createElement('section'); sec.className = 'sec'; sec.id = id;
+    var h = '<div class="card"><div class="sec-head"><span class="n">' + (i + 1) + '</span><h2>' + esc(s[1]) + '</h2><span class="route">' + esc(s[2]) + '</span></div><span class="as">As ' + esc(s[3]) + '</span>';
+    s[4].forEach(function (t, k) {
+      h += '<div class="step">';
+      if (t[3]) h += '<div class="who">Now as ' + esc(t[3]) + '</div>';
+      h += '<label class="chk"><input type="checkbox" id="c-' + id + '-' + k + '" data-k="' + id + '.' + k + '"> <span><span class="do">' + (k + 1) + '. ' + esc(t[0]) + (t[2] ? ' <span class="tag-held">may not show on dev</span>' : '') + '</span><span class="see">You should see: ' + esc(t[1]) + '</span></span></label>';
+      if (t[2]) h += '<label class="chk held"><input type="checkbox" id="h-' + id + '-' + k + '" data-k="' + id + '.' + k + '.h"> <span>Held: could not be shown on dev</span></label>';
+      h += '</div>';
+    });
+    h += '<div class="verdict" role="group" aria-label="Verdict for ' + esc(s[1]) + '"><span class="vl">Verdict</span>';
+    VERDICTS.forEach(function (v) { h += '<button type="button" class="vb" data-part="' + id + '" data-v="' + v[0] + '" aria-pressed="false">' + v[1] + '</button>'; });
+    h += '</div>';
+    h += '<textarea id="n-' + id + '" aria-label="Notes on ' + esc(s[1]) + '" data-n="' + id + '" placeholder="Notes: anything that did not hold"></textarea></div>';
+    sec.innerHTML = h; host.appendChild(sec);
+  });
+  var calls = document.getElementById('calls');
+  CALLS.forEach(function (c, k) { calls.insertAdjacentHTML('beforeend', '<label class="chk"><input type="checkbox" id="c-call-' + k + '" data-k="call.' + k + '"> <span>' + (k + 1) + '. <b>' + esc(c[0]) + '.</b> ' + esc(c[1]) + '</span></label>'); });
+  calls.insertAdjacentHTML('beforeend', '<textarea id="n-calls" aria-label="Notes on the calls" data-n="calls" placeholder="Which of these do you want changed?"></textarea>');
+  function stepDone(id, k) { return !!(state[id + '.' + k] || state[id + '.' + k + '.h']); }
+  function progress() {
+    var done = 0;
+    S.forEach(function (s) { s[4].forEach(function (t, k) { if (stepDone(s[0], k)) done++; }); });
+    document.getElementById('prog').textContent = done + ' of ' + total + ' done';
+  }
+  function paintVerdicts() {
+    document.querySelectorAll('.vb').forEach(function (b) {
+      b.setAttribute('aria-pressed', state['v.' + b.getAttribute('data-part')] === b.getAttribute('data-v') ? 'true' : 'false');
+    });
+  }
+  document.querySelectorAll('input[type=checkbox]').forEach(function (c) {
+    c.checked = !!state[c.getAttribute('data-k')];
+    c.addEventListener('change', function () { state[c.getAttribute('data-k')] = c.checked; save(); progress(); });
+  });
+  document.querySelectorAll('.vb').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var p = b.getAttribute('data-part'), v = b.getAttribute('data-v');
+      state['v.' + p] = state['v.' + p] === v ? '' : v; save(); paintVerdicts();
+    });
+  });
+  document.querySelectorAll('textarea[data-n]').forEach(function (t) {
+    t.value = state['n.' + t.getAttribute('data-n')] || '';
+    t.addEventListener('input', function () { state['n.' + t.getAttribute('data-n')] = t.value; save(); });
+  });
+  paintVerdicts();
+  progress();
+  document.getElementById('make').addEventListener('click', function () {
+    var lines = ['Support console stage 7, walk B, the guard rails (§398): my results'];
+    var all = 0, allTotal = 0;
+    S.forEach(function (s, i) {
+      var miss = [], held = [], ok = 0;
+      s[4].forEach(function (t, k) {
+        if (state[s[0] + '.' + k]) ok++;
+        else if (state[s[0] + '.' + k + '.h']) held.push(k + 1);
+        else miss.push(k + 1);
+      });
+      all += ok; allTotal += s[4].length;
+      var vd = state['v.' + s[0]] || 'no verdict';
+      var vtext = vd === 'pass' ? 'PASS' : vd === 'issue' ? 'ISSUE' : vd === 'call' ? 'NEEDS A CALL' : 'NO VERDICT';
+      var n = (state['n.' + s[0]] || '').trim();
+      lines.push('', (i + 1) + ' ' + s[1] + ': [' + vtext + '] ' + ok + '/' + s[4].length + ' ticked' + (held.length ? ', held (not shown on dev): ' + held.join(', ') : '') + (miss.length ? ' (not ticked: ' + miss.join(', ') + ')' : ''));
+      if (n) lines.push('  Notes: ' + n);
+    });
+    lines.splice(1, 0, 'Checked ' + all + ' of ' + allTotal);
+    lines.push('', 'Calls the build made');
+    CALLS.forEach(function (c, k) { lines.push('  ' + (k + 1) + '. ' + (state['call.' + k] ? '[accepted] ' : '[not ticked] ') + c[0] + '.'); });
+    var cn = (state['n.calls'] || '').trim(); if (cn) lines.push('  Notes: ' + cn);
+    var out = document.getElementById('out'); out.value = lines.join('\n');
+    var done = function () { document.getElementById('make').textContent = 'Copied'; setTimeout(function () { document.getElementById('make').textContent = 'Build summary'; }, 1600); };
+    try { navigator.clipboard.writeText(out.value).then(done, function () { out.select(); }); } catch (e) { out.select(); }
+  });
+})();
+</script>
+</body>
+</html>
