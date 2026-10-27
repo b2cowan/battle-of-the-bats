@@ -1,0 +1,786 @@
+<title>House League Time Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the club admin kit.
+   Chrome and specimens deliberately do not share a ground. Copied from HOUSE_LEAGUE_STAGE9D2_DRAWINGS.html. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0}
+.doc{max-width:1240px;margin:0 auto;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:24px;margin:44px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:18px;margin:24px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16.5px;max-width:82ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+.tabs .sp{flex:1}
+.thm{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.thm button{border-radius:0;min-height:36px;font-size:13px}
+.thm button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+section.pane[hidden]{display:none}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3{margin-top:0}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--fix);border-radius:0 12px 12px 0;padding:14px 20px;margin:16px 0;box-shadow:var(--shadow)}
+.verdict.push{border-left-color:var(--ask)}
+.verdict h3{margin:0 0 6px}
+.verdict ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.st{border-top:2px solid var(--line);padding-top:8px;margin-top:40px}
+.st>h2{margin-top:6px}
+.st .who{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:22px;vertical-align:2px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.dw{font:600 10px/1 var(--f-mono);letter-spacing:.03em;border-radius:4px;padding:3px 5px;cursor:pointer;border:1px dashed var(--ask);color:var(--ask);background:var(--ask-soft);white-space:nowrap;margin-left:6px;vertical-align:1px;font-style:normal;text-transform:none}
+.cap{font-size:13.5px;color:var(--muted);max-width:92ch;margin:6px 0 0}
+.sp-cap{font:600 12px/1.35 var(--f-mono);letter-spacing:.04em;color:var(--muted);margin:0 0 4px}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px;margin:10px 0;align-items:start}
+.cmp>div{min-width:0}
+.spec{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:10px 0}
+.spec>.col{min-width:0;display:flex;flex-direction:column;gap:6px;max-width:100%}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.optgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:12px 0}
+.optgrid .card{margin:0}
+.optgrid .card.rec{outline:2px solid var(--fix)}
+.optgrid .card h3{font-size:16px}
+.optgrid .card ul{padding-left:18px;margin:6px 0 0;display:flex;flex-direction:column;gap:5px;font-size:14px}
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .rec{font-size:14px;margin:6px 0}
+.ask .rec b{color:var(--fix)}
+.ask .rides{font-size:13.5px;color:var(--muted);margin:4px 0}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.dt-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.dt-wrap{overflow-x:auto;border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);max-width:100%;margin:8px 0}
+.dt{width:1440px}
+.dt-wrap.fit .dt{zoom:var(--z,1)}
+.ph{width:390px;max-width:100%;flex:none;border-radius:18px;overflow:hidden;outline:1px solid var(--line);box-shadow:var(--shadow)}
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:17px;flex:1}
+dialog.note .x{font-size:22px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px;display:flex;flex-direction:column;gap:10px}
+dialog.note .nb h4{margin:0;font:700 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+dialog.note .nb p{margin:0}
+
+/* ===== the product kit, for specimens (Warm default; .dk = Dark) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.22);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#B03A22;--amber:#835006;--amber-soft:#FBEFD9;--green:#34662A;--green-soft:#E6F0E2;--blue:#1D4A8A;--blue-soft:#E3ECF8;--grid:rgba(70,55,30,.06);--dimbg:rgba(36,30,21,.28);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left}
+.ak.dk{--paper:#0A0A0A;--card:#141A22;--ink:#F1F5F9;--soft:rgba(255,255,255,.72);--dim:rgba(255,255,255,.55);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.18);
+  --olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--cta:#D9F99D;--cta-ink:#1F2A07;--red:#F08A74;--amber:#F2B55A;--amber-soft:rgba(242,181,90,.14);--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--blue:#9CC2F5;--blue-soft:rgba(156,194,245,.13);--grid:rgba(255,255,255,.03);--dimbg:rgba(0,0,0,.6)}
+.ak *{box-sizing:border-box}
+.ak .ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ak .tb{display:flex;align-items:center;gap:10px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .tb .lg{width:18px;height:18px;background:var(--olive);border-radius:4px}
+.ak .tb .ar{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim);border-left:1px solid var(--line2);padding-left:12px;margin-left:4px}
+.ak .sp{flex:1}
+.ak .tb .av{width:30px;height:30px;border-radius:50%;border:1px solid var(--line2)}
+.ak .shell{display:flex;min-height:640px}
+.ak .sb{width:240px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:10px;border-radius:7px;display:flex;align-items:center;gap:8px;min-height:38px}
+.ak .sb .it.sub{padding-left:26px;font-size:13.5px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb .it.hd{font-weight:650;color:var(--ink)}
+.ak .sb .it i{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;opacity:.6;flex:none}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+.ak .sb .sw{margin:4px 10px 6px 14px;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;font:600 13px/1.2 'Inter';display:flex;justify-content:space-between;align-items:center;background:var(--paper)}
+.ak .sb .blk{margin-left:18px;border-left:2px solid var(--line2);padding-left:4px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .blk .it.sub{padding-left:14px}
+.ak .mn{flex:1;min-width:0;padding:22px 0 60px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.ak .pg{width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.ak .ey{font:600 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);display:block}
+.ak .ph1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ak .ph1 h1{font:700 26px/1.15 'Inter',system-ui,sans-serif;margin:2px 0 0}
+.ak .back{font:600 13px/1.2 'Inter';color:var(--olive);display:inline-flex;align-items:center;gap:4px;margin-bottom:6px}
+.ak .btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font:600 14px/1 'Inter';color:var(--ink);white-space:nowrap}
+.ak .btn.pri{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .btn.ic{width:44px;height:44px;padding:0;justify-content:center;border-color:transparent;background:none;border-radius:8px}
+.ak .btn.ic.bd{border-color:var(--line2);background:var(--card)}
+.ak .quiet{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;color:var(--soft);line-height:1.45;max-width:760px}
+.ak .quiet .ico{width:15px;height:15px;margin-top:3px}
+.ak .lnk{color:var(--olive);font-weight:650;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.ak .tbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ak .seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line2);border-radius:999px;background:var(--card)}
+.ak .seg span{min-height:34px;display:inline-flex;align-items:center;padding:0 12px;border-radius:999px;font:600 13.5px/1 'Inter';color:var(--soft)}
+.ak .seg span.on{background:var(--olive-soft);color:var(--olive)}
+.ak .scope{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px 0 14px;border-radius:999px;background:var(--olive);color:var(--paper);font:650 14px/1 'Inter';white-space:nowrap}
+.ak.dk .scope{color:#141A22}
+.ak .scope .ico{width:14px;height:14px}
+.ak .wk{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .wk .wh{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font:650 14px/1.2 'Inter'}
+.ak .wk .wh small{font-weight:500;color:var(--dim);font-size:13px}
+.ak .wg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.ak .wg .d{border-left:1px solid var(--line);min-height:150px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.ak .wg .d:first-child{border-left:0}
+.ak .wg .d>i{font:600 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-style:normal}
+.ak .gc{background:var(--olive-soft);border-radius:7px;padding:6px 8px;font:500 12.5px/1.35 'Inter';color:var(--ink)}
+.ak .gc b{display:block;font-weight:650}
+.ak .gc small{display:block;color:var(--soft);font-size:11.5px}
+.ak .glist{display:flex;flex-direction:column;gap:8px}
+.ak .gday{font:650 13px/1.2 'Inter';color:var(--ink);margin:4px 0 0}
+.ak .menu{background:var(--card);border:1px solid var(--line2);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.22);padding:6px;display:flex;flex-direction:column;min-width:210px}
+.ak .menu .mi{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px;border-radius:7px;font:500 14px/1.2 'Inter';color:var(--ink);white-space:nowrap}
+.ak .menu .mi .go{margin-left:auto;color:var(--dim)}
+.ak .menu .mi.on{background:var(--olive-soft)}
+.ak .menu .mi .ico{color:var(--soft)}
+.ak .pop{display:flex;justify-content:flex-end;align-items:flex-start;gap:6px;margin-top:6px}
+.ak .strip{padding:12px 14px}
+.ak .sheetwrap{position:relative;overflow:hidden}
+.ak .dim{position:absolute;inset:0;background:var(--dimbg)}
+.ak .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:16px 16px 0 0;padding:10px 8px 18px;box-shadow:0 -10px 30px rgba(0,0,0,.25);display:flex;flex-direction:column}
+.ak .sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 8px}
+.ak .sheet .mi{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 12px;font:500 15px/1.2 'Inter';color:var(--ink)}
+.ak .sheet .mi.s{padding-left:44px;min-height:44px;font-size:14.5px}
+.ak .sheet .mi .go{margin-left:auto;color:var(--dim)}
+.ak .pbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .pin{padding:14px 16px 20px;display:flex;flex-direction:column;gap:12px}
+.ak.ph-in .btn{min-height:44px}
+.ak.ph-in .seg span{min-height:40px}
+.ak .win{padding:34px 28px;background:var(--dimbg)}
+.ak.win{padding:34px 28px;background:var(--dimbg)}
+.w640{width:696px;max-width:100%}
+.ak .dlg{background:var(--card);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);max-width:640px;margin:0 auto;display:flex;flex-direction:column;min-width:0}
+.ak .dlg.sm{max-width:460px}
+.ak .dlg .dh{display:flex;align-items:flex-start;padding:18px 18px 8px 24px}
+.ak .dlg .dh .tt{flex:1;display:flex;flex-direction:column;gap:4px}
+.ak .dlg .dh h4{font:700 17px/1.3 'Inter';margin:0}
+.ak .dlg .dh .xx{font-size:22px;color:var(--dim);width:44px;text-align:center;line-height:1.1}
+.ak .dlg .id{font:500 13.5px/1.3 'Inter';color:var(--soft)}
+.ak .dlg .db{padding:6px 24px 18px;display:flex;flex-direction:column;gap:12px;color:var(--soft);font-size:14px}
+.ak .dlg .df{display:flex;align-items:center;gap:10px;padding:14px 24px;border-top:1px solid var(--line);flex-wrap:wrap}
+.ak .dlg .df .s{flex:1;font-size:13px;color:var(--dim);min-width:200px}
+.ak .dlg .df .saved{font:600 13px/1 'Inter';color:var(--green)}
+.ak .hint{font-size:12.5px;color:var(--dim);margin:0;line-height:1.45}
+.ak .note{background:var(--amber-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.45}
+.ak .note.blue{background:var(--blue-soft)}
+.ak .sec{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.ak .sec h5{margin:0 0 2px;font:650 14.5px/1.3 'Inter';color:var(--ink)}
+.ak .lrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);min-height:56px}
+.ak .lrow:first-of-type{border-top:0}
+.ak .lrow .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ak .lrow b{font:600 14.5px/1.3 'Inter';color:var(--ink)}
+.ak .lrow .d{font-size:12.5px;color:var(--soft)}
+.ak .lrow .r{font:600 13px/1.3 'Inter';color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+.ak .prt{display:flex;align-items:center;gap:12px;min-height:40px;font-size:14px;color:var(--ink);border-top:1px solid var(--line)}
+.ak .prt:first-of-type{border-top:0}
+.ak .prt .bx{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--line2);flex:none;display:grid;place-items:center;background:var(--card)}
+.ak .prt .bx.none{border-color:transparent;background:none}
+.ak .prt.on .bx{background:var(--olive);border-color:var(--olive)}
+.ak .prt.on .bx::after{content:"";width:8px;height:4px;border:solid var(--paper);border-width:0 0 2px 2px;transform:rotate(-45deg) translate(1px,-1px)}
+.ak.dk .prt.on .bx::after{border-color:#141A22}
+.ak .prt .pt{flex:1;min-width:0}
+.ak .prt .pt small{display:block;font-size:12.5px;color:var(--soft)}
+.ak .prt .pr{font:500 13px/1.2 'Inter';color:var(--soft);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ak .prt .pr.hold{color:var(--dim)}
+.ak .prt.held{color:var(--soft)}
+.ak.ph-in .prt{min-height:56px}
+.ak.ph-in .prt .bx{width:22px;height:22px}
+.ak .door{font-size:13.5px;color:var(--soft);padding:2px 0}
+.ak .door .lnk{color:var(--soft)}
+.ak .fsw{display:flex;flex-direction:column;background:var(--card)}
+.ak .fsw .fh{display:flex;align-items:center;gap:6px;height:56px;padding:0 6px;border-bottom:1px solid var(--line);font:700 16px/1.2 'Inter'}
+.ak .fsw .fh small{display:block;font:600 10.5px/1.2 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .fsw .fb{padding:12px 16px;display:flex;flex-direction:column;gap:10px;color:var(--soft);font-size:14px;flex:1;overflow:auto}
+.ak .fsw .ff{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .fsw .ff .s{font-size:13px;color:var(--dim);line-height:1.45}
+.ak .fsw .ff .bb{display:flex;gap:10px;justify-content:flex-end;align-items:center}
+.ak .fsw .ff .saved{font:600 13px/1 'Inter';color:var(--green);margin-right:auto}
+.ak .sel{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;padding:0 10px 0 12px;border:1px solid var(--line2);border-radius:8px;background:var(--paper);font:500 14px/1.3 'Inter';color:var(--ink)}
+.ak .facts{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px 16px;font-size:14px;align-items:baseline}
+.ak .facts>span:nth-child(odd){color:var(--dim)}
+.ak .flbl{font:600 13px/1.2 'Inter';color:var(--ink)}
+.ak .opts{border:1px solid var(--line2);border-radius:10px;background:var(--card);overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.14)}
+.ak .opts .o{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 12px;font:500 14px/1.2 'Inter';color:var(--ink);border-top:1px solid var(--line)}
+.ak .opts .o:first-child{border-top:0}
+.ak .opts .o.on{background:var(--olive-soft);font-weight:650}
+.ak .opts .o .go{margin-left:auto;color:var(--olive)}
+.ak .cg{display:grid;grid-template-columns:130px repeat(7,minmax(0,1fr));background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .cg>div{border-left:1px solid var(--line);border-top:1px solid var(--line);padding:6px;min-width:0;display:flex;flex-direction:column;gap:5px}
+.ak .cg>div.h{border-top:0;font:650 12.5px/1.25 'Inter';color:var(--ink);background:var(--paper);padding:9px 8px}
+.ak .cg>div.h small{display:block;font-weight:500;color:var(--dim)}
+.ak .cg>div.f{border-left:0;font:650 13px/1.3 'Inter'}
+.ak .cg>div.f small{display:block;font-weight:500;color:var(--dim);font-size:11.5px}
+.ak .cg>div.h.today{color:var(--olive)}
+.ak .sl{border-radius:7px;padding:5px 7px;font:500 11.5px/1.3 'Inter';color:var(--ink)}
+.ak .sl b{display:block;font-weight:650;font-size:11.5px}
+.ak .sl.hl{background:var(--olive-soft)}
+.ak .sl.ng{background:transparent;border:1.5px dashed var(--olive)}
+.ak .sl.rep{background:var(--blue-soft)}
+.ak .sl.open{background:transparent;border:1px solid var(--line2);color:var(--soft)}
+.ak .sl.pick{outline:2px solid var(--olive);outline-offset:1px}
+.ak .cg .none{color:var(--dim);font-size:11.5px;padding:5px 2px}
+.ak .sublegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);align-items:center}
+.ak .sublegend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:5px}
+/* ===== revision round (2026-10-27): one Save, group ticks, danger button, flat Tools menu ===== */
+.ak .btn.dng{background:var(--red);border-color:var(--red);color:#fff}
+.ak.dk .btn.dng{color:#1A0A07}
+.ak .btn.fade{opacity:.5}
+.ak .bx{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--line2);flex:none;display:grid;place-items:center;background:var(--card)}
+.ak .bx.on,.ak .bx.mix{background:var(--olive);border-color:var(--olive)}
+.ak .bx.on::after{content:"";width:8px;height:4px;border:solid var(--paper);border-width:0 0 2px 2px;transform:rotate(-45deg) translate(1px,-1px)}
+.ak .bx.mix::after{content:"";width:9px;height:2px;border-radius:1px;background:var(--paper)}
+.ak.dk .bx.on::after{border-color:#141A22} .ak.dk .bx.mix::after{background:#141A22}
+.ak .bx.none{border-color:transparent;background:none}
+.ak.ph-in .bx{width:22px;height:22px}
+.ak .sh,.ak .wd{display:flex;align-items:center;gap:12px}
+.ak .sh{min-height:36px}
+.ak .sh h5{margin:0;flex:1}
+.ak .wd{min-height:40px;font:650 14px/1.3 'Inter';color:var(--ink);border-top:1px solid var(--line);margin-top:2px}
+.ak .wd .pr{margin-left:auto;font:500 13px/1.2 'Inter';color:var(--dim)}
+.ak.ph-in .wd{min-height:48px}
+.ak .prt.sub{padding-left:30px}
+.ak .prt.sub .bx.none{display:none}
+.ak .prt.chg{background:var(--olive-soft);border-radius:6px;margin:0 -6px;padding-left:36px;padding-right:6px}
+.ak .hlk{color:var(--olive);font:600 13px/1.2 'Inter';white-space:nowrap}
+.ak .ract{display:inline-flex;align-items:center;gap:8px;min-height:40px;font:500 14px/1.3 'Inter';color:var(--ink)}
+.ak .ract .ico{color:var(--soft)}
+.ak .ract.hov{text-decoration:underline;text-underline-offset:3px}
+.ak.ph-in .ract{min-height:44px}
+.ak .dlg .up{display:inline-flex;align-items:center;gap:4px;font:600 13px/1.2 'Inter';color:var(--olive);margin:0 0 2px -2px}
+.ak .dlg .up .ico{width:15px;height:15px}
+.ak .menu .mh{font:700 10.5px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:10px 10px 4px}
+.ak .sep{height:1px;background:var(--line);margin:4px 6px}
+.ak .sheet .lab{font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:6px 12px 8px}
+.ak .sheet .mi.lab2{min-height:36px;font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .quiet.ph{font-size:12.5px}
+.ak .dd{position:absolute;right:0;top:46px;width:236px;z-index:3}
+.ak .rdo{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line2);flex:none;background:var(--card)}
+.ak .o.on .rdo{border:5px solid var(--olive)}
+.ak .opts .o .rdo{margin-right:2px}
+.ak .savedp{position:absolute;right:18px;bottom:10px;background:var(--green-soft);color:var(--green);font:600 12.5px/1 'Inter';padding:7px 11px;border-radius:999px}
+.ak .dlg .db.rel{position:relative;padding-bottom:40px}
+.ak .dlg .df .why{flex:1;font-size:13px;color:var(--red);min-width:200px}
+.ak .opts .o.fail{background:rgba(176,58,34,.08)}
+/* owner 2026-10-27: phone actions are symbols (the add door is the lime square); the view switch sits right above the schedule */
+.ak .btn.ic.sq{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.ak .tbar.nw{flex-wrap:nowrap;gap:2px}
+.ak .seg.fill{display:flex;width:100%}
+.ak .seg.fill span{flex:1;justify-content:center}
+</style>
+
+<div class="doc">
+<p class="eyebrow">FieldLogicHQ · Club Tier · Stage 9 · house league · 11b Part 3 · 2026-10-27 · revised after /design, /ux, /marketing</p>
+<h1>House league’s time: the piece’s level, the schedule page, and the league admin in the club’s schedule</h1>
+<p class="lede">Drawn for the Part 3 build. Parts 1 and 2 built the club giving house league time. Part 3 is where a league admin divides it. The list (k2) was drawn last round; this round draws what its rows open into, what changes on the house-league Schedule page to reach it, the empty states, and the league admin’s own view of the club’s schedule (built second). Words marked <button class="dw" type="button">draft words</button> are not settled; words without the tag are settled. Click any tag to read what it means.</p>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-pane="decisions" aria-selected="true">The decisions</button>
+  <button role="tab" data-pane="schedule" aria-selected="false">The schedule page</button>
+  <button role="tab" data-pane="piece" aria-selected="false">A piece’s window</button>
+  <button role="tab" data-pane="empty" aria-selected="false">When there’s nothing to give</button>
+  <button role="tab" data-pane="club" aria-selected="false">The league admin in the club’s schedule</button>
+  <span class="sp"></span>
+  <span class="thm" role="group" aria-label="Drawing theme"><button type="button" data-thm="warm" aria-pressed="true">Warm</button><button type="button" data-thm="dark" aria-pressed="false">Dark</button></span>
+</nav>
+<div class="dt-tools"><button type="button" class="btn-d" data-fit>Show at true size</button><span class="zl">Whole desk screens are scaled to fit; use the button for true size (1440 wide). Windows and phones are always true size.</span></div>
+
+<!-- ======================= THE DECISIONS ======================= -->
+<section class="pane" id="decisions" data-pane="decisions">
+<h2 style="margin-top:16px">What you are asked to rule on</h2>
+<div class="verdict"><h3>Why these were not in the earlier drawings</h3>
+<ul>
+  <li>The last round (k2) drew the list: sections per stretch, a row per division, and <b>Give it to</b> on a Not given yet row. It gave the <b>whole</b> row. It did not draw what the › on a division’s row opens, so giving or taking <b>part</b> of a row had no screen.</li>
+  <li>The house-league Schedule page was drawn only as it would look once everything was built (9d-2). The one step that makes the list reachable, the time line and the Tools menu on today’s page, had no before-and-after, and Export’s place was never settled.</li>
+  <li>k4’s empty states were drawn for Generate games. House league’s time has its own, and they differ for a league admin and an owner.</li>
+  <li>The league admin’s view of the club’s schedule was ruled (a league admin divides house league’s time, never gives or takes it) but only the rep slot read (h3) was drawn.</li>
+</ul></div>
+
+<div class="ask"><h3><span class="no">1</span>The piece’s window saves with one Save</h3>
+<p class="rec"><b>Recommended:</b> ticks stage; one Save at the foot applies them all at once. The foot says “Nothing is saved yet.” until a change, then “3 changes”. <i>Alternative:</i> every tick saves on the spot.</p>
+<p class="rides">Why: one request, one practices question, and no half-state if something fails. Giving time and taking it back in the same visit stays one decision.</p></div>
+
+<div class="ask"><h3><span class="no">2</span>One editor, the piece’s window, plus “Choose parts…”</h3>
+<p class="rec"><b>Recommended:</b> the piece’s window is the only place parts are ticked. It opens as a level inside House league’s time, with a named Back. “Give it to” on a Not given yet row still gives the whole row in one pick, and gains a last item, “Choose parts…”, that opens the piece with nothing new ticked. <i>Alternative (Option B):</i> Give it to first opens a parts checklist.</p>
+<p class="rides">Why: Option B still needs the piece’s window to shrink, move or give back, so it means two checklists to build and learn.</p></div>
+
+<div class="ask"><h3><span class="no">3</span>Group ticks, per weekday and per stretch</h3>
+<p class="rec"><b>Recommended:</b> within a stretch, parts are grouped by weekday. A weekday line and the stretch heading each carry a tick that ticks or unticks everything under them, with a “some ticked” state in between.</p>
+<p class="rides">Why: one stretch here holds sixteen parts; U12 gets Tuesdays and Thursdays in two ticks, not eight.</p></div>
+
+<div class="ask"><h3><span class="no">4</span>A mixed part reads “8 of 12 dates”</h3>
+<p class="rec"><b>Recommended:</b> when the club extends a schedule, the new dates arrive as Not given yet, so a part can be partly one division’s. It shows a half tick and “8 of 12 dates”. Ticking takes the remaining Not given yet dates; unticking gives back this division’s.</p></div>
+
+<div class="ask"><h3><span class="no">5</span>A part another division holds: no box, a link to its piece</h3>
+<p class="rec"><b>Recommended:</b> the right column names the holder as a link (“U12 practice time ›”) that opens that piece; Back returns. To take the part, untick it there first. <i>Alternative:</i> a tick on a held part moves it with a question.</p>
+<p class="rides">Why: one gesture never changes two divisions at once.</p></div>
+
+<div class="ask"><h3><span class="no">6</span>Giving back time with practices on it asks first, in red</h3>
+<p class="rec"><b>Recommended:</b> when Save would give back time that has practices still to come, a question names the teams and the button says what it does (“Save and remove 6 practices”). Past practices stay. Telling coaches and families comes with Part 5; this window never promises a notice. When no practices are on the time, Save just saves.</p></div>
+
+<div class="ask"><h3><span class="no">7</span>Export inside Tools — already ruled (9d-2), and the toolbar waits for 9d-2a</h3>
+<p class="rec"><b>Ruled, not asked:</b> the 9d-2 drawings put Export (with Show and Generate games) inside Tools. Part 3 adds Tools holding “House league’s time”, a separator, then an “Export” heading over Excel, CSV and Calendar file (one level, no flyout). <b>Owner, 2026-10-27:</b> Part 3 adds only Tools and the time line; the views (List · Week · Month), the Show filter and the phone symbols come with 9d-2a’s toolbar rebuild, so nothing is built twice.</p></div>
+
+<div class="ask"><h3><span class="no">8</span>The time line shows only when there is club time or the viewer builds Schedules</h3>
+<p class="rec"><b>Recommended:</b> it shows when the club has house-league time in a final schedule, or when the viewer is an owner or admin who builds Schedules (so a division with none yet has a way to start). Otherwise it is absent, so a club that hand-books never gets a permanent nag.</p></div>
+
+<div class="ask"><h3><span class="no">9</span>Hours only, until a length exists</h3>
+<p class="rec"><b>Recommended:</b> “6 hours a week”. A count of games needs a game length (Generate games) and a count of practices needs a practice length (Practice time, Part 4). The count joins the row when its length exists.</p></div>
+
+<div class="ask"><h3><span class="no">10</span>The empty states</h3>
+<p class="rec"><b>Recommended:</b> a league admin whose club gave nothing reads a note and Close, with no link. An owner or admin reads the same sentence plus a hint and a lime “Give house league time”. When everything is divided there is no empty state: every row shows, and only an owner or admin gets a quiet “Give house league more time” at the end.</p></div>
+
+<div class="ask"><h3><span class="no">11</span>The league admin in the club’s schedule (built second)</h3>
+<p class="rec"><b>Recommended:</b> a page that reads the club’s schedule week and opens only from House league’s time. Rep team names never reach a league admin (“A rep team”). A house-league slot gets a one-date “Use” list that saves on the spot; rep and open slots read with no controls. No bill, asks, replies or send history; no nav rail entry.</p></div>
+</section>
+
+<!-- ======================= THE SCHEDULE PAGE ======================= -->
+<section class="pane" id="schedule" data-pane="schedule" hidden>
+<h2 style="margin-top:16px">The house-league Schedule page: how a league admin reaches House league’s time</h2>
+<p class="cap">Two things change on the page. A quiet time line appears under the title, and a Tools menu joins the toolbar. Everything else is exactly as it is today. The page always has one division picked, so there is no “All divisions” case. This page has no Search today and Part 3 adds none. Example: Draft Test 2027, U12, the week of Jun 14 – 20, 2027.</p>
+
+<div class="st"><h2>a · Today, the whole screen <button class="mk unc" data-kind="TODAY" data-note="TODAY: how the house-league Schedule page reads now. The toolbar is hand-built: a division picker, a Week / List / Practices switch, Generate schedule, Add game and Export (one button, a download symbol and the word).">TODAY</button></h2>
+<p class="who">BEFORE · desk</p>
+<div class="dt-wrap"><div class="ak dt"><div class="tb" data-tb></div><div class="shell"><div class="sb" data-sb="hl"></div><div class="mn"><div class="pg" data-page="before"></div></div></div></div></div></div>
+
+<div class="st"><h2>b · After, the whole screen <button class="mk res" data-note="RESTYLED: the page gains one quiet line under the title and a Tools menu at the right end of the toolbar. With Option 1 the Export button moves inside Tools. Nothing else changes.">RESTYLED</button></h2>
+<p class="who">Owner, admin, league admin, registrar all see Tools · the time line follows the rule in the caption · AFTER · desk, Option 1 (recommended)</p>
+<div class="dt-wrap"><div class="ak dt"><div class="tb" data-tb></div><div class="shell"><div class="sb" data-sb="hl"></div><div class="mn"><div class="pg" data-page="after"></div></div></div></div></div>
+<p class="cap">At a desk everything on the toolbar stays as it is today: the division picker, the Week · List · Practices switch on the line right above the schedule, Generate schedule and Add game. “Tools” and the time line are the two new things, placed where the ruled 9d-2 toolbar puts them, so 9d-2a’s rebuild doesn’t move them.</p></div>
+
+<div class="st"><h2>c · The time line <button class="mk new" data-note="NEW: one quiet line naming where the division’s time comes from, ending in the door to House league’s time. It reads the club’s schedule, so a division with no time reads differently.">NEW</button></h2>
+<div class="dt-wrap"><div class="ak" style="width:1000px;padding:20px;display:flex;flex-direction:column;gap:22px" data-lines></div></div>
+<p class="cap"><b>When it shows:</b> only when the club has house-league time in a final schedule, or when the viewer is an owner or admin who builds Schedules. Otherwise it is absent, never a permanent nag on a club that books by hand. The arrow phrase is the link. Practice time joins the line only as the division has it. On a phone the line is one line (draft words below).</p></div>
+
+<div class="st"><h2>d · Tools: Export inside, as a flat group (ruled in 9d-2) <button class="mk new" data-note="NEW: the Tools menu. The shipped menu is one level: an item, a separator, then a heading over three normal rows. No flyout and no accordion.">NEW</button></h2>
+<div class="dt-wrap"><div class="ak" style="width:1000px;padding:14px" data-tools="opt1"></div></div>
+<p class="cap">Tools opens a worded menu on a desk. “Export” is a heading over Excel, CSV and Calendar file, Excel first: the same two taps as today’s Export (Tools, then a format). “Practice time” joins this menu in Part 4; it is absent until then, not greyed out.</p></div>
+
+
+<div class="st"><h2>f · After Part 3, a phone (interim until 9d-2a) <button class="mk res" data-note="INTERIM (owner, 2026-10-27): Part 3 adds only the Tools symbol and the one-line time line to today’s phone toolbar. 9d-2a, the next build, rebuilds this toolbar as ruled in the 9d-2 drawings: the division · the current view’s symbol (Week · Month, a drawer titled View) · health · Tools · the lime +, with games and practices together and Show (games, practices) inside Tools.">INTERIM</button></h2>
+<p class="who">AFTER · phone, 390 · the page, and the same page with Tools open</p>
+<div class="spec">
+  <div class="col"><p class="sp-cap">The page</p><div class="ph"><div class="ak ph-in" data-phone="page"></div></div></div>
+  <div class="col"><p class="sp-cap">Tools open, a bottom sheet</p><div class="ph"><div class="ak ph-in sheetwrap" data-phone="sheet"></div></div></div>
+</div>
+<p class="cap"><b>Interim, by the owner’s ruling (2026-10-27):</b> Part 3 adds only the Tools symbol and the time line. The rest of this phone toolbar is today’s, and <b>9d-2a rebuilds it as already ruled</b> (the 9d-2 drawings, 9d2·12): the views become List · Week · Month (Week · Month on a phone, from the current view’s symbol), games and practices show together, a Show filter (games, practices) replaces the Practices view, and on a phone every action is a symbol: division · view · health · Tools · the lime +. Building that here would build the toolbar twice. Tools’ sheet carries a small “Tools” label under the grab line, then House league’s time, a separator, and an Export heading over three rows (9d-2 adds Show and Generate games to it).</p></div>
+
+<div class="read"><div class="w"><h4>What changed</h4><ul><li>A time line under the title, with the door to House league’s time.</li><li>A Tools menu holding House league’s time and, with Option 1, Export as a flat group.</li></ul></div><div class="c"><h4>Kept until 9d-2a</h4><ul><li>The header, the division picker, Week · List · Practices, Generate schedule, Add game, and the Export choices. 9d-2a rebuilds the toolbar as ruled (List · Week · Month, Show filter, phone symbols).</li></ul></div><div class="g"><h4>Absent, on purpose</h4><ul><li>Practice time in Tools until Part 4.</li><li>The time line when the club has no house-league time and the viewer does not build Schedules.</li><li>A registrar sees Tools; House league’s time opens read-only for them.</li></ul></div></div>
+</section>
+
+<!-- ======================= A PIECE'S WINDOW ======================= -->
+<section class="pane" id="piece" data-pane="piece" hidden>
+<h2 style="margin-top:16px">A piece’s level: tick the parts a division has, then Save</h2>
+<p class="cap">New. A division’s row (›) in House league’s time opens a <b>level inside the same window</b>, not a second window, with a named Back. A <b>part</b> is the same weekday, start, end and facility across the weeks. Example: U12 games in Draft Test 2027. Every other part of the club’s time is shown too, so you see what U12 has, what is free, and who holds the rest.</p>
+
+<div class="st"><h2>a · The list it opens from, with one new door <button class="mk res" data-note="RESTYLED from k2: the hours line, the product’s own stretch headings, and one new item at the end of the Give it to menu, Choose parts…, after the division pairs and a separator. Picking a pair still gives the whole row.">RESTYLED</button></h2>
+<p class="who">Owner, admin, league admin (everyone who divides house league’s time) · a registrar sees the list with no Give it to</p>
+<div class="ak win w640" data-top="menu"></div>
+<p class="cap">Figures are hours only (“6 hours a week”). The drawn “· 4 games a week” and “· 10 practices a week” join when Generate games or Practice time (Part 4) set a length. <b>Choose parts…</b> asks which division and kind in one small step (the same four pairs), then opens that piece with nothing new ticked. Picking a pair directly gives the whole row, as in k2.</p></div>
+
+<div class="st"><h2>b · The level, desk <button class="mk new" data-note="NEW: one level that moves, shrinks and grows a division’s piece. Ticks stage; Save applies them all at once. A part another division holds has no box and links to its piece.">NEW</button></h2>
+<p class="who">Owner, admin, league admin · U12 games, with two changes staged (Tue 7:30 parts newly ticked)</p>
+<div class="ak win w640" data-top="piece-edit"></div>
+<p class="cap">Three kinds of line. <b>Ticked or unticked box:</b> U12’s, or free (Not given yet). <b>A “some ticked” box</b> on Thursdays and on the stretch heading. <b>No box and a link</b> on the right: another division holds it; the link opens that piece and Back returns. The hint for practice time reads “Tick the time for U12’s practices. A tick gives it to U12 when you save. Unticked time goes back to Not given yet.” The sentence “Only an owner or an admin changes how much time house league has.” stays on the top level, not here. <b>“Give all of it back”</b> is a RecordAction (a small symbol and words in ink, underlined on hover) that ends the body. It stages unticking everything; Save then confirms.</p></div>
+
+<div class="st"><h2>c · The foot, before and after a change <button class="mk new" data-note="NEW. The foot says Nothing is saved yet until a change, then counts the changes. Buttons right: Cancel (outline) and the lime Save. There is no transient Saved word here, because nothing saves until Save.">NEW</button></h2>
+<div class="spec">
+  <div class="col"><p class="sp-cap">Before any change</p><div class="ak win" style="width:696px;max-width:100%"><div class="dlg"><div class="df"><span class="s">Nothing is saved yet.</span><span class="btn">Cancel</span><span class="btn pri fade">Save</span></div></div></div></div>
+  <div class="col"><p class="sp-cap">After two ticks</p><div class="ak win" style="width:696px;max-width:100%"><div class="dlg"><div class="df"><span class="s">2 changes<x-dw></x-dw></span><span class="btn">Cancel</span><span class="btn pri">Save</span></div></div></div></div>
+</div>
+<p class="cap">Before any change Save fades, the house rule for a disabled button (flagged in the report: absent would also work). Cancel leaves the level and drops the changes.</p></div>
+
+<div class="st"><h2>d · A mixed part, and the states beyond a tick <button class="mk new" data-note="NEW: a part where only some dates are this division’s, for example when the club extended the schedule and the new dates arrived as Not given yet.">NEW</button></h2>
+<div class="ak win" style="width:696px;max-width:100%"><div class="dlg"><div class="db">
+  <div class="sec"><h5>Sat · 10:00 a.m.–1:00 p.m. · Diamond 1 and Diamond 2</h5>
+    <div class="wd"><span class="bx mix"></span>Saturdays</div>
+    <div class="prt sub"><span class="bx mix"></span><span class="pt">11:30 a.m.–1:00 p.m. · Diamond 2</span><span class="pr">8 of 12 dates<x-dw></x-dw></span></div>
+    <div class="prt sub"><span class="bx"></span><span class="pt">11:30 a.m.–1:00 p.m. · Diamond 1</span><span class="pr">1.5 hours</span></div>
+    <div class="prt sub held"><span class="pt">10:00–11:30 a.m. · Diamond 1</span><span class="pr"><span class="hlk">U14 games ›</span></span></div></div>
+</div></div></div>
+<p class="cap">The half tick with “8 of 12 dates”: ticking takes the remaining Not given yet dates; unticking gives back this division’s dates. The last line shows a held part: no box, and the holder is a link.</p></div>
+
+<div class="st"><h2>e · The question on Save, only when practices are on the time <button class="mk new" data-note="NEW: appears only when Save would give back time that has practices still to come. Danger red, because it removes things. Past practices stay. When no practices are on the time, Save just saves.">NEW</button></h2>
+<div class="ak win" style="width:516px;max-width:100%"><div class="dlg sm">
+  <div class="dh"><div class="tt"><h4>Give back all of U12’s practice time?</h4></div></div>
+  <div class="db"><p style="margin:0">That time, 12 hours a week, goes back to Not given yet.</p><div class="note">U12 Blue and U12 Red have practices on this time. Saving removes the ones still to come. Past practices stay.</div></div>
+  <div class="df" style="justify-content:flex-end"><span class="btn">Cancel</span><span class="btn dng">Save and remove 6 practices<x-dw></x-dw></span></div></div></div>
+<p class="cap">A partial give-back reads “Give back 2 parts of U12’s practice time?”<x-dw></x-dw>. Telling coaches and families comes with Part 5; this window never promises a notice. Until Part 4 builds practices, the question has nothing to name and never shows.</p></div>
+
+<div class="st"><h2>f · The level on a phone <button class="mk new" data-note="NEW: a full sheet. The arrow top-left is a Back to House league’s time. Part rows are 56px with the checkbox on the left; the facility and hours sit under the part. The count and Save pin to the foot.">NEW</button></h2>
+<p class="who">Owner, admin, league admin · 390 · the sheet scrolls; the foot stays</p>
+<div class="spec"><div class="col"><div class="ph"><div class="ak ph-in" data-top="piece-phone"></div></div></div></div>
+<p class="cap">The arrow reads as Back to House league’s time. A held part has no box, says who holds it, and the holder’s name opens that piece.</p></div>
+
+<div class="st"><h2>g · The registrar’s read <button class="mk new" data-note="NEW: the same level for a reader. No boxes, no group ticks, no door, no Save and no foot. Back only.">NEW</button></h2>
+<p class="who">Registrar</p>
+<div class="ak win w640" data-top="piece-read"></div>
+<p class="cap">Absent, not disabled: no boxes, no hint about ticking, no “Give all of it back”, no foot. Only the parts U12 holds are listed.</p></div>
+
+<div class="st"><h2>h · Option B (not recommended): Give it to opens a parts checklist first <button class="mk res" data-note="ALTERNATIVE: Give it to on a Not given yet row opens a checklist of its parts, all ticked, with a lime Give it to U12 games. Partial giving happens before the giving rather than after.">OPTION B</button></h2>
+<div class="ak win" style="width:560px;max-width:100%"><div class="dlg" style="max-width:500px">
+    <div class="dh"><div class="tt"><span class="ey">House league’s time</span><h4>Give this time to U12 games</h4></div><span class="xx">×</span></div>
+    <div class="db"><p class="hint" style="font-size:13.5px">All of it is ticked. Untick any time U12 shouldn’t have; it stays Not given yet.</p>
+      <div class="sec"><h5>Tue and Thu · 7:30–9:00 p.m. · Diamond 1 and Diamond 2</h5>
+        <div class="prt"><span class="bx on"></span><span class="pt">Tuesdays · Diamond 1</span><span class="pr">1.5 hours</span></div>
+        <div class="prt"><span class="bx on"></span><span class="pt">Tuesdays · Diamond 2</span><span class="pr">1.5 hours</span></div>
+        <div class="prt"><span class="bx on"></span><span class="pt">Thursdays · Diamond 1</span><span class="pr">1.5 hours</span></div>
+        <div class="prt"><span class="bx on"></span><span class="pt">Thursdays · Diamond 2</span><span class="pr">1.5 hours</span></div></div></div>
+    <div class="df"><span class="s">Nothing is saved yet.</span><span class="btn">Cancel</span><span class="btn pri">Give it to U12 games</span></div>
+</div></div>
+<div class="optgrid">
+  <div class="card rec"><h3>Recommended: one editor, the piece’s level</h3><ul><li>“All of it” stays one pick (Give it to); “Choose parts…” covers partial giving.</li><li>The same level grows, shrinks, moves and gives back a piece, so there is one checklist to build and learn.</li></ul></div>
+  <div class="card"><h3>Option B: checklist before giving</h3><ul><li>One more click for the common “all of it” case.</li><li>Partial giving happens before the giving, not after.</li><li>It still needs the piece’s level to shrink, move or give back, so there are two checklists to build and learn.</li></ul></div>
+</div>
+</div>
+</section>
+
+<!-- ======================= WHEN THERE'S NOTHING TO GIVE ======================= -->
+<section class="pane" id="empty" data-pane="empty" hidden>
+<h2 style="margin-top:16px">When there’s nothing to give</h2>
+<p class="cap">Adapted from k4, which was drawn for Generate games. These are the empty states inside House league’s time. Who you are decides what is offered, because a league admin cannot give house league time and an owner or admin can.</p>
+
+<div class="st"><h2>a · A league admin, and the club gave house league nothing <button class="mk new" data-note="NEW: the window for a league admin when the club has given house league no time at all. A note, and no link: the product cannot reach the owner on a league admin’s behalf, so it names who can.">NEW</button></h2>
+<p class="who">League admin</p>
+<div class="ak win w640"><div class="dlg">
+  <div class="dh"><div class="tt"><span class="ey">Draft Test 2027</span><h4>House league’s time</h4></div><span class="xx">×</span></div>
+  <div class="db"><div class="note">The club hasn’t given house league any time yet. An owner or an admin gives it, in Schedules.</div></div>
+  <div class="df" style="justify-content:flex-end"><span class="btn pri">Close</span></div>
+</div></div>
+<p class="cap">No link and no “Ask the club” button. One button, Close.</p></div>
+
+<div class="st"><h2>b · An owner or admin, and the club gave house league nothing <button class="mk new" data-note="NEW: an owner or admin is the club, so the window gives them the door. It opens the club’s Schedules.">NEW</button></h2>
+<p class="who">Owner, admin</p>
+<div class="ak win w640"><div class="dlg">
+  <div class="dh"><div class="tt"><span class="ey">Draft Test 2027</span><h4>House league’s time</h4></div><span class="xx">×</span></div>
+  <div class="db"><div class="note">The club hasn’t given house league any time yet.</div>
+    <p class="hint" style="font-size:13.5px">Give it some from one of the club’s permits, then come back here.<x-dw></x-dw></p></div>
+  <div class="df" style="justify-content:flex-end"><span class="btn">Close</span><span class="btn pri">Give house league time<x-dw></x-dw></span></div>
+</div></div>
+<p class="cap">The lime button opens the club’s Schedules; you come back on your own. The drawn k4 behaviour, “with House league already picked”, waits for Generate games (a later stage).</p></div>
+
+<div class="st"><h2>c · Everything divided: not an empty state <button class="mk new" data-note="NEW. When every part is given to a division, the window shows every division’s row and has no Not given yet row. Only an owner or admin gets the quiet door at the end.">NEW</button></h2>
+<div class="spec">
+  <div class="col"><p class="sp-cap">Owner, admin</p><div class="ak win w640" data-top="divided-owner"></div></div>
+  <div class="col"><p class="sp-cap">League admin: just the rows</p><div class="ak win w640" data-top="divided-la"></div></div>
+</div>
+<p class="cap">Nothing is missing, so nothing needs saying to a league admin. An owner or admin ends the body with “House league has no time left to give.” and a quiet “Give house league more time” (the RecordAction shape, a calendar-plus symbol and words in ink).</p></div>
+</section>
+
+<!-- ======================= THE LEAGUE ADMIN IN THE CLUB'S SCHEDULE ======================= -->
+<section class="pane" id="club" data-pane="club" hidden>
+<h2 style="margin-top:16px">The league admin in the club’s schedule</h2>
+<p class="cap">Built second, after the piece’s level. A league admin may open the club’s schedule to see where house league’s time sits and to change one date of a house-league slot. They cannot touch a rep team’s slot or open time. The page is reached from House league’s time, not from the nav rail. <b>Rep team names never reach a league admin</b> who cannot open Rep teams: the server strips the name, so the grid and the windows say “A rep team”.</p>
+
+<div class="st"><h2>a · The door: the schedule’s name in House league’s time <button class="mk new" data-note="NEW: in House league’s time the source line’s schedule name becomes a link to this page. Nothing else in that window changes.">NEW</button></h2>
+<div class="ak win" style="width:696px;max-width:100%"><div class="dlg">
+  <div class="db" style="padding-top:18px"><p class="hint" style="margin:0;font-size:13.5px">Given by the club in <span class="lnk">Maple Grove · summer 2027</span><x-dw></x-dw> · Jun 1 – Aug 31, 2027 · Maple Grove Park. Hours add up across facilities: 3 hours on 2 facilities is 6.</p></div>
+</div></div>
+<p class="cap">The “← House league’s time” link on the club’s page <b>reopens the window</b> where you were, not just the page: it replays the open.</p></div>
+
+<div class="st"><h2>b · The page, whole screen, desk <button class="mk new" data-note="NEW for a league admin: the club’s schedule week as a grid of slots by facility. House-league slots are tinted and can be opened; a rep team’s slot and an open slot open to a read.">NEW</button></h2>
+<p class="who">League admin · AFTER · desk</p>
+<div class="dt-wrap"><div class="ak dt"><div class="tb" data-tb></div><div class="shell"><div class="sb" data-sb="la"></div><div class="mn"><div class="pg" data-page="club"></div></div></div></div></div>
+<p class="cap">The page shows no bill, no asks, no replies and no send history. There is no “Give it to” on the page and no new schedule. The three outlined slots are the three windows below.</p></div>
+
+<div class="st"><h2>c · The slot windows</h2>
+<div class="spec">
+  <div class="col"><p class="sp-cap">a · A rep team’s slot <button class="mk unc" data-note="UNCHANGED from h3: a slot a rep team holds reads, with no controls (absent beats disabled). Only the dates and the neutral name differ.">UNCHANGED</button></p>
+  <div class="ak win" style="width:516px;max-width:100%"><div class="dlg sm">
+    <div class="dh"><div class="tt"><span class="ey">Maple Grove · summer 2027 · a slot</span><h4>Fri, Jun 18 · 6:00–8:00 p.m.</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="facts"><span>Where</span><span>Maple Grove Park · Diamond 1</span><span>Team</span><span>A rep team</span><span>Repeats</span><span>Every Friday at 6:00 p.m., Jun 4 – Aug 27</span></div>
+      <div class="note">A rep team holds this time. An owner or an admin can give it to house league.</div></div>
+  </div></div></div>
+  <div class="col"><p class="sp-cap">b · A house-league slot, picking <button class="mk new" data-note="NEW: a league admin changes what house league does with this one date. A change saves on the spot, so there is no foot; a Saved pill floats at the bottom right and fades.">NEW</button></p>
+  <div class="ak win" style="width:516px;max-width:100%"><div class="dlg sm">
+    <div class="dh"><div class="tt"><span class="ey">Maple Grove · summer 2027 · a slot</span><h4>Tue, Jun 15 · 6:00–7:30 p.m.</h4></div><span class="xx">×</span></div>
+    <div class="db rel"><div class="facts"><span>Where</span><span>Maple Grove Park · Diamond 1</span><span>Held by</span><span>House league · U12 games</span><span>Repeats</span><span>Every Tuesday at 6:00 p.m., Jun 1 – Aug 31</span></div>
+      <span class="flbl">Use</span>
+      <div class="opts"><div class="o"><span class="rdo"></span>Not given yet</div><div class="o on"><span class="rdo"></span>U12 games</div><div class="o"><span class="rdo"></span>U12 practice time</div><div class="o"><span class="rdo"></span>U14 games</div><div class="o"><span class="rdo"></span>U14 practice time</div></div>
+      <p class="hint" style="font-size:13px">This changes Tue, Jun 15 only. To change every week, use <span class="lnk">House league’s time</span>.<x-dw></x-dw></p><span class="savedp">Saved</span></div>
+  </div></div></div>
+</div>
+<div class="spec">
+  <div class="col"><p class="sp-cap">b2 · The same, when the save fails <button class="mk new" data-note="NEW: the radio goes back to where it was, and the reason sits at the left of the foot. Only an error stays on screen.">NEW</button></p>
+  <div class="ak win" style="width:516px;max-width:100%"><div class="dlg sm">
+    <div class="dh"><div class="tt"><span class="ey">Maple Grove · summer 2027 · a slot</span><h4>Tue, Jun 15 · 6:00–7:30 p.m.</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="facts"><span>Where</span><span>Maple Grove Park · Diamond 1</span><span>Held by</span><span>House league · U12 games</span></div>
+      <span class="flbl">Use</span>
+      <div class="opts"><div class="o fail"><span class="rdo"></span>Not given yet</div><div class="o on"><span class="rdo"></span>U12 games</div><div class="o"><span class="rdo"></span>U12 practice time</div><div class="o"><span class="rdo"></span>U14 games</div><div class="o"><span class="rdo"></span>U14 practice time</div></div></div>
+    <div class="df"><span class="why">That time changed while you were looking. Close this and try again.<x-dw></x-dw></span><span class="btn">Close</span></div>
+  </div></div></div>
+  <div class="col"><p class="sp-cap">b3 · A dashed “Not given yet” slot <button class="mk new" data-note="NEW: house league’s own time that no division has yet. Not given yet is the chosen radio; a league admin can hand this one date to a division.">NEW</button></p>
+  <div class="ak win" style="width:516px;max-width:100%"><div class="dlg sm">
+    <div class="dh"><div class="tt"><span class="ey">Maple Grove · summer 2027 · a slot</span><h4>Tue, Jun 15 · 7:30–9:00 p.m.</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="facts"><span>Where</span><span>Maple Grove Park · Diamond 1</span><span>Held by</span><span>House league · Not given yet</span><span>Repeats</span><span>Every Tuesday at 7:30 p.m., Jun 1 – Aug 31</span></div>
+      <span class="flbl">Use</span>
+      <div class="opts"><div class="o on"><span class="rdo"></span>Not given yet</div><div class="o"><span class="rdo"></span>U12 games</div><div class="o"><span class="rdo"></span>U12 practice time</div><div class="o"><span class="rdo"></span>U14 games</div><div class="o"><span class="rdo"></span>U14 practice time</div></div></div>
+  </div></div></div>
+  <div class="col"><p class="sp-cap">c · An open slot <button class="mk new" data-note="NEW for a league admin: open time is never theirs to give, so it reads with no controls.">NEW</button></p>
+  <div class="ak win" style="width:516px;max-width:100%"><div class="dlg sm">
+    <div class="dh"><div class="tt"><span class="ey">Maple Grove · summer 2027 · a slot</span><h4>Sun, Jun 20 · 1:00–2:30 p.m.</h4></div><span class="xx">×</span></div>
+    <div class="db"><div class="facts"><span>Where</span><span>Maple Grove Park · Diamond 1</span><span>Team</span><span>Open</span><span>Repeats</span><span>Every Sunday at 1:00 p.m., Jun 6 – Aug 29</span></div>
+      <div class="note blue">This time is open. An owner or an admin can give it to a team or house league.</div></div>
+  </div></div></div>
+</div>
+<p class="cap"><b>“Use” is one date only</b>, and each choice saves on the spot (radio dots, as the shipped pattern). A past date reads with no Use. Choosing Not given yet on a date that has a handed-out practice asks the practices question first, as the piece’s level does. <b>One date’s Use makes its part mixed</b> in House league’s time: that part then reads with the half tick and “8 of 12 dates”.</p></div>
+
+<div class="read"><div class="w"><h4>What a league admin can do</h4><ul><li>Read the whole week of the club’s schedule.</li><li>Change one date of a house-league slot.</li></ul></div><div class="c"><h4>Kept</h4><ul><li>Everything else about the club’s schedule is the owner’s and admin’s, as today.</li></ul></div><div class="g"><h4>Absent, on purpose</h4><ul><li>Bill, asks, replies, send history.</li><li>Any control on a rep team’s or an open slot.</li><li>Rep team names.</li><li>A nav rail entry: the door is House league’s time.</li></ul></div></div>
+</section>
+</div>
+
+<dialog class="note" id="dlg" aria-labelledby="dlgT"><div class="nh"><h3 id="dlgT">Note</h3><button type="button" class="x" aria-label="Close" id="dlgX">×</button></div><div class="nb" id="dlgB"></div></dialog>
+
+<script>
+(function(){
+function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+var IC={
+ cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+ calplus:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M12 13v4M10 15h4"/>',
+ undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>',
+ wand:'<path d="M5 19L17 7"/><path d="M15 5l4 4"/><path d="M6 4v3M4.5 5.5h3M19 15v3M17.5 16.5h3"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>', dots:'<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>',
+ dl:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', down:'<path d="M6 9l6 6 6-6"/>', up:'<path d="M6 15l6-6 6 6"/>', right:'<path d="M9 6l6 6-6 6"/>',
+ left:'<path d="M15 6l-6 6 6 6"/>', back:'<path d="M19 12H5M11 6l-6 6 6 6"/>', menu:'<path d="M4 7h16M4 12h16M4 17h16"/>', check:'<path d="M5 12l5 5 9-10"/>',
+ clock:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>'
+};
+function ico(n){return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">'+(IC[n]||'')+'</svg>'}
+function fill(root){
+  $$('x-i',root).forEach(function(e){ var s=document.createElement('span'); s.style.display='inline-flex'; s.innerHTML=ico(e.getAttribute('n')); e.parentNode.replaceChild(s.firstChild,e); });
+  $$('x-dw',root).forEach(function(e){ var b=document.createElement('button'); b.type='button'; b.className='dw'; b.textContent='draft words'; e.parentNode.replaceChild(b,e); });
+}
+var DW='<x-dw></x-dw>';
+
+/* ---------- shell pieces ---------- */
+function sb(mode,onSchedule){
+  var h='';
+  if(mode!=='la') h+='<span class="it"><i></i>Overview</span><span class="it"><i></i>Calendar</span>';
+  h+='<span class="grp">Programs</span><span class="it hd"><i></i>House league<span style="margin-left:auto">'+ico('down')+'</span></span><div class="blk"><span class="it sub">Seasons</span><span class="grp" style="padding-left:14px">Season</span><span class="sw">Draft Test 2027'+ico('down')+'</span>';
+  ['Overview','Registrations','Teams &amp; draft','Schedule','Standings','Money','Email families'].forEach(function(n){ h+='<span class="it sub'+(onSchedule&&n==='Schedule'?' on':'')+'">'+n+'</span>' });
+  h+='</div>';
+  if(mode!=='la') h+='<span class="it"><i></i>Families</span><span class="it"><i></i>Public site</span>';
+  return h;
+}
+var TB='<span class="lg"></span>FieldLogicHQ<span class="ar">ADMIN AREA</span><span class="sp"></span><span class="av"></span>';
+
+/* ---------- schedule page ---------- */
+function tline(v,phone){
+  if(phone) return '<div class="quiet ph">'+ico('cal')+'<span>Time from the club’s schedule · <span class="lnk">House league’s time →</span>'+DW+'</span></div>';
+  var t = v==='none'
+   ? 'U12 has no time from the club yet. <span class="lnk">House league’s time →</span>'+DW
+   : 'U12’s time comes from the club’s schedule, <b>Maple Grove · summer 2027</b>. Games: Tue and Thu, 6:00–7:30 p.m. Practice time: Mon and Wed, 6:00–9:00 p.m. <span class="lnk">House league’s time →</span>';
+  return '<div class="quiet">'+ico('cal')+'<span>'+t+'</span></div>';
+}
+function seg(){return '<span class="seg"><span class="on">Week</span><span>List</span><span>Practices</span></span>'}
+function toolbar(k){
+  var gen='<span class="btn">'+ico('wand')+'Generate schedule</span>', add='<span class="btn pri">'+ico('plus')+'Add game</span>';
+  var tools='<span class="btn">'+ico('dots')+'Tools</span>', exp='<span class="btn">'+ico('dl')+'Export</span>';
+  var scope='<span class="btn" style="font-weight:500">U12 Division'+ico('down')+'</span>';
+  if(k==='before') return '<div class="tbar">'+scope+seg()+'<span class="sp"></span>'+gen+add+exp+'</div>';
+  if(k==='opt1') return '<div class="tbar">'+scope+seg()+'<span class="sp"></span>'+gen+add+tools+'</div>';
+  return '<div class="tbar">'+scope+seg()+'<span class="sp"></span>'+gen+add+exp+tools+'</div>';
+}
+function wk(){
+  var days=[['Mon','14'],['Tue','15'],['Wed','16'],['Thu','17'],['Fri','18'],['Sat','19'],['Sun','20']];
+  var g={1:[['6:00 p.m.','Cardinals vs Blue Jays','Diamond 1'],['6:00 p.m.','Tigers vs Orioles','Diamond 2']],3:[['6:00 p.m.','Red Sox vs Mariners','Diamond 1'],['6:00 p.m.','Twins vs Royals','Diamond 2']]};
+  var h='<div class="wk"><div class="wh">Jun 14 – 20, 2027 <small>this week · U12 Division</small></div><div class="wg">';
+  days.forEach(function(d,i){ h+='<div class="d"><i>'+d[0]+' '+d[1]+'</i>'+(g[i]||[]).map(function(x){return '<div class="gc"><b>'+x[0]+'</b>'+x[1]+'<small>Maple Grove Park · '+x[2]+'</small></div>'}).join('')+'</div>' });
+  return h+'</div></div>';
+}
+function head(){ return '<div><span class="back">'+ico('left')+'Draft Test 2027</span><span class="ey">House league</span><h1>Schedule</h1></div>' }
+function schedPage(k){
+  return '<div class="ph1">'+head()+'</div>'+(k==='before'?'':tline('time'))+toolbar(k==='before'?'before':'opt1')+wk();
+}
+
+/* ---------- phone ---------- */
+function phPage(sheet){
+  var h='<div class="pbar"><span class="btn ic">'+ico('menu')+'</span>FieldLogicHQ</div><div class="pin">';
+  h+='<div><span class="back">'+ico('left')+'Draft Test 2027</span><span class="ey">House league</span><h1 style="font:700 24px/1.15 Inter;margin:2px 0 0">Schedule</h1></div>';
+  h+=tline('time',true);
+  h+='<div class="tbar nw"><span class="btn" style="font-weight:500">U12 Division'+ico('down')+'</span><span class="sp"></span><span class="btn ic" aria-label="Tools">'+ico('dots')+'</span></div>';
+  h+='<div class="tbar">'+seg()+'</div><div class="tbar"><span class="btn">'+ico('wand')+'Generate schedule</span><span class="btn pri">Add game</span></div>';
+  h+='<div class="glist"><div class="gday">Tue, Jun 15</div><div class="gc"><b>6:00 p.m.</b>Cardinals vs Blue Jays<small>Maple Grove Park · Diamond 1</small></div><div class="gc"><b>6:00 p.m.</b>Tigers vs Orioles<small>Maple Grove Park · Diamond 2</small></div><div class="gday">Thu, Jun 17</div><div class="gc"><b>6:00 p.m.</b>Red Sox vs Mariners<small>Maple Grove Park · Diamond 1</small></div><div class="gc"><b>6:00 p.m.</b>Twins vs Royals<small>Maple Grove Park · Diamond 2</small></div></div></div>';
+  if(sheet){
+    h+='<div class="dim"></div><div class="sheet"><span class="grab"></span><div class="lab">Tools</div>'
+     +'<div class="mi">'+ico('clock')+'House league’s time</div><div class="sep"></div>'
+     +'<div class="mi lab2">Export</div><div class="mi">Excel</div><div class="mi">CSV</div><div class="mi">Calendar file</div></div>';
+    return '<div style="height:720px;overflow:hidden">'+h+'</div>';
+  }
+  return h;
+}
+
+/* ---------- tools menus ---------- */
+function toolsStrip(k){
+  var h=toolbar(k);
+  if(k==='opt1') h+='<div class="pop"><div class="menu"><span class="mi">'+ico('clock')+'House league’s time</span><div class="sep"></div><div class="mh">Export</div><span class="mi">Excel</span><span class="mi">CSV</span><span class="mi">Calendar file</span></div></div>';
+  else h+='<div class="pop"><div class="menu"><span class="mi">'+ico('clock')+'House league’s time</span></div></div>';
+  return h;
+}
+
+/* ---------- parts (a part = weekday + start + end + facility across the weeks) ---------- */
+var ST=[
+ {t:'Mon, Tue, Wed and Thu · 6:00–9:00 p.m. · Diamond 1 and Diamond 2',days:['Mondays','Tuesdays','Wednesdays','Thursdays'],slots:['6:00–7:30 p.m.','7:30–9:00 p.m.'],k:'A'},
+ {t:'Sat · 10:00 a.m.–1:00 p.m. · Diamond 1 and Diamond 2',days:['Saturdays'],slots:['10:00–11:30 a.m.','11:30 a.m.–1:00 p.m.'],k:'B'}];
+var FAC=['Diamond 1','Diamond 2'];
+function holder(k,d,s,f){
+  if(k==='A'){ if(d===0||d===2) return 'U12 practice time'; return s===0?'U12 games':null; }
+  return (s===0&&f===0)?'U14 games':null;
+}
+/* status of one part for a piece: own | stg (newly ticked, staged) | free | held:<who> */
+function status(piece,staged,k,d,s,f){
+  var who=holder(k,d,s,f);
+  if(who===piece) return 'own';
+  if(who===null) return (staged&&piece==='U12 games'&&k==='A'&&d===1&&s===1)?'stg':'free';
+  return 'held:'+who;
+}
+function bxs(ticked,tot){ return !tot?'none':ticked===0?'':ticked===tot?'on':'mix' }
+function parts(mode,piece,staged){
+  return ST.map(function(S){
+    var all=[], byDay=S.days.map(function(day,d){ var list=[]; S.slots.forEach(function(sl,s){ FAC.forEach(function(fa,f){ list.push({day:day,sl:sl,fa:fa,st:status(piece,staged,S.k,d,s,f)}) }) }); all=all.concat(list); return list });
+    function cnt(l){ var t=0,k=0; l.forEach(function(p){ if(p.st.indexOf('held')!==0){ t++; if(p.st==='own'||p.st==='stg') k++ } }); return [k,t] }
+    if(mode==='read'){
+      var mine=all.filter(function(p){return p.st==='own'}); if(!mine.length) return '';
+      return '<div class="sec"><h5>'+S.t+'</h5>'+mine.map(function(p){return '<div class="prt"><span class="pt">'+p.day+' · '+p.sl+' · '+p.fa+'</span><span class="pr">1.5 hours</span></div>'}).join('')+'</div>';
+    }
+    var c=cnt(all), h='<div class="sec"><div class="sh"><span class="bx '+bxs(c[0],c[1])+'"></span><h5>'+S.t+'</h5></div>';
+    byDay.forEach(function(list,d){
+      var w=cnt(list);
+      h+='<div class="wd"><span class="bx '+bxs(w[0],w[1])+'"></span>'+S.days[d]+'</div>';
+      list.forEach(function(p){
+        var held=p.st.indexOf('held:')===0, who=held?p.st.slice(5):'', on=(p.st==='own'||p.st==='stg'), chg=p.st==='stg';
+        if(mode==='phone'){
+          h+='<div class="prt sub'+(chg?' chg':'')+'">'+(held?'':'<span class="bx '+(on?'on':'')+'"></span>')+'<span class="pt">'+p.sl+'<small>'+p.fa+' · '+(held?'<span class="hlk">'+who+' ›</span>':'1.5 hours')+'</small></span></div>';
+        } else {
+          h+='<div class="prt sub'+(chg?' chg':'')+(held?' held':'')+'">'+(held?'':'<span class="bx '+(on?'on':'')+'"></span>')+'<span class="pt">'+p.sl+' · '+p.fa+'</span><span class="pr">'+(held?'<span class="hlk">'+who+' ›</span>':'1.5 hours')+'</span></div>';
+        }
+      });
+    });
+    return h+'</div>';
+  }).join('');
+}
+
+/* ---------- House league’s time windows ---------- */
+var HS_A='Mon, Tue, Wed and Thu · 6:00–9:00 p.m. · Diamond 1 and Diamond 2', HS_B='Sat · 10:00 a.m.–1:00 p.m. · Diamond 1 and Diamond 2';
+function lrow(n,d,r,tail){ return '<div class="lrow"><div class="m"><b>'+n+'</b><span class="d">'+d+'</span></div><span class="r">'+r+'</span>'+(tail||'<span class="btn ic" aria-label="Open '+n+'">'+ico('right')+'</span>')+'</div>' }
+function dd(){ return '<div class="menu dd"><span class="mi">U12 games</span><span class="mi">U12 practice time</span><span class="mi">U14 games</span><span class="mi">U14 practice time</span><div class="sep"></div><span class="mi on">Choose parts…'+DW+'</span></div>' }
+function top(v){
+  if(v==='piece-edit'||v==='piece-read') return pieceWin(v==='piece-read');
+  if(v==='piece-phone') return piecePhone();
+  var h='<div class="dlg"><div class="dh"><div class="tt"><span class="ey">Draft Test 2027</span><h4>House league’s time</h4></div><span class="xx">×</span></div><div class="db">';
+  h+='<p class="hint" style="margin:0;font-size:13.5px">Given by the club in <b>Maple Grove · summer 2027</b> · Jun 1 – Aug 31, 2027 · Maple Grove Park. Hours add up across facilities: 3 hours on 2 facilities is 6.</p>';
+  if(v==='menu'){
+    h+='<div class="sec"><h5>'+HS_A+'</h5>'+lrow('U12 games','Tue and Thu · 6:00–7:30 p.m. · Diamond 1 and Diamond 2','6 hours a week')+lrow('U12 practice time','Mon and Wed · 6:00–9:00 p.m. · Diamond 1 and Diamond 2','12 hours a week')
+      +'<div class="lrow" style="position:relative"><div class="m"><b>Not given yet</b><span class="d">Tue and Thu · 7:30–9:00 p.m. · Diamond 1 and Diamond 2</span></div><span class="r">6 hours a week</span><span class="btn">Give it to'+ico('down')+'</span>'+dd()+'</div></div>'
+      +'<div class="sec"><h5>'+HS_B+'</h5>'+lrow('U14 games','Sat · 10:00–11:30 a.m. · Diamond 1','1.5 hours a week')+lrow('Not given yet','The rest of Saturday','4.5 hours a week','<span class="btn">Give it to'+ico('down')+'</span>')+'</div>';
+  } else {
+    h+='<div class="sec"><h5>'+HS_A+'</h5>'+lrow('U12 games','Tue and Thu · 6:00–9:00 p.m. · Diamond 1 and Diamond 2','12 hours a week')+lrow('U12 practice time','Mon and Wed · 6:00–9:00 p.m. · Diamond 1 and Diamond 2','12 hours a week')+'</div>'
+      +'<div class="sec"><h5>'+HS_B+'</h5>'+lrow('U14 games','Sat · 10:00 a.m.–1:00 p.m. · Diamond 1 and Diamond 2','6 hours a week')+'</div>';
+    if(v==='divided-owner') h+='<p class="hint" style="margin:0;font-size:13.5px">House league has no time left to give.</p><div><span class="ract">'+ico('calplus')+'Give house league more time</span></div>';
+  }
+  return h+'</div><div class="df"><span class="s">Only an owner or an admin changes how much time house league has.</span><span class="btn pri">Done</span></div></div>';
+}
+function pieceWin(read){
+  var h='<div class="dlg"><div class="dh"><div class="tt"><span class="up">'+ico('back')+'House league’s time</span><h4>U12 games</h4><span class="id">6 hours a week'+DW+'</span></div><span class="xx">×</span></div><div class="db">';
+  if(!read) h+='<p class="hint" style="font-size:13.5px">Tick the time for U12’s games. A tick gives it to U12 when you save. Unticked time goes back to Not given yet.</p>';
+  h+='<div style="display:flex;flex-direction:column;gap:12px">'+parts(read?'read':'edit','U12 games',!read)+'</div>';
+  if(!read) h+='<div><span class="ract hov">'+ico('undo')+'Give all of it back'+DW+'</span></div>';
+  h+='</div>';
+  if(!read) h+='<div class="df"><span class="s">2 changes'+DW+'</span><span class="btn">Cancel</span><span class="btn pri">Save</span></div>';
+  return h+'</div>';
+}
+function piecePhone(){
+  return '<div class="fsw" style="height:780px"><div class="fh"><span class="btn ic" aria-label="Back to House league’s time">'+ico('back')+'</span><div><small>House league’s time</small>U12 games</div></div>'
+   +'<div class="fb"><div class="id" style="font-weight:500;color:var(--soft)">6 hours a week'+DW+'</div>'
+   +'<p class="hint" style="font-size:13.5px">Tick the time for U12’s games. A tick gives it to U12 when you save. Unticked time goes back to Not given yet.</p>'
+   +'<div style="display:flex;flex-direction:column;gap:12px">'+parts('phone','U12 games',true)+'</div>'
+   +'<div><span class="ract hov">'+ico('undo')+'Give all of it back'+DW+'</span></div></div>'
+   +'<div class="ff"><div class="bb"><span class="s" style="flex:1">2 changes'+DW+'</span><span class="btn">Cancel</span><span class="btn pri">Save</span></div></div></div>';
+}
+
+/* ---------- the club's schedule page ---------- */
+function clubPage(){
+  var days=[['Mon','Jun 14'],['Tue','Jun 15'],['Wed','Jun 16'],['Thu','Jun 17'],['Fri','Jun 18'],['Sat','Jun 19'],['Sun','Jun 20']];
+  function hl(t,w,pick){return '<div class="sl hl'+(pick?' pick':'')+'"><b>'+t+'</b>'+w+'</div>'}
+  function ng(t){return '<div class="sl ng"><b>'+t+'</b>Not given yet</div>'}
+  function rep(t,pick){return '<div class="sl rep'+(pick?' pick':'')+'"><b>'+t+'</b>A rep team</div>'}
+  function op(t,pick){return '<div class="sl open'+(pick?' pick':'')+'"><b>'+t+'</b>Open</div>'}
+  var A1='6:00–7:30 p.m.', A2='7:30–9:00 p.m.';
+  function wd(day,f){
+    if(day===0||day===2) return hl(A1,'U12 practice time')+hl(A2,'U12 practice time');
+    return hl(A1,'U12 games',day===1&&f===0)+ng(A2);
+  }
+  var h='<div class="ph1"><div><span class="back">'+ico('left')+'House league’s time</span><span class="ey">Schedules'+DW+'</span><h1>Maple Grove · summer 2027</h1></div></div>';
+  h+='<p style="margin:0;font-size:13.5px;color:var(--soft)">Maple Grove Park · Jun 1 – Aug 31, 2027 · Diamond 1, Diamond 2</p>';
+  h+='<div class="tbar"><span class="btn ic bd">'+ico('left')+'</span><span class="btn">Jun 14 – 20, 2027</span><span class="btn ic bd">'+ico('right')+'</span><span class="sp"></span><span class="sublegend"><span><i style="background:var(--olive-soft)"></i>House league</span><span><i style="border:1.5px dashed var(--olive)"></i>Not given yet</span><span><i style="background:var(--blue-soft)"></i>A rep team</span><span><i style="border:1px solid var(--line2)"></i>Open</span></span></div>';
+  h+='<div class="cg"><div class="h">Facility</div>'+days.map(function(d){return '<div class="h">'+d[0]+'<small>'+d[1]+'</small></div>'}).join('');
+  FAC.forEach(function(fa,f){
+    h+='<div class="f">'+fa+'<small>Maple Grove Park</small></div>';
+    for(var d=0;d<7;d++){
+      var c;
+      if(d<4) c=wd(d,f);
+      else if(d===4) c=rep('6:00–8:00 p.m.',f===0);
+      else if(d===5) c=f===0?hl('10:00–11:30 a.m.','U14 games')+ng('11:30 a.m.–1:00 p.m.'):ng('10:00–11:30 a.m.')+ng('11:30 a.m.–1:00 p.m.');
+      else c=f===0?op('1:00–2:30 p.m.',true):'<div class="none">No time</div>';
+      h+='<div>'+c+'</div>';
+    }
+  });
+  return h+'</div>';
+}
+
+/* ---------- mount ---------- */
+$$('[data-tb]').forEach(function(e){e.innerHTML=TB});
+$$('[data-sb]').forEach(function(e){e.innerHTML=sb(e.getAttribute('data-sb'),e.getAttribute('data-sb')==='hl')});
+$$('[data-page]').forEach(function(e){ var k=e.getAttribute('data-page'); e.innerHTML = k==='club'?clubPage():schedPage(k) });
+$$('[data-lines]').forEach(function(e){ e.innerHTML='<div><p class="sp-cap">A division with time</p><div class="ph1" style="margin-bottom:8px">'+head()+'</div>'+tline('time')+'</div><div><p class="sp-cap">A division with none yet (an owner or admin who builds Schedules)</p><div class="ph1" style="margin-bottom:8px">'+head()+'</div>'+tline('none')+'</div>' });
+$$('[data-tools]').forEach(function(e){ e.innerHTML=toolsStrip(e.getAttribute('data-tools')) });
+$$('[data-phone]').forEach(function(e){ e.innerHTML=phPage(e.getAttribute('data-phone')==='sheet') });
+$$('[data-top]').forEach(function(e){ e.innerHTML=top(e.getAttribute('data-top')) });
+fill(document);
+
+/* ---------- notes, tabs, theme, fit ---------- */
+var dlg=$('#dlg'), dT=$('#dlgT'), dB=$('#dlgB');
+function esc(t){return String(t).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function open(title, parts){ dT.textContent=title; dB.innerHTML=parts.map(function(p){return '<div><h4>'+esc(p[0])+'</h4><p>'+esc(p[1])+'</p></div>'}).join(''); if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); }
+$('#dlgX').addEventListener('click',function(){dlg.close()});
+dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
+document.addEventListener('click',function(e){
+  var d=e.target.closest('.dw'); if(d){ e.preventDefault(); open('draft words',[['What this means','These words are not settled. They are drawn so you can react to them. They are the product owner’s call, with /marketing, before the build.']]); return; }
+  var m=e.target.closest('.mk'); if(m){ e.preventDefault(); var kind=m.getAttribute('data-kind')||(m.classList.contains('new')?'NEW':m.classList.contains('res')?'RESTYLED':'UNCHANGED'); open(m.textContent.trim(), [[kind, m.getAttribute('data-note')||'']]); }
+}, true);
+var tabs=$$('.tabs [role=tab]');
+function show(p){ tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p}); try{localStorage.setItem('hl11b3-tab',p)}catch(e){} window.scrollTo(0, $('.tabs').offsetTop - 4); setTimeout(fitAll,0); }
+tabs.forEach(function(t){ t.addEventListener('click',function(){ show(t.getAttribute('data-pane')) }) });
+function thm(v){ $$('.ak').forEach(function(a){ a.classList.toggle('dk', v==='dark') }); $$('[data-thm]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-thm')===v)) }); try{localStorage.setItem('hl9-thm',v)}catch(e){} }
+$$('[data-thm]').forEach(function(b){ b.addEventListener('click',function(){ thm(b.getAttribute('data-thm')) }) });
+var trueSize=false;
+function fitAll(){ $$('.dt-wrap').forEach(function(w){ var dt=w.firstElementChild; if(!dt||!dt.classList.contains('dt')) return; var avail=w.parentElement.clientWidth||w.clientWidth; if(!avail) return; var z=trueSize?1:Math.min(1,avail/1440); w.style.setProperty('--z',z); w.classList.toggle('fit',!trueSize); }) }
+$$('[data-fit]').forEach(function(b){ b.addEventListener('click',function(){ trueSize=!trueSize; fitAll(); b.textContent=trueSize?'Fit to width':'Show at true size'; $$('.zl').forEach(function(z){ z.textContent=trueSize?'True size (1440 wide). Scroll sideways.':'Whole desk screens are scaled to fit; use the button for true size (1440 wide). Windows and phones are always true size.' }) }) });
+window.addEventListener('resize',fitAll);
+var p0='decisions', t0='warm'; try{ p0=localStorage.getItem('hl11b3-tab')||'decisions'; t0=localStorage.getItem('hl9-thm')||'warm' }catch(e){}
+var h=(location.hash||'').slice(1); if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(h)>=0) p0=h;
+if(tabs.map(function(t){return t.getAttribute('data-pane')}).indexOf(p0)<0) p0='decisions';
+thm(t0); tabs.forEach(function(t){t.setAttribute('aria-selected', String(t.getAttribute('data-pane')===p0))}); $$('section.pane').forEach(function(s){s.hidden = s.getAttribute('data-pane')!==p0});
+fitAll();
+})();
+</script>

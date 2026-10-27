@@ -1,0 +1,35 @@
+/* House league's time (Club Tier Stage 11b Part 3, frame k2). The kit's list rows; a stretch's title over each list. */
+
+.source { margin: 0 0 1.25rem; }
+.source:last-child { margin-bottom: 0; }
+.source > p { margin-bottom: 0.9rem; }
+
+.stretch { margin: 0 0 1rem; }
+.stretchTitle {
+  margin: 0 0 0.4rem;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+
+.detail {
+  display: block;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+/* Hours first, on the right at a desk; under the detail on a phone (k2's phone frame has no figure column). */
+.hours { flex-shrink: 0; font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; }
+.hoursUnder { display: none; }
+
+@media (max-width: 640px) {
+  .hours { display: none; }
+  .hoursUnder { display: block; font-size: var(--type-support); color: var(--text-secondary); }
+}
+
+.empty { padding: 0.25rem 0; }
+.emptyNote { margin: 0 0 0.4rem; color: var(--text-primary); }
+
+/* The owner's rare door when everything is divided: it ends the body (decision_rare_door_ends_body). */
+.more { margin-top: 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
