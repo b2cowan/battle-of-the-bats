@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  planPractices, readHandOutBody, readSettings, sameIds, PRACTICE_TIME_WORDS as W,
+  planPractices, readHandOutBody, readSettings, repeatsWords, sameIds, PRACTICE_TIME_WORDS as W, PRACTICE_WINDOW_WORDS,
   type PlannedPractice, type PracticeTimeSlot, type PracticeTimeTeam,
 } from '../../lib/league-practice-time.ts';
 import { partsShapes } from '../../lib/league-time.ts';
@@ -254,6 +254,35 @@ describe('Practice time: a hand-out says what it saw', () => {
   it('compares what it saw in any order', () => {
     assert.equal(sameIds([S, T], [T.toUpperCase(), S]), true);
     assert.equal(sameIds([S], [S, T]), false);
+  });
+});
+
+describe('A practice\'s window (h2): Repeats and From', () => {
+  const base = {
+    seasonId: 's', divisionId: 'd', teamId: 't', endsAt: null, location: null, notes: null, status: 'scheduled' as const,
+    createdAt: '', updatedAt: '', orgVenueId: 'v1', orgVenueFacilityId: 'f2',
+  };
+  // Wednesdays Jun 16 – Aug 25, 2027, 6:00 p.m. Eastern; one week at 7:00 (the turns), one on Diamond 1 (another part).
+  const club = Array.from({ length: 11 }, (_, i) => ({
+    ...base, id: `c${i}`, scheduledAt: new Date(Date.UTC(2027, 5, 16 + i * 7, i === 3 ? 23 : 22)).toISOString(),
+    recurrenceGroupId: null, clubScheduleSlotId: `slot${i}`, fromSchedule: 'Maple Grove · summer 2027',
+  }));
+  const other = { ...club[0], id: 'x', orgVenueFacilityId: 'f1', scheduledAt: '2027-09-01T22:00:00Z' };
+  it('a club practice repeats on its weekday and facility, whatever its turn at the clock', () => {
+    assert.equal(repeatsWords(club[0], [...club, other]), 'Every Wednesday to Aug 25');
+  });
+  it('a hand-booked practice repeats across its series; alone it has no Repeats', () => {
+    const series = [0, 1, 2].map(i => ({ ...base, id: `h${i}`, scheduledAt: new Date(Date.UTC(2027, 5, 12 + i * 7, 17)).toISOString(),
+      recurrenceGroupId: 'g', clubScheduleSlotId: null }));
+    assert.equal(repeatsWords(series[1], series), 'Every Saturday to Jun 26');
+    assert.equal(repeatsWords({ ...series[0], recurrenceGroupId: null }, series), null);
+  });
+  it('From names the schedule, and the rep coach\'s hint is the one spelling', () => {
+    assert.equal(PRACTICE_WINDOW_WORDS.fromValue('Maple Grove · summer 2027'), 'Maple Grove · summer 2027 · the club’s schedule');
+    assert.equal(PRACTICE_WINDOW_WORDS.fromCard('Maple Grove · summer 2027'), 'From Maple Grove · summer 2027');
+    assert.equal(PRACTICE_WINDOW_WORDS.onlyTheClub, 'Only the club can move or remove this practice.');
+    assert.equal(PRACTICE_WINDOW_WORDS.changeTime('U12'), 'Change U12’s practice time');
+    assert.deepEqual([PRACTICE_WINDOW_WORDS.scopeOne, PRACTICE_WINDOW_WORDS.scopeRest], ['This practice only', 'This & future']);
   });
 });
 

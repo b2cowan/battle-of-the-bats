@@ -1090,6 +1090,11 @@ export interface LeaguePractice {
   notes: string | null;
   status: LeaguePracticeStatus;
   recurrenceGroupId: string | null;
+  /** The club's slot this practice was handed out from (Practice time, Stage 11b Part 4; mig 392) — null when booked by
+   *  hand. A club practice changes only in the club's schedule (9d2·5). */
+  clubScheduleSlotId: string | null;
+  /** Its schedule's name ("From {schedule}"), when a route reads it alongside (the Practices view does). */
+  fromSchedule?: string | null;
   createdAt: string;
   updatedAt: string;
 }

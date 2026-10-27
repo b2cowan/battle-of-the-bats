@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
-import { getLeagueSeasonById, cancelPractice } from '@/lib/db';
+import { getLeagueSeasonById, cancelPractice, updatePractices } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } from '@/lib/league-venue';
+import { utcToZonedInputs, zonedWallClockToUtc } from '@/lib/timezone';
+import { SCHEDULE_WORDS } from '@/lib/club-schedule-words';
+import { PRACTICE_WINDOW_WORDS } from '@/lib/league-practice-time';
 
+/**
+ * ONE PRACTICE: cancel it (`{ action: 'cancel', scope: one | remaining | all }`), or move a hand-booked one
+ * (`{ action: 'edit', scope: one | rest, scheduledDate?, startTime, endTime, orgVenueId?, orgVenueFacilityId?, location?,
+ * notes? }` — Club Tier Stage 11b Part 4, h2's pencil; "rest" keeps each date and moves this one and the ones after it in
+ * its series). ⚖ A practice handed out from the club's time is refused both (9d2·5): only the club's schedule moves or
+ * cancels it, and the window offers neither.
+ */
 export const PATCH = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ seasonId: string; practiceId: string }> },) => {
   const { seasonId, practiceId } = await params;
@@ -22,13 +33,18 @@ export const PATCH = withObservability(async (req: NextRequest,
   if (refused) return refused;
   const { data: practice } = await supabaseAdmin
     .from('league_practices')
-    .select('id')
+    .select('id, team_id, status, scheduled_at, recurrence_group_id, club_schedule_slot_id, notes')
     .eq('id', practiceId)
     .eq('season_id', seasonId)
     .single();
   if (!practice) return NextResponse.json({ error: 'Practice not found' }, { status: 404 });
+  if (practice.club_schedule_slot_id) {
+    return NextResponse.json({ error: SCHEDULE_WORDS.onlyTheClub, code: 'from_club' }, { status: 409 });
+  }
 
-  const { action, scope = 'one' } = await req.json();
+  const body = await req.json().catch(() => ({}));
+  const { action, scope = 'one' } = body ?? {};
+  if (action === 'edit') return editPractice(ctx.org.id, practice, scope, body);
   if (action !== 'cancel')
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   if (!['one', 'remaining', 'all'].includes(scope))
@@ -37,3 +53,67 @@ export const PATCH = withObservability(async (req: NextRequest,
   await cancelPractice(practiceId, scope as 'one' | 'remaining' | 'all');
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/practices/[practiceId]' });
+
+const CLOCK = /^\d{2}:\d{2}$/;
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The pencil's save: this practice, or this one and the rest of its series (each keeping its own date). */
+async function editPractice(
+  orgId: string,
+  practice: { id: string; team_id: string; status: string; scheduled_at: string | null; recurrence_group_id: string | null; notes: string | null },
+  scope: unknown,
+  body: Record<string, unknown>,
+) {
+  const W = PRACTICE_WINDOW_WORDS.refusals;
+  if (scope !== 'one' && scope !== 'rest') return NextResponse.json({ error: 'Invalid scope' }, { status: 400 });
+  if (practice.status === 'cancelled') return NextResponse.json({ error: W.cancelled, code: 'cancelled' }, { status: 409 });
+  const startTime = typeof body.startTime === 'string' ? body.startTime : '';
+  const endTime = typeof body.endTime === 'string' && body.endTime ? body.endTime : null;
+  if (!CLOCK.test(startTime) || (endTime && !CLOCK.test(endTime))) return NextResponse.json({ error: W.badTime, code: 'bad_request' }, { status: 400 });
+  if (scope === 'one' && (typeof body.scheduledDate !== 'string' || !DAY.test(body.scheduledDate))) {
+    return NextResponse.json({ error: W.badTime, code: 'bad_request' }, { status: 400 });
+  }
+
+  // The dates it moves: this one, or this one and the ones after it in its series that aren't cancelled.
+  let targets: { id: string; scheduled_at: string | null }[] = [{ id: practice.id, scheduled_at: practice.scheduled_at }];
+  if (scope === 'rest' && practice.recurrence_group_id && practice.scheduled_at) {
+    const { data } = await supabaseAdmin.from('league_practices').select('id, scheduled_at')
+      .eq('org_id', orgId).eq('recurrence_group_id', practice.recurrence_group_id).is('club_schedule_slot_id', null)
+      .neq('status', 'cancelled').gte('scheduled_at', practice.scheduled_at).order('scheduled_at');
+    targets = (data ?? []) as typeof targets;
+  }
+
+  const selection = await resolveLeagueVenueSelection({
+    orgId,
+    orgVenueId: (body.orgVenueId as string | null) ?? null,
+    orgVenueFacilityId: (body.orgVenueFacilityId as string | null) ?? null,
+    locationText: (body.location as string | null) ?? null,
+  });
+  if (!selection.ok) return NextResponse.json({ error: selection.error }, { status: 400 });
+  const { orgVenueId, orgVenueFacilityId, location } = selection.value;
+  const notes = typeof body.notes === 'string' ? body.notes.trim() || null : practice.notes;
+
+  const rows = targets.map(t => {
+    const date = scope === 'one' ? (body.scheduledDate as string) : utcToZonedInputs(t.scheduled_at).date;
+    const scheduledAt = zonedWallClockToUtc(date, startTime) ?? `${date}T${startTime}:00`;
+    const endsAt = endTime ? (resolveEndInstant(scheduledAt, date, endTime) ?? `${date}T${endTime}:00`) : null;
+    return { id: t.id, scheduledAt, endsAt, orgVenueId, orgVenueFacilityId, location, notes };
+  });
+  if (!rows.length) return NextResponse.json({ error: W.cancelled, code: 'cancelled' }, { status: 409 });
+
+  // One booking pool, as Add practice: a picked facility that clashes refuses, named on its date; typed text warns.
+  const { data: team } = await supabaseAdmin.from('league_teams').select('name').eq('id', practice.team_id).maybeSingle();
+  const check = await checkLeagueBookings({
+    orgId,
+    excludePracticeIds: rows.map(r => r.id),
+    proposed: rows.map((r, i) => ({
+      id: `edit-${i}`, kind: 'practice' as const, startsAt: r.scheduledAt, endsAt: r.endsAt,
+      orgVenueId: r.orgVenueId, orgVenueFacilityId: r.orgVenueFacilityId, location: r.location,
+      label: `${team?.name ?? 'Team'} practice`,
+    })),
+  });
+  if (check.blocking.length) return NextResponse.json({ error: check.blocking[0].message, conflicts: check.blocking }, { status: 409 });
+
+  await updatePractices(rows);
+  return NextResponse.json({ ok: true, count: rows.length, warnings: check.warnings.map(w => w.message) });
+}

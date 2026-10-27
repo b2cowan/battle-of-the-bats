@@ -95,9 +95,13 @@ export const POST = withObservability(async (req: Request,
 
   // 1. House league's own rule — per occurrence, so a series' refusal is on the date it falls on.
   const excludeGameIds = typeof body.excludeGameId === 'string' ? [body.excludeGameId] : [];
+  // A practice being edited (Stage 11b Part 4): its own dates are never another booking.
+  const excludePracticeIds = Array.isArray(body.excludePracticeIds)
+    ? (body.excludePracticeIds as unknown[]).filter((x): x is string => typeof x === 'string').slice(0, MAX_OCCURRENCES) : [];
   const own = await checkLeagueBookings({
     orgId: ctx.org.id,
     excludeGameIds,
+    excludePracticeIds,
     proposed: slots.map((s, i) => ({
       id: `proposed-${i}`, kind, startsAt: s.startsAt, endsAt: s.endsAt,
       orgVenueId, orgVenueFacilityId, location, label: `${label} #${i}`,

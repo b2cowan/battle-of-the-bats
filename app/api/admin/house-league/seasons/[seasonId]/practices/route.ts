@@ -45,7 +45,20 @@ export const GET = withObservability(async (req: NextRequest,
   if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
 
   const practices = await getPracticesForTeam(teamId);
-  return NextResponse.json({ practices });
+  // A practice handed out from the club's time reads "From {schedule}" (Stage 11b Part 4, h2): its slot's schedule.
+  const slotIds = [...new Set(practices.map(p => p.clubScheduleSlotId).filter((x): x is string => !!x))];
+  const scheduleOf = new Map<string, string>();
+  if (slotIds.length) {
+    const { data } = await supabaseAdmin.from('club_schedule_slots').select('id, club_schedules!inner(name)')
+      .eq('org_id', ctx.org.id).in('id', slotIds);
+    for (const r of (data ?? []) as { id: string; club_schedules: { name: string } | { name: string }[] }[]) {
+      const s = Array.isArray(r.club_schedules) ? r.club_schedules[0] : r.club_schedules;
+      if (s?.name) scheduleOf.set(r.id, s.name);
+    }
+  }
+  return NextResponse.json({
+    practices: practices.map(p => (p.clubScheduleSlotId ? { ...p, fromSchedule: scheduleOf.get(p.clubScheduleSlotId) ?? null } : p)),
+  });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/practices' });
 
 export const POST = withObservability(async (req: NextRequest,

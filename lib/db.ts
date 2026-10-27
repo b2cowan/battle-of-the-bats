@@ -2729,6 +2729,7 @@ function mapLeaguePractice(row: Record<string, unknown>): LeaguePractice {
     notes:             row.notes as string | null,
     status:            row.status as LeaguePracticeStatus,
     recurrenceGroupId: row.recurrence_group_id as string | null,
+    clubScheduleSlotId: (row.club_schedule_slot_id as string | null) ?? null,
     createdAt:         row.created_at as string,
     updatedAt:         row.updated_at as string,
   };
@@ -2779,6 +2780,22 @@ export async function createPractices(inputs: LeaguePracticeInput[]): Promise<Le
   // venue columns (mig 229) that failure mode is now reachable, so it must surface.
   if (error) throw new Error(`createPractices failed: ${error.message}`);
   return (data ?? []).map(mapLeaguePractice);
+}
+
+/** A hand-booked practice moved (Stage 11b Part 4, h2's pencil): its time, place and notes. Never a club practice — the
+ *  route refuses one (only the club's schedule changes it), and nothing here writes its slot link. */
+export async function updatePractices(rows: {
+  id: string; scheduledAt: string; endsAt: string | null;
+  orgVenueId: string | null; orgVenueFacilityId: string | null; location: string | null; notes: string | null;
+}[]): Promise<void> {
+  const now = new Date().toISOString();
+  for (const r of rows) {
+    const { error } = await supabaseAdmin.from('league_practices').update({
+      scheduled_at: r.scheduledAt, ends_at: r.endsAt, org_venue_id: r.orgVenueId, org_venue_facility_id: r.orgVenueFacilityId,
+      location: r.location, notes: r.notes, updated_at: now,
+    }).eq('id', r.id).is('club_schedule_slot_id', null);
+    if (error) throw new Error(`updatePractices failed: ${error.message}`);
+  }
 }
 
 export async function cancelPractice(

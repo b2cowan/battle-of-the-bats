@@ -26,7 +26,8 @@ import HouseLeagueTimeWindow from '@/components/admin/kit/club/league/time/House
 import HouseLeagueTimeLine, { showTimeLine, useBuildsSchedules } from '@/components/admin/kit/club/league/time/HouseLeagueTimeLine';
 import { LEAGUE_TIME_WORDS, type LeagueTime, type LeagueUse } from '@/lib/league-time';
 import PracticeTimeWindow from '@/components/admin/kit/club/league/time/PracticeTimeWindow';
-import { PRACTICE_TIME_WORDS } from '@/lib/league-practice-time';
+import PracticeWindow from '@/components/admin/kit/club/league/practices/PracticeWindow';
+import { PRACTICE_TIME_WORDS, PRACTICE_WINDOW_WORDS } from '@/lib/league-practice-time';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { RecordDelete, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
 import { useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
@@ -251,23 +252,28 @@ function useLeagueLine(opts: {
   kind: 'game' | 'practice';
   /** One booking… */
   occurrence?: { date: string; startTime: string; endTime: string } | null;
-  /** …or a practice series (expanded on the server by the save's own generator). */
+  /** …or a practice series (expanded on the server by the save's own generator)… */
   series?: { dayOfWeek: number; startDate: string; endDate: string; startTime: string; endTime: string } | null;
+  /** …or the dates an edit of a series reaches (Stage 11b Part 4). */
+  occurrences?: { date: string; startTime: string; endTime: string }[] | null;
   excludeGameId?: string | null;
+  /** The practices an edit moves: never a clash with themselves. */
+  excludePracticeIds?: string[] | null;
   teamId?: string | null;
 }) {
-  const { checkPath, sport, where, venues, kind, occurrence, series, excludeGameId, teamId } = opts;
+  const { checkPath, sport, where, venues, kind, occurrence, series, occurrences, excludeGameId, excludePracticeIds, teamId } = opts;
   const ready = where.source === 'club' && !!where.orgVenueId && (
     series ? !!(series.startDate && series.endDate && series.startTime && series.endTime)
-      : !!(occurrence?.date && occurrence.startTime)
+      : occurrences ? occurrences.length > 0 && occurrences.every(o => o.date && o.startTime)
+        : !!(occurrence?.date && occurrence.startTime)
   );
   const { result, checking, lineIsCurrent } = useClashCheck(
     ready ? {
       path: checkPath,
       body: {
         kind, orgVenueId: where.orgVenueId, orgVenueFacilityId: where.orgVenueFacilityId,
-        ...(series ? { series } : { occurrences: [occurrence] }),
-        excludeGameId: excludeGameId ?? null, teamId: teamId ?? null,
+        ...(series ? { series } : { occurrences: occurrences ?? [occurrence] }),
+        excludeGameId: excludeGameId ?? null, excludePracticeIds: excludePracticeIds ?? [], teamId: teamId ?? null,
       },
     } : null,
     readLeagueCheck,
@@ -284,18 +290,18 @@ function useLeagueLine(opts: {
         sport, kinds: ctx.kinds, matchedOn: refusalAt.refusal.matchedOn, venueName: ctx.venueName, facilityName: ctx.facilityName,
         partnerLabel: refusalAt.refusal.partnerLabel, partnerKind: refusalAt.refusal.partnerKind, proposedKind: kind,
         startIso: refusalAt.refusal.partnerStartsAt, endIso: refusalAt.refusal.partnerEndsAt,
-        date: series ? refusalAt.date : null,
+        date: series || occurrences ? refusalAt.date : null,
       })
     : null;
   const cross = result?.some(r => r.crossProgram.length)
-    ? (series
+    ? (series || occurrences
         ? leagueSeriesLine(result.map(r => ({ date: r.date, findings: r.crossProgram })), ctx)
         : clashLine(result[0]?.crossProgram ?? [], ctx))
     : null;
   // The permit's quiet line (Stage 10a, Ask 3): under the league's own and the amber line, never merged, never a refusal.
   const permits = (result ?? []).map(r => r.permit ?? null);
   const outside = permits.some(Boolean)
-    ? (series ? permitSeriesLine(permits, (result ?? []).map(r => r.date), sport, { nameTheDates: true }) : permitLine(permits[0], sport))
+    ? (series || occurrences ? permitSeriesLine(permits, (result ?? []).map(r => r.date), sport, { nameTheDates: true }) : permitLine(permits[0], sport))
     : '';
   return {
     refused: !!refusal,
@@ -663,6 +669,7 @@ function PracticeModal({
   checkPath,
   orgSlug,
   saving,
+  editing,
   onSave,
   onClose,
 }: {
@@ -672,46 +679,61 @@ function PracticeModal({
   checkPath: string;
   orgSlug: string;
   saving: boolean;
+  /** A hand-booked practice opened to edit (Stage 11b Part 4, h2's pencil): this one, or this one and the rest of its
+   *  series — `reach` is each practice it moves and its club day (asked first, so the line checks exactly them). */
+  editing?: { practice: LeaguePractice; scope: 'one' | 'rest'; reach: { id: string; date: string }[] } | null;
   onSave: (form: PracticeForm) => Promise<void>;
   onClose: () => void;
 }) {
   const B = useKitButtons(LEGACY_BUTTONS);
   const today = tournamentToday();
-  const [form, setForm] = useState<PracticeForm>({
-    recurring: false,
-    scheduledDate: today,
-    dayOfWeek: '2',
-    startDate: today,
-    endDate: today,
-    startTime: '18:00',
-    endTime: '20:00',
-    where: EMPTY_WHERE,
-    notes: '',
+  const [form, setForm] = useState<PracticeForm>(() => {
+    const p = editing?.practice;
+    const start = p?.scheduledAt ? utcToZonedInputs(p.scheduledAt) : null;
+    const end = p?.endsAt ? utcToZonedInputs(p.endsAt) : null;
+    return {
+      recurring: false,
+      scheduledDate: start?.date || today,
+      dayOfWeek: '2',
+      startDate: today,
+      endDate: today,
+      startTime: start?.time || '18:00',
+      endTime: p ? (end?.time ?? '') : '20:00',
+      where: p ? whereOfLibraryRow(p, venues) : EMPTY_WHERE,
+      notes: p?.notes ?? '',
+    };
   });
+  const rest = editing?.scope === 'rest';
+  const title = editing ? PRACTICE_WINDOW_WORDS.editTitle(team.name) : `Add practice — ${team.name}`;
 
   function set(k: keyof PracticeForm, v: string | boolean) {
     setForm(f => ({ ...f, [k]: v }));
   }
 
   // The line under the field (Club Tier Stage 6a): a series is checked date by date — the same dates the save will
-  // write — and its refusal names the date; another program's booking names its dates in amber.
+  // write — and its refusal names the date; another program's booking names its dates in amber. An edit checks the
+  // dates it reaches, leaving out the practices it moves.
   const { refused, line, checking, lineIsCurrent } = useLeagueLine({
     checkPath, sport, where: form.where, venues, kind: 'practice', teamId: team.id,
-    series: form.recurring
+    series: !editing && form.recurring
       ? { dayOfWeek: Number(form.dayOfWeek), startDate: form.startDate, endDate: form.endDate, startTime: form.startTime, endTime: form.endTime }
       : null,
-    occurrence: form.recurring ? null : { date: form.scheduledDate, startTime: form.startTime, endTime: form.endTime },
+    occurrence: rest || (!editing && form.recurring) ? null : { date: form.scheduledDate, startTime: form.startTime, endTime: form.endTime },
+    occurrences: rest ? editing!.reach.map(r => ({ date: r.date, startTime: form.startTime, endTime: form.endTime })) : null,
+    excludePracticeIds: editing ? editing.reach.map(r => r.id) : null,
   });
 
   return (
     <div className={styles.modalOverlay} onPointerDown={e => e.target === e.currentTarget && !saving && onClose()}>
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Add practice — ${team.name}`}>
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={title}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Add practice — {team.name}</h2>
+          <h2 className={styles.modalTitle}>{title}</h2>
           <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        {rest && <p style={{ fontSize: '0.88rem', color: 'var(--white-60)', marginBottom: '1rem' }}>{PRACTICE_WINDOW_WORDS.editRestHint}</p>}
+
+        {!editing && <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
           <button
             style={{ ...(!form.recurring ? B.primary : B.secondary), flex: 1 }}
             onClick={() => set('recurring', false)}
@@ -724,10 +746,10 @@ function PracticeModal({
           >
             Recurring series
           </button>
-        </div>
+        </div>}
 
         <div className={styles.formGrid}>
-          {!form.recurring ? (
+          {rest ? null : !form.recurring ? (
             <div className={styles.field}>
               <label className={styles.label}>Date</label>
               <DateInput className={styles.input} value={form.scheduledDate} onChange={v => set('scheduledDate', v)} />
@@ -783,7 +805,7 @@ function PracticeModal({
             onClick={async () => { if (await lineIsCurrent()) await onSave(form); }}
             disabled={saving || refused || checking}
           >
-            {saving ? 'Saving…' : form.recurring ? 'Create series' : 'Create practice'}
+            {saving ? 'Saving…' : editing ? PRACTICE_WINDOW_WORDS.save : form.recurring ? 'Create series' : 'Create practice'}
           </button>
         </div>
       </div>
@@ -891,6 +913,9 @@ export default function SchedulePage() {
   const [showPracticeModal, setShowPracticeModal] = useState(false);
   const [activePractice, setActivePractice] = useState<LeaguePractice | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  // A practice's window, read first (Part 4, h2), and its pencil's form (a hand-booked practice, this one or the rest).
+  const [openPractice, setOpenPractice] = useState<LeaguePractice | null>(null);
+  const [editingPractice, setEditingPractice] = useState<{ practice: LeaguePractice; scope: 'one' | 'rest'; reach: { id: string; date: string }[] } | null>(null);
 
   const [feedback, setFeedback] = useState<FeedbackState>({ isOpen: false, title: '', message: '', type: 'success' });
 
@@ -1189,7 +1214,35 @@ export default function SchedulePage() {
 
   // ── Practice CRUD ──────────────────────────────────────────────────────────
 
+  /** h2's pencil saved: this hand-booked practice, or it and the rest of its series (each keeping its date). */
+  async function handleEditPractice(form: PracticeForm) {
+    if (!editingPractice) return;
+    setSaving(true);
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/practices/${editingPractice.practice.id}${orgQuery}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'edit', scope: editingPractice.scope,
+        scheduledDate: form.scheduledDate, startTime: form.startTime, endTime: form.endTime || null,
+        ...whereLibraryBody(form.where), notes: form.notes,
+      }),
+    }).catch(() => null);
+    setSaving(false);
+    const data = res ? await res.json().catch(() => null) : null;
+    if (!res?.ok) {
+      showError(res?.status === 409 && !data?.code ? `That ${noun.toLowerCase()} is already booked` : 'Could not save practice', data?.error ?? 'Unknown error');
+      return;
+    }
+    setEditingPractice(null);
+    if (Array.isArray(data?.warnings) && data.warnings.length) {
+      setFeedback({ isOpen: true, title: PRACTICE_WINDOW_WORDS.saved(data.count ?? 1), message: `Possible clash: ${data.warnings[0]}`, type: 'info' });
+    }
+    await loadPractices(selectedTeamId);
+    await loadHealth();
+  }
+
   async function handleSavePractice(form: PracticeForm) {
+    if (editingPractice) return handleEditPractice(form);
     setSaving(true);
     const body: Record<string, unknown> = {
       teamId:     selectedTeamId,
@@ -1697,13 +1750,16 @@ export default function SchedulePage() {
                   const team = teamMap.get(p.teamId);
                   const dt = p.scheduledAt ? formatDateTime(p.scheduledAt) : null;
                   const endDt = p.endsAt ? formatDateTime(p.endsAt) : null;
-                  const clickable = canManage && p.status !== 'cancelled';
+                  // Every practice opens its window, read first (Part 4, h2); its doors are the window's.
                   return (
                     <div
                       key={p.id}
                       className={`${styles.practiceCard} ${p.status === 'cancelled' ? styles.gameCardCancelled : ''}`}
-                      style={{ cursor: clickable ? 'pointer' : 'default' }}
-                      onClick={() => { if (clickable) { setActivePractice(p); setShowCancelModal(true); } }}
+                      style={{ cursor: 'pointer' }}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setOpenPractice(p)}
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenPractice(p); } }}
                     >
                       <div className={styles.practiceCardHeader}>
                         {team?.color && <span className={styles.teamDot} style={{ background: team.color }} />}
@@ -1717,6 +1773,7 @@ export default function SchedulePage() {
                           <span>{dt.date}</span>
                           <span>{dt.time}{endDt ? ` – ${endDt.time}` : ''}</span>
                           {p.location && <span>{p.location}</span>}
+                          {p.clubScheduleSlotId && <span>{PRACTICE_WINDOW_WORDS.fromCard(p.fromSchedule)}</span>}
                         </div>
                       )}
                       {p.notes && (
@@ -1732,9 +1789,6 @@ export default function SchedulePage() {
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.68rem', fontWeight: 700, color: 'var(--warning)' }}>
                             <AlertTriangle size={11} /> Double-booked
                           </span>
-                        )}
-                        {clickable && (
-                          <span style={kx({ fontSize: '0.68rem', color: 'var(--white-30)' }, KIT_INK.tertiary)}>click to cancel</span>
                         )}
                       </div>
                     </div>
@@ -1789,6 +1843,42 @@ export default function SchedulePage() {
           saving={saving}
           onSave={handleSavePractice}
           onClose={() => setShowPracticeModal(false)}
+        />
+      )}
+
+      {/* A practice's window, read first (Part 4, h2) */}
+      {openPractice && (
+        <PracticeWindow practice={openPractice} teamName={teamMap.get(openPractice.teamId)?.name ?? 'Team'}
+          divisionName={selectedDiv?.name ?? ''} teamPractices={practices} canRun={canManage}
+          onClose={() => setOpenPractice(null)}
+          onEdit={scope => {
+            const p = openPractice;
+            const day = (x: LeaguePractice) => (x.scheduledAt ? utcToZonedInputs(x.scheduledAt).date : '');
+            // The rest of the series: this one and the ones after it that aren't cancelled (the route moves the same).
+            const reach = scope === 'rest' && p.recurrenceGroupId && p.scheduledAt
+              ? practices.filter(x => x.recurrenceGroupId === p.recurrenceGroupId && x.status !== 'cancelled' && !x.clubScheduleSlotId
+                  && x.scheduledAt && x.scheduledAt >= p.scheduledAt!)
+                .sort((a, b) => a.scheduledAt!.localeCompare(b.scheduledAt!)).map(x => ({ id: x.id, date: day(x) }))
+              : [{ id: p.id, date: day(p) }];
+            setOpenPractice(null);
+            setEditingPractice({ practice: p, scope, reach });
+          }}
+          onCancel={() => { setActivePractice(openPractice); setOpenPractice(null); setShowCancelModal(true); }}
+          onChangePracticeTime={() => { setOpenPractice(null); setPracticeTimeOpen(true); }} />
+      )}
+
+      {/* A hand-booked practice's form, opened to edit */}
+      {editingPractice && teamMap.get(editingPractice.practice.teamId) && (
+        <PracticeModal
+          team={teamMap.get(editingPractice.practice.teamId)!}
+          venues={clubVenues}
+          sport={season?.sport}
+          checkPath={checkPath}
+          orgSlug={orgSlug}
+          saving={saving}
+          editing={editingPractice}
+          onSave={handleSavePractice}
+          onClose={() => setEditingPractice(null)}
         />
       )}
 

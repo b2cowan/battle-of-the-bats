@@ -27,8 +27,12 @@
  * ⚖ Only slots still to come are planned over (the route's read, lib/league-time-server.ts): the step rewrites every
  * practice the rows name, so a started slot is history and is never in a plan.
  */
-import { mondayOfDay } from './timezone.ts';
+import { formatStoredDate, mondayOfDay, utcToZonedInputs } from './timezone.ts';
 import { pluralize, possessive } from './utils.ts';
+import { weekdayOf } from './permit-time.ts';
+import { SCHEDULE_COACH_WORDS, SCHEDULE_WORDS } from './club-schedule-words.ts';
+import { SERIES_SCOPE_ROWS } from './coach-series-scope.ts';
+import type { LeaguePractice } from './types.ts';
 
 /** One slot of a division's practice time, its club day and clock already worked out in the club's zone. */
 export interface PracticeTimeSlot {
@@ -330,6 +334,62 @@ export const PRACTICE_TIME_WORDS = {
   loading: 'Loading practice time…',
   loadFailed: 'Practice time didn’t load. Try again.',
   saveFailed: 'The practices didn’t hand out. Try again.',
+} as const;
+
+// ── A PRACTICE'S WINDOW, READ FIRST (frame h2) ──────────────────────────────────────────────────────────────────
+
+const WEEKDAY = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+/**
+ * "Every Wednesday to Aug 25" — h2's Repeats: the practices of its run that aren't cancelled. A club practice's run is the
+ * team's practices from the same schedule on the same weekday and facility (a hand-out keeps a team's part, its clock
+ * taking turns); a hand-booked one's is its series. Null when it stands alone.
+ */
+export function repeatsWords(practice: LeaguePractice, teamPractices: readonly LeaguePractice[]): string | null {
+  if (!practice.scheduledAt) return null;
+  const day = (p: LeaguePractice) => (p.scheduledAt ? utcToZonedInputs(p.scheduledAt).date : '');
+  const weekday = weekdayOf(day(practice));
+  const run = teamPractices.filter(p => p.status !== 'cancelled' && p.scheduledAt && (practice.clubScheduleSlotId
+    ? p.clubScheduleSlotId && (p.fromSchedule ?? null) === (practice.fromSchedule ?? null)
+      && p.orgVenueFacilityId === practice.orgVenueFacilityId && p.orgVenueId === practice.orgVenueId && weekdayOf(day(p)) === weekday
+    : !!practice.recurrenceGroupId && p.recurrenceGroupId === practice.recurrenceGroupId));
+  if (run.length < 2) return null;
+  const last = run.map(day).sort().at(-1)!;
+  return `Every ${WEEKDAY[weekday]} to ${formatStoredDate(last, { withYear: false })}`;
+}
+
+/** h2's words. The source line and the hint are the rep coach's own (one spelling: SCHEDULE_WORDS); [marketing] the rest. */
+export const PRACTICE_WINDOW_WORDS = {
+  eyebrow: (division: string) => `${division} · a practice`,
+  title: (team: string) => `Practice · ${team}`,
+  when: 'When',
+  where: 'Where',
+  repeats: 'Repeats',
+  from: 'From',
+  notes: 'Notes',
+  /** "Maple Grove · summer 2027 · the club's schedule"; a slot the club has since removed names no schedule. */
+  fromValue: (schedule: string | null | undefined) => (schedule ? `${schedule} ${SCHEDULE_COACH_WORDS.sourceTail}` : 'The club’s schedule'),
+  /** The Practices view's card. */
+  fromCard: (schedule: string | null | undefined) => (schedule ? `From ${schedule}` : 'From the club’s schedule'),
+  onlyTheClub: SCHEDULE_WORDS.onlyTheClub,
+  changeTime: (division: string) => `Change ${possessive(division)} practice time`,
+  edit: 'Edit this practice',
+  cancel: 'Cancel this practice',
+  /** The pencil on a series asks first (the rep coach's rows, ruled 2026-10-09). */
+  scopeTitle: 'Edit which practices?',
+  scopeOne: SERIES_SCOPE_ROWS[0].label('practice'),
+  scopeRest: SERIES_SCOPE_ROWS[1].label('practice'),
+  scopeNext: 'Edit',
+  close: 'Close',
+  /** The edit form (today's practice form, opened to edit). */
+  editTitle: (team: string) => `Edit practice — ${team}`,
+  editRestHint: 'Each practice keeps its own date. The time, place and notes change for this one and the ones after it.',
+  save: 'Save',
+  saved: (n: number) => `${pluralize(n, 'practice')} changed.`,
+  refusals: {
+    cancelled: 'This practice is cancelled, so it can’t move.',
+    badTime: 'Pick a date and a start time.',
+  },
 } as const;
 
 /** [marketing] The route's refusals, one sentence each. */
