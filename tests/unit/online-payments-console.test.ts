@@ -22,7 +22,8 @@ describe('console access by role (owner ruling 3)', () => {
     assert.match(readCode('app/api/platform-admin/orgs/[id]/online-payments/route.ts'), /requirePlatformPower\('find_stripe'\)/);
     assert.match(readCode('app/api/platform-admin/orgs/[id]/online-payments/player/route.ts'), /requirePlatformPower\('find_stripe'\)/);
     assert.match(readCode('app/platform-admin/online-payments/page.tsx'), /requirePlatformAreaView\('online_payments'\)/);
-    assert.match(readCode('app/platform-admin/orgs/[id]/page.tsx'), /const onlinePayments = readsStripe \? await readClubOnlinePayments\(id\)/);
+    // Started beside the record's other reads (/review).
+    assert.match(readCode('app/platform-admin/orgs/[id]/page.tsx'), /const onlinePaymentsRead = readsStripe \? readClubOnlinePayments\(id\)\.catch/);
   });
   it('the Health menu entry and Today’s count', () => {
     assert.match(readCode('app/platform-admin/console-menu.ts'), /\{ href: '\/platform-admin\/online-payments', label: 'Online payments', icon: 'payments', area: 'online_payments' \}/);
@@ -44,7 +45,10 @@ describe('read only (ask 7): nothing writes, never a card or bank number, a name
   it('Show the player logs every opening, and reads only this club’s payment', () => {
     const player = readCode('app/api/platform-admin/orgs/[id]/online-payments/player/route.ts');
     assert.match(player, /\.eq\('id', paymentId\)\.eq\('org_id', id\)/);
-    assert.match(player, /writePlatformAuditLog\([^)]*'online_payment_player_shown'/);
+    // Logged FIRST and strictly: a log that can't be written shows no name; only a disputed payment's (/review).
+    assert.match(player, /await writePlatformAuditLogStrict\([^)]*'online_payment_player_shown'/);
+    assert.ok(player.indexOf('writePlatformAuditLogStrict(') < player.indexOf("from('teams')"));
+    assert.match(player, /from\('online_payment_disputes'\)[\s\S]*?if \(!disputed\) return/);
     assert.doesNotMatch(player, /card_last4|bank_last4/);
   });
   it('a club that never connected has no tab', () => {
@@ -72,5 +76,27 @@ describe('the Health list (words §6.2)', () => {
     const story = readCode('lib/platform-story.ts');
     for (const a of ['payouts_fee_payer_changed', 'payouts_terms_agreed', 'payouts_closed_by_stripe']) assert.ok(story.includes(`'${a}'`), a);
     assert.match(readCode('app/api/payments/connect-account-events/route.ts'), /action: 'payouts_closed_by_stripe'/);
+  });
+});
+
+describe('the /review of 12d-2 (Parts 2, 4, 5)', () => {
+  it('Stripe closed an account = the record its event writes, never a missing name', () => {
+    const lib = readCode('lib/platform-online-payments.ts');
+    assert.match(lib, /stripeClosed: !!acct\.disconnected_at && \(closedByStripe\.count \?\? 0\) > 0/);
+    assert.match(lib, /if \(a\.disconnected_at && closedOrgs\.has\(a\.org_id\)\) rows\.push/);
+    assert.doesNotMatch(lib, /!a\.disconnected_by|!acct\.disconnected_by/);
+  });
+  it('a tab the record does not show opens the Story; the move line only while payments are on', () => {
+    const cr = readCode('app/platform-admin/orgs/[id]/ClubRecord.tsx');
+    assert.match(cr, /t\.key === asked && \(t\.key !== 'payments' \|\| props\.onlinePayments !== null\)/);
+    assert.match(cr, /!op\.account\.ended && !hasPlanFeature/);
+  });
+  it('the tab counts as the Health list does, and says "Nothing is open" only when its count is 0', () => {
+    assert.match(readCode('lib/platform-online-payments.ts'), /\.lt\('due_at', now\.toISOString\(\)\);\s*if \(pastDueError\) throw pastDueError;/);
+    assert.match(readCode('app/platform-admin/orgs/[id]/OnlinePaymentsTab.tsx'), /const nothingOpen = read\.openItems === 0 && !read\.clearing;/);
+  });
+  it('the ending item waits on a failed read (a settle is final)', () => {
+    const na = readCode('lib/needs-attention.ts');
+    assert.match(na, /try \{ still = await upcomingEnding\(r\.org_id, now\); \} catch \{ out\.set\(r\.id, 'waiting'\); continue; \}/);
   });
 });

@@ -146,3 +146,24 @@ describe('the tab and who reads it (ask 5; words §7 question 6)', () => {
       /if \(!ctx \|\| isOrgBillingSuspended\(ctx\.org\) \|\| !\(await clubHasPayouts\(ctx\.org\.id\)\)\) notFound\(\);/);
   });
 });
+
+describe('the /review of 12d-2 (the payouts read)', () => {
+  const lib = readCode('lib/online-payouts.ts');
+  it('a payout on its way is kept although it arrives after the chosen end', () => {
+    assert.match(lib, /return day >= args\.from && \(day <= args\.to \|\| onItsWay\);/);
+  });
+  it('every read is checked and chunked, two screens share one read, and old reads are swept', () => {
+    assert.match(lib, /async function rowsWhereIn<T>/);
+    assert.doesNotMatch(lib, /const \[\{ data: refunds \}/);
+    assert.match(lib, /const running = inFlight\.get\(key\);/);
+    assert.match(lib, /for \(const \[k, v\] of held\) if \(now - v\.at >= HOLD_MS\) held\.delete\(k\);/);
+  });
+  it('each payout names the bank account it went to', () => {
+    assert.match(lib, /last4: last4Of\(p\.destination\),/);
+  });
+  it('a receipt is found whole', () => {
+    const p = { amount: 1, lines: [{ id: 'x', kind: 'payment' as const, at: '', who: 'A', what: '', receiptNo: 1084, amount: 1 }] };
+    assert.equal(payoutMatches(p, '1084'), true);
+    assert.equal(payoutMatches(p, '108'), false);
+  });
+});

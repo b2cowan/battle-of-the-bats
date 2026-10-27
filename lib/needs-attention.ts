@@ -1,4 +1,6 @@
 import 'server-only';
+import { hasPlanFeature } from './plan-features';
+import { effectiveOrgFactsForId } from './entitlement-grants';
 import { supabaseAdmin } from './supabase-admin';
 import { resolvePersonNamer } from './db';
 import { clubMoneyLinks } from './club-money-notify';
@@ -678,8 +680,16 @@ const paymentsEnding: Resolver = async rows => {
     const endingFor = meta(r, 'endingFor');
     const kind = meta(r, 'endingKind');
     if (kind === 'comp' && endingFor && endingFor <= now.toISOString()) { out.set(r.id, said(W.endingPassed)); continue; }
-    const still = await upcomingEnding(r.org_id, now).catch(() => null);
-    out.set(r.id, still && still.at === endingFor ? 'waiting' : said(kind === 'failed' && !still ? W.endingOff : W.endingPassed));
+    // A read that fails keeps it waiting: a settle is final, and a blip must never retire a live warning (/review).
+    let still: Awaited<ReturnType<typeof upcomingEnding>>;
+    try { still = await upcomingEnding(r.org_id, now); } catch { out.set(r.id, 'waiting'); continue; }
+    if (still && still.at === endingFor) { out.set(r.id, 'waiting'); continue; }
+    if (still) { out.set(r.id, said(W.endingPassed)); continue; } // a newer ending replaced it (its own item says so)
+    // Nothing coming any more: a comp moved later, or the payment went through — payments carry on. A failed payment that
+    // ended in a suspension stopped them.
+    const facts = await effectiveOrgFactsForId(r.org_id).catch(() => null);
+    if (!facts) { out.set(r.id, 'waiting'); continue; }
+    out.set(r.id, said(facts.subscriptionStatus === 'canceled' || !hasPlanFeature(facts.planId, 'online_payments') ? W.endingPassed : W.endingOff));
   }
   return out;
 };

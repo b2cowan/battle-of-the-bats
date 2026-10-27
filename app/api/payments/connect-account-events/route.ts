@@ -72,8 +72,9 @@ export const POST = withObservability(async (req: Request) => {
       // 12d-2 (Part 5): the club's Story says Stripe closed it — once, though Stripe may send the event again.
       const { data: acct } = await supabaseAdmin.from('org_payment_accounts').select('org_id').eq('stripe_account_id', account).maybeSingle();
       if (acct?.org_id) {
-        const { count } = await supabaseAdmin.from('org_audit_log').select('id', { count: 'exact', head: true })
+        const { count, error: countError } = await supabaseAdmin.from('org_audit_log').select('id', { count: 'exact', head: true })
           .eq('org_id', acct.org_id).eq('action', 'payouts_closed_by_stripe').contains('payload', { stripeAccountId: account });
+        if (countError) throw countError;
         if (!count) await supabaseAdmin.from('org_audit_log').insert({ org_id: acct.org_id, actor_id: null, action: 'payouts_closed_by_stripe', payload: { stripeAccountId: account } });
       }
     } else {

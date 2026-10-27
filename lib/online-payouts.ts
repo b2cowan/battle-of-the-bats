@@ -31,6 +31,8 @@ export interface PayoutRow {
   contents: PayoutContents;
   lines: PayoutLine[];
   counts: { payments: number; refunds: number };
+  /** The bank account THIS payout went to (a club can change its account inside the chosen dates; /review). */
+  last4: string | null;
 }
 
 export interface PayoutsRead {
@@ -43,9 +45,26 @@ export interface PayoutsRead {
 }
 
 const HOLD_MS = 3 * 60 * 1000;
-const MAX_PAGES = 10;
+const MAX_PAGES = 20;
 const CONCURRENT = 4;
+/** How many ids one `.in()` filter carries: a long list overruns the request. */
+const ID_CHUNK = 100;
+/** A payout on its way arrives after today: the read looks this far past the chosen end for one (/review). */
+const ON_ITS_WAY_DAYS = 21;
 const held = new Map<string, { at: number; read: PayoutsRead }>();
+/** A read in flight, shared by a second screen asking the same thing (the card's summary and its list; /review). */
+const inFlight = new Map<string, Promise<PayoutsRead>>();
+
+/** Rows of one table whose column is in `ids`, read 100 ids at a time; a failed read throws (never a silent "not ours"). */
+async function rowsWhereIn<T>(ids: readonly string[], read: (chunk: string[]) => PromiseLike<{ data: unknown[] | null; error: unknown }>): Promise<T[]> {
+  const out: T[] = [];
+  for (let i = 0; i < ids.length; i += ID_CHUNK) {
+    const { data, error } = await read(ids.slice(i, i + ID_CHUNK));
+    if (error) throw error;
+    out.push(...((data ?? []) as T[]));
+  }
+  return out;
+}
 
 /** A calendar day as Stripe's unix seconds. Stripe stamps a payout's `arrival_date` at midnight UTC of the arrival day
  *  (a date, not a moment), so the day is read in UTC, never in the club's zone. */
@@ -91,55 +110,48 @@ async function ourIndex(orgId: string, bts: readonly BtIn[]): Promise<OurIndex> 
   const disputeIds = all.filter(i => i.startsWith('du_') || i.startsWith('dp_'));
   if (!all.length) return { payments: [], refunds: {}, disputes: {} };
 
-  const [{ data: refunds }, { data: disputes }] = await Promise.all([
-    refundIds.length
-      ? supabaseAdmin.from('online_payment_refunds').select('stripe_refund_id, online_payment_id').eq('org_id', orgId).in('stripe_refund_id', refundIds)
-      : Promise.resolve({ data: [] }),
-    disputeIds.length
-      ? supabaseAdmin.from('online_payment_disputes').select('stripe_dispute_id, online_payment_id').eq('org_id', orgId).in('stripe_dispute_id', disputeIds)
-      : Promise.resolve({ data: [] }),
+  const [refunds, disputes] = await Promise.all([
+    rowsWhereIn<{ stripe_refund_id: string; online_payment_id: string }>(refundIds, c =>
+      supabaseAdmin.from('online_payment_refunds').select('stripe_refund_id, online_payment_id').eq('org_id', orgId).in('stripe_refund_id', c)),
+    rowsWhereIn<{ stripe_dispute_id: string; online_payment_id: string }>(disputeIds, c =>
+      supabaseAdmin.from('online_payment_disputes').select('stripe_dispute_id, online_payment_id').eq('org_id', orgId).in('stripe_dispute_id', c)),
   ]);
   const refundMap: Record<string, string> = {};
-  for (const r of (refunds ?? []) as Array<{ stripe_refund_id: string; online_payment_id: string }>) refundMap[r.stripe_refund_id] = r.online_payment_id;
+  for (const r of refunds) refundMap[r.stripe_refund_id] = r.online_payment_id;
   const disputeMap: Record<string, string> = {};
-  for (const d of (disputes ?? []) as Array<{ stripe_dispute_id: string; online_payment_id: string }>) disputeMap[d.stripe_dispute_id] = d.online_payment_id;
+  for (const d of disputes) disputeMap[d.stripe_dispute_id] = d.online_payment_id;
 
   const byIdWanted = [...new Set([...Object.values(refundMap), ...Object.values(disputeMap)])];
   const cols = 'id, flow, rail, scope, receipt_no, stripe_charge_id, stripe_payment_intent_id, stripe_dispute_id, tournament_id, team_id, description';
-  const reads = [
-    charges.length ? supabaseAdmin.from('online_payments').select(cols).eq('org_id', orgId).in('stripe_charge_id', charges) : null,
-    disputeIds.length ? supabaseAdmin.from('online_payments').select(cols).eq('org_id', orgId).in('stripe_dispute_id', disputeIds) : null,
-    byIdWanted.length ? supabaseAdmin.from('online_payments').select(cols).eq('org_id', orgId).in('id', byIdWanted) : null,
-  ];
   type Row = {
     id: string; flow: 'tournament_team' | 'league_signup'; rail: 'card' | 'bank_debit'; scope: 'deposit' | 'balance' | 'full' | null;
     receipt_no: number | null; stripe_charge_id: string | null; stripe_payment_intent_id: string | null; stripe_dispute_id: string | null;
     tournament_id: string | null; team_id: string | null; description: string;
   };
   const rows = new Map<string, Row>();
-  for (const res of await Promise.all(reads.map(r => r ?? Promise.resolve({ data: [] as Row[], error: null })))) {
-    if (res.error) throw res.error;
-    for (const r of (res.data ?? []) as Row[]) rows.set(r.id, r);
-  }
+  const reads = await Promise.all([
+    rowsWhereIn<Row>(charges, c => supabaseAdmin.from('online_payments').select(cols).eq('org_id', orgId).in('stripe_charge_id', c)),
+    rowsWhereIn<Row>(disputeIds, c => supabaseAdmin.from('online_payments').select(cols).eq('org_id', orgId).in('stripe_dispute_id', c)),
+    rowsWhereIn<Row>(byIdWanted, c => supabaseAdmin.from('online_payments').select(cols).eq('org_id', orgId).in('id', c)),
+  ]);
+  for (const r of reads.flat()) rows.set(r.id, r);
   const list = [...rows.values()];
 
   const teamIds = [...new Set(list.map(r => r.team_id).filter((x): x is string => !!x))];
   const tourIds = [...new Set(list.map(r => r.tournament_id).filter((x): x is string => !!x))];
   const leagueIds = list.filter(r => r.flow === 'league_signup').map(r => r.id);
-  const [{ data: teams }, { data: tours }, { data: items }] = await Promise.all([
-    teamIds.length ? supabaseAdmin.from('teams').select('id, name').in('id', teamIds) : Promise.resolve({ data: [] }),
-    tourIds.length ? supabaseAdmin.from('tournaments').select('id, name').in('id', tourIds) : Promise.resolve({ data: [] }),
-    leagueIds.length ? supabaseAdmin.from('online_payment_items').select('online_payment_id, registration_id, description').in('online_payment_id', leagueIds) : Promise.resolve({ data: [] }),
+  const [teams, tours, itemRows] = await Promise.all([
+    rowsWhereIn<{ id: string; name: string }>(teamIds, c => supabaseAdmin.from('teams').select('id, name').in('id', c)),
+    rowsWhereIn<{ id: string; name: string }>(tourIds, c => supabaseAdmin.from('tournaments').select('id, name').in('id', c)),
+    rowsWhereIn<{ online_payment_id: string; registration_id: string | null; description: string }>(leagueIds, c =>
+      supabaseAdmin.from('online_payment_items').select('online_payment_id, registration_id, description').in('online_payment_id', c)),
   ]);
-  const teamName = new Map(((teams ?? []) as Array<{ id: string; name: string }>).map(t => [t.id, t.name]));
-  const tourName = new Map(((tours ?? []) as Array<{ id: string; name: string }>).map(t => [t.id, t.name]));
-  const itemRows = (items ?? []) as Array<{ online_payment_id: string; registration_id: string | null; description: string }>;
+  const teamName = new Map(teams.map(t => [t.id, t.name]));
+  const tourName = new Map(tours.map(t => [t.id, t.name]));
   const regIds = [...new Set(itemRows.map(i => i.registration_id).filter((x): x is string => !!x))];
-  const { data: regs } = regIds.length
-    ? await supabaseAdmin.from('league_registrations').select('id, player_first_name, player_last_name').in('id', regIds)
-    : { data: [] };
-  const regName = new Map(((regs ?? []) as Array<{ id: string; player_first_name: string | null; player_last_name: string | null }>)
-    .map(r => [r.id, { first: r.player_first_name ?? '', last: r.player_last_name ?? '' }]));
+  const regs = await rowsWhereIn<{ id: string; player_first_name: string | null; player_last_name: string | null }>(regIds, c =>
+    supabaseAdmin.from('league_registrations').select('id, player_first_name, player_last_name').in('id', c));
+  const regName = new Map(regs.map(r => [r.id, { first: r.player_first_name ?? '', last: r.player_last_name ?? '' }]));
 
   const payments: OurPayment[] = list.map(r => {
     let who = r.description;
@@ -161,14 +173,29 @@ async function ourIndex(orgId: string, bts: readonly BtIn[]): Promise<OurIndex> 
 /** Read a club's payouts that arrive between two club days (inclusive). Throws when Stripe doesn't answer. */
 export async function readPayouts(args: { orgId: string; accountId: string; livemode: boolean; from: string; to: string }): Promise<PayoutsRead> {
   const key = `${args.accountId}:${args.from}:${args.to}`;
+  const now = Date.now();
+  for (const [k, v] of held) if (now - v.at >= HOLD_MS) held.delete(k);
   const hit = held.get(key);
-  if (hit && Date.now() - hit.at < HOLD_MS) return hit.read;
+  if (hit) return hit.read;
+  const running = inFlight.get(key);
+  if (running) return running;
+  const read = readFromStripe(args).finally(() => inFlight.delete(key));
+  inFlight.set(key, read);
+  const done = await read;
+  held.set(key, { at: Date.now(), read: done });
+  if (held.size > 200) held.delete(held.keys().next().value as string);
+  return done;
+}
 
-  // Arrival is what a bank statement shows: filtered by it, and trimmed to the chosen days below.
-  const payouts = await listAll<Stripe.Payout>(after => listPayoutsPage(args.accountId, { gte: dayStart(args.from), lte: dayStart(args.to) }, after));
+async function readFromStripe(args: { orgId: string; accountId: string; livemode: boolean; from: string; to: string }): Promise<PayoutsRead> {
+  // Arrival is what a bank statement shows: filtered by it, and trimmed to the chosen days below — except a payout still
+  // on its way, which arrives after today and is the card's "is money coming?" (/review): kept whenever it was sent.
+  const ahead = dayStart(args.to) + ON_ITS_WAY_DAYS * 86_400;
+  const payouts = await listAll<Stripe.Payout>(after => listPayoutsPage(args.accountId, { gte: dayStart(args.from), lte: ahead }, after));
   const inRange = payouts.filter(p => {
     const day = new Date(p.arrival_date * 1000).toISOString().slice(0, 10);
-    return day >= args.from && day <= args.to;
+    const onItsWay = p.status === 'pending' || p.status === 'in_transit';
+    return day >= args.from && (day <= args.to || onItsWay);
   });
 
   const contents = new Map<string, PayoutContents>(inRange.map(p => [p.id, payoutContents({
@@ -198,14 +225,14 @@ export async function readPayouts(args: { orgId: string; accountId: string; live
         contents: contents.get(p.id) ?? 'none',
         lines,
         counts: payoutCounts(lines),
+        last4: last4Of(p.destination),
       };
     });
-  const dest = inRange[0]?.destination ?? payouts[0]?.destination;
-  const last4 = dest && typeof dest !== 'string' && 'last4' in dest ? (dest as { last4: string }).last4 : null;
-  const read: PayoutsRead = { from: args.from, to: args.to, testMode: !args.livemode, last4, payouts: rows };
-  held.set(key, { at: Date.now(), read });
-  if (held.size > 200) held.delete(held.keys().next().value as string);
-  return read;
+  return { from: args.from, to: args.to, testMode: !args.livemode, last4: rows[0]?.last4 ?? last4Of(payouts[0]?.destination), payouts: rows };
+}
+
+function last4Of(dest: Stripe.Payout['destination'] | undefined): string | null {
+  return dest && typeof dest !== 'string' && 'last4' in dest ? (dest as { last4: string }).last4 : null;
 }
 
 /** Whether the club has connected payouts at some time (the Payouts tab's condition, words §7 question 6), while online

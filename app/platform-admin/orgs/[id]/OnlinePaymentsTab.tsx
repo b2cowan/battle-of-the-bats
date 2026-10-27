@@ -56,7 +56,7 @@ export default function OnlinePaymentsTab({ orgId, initial }: { orgId: string; i
   const t = read.terms;
   const termsValue = !t ? W.termsNone : t.standing === 'stale' ? W.termsStale : t.standing === 'draft' ? W.termsDraft : W.termsVersion(long(t.versionDate));
   const termsSub = !t ? '' : t.standing === 'stale' ? W.termsSubStale(short(t.agreedAt)) : t.standing === 'draft' ? W.termsSubDraft(short(t.agreedAt)) : W.termsSub(short(t.agreedAt));
-  const nothingOpen = !read.disputes.rows.length && !read.messages.failing.length && !read.clearing;
+  const nothingOpen = read.openItems === 0 && !read.clearing;
   const goTo = (el: HTMLDivElement | null) => el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   return (

@@ -84,7 +84,12 @@ describe('the owner item and the emails clear and send once (the daily job)', ()
     assert.match(notices, /if \(a\.terms_notice_version !== current\) \{/);
     assert.match(notices, /terms_notice_version: current, terms_notice_at: now\.toISOString\(\), terms_reminded_at: null/);
     assert.match(notices, /!a\.terms_reminded_at && a\.terms_notice_at/);
-    assert.match(notices, /\.neq\('terms_version', current\)/);
+    // Behind includes a club with no version recorded; every club is reached, in pages (/review).
+    assert.match(notices, /filter\(a => a\.terms_version !== current\)/);
+    assert.match(notices, /\.order\('org_id'\)\.range\(from, from \+ 999\)/);
+    // Claimed before it is sent, and never for a club with nobody to tell (/review).
+    assert.match(notices, /if \(!people\.userIds\.length\) continue;/);
+    assert.ok(notices.indexOf('if (!claimed?.length) continue;') < notices.indexOf("eventType: 'payments_terms_changed'"));
   });
   it('the item clears itself when the club agrees (no Done)', () => {
     const na = readCode('lib/needs-attention.ts');
@@ -100,5 +105,19 @@ describe('the daily job runs the owners’ two steps (owner ruling 4, its own co
     const terms = route.indexOf("await run('terms_notices', () => sendTermsNotices(now));");
     const ending = route.indexOf("await run('ending_warnings', () => sendEndingWarnings(now));");
     assert.ok(lost > 0 && terms > lost && ending > terms);
+  });
+});
+
+describe('the /review of 12d-2 (the terms)', () => {
+  it('agreeing names the version the window showed; a change while it was open is refused', () => {
+    const route = readCode('app/api/admin/payouts/route.ts');
+    assert.match(route, /if \(body\.termsVersion !== PAYMENTS_TERMS_VERSION\) \{/);
+    assert.match(route, /if \(agreeError\) throw agreeError;/);
+    assert.match(readCode('components/admin/kit/club/PayoutsCard.tsx'), /action: 'agree_terms', agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION/);
+  });
+  it('an ending warning is claimed before it is sent, and compared as a moment', () => {
+    const notices = readCode('lib/online-payment-owner-notices.ts');
+    assert.match(notices, /new Date\(a\.ending_warned_for\)\.getTime\(\) === new Date\(ending\.at\)\.getTime\(\)/);
+    assert.match(notices, /\.or\(`ending_warned_for\.is\.null,ending_warned_for\.neq\."\$\{ending\.at\}"`\)/);
   });
 });

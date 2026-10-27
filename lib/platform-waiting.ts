@@ -178,6 +178,8 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
   const sinceIso = since ?? dayAgo;
 
   const wantsLeads = wants('new_leads') || wants('follow_ups_due') || wants('signup_to_confirm');
+  // Club Tier 12d-2: started beside the other queues (/review). A list that could not be read is "Not read", never 0.
+  const onlinePaymentsRead = wants('online_payments') ? readOnlinePaymentsHealth().then(r => r.length).catch(() => null) : Promise.resolve(0);
   const [stats, campaigns, approvals, newErrors, newFeedback, freeTimeEnding, leads] = await Promise.all([
     getCommandCenterStats({ since }),
     wants('campaigns_past_due') || wants('campaigns_due_soon') ? campaignAlerts() : Promise.resolve({ pastDue: 0, dueSoon: 0 }),
@@ -193,8 +195,7 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
     wants('free_time_ending') ? getStaffFreeTime().then(freeTimeEndingCount).catch(() => 0) : Promise.resolve(0),
     wantsLeads ? leadCounts().catch(() => null) : Promise.resolve(null),
   ]);
-  // A list that could not be read is "Not read", never 0 (Stage 7).
-  const onlinePayments = wants('online_payments') ? await readOnlinePaymentsHealth().then(r => r.length).catch(() => null) : 0;
+  const onlinePayments = await onlinePaymentsRead;
 
   const counts: Record<string, number> = {
     owner_inactive: stats.alerts.orgsWithInactiveOwner,

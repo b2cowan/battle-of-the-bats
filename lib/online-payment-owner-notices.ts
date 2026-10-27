@@ -64,24 +64,46 @@ function termsEmail(org: Organization, changedLong: string, reminder: boolean): 
   };
 }
 
-/** The terms changed: the item and the email the day a club is found behind, and the one reminder at 14 days. */
+/** Every connected club's account row, in pages (a capped, unordered read would reach the same clubs every day). */
+async function connectedAccounts(): Promise<AccountRow[]> {
+  const out: AccountRow[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabaseAdmin.from('org_payment_accounts')
+      .select('org_id, terms_version, terms_notice_version, terms_notice_at, terms_reminded_at, ending_warned_for')
+      .is('disconnected_at', null).order('org_id').range(from, from + 999);
+    if (error) throw error;
+    out.push(...((data ?? []) as AccountRow[]));
+    if ((data ?? []).length < 1000) break;
+  }
+  return out;
+}
+
+/**
+ * The terms changed: the item and the email the day a club is found behind, and the one reminder at 14 days.
+ * ⚠ ONCE, claimed before it is sent (/review of 12d-2): the stamp is a conditional update that only one run can win, so
+ * a run that dies after sending never sends again the next day (Resend's own key lasts a day); a club with no active owner
+ * is not stamped, so it is told once it has one.
+ */
 export async function sendTermsNotices(now: Date = new Date()): Promise<{ told: number; reminded: number } | { skipped: 'draft' }> {
   const current = PAYMENTS_TERMS_VERSION;
   const changedOn = termsVersionDate(current);
   if (!changedOn) return { skipped: 'draft' };
   const changedLong = formatStoredDate(changedOn, { longMonth: true });
-  const { data, error } = await supabaseAdmin.from('org_payment_accounts')
-    .select('org_id, terms_version, terms_notice_version, terms_notice_at, terms_reminded_at, ending_warned_for')
-    .is('disconnected_at', null).neq('terms_version', current).limit(500);
-  if (error) throw error;
+  // Behind = any version but the current one, or none recorded at all.
+  const behind = (await connectedAccounts()).filter(a => a.terms_version !== current);
   let told = 0;
   let reminded = 0;
-  for (const a of (data ?? []) as AccountRow[]) {
+  for (const a of behind) {
     try {
       const org = await orgOf(a.org_id);
       if (!org) continue;
+      const people = await owners(org.id);
+      if (!people.userIds.length) continue;
       if (a.terms_notice_version !== current) {
-        const people = await owners(org.id);
+        const { data: claimed } = await supabaseAdmin.from('org_payment_accounts')
+          .update({ terms_notice_version: current, terms_notice_at: now.toISOString(), terms_reminded_at: null })
+          .eq('org_id', org.id).or(`terms_notice_version.is.null,terms_notice_version.neq."${current}"`).select('org_id');
+        if (!claimed?.length) continue;
         await notify({
           orgId: org.id, userIds: people.userIds, eventType: 'payments_terms_changed',
           title: TERMS_WORDS.itemTitle, body: TERMS_WORDS.itemBody(changedLong), link: payoutsPath(org),
@@ -91,19 +113,16 @@ export async function sendTermsNotices(now: Date = new Date()): Promise<{ told: 
         for (const to of people.emails) {
           await sendEmail(to, mail.subject, mail.html, { kind: 'payments_terms_changed', orgId: org.id, idempotencyKey: `terms-changed:${org.id}:${current}:${to}` });
         }
-        await supabaseAdmin.from('org_payment_accounts')
-          .update({ terms_notice_version: current, terms_notice_at: now.toISOString(), terms_reminded_at: null })
-          .eq('org_id', org.id);
         told += 1;
       } else if (!a.terms_reminded_at && a.terms_notice_at
         && now.getTime() - new Date(a.terms_notice_at).getTime() >= TERMS_REMIND_DAYS * 86_400_000) {
-        const people = await owners(org.id);
+        const { data: claimed } = await supabaseAdmin.from('org_payment_accounts').update({ terms_reminded_at: now.toISOString() })
+          .eq('org_id', org.id).is('terms_reminded_at', null).select('org_id');
+        if (!claimed?.length) continue;
         const mail = termsEmail(org, changedLong, true);
         for (const to of people.emails) {
           await sendEmail(to, mail.subject, mail.html, { kind: 'payments_terms_reminder', orgId: org.id, idempotencyKey: `terms-reminder:${org.id}:${current}:${to}` });
         }
-        await supabaseAdmin.from('org_payment_accounts').update({ terms_reminded_at: now.toISOString() })
-          .eq('org_id', org.id).is('terms_reminded_at', null);
         reminded += 1;
       }
     } catch (e) {
@@ -115,23 +134,26 @@ export async function sendTermsNotices(now: Date = new Date()): Promise<{ told: 
 
 /** An ending the owner didn't choose: the item and one email, once per ending; and pages closed once it has ended. */
 export async function sendEndingWarnings(now: Date = new Date()): Promise<{ warned: number; pagesClosed: number }> {
-  const { data, error } = await supabaseAdmin.from('org_payment_accounts')
-    .select('org_id, terms_version, terms_notice_version, terms_notice_at, terms_reminded_at, ending_warned_for')
-    .is('disconnected_at', null).limit(1000);
-  if (error) throw error;
   let warned = 0;
   let pagesClosed = 0;
-  for (const a of (data ?? []) as AccountRow[]) {
+  for (const a of await connectedAccounts()) {
     try {
       // Free time that ran out has no event of its own: its open pages close here, the day after it ended (ask 11).
       pagesClosed += await closePagesIfPaymentsEnded(a.org_id, 'daily job');
       const ending = await upcomingEnding(a.org_id, now);
-      if (!ending || a.ending_warned_for === ending.at) continue;
+      // The same moment, compared as a moment: the column reads back as "+00:00", ours is "Z" (/review).
+      if (!ending || (a.ending_warned_for && new Date(a.ending_warned_for).getTime() === new Date(ending.at).getTime())) continue;
       const org = await orgOf(a.org_id);
       if (!org) continue;
+      const people = await owners(org.id);
+      if (!people.userIds.length) continue;
+      // Claimed before it is sent (/review): one run wins the stamp; a run that dies after sending never repeats it.
+      const { data: claimed } = await supabaseAdmin.from('org_payment_accounts')
+        .update({ ending_warned_for: ending.at, ending_warned_at: now.toISOString() })
+        .eq('org_id', org.id).or(`ending_warned_for.is.null,ending_warned_for.neq."${ending.at}"`).select('org_id');
+      if (!claimed?.length) continue;
       const outstanding = await readOutstanding(org.id).catch(() => null);
       const notice = endingNotice(ending, org.name, outstanding);
-      const people = await owners(org.id);
       await notify({
         orgId: org.id, userIds: people.userIds, eventType: 'payments_ending',
         title: notice.title, body: notice.body, link: payoutsPath(org),
@@ -153,7 +175,6 @@ export async function sendEndingWarnings(now: Date = new Date()): Promise<{ warn
       for (const to of people.emails) {
         await sendEmail(to, subject, html, { kind: 'payments_ending_warning', orgId: org.id, idempotencyKey: `payments-ending:${org.id}:${ending.at}:${to}` });
       }
-      await supabaseAdmin.from('org_payment_accounts').update({ ending_warned_for: ending.at, ending_warned_at: now.toISOString() }).eq('org_id', org.id);
       warned += 1;
     } catch (e) {
       console.error('[online-payment-owner-notices] the ending warning was not sent:', a.org_id, e instanceof Error ? e.message : String(e));

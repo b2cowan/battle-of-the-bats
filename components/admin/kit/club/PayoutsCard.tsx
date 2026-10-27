@@ -14,7 +14,7 @@
 import { useCallback, useState } from 'react';
 import { Check, Pencil, Unplug } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
-import { LEAVING_WORDS, PAYMENTS_TERMS_SUMMARY, TERMS_PLACEHOLDER, TERMS_WORDS, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
+import { LEAVING_WORDS, PAYMENTS_TERMS_SUMMARY, PAYMENTS_TERMS_VERSION, TERMS_PLACEHOLDER, TERMS_WORDS, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
 import type { PayoutsState } from '@/lib/online-payment-account';
 import type { OnlineFeePayer } from '@/lib/online-payment-fee';
 import KitDialog from './KitDialog';
@@ -171,7 +171,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
         <h2 id="settings-payouts" className={styles.cardTitle}>{wind ? WD.title : state === 'needs_attention' && view.paymentsOn ? W.needsTitleStillOn : W.title[state]}</h2>
         {view.testMode && <p className={ck.hint}>{W.testLine}</p>}
         {/* 12d-2 Part 4 (words §5.2, ask 6): the terms changed — a notice, payments stay on. The owner's. */}
-        {isOwner && view.terms?.standing === 'stale' && (
+        {isOwner && view.terms?.standing === 'stale' && state !== 'disconnected' && (
           <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">
             <div className={ck.noticeBody}>
               {TERMS_WORDS.noticeBody(longDay(view.terms.currentVersionDate))}{' '}
@@ -455,7 +455,7 @@ function TermsWindow({ orgSlug, clubName, mode, onClose, onAgreed }: {
     setBusy(true);
     setError(null);
     try {
-      await post(orgSlug, { action: 'agree_terms', agreeToTerms: true });
+      await post(orgSlug, { action: 'agree_terms', agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION });
       setDone(true);
       onAgreed();
     } catch (e) {

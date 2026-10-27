@@ -73,7 +73,7 @@ export async function readClubOnlinePayments(orgId: string, now: Date = new Date
     terms_version: string | null; terms_agreed_at: string | null; stripe_account_id: string;
   };
   const since = new Date(now.getTime() - 30 * DAY).toISOString();
-  const [paid, refunds, clearing, disputes, messages, org, facts, outstanding] = await Promise.all([
+  const [paid, refunds, clearing, disputes, messages, org, facts, outstanding, closedByStripe] = await Promise.all([
     supabaseAdmin.from('online_payments').select('total_amount').eq('org_id', orgId)
       .in('status', ['paid', 'partly_refunded', 'refunded', 'reversed']).gte('paid_at', since).limit(5000),
     supabaseAdmin.from('online_payment_refunds').select('id', { count: 'exact', head: true }).eq('org_id', orgId)
@@ -82,12 +82,13 @@ export async function readClubOnlinePayments(orgId: string, now: Date = new Date
     supabaseAdmin.from('online_payment_disputes').select('id, online_payment_id, reason, due_by, held, amount, status, stripe_fee, fee_paid_from')
       .eq('org_id', orgId).in('status', [...OPEN_DISPUTE_STATUSES]).order('due_by', { ascending: true, nullsFirst: false }),
     supabaseAdmin.from('stripe_connect_events').select('id, type, error, received_at, attempts')
-      .eq('account', acct.stripe_account_id).is('processed_at', null).not('error', 'is', null).order('received_at', { ascending: false }).limit(200),
+      .eq('account', acct.stripe_account_id).is('processed_at', null).not('error', 'is', null).order('received_at', { ascending: false }).limit(1000),
     supabaseAdmin.from('organizations').select('subscription_status, billing_suspended_at').eq('id', orgId).maybeSingle(),
     effectiveOrgFactsForId(orgId),
     readOutstanding(orgId).catch(() => null),
+    supabaseAdmin.from('org_audit_log').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('action', 'payouts_closed_by_stripe'),
   ]);
-  for (const r of [paid, refunds, clearing, disputes, messages, org]) if (r.error) throw r.error;
+  for (const r of [paid, refunds, clearing, disputes, messages, org, closedByStripe]) if (r.error) throw r.error;
 
   const disputeRows = (disputes.data ?? []) as Array<{ id: string; online_payment_id: string; reason: string | null; due_by: string | null; held: number; amount: number; status: string; stripe_fee: number | null }>;
   const payIds = [...new Set(disputeRows.map(d => d.online_payment_id))];
@@ -114,6 +115,11 @@ export async function readClubOnlinePayments(orgId: string, now: Date = new Date
     .map(m => ({ id: m.id, type: m.type, error: m.error, receivedAt: m.received_at, tries: m.attempts }));
   const split = splitMessages(msgRows, now.getTime());
   const feesSoFar = disputeRows.reduce((s, d) => s + Number(d.stripe_fee ?? 0), 0);
+  // An own fee invoice counts once it is past due, as the Health list counts it (words §6.2 `pa.health.invoice`).
+  const { count: pastDue, error: pastDueError } = await supabaseAdmin.from('platform_fee_invoices').select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId).in('status', ['open', 'uncollectible']).lt('due_at', now.toISOString());
+  if (pastDueError) throw pastDueError;
+  const invoicesPastDue = pastDue ?? 0;
 
   return {
     testMode: !acct.livemode,
@@ -121,7 +127,7 @@ export async function readClubOnlinePayments(orgId: string, now: Date = new Date
       state,
       connectedAt: acct.connected_at, connectedBy: await nameOf(acct.connected_by),
       disconnectedAt: acct.disconnected_at ?? null, disconnectedBy: await nameOf(acct.disconnected_by),
-      stripeClosed: !!acct.disconnected_at && !acct.disconnected_by,
+      stripeClosed: !!acct.disconnected_at && (closedByStripe.count ?? 0) > 0,
       ended,
     },
     terms: acct.terms_agreed_at ? {
@@ -146,8 +152,7 @@ export async function readClubOnlinePayments(orgId: string, now: Date = new Date
     },
     messages: split,
     outstanding,
-    openItems: disputeRows.length + split.failing.length
-      + (outstanding ? outstanding.feesFailed + outstanding.invoicesUnpaid : 0),
+    openItems: disputeRows.length + split.failing.length + (outstanding ? outstanding.feesFailed : 0) + invoicesPastDue,
   };
 }
 
@@ -174,14 +179,17 @@ const KIND_ORDER: Record<HealthKind, number> = { dispute: 0, disconnected: 1, cl
 /** Every club's online payments that need a look. A row leaves when it clears. Throws on a failed read. */
 export async function readOnlinePaymentsHealth(now: Date = new Date()): Promise<HealthRow[]> {
   const cut = new Date(now.getTime() - MESSAGE_STOP_DAYS * DAY).toISOString();
-  const [accounts, disputes, messages, invoices, failedFees] = await Promise.all([
+  const [accounts, disputes, messages, invoices, failedFees, closedAudit] = await Promise.all([
     supabaseAdmin.from('org_payment_accounts').select('org_id, stripe_account_id, disconnected_at, disconnected_by, terms_version, connected_at').limit(5000),
     supabaseAdmin.from('online_payment_disputes').select('org_id, due_by, opened_at').in('status', [...OPEN_DISPUTE_STATUSES]).limit(5000),
     supabaseAdmin.from('stripe_connect_events').select('account, received_at').is('processed_at', null).not('error', 'is', null).gte('received_at', cut).limit(5000),
     supabaseAdmin.from('platform_fee_invoices').select('org_id, due_at').in('status', ['open', 'uncollectible']).lt('due_at', now.toISOString()).limit(5000),
-    supabaseAdmin.from('platform_stripe_fees').select('org_id, created_at').is('billed_at', null).is('exempt_reason', null).not('bill_error', 'is', null).limit(5000),
+    supabaseAdmin.from('platform_stripe_fees').select('org_id, created_at').is('billed_at', null).is('exempt_reason', null).not('bill_error', 'is', null)
+      .neq('kind', 'dispute_answer_returned').limit(5000),
+    supabaseAdmin.from('org_audit_log').select('org_id').eq('action', 'payouts_closed_by_stripe').limit(5000),
   ]);
-  for (const r of [accounts, disputes, messages, invoices, failedFees]) if (r.error) throw r.error;
+  for (const r of [accounts, disputes, messages, invoices, failedFees, closedAudit]) if (r.error) throw r.error;
+  const closedOrgs = new Set((closedAudit.data ?? []).map(c => c.org_id as string));
   type Acct = { org_id: string; stripe_account_id: string; disconnected_at: string | null; disconnected_by: string | null; terms_version: string | null; connected_at: string };
   const accts = (accounts.data ?? []) as Acct[];
   const byAccount = new Map(accts.map(a => [a.stripe_account_id, a]));
@@ -197,7 +205,7 @@ export async function readOnlinePaymentsHealth(now: Date = new Date()): Promise<
   }
   for (const a of accts) {
     const open = disputesByOrg.get(a.org_id);
-    if (a.disconnected_at && !a.disconnected_by) rows.push({ orgId: a.org_id, kind: 'closed', n: 0, due: null, since: a.disconnected_at, sortAt: a.disconnected_at });
+    if (a.disconnected_at && closedOrgs.has(a.org_id)) rows.push({ orgId: a.org_id, kind: 'closed', n: 0, due: null, since: a.disconnected_at, sortAt: a.disconnected_at });
     if (open && a.disconnected_at) rows.push({ orgId: a.org_id, kind: 'disconnected', n: open.n, due: open.due, since: a.disconnected_at, sortAt: open.due ?? a.disconnected_at });
     else if (open) rows.push({ orgId: a.org_id, kind: 'dispute', n: open.n, due: open.due, since: open.since, sortAt: open.due ?? open.since });
     // Not on the current terms: joins once counsel's dated version exists (words §6.2).
@@ -228,9 +236,12 @@ export async function readOnlinePaymentsHealth(now: Date = new Date()): Promise<
   }
   if (!rows.length) return [];
   const orgIds = [...new Set(rows.map(r => r.orgId))];
-  const { data: orgs, error } = await supabaseAdmin.from('organizations').select('id, name').in('id', orgIds.slice(0, 1000));
-  if (error) throw error;
-  const name = new Map((orgs ?? []).map(o => [o.id as string, o.name as string]));
+  const name = new Map<string, string>();
+  for (let i = 0; i < orgIds.length; i += 100) {
+    const { data: orgs, error } = await supabaseAdmin.from('organizations').select('id, name').in('id', orgIds.slice(i, i + 100));
+    if (error) throw error;
+    for (const o of orgs ?? []) name.set(o.id as string, o.name as string);
+  }
   return rows
     .map(r => ({ ...r, club: name.get(r.orgId) ?? '' }))
     .sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || (a.sortAt < b.sortAt ? -1 : a.sortAt > b.sortAt ? 1 : 0));

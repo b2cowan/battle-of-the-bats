@@ -131,7 +131,7 @@ export default function PayoutsList({ orgSlug }: { orgSlug: string }) {
             <li key={p.id} className={s.phoneItem}>
               <button type="button" className={s.phoneRow} aria-expanded={open.has(p.id)} onClick={() => toggle(p.id)}>
                 <span className={s.phoneAmount}>
-                  {W.phoneRow(money(p.amount), p.status === 'on_its_way' ? W.phoneArrives(day(p.arrives)) : day(p.arrives ?? p.sent))}
+                  {W.phoneRow(money(p.amount), p.status === 'on_its_way' ? W.phoneArrives(day(p.arrives)) : p.status === 'failed' ? day(p.sent) : day(p.arrives ?? p.sent))}
                 </span>
                 <StatusCell p={p} read={read} orgSlug={orgSlug} />
               </button>
@@ -216,7 +216,7 @@ function Contents({ p, read, phone = false }: { p: PayoutRow; read: Read; phone?
   if (p.contents === 'manual') return <p className={`${ck.hint} ${s.contentsNote}`}>{W.noManual}</p>;
   if (p.contents === 'matching') return <p className={`${ck.hint} ${s.contentsNote}`}>{W.matching}</p>;
   if (p.contents === 'none') return <p className={`${ck.hint} ${s.contentsNote}`}>{W.failedNone}</p>;
-  const total = W.total(read.last4, day(p.arrives ?? p.sent));
+  const total = W.total(p.last4 ?? read.last4, day(p.arrives ?? p.sent));
   if (phone) {
     return (
       <div className={s.phoneContents}>
@@ -284,7 +284,11 @@ export function exportRows(payouts: readonly PayoutRow[]): (string | number | nu
   const rows: (string | number | null)[][] = [];
   for (const p of payouts) {
     const head = [day(p.sent), p.status === 'failed' ? '' : day(p.arrives), W.status[p.status], p.amount];
-    if (!p.lines.length) { rows.push([...head, '', '', p.contents === 'manual' ? W.noManual : '', '', null]); continue; }
+    if (!p.lines.length) {
+      const why = p.contents === 'manual' ? W.noManual : p.contents === 'matching' ? W.matching : p.contents === 'none' ? W.failedNone : '';
+      rows.push([...head, '', '', why, '', null]);
+      continue;
+    }
     for (const l of p.lines) rows.push([...head, day(l.at), l.who ?? '', l.what, l.receiptNo ?? '', l.amount]);
   }
   return rows;

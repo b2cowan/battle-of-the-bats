@@ -9,6 +9,8 @@ import { readPayouts } from '@/lib/online-payouts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// A wide range reads many payouts from Stripe, a few at a time (/review of 12d-2).
+export const maxDuration = 60;
 
 /**
  * THE PAYOUTS LIST (Club Tier Stage 12d-2 Part 2 — frame 3, words §3; owner rulings ask 5 + 2026-10-27 ruling 1).

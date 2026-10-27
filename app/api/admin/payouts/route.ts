@@ -220,10 +220,15 @@ export const POST = withObservability(async (req: Request) => {
       // 12d-2 Part 4 (words §5.3, ask 6): agree to the current version. Payments stayed on throughout; nothing else moves.
       if (body.agreeToTerms !== true) return NextResponse.json({ error: TERMS_WORDS.refuseSetup }, { status: 400 });
       if (!row) return NextResponse.json({ error: 'Set up payouts first.' }, { status: 409 });
-      await supabaseAdmin.from('org_payment_accounts').update({
+      // The version the window showed (/review of 12d-2): terms published while it was open are never agreed unread.
+      if (body.termsVersion !== PAYMENTS_TERMS_VERSION) {
+        return NextResponse.json({ error: 'The payments terms changed while this window was open. Read them again.', code: 'terms_changed' }, { status: 409 });
+      }
+      const { error: agreeError } = await supabaseAdmin.from('org_payment_accounts').update({
         terms_version: PAYMENTS_TERMS_VERSION, terms_agreed_by: ctx.user.id, terms_agreed_by_email: ctx.user.email ?? 'unknown',
         terms_agreed_at: now, updated_at: now,
       }).eq('org_id', ctx.org.id);
+      if (agreeError) throw agreeError;
       await audit(ctx.org.id, ctx.user.id, 'payouts_terms_agreed', { termsVersion: PAYMENTS_TERMS_VERSION });
       return NextResponse.json({ ok: true });
     }

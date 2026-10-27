@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
-import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { writePlatformAuditLogStrict } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
@@ -22,6 +22,12 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const { data: op } = await supabaseAdmin.from('online_payments').select('id, org_id, flow, team_id, description')
     .eq('id', paymentId).eq('org_id', id).maybeSingle();
   if (!op) return NextResponse.json({ error: 'That payment couldn’t be found.' }, { status: 404 });
+  // Only a disputed payment's name is shown here (the panel's rows).
+  const { count: disputed } = await supabaseAdmin.from('online_payment_disputes').select('id', { count: 'exact', head: true })
+    .eq('org_id', id).eq('online_payment_id', op.id);
+  if (!disputed) return NextResponse.json({ error: 'That payment couldn’t be found.' }, { status: 404 });
+  // Logged FIRST, strictly (/review): a log that can't be written shows no name.
+  await writePlatformAuditLogStrict(auth.user.email ?? 'platform-admin', id, 'online_payment_player_shown', 'online_payment', null, { onlinePaymentId: op.id }, {});
 
   let names: string[] = [];
   if (op.flow === 'tournament_team') {
@@ -36,6 +42,5 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     names = (regs ?? []).map(r => `${r.player_first_name ?? ''} ${r.player_last_name ?? ''}`.trim()).filter(Boolean);
     if (!names.length) names = (items ?? []).map(i => (i.description as string).split(' · ')[0]);
   }
-  await writePlatformAuditLog(auth.user.email ?? 'platform-admin', id, 'online_payment_player_shown', 'online_payment', null, { onlinePaymentId: op.id });
   return NextResponse.json({ names }, { headers: { 'Cache-Control': 'no-store' } });
 }, { route: '/api/platform-admin/orgs/[id]/online-payments/player' });

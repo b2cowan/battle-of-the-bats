@@ -133,7 +133,8 @@ export default function ClubRecord(props: ClubRecordProps) {
   const search = useSearchParams();
   const tabParam = search.get('tab');
   const asked = tabParam ? (OLD_TABS[tabParam] ?? tabParam) : null;
-  const tab: Tab = TABS.some(t => t.key === asked) ? (asked as Tab) : 'story';
+  // A tab this record doesn't show (Online payments for a club that never connected, or a role without it) opens the Story.
+  const tab: Tab = TABS.some(t => t.key === asked && (t.key !== 'payments' || props.onlinePayments !== null)) ? (asked as Tab) : 'story';
   /** Find opens a charge on the Money tab: `?tab=money&charge=ch_…` (the charge route checks it is this club's). */
   const chargeParam = search.get('charge');
   const canEdit = can.support || can.billing || can.sections;
@@ -198,7 +199,7 @@ export default function ClubRecord(props: ClubRecordProps) {
 
   /** Every held change in one sentence (R3), built as pieces so a club's name is never read as markup. */
   const op = props.onlinePayments && props.onlinePayments !== 'failed' ? props.onlinePayments : null;
-  const movesOffOnlinePayments = op?.outstanding && !op.account.disconnectedAt && !hasPlanFeature(form.planId as OrgPlan, 'online_payments')
+  const movesOffOnlinePayments = op?.outstanding && !op.account.disconnectedAt && !op.account.ended && !hasPlanFeature(form.planId as OrgPlan, 'online_payments')
     ? op.outstanding : null;
 
   function saveSentence(): ReactNode {

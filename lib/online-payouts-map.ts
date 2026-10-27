@@ -207,7 +207,8 @@ export function payoutMatches(p: { amount: number; lines: readonly PayoutLine[] 
     if (Math.abs(p.amount - n) < 0.005) return true;
     if (p.lines.some(l => Math.abs(Math.abs(l.amount) - n) < 0.005)) return true;
   }
-  return p.lines.some(l => (l.who ?? '').toLowerCase().includes(q) || (l.receiptNo != null && String(l.receiptNo).includes(q)));
+  // A receipt is matched whole ("1084" finds receipt 1084, never 10840); a name by any part of it.
+  return p.lines.some(l => (l.who ?? '').toLowerCase().includes(q) || (l.receiptNo != null && String(l.receiptNo) === q));
 }
 
 /** "Henry and Lily Grant" (one surname), "Ava Chen and Theo Grant" (two), "Ava, Ben and Cal Smith" (three, one surname). */

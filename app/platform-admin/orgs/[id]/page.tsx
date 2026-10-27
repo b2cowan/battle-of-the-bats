@@ -93,6 +93,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
   const { id } = await params;
   const { via } = await searchParams;
   const readsStripe = hasPlatformPower(auth.role, 'find_stripe');
+  const onlinePaymentsRead = readsStripe ? readClubOnlinePayments(id).catch(() => 'failed' as const) : Promise.resolve(null);
 
   // Every read at once; the members' sign-in facts chain straight off the members read. Opening the record is the read
   // that matters after a complaint (A3): its trail row is written alongside, best effort, never a gate.
@@ -118,8 +119,9 @@ export default async function ClubRecordPage({ params, searchParams }: {
   ]);
   const org = orgRes.data;
   if (!org) notFound();
-  // Club Tier 12d-2: the Online payments tab's read — ours only (no Stripe call), for the roles that read Stripe's records.
-  const onlinePayments = readsStripe ? await readClubOnlinePayments(id).catch(() => 'failed' as const) : null;
+  // Club Tier 12d-2: the Online payments tab's read — ours only (no Stripe call), for the roles that read Stripe's records,
+  // started beside the record's other reads (/review).
+  const onlinePayments = await onlinePaymentsRead;
 
   const members = memberRows.map(m => {
     const p = people.get(m.user_id);
