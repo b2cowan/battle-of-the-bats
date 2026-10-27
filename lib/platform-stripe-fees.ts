@@ -326,7 +326,9 @@ async function completeInvoice(row: InvoiceRow, fees: FeeRow[], mayAdd: boolean)
   const draft = inv.status === 'draft';
   const existing = await stripe.invoiceItems.list({ invoice: invoiceId, limit: 100 }).autoPagingToArray({ limit: 10000 });
   const onInvoice = new Map(existing.map(i => [i.metadata?.platform_stripe_fee_id ?? '', i.id]));
-  let lines = 0;
+  // The line each fee rides, stamped with it once the invoice is finalized: the table holds a line id only on a billed
+  // fee (`platform_stripe_fees_billed_chk`), so storing it earlier was refused and no own-invoice fee was ever stamped.
+  const lineOf = new Map<string, string>();
   for (const f of fees) {
     if (f.fee_invoice_id !== row.id) {
       if (!draft || !mayAdd) continue;
@@ -348,18 +350,20 @@ async function completeInvoice(row: InvoiceRow, fees: FeeRow[], mayAdd: boolean)
         description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: row.org_id },
       }, { idempotencyKey: `stripe-fee:${f.id}:${invoiceId}` })).id;
     }
-    await supabaseAdmin.from('platform_stripe_fees').update({ stripe_invoice_item_id: itemId }).eq('id', f.id).is('billed_at', null);
-    lines += 1;
+    lineOf.set(f.id, itemId);
   }
-  if (draft && !lines) return false;
+  if (draft && !lineOf.size) return false;
 
   // Finalized with Stripe's own email off (auto_advance false, never sendInvoice): the email is ours.
   if (draft) inv = await stripe.invoices.finalizeInvoice(invoiceId, { auto_advance: false });
   await writeInvoiceState(row.id, inv);
-  const { error: stampError } = await supabaseAdmin.from('platform_stripe_fees')
-    .update({ billed_at: new Date().toISOString(), billed_on: 'own_invoice', bill_error: null })
-    .eq('fee_invoice_id', row.id).is('billed_at', null).not('stripe_invoice_item_id', 'is', null);
-  if (stampError) throw stampError;
+  const billedAt = new Date().toISOString();
+  for (const [feeId, itemId] of lineOf) {
+    const { error: stampError } = await supabaseAdmin.from('platform_stripe_fees')
+      .update({ stripe_invoice_item_id: itemId, billed_at: billedAt, billed_on: 'own_invoice', bill_error: null })
+      .eq('id', feeId).eq('fee_invoice_id', row.id).is('billed_at', null);
+    if (stampError) throw stampError;
+  }
   await emailFeeInvoice(row.id);
   return draft;
 }

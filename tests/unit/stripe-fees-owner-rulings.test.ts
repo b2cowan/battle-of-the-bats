@@ -8,7 +8,19 @@ import { readCode } from './_source-code.ts';
  */
 const FEES = 'lib/platform-stripe-fees.ts';
 
-describe('ruling 2: a cancelled club is still billed, and sees its Stripe fees list', () => {
+describe('the club’s own invoice stamps its fees billed (found building ruling 6)', () => {
+  it('a line id is never written to a fee before its billed date (`platform_stripe_fees_billed_chk` refuses it)', () => {
+    const src = readCode(FEES);
+    const done = /async function completeInvoice[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+    // The stamp carries the line id, the date and how, together, after the finalize; each write's error is read.
+    assert.match(done, /\.update\(\{ stripe_invoice_item_id: itemId, billed_at: billedAt, billed_on: 'own_invoice', bill_error: null \}\)/);
+    assert.match(done, /if \(stampError\) throw stampError;/);
+    // No update anywhere writes a line id alone.
+    assert.doesNotMatch(src, /update\(\{ stripe_invoice_item_id: [a-zA-Z.]+ \}\)/);
+  });
+});
+
+describe('ruling 2:a cancelled club is still billed, and sees its Stripe fees list', () => {
   it('the list’s read is off the billing rail, and stays the owner’s', () => {
     const route = readCode('app/api/billing/stripe-fees/route.ts');
     assert.match(route, /getAuthContextWithRole\(\{ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true \}\)/);
