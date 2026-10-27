@@ -74,6 +74,9 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   card_refund_whose:                 'A refund in Stripe needs you to say whose it was',
   card_refund_still_enrolled:        'A refunded child is still enrolled',
   card_refund_unmatched:             'A refund in Stripe matches no payment we recorded',
+  // 12d-2 words §5.2 `terms.item.title`, §4.2 `ending.notice.title` (its own title carries the date).
+  payments_terms_changed:            'New payments terms to agree to',
+  payments_ending:                   'Online payments are about to stop',
   debit_returned:                    'A bank debit was returned',
   debit_reversed:                    'A bank payment was returned after it cleared',
   // 12d words §1.4 `kind.dispute.*` / `kind.disputeLost.*`; the paid-twice label is drawn from §2.2's item.
@@ -154,6 +157,8 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   card_refund_whose:                 'A part refund was made in Stripe on a payment for more than one child. Choose whose fee it was.',
   card_refund_still_enrolled:        'A child’s fee was refunded in Stripe, but the registration is still active. Withdraw them, email the pay link or keep them enrolled.',
   card_refund_unmatched:             'A refund was made in Stripe on a payment that isn’t recorded yet. It clears when the payment arrives.',
+  payments_terms_changed:            'FieldLogicHQ’s payments terms changed. The owner reads and agrees on the Payouts card; online payments stay on.',
+  payments_ending:                   'Online payments stop through an ending the owner didn’t choose: a comp running out, or a subscription payment that failed.',
   debit_returned:                    'A bank debit was returned while it was clearing. Nothing was taken. The family was emailed a way to pay.',
   debit_reversed:                    'The bank reversed a payment that had cleared. It’s out of the book and the amount is owing again.',
   online_payment_over:               'A team’s online payment landed after it had paid, or for more than it owed. Refund the extra to the card.',
@@ -448,6 +453,9 @@ export const NOTIFICATION_CATEGORY = {
   card_refund_whose:                  'act',
   card_refund_still_enrolled:         'act',
   card_refund_unmatched:              'act',
+  // 12d-2: the owner agrees (clears itself), or the ending passes or stops coming (clears itself).
+  payments_terms_changed:             'act',
+  payments_ending:                    'act',
   debit_returned:                     'act',
   debit_reversed:                     'act',
   online_payment_over:                'act',

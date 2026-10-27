@@ -14,7 +14,7 @@
 import { useCallback, useState } from 'react';
 import { Check, Pencil, Unplug } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
-import { LEAVING_WORDS, TERMS_PLACEHOLDER, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
+import { LEAVING_WORDS, PAYMENTS_TERMS_SUMMARY, TERMS_PLACEHOLDER, TERMS_WORDS, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
 import type { PayoutsState } from '@/lib/online-payment-account';
 import type { OnlineFeePayer } from '@/lib/online-payment-fee';
 import KitDialog from './KitDialog';
@@ -61,6 +61,14 @@ export type PayoutsView = {
   windDown?: boolean;
   /** 12d-2 (words §4.2): an ending the owner didn't choose is coming (a comp ending, a failed subscription payment). */
   ending?: { title: string; body: string } | null;
+  /** 12d-2 Part 4 (words §5.1): who agreed to the payments terms, when, to which version — the owner's. */
+  terms?: {
+    standing: 'agreed' | 'draft' | 'stale' | 'none';
+    agreedBy: string;
+    agreedAt: string;
+    agreedVersionDate: string | null;
+    currentVersionDate: string | null;
+  } | null;
 };
 
 const PILL_TONE: Record<PayoutsState, ChipTone> = {
@@ -96,6 +104,8 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
   const [before, setBefore] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [editing, setEditing] = useState(false);
+  // 12d-2 Part 4 (words §5.3): the terms window — 'agree' asks again; 'read' only shows the terms agreed to.
+  const [termsWindow, setTermsWindow] = useState<'agree' | 'read' | null>(null);
 
   const reload = useCallback(async () => { setView(await loadPayouts(orgSlug)); }, [orgSlug]);
 
@@ -160,6 +170,15 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
         </div>
         <h2 id="settings-payouts" className={styles.cardTitle}>{wind ? WD.title : state === 'needs_attention' && view.paymentsOn ? W.needsTitleStillOn : W.title[state]}</h2>
         {view.testMode && <p className={ck.hint}>{W.testLine}</p>}
+        {/* 12d-2 Part 4 (words §5.2, ask 6): the terms changed — a notice, payments stay on. The owner's. */}
+        {isOwner && view.terms?.standing === 'stale' && (
+          <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">
+            <div className={ck.noticeBody}>
+              {TERMS_WORDS.noticeBody(longDay(view.terms.currentVersionDate))}{' '}
+              <button type="button" className={pc.linkButton} onClick={() => setTermsWindow('agree')}>{TERMS_WORDS.readAndAgree}</button>
+            </div>
+          </div>
+        )}
         {view.ending && (
           <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">
             <div className={ck.noticeBody}><b>{view.ending.title}</b> {view.ending.body}</div>
@@ -170,7 +189,8 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
         {state !== 'disconnected' && !view.windDown && <p className={ck.hint}>{W.ratesLine(view.rateLabel, view.bankRateLabel ?? null)}</p>}
 
         {hasRecord && (
-          <PayoutsRecord orgSlug={orgSlug} home={home} view={view} editing={editing && isOwner} onSaved={next => setView(v => (v ? { ...v, ...next } : v))} />
+          <PayoutsRecord orgSlug={orgSlug} home={home} view={view} editing={editing && isOwner} onSaved={next => setView(v => (v ? { ...v, ...next } : v))}
+            onTerms={setTermsWindow} />
         )}
 
         {isOwner ? (showPrimary && (
@@ -204,6 +224,15 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
           onClose={() => setBefore(false)}
         />
       )}
+      {termsWindow && (
+        <TermsWindow
+          orgSlug={orgSlug}
+          clubName={clubName}
+          mode={termsWindow}
+          onClose={() => setTermsWindow(null)}
+          onAgreed={async () => { setTermsWindow(null); await reload(); }}
+        />
+      )}
       {disconnecting && (
         <DisconnectWindow
           orgSlug={orgSlug}
@@ -218,9 +247,11 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
 }
 
 /** The record (copy §4): reads first; the card's pencil flips it whole. The fee choice and the policy autosave and tell nobody. */
-function PayoutsRecord({ orgSlug, home, view, editing, onSaved }: {
+function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms }: {
   orgSlug: string; home: PayoutsHome; view: PayoutsView; editing: boolean; onSaved: (next: Partial<PayoutsView>) => void;
+  onTerms: (mode: 'agree' | 'read') => void;
 }) {
+  const stale = view.terms?.standing === 'stale';
   const W = payoutsWords(home);
   const [policy, setPolicy] = useState(view.refundPolicy);
   const [saving, setSaving] = useState(false);
@@ -263,6 +294,7 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved }: {
           <dt>{W.record.policyLabel}</dt>
           <dd>{view.refundPolicy ? view.refundPolicy : <span className={ck.hint}>{W.record.policyEmpty}</span>}</dd>
         </div>
+        {view.terms && <TermsRow terms={view.terms} onTerms={onTerms} />}
       </dl>
     );
   }
@@ -271,7 +303,14 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved }: {
     <div className={pc.record}>
       <fieldset className={pc.choice}>
         <legend className={ck.label}>{W.record.feeEditLabel}</legend>
-        {(['family', 'club'] as const).map(p => (
+        {/* 12d-2 (words §5.2 `terms.refuse.fee`): the choice waits for the current terms — the line replaces it. */}
+        {stale && (
+          <p className={ck.hint}>
+            {TERMS_WORDS.refuseFee}{' '}
+            <button type="button" className={pc.linkButton} onClick={() => onTerms('agree')}>{TERMS_WORDS.readAndAgree}</button>
+          </p>
+        )}
+        {!stale && (['family', 'club'] as const).map(p => (
           <label key={p} className={pc.choiceRow}>
             <input type="radio" name="payouts-fee-payer" checked={view.feePayer === p} disabled={saving} onChange={() => void save({ feePayer: p })} />
             <span>
@@ -331,9 +370,12 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
       footer={
         <>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{W.before.cancel}</button>
-          <button type="button" className="btn btn-lime" onClick={() => void go()} disabled={!agreed || busy}>
-            {busy ? W.opening : W.before.continue}
-          </button>
+          {/* 12d-2 (ask 6): absent until the box is ticked, never disabled. */}
+          {agreed && (
+            <button type="button" className="btn btn-lime" onClick={() => void go()} disabled={busy}>
+              {busy ? W.opening : W.before.continue}
+            </button>
+          )}
         </>
       }
     >
@@ -375,6 +417,96 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
       </div>
     </KitDialog>
   );
+}
+
+/** "Payments terms" (words §5.1): agreed, to the draft, or behind — with the one door each reads. */
+function TermsRow({ terms, onTerms }: { terms: NonNullable<PayoutsView['terms']>; onTerms: (mode: 'agree' | 'read') => void }) {
+  const day = longDay(terms.agreedAt);
+  const version = terms.agreedVersionDate ? longDay(terms.agreedVersionDate) : null;
+  const words = terms.standing === 'stale' ? TERMS_WORDS.rowStale(terms.agreedBy, day, version)
+    : terms.standing === 'agreed' && version ? TERMS_WORDS.rowAgreed(terms.agreedBy, day, version)
+      : TERMS_WORDS.rowDraft(terms.agreedBy, day);
+  return (
+    <div className={pc.recordRow}>
+      <dt>{TERMS_WORDS.rowLabel}</dt>
+      <dd>
+        {words}
+        {terms.standing === 'stale'
+          ? <> · <button type="button" className={pc.linkButton} onClick={() => onTerms('agree')}>{TERMS_WORDS.readAndAgree}</button></>
+          : terms.standing === 'agreed'
+            ? <> · <button type="button" className={pc.linkButton} onClick={() => onTerms('read')}>{TERMS_WORDS.readTerms}</button></>
+            : null}
+      </dd>
+    </div>
+  );
+}
+
+/** "The new payments terms" (words §5.3): counsel's summary (left out while empty), the terms, the box — and Agree,
+ *  ABSENT until the box is ticked (ask 6). 'read' shows the terms with no box. The text is counsel's, never ours. */
+function TermsWindow({ orgSlug, clubName, mode, onClose, onAgreed }: {
+  orgSlug: string; clubName: string; mode: 'agree' | 'read'; onClose: () => void; onAgreed: () => void;
+}) {
+  const W = payoutsWords('club');
+  const [agreed, setAgreed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function agree() {
+    setBusy(true);
+    setError(null);
+    try {
+      await post(orgSlug, { action: 'agree_terms', agreeToTerms: true });
+      setDone(true);
+      onAgreed();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setBusy(false);
+    }
+  }
+  return (
+    <KitDialog
+      kind="form"
+      title={mode === 'agree' ? TERMS_WORDS.windowTitle : TERMS_WORDS.termsHeading}
+      onClose={onClose}
+      busy={busy}
+      footer={mode === 'agree' ? (
+        <>
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{TERMS_WORDS.later}</button>
+          {agreed && (
+            <button type="button" className="btn btn-lime" onClick={() => void agree()} disabled={busy}>
+              {busy ? TERMS_WORDS.working : TERMS_WORDS.agree}
+            </button>
+          )}
+        </>
+      ) : undefined}
+    >
+      <div className={pc.before}>
+        {mode === 'agree' && PAYMENTS_TERMS_SUMMARY && (
+          <section>
+            <h3 className={ck.label}>{TERMS_WORDS.changedHeading}</h3>
+            <p>{PAYMENTS_TERMS_SUMMARY}</p>
+          </section>
+        )}
+        <section>
+          {mode === 'agree' && <h3 className={ck.label}>{TERMS_WORDS.termsHeading}</h3>}
+          <p className={pc.termsText}>{TERMS_PLACEHOLDER}</p>
+        </section>
+        {mode === 'agree' && (
+          <label className={pc.terms}>
+            <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} disabled={busy} />
+            <span>{W.before.termsCheckbox(clubName)}</span>
+          </label>
+        )}
+        {done && <p className={ck.hint} role="status">{TERMS_WORDS.done}</p>}
+        {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
+      </div>
+    </KitDialog>
+  );
+}
+
+/** "October 27, 2026" — a stored day or moment, long (the words' {dateLong}). */
+function longDay(value: string | null | undefined): string {
+  return formatStoredDate(value ?? null, { longMonth: true });
 }
 
 /** Disconnect (copy §5): asks, with how many teams still owe. Stops new payments; nothing already paid changes. */

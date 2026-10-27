@@ -80,6 +80,10 @@ export const EMAIL_KINDS = {
   // 12d-1: the club's own business to the one person who can answer it (the logged list is the owner's G1 37; unchanged).
   card_dispute_opened:                  { klass: 'team', label: 'Card dispute opened' },
   card_dispute_reminder:                { klass: 'team', label: 'Card dispute due soon' },
+  // 12d-2 (the daily job, owner ruling 4): FieldLogicHQ to the club's owners.
+  payments_terms_changed:               { klass: 'team', label: 'New payments terms' },
+  payments_terms_reminder:              { klass: 'team', label: 'New payments terms reminder' },
+  payments_ending_warning:              { klass: 'team', label: 'Online payments stopping' },
   // 12d-1 Part 4: a club's own monthly invoice of Stripe fees and its one reminder (unlogged for the same reason).
   stripe_fee_invoice:                   { klass: 'team', label: 'Stripe fees invoice' },
   stripe_fee_invoice_reminder:          { klass: 'team', label: 'Stripe fees invoice reminder' },

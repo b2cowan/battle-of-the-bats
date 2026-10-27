@@ -60,6 +60,11 @@ export const SETTLED_WORDS = {
   // Online payments (Club Tier Stage 12a — CLUB_TIER_STAGE12A_COPY.md §19)
   payoutsBack: 'Online payments are back on',
   payoutsDisconnected: 'Payouts were disconnected.',
+  // 12d-2 words §5.2 `terms.item.settled` (the did() shape: "You agreed" for the owner).
+  termsAgreed: (who: string | null, you: boolean) => (you ? 'You agreed' : who ? `Agreed by ${who}` : 'Agreed'),
+  // 12d-2, derived (owed to /marketing): an ending that passed, or stopped coming (the comp moved, the payment went through).
+  endingPassed: 'Online payments stopped.',
+  endingOff: 'Online payments carry on.',
   onlinePaymentRecorded: 'It’s in the team’s record now.',
   onlinePaymentRefunded: 'It was refunded to the card.',
   onlineItemRecorded: 'It’s on the registration now.',

@@ -11,7 +11,7 @@ import { ONLINE_FEE_PAYERS, onlineFee, type OnlineFeePayer } from '@/lib/online-
 import { createClubAccount, dashboardLink, onboardingLink, prefillClubProfile, retrieveAccount } from '@/lib/stripe-connect';
 import { syncPayoutsAccount } from '@/lib/online-payment-landing';
 import { stripeProfileFor } from '@/lib/online-payment-profile';
-import { PAYMENTS_TERMS_VERSION } from '@/lib/online-payment-words';
+import { PAYMENTS_TERMS_VERSION, TERMS_WORDS, termsStanding, termsVersionDate } from '@/lib/online-payment-words';
 import { effectiveOrgFactsForId } from '@/lib/entitlement-grants';
 import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -51,10 +51,11 @@ async function context(orgSlug: string | null): Promise<PayoutsContext | Respons
 
 async function readAccount(orgId: string): Promise<PayoutsAccountRow & {
   connected_at: string; disconnected_by: string | null; terms_agreed_at: string | null; country: string | null;
+  terms_version: string | null; terms_agreed_by: string | null; terms_agreed_by_email: string | null;
 } | null> {
   const { data } = await supabaseAdmin
     .from('org_payment_accounts')
-    .select(`${PAYOUTS_ACCOUNT_COLUMNS}, connected_at, disconnected_by, terms_agreed_at, country`)
+    .select(`${PAYOUTS_ACCOUNT_COLUMNS}, connected_at, disconnected_by, terms_agreed_at, country, terms_version, terms_agreed_by, terms_agreed_by_email`)
     .eq('org_id', orgId)
     .maybeSingle();
   return data as never;
@@ -110,6 +111,15 @@ export const GET = withObservability(async (req: Request) => {
     // 12d-1 Part 4 (words §3.4): a club that pays nothing for its plan reads "Your plan doesn't change" beside the
     // other-fees line, so a Stripe fee is never read as its comp being withdrawn. An extra read: a failure omits it.
     planFree: await planIsFree(ctx.org.id),
+    // 12d-2 Part 4 (words §5.1, ask 6): who agreed, when, to which version — the owner's read-out. An owner who has left
+    // keeps their name: the stored email stands in once the user is gone.
+    terms: isOwner && row?.terms_agreed_at ? {
+      standing: termsStanding(row.terms_version),
+      agreedBy: (await nameOf(row.terms_agreed_by)) ?? row.terms_agreed_by_email ?? '',
+      agreedAt: row.terms_agreed_at,
+      agreedVersionDate: termsVersionDate(row.terms_version),
+      currentVersionDate: termsVersionDate(PAYMENTS_TERMS_VERSION),
+    } : null,
     // 12d-2 (words §3.3, ask 5): a club without Accounting reads its payouts on the owner's card instead of a tab.
     hasAccounting: hasModuleEntitlement(ctx.org, 'module_accounting'),
     everConnected: !!row,
@@ -138,6 +148,11 @@ export const PATCH = withObservability(async (req: Request) => {
   const { ctx } = c;
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if ('feePayer' in body) {
+    // 12d-2 (ask 6): changing who pays the fee needs the current terms; agreeing again is the terms window's.
+    const { data: agreed } = await supabaseAdmin.from('org_payment_accounts').select('terms_version').eq('org_id', ctx.org.id).maybeSingle();
+    if (agreed && termsStanding(agreed.terms_version as string | null) === 'stale') {
+      return NextResponse.json({ error: TERMS_WORDS.refuseFee, code: 'terms_stale' }, { status: 409 });
+    }
     if (!ONLINE_FEE_PAYERS.includes(body.feePayer)) return NextResponse.json({ error: 'Choose who pays the fee.' }, { status: 400 });
     update.fee_payer = body.feePayer as OnlineFeePayer;
   }
@@ -200,6 +215,17 @@ export const POST = withObservability(async (req: Request) => {
       const synced = await syncPayoutsAccount(accountId);
       if (payoutsState(factsFromRow(synced)) === 'taking_payments') return NextResponse.json({ url: null });
       return NextResponse.json({ url: await onboardingLink(accountId, back(true), back(false)) });
+    }
+    case 'agree_terms': {
+      // 12d-2 Part 4 (words §5.3, ask 6): agree to the current version. Payments stayed on throughout; nothing else moves.
+      if (body.agreeToTerms !== true) return NextResponse.json({ error: TERMS_WORDS.refuseSetup }, { status: 400 });
+      if (!row) return NextResponse.json({ error: 'Set up payouts first.' }, { status: 409 });
+      await supabaseAdmin.from('org_payment_accounts').update({
+        terms_version: PAYMENTS_TERMS_VERSION, terms_agreed_by: ctx.user.id, terms_agreed_by_email: ctx.user.email ?? 'unknown',
+        terms_agreed_at: now, updated_at: now,
+      }).eq('org_id', ctx.org.id);
+      await audit(ctx.org.id, ctx.user.id, 'payouts_terms_agreed', { termsVersion: PAYMENTS_TERMS_VERSION });
+      return NextResponse.json({ ok: true });
     }
     case 'continue': {
       if (!row || row.disconnected_at) return NextResponse.json({ error: 'Set up payouts first.' }, { status: 409 });

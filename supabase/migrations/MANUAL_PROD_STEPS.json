@@ -478,6 +478,10 @@
     "401_a_club_is_told_once_about_new_terms_and_an_ending.sql": {
       "prod": "pending",
       "note": "Club Tier Stage 12d-2 Part 1 (the once-only stamps of the daily job's terms-changed and ending-warning emails). Visible: columns org_payment_accounts.terms_notice_version, terms_notice_at, terms_reminded_at, ending_warned_for, ending_warned_at; CHECKs org_payment_accounts_terms_notice_chk, org_payment_accounts_ending_warned_chk. Additive, nullable, no row change, re-runnable. Needs 358 (and 390-399 for the 12d-1 code beside it). Apply to prod BEFORE the promote that ships 12d-2. Verify on prod: SELECT count(*) FROM information_schema.columns WHERE table_name = 'org_payment_accounts' AND column_name IN ('terms_notice_version','ending_warned_for') -> 2. Applied to DEV 2026-10-27."
+    },
+    "403_the_terms_and_an_ending_wait_on_the_owner.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 12d-2 Part 4 (the owners' two Needs attention kinds from the daily job). Visible only as index definitions: notifications_user_needs_attention_idx and notifications_org_needs_attention_idx REPLACED (adds payments_ending, payments_terms_changed); notifications_one_open_online_payments_notice REPLACED (adds the two kinds, keyed on metadata termsVersion / endingFor). Indexes only, no row change, re-runnable. Needs 390. Apply to prod BEFORE the promote that ships 12d-2 (the daily job raises these kinds). Verify on prod: SELECT indexdef FROM pg_indexes WHERE indexname = 'notifications_one_open_online_payments_notice' -> contains payments_terms_changed. Applied to DEV 2026-10-27."
     }
   }
 }

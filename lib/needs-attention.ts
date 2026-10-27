@@ -648,6 +648,42 @@ const cardRefundStillEnrolled: Resolver = async rows => {
 
 /** A refund made in Stripe that matched no payment we recorded (12c, `unmatchedStripeRefundId`): events arrive out of
  *  order — it settles once the payment lands and the refund is recorded on it. */
+/** 12d-2 (words §5.2): the new terms item clears itself when the club agrees to that version (or a later one), or
+ *  disconnects. No Done. */
+type TermsAccount = { org_id: string; terms_version: string | null; terms_agreed_by: string | null; terms_agreed_at: string | null; disconnected_at: string | null };
+const paymentsTermsChanged: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const accounts = new Map((await rowsIn<TermsAccount>('org_payment_accounts', 'org_id, terms_version, terms_agreed_by, terms_agreed_at, disconnected_at', 'org_id', uniq(rows.map(r => r.org_id)), undefined, 'org_id')).map(a => [a.org_id, a]));
+  for (const r of rows) {
+    const a = accounts.get(r.org_id);
+    const asked = meta(r, 'termsVersion');
+    if (!a || a.disconnected_at) out.set(r.id, said(W.payoutsDisconnected));
+    else if (a.terms_version && asked && a.terms_version >= asked && a.terms_version !== 'placeholder-counsel-pending') {
+      out.set(r.id, { by: a.terms_agreed_by, at: a.terms_agreed_at, words: (who, you) => ({ outcome: W.termsAgreed(who, you) }) });
+    } else out.set(r.id, 'waiting');
+  }
+  return out;
+};
+
+/** 12d-2 (words §4.2): an ending the owner didn't choose clears itself once it has passed (its pages closed by the daily
+ *  job) or stops coming (free time moved, the subscription payment went through), or the club disconnects. */
+const paymentsEnding: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const { upcomingEnding } = await import('./online-payment-endings');
+  const accounts = new Map((await rowsIn<TermsAccount>('org_payment_accounts', 'org_id, terms_version, terms_agreed_by, terms_agreed_at, disconnected_at', 'org_id', uniq(rows.map(r => r.org_id)), undefined, 'org_id')).map(a => [a.org_id, a]));
+  const now = new Date();
+  for (const r of rows) {
+    const a = accounts.get(r.org_id);
+    if (!a || a.disconnected_at) { out.set(r.id, said(W.payoutsDisconnected)); continue; }
+    const endingFor = meta(r, 'endingFor');
+    const kind = meta(r, 'endingKind');
+    if (kind === 'comp' && endingFor && endingFor <= now.toISOString()) { out.set(r.id, said(W.endingPassed)); continue; }
+    const still = await upcomingEnding(r.org_id, now).catch(() => null);
+    out.set(r.id, still && still.at === endingFor ? 'waiting' : said(kind === 'failed' && !still ? W.endingOff : W.endingPassed));
+  }
+  return out;
+};
+
 const cardRefundUnmatched: Resolver = async rows => {
   const out = new Map<string, Verdict>();
   const ids = uniq(rows.map(r => meta(r, 'unmatchedStripeRefundId')));
@@ -763,6 +799,8 @@ export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   card_refund_whose: cardRefundWhose,
   card_refund_still_enrolled: cardRefundStillEnrolled,
   card_refund_unmatched: cardRefundUnmatched,
+  payments_terms_changed: paymentsTermsChanged,
+  payments_ending: paymentsEnding,
   debit_returned: debitOwedAgain,
   debit_reversed: debitOwedAgain,
   online_payment_over: onlinePaymentOver,

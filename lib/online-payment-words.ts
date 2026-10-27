@@ -40,6 +40,56 @@ export const TERMS_PLACEHOLDER = '[PAYMENTS TERMS — counsel to write]';
  *  the terms; the real version replaces it, and an owner who agreed to the placeholder is asked again then. */
 export const PAYMENTS_TERMS_VERSION = 'placeholder-counsel-pending';
 
+/** Counsel's short "What changed" for the current version (words §5.3 `{counselSummary}`). Empty: the window leaves the
+ *  section out. Counsel's text; the product never writes it. */
+export const PAYMENTS_TERMS_SUMMARY = '';
+
+/**
+ * 12d-2 Part 4 (words §5; ask 6): a published version IS its date (`YYYY-MM-DD`), so changing the one constant above is
+ * the whole act of publishing new terms. Anything else (the placeholder) is the draft: agreed "to the draft", and every
+ * club is asked again when the first dated version replaces it.
+ */
+export function termsVersionDate(version: string | null | undefined): string | null {
+  return version && /^\d{4}-\d{2}-\d{2}$/.test(version) ? version : null;
+}
+
+/** How a club stands on the current terms: agreed to it, agreed to the draft while the draft is current, or behind. */
+export function termsStanding(agreedVersion: string | null | undefined, current: string = PAYMENTS_TERMS_VERSION): 'agreed' | 'draft' | 'stale' | 'none' {
+  if (!agreedVersion) return 'none';
+  if (agreedVersion !== current) return 'stale';
+  return termsVersionDate(current) ? 'agreed' : 'draft';
+}
+
+/** THE PAYMENTS TERMS (words CLUB_TIER_STAGE12D_COPY.md §5): who agreed, and agreeing again. The owner's. */
+export const TERMS_WORDS = {
+  rowLabel: 'Payments terms',
+  rowAgreed: (name: string, dateLong: string, versionDate: string) => `Agreed by ${name} on ${dateLong}, version of ${versionDate}`,
+  rowDraft: (name: string, dateLong: string) => `Agreed by ${name} on ${dateLong}, to the draft. You’ll be asked again when the final terms are ready.`,
+  rowStale: (name: string, dateLong: string, versionDate: string | null) =>
+    `Agreed by ${name} on ${dateLong}${versionDate ? `, version of ${versionDate}` : ', to the draft'}. There are newer terms to read.`,
+  readTerms: 'Read the terms',
+  readAndAgree: 'Read and agree',
+  noticeBody: (dateLong: string) => `The payments terms changed on ${dateLong}. Online payments stay on. Agree to the new terms before you set up payouts again or change who pays the fee.`,
+  itemTitle: 'New payments terms to agree to',
+  itemBody: (dateLong: string) => `FieldLogicHQ’s payments terms changed on ${dateLong}. Online payments stay on while you read them.`,
+  itemSettled: (name: string) => `Agreed by ${name}`,
+  refuseFee: 'Agree to the new payments terms to change who pays the processing fee.',
+  refuseSetup: 'Agree to the payments terms first.',
+  emailSubject: (clubName: string) => `New payments terms for ${clubName}`,
+  emailLead: (dateLong: string, clubName: string) => `FieldLogicHQ’s payments terms changed on ${dateLong}. Online payments for ${clubName} stay on while you read them.`,
+  emailBody: 'Please read and agree. You’ll need the new terms to set up payouts again, to reconnect, or to change who pays the processing fee.',
+  emailButton: 'Read and agree',
+  reminderSubject: (clubName: string) => `Reminder: new payments terms for ${clubName}`,
+  reminderLead: (clubName: string) => `You haven’t agreed to the new payments terms yet. Online payments for ${clubName} are still on.`,
+  windowTitle: 'The new payments terms',
+  changedHeading: 'What changed',
+  termsHeading: 'The terms',
+  later: 'Not now',
+  agree: 'Agree',
+  working: 'Agreeing…',
+  done: 'Agreed. Thank you.',
+} as const;
+
 /** Needs attention (§19, plus the "not recorded" item derived for the landing that could not complete). */
 export const ONLINE_NOTICE_WORDS = {
   stripeNeedsTitle: 'Stripe needs something to keep online payments on',

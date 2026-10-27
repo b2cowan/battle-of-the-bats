@@ -3479,6 +3479,9 @@ export type NotificationEventType =
   | 'card_refund_whose'          // a part refund on a payment for two or more children: choose the child
   | 'card_refund_still_enrolled' // a child's fee went back in Stripe while the child is registered: withdraw, link or keep
   | 'card_refund_unmatched'      // a refund on a payment we haven't recorded yet (Stripe's events out of order)
+  // Club Tier Stage 12d-2 (mig 401) — to the owners, from the daily job. Both Needs attention; both clear themselves.
+  | 'payments_terms_changed'     // FieldLogicHQ's payments terms changed: read and agree (payments stay on)
+  | 'payments_ending'            // online payments stop through an ending the owner didn't choose (a comp, a failed payment)
   | 'debit_returned'             // 12c: a bank debit came back while it was clearing (nothing taken; the family emailed)
   | 'debit_reversed'             // 12c: the bank reversed a debit after it cleared (out of the book; owing again)
   // Club Tier Stage 12d-1 (mig 390). All three Needs attention.
