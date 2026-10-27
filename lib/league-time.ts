@@ -114,6 +114,15 @@ export const hoursOf = (minutes: number) => pluralize(hoursNumber(minutes), 'hou
  * and Diamond 2". Shapes that don't line up are each said, joined by "; ", Monday first.
  */
 export function partsWords(parts: readonly Pick<LeagueTimePart, 'weekday' | 'start' | 'end' | 'place'>[]): string {
+  return partsShapes(parts).map(s => `${s.when} · ${facilityListWords(s.places)}`).join('; ');
+}
+
+/** One shape of some parts: its days and clock ("Mon and Wed · 6:00–9:00 p.m."), its facilities, and a week's minutes
+ *  (the clock on each day at each facility). Practice time lists its division's time one row per shape (frame h1). */
+export interface PartsShape { days: number[]; when: string; places: string[]; minutesAWeek: number }
+
+/** Some parts as their shapes, Monday first (`partsWords` says them on one line). */
+export function partsShapes(parts: readonly Pick<LeagueTimePart, 'weekday' | 'start' | 'end' | 'place'>[]): PartsShape[] {
   // 1. Each (day, place)'s clocks, touching ones joined.
   const runs = new Map<string, { weekday: number; place: string; spans: [number, number][] }>();
   for (const p of parts) {
@@ -139,7 +148,7 @@ export function partsWords(parts: readonly Pick<LeagueTimePart, 'weekday' | 'sta
     }
   }
   // 3. Within a clock, the days that share the same places.
-  const shapes: { firstDay: number; start: number; words: string }[] = [];
+  const shapes: (PartsShape & { firstDay: number; start: number })[] = [];
   for (const c of byClock.values()) {
     const byPlaces = new Map<string, { places: string[]; days: number[] }>();
     for (const [day, places] of c.days) {
@@ -152,12 +161,14 @@ export function partsWords(parts: readonly Pick<LeagueTimePart, 'weekday' | 'sta
     for (const g of byPlaces.values()) {
       const days = [...g.days].sort((a, b) => a - b);
       shapes.push({
-        firstDay: days[0], start: c.start,
-        words: `${weekdaysWords(days)} · ${formatTimeRange(clockOf(c.start), clockOf(c.end))} · ${facilityListWords(g.places)}`,
+        firstDay: days[0], start: c.start, days, places: g.places,
+        when: `${weekdaysWords(days)} · ${formatTimeRange(clockOf(c.start), clockOf(c.end))}`,
+        minutesAWeek: (c.end - c.start) * days.length * g.places.length,
       });
     }
   }
-  return shapes.sort((a, b) => a.firstDay - b.firstDay || a.start - b.start).map(s => s.words).join('; ');
+  return shapes.sort((a, b) => a.firstDay - b.firstDay || a.start - b.start)
+    .map(({ days, when, places, minutesAWeek }) => ({ days, when, places, minutesAWeek }));
 }
 
 /** A stretch's title: the days, the clock and the facilities house league holds in it, as one envelope. */
