@@ -390,6 +390,34 @@ Recorded as ticked; the drawings: https://claude.ai/artifact/QTrwrgyGqgBZugpGfvp
   browser-role grants are revoked (prod still had them in 2026-06; RLS made them harmless); `platform_lead_account_dates`
   is the one account read the match needs.
 
+## Stage 7 build (2026-10-27) — Parts 0–7 and 9 built; Part 8 waits on frame J
+
+Commits: Part 0 `c6e3d3720`; records `ab6fe2c41`; mig 398 `978b645fb` (dev 2026-10-27; prod step in MANUAL_PROD_STEPS);
+one definition `c1c195f9b`; Leads `90d1f8408`; words and places `3d3cb8f98`; help + records (this commit).
+- **One definition:** `lib/lead-numbers.ts` (pure) over `lib/lead-book.ts` (every lead, pages of 1,000; a failed read is
+  `not_read`, printed "Not read"). `paysNow` in `lib/plan-growth.ts`. Today, Business numbers and the menu read it;
+  `getCommandCenterStats` reads no leads.
+- **Leads:** `app/platform-admin/early-access/` (Pipeline + Numbers, `LeadsScreen.tsx`), the lead page `[leadId]/`,
+  sentences in `lib/lead-views.ts`, `lib/lead-numbers-view.ts`, `lib/lead-timeline.ts`; every write in
+  `lib/lead-writes.ts`; routes under `app/api/platform-admin/early-access/` (link, dismiss, notes, clubs, copy-emails,
+  export, numbers-export).
+- **Builder's calls (the walk puts them to the owner):** Mark contacted moves only New → Contacted (a Signed up lead's
+  step is its link's); a lead edit's audit entry also keeps the source and Lost reason CODES (fixed lists, never words) so
+  the timeline can say "set the source: …"; no "Details" box under Lost (no column; a note instead); the timeline says
+  "started a subscription" (the event fires at a trial's start too), not the drawn "started paying"; only the latest
+  refill of the form is dated (earlier ones were never kept; Part 8 adds a place); the export carries no staff notes;
+  note removal uses the rulebook's `delete_records` (Super admin), no new power; the catalogue four keep their menu
+  place (none was drawn); no "Opened" line on a deck (Q8); Business numbers loses its back link (it is in the menu).
+  Pitch decks (a helper's restyle, reviewed): Create this deck hidden until a name and a slide, with the new foot line
+  "Name the deck and add at least one slide to create it."; saved dates read "Sep 3" through the console's day.
+- **Finding, not S7's:** Today's and Business numbers' "about $X a month at list price" counts Founding comps and free
+  time at list price (`getCommandCenterStats` MRR: `status === 'active'` only) — Business numbers' own billing pass.
+- **Threats → guards:** `tests/unit/support-console-stage7-guard.test.ts` (THREATS table: 1–3, 5–9, 11–14 guarded;
+  4, 10, 16 owed to Part 8; 15 not built per Q8), `-stage7-numbers`, `-stage7-audit-guard`.
+- **Owed:** frame J (drawn on the drawings page, owner OK) → Part 8 (overwrite fix incl. the coach-interest writer,
+  C, D, the throttle, its migration for refills and tags); the two walks; `/simplify`, `/review` (privacy lens),
+  `/docs` beyond the Leads and Audit log articles.
+
 ## Stage 5 build (2026-10-26) — what was built, and the threats → guards
 
 Built on dev in one session after the gate (G1–G4). Migration 389 (dev 2026-10-26; prod step in MANUAL_PROD_STEPS with

@@ -1475,46 +1475,48 @@ const platformAdminHelp: HelpPageContent = {
     {
       id: 'early-access-pipeline',
       group: 'Growth SOP',
-      heading: 'How to manage the early-access lead pipeline',
-      summary: 'Work early-access leads through the pipeline: status, notes, outreach templates, and conversion.',
-      keywords: ['early access', 'leads', 'pipeline', 'outreach', 'convert', 'follow up', 'growth', 'lead status', 'export'],
-      searchText: 'how do i manage early access lead pipeline status new qualified contacted pilot converted not a fit do not contact outreach templates mark converted follow up export copy emails follow-up due in view tiles',
+      heading: 'How to work the leads pipeline',
+      summary: 'Leads: the seven steps, Needs you, a lead\u2019s own page, the offered sign-up match, and the Numbers view.',
+      keywords: ['leads', 'pipeline', 'needs you', 'signed up', 'lost', 'stuck', 'source', 'note', 'link a club', 'numbers', 'pay now', 'copy emails', 'export', 'early access'],
+      searchText: 'how do i work the leads pipeline steps new contacted qualified pilot waiting for launch signed up lost why it was lost not a fit chose another tool price not this season no reply after three tries asked not to be contacted needs you stuck 30 days follow-up due sign-up to confirm offered match link the club not this club link one by hand unlink source not set referral from a club a tournament on fieldlogichq search social media an event or conference a pitch deck other add a note remove a note timeline email templates mark contacted numbers leads arrived pay now time to sign up new accounts by page by plan by source month by month copy emails export early access',
       links: [
         { label: 'Leads', href: '/platform-admin/early-access' },
+        { label: 'Numbers', href: '/platform-admin/early-access?view=numbers' },
       ],
       content: (
         <>
-          <p><strong>Leads</strong> (once called Early access) is the growth lead pipeline. The summary tiles show leads <strong>In view</strong>, <strong>New</strong>, <strong>Pilot</strong>, <strong>Converted</strong> (with rate), and <strong>Follow-up due</strong>. The conversion panels break down what is converting by plan interest and feature interest.</p>
+          <p><strong>Leads</strong> (once called Early access) is where every early-access form and every coach&rsquo;s &ldquo;tell me more&rdquo; lands. It has two views: <strong>Pipeline</strong>, the list, and <strong>Numbers</strong>, what has converted. Super admin, Product and Growth work leads; other roles see three counts on Business numbers and nothing else.</p>
           <ol>
-            <li>Filter the list by search text, plan interest, feature interest, status, or consent. Click a lead to open the detail panel.</li>
-            <li>Move the lead through its lifecycle with the status select: <strong>New → Qualified → Contacted → Pilot candidate → Waiting for launch → Converted</strong>, or close it as <strong>Not a fit</strong> / <strong>Do not contact</strong>. Any status can be set directly — there is no forced order.</li>
-            <li>Record work in the detail panel: set a <strong>Follow-up due</strong> date, a <strong>Next action</strong>, and <strong>Internal notes</strong>, then <strong>Save</strong>. Use <strong>Mark contacted</strong> to stamp the last-contacted date.</li>
-            <li>For outreach, use the built-in <strong>Templates</strong> (League Plus beta invite, Club roadmap update, Feedback call). Clicking one copies the subject and body with the lead&apos;s name and org filled in — paste into your email tool and personalise before sending. The <strong>Email</strong> button in the panel copies the lead&apos;s address; <strong>Copy emails</strong> grabs all consented addresses in the current view.</li>
-            <li>To convert a lead, first pick the <strong>Converted organization</strong> in the panel, then click <strong>Mark converted</strong>. This links the lead to that org and records the conversion (a lead with no org selected cannot be marked converted).</li>
+            <li><strong>The steps.</strong> A lead moves through seven steps in the order the work happens: <strong>New → Contacted → Qualified → Pilot → Waiting for launch → Signed up</strong>, or <strong>Lost</strong>. The band at the top counts every lead in each step; press a step to list it.</li>
+            <li><strong>Needs you</strong> is the list the screen opens on: a new lead nobody has answered, a follow-up that has come due, a lead <strong>stuck</strong> for 30 days with no step change, note or follow-up (Waiting for launch is never stuck), and a sign-up to confirm. The menu&rsquo;s Leads count is this list. Pick <strong>Every lead</strong> for the rest.</li>
+            <li><strong>A lead&rsquo;s page</strong> reads first. Press the pencil to edit its step, source and source detail, next action and follow-up all at once; the check mark saves at once, and the &#10005; puts everything back. <strong>Lost</strong> needs a reason (Not a fit, Chose another tool, Price, Not this season, No reply after three tries, Asked not to be contacted); the check mark refuses until one is picked.</li>
+            <li><strong>Signed up</strong> is never picked from the list: it comes from linking a club or Coaches Portal. When a club signs up with a lead&rsquo;s email, the page offers it: <strong>Link the club</strong> or <strong>Not this club</strong> (never offered again). Nothing links by itself. To link a club whose address differs, press the pencil, then <strong>Link one by hand</strong>; demo clubs and staff test clubs are never offered. Unlinking puts the step back.</li>
+            <li><strong>Add a note</strong> opens a window. A note is dated and signed with your name and cannot be edited; a Super admin can remove one, which leaves &ldquo;A note was removed&rdquo; and no words. The <strong>timeline</strong> shows every step move, source, link, note and form, newest first.</li>
+            <li><strong>Email</strong> followed by the lead&rsquo;s first name holds the three outreach templates (League Plus early access, Club roadmap update, Feedback call), which copy with the lead&rsquo;s name filled in, and <strong>Mark contacted</strong>, which stamps today and moves a New lead to Contacted.</li>
           </ol>
-          <p><strong>Reporting:</strong> the list loads at most <strong>100 leads</strong> — when the true total exceeds that, narrow with filters or <strong>Export</strong> (XLSX/CSV) for the full pipeline. Respect consent: only consented leads are included in <em>Copy emails</em>.</p>
-          <p><strong>Permission boundary:</strong> growth, product, and super admin can update leads. Billing and support do not see this surface. A view-only role can read a lead but cannot edit it.</p>
+          <p><strong>Numbers</strong> is read live when it opens, over every lead: <strong>Leads arrived</strong> (their first form in the period), <strong>Signed up</strong> (linked to a club or portal by a person), <strong>Pay now</strong> (their own plan is not Tournament, billing is active and a real subscription stands behind it; a trial, free time and a Founding Season comp are not paying), <strong>Time to sign up</strong> (to the day the club or portal was created, not the day it was linked) and <strong>New accounts</strong>. A figure that could not be read says <strong>Not read</strong>, never 0.</p>
+          <p><strong>Tools:</strong> <em>Copy emails</em> copies the addresses of the leads in the list on screen who said yes to release emails, never one who asked not to be contacted. <em>Export</em> takes every lead in the list, Excel first or CSV; a lead who asked not to be contacted has an empty email cell. Both are recorded in the audit log (who, when, how many), never with an address.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-ea-mark-converted',
-          question: 'I cannot mark a lead converted. What am I missing?',
+          question: 'How do I mark a lead Signed up?',
           answer: (
-            <p>You must select the <strong>Converted organization</strong> in the lead detail panel first. <strong>Mark converted</strong> links the lead to that org and records the conversion — without an org selected it cannot proceed.</p>
+            <p>Link its club. If the page offers a club that signed up with the lead&rsquo;s email, press <strong>Link the club</strong>. Otherwise press the pencil and <strong>Link one by hand</strong>, and search for the club or portal by name.</p>
           ),
-          answerText: 'Select the Converted organization in the detail panel first — Mark converted links the lead to that org and needs it set.',
-          keywords: ['mark converted', 'convert lead', 'organization'],
+          answerText: 'Link its club: Link the club on an offered match, or the pencil then Link one by hand.',
+          keywords: ['signed up', 'link a club', 'convert lead', 'organization'],
           popular: true,
         },
         {
-          id: 'faq-ea-100-cap',
-          question: 'The list seems capped. How do I see all the leads?',
+          id: 'faq-ea-not-offered',
+          question: 'A club signed up but the lead page does not offer it. Why?',
           answer: (
-            <p>The list loads up to 100 leads at a time. The total count tile reflects the true number — when it exceeds 100, narrow the view with filters or use <strong>Export</strong> (XLSX/CSV) to pull the full pipeline.</p>
+            <p>The page offers a club only when an owner or admin who has joined it signs in with the lead&rsquo;s address, and confirmed that address themselves from our email. An address staff confirmed in the console, a demo club, a staff test club and a club you marked <strong>Not this club</strong> are never offered. Link it by hand if it is the lead&rsquo;s.</p>
           ),
-          answerText: 'The list caps at 100 loaded leads. Filter to narrow, or Export (XLSX/CSV) for the full pipeline.',
-          keywords: ['100 cap', 'limit', 'export', 'all leads'],
+          answerText: 'Only an owner or admin who joined and confirmed the lead\u2019s address themselves is offered; link any other club by hand.',
+          keywords: ['offered match', 'sign-up to confirm', 'not offered'],
         },
       ],
     },
