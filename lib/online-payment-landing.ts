@@ -559,6 +559,9 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     });
   const error = landError;
   if (error) {
+    // A passing conflict (a deadlock victim, a lock wait, a cancelled statement) is Stripe's to retry, exactly as the
+    // house-league landing does: stamped "not recorded" it would be answered 200 and never landed (review 2026-10-26).
+    if (isTransientDbError(error)) throw new Error(`Team payment landing will retry: ${error.message}`);
     await supabaseAdmin.rpc('online_payment_land_failed', {
       p_online_payment: op.id, p_paid_at: paidAt, p_payment_intent: card.intent, p_charge: card.charge, p_brand: card.brand,
       p_last4: card.last4, p_error: error.message,
@@ -987,7 +990,10 @@ export async function applyRefundEvent(stripeAccountId: string, refund: Stripe.R
   if (op.stripe_account_id !== stripeAccountId) return;
   // Ours carries our refund's id in its metadata (set when we asked Stripe), or Stripe's id once recorded. A refund made
   // in the club's own Stripe dashboard has neither and is never taken for one of ours.
-  const ourId = typeof refund.metadata?.refund_id === 'string' ? refund.metadata.refund_id : null;
+  // The metadata is the club's to write (a dashboard refund can carry anything), and it goes into a filter string: only a
+  // real id is used (review 2026-10-26: a value like "x,id.neq.0" widened the filter to every refund on the payment).
+  const metaId = refund.metadata?.refund_id;
+  const ourId = typeof metaId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(metaId) ? metaId : null;
   const { data: ours } = await supabaseAdmin.from('online_payment_refunds')
     .select('id, status').eq('online_payment_id', op.id)
     .or(ourId ? `id.eq.${ourId},stripe_refund_id.eq.${refund.id}` : `stripe_refund_id.eq.${refund.id}`);

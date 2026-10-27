@@ -98,6 +98,24 @@ describe('the notices say which rail the money came by, and the dates are the or
   });
 });
 
+describe('the last small gaps from the review', () => {
+  const land = readCode('lib/online-payment-landing.ts');
+  it('a tournament landing a passing database conflict hit is retried by Stripe, not stamped "not recorded"', () => {
+    const at = land.indexOf("rpc('online_payment_land', {");
+    const block = land.slice(at, land.indexOf("rpc('online_payment_land_failed'", at));
+    assert.match(block, /isTransientDbError\(error\)\) throw new Error\(`Team payment landing will retry/);
+  });
+  it('the team pay route is throttled before it asks Stripe, as the league one is', () => {
+    const route = readCode('app/api/pay/team/[token]/route.ts');
+    assert.ok(route.indexOf('throttlePublicForm(req)') > 0 && route.indexOf('throttlePublicForm(req)') < route.indexOf('teamFromPayToken(token)'));
+    assert.match(readCode('app/api/pay/league/[token]/route.ts'), /throttlePublicForm\(req\)/);
+  });
+  it('only a real id from a refund\'s metadata reaches the lookup filter', () => {
+    assert.match(land, /const ourId = typeof metaId === 'string' && \/\^\[0-9a-f\]\{8\}-/);
+    assert.doesNotMatch(land, /metadata\?\.refund_id === 'string' \? refund\.metadata\.refund_id/);
+  });
+});
+
 describe('an answer saved while a debit clears is settled if the debit moved meanwhile', () => {
   it('the team route settles the answer after saving it', () => {
     const route = readCode('app/api/admin/tournaments/[tournamentId]/registrations/online-payments/route.ts');

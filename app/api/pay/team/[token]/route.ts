@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
+import { throttlePublicForm } from '@/lib/public-form-throttle';
 import { createCheckout, expireCheckout, retrieveCheckout } from '@/lib/stripe-connect';
 import { loadTeamPayFacts } from '@/lib/team-pay-facts';
 import { refusalMessage, teamFromPayToken } from '@/lib/team-pay-view';
@@ -60,6 +61,9 @@ async function openSessionFor(teamId: string, scope: PayScope, rail: 'card' | 'b
 export const POST = withObservability(async (req: Request, { params }: { params: Promise<{ token: string }> }) => {
   const { token } = await params;
   if (!onlinePaymentsOn()) return NextResponse.json({ error: W.error.switchOff }, { status: 404 });
+  // Public: throttled like every family form, as the league pay route is — each press asks Stripe (review 2026-10-26).
+  const throttled = throttlePublicForm(req);
+  if (throttled) return throttled;
   const teamId = teamFromPayToken(token);
   if (!teamId) return NextResponse.json({ error: W.error.linkInvalid }, { status: 404 });
   const body = await req.json().catch(() => ({}));
