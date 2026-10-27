@@ -186,6 +186,16 @@
   settled line drop "as a credit" to match ruling 5, and "The dispute was lost." is a derived settled line (both owed to
   `/marketing`). Layout check skipped (the UAT fixture's screens were missing, untouched ones too). Next:
   `CLUB_TIER_STAGE12D1_PART3_PROMPT.md`.
+  **Part 3 (card disputes) committed `20525a222` (server), `77cddf92b` (screens), `717f6811b` (its /review) 2026-10-27, no
+  schema change.** Every `charge.dispute.*` event re-reads the dispute from Stripe and writes it once; a bank debit keeps
+  12c's path. Builder's calls for the walk: the desk gets its own quiet copy of the item (words §1.4 `titleOthers`; the
+  handoff read "item to the answerer only"); "Copy the facts" is one labelled button on a phone too (words §1.2 rules the
+  symbol-alone rule out for it); an inquiry never blocks a refund (Stripe settles one by a refund, and "Stripe has already
+  taken the money back" is false for it); the answering fee isn't printed (Stripe doesn't break it out); `answererGone`
+  stays held; the opened email is built (the 3-days reminder is the daily job's); its email kind is unlogged (the logged
+  list is the owner's 37). Derived words owed to `/marketing`: the inquiry's tap tip, the siblings' email act/button.
+  Deferred to `/dba` (migrations) and the rest: `CLUB_TIER_STAGE12D1_PART4_PROMPT.md` "What Part 3 learned". Layout
+  check skipped (UAT fixture, as Part 2).
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
