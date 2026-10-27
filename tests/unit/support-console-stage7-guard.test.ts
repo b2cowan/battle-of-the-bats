@@ -147,6 +147,24 @@ describe('Stage 7 guard 9 · the Story', () => {
       assert.equal(hiddenEntryLine(a, { money: true, leads: false }), LEAD_ENTRY_HIDDEN, a);
     }
   });
+
+  it('any audit write that names an early-access action is on the lead list — a new one cannot slip past the filter', () => {
+    const written = new Set<string>();
+    for (const dir of ['lib', 'app']) {
+      for (const ext of ['.ts', '.tsx']) {
+        for (const f of filesUnder(dir, ext)) {
+          const code = readCode(f);
+          if (!/writePlatformAuditLog(?:Strict)?\(/.test(code)) continue;
+          // An action is a verb_phrase (`link_early_access_lead`); a table, a column or an area key is not.
+          for (const m of code.matchAll(/['"`]((?:update|link|unlink|dismiss|add|remove|copy|export|create|delete|confirm|set|clear|send|save|merge)_[a-z_]*early_access[a-z_]*)['"`]/g)) written.add(m[1]);
+        }
+      }
+    }
+    assert.ok(written.size > 0, 'the scan found no early-access action at all — the scan is broken');
+    for (const action of written) {
+      assert.ok(LEAD_ACTIONS.has(action), `${action} is written to the audit log but is not in LEAD_ACTIONS, so every staff role would read its details`);
+    }
+  });
 });
 
 describe('Stage 7 guard 10 · Today', () => {
@@ -207,5 +225,42 @@ describe('Stage 7 guard 12 · the threat list', () => {
   it('names a guard, or why there is none, for all 16 threats', () => {
     assert.deepEqual(Object.keys(THREATS).map(Number), Array.from({ length: 16 }, (_, i) => i + 1));
     for (const [n, why] of Object.entries(THREATS)) assert.ok(why.length > 10, `threat ${n}`);
+  });
+});
+
+describe('Stage 7 finish pass · what /review found and fixed', () => {
+  it('a CSV cell with a bare carriage return is quoted, so a stranger’s text cannot start a new record', async () => {
+    const { generateCSV } = await import('../../lib/export/csv.ts');
+    assert.equal(generateCSV(['a'], [['x\r=1+1']]), 'a\n"x\r=1+1"');
+  });
+
+  it('a made-up step in the address never widens a file or a copy past the screen', () => {
+    const code = readCode('lib/lead-writes.ts');
+    // The scope test reads the VALIDATED step (an unknown one is empty), as the Leads screen does.
+    assert.match(code, /const step = \(EARLY_ACCESS_STATUSES as readonly string\[\]\)\.includes\(asked\) \? asked : ''/);
+    assert.match(code, /scope: sp\.get\('scope'\) === 'all' \|\| step \? 'all' : 'needs'/);
+  });
+
+  it('Copy emails writes its audit entry before the addresses leave, and refuses without it', () => {
+    const code = readCode('lib/lead-writes.ts');
+    assert.match(code, /await writePlatformAuditLogStrict\(actor, null, 'copy_early_access_emails'/);
+    assert.doesNotMatch(code, /writePlatformAuditLog\(actor, null, 'copy_early_access_emails'/);
+  });
+
+  it('a link can never lift "asked not to be contacted", and a second press changes nothing', () => {
+    const code = readCode('lib/lead-writes.ts');
+    assert.match(code, /if \(askedNotToBeContacted\(\{ step: lead\.internal_status as EarlyAccessStatus, lostReason: lead\.lost_reason \}\)\)/);
+    assert.match(code, /\.is\('linked_at', null\)\.eq\('internal_status', lead\.internal_status\)\.select\('id'\)/);
+    assert.match(code, /if \(!changed \|\| changed\.length === 0\) return fail\(409/);
+  });
+
+  it('there is no second way to read every lead: the old unaudited list route is gone', () => {
+    assert.throws(() => readCode('app/api/platform-admin/early-access/route.ts'), /ENOENT/);
+  });
+
+  it('the New deck window forgets what was typed when it is discarded', () => {
+    const code = readCode('app/platform-admin/pitch-deck-studio/DeckComposer.tsx');
+    assert.match(code, /onClose=\{closeNew\}/);
+    assert.match(code, /<DialogCancel \/>/);
   });
 });

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { withObservability } from '@/lib/observability';
 import { findClubs } from '@/lib/platform-people-lookup';
-import { getBootstrapAdminEmails } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { normalAddress } from '@/lib/lead-numbers';
+import { readStaffAddresses } from '@/lib/lead-book';
 import { consoleDay } from '@/lib/console-dates';
 
 /**
@@ -18,9 +18,7 @@ export const GET = withObservability(async (req: NextRequest) => {
   if (q.length < 2) return NextResponse.json({ clubs: [] });
   try {
     const { rows } = await findClubs(q);
-    const { data: staffRows, error: staffError } = await supabaseAdmin.from('platform_users').select('email');
-    if (staffError) throw staffError;
-    const staff = new Set([...getBootstrapAdminEmails(), ...((staffRows ?? []) as { email: string }[]).map(s => normalAddress(s.email))]);
+    const staff = await readStaffAddresses();
     const kept = rows.filter(r => !(r.ownerEmail && staff.has(normalAddress(r.ownerEmail))));
     const { data: dates, error } = kept.length
       ? await supabaseAdmin.from('organizations').select('id, created_at').in('id', kept.map(r => r.id))

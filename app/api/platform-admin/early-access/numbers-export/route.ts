@@ -7,6 +7,7 @@ import { generateCSV } from '@/lib/export/csv';
 import { formulaSafeRow } from '@/lib/export/formula-safe';
 import { readAccounts, readLeadBook, readPaying } from '@/lib/lead-book';
 import { isSignedUp } from '@/lib/lead-numbers';
+import { filterToken } from '@/lib/lead-views';
 import { numbersView, parsePeriod, tableRows } from '@/lib/lead-numbers-view';
 
 /**
@@ -23,8 +24,7 @@ export const GET = withObservability(async (req: NextRequest) => {
   const period = parsePeriod(sp.get('period') ?? undefined, leads);
   const signed = leads.filter(isSignedUp).map(l => l.orgId).filter((x): x is string => !!x);
   const [pay, accounts] = await Promise.all([readPaying(signed), readAccounts()]);
-  const token = (k: string) => (sp.get(k) ?? '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40);
-  const m = numbersView(leads, period, { plan: token('plan'), source: token('source'), tag: token('tag'), page: (sp.get('page') ?? '').slice(0, 60) },
+  const m = numbersView(leads, period, { plan: filterToken(sp.get('plan')), source: filterToken(sp.get('source')), tag: filterToken(sp.get('tag'), 32), page: (sp.get('page') ?? '').slice(0, 60) },
     pay, accounts, new Set(leads.map(l => l.orgId).filter((x): x is string => !!x)), new Date());
   const n = m.numbers;
 

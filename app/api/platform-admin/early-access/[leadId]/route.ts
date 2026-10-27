@@ -64,6 +64,13 @@ export const PATCH = withObservability(async (req: NextRequest,
   if (body.source !== undefined && body.source !== null && !isLeadSource(body.source)) {
     return NextResponse.json({ error: 'Pick a source from the list' }, { status: 400 });
   }
+  // An empty follow-up clears it; anything else must be a real calendar day, never silently read as "clear it".
+  if (body.followUpDueAt !== undefined && body.followUpDueAt !== null && body.followUpDueAt !== '') {
+    const day = cleanOptionalDate(body.followUpDueAt);
+    if (!day || new Date(`${day}T00:00:00Z`).toISOString().slice(0, 10) !== day) { // utc-intentional: a calendar-day validity check, no clock
+      return NextResponse.json({ error: 'Pick a real date for the follow-up' }, { status: 400 });
+    }
+  }
 
   const { data: current, error: currentError } = await supabaseAdmin
     .from('early_access_leads').select(SELECT).eq('id', leadId).maybeSingle<LeadRow>();

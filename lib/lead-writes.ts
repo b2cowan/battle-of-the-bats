@@ -11,21 +11,20 @@
 import { supabaseAdmin } from './supabase-admin';
 import { writePlatformAuditLog, writePlatformAuditLogStrict } from './platform-audit';
 import { isDemoOrgId } from './demo-org-server';
-import { getBootstrapAdminEmails } from './platform-auth';
-import { readLeadBook, readOffers, type BookLead, type OfferedClub, type Read } from './lead-book';
+import { readLeadBook, readOffers, readStaffAddresses, type BookLead, type OfferedClub, type Read } from './lead-book';
 import { normalAddress } from './lead-numbers';
-import { leadsInList, type PipelineFilters } from './lead-views';
+import { filterToken, leadsInList, type PipelineFilters } from './lead-views';
 import { EARLY_ACCESS_STATUSES, isEarlyAccessStatus, type EarlyAccessStatus } from './early-access-admin';
 
 export type WriteResult = { ok: true } | { ok: false; status: number; error: string };
 
 const fail = (status: number, error: string): WriteResult => ({ ok: false, status, error });
 
-type LeadNow = { id: string; email: string; internal_status: string; linked_at: string | null; converted_org_id: string | null; converted_at: string | null };
+type LeadNow = { id: string; email: string; internal_status: string; lost_reason: string | null; linked_at: string | null; converted_org_id: string | null; converted_at: string | null };
 
 async function leadNow(leadId: string): Promise<LeadNow | null | 'error'> {
   const { data, error } = await supabaseAdmin.from('early_access_leads')
-    .select('id, email, internal_status, linked_at, converted_org_id, converted_at').eq('id', leadId).maybeSingle();
+    .select('id, email, internal_status, lost_reason, linked_at, converted_org_id, converted_at').eq('id', leadId).maybeSingle();
   if (error) return 'error';
   return (data as LeadNow | null) ?? null;
 }
@@ -39,9 +38,7 @@ async function refusedClub(orgId: string): Promise<boolean> {
   if (ids.length === 0) return false;
   const { data: people, error: peopleError } = await supabaseAdmin.rpc('platform_people_by_ids', { p_ids: ids });
   if (peopleError) throw peopleError;
-  const { data: staffRows, error: staffError } = await supabaseAdmin.from('platform_users').select('email');
-  if (staffError) throw staffError;
-  const staff = new Set([...getBootstrapAdminEmails(), ...((staffRows ?? []) as { email: string }[]).map(s => normalAddress(s.email))]);
+  const staff = await readStaffAddresses();
   return ((people ?? []) as { email: string }[]).some(p => staff.has(normalAddress(p.email)));
 }
 
@@ -51,6 +48,11 @@ export async function linkLead(actor: string, leadId: string, orgId: string, met
   if (lead === 'error') return fail(500, 'The lead could not be read. Nothing was linked.');
   if (!lead) return fail(404, 'Lead not found');
   if (lead.linked_at) return fail(409, 'This lead already has a club. Unlink it first.');
+  // A link clears the lost reason, which would silently lift "asked not to be contacted" and put the person back in
+  // Copy emails and the export. Moving the step off Lost is the deliberate act that lifts it.
+  if (askedNotToBeContacted({ step: lead.internal_status as EarlyAccessStatus, lostReason: lead.lost_reason })) {
+    return fail(409, 'This lead asked not to be contacted. Change its step first if that has changed.');
+  }
 
   const { data: org, error: orgError } = await supabaseAdmin.from('organizations').select('id, name, created_at').eq('id', orgId).maybeSingle();
   if (orgError) return fail(500, 'The club could not be read. Nothing was linked.');
@@ -69,7 +71,8 @@ export async function linkLead(actor: string, leadId: string, orgId: string, met
   }
 
   const now = new Date().toISOString();
-  const { error } = await supabaseAdmin.from('early_access_leads').update({
+  // Conditioned on what the checks above read, so a second press (or a step moved to Lost meanwhile) changes nothing.
+  const { data: changed, error } = await supabaseAdmin.from('early_access_leads').update({
     internal_status: 'converted',
     converted_org_id: orgId,
     converted_at: lead.converted_at ?? now,
@@ -82,8 +85,9 @@ export async function linkLead(actor: string, leadId: string, orgId: string, met
     follow_up_due_at: null,
     next_action: null,
     updated_at: now,
-  }).eq('id', leadId).is('linked_at', null);
+  }).eq('id', leadId).is('linked_at', null).eq('internal_status', lead.internal_status).select('id');
   if (error) return fail(500, 'The link could not be saved.');
+  if (!changed || changed.length === 0) return fail(409, 'This lead changed while you were linking it. Nothing was linked; open it again.');
 
   await writePlatformAuditLog(actor, orgId, 'link_early_access_lead', leadId,
     { internal_status: lead.internal_status }, { internal_status: 'converted', method, orgId });
@@ -127,19 +131,19 @@ export async function dismissOffer(actor: string, leadId: string, orgId: string)
 
 export type ListParams = { scope: 'needs' | 'all'; filters: PipelineFilters };
 
-const token = (v: string | null, max = 40) => (v ?? '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, max);
-
 /** The list a Copy emails or an export works on, from the address the screen sent (the screen's own filters). */
 export function listFromParams(sp: URLSearchParams): ListParams {
-  const step = sp.get('step') ?? '';
+  const asked = sp.get('step') ?? '';
+  // The screen validates the step before it picks the list; a made-up one must not widen the file past the screen.
+  const step = (EARLY_ACCESS_STATUSES as readonly string[]).includes(asked) ? asked : '';
   return {
     scope: sp.get('scope') === 'all' || step ? 'all' : 'needs',
     filters: {
       q: (sp.get('q') ?? '').trim().slice(0, 80),
-      step: (EARLY_ACCESS_STATUSES as readonly string[]).includes(step) ? step : '',
-      plan: token(sp.get('plan')),
-      source: token(sp.get('source')),
-      tag: token(sp.get('tag'), 32),
+      step,
+      plan: filterToken(sp.get('plan')),
+      source: filterToken(sp.get('source')),
+      tag: filterToken(sp.get('tag'), 32),
     },
   };
 }
@@ -173,8 +177,13 @@ export async function copyEmails(actor: string, l: ListParams): Promise<{ ok: tr
   const list = await readList(l);
   if (list.kind === 'not_read') return { ok: false, status: 503, error: 'The leads could not be read just now. Nothing was copied.' };
   const emails = [...new Set(list.value.filter(x => x.consent && !askedNotToBeContacted(x)).map(x => x.email))];
-  // Who, when, how many and which list — never an address.
-  await writePlatformAuditLog(actor, null, 'copy_early_access_emails', 'list', null, { count: emails.length, list: listWords(l) });
+  // Who, when, how many and which list — never an address. Written BEFORE the addresses leave, like the export: if the
+  // entry cannot be written, nothing is copied.
+  try {
+    await writePlatformAuditLogStrict(actor, null, 'copy_early_access_emails', 'list', null, { count: emails.length, list: listWords(l) }, {});
+  } catch {
+    return { ok: false, status: 503, error: 'The copy could not be recorded just now. Nothing was copied.' };
+  }
   return { ok: true, emails };
 }
 

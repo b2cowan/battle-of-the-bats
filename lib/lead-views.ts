@@ -12,6 +12,11 @@ import { daysOnStep, followUpDue, isStuck, needsYou, stepCounts, type PayRead } 
 import type { BookLead, OfferedClub } from './lead-book';
 import { planName } from './platform-story-view';
 
+/** A filter value from an address: letters, digits, "_" and "-" only, so it can only ever match a stored tag/plan/source. */
+export function filterToken(v: string | null | undefined, max = 40): string {
+  return (v ?? '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, max);
+}
+
 export type StepTone = 'plain' | 'ok' | 'info' | 'warn' | 'bad' | 'quiet';
 
 export function stepTone(step: EarlyAccessStatus): StepTone {

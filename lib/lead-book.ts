@@ -80,14 +80,14 @@ function movedFollowUp(oldValue: unknown, newValue: unknown): boolean {
 /** Every lead, with the dated facts the one definition needs. */
 export async function readLeadBook(): Promise<Read<BookLead[]>> {
   const rows = await readAll<LeadRow>((from, to) => supabaseAdmin.from('early_access_leads').select(LEAD_COLUMNS)
-    .order('created_at', { ascending: false }).range(from, to));
+    .order('created_at', { ascending: false }).order('id').range(from, to));
   if (!rows) return { kind: 'not_read' };
 
   const notes = await readAll<{ lead_id: string; created_at: string }>((from, to) => supabaseAdmin
-    .from('early_access_lead_notes').select('lead_id, created_at').order('created_at').range(from, to));
+    .from('early_access_lead_notes').select('lead_id, created_at').order('created_at').order('id').range(from, to));
   const edits = await readAll<{ field: string | null; created_at: string; old_value: unknown; new_value: unknown }>((from, to) => supabaseAdmin
     .from('platform_audit_log').select('field, created_at, old_value, new_value').eq('action', 'update_early_access_lead')
-    .order('created_at').range(from, to));
+    .order('created_at').order('id').range(from, to));
   if (!notes || !edits) return { kind: 'not_read' };
 
   const lastNote = new Map<string, string>();
@@ -192,7 +192,7 @@ export async function readPaying(orgIds: string[]): Promise<PayRead> {
 /** Every club and portal ever created, demo clubs left out (New accounts). */
 export async function readAccounts(): Promise<AccountsRead> {
   const rows = await readAll<{ id: string; created_at: string }>((from, to) => supabaseAdmin.from('organizations')
-    .select('id, created_at').order('created_at').range(from, to));
+    .select('id, created_at').order('created_at').order('id').range(from, to));
   if (!rows) return { kind: 'not_read' };
   try {
     const out: { id: string; createdAt: string }[] = [];
@@ -233,6 +233,16 @@ export type OfferedClub = { orgId: string; name: string; planId: string | null; 
 type AccountDates = { user_id: string; email: string; created_at: string; confirmation_sent_at: string | null; email_confirmed_at: string | null; last_sign_in_at: string | null };
 
 /**
+ * Every staff address: the bootstrap list and every platform_users row, active or not (a former staff address is still
+ * ours). Throws when the list cannot be read — every caller treats that as "cannot tell", never "no staff".
+ */
+export async function readStaffAddresses(): Promise<Set<string>> {
+  const { data, error } = await supabaseAdmin.from('platform_users').select('email');
+  if (error) throw error;
+  return new Set([...getBootstrapAdminEmails(), ...((data ?? []) as { email: string }[]).map(s => normalAddress(s.email))]);
+}
+
+/**
  * The clubs offered for each lead. Computed only when the growth power opens Leads, a lead or Today — never in the public
  * form. ⚠ It REFUSES (returns not_read, so nothing is offered) whenever a check it needs cannot be read: the staff list,
  * the console's confirm entries, the memberships, or the demo check.
@@ -252,9 +262,7 @@ export async function readOffers(leads: { id: string; email: string; step: Early
     if (accounts.length === 0) return { kind: 'read', value: out };
 
     // Staff: the bootstrap list and every platform_users row, active or not (a former staff address is still ours).
-    const { data: staffRows, error: staffError } = await supabaseAdmin.from('platform_users').select('email');
-    if (staffError) return { kind: 'not_read' };
-    const staff = new Set([...getBootstrapAdminEmails(), ...((staffRows ?? []) as { email: string }[]).map(s => normalAddress(s.email))]);
+    const staff = await readStaffAddresses();
 
     // An address staff confirmed or changed in the console is not the person's own confirmation.
     const userIds = accounts.map(a => a.user_id);

@@ -15,6 +15,7 @@
  * ⚠ A failed read is "Not read", never 0 and never 0%; a rate with nothing behind it is a dash (null).
  */
 import type { EarlyAccessStatus } from './early-access-admin';
+import { orgDayKey } from './timezone';
 import { EARLY_ACCESS_PLAN_LABELS, LEAD_SOURCES, LEAD_SOURCE_LABELS, SOURCE_NOT_SET, leadPageLabel } from './early-access-admin';
 
 export const STUCK_DAYS = 30;
@@ -89,7 +90,8 @@ export function daysToSignUp(l: Pick<LeadFacts, 'createdAt' | 'signedUpAt'>): nu
 }
 
 function inPeriod(at: string, p: Period): boolean {
-  const day = at.slice(0, 10);
+  // The console's day (Eastern), the same day the period's bounds are in — never the UTC day, which is tomorrow after 8 p.m.
+  const day = orgDayKey(at);
   return (!p.from || day >= p.from) && (!p.to || day <= p.to);
 }
 
@@ -168,7 +170,7 @@ export function leadNumbers(all: LeadFacts[], period: Period, pay: PayRead, acco
   const tags = groupBy(leads, l => [l.refTag ?? '']);
   const byTag = [...tags].filter(([k]) => k).map(([k, ls]) => groupRow(k, k, ls, pay)).sort((a, b) => b.leads - a.leads);
 
-  const months = groupBy(leads, l => [l.createdAt.slice(0, 7)]);
+  const months = groupBy(leads, l => [orgDayKey(l.createdAt).slice(0, 7)]);
   const byMonth = [...months].sort(([a], [b]) => a.localeCompare(b))
     .map(([month, ls]) => ({ month, arrived: ls.length, signedUp: ls.filter(isSignedUp).length }));
 

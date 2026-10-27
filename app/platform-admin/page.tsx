@@ -47,11 +47,15 @@ export default async function TodayPage() {
       // A queue that could not be read stays in view with "Not read"; it is never "clear" and never counted.
       const waiting = all.filter(q => q.count > 0 || q.notRead);
       const clear = all.filter(q => q.count === 0 && !q.notRead);
-      return { key, label: WAITING_GROUP_LABELS[key], all, waiting, clear, total: waiting.reduce((s, q) => s + q.count, 0) };
+      return { key, label: WAITING_GROUP_LABELS[key], all, waiting, clear, total: waiting.reduce((s, q) => s + q.count, 0), unread: waiting.filter(q => q.notRead).length };
     })
     .filter(g => g.all.length > 0);
   const totalWaiting = groups.reduce((s, g) => s + g.total, 0);
   const queuesWaiting = groups.reduce((s, g) => s + g.waiting.length, 0);
+  const queuesUnread = groups.reduce((s, g) => s + g.unread, 0);
+  // A queue that could not be read is never 'nothing waiting' — the words say so, here and in every group.
+  const waitingWords = (total: number, unread: number) =>
+    unread === 0 ? `${total} waiting` : total === 0 ? `${unread} not read` : `${total} waiting · ${unread} not read`;
 
   const nothingLine = (g: (typeof groups)[number]) =>
     g.all.length === 1 ? `nothing waiting in ${g.all[0].clearLabel}` : 'nothing waiting';
@@ -80,7 +84,11 @@ export default async function TodayPage() {
         <div className={`${kit.card} ${styles.desk}`}>
           <div className={kit.toolbar}>
             <span className={kit.count}>
-              {totalWaiting === 0 ? 'Nothing waiting' : `${totalWaiting} waiting in ${plural(queuesWaiting, 'queue')}`}
+              {totalWaiting === 0 && queuesUnread === 0
+                ? 'Nothing waiting'
+                : totalWaiting === 0
+                  ? `${plural(queuesUnread, 'queue')} could not be read`
+                  : `${totalWaiting} waiting in ${plural(queuesWaiting - queuesUnread, 'queue')}${queuesUnread > 0 ? ` · ${queuesUnread} not read` : ''}`}
             </span>
             {previous && (
               <span className={`${kit.countQuiet} ${kit.toolbarEnd}`}>
@@ -100,7 +108,7 @@ export default async function TodayPage() {
               </thead>
               <tbody>
                 {groups.map(g => (
-                  <GroupRows key={g.key} label={g.label} total={g.total} waiting={g.waiting}
+                  <GroupRows key={g.key} label={g.label} words={waitingWords(g.total, g.unread)} waiting={g.waiting}
                     clear={g.waiting.length > 0 && g.clear.length > 0 ? clearLine(g.clear) : null}
                     nothing={g.waiting.length === 0 ? nothingLine(g) : null} />
                 ))}
@@ -114,7 +122,7 @@ export default async function TodayPage() {
           {groups.map(g => (
             <div key={g.key} className={styles.phoneGroup}>
               <div className={kit.eye}>
-                {g.label} · {g.waiting.length > 0 ? `${g.total} waiting` : nothingLine(g)}
+                {g.label} · {g.waiting.length > 0 ? waitingWords(g.total, g.unread) : nothingLine(g)}
               </div>
               {g.waiting.length > 0 && (
                 <div className={styles.plist}>
@@ -154,9 +162,9 @@ function WaitingCount({ q }: { q: WaitingQueue }) {
   return <span className={frame.count} aria-label={`${q.count} waiting`}>{q.count}</span>;
 }
 
-function GroupRows({ label, total, waiting, clear, nothing }: {
+function GroupRows({ label, words, waiting, clear, nothing }: {
   label: string;
-  total: number;
+  words: string;
   waiting: WaitingQueue[];
   clear: string | null;
   nothing: string | null;
@@ -164,7 +172,7 @@ function GroupRows({ label, total, waiting, clear, nothing }: {
   return (
     <>
       <tr className={styles.band}>
-        <td colSpan={4}>{label} · {nothing ?? `${total} waiting`}</td>
+        <td colSpan={4}>{label} · {nothing ?? words}</td>
       </tr>
       {waiting.map(q => (
         <tr key={q.key} className={kit.comfortable}>

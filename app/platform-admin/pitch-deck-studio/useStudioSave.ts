@@ -46,5 +46,5 @@ export function useStudioSave() {
     }
   }
 
-  return { busy, problems, note, setNote, run };
+  return { busy, problems, setProblems, note, setNote, run };
 }

@@ -3,7 +3,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import { readAccounts, readLeadBook, readOffers, readPaying } from '@/lib/lead-book';
 import { isSignedUp } from '@/lib/lead-numbers';
-import { bandCells, pipelineRows } from '@/lib/lead-views';
+import { bandCells, filterToken, pipelineRows } from '@/lib/lead-views';
 import { numbersView, parsePeriod } from '@/lib/lead-numbers-view';
 import { consoleClock, consoleDay } from '@/lib/console-dates';
 import { tournamentToday } from '@/lib/timezone';
@@ -19,10 +19,6 @@ import LeadsScreen from './LeadsScreen';
 export const metadata = { title: 'Leads — Support console' };
 
 type Search = { view?: string; scope?: string; q?: string; step?: string; plan?: string; source?: string; tag?: string; page?: string; period?: string };
-
-function token(v: string | undefined, max = 40) {
-  return (v ?? '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, max);
-}
 
 export default async function LeadsPage({ searchParams }: { searchParams: Promise<Search> }) {
   const auth = await requirePlatformAreaView('early_access');
@@ -45,9 +41,9 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const filters = {
     q: (sp.q ?? '').trim().slice(0, 80),
     step: (EARLY_ACCESS_STATUSES as readonly string[]).includes(sp.step ?? '') ? sp.step! : '',
-    plan: token(sp.plan),
-    source: token(sp.source),
-    tag: token(sp.tag, 32),
+    plan: filterToken(sp.plan),
+    source: filterToken(sp.source),
+    tag: filterToken(sp.tag, 32),
     page: (sp.page ?? '').slice(0, 60),
   };
 

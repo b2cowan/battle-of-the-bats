@@ -6,7 +6,7 @@
 
 /**
  * Serialize headers + rows into a RFC 4180-compliant CSV string.
- * Cells containing commas, double-quotes, or newlines are quoted.
+ * Cells containing commas, double-quotes, or line breaks (a bare carriage return counts) are quoted.
  */
 export function generateCSV(
   headers: string[],
@@ -17,7 +17,7 @@ export function generateCSV(
       row
         .map((cell) => {
           const v = cell === null || cell === undefined ? '' : String(cell);
-          return v.includes(',') || v.includes('"') || v.includes('\n')
+          return v.includes(',') || v.includes('"') || v.includes('\n') || v.includes('\r')
             ? `"${v.replace(/"/g, '""')}"`
             : v;
         })

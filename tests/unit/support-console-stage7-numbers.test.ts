@@ -128,9 +128,13 @@ describe('Stage 7 · the offered match reads an address its owner confirmed (bui
 
   it('refuses when a check cannot be read, and leaves out staff, console-confirmed accounts, invites, demo and staff-owned clubs', () => {
     const code = readCode('lib/lead-book.ts');
-    for (const refusal of ['staffError', 'touchedError', 'memberError', 'ownerError', 'dismissError']) {
+    for (const refusal of ['touchedError', 'memberError', 'ownerError', 'dismissError']) {
       assert.match(code, new RegExp(`if \\(${refusal}\\) return \\{ kind: 'not_read' \\}`), refusal);
     }
+    // The staff list is read once, by `readStaffAddresses`, which throws when it cannot be read; the offer's own catch
+    // turns that into not_read (nothing offered), and the hand link / club picker treat it as "cannot tell".
+    assert.match(code, /export async function readStaffAddresses[\s\S]*?if \(error\) throw error;/);
+    assert.match(code, /const staff = await readStaffAddresses\(\);[\s\S]*?\} catch \{\s*return \{ kind: 'not_read' \};/);
     assert.match(code, /\.in\('action', \['confirm_email', 'update_user'\]\)/);
     assert.match(code, /\.in\('role', \['owner', 'admin'\]\)\.eq\('status', 'active'\)\.not\('accepted_at', 'is', null\)/);
     assert.match(code, /demo\.has\(m\.organization_id\) \|\| staffOwned\.has\(m\.organization_id\)/);
@@ -142,5 +146,17 @@ describe('Stage 7 · the offered match reads an address its owner confirmed (bui
   it('the public form computes no match', () => {
     const route = readCode('app/api/early-access/route.ts');
     assert.doesNotMatch(route, /readOffers|lead-book|platform_lead_account_dates/);
+  });
+});
+
+describe('Stage 7 finish pass · a lead belongs to the console’s day, not the UTC day', () => {
+  it('a lead that arrived at 9 p.m. Eastern on the last day of a period is in that period and that month', () => {
+    // 01:30 UTC on Nov 1 is 9:30 p.m. Eastern on Oct 31.
+    const late = lead({ id: 'late', createdAt: '2026-11-01T01:30:00Z' });
+    const october = leadNumbers([late], { from: '2026-10-01', to: '2026-10-31' }, PAY, ACCOUNTS, new Set());
+    assert.equal(october.arrived, 1, 'counted in October, the day it arrived');
+    const november = leadNumbers([late], { from: '2026-11-01', to: '2026-11-30' }, PAY, ACCOUNTS, new Set());
+    assert.equal(november.arrived, 0, 'not in November');
+    assert.deepEqual(october.byMonth.map(m => m.month), ['2026-10']);
   });
 });

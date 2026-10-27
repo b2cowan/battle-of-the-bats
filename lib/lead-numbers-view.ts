@@ -8,7 +8,6 @@ import { consoleDate, consoleDay } from './console-dates';
 import { tournamentToday } from './timezone';
 import { leadPageLabel } from './early-access-admin';
 import { leadNumbers, type AccountsRead, type GroupRow, type LeadFacts, type LeadNumbers, type PayRead } from './lead-numbers';
-import { planWords } from './lead-views';
 
 /** Purchases were first recorded in the events table on this day (commit 6de082f2f); paying by month starts here. */
 export const PAYING_RECORDED_FROM = '2026-10-25';
@@ -93,5 +92,3 @@ export function numbersView(all: LeadFacts[], period: PeriodPick, f: NumbersFilt
 export function tableRows(rows: GroupRow[], withDays: boolean): (string | number)[][] {
   return rows.map(r => [r.label, r.leads, r.signedUp, r.rate === null ? '—' : `${r.rate}%`, r.payNow ?? 'Not read', ...(withDays ? [r.days ?? '—'] : [])]);
 }
-
-export { planWords };

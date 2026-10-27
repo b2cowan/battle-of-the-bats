@@ -23,7 +23,7 @@
 import { useState, type ReactNode } from 'react';
 import type { WalkthroughPersona } from '@/lib/walkthrough-content';
 import { useStudioSave } from './useStudioSave';
-import KitDialog from '@/components/admin/kit/club/KitDialog';
+import KitDialog, { DialogCancel } from '@/components/admin/kit/club/KitDialog';
 import { consoleDay } from '@/lib/console-dates';
 import kit from '../console.module.css';
 import styles from './pitch-deck-studio.module.css';
@@ -84,7 +84,7 @@ export default function DeckComposer({
   }
 
   const [previewId, setPreviewId] = useState<string | null>(null);
-  const { busy, problems, note, setNote, run: call } = useStudioSave();
+  const { busy, problems, setProblems, note, setNote, run: call } = useStudioSave();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   // The New deck window (NEW posture only) — the door is a button, the form lives in a window.
   const [open, setOpen] = useState(false);
@@ -151,15 +151,19 @@ export default function DeckComposer({
           body: JSON.stringify({ name, purpose, slideIds: order }),
         }),
       'Deck created — its unlisted link is on its new card in Your decks.',
-      () => {
-        setOrder([]);
-        setName('');
-        setPurpose('');
-        setPreviewId(null);
-        setOpen(false);
-      },
+      closeNew,
     );
   };
+
+  /** Close the New deck window, nothing kept: also what Discard runs, so a reopened window starts empty. */
+  function closeNew() {
+    setOrder([]);
+    setName('');
+    setPurpose('');
+    setPreviewId(null);
+    setProblems([]);
+    setOpen(false);
+  }
 
   const revert = () =>
     target.kind === 'standing' &&
@@ -315,15 +319,13 @@ export default function DeckComposer({
           <KitDialog
             kind="form"
             title="New deck"
-            onClose={() => setOpen(false)}
+            onClose={closeNew}
             busy={busy}
             dirty={typed}
             footerStart={creatable ? undefined : <span>Name the deck and add at least one slide to create it.</span>}
             footer={(
               <>
-                <button type="button" className="btn btn-outline" onClick={() => setOpen(false)} disabled={busy}>
-                  Cancel
-                </button>
+                <DialogCancel />
                 {(creatable || busy) && (
                   <button type="button" className="btn btn-primary" onClick={save} disabled={busy}>
                     {busy ? 'Working…' : 'Create this deck'}
