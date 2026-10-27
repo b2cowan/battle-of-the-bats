@@ -762,7 +762,7 @@ open it, and the menu's top level is Stage 13's.
   week** (1–3, starting at 1); every team gets the pick or what fits, the rest stays open; the earliest parts fill first so
   spare time is whole evenings (2 at once + 1 a week = Mondays, Wednesdays free). Built `29cfecb71`
   (no migration: the window reopens on what is handed out now, read from the practices). Not drawn — its words are
-  [marketing] drafts; (2) walk Parts 3 and 4 together now — open. **Owed:** /marketing's one pass on the [marketing] words, then the settled
+  [marketing] drafts; (2) walk Parts 3 and 4 together now — **declined 2026-10-27** (owner: Part 5 already underway); the one 11b walk stays at the end of 11b. **Owed:** /marketing's one pass on the [marketing] words, then the settled
   set appended to `HOUSE_LEAGUE_STAGE9D2_11B_COPY.md`; the k2 row figure's practice count ("12 hours · 10 practices a week",
   copy ruling 9) is not built; the dev server restart (new files); `/docs` (Part 6). **Next:** Part 5 (Send the changes'
   house-league rows and the emails), `CLUB_TIER_STAGE11B_PART5_BUILD_PROMPT.md`. **⚠ Found writing it (dev only):** the club's
