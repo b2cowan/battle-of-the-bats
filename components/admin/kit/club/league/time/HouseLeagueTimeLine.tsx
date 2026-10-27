@@ -1,6 +1,8 @@
 'use client';
 import { Fragment } from 'react';
 import { CalendarDays } from 'lucide-react';
+import { useOrg } from '@/lib/org-context';
+import { canOpenClubSchedules } from '@/lib/club-schedule-gate';
 import { divisionTimeLine, timeLineWords, LEAGUE_TIME_WORDS as W, type LeagueTime } from '@/lib/league-time';
 import s from './LeagueTime.module.css';
 
@@ -15,6 +17,13 @@ import s from './LeagueTime.module.css';
  */
 export const showTimeLine = (time: LeagueTime | null, buildsSchedules: boolean) =>
   !!time && (time.sources.length > 0 || buildsSchedules);
+
+/** The signed-in member builds the club's Schedules — the rail's own door (`kitSchedulesLink`), read here so a season
+ *  screen never reads a role itself (house-league-season-frame's guard). */
+export function useBuildsSchedules(): boolean {
+  const { currentOrg, userRole, canOpen } = useOrg();
+  return canOpenClubSchedules({ planId: currentOrg?.planId, role: userRole }) && (canOpen('module_rep_teams') || canOpen('module_house_league'));
+}
 
 export default function HouseLeagueTimeLine({ time, divisionId, divisionName, onOpen }: {
   time: LeagueTime;

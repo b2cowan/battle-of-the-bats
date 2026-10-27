@@ -191,7 +191,12 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
         : <div className={s.empty}><p className={s.emptyNote}>{W.noneGivenLeagueAdmin}</p></div>)}
       {time && time.sources.map(source => (
         <section key={source.scheduleId} className={s.source}>
-          <p className={ck.hint}>{W.source(source.name, source.dates, source.venues)}. {W.hoursLine}</p>
+          {/* The schedule's name is the door to the club's schedule, a week at a time (drawings tab 5, a). */}
+          <p className={ck.hint}>
+            {W.sourceLead}
+            <Link href={`/${orgSlug}/admin/house-league/seasons/${seasonId}/club-schedule/${source.scheduleId}`} className={s.sourceLink}>{source.name}</Link>
+            {W.sourceRest(source.dates, source.venues)}. {W.hoursLine}
+          </p>
           {source.stretches.map(stretch => (
             <div key={stretch.key} className={s.stretch}>
               <h3 className={s.stretchTitle}>{stretch.title}</h3>

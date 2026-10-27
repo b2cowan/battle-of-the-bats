@@ -23,9 +23,8 @@ import {
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import HouseLeagueTimeWindow from '@/components/admin/kit/club/league/time/HouseLeagueTimeWindow';
-import HouseLeagueTimeLine, { showTimeLine } from '@/components/admin/kit/club/league/time/HouseLeagueTimeLine';
+import HouseLeagueTimeLine, { showTimeLine, useBuildsSchedules } from '@/components/admin/kit/club/league/time/HouseLeagueTimeLine';
 import { LEAGUE_TIME_WORDS, type LeagueTime } from '@/lib/league-time';
-import { canOpenClubSchedules } from '@/lib/club-schedule-gate';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { RecordDelete, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
 import { useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
@@ -863,7 +862,7 @@ function CancelPracticeModal({
 
 export default function SchedulePage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
-  const { currentOrg, userRole } = useOrg();
+  const { currentOrg } = useOrg();
   // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
   const kx = useKitStyle();
   const B = useKitButtons(LEGACY_BUTTONS);
@@ -900,7 +899,7 @@ export default function SchedulePage() {
 
   // House league's time (Club Tier Stage 11b Part 3): the time line reads it; Tools, the line and `?time=1` (the club
   // schedule's "← House league's time" replays the open) open its window.
-  const buildsSchedules = canOpenClubSchedules({ planId: currentOrg?.planId, role: userRole });
+  const buildsSchedules = useBuildsSchedules();
   const [leagueTime, setLeagueTime] = useState<LeagueTime | null>(null);
   // The window mounts only once the season has loaded, so the server's render and the first client render agree.
   const [timeOpen, setTimeOpen] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('time') === '1');

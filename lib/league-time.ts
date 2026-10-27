@@ -468,6 +468,9 @@ export const LEAGUE_TIME_WORDS = {
   title: 'House league’s time',
   source: (schedule: string, dates: string, venues: readonly string[]) =>
     ['Given by the club in ' + schedule, dates, joinWithAnd([...venues])].filter(Boolean).join(' · '),
+  /** The same line around the schedule's name, which is the door to the club's schedule (drawings tab 5, a). */
+  sourceLead: 'Given by the club in ',
+  sourceRest: (dates: string, venues: readonly string[]) => ['', dates, joinWithAnd([...venues])].filter((x, i) => i === 0 || x).join(' · '),
   hoursLine: 'Hours add up across facilities: 3 hours on 2 facilities is 6.',
   notGiven: 'Not given yet',
   giveItTo: 'Give it to',
@@ -525,9 +528,32 @@ export const LEAGUE_TIME_WORDS = {
     note: (teams: readonly string[]) =>
       `${joinWithAnd([...teams])} ${teams.length === 1 ? 'has' : 'have'} practices on this time. Saving removes the ones still to come. Past practices stay.`,
     confirm: (n: number) => `Save and remove ${pluralize(n, 'practice')}`,
-    /** The club's schedule's one-date Use (tab 5): the same question, one date. */
+    /** [marketing] The club's schedule's one-date Use (tab 5): the same question, one date. */
     titleOneDate: (date: string) => `Change ${date}?`,
-    bodyOneDate: 'That date stops being this division’s practice time.',
+  },
+  /** The league admin in the club's schedule (drawings tab 5; ruled card 11). The rep note is SCHEDULE_SCREEN_WORDS'. */
+  club: {
+    /** [marketing] */
+    eyebrow: 'Schedules',
+    back: 'House league’s time',
+    legend: { houseLeague: 'House league', notGiven: 'Not given yet', rep: 'A rep team', open: 'Open' },
+    aRepTeam: 'A rep team',
+    open: 'Open',
+    houseLeague: (use: string) => `House league · ${use}`,
+    where: 'Where',
+    team: 'Team',
+    heldBy: 'Held by',
+    repeats: 'Repeats',
+    use: 'Use',
+    openNote: 'This time is open. An owner or an admin can give it to a team or house league.',
+    /** [marketing] the door at its end is House league's time. */
+    useHint: (date: string) => `This changes ${date} only. To change every week, use `,
+    weekLabel: 'The schedule, a week at a time',
+    prevWeek: 'Previous week',
+    nextWeek: 'Next week',
+    /** [marketing] */
+    loadFailed: 'This schedule didn’t load. Try again.',
+    close: 'Close',
   },
   /** Choose parts…'s small step: whose piece to open (ruled card 2). [marketing] */
   choose: {
@@ -560,6 +586,8 @@ export const LEAGUE_TIME_REFUSALS = {
   seasonClosed: 'This season is finished, so its time can’t change.',
   changed: 'House league’s time changed while you were looking. Here it is again.',
   badRequest: 'Pick the time to give, and who it goes to.',
+  /** [marketing] The club's schedule, when it isn't a final schedule house league holds time in. */
+  scheduleNotFound: 'That schedule isn’t one house league has time in.',
   /** [marketing] The club's schedule's one-date Use, when that date changed (drawn tab 5, b2). */
   changedOneDate: 'That time changed while you were looking. Close this and try again.',
 } as const;

@@ -102,3 +102,33 @@
   .linePhoneText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .line { align-items: center; }
 }
+
+/* ── The league admin in the club's schedule (drawings tab 5): the scheduler's own grid, holders by tint ── */
+.clubPage { min-width: 0; }
+.clubFacts { margin: -0.25rem 0 0.75rem; font-size: var(--type-support); color: var(--text-secondary); }
+.clubBar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin-bottom: 0.75rem; }
+.legend { display: inline-flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-left: auto; font-size: var(--type-support); color: var(--text-secondary); }
+.legend > span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.legend i { display: inline-block; width: 14px; height: 10px; border-radius: 3px; }
+.keyHl { background: var(--home-olive-soft); border: 1px solid var(--home-olive); }
+.keyNotGiven { border: 1.5px dashed var(--home-olive); }
+.keyRep { background: rgba(var(--info-rgb), 0.14); border: 1px solid rgba(var(--info-rgb), 0.45); }
+.keyOpen { border: 1px solid var(--home-line-strong); }
+
+/* House league's slots are tinted (olive); Not given yet is dashed olive; a rep team's slot is blue; open stays dashed. */
+.chipHl { background: var(--home-olive-soft); border-left-color: var(--home-olive); }
+.chipNotGiven { background: transparent; border-style: dashed; border-color: var(--home-olive); border-left-width: 1px; }
+.chipRep { background: rgba(var(--info-rgb), 0.1); border-left-color: rgba(var(--info-rgb), 0.7); }
+.chipPlace { display: block; margin-top: 0.1rem; color: var(--text-tertiary); font-weight: 400; }
+
+/* A phone reads the week as a list of its days. */
+.dayList { display: flex; flex-direction: column; gap: 1rem; }
+.dayGroup { display: flex; flex-direction: column; gap: 0.4rem; }
+
+/* A slot's facts: a label, then its value. */
+.facts { display: grid; gap: 0.35rem; margin: 0 0 0.9rem; }
+.facts > div { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0.75rem; }
+.facts dt { color: var(--text-secondary); font-size: var(--type-support); }
+.facts dd { margin: 0; color: var(--text-primary); }
+.useLabel { font-weight: 650; color: var(--text-primary); margin-bottom: 0.25rem; }
+.sourceLink { color: var(--text-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }

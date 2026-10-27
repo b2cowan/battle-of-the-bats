@@ -103,7 +103,7 @@ export async function readLeagueTime(orgId: string, season: LeagueSeason): Promi
 
 /** The practices still to come on these slots (not cancelled), with their teams' names: what giving the time back
  *  removes (the piece's question on Save, the club view's one-date Use). */
-async function practicesStillToCome(orgId: string, seasonId: string, slotIds: readonly string[]): Promise<LeagueTime['practices']> {
+export async function practicesStillToCome(orgId: string, seasonId: string, slotIds: readonly string[]): Promise<LeagueTime['practices']> {
   if (!slotIds.length) return [];
   const now = new Date().toISOString();
   const rows = await fetchAllIn<{ id: string; club_schedule_slot_id: string; division_id: string; team_id: string }>(slotIds, (c, a, b) => supabaseAdmin
