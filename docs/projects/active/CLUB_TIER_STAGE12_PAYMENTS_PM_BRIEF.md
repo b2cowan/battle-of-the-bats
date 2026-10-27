@@ -56,8 +56,8 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
    and gets no refund or collection button. **Every refund can be seen:** on the row, in the record with Stripe's
    reference, and in a refund email to the family. A refund made in Stripe's own dashboard records itself. The family's
    record shows "Paid online · card (or bank debit) · receipt", and "View the payment" opens the registration at its fee.
-   Each returned or reversed debit costs the club $5, billed on its next FieldLogicHQ invoice; a free or comped club is
-   not billed. Success: a walk where every debit state reads right without a phone call.
+   Each returned or reversed debit costs the club what Stripe charged for it (nothing when Stripe charges nothing), billed
+   on its next FieldLogicHQ invoice, every club included (owner 2026-10-26 and 2026-10-27). Success: a walk where every debit state reads right without a phone call.
 6. **12d · Hardening.** Disputes, matching payouts to the bank, the tax display, and help articles.
    **Drawn 2026-10-26, ruled 2026-10-26/27, worded 2026-10-27; built in two parts, 12d-1 then 12d-2**
    (https://claude.ai/artifact/WutBgX8o56jBWN2zXXvZvg). What changes, by person: a
@@ -75,10 +75,11 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
    act on in the product, and no Stripe fee is left for FieldLogicHQ to absorb.
    **12d-1 built and committed 2026-10-27** (disputes, paid twice, every club pays its Stripe fees), with its help and two
    owner walks: paid twice (https://claude.ai/artifact/GmV1oKgXPb1RmVRNSeHw2i) and disputes and fees
-   (https://claude.ai/artifact/RKnhTRAFymveVggrXCUTnG). Five follow-up rulings of 2026-10-27 are built next (Part 5b): a
-   cancelled club still sees its fee list, a returned debit is billed only what Stripe charged, a single pay-link email
-   after a lost dispute warns, a stranded fee moves to the club's own invoice, and a returned answering fee is credited
-   against the invoice that carried it.
+   (https://claude.ai/artifact/RKnhTRAFymveVggrXCUTnG). The five follow-up rulings of 2026-10-27 are **built and
+   committed (Part 5b)**: a cancelled club still sees its fee list, a returned debit is billed only what Stripe charged, a
+   single pay-link email after a lost dispute asks first, a stranded fee moves to the club's own invoice, and a returned
+   answering fee goes back against the invoice that charged it (taken off what is owed, or refunded to the card). The
+   disputes walk gained their steps.
 
 ## Who sees what
 

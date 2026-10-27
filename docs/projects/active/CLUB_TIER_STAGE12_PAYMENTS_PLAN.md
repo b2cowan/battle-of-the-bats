@@ -261,6 +261,37 @@
   extensionless import), not 12d-1's, for the owner. Walks: ledger §395 paid twice
   (https://claude.ai/artifact/GmV1oKgXPb1RmVRNSeHw2i), §396 disputes and fees
   (https://claude.ai/artifact/RKnhTRAFymveVggrXCUTnG).
+  **Part 5b (2026-10-27): the owner's rulings 2, 3, 5, 6, 7 built, reviewed and committed, then the help and walk §396
+  trued up.** Ruling 2 `3cd0731f1` (a cancelled club's owner sees the Stripe fees list on both Plan & billing pages; its
+  read is on the billing rail's allow-list). A defect found first, `88625c444`: the club's own invoice wrote each fee's
+  line id before its billed date, which `platform_stripe_fees_billed_chk` refuses, unread, so no own-invoice fee was ever
+  stamped billed (dev held no fee rows; nothing mis-billed). Ruling 3 `ee2a890d7` (a returned debit read from the platform
+  balance by its charge, nothing when Stripe charged nothing; `RETURNED_BANK_DEBIT_FEE_CENTS` removed; Facts doc line and
+  reconcile note, the 2026-10-26 debit decision's point 4 superseded). Ruling 5 `e31adbb52` (one Email the pay link after a
+  lost dispute asks, then sends; the bulk sends still skip; a tournament team's asks too, builder's call). Ruling 6
+  `8d12152ae` (the daily job's `stranded_fees` step, before the monthly invoice: a pending line on a subscription the club
+  can't ride is deleted, read again, and the fee returned to unbilled). Ruling 7 `947696ea9` + **mig 399** (applied to dev
+  2026-10-27; prod pending in MANUAL_PROD_STEPS, before the promote): a returned answering fee nets beside its answering
+  fee while that invoice is to come (a month they cancel out finalizes at nothing owed, paid, no email), else a Stripe
+  credit note on THAT invoice (owed first, then refunded to the card), Stripe's email off, once only
+  (`stripe_credit_note_id`, unique); Plan & billing reads "Returned {day}". **/review** (four lenses; Stripe's behaviour
+  proven in test mode: a pending line names its subscription, a deleted one reads 404, a $0 invoice finalizes paid, a credit
+  note lowers an open invoice and refunds a paid one) fixed in `0264dd868`: High, a
+  credit's subscription line had no read-back (a second line after Stripe's 24 hours); Medium, the ask reached the refund's
+  pay-link answer and the price-raise email (only the desk's own button asks now); Medium, a credit with no answering fee
+  of ours threw for good; a credit note never made for a credit the own invoice claimed meanwhile; unbilled credits retried
+  daily; the stranded sweep oldest first; a returned debit re-read two weeks, not sixty. **Recorded, not fixed (Low):** a
+  returned-debit fee's `source` on the platform balance is undocumented, so reading it by the charge is unproven until a
+  live failed debit is seen (the sandbox charged nothing; the e2e pass); a fee re-billed on the SAME subscription within 24
+  hours of its release gets the deleted line back and heals at the next release; a subscription stamp racing the monthly
+  claim; an answering fee claimed by an earlier month's unfinished draft lets its credit land on this month's invoice;
+  `readClubFees` has no state for a void own invoice. Words: /marketing's pass (copy doc §1.5, §1.7). Help `/docs`: org
+  `stripe-fees` (now three sub-topics, it was over 350 words), house league and tournaments dispute-ends and returned-debit
+  lines. Walk §396 republished (version 3): C7–C8, E8–E9, part F, 29 → 37 steps. **`check:layout` still not run, and the
+  cause is found:** `app/not-found.tsx`'s eyebrow "404 · Page not found" (`2e205823d`, 2026-10-23) rides in every page's
+  inline data, and the check's LANDING_FAILURES matches "Page not found" in `textContent`, so every screen has failed since
+  10-23 (not the fixture, not memory); a one-line fix in the shared check (visible text only) is the owner's call.
+  `check:demos` red (12c's `registration-attention.ts` import) is still the owner's.
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 
