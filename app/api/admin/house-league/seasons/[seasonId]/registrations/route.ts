@@ -9,6 +9,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { readRegistrationDisputes } from '@/lib/online-dispute-read';
 import { loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { clubTakesCards, loadCardRefunds, loadRegistrationDebits, loadUnassignedRefunds, returnedCardRefunds, unrecordedCardShares } from '@/lib/league-pay-facts';
 
@@ -60,9 +61,15 @@ export const GET = withObservability(async (req: Request,
   const registrations = (data ?? []).map(mapLeagueRegistration);
   const shown = new Set(registrations.map(r => r.id));
   const money = Object.fromEntries([...lines].filter(([id]) => shown.has(id)));
-  const [unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits] = await Promise.all([
+  const [unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits, disputes] = await Promise.all([
     unrecordedCardShares([...shown]), returnedCardRefunds([...shown]), loadCardRefunds(ctx!.org.id, [...shown]),
     loadUnassignedRefunds(ctx!.org.id, seasonId), loadRegistrationDebits(ctx!.org.id, [...shown]),
+    // 12d-1 Part 3 (words §1.1–§1.2): each child's card dispute, read for THIS reader (amber and the Stripe door are the
+    // answerer's; Copy the facts the desk's and the owner's; the treasurer reads it plain).
+    readRegistrationDisputes({
+      orgId: ctx!.org.id, registrationIds: [...shown],
+      viewer: { userId: ctx!.user.id, canCopy: !houseLeagueRefusal(ctx, 'takeFees') },
+    }),
   ]);
   const priceChanges = (changes.data ?? []).map(c => ({
     registrationId: c.registration_id as string, kind: c.kind as 'corrected' | 'moved',
@@ -71,7 +78,7 @@ export const GET = withObservability(async (req: Request,
     refundEntryId: (c.refund_entry_id as string | null) ?? null,
   }));
 
-  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday(), payLinks, unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits });
+  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday(), payLinks, unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits, disputes });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations' });
 
 

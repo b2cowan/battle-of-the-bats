@@ -353,7 +353,8 @@ async function signupDebits(regIds: string[], firstName: Map<string, string>): P
   return {
     clearing: clearing.map(debit),
     returned: newest && newest.op.status === 'returned' && newest.op.rail === 'bank_debit' ? debit(newest) : null,
-    reversed: newest && newest.op.status === 'reversed' ? debit(newest) : null,
+    // A bank debit only: a card is reversed by a lost dispute, which the family is never told of by us (12d ask 2).
+    reversed: newest && newest.op.status === 'reversed' && newest.op.rail === 'bank_debit' ? debit(newest) : null,
     clearingRegs: new Set(clearing.flatMap(p => p.regs)),
   };
 }

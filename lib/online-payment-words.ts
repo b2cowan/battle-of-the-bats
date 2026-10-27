@@ -814,6 +814,30 @@ export const DISPUTE_WORDS = {
   bulkWhy: 'a dispute was lost',
 } as const;
 
+/**
+ * §1.3 "Copy the facts": the one string the club pastes into Stripe, where a bank reads it. Plain statements in the club's
+ * voice; every line is dropped when its fact is missing (nothing guessed or padded). Nothing is submitted (ask 13).
+ */
+export function disputeFactsText(f: {
+  test: boolean; receiptNo: string; amount: string; paidDay: string; cardLast4: string | null;
+  payerName: string | null; payerEmail: string | null; forLine: string;
+  registeredDay: string | null; registeredBy: string | null; refundPolicy: string | null;
+  receiptEmailedDay: string | null; club: string; contactEmail: string | null;
+}): string {
+  const paidBy = f.payerName ? `${f.payerName}${f.payerEmail ? ` (${f.payerEmail})` : ''}` : f.payerEmail;
+  return [
+    f.test ? 'Test mode: no money moved.' : null,
+    `Disputed payment: receipt ${f.receiptNo}, ${f.amount}, paid ${f.paidDay} by card${f.cardLast4 ? ` ending ${f.cardLast4}` : ''}.`,
+    paidBy ? `Paid by ${paidBy}.` : null,
+    `For: ${f.forLine}.`,
+    f.registeredDay ? `Registered ${f.registeredDay}${f.registeredBy ? ` by ${f.registeredBy}` : ''}.` : null,
+    'The payer entered the card on Stripe’s secure payment page.',
+    f.refundPolicy ? `Refund policy shown beside Pay: “${f.refundPolicy}”` : null,
+    f.receiptEmailedDay && f.payerEmail ? `Receipt ${f.receiptNo} was emailed to ${f.payerEmail} on ${f.receiptEmailedDay}.` : null,
+    `Contact: ${f.club}${f.contactEmail ? `, ${f.contactEmail}` : ''}.`,
+  ].filter((l): l is string => !!l).join('\n');
+}
+
 /** §1.6: the email to the person who answers, when a dispute opens (FieldLogicHQ's own envelope). The reminder three days
  *  before it is due is the daily job's (Part 4). */
 export const DISPUTE_EMAIL_WORDS = {

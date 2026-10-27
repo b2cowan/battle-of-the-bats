@@ -15,9 +15,10 @@ import css from './Registrations.module.css';
 export default function FeeCell({ parts, onAlert }: { parts: FeeCellParts; onAlert?: (refundId: string) => void }) {
   const [tipOpen, setTipOpen] = useState(false);
   const [chipOpen, setChipOpen] = useState(false);
+  const [flagOpen, setFlagOpen] = useState(false);
   if (!parts.primary && !parts.alert && !parts.chip && !parts.third) return <span className={css.feeNone}>—</span>;
   const pill = parts.tone === 'good' ? `${css.feePill} ${css.feeGood}` : parts.tone === 'warn' ? `${css.feePill} ${css.feeWarn}` : null;
-  const { alert, chip, third } = parts;
+  const { alert, chip, flag, third } = parts;
   const thirdDoor = third?.refundId && onAlert ? third.refundId : null;
   return (
     <span className={css.fee}>
@@ -37,8 +38,16 @@ export default function FeeCell({ parts, onAlert }: { parts: FeeCellParts; onAle
         </button>
       )}
       {!alert && !chip && parts.primary && <span className={pill ?? css.feePlain}>{parts.primary}</span>}
+      {/* 12d-1 Part 3: a card dispute — its chip after the paid line (amber for the answerer only), detail on tap (§1.1). */}
+      {flag && (
+        <button type="button" className={`${css.feePill} ${flag.tone === 'warn' ? css.feeWarn : css.feeInfo} ${css.feeAlert}`} title={flag.tip} aria-expanded={flagOpen}
+          onClick={e => { e.stopPropagation(); setFlagOpen(o => !o); }}>
+          {flag.text}
+        </button>
+      )}
       {parts.sub && <span className={css.feeSub}>{parts.sub}</span>}
       {chip && chipOpen && <span className={css.feeTip}>{chip.tip}</span>}
+      {flag && flagOpen && <span className={css.feeTip}>{flag.tip}</span>}
       {third && (
         <button
           type="button"

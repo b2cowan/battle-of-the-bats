@@ -98,6 +98,33 @@ export type DisputeView = {
   openedEmailedAt: string | null;
 };
 
+/**
+ * A dispute as ONE reader's record shows it (words §1.2): the facts everyone who opens the record reads, and what this
+ * reader may do. Amber and "Answer in Stripe" are the answerer's alone (`youAnswer`); "Copy the facts" goes to whoever
+ * refunds in that flow and the owner (`canCopy`); the dispute fee line to the owner (`showFee`). The treasurer reads it
+ * all with no button.
+ */
+export type DisputeRecord = DisputeView & {
+  receiptNo: number | null;
+  /** The person who set up payouts, as the club holds their name. */
+  answererName: string;
+  youAnswer: boolean;
+  canCopy: boolean;
+  showFee: boolean;
+  /** `{factsList}` (the sentence under the buttons) and the text "Copy the facts" puts on the clipboard (§1.3). */
+  factsList: string;
+  factsText: string;
+  /** A payment refunded in full before the dispute (`dispute.refunded`). */
+  refundedOn: string | null;
+  /** The first names when one payment covered two or more children (`dispute.siblings`). */
+  children: string[];
+  /** First names a win could not put back because the child paid again another way (`dispute.againAfterOther`). */
+  paidAgain: string[];
+  /** The lost sentence's `{owesAgain}` ("Henry owes $150.00 again"). */
+  owesAgain: string;
+  book: 'season' | 'tournament';
+};
+
 /** The one dispute a payment's row and record speak of: the open one first, else the latest. */
 export function currentDispute<T extends Pick<DisputeView, 'status' | 'openedAt'>>(list: readonly T[]): T | null {
   if (!list.length) return null;

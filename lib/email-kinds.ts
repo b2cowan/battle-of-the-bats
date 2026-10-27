@@ -49,7 +49,6 @@ export const EMAIL_KINDS = {
   billing_retention_warning:            { klass: 'account', label: 'Records retention notice' },
   org_closed:                           { klass: 'account', label: 'Account closed' },
   club_domain_notice:                   { klass: 'account', label: 'Web address update' },
-  card_dispute_opened:                  { klass: 'account', label: 'Card dispute opened' },
   // ── account: feedback ──────────────────────────────────────────────────────
   feedback_receipt:                     { klass: 'account', label: 'Feedback received' },
   feedback_reply:                       { klass: 'account', label: 'Reply to their feedback', story: true },
@@ -76,6 +75,8 @@ export const EMAIL_KINDS = {
   club_guardian_email_ask:              { klass: 'team', label: 'Guardian email request' },
   family_email_coach_copy:              { klass: 'team', label: 'Copy of a family email' },
   club_payment_handoff_coach:           { klass: 'team', label: 'Club payment hand-off' },
+  // 12d-1: the club's own business to the one person who can answer it (the logged list is the owner's G1 37; unchanged).
+  card_dispute_opened:                  { klass: 'team', label: 'Card dispute opened' },
   // ── family: never logged here ──────────────────────────────────────────────
   family_announcement:                  { klass: 'family', label: 'Team announcement' },
   family_game_update:                   { klass: 'family', label: 'Game update' },

@@ -20,7 +20,8 @@ import { BULK_WORDS, CARD_REFUND_WORDS, END_WORDS, REGS_WORDS, MONEY_REFUSAL, RE
 import { clockOf, isBank, isShown, newestFirst, refundBase, refundState, refundTarget, type CardRefund } from './league-card-refunds';
 import type { RegDebit } from './league-debits';
 import { childList } from './league-pay-words';
-import { reasonShort } from './online-payment-words';
+import { DISPUTE_WORDS, disputeDue, reasonShort } from './online-payment-words';
+import { disputeChip, type DisputeRecord } from './online-payment-dispute';
 import { leagueUnrecordedWhy } from './online-payment-words';
 
 // ── What the screen reads ───────────────────────────────────────────────────────────────────────
@@ -80,6 +81,8 @@ export interface RegsRead {
   notMatched?: Record<string, { id: string; amount: number; children: string }>;
   /** 12c Part 6: a child's bank debit — clearing, returned, or reversed (the Fee cell, the menu, the ending window). */
   debits?: Record<string, RegDebit>;
+  /** 12d-1 Part 3: a child's card dispute, as this reader's record shows it (the Fee cell, the record's block). */
+  disputes?: Record<string, DisputeRecord>;
 }
 
 // ── Words about a person and a day ──────────────────────────────────────────────────────────────
@@ -147,6 +150,9 @@ export interface FeeCellParts {
   alert: { text: string; aria: string; refundId: string } | null;
   /** 12c Part 6: a bank debit on its way — an info chip in the primary line's place ("$150.00 clearing"), its detail on tap. */
   chip: { text: string; tip: string } | null;
+  /** 12d-1 Part 3 (words §1.1): a card dispute's chip AFTER the primary line ("$150.00 paid" stays): amber for the
+   *  answerer only, the info colour for everyone else; its detail on tap. */
+  flag: { text: string; tone: 'warn' | 'info'; tip: string } | null;
   /** The dotted third line: a price correction (its card refund when it went to the card), or a card refund that never
    *  entered the book. `refundId` makes a failed correction refund the same door as the pill. */
   third: { text: string; tip: string; tone: 'plain' | 'warn'; refundId: string | null } | null;
@@ -162,6 +168,7 @@ export function feeCell(
   cardRefunds: readonly CardRefund[] = [],
   notMatched: { amount: number; children: string } | null = null,
   debit: RegDebit | null = null,
+  dispute: DisputeRecord | null = null,
 ): FeeCellParts {
   const state = feeState(reg, season, lines, today);
   const F = REGS_WORDS.fee;
@@ -272,6 +279,26 @@ export function feeCell(
     }
   }
 
+  // ── 12d-1 Part 3: a card dispute (words §1.1). The book line stays while it is open; a loss owes again; a win is plain
+  // paid with "dispute won" last on the second line. ──
+  let flag: FeeCellParts['flag'] = null;
+  if (dispute && !alert) {
+    const D = DISPUTE_WORDS;
+    const kind = disputeChip(dispute);
+    if (kind) {
+      flag = { text: D.chip[kind], tone: dispute.youAnswer ? 'warn' : 'info', tip: dispute.answered ? D.tipAnswered : D.tip(money(dispute.held), 'season') };
+      sub = dispute.answered ? D.answered(regDay(dispute.answeredAt, today))
+        : kind === 'notAnswered' ? D.wasDue(disputeDue(dispute.dueBy))
+          : dispute.dueBy ? (dispute.youAnswer ? D.answerByYou(disputeDue(dispute.dueBy)) : D.answerBy(dispute.answererName, disputeDue(dispute.dueBy))) : sub;
+    } else if (dispute.status === 'lost' && dispute.lostBookedAt && isOwing(state)) {
+      primary = D.lost(money(state.owing));
+      sub = D.lostSub(regDay(dispute.lostBookedAt, today), String(dispute.receiptNo ?? ''));
+      tone = 'warn';
+    } else if (dispute.status === 'won' && sub) {
+      sub = `${sub} · ${D.wonSub(regDay(dispute.wonBackAt ?? dispute.closedAt, today))}`;
+    }
+  }
+
   let third: FeeCellParts['third'] = null;
   const CW = CARD_REFUND_WORDS.whose;
   if (notMatched) {
@@ -304,12 +331,12 @@ export function feeCell(
     };
   }
 
-  return { kind: state.kind, primary, sub, tone, alert, chip, third, state };
+  return { kind: state.kind, primary, sub, tone, alert, chip, flag, third, state };
 }
 
 /** The phone row's detail line: division · fee line · fee sub-line (copy §1.3). */
 export function phoneDetail(division: string | null, team: string | null, fee: FeeCellParts): string {
-  return [division, team, fee.alert?.text ?? fee.chip?.text ?? fee.primary, fee.sub].filter(Boolean).join(' · ');
+  return [division, team, fee.alert?.text ?? fee.chip?.text ?? fee.primary, fee.flag?.text, fee.sub].filter(Boolean).join(' · ');
 }
 
 // ── Who can do what to a row ────────────────────────────────────────────────────────────────────

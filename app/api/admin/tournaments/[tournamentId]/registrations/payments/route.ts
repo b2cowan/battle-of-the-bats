@@ -17,6 +17,7 @@ import { canRefundOnline } from '@/lib/online-payment-access';
 import { announceTeamPaid } from '@/lib/team-payment-notices';
 import { TEAM_RECORD_WORDS } from '@/lib/registration-words';
 import { closeTeamPayPages, openTeamPayPages } from '@/lib/online-pay-pages';
+import { readDisputes } from '@/lib/online-dispute-read';
 
 /**
  * A TEAM'S PAYMENTS — the Teams record's Payment section (mig 345; TEAM_PAYMENTS_LIST_PLAN.md).
@@ -99,6 +100,13 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
   // Online payments on this record (Club Tier Stage 12a): the pay link goes out only while the team can pay online now;
   // a refund to the card only while the club's account is still connected (after Disconnect, refunds are made in Stripe).
   const member = { role: g.ctx.role, capabilities: g.ctx.capabilities };
+  // 12d-1 Part 3: a card dispute on a row (words §1.1–§1.2), read for THIS reader (amber and the Stripe door are the
+  // answerer's; Copy the facts whoever refunds here and the owner).
+  const disputes = await readDisputes({
+    orgId: g.ctx.org.id, onlinePaymentIds: payments.map(p => p.online?.id).filter((x): x is string => !!x),
+    viewer: { userId: g.ctx.user.id, canCopy: canRefundOnline(member, g.ctx.org) },
+  });
+  for (const p of payments) if (p.online) p.online.dispute = disputes.get(p.online.id) ?? null;
   const online = {
     payLink: facts?.refusal === null && canRefundOnline(member, g.ctx.org),
     payLinkSentAt: (team?.pay_link_sent_at as string | null) ?? null,

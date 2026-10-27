@@ -1,3 +1,5 @@
+import type { DisputeRecord } from './online-payment-dispute';
+
 /**
  * A TEAM'S PAYMENTS — the plain facts behind the Payment section (mig 345; TEAM_PAYMENTS_LIST_PLAN.md, ruled 2026-10-21).
  *
@@ -92,6 +94,8 @@ export interface TeamOnlinePayment {
    *  paid in full) or part — and what of it still stands (`leftCents`, read live: 0 once refunded, kept or the entry
    *  raised). Null when nothing was extra. */
   over?: { extraCents: number; whole: boolean; leftCents: number; keptReason: string | null } | null;
+  /** 12d-1 Part 3: the card dispute this row speaks of, as this reader's record shows it (words §1.1–§1.2). */
+  dispute?: DisputeRecord | null;
 }
 
 /** A payment row's money: "$100", "$109.50" (cents show only when there are some). */

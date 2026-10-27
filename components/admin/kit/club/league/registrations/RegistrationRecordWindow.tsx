@@ -16,13 +16,15 @@ import { endedKind, isOpenReg, owesNow, regDay, registrationHistory, type PriceC
 import type { LeagueRegistration } from '@/lib/types';
 import FeeCell from './FeeCell';
 import CardRefundBlock from './CardRefundBlock';
+import DisputeBlock, { disputeShows } from '../../DisputeBlock';
+import type { DisputeRecord } from '@/lib/online-payment-dispute';
 import { isShown, newestFirst, type CardRefund } from '@/lib/league-card-refunds';
 import { Note, type RegRowModel } from './RegistrationsList';
 import css from './Registrations.module.css';
 
 export default function RegistrationRecordWindow({
   model, season, seasonName, teamName, lines, changes, today, showFee, statusWord, steps, onPick, onNote, onClose,
-  cardRefunds = [], canDesk = false, isPhone = false, focus = null, onAnotherWay,
+  cardRefunds = [], dispute = null, orgSlug = '', canDesk = false, isPhone = false, focus = null, onAnotherWay,
 }: {
   model: RegRowModel;
   season: RegsSeason;
@@ -42,6 +44,9 @@ export default function RegistrationRecordWindow({
   onClose: () => void;
   /** 12c: this child's card refunds (the "To the card" blocks). */
   cardRefunds?: readonly CardRefund[];
+  /** 12d-1 Part 3: this child's card dispute, as this reader's record shows it (words §1.2). */
+  dispute?: DisputeRecord | null;
+  orgSlug?: string;
   /** The desk (takeFees): the button on a refund the card sent back, and the Fee cell's pill as its door. */
   canDesk?: boolean;
   isPhone?: boolean;
@@ -112,6 +117,7 @@ export default function RegistrationRecordWindow({
           <h3 className={css.recordHead}>{W.fee}</h3>
           <div className={css.recordFee}><FeeCell parts={model.fee} onAlert={door} /></div>
           <Facts rows={feeRows} />
+          {disputeShows(dispute) && <DisputeBlock d={dispute} orgSlug={orgSlug} team={false} isPhone={isPhone} />}
           {refunds.length > 0 && (
             <CardRefundBlock refunds={refunds} reg={reg} childName={model.name} kept={fee.kind === 'kept' && fee.refunded ? fee.kept : null}
               today={today} isPhone={isPhone} canDesk={!!door} focus={focus === 'card'} onAnotherWay={id => door?.(id)} />

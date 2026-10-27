@@ -63,6 +63,8 @@ import MoveWindow, { type MoveOutcome, type MoveTarget } from './MoveWindow';
 import PriceWindow from './PriceWindow';
 import ReceiveWindow, { type ReceiveOutcome, type ReceiveTarget } from './ReceiveWindow';
 import RegistrationRecordWindow from './RegistrationRecordWindow';
+import { isDisputeOpen } from '@/lib/online-payment-dispute';
+import { DISPUTE_WORDS } from '@/lib/online-payment-words';
 import RegistrationsList, { type RegRowModel, type RowNote } from './RegistrationsList';
 import UndoWindow from './UndoWindow';
 import WhoseWindow from './WhoseWindow';
@@ -159,6 +161,7 @@ export default function RegistrationsScreen() {
       priceChanges: regsRes.data.priceChanges ?? [], today: regsRes.data.today, payLinks: !!regsRes.data.payLinks,
       unrecordedCard: regsRes.data.unrecordedCard ?? {}, returnedRefunds: regsRes.data.returnedRefunds ?? {},
       cardRefunds: regsRes.data.cardRefunds ?? {}, notMatched: regsRes.data.notMatched ?? {}, debits: regsRes.data.debits ?? {},
+      disputes: regsRes.data.disputes ?? {},
     });
     setFailed(null);
   }, [orgSlug, seasonId, orgQuery, beginRead]);
@@ -224,7 +227,7 @@ export default function RegistrationsScreen() {
   const fees = useMemo(() => {
     const m = new Map<string, ReturnType<typeof feeCell>>();
     if (!season || !read) return m;
-    for (const r of regs) m.set(r.id, feeCell(r, season, linesOf(r.id), read.today, changesByReg.get(r.id) ?? [], refundsOf(r.id), read.notMatched?.[r.id] ?? null, read.debits?.[r.id] ?? null));
+    for (const r of regs) m.set(r.id, feeCell(r, season, linesOf(r.id), read.today, changesByReg.get(r.id) ?? [], refundsOf(r.id), read.notMatched?.[r.id] ?? null, read.debits?.[r.id] ?? null, read.disputes?.[r.id] ?? null));
     return m;
   }, [regs, season, read, linesOf, changesByReg, refundsOf]);
 
@@ -288,7 +291,8 @@ export default function RegistrationsScreen() {
     const asked = !ended && reg.withdrawRequestedAt ? REGS_WORDS.player.asked(regDay(reg.withdrawRequestedAt, today)) : null;
     const actions = rowActions(reg, fee.state, linesOf(reg.id), rights, read?.debits?.[reg.id]?.state === 'clearing');
     // 12b: a card payment that couldn't go on this row, or a card refund that came back — the desk's doors (any tab).
-    if (rights.takeFees && read?.unrecordedCard?.[reg.id]?.length) actions.all.push('refundCard');
+    // 12d-1 Part 3 (words §1.2): no refund to the card while a dispute on it is open (the record's block says why).
+    if (rights.takeFees && read?.unrecordedCard?.[reg.id]?.length && !isDisputeOpen(read?.disputes?.[reg.id]?.status ?? '')) actions.all.push('refundCard');
     if (rights.takeFees && read?.returnedRefunds?.[reg.id]?.length) actions.all.push('refundAnotherWay');
     const sheet = actions.all.map(k => itemFor(k, reg, fee, division));
     const primaryLabel = actions.primary === 'approve' ? REGS_WORDS.act.approve
@@ -511,12 +515,16 @@ export default function RegistrationsScreen() {
     const families = new Map<string, LeagueRegistration>();
     const skipped: string[] = [];
     let clearingSkipped = 0;
+    let disputeSkipped = 0;
     for (const id of ids) {
       const reg = regById.get(id);
       if (!reg) continue;
       // 12c Part 6: a family whose debit is clearing has nothing to pay yet (words §3.2's skipped reason).
       if (fees.get(id)!.chip) { skipped.push(id); clearingSkipped += 1; continue; }
       if (!isOwing(fees.get(id)!.state)) { skipped.push(id); continue; }
+      // 12d-1 Part 3 (words §1.5): a family that took its money back through its bank hears from a person, not a reminder.
+      const lost = read?.disputes?.[id];
+      if (lost?.status === 'lost' && lost.lostBookedAt) { skipped.push(id); disputeSkipped += 1; continue; }
       const key = reg.signupRef ?? reg.id;
       if (!families.has(key)) families.set(key, reg);
     }
@@ -531,7 +539,8 @@ export default function RegistrationsScreen() {
     markBusy(ids, false);
     const P = REGS_WORDS.payLink;
     present(stayed.length
-      ? { text: P.bulkPartial(sent, stayed.length, failed ? P.failed : clearingSkipped === stayed.length ? P.clearingWhy : P.nothingOwed), partial: true }
+      ? { text: P.bulkPartial(sent, stayed.length, failed ? P.failed : clearingSkipped === stayed.length ? P.clearingWhy
+        : disputeSkipped === stayed.length ? DISPUTE_WORDS.bulkWhy : P.nothingOwed), partial: true }
       : { text: P.bulkDone(sent), partial: false }, stayed, false);
   }
 
@@ -748,6 +757,8 @@ export default function RegistrationsScreen() {
           onNote={key => void statusOne(openReg, key)}
           onClose={() => { setOpenId(null); setFeeFocus(null); }}
           cardRefunds={refundsOf(openReg.id)}
+          dispute={read?.disputes?.[openReg.id] ?? null}
+          orgSlug={orgSlug}
           canDesk={rights.takeFees}
           isPhone={isPhone}
           focus={openReg.id === openedLink ? linkedAt : openReg.id === feeFocus ? 'fee' : null}

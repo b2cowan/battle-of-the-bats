@@ -14,7 +14,7 @@
  * the Overview's tiles show.
  */
 import { useCallback, useState } from 'react';
-import { reasonShort } from '@/lib/online-payment-words';
+import { DISPUTE_WORDS, disputeWhyShort, reasonShort } from '@/lib/online-payment-words';
 import { useParams } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -33,7 +33,9 @@ import { buildFilename, downloadCSVBlob, downloadXLSX, generateCSV } from '@/lib
 
 interface BookLine {
   id: string; regId: string; player: string | null; day: string; amount: number; method: string | null; receiptNo?: number | null;
-  kind: 'fee' | 'refund' | 'voided' | 'processing' | 'returned'; returnReason?: string | null; refundWhy: string | null; priceKind: 'regular' | 'corrected' | null; note: string | null;
+  kind: 'fee' | 'refund' | 'voided' | 'processing' | 'returned'; returnReason?: string | null;
+  /** 12d-1 Part 3: a returned line a lost card dispute wrote (`returnReason` is then the cardholder's reason). */
+  disputeLost?: boolean; refundWhy: string | null; priceKind: 'regular' | 'corrected' | null; note: string | null;
   /** 12c: a refund line that went to the card, and how it stands. */
   card?: { state: CardRefundState; bank: boolean; stripe: boolean } | null;
 }
@@ -46,6 +48,8 @@ interface MoneyRead {
   free: boolean; filesToStatement: boolean; band: SeasonMoney;
   /** 12b: how much of Received came by card. */
   byCard?: number;
+  /** 12d-1 Part 3: open card disputes on the season's payments, and what Stripe holds for them (words §1.5). */
+  disputed?: { n: number; held: number };
   /** 12c Part 6: what of Received came by bank debit (the band's note). */
   byBank?: number;
   lines: BookLine[]; history: HistoryLine[]; owing: OwingRow[]; today: string;
@@ -111,6 +115,7 @@ export default function MoneyPage() {
     ...read.lines.map((l): Row => ({
       key: l.kind === 'processing' ? `cost:${l.id}` : l.kind === 'returned' ? `returned:${l.id}` : l.id, day: l.day, player: l.player ?? '—',
       what: l.kind === 'voided' ? W.what.voided
+        : l.kind === 'returned' && l.disputeLost ? DISPUTE_WORDS.moneyLine(l.receiptNo != null ? String(l.receiptNo) : '', disputeWhyShort(l.returnReason ?? null))
         : l.kind === 'returned' ? W.what.returned(l.receiptNo != null ? String(l.receiptNo) : '', reasonShort(l.returnReason ?? null))
         : l.kind === 'refund' ? W.what.refund(l.card?.stripe ? CM.madeInStripe : l.refundWhy)
         : l.kind === 'processing'
@@ -119,7 +124,8 @@ export default function MoneyPage() {
             : W.what.processing((l.note ?? '').replace(/^Payment processing · /, '')))
           : W.what.fee(l.priceKind),
       // 12b copy §5: a card payment's receipt after its method ("Online, card · receipt 1043").
-      how: l.card ? cardHow(l.card)
+      how: l.kind === 'returned' && l.disputeLost ? DISPUTE_WORDS.moneyHow
+        : l.card ? cardHow(l.card)
         : l.receiptNo ? `${paymentMethodWord(l.method)} · ${REGS_WORDS.fee.receipt(l.receiptNo)}` : paymentMethodWord(l.method),
       amount: l.kind === 'refund' || l.kind === 'processing' || l.kind === 'returned' ? money(-l.amount) : money(l.amount),
       // The export's number: a refund negative, a voided line counted nowhere (its What says so).
@@ -174,6 +180,7 @@ export default function MoneyPage() {
   const bandNote = [
     byCard && byBank ? W.band.noteBoth(money(byCard), money(byBank)) : byCard ? W.band.noteCard(money(byCard)) : byBank ? W.band.noteBank(money(byBank)) : null,
     band.clearing > 0 ? W.band.noteClearing : null,
+    read.disputed?.n ? DISPUTE_WORDS.band(read.disputed.n, money(read.disputed.held)) : null,
   ].filter(Boolean).join(' ');
 
   return (

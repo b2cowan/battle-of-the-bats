@@ -21,6 +21,11 @@ import type { TeamDebit } from '@/lib/team-pay-facts';
 import { KeepOverWindow, PaymentViewWindow, RefundWindow, type OverPreset, type RefundSend } from './OnlinePaymentWindows';
 import type { OpenPayPage } from '@/lib/online-pay-pages';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
+import DisputeBlock, { disputeShows } from '@/components/admin/kit/club/DisputeBlock';
+import { disputeChip, isDisputeOpen, type DisputeRecord } from '@/lib/online-payment-dispute';
+import { DISPUTE_WORDS as DPW, disputeDue } from '@/lib/online-payment-words';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { useParams } from 'next/navigation';
 import DateInput from '@/components/shared/DateInput';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
@@ -98,6 +103,8 @@ const amountText = (n: number) => String(Math.round(n * 100) / 100);
 export default function TeamPayments(props: Props) {
   const { teamId, tournamentId, orgQuery, fee, today, canRecord, paidTotal, onChanged, busy = false, onFormOpen, teamName = '', autoRefundId = null, onOver, doneSaid = null } = props;
   const uid = useId();
+  const isPhone = useIsPhone();
+  const orgSlug = useParams<{ orgSlug?: string }>()?.orgSlug ?? '';
   const [payments, setPayments] = useState<TeamPayment[] | null>(null);
   const [postsToBook, setPostsToBook] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -396,6 +403,15 @@ export default function TeamPayments(props: Props) {
   const rows = payments ? receivedOrder(payments) : [];
   const clearing = debit?.state === 'clearing' ? debit : null;
   const day = (iso: string | null) => (iso ? formatStoredDate(iso, { withYear: false }) : '');
+  /** 12d-1 Part 3 (words §1.1): a dispute's chip under the row's label — amber for the answerer only — and its second line. */
+  const disputeTag = (d: DisputeRecord) => {
+    const chip = disputeChip(d);
+    if (!chip) return null;
+    const sub = d.answered ? DPW.answered(day(d.answeredAt))
+      : chip === 'notAnswered' ? DPW.wasDue(disputeDue(d.dueBy))
+        : d.dueBy ? (d.youAnswer ? DPW.answerByYou(disputeDue(d.dueBy)) : DPW.answerBy(d.answererName, disputeDue(d.dueBy))) : null;
+    return <span className={styles.payChip}><RepChip tone={d.youAnswer ? 'warn' : 'info'}>{DPW.chip[chip]}</RepChip>{sub && <span className={styles.payTagSub}>{sub}</span>}</span>;
+  };
   // A declined or withdrawn team's clearing debit: what happens when it clears (asked here, ask 7).
   const askClear = !!clearing && teamStatus !== 'accepted' && !decision && canDecide;
   const C = OW.clear;
@@ -513,7 +529,11 @@ export default function TeamPayments(props: Props) {
                     ? <span className={styles.payHow}> · {p.online.rail === 'bank_debit' ? OW.methodBank(receiptLabel(p.online.receiptNo ?? '')) : OW.method(receiptLabel(p.online.receiptNo ?? ''))}</span>
                     : p.method && <span className={styles.payHow}> · {W.methods[p.method]}</span>}
                   {p.inLedger && p.status !== 'refunded' && p.status !== 'reversed' && <span className={styles.payChip}><RepChip tone="good">{W.inLedger}</RepChip></span>}
-                  {p.status === 'reversed' && p.online && <span className={styles.payTag}>{OW.debitReversed(day(p.online.reversedAt ?? null))}</span>}
+                  {p.status === 'reversed' && p.online && (p.online.rail === 'card' && p.online.dispute?.lostBookedAt
+                    ? <span className={styles.payTag}>{DPW.teamRowLost(day(p.online.dispute.lostBookedAt))}</span>
+                    : <span className={styles.payTag}>{OW.debitReversed(day(p.online.reversedAt ?? null))}</span>)}
+                  {/* 12d-1 Part 3 (words §1.1): a won dispute joins the method line, last and lowercase. */}
+                  {p.online?.dispute?.status === 'won' && <span className={styles.payHow}> · {DPW.wonSub(day(p.online.dispute.wonBackAt ?? p.online.dispute.closedAt))}</span>}
                   {p.online?.test && <span className={styles.payTag}>{OW.test}</span>}
                   {p.online && p.status === 'refunded' && (p.online.refundedOn || p.online.refunds[0]) && (
                     <span className={styles.payTag}>{OW.refunded(formatStoredDate((p.online.refundedOn ?? p.online.refunds[0].succeededAt ?? p.online.refunds[0].createdAt), { withYear: false }), p.online.rail === 'bank_debit')}</span>
@@ -535,12 +555,14 @@ export default function TeamPayments(props: Props) {
                     <span className={styles.payTagSub}>{overOf(p)!.whole ? XW.tagTwice : XW.tagMore(money(overOf(p)!.leftCents / 100))}</span>
                   )}
                   {p.online?.over?.keptReason && <span className={styles.payTagSub}>{XW.keptLine(money(p.online.over.extraCents / 100), p.online.over.keptReason)}</span>}
+                  {p.online?.dispute && disputeTag(p.online.dispute)}
                 </span>
                 <span className={styles.payAmt}>{formatPaymentMoney(p.amount)}</span>
                 {p.online ? (
                   <CoachToolbarMenu variant="glyph" overWindow label={OW.menuLabel} icon={<MoreHorizontal size={16} aria-hidden />} disabled={locked}>
                     <CoachToolbarMenuItem label={OW.menuView} onSelect={() => setViewing(p.online!)} />
-                    {online?.refunds && p.status !== 'refunded' && p.status !== 'reversed' && p.online.leftCents > 0 && p.online.refund !== 'pending' && (
+                    {online?.refunds && p.status !== 'refunded' && p.status !== 'reversed' && p.online.leftCents > 0 && p.online.refund !== 'pending'
+                      && !isDisputeOpen(p.online.dispute?.status ?? '') && (
                       <CoachToolbarMenuItem label={OW.menuRefund(p.online.rail === 'bank_debit')} onSelect={() => setRefunding({ p: p.online!, anotherWay: false })} />
                     )}
                     {online?.refunds && p.online.refund === 'failed' && (
@@ -556,6 +578,10 @@ export default function TeamPayments(props: Props) {
               </div>
             )))}
           </div>
+          {/* 12d-1 Part 3 (words §1.2): each disputed payment's block, under the payment rows. */}
+          {rows.map(p => (disputeShows(p.online?.dispute)
+            ? <DisputeBlock key={`dispute-${p.id}`} d={p.online!.dispute!} orgSlug={orgSlug} team isPhone={isPhone} />
+            : null))}
         </>
       )}
 
