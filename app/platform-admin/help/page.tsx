@@ -155,6 +155,7 @@ export default function PlatformAdminHelpPage() {
         { label: 'Rate, draft and publish teams', href: '/platform-admin/help/house-league#recipe-build-teams' },
         { label: 'How coaches get their team page', href: '/platform-admin/help/house-league#coach-team-page' },
         { label: 'Generate a house league schedule', href: '/platform-admin/help/house-league#recipe-generate-house-league-schedule' },
+        { label: 'Divide the club’s time and hand out practices', href: '/platform-admin/help/house-league#house-league-time' },
       ],
     },
     {

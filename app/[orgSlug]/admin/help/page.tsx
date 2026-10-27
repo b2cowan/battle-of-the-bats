@@ -147,6 +147,7 @@ export default function AdminHelpHubPage() {
           { label: 'Rate, draft and publish teams', href: `${helpBase}/house-league#recipe-build-teams` },
           { label: 'How coaches get their team page', href: `${helpBase}/house-league#coach-team-page` },
           { label: 'Generate a house league schedule', href: `${helpBase}/house-league#recipe-generate-house-league-schedule` },
+          { label: 'Divide the club’s time and hand out practices', href: `${helpBase}/house-league#house-league-time` },
           { label: 'Record scores and update standings', href: `${helpBase}/house-league#recipe-record-house-league-scores` },
         ],
       },

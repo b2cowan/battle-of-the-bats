@@ -55,15 +55,16 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'Who can do what in house league',
       summary: 'Owners, club admins and league admins run the season; the league registrar works registrations, fees and Email families and reads the rest.',
-      keywords: ['permissions', 'who can', 'club admin', 'league admin', 'league registrar', 'treasurer', 'read only', 'roles', 'access', 'move a child between divisions', 'who can take fees', 'who can end a registration', 'who can refund', 'refund to card', 'pay link'],
-      searchText: 'who can do what house league permissions owner admin club admin league admin league registrar registrar treasurer read only edit seasons divisions teams schedule approve decline withdraw release the spot add registration by hand fees received mark received undo correct the price refund move to another division email families money page read cannot see button absent not greyed registrar cannot move a child between divisions who can refund a card payment owner club admin league admin registrar email the pay link',
+      keywords: ['permissions', 'who can', 'club admin', 'league admin', 'league registrar', 'treasurer', 'read only', 'roles', 'access', 'move a child between divisions', 'who can take fees', 'who can end a registration', 'who can refund', 'refund to card', 'pay link', 'divide house league’s time', 'club schedule read only', 'who is told when the club moves practices'],
+      searchText: 'league admin divides house league’s time hands out practices reads the club’s schedule never gives takes back locks swaps or clears a rep team’s slot or an open slot told in the bell when the club sends changes that move practices registrar reads house league’s time who can do what house league permissions owner admin club admin league admin league registrar registrar treasurer read only edit seasons divisions teams schedule approve decline withdraw release the spot add registration by hand fees received mark received undo correct the price refund move to another division email families money page read cannot see button absent not greyed registrar cannot move a child between divisions who can refund a card payment owner club admin league admin registrar email the pay link',
       content: (
         <>
           <ul>
-            <li><strong>Owner, club admin and league admin</strong> — everything: create and edit seasons and divisions, build teams, run the schedule, move a season between states, work registrations and fees, move a child to another division, and email families.</li>
+            <li><strong>Owner, club admin and league admin</strong> — everything: create and edit seasons and divisions, build teams, run the schedule, move a season between states, work registrations and fees, move a child to another division, and email families. Owners and admins also give house league its time in the club&apos;s Schedules; a league admin divides that time among divisions and hands out practices (see <em>House league&apos;s time</em>).</li>
             <li><strong>League registrar</strong> — works the registrations (approve, waitlist, decline, withdraw, release a spot, add one by hand), takes fees (<strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong>), refunds a card payment, emails a family their pay link, and uses Email families. <strong>Move to another division</strong> is not theirs: only the owner, a club admin and a league admin see it. Reads the rest of the season, with no edit controls and no status buttons.</li>
             <li><strong>Treasurer</strong> — reads a season&apos;s <strong>Money</strong> page, through the club&apos;s Accounting, and sees where the club&apos;s payouts stand. Nothing else in house league: refunds are the desk&apos;s.</li>
           </ul>
+          <p>The club&apos;s time works the same way. A league admin changes <strong>House league&apos;s own pieces</strong> only: they divide the time the club gave, hand out practices, and read the club&apos;s schedule from <strong>House league&apos;s time</strong>. They never give, take back, lock, swap or clear a rep team&apos;s slot or an open one, and only an owner or an admin changes how much time house league has. When the club sends changes that move or cancel house league&apos;s practices, the league admins are told in the bell, as are the owners and admins who run house league. The registrar reads <strong>House league&apos;s time</strong> and the club&apos;s schedule and changes nothing there.</p>
           <p>A control you can&apos;t use is not shown at all, rather than shown greyed. A member whose House league access is switched off, or whose plan doesn&apos;t carry it, can&apos;t open any of it.</p>
         </>
       ),
@@ -522,7 +523,7 @@ const houseLeagueHelp: HelpPageContent = {
           <p><strong>Where games are played.</strong> Every game and practice window asks <strong>Venue</strong>, then the diamond beside it. For one of your club&apos;s venues the label is what the Venue library says its facilities are (for example <strong>Diamond</strong> or <strong>Field</strong>), or <strong>Facility</strong> where a venue has more than one kind; for a typed venue it&apos;s your season&apos;s sport&apos;s own word. Type to find one of your club&apos;s venues from the <strong>Venue library</strong> (under Organization), set up once for every season, then pick its diamond. An archived venue leaves this list; the games already on it keep it. <strong>Not set</strong> means anywhere at that venue. A venue you just type, for an away facility, saves as plain text, but typed venues can only be matched against identically typed text, so picking from the library is what makes clash checking reliable.</p>
           <p><strong>Double-booking protection.</strong> The schedule treats games and practices as one pool of bookings. When the date, time and diamond are set, the window checks before you press <strong>Create</strong>: another league game or practice on that diamond at that time shows in <strong>red</strong> under the field, naming it, and <strong>Create</strong> stays greyed until you change the time or the diamond. A recurring practice series names the date it clashes on. The schedule page also shows a warning strip listing any existing clashes, and a count of bookings with no diamond set (those can&apos;t be checked at all). The generator is the one exception: it saves and <em>warns</em> instead of blocking, because a generated round places several games at the same default time on purpose. Spread them across times or diamonds afterward.</p>
           <p><strong>Your club&apos;s other teams and tournaments.</strong> If one of the club&apos;s rep teams or tournaments holds the diamond, an <strong>amber</strong> line says so under the field, for example <em>&ldquo;Diamond B is booked by 11U AA practice, 6:00–7:30 p.m.&rdquo;</em> That one never blocks: the game or practice still saves, because a diamond shared between two programs is for the club to settle, not for either form to refuse. The generator&apos;s after-save summary counts these too.</p>
-          <p><strong>Practices</strong> are tracked on their own tab. Add a single or recurring practice per team with a start and end time and a field. When you cancel a recurring practice, you choose whether to cancel just that one, this and the rest of the series, or the whole series.</p>
+          <p><strong>Practices</strong> are tracked on their own tab. Add a single or recurring practice per team with a start and end time and a field. When you cancel a recurring practice, you choose whether to cancel just that one, this and the rest of the series, or the whole series. Practices handed out from time the club gave house league read <strong>From</strong> the club&apos;s schedule and can&apos;t be cancelled or edited here (see <em>House league&apos;s time</em>).</p>
           <p><strong>Tools</strong> (⋯) at the right end of the toolbar holds <strong>House league&apos;s time</strong> and the schedule&apos;s <strong>Export</strong> (Excel, CSV, or calendar file). Exporting the schedule is part of League Plus.</p>
         </>
       ),
@@ -557,6 +558,109 @@ const houseLeagueHelp: HelpPageContent = {
           <p>Standings rank teams by <strong>points</strong> — a win is worth 2, a tie 1, and a loss 0. Ties in points are broken by score differential, then by total scored (the GF/GA columns). If standings look wrong, check for games still scheduled, postponed, or missing scores — only completed games count.</p>
         </>
       ),
+    },
+    {
+      id: 'house-league-time',
+      group: 'Running the season',
+      heading: 'House league’s time — the club’s time, divided and handed out',
+      summary: 'The club gives house league its time; a league admin divides it among divisions, hands out practices, and families hear about changes the club sends.',
+      keywords: ['house league’s time', 'club time', 'given by the club', 'give it to', 'choose parts', 'practice time', 'hand out practices', 'practices a week', 'not given yet', 'divide time', 'division games', 'give all of it back', 'the club’s schedule', 'from the club’s schedule', 'practices changed', 'families emailed'],
+      searchText: 'house league’s time given by the club in hours add up across facilities 3 hours on 2 facilities is 6 time line under the title tools u12 games u12 practice time not given yet hours a week only an owner or an admin changes how much time house league has the club hasn’t given house league any time yet an owner or an admin gives it in schedules give it to choose parts which time are you choosing parts for a piece a division’s games or practice time tick the time save nothing is saved yet 1 change 2 changes mixed 8 of 12 dates a part another division holds give all of it back give back all of u12’s practice time save and remove 6 practices past practices stay practice time each practice 30 45 60 75 90 120 minutes teams at once per facility practices a week 1 a week 2 a week every team gets 1 practice a week 2 slots stay open teams take turns at the early and late times week by week there’s room for teams each week going without hand out 10 practices a week hand it to the teams give u12 more time a second hand-out runs again replaces practices still to come hand-booked practice from the club’s schedule only the club can move or remove this practice change u12’s practice time the club’s schedule read only league admin legend house league not given yet a rep team open a rep team holds this time an owner or an admin can give it to house league this time is open use one date this changes only to change every week change tue practice on this date saving removes it coach team page practices list first hand-out emails nobody families aren’t emailed practices changed email now was questions ask the coach unsubscribed club news a household one email bell email families history automatic practices changed finished season locked registrar reads',
+      content: (
+        <p>The club gives house league its time in its Schedules. This section is for the people who then use it: <strong>House league&apos;s time</strong> shows what the club gave and divides it among divisions, <strong>Practice time</strong> hands practices out to teams, and the rest says what the club&apos;s own changes do to your practices.</p>
+      ),
+      subtopics: [
+        {
+          id: 'house-league-time-t-given',
+          title: 'What the club gave, and where it shows',
+          content: (
+            <>
+              <p>An owner or an admin gives house league time in the club&apos;s Schedules, as a whole schedule, a share of one, or a slot at a time (the club&apos;s guide, <a href="../help/org#club-schedules-t-house-league">Giving time to house league</a>, covers that side). House league is never billed for it.</p>
+              <HelpDefs>
+                <HelpDef term="The time line">On the season&apos;s <strong>Schedule</strong> page, under the title: where the division&apos;s time comes from, the days and hours for games and for practices, and <strong>House league&apos;s time &rarr;</strong>. With nothing given, an owner or an admin sees &ldquo;U12 has no time from the club yet.&rdquo; A league admin or registrar sees the line only once the club has given time.</HelpDef>
+                <HelpDef term="Tools">Open <strong>Tools</strong> (⋯) and choose <strong>House league&apos;s time</strong>. Owners, admins, league admins and the registrar can all open it.</HelpDef>
+                <HelpDef term="The window">The first line says where it comes from: <em>Given by the club in</em> the schedule&apos;s name, its dates and venue. Hours add up across facilities: 3 hours on 2 facilities is 6. Each row is a stretch of time, labelled <strong>U12 games</strong>, <strong>U12 practice time</strong> or <strong>Not given yet</strong>, with its days, hours and facilities and its figure (&ldquo;6 hours a week&rdquo;). The name of the schedule opens the club&apos;s schedule (see <a href="#house-league-time-t-club-schedule">The club&apos;s schedule, as you read it</a>).</HelpDef>
+                <HelpDef term="The foot">&ldquo;Only an owner or an admin changes how much time house league has.&rdquo; Everyone else divides and reads; they don&apos;t add or take away.</HelpDef>
+              </HelpDefs>
+              <p>When the club hasn&apos;t given house league anything, an owner or an admin sees <strong>Give house league time</strong>, which goes to Schedules. A league admin or registrar reads &ldquo;The club hasn&apos;t given house league any time yet. An owner or an admin gives it, in Schedules.&rdquo; Once the season is finished its time can&apos;t change.</p>
+            </>
+          ),
+        },
+        {
+          id: 'house-league-time-t-divide',
+          title: 'Dividing it among divisions',
+          content: (
+            <>
+              <p>A <strong>piece</strong> is one division&apos;s games or one division&apos;s practice time. Time starts as <strong>Not given yet</strong>; you give it to a piece, and only an owner, an admin or a league admin can.</p>
+              <ol>
+                <li>On a <strong>Not given yet</strong> row choose <strong>Give it to</strong>, then <strong>U12 games</strong> or <strong>U12 practice time</strong> (a pair for each division). The whole row goes to that piece.</li>
+                <li>For only some of a stretch, choose <strong>Choose parts&hellip;</strong>. It asks <strong>Which time are you choosing parts for?</strong>; pick a division&apos;s games or its practice time, then <strong>Choose parts</strong>.</li>
+                <li>A piece&apos;s window lists its parts with a tick each, by weekday and by stretch. A tick gives that time to the division when you save; unticking sends it back to <strong>Not given yet</strong>. A part with only some dates ticked reads &ldquo;8 of 12 dates&rdquo;.</li>
+                <li>The foot counts your changes (&ldquo;Nothing is saved yet.&rdquo;, &ldquo;1 change&rdquo;). <strong>Save</strong> saves them all at once.</li>
+              </ol>
+              <ul>
+                <li>A part another division holds has no box; its name is a link to that division&apos;s piece.</li>
+                <li><strong>Give all of it back</strong> unticks everything the piece holds.</li>
+                <li>Giving back time with practices still to come on it asks first: <em>Give back all of U12&apos;s practice time?</em> or <em>Give back 2 parts of U12&apos;s practice time?</em> The note names the teams (&ldquo;&hellip; have practices on this time. Saving removes the ones still to come. Past practices stay.&rdquo;) and the button says what it costs: <strong>Save and remove 6 practices</strong>.</li>
+              </ul>
+              <p>The registrar sees the same pieces without the ticks, and an empty one reads &ldquo;U12 has no game time yet.&rdquo; or &ldquo;U12 has no practice time yet.&rdquo;</p>
+            </>
+          ),
+        },
+        {
+          id: 'house-league-time-t-practice',
+          title: 'Practice time: handing out practices',
+          content: (
+            <>
+              <p>With a division selected, open <strong>Tools</strong> &rsaquo; <strong>Practice time</strong>. Owners, admins and league admins see it on a live season; the registrar doesn&apos;t. It takes the division&apos;s practice time and spreads it fairly over its teams.</p>
+              <HelpDefs>
+                <HelpDef term="Its practice time">The parts the division holds, with the hours a week each. <strong>+ Give U12 more time</strong> opens House league&apos;s time on that piece and brings you back.</HelpDef>
+                <HelpDef term="Each practice">30, 45, 60, 75, 90 or 120 minutes. Parts shorter than a practice stay open.</HelpDef>
+                <HelpDef term="Teams at once">1 to 4 per facility.</HelpDef>
+                <HelpDef term="Practices a week">1, 2 or 3 a week for every team.</HelpDef>
+              </HelpDefs>
+              <p>As you choose, one line says what you&apos;ll get: <em>Every team gets 1 practice a week. 2 slots stay open.</em> and <em>Teams take turns at the early and late times, week by week.</em> When the time is short it says so instead (&ldquo;There&apos;s room for 6 of 8 teams each week. The other 2 teams take turns going without, week by week.&rdquo;), and when a practice is longer than any of the time it asks for a shorter one. <strong>Hand out 10 practices a week</strong> then writes them for the whole division, and the page opens on its practices.</p>
+              <ul>
+                <li><strong>Handing out a second time</strong> works the whole division again. Practices still to come are replaced by the new plan, a cancelled practice the plan names again comes back, and practices already played stay. Hand-booked practices are never touched. The window opens on your last length and teams at once.</li>
+                <li><strong>A practice from the club&apos;s time</strong> reads <strong>From</strong> the schedule&apos;s name on the Practices list and in its window, which says <em>Only the club can move or remove this practice.</em> It has no pencil and no Cancel. Its one link, <strong>Change U12&apos;s practice time</strong>, opens Practice time; to move the time itself the club changes its schedule and sends the changes.</li>
+                <li><strong>A practice you book by hand</strong> keeps its pencil and Cancel, as before.</li>
+                <li>Handing out emails no one.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'house-league-time-t-club-schedule',
+          title: 'The club’s schedule, as you read it',
+          content: (
+            <>
+              <p>The schedule&apos;s name on House league&apos;s time opens <strong>The club&apos;s schedule</strong>, a week grid with <strong>Previous week</strong> and <strong>Next week</strong>. It shows only a final schedule that holds house league time; otherwise it says &ldquo;House league has no time in that schedule.&rdquo; On a phone it&apos;s a read-only day list. Everyone who reads house league can open it, and a league admin changes only house league&apos;s own pieces on it.</p>
+              <HelpDefs>
+                <HelpDef term="The colours">The key reads <strong>House league</strong>, <strong>Not given yet</strong>, <strong>A rep team</strong> and <strong>Open</strong>. A chip names the division&apos;s piece (&ldquo;U12 games&rdquo;).</HelpDef>
+                <HelpDef term="A rep slot">Click it and it reads <strong>Held by</strong> the team, or &ldquo;A rep team&rdquo; if you can&apos;t open Rep teams, with <em>A rep team holds this time. An owner or an admin can give it to house league.</em> An open slot says an owner or an admin can give it to a team or house league. Neither has a control: you can&apos;t give, take back, lock, swap or clear them.</HelpDef>
+                <HelpDef term="Use">On a house-league slot of this season that is still to come, a computer shows <strong>Use</strong>: <strong>Not given yet</strong>, or a division&apos;s games or practice time. Choosing one saves at once and covers <em>that date only</em> (&ldquo;This changes Tue, Jun 15 only. To change every week, use House league&apos;s time.&rdquo;). If practices that day would go, it asks first: <em>Change Tue, Jun 15 to U12 games?</em> and the button names them (<strong>Change and remove 1 practice</strong>).</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'house-league-time-t-families',
+          title: 'What coaches and families hear',
+          content: (
+            <>
+              <p>A house-league coach sees their team&apos;s practices under <strong>Practices</strong> on the team page: the day and hours, the place and <em>From</em> the club&apos;s schedule, and a <strong>Cancelled</strong> chip when one is called off. The page only reads. Handing practices out tells no one.</p>
+              <p>When the club moves or cancels house league&apos;s time and presses <strong>Send the changes</strong>, the people it touches are told once:</p>
+              <ul>
+                <li><strong>The team&apos;s coaches</strong> get &ldquo;<em>the schedule&apos;s name</em>: Reds&apos; practices changed&rdquo;, each change on a line, and a link to the team page.</li>
+                <li><strong>Each family</strong> gets one email per household, with a part for each child on a changed team: <em>Now</em> in full, <em>Was</em> only for what changed, and <em>Questions? Ask the Reds&apos; coach.</em> There is no link, and it also reaches a family that unsubscribed from club news, because it is about their child.</li>
+                <li><strong>You</strong> get a bell if you run house league: owners, admins and league admins, but not whoever sent. It reads the schedule&apos;s name, <em>changed house league&apos;s practices</em>, and the count (&ldquo;U12: 2 practices moved, 1 practice cancelled.&rdquo;).</li>
+                <li>The season&apos;s <strong>Email families</strong> history shows one <strong>Automatic</strong> row, <em>Practices changed</em>, for each send.</li>
+              </ul>
+              <p>The club can untick a team before it sends, which stops that team&apos;s emails but not its practices moving. Game changes aren&apos;t part of this email.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'family-signup',

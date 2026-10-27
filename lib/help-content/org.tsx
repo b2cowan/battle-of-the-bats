@@ -622,7 +622,7 @@ const orgHelp: HelpPageContent = {
     {
       id: 'club-schedules',
       heading: 'Schedules — handing the club’s time out to its teams',
-      summary: 'Schedules, under Calendar: hand the time the club holds (a dome’s winter Sundays, a town’s field permit) out to its rep teams fairly, bill them for it, and send it.',
+      summary: 'Schedules, under Calendar: hand the time the club holds (a dome’s winter Sundays, a town’s field permit) out to its rep teams and house league fairly, bill the teams for it, and send it.',
       keywords: [
         'schedules', 'club schedule', 'practice schedule', 'time slots', 'slots', 'dome', 'permit', 'hand out the time', 'share the time',
         'new schedule', 'no permit', 'link a permit', 'copy a schedule', 'start blank', 'start from the permit', 'last year’s schedule', 'drafts', 'generate drafts', 'three more drafts', 'evenly',
@@ -642,10 +642,14 @@ const orgHelp: HelpPageContent = {
         // Club Tier Stage 11d part B + Fair shares B (2026-10-16): the ask on the schedule's page; Fair shares above and below.
         'answer', 'answer an ask', 'ask on the schedule', 'late ask', 'money only', 'fair shares by team', 'what each team pays',
         'bill stays', 'nothing to send', 'ringed',
+        // Club Tier Stage 11b (2026-10-27): house league holds the club's time; the club takes it back; Send the changes tells its teams.
+        'house league', 'house league’s time', 'give it to house league', 'give it to', 'programs', 'league admin', 'league admins divide',
+        'take time back', 'takes time back', 'give a slot back', 'clear a slot', 'practices cancelled', 'house league never billed',
+        'league plus no rep teams', 'house-league teams told', 'families emailed', 'practices changed',
       ],
-      searchText: 'schedules club schedule practice schedule time slots slots dome winter sundays town field permit hand out the time share the time fairly rep teams new schedule permit no permit link a permit copy a schedule start blank start from the permit last year’s schedule a year on venue facilities all none dates days hours add hours slot length changeover teams at once dates off 25 sundays 6 fields 12 slots a sunday 300 slots who and how much split the time evenly by percentage a set number a week group figure 60 40 slots column closing row left open held by a tryout day over 100% prime time shared the same way shared evenly by team no season running rules earliest and latest start start after finish by teams’ days off at most a day at most a week keep each team’s nights rotate it weekly facilities by group only for never on a team’s game day away games never over a booking already on the books no back-to-back days generate drafts three drafts ranked three more drafts by team by day export a draft excel pdf save as a draft nothing reaches a team schedule’s page grid a week monday first one weekday dates across seven at a time facility filter team filter clashes amber pill by team by group a week slots hours prime time days drag a chip which weeks this week only this & later weeks every week undo a moved slot locks itself give it to change team house league lock this slot unlock swap with clear this slot tools settings regenerate the unlocked slots lock this week clear this week send log delete this draft phone reads day by day one day at a time next day choose a day computer changes fair shares handed out open short clashes the bill bill the teams bill from budget line the permit’s cost a part of it split by the time each team got full field half field an hour payments one payment monthly every two months dates i choose nothing is billed until you finalize money club tab send for review first final now books and bills reply by who is told head coach and staff see the email in review replied looks good asked for a change finalize and send changed since sent send the changes only those teams told bill the corrections owed back send log handed back open handed back by notification schedules section families are not emailed sharing a facility share a field two teams one facility at once paired whenever a partner is free plays alone half a facility a third a quarter shared slot shared each team’s time the same each week moved around spread out rotate early and late taken in turn facilities taken in turn keeps its days add a rule start and finish times a team’s day off facilities for a group at most a day or a week always remove this rule not in use finish this rule or remove it a third mix hours early fields 50 shared 37.5 hours half-field slots shared slots open slots share with take off add slot holds 2 teams at once a coach asks for money back ask on the schedule callout above the grid answer accept decline asked by the sundays stay the team’s until you answer ringed hand back arrow hand-back asked which team asked late ask money only their time is already open your answer moves only the money someone who holds the club’s accounting answers the bell opens the schedule with answer open nothing to send a hand-back never changed since sent fair shares by team band above the toolbar card under the grid the bill as finalize made it what each team pays after credits and money given back same as money club its bill stays without asking for money',
+      searchText: 'schedules club schedule practice schedule time slots slots dome winter sundays town field permit hand out the time share the time fairly rep teams new schedule permit no permit link a permit copy a schedule start blank start from the permit last year’s schedule a year on venue facilities all none dates days hours add hours slot length changeover teams at once dates off 25 sundays 6 fields 12 slots a sunday 300 slots who and how much split the time evenly by percentage a set number a week group figure 60 40 slots column closing row left open held by a tryout day over 100% prime time shared the same way shared evenly by team no season running rules earliest and latest start start after finish by teams’ days off at most a day at most a week keep each team’s nights rotate it weekly facilities by group only for never on a team’s game day away games never over a booking already on the books no back-to-back days generate drafts three drafts ranked three more drafts by team by day export a draft excel pdf save as a draft nothing reaches a team schedule’s page grid a week monday first one weekday dates across seven at a time facility filter team filter clashes amber pill by team by group a week slots hours prime time days drag a chip which weeks this week only this & later weeks every week undo a moved slot locks itself give it to change team house league lock this slot unlock swap with clear this slot tools settings regenerate the unlocked slots lock this week clear this week send log delete this draft phone reads day by day one day at a time next day choose a day computer changes fair shares handed out open short clashes the bill bill the teams bill from budget line the permit’s cost a part of it split by the time each team got full field half field an hour payments one payment monthly every two months dates i choose nothing is billed until you finalize money club tab send for review first final now books and bills reply by who is told head coach and staff see the email in review replied looks good asked for a change finalize and send changed since sent send the changes only those teams told bill the corrections owed back send log handed back open handed back by notification schedules section families are not emailed sharing a facility share a field two teams one facility at once paired whenever a partner is free plays alone half a facility a third a quarter shared slot shared each team’s time the same each week moved around spread out rotate early and late taken in turn facilities taken in turn keeps its days add a rule start and finish times a team’s day off facilities for a group at most a day or a week always remove this rule not in use finish this rule or remove it a third mix hours early fields 50 shared 37.5 hours half-field slots shared slots open slots share with take off add slot holds 2 teams at once a coach asks for money back ask on the schedule callout above the grid answer accept decline asked by the sundays stay the team’s until you answer ringed hand back arrow hand-back asked which team asked late ask money only their time is already open your answer moves only the money someone who holds the club’s accounting answers the bell opens the schedule with answer open nothing to send a hand-back never changed since sent fair shares by team band above the toolbar card under the grid the bill as finalize made it what each team pays after credits and money given back same as money club its bill stays without asking for money house league holder house league’s share of the time all of it goes to house league no drafts its league admins divide it among divisions and teams programs group give it to house league one row never billed no bill no allocation no credit league plus club with no rep teams a house league season running nothing to hand time to a slot is held by rep teams or by house league never both held by take time back give a slot back clear this slot the question practices still to come house league uses this time nothing changes until you send the changes practices cancelled when you send moved the same week past practices stay send the changes with house league in it a row for each house-league team coaches and families who is told people unticking a team its practices still move bell league admins owners admins changed house league’s practices families get one email a household practices changed now was no link even a family that unsubscribed game changes are not in this window',
       content: (
-        <p><strong>Schedules</strong>, directly under <strong>Calendar</strong> in the menu, is where the club hands out the time it holds (a dome&rsquo;s winter Sundays, a town&rsquo;s field permit) to its rep teams: by the shares and rules you set, with each team&rsquo;s share of the cost. The owner and admins see it on League Plus and Club, once the club runs rep teams.</p>
+        <p><strong>Schedules</strong>, directly under <strong>Calendar</strong> in the menu, is where the club hands out the time it holds (a dome&rsquo;s winter Sundays, a town&rsquo;s field permit) to its rep teams and to house league: by the shares and rules you set, with each rep team&rsquo;s share of the cost. The owner and admins see it on League Plus and Club, once the club has rep teams or a house league season running.</p>
       ),
       subtopics: [
         {
@@ -685,6 +689,25 @@ const orgHelp: HelpPageContent = {
               </HelpDefs>
               <p>The <strong>Slots</strong> column is what the time gives each team, worked out as you type. The closing row says what is left open, and why: &ldquo;64 slots left open. 2 more are held by 13U AAA&rsquo;s tryout day.&rdquo; or &ldquo;50 slots left open: 9U AA and 11U AA share a facility.&rdquo;</p>
               <p><strong>Prime time</strong>, at the end of the card, sets the hours every team wants (Weeknights, Weekends or Every day, from and until). By percentage, <strong>How it&rsquo;s shared</strong> beside it is <strong>Shared the same way</strong> as the time or <strong>Shared evenly by team</strong>. Whether a team keeps its prime-time slot or takes it in turn is Each team&rsquo;s time.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-house-league',
+          title: 'Giving time to house league',
+          content: (
+            <>
+              <p>House league holds the club&rsquo;s time the way a rep team does, and its league admins divide it among its divisions and teams (see <a href="../help/house-league#house-league-time">House league&rsquo;s time</a>). Give it a whole schedule, a share of one, or a slot at a time.</p>
+              <HelpDefs>
+                <HelpDef term="A whole schedule">In <strong>New schedule</strong>, under <strong>Who, and how much</strong>, tick only <strong>House league</strong>. Its row reads <em>Its league admins divide it among divisions and teams.</em> There are no drafts to choose from, and the split, each team&rsquo;s time, prime time and rules are not shown. The foot says what it gets (&ldquo;House league gets 30 hours a week across 2 facilities, Jun 1 &ndash; Aug 31&rdquo;), and <strong>Give it to house league</strong> makes the schedule final at once. Nobody is emailed, because there is no team to tell.</HelpDef>
+                <HelpDef term="A share">Tick <strong>House league</strong> beside rep teams. It sits under <strong>Programs</strong> in the list, and the drafts place its slots like a team&rsquo;s. Its league admins divide them after you send.</HelpDef>
+                <HelpDef term="One slot">Click the slot and choose <strong>Give it to</strong> &rsaquo; <strong>House league</strong> (under <strong>Programs</strong>). The slot then reads <strong>Held by</strong> House league. A slot is held by rep teams or by house league, never both, and a rule can&rsquo;t name house league.</HelpDef>
+              </HelpDefs>
+              <ul>
+                <li>House league is never billed. Its time has no bill, no allocation and no credit, and Fair shares counts rep teams only.</li>
+                <li>A League Plus club with no rep teams can use Schedules to give house league its time, as long as a house league season is running. With neither a rep team season nor a house league season to give time to, the club is told <em>There are no rep teams or house-league seasons running to hand time to yet.</em></li>
+                <li>Time you take back from house league later waits for <strong>Send the changes</strong> (see <a href="#club-schedules-t-take-back">Taking time back from house league</a>).</li>
+              </ul>
             </>
           ),
         },
@@ -761,6 +784,21 @@ const orgHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'club-schedules-t-take-back',
+          title: 'Taking time back from house league',
+          content: (
+            <>
+              <p>Give a slot house league holds to a team, or clear it, and the slot&rsquo;s window asks first, but only when house-league practices still to come sit on it. A slot with no practices on it changes with no question.</p>
+              <ol>
+                <li>Choose the team in <strong>Give it to</strong>, or click <strong>Clear this slot</strong>. The question names the date (&ldquo;Give Thu, Jun 3 at 6:00 p.m. to Reds?&rdquo; or &ldquo;Clear Thu, Jun 3 at 6:00 p.m.?&rdquo;) and the practices: <em>House league uses this time: the Reds&rsquo; and Blues&rsquo; practices. Their coaches and families are told when you send the changes.</em></li>
+                <li>Confirm with <strong>Give it to</strong> the team, or <strong>Clear this slot</strong>. The note says <em>Nothing changes until you send the changes</em>, and that the division&rsquo;s league admins are told then.</li>
+                <li>Press <strong>Send the changes</strong> on the schedule&rsquo;s page. Until then house league keeps the time and its practices.</li>
+              </ol>
+              <p>When you send, the practices still to come on that time are cancelled, and past practices stay. If house league was given other time the same week, its practices move there instead, at the same length; one that doesn&rsquo;t fit the new slot is cancelled. The coaches and families of those teams are emailed only if you leave the team ticked in <a href="#club-schedules-t-send-league">Send the changes</a>.</p>
+            </>
+          ),
+        },
+        {
           id: 'club-schedules-t-fair',
           title: 'Fair shares',
           content: (
@@ -787,7 +825,7 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Split</strong>: <strong>By the time each team got</strong>, each field at the permit&rsquo;s price (a full field $72.00 an hour, a half field $36.00).</li>
                 <li><strong>Payments</strong>: <strong>One payment</strong>, <strong>Monthly</strong>, <strong>Every two months</strong> or <strong>Dates I choose</strong>, from a first date. Each payment is the time that team gets in that period.</li>
               </ol>
-              <p>The table reads every team&rsquo;s share and payments as you go: 15U AA&rsquo;s $2,700.00 is $972.00, $864.00 and $864.00. Each team&rsquo;s line says what its time was (&ldquo;25 full-field slots &middot; 37.5 h&rdquo;, &ldquo;50 half-field slots &middot; 37.5 h&rdquo;, &ldquo;50 shared slots &middot; 37.5 h&rdquo;), and the line under the table names any open time: &ldquo;$5,400.00 less than the permit&rsquo;s $27,000.00: the 50 open slots. The club covers the rest.&rdquo; Nothing is billed until you finalize. Then each team&rsquo;s share arrives on its <strong>Money &rsaquo; Club</strong> tab with its payments, as an allocation, and the link reads <strong>The bill &middot; 3 payments</strong>: the bill as it was made, which never changes. A hand-back or a credit comes off what a team pays (Fair shares&rsquo; Bill), never off the bill.</p>
+              <p>The table reads every team&rsquo;s share and payments as you go: 15U AA&rsquo;s $2,700.00 is $972.00, $864.00 and $864.00. Each team&rsquo;s line says what its time was (&ldquo;25 full-field slots &middot; 37.5 h&rdquo;, &ldquo;50 half-field slots &middot; 37.5 h&rdquo;, &ldquo;50 shared slots &middot; 37.5 h&rdquo;), and the line under the table names any open time: &ldquo;$5,400.00 less than the permit&rsquo;s $27,000.00: the 50 open slots. The club covers the rest.&rdquo; Nothing is billed until you finalize. Then each team&rsquo;s share arrives on its <strong>Money &rsaquo; Club</strong> tab with its payments, as an allocation, and the link reads <strong>The bill &middot; 3 payments</strong>: the bill as it was made, which never changes. A hand-back or a credit comes off what a team pays (Fair shares&rsquo; Bill), never off the bill. House league is never billed: its time has no bill, no allocation and no credit.</p>
             </>
           ),
         },
@@ -810,9 +848,26 @@ const orgHelp: HelpPageContent = {
           title: 'Changes after it’s sent',
           content: (
             <>
-              <p>A change to a final schedule waits on its page: <strong>Changed since sent</strong> lists each one, and the teams keep what you sent until you press <strong>Send the changes</strong>. Only the teams with changes are told. <strong>Bill the corrections</strong> gives a team that gained time a small bill from the same line, and takes the time a team lost off what it still owes; what that team had already paid, the club owes it, waiting in Payment requests.</p>
+              <p>A change to a final schedule waits on its page: <strong>Changed since sent</strong> lists each one, and the teams keep what you sent until you press <strong>Send the changes</strong>. Only the teams with changes are told: a rep team&rsquo;s coaches, and for house league a team&rsquo;s coaches and families (see <a href="#club-schedules-t-send-league">Send the changes, with house league in it</a>). <strong>Bill the corrections</strong> gives a team that gained time a small bill from the same line, and takes the time a team lost off what it still owes; what that team had already paid, the club owes it, waiting in Payment requests.</p>
               <p>A coach can hand a practice back from the team&rsquo;s schedule. Its slot reads <strong>Open &middot; handed back by</strong> the team, and you get a notice. Until you give that time to another team, the coach can take it back: the slot is the team&rsquo;s again, and you get a notice. Neither marks the schedule Changed since sent, with money or without: the team already has the change, so there is nothing to send. Coaches&rsquo; replies and hand-backs ring your bell; choose how in your notification settings, under <strong>Schedules</strong>. The <strong>Send log</strong>, under Tools, lists every send: when, by whom, and to which teams.</p>
               <p>A coach can also ask for the money back: see <a href="#club-schedules-t-asks">A coach asks for money back</a>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-send-league',
+          title: 'Send the changes, with house league in it',
+          content: (
+            <>
+              <p>When your changes move or cancel house league&rsquo;s practices, <strong>Send the changes</strong> lists each house-league team beside the rep teams.</p>
+              <ul>
+                <li><strong>A row for each team</strong>, with its lines (&ldquo;Reds &middot; Sundays from Nov 8: Field 1 &rarr; Field 3, 11:00 a.m. &rarr; 12:30 p.m.&rdquo;) and who it reaches: <em>House league &middot; U9 Rookie &middot; 2 coaches and 11 families</em>. A cancelled practice reads &ldquo;&hellip;: cancelled&rdquo;.</li>
+                <li><strong>Who is told &middot; N people</strong> counts rep coaches, house-league coaches and each family household once, however many of its children are on ticked teams. The button reads <strong>Send to N people</strong>.</li>
+                <li><strong>Untick a team</strong> and its coaches and families aren&rsquo;t emailed. Its practices still move or cancel.</li>
+                <li><strong>The emails.</strong> A coach gets &ldquo;Reds&rsquo; practices changed&rdquo; with the lines and a link to the team&rsquo;s page. Each household gets one email for all its children, with <em>Now</em> and <em>Was</em> for what changed, no link, and <em>Questions? Ask the Reds&rsquo; coach.</em> It reaches a family that unsubscribed from club news too, because it is about their child.</li>
+                <li><strong>The bell.</strong> Everyone who runs house league, owners and admins as well as league admins, is told when you send, except you: the bell reads the schedule&rsquo;s name and <em>changed house league&rsquo;s practices</em>, with the count by division (&ldquo;U12: 2 practices moved, 1 practice cancelled.&rdquo;). The registrar is not told.</li>
+              </ul>
+              <p>This window carries house league&rsquo;s practices only. It doesn&rsquo;t send game changes, and a rep team&rsquo;s families are never emailed from here.</p>
             </>
           ),
         },
@@ -835,7 +890,7 @@ const orgHelp: HelpPageContent = {
           id: 'club-schedules-t-who-sees',
           title: 'Who sees what',
           content: (
-            <p>The owner and admins build and send schedules. The bill, the permit&rsquo;s prices and every team&rsquo;s share show only to someone who holds the club&rsquo;s Accounting, and only they answer a coach&rsquo;s ask for money back; everyone else reads the time, and an ask without its figure. A coach sees only their own team&rsquo;s slots, and only the head coach answers a review. On a plan without Schedules, or a club with no rep teams, there is no Schedules row.</p>
+            <p>The owner and admins build and send schedules. The bill, the permit&rsquo;s prices and every team&rsquo;s share show only to someone who holds the club&rsquo;s Accounting, and only they answer a coach&rsquo;s ask for money back; everyone else reads the time, and an ask without its figure. A coach sees only their own team&rsquo;s slots, and only the head coach answers a review. A league admin has no Schedules row: they divide house league&rsquo;s time in <a href="../help/house-league#house-league-time">House league&rsquo;s time</a> and read the club&rsquo;s schedule from there, and never change a rep team&rsquo;s or an open slot. On a plan without Schedules, or when the owner or admin can open neither Rep teams nor House league, there is no Schedules row.</p>
           ),
         },
       ],
@@ -853,19 +908,28 @@ const orgHelp: HelpPageContent = {
           id: 'faq-club-schedules-families',
           question: 'Do families get an email when I send a schedule?',
           answer: (
-            <p>No. Only the coaches are emailed, one email each listing their team&rsquo;s slots. Families see their team&rsquo;s practices on the team&rsquo;s schedule once it&rsquo;s final, where they already look.</p>
+            <p>Not when you first send it. Only the rep teams&rsquo; coaches are emailed, one email each listing their team&rsquo;s slots, and families see their team&rsquo;s practices on the team&rsquo;s schedule once it&rsquo;s final, where they already look. Giving time to house league emails nobody. A later <strong>Send the changes</strong> that moves or cancels a house-league team&rsquo;s practices does email that team&rsquo;s families, once per household; a rep team&rsquo;s families are never emailed from here.</p>
           ),
-          answerText: 'No. Only the coaches are emailed, one email each listing their team’s slots. Families see the practices on the team’s schedule once it’s final.',
-          keywords: ['families', 'email', 'parents', 'send schedule', 'notify'],
+          answerText: 'Not when you first send it. Only the rep teams’ coaches are emailed, one email each listing their team’s slots, and families see the practices on the team’s schedule once it’s final. Giving time to house league emails nobody. A later Send the changes that moves or cancels a house-league team’s practices does email that team’s families, once per household; a rep team’s families are never emailed from here.',
+          keywords: ['families', 'email', 'parents', 'send schedule', 'notify', 'house league', 'practices changed', 'household'],
         },
         {
           id: 'faq-club-schedules-change-sent',
           question: 'Can I still change a schedule after I’ve sent it?',
           answer: (
-            <p>Yes. Move, swap or clear slots as before: the page lists them under <strong>Changed since sent</strong>, and nothing reaches a team until you press <strong>Send the changes</strong>. Only the teams the changes touch are told.</p>
+            <p>Yes. Move, swap or clear slots as before: the page lists them under <strong>Changed since sent</strong>, and nothing reaches a team until you press <strong>Send the changes</strong>. Only the teams the changes touch are told: a rep team&rsquo;s coaches, and a house-league team&rsquo;s coaches and families.</p>
           ),
-          answerText: 'Yes. Changes after it is sent wait under Changed since sent, and nothing reaches a team until you press Send the changes. Only the teams the changes touch are told.',
-          keywords: ['change after sending', 'changed since sent', 'send the changes', 'edit final schedule'],
+          answerText: 'Yes. Changes after it is sent wait under Changed since sent, and nothing reaches a team until you press Send the changes. Only the teams the changes touch are told: a rep team’s coaches, and a house-league team’s coaches and families.',
+          keywords: ['change after sending', 'changed since sent', 'send the changes', 'edit final schedule', 'house league', 'families told'],
+        },
+        {
+          id: 'faq-club-schedules-house-league-billed',
+          question: 'Is house league billed for the time it holds?',
+          answer: (
+            <p>No. House league&rsquo;s time has no bill, no allocation and no credit, and <strong>Fair shares</strong> counts rep teams only.</p>
+          ),
+          answerText: 'No. House league’s time has no bill, no allocation and no credit, and Fair shares counts rep teams only.',
+          keywords: ['house league', 'billed', 'bill', 'cost', 'allocation', 'free', 'fair shares'],
         },
         {
           id: 'faq-club-schedules-hand-back-send',

@@ -1489,7 +1489,7 @@ A practice handed out from the club's time is refused cancel and edit from the h
 built** (`HOUSE_LEAGUE_STAGE9_PLAN.md` §9 has the commits; mig 400): Send the changes carries house league's half in its one
 step (`p_league` from a pure plan beside `planChanges`, which still measures rep practices only), lists each house-league
 team's changes (h4), and after the step emails the house-league coaches and — a service notice — their families, and tells
-the league admins in the bell. The "Changed since sent" callout counts house-league rows too.
+the league admins in the bell. The "Changed since sent" callout counts house-league rows too. **2026-10-27 · Part 6 (help) written:** the Schedules guide teaches house league as a holder, the take-back and Send the changes with house league in it, and no longer says only the teams with changes are told; the house-league guide has "House league's time". 11b is complete pending its walks and prod migs 392–394, 397, 400.
 
 **Gates to add:** a "one model of time" guard (no second slot table); the screens guards; the arithmetic of a permit's
 use recomputed from rows (the `check:club-money-arithmetic` pattern) for the Held / Booked / Unused band.

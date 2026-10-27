@@ -815,3 +815,19 @@ open it, and the menu's top level is Stage 13's.
   so Part 5 read a dragged house-league slot as time taken back and would have cancelled its practices; and time-order
   pairing let a take-back steal a moved slot's new time. **Next:** Part 6, `CLUB_TIER_STAGE11B_PART6_BUILD_PROMPT.md` (help
   only; it starts by correcting the Schedules guide's "Only the teams with changes are told").
+- **2026-10-27 · 11b Part 6 (help): WRITTEN** (`CLUB_TIER_STAGE11B_PART6_BUILD_PROMPT.md`; help only, no product code). The club's
+  Schedules guide (`org.tsx`) gained "Giving time to house league", "Taking time back from house league" and "Send the changes,
+  with house league in it"; "Only the teams with changes are told" (the Changes sub-topic and its FAQ) and "Do families get an
+  email" now say a house-league team's coaches and families are told; "house league is never billed" and an FAQ; "Who sees what"
+  no longer says a club with no rep teams has no Schedules row. The house-league guide gained "House league's time" (5
+  sub-topics: what the club gave · dividing it · Practice time · the club's schedule as a league admin reads it · what coaches and
+  families hear) and the league admin's role article now says what a league admin may do in the club's Schedules; both help hubs'
+  League admin path link to it. **Screen differs from the copy file (the screen is the truth; the help follows the screen):**
+  the repeating-form take-back (k5 "Give every Thursday…") is NOT built, the slot window changes one slot; k5's foot DOES carry
+  "U12's league admins are told then"; "Who, and how much" is on New schedule's step 1; k4 for a league admin has no "Take time
+  back from another division" link and no "no time left" line; "Practices a week" (11b·D) is a third field the copy file's h1
+  table lacks; the house-league coach's email drops "Your families get this change too." when the team has no households; the
+  families' email omits "Sent by {club} because…" when the club's mail face is unavailable; "Times in Eastern time." is the
+  platform default zone, not the club's own; the h4 game rows ("games move") are not built (9d-2b). **Found, not changed:**
+  `lib/club-schedule-gate.ts`'s header still says a door that starts a schedule needs rep teams (Part 2 made a house league
+  season enough). **Hand-off:** 11b is complete pending its walks (§399–§403) and prod migs 392–394, 397, 400.
