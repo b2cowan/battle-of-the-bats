@@ -154,7 +154,7 @@ export const POST = withObservability(async (req: Request,
       club: face?.club,
       replyLine: face?.reply.line,
     });
-    await sendEmail(next.guardianEmail, subject, html, face?.sendOpts);
+    await sendEmail(next.guardianEmail, subject, html, { ...face?.sendOpts, kind: 'dues_reminder' });
     await markInstallmentsReminderSent([next.installmentId]);
     return NextResponse.json({ remindersChecked: 1, emailsSent: 1, installmentsTagged: 1 });
   }
@@ -218,7 +218,7 @@ export const POST = withObservability(async (req: Request,
       replyLine: face?.reply.line,
     });
 
-    await sendEmail(email, subject, html, face?.sendOpts);
+    await sendEmail(email, subject, html, { ...face?.sendOpts, kind: 'dues_reminder' });
     emailsSent++;
     for (const i of items) taggedIds.push(i.installmentId);
   }

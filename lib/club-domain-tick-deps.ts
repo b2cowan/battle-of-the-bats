@@ -128,7 +128,7 @@ async function emailOwner(row: DomainRow, which: OwnerEmail, patch: Partial<Doma
     hostCause: which === 'not_working' && hostStatusMeansGone((patch.host_status ?? row.host_status) as string | null),
   };
   const { subject, html } = clubDomainEmail(which, facts);
-  const res = await sendEmail(owner.email, subject, html);
+  const res = await sendEmail(owner.email, subject, html, { kind: 'club_domain_notice', orgId: row.org_id });
   // Only a send counts: 'skipped' (no mail key configured) is not "told", so the owner is told once the key exists.
   return res.status === 'sent';
 }

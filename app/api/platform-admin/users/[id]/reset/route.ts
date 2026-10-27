@@ -60,6 +60,7 @@ export const POST = withObservability(async (req: NextRequest,
       vars: { resetLink: confirmUrl },
       defaultSubject: 'Reset your FieldLogicHQ password',
       defaultHtml: platformPasswordResetHtml(confirmUrl),
+      askedBy: auth.user.id,
     });
   } catch (emailErr) {
     console.error('[platform-admin] reset email send error:', emailErr);

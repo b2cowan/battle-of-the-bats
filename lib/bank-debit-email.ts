@@ -75,7 +75,7 @@ async function debitContext(onlinePaymentId: string): Promise<DebitContext | nul
 }
 
 /** The body lines, then the closing line (the started email's "Wrong account, or a question?", else the receipt's questions). */
-async function send(c: DebitContext, subject: string, lines: string[], closing: 'contact' | 'questions', preheader?: string): Promise<void> {
+async function send(c: DebitContext, kind: 'league_bank_debit_started' | 'league_bank_debit_returned' | 'league_bank_debit_reversed', subject: string, lines: string[], closing: 'contact' | 'questions', preheader?: string): Promise<void> {
   const face = await systemMailFace({
     id: c.org.id, name: c.org.name, logoUrl: c.org.logoUrl ?? null,
     themePreset: c.org.themePreset ?? null, themePrimary: c.org.themePrimary ?? null, themeAccent: c.org.themeAccent ?? null,
@@ -89,7 +89,7 @@ async function send(c: DebitContext, subject: string, lines: string[], closing: 
     test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
     transactionalFamilyFooterHtml({ orgName: c.org.name, teamName: c.season, noticeKind: 'Payment notices', about: 'a payment', replyLine: null }),
   ].filter(Boolean).join('\n'), face?.club ?? null);
-  const result = await sendEmail(c.op.payer_email!, `${test ? E.testPrefix : ''}${subject}`, html, face?.sendOpts ?? {});
+  const result = await sendEmail(c.op.payer_email!, `${test ? E.testPrefix : ''}${subject}`, html, { ...face?.sendOpts, kind });
   if (result.status === 'provider_error') throw new Error('send failed');
 }
 
@@ -100,7 +100,7 @@ export async function sendDebitStartedEmail(onlinePaymentId: string): Promise<vo
     if (!c) return;
     const total = money(Number(c.op.total_amount));
     const started = formatStoredDate(c.op.clearing_at ?? c.op.created_at);
-    await send(c, D.startedSubject(c.org.name), [
+    await send(c, 'league_bank_debit_started', D.startedSubject(c.org.name), [
       warmEmailParagraph(escapeHtml(D.startedLead(c.who, c.season))),
       emailFactsPanel([
         [D.amount, total],
@@ -122,7 +122,7 @@ export async function sendDebitReturnedEmail(onlinePaymentId: string): Promise<v
     const c = await debitContext(onlinePaymentId);
     if (!c) return;
     const total = money(Number(c.op.total_amount));
-    await send(c, D.returnedSubject, [
+    await send(c, 'league_bank_debit_returned', D.returnedSubject, [
       warmEmailParagraph(escapeHtml(D.returnedLead(total, c.who, formatStoredDate(c.op.returned_at), reasonFull(c.op.return_reason)))),
       warmEmailParagraph(escapeHtml(D.returnedNothing)),
       warmEmailParagraph(escapeHtml(c.stillHeld)),
@@ -144,7 +144,7 @@ export async function sendDebitReversedEmail(onlinePaymentId: string): Promise<v
     if (!c) return;
     const total = money(Number(c.op.total_amount));
     const why = reasonFull(c.op.return_reason);
-    await send(c, D.reversedSubject(c.org.name), [
+    await send(c, 'league_bank_debit_reversed', D.reversedSubject(c.org.name), [
       warmEmailParagraph(escapeHtml(D.reversedLead(total, c.org.name, formatStoredDate(c.op.reversed_at)))),
       why ? warmEmailParagraph(escapeHtml(D.reversedReason(why))) : '',
       warmEmailParagraph(escapeHtml(D.reversedOwes(String(c.op.receipt_no ?? ''), DW.owingAgain(money(Number(c.op.base_amount)))))),

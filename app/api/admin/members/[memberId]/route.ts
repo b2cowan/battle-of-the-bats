@@ -209,6 +209,7 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
             targetEmail,
             `Your access to ${org.name} was removed`,
             memberRemovedHtml({ orgName: org.name }),
+            { kind: 'org_member_removed', orgId: org.id, askedBy: ctx.user.id },
           );
         } catch (e) {
           console.error('[members] removal email failed:', e);
@@ -541,6 +542,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
               suspendedUser.email,
               `Your access to ${org.name} was suspended`,
               memberSuspendedHtml({ orgName: org.name }),
+              { kind: 'org_member_suspended', orgId: org.id, askedBy: ctx.user.id },
             );
           }
         } catch (e) {
@@ -572,6 +574,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
               changedUser.email,
               `Your access to ${org.name} changed`,
               memberAccessChangedHtml({ orgName: org.name, changes, signInUrl: `${appUrl}/auth/login` }),
+              { kind: 'org_member_access_changed', orgId: org.id, askedBy: ctx.user.id },
             );
           }
         } catch (e) {

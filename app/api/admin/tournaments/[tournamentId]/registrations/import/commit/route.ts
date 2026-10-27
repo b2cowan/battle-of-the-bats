@@ -395,6 +395,8 @@ async function applyRows(input: {
  */
 async function sendImportPortalEmails(input: {
   tournamentId: string;
+  orgId: string;
+  askedBy: string;
   createRows: PreparedTournamentTeamCommitRow[];
   createdTargetIds: Map<string, string>;
 }): Promise<number> {
@@ -432,6 +434,7 @@ async function sendImportPortalEmails(input: {
         registrationId: teamId,
         coachEmail: email,
       }),
+      { kind: 'tournament_team_registered', orgId: input.orgId, askedBy: input.askedBy },
     ).catch(() => ({ status: 'provider_error' as const }));
     if (result.status === 'sent') sent++;
   }
@@ -512,6 +515,8 @@ export const POST = withObservability(async (req: Request, { params }: RoutePara
     if (sendPortalEmails && prepared.createRows.length > 0) {
       emailsSent = await sendImportPortalEmails({
         tournamentId,
+        orgId: auth.ctx.org.id,
+        askedBy: auth.ctx.user.id,
         createRows: prepared.createRows,
         createdTargetIds,
       }).catch(() => 0);

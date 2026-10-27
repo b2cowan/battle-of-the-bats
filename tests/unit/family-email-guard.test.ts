@@ -134,6 +134,9 @@ const NOT_FAMILY_MAIL = [
   // Email families' copy to each team's head coach (Club Tier Stage 7c): colleague mail to the club's coaches, never a
   // guardian as a guardian — a coach who is also a parent the send reaches gets the family copy only.
   'lib/families-email-coaches.ts',
+  // The club's "send us your guardians' emails" ask goes to each team's COACH (Club Tier Stage 7c); its kind key
+  // `club_guardian_email_ask` merely contains the word the recipient pattern looks for.
+  'lib/families-coach-ask.ts',
 ];
 
 describe('Family email — the choke point keeps its shape', () => {
@@ -221,7 +224,7 @@ describe('Family email — the Families message door (claim + cap, then the guar
   it('the reply address is an additive option on the choke point, passed to the transport', () => {
     assert.match(choke, /replyTo\?:\s*string\s*\|\s*null/);
     // S3b added the club's sender name beside it (fromName); the reply address is still handed to the transport.
-    assert.match(choke, /return sendEmail\([^;]*\{\s*replyTo: params\.replyTo \?\? null,\s*fromName: familyFromName\(params\.content\),?\s*\}\);/,
+    assert.match(choke, /return sendEmail\([^;]*\{\s*kind: params\.kind,\s*replyTo: params\.replyTo \?\? null,\s*fromName: familyFromName\(params\.content\),?\s*\}\);/,
       'sendFamilyEmail takes replyTo but no longer hands it to sendEmail.');
   });
 

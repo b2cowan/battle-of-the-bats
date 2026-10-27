@@ -227,6 +227,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
         payUrl: pay?.url ?? null,
         paidSome: pay?.paidSome ?? false,
       }),
+      { kind: 'tournament_payment_reminder', orgId: ctx.org.id, askedBy: ctx.user.id },
     );
     emailsSent++;
     bellDue.set(

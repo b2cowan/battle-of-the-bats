@@ -625,7 +625,8 @@ export const POST = withObservability(async (req: NextRequest) => {
         adminNotificationHtml({
           teamName, coachName: entryCoach, contactEmail: entryCoachEmail ?? email, divisionName, tournamentName,
           registeredBy: headCoachElsewhere ? { name: registrantName, email } : null,
-        })
+        }),
+        { kind: 'registration_admin_alert' },
       ),
     ];
     if (coachEmailEnabled(tournament.settings, 'confirmation')) {
@@ -639,6 +640,7 @@ export const POST = withObservability(async (req: NextRequest) => {
         sendTransactionalEmail({
           key: isWaitlist ? 'tournament_registration_waitlist' : 'tournament_registration_confirmation',
           to: email,
+          orgId: tournament.org_id,
           // A customised platform template greets `{{coachName}}`: the person this email goes to.
           vars: { coachName: registrantName?.trim() || 'Coach', teamName, ageGroupName: divisionName, tournamentName },
           defaultSubject: isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,

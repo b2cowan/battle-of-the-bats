@@ -303,6 +303,7 @@ export async function sendRepTeamAnnouncement(params: {
       // list and appends the CASL footer (sender identification + an unsubscribe link keyed
       // to THIS address) so neither can be forgotten here.
       const result = await sendFamilyEmail({
+        kind: 'family_announcement',
         orgId: params.orgId,
         to: email,
         subject,

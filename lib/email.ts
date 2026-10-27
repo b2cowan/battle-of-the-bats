@@ -24,6 +24,7 @@ import { VERIFICATION_NEXT_STEP, type VerificationNextStep } from '@/lib/verific
 import { htmlToText } from '@/lib/email-plain-text';
 import type { FamilyMailFace } from '@/lib/email-club-identity';
 import { accountNoticeFootnoteHtml } from '@/lib/family-mail-footer';
+import { isLoggedKind, type EmailKind, type LoggedEmailKind, type UnloggedEmailKind } from '@/lib/email-kinds';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <onboarding@resend.dev>';
@@ -50,38 +51,105 @@ export function escapeHtml(value: string): string {
     .replace(/\n/g, '<br>');
 }
 
-export type SendEmailResult = { status: 'sent' | 'skipped' | 'provider_error' };
-
 /**
- * `opts.replyTo` — where a reply goes (Club Tier Stage 3a: an allocation reminder's reply reaches the
- * person who sent it, question 3 ruled 2026-09-30 — the club has no payment-instructions setting, so
- * the coach replies to arrange payment). Omitted, replies go to the From address as before.
+ * `id` is the mail service's number for the email; `logId` the account-email log's row (null when the kind is not
+ * logged or the row could not be written). `no_answer` only when the caller set `timeoutMs` and the mail service did
+ * not answer in time: the email may or may not have gone. `refused` (with `provider_error`) says the mail service's
+ * answer was a definite no — a 4xx about the request itself — so nothing went; otherwise (5xx, 429, a 409 on a
+ * once-only key already in flight) it may yet have gone.
  */
+export type SendEmailResult = {
+  status: 'sent' | 'skipped' | 'provider_error' | 'no_answer';
+  id?: string;
+  logId?: string | null;
+  refused?: boolean;
+};
+
+/** The mail service's answers that mean the request itself was refused, so nothing was sent. */
+const DEFINITE_REFUSALS = new Set([400, 401, 403, 404, 422]);
+
+export type SendEmailOptions = {
+  /**
+   * What kind of email this is (Support console Stage 5, owner Q8: required on every send, build-enforced by
+   * tests/unit/support-console-stage5-sender-guard.test.ts). An account or registration kind writes a row in the
+   * sent-email log BEFORE the email leaves (lib/email-kinds.ts says which); every other kind writes nothing.
+   */
+  kind: EmailKind;
+  /**
+   * Where a reply goes (Club Tier Stage 3a: an allocation reminder's reply reaches the person who sent it, question 3
+   * ruled 2026-09-30 — the club has no payment-instructions setting, so the coach replies to arrange payment).
+   * Omitted, replies go to the From address as before.
+   */
+  replyTo?: string | null;
+  fromName?: string | null;
+  /** The log row's club, the person whose action sent it, and the feedback item it belongs to (logged kinds only). */
+  orgId?: string | null;
+  askedBy?: string | null;
+  feedbackId?: string | null;
+  /** The mail service's once-only key (it remembers one for 24 hours): the same key sends at most once. */
+  idempotencyKey?: string;
+  /** Give up waiting for the mail service after this long and answer `no_answer`. Omitted, the send waits. */
+  timeoutMs?: number;
+  /** A plain-text email: pass `html` as '' and the words here. */
+  text?: string;
+  /**
+   * Repeat an earlier send's log row instead of writing a new one: a retry under the same once-only key is the same
+   * email, and the mail service's callbacks name the first row's tag.
+   */
+  logId?: string | null;
+};
+
 export async function sendEmail(
   to: string,
   subject: string,
   html: string,
-  opts: { replyTo?: string | null; fromName?: string | null } = {},
+  opts: SendEmailOptions,
 ): Promise<SendEmailResult> {
+  const log = isLoggedKind(opts.kind) ? await import('./email-log') : null;
+  const logId = log
+    ? opts.logId ?? await log.openSentEmailRow({ kind: opts.kind as LoggedEmailKind, to, orgId: opts.orgId, askedBy: opts.askedBy, feedbackId: opts.feedbackId })
+    : null;
+
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn('[email] RESEND_API_KEY not set - skipping send');
-    return { status: 'skipped' };
+    if (log && logId) await log.settleSentEmailRow(logId, { state: 'not_sent' });
+    return { status: 'skipped', logId };
   }
-  const res = await fetch(RESEND_API, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: fromHeader(opts.fromName), to, subject, html, text: htmlToText(html),
-      ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
-    }),
-  });
+
+  const headers: Record<string, string> = { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+  if (opts.idempotencyKey) headers['Idempotency-Key'] = opts.idempotencyKey;
+  const body = {
+    from: fromHeader(opts.fromName), to, subject,
+    ...(html ? { html, text: opts.text ?? htmlToText(html) } : { text: opts.text ?? '' }),
+    ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
+    ...(log && logId ? { tags: [{ name: log.ROW_TAG, value: logId }, { name: log.DB_TAG, value: log.logDatabaseRef() }] } : {}),
+  };
+
+  let res: Response;
+  try {
+    res = await fetch(RESEND_API, {
+      method: 'POST', headers, body: JSON.stringify(body),
+      ...(opts.timeoutMs ? { signal: AbortSignal.timeout(opts.timeoutMs) } : {}),
+    });
+  } catch (err) {
+    if (log && logId) await log.settleSentEmailRow(logId, { state: 'unconfirmed' });
+    if (opts.timeoutMs) return { status: 'no_answer', logId };
+    throw err;
+  }
   if (!res.ok) {
     const err = await res.text();
     console.error('[email] Resend error:', err);
-    return { status: 'provider_error' };
+    const refused = DEFINITE_REFUSALS.has(res.status);
+    if (log && logId) {
+      if (refused) await log.settleSentEmailRow(logId, { state: 'failed' });
+      else await log.settleSentEmailRow(logId, { state: 'unconfirmed' });
+    }
+    return { status: 'provider_error', logId, refused };
   }
-  return { status: 'sent' };
+  const id = await res.json().then((j: { id?: unknown }) => (typeof j?.id === 'string' ? j.id : undefined), () => undefined);
+  if (log && logId && id) await log.settleSentEmailRow(logId, { resendId: id });
+  return { status: 'sent', id, logId };
 }
 
 /** The provider's batch limit: one request carries up to this many separate emails (Resend's `/emails/batch`). */
@@ -95,7 +163,7 @@ export const EMAIL_BATCH_SIZE = 100;
  * More than the limit is a caller's bug and throws before anything is sent.
  */
 export async function sendEmailBatch(
-  emails: readonly { to: string; subject: string; html: string; replyTo?: string | null; fromName?: string | null }[],
+  emails: readonly { kind: UnloggedEmailKind; to: string; subject: string; html: string; replyTo?: string | null; fromName?: string | null }[],
 ): Promise<SendEmailResult> {
   if (emails.length === 0) return { status: 'sent' };
   if (emails.length > EMAIL_BATCH_SIZE) throw new Error(`sendEmailBatch: ${emails.length} emails exceeds the batch limit of ${EMAIL_BATCH_SIZE}`);
@@ -126,6 +194,9 @@ export async function sendEmailBatch(
   }
   return { status: 'sent' };
 }
+
+/** The verified sending address (the part of RESEND_FROM inside <>): the reply window shows it as the From. */
+export const SENDING_ADDRESS = FROM_ADDRESS;
 
 export { ADMIN_EMAIL, SITE_URL };
 

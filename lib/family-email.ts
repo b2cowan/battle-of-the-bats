@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { sendEmail, sendEmailBatch, EMAIL_BATCH_SIZE, escapeHtml, type SendEmailResult } from './email';
+import type { UnloggedEmailKind } from './email-kinds';
 import { buildGuardianUnsubscribeUrl } from './unsubscribe-token';
 import { normalizeGuardianEmail, isSendableGuardianEmail } from './guardian-email';
 import { fetchAll as readAllPaged, chunked } from './supabase-paging';
@@ -181,6 +182,8 @@ export type FamilySendResult = SendEmailResult | { status: 'suppressed' };
  * nothing to remember and nothing to forget.
  */
 export async function sendFamilyEmail(params: {
+  /** What this family email is (lib/email-kinds.ts; required on every send, Support console Stage 5). */
+  kind: UnloggedEmailKind;
   orgId: string;
   to: string;
   subject: string;
@@ -199,7 +202,7 @@ export async function sendFamilyEmail(params: {
   if (suppressed.has(to)) return { status: 'suppressed' };
 
   return sendEmail(to, params.subject, familyEmailHtml(params.content, params.orgId, to), {
-    replyTo: params.replyTo ?? null, fromName: familyFromName(params.content),
+    kind: params.kind, replyTo: params.replyTo ?? null, fromName: familyFromName(params.content),
   });
 }
 
@@ -213,6 +216,7 @@ export async function sendFamilyEmail(params: {
  * results so far, so a caller can record progress as it goes.
  */
 export async function sendFamilyEmailBatch(params: {
+  kind: UnloggedEmailKind;
   orgId: string;
   to: readonly string[];
   subject: string;
@@ -236,7 +240,7 @@ export async function sendFamilyEmailBatch(params: {
     let result: SendEmailResult;
     try {
       result = await sendEmailBatch(chunk.map(to => ({
-        to, subject: params.subject, html: familyEmailHtml(params.content, params.orgId, to), replyTo: params.replyTo ?? null,
+        kind: params.kind, to, subject: params.subject, html: familyEmailHtml(params.content, params.orgId, to), replyTo: params.replyTo ?? null,
         fromName,
       })));
     } catch (err) {
@@ -265,6 +269,7 @@ export interface FamilyServiceMessage { to: string; subject: string; html: strin
  * The results come back in the messages' own order, so the caller can mark each one's row.
  */
 export async function sendFamilyServiceBatch(params: {
+  kind: UnloggedEmailKind;
   messages: readonly FamilyServiceMessage[];
   fromName: string | null;
   replyTo?: string | null;
@@ -279,7 +284,7 @@ export async function sendFamilyServiceBatch(params: {
     let result: SendEmailResult;
     try {
       result = await sendEmailBatch(chunk.map(m => ({
-        to: m.to, subject: m.subject, html: m.html, replyTo: params.replyTo ?? null, fromName: params.fromName,
+        kind: params.kind, to: m.to, subject: m.subject, html: m.html, replyTo: params.replyTo ?? null, fromName: params.fromName,
       })));
     } catch (err) {
       console.error('[family-email] a service batch threw:', err instanceof Error ? err.message : String(err));

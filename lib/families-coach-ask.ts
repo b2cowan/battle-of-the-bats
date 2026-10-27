@@ -134,7 +134,7 @@ export async function sendCoachAsk(ctx: AuthContextWithRole, teamIds: unknown): 
   // must always be completed or released below (/review 2026-10-17 — a throw left a claim reading "Last sent" and a
   // minute's refusal behind it).
   const results = await inParallel(sends, 5, async s => {
-    try { return await sendEmail(s.email, s.subject, s.html, { replyTo: ctx.user.email ?? null }); }
+    try { return await sendEmail(s.email, s.subject, s.html, { kind: 'club_guardian_email_ask', replyTo: ctx.user.email ?? null }); }
     catch (e) { console.error('[families-coach-ask] an email threw:', e); return { status: 'provider_error' as const }; }
   });
   const went = sends.filter((_, i) => results[i].status === 'sent');

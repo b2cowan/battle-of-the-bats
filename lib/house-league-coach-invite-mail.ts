@@ -66,7 +66,7 @@ export async function sendCoachInvites(
       const result = await sendEmail(row.email, leagueCoachInviteSubject({ teamName, seasonName: season.name }), leagueCoachInviteHtml({
         clubName: org.name, teamName, seasonName: season.name, divisionName: row.league_teams?.league_divisions?.name ?? '',
         playerCount: counts.get(row.team_id) ?? 0, invitedEmail: row.email, inviteUrl: coachInviteUrl(token),
-      }));
+      }), { kind: 'house_league_coach_invite', orgId: org.id });
       ok = result.status !== 'provider_error';
     } catch (err) {
       console.error('[house-league-coach-invite-mail] a coach invite did not send:', err instanceof Error ? err.message : String(err));

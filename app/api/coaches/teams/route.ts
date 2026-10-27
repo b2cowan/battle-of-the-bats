@@ -79,6 +79,7 @@ export const POST = withObservability(async (req: NextRequest) => {
             coachName: primaryCoachName ?? user.name,
             teamUrl: `${SITE_URL}${coachTeamPath(id)}`,
           }),
+          { kind: 'basic_team_welcome', askedBy: user.id },
         );
       } catch (emailError) {
         console.error('[coaches teams POST] welcome email error:', emailError);

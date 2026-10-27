@@ -214,6 +214,7 @@ export async function notifyFamiliesOfGameUpdate(params: {
       await Promise.allSettled(
         recipients.slice(i, i + SEND_CONCURRENCY).map(email =>
           sendFamilyEmail({
+            kind: 'family_game_update',
             orgId: event.orgId,
             to: email,
             subject: title,

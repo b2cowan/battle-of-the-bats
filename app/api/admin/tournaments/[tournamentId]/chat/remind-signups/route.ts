@@ -219,6 +219,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
         // promises no group chat.
         mentionsChat: !CHAT_PAUSED,
       }),
+      { kind: 'coach_access_reminder', orgId: ctx.org.id, askedBy: ctx.user.id },
     );
   }));
 

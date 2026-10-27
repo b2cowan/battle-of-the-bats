@@ -239,6 +239,8 @@ async function sendCompletionResultsNotification(input: {
         registrationId: recipient.id,
         coachEmail: recipient.email ?? undefined,
       }),
+      orgId: ctx.org.id,
+      askedBy: ctx.user.id,
     });
     sent++;
   }

@@ -76,7 +76,7 @@ export function coachCopyWords(o: { orgName: string; audience: string; families:
 export async function sendCoachCopies(coaches: readonly CopiedCoach[], words: (coach: CopiedCoach) => EmailWords, replyTo: string | null): Promise<number> {
   const results = await inParallel(coaches, 5, async c => {
     const w = words(c);
-    try { return await sendEmail(c.email, w.subject, emailHtml(w), { replyTo }); }
+    try { return await sendEmail(c.email, w.subject, emailHtml(w), { kind: 'family_email_coach_copy', replyTo }); }
     catch (e) { console.error('[families-email] a head coach copy threw:', e); return { status: 'provider_error' as const }; }
   });
   return results.filter(r => r.status === 'sent' || r.status === 'skipped').length;

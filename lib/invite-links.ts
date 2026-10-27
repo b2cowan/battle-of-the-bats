@@ -84,6 +84,7 @@ export async function sendPendingInviteLink(params: {
     email,
     `You've been invited to ${orgName} on FieldLogicHQ`,
     orgInviteHtml({ orgName, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: INVITE_EMAIL_ACTION.accept, note: job ? VOLUNTEER_EMAIL_NOTE.invite[job] : null, inviterName: sender?.name ?? null }),
+    { kind: 'org_invite', orgId: memberRow?.organization_id ?? null },
   );
 
   // Refresh invited_at (admin sees the re-invite time) + backfill invited_email so the row

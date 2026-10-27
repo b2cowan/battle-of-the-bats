@@ -366,7 +366,7 @@ export async function notify(opts: NotifyOptions): Promise<void> {
       if (prefs.email) {
         try {
           const html = notificationEmailHtml(opts.title, opts.body, opts.link, appUrl);
-          await sendEmail(recipient.email, opts.title, html);
+          await sendEmail(recipient.email, opts.title, html, { kind: 'notification' });
         } catch (emailErr) {
           console.error('[notify] Email send failed for', recipient.email, emailErr);
         }

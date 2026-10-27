@@ -50,7 +50,7 @@ export async function announceTeamPaid(
       teamId: team.id,
       coachEmail: team.email,
       contactEmail,
-    }));
+    }), { kind: 'tournament_payment_recorded', orgId: ctx.org.id, askedBy: ctx.user.id });
   }
 
   notify({

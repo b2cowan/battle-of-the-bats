@@ -343,6 +343,7 @@ export async function deliverFamilyEmail(d: {
 
   // The family send — through the choke point only, with progress written as each batch goes.
   const results = await sendFamilyEmailBatch({
+    kind: 'family_club_email',
     orgId: ctx.org.id,
     to: audience.families.flatMap(f => f.addresses),
     subject: d.subject,
@@ -442,6 +443,7 @@ export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: str
   const reply = familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail: ctx.user.email ?? null, senderName: name });
   const known: RecipientStatus[] = families.map(() => 'pending');
   const results = families.length === 0 ? new Map<string, FamilySendResult>() : await sendFamilyEmailBatch({
+    kind: 'family_club_email',
     orgId: ctx.org.id,
     to: families.flatMap(f => f.addresses),
     subject: taken.subject,
@@ -524,6 +526,7 @@ export async function messageOneFamily(ctx: AuthContextWithRole, personId: strin
   const reply = familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail: ctx.user.email, senderName: sender });
   const results = await Promise.all(to.map(address =>
     sendFamilyEmail({
+      kind: 'family_message',
       orgId: ctx.org.id,
       to: address,
       subject: rawSubject,

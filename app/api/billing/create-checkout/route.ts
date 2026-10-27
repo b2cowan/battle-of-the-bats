@@ -203,6 +203,8 @@ export const POST = withObservability(async (req: Request) => {
             restoredTournaments: restoreResult.restoredCount,
             dashboardUrl,
           }),
+          orgId: auth.org.id,
+          askedBy: auth.user.id,
         });
       }
     }

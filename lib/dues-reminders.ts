@@ -154,7 +154,7 @@ async function sweepTeamWave(
     // re-send to them tomorrow. A throw is just another failed send (unstamped ⇒ retried).
     let status: string;
     try {
-      status = (await sendEmail(email, subject, html, face?.sendOpts)).status;
+      status = (await sendEmail(email, subject, html, { ...face?.sendOpts, kind: 'dues_reminder' })).status;
     } catch {
       status = 'threw';
     }

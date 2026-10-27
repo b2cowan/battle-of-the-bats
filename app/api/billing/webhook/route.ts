@@ -360,6 +360,7 @@ export const POST = withObservability(async (req: Request) => {
                     restoredTournaments: 0,
                     dashboardUrl: `${SITE_URL}/${wsOrg.slug}/coaches`,
                   }),
+                  orgId: prevWs.workspace_org_id,
                 });
               }
             }
@@ -510,6 +511,7 @@ export const POST = withObservability(async (req: Request) => {
                     restoredTournaments: restoreResult.restoredCount + (reactivation?.restoredTournamentIds.length ?? 0),
                     dashboardUrl,
                   }),
+                  orgId: updatedOrg.id,
                 });
               }
             }
@@ -597,6 +599,7 @@ export const POST = withObservability(async (req: Request) => {
               vars: { workspaceName, resubscribeUrl, retentionUntil },
               defaultSubject: `Your ${workspaceName} Coaches Portal has been cancelled`,
               defaultHtml: teamWorkspaceCancelledHtml({ workspaceName, resubscribeUrl, retentionUntil }),
+              orgId: cancelledWs.workspace_org_id,
             });
           }
         }
@@ -885,6 +888,7 @@ export const POST = withObservability(async (req: Request) => {
         vars: { orgName: org.name, planLabel, trialEndDate, billingUrl },
         defaultSubject: `Your ${planLabel} trial ends ${trialEndDate}`,
         defaultHtml: trialEndingHtml({ orgName: org.name, planLabel, trialEndDate, billingUrl }),
+        orgId: org.id,
       });
       break;
     }

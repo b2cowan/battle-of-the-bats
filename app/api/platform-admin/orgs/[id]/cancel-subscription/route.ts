@@ -283,6 +283,8 @@ export const POST = withObservability(async (req: NextRequest,
         vars: { workspaceName, resubscribeUrl, retentionUntil: retentionDate },
         defaultSubject: `Your ${workspaceName} Coaches Portal has been cancelled`,
         defaultHtml: teamWorkspaceCancelledHtml({ workspaceName, resubscribeUrl, retentionUntil: retentionDate }),
+        orgId: id,
+        askedBy: auth.user.id,
       });
     } else if (ownerEmail) {
       const planLabel = PLAN_CONFIG[orgRow.plan_id as OrgPlan]?.label ?? orgRow.plan_id;
@@ -299,6 +301,8 @@ export const POST = withObservability(async (req: NextRequest,
           retainedTournaments: preflight.tournaments.length,
           resubscribeUrl: `${SITE_URL}/${orgRow.slug}/admin/org/billing`,
         }),
+        orgId: id,
+        askedBy: auth.user.id,
       });
     }
   }

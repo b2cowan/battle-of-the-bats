@@ -31,6 +31,7 @@ import { withObservability } from '@/lib/observability';
 import { leagueMailPay } from '@/lib/league-pay-view';
 import { sendLeaguePayLink } from '@/lib/online-payment-receipt';
 import { answerStillEnrolled, leagueEndingRefundHtml, leagueRefundMail, sendLeagueRefundEmail, stampRefundEmailed, stillEnrolledRefund } from '@/lib/online-refund-email';
+import type { EmailKind } from '@/lib/email-kinds';
 import { leagueCardShares, refundLeagueToCard, resolveLeagueRefundAnotherWay } from '@/lib/online-payment-landing';
 import { clubTakesCards, loadRegistrationDebits, returnedCardRefunds, unrecordedCardShares, isRegClearing } from '@/lib/league-pay-facts';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
@@ -676,7 +677,7 @@ export const PATCH = withObservability(async (req: Request,
       void (async () => {
         try {
           const face = await faceOnce();
-          const mail = released
+          const mail: { key: Extract<EmailKind, 'league_spot_released' | 'league_registration_declined' | 'league_registration_withdrawn'>; subject: string; html: string } = released
             ? {
               key: 'league_spot_released',
               subject: `${possessive(reg.playerFirstName)} spot was released — ${season.name}`,

@@ -148,6 +148,7 @@ export const POST = withObservability(async (req: Request) => {
       email,
       `You've been added to ${org.name} on FieldLogicHQ`,
       orgMemberAddedHtml({ orgName: org.name, roleLabel, signInUrl, ctaLabel: INVITE_EMAIL_ACTION.signIn, note: job ? VOLUNTEER_EMAIL_NOTE.added[job] : null }),
+      { kind: 'org_member_added', orgId: org.id, askedBy: user.id },
     );
 
     return NextResponse.json({ ok: true, added: true });
@@ -209,6 +210,7 @@ export const POST = withObservability(async (req: Request) => {
     email,
     `You've been invited to ${org.name} on FieldLogicHQ`,
     orgInviteHtml({ orgName: org.name, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: INVITE_EMAIL_ACTION.accept, note: job ? VOLUNTEER_EMAIL_NOTE.invite[job] : null, inviterName }),
+    { kind: 'org_invite', orgId: org.id, askedBy: user.id },
   );
 
   return NextResponse.json({ ok: true, added: false });

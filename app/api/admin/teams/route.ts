@@ -401,6 +401,7 @@ export const POST = withObservability(async (req: Request) => {
             registrationId: id,
             coachEmail: team.email.trim(),
           }),
+          { kind: 'team_invitation', orgId: ctx.org.id, askedBy: ctx.user.id },
         );
       } else if (team.notifyTeam && team.email?.trim()) {
         await sendEmail(
@@ -416,7 +417,8 @@ export const POST = withObservability(async (req: Request) => {
             contactEmail: tournament?.contact_email ?? ctx.org.contactEmail ?? undefined,
             registrationId: id,
             coachEmail: team.email.trim(),
-          })
+          }),
+          { kind: 'tournament_team_registered', orgId: ctx.org.id, askedBy: ctx.user.id },
         );
       }
 
@@ -682,7 +684,7 @@ export const POST = withObservability(async (req: Request) => {
           });
           // Club Tier Stage 12a: Pay now while the club takes payments online (the team is accepted by now; absent → today's email).
           const pay = paymentsTracked && !willBePaid ? await teamPayNowLink(current.id) : null;
-          await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions, feeLine, paymentsTracked, payUrl: pay?.url ?? null }));
+          await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions, feeLine, paymentsTracked, payUrl: pay?.url ?? null }), { kind: 'tournament_registration_accepted', orgId: ctx.org.id, askedBy: ctx.user.id });
         }
         // Notify other org admins of the status change (fire-and-forget)
         notify({
@@ -698,7 +700,7 @@ export const POST = withObservability(async (req: Request) => {
       if (updates.status === 'rejected' && current.status !== 'rejected') {
         bellDeclined.push(current.id);
         if (!inviteOnlyEmails && !coachEmailBlock(bulkCoachSettings, 'rejection', current)) {
-          await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p));
+          await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p), { kind: 'tournament_registration_rejected', orgId: ctx.org.id, askedBy: ctx.user.id });
         }
         // 5m: a rejected team is no longer playing — cancel any scheduled game-day reminder.
         if (recipient) await cancelScheduledEmailForRecipient(ctx.org.id, COACH_GAME_DAY_REMINDER_EMAIL_KEY, recipient);

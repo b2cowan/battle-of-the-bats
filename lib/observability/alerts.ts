@@ -159,7 +159,7 @@ export async function maybeSendCriticalAlert(
       ? `${SITE_URL}/platform-admin/observability/${flags.group_id}`
       : `${SITE_URL}/platform-admin/observability`;
     const subject = `${alertIcon(flags)} ${trigger}: ${details.errorName}${details.route ? ` @ ${details.route}` : ''}`;
-    const result = await sendEmail(ADMIN_EMAIL, subject, alertHtml(trigger, flags, details, link));
+    const result = await sendEmail(ADMIN_EMAIL, subject, alertHtml(trigger, flags, details, link), { kind: 'ops_alert' });
     if (result.status === 'sent') {
       console.log(`[observability] critical alert emailed to ${ADMIN_EMAIL}: ${trigger} (group ${flags.group_id ?? '?'})`);
     } else {

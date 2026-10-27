@@ -31,6 +31,7 @@ export const POST = withObservability(async (req: Request) => {
       reason,
       requestedAt: new Date().toISOString(),
     }),
+    { kind: 'org_deletion_request' },
   );
 
   return NextResponse.json({ ok: true });

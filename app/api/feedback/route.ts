@@ -120,7 +120,7 @@ export const POST = withObservability(async (req: NextRequest) => {
     (typeof meta?.name === 'string' && meta.name) ||
     null;
 
-  const { error } = await supabaseAdmin.from('feedback_submissions').insert({
+  const { data: inserted, error } = await supabaseAdmin.from('feedback_submissions').insert({
     org_id: auth?.org.id ?? null,
     user_id: user?.id ?? null,
     user_email: user?.email ?? null,
@@ -130,7 +130,7 @@ export const POST = withObservability(async (req: NextRequest) => {
     title: safeTitle,
     body: safeBody,
     context: safeContext,
-  });
+  }).select('id').single();
 
   if (error) {
     return NextResponse.json({ error: 'Could not save feedback.' }, { status: 500 });
@@ -151,6 +151,7 @@ export const POST = withObservability(async (req: NextRequest) => {
         orgSlug: auth?.org.slug ?? null,
         userEmail: user?.email ?? null,
       }),
+      { kind: 'feedback_received' },
     );
   } catch {
     /* email failure must never fail the submission */
@@ -161,6 +162,7 @@ export const POST = withObservability(async (req: NextRequest) => {
       user.email,
       'We received your feedback',
       feedbackConfirmationHtml({ type, submitterName }),
+      { kind: 'feedback_receipt', feedbackId: inserted?.id ?? null, orgId: auth?.org.id ?? null, askedBy: user.id },
     ).catch(() => {});
   }
 

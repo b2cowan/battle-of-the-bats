@@ -25,6 +25,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { wrap, sendEmail, type SendEmailResult } from '@/lib/email';
+import type { EmailKind } from '@/lib/email-kinds';
 import { warmEmailDocument } from '@/lib/email-envelope-warm';
 import { familySenderName, type ClubEmailFacts, type FamilyMailFace } from '@/lib/email-club-identity';
 import { accountNoticeFootnoteHtml } from '@/lib/family-mail-footer';
@@ -194,13 +195,17 @@ export async function renderResolvedEmail(opts: {
  * `variables` array), which occasionally differ from the builder's param names.
  */
 export async function sendTransactionalEmail(opts: {
-  key: string;
+  /** The template's key, which is also the email's kind (lib/email-kinds.ts; Support console Stage 5, Q8). */
+  key: EmailKind;
   to: string;
   vars: EmailVars;
   defaultSubject: string;
   defaultHtml: string;
   /** A FAMILY email (a registration email, the tryout receipt): the club it wears, why it was sent and where a reply goes. It also names the sender in the inbox. */
   family?: FamilyTemplateFace;
+  /** The sent-email log's club and the person whose action sent it (logged kinds only; lib/email.ts). */
+  orgId?: string | null;
+  askedBy?: string | null;
 }): Promise<SendEmailResult> {
   const { subject, html } = await renderResolvedEmail({
     key: opts.key,
@@ -208,8 +213,10 @@ export async function sendTransactionalEmail(opts: {
     fallback: { subject: opts.defaultSubject, html: opts.defaultHtml },
     family: opts.family,
   });
-  if (!opts.family) return sendEmail(opts.to, subject, html);
+  const log = { kind: opts.key, orgId: opts.orgId, askedBy: opts.askedBy };
+  if (!opts.family) return sendEmail(opts.to, subject, html, log);
   return sendEmail(opts.to, subject, html, {
+    ...log,
     replyTo: opts.family.face.replyTo ?? null,
     fromName: familySenderName(opts.family.face.club.name),
   });

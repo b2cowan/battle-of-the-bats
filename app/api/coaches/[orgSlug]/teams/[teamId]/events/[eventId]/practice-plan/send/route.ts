@@ -161,7 +161,7 @@ export const POST = withObservability(async (req: Request,
       outline: outlineFor(mineTagIds), planUrl: `${appUrl}${planPath}`,
     });
     try {
-      return (await sendEmail(r.email, subject, html)).status === 'sent';
+      return (await sendEmail(r.email, subject, html, { kind: 'practice_plan_staff' })).status === 'sent';
     } catch (e) {
       // Best-effort per person, like every other mail here — the bell and push already went.
       console.error('[practice-plan/send] email failed:', e instanceof Error ? e.message : e);

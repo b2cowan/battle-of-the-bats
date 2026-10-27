@@ -627,7 +627,7 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
 
   // The emails: one per team's person, colleague mail, reply-to the sender (never a recipient — the preview left them out).
   const sends = teams.flatMap(t => t.recipients.map(p => ({ teamId: t.teamId, email: p.email, subject: t.sample.subject, html: emailHtml(t.sample) })));
-  const results = await inParallel(sends, 5, s => sendEmail(s.email, s.subject, s.html, { replyTo: sctx.ctx.user.email ?? null }));
+  const results = await inParallel(sends, 5, s => sendEmail(s.email, s.subject, s.html, { kind: 'club_schedule_coach', replyTo: sctx.ctx.user.email ?? null }));
   const sent = results.filter(r => r.status === 'sent').length;
   const reached = [...new Set(sends.filter((s, i) => results[i].status === 'sent').map(s => s.teamId))];
 

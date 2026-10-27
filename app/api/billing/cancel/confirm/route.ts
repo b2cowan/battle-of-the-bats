@@ -218,6 +218,8 @@ export const POST = withObservability(async (req: Request) => {
           resubscribeUrl,
           retentionUntil: retentionDateLabel(retentionUntil),
         }),
+        orgId: ctx.org.id,
+        askedBy: ctx.user.id,
       });
     }
 
@@ -373,6 +375,8 @@ export const POST = withObservability(async (req: Request) => {
         retainedTournaments: preflight.tournaments.length,
         resubscribeUrl,
       }),
+      orgId: ctx.org.id,
+      askedBy: ctx.user.id,
     });
   }
 

@@ -170,6 +170,7 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
         // Club Tier Stage 12a: Pay now while the club takes payments online (absent → today's email).
         defaultHtml: acceptanceHtml({ ...payload, paymentInstructions, feeLine, paymentsTracked,
           payUrl: feeLine ? (await teamPayNowLink(team.id))?.url ?? null : null }),
+        orgId,
       });
     }
     if (action === 'reject' && team.status !== 'rejected') {
@@ -180,6 +181,7 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
           vars: { coachName: payload.coachName, teamName: payload.teamName, ageGroupName: payload.divisionName, tournamentName: payload.tournamentName },
           defaultSubject: `Registration Update - ${team.name}`,
           defaultHtml: rejectionHtml(payload),
+          orgId,
         });
       }
       // 5m: a rejected team is no longer playing — cancel any scheduled game-day reminder.
@@ -192,6 +194,7 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
         vars: { coachName: payload.coachName, teamName: payload.teamName, ageGroupName: payload.divisionName, tournamentName: payload.tournamentName },
         defaultSubject: `Payment Recorded - ${team.name}`,
         defaultHtml: paymentConfirmationHtml(payload),
+        orgId,
       });
     }
   }

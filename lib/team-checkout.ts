@@ -692,6 +692,7 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
           teamName: parsed.teamName,
           portalUrl: `${SITE_URL}/${result.org.slug}/coaches`,
         }),
+        { kind: 'team_workspace_welcome', orgId: result.org.id, askedBy: parsed.ownerUserId },
       );
     } catch (err) {
       console.error('[team-checkout] Premium welcome email failed:', err);
@@ -930,6 +931,7 @@ export async function provisionCompTeamWorkspaceFromCheckout(params: {
           portalUrl: `${SITE_URL}/${result.org.slug}/coaches`,
           comp: true,
         }),
+        { kind: 'team_workspace_welcome', orgId: result.org.id, askedBy: parsed.ownerUserId },
       );
     } catch (err) {
       console.error('[team-checkout comp] Premium welcome email failed:', err);

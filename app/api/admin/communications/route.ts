@@ -360,7 +360,7 @@ export const POST = withObservability(async (req: Request) => {
               tournamentName: announcementTournamentName,
               contactEmail: announcementContact,
               coachEmail: email,
-            }));
+            }), { kind: 'tournament_announcement', orgId: ctx.org.id, askedBy: ctx.user.id });
             results.success++;
           } catch (sendErr) {
             console.error(`Failed to send to ${email}:`, sendErr);

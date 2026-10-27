@@ -76,7 +76,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   const html = renderPlatformEmailHtml({ heading, body: bodyMarkup, vars, footerHtml: `${family?.footerHtml ?? ''}${testNote}`, club: family?.club });
   const filledSubject = fillSubjectTokens(subject, vars);
 
-  await sendEmail(user.email, `[TEST] ${filledSubject}`, html);
+  await sendEmail(user.email, `[TEST] ${filledSubject}`, html, { kind: 'template_test' });
 
   return Response.json({ ok: true, sentTo: user.email });
 }, { route: '/api/platform-admin/email-templates/[key]/test-send' });

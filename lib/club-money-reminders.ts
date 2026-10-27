@@ -180,7 +180,7 @@ export async function sendReminders(
     return t.recipients.map(p => ({ teamId: t.teamId, email: p.email, subject, html }));
   });
   // A few at a time: a club-wide wave is tens of emails, and one after another risked the time limit.
-  const results = await inParallel(sends, 5, s => sendEmail(s.email, s.subject, s.html, { replyTo: ctx.user.email ?? null }));
+  const results = await inParallel(sends, 5, s => sendEmail(s.email, s.subject, s.html, { kind: 'club_money_reminder_coach', replyTo: ctx.user.email ?? null }));
   const reachedIds = new Set(sends.filter((_, i) => results[i].status === 'sent').map(s => s.teamId));
   const sent = results.filter(r => r.status === 'sent').length;
   const reached = teams.filter(t => reachedIds.has(t.teamId));

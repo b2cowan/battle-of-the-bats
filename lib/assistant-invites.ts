@@ -35,6 +35,7 @@ export async function sendAssistantInviteEmail(p: {
     p.email,
     STAFF_KIND_COPY[kind].emailSubject(p.teamName),
     assistantCoachInviteHtml({ teamName: p.teamName, invitedByName: p.invitedByName, inviteUrl, staffKind: kind, isTeamWorkspace: p.isTeamWorkspace }),
+    { kind: 'staff_invite' },
   );
 }
 
@@ -60,6 +61,7 @@ export async function sendClubCoachInviteEmail(p: {
       clubName: p.clubName, teamName: p.teamName, coachRole: p.coachRole,
       invitedByName: p.invitedByName, invitedByRoleWords: p.invitedByRoleWords, inviteUrl,
     }),
+    { kind: 'club_coach_invite' },
   );
 }
 

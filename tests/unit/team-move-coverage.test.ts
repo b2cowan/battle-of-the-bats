@@ -64,6 +64,9 @@ const STAYS: Record<string, string> = {
   online_payment_clear_decisions: 'what happens to a club’s clearing bank debit when it clears, answered at an ending (online payments exclude the coach portal)',
   platform_debit_fees: 'Stripe’s returned-debit fee recovered from a club on its FieldLogicHQ invoice (online payments exclude the coach portal)',
   stripe_connect_events: 'a log of Stripe’s events, kept for audit; its org_id is a plain label with no foreign key',
+  // Support console (mig 380, 389): FieldLogicHQ's own records about the account, read only in the console.
+  platform_refunds: 'a refund FieldLogicHQ staff made on the account’s own subscription charge (Support console Stage 3)',
+  platform_account_emails: 'FieldLogicHQ’s log of an account email it sent, kept 90 days as it happened (Support console Stage 5)',
   team_entitlements: 'the old portal’s own plan — the move cancels it, and it stays as that portal’s record',
   org_public_site_content: 'the coach org’s own public-site page, not the team',
   org_site_notices: 'the club notice on an org’s own public site (Club Tier Stage 4c-1) — the org’s words, never a team’s',

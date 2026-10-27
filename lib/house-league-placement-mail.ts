@@ -189,6 +189,7 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
   }
 
   const results = messages.length === 0 ? [] : await sendFamilyServiceBatch({
+    kind: 'house_league_placement',
     messages, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
   });
   const byStatus = new Map<'sent' | 'failed' | 'skipped', string[]>([['sent', []], ['failed', []], ['skipped', [...nothingToSay]]]);

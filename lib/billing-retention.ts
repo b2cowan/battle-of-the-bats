@@ -471,6 +471,7 @@ async function sendRetentionEmail(
   await sendTransactionalEmail({
     key: 'billing_retention_warning',
     to: ownerEmail,
+    orgId,
     vars: {
       orgName,
       retentionUrl: `${SITE_URL}/${orgSlug}/admin/org/billing`,

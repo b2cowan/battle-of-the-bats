@@ -74,6 +74,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
           teamName: team.name, coachName: team.coach ?? '', divisionName, tournamentName: tournament.name,
           registrationId: regId, coachEmail: email,
         }),
+        { kind: 'team_invitation', orgId: ctx.org.id, askedBy: ctx.user.id },
       );
     } catch (err) {
       console.error('[resend-access] invitation send failed:', err);
@@ -93,6 +94,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
         joinUrl,
         loginUrl,
       }),
+      { kind: 'coach_access_reminder', orgId: ctx.org.id, askedBy: ctx.user.id },
     );
   } catch (err) {
     console.error('[resend-access] email send failed:', err);

@@ -187,6 +187,8 @@ export const POST = withObservability(async (req: Request) => {
             vars: { coachName: team.coach || team.name, tournamentName: tournament.name, scheduleUrl },
             defaultSubject: `Schedule Published — ${tournament.name}`,
             defaultHtml: html,
+            orgId: org.id,
+            askedBy: ctx!.user.id,
           });
           notified++;
         }

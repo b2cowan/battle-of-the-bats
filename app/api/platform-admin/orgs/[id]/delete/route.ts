@@ -137,6 +137,7 @@ export const DELETE = withObservability(async (req: NextRequest,
         ownerEmail,
         `Your ${org.name} account has been closed`,
         orgClosedHtml({ orgName: org.name, planLabel, contactEmail: 'support@fieldlogichq.ca' }),
+        { kind: 'org_closed', orgId: id, askedBy: auth.user.id },
       );
     }
   }

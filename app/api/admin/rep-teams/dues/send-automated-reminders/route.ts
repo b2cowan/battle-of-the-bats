@@ -93,7 +93,7 @@ export const POST = withObservability(async (req: Request) => {
         replyLine: face?.reply.line,
       });
 
-      await sendEmail(email, subject, html, face?.sendOpts);
+      await sendEmail(email, subject, html, { ...face?.sendOpts, kind: 'dues_reminder' });
       totalEmailed++;
       for (const i of items) taggedIds.push(i.installmentId);
     }

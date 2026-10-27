@@ -245,6 +245,8 @@ export const POST = withObservability(async (req: Request) => {
         retentionUntil: retentionDate,
         billingUrl,
       }),
+      orgId: ctx.org.id,
+      askedBy: ctx.user.id,
     });
   }
 

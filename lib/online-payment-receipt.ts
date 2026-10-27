@@ -104,7 +104,7 @@ async function sendLeagueReceipt(op: OnlineForEmail): Promise<void> {
     test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
   ];
   const subject = `${test ? E.testPrefix : ''}${E.receiptSubject(receiptNo, facts.org.name)}`;
-  const result = await sendEmail(op.payer_email!, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), face?.sendOpts ?? {});
+  const result = await sendEmail(op.payer_email!, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), { ...face?.sendOpts, kind: 'league_payment_receipt' });
   if (result.status === 'provider_error') throw new Error('send failed');
 }
 
@@ -136,7 +136,7 @@ async function sendReceipt(op: OnlineForEmail): Promise<void> {
   lines.push(warmEmailSmall(escapeHtml(E.questions(facts.org.name, face?.contact ?? null))));
   if (test) lines.push(warmEmailSmall(escapeHtml(E.testNote)));
   const subject = `${test ? E.testPrefix : ''}${E.receiptSubject(receiptNo, facts.org.name)}`;
-  const result = await sendEmail(op.payer_email!, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), face?.sendOpts ?? {});
+  const result = await sendEmail(op.payer_email!, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), { ...face?.sendOpts, kind: 'team_payment_receipt', orgId: facts.org.id });
   if (result.status === 'provider_error') throw new Error('send failed');
 }
 
@@ -195,7 +195,7 @@ export async function sendRefundEmail(refundId: string, extra?: { lead?: string;
     lines.push(warmEmailSmall(escapeHtml(E.refundQuestions(face?.contact ?? null) || E.refundQuestionsClub(facts.org.name))));
     if (test) lines.push(warmEmailSmall(escapeHtml(E.testNote)));
     const subject = `${test ? E.testPrefix : ''}${E.refundSubject(facts.org.name)}`;
-    const result = await sendEmail(op.payer_email, subject, warmEmailDocument(lines.join('\n'), face?.club ?? null), face?.sendOpts ?? {});
+    const result = await sendEmail(op.payer_email, subject, warmEmailDocument(lines.join('\n'), face?.club ?? null), { ...face?.sendOpts, kind: 'team_payment_refund', orgId: facts.org.id });
     await stampRefundEmailed([refundId], result.status !== 'provider_error');
   } catch (err) {
     console.error('[online-payment-receipt] the refund email was not sent:', err instanceof Error ? err.message : String(err));
@@ -227,7 +227,7 @@ export async function sendTeamPayLink(teamId: string): Promise<{ sentTo: string;
     warmEmailButton(facts.totalPaid > 0 ? E.payBalance : E.payNow, payLink),
     how ? warmEmailParagraph(escapeHtml(E.otherWays(how))) : '',
   ].filter(Boolean).join('\n'), face?.club ?? null);
-  const result = await sendEmail(facts.teamEmail, E.linkSubject(facts.teamName, facts.tournament.name), html, face?.sendOpts ?? {});
+  const result = await sendEmail(facts.teamEmail, E.linkSubject(facts.teamName, facts.tournament.name), html, { ...face?.sendOpts, kind: 'team_pay_link', orgId: facts.org.id });
   if (result.status === 'provider_error') return { error: 'Couldn’t send the pay link. Try again.' };
   const sentAt = new Date().toISOString();
   await supabaseAdmin.from('teams').update({ pay_link_sent_at: sentAt }).eq('id', teamId);
@@ -273,7 +273,7 @@ export async function sendLeaguePayLink(
     // Transactional family mail (money owed): it names the club and says why it arrives after an unsubscribe.
     transactionalFamilyFooterHtml({ orgName: facts.org.name, teamName: facts.season.name, noticeKind: 'Payment notices', about: 'a registration fee', replyLine: face?.contact ? `Questions: ${face.contact}.` : null }),
   ].filter(Boolean).join('\n'), face?.club ?? null);
-  const result = await sendEmail(facts.guardianEmail, L.subject(names, facts.season.name), html, face?.sendOpts ?? {});
+  const result = await sendEmail(facts.guardianEmail, L.subject(names, facts.season.name), html, { ...face?.sendOpts, kind: 'league_pay_link' });
   if (result.status === 'provider_error') return { error: 'Couldn’t send the pay link. Try again.' };
   const sentAt = new Date().toISOString();
   await supabaseAdmin.from('league_registrations').update({ pay_link_sent_at: sentAt }).in('id', facts.shares.map(s => s.registrationId));
