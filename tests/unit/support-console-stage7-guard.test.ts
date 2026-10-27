@@ -206,19 +206,19 @@ const THREATS: Record<number, string> = {
   1: 'guard 2 (server rules) + support-console-stage7-audit-guard',
   2: 'guard 7 (the export)',
   3: 'guard 7 (Copy emails)',
-  4: 'OWED: Part 8 (the public form’s overwrite fix) is not built yet',
+  4: 'support-console-stage7-part8 (a yes never replaces a no, a worked lead keeps its fields, both writers)',
   5: 'support-console-stage7-numbers (the match)',
   6: 'support-console-stage7-numbers ("the public form computes no match")',
   7: 'guard 9 (the Story)',
   8: 'support-console-stage7-numbers (demo never, deleted still counted)',
   9: 'guard 6 (rendering)',
-  10: 'OWED: Part 8 (the throttle, owner build-gate answer §6-4); the captcha is a later pass',
+  10: 'support-console-stage7-part8 (the throttle, a fixed error sentence); the captcha is a later pass',
   11: 'guard 8 (notes) + guard 1; erasing a lead is Stage 8',
   12: 'lib/lead-timeline.ts builds fixed sentences only; guard 2 (growth power)',
   13: 'guard 2 (malformed ids and bodies)',
   14: 'support-console-stage7-numbers ("Not read", never 0)',
   15: 'NOT BUILT: deck opens are not counted (owner Q8)',
-  16: 'OWED: Part 8 (the link tag list)',
+  16: 'support-console-stage7-part8 (a tag is kept only from the short list, cut, never shown raw)',
 };
 
 describe('Stage 7 guard 12 · the threat list', () => {

@@ -1,6 +1,8 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { HEARD_FROM_CHOICES } from '@/lib/lead-form-answers';
+import { readRefTag } from '@/lib/ref-tag-client';
 import styles from './EarlyAccessForm.module.css';
 
 const PLAN_OPTIONS = [
@@ -58,6 +60,8 @@ export default function EarlyAccessForm({
       featuresInterested,
       releaseNotificationsConsent,
       sourcePath: `${window.location.pathname}${window.location.hash}`,
+      heardFrom: String(form.get('heardFrom') ?? ''),
+      refTag: readRefTag(),
     };
 
     try {
@@ -139,6 +143,14 @@ export default function EarlyAccessForm({
       <label className={styles.field}>
         <span>What would make this useful for you?</span>
         <textarea name="notes" maxLength={1200} rows={4} />
+      </label>
+
+      <label className={styles.field}>
+        <span>How did you hear about us?</span>
+        <select name="heardFrom" defaultValue="">
+          <option value="">Choose one</option>
+          {HEARD_FROM_CHOICES.map(choice => <option key={choice.code} value={choice.code}>{choice.label}</option>)}
+        </select>
       </label>
 
       <label className={styles.consent}>

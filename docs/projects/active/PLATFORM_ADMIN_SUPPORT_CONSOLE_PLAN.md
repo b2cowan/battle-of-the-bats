@@ -788,6 +788,37 @@ none is ruled, each is an ask or a drawing, not a given).**
 12. **Also draw, from the owner's questions:** a **rollback** (what undoing a price change does and does not undo) and a
     **record of what changed, who approved it and when** (drawing B and H).
 
+## Frame J rulings and Part 8 (2026-10-27) — the public form, built as drawn
+
+Drawing J (https://claude.ai/artifact/QTrwrgyGqgBZugpGfvpJHM, "J · Public form"; source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE7_DRAWINGS.html`) was drawn,
+passed `/design` (8 defects, 7 fixed; the shipped coach title is Inter 800, kept) and the owner said **"go ahead as drawn"**: every recommended
+option of questions 12-16.
+
+- **Q12:** both public forms (the early-access form and the coach "Express interest" form) gain an optional "How did you hear about us?" — last,
+  "Choose one" first, no star, the eight /marketing choices (`lib/lead-form-answers.ts`).
+- **Q13 A:** the visitor's answer fills the lead's Source only until staff set one; "From the form: …" always shows under Source; the Link row sits
+  under Arrived from. The pencil's empty option reads "{source} (from the form)" and keeps staff's own source null until staff pick one (a builder's
+  call: drawn as "selected", built so an unrelated save cannot turn the form's answer into staff's).
+- **Q14 (all three):** a yes never replaces a no on any lead; **a withdrawal (box unticked) always lands, even on a worked lead** (the one place the
+  drawing differs from the Q10 ruling as first worded); Arrived from, the first tag and the first browser never move. Timeline notes an unapplied
+  yes ("Ticked yes to release emails. The lead still says no.") and a withdrawal ("Unticked release emails. The lead now says no.").
+- **Q15:** By link tag lists "No tag" first once any lead in the period carries a tag (Part 7 left untagged leads out); the Link tag filter appears
+  only once a tag exists; starting tags (examples, **the owner's real list is still owed**): spring-mailout, conference-booth, club-newsletter,
+  deck-follow-up. A tag is cut to **32** characters (the database's limit; the drawing said 40, "a builder's number") and kept only from the list.
+- **Q16:** two error sentences: the house throttle sentence, and the new "We couldn't save your request just now. Please try again in a few minutes."
+  (customer copy: **goes to /marketing before release**).
+- **Built (uncommitted, 2026-10-27):** mig **402** `early_access_lead_submissions` (applied to dev; prod at the release with 398); `lib/lead-form-answers.ts`
+  (the lists, pure), `lib/early-access-refill.ts` (the rule, pure — BOTH writers call it: `app/api/early-access/route.ts` and
+  `lib/basic-coach-interest.ts`); the route is throttled with `throttlePublicForm`, answers a database error with a fixed sentence (the cause goes to
+  the error log), and answers a known and an unknown address identically; `lib/ref-tag-client.ts` + `components/RefTagCapture.tsx` (root layout) keep `?ref=`
+  in the tab's session storage, no cookie. Guard: `tests/unit/support-console-stage7-part8.test.ts` (23 tests); threats 4, 10 and 16 are now guarded in
+  `support-console-stage7-guard.test.ts`. Dictionary documents the new table.
+- **Findings, not fixed here:** the early-access form's updates box starts ticked, and the coach form sends no box but a new lead is saved as a yes; the
+  form already stores the browser's user-agent text on every lead; the throttle is best-effort per instance (the captcha stays a later pass).
+- **Owed:** the walk (a tagged link, the question on both forms, a refill on a worked lead, a withdrawal), `/review` with the privacy lens on the public
+  route, `/docs`, `/marketing` for the two sentences, the owner's tag list, prod: apply 402 with 398 at the release. Two other sessions have uncommitted edits in
+  `components/EarlyAccessForm.tsx`, its css and `EarlyAccessModalTrigger.tsx` (the confirmation swap): commit Part 8's hunks only.
+
 ## Stage 7 findings (verified against the code and dev's data 2026-10-27, before drawing)
 
 Three helpers read the code and ran read-only counts on dev; the lines each drawing turns on were opened by hand.

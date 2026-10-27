@@ -9522,7 +9522,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 
 # Domain: CRM
 
-The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the smallest domain). Public marketing **lead capture** (the Early Access form on the homepage / pricing / `/start/league` / `/start/club`, plus the free-tier coach "express interest" capture) writes leads; the platform-admin **Early Access triage** page + the command-center **growth metrics** read them. Built but unexercised — **0 rows in dev AND prod.**
+The growth/CRM pipeline — the lead table **`early_access_leads`** plus its notes, dismissed-offers and refill tables (Stage 7; the smallest domain). Public marketing **lead capture** (the Early Access form on the homepage / pricing / `/start/league` / `/start/club`, plus the free-tier coach "express interest" capture) writes leads; the platform-admin **Early Access triage** page + the command-center **growth metrics** read them. Built but unexercised — **0 rows in dev AND prod.**
 
 > _Last verified: 2026-06-10 @ snapshot 2026-06-10, commit `9faea936` (branch `feat/free-tier-coaches`). Authored against a clean tree; a concurrent workstream (feedback center / observability) has since touched unrelated files, but **every file this domain cites is UNMODIFIED vs `9faea936`** (checked via `git status`) — refs match the commit. Live probes (2026-06-10, dev+prod `pg_class`/`pg_policies`/`pg_trigger`/`role_table_grants`): `early_access_leads` is column-, constraint-, and FK-identical dev↔prod (**zero structural drift**); **RLS ENABLED with ZERO policies and ZERO triggers** in both envs; **prod grants `anon`+`authenticated` FULL `SELECT/INSERT/UPDATE/DELETE` while dev grants only `REFERENCES/TRIGGER/TRUNCATE`** (the [[reference_supabase_rls_grants]] gate); **0 rows** in both envs. No DB CHECK constraints — every "enum" is a TS union/string convention._
 
@@ -9532,7 +9532,7 @@ The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the sma
 - **DUAL-STATUS TRAP — `internal_status` is the live triage field; `status` is legacy/dead.** Both default `'new'`; the insert stamps `status='new'` once and never touches it again, while every triage write, list filter, and metric reads **`internal_status`** (8-value TS union). `status` is selected into the row + typed on the `Lead` type but **no code ever reads it**.
 - **`metadata` jsonb is 100% dead** — never written by either insert helper, never selected (absent from `EARLY_ACCESS_SELECT`); no key catalog exists. Three more columns are **write-only** (written, never read): `last_submitted_at`, `user_agent`, `last_contacted_by`, plus `updated_at` (code-maintained, never read).
 - **`converted_org_id` is set ONLY by the manual admin PATCH** — no signup/billing automation ever links a lead to an org. The command-center conversion metrics key off the **FK** (`converted_org_id` non-null), not `internal_status='converted'` (the PATCH enforces that the two agree by rejecting a `'converted'` status with no org).
-- **The public "upsert" is a manual select-then-insert/update keyed on `email_normalized` (UNIQUE), not an atomic Postgres upsert** — two concurrent first-submits of the same email can collide on the unique constraint and 500. A public resubmit bumps `submission_count`/`last_submitted_at` and overwrites capture fields but does **not** reset `internal_status`/`converted_org_id` — a converted lead that resubmits stays converted.
+- **The public "upsert" is a manual select-then-insert/update keyed on `email_normalized` (UNIQUE), not an atomic Postgres upsert** — two concurrent first-submits of the same email can collide on the unique constraint and 500. A public resubmit bumps `submission_count`/`last_submitted_at`; it overwrites capture fields **only on a lead nobody has worked** (`lib/early-access-refill.ts`, Stage 7 Part 8; a lost first-insert race now reads as a known address) and does **not** reset `internal_status`/`converted_org_id` — a converted lead that resubmits stays converted.
 - **No DB triggers or CHECKs** — `updated_at` is code-maintained (set inconsistently across the three writers); the 8-value `internal_status` domain, the `plan_interest`/`features_interested` array allowlists, and the lead's identity guards live entirely in `lib/early-access-admin.ts` + the route allowlists.
 - **Dev/prod:** zero structural drift; 0 rows both; the only divergence is the grant drift above (prod anon full DML).
 
@@ -9555,7 +9555,7 @@ The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the sma
 **`last_submitted_at`** (tstz, NN, default now()) — "most recent public submission"; set to now on every insert and resubmit ([route.ts:77](../../../app/api/early-access/route.ts#L77)). **Selected but never consumed** — present in `EARLY_ACCESS_SELECT` + the client type, but never rendered or used in any logic (effectively write-only).
 
 <!-- dict:col:early_access_leads.submission_count -->
-**`submission_count`** (int4, NN, default 1) — how many times this email submitted; the manual upsert reads `existing.submission_count` and increments ([route.ts:97](../../../app/api/early-access/route.ts#L97)). Read by the lead page ("filled the form N times") and its timeline ("Filled the form again", dated by `last_submitted_at`; earlier refills are not kept).
+**`submission_count`** (int4, NN, default 1) — how many times this email submitted; the manual upsert reads `existing.submission_count` and increments ([route.ts:97](../../../app/api/early-access/route.ts#L97)). Read by the lead page ("filled the form N times") and its timeline ("Filled the form again", each refill since [mig 402](../../../supabase/migrations/402_a_second_form_is_kept_dated.sql) is its own dated row in `early_access_lead_submissions`; refills before it are only counted, the latest dated by `last_submitted_at`).
 
 <!-- dict:col:early_access_leads.status -->
 **`status`** (text, NN, default `'new'`) — **LEGACY/DEAD.** Stamped `'new'` at insert by both writers and never updated; selected ([lib/early-access-admin.ts:52](../../../lib/early-access-admin.ts#L52)) and typed but **never read** by any triage/filter/metric path — all of those use `internal_status`. No governing TS union (only value ever written is `'new'`).
@@ -9585,10 +9585,10 @@ The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the sma
 **`features_interested`** (text[], NN, default `{}`) — module/feature interests. Public allowlist `FEATURE_OPTIONS = house_league|registration|public_site|accounting|rep_teams|coach_portal|communications` ([route.ts:6](../../../app/api/early-access/route.ts#L6)); free-tier writer adds `coach_portal` + `team_lineups|team_attendance|team_documents|team_budget|team_dues_automation` ([basic-coach-interest.ts:47](../../../lib/basic-coach-interest.ts#L47)); 12-value label map `EARLY_ACCESS_FEATURE_LABELS` ([lib/early-access-admin.ts:31](../../../lib/early-access-admin.ts#L31)).
 
 <!-- dict:col:early_access_leads.notes -->
-**`notes`** (text, nullable, max 1200) — public "what would make this useful" free-text. **Gotcha:** the free-tier path **appends** an interest summary (keeping the last 1200 chars, [basic-coach-interest.ts:68](../../../lib/basic-coach-interest.ts#L68)) whereas the public path overwrites. Distinct from the private `internal_notes`.
+**`notes`** (text, nullable, max 1200) — public "what would make this useful" free-text. **Gotcha:** the free-tier path **appends** an interest summary (keeping the last 1200 chars, [basic-coach-interest.ts:68](../../../lib/basic-coach-interest.ts#L68)) whereas the public path overwrites only on a lead nobody has worked. Distinct from the private `internal_notes`.
 
 <!-- dict:col:early_access_leads.source_path -->
-**`source_path`** (text, nullable) — the page/path that produced the lead; powers the top-5 source attribution ([lib/platform-metrics.ts:245](../../../lib/platform-metrics.ts#L245)). Public form sends `window.location.pathname+hash`; the free-tier writer hardcodes `/coaches/team/{id}` ([basic-coach-interest.ts:131](../../../lib/basic-coach-interest.ts#L131)). Not in the CSV export. Because `/start/league`, `/start/club`, the homepage and pricing all submit via the same modal, `source_path` is whatever pathname the modal was opened on.
+**`source_path`** (text, nullable) — the page/path that produced the lead; powers the top-5 source attribution ([lib/platform-metrics.ts:245](../../../lib/platform-metrics.ts#L245)). Public form sends `window.location.pathname+hash`; **a refill never rewrites it: it is the lead's FIRST page**; the free-tier writer hardcodes `/coaches/team/{id}` ([basic-coach-interest.ts:131](../../../lib/basic-coach-interest.ts#L131)). Not in the CSV export. Because `/start/league`, `/start/club`, the homepage and pricing all submit via the same modal, `source_path` is whatever pathname the modal was opened on.
 
 <!-- dict:col:early_access_leads.user_agent -->
 **`user_agent`** (text, nullable, max 500) — submitter UA (anti-bot/diagnostic), sliced to 500 ([route.ts:63](../../../app/api/early-access/route.ts#L63)). **Write-only** — not in `EARLY_ACCESS_SELECT`, never displayed/exported.
@@ -9648,14 +9648,14 @@ The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the sma
 **`step_changed_at`** (tstz, NN, default `now()`) — when the step last moved; "stuck" = 30 days with no step change, note or follow-up (Q9 c). Back-filled in mig 398 from the edit log, else `created_at`.
 
 <!-- dict:col:early_access_leads.heard_from -->
-**`heard_from`** (text, nullable; format CHECK `^[a-z][a-z_]{1,39}$`) — the visitor's answer to "How did you hear about us?" (Stage 7 C), kept as given; the list and each answer's one staff source live in code.
+**`heard_from`** (text, nullable; format CHECK `^[a-z][a-z_]{1,39}$`) — the visitor's answer to "How did you hear about us?" (Stage 7 C), kept as given; the list and each answer's one staff source live in code (`lib/lead-form-answers.ts`). A second form from a known address changes it only while nobody has worked the lead.
 
 <!-- dict:col:early_access_leads.ref_tag -->
-**`ref_tag`** (text, nullable; format CHECK `^[a-z0-9][a-z0-9-]{0,31}$`) — the tag on a link we handed out (Stage 7 D). Only tags on the list in code are stored; a known address keeps its first tag.
+**`ref_tag`** (text, nullable; format CHECK `^[a-z0-9][a-z0-9-]{0,31}$`) — the tag on a link we handed out (Stage 7 D). Only tags on the list in code are stored; a known address keeps its first tag (a refill never moves it, nor `source_path`).
 
 ### Functions & mechanics (not tables — not coverage-checked, documented for completeness)
 
-- **The manual upsert** ([app/api/early-access/route.ts:65](../../../app/api/early-access/route.ts#L65); [lib/basic-coach-interest.ts:111](../../../lib/basic-coach-interest.ts#L111)) — both writers `select('id, submission_count').eq('email_normalized', …).maybeSingle()` then UPDATE (bump count) or INSERT (`submission_count:1`, `status:'new'`). Not atomic; the `UNIQUE(email_normalized)` constraint is the only backstop against a concurrent-first-submit race.
+- **The manual upsert** ([app/api/early-access/route.ts:65](../../../app/api/early-access/route.ts#L65); [lib/basic-coach-interest.ts:111](../../../lib/basic-coach-interest.ts#L111)) — both writers select the lead (`KNOWN_COLUMNS`) by `email_normalized`, then INSERT a new lead (`submission_count:1`, `status:'new'`) or, for a known address, apply the refill rule, UPDATE (bump count) and write the dated refill row. Not atomic; the `UNIQUE(email_normalized)` constraint is the backstop, and the public route reads a lost first-insert race as a known address.
 - **`EARLY_ACCESS_SELECT`** ([lib/early-access-admin.ts:46](../../../lib/early-access-admin.ts#L46)) — the 24-column source of truth for the admin list/PATCH/export; **excludes** only `metadata`, `user_agent`, `email_normalized` (the three columns never read back). Adding a readable column means editing this constant.
 - **The one definition** (Stage 7 Part 2) — every lead figure (Leads’ band and Numbers, Today’s growth rows and the menu’s "Needs you", Business numbers’ "Leads and conversion" card) counts through [lib/lead-numbers.ts](../../../lib/lead-numbers.ts) over EVERY lead, read in pages of 1,000 by [lib/lead-book.ts](../../../lib/lead-book.ts); a failed read says "Not read", never 0. `getCommandCenterStats` no longer reads leads (the 5,000-row read and its `converted_org_id` test were retired).
 - **Free-tier "express interest" bridge** — `lib/basic-coach-interest.ts` writes leads with `plan_interest=['team']` + `source_path=/coaches/team/{id}` from the free Basic-coach portal (forward-link to [[project_free_tier_strategy]]); `/start/league` + `/start/club` feed the same public POST. These do **not** redocument the free-tier feature — they only close the writer link.
@@ -9686,6 +9686,37 @@ The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the sma
 
 <!-- dict:col:early_access_lead_notes.removed_at -->
 **`removed_at`** (tstz) — when; set with `removed_by` and a null `body` (CHECK).
+
+## `early_access_lead_submissions`
+<!-- dict:table:early_access_lead_submissions -->
+
+**Purpose:** one row per **refill** of the public form (or a coach team's interest button) from an address that is already a lead (Stage 7 Part 8, [mig 402](../../../supabase/migrations/402_a_second_form_is_kept_dated.sql)). The lead's own first form stays on `early_access_leads`; this table lets the timeline date every later one, with the page and the visitor's new words. Nothing about the visitor's device, address or browser is kept. Written only by the two lead writers ([app/api/early-access/route.ts](../../../app/api/early-access/route.ts), [lib/basic-coach-interest.ts](../../../lib/basic-coach-interest.ts)); read only by [lib/lead-timeline.ts](../../../lib/lead-timeline.ts) behind the `growth` power. Service role only (RLS on, no policies).
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:early_access_lead_submissions.lead_id -->
+**`lead_id`** (uuid, NN; FK→`early_access_leads(id)` ON DELETE CASCADE).
+
+<!-- dict:col:early_access_lead_submissions.submitted_at -->
+**`submitted_at`** (tstz, NN, default `now()`) — when the refill came in; the timeline's date for it.
+
+<!-- dict:col:early_access_lead_submissions.kind -->
+**`kind`** (text, NN, default `form`; CHECK `form | coach_button`) — the public form, or a coach asking again from inside the product.
+
+<!-- dict:col:early_access_lead_submissions.source_path -->
+**`source_path`** (text, ≤240) — the page the refill sat on, as the form sent it ("Filled the form again, on the Club page").
+
+<!-- dict:col:early_access_lead_submissions.their_words -->
+**`their_words`** (text, 1–1200, nullable) — what the visitor wrote this time, printed as text on the timeline, never as markup.
+
+<!-- dict:col:early_access_lead_submissions.heard_from -->
+**`heard_from`** (text, nullable; format CHECK `^[a-z][a-z_]{1,39}$`) — their answer to "How did you hear about us?" on this refill (code from `lib/lead-form-answers.ts`).
+
+<!-- dict:col:early_access_lead_submissions.yes_not_applied -->
+**`yes_not_applied`** (bool, NN, default false) — they ticked release emails over a lead that says no. Nothing on the lead changed; the timeline says so (a yes never replaces a no).
+
+<!-- dict:col:early_access_lead_submissions.withdrew_consent -->
+**`withdrew_consent`** (bool, NN, default false) — they unticked release emails: the lead now says no. A withdrawal always lands, on any lead.
 
 ## `early_access_lead_dismissed_offers`
 <!-- dict:table:early_access_lead_dismissed_offers -->

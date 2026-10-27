@@ -786,6 +786,49 @@ table.doc td .code2 { font: 500 12.5px/1.4 var(--font-data); }
 .fx .tiles3 b { font: 700 24px/1.1 var(--font-body); }
 .fx .tiles3 span { font-size: 12px; color: var(--i3); }
 </style>
+<style>
+/* ═════ Stage 7 · drawing J: the public forms, link tags, Filter ═════ */
+.fx .pub.j { width: 440px; padding: 18px 20px; gap: 10px; flex: none; }
+.fx .pub .g2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.fx .pub .f { display: grid; gap: 5px; min-width: 0; }
+.fx .pub .ttl { font: 800 20px/1.25 var(--font-body); letter-spacing: -.02em; color: #1d1d1b; }
+.fx .pub .lead { font-size: 12px; line-height: 1.4; color: #6b655c; }
+.fx .pub .pi.area { height: 62px; align-items: flex-start; padding-top: 9px; }
+.fx .pub.j .pi { height: 44px; font-size: 16px; }
+.fx .pub.j .pl { font-size: 14px; font-weight: 600; color: #241E15; }
+.fx .pub.j .pi.area { height: 62px; font-size: 14px; }
+.fx .pub.j.coach .pi { height: 42px; font-size: 14px; }
+.fx .pub.j.coach .pl { font-size: 12px; color: #46413a; }
+.fx .pub .pi.new { color: #46413a; }
+.fx .pub .nw { font: 700 10px/1 var(--font-data); color: #1d4f8a; background: #dde8f5; border: 1px solid #1d4f8a; border-radius: 6px; padding: 3px 5px; margin-left: 8px; vertical-align: 1px; letter-spacing: .04em; }
+.fx .pub .cbs { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; color: #46413a; }
+.fx .pub .cbs i { display: inline-block; width: 12px; height: 12px; border: 1px solid rgba(0,0,0,.35); border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
+.fx .pub .cbs i.on { background: #4b6322; border-color: #4b6322; }
+.fx .pub .cons { display: flex; gap: 8px; font-size: 14px; line-height: 1.4; color: #46413a; align-items: flex-start; }
+.fx .pub .cons i { flex: none; width: 12px; height: 12px; margin-top: 2px; border-radius: 3px; background: #4b6322; border: 1px solid #4b6322; }
+.fx .pub .go { height: 48px; border-radius: 10px; background: #D9F99D; color: #241E15; display: flex; align-items: center; justify-content: center; font: 700 16px/1.2 var(--font-body); }
+.fx .pub .go.c { height: 44px; align-self: flex-start; padding: 0 19px; gap: 6px; font-size: 14px; font-weight: 800; }
+.fx .pub .go.c svg.ic { width: 15px; height: 15px; }
+.fx .pub .menu { border: 1px solid rgba(0,0,0,.18); border-radius: 8px; box-shadow: 0 10px 28px rgba(0,0,0,.14); display: grid; padding: 4px; }
+.fx .pub .menu span { min-height: 34px; display: flex; align-items: center; padding: 0 10px; border-radius: 6px; font-size: 14px; color: #1d1d1b; }
+.fx .pub .menu span.on { background: #eef1e6; font-weight: 600; }
+.fx .pub .menu span.q0 { color: #6b655c; }
+.fx .pub .err { color: #B03A22; font-size: 14px; line-height: 1.55; }
+.fx .pub .err.box { background: rgba(176,58,34,.10); border: 1px solid rgba(176,58,34,.3); border-radius: 8px; padding: 9px 12px; }
+.fx .pub .hide { opacity: .45; }
+.fx .jcol .stlbl { white-space: normal; }
+.fx .jcol .kv7 > div { grid-template-columns: 1fr; gap: 2px; }
+.fx .jcol { display: grid; gap: 8px; align-content: start; flex: none; }
+.fx .fp7 { position: absolute; right: 118px; top: 50px; width: 300px; background: var(--c); border: 1px solid var(--ln2); border-radius: 10px; box-shadow: 0 10px 28px rgba(0,0,0,.14); padding: 12px; display: grid; gap: 10px; z-index: 4; }
+.fx .fp7.st { position: static; box-shadow: none; width: 300px; }
+.fx .fp7 .fg { display: grid; gap: 4px; }
+.fx .fp7 .fg .fgl { font-size: 12px; color: var(--i3); }
+.fx .fp7 .door { color: var(--ol); font-weight: 600; font-size: 14px; }
+.fx .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; padding: 28px; background: var(--scrim); }
+.fx .flow .lbox { position: relative; }
+.fx .flow .lbox + .lbox::before { content: "\2192"; position: absolute; left: -22px; top: 14px; font-size: 16px; color: var(--i3); }
+.fx .flow .lbox .code { color: var(--i); word-break: break-all; }
+</style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol></svg>
 <div class="wrap">
 <header class="lede">
@@ -872,7 +915,7 @@ table.doc td .code2 { font: 500 12.5px/1.4 var(--font-data); }
 </section>
 
 <div class="bar" role="navigation" aria-label="Drawings">
-  <a class="jump" href="#a">A · Pipeline</a><a class="jump" href="#b">B · Numbers</a><a class="jump" href="#c">C · What staff put in</a><a class="jump" href="#d">D · Campaigns</a><a class="jump" href="#e">E · Pitch decks</a><a class="jump" href="#f">F · Business numbers</a><a class="jump" href="#g">G · Can't</a><a class="jump" href="#h">H · Safety</a><a class="jump" href="#i">I · Boundary</a><a class="jump" href="#fmt">Formatting</a><a class="jump" href="#paste">Paste-back</a>
+  <a class="jump" href="#a">A · Pipeline</a><a class="jump" href="#b">B · Numbers</a><a class="jump" href="#c">C · What staff put in</a><a class="jump" href="#d">D · Campaigns</a><a class="jump" href="#e">E · Pitch decks</a><a class="jump" href="#f">F · Business numbers</a><a class="jump" href="#g">G · Can't</a><a class="jump" href="#h">H · Safety</a><a class="jump" href="#i">I · Boundary</a><a class="jump" href="#j">J · Public form</a><a class="jump" href="#fmt">Formatting</a><a class="jump" href="#paste">Paste-back</a>
   <span class="sw" role="group" aria-label="Frames theme"><button type="button" id="sw-warm" aria-pressed="true">Warm</button><button type="button" id="sw-dark" aria-pressed="false">Dark</button></span>
 </div>
 
@@ -1263,7 +1306,7 @@ table.doc td .code2 { font: 500 12.5px/1.4 var(--font-data); }
         <p style="margin:0">A link we hand out carries a tag, e.g. <span class="code">fieldlogichq.com/start/league?ref=spring-mailout</span>. The form keeps the tag with the lead, from a short list we control; anything else is dropped. Nothing new to fill in, but it is a new public write and a link convention staff must use every time.</p>
         <ul><li>Needs: a list of tags, a place to keep them per lead, a guard on what is kept.</li><li>Answers "which of our efforts brought this lead", which staff typing never will.</li></ul></div>
     </div>
-    <span class="ex">Options only · not recommended in Stage 7</span>
+    <span class="ex">Options as first drawn · you chose C and D · drawn in full in drawing J</span>
   </div></div>
   <div class="ask" data-q="A4"><div class="q">Question 4 · Where a lead's source comes from</div>
     <p class="rec">Today the only clue is the page the form sat on. <b>(A)</b> Nothing new. <b>(B)</b> Staff record a source and their words on the lead, as drawn above. <b>(C)</b> A "How did you hear about us?" question on the public form: a visitor sees a new field, and it is customer copy (/marketing). <b>(D)</b> A tag on the links we hand out, kept quietly with the lead: no visible field, but a new public write.</p>
@@ -1580,13 +1623,388 @@ table.doc td .code2 { font: 500 12.5px/1.4 var(--font-data); }
     <tr><td><span class="k-res">FIXED</span></td><td>Today's campaign rows count live campaigns only; the export is audited, spreadsheet-safe and uncapped up to a stated ceiling; Copy emails moves to the server</td><td>Questions 6, 10.</td></tr>
     <tr><td><span class="k-res">FIXED</span></td><td>The Audit log's lead entries (field names only; old details for the growth power only); a second public form never turns a "no" into a "yes" or overwrites a worked lead</td><td>Headlines 6 and 7; question 10. The Audit log fix can go now, on its own.</td></tr>
     <tr><td><span class="k-unc">UNCHANGED</span></td><td>The shell, Find, the menu by job, the club record and its Story's frame, free time, money, Status, Errors, Feedback, Sent emails</td><td>Stages 1–5, as walked.</td></tr>
-    <tr><td><span class="k-unc">UNCHANGED</span></td><td>The public early-access form and the coach's "ask for more" button; the pitch walkthrough pages; every visitor's screen</td><td>Question 4's B; question 10 lists the form's latent fault.</td></tr>
+    <tr><td><span class="k-new">NEW</span></td><td>The public forms' optional question, the link tag, a limit on the early-access form, and the repeat-form rule</td><td>Drawing J, questions 12 to 16 (you chose C and D in question 4).</td></tr>
+    <tr><td><span class="k-unc">UNCHANGED</span></td><td>The coach's "ask for more" button inside the product; the pitch walkthrough pages; every other visitor screen</td><td>Question 4's B.</td></tr>
     <tr><td><span class="k-unc">UNCHANGED</span></td><td>Plans &amp; pricing, Approval queue, Email templates, Export registry, Bulk changes (apart from the one rename)</td><td>Question 1's A.</td></tr>
     <tr><td><span class="k-unc">UNCHANGED</span></td><td>Business numbers' Subscription, Usage and Metric notes tabs; the snapshot button; every watched path</td><td>Question 3's A.</td></tr>
     <tr><td><span class="k-lat">LATER</span></td><td>Club web addresses and the hosting quota</td><td>Stage 6.</td></tr>
     <tr><td><span class="k-lat">LATER</span></td><td>Staff and roles, the console's word pass, deleting a lead on request</td><td>Stage 8 (question 10).</td></tr>
-    <tr><td><span class="k-out">NOT BUILT</span></td><td>Automatic linking; a daily snapshot; a source on the public form or link tags; deck opens; emailing leads from Campaigns; merging two leads; a churn figure</td><td>Questions 2, 3, 4, 8, 5; drawing G; findings.</td></tr>
+    <tr><td><span class="k-out">NOT BUILT</span></td><td>Automatic linking; a daily snapshot; deck opens; emailing leads from Campaigns; merging two leads; a churn figure</td><td>Questions 2, 3, 4, 8, 5; drawing G; findings.</td></tr>
   </tbody></table></div>
+</section>
+
+<!-- ═══════════ J · THE PUBLIC FORM ═══════════ -->
+<section class="screen" id="j">
+  <div class="screen-head"><span class="n">DRAWING J</span><h2>What a visitor can tell us, and what staff then see</h2>
+  <p>You chose <b>C</b> (a "How did you hear about us?" question on the public forms) and <b>D</b> (a tag on the links we hand out) in question 4. Drawing C showed them as options only, so this is the full drawing: the two forms a visitor fills, the lead's page with the answer and the tag on it, the Numbers table and the filter that use them, and what a second form from a known address now does. It is the same example: Morgan Ellis of Cedar Hollow filled the form on Aug 4, again on Aug 11, and once more on Sep 2. <b>Nothing here is built.</b> Customer copy (the question, its eight choices, two error sentences) is a release item and goes through the marketing session.</p></div>
+
+  <h3 style="margin-top:8px">1 · The early-access form: one new question, last before the updates box</h3>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="wins" style="background:var(--p);gap:24px">
+      <div class="jcol"><span class="stlbl">Before · the form as it ships</span>
+        <div class="pub j">
+          <div class="g2"><div class="f"><div class="pl">Name</div><div class="pi ">Morgan Ellis</div></div><div class="f"><div class="pl">Email</div><div class="pi ">morgan@example.com</div></div></div>
+          <div class="f"><div class="pl">Organization</div><div class="pi ">Cedar Hollow Youth Sports</div></div>
+          <div class="g2"><div class="f"><div class="pl">Your role</div><div class="pi ">Registrar</div></div><div class="f"><div class="pl">Sport or program</div><div class="pi ">Baseball, soccer</div></div></div>
+          <div class="f"><div class="pl">Plans interested in</div><div class="cbs"><span><i class="on"></i>League Plus</span><span><i class=""></i>Club</span></div></div>
+          <div class="f"><div class="pl">Features interested in</div><div class="cbs"><span><i class="on"></i>House league</span><span><i class="on"></i>Registration</span><span><i class=""></i>Public site</span><span><i class=""></i>Accounting</span><span><i class=""></i>Rep teams</span><span><i class=""></i>Coach portal</span><span><i class=""></i>Communications</span></div></div>
+          <div class="f"><div class="pl">What would make this useful for you?</div><div class="pi area">We run 40 teams in a spring house league and want online registration by January.</div></div>
+          
+          <div class="cons"><i></i><span>Send me feature and release updates for the areas I selected.</span></div>
+          <div class="go">Join early access</div>
+        </div></div>
+      <div class="jcol"><span class="stlbl">After · one new question, optional</span>
+        <div class="pub j">
+          <div class="g2"><div class="f"><div class="pl">Name</div><div class="pi ">Morgan Ellis</div></div><div class="f"><div class="pl">Email</div><div class="pi ">morgan@example.com</div></div></div>
+          <div class="f"><div class="pl">Organization</div><div class="pi ">Cedar Hollow Youth Sports</div></div>
+          <div class="g2"><div class="f"><div class="pl">Your role</div><div class="pi ">Registrar</div></div><div class="f"><div class="pl">Sport or program</div><div class="pi ">Baseball, soccer</div></div></div>
+          <div class="f"><div class="pl">Plans interested in</div><div class="cbs"><span><i class="on"></i>League Plus</span><span><i class=""></i>Club</span></div></div>
+          <div class="f"><div class="pl">Features interested in</div><div class="cbs"><span><i class="on"></i>House league</span><span><i class="on"></i>Registration</span><span><i class=""></i>Public site</span><span><i class=""></i>Accounting</span><span><i class=""></i>Rep teams</span><span><i class=""></i>Coach portal</span><span><i class=""></i>Communications</span></div></div>
+          <div class="f"><div class="pl">What would make this useful for you?</div><div class="pi area">We run 40 teams in a spring house league and want online registration by January.</div></div>
+          <div class="f"><div class="pl">How did you hear about us?<span class="nw">NEW</span></div><div class="pi new"><span>Choose one</span><span>▾</span></div></div>
+          <div class="cons"><i></i><span>Send me feature and release updates for the areas I selected.</span></div>
+          <div class="go">Join early access</div>
+        </div></div>
+      <div class="jcol" style="width:330px"><span class="stlbl">As the browser draws it (Morgan's pick)</span>
+        <div class="pub j" style="width:330px"><div class="pl">How did you hear about us?<span class="nw">NEW</span></div>
+          <div class="pi new"><span>Another club or team told me</span><span>▴</span></div>
+          <div class="menu"><span class="q0">Choose one</span><span class="on">Another club or team told me</span><span class="">Someone else told me</span><span class="">I came across it at a tournament</span><span class="">I searched online</span><span class="">Social media</span><span class="">An event or conference</span><span class="">Someone sent me a presentation</span><span class="">Something else</span></div>
+          <div class="lead">A computer's browser and a phone each draw this list themselves. This panel shows the words and their order, not the look.</div></div></div>
+    </div>
+    <span class="ex">The public site, light · the form in its window; the page around it does not change · the blue NEW marks the addition and is not shown to visitors</span>
+  </div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="One optional question, labelled How did you hear about us? It sits last, just above the updates box, so the fields we need stay first. It carries no star and no (optional) tag: required fields are marked, optional ones are not. The first choice, Choose one, means no answer. A visitor who skips it is a lead like any other.">ASK 4 · C · the question</button>
+    <button class="tag" data-n="A select, 44 pixels tall with the same edge and corners as the form's other fields. The browser draws the list itself on a computer and the phone draws it on a phone, with the same eight words in the same order. The eight choices and their order are the marketing session's words; they are customer copy.">S7 · a dropdown like the others</button>
+    <button class="tag" data-n="The fields, the order of the others, the button and the thanks screen are as they ship today. The thanks screen is the same for a new address and a known one. The updates box starts ticked today; that is what the form does today and this drawing does not change it.">Nothing else changes</button>
+  </div>
+  <div class="tbl"><table class="doc lbls"><thead><tr><th>The visitor chooses</th><th>The lead's Source becomes (until staff choose one)</th></tr></thead><tbody>
+    <tr><td>Choose one (or skips it)</td><td>Nothing: Source stays Not set</td></tr>
+    <tr><td>Another club or team told me</td><td>Referral from a club</td></tr>
+    <tr><td>Someone else told me</td><td>Other</td></tr>
+    <tr><td>I came across it at a tournament</td><td>A tournament on FieldLogicHQ</td></tr>
+    <tr><td>I searched online</td><td>Search</td></tr>
+    <tr><td>Social media</td><td>Social media</td></tr>
+    <tr><td>An event or conference</td><td>An event or conference</td></tr>
+    <tr><td>Someone sent me a presentation</td><td>A pitch deck</td></tr>
+    <tr><td>Something else</td><td>Other</td></tr>
+  </tbody></table></div>
+
+  <h3 style="margin-top:8px">2 · The same question on the coach's "Express interest" form</h3>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="wins" style="background:var(--p);gap:24px">
+      <div class="jcol"><span class="stlbl">Before · the coach form as it ships</span>
+        <div class="pub j coach">
+          <div class="ttl">Premium Coaches Portal</div>
+          <div class="lead">Self-serve signup isn't open yet. Tell us you're interested and we'll be in touch. No commitment, and your free Coaches Portal stays free.</div>
+          <div class="f"><div class="pl">Your name *</div><div class="pi ">Drew Palmer</div></div><div class="f"><div class="pl">Email *</div><div class="pi ">drew@example.com</div></div><div class="f"><div class="pl">Team or club name *</div><div class="pi ">Lakeshore U13 Blue</div></div>
+          <div class="f"><div class="pl">What would help your team?</div><div class="pi area">e.g. lineups, dues tracking, documents…</div></div>
+          
+          <div class="go c"><svg class="ic"><use href="#i-campaigns"/></svg>Express interest</div>
+        </div></div>
+      <div class="jcol"><span class="stlbl">After · the same question, the same eight choices</span>
+        <div class="pub j coach">
+          <div class="ttl">Premium Coaches Portal</div>
+          <div class="lead">Self-serve signup isn't open yet. Tell us you're interested and we'll be in touch. No commitment, and your free Coaches Portal stays free.</div>
+          <div class="f"><div class="pl">Your name *</div><div class="pi ">Drew Palmer</div></div><div class="f"><div class="pl">Email *</div><div class="pi ">drew@example.com</div></div><div class="f"><div class="pl">Team or club name *</div><div class="pi ">Lakeshore U13 Blue</div></div>
+          <div class="f"><div class="pl">What would help your team?</div><div class="pi area">e.g. lineups, dues tracking, documents…</div></div>
+          <div class="f"><div class="pl">How did you hear about us?<span class="nw">NEW</span></div><div class="pi new"><span>Choose one</span><span>▾</span></div></div>
+          <div class="go c"><svg class="ic"><use href="#i-campaigns"/></svg>Express interest</div>
+        </div></div>
+      <div class="lbox" style="width:420px;align-self:center"><span class="stg">One question, two forms</span>
+        <p style="margin:0">The coach form reaches the same lead list through the same server door, so the same list, the same stored answer and the same rules apply. A coach lands in Numbers under "Coach start".</p>
+        <ul><li>The coach's "ask for more" button inside the product has no question. We already know who asked and for which team.</li><li>The honeypot field stays invisible and unchanged.</li></ul></div>
+    </div>
+    <span class="ex">The public site, light · the blue NEW marks the addition and is not shown to visitors</span>
+  </div></div>
+  <div class="ask" data-q="A12"><div class="q">Question 12 · The forms' new question</div>
+    <p class="rec">Both public forms gain "How did you hear about us?": optional, no star, Choose one first, the eight choices with the mapping above (the marketing session's words, Oct 27). The early-access form places it last before the updates box; the coach form places it last before the button.</p>
+    <p class="rec"><b>Recommended: as drawn, on both forms.</b> The alternative is the early-access form only, which would leave every coach lead with Source Not set.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="As drawn: last, optional, no star, on both forms (recommended)"> As drawn: last, optional, no star, on both forms (recommended)</label>
+      <label><input type="checkbox" data-o="Higher up: right after Sport or program"> Higher up: right after Sport or program</label>
+      <label><input type="checkbox" data-o="The early-access form only; leave the coach form alone"> The early-access form only; leave the coach form alone</label>
+    </div><textarea aria-label="Notes on question 12" placeholder="Notes"></textarea></div>
+
+  <h3 style="margin-top:8px">3 · The lead's page, after: the answer, the link, and every refill dated</h3>
+  <p class="hint">Before: the lead's page in drawing A. This is the same morning with three rows changed: Arrived from counts the refills, a new Link row, and Source keeps what the visitor said beneath what staff recorded.</p>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app auto">
+      <aside class="side" data-role="growth" data-active="leads" data-open="Growth"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Leads</span><span class="rule"></span><h1>Cedar Hollow Youth Sports</h1><span class="chip">Pilot</span><div class="end"><span class="pencil" aria-label="Edit"><svg class="ic"><use href="#i-pencil"/></svg></span><span class="btn">Email Morgan<svg class="ic"><use href="#i-down"/></svg></span><span class="btn">Add a note</span><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div>
+          <div class="meta">Morgan Ellis · <span class="code">morgan@example.com</span> · arrived Aug 4 from the League Plus page · 84 days ago</div></div>
+        <div class="match">
+          <div><b>A club signed up with this lead's email.</b> Cedar Hollow Youth Sports joined last night at 7:12 p.m. and is on a League Plus trial. Is it this lead's club?</div>
+          <div class="row"><span class="why">Matched because its owner signs in with morgan@example.com. Nothing is linked until someone confirms.</span><span class="gap"></span><span class="btn">Not this club</span><span class="btn lime">Link the club</span></div>
+        </div>
+        <div class="rec2">
+          <div class="card"><h3 class="ch">About this lead</h3>
+            <div class="kv7">
+              <div><span class="k2">Contact</span><span>Morgan Ellis · Registrar<span class="sub" style="display:block;font-size:12px;color:var(--i3)">morgan@example.com · said yes to release emails</span></span></div>
+              <div><span class="k2">Interest</span><span>League Plus<span style="display:block;font-size:12px;color:var(--i3)">House league, Registration</span></span></div>
+              <div><span class="k2">Arrived from</span><span>The League Plus page<span style="display:block;font-size:12px;color:var(--i3)"><span class="code">/start/league</span> · filled the form 3 times, last on Sep 2</span></span></div>
+              <div><span class="k2">Link</span><span>Spring mailout</span></div>
+              <div><span class="k2">Source</span><span>Referral from a club<span style="display:block;font-size:12px;color:var(--i3)">Lakeview Minor Sports' registrar told them</span><span style="display:block;font-size:12px;color:var(--i3)">From the form: Another club or team told me</span></span></div>
+              <div><span class="k2">Next action</span><span>Check they've signed up</span></div>
+              <div><span class="k2">Follow-up</span><span>Oct 30</span></div>
+              <div><span class="k2">Last contacted</span><span>Oct 14, by Riley</span></div>
+              <div><span class="k2">In their words</span><span class="q2">"We run 40 teams in a spring house league and want online registration by January."</span></div>
+            </div></div>
+          <div class="card"><h3 class="ch">Timeline<span class="end">Newest first · every edit since May 20</span></h3>
+            <div class="story7">
+              <div class="r hot sys"><span class="w">Oct 26, 7:12 p.m.</span><span class="t"><b>A club signed up with this email:</b> Cedar Hollow Youth Sports, on a League Plus trial. Not linked yet.</span></div>
+              <div class="r"><span class="w">Oct 14</span><span class="t"><span class="by">Riley</span> added a note<span class="q">Morgan says they'll start a trial this month. Follow-up moved to Oct 30.</span></span></div>
+              <div class="r"><span class="w">Sep 10</span><span class="t"><span class="by">Riley</span> moved it from Qualified to <b>Pilot</b></span></div>
+              <div class="r"><span class="w">Sep 3</span><span class="t"><span class="by">Riley</span> added a note<span class="q">Sent the club walkthrough deck.</span></span></div>
+              <div class="r sys"><span class="w">Sep 2, 6:20 p.m.</span><span class="t">Filled the form again, on the Club page<span class="q">"We have grown to 44 teams across two leagues and are also looking at the Club plan."</span></span></div>
+              <div class="r"><span class="w">Aug 20</span><span class="t"><span class="by">Riley</span> moved it from Contacted to <b>Qualified</b><span class="s3">Next action: Send the club walkthrough · Follow-up Sep 3</span></span></div>
+              <div class="r sys"><span class="w">Aug 11, 8:03 p.m.</span><span class="t">Filled the form again, on the League Plus page</span></div>
+              <div class="r"><span class="w">Aug 6</span><span class="t"><span class="by">Riley</span> marked it <b>Contacted</b> and set the source: Referral from a club<span class="s3">Next action: Call Morgan back about house league · Follow-up Aug 20</span></span></div>
+              <div class="r"><span class="w">Aug 6</span><span class="t"><span class="by">Riley</span> added a note<span class="q">Wants house league registration live by January.</span></span></div>
+              <div class="r sys"><span class="w">Aug 4, 9:48 p.m.</span><span class="t">Filled the early-access form on the League Plus page<span class="s3">Asked about House league and Registration</span></span></div>
+            </div></div>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Production console · example data · Oct 27 · after</span>
+  </div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Under Source, always: From the form: and the visitor's own choice, in their words as the form worded it. Here Riley recorded Referral from a club on Aug 6 and the visitor had said Another club or team told me, so they agree. When they disagree, staff's source stays the Source and the form line still shows, so nothing the visitor said is hidden.">ASK 4 · C · From the form</button>
+    <button class="tag" data-n="A Link row, only when the lead has a tag: the label from our list (Spring mailout), never the raw text from the address. It answers which of our efforts brought the lead, which Source (a channel) does not.">ASK 4 · D · Link</button>
+    <button class="tag" data-n="Arrived from is the first page the lead came in on, and does not move when someone fills the form again from another page. Today the latest form overwrites it. The refills are on the timeline, each on its own date.">S7 · Arrived from keeps the first page</button>
+    <button class="tag" data-n="Today only the latest refill is dated (the page says &quot;last on&quot;). A refill is now stored, so the timeline carries one entry per form: its date and time, the page, and the visitor's new words when they wrote any (Sep 2). A refill with no new words (Aug 11) is just the line. The words are printed as text, never as markup.">S7 · each refill is dated</button>
+  </div>
+
+  <h3 style="margin-top:8px">The Source row in four cases</h3>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="wins" style="gap:24px">
+      <div class="jcol" style="width:320px"><span class="stlbl">Nobody has set a source; the visitor chose one</span><div class="card" style="width:320px"><h3 class="ch">About this lead · Northgate Sports Club</h3><div class="kv7"><div><span class="k2">Source</span><span>Search<span style="display:block;font-size:12px;color:var(--i3)">From the form: I searched online</span></span></div></div></div></div>
+      <div class="jcol" style="width:320px"><span class="stlbl">Staff set one; the visitor said something else</span><div class="card" style="width:320px"><h3 class="ch">About this lead · Pine Ridge Recreation</h3><div class="kv7"><div><span class="k2">Source</span><span>A tournament on FieldLogicHQ<span style="display:block;font-size:12px;color:var(--i3)">Jordan met our team at the Spring Showcase</span><span style="display:block;font-size:12px;color:var(--i3)">From the form: Social media</span></span></div></div></div></div>
+      <div class="jcol" style="width:320px"><span class="stlbl">The visitor chose a catch-all</span><div class="card" style="width:320px"><h3 class="ch">About this lead · Riverbend Rec League</h3><div class="kv7"><div><span class="k2">Source</span><span>Other<span style="display:block;font-size:12px;color:var(--i3)">From the form: Someone else told me</span></span></div></div></div></div>
+      <div class="jcol" style="width:320px"><span class="stlbl">The visitor skipped it; the link carried a tag</span><div class="card" style="width:320px"><h3 class="ch">About this lead · Summit Valley Athletics</h3><div class="kv7"><div><span class="k2">Link</span><span>Conference booth</span></div><div><span class="k2">Source</span><span class="none" style="color:var(--i3)">Not set</span></div></div></div></div>
+    </div>
+    <span class="ex">Production console · example data · the Source and Link rows of About this lead</span>
+  </div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Until a staff member chooses a source, the Source is the one the visitor's answer maps to (the table above). The moment staff choose one, it is theirs and the visitor's answer stays beneath it. Nothing the visitor said is ever written over a staff source. The pencil shows the form's source selected, and the first choice staff make replaces it.">ASK 4 · fills only when staff have set none</button>
+    <button class="tag" data-n="A visitor who skipped the question and has no staff source is still Not set, and still counts in the first row of By source (drawing B).">S7 · Not set stays honest</button>
+  </div>
+  <div class="ask" data-q="A13"><div class="q">Question 13 · The lead's page: the answer and the link</div>
+    <p class="rec">Two ways to treat the visitor's answer. <b>(A) It fills Source until staff choose one</b>, with "From the form:" always shown (as drawn). The By source table then counts staff's choices and the visitors' answers together, and says so in its note. <b>(B) It stays apart</b>: Source means what staff recorded, and the visitor's answer shows only as "From the form:". Not set stays the largest row, and the form's answers need a table of their own.</p>
+    <p class="rec"><b>Recommended: A.</b> It is the rule you gave ("only when staff have set none, never overwriting one"), it shrinks Not set for the leads that matter, and nothing is lost either way. The cost is that one table mixes two kinds of evidence. The Link row sits under Arrived from, because a tag is part of how the lead arrived.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="A: the form fills Source until staff choose one; From the form: always shown (recommended)"> A: the form fills Source until staff choose one; From the form: always shown (recommended)</label>
+      <label><input type="checkbox" data-o="B: Source is staff only; the visitor's answer shows as From the form: and nowhere else"> B: Source is staff only; the visitor's answer shows as From the form: and nowhere else</label>
+      <label><input type="checkbox" data-o="The Link row sits under Arrived from (recommended)"> The Link row sits under Arrived from (recommended)</label>
+      <label><input type="checkbox" data-o="The Link row sits under Source instead"> The Link row sits under Source instead</label>
+    </div><textarea aria-label="Notes on question 13" placeholder="Notes"></textarea></div>
+
+  <h3 style="margin-top:8px">4 · A second form from a known address</h3>
+  <div class="tbl"><table class="doc"><thead><tr><th style="width:220px">The address is</th><th>What the new form changes on the lead</th><th>What the timeline says</th></tr></thead><tbody>
+    <tr><td>New to us</td><td>A new lead, from what was filled in. The thanks screen is the same whether the address is known or not, so the form cannot be used to find out who is already a lead.</td><td>Filled the early-access form on the {page} page</td></tr>
+    <tr><td>A lead nobody has worked: still New, no note, no source, no link</td><td>The visitor's new words replace the old ones (name, organization, role, interests, what they wrote). Arrived from and the Link tag keep their first values. A tick on the updates box can switch it off, never on.</td><td>Filled the form again, on the {page} page, and their words</td></tr>
+    <tr><td>A lead staff have worked: any step past New, a note, a source, or a link</td><td>Nothing on the lead changes. If the visitor unticked the updates box, that one change lands (see question 14).</td><td>Filled the form again, on the {page} page, and their words quoted</td></tr>
+    <tr><td>A lead whose updates box says no, when the visitor ticks yes</td><td>It stays no, at every step. Only a person can turn it on, by asking them.</td><td>The entry adds: Ticked yes to release emails. The lead still says no.</td></tr>
+  </tbody></table></div>
+  <div class="ask" data-q="A14"><div class="q">Question 14 · A second form on a known address</div>
+    <p class="rec">Your rule (question 10): a second form never turns a no into a yes and never overwrites a worked lead. The table draws it for the four cases. <b>Two places where your rule and the drawing differ, for you to rule on.</b> First, a visitor who <em>unticks</em> the updates box on a worked lead is withdrawing a yes; as ruled, that would be ignored and they would stay in Copy emails. Recommended: a withdrawal always lands, on any lead. Second, the address a lead arrived from, and its tag, are facts about the first visit; they stay the first on every lead (today the latest overwrites the page).</p>
+    <p class="rec"><b>Recommended: all three.</b> A second form never makes a lead say yes, a withdrawal always lands, and the first page and first tag are kept.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="A yes never replaces a no, on any lead (your rule, as ruled)"> A yes never replaces a no, on any lead (your rule, as ruled)</label>
+      <label><input type="checkbox" data-o="A withdrawal (unticking the updates box) always lands, even on a worked lead (recommended)"> A withdrawal (unticking the updates box) always lands, even on a worked lead (recommended)</label>
+      <label><input type="checkbox" data-o="A worked lead ignores every change, including a withdrawal (as ruled, literally)"> A worked lead ignores every change, including a withdrawal (as ruled, literally)</label>
+      <label><input type="checkbox" data-o="Arrived from and the Link tag keep their first values on every lead (recommended)"> Arrived from and the Link tag keep their first values on every lead (recommended)</label>
+      <label><input type="checkbox" data-o="The timeline notes a yes that was not applied: Ticked yes to release emails. The lead still says no. (recommended)"> The timeline notes a yes that was not applied: Ticked yes to release emails. The lead still says no. (recommended)</label>
+    </div><textarea aria-label="Notes on question 14" placeholder="Notes"></textarea></div>
+
+  <h3 style="margin-top:8px">5 · A tag on the links we hand out: what the visitor never sees</h3>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="flow">
+      <div class="lbox"><span class="stg">1 · A link we hand out</span>
+        <p style="margin:0">In a mailout, a newsletter or a booth card:</p>
+        <p style="margin:0" class="code">fieldlogichq.com/start/league?ref=spring-mailout</p>
+        <ul><li>Any public page can carry it.</li><li>We choose and write the tag; a visitor never types one.</li></ul></div>
+      <div class="lbox"><span class="stg">2 · The page they land on</span>
+        <p style="margin:0">Looks exactly as it does today. It reads the tag once and keeps it in that browser tab's own memory.</p>
+        <ul><li>No cookie, nothing in the account, nothing shown on screen.</li><li>It is gone when the tab closes.</li></ul></div>
+      <div class="lbox"><span class="stg">3 · The form sends it</span>
+        <p style="margin:0">If they fill the form in that tab, the tag goes with the form, next to the page it was filled on.</p>
+        <ul><li>Back later in a new tab: no tag, and the lead is saved without one.</li><li>Nothing new is stored about the visitor, their address or their device.</li></ul></div>
+      <div class="lbox s2"><span class="stg">4 · The server checks it</span>
+        <ul><li>On our list: kept, shown as Link: Spring mailout.</li><li>Not on the list, or anything else: dropped. The lead is saved untagged and the visitor sees no difference.</li><li>Longer than 40 characters: cut first, so it is dropped.</li><li>A known address keeps its first tag.</li></ul></div>
+    </div>
+    <span class="ex">Not visible to the visitor · the forty characters is a builder's number</span>
+  </div></div>
+  <div class="tbl"><table class="doc lbls"><thead><tr><th>In the address</th><th>Staff see</th><th>A starting list (examples: send me the real ones)</th></tr></thead><tbody>
+    <tr><td>ref=spring-mailout</td><td>Link: Spring mailout</td><td>The email we send clubs in the spring</td></tr>
+    <tr><td>ref=conference-booth</td><td>Link: Conference booth</td><td>A card or a screen at an event table</td></tr>
+    <tr><td>ref=club-newsletter</td><td>Link: Club newsletter</td><td>A link in a club's own newsletter</td></tr>
+    <tr><td>ref=deck-follow-up</td><td>Link: Deck follow-up</td><td>The link in the note that goes with a pitch deck</td></tr>
+  </tbody></table></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Only tags on a short list in the product are ever stored, each with the label staff read. Adding one is a small change we make, with its label, not something staff do on a screen; so a tag can never be a stranger's words. Anything else is dropped and never displayed, whatever it contains.">ASK 4 · D · a short list we keep</button>
+    <button class="tag" data-n="No referrer, no address, no cookie and no new device information. The tag is one short word from our list or nothing. (The form already records the browser's user-agent text, as it does today; this does not change that.)">S7 · what is not kept</button>
+  </div>
+
+  <h3 style="margin-top:8px">6 · Numbers and Filter: the table and the field that use the tag</h3>
+  <p class="hint">Before: drawing B. Three changes: By source's note, a new By link tag table, and the definitions move beside the month chart so the new table fits. Leads with no tag are counted, like Not set.</p>
+  <div class="scroller"><div class="fx" data-frame>
+    <div class="strip" data-strip data-find=""></div>
+    <div class="app auto">
+      <aside class="side" data-role="growth" data-active="leads" data-open="Growth" data-n-leads="7"></aside>
+      <main class="main"><div class="page">
+        <div class="ph"><h1>Leads</h1><div class="end"><span class="help" aria-hidden="true"><svg class="ic"><use href="#i-help"/></svg></span></div></div>
+        <div class="tools"><span class="vsw"><span>Pipeline</span><span class="on">Numbers</span></span><span class="sel">All time · since May 20<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span><span class="gap"></span><span class="quiet" style="font-size:12px;color:var(--i3)">Read at 9:44 a.m.</span><span class="tbtn">Filter</span><span class="tbtn" aria-label="Tools">Tools ⋯</span></div>
+        <div class="band c5">
+          <div><span class="k">Leads arrived</span><span class="v">64</span><span class="s">May 20 to Oct 27</span></div>
+          <div><span class="k">Signed up</span><span class="v">11</span><span class="s">17% of the leads</span></div>
+          <div><span class="k">Pay now</span><span class="v">6</span><span class="s">6 of the 11 who signed up</span></div>
+          <div><span class="k">Time to sign up</span><span class="v">41 days</span><span class="s">the middle lead; quickest 4, slowest 133</span></div>
+          <div><span class="k">New accounts</span><span class="v">26</span><span class="s">15 came without a lead</span></div>
+        </div>
+        <div class="two">
+          <div class="card"><h3 class="ch">By the page they arrived from</h3>
+            <table class="t"><thead><tr><th>Page</th><th class="r">Leads</th><th class="r">Signed up</th><th class="r">Rate</th><th class="r">Pay now</th><th class="r">Days</th></tr></thead><tbody>
+              <tr><td>The League Plus page</td><td class="r">18</td><td class="r">4</td><td class="r">22%</td><td class="r">2</td><td class="r">33</td></tr>
+              <tr><td>The Club page</td><td class="r">15</td><td class="r">2</td><td class="r">13%</td><td class="r">1</td><td class="r">58</td></tr>
+              <tr><td>Inside the product (a coach asked)</td><td class="r">10</td><td class="r">2</td><td class="r">20%</td><td class="r">1</td><td class="r">9</td></tr>
+              <tr><td>The pricing page</td><td class="r">9</td><td class="r">1</td><td class="r">11%</td><td class="r">1</td><td class="r">41</td></tr>
+              <tr><td>Coach start</td><td class="r">8</td><td class="r">2</td><td class="r">25%</td><td class="r">1</td><td class="r">12</td></tr>
+              <tr><td>Other pages</td><td class="r">4</td><td class="r">0</td><td class="r">0%</td><td class="r">0</td><td class="r none">—</td></tr>
+            </tbody></table></div>
+          <div class="card"><h3 class="ch">By the plan they wanted<span class="end">A lead may pick two</span></h3>
+            <table class="t"><thead><tr><th>Plan</th><th class="r">Leads</th><th class="r">Signed up</th><th class="r">Rate</th><th class="r">Pay now</th><th class="r">Days</th></tr></thead><tbody>
+              <tr><td>League Plus</td><td class="r">24</td><td class="r">5</td><td class="r">21%</td><td class="r">3</td><td class="r">37</td></tr>
+              <tr><td>Club</td><td class="r">19</td><td class="r">2</td><td class="r">11%</td><td class="r">1</td><td class="r">58</td></tr>
+              <tr><td>Premium Coaches Portal</td><td class="r">18</td><td class="r">4</td><td class="r">22%</td><td class="r">2</td><td class="r">10</td></tr>
+              <tr><td>Club · Association</td><td class="r">6</td><td class="r">0</td><td class="r">0%</td><td class="r">0</td><td class="r none">—</td></tr>
+              <tr><td class="none">None picked</td><td class="r">3</td><td class="r">0</td><td class="r">0%</td><td class="r">0</td><td class="r none">—</td></tr>
+            </tbody></table></div>
+        </div>
+        <div class="two">
+          <div class="card"><h3 class="ch">By source<span class="end">Staff's choice, else the form's answer</span></h3>
+            <table class="t"><thead><tr><th>Source</th><th class="r">Leads</th><th class="r">Signed up</th><th class="r">Rate</th><th class="r">Pay now</th></tr></thead><tbody>
+              <tr><td class="none">Not set</td><td class="r">24</td><td class="r">2</td><td class="r">8%</td><td class="r">1</td></tr>
+              <tr><td>A tournament on FieldLogicHQ</td><td class="r">12</td><td class="r">2</td><td class="r">17%</td><td class="r">1</td></tr>
+              <tr><td>Referral from a club</td><td class="r">12</td><td class="r">5</td><td class="r">42%</td><td class="r">3</td></tr>
+              <tr><td>Search</td><td class="r">8</td><td class="r">1</td><td class="r">13%</td><td class="r">1</td></tr>
+              <tr><td>Social media</td><td class="r">4</td><td class="r">0</td><td class="r">0%</td><td class="r">0</td></tr>
+              <tr><td>An event or conference</td><td class="r">2</td><td class="r">1</td><td class="r">50%</td><td class="r">0</td></tr>
+              <tr><td>A pitch deck</td><td class="r">0</td><td class="r">0</td><td class="r none">—</td><td class="r">0</td></tr>
+              <tr><td>Other</td><td class="r">2</td><td class="r">0</td><td class="r">0%</td><td class="r">0</td></tr>
+            </tbody></table></div>
+          <div class="card"><h3 class="ch">By link tag<span class="end">From the links we hand out</span></h3>
+            <table class="t"><thead><tr><th>Link tag</th><th class="r">Leads</th><th class="r">Signed up</th><th class="r">Rate</th><th class="r">Pay now</th></tr></thead><tbody>
+              <tr><td class="none">No tag</td><td class="r">51</td><td class="r">8</td><td class="r">16%</td><td class="r">5</td></tr>
+              <tr><td>Spring mailout</td><td class="r">6</td><td class="r">2</td><td class="r">33%</td><td class="r">1</td></tr>
+              <tr><td>Conference booth</td><td class="r">4</td><td class="r">1</td><td class="r">25%</td><td class="r">0</td></tr>
+              <tr><td>Club newsletter</td><td class="r">3</td><td class="r">0</td><td class="r">0%</td><td class="r">0</td></tr>
+            </tbody></table></div>
+        </div>
+        <div class="two">
+          <div class="card"><h3 class="ch">Month by month<span class="end">By the month a lead arrived</span></h3>
+            <div class="trend">
+              <div class="lg"><span><i style="background:color-mix(in srgb, var(--ol) 22%, transparent)"></i>Leads arrived</span><span><i style="background:var(--ol)"></i>Of them, signed up so far</span></div>
+              <svg viewBox="0 0 560 230" role="img" aria-label="Leads arrived each month, May to October 2026: 5, 9, 11, 14, 13 and 12. Of them, signed up so far: 2, 3, 3, 2, 1 and 0.">
+                <g stroke="var(--ln)" stroke-width="1"><line x1="34" y1="20" x2="556" y2="20"/><line x1="34" y1="76.7" x2="556" y2="76.7"/><line x1="34" y1="133.3" x2="556" y2="133.3"/><line x1="34" y1="190" x2="556" y2="190"/></g>
+                <g font-size="11" fill="var(--i3)" font-family="Inter, sans-serif" text-anchor="end"><text x="26" y="24">15</text><text x="26" y="80.7">10</text><text x="26" y="137.3">5</text><text x="26" y="194">0</text></g>
+                <g fill="color-mix(in srgb, var(--ol) 22%, transparent)">
+                  <rect x="56" y="133.3" width="48" height="56.7" rx="3"/><rect x="142" y="88" width="48" height="102" rx="3"/><rect x="228" y="65.3" width="48" height="124.7" rx="3"/><rect x="314" y="31.3" width="48" height="158.7" rx="3"/><rect x="400" y="42.7" width="48" height="147.3" rx="3"/><rect x="486" y="54" width="48" height="136" rx="3"/>
+                </g>
+                <g fill="var(--ol)">
+                  <rect x="56" y="167.3" width="48" height="22.7" rx="3"/><rect x="142" y="156" width="48" height="34" rx="3"/><rect x="228" y="156" width="48" height="34" rx="3"/><rect x="314" y="167.3" width="48" height="22.7" rx="3"/><rect x="400" y="178.7" width="48" height="11.3" rx="3"/>
+                </g>
+                <g font-size="12" font-weight="600" fill="var(--i)" font-family="Inter, sans-serif" text-anchor="middle"><text x="80" y="127">5</text><text x="166" y="82">9</text><text x="252" y="59">11</text><text x="338" y="25">14</text><text x="424" y="37">13</text><text x="510" y="48">12</text></g>
+                <g font-size="11" fill="var(--i2)" font-family="Inter, sans-serif" text-anchor="middle"><text x="80" y="208">May</text><text x="166" y="208">Jun</text><text x="252" y="208">Jul</text><text x="338" y="208">Aug</text><text x="424" y="208">Sep</text><text x="510" y="208">Oct</text><text x="80" y="222" fill="var(--i3)">from the 20th</text><text x="510" y="222" fill="var(--i3)">to date</text></g>
+              </svg>
+            </div>
+            <div class="defs">Paying by month starts on Oct 25, 2026, the day we began recording when a subscription starts. Until then, Pay now is today's count only.</div>
+          </div>
+          <div class="card"><div class="defs" style="border-top:0">
+          <span><b>Leads arrived</b> · leads whose first form came in the period. A second form from the same address is the same lead.</span>
+          <span><b>Signed up</b> · of those leads, the ones linked to a club or a Coaches Portal by a person (an offered match they confirmed, or by hand), at any time up to today. 3 of the 11 were offered matches.</span>
+          <span><b>Pay now</b> · of those, the ones paying today: their own plan is not the free Tournament plan, their billing is active, and a real subscription stands behind it. A trial, free time and a Founding Season comp are not paying.</span>
+          <span><b>Time to sign up</b> · days from the lead's first form to the day its club or portal was created, not the day staff linked it (question 11).</span>
+          <span><b>Link tag</b> · the tag on the link a lead arrived by, from our short list. A lead that filled the form again keeps its first tag. Leads with no tag are counted too, so the tagged ones are not mistaken for all of them.</span>
+          <span><b>What it cannot know</b> · whether a charge was actually collected or how much; how a lead heard of us unless staff recorded it or the visitor said; a club that signed up under a different address from the lead's until someone links it; anything before May 20.</span>
+        </div></div>
+        </div>
+      </div></main>
+    </div>
+    <span class="ex">Production console · example data · Oct 27 · after</span>
+  </div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="Its note changes from Recorded by staff to Staff's choice, else the form's answer, because with question 13's A the table now counts both. Not set shrinks (31 to 24 in the example) as visitors answer. The totals still add up to the leads that arrived.">ASK 4 · By source, honest about its mix</button>
+    <button class="tag" data-n="One row per tag on the list that a lead in this period carries, plus No tag first, quiet like Not set, so the tagged rows do not read as the whole. The columns are By source's. A tag nobody has used yet draws no row; with no tag used at all, the table is not drawn. Part 7 left untagged leads out; this adds them.">ASK 4 · D · By link tag</button>
+    <button class="tag" data-n="They move beside the month chart, where the room is, and gain one line for Link tag. The line saying what the numbers cannot know now says how a lead heard of us &quot;unless staff recorded it or the visitor said&quot;.">S7 · the definitions</button>
+  </div>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="mini" style="grid-template-columns: 820px 1fr; align-items:start">
+      <div style="display:grid; gap:8px"><span class="stlbl">Filter, opened on the Pipeline, a link tag chosen</span>
+        <div class="card rel" style="height:420px">
+          <div class="tb tools"><span class="vsw"><span class="on">Pipeline</span><span>Numbers</span></span><span class="sel round">All leads<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span><span class="gap"></span><span class="search"><svg class="ic"><use href="#i-search"/></svg>Search leads</span><span class="tbtn on">Filter <span class="dotn">· 1</span></span><span class="tbtn" aria-label="Tools">Tools ⋯</span></div>
+          <div class="fp7">
+          <div class="fg"><span class="fgl">Step</span><span class="sel w">Any<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+          <div class="fg"><span class="fgl">Plan</span><span class="sel w">Any<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+          <div class="fg"><span class="fgl">Source</span><span class="sel w">Any<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+          <div class="fg"><span class="fgl">Link tag</span><span class="sel w" style="border-color:var(--ol)">Spring mailout<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+            <span class="door">Clear the filter</span>
+          </div>
+        </div></div>
+      <div style="display:grid; gap:8px"><span class="stlbl">Before any link has been used</span>
+        <div class="fp7 st">
+          <div class="fg"><span class="fgl">Step</span><span class="sel w">Any<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+          <div class="fg"><span class="fgl">Plan</span><span class="sel w">Any<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+          <div class="fg"><span class="fgl">Source</span><span class="sel w">Any<span class="chev"><svg class="ic"><use href="#i-down"/></svg></span></span></div>
+          
+        </div>
+        <p class="cap12">The Link tag field appears once a lead has a tag. Until then it would hold only Any, a control with nothing to do. Absent beats disabled.</p></div>
+    </div>
+    <span class="ex">Production console · example data</span>
+  </div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="A fourth field in the Filter, beneath Source, with the tag labels. It filters the list and the Numbers view alike, and the Filter button shows a count when it is on. Clear the filter puts everything back.">ASK 4 · D · Filter · Link tag</button>
+  </div>
+  <div class="ask" data-q="A15"><div class="q">Question 15 · Link tags: the list, the table and the filter</div>
+    <p class="rec">Three things to settle. <b>The starting list</b> of tags (the four above are examples), <b>whether By link tag shows the leads that have no tag</b>, and <b>whether the Link tag filter appears only once a tag exists</b>. The tag list is yours to choose; a tag is added with a small code change that includes its label.</p>
+    <p class="rec"><b>Recommended:</b> the tags you send me in the notes (the four are placeholders), the table with a No tag row, and the filter field only once a tag exists.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="By link tag counts leads with no tag, in a first quiet row (recommended)"> By link tag counts leads with no tag, in a first quiet row (recommended)</label>
+      <label><input type="checkbox" data-o="By link tag lists tagged leads only (as Part 7 built it)"> By link tag lists tagged leads only (as Part 7 built it)</label>
+      <label><input type="checkbox" data-o="The Link tag filter appears only once a tag has been used (recommended)"> The Link tag filter appears only once a tag has been used (recommended)</label>
+      <label><input type="checkbox" data-o="Start with the four examples as drawn; I will add more later"> Start with the four examples as drawn; I will add more later</label>
+      <label><input type="checkbox" data-o="Start with my own list: see Notes"> Start with my own list: see Notes</label>
+    </div><textarea aria-label="Notes on question 15" placeholder="Notes"></textarea></div>
+
+  <h3 style="margin-top:8px">7 · When the form cannot save</h3>
+  <div class="scroller"><div class="fx" data-frame style="width:1440px">
+    <div class="wins" style="background:var(--p);gap:24px">
+      <div class="jcol"><span class="stlbl">Too many tries from one place · the house sentence, now also on this form</span>
+        <div class="pub j"><div class="cons hide"><i></i><span>Send me feature and release updates for the areas I selected.</span></div>
+          <div class="err">Too many attempts. Please wait a few minutes and try again.</div>
+          <div class="go">Join early access</div></div></div>
+      <div class="jcol"><span class="stlbl">We could not save it · a new sentence (proposed)</span>
+        <div class="pub j"><div class="cons hide"><i></i><span>Send me feature and release updates for the areas I selected.</span></div>
+          <div class="err">We couldn't save your request just now. Please try again in a few minutes.</div>
+          <div class="go">Join early access</div></div></div>
+      <div class="lbox" style="width:420px;align-self:center"><span class="stg">Today</span>
+        <p style="margin:0">There is no limit on how often the form can be submitted. When the database fails, the visitor is shown the database's own error text, which can include table and column names.</p>
+        <ul><li>The limit is the one the registration forms already use: per source address, with a ceiling across everyone.</li><li>The captcha is a later pass.</li></ul></div>
+    </div>
+    <span class="ex">The public site, light · the foot of the early-access form · the coach form shows the same two sentences</span>
+  </div></div>
+  <div class="tagrow"><span class="lbl">Tags</span>
+    <button class="tag" data-n="The form gets the same throttle as the registration forms, so someone filling in the form dozens of times from one address is stopped with the first sentence. A school or club office sharing one connection has room for a normal rush.">ASK 10 · the limit</button>
+    <button class="tag" data-n="Whatever fails inside, the visitor reads the second sentence. The real error goes to the error log, where staff can see it.">S7 · never the database's words</button>
+  </div>
+  <div class="ask" data-q="A16"><div class="q">Question 16 · The two error sentences</div>
+    <p class="rec">The first is the sentence the registration forms already show. The second is new customer copy, proposed here for the marketing session to confirm before release.</p>
+    <div class="opts">
+      <label><input type="checkbox" data-o="Both sentences as drawn (the second goes to the marketing session)"> Both sentences as drawn (the second goes to the marketing session)</label>
+      <label><input type="checkbox" data-o="Change the second: see Notes"> Change the second: see Notes</label>
+    </div><textarea aria-label="Notes on question 16" placeholder="Notes"></textarea></div>
 </section>
 
 <!-- ═══════════ FORMATTING CHECK ═══════════ -->

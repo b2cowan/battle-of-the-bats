@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { readOffers, readPaying, type OfferedClub } from '@/lib/lead-book';
 import { leadTimeline } from '@/lib/lead-timeline';
 import { featureWords, lostWords, offerSentence, planWords, sourceWords, stepTone } from '@/lib/lead-views';
+import { heardFromLabel, linkTagLabel, sourceFromHeard } from '@/lib/lead-form-answers';
 import { daysToSignUp } from '@/lib/lead-numbers';
 import { consoleDay } from '@/lib/console-dates';
 import { daysBetweenDateStrings, orgDayKey, tournamentToday } from '@/lib/timezone';
@@ -117,8 +118,12 @@ export default async function LeadPage({ params }: { params: Promise<{ leadId: s
       interestSub: featureWords(lead.features_interested ?? []),
       arrivedFrom: page,
       arrivedSub: `${lead.source_path ?? 'no page recorded'}${lead.submission_count > 1 ? ` · filled the form ${plural(lead.submission_count, 'time')}, last on ${consoleDay(lead.last_submitted_at)}` : ''}`,
-      source: sourceWords(lead.source),
+      // Staff's choice; else the visitor's own answer mapped to the same list (drawing J, question 13 A).
+      source: sourceWords(lead.source ?? sourceFromHeard(lead.heard_from)),
       sourceWords: lead.source_words,
+      sourceFromForm: !lead.source && sourceFromHeard(lead.heard_from) ? sourceWords(sourceFromHeard(lead.heard_from)) : null,
+      formAnswer: heardFromLabel(lead.heard_from) ? `From the form: ${heardFromLabel(lead.heard_from)}` : null,
+      link: linkTagLabel(lead.ref_tag),
       lost: step === 'lost' ? lostWords(lead.lost_reason) : null,
       nextAction: lead.next_action,
       followUp: lead.follow_up_due_at ? consoleDay(`${lead.follow_up_due_at}T12:00:00Z`) : null,

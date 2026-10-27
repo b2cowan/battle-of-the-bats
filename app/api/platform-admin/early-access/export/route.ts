@@ -17,7 +17,7 @@ import { askedNotToBeContacted, listFromParams, readList, recordExport } from '@
  * reach is made formula-safe, and a lead who asked not to be contacted has an empty email cell.
  */
 const HEADERS = ['Arrived', 'Name', 'Email', 'Organization', 'Role', 'Sport or program', 'Plans', 'Features', 'Step',
-  'Why it was lost', 'Source', 'Source detail', 'Arrived from', 'Said yes to release emails', 'Last contacted', 'Next action',
+  'Why it was lost', 'Source', 'Source recorded by', 'Source detail', 'Arrived from', 'Said yes to release emails', 'Last contacted', 'Next action',
   'Follow-up', 'Signed up', 'In their words'];
 
 export const GET = withObservability(async (req: NextRequest) => {
@@ -46,6 +46,7 @@ export const GET = withObservability(async (req: NextRequest) => {
     EARLY_ACCESS_STATUS_LABELS[l.step],
     lostWords(l.lostReason) ?? '',
     sourceWords(l.source),
+    l.sourceFromForm ? 'The form' : l.source ? 'Staff' : '',
     l.sourceWords ?? '',
     leadPageLabel(l.sourcePath),
     l.consent ? 'Yes' : 'No',

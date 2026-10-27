@@ -17,6 +17,7 @@
 import type { EarlyAccessStatus } from './early-access-admin';
 import { orgDayKey } from './timezone';
 import { EARLY_ACCESS_PLAN_LABELS, LEAD_SOURCES, LEAD_SOURCE_LABELS, SOURCE_NOT_SET, leadPageLabel } from './early-access-admin';
+import { linkTagLabel } from './lead-form-answers';
 
 export const STUCK_DAYS = 30;
 const DAY = 86_400_000;
@@ -167,8 +168,13 @@ export function leadNumbers(all: LeadFacts[], period: Period, pay: PayRead, acco
   const bySource = ['not_set', ...LEAD_SOURCES].map(k =>
     groupRow(k, k === 'not_set' ? SOURCE_NOT_SET : LEAD_SOURCE_LABELS[k as keyof typeof LEAD_SOURCE_LABELS], sources.get(k) ?? [], pay));
 
-  const tags = groupBy(leads, l => [l.refTag ?? '']);
-  const byTag = [...tags].filter(([k]) => k).map(([k, ls]) => groupRow(k, k, ls, pay)).sort((a, b) => b.leads - a.leads);
+  // By link tag (drawing J): drawn only once some lead in the period carries a tag. Then "No tag" is the first row (when any
+  // lead has none), like "Not set", so the tagged rows are never mistaken for all of them.
+  const tags = groupBy(leads, l => [l.refTag ?? 'no_tag']);
+  const tagged = [...tags].filter(([k]) => k !== 'no_tag')
+    .map(([k, ls]) => groupRow(k, linkTagLabel(k) ?? k, ls, pay)).sort((a, b) => b.leads - a.leads || a.label.localeCompare(b.label));
+  const untagged = tags.get('no_tag') ?? [];
+  const byTag = tagged.length ? [...(untagged.length ? [groupRow('no_tag', 'No tag', untagged, pay)] : []), ...tagged] : [];
 
   const months = groupBy(leads, l => [orgDayKey(l.createdAt).slice(0, 7)]);
   const byMonth = [...months].sort(([a], [b]) => a.localeCompare(b))

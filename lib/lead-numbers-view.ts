@@ -76,7 +76,8 @@ export function numbersView(all: LeadFacts[], period: PeriodPick, f: NumbersFilt
       },
       { term: 'Pay now', text: 'of those, the ones paying today: their own plan is not the free Tournament plan, their billing is active, and a real subscription stands behind it. A trial, free time and a Founding Season comp are not paying.' },
       { term: 'Time to sign up', text: 'days from the lead’s first form to the day its club or portal was created, not the day staff linked it.' },
-      { term: 'What it cannot know', text: `whether a charge was actually collected or how much; how a lead heard of us unless staff record it; a club that signed up under a different address from the lead’s until someone links it; anything before ${first ? consoleDay(first) : 'the first lead'}.` },
+      { term: 'Link tag', text: 'the tag on the link a lead arrived by, from our short list. A lead that filled the form again keeps its first tag. Leads with no tag are counted too, so the tagged ones are not mistaken for all of them.' },
+      { term: 'What it cannot know', text: `whether a charge was actually collected or how much; how a lead heard of us unless staff recorded it or the visitor said; a club that signed up under a different address from the lead’s until someone links it; anything before ${first ? consoleDay(first) : 'the first lead'}.` },
     ],
     payingFrom: `Paying by month starts on ${consoleDate(`${PAYING_RECORDED_FROM}T12:00:00Z`)}, the day we began recording when a subscription starts. Until then, Pay now is today’s count only.`,
     filterOptions: {

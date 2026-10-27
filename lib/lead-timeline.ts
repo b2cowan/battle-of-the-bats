@@ -13,6 +13,7 @@ import { EARLY_ACCESS_STATUS_LABELS, isEarlyAccessStatus, leadPageLabel } from '
 import { featureWords, lostWords, sourceWords } from './lead-views';
 import { LEAD_ACTIONS } from './platform-audit-reason';
 import { planName } from './platform-story-view';
+import { heardFromLabel } from './lead-form-answers';
 import type { OfferedClub } from './lead-book';
 
 export type TimelineEntry = {
@@ -21,6 +22,8 @@ export type TimelineEntry = {
   when: string;
   title: string;
   sub?: string;
+  /** Who did it, shown in the small print under the sentence so the sentence itself stays about what happened. */
+  by?: string;
   /** A note's words, shown as the visitor or staff wrote them (rendered as text, never as markup). */
   body?: string;
   noteId?: string;
@@ -28,6 +31,7 @@ export type TimelineEntry = {
 };
 
 type Audit = { id: string; actor_email: string | null; action: string; old_value: unknown; new_value: unknown; created_at: string };
+type Refill = { id: string; submitted_at: string; kind: string; source_path: string | null; their_words: string | null; heard_from: string | null; yes_not_applied: boolean; withdrew_consent: boolean };
 type Note = { id: string; body: string | null; author_email: string | null; from_old_box: boolean; created_at: string; removed_at: string | null };
 
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {});
@@ -56,14 +60,16 @@ export async function leadTimeline(lead: {
   id: string; created_at: string; source_path: string | null; features_interested: string[] | null;
   submission_count: number; last_submitted_at: string | null; linked_at: string | null; converted_org_id: string | null;
 }, offers: OfferedClub[]): Promise<{ entries: TimelineEntry[]; notRead: boolean }> {
-  const [auditRes, notesRes, staffRes] = await Promise.all([
+  const [auditRes, notesRes, staffRes, refillRes] = await Promise.all([
     supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, old_value, new_value, created_at')
       .eq('field', lead.id).in('action', [...LEAD_ACTIONS]).order('created_at', { ascending: false }).limit(500),
     supabaseAdmin.from('early_access_lead_notes').select('id, body, author_email, from_old_box, created_at, removed_at')
       .eq('lead_id', lead.id).order('created_at', { ascending: false }),
     supabaseAdmin.from('platform_users').select('email, display_name'),
+    supabaseAdmin.from('early_access_lead_submissions').select('id, submitted_at, kind, source_path, their_words, heard_from, yes_not_applied, withdrew_consent')
+      .eq('lead_id', lead.id).order('submitted_at', { ascending: false }).limit(200),
   ]);
-  const notRead = !!(auditRes.error || notesRes.error);
+  const notRead = !!(auditRes.error || notesRes.error || refillRes.error);
   const names = new Map(((staffRes.data ?? []) as { email: string; display_name: string | null }[])
     .map(s => [s.email.toLowerCase(), s.display_name?.trim() || null]));
   const who = (email: string | null) => (email ? names.get(email.toLowerCase()) ?? email : 'Staff');
@@ -79,42 +85,71 @@ export async function leadTimeline(lead: {
   const club = (id: string | null) => (id ? orgName.get(id) ?? 'a club since deleted' : 'a club');
 
   const entries: TimelineEntry[] = [];
-  const page = leadPageLabel(lead.source_path);
-  const thePage = page === 'Other pages' ? 'another page'
-    : page.startsWith('Inside the product') ? 'inside the product'
-      : page.startsWith('The ') ? `the ${page.slice(4)}` : `the ${page} page`;
+  const pageIn = (path: string | null) => {
+    const page = leadPageLabel(path);
+    return page === 'Other pages' ? 'another page'
+      : page.startsWith('Inside the product') ? 'inside the product'
+        : page.startsWith('The ') ? `the ${page.slice(4)}` : `the ${page} page`;
+  };
+  const thePage = pageIn(lead.source_path);
 
   entries.push({
     key: 'form', at: lead.created_at, when: consoleWhen(lead.created_at),
     title: `Filled the early-access form on ${thePage}`,
     sub: featureWords(lead.features_interested ?? []) ? `Asked about ${featureWords(lead.features_interested ?? [])}` : undefined,
   });
-  if (lead.submission_count > 1 && lead.last_submitted_at && lead.last_submitted_at !== lead.created_at) {
+  // Every refill since Stage 7 Part 8 is its own dated entry (date, page, the visitor's new words). A refill from before
+  // that was only counted, and the latest of them dated: it keeps one dated line (when nothing newer is stored) and the
+  // rest are said once, undated, never invented.
+  const refills = (refillRes.data ?? []) as Refill[];
+  for (const r of refills) {
+    const sub = [
+      r.heard_from && heardFromLabel(r.heard_from) ? `From the form: ${heardFromLabel(r.heard_from)}` : null,
+      r.yes_not_applied ? 'Ticked yes to release emails. The lead still says no.' : null,
+      r.withdrew_consent ? 'Unticked release emails. The lead now says no.' : null,
+    ].filter(Boolean).join(' · ') || undefined;
+    entries.push({
+      key: `refill:${r.id}`, at: r.submitted_at, when: consoleWhen(r.submitted_at),
+      title: r.kind === 'coach_button' ? 'A coach asked again from inside the product' : `Filled the form again, on ${pageIn(r.source_path)}`,
+      sub, body: r.their_words ?? undefined,
+    });
+  }
+  let earlier = Math.max(0, lead.submission_count - 1 - refills.length);
+  if (earlier > 0 && refills.length === 0 && lead.last_submitted_at && lead.last_submitted_at !== lead.created_at) {
     entries.push({ key: 'form-again', at: lead.last_submitted_at, when: consoleWhen(lead.last_submitted_at), title: `Filled the form again, on ${thePage}` });
+    earlier -= 1;
+  }
+  if (earlier > 0) {
+    entries.push({
+      // One millisecond after the first form, so a newest-first list reads: the dated refills, then these, then the first form.
+      key: 'form-again-earlier', at: new Date(Date.parse(lead.created_at) + 1).toISOString(), when: 'Earlier',
+      title: earlier === 1 ? 'Filled the form again once before each form was dated' : `Filled the form again ${earlier} times before each form was dated`,
+      quiet: true,
+    });
   }
 
   for (const a of audit) {
     const o = obj(a.old_value);
     const n = obj(a.new_value);
     const actor = who(a.actor_email);
-    const base = { key: `audit:${a.id}`, at: a.created_at, when: consoleDay(a.created_at) };
+    const base = { key: `audit:${a.id}`, at: a.created_at, when: consoleDay(a.created_at), by: actor };
     if (a.action === 'update_early_access_lead') {
       const changed = changedOf(o, n);
       const moved = o.internal_status !== n.internal_status;
       const sourceSet = changed.includes('source') && str(n.source);
       let title: string;
       if (moved && o.internal_status === 'new' && n.internal_status === 'contacted' && sourceSet) {
-        title = `${actor} marked it Contacted and set the source: ${sourceWords(str(n.source))}`;
+        title = `Marked it Contacted and set the source: ${sourceWords(str(n.source))}`;
       } else if (moved) {
-        title = `${actor} moved it from ${stepName(o.internal_status)} to ${stepName(n.internal_status)}`;
+        title = `Moved it from ${stepName(o.internal_status)} to ${stepName(n.internal_status)}`;
         if (n.internal_status === 'lost' && str(n.lost_reason)) title += `: ${lostWords(str(n.lost_reason))}`;
         if (sourceSet) title += `, and set the source: ${sourceWords(str(n.source))}`;
       } else if (sourceSet) {
-        title = `${actor} set the source: ${sourceWords(str(n.source))}`;
+        title = `Set the source: ${sourceWords(str(n.source))}`;
       } else if (changed.length > 0 && changed.every(c => c === 'last_contacted_at' || c === 'last_contacted_by')) {
-        title = `${actor} marked it contacted`;
+        title = 'Marked it contacted';
       } else {
-        title = `${actor} edited the lead`;
+        title = 'Edited the lead';
       }
       entries.push({ ...base, title, sub: editSub(changed, n) });
     } else if (a.action === 'link_early_access_lead') {
@@ -122,22 +157,22 @@ export async function leadTimeline(lead: {
       entries.push({
         ...base, when: consoleWhen(a.created_at),
         title: str(n.method) === 'offered'
-          ? `${actor} linked ${club(id)}, the offered match (same email). Step: Signed up`
-          : `${actor} linked ${club(id)} by hand`,
+          ? `Linked ${club(id)}, the offered match (same email). Step: Signed up`
+          : `Linked ${club(id)} by hand`,
         sub: 'Follow-up and next action cleared',
       });
     } else if (a.action === 'unlink_early_access_lead') {
-      entries.push({ ...base, title: `${actor} unlinked ${club(str(o.orgId))}. Step: ${stepName(n.internal_status)}` });
+      entries.push({ ...base, title: `Unlinked ${club(str(o.orgId))}. Step: ${stepName(n.internal_status)}` });
     } else if (a.action === 'dismiss_early_access_offer') {
-      entries.push({ ...base, title: `${actor} said ${club(str(n.orgId))} is not this lead’s club`, quiet: true });
+      entries.push({ ...base, title: `Marked ${club(str(n.orgId))} as not this lead’s club`, quiet: true });
     }
   }
 
   for (const note of (notesRes.data ?? []) as Note[]) {
-    const base = { key: `note:${note.id}`, at: note.created_at, when: consoleDay(note.created_at), noteId: note.removed_at ? undefined : note.id };
-    if (note.removed_at) entries.push({ ...base, title: 'A note was removed', quiet: true });
-    else if (note.from_old_box) entries.push({ ...base, title: 'From the old notes box', body: note.body ?? '' });
-    else entries.push({ ...base, title: `${who(note.author_email)} added a note`, body: note.body ?? '' });
+    const base = { key: `note:${note.id}`, at: note.created_at, when: consoleDay(note.created_at), by: who(note.author_email), noteId: note.removed_at ? undefined : note.id };
+    if (note.removed_at) entries.push({ ...base, by: undefined, title: 'A note was removed', quiet: true });
+    else if (note.from_old_box) entries.push({ ...base, by: undefined, title: 'From the old notes box', body: note.body ?? '' });
+    else entries.push({ ...base, title: 'Added a note', body: note.body ?? '' });
   }
 
   // A club that signed up with this lead's email and is waiting to be confirmed (never linked by itself).

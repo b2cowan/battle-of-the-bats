@@ -12,6 +12,7 @@ import { getBootstrapAdminEmails } from './platform-auth';
 import { effectiveOrgFactsById } from './entitlement-grants';
 import { paysNow } from './plan-growth';
 import { isEarlyAccessStatus, type EarlyAccessStatus } from './early-access-admin';
+import { sourceFromHeard } from './lead-form-answers';
 import { isSignedUp, normalAddress, selfConfirmed, type AccountsRead, type LeadFacts, type PayRead } from './lead-numbers';
 
 const PAGE = 1000;
@@ -31,6 +32,8 @@ export type BookLead = LeadFacts & {
   sports: string | null;
   lastContactedAt: string | null;
   words: string | null;
+  /** `source` is the visitor's own answer mapped to the list, because staff set none. The export says so. */
+  sourceFromForm: boolean;
 };
 
 export type Read<T> = { kind: 'read'; value: T } | { kind: 'not_read' };
@@ -119,7 +122,10 @@ export async function readLeadBook(): Promise<Read<BookLead[]>> {
         linkMethod: r.link_method,
         plans: r.plan_interest ?? [],
         sourcePath: r.source_path,
-        source: r.source,
+        // Staff's choice, else the visitor's own answer mapped to the same list (drawing J, question 13 A). A staff source
+        // is never overwritten by the form; the page still shows what the visitor said beside it.
+        source: r.source ?? sourceFromHeard(r.heard_from),
+        sourceFromForm: !r.source && !!sourceFromHeard(r.heard_from),
         refTag: r.ref_tag,
         followUpDueAt: r.follow_up_due_at,
         stepChangedAt: r.step_changed_at,

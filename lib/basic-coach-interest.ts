@@ -1,6 +1,8 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { normalizeGuardianEmailRequired } from './guardian-email';
+import { isWorkedLead } from './early-access-refill';
+import { captureError } from './observability';
 
 /**
  * Scope-ceiling interest capture for org-less Basic coach teams (free-tier Phase 4d).
@@ -37,6 +39,14 @@ type EarlyAccessLeadRow = {
   features_interested: string[] | null;
   notes: string | null;
   release_notifications_consent: boolean | null;
+  internal_status: string | null;
+  source: string | null;
+  source_words: string | null;
+  linked_at: string | null;
+  converted_org_id: string | null;
+  last_contacted_at: string | null;
+  next_action: string | null;
+  follow_up_due_at: string | null;
 };
 
 const LABELS: Record<BasicCoachInterestOption, string> = {
@@ -113,13 +123,55 @@ export async function submitBasicCoachTeamScopeInterest(params: {
 
   const { data: existing, error: existingError } = await supabaseAdmin
     .from('early_access_leads')
-    .select('id, submission_count, plan_interest, features_interested, notes, release_notifications_consent')
+    .select('id, submission_count, plan_interest, features_interested, notes, release_notifications_consent, internal_status, source, source_words, linked_at, converted_org_id, last_contacted_at, next_action, follow_up_due_at')
     .eq('email_normalized', email)
     .maybeSingle<EarlyAccessLeadRow>();
 
   if (existingError) throw existingError;
 
-  const row = {
+  // A coach asking from inside the product is a signed-in person on their own address, but the same rule holds as for
+  // the public form (early-access-refill.ts): a lead staff have worked keeps every field as staff left it, and the
+  // coach's ask lands on the timeline. Its consent is never touched here (the button carries no box).
+  if (existing) {
+    const { count: noteCount, error: notesError } = await supabaseAdmin
+      .from('early_access_lead_notes')
+      .select('id', { count: 'exact', head: true })
+      .eq('lead_id', existing.id);
+    if (notesError) throw notesError;
+
+    const worked = isWorkedLead(existing, (noteCount ?? 0) > 0);
+    const { error } = await supabaseAdmin
+      .from('early_access_leads')
+      .update(worked
+        ? { updated_at: now, last_submitted_at: now, submission_count: (existing.submission_count ?? 1) + 1 }
+        : {
+            updated_at: now,
+            last_submitted_at: now,
+            submission_count: (existing.submission_count ?? 1) + 1,
+            name: cleanText(team.primary_coach_name, 120) || email,
+            organization_name: cleanText(team.name, 160) || 'Basic coach team',
+            role: 'Coach',
+            sports: cleanText(teamBits, 160),
+            plan_interest: mergeValues(existing.plan_interest, ['team']),
+            features_interested: mergeValues(existing.features_interested, ['coach_portal', ...selectedFeatures]),
+            notes: appendNote(existing.notes, nextNote),
+          })
+      .eq('id', existing.id);
+    if (error) throw error;
+
+    // The dated entry comes after the update, so a failure never leaves a stray entry; it goes to the error log.
+    const { error: entryError } = await supabaseAdmin.from('early_access_lead_submissions').insert({
+      lead_id: existing.id,
+      submitted_at: now,
+      kind: 'coach_button',
+      source_path: `/coaches/team/${team.id}`,
+      their_words: `Asked about ${selected}. Team: ${team.name}.`.slice(0, 1200),
+    });
+    if (entryError) await captureError(entryError);
+    return;
+  }
+
+  const result = await supabaseAdmin.from('early_access_leads').insert({
     updated_at: now,
     last_submitted_at: now,
     name: cleanText(team.primary_coach_name, 120) || email,
@@ -128,30 +180,16 @@ export async function submitBasicCoachTeamScopeInterest(params: {
     organization_name: cleanText(team.name, 160) || 'Basic coach team',
     role: 'Coach',
     sports: cleanText(teamBits, 160),
-    plan_interest: mergeValues(existing?.plan_interest, ['team']),
-    features_interested: mergeValues(existing?.features_interested, ['coach_portal', ...selectedFeatures]),
-    notes: appendNote(existing?.notes, nextNote),
+    plan_interest: ['team'],
+    features_interested: mergeValues(null, ['coach_portal', ...selectedFeatures]),
+    notes: appendNote(null, nextNote),
     source_path: `/coaches/team/${team.id}`,
     user_agent: params.userAgent?.slice(0, 500) ?? null,
-    release_notifications_consent: existing?.release_notifications_consent ?? false,
-  };
-
-  const result = existing
-    ? await supabaseAdmin
-        .from('early_access_leads')
-        .update({
-          ...row,
-          submission_count: (existing.submission_count ?? 1) + 1,
-        })
-        .eq('id', existing.id)
-    : await supabaseAdmin
-        .from('early_access_leads')
-        .insert({
-          ...row,
-          created_at: now,
-          submission_count: 1,
-          status: 'new',
-        });
+    release_notifications_consent: false,
+    created_at: now,
+    submission_count: 1,
+    status: 'new',
+  });
 
   if (result.error) throw result.error;
 }

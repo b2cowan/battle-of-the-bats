@@ -15,6 +15,7 @@ import ViewSwitch from '@/components/coaches/kit/ViewSwitch';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { EARLY_ACCESS_PLAN_LABELS, EARLY_ACCESS_STATUS_LABELS, EARLY_ACCESS_STATUSES, LEAD_SOURCE_LABELS, LEAD_SOURCES } from '@/lib/early-access-admin';
+import { linkTagLabel } from '@/lib/lead-form-answers';
 import type { BandCell, PipelineRow, StepTone } from '@/lib/lead-views';
 import type { NumbersModel } from '@/lib/lead-numbers-view';
 import type { GroupRow } from '@/lib/lead-numbers';
@@ -212,7 +213,7 @@ function FilterButton({ kind, filters, options, go, count }: {
           {field('Plan', 'plan', [...options.plans.map(pl => ({ value: pl, label: EARLY_ACCESS_PLAN_LABELS[pl] ?? pl })), { value: 'none', label: 'None picked' }])}
           {kind === 'numbers' && options.pages.length > 0 && field('Page', 'page', options.pages.map(pg => ({ value: pg, label: pg })))}
           {field('Source', 'source', [{ value: 'not_set', label: 'Not set' }, ...LEAD_SOURCES.map(s => ({ value: s, label: LEAD_SOURCE_LABELS[s] }))])}
-          {options.tags.length > 0 && field('Link tag', 'tag', options.tags.map(t => ({ value: t, label: t })))}
+          {options.tags.length > 0 && field('Link tag', 'tag', options.tags.map(t => ({ value: t, label: linkTagLabel(t) ?? t })))}
           {n > 0 && (
             <button type="button" className={kit.door} onClick={() => { go({ step: null, plan: null, source: null, tag: null, page: null }); setOpen(false); }}>
               Clear the filter
@@ -303,8 +304,8 @@ function NumbersBody({ model }: { model: NumbersModel }) {
 
       <GroupTable title="By the page they arrived from" first="Page" rows={n.byPage} days />
       <GroupTable title="By the plan they wanted" lede="A lead may pick two" first="Plan" rows={n.byPlan} days />
-      <GroupTable title="By source" lede="Recorded by staff" first="Source" rows={n.bySource} />
-      {n.byTag.length > 0 && <GroupTable title="By link tag" first="Link tag" rows={n.byTag} />}
+      <GroupTable title="By source" lede="Staff’s choice, else the form’s answer" first="Source" rows={n.bySource} />
+      {n.byTag.length > 0 && <GroupTable title="By link tag" lede="From the links we hand out" first="Link tag" rows={n.byTag} />}
 
       <section className={kit.section}>
         <h2 className={kit.sectionTitle}>Month by month <span className={kit.sectionLede}>By the month a lead arrived</span></h2>

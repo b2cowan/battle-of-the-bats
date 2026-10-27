@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Check, Send } from 'lucide-react';
 import styles from './CoachStartInterest.module.css';
+import { HEARD_FROM_CHOICES } from '@/lib/lead-form-answers';
+import { readRefTag } from '@/lib/ref-tag-client';
 
 /**
  * Express-interest capture for the GATED /coaches/start (free-tier Coaches Phase 5m, J5-051).
@@ -26,6 +28,7 @@ export default function CoachStartInterest({ defaultName = '', defaultEmail = ''
   const [email, setEmail] = useState(defaultEmail);
   const [orgName, setOrgName] = useState('');
   const [notes, setNotes] = useState('');
+  const [heardFrom, setHeardFrom] = useState('');
   const [website, setWebsite] = useState(''); // honeypot — real users never see this
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +52,8 @@ export default function CoachStartInterest({ defaultName = '', defaultEmail = ''
           notes: notes.trim() || undefined,
           featuresInterested: ['coach_portal'],
           sourcePath: '/coaches/start',
+          heardFrom,
+          refTag: readRefTag(),
           website, // honeypot
         }),
       });
@@ -101,6 +106,14 @@ export default function CoachStartInterest({ defaultName = '', defaultEmail = ''
         <label className={styles.field}>
           <span className={styles.label}>What would help your team?</span>
           <textarea className={styles.textarea} rows={3} value={notes} maxLength={1200} onChange={e => setNotes(e.target.value)} placeholder="e.g. lineups, dues tracking, documents…" />
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.label}>How did you hear about us?</span>
+          <select className={styles.input} value={heardFrom} onChange={e => setHeardFrom(e.target.value)}>
+            <option value="">Choose one</option>
+            {HEARD_FROM_CHOICES.map(choice => <option key={choice.code} value={choice.code}>{choice.label}</option>)}
+          </select>
         </label>
 
         {/* Honeypot: visually hidden, off-screen; bots fill it, humans don't. */}

@@ -1450,6 +1450,26 @@
     "update_rule": null
   },
   {
+    "table_name": "early_access_lead_submissions",
+    "constraint_name": "early_access_lead_submissions_lead_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "lead_id",
+    "foreign_table": "early_access_leads",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "early_access_lead_submissions",
+    "constraint_name": "early_access_lead_submissions_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "early_access_leads",
     "constraint_name": "early_access_leads_converted_org_id_fkey",
     "constraint_type": "FOREIGN KEY",

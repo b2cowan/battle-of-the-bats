@@ -46,7 +46,14 @@ export type LeadRecordProps = {
   signedUp: { line: string; club: { id: string; name: string; sub: string } | null } | null;
   facts: {
     contact: string; contactSub: string; interest: string; interestSub: string | null; arrivedFrom: string; arrivedSub: string;
-    source: string; sourceWords: string | null; lost: string | null; nextAction: string | null; followUp: string | null;
+    source: string; sourceWords: string | null;
+    /** The staff source the visitor's own answer maps to, shown while staff have set none; null when they set one or the visitor did not say. */
+    sourceFromForm: string | null;
+    /** "From the form: …", the visitor's own choice in the form's words, shown whenever they gave one. */
+    formAnswer: string | null;
+    /** The tag on the link the lead arrived by, in words; null when it carried none. */
+    link: string | null;
+    lost: string | null; nextAction: string | null; followUp: string | null;
     lastContacted: string | null; words: string | null; sports: string | null;
   };
   form: { step: EarlyAccessStatus; lostReason: string; source: string; sourceWords: string; nextAction: string; followUpDueAt: string };
@@ -196,6 +203,7 @@ export default function LeadRecord(p: LeadRecordProps) {
             {p.signedUp?.club && field('Signed up as', p.signedUp.club.name, p.signedUp.club.name, { sub: p.signedUp.club.sub })}
             {field('Interest', p.facts.interest, p.facts.interest, { sub: p.facts.interestSub })}
             {!p.signedUp && field('Arrived from', p.facts.arrivedFrom, p.facts.arrivedFrom, { sub: p.facts.arrivedSub })}
+            {p.facts.link && field('Link', p.facts.link, p.facts.link)}
             {field('Step', p.stepLabel, p.linked ? (
               <span>{EARLY_ACCESS_STATUS_LABELS.converted}<span className={kit.sub}>A linked lead moves only by unlinking its club.</span></span>
             ) : (
@@ -218,10 +226,10 @@ export default function LeadRecord(p: LeadRecordProps) {
             {field('Source', p.facts.source, (
               <select className={`${kit.select} ${form.source !== p.form.source ? record.changed : ''}`} aria-label="Source" value={form.source}
                 onChange={e => setForm(f => ({ ...f, source: e.target.value }))}>
-                <option value="">Not set</option>
+                <option value="">{p.facts.sourceFromForm ? `${p.facts.sourceFromForm} (from the form)` : 'Not set'}</option>
                 {LEAD_SOURCES.map(s => <option key={s} value={s}>{LEAD_SOURCE_LABELS[s]}</option>)}
               </select>
-            ), { sub: p.facts.sourceWords })}
+            ), { sub: (p.facts.sourceWords || p.facts.formAnswer) ? <>{p.facts.sourceWords}{p.facts.sourceWords && p.facts.formAnswer && <br />}{p.facts.formAnswer}</> : undefined })}
             {editing && field('Source detail', null, (
               <input className={`${kit.field} ${form.sourceWords !== p.form.sourceWords ? record.changed : ''}`} aria-label="Source detail" maxLength={500}
                 value={form.sourceWords} onChange={e => setForm(f => ({ ...f, sourceWords: e.target.value }))} placeholder="Who told them, or where" />

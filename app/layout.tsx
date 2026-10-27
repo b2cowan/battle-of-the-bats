@@ -7,6 +7,7 @@ import ConsumerNav from '@/components/consumer/ConsumerNav';
 import { OrgNavProvider } from '@/components/OrgNavContext';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import ViewportKeyboardVars from '@/components/ViewportKeyboardVars';
+import RefTagCapture from '@/components/RefTagCapture';
 import LegacyInstallBanner from '@/components/LegacyInstallBanner';
 import { NO_FLASH_SCRIPT } from '@/lib/no-flash-script';
 import NoFlashRestore from '@/components/NoFlashRestore';
@@ -120,6 +121,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegistration />
         {/* Keeps --vvh / --vv-offset-top in sync with the real visual viewport — browser-only, renders nothing */}
         <ViewportKeyboardVars />
+        {/* Remembers a ?ref= tag on a link we hand out, in this tab only — browser-only, renders nothing */}
+        <RefTagCapture />
       </body>
     </html>
   );

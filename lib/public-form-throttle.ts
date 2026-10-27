@@ -21,9 +21,22 @@ const recipientLimiter = new FixedWindowRateLimiter(60 * MINUTE, 8);  // per gua
 
 const TOO_MANY = 'Too many attempts. Please wait a few minutes and try again.';
 
+// The early-access lead form has buckets of its own (Stage 7 Part 8 review): it is the one public form anyone can aim at a
+// stranger's address, and its traffic must never spend the family registration forms' budget.
+const leadIpLimiter = new FixedWindowRateLimiter(60 * MINUTE, 30);
+const leadGlobalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 150);
+
 /** Call first thing in the handler. Returns a 429 to send back, or null to carry on. */
 export function throttlePublicForm(req: Request): NextResponse | null {
   if (!ipLimiter.take(clientIpFrom(req)) || !globalLimiter.take('global')) {
+    return NextResponse.json({ error: TOO_MANY }, { status: 429 });
+  }
+  return null;
+}
+
+/** Call first thing in the early-access lead form's handler: the same shape as `throttlePublicForm`, its own buckets. */
+export function throttleLeadForm(req: Request): NextResponse | null {
+  if (!leadIpLimiter.take(clientIpFrom(req)) || !leadGlobalLimiter.take('global')) {
     return NextResponse.json({ error: TOO_MANY }, { status: 429 });
   }
   return null;

@@ -29,6 +29,7 @@
 }
 
 .field input,
+.field select,
 .field textarea {
   width: 100%;
   min-height: 44px;
@@ -44,6 +45,7 @@
 }
 
 .field input:focus,
+.field select:focus,
 .field textarea:focus {
   border-color: var(--home-olive);
   outline: 2px solid var(--home-olive);
