@@ -1,0 +1,39 @@
+/* Sent emails' own parts (Support console Stage 5, drawing E): the flag line under a state, the email window's facts and
+   timeline, the empty states' bold line. The page, card, toolbar, table, chips, callout and buttons are the console kit
+   (../console.module.css). Tokens only. */
+
+.when { white-space: nowrap; }
+.what { display: inline-flex; align-items: baseline; gap: 0.4rem; flex-wrap: wrap; }
+.whatTime { color: var(--text-secondary); white-space: nowrap; }
+/* The reason under a Bounced or Not sent state (E3): a red line, the word does the work, colour only echoes it. */
+.flag { display: block; margin-top: 0.2rem; font-size: var(--type-support); color: var(--danger); }
+.labelButton {
+  background: none; border: 0; padding: 0; cursor: pointer; text-align: left;
+  font-family: inherit; font-size: inherit; font-weight: 600; color: var(--text-primary);
+  text-decoration: underline; text-decoration-color: var(--home-line-strong); text-underline-offset: 3px;
+}
+.labelButton:hover { text-decoration-color: var(--home-olive); color: var(--home-olive); }
+.labelButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+
+/* An empty list: the bold sentence, then the hint beneath it (E6). */
+.emptyBold { display: block; color: var(--text-primary); font-weight: 700; }
+.emptyHint { display: block; margin-top: 0.25rem; }
+.sectionHead { padding: 0.7rem 1rem; border-bottom: 1px solid var(--home-line); font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.7rem 1rem; border-top: 1px solid var(--home-line); }
+
+/* ── The email's window (E4) ── */
+.winBody { display: grid; gap: 0.9rem; }
+.facts { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 0.5rem 1rem; margin: 0; }
+.facts dt { font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
+.facts dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.timeline { list-style: none; margin: 0.4rem 0 0; padding: 0; display: grid; gap: 0.5rem; }
+.timeline li { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0.75rem; color: var(--text-secondary); }
+.timeline strong { color: var(--text-primary); font-weight: 650; }
+.tTime { color: var(--text-tertiary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.winFoot { align-self: center; font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
+
+@media (max-width: 640px) {
+  .facts { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+  .facts dd { margin-bottom: 0.5rem; }
+  .timeline li { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+}

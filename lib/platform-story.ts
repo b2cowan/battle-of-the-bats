@@ -11,7 +11,7 @@
  *     `organization_members.accepted_at` (joined); emails — `email_sends`; feedback — `feedback_submissions`;
  *   • the club created — `organizations.created_at`.
  * ⚠ NOT IN IT YET (A4, the quiet line under the table): Stripe's charges and refunds and purchases the customer makes in
- * Stripe (Stage 3 reads Stripe), account emails such as password resets (Stage 5). Never the trail of records opened.
+ * Stripe (Stage 3 reads Stripe), a CLUB's account emails (a PERSON's Story has them since Stage 5, for the sent-log roles only). Never the trail of records opened.
  *
  * ⚖ PUT IT BACK (R5) is decided HERE and nowhere else — on a plan or limit entry, a section entry and a running override
  * only; never on anything that reached Stripe or an inbox. The Put it back route rebuilds this list and acts on the entry
@@ -27,6 +27,10 @@ import { possessive } from './utils';
 import { freeTimeStoryEntries } from './free-time-story';
 import { formatCents } from './console-money';
 import { CONSOLE_REFUND_TAIL } from './console-money-story';
+import { hasPlatformPower } from './platform-areas';
+import type { PlatformRole } from './platform-auth';
+import { listSentEmails } from './sent-log';
+import { SENT_STATES } from './sent-log-words';
 
 // The shape and the on-screen filter are plain (the record filters on screen); this module builds the entries.
 export type { PutBack, PutBackKind, StoryEntry, StoryKind } from './platform-story-view';
@@ -386,7 +390,7 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean } = 
 // ── A person's Story ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 const PERSON_ACTIONS: Record<string, { title: string; sub?: string }> = {
-  generate_reset_link: { title: 'Reset link made', sub: 'The email itself is not logged yet' },
+  generate_reset_link: { title: 'Reset link made' },
   confirm_email: { title: 'Email confirmed' },
   revoke_sessions: { title: 'Signed out everywhere' },
   ban_user: { title: 'Banned' },
@@ -398,6 +402,11 @@ const PERSON_ACTIONS: Record<string, { title: string; sub?: string }> = {
  * A person's Story: the account created, staff actions on it (from Stage 2 they name the account id; older ones hold
  * the email or the id as a bare value, so both are matched), staff notes, club invitations, role changes and joins.
  * Sign-in history is not kept — only the last sign-in, which the band shows.
+ *
+ * ⚖ THE EMAIL ROWS (Stage 5, owner Q6): only for a role holding the `sent_log` power, and only the kinds people ask about
+ * (`isStoryKind`: sign-up, sign-in and reset links, the invitations, our feedback replies). The Story is open to every
+ * role, so the rows are decided HERE from the role — `emailsAs` — and a role without the power is never asked for them
+ * (T14). The CLUB's Story is unchanged.
  */
 export type PersonMembership = {
   role: string;
@@ -409,12 +418,14 @@ export type PersonMembership = {
 export async function buildPersonStory(
   person: { id: string; email: string; createdAt: string | null },
   memberships: readonly PersonMembership[],
+  opts: { emailsAs?: PlatformRole | null } = {},
 ): Promise<StoryEntry[]> {
   const email = person.email.toLowerCase();
+  const emailsAs = opts.emailsAs && hasPlatformPower(opts.emailsAs, 'sent_log') ? opts.emailsAs : null;
   // From Stage 2 an entry names the account (`new_value.userId`); an older one holds the email or the id as a bare value.
   const named = [`new_value->>userId.eq.${person.id}`]
     .concat([person.id, email].flatMap(v => [`new_value.eq.${JSON.stringify(JSON.stringify(v))}`, `old_value.eq.${JSON.stringify(JSON.stringify(v))}`]));
-  const [auditRes, notesRes, orgAuditRes] = await Promise.all([
+  const [auditRes, notesRes, orgAuditRes, sentRes] = await Promise.all([
     supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, field, old_value, new_value, reason, created_at')
       .is('org_id', null).in('action', Object.keys(PERSON_ACTIONS)).or(named.join(','))
       .order('created_at', { ascending: false }).limit(SOURCE_CAP),
@@ -423,9 +434,14 @@ export async function buildPersonStory(
     supabaseAdmin.from('org_audit_log').select('id, org_id, actor_id, action, payload, created_at, organizations(name)')
       .eq('target_id', person.id).in('action', ['member_invited', 'member_removed', 'role_changed', 'member_suspended', 'member_reinstated'])
       .order('created_at', { ascending: false }).limit(SOURCE_CAP),
+    // A failed read leaves the rows out; it never fails the Story (the Emails tab says it could not read them).
+    emailsAs ? listSentEmails(emailsAs, { to: email, storyOnly: true, limit: 100 }).catch(() => null) : Promise.resolve(null),
   ]);
 
   const entries: StoryEntry[] = [];
+  for (const e of sentRes?.rows ?? []) {
+    entries.push({ key: `sentemail:${e.id}`, at: e.sentAt, kind: 'emails', title: `${e.label} sent`, sub: SENT_STATES[e.state].word, who: THE_PRODUCT, why: null });
+  }
   for (const r of (auditRes.data ?? []) as AuditRow[]) {
     const def = PERSON_ACTIONS[r.action];
     let sub = def.sub;

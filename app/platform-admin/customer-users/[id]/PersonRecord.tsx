@@ -22,6 +22,7 @@ import { errorOf, sendJson } from '../../console-fetch';
 import { personStatusChip } from '../../chips';
 import StoryTable from '../../StoryTable';
 import RecordWindow from '../../RecordWindow';
+import { PersonEmailsTab, type PersonEmails } from '../../sent-emails/SentParts';
 import kit from '../../console.module.css';
 import styles from '../../record.module.css';
 
@@ -32,10 +33,12 @@ export type PersonRecordProps = {
   };
   clubs: Array<{ id: string; name: string; slug: string; planLabel: string; role: string; status: string }>;
   story: StoryEntry[];
+  /** The person's emails; null for a role without the sent-log power (no tab at all). */
+  emails: PersonEmails | null;
   can: { support: boolean; delete: boolean };
 };
 
-type Tab = 'story' | 'clubs' | 'account';
+type Tab = 'story' | 'clubs' | 'account' | 'emails';
 type Window = 'save' | 'discard' | 'reset' | 'note' | 'confirm' | 'signOut' | 'ban' | 'unban' | 'delete' | null;
 
 /** One call; null when it went through, else the server's sentence. */
@@ -44,7 +47,7 @@ async function post(url: string, method: string, body: unknown): Promise<string 
   return ok ? null : errorOf(data, 'That did not go through. Try again in a moment.');
 }
 
-export default function PersonRecord({ person, clubs, story, can }: PersonRecordProps) {
+export default function PersonRecord({ person, clubs, story, emails, can }: PersonRecordProps) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('story');
   const [editing, setEditing] = useState(false);
@@ -142,7 +145,10 @@ export default function PersonRecord({ person, clubs, story, can }: PersonRecord
           </div>
 
           <div className={kit.tabs} role="tablist">
-            {([['story', 'Story', story.length], ['clubs', 'Clubs', clubs.length], ['account', 'Account', 0]] as const).map(([key, label, n]) => (
+            {([
+              ['story', 'Story', story.length], ['clubs', 'Clubs', clubs.length], ['account', 'Account', 0],
+              ...(emails ? [['emails', 'Emails', emails.total] as const] : []),
+            ] as ReadonlyArray<readonly [Tab, string, number]>).map(([key, label, n]) => (
               <button key={key} type="button" role="tab" aria-selected={tab === key} className={`${kit.tab}${tab === key ? ` ${kit.tabOn}` : ''}`} onClick={() => setTab(key)}>
                 {label}{n ? <span className={kit.tabCount}>{n}</span> : null}
               </button>
@@ -152,9 +158,11 @@ export default function PersonRecord({ person, clubs, story, can }: PersonRecord
           {tab === 'story' && (
             <div className={kit.card}>
               <StoryTable entries={story} emptyText="Nothing has happened to this account yet." />
-              <div className={styles.tline}>Not in the Story yet: sign-in history (only the last sign-in is kept) and the emails themselves, such as password resets.</div>
+              <div className={styles.tline}>Not in the Story yet: sign-in history (only the last sign-in is kept).</div>
             </div>
           )}
+
+          {tab === 'emails' && emails && <PersonEmailsTab emails={emails} />}
 
           {tab === 'clubs' && (
             <div className={kit.card}>

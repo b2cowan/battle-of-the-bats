@@ -17,9 +17,10 @@
  */
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Building2, ChevronRight, CreditCard, Search, User } from 'lucide-react';
+import { ArrowLeft, Building2, ChevronRight, CreditCard, Mail, Search, User } from 'lucide-react';
 import { readConsoleRecent, handListSearch, type RecentRecord } from '@/lib/console-recent';
-import { consoleAgo, consoleDate, consoleDay } from '@/lib/console-dates';
+import { consoleAgo, consoleDate, consoleDay, consoleWhen } from '@/lib/console-dates';
+import { SENT_STATES } from '@/lib/sent-log-words';
 import { formatCents } from '@/lib/console-money';
 import { FIND_FAILED, FIND_MIN_CHARS, type FindAnswer } from '@/lib/platform-find';
 import styles from './find.module.css';
@@ -29,6 +30,8 @@ type Item = { key: string; href: string; onOpen?: () => void };
 const CLUB_HREF = (id: string, money = false, chargeId?: string | null) =>
   `/platform-admin/orgs/${id}?${money ? 'tab=money&' : ''}${chargeId ? `charge=${encodeURIComponent(chargeId)}&` : ''}via=find`;
 const PERSON_HREF = (id: string) => `/platform-admin/customer-users/${id}?via=find`;
+// An email is opened by its id, never by its address: the address is the words typed, and words never ride in a web address (A3).
+const SENT_EMAIL_HREF = (id: string) => `/platform-admin/sent-emails?email=${encodeURIComponent(id)}`;
 
 function signedIn(iso: string | null): string {
   return iso ? `last signed in ${consoleDay(iso)}` : 'never signed in';
@@ -149,6 +152,7 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
       out.push({ key: 'more-people', href: '/platform-admin/customer-users', onOpen: () => handListSearch('people', trimmed) });
     }
     for (const s of answer.stripe?.rows ?? []) out.push({ key: `s-${s.orgId}`, href: CLUB_HREF(s.orgId, true, s.chargeId) });
+    for (const e of answer.sentEmails?.rows ?? []) out.push({ key: `e-${e.id}`, href: SENT_EMAIL_HREF(e.id) });
     return out;
   }, [open, asking, recent, showAnswer, answer, trimmed]);
 
@@ -178,10 +182,10 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
 
   const placeholder = searchesStripe ? 'Find a club, person or Stripe number' : 'Find a club or person';
 
-  const hasAnyRow = !!answer && ((answer.clubs?.rows.length ?? 0) + (answer.people?.rows.length ?? 0) + (answer.stripe?.rows.length ?? 0)) > 0;
+  const hasAnyRow = !!answer && ((answer.clubs?.rows.length ?? 0) + (answer.people?.rows.length ?? 0) + (answer.stripe?.rows.length ?? 0) + (answer.sentEmails?.rows.length ?? 0)) > 0;
   const trimmedGroups = !!answer && !answer.searched.includes('stripe');
   const onlyStripe = !!answer && (answer.stripe?.rows.length ?? 0) > 0
-    && (answer.clubs?.rows.length ?? 0) === 0 && (answer.people?.rows.length ?? 0) === 0;
+    && (answer.clubs?.rows.length ?? 0) === 0 && (answer.people?.rows.length ?? 0) === 0 && (answer.sentEmails?.rows.length ?? 0) === 0;
 
   const keyFoot = (
     <div className={styles.foot}>
@@ -330,6 +334,23 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
                       {' '}<code className={styles.code}>{s.number}</code>
                       {s.amountCents != null && <> · {formatCents(s.amountCents, s.currency)}</>}
                       {s.at && <> · {consoleDate(s.at)}</>} · {s.planLabel}
+                    </span>
+                  </span>
+                  <ChevronRight size={14} className={styles.chev} aria-hidden />
+                </div>
+              ))}
+            </>
+          )}
+          {answer.sentEmails && answer.sentEmails.rows.length > 0 && (
+            <>
+              <div className={styles.head} role="presentation">Sent emails · {answer.sentEmails.total}</div>
+              {answer.sentEmails.rows.map(e => (
+                <div key={e.id} {...row(`e-${e.id}`)}>
+                  <span className={styles.tile} aria-hidden><Mail size={15} /></span>
+                  <span className={styles.text}>
+                    <span className={styles.title}>{e.label}</span>
+                    <span className={styles.sub}>
+                      {e.to}{e.orgName ? ` · ${e.orgName}` : ''} · {consoleWhen(e.sentAt)} · {SENT_STATES[e.state].word}
                     </span>
                   </span>
                   <ChevronRight size={14} className={styles.chev} aria-hidden />

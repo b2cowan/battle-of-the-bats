@@ -11,6 +11,7 @@ import { isDemoOrgSlug } from '@/lib/demo-org';
 import { getStripe } from '@/lib/stripe';
 import { findStripeItem } from '@/lib/console-money-stripe';
 import { stripeKeyIsLive } from '@/lib/online-payments-switch';
+import { listSentEmails } from '@/lib/sent-log';
 import {
   checkFindWords,
   invoiceNumberQuery,
@@ -155,6 +156,14 @@ const readers: FindReaders = {
       }
     }
     return rows;
+  },
+  async sentEmails(address, role) {
+    // The reader applies the role itself: an email to a staff address reads for Super admin only (T15).
+    const found = await listSentEmails(role, { to: address, limit: 8 });
+    return {
+      total: found.total,
+      rows: found.rows.map(e => ({ id: e.id, label: e.label, to: e.to, orgName: e.orgName, sentAt: e.sentAt, state: e.state })),
+    };
   },
 };
 

@@ -15,7 +15,7 @@ import { supabaseAdmin } from './supabase-admin';
 export const RECORD_OPENS_KEEP_DAYS = 90;
 const REPEAT_WINDOW_MS = 10 * 60_000;
 
-export type RecordKind = 'club' | 'person';
+export type RecordKind = 'club' | 'person' | 'email';
 
 export async function recordOpened(opts: {
   actorUserId: string;

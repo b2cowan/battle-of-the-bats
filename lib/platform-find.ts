@@ -18,6 +18,7 @@
  */
 import { canViewPlatformArea, hasPlatformPower } from './platform-areas';
 import type { PlatformRole } from './platform-auth';
+import { looksLikeEmailAddress, type SentState } from './sent-log-words';
 
 export const FIND_MIN_CHARS = 2;
 export const FIND_MAX_CHARS = 120;
@@ -26,7 +27,7 @@ export const FIND_ROWS_PER_GROUP = 8;
 /** The one sentence any failure on Find's path becomes, before anything logs it. */
 export const FIND_FAILED = 'Find could not search just now. Try again in a moment.';
 
-export type FindGroupKey = 'clubs' | 'people' | 'stripe';
+export type FindGroupKey = 'clubs' | 'people' | 'stripe' | 'sent_emails';
 
 export type FindClubRow = {
   id: string;
@@ -69,6 +70,16 @@ export type FindStripeRow = {
   chargeId?: string | null;
 };
 
+/** An email we sent to an address no account owns (Stage 5, drawing E2): a label, never a subject, a body or a link. */
+export type FindSentEmailRow = {
+  id: string;
+  label: string;
+  to: string;
+  orgName: string | null;
+  sentAt: string;
+  state: SentState;
+};
+
 export type FindGroup<T> = { rows: T[]; total: number };
 
 export type FindAnswer = {
@@ -77,6 +88,8 @@ export type FindAnswer = {
   clubs?: FindGroup<FindClubRow>;
   people?: FindGroup<FindPersonRow>;
   stripe?: FindGroup<FindStripeRow>;
+  /** Only for a role holding the `sent_log` power, and only for a whole address that no account owns. */
+  sentEmails?: FindGroup<FindSentEmailRow>;
   /** A Stripe-shaped number that is neither a family payment nor one of our clubs' (or is the other mode's). */
   stripeNotFound?: boolean;
 };
@@ -86,6 +99,8 @@ export type FindReaders = {
   people(query: string): Promise<FindGroup<Omit<FindPersonRow, 'clubs'>>>;
   personClubs(personIds: string[]): Promise<Map<string, FindPersonClub[]>>;
   stripe(number: string, kind: FindStripeKind): Promise<FindStripeRow[]>;
+  /** Exact address, newest first, staff addresses left out for every role but Super admin (the reader applies the role). */
+  sentEmails(address: string, role: PlatformRole): Promise<FindGroup<FindSentEmailRow>>;
 };
 
 /** The groups a role searches, in the panel's order. */
@@ -94,6 +109,8 @@ export function findGroupsFor(role: PlatformRole): FindGroupKey[] {
   if (canViewPlatformArea(role, 'organizations')) groups.push('clubs');
   if (canViewPlatformArea(role, 'customer_users')) groups.push('people');
   if (hasPlatformPower(role, 'find_stripe')) groups.push('stripe');
+  // Sent emails (Stage 5): the sent-log roles only. A group a role may not read is never searched.
+  if (hasPlatformPower(role, 'sent_log')) groups.push('sent_emails');
   return groups;
 }
 
@@ -147,6 +164,13 @@ export async function runFind(role: PlatformRole, words: string, readers: FindRe
     const rows = people.rows.slice(0, FIND_ROWS_PER_GROUP);
     const clubsByPerson = rows.length > 0 ? await readers.personClubs(rows.map(p => p.id)) : new Map<string, FindPersonClub[]>();
     answer.people = { rows: rows.map(p => ({ ...p, clubs: clubsByPerson.get(p.id) ?? [] })), total: people.total };
+  }
+  // An address that matches NO account but has emails recorded (an invite that never arrived): one more group, exact match
+  // only and only for a whole address. An address with an account is found as that person, whose Emails tab has them.
+  const address = searched.includes('sent_emails') && looksLikeEmailAddress(words) ? words.trim().toLowerCase() : null;
+  if (address && !people?.rows.some(p => p.email.trim().toLowerCase() === address)) {
+    const sent = await readers.sentEmails(address, role);
+    if (sent.rows.length > 0) answer.sentEmails = { rows: sent.rows.slice(0, FIND_ROWS_PER_GROUP), total: sent.total };
   }
   if (searched.includes('stripe')) {
     const rows = (stripeRows ?? []).slice(0, FIND_ROWS_PER_GROUP);

@@ -1,10 +1,12 @@
 import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { hasPlatformPower, isPlatformAdminEmail, requirePlatformAreaView } from '@/lib/platform-auth';
+import { hasPlatformPower, isPlatformAdminEmail, requirePlatformAreaView, type PlatformRole } from '@/lib/platform-auth';
 import { personAuthStatus, personById } from '@/lib/platform-people-lookup';
 import { buildPersonStory, type PersonMembership } from '@/lib/platform-story';
 import { recordOpened } from '@/lib/platform-record-opens';
 import { planLabel } from '@/lib/platform-labels';
+import { listSentEmails, recordingStartedAt } from '@/lib/sent-log';
+import type { PersonEmails } from '../../sent-emails/SentParts';
 import PersonRecord, { type PersonRecordProps } from './PersonRecord';
 
 /**
@@ -41,7 +43,14 @@ export default async function PersonRecordPage({ params, searchParams }: {
   const memberships = (membersRes.data ?? []) as unknown as Array<PersonMembership & {
     status: string | null; organizations: { id: string; name: string; slug: string; plan_id: string | null; subscription_status: string | null } | null;
   }>;
-  const story = await buildPersonStory({ id: person.id, email: person.email, createdAt: person.createdAt }, memberships);
+  // The sent log is the `sent_log` power's (Super admin, Support, Billing), decided HERE on the server: the Story and the
+  // Emails tab are open to every role that opens a person, so a role without the power is handed no email rows and no tab
+  // (absent beats disabled; T14). The Story is given the role, not a flag, and checks the power again.
+  const sentLog = hasPlatformPower(auth.role, 'sent_log');
+  const [story, emails] = await Promise.all([
+    buildPersonStory({ id: person.id, email: person.email, createdAt: person.createdAt }, memberships, { emailsAs: sentLog ? auth.role : null }),
+    sentLog ? readPersonEmails(auth.role, person.email) : Promise.resolve(null),
+  ]);
 
   const clubs = memberships
     .filter(m => m.organizations)
@@ -66,10 +75,25 @@ export default async function PersonRecordPage({ params, searchParams }: {
     },
     clubs,
     story,
+    emails,
     can: {
       support: hasPlatformPower(auth.role, 'person_support'),
       delete: hasPlatformPower(auth.role, 'delete_records'),
     },
   };
   return <PersonRecord {...props} />;
+}
+
+/** The person's own emails by their CURRENT address, newest first, with when recording began for the empty state (E6). */
+async function readPersonEmails(role: PlatformRole, address: string): Promise<PersonEmails | null> {
+  try {
+    const [{ rows, total }, startedAt] = await Promise.all([
+      listSentEmails(role, { to: address, limit: 100 }),
+      recordingStartedAt(),
+    ]);
+    return { rows, total, startedAt };
+  } catch {
+    // A failed read is an error, never "no emails recorded": the tab then says it could not be read.
+    return { rows: [], total: 0, startedAt: null, failed: true };
+  }
 }

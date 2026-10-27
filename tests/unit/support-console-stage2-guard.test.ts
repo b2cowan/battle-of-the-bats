@@ -105,6 +105,7 @@ function spyReaders() {
     async people() { calls.push('people'); return { rows: [{ id: 'p1', email: 'p@x.ca', name: null, lastSignInAt: null, banned: false }], total: 1 }; },
     async personClubs() { calls.push('personClubs'); return new Map(); },
     async stripe(n) { calls.push('stripe'); return [{ orgId: 'c1', orgName: 'Lynx', planLabel: 'Club', number: n, kind: 'customer' }]; },
+    async sentEmails() { calls.push('sentEmails'); return { rows: [], total: 0 }; },
   };
   return { readers, calls };
 }
@@ -293,7 +294,9 @@ describe('7 · Billing lost Support\'s club and person powers (A1), and kept fee
   it('feedback triage reads the feedback page\'s power, never a support power', () => {
     for (const f of ['feedback/[id]/status', 'feedback/[id]/escalate']) {
       const src = readCode(`app/api/platform-admin/${f}/route.ts`);
-      assert.match(src, /requirePlatformAreaApi\('feedback', 'write'\)/);
+      // Stage 5: the Feedback page now also carries the reply power, so triage asks triage itself, not "any power on
+      // the page" (which would let a reply-only role triage).
+      assert.match(src, /requirePlatformPower\('feedback_triage'\)/);
       assert.doesNotMatch(src, /person_support|club_support/);
     }
   });
@@ -324,7 +327,8 @@ describe('9 · the menu by job', () => {
     assert.deepEqual(labels, [
       // Stage 4 renamed Founding season → Free time, in the same place (owner ruling Q4).
       'Customers: Clubs & portals, People, Free time, Retention',
-      'Health: Errors, Feedback',
+      // Stage 5 joined Status (first) and Sent emails to the group; it made no new group (drawing A).
+      'Health: Status, Errors, Feedback, Sent emails',
       'Growth: Leads, Campaigns, Pitch decks',
       'Product: Plans & pricing, Approval queue, Bulk changes, Email templates, Export registry',
       'Records: Staff, Audit log',
