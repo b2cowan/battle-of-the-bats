@@ -26,7 +26,7 @@ export const POST = withObservability(async (req: Request) => {
   const scheduleId = isUuid(body.scheduleId) ? body.scheduleId : null;
   if (body.scheduleId && !scheduleId) return schedulerRefusal(404, 'not_found', R.notFound);
   const [asked, loaded] = await Promise.all([
-    readScheduleRequest(orgId, body),
+    readScheduleRequest(orgId, body, { houseLeague: r.houseLeague }),
     scheduleId ? loadSchedule(orgId, scheduleId) : null,
   ]);
   if (!asked.ok) return asked.response;

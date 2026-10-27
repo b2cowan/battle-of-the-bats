@@ -46,6 +46,7 @@ import { sharingPools } from '@/lib/club-schedule-settings';
 import { matchesScheduleTeamFilter } from '@/lib/club-schedule-overview';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
+import { isProgramHolder } from '@/lib/club-schedule-holders';
 import { fetchDoorNote } from '@/lib/needs-attention-door';
 import { facilityListWords, weekdayPlural } from '@/lib/permit-words';
 import {
@@ -151,7 +152,7 @@ export default function SchedulePage() {
   // ── Names, colours, places — looked up by id, once per read ──
   const teamById = useMemo(() => new Map((read?.teams ?? []).map(t => [t.id, t])), [read]);
   const slotByKey = useMemo(() => new Map((read?.slots ?? []).map(x => [x.key, x])), [read]);
-  const nameOf = useCallback((id: string) => teamById.get(id)?.name ?? 'A team', [teamById]);
+  const nameOf = useCallback((id: string) => teamById.get(id)?.name ?? (isProgramHolder(id) ? W.heldByHouseLeague : 'A team'), [teamById]);
   const colourOf = useCallback((id: string) => teamColour(read?.teams ?? [], id), [read]);
   const groupOf = useCallback((id: string) => teamById.get(id)?.groupId ?? null, [teamById]);
   const placeOfSlot = useCallback((x: Pick<SlotView, 'venueId' | 'facilityId'>) => placeName(read?.places ?? [], x.venueId, x.facilityId), [read]);

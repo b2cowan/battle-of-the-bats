@@ -24,9 +24,10 @@ import {
   billShares, closingRow, paymentPeriods, pricedMinutes, teamInstallments,
   type BillShares, type BillSlot, type ClosingRow, type Installment, type PaymentPeriod, type PaymentPlan,
 } from './club-schedule-bill';
-import { SCHEDULE_REFUSALS as R } from './club-schedule-words';
+import { SCHEDULE_REFUSALS as R, houseLeagueUse } from './club-schedule-words';
 import { clubDay, keptHandBacks, waitingAsksOfSchedule, type KeptHandBack } from './club-hand-back-reads';
 import { scheduleMoney, type ScheduleMoney } from './club-money-reads';
+import { HOUSE_LEAGUE, isProgramHolder, storedHolders, teamsOnly } from './club-schedule-holders';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -37,12 +38,17 @@ import { scheduleMoney, type ScheduleMoney } from './club-money-reads';
  * (`lib/club-schedule-send.ts`, `lib/club-schedule-coach.ts`).
  *
  * ⚖ WHO (Stage 11 Ask 3): the club's OWNER or an ADMIN builds, adjusts, bills and sends — for any team (an admin is never
- * limited to groups: `GROUP_UNSCOPED_ROLES`). A league admin builds house league's half (11b — not here). A head coach
- * reads only their own team's slots, bill and replies, through the coach's routes. A bill is money: adding one, and
- * finalizing a schedule that carries one, also asks the club's one money rule (`canMoveClubMoney`).
+ * limited to groups: `GROUP_UNSCOPED_ROLES`). A head coach reads only their own team's slots, bill and replies, through
+ * the coach's routes. A bill is money: adding one, and finalizing a schedule that carries one, also asks the club's one
+ * money rule (`canMoveClubMoney`).
+ * ⚖ HOUSE LEAGUE (Stage 11b, 9d2·15): the owner or an admin gives time to House league AS A WHOLE — one holder beside the
+ * teams (`HOUSE_LEAGUE`, lib/club-schedule-holders.ts), never a division, never billed (11b·A), never sharing a slot
+ * (11b·B). It is offered when the club has house league (its plan or a section), whether or not this member opens it: an
+ * admin builds for any program (Ask 3). The league admin divides it from the house-league season (lib/league-time-server.ts).
  * ⚖ THE PLAN (Stage 11 Ask 6): `club_scheduler` — League Plus and both Club bands, checked HERE on the server.
- * ⚖ NOTHING TO SCHEDULE: League Plus runs no rep teams until house league joins (11b). The list answers `nothingToSchedule`
- * (the screens hide the door); every write refuses in words.
+ * ⚖ NOTHING TO SCHEDULE: a club with no running rep team and no house league has nothing to hand time to. The list
+ * answers `nothingToSchedule` (the screens hide the door); every write refuses in words. Since 11b a League Plus club
+ * schedules house league.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -60,11 +66,14 @@ export interface SchedulerCtx {
   ctx: AuthContextWithRole;
   /** Holds the club's Accounting: may add a bill and finalize one that carries it. */
   canMoney: boolean;
-  /** The org runs rep teams this member can open — something to hand time to (false on League Plus until 11b). */
+  /** Something to hand time to: rep teams this member can open, or house league (Stage 11b). */
   canSchedule: boolean;
+  /** The club has house league (its plan, a free floor or a section): House league is offered as a holder (Stage 11b). */
+  houseLeague: boolean;
 }
 
-/** THE GATE: signed in, the plan carries the scheduler, an owner or an admin. `write` also needs rep teams to hand time to. */
+/** THE GATE: signed in, the plan carries the scheduler, an owner or an admin. `write` also needs something to hand time
+ *  to: rep teams, or house league. */
 export async function resolveScheduler(req: Request, opts: { write?: boolean } = {}): Promise<{ error: Response } | SchedulerCtx> {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
@@ -72,9 +81,11 @@ export async function resolveScheduler(req: Request, opts: { write?: boolean } =
   // The one rule (lib/club-schedule-gate.ts), each half refused in its own words.
   if (!clubSchedulerOn(ctx.org.planId)) return { error: refusal(403, 'plan_lacks_scheduler', R.plan) };
   if (!isScheduleBuilder(ctx.role)) return { error: refusal(403, 'not_a_builder', R.who) };
-  const canSchedule = hasModuleEntitlement(ctx.org, 'module_rep_teams') && canOpenModule(ctx, ctx.org, 'module_rep_teams');
+  const repTeams = hasModuleEntitlement(ctx.org, 'module_rep_teams') && canOpenModule(ctx, ctx.org, 'module_rep_teams');
+  const houseLeague = hasModuleEntitlement(ctx.org, 'module_house_league');
+  const canSchedule = repTeams || houseLeague;
   if (opts.write && !canSchedule) return { error: refusal(409, 'nothing_to_schedule', R.nothingToSchedule) };
-  return { ctx, canMoney: canMoveClubMoney(ctx, ctx.org), canSchedule };
+  return { ctx, canMoney: canMoveClubMoney(ctx, ctx.org), canSchedule, houseLeague };
 }
 
 /** A database refusal (the floor: mig 326's raises) said in words, never a 500. Null when it isn't one of ours. */
@@ -86,6 +97,7 @@ export function floorRefusal(e: unknown): Response | null {
   if (full) return refusal(409, 'slot_full', R.slotFull(Number(full[1])));
   if (/\bslot_place\b|\bblock_venue\b|\bblock_facility\b/.test(msg)) return refusal(409, 'place_gone', R.placeGone);
   if (/\bslot_team\b/.test(msg)) return refusal(409, 'team_gone', R.teamGone);
+  if (/\bslot_both\b/.test(msg)) return refusal(409, 'slot_both', R.slotBoth);
   if (/\bchanged:/.test(msg)) return refusal(409, 'changed', R.changed);
   const code = (e as { code?: string } | null)?.code;
   if (code === '23514' || code === '22003' || code === '22P02' || code === '23502') return refusal(400, 'schedule_value', R.scheduleValue);
@@ -120,13 +132,22 @@ export interface ClubTeam extends EngineTeam {
   /** The team's colour (`rep_teams.color`) — its edge on the grid and its swatch in a list (R4). Null: the page's own. */
   color: string | null;
   groupOrder: number;
-  /** The team's RUNNING season (Ask 15: a slot lands there; a team without one can't take one). */
+  /** The team's RUNNING season (Ask 15: a slot lands there; a team without one can't take one). House league's is its own
+   *  id: it always runs (its league admins put the time on a season). */
   season: { id: string; name: string } | null;
+  /** House league as a whole (Stage 11b) — a program, not a team. */
+  program?: typeof HOUSE_LEAGUE;
 }
 
+/** House league as the scheduler reads it (Stage 11b): one holder, after every team. */
+export const HOUSE_LEAGUE_HOLDER: ClubTeam = {
+  id: HOUSE_LEAGUE, name: 'House league', groupId: null, groupName: null, color: null, groupOrder: Number.MAX_SAFE_INTEGER,
+  age: null, many: true, season: { id: HOUSE_LEAGUE, name: 'House league' }, program: HOUSE_LEAGUE,
+};
+
 /** Every unarchived rep team of the club with its group and its running season — in the club's group order, then "Not in
- *  a group", each by name. One read of each table. */
-export async function readClubTeams(orgId: string): Promise<ClubTeam[]> {
+ *  a group", each by name; then House league when `houseLeague` (Stage 11b). One read of each table. */
+export async function readClubTeams(orgId: string, opts: { houseLeague?: boolean } = {}): Promise<ClubTeam[]> {
   const [teams, groups, seasons] = await Promise.all([
     fetchAll<{ id: string; name: string; group_id: string | null; color: string | null }>((a, b) => supabaseAdmin.from('rep_teams')
       .select('id, name, group_id, color').eq('org_id', orgId).eq('is_archived', false).order('id').range(a, b)),
@@ -145,8 +166,9 @@ export async function readClubTeams(orgId: string): Promise<ClubTeam[]> {
       season: live ? { id: live.id, name: live.name } : null,
     };
   });
-  return out.sort((a, b) => a.groupOrder - b.groupOrder || (a.groupName ?? '').localeCompare(b.groupName ?? '')
+  out.sort((a, b) => a.groupOrder - b.groupOrder || (a.groupName ?? '').localeCompare(b.groupName ?? '')
     || a.name.localeCompare(b.name, 'en-CA', { numeric: true }));
+  return opts.houseLeague ? [...out, HOUSE_LEAGUE_HOLDER] : out;
 }
 
 // ── A schedule, read whole ───────────────────────────────────────────────────────────────────────
@@ -204,6 +226,18 @@ async function readScheduleTime(orgId: string, scheduleId: string, row: Pick<Sch
   };
 }
 
+/** A slot's program row as PostgREST embeds it (one-to-one on the slot: an object, or an array from an older client). */
+type ProgramEmbed = { program: string } | { program: string }[] | null;
+
+/** A slot's holders as the scheduler reads them (Stage 11b): its teams in id order, then House league when a program row
+ *  holds it — the floor keeps the two apart (`slot_both`), so it is one or the other. */
+export function holdersOf(s: { club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs?: ProgramEmbed }): string[] {
+  const teams = (s.club_schedule_slot_teams ?? []).map(t => t.team_id).sort();
+  const p = s.club_schedule_slot_programs;
+  const program = Array.isArray(p) ? p[0]?.program : p?.program;
+  return program === HOUSE_LEAGUE ? [...teams, HOUSE_LEAGUE] : teams;
+}
+
 export async function loadSchedule(orgId: string, scheduleId: string): Promise<LoadedSchedule | null> {
   if (!isUuid(scheduleId)) return null;
   const { data, error } = await supabaseAdmin.from('club_schedules').select(SCHEDULE_COLUMNS).eq('id', scheduleId).eq('org_id', orgId).maybeSingle();
@@ -212,8 +246,8 @@ export async function loadSchedule(orgId: string, scheduleId: string): Promise<L
   const row = data as ScheduleRow;
   const [time, slotRows] = await Promise.all([
     readScheduleTime(orgId, scheduleId, row),
-    fetchAll<{ id: string; org_venue_id: string; facility_id: string | null; block_id: string | null; starts_at: string; ends_at: string; locked: boolean; moved_by_hand: boolean; handed_back_at: string | null; handed_back_by: string | null; handed_back_team_id: string | null; removed_at: string | null; club_schedule_slot_teams: { team_id: string }[] | null }>((a, b) => supabaseAdmin
-      .from('club_schedule_slots').select('id, org_venue_id, facility_id, block_id, starts_at, ends_at, locked, moved_by_hand, handed_back_at, handed_back_by, handed_back_team_id, removed_at, club_schedule_slot_teams(team_id)')
+    fetchAll<{ id: string; org_venue_id: string; facility_id: string | null; block_id: string | null; starts_at: string; ends_at: string; locked: boolean; moved_by_hand: boolean; handed_back_at: string | null; handed_back_by: string | null; handed_back_team_id: string | null; removed_at: string | null; club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs: ProgramEmbed }>((a, b) => supabaseAdmin
+      .from('club_schedule_slots').select('id, org_venue_id, facility_id, block_id, starts_at, ends_at, locked, moved_by_hand, handed_back_at, handed_back_by, handed_back_team_id, removed_at, club_schedule_slot_teams(team_id), club_schedule_slot_programs(program)')
       .eq('org_id', orgId).eq('schedule_id', scheduleId).order('starts_at').order('id').range(a, b)),
   ]);
   const read = readScheduleSettings(row.settings);
@@ -223,7 +257,7 @@ export async function loadSchedule(orgId: string, scheduleId: string): Promise<L
     time,
     slots: slotRows.map((s): StoredSlot => ({
       id: s.id, key: slotKeyOf(s.org_venue_id, s.facility_id, Date.parse(s.starts_at)), venueId: s.org_venue_id, facilityId: s.facility_id,
-      blockId: s.block_id, startsAt: s.starts_at, endsAt: s.ends_at, teamIds: (s.club_schedule_slot_teams ?? []).map(t => t.team_id).sort(),
+      blockId: s.block_id, startsAt: s.starts_at, endsAt: s.ends_at, teamIds: holdersOf(s),
       locked: s.locked, movedByHand: s.moved_by_hand,
       handedBack: s.handed_back_at ? { at: s.handed_back_at, by: s.handed_back_by, teamId: s.handed_back_team_id } : null,
       removed: !!s.removed_at,
@@ -281,6 +315,8 @@ export async function engineContext(orgId: string, p: {
   prices?: Prices;
 }): Promise<{ places: ClubPlaces; pool: PoolBooking[]; teamBookings: Map<string, TeamBooking[]>; prices: Prices }> {
   const own = new Set(p.slotIds);
+  // House league has no team bookings of its own here: its league admins' games and practices are in the pool.
+  p = { ...p, teamIds: teamsOnly(p.teamIds) };
   const [places, pool, events, tryouts, prices] = await Promise.all([
     p.places ?? readClubPlaces(orgId),
     readClubBookings(orgId, p.fromMs, p.toMs),
@@ -369,6 +405,9 @@ export interface SlotView {
   heldBy: { ownerName: string; kind: string | null } | null;
   /** Given to a team while a booking holds it — the amber flag (6a's rule). */
   clash: boolean;
+  /** A slot House league holds (Stage 11b): how its league admins used it ("U12 games", "U12 practice time" — null: Not
+   *  given yet), and the teams with a practice on it still to come (k5 names them before the club takes it back). */
+  houseLeague?: { use: string | null; practiceTeams: string[] } | null;
 }
 
 export interface BillView {
@@ -469,6 +508,8 @@ export interface ScheduleView {
    *  works a bill out passes it, so its table and what Finalize bills agree to the cent. */
   teamOrder: string[];
   canMoney: boolean;
+  /** The club has house league: a slot's Give it to offers House league under Programs (Stage 11b, h3). */
+  houseLeague: boolean;
   /** The asks waiting on this schedule, oldest first (Stage 11d part B — the callout, the ringed Sundays, the slot window). */
   asks: ScheduleAsk[];
   /** MONEY — null unless `canMoney` and the schedule has made its bill: what each team pays for its time, in cents (its
@@ -495,8 +536,28 @@ export interface ScheduleAsk {
   sundays: { slotId: string | null; startsAt: string; venueId: string | null; facilityId: string | null }[];
 }
 
+/** House league's slots as the club's schedule reads them (Stage 11b): each one's use ("U12 games"), and the teams with a
+ *  live practice on it still to come. The club never divides house league's time; it only reads how it was divided. */
+async function houseLeagueSlots(orgId: string, slotIds: readonly string[]): Promise<Map<string, { use: string | null; practiceTeams: string[] }>> {
+  const out = new Map<string, { use: string | null; practiceTeams: string[] }>();
+  if (!slotIds.length) return out;
+  const now = new Date().toISOString();
+  const [uses, practices] = await Promise.all([
+    fetchAllIn<{ slot_id: string; kind: 'games' | 'practices'; league_divisions: { name: string } | null }>(slotIds, (c, a, b) => supabaseAdmin
+      .from('league_slot_uses').select('slot_id, kind, league_divisions ( name )').eq('org_id', orgId).in('slot_id', c).order('slot_id').range(a, b)),
+    fetchAllIn<{ club_schedule_slot_id: string; league_teams: { name: string } | null }>(slotIds, (c, a, b) => supabaseAdmin
+      .from('league_practices').select('club_schedule_slot_id, league_teams ( name )').eq('org_id', orgId).in('club_schedule_slot_id', c)
+      .eq('status', 'scheduled').gt('scheduled_at', now).order('id').range(a, b)),
+  ]);
+  for (const id of slotIds) out.set(id, { use: null, practiceTeams: [] });
+  for (const u of uses) out.get(u.slot_id)!.use = u.league_divisions ? houseLeagueUse(u.league_divisions.name, u.kind) : null;
+  for (const p of practices) if (p.league_teams) out.get(p.club_schedule_slot_id)!.practiceTeams.push(p.league_teams.name);
+  for (const v of out.values()) v.practiceTeams = [...new Set(v.practiceTeams)].sort((x, y) => x.localeCompare(y, 'en-CA', { numeric: true }));
+  return out;
+}
+
 /** THE SCHEDULE'S PAGE: the schedule, its time, every slot (held and clashing marked), fairness, the bill. */
-export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMoney: boolean): Promise<ScheduleView> {
+export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMoney: boolean, opts: { houseLeague?: boolean } = {}): Promise<ScheduleView> {
   const row = loaded.row;
   const permitId = row.bill_permit_id ?? row.started_from_permit_id;
   const live = loaded.slots.filter(s => !s.removed);
@@ -506,7 +567,8 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
   // made it, in one read — and the plain hand-backs that leave a bill as it was (Stage 11d part B — S11D-05's two numbers).
   const billed = canMoney && row.state === 'final' && !!row.allocation_id;
   const [teams, ctx, nameOf, waiting, money, plainBacks] = await Promise.all([
-    readClubTeams(orgId),
+    // House league is always named when a slot holds it, whether or not the club still has house league.
+    readClubTeams(orgId, { houseLeague: true }),
     engineContext(orgId, { slotIds: loaded.slots.map(s => s.id), teamIds: [], fromMs, toMs, permitId }),
     resolvePersonNamer(orgId, [row.sent_by, row.finalized_by]),
     row.state === 'final' ? waitingAsksOfSchedule(orgId, row.id) : Promise.resolve([]),
@@ -515,6 +577,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
   ]);
   const { slots, assignments, stored } = liveSlots(loaded, ctx.prices.weightOf);
   const held = heldSlots(slots, ctx.pool);
+  const houseLeagueOf = await houseLeagueSlots(orgId, stored.filter(s => s.teamIds.some(isProgramHolder)).map(s => s.id));
   const teamById = new Map(teams.map(t => [t.id, t]));
   const ticked = loaded.settings.teamIds.map(id => teamById.get(id)).filter((t): t is ClubTeam => !!t);
   const tickedIds = new Set(ticked.map(t => t.id));
@@ -556,6 +619,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
         handedBack: s.handedBack ? { at: s.handedBack.at, teamId: s.handedBack.teamId } : null,
         heldBy: h ? { ownerName: h.ownerName, kind: h.kind ?? null } : null,
         clash: !!h && s.teamIds.length > 0,
+        houseLeague: s.teamIds.some(isProgramHolder) ? houseLeagueOf.get(s.id) ?? { use: null, practiceTeams: [] } : null,
       };
     }),
     fairness: {
@@ -573,6 +637,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
       ? { permitId, permitName: ctx.prices.permitName, fullHour: ctx.prices.fullHour, permitCost: ctx.prices.permitCost, lineId: ctx.prices.lineId }
       : null,
     canMoney,
+    houseLeague: !!opts.houseLeague,
     // An ask with no Sunday left to count (every one started, or came back to the team) lapses at the next sweep, and
     // Accept refuses it: a callout whose Answer can only refuse is a dead end, so it isn't shown (Payment requests keeps it).
     asks: waiting.filter(a => a.count > 0).map(a => ({
@@ -606,8 +671,8 @@ export async function scheduleList(orgId: string): Promise<ScheduleListRow[]> {
   const [blocks, slots, places] = await Promise.all([
     fetchAllIn<{ schedule_id: string; org_venue_id: string; org_time_block_facilities: { facility_id: string }[] | null }>(ids, (c, a, b) => supabaseAdmin
       .from('org_time_blocks').select('schedule_id, org_venue_id, org_time_block_facilities(facility_id)').eq('org_id', orgId).in('schedule_id', c).order('id').range(a, b)),
-    fetchAllIn<{ schedule_id: string; club_schedule_slot_teams: { team_id: string }[] | null }>(ids, (c, a, b) => supabaseAdmin
-      .from('club_schedule_slots').select('schedule_id, club_schedule_slot_teams(team_id)').eq('org_id', orgId).in('schedule_id', c).is('removed_at', null).order('id').range(a, b)),
+    fetchAllIn<{ schedule_id: string; club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs: ProgramEmbed }>(ids, (c, a, b) => supabaseAdmin
+      .from('club_schedule_slots').select('schedule_id, club_schedule_slot_teams(team_id), club_schedule_slot_programs(program)').eq('org_id', orgId).in('schedule_id', c).is('removed_at', null).order('id').range(a, b)),
     readClubPlaces(orgId),
   ]);
   const nameOf = await resolvePersonNamer(orgId, rows.map(r => r.sent_by));
@@ -616,7 +681,7 @@ export async function scheduleList(orgId: string): Promise<ScheduleListRow[]> {
     const read = readScheduleSettings(r.settings);
     const mine = slots.filter(s => s.schedule_id === r.id);
     // A slot handed out is one a team has, however many share it (Stage 11c); an open one has nobody.
-    const handedOut = mine.filter(s => (s.club_schedule_slot_teams ?? []).length > 0).length;
+    const handedOut = mine.filter(s => holdersOf(s).length > 0).length;
     const placeWords = blocks.filter(b => b.schedule_id === r.id).map(b => {
       const venue = places.venueName.get(b.org_venue_id) ?? '';
       // In the venue's order and said as the page says it: "Lakeshore Dome · Fields 1–6" (/design, 2026-10-11).
@@ -652,10 +717,12 @@ export function timePayload(time: ScheduleTime & { blockIds?: (string | null)[] 
 export function slotsPayload(slots: readonly Slot[], assignments: ReadonlyMap<string, readonly string[]>, kept: ReadonlyMap<string, StoredSlot>) {
   return slots.map(s => {
     const k = kept.get(s.key);
+    // House league goes as the slot's program, never as a team (Stage 11b; the floor refuses both, `slot_both`).
+    const held = storedHolders(k && (k.locked || k.movedByHand) ? k.teamIds : [...(assignments.get(s.key) ?? [])]);
     return {
       venueId: s.venueId, facilityId: s.facilityId, startsAt: new Date(s.startMs).toISOString(), endsAt: new Date(s.endMs).toISOString(),
       blockIndex: s.blockIndex,
-      teamIds: k && (k.locked || k.movedByHand) ? k.teamIds : [...(assignments.get(s.key) ?? [])],
+      teamIds: held.teamIds, program: held.program,
       locked: k?.locked ?? false, movedByHand: k?.movedByHand ?? false,
     };
   });
@@ -682,8 +749,10 @@ export async function saveScheduleStep(orgId: string, scheduleId: string | null,
 
 /** Hand edits on the grid through the one step (Ask 13). */
 export async function editSlotsStep(orgId: string, scheduleId: string, actor: string, version: number, edits: { slotId: string; teamIds?: string[]; locked?: boolean; movedByHand?: boolean }[]): Promise<{ ok: true; version: number } | { ok: false; response: Response }> {
+  // An edit that names the slot's holders names them whole: its teams, and House league as its program (Stage 11b).
+  const stored = edits.map(e => (e.teamIds ? { ...e, ...storedHolders(e.teamIds) } : e));
   const r = await runStep<{ ok: boolean; version: number }>(
-    supabaseAdmin.rpc('club_schedule_edit_slots', { p_org: orgId, p_schedule: scheduleId, p_actor: actor, p_version: version, p_edits: edits }));
+    supabaseAdmin.rpc('club_schedule_edit_slots', { p_org: orgId, p_schedule: scheduleId, p_actor: actor, p_version: version, p_edits: stored }));
   return r.ok ? { ok: true, version: r.out.version } : r;
 }
 
@@ -786,10 +855,10 @@ export interface ScheduleRequest {
 
 /** A schedule's time and settings off a request, checked against the club's teams, places and groups — what Generate,
  *  Save as a draft and a regenerate all read first. */
-export async function readScheduleRequest(orgId: string, body: Record<string, unknown>): Promise<{ ok: true; value: ScheduleRequest } | { ok: false; response: Response }> {
+export async function readScheduleRequest(orgId: string, body: Record<string, unknown>, opts: { houseLeague?: boolean } = {}): Promise<{ ok: true; value: ScheduleRequest } | { ok: false; response: Response }> {
   const t = readTimeBody(body);
   if (!t.ok) return { ok: false, response: refusal(400, t.code, t.error) };
-  const [teams, places] = await Promise.all([readClubTeams(orgId), readClubPlaces(orgId)]);
+  const [teams, places] = await Promise.all([readClubTeams(orgId, opts), readClubPlaces(orgId)]);
   const running = teams.filter(x => x.season);
   if (!running.length) return { ok: false, response: refusal(409, 'nothing_to_schedule', R.nothingToSchedule) };
   const settings = readScheduleSettings(body.settings, {
@@ -800,6 +869,11 @@ export async function readScheduleRequest(orgId: string, body: Record<string, un
     groupOf: new Map(running.map(x => [x.id, x.groupId])),
   });
   if (!settings.ok) return { ok: false, response: refusal(400, settings.code, settings.error) };
+  // No team rule reaches house league (Stage 11b): its league admins divide its time, and it shares a slot with nobody.
+  const r = settings.value.rules;
+  if ([...r.windows.flatMap(w => w.teamIds), ...r.daysOff.map(d => d.teamId), ...r.fieldsBy.flatMap(f => f.teamIds), ...r.sharing.flatMap(s => s.teamIds)].some(isProgramHolder)) {
+    return { ok: false, response: refusal(400, 'bad_rule', R.ruleNamesHouseLeague) };
+  }
   return { ok: true, value: { time: t.time, teams, running, places, settings: settings.value } };
 }
 
@@ -816,7 +890,8 @@ export function draftToSave(req: ScheduleRequest, prices: Prices, rawAssignments
   const a = readAssignments(rawAssignments, checked.slots, new Set(req.running.map(x => x.id)), (ids, slot) => room(ids, slot.weight));
   if (!a.ok) return { ok: false, response: refusal(400, a.code, a.error) };
   for (const [key, s] of kept) a.value.set(key, s.teamIds);
-  const twice = teamTwice(checked.slots, a.value);
+  // House league holds many slots at once (its league admins divide them): the one refusal is a TEAM's.
+  const twice = teamTwice(checked.slots, new Map([...a.value].map(([k, ids]) => [k, teamsOnly(ids)])));
   if (twice) return { ok: false, response: refusal(409, 'team_twice', R.teamTwice(teamNamer(req.teams)(twice.teamId))) };
   return { ok: true, slots: slotsPayload(checked.slots, a.value, kept) };
 }

@@ -177,7 +177,7 @@ export function tryoutSessionBooking(row: {
  */
 export function leagueBooking(row: {
   id: string; kind: 'game' | 'practice'; scheduled_at: string | null; ends_at?: string | null; status?: string | null;
-  org_venue_id?: string | null; org_venue_facility_id?: string | null;
+  org_venue_id?: string | null; org_venue_facility_id?: string | null; club_schedule_slot_id?: string | null;
 }, names: { season: string; venue?: string | null; facility?: string | null }): ClubBooking | null {
   if (row.status === 'cancelled' || row.status === 'postponed') return null;
   const w = windowOf(row.scheduled_at, row.ends_at);
@@ -186,6 +186,8 @@ export function leagueBooking(row: {
     key: `league_${row.kind}:${row.id}`, program: 'league', owner: 'league', ownerName: names.season, kind: row.kind,
     ...w, ...placed(row.org_venue_id, row.org_venue_facility_id),
     venueName: names.venue ?? null, facilityName: names.facility ?? null,
+    // A practice handed out from house league's club time (Stage 11b): its own slot never clashes with it.
+    clubSlotOf: row.club_schedule_slot_id ?? null,
   };
 }
 

@@ -545,10 +545,10 @@ export function PermitWindow({
   const [read, setRead] = useState<PermitWindowRead | null>(null);
   const [failed, setFailed] = useState(false);
   const router = useRouter();
-  // Who builds schedules (Club Tier 11a): the club's owner or an admin, the plan's scheduler, rep teams to hand time to —
-  // `kitSchedulesLink`'s own gate, so the door shows exactly where Schedules does.
+  // Who builds schedules (Club Tier 11a): the club's owner or an admin, the plan's scheduler, rep teams or house league to
+  // hand time to (11b) — `kitSchedulesLink`'s own gate, so the door shows exactly where Schedules does.
   const { currentOrg, userRole, canOpen } = useOrg();
-  const canBuild = canOpenClubSchedules({ planId: currentOrg?.planId, role: userRole }) && canOpen('module_rep_teams');
+  const canBuild = canOpenClubSchedules({ planId: currentOrg?.planId, role: userRole }) && (canOpen('module_rep_teams') || canOpen('module_house_league'));
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
     const current = beginRead();

@@ -41,7 +41,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   const loaded = await loadSchedule(r.ctx.org.id, scheduleId);
   if (!loaded) return schedulerRefusal(404, 'not_found', R.notFound);
   const [view, replies, log, changes] = await Promise.all([
-    scheduleView(r.ctx.org.id, loaded, r.canMoney),
+    scheduleView(r.ctx.org.id, loaded, r.canMoney, { houseLeague: r.houseLeague }),
     scheduleReplies(r.ctx.org.id, scheduleId),
     sendLog(r.ctx.org.id, scheduleId),
     loaded.row.changed_since_sent ? changesSummary(r, loaded) : Promise.resolve({ teams: [] }),
@@ -73,7 +73,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
 
     if (body.action === 'regenerate') {
       const [asked, prices] = await Promise.all([
-        readScheduleRequest(orgId, body),
+        readScheduleRequest(orgId, body, { houseLeague: r.houseLeague }),
         readPrices(orgId, loaded.row.bill_permit_id ?? loaded.row.started_from_permit_id),
       ]);
       if (!asked.ok) return asked.response;
@@ -95,7 +95,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       // asks it too — what it puts back must still fit the schedule's sharing rules.
       const crowds = (body.edits as Record<string, unknown>[]).some(e => Array.isArray(e?.teamIds) && e.teamIds.length > 1);
       const [teams, prices] = await Promise.all([
-        readClubTeams(orgId),
+        readClubTeams(orgId, { houseLeague: r.houseLeague }),
         crowds ? readPrices(orgId, loaded.row.bill_permit_id ?? loaded.row.started_from_permit_id) : null,
       ]);
       const running = new Set(teams.filter(x => x.season).map(x => x.id));

@@ -23,6 +23,7 @@
 import { shareCents } from './club-bill-split';
 import { toCents, toDollars } from './coach-register';
 import { addCalendarMonths } from './timezone';
+import { teamsOnly } from './club-schedule-holders';
 
 const MIN = 60_000;
 
@@ -66,7 +67,8 @@ export interface BillShares {
  * no price and no amount).
  */
 export function billShares(priced: ReadonlyMap<string, number>, opts: { fullHour: number | null; amount: number | null; teamOrder?: readonly string[] }): BillShares | null {
-  const order = (opts.teamOrder ?? [...priced.keys()]).filter(t => (priced.get(t) ?? 0) > 0);
+  // House league is never billed (11b·A): its time is on no bill, whatever order a caller passes.
+  const order = teamsOnly(opts.teamOrder ?? [...priced.keys()]).filter(t => (priced.get(t) ?? 0) > 0);
   const minutes = order.reduce((n, t) => n + priced.get(t)!, 0);
   if (!order.length || minutes <= 0) return null;
   const timePriceCents = opts.fullHour != null ? Math.round((minutes / 60) * opts.fullHour * 100) : null;
@@ -192,7 +194,7 @@ export function timeSplits(p: {
  * time × the rate, shared by priced time in `teamOrder` (the first bill's order, so the rounding is the same rule).
  */
 export function sharesAtRate(priced: ReadonlyMap<string, number>, rate: number, teamOrder?: readonly string[]): Map<string, number> {
-  const order = (teamOrder ?? [...priced.keys()]).filter(t => (priced.get(t) ?? 0) > 0);
+  const order = teamsOnly(teamOrder ?? [...priced.keys()]).filter(t => (priced.get(t) ?? 0) > 0);
   const minutes = order.reduce((n, t) => n + priced.get(t)!, 0);
   if (!order.length) return new Map();
   const cents = shareCents(Math.round(minutes * rate), order.map(t => priced.get(t)!));

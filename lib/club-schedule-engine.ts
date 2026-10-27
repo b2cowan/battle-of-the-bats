@@ -198,6 +198,10 @@ export interface EngineTeam {
   groupId: string | null;
   /** The age in its name ("13U AAA" → 13), for "youngest earliest". Null when it has none. */
   age: number | null;
+  /** A PROGRAM, not a team (Stage 11b: house league as a whole — lib/club-schedule-holders.ts): it holds many slots at
+   *  once (its league admins divide them), so no team rule caps it — never twice at once, a day cap, back-to-back or a
+   *  weekly cap. It shares a slot with nobody (no sharing rule names it). */
+  many?: boolean;
 }
 
 /** "13U AAA" → 13; "U11 Girls" → 11. */
@@ -322,14 +326,14 @@ export function shareTargets(teams: readonly EngineTeam[], settings: Pick<Schedu
   let slots: Map<string, number>;
   if (method === 'weekly') {
     const cap = settings.rules.maxPerWeek;
-    slots = new Map(teams.map(t => [t.id, Math.min(valueOf(t), cap ?? Infinity) * seats.weeks]));
+    slots = new Map(teams.map(t => [t.id, Math.min(valueOf(t), t.many ? Infinity : cap ?? Infinity) * seats.weeks]));
   } else {
     const percent = method === 'even' ? 100 : teams.reduce((s, t) => s + valueOf(t), 0);
     const total = Math.min(seats.capacity, Math.round(seats.capacity * Math.min(percent, 100) / 100));
     slots = apportionByGroup(total, teams, valueOf);
     // A weekly cap holds a share down (reported by `capWarnings`, never broken).
     if (settings.rules.maxPerWeek != null) {
-      for (const t of teams) slots.set(t.id, Math.min(slots.get(t.id)!, settings.rules.maxPerWeek * seats.weeks));
+      for (const t of teams) if (!t.many) slots.set(t.id, Math.min(slots.get(t.id)!, settings.rules.maxPerWeek * seats.weeks));
     }
   }
   // What the shares come to once sharing is worked out: each rule's teams matched (a set number a week matches one
@@ -732,12 +736,12 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
   const needsFor = (seats: readonly Seat[], cumSeats: number, cumPrime: number, kept: Map<string, Seat[]>, have: Map<string, number>, havePrime: Map<string, number>) => {
     const need = new Map<string, number>(), primeNeed = new Map<string, number>();
     if (settings.split.method === 'weekly') {
-      for (const t of teams) need.set(t.id, Math.min(settings.split.values[t.id] ?? 0, maxPerWeek));
+      for (const t of teams) need.set(t.id, Math.min(settings.split.values[t.id] ?? 0, t.many ? Infinity : maxPerWeek));
     } else {
       const ideal = new Map(teams.map(t => [t.id, targets.slots.get(t.id)! * cumSeats / Math.max(1, targets.capacity)]));
       const deficits = new Map(teams.map(t => [t.id, ideal.get(t.id)! - have.get(t.id)!]));
       // Rounded UP: a team that shares may be owed half a facility (units), which a whole cap of 0 would never hand it.
-      const caps = new Map(teams.map(t => [t.id, Math.min(Math.ceil(targets.slots.get(t.id)! - have.get(t.id)! - EPS), maxPerWeek)]));
+      const caps = new Map(teams.map(t => [t.id, Math.min(Math.ceil(targets.slots.get(t.id)! - have.get(t.id)! - EPS), t.many ? Infinity : maxPerWeek)]));
       const toHand = Math.max(0, Math.min(seats.length,
         Math.round([...ideal.values()].reduce((a, b) => a + b, 0) - [...have.values()].reduce((a, b) => a + b, 0))));
       const share = apportionDeficits(toHand, deficits, caps);
@@ -874,7 +878,9 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
             if (p.teams.length > 1 && s.weight < 1) continue;
             if (!p.teams.every(t => rules.eligible(t, s))) continue;
             let dayCount = 0, ok = true;
+            const many = p.teams.some(t => t.many);
             for (const t of p.teams) {
+              if (t.many) continue;
               const mine = taken.get(t.id)!;
               if (mine.some(m => m.slot.startMs < s.endMs && s.startMs < m.slot.endMs)) { ok = false; break; }
               const dc = mine.filter(m => m.slot.day === s.day).length;
@@ -885,8 +891,9 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
             const dk = `${p.id}|${s.day}`;
             if (!dayNode.has(dk)) {
               dayNode.set(dk, n++);
-              // The day's first slot is free; every further one costs SAME_DAY_COST (two parallel edges: a convex cost).
-              const room = maxPerDay - dayCount;
+              // The day's first slot is free; every further one costs SAME_DAY_COST (two parallel edges: a convex cost). A
+              // program has no day cap: its league admins divide the day among teams.
+              const room = many ? pool.length : maxPerDay - dayCount;
               if (dayCount === 0) {
                 edges.push({ u: placerNode.get(p.id)!, v: dayNode.get(dk)!, cap: 1, cost: 0 });
                 if (room > 1) edges.push({ u: placerNode.get(p.id)!, v: dayNode.get(dk)!, cap: room - 1, cost: SAME_DAY_COST });
@@ -897,7 +904,7 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
             const sk = `${p.id}|${s.startMs}`;
             if (!startNode.has(sk)) {
               startNode.set(sk, n++);
-              edges.push({ u: dayNode.get(dk)!, v: startNode.get(sk)!, cap: 1, cost: 0 });
+              edges.push({ u: dayNode.get(dk)!, v: startNode.get(sk)!, cap: many ? pool.length : 1, cost: 0 });
             }
             pending.push({ u: startNode.get(sk)!, v: seatNode.get(seat)!, seat, placer: p, cost: costOf(p, s) });
           }
@@ -937,7 +944,7 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
      *  forbid key on the placer that broke it. */
     const findViolation = (res: Map<Seat, Placer>): string | null => {
       const byTeam = new Map<string, { seat: Seat; p: Placer }[]>();
-      for (const [seat, p] of res) for (const t of p.teams) (byTeam.get(t.id) ?? byTeam.set(t.id, []).get(t.id)!).push({ seat, p });
+      for (const [seat, p] of res) for (const t of p.teams) if (!t.many) (byTeam.get(t.id) ?? byTeam.set(t.id, []).get(t.id)!).push({ seat, p });
       for (const [t, list] of byTeam) {
         const all: { seat: Seat; p: Placer | null }[] = [...(kept.get(t) ?? []).map(seat => ({ seat, p: null })), ...list];
         for (const a of list) {
@@ -972,6 +979,7 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
     for (const [seat, p] of res) {
       const s = seat.slot;
       const fits = p.teams.every(t => {
+        if (t.many) return true;
         const mine = held.get(t.id) ?? [];
         if (mine.some(m => m.slot.startMs < s.endMs && s.startMs < m.slot.endMs)) return false;
         if (mine.filter(m => m.slot.day === s.day).length >= maxPerDay) return false;
@@ -1250,7 +1258,7 @@ function capWarnings(input: EngineInput, targets: ShareTargets): ShareWarning[] 
   if (cap == null || input.settings.split.method === 'weekly') return [];
   const { method, values } = input.settings.split;
   const groups = new Map<string, EngineTeam[]>();
-  for (const t of input.teams) { const k = groupKey(t); (groups.get(k) ?? groups.set(k, []).get(k)!).push(t); }
+  for (const t of input.teams) { if (t.many) continue; const k = groupKey(t); (groups.get(k) ?? groups.set(k, []).get(k)!).push(t); }
   const out: ShareWarning[] = [];
   for (const list of groups.values()) {
     const wanted = list.reduce((n, t) => {

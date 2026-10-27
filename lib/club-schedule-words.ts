@@ -52,10 +52,16 @@ export const SCHEDULE_WORDS = {
 } as const;
 
 /** [marketing] Why a send can't go, or a write was refused — one sentence each, the routes' `error`. */
+/** A piece of house league's time, as every screen names it (Stage 11b copy, k2): "U12 games", "U12 practice time". */
+export const houseLeagueUse = (division: string, kind: 'games' | 'practices') =>
+  (kind === 'games' ? `${division} games` : `${division} practice time`);
+
 export const SCHEDULE_REFUSALS = {
   plan: 'The club scheduler is part of League Plus and Club.',
   who: 'Only the club’s owner or an admin builds schedules.',
-  nothingToSchedule: 'There are no rep teams with a season running to hand time to yet.',
+  nothingToSchedule: 'There are no rep teams with a season running, and no house league, to hand time to yet.',
+  slotBoth: 'A slot is held by teams or by house league, never both.',
+  ruleNamesHouseLeague: 'A rule names house league. Its league admins divide its time, so take it out of the rule.',
   notFound: 'That schedule isn’t here any more. Reload the page.',
   changed: 'This schedule changed since you opened it. Reload it to see the change, then try again.',
   alreadyFinal: 'This schedule is already final. Its changes go with Send the changes.',
@@ -480,6 +486,15 @@ export const SCHEDULE_SCREEN_WORDS = {
   colSlots: 'Slots',
   each: 'each',
   notInGroup: 'Not in a group',
+  // House league as a whole (Stage 11b — HOUSE_LEAGUE_STAGE9D2_11B_COPY.md, k1): one row, never by division.
+  programs: 'Programs',
+  houseLeagueWhole: 'Its league admins divide it among divisions and teams.',
+  houseLeagueShare: 'Its league admins divide its share.',
+  houseLeagueWholeHint: 'All of it goes to house league, so there are no drafts to choose from.',
+  houseLeagueShareHint: 'The drafts place house league’s slots like a team’s. Its league admins divide them after you send.',
+  houseLeagueFoot: (hours: number, facilities: number, range: string) =>
+    `House league gets ${pluralize(hours, 'hour')} a week across ${pluralize(facilities, 'facility', 'facilities')}, ${range}. Its league admins can divide it right away.`,
+  giveToHouseLeague: 'Give it to house league',
   teamsCount: (n: number) => pluralize(n, 'team'),
   aWeek: (n: number) => `${n} a week`,
   everyWeek: 'The shares hold every week, so no group takes its time early.',
@@ -703,8 +718,20 @@ export const SCHEDULE_SCREEN_WORDS = {
   slotHeld: 'Held by',
   yes: 'Yes',
   no: 'No',
-  changeTeam: 'Change team',
+  // "Change team" became "Give it to" (Stage 11b copy): the list holds House league, which is not a team.
+  changeTeam: 'Give it to',
   nobody: 'Nobody (open)',
+  repTeams: 'Rep teams',
+  heldByHouseLeague: 'House league',
+  repSlotReads: 'A rep team holds this time. The owner or an admin can give it to house league.',
+  // The club takes time back (k5, 9d2·16 — the practices half; the games half arrives with 9d-2b).
+  takeBackTitle: (when: string, to: string) => `Give ${when} to ${to}?`,
+  takeBackOpenTitle: (when: string) => `Open ${when}?`,
+  takeBackPractices: (teams: string[], weekday: string) =>
+    `House league uses this time: ${joinWithAnd(teams.map(possessive))} practices on ${weekday}s. Their coaches and families are told when you send the changes.`,
+  takeBackWait: 'Nothing changes until you send the changes.',
+  giveItTo: (to: string) => `Give it to ${to}`,
+  openIt: 'Open it',
   lockSlot: 'Lock this slot',
   unlockSlot: 'Unlock this slot',
   swapWith: 'Swap with…',

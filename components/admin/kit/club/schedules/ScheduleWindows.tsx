@@ -16,7 +16,7 @@
  *   SendLogWindow— Tools › Send log: every send, kept (one log shape for every club send — Ask 9).
  *   TeamSlotsWindow — By team's row opens that team's slots as a list.
  */
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ArrowLeftRight, Eraser, Lock, LockOpen } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
@@ -25,6 +25,7 @@ import { useDismissable } from '@/lib/overlay-hooks';
 import { formatMonthYear, formatStoredDate, formatWeekRange, utcToZonedInputs } from '@/lib/timezone';
 import { formatTime, joinWithAnd, pluralize } from '@/lib/utils';
 import { slotHolds } from '@/lib/club-schedule-settings';
+import { HOUSE_LEAGUE, isProgramHolder } from '@/lib/club-schedule-holders';
 import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
 import { SCHEDULE_SCREEN_WORDS as W, sendLogLine } from '@/lib/club-schedule-words';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
@@ -109,7 +110,16 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
 }) {
   const venue = view.places.find(p => p.venueId === slot.venueId)?.venueName ?? '';
   const where = [venue, slot.facilityId ? placeOf(slot) : ''].filter(Boolean).join(' · ');
-  const running = view.teams.filter(t => t.season);
+  // Give it to (Stage 11b, h3): the rep teams with a season running, then House league under Programs — never sharing.
+  const running = view.teams.filter(t => t.season && !isProgramHolder(t.id));
+  const houseLeagueHere = slot.teamIds.some(isProgramHolder);
+  const offerHouseLeague = view.houseLeague || houseLeagueHere;
+  const [confirmTo, setConfirmTo] = useState<string[] | null>(null);
+  /** A change away from house league with practices on the slot asks first (k5, 9d2·16); unused time goes with no question. */
+  const change = (teamIds: string[]) => {
+    if (houseLeagueHere && !teamIds.some(isProgramHolder) && slot.houseLeague?.practiceTeams.length) setConfirmTo(teamIds);
+    else onChangeTeams(teamIds);
+  };
   const one = slot.teamIds[0] ?? null;
   // How it repeats: the team's slots at this place in the week.
   const repeats = (() => {
@@ -122,14 +132,35 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
   const held = slot.heldBy && !slot.teamIds.length;
   // A slot's room (Stage 11c): a sharing rule's teams up to its number — Change team adds a partner while there is room.
   // Who may join the teams in it: whoever the slot's room holds beside them — a partner of their sharing rule.
-  const partners = slot.teamIds.length ? running.filter(t => !slot.teamIds.includes(t.id) && slotHolds([...slot.teamIds, t.id], slot.weight, sharing)) : [];
+  const partners = slot.teamIds.length && !houseLeagueHere ? running.filter(t => !slot.teamIds.includes(t.id) && slotHolds([...slot.teamIds, t.id], slot.weight, sharing)) : [];
   const shared = slot.teamIds.length > 1;
+  if (confirmTo) {
+    const to = confirmTo.length ? joinWithAnd(confirmTo.map(nameOf)) : null;
+    const when = `${dayHead(slot.day)} · ${slotTime(slot)}`;
+    return (
+      <KitDialog kind="question" eyebrow={W.slotEyebrow(view.schedule.name)} title={to ? W.takeBackTitle(when, to) : W.takeBackOpenTitle(when)}
+        identity={where} onClose={() => setConfirmTo(null)} busy={busy}
+        footer={(
+          <>
+            <button type="button" className="btn btn-outline" onClick={() => setConfirmTo(null)} disabled={busy}>{W.cancel}</button>
+            <button type="button" className="btn btn-lime" onClick={() => { const ids = confirmTo; setConfirmTo(null); onChangeTeams(ids); }} disabled={busy}>
+              {to ? W.giveItTo(to) : W.openIt}
+            </button>
+          </>
+        )}>
+        <p>{W.takeBackPractices(slot.houseLeague!.practiceTeams, DAY_NAMES[slot.weekday])}</p>
+        <p className={sch.quiet}>{W.takeBackWait}</p>
+      </KitDialog>
+    );
+  }
   return (
     <KitDialog kind="question" eyebrow={W.slotEyebrow(view.schedule.name)} title={`${dayHead(slot.day)} · ${slotTime(slot)}`} identity={where} onClose={onClose} busy={busy}>
       <dl className={sch.read2}>
-        <dt>{shared ? `${W.slotTeams}, ${W.slotShared}` : W.slotTeam}</dt>
+        <dt>{houseLeagueHere ? W.slotHeld : shared ? `${W.slotTeams}, ${W.slotShared}` : W.slotTeam}</dt>
         <dd>
-          {slot.teamIds.length ? (
+          {houseLeagueHere ? (
+            [W.heldByHouseLeague, slot.houseLeague?.use].filter(Boolean).join(' · ')
+          ) : slot.teamIds.length ? (
             <span className={sch.slotTeamList}>
               {slot.teamIds.map(t => <span key={t} className={sch.withSwatch}><Swatch colour={colourOf(t)} />{nameOf(t)}</span>)}
             </span>
@@ -161,10 +192,15 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
               {partners.map(t => <option key={t.id} value={t.id}>{W.addTeam(t.name)}</option>)}
             </select>
           ) : (
-            <select id="slot-team" className={ck.select} value={one ?? ''} disabled={busy}
-              onChange={e => { const v = e.target.value; onChangeTeams(v.startsWith('+') ? [...slot.teamIds, v.slice(1)] : v ? [v] : []); }}>
+            <select id="slot-team" className={ck.select} value={one ?? ''} disabled={busy} aria-describedby={houseLeagueHere ? 'slot-team-hint' : undefined}
+              onChange={e => { const v = e.target.value; change(v.startsWith('+') ? [...slot.teamIds, v.slice(1)] : v ? [v] : []); }}>
               <option value="">{W.nobody}</option>
-              {running.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {offerHouseLeague ? (
+                <>
+                  {running.length > 0 && <optgroup label={W.repTeams}>{running.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</optgroup>}
+                  <optgroup label={W.programs}><option value={HOUSE_LEAGUE}>{W.heldByHouseLeague}</option></optgroup>
+                </>
+              ) : running.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               {partners.length > 0 && (
                 <optgroup label={W.shareWith}>
                   {partners.map(t => <option key={t.id} value={`+${t.id}`}>{W.addTeam(t.name)}</option>)}
@@ -172,6 +208,7 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
               )}
             </select>
           )}
+          {houseLeagueHere && <span id="slot-team-hint" className={ck.hint}>{W.houseLeagueWhole}</span>}
         </label>
       )}
       {canChange && (
@@ -179,10 +216,13 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
           <RecordAction icon={slot.locked ? <LockOpen size={14} aria-hidden /> : <Lock size={14} aria-hidden />} onClick={() => onLock(!slot.locked)} disabled={busy}>
             {slot.locked ? W.unlockSlot : W.lockSlot}
           </RecordAction>
-          {one && !shared && (
+          {one && !shared && !houseLeagueHere && (
             <RecordAction icon={<ArrowLeftRight size={14} aria-hidden />} onClick={onSwap} disabled={busy}>{W.swapWith}</RecordAction>
           )}
-          {slot.teamIds.length > 0 && <RecordAction icon={<Eraser size={14} aria-hidden />} onClick={onClear} disabled={busy}>{W.clearSlot}</RecordAction>}
+          {slot.teamIds.length > 0 && (
+            <RecordAction icon={<Eraser size={14} aria-hidden />} disabled={busy}
+              onClick={() => (houseLeagueHere && slot.houseLeague?.practiceTeams.length ? setConfirmTo([]) : onClear())}>{W.clearSlot}</RecordAction>
+          )}
         </div>
       )}
     </KitDialog>

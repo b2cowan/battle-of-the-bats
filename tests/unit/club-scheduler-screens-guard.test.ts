@@ -69,6 +69,14 @@ describe('1 · the Schedules row is there only where time can be handed out', ()
     assert.equal(link({ planId: null }), null);
     assert.equal(link({ canUse: () => false }), null);
   });
+  it('⚖ Stage 11b: a League Plus club with house league and no rep teams has Schedules (the club gives house league its time there); a league admin never does', () => {
+    // Changed 2026-10-27 (11b): the row asked only rep teams, so a League Plus club had no door. House league is now a
+    // holder, so either program opens it — and only for the owner or an admin (`canOpenClubSchedules`).
+    const onlyHouseLeague = (c: string) => c === 'module_house_league';
+    assert.equal(link({ planId: 'league', canUse: onlyHouseLeague as never })?.href, '/riverdale/admin/schedules');
+    assert.equal(link({ planId: 'league', canUse: onlyHouseLeague as never, role: 'league_admin' }), null);
+    assert.equal(link({ planId: 'league', canUse: (c => c === 'module_families') as never }), null);
+  });
   it('the rail and the phone’s More sheet carry it under Calendar, never on a tournament-only rail', () => {
     const rail = readCode(RAIL);
     assert.match(rail, /schedulesLink && !tournamentOnly/);
@@ -160,7 +168,8 @@ describe('7 · the doors into a schedule are gated like the page', () => {
   });
   it('a permit’s "Hand out this time in a schedule" asks the same gate; Delete is absent while a schedule hands it out', () => {
     const permit = readCode(PERMIT);
-    assert.match(permit, /const canBuild = canOpenClubSchedules\(\{ planId: currentOrg\?\.planId, role: userRole \}\) && canOpen\('module_rep_teams'\);/);
+    // Stage 11b: rep teams OR house league to hand time to — `kitSchedulesLink`'s own gate.
+    assert.match(permit, /const canBuild = canOpenClubSchedules\(\{ planId: currentOrg\?\.planId, role: userRole \}\) && \(canOpen\('module_rep_teams'\) \|\| canOpen\('module_house_league'\)\);/);
     assert.match(permit, /!editing && canBuild && \(/);
     assert.match(permit, /handedOut\.length === 0 && <RecordDelete/);
   });

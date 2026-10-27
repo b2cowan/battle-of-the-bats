@@ -274,7 +274,7 @@ async function readClubPool(orgId: string, fromMs: number, toMs: number): Promis
       .gte('scheduled_at', fromIso).lte('scheduled_at', toIso)
       .order('id').range(a, b)),
     fetchAll<LeagueRow>((a, b) => supabaseAdmin.from('league_practices')
-      .select('id, season_id, scheduled_at, ends_at, status, org_venue_id, org_venue_facility_id')
+      .select('id, season_id, scheduled_at, ends_at, status, org_venue_id, org_venue_facility_id, club_schedule_slot_id')
       .eq('org_id', orgId).not('org_venue_id', 'is', null)
       .gte('scheduled_at', fromIso).lte('scheduled_at', toIso)
       .order('id').range(a, b)),

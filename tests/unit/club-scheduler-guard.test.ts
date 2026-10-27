@@ -63,8 +63,29 @@ describe('the scheduler rides League Plus and both Club bands, checked on the se
     const rule = readCode('lib/club-schedule-gate.ts');
     assert.match(rule, /hasPlanFeature\(planId, 'club_scheduler'\)/);
     assert.match(rule, /role === 'owner' \|\| role === 'admin'/);
-    assert.match(gate, /hasModuleEntitlement\(ctx\.org, 'module_rep_teams'\)/, 'League Plus has no rep team to hand time to until 11b');
+    assert.match(gate, /hasModuleEntitlement\(ctx\.org, 'module_rep_teams'\)/);
+    // ⚖ Changed 2026-10-27 (Stage 11b, 9d2·15): house league is a holder of the club's time, so a club with house league
+    // has something to schedule — League Plus included. Still the owner or an admin only (the line above `isScheduleBuilder`).
+    assert.match(gate, /const houseLeague = hasModuleEntitlement\(ctx\.org, 'module_house_league'\);/);
+    assert.match(gate, /const canSchedule = repTeams \|\| houseLeague;/);
     assert.match(gate, /canMoney: canMoveClubMoney\(ctx, ctx\.org\)/);
+  });
+  it('⚖ Stage 11b: house league is taken back out at every edge — the database, the bill, the send, the rules', () => {
+    const server = readCode('lib/club-schedule-server.ts');
+    // A slot's program goes as `program`, never as a team row (mig 392's floor refuses both: slot_both).
+    assert.match(functionBody(server, 'slotsPayload'), /storedHolders\(/);
+    assert.match(functionBody(server, 'editSlotsStep'), /storedHolders\(/);
+    assert.match(server, /\\bslot_both\\b/);
+    // The one refusal is a TEAM's: house league holds many slots at once.
+    assert.match(functionBody(server, 'draftToSave'), /teamTwice\(checked\.slots, new Map\(\[\.\.\.a\.value\]\.map\(\(\[k, ids\]\) => \[k, teamsOnly\(ids\)\]\)\)\)/);
+    // No team rule names it.
+    assert.match(functionBody(server, 'readScheduleRequest'), /isProgramHolder/);
+    // Never billed (11b·A), whatever order a caller passes.
+    const bill = readCode('lib/club-schedule-bill.ts');
+    assert.match(functionBody(bill, 'billShares'), /teamsOnly\(/);
+    assert.match(functionBody(bill, 'sharesAtRate'), /teamsOnly\(/);
+    // The rep teams' Send the changes measures rep practices only; house league's half is its own.
+    assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'planChanges'), /teamsOnly\(ids\)/);
   });
   it('every admin scheduler route passes through the gate', () => {
     for (const f of ['app/api/admin/schedules/route.ts', 'app/api/admin/schedules/generate/route.ts',

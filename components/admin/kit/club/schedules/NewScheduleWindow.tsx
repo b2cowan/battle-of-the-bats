@@ -72,6 +72,7 @@ import {
 } from '@/lib/club-schedule-view';
 import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import type { DraftMeasure, TeamResult } from '@/lib/club-schedule-engine';
+import { HOUSE_LEAGUE, isProgramHolder } from '@/lib/club-schedule-holders';
 import type { DateOff, TimeBlock } from '@/lib/permit-time';
 import { Statement, Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
@@ -81,7 +82,9 @@ import TimeInput from '@/components/shared/TimeInput';
 
 // ── The inputs New schedule reads (`GET /api/admin/schedules?new=1`) ─────────────────────────────
 
-interface InputTeam { id: string; name: string; groupId: string | null; groupName: string | null; color: string | null; season: { id: string; name: string } | null }
+interface InputTeam { id: string; name: string; groupId: string | null; groupName: string | null; color: string | null; season: { id: string; name: string } | null; program?: string }
+/** House league's group in the table (Stage 11b): its own heading, after the rep teams' groups. */
+const PROGRAMS = '__programs__';
 interface InputPlace { venueId: string; venueName: string; facilities: { id: string; name: string }[] }
 interface InputPermit { id: string; name: string; startsOn: string; endsOn: string; blocks: TimeBlock[]; datesOff: DateOff[] }
 export interface NewInputs {
@@ -256,7 +259,11 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         });
         return;
       }
-      const base: Draft = { ...EMPTY, ticked: r.data.teams.filter(t => t.season).map(t => t.id) };
+      // Every running team ticked; House league only when it is all the club has (Stage 11b: a club's rep teams are its
+      // usual holders, and giving house league a share is a choice).
+      const runningNow = r.data.teams.filter(t => t.season);
+      const teamsNow = runningNow.filter(t => !isProgramHolder(t.id));
+      const base: Draft = { ...EMPTY, ticked: (teamsNow.length ? teamsNow : runningNow).map(t => t.id) };
       const permit = startPermitId ? r.data.permits.find(p => p.id === startPermitId) : null;
       setDraft(permit ? { ...base, ...fromPermit(permit, r.data.places), name: permit.name } : base);
     }).catch(() => { if (live) setInputsFailed(true); });
@@ -315,10 +322,15 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const noSeason = useMemo(() => (inputs?.teams ?? []).filter(t => !t.season), [inputs]);
   const tickedSet = useMemo(() => new Set(draft.ticked), [draft.ticked]);
   const inOrder = useMemo(() => running.filter(t => tickedSet.has(t.id)), [running, tickedSet]);
-  const groupKeyOf = (t: InputTeam) => t.groupId ?? NO_GROUP;
+  /** The rep teams alone: the only holders a rule can name (Stage 11b — no team rule reaches house league). */
+  const runningTeams = useMemo(() => running.filter(t => !isProgramHolder(t.id)), [running]);
+  /** All of it to house league (Stage 11b, k1): no drafts, no split, no prime time, no rules — the time goes as it stands. */
+  const wholeHouseLeague = inOrder.length === 1 && isProgramHolder(inOrder[0].id);
+  const houseLeagueShare = !wholeHouseLeague && inOrder.some(t => isProgramHolder(t.id));
+  const groupKeyOf = (t: InputTeam) => (isProgramHolder(t.id) ? PROGRAMS : t.groupId ?? NO_GROUP);
   const groupKeys = useMemo(() => (running.some(t => t.groupId) ? [...new Set(running.map(groupKeyOf))] : []), [running]);
   const membersOf = (key: string) => running.filter(t => groupKeyOf(t) === key);
-  const groupLabel = (key: string) => (key === NO_GROUP ? W.notInGroup : running.find(t => t.groupId === key)?.groupName ?? W.notInGroup);
+  const groupLabel = (key: string) => (key === PROGRAMS ? W.programs : key === NO_GROUP ? W.notInGroup : running.find(t => t.groupId === key)?.groupName ?? W.notInGroup);
 
   const figureOf = (teamId: string): number | null => figureIn(draft, teamId);
   const percentHundredths = draft.method === 'percentage'
@@ -389,6 +401,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     if (!isCalendarDate(draft.startsOn) || !isCalendarDate(draft.endsOn) || draft.endsOn < draft.startsOn) return W.needDates;
     if (timeBody.blocks.length !== draft.rows.length || !timeBody.blocks.length) return W.needHours;
     if (!inOrder.length) return W.needTeams;
+    if (wholeHouseLeague) return null;
     if (draft.method !== 'even' && tickedWithFigure.length !== inOrder.length) return W.needFigures;
     if (percentHundredths > 10000) return W.over100(String((percentHundredths - 10000) / 100));
     if (unfinishedRule) return W.ruleUnfinished;
@@ -701,11 +714,13 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const rows: FormTableRow[] = running.map(t => {
     const isIn = tickedSet.has(t.id);
     const slots = isIn ? targetOf(t.id) : null;
+    // House league's row says who divides it (k1), where a team's says its season.
+    const note = isProgramHolder(t.id) ? (wholeHouseLeague ? W.houseLeagueWhole : W.houseLeagueShare) : t.season!.name;
     return {
-      key: t.id, name: t.name, group: groupKeys.length ? groupKeyOf(t) : undefined, nameNote: t.season!.name,
+      key: t.id, name: t.name, group: groupKeys.length ? groupKeyOf(t) : undefined, nameNote: note,
       ticked: isIn, tickLabel: W.tick(t.name), onTick: next => tickTo(next ? [...draft.ticked, t.id] : draft.ticked.filter(x => x !== t.id)),
-      cells: { figure: isIn ? figureCell(t) : '', slots: isIn ? slotsWords(slots) : '' },
-      phoneLine: t.season!.name,
+      cells: { figure: isIn && !wholeHouseLeague ? figureCell(t) : '', slots: isIn ? slotsWords(slots) : '' },
+      phoneLine: note,
       phoneFigure: isIn ? (draft.method === 'even' ? slotsWords(slots) : figureCell(t)) : undefined,
     };
   });
@@ -796,7 +811,9 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       <div className={sch.sectionHead}>
         <h3 id="ns-who" className={sch.sectionTitle}>{W.sectionWho}</h3>
       </div>
-      {/* Split the time beside Each team's time: both say how the time is handed out (Stage 11c Ask 4). */}
+      {/* Split the time beside Each team's time: both say how the time is handed out (Stage 11c Ask 4). All of it to house
+          league has no split, no daily limit and no prime time: absent, not explained (Stage 11b, k1). */}
+      {!wholeHouseLeague && (<>
       <div className={sch.pair}>
         <label className={ck.field} htmlFor="ns-split">
           <span className={ck.label}>{W.split}</span>
@@ -829,6 +846,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           <span id="ns-max-per-day-hint" className={ck.hint}>{W.practicesPerDayHint}</span>
         </label>
       </div>
+      </>)}
       {!inputs ? <LoadingState inline label={W.loadingInputs} /> : running.length === 0 ? <p className={ck.hint}>{R.nothingToSchedule}</p> : (
         <FormTable
           ariaLabel={W.sectionWho}
@@ -850,7 +868,9 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           }}
         />
       )}
-      {draft.method === 'percentage' && <p className={sch.quiet}>{W.everyWeek}</p>}
+      {wholeHouseLeague && <p className={sch.quiet}>{W.houseLeagueWholeHint}</p>}
+      {houseLeagueShare && <p className={sch.quiet}>{W.houseLeagueShareHint}</p>}
+      {draft.method === 'percentage' && !wholeHouseLeague && <p className={sch.quiet}>{W.everyWeek}</p>}
       {noSeason.length > 0 && (
         <div className={mk.noSeason}>
           <button type="button" className={mk.noSeasonToggle} aria-expanded={noSeasonOpen} onClick={() => setNoSeasonOpen(o => !o)}>
@@ -861,6 +881,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       )}
       {/* Prime time, whole (Stage 11c Ask 5): its hours, and how it is shared beside them where that applies. Each team's
           time answers whether a team keeps its prime-time slot or moves — no Keep / Rotate of its own. */}
+      {!wholeHouseLeague && (<>
       <div className={`${sch.pair} ${sch.primePair}`}>
         <label className={ck.field} htmlFor="ns-prime">
           <span className={ck.label}>{W.prime}</span>
@@ -890,16 +911,17 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           {clockSelect('ns-pe', W.until, draft.primeEnd, v => set({ primeEnd: v }))}
         </div>
       )}
+      </>)}
     </section>
   );
 
   // ── Rules: only the rules the club added, each its sentence; a rule opens in place; one Add a rule ──
-  const teamOptions = running.map(t => ({ id: t.id, label: t.name }));
+  const teamOptions = runningTeams.map(t => ({ id: t.id, label: t.name }));
   const allFacilities = places.filter(p => p.venueId === draft.venueId || draft.rows.some(r => r.place?.venueId === p.venueId))
     .flatMap(p => p.facilities.map(f => ({ id: f.id, label: f.name })));
   const whoOptions = [
     ...(inputs?.groups ?? []).filter(g => running.some(t => t.groupId === g.id)).map(g => ({ id: `g:${g.id}`, label: g.name })),
-    ...running.map(t => ({ id: `t:${t.id}`, label: t.name })),
+    ...runningTeams.map(t => ({ id: `t:${t.id}`, label: t.name })),
   ];
   const halfNames = shown?.half.length ? facilityNames(shown.half) : null;
   const addRule = (kind: RuleKind) => {
@@ -939,7 +961,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
             <span className={ck.label}>{W.ruleTeam}<span className={repKit.req} aria-hidden>*</span></span>
             <select id={id('team')} className={ck.select} value={d.teamId} onChange={e => patchIn('daysOff', d.key, { teamId: e.target.value })}>
               <option value="">{W.chooseTeam}</option>
-              {running.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {runningTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </label>
           <label className={ck.field} htmlFor={id('when')}>
@@ -1208,11 +1230,52 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const lockedOnly = editing ? editing.slots.filter(s => s.locked && !s.movedByHand).length : 0;
   const movedByHand = editing ? editing.slots.filter(s => s.movedByHand).length : 0;
   // The count sits at the foot's left, never among the buttons (owner, 2026-10-12 — KitDialog's `footerStart`).
-  const footSettingsNote = shown ? <span className={sch.footNote}>{footCount(shown.handedOut, inOrder.length)}</span> : undefined;
+  // All of it to house league (k1): the foot says what house league gets, and the lime gives it — no drafts to choose from.
+  const weeklyHours = (() => {
+    let minutes = 0;
+    const facilitiesUsed = new Set<string>();
+    for (const r of draft.rows) {
+      if (!r.start || !r.end || r.end <= r.start) continue;
+      const v = places.find(p => p.venueId === (r.place?.venueId ?? draft.venueId));
+      const ids = v?.facilities.length ? r.place?.facilityIds ?? draft.facilityIds : [v?.venueId ?? ''];
+      ids.forEach(f => facilitiesUsed.add(f));
+      const [sh, sm] = r.start.split(':').map(Number), [eh, em] = r.end.split(':').map(Number);
+      minutes += r.weekdays.length * ids.length * ((eh * 60 + em) - (sh * 60 + sm));
+    }
+    return { hours: Math.round((minutes / 60) * 10) / 10, facilities: facilitiesUsed.size };
+  })();
+  const footSettingsNote = wholeHouseLeague
+    ? (timeReady ? <span className={sch.footNote}>{W.houseLeagueFoot(weeklyHours.hours, weeklyHours.facilities, scheduleDates(draft.startsOn, draft.endsOn))}</span> : undefined)
+    : shown ? <span className={sch.footNote}>{footCount(shown.handedOut, inOrder.length)}</span> : undefined;
+
+  /** Give it to house league (k1): saved and sent in one step — its league admins can divide it right away. */
+  async function giveWhole() {
+    if (busy) return;
+    const p = problem();
+    if (p) { setError(p); return; }
+    setBusy(true); setError('');
+    try {
+      const body = {
+        // The time as it stands, to house league: no split, no prime time, no rules (they are absent from the form too).
+        name: draft.name.trim(), ...timeBody,
+        settings: settingsFromDraft({ ...draft, method: 'even', values: {}, groupTyped: {}, primeDays: 'none', windows: [], daysOff: [], fieldsBy: [], sharing: [], maxPerWeek: '' }, [HOUSE_LEAGUE]),
+        startedFromPermitId: permitId, startedFromScheduleId: fromScheduleId, giveToHouseLeague: true,
+      };
+      // org-slug-ok: `q` is the host page's "orgSlug=…" query
+      const r = await moneyFetch<{ id: string }>(`/api/admin/schedules?${q}`, jsonInit('POST', body));
+      if (!r.ok) { setError(refusalText(r.data, R.notSaved)); setBusy(false); return; }
+      onSaved?.(r.data.id);
+    } catch {
+      setError(R.notSaved);
+      setBusy(false);
+    }
+  }
   const footSettings = (
     <>
       <button type="button" className="btn btn-outline" onClick={onCancel} disabled={busy}>{W.cancel}</button>
-      <button type="button" className="btn btn-lime" onClick={() => void generate(0)} disabled={busy || !inputs}>{busy ? W.generating : W.generate}</button>
+      {wholeHouseLeague && !editing
+        ? <button type="button" className="btn btn-lime" onClick={() => void giveWhole()} disabled={busy || !inputs}>{busy ? W.saving : W.giveToHouseLeague}</button>
+        : <button type="button" className="btn btn-lime" onClick={() => void generate(0)} disabled={busy || !inputs}>{busy ? W.generating : W.generate}</button>}
     </>
   );
   const footDrafts = (
@@ -1239,7 +1302,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   else if (!inputs) body = <LoadingState inline label={W.loadingInputs} />;
   else if (choosing) body = openingBody;
   else if (step === 'drafts' && gen) body = draftsBody;
-  else body = <div className={sch.settings}>{timeSection}{whoSection}{rulesSection}</div>;
+  else body = <div className={sch.settings}>{timeSection}{whoSection}{!wholeHouseLeague && rulesSection}</div>;
 
   // While the inputs load, no step line and no step bar: the window may open on the opening screen instead (/review).
   let identity: string | undefined = copiedFrom ? W.copiedFrom(copiedFrom) : W.step1;

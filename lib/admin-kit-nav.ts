@@ -227,8 +227,9 @@ export function kitCalendarLink({ base, canUse, isCanceled, tournamentTier }: {
  * booked slots (the nav standard's N5, 2026-10-17: the clipboard it first wore is Tryouts' in the coaches portal).
  * It shows only where the route answers (`resolveScheduler`, through the one rule `canOpenClubSchedules`):
  * the club's OWNER or an ADMIN, a plan carrying `club_scheduler` (League Plus and both Club bands), never cancelled — and ONLY where there is something to schedule:
- * the rep teams program this person can open (`canUse('module_rep_teams')`). League Plus runs no rep teams until house
- * league joins (11b), so the row is ABSENT there — an entry point that can't serve is the 404's politer face.
+ * the rep teams program this person can open (`canUse('module_rep_teams')`), or house league (Stage 11b: the club gives
+ * house league its time here, so a League Plus club with no rep teams has Schedules too). With neither the row is ABSENT
+ * — an entry point that can't serve is the 404's politer face.
  */
 export function kitSchedulesLink({ base, canUse, isCanceled, role, planId }: {
   base: string;
@@ -238,7 +239,7 @@ export function kitSchedulesLink({ base, canUse, isCanceled, role, planId }: {
   planId: OrgPlan | null | undefined;
 }): KitLink | null {
   if (isCanceled || !canOpenClubSchedules({ planId, role })) return null;
-  return canUse('module_rep_teams') ? { key: 'schedules', label: 'Schedules', href: `${base}/schedules`, icon: ChartGantt } : null;
+  return canUse('module_rep_teams') || canUse('module_house_league') ? { key: 'schedules', label: 'Schedules', href: `${base}/schedules`, icon: ChartGantt } : null;
 }
 
 /** The Organization group's icon (the rail row and the More section share it). */

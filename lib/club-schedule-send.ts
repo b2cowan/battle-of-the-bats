@@ -35,6 +35,7 @@ import {
   type ClubTeam, type LoadedSchedule, type SchedulerCtx,
 } from './club-schedule-server';
 import type { NotificationEventType } from './types';
+import { teamsOnly } from './club-schedule-holders';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -277,7 +278,8 @@ function planChanges(c: Context, practices: readonly Practice[]): ChangesPlan {
   const practiceById = new Map(practices.map(p => [p.id, p]));
   const diff = diffAgainstSent(
     [...c.slotIdOf].map(([key, id]) => ({ id, key, week: slotByKey.get(key)!.week, startMs: slotByKey.get(key)!.startMs })),
-    c.assignments,
+    // The rep teams' practices only: house league's are league practices, its own half of the send (Stage 11b).
+    new Map([...c.assignments].map(([key, ids]) => [key, teamsOnly(ids)])),
     practices.map(p => ({ id: p.id, teamId: p.team_id, slotId: p.club_schedule_slot_id, cancelled: p.status === 'cancelled', startMs: Date.parse(p.starts_at) })),
     ms => mondayOfDay(utcToZonedInputs(new Date(ms).toISOString()).date),
   );
