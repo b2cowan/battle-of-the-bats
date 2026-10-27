@@ -5,7 +5,9 @@ import { withObservability } from '@/lib/observability';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { onlinePaymentsOn, ONLINE_PAYMENTS_OFF_ERROR } from '@/lib/online-payments-switch';
 import { canRefundOnline } from '@/lib/online-payment-access';
-import { recordRefundAnotherWay, refundOnlinePayment, refundTeamPart, resolveLeagueRefundAnotherWay, settleDecisionAfterSave } from '@/lib/online-payment-landing';
+import { keepOverpayment, recordRefundAnotherWay, refundOnlinePayment, refundTeamPart, resolveLeagueRefundAnotherWay, settleDecisionAfterSave } from '@/lib/online-payment-landing';
+import { clearSettled } from '@/lib/needs-attention';
+import { OVER_WORDS } from '@/lib/online-payment-words';
 import { sendTeamPayLink } from '@/lib/online-payment-receipt';
 
 export const runtime = 'nodejs';
@@ -20,6 +22,8 @@ export const dynamic = 'force-dynamic';
  *   POST { action: 'email_pay_link', teamId }                                      "Email the pay link" → "Pay link sent"
  *   POST { action: 'clear_decision', onlinePaymentId, choice, feeBack, reason }    12c Part 6: a team ended while its bank debit
  *                                                                                  clears — send it back or keep it, when it clears
+ *   POST { action: 'keep_over', onlinePaymentId, reason }                          12d-1: the club keeps what a team paid past
+ *                                                                                  what it owed ("Keep it": a note, never a credit)
  *
  * Who: whoever runs tournaments (A13, `canRefundOnline`; the treasurer does not refund, owner 2026-10-26). Inside the event's organization and scope,
  * behind the launch switch and the plan. FieldLogicHQ's fee is never refunded (§0c); with A2's box ticked the club pays
@@ -75,6 +79,17 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     return json({ ok: true });
   }
 
+  if (body.action === 'keep_over') {
+    if (typeof body.onlinePaymentId !== 'string' || !UUID.test(body.onlinePaymentId)) return json({ error: 'That payment couldn’t be found.' }, 404);
+    const { data: op } = await supabaseAdmin.from('online_payments').select('org_id, tournament_id').eq('id', body.onlinePaymentId).maybeSingle();
+    if (!op || op.org_id !== ctx.org.id || op.tournament_id !== tournamentId) return json({ error: 'That payment couldn’t be found.' }, 404);
+    const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 500) : '';
+    if (!reason) return json({ error: OVER_WORDS.keepReasonError }, 400);
+    const kept = await keepOverpayment({ onlinePaymentId: body.onlinePaymentId, reason, actorId: ctx.user.id });
+    if (kept === 'nothing_extra') return json({ error: OVER_WORDS.keepGone }, 409);
+    return json({ ok: true });
+  }
+
   if (body.action === 'refund' || body.action === 'refund_another_way') {
     if (typeof body.onlinePaymentId !== 'string' || !UUID.test(body.onlinePaymentId)) return json({ error: 'That payment couldn’t be found.' }, 404);
     const { data: op } = await supabaseAdmin.from('online_payments').select('org_id, tournament_id, status').eq('id', body.onlinePaymentId).maybeSingle();
@@ -107,6 +122,8 @@ export const POST = withObservability(async (req: Request, { params }: { params:
       const outcome = body.action === 'refund'
         ? (amount != null ? await refundTeamPart({ onlinePaymentId: body.onlinePaymentId, amount, partialReason, note, actorId: ctx.user.id }) : await refundOnlinePayment(args))
         : await recordRefundAnotherWay(args);
+      // 12d-1: a refund that took the extra back settles "paid twice" for everyone it went to (its rule reads it live).
+      if (outcome.state !== 'failed') await clearSettled({ orgIds: [ctx.org.id], kinds: ['online_payment_over'] });
       return json(outcome, outcome.state === 'failed' ? 502 : 200);
     } catch (e) {
       const message = e instanceof Error ? e.message : '';

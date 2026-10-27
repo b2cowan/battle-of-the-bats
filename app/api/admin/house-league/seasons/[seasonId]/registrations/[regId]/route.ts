@@ -1,3 +1,4 @@
+import { closeChildPayPages, openChildPayPages } from '@/lib/online-pay-pages';
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, forbidden } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
@@ -246,7 +247,9 @@ export const GET = withObservability(async (_req: Request,
 
   // 12b: the child's card shares still refundable (the ending window's "Refund to the card", the price correction's).
   const cardShares = await leagueCardShares(regId);
-  return NextResponse.json({ registration: reg, cardShares });
+  // 12d-1 (ask 12): the family's open pay pages, for Mark received's notice (who opened it, for what, and when).
+  const openPages = await openChildPayPages(regId);
+  return NextResponse.json({ registration: reg, cardShares, openPages, today: tournamentToday() });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations/[regId]' });
 
 export const PATCH = withObservability(async (req: Request,
@@ -378,6 +381,8 @@ export const PATCH = withObservability(async (req: Request,
     if ('refused' in wrote) return moveRefused(wrote.refused);
     if ('refusal' in wrote) return moneyRefusal(wrote.refusal, reg, season);
     priceRefundNotice?.();
+    // 12d-1 (ask 12): marked received by hand, so the family's open pay pages close (they can't pay twice).
+    const pagesClosed = move.kind === 'receive' ? await closeChildPayPages([regId], 'Mark received') : 0;
     // A raised price while the club takes card payments: the family is emailed a pay link for the difference (b6).
     if (cardPrice && move.kind === 'price' && before != null && move.price > before) {
       await sendLeaguePayLink(regId, {
@@ -386,7 +391,7 @@ export const PATCH = withObservability(async (req: Request,
       }).catch(() => null);
     }
     const updated = await fetchReg(regId, seasonId);
-    return NextResponse.json({ registration: updated });
+    return NextResponse.json({ registration: updated, pagesClosed });
   }
 
   // ── adminNotes only ──────────────────────────────────────────────────────────

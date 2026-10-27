@@ -137,12 +137,13 @@ export function paymentFact(team: TeamRecord, fee: FeeSchedule): { text: string;
  * owed/paid fact (amber when owed); `rest` what has been received and the state. The due DATES are the Still due rows'
  * (mig 345, TeamPayments.tsx), said once. Null with no fee schedule (the record then offers Mark paid / Mark unpaid).
  */
-export function paymentLine(team: TeamRecord, fee: FeeSchedule, today: string): { lead: string; owes: boolean; rest: string[] } | null {
+export function paymentLine(team: TeamRecord, fee: FeeSchedule, today: string): { lead: string; owes: boolean; rest: string[]; over?: boolean } | null {
   if (!fee.totalFeeAmount) return null;
   const owed = owedAmount(team, fee);
   if (owed <= 0) {
     const over = Math.round((team.totalPaid - fee.totalFeeAmount) * 100) / 100;
-    if (over > 0) return { lead: TEAM_RECORD_WORDS.paidAmount(formatMoney(team.totalPaid)), owes: false, rest: [TEAM_RECORD_WORDS.overFee(formatMoney(over))] };
+    // `over`: 12d-1's pill replaces "over the fee" when the extra came from an online payment (words §2.2 `teamRec.*`).
+    if (over > 0) return { lead: TEAM_RECORD_WORDS.paidAmount(formatMoney(team.totalPaid)), owes: false, rest: [TEAM_RECORD_WORDS.overFee(formatMoney(over))], over: true };
     return { lead: TEAM_RECORD_WORDS.paidInFull(formatMoney(fee.totalFeeAmount)), owes: false, rest: [] };
   }
   const rest: string[] = [];

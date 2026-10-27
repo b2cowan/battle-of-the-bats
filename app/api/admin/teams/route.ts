@@ -48,6 +48,7 @@ import {
   findDuplicateTournamentTeam,
 } from '@/lib/team-registration-duplicates';
 import { claimNextOpenSlot } from '@/lib/slot-claim';
+import { closeTeamPayPages } from '@/lib/online-pay-pages';
 import { ourTeamIdsAmong } from '@/lib/club-own-tournament-team';
 import { runsInviteOnlyEvents, teamUpdateAllowed } from '@/lib/invite-only-event';
 import { INVITATION_EMAIL_WORDS, INVITE_REFUSALS } from '@/lib/invite-only-words';
@@ -740,7 +741,11 @@ export const POST = withObservability(async (req: Request) => {
       notifyTeamCoaches({ registrationIds: bellDeclined, eventType: 'team_coach_declined', compose: TEAM_COACH_WORDS.declined, excludeUserIds: [ctx.user.id] }),
     ]);
 
-    return new Response(JSON.stringify({ success: true, count: items.length }), {
+    // 12d-1 (ask 12): Mark paid / Deposit paid recorded the payment, so any pay page still open closes. (A team created
+    // "paid" needs none: it has never had a pay page.)
+    const pagesClosed = markedByPayment.size ? await closeTeamPayPages([...markedByPayment], 'Mark paid') : 0;
+
+    return new Response(JSON.stringify({ success: true, count: items.length, pagesClosed }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

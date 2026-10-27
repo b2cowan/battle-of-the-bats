@@ -12,6 +12,7 @@ import { notify } from './notify';
 import { fetchAll, inParallel } from './supabase-paging';
 import { clearSettled } from './needs-attention';
 import { canMarkLeagueFeePaid, writeLeagueMoney } from './league-fee-paid';
+import { closeChildPayPages } from './online-pay-pages';
 import { futureReceivedDateRefusal } from './money-date-guards';
 import { methodWord } from './club-money-words';
 import { fmt } from './coach-money-summary';
@@ -261,6 +262,8 @@ export async function recordFamilyPayment(ctx: AuthContextWithRole, page: Family
       return refuse(refusedBody ? refusedBody.status : 409, 'fee_refused', sofar ? `${W.partly(sofar)} ${words}` : words, sofar);
     }
     fees.push(line.childName);
+    // 12d-1 (ask 12): the same act as Mark received, so the family's open pay pages close (no notice here; the drawn three warn).
+    await closeChildPayPages([reg.id], 'the family record');
   }
 
   // 2 · The hand-offs: one row per rep line, then the head coaches are told.

@@ -88,6 +88,10 @@ export interface TeamOnlinePayment {
   returnReason?: string | null;
   leftCents: number;
   refunds: TeamRefund[];
+  /** 12d-1 (ask 10): what this payment brought in past what the team owed when it landed — whole (the team had already
+   *  paid in full) or part — and what of it still stands (`leftCents`, read live: 0 once refunded, kept or the entry
+   *  raised). Null when nothing was extra. */
+  over?: { extraCents: number; whole: boolean; leftCents: number; keptReason: string | null } | null;
 }
 
 /** A payment row's money: "$100", "$109.50" (cents show only when there are some). */

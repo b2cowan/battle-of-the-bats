@@ -16,6 +16,7 @@ import { loadTeamPayFacts } from '@/lib/team-pay-facts';
 import { canRefundOnline } from '@/lib/online-payment-access';
 import { announceTeamPaid } from '@/lib/team-payment-notices';
 import { TEAM_RECORD_WORDS } from '@/lib/registration-words';
+import { closeTeamPayPages, openTeamPayPages } from '@/lib/online-pay-pages';
 
 /**
  * A TEAM'S PAYMENTS — the Teams record's Payment section (mig 345; TEAM_PAYMENTS_LIST_PLAN.md).
@@ -86,12 +87,14 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
   if ('error' in g) return g.error;
   const teamId = new URL(req.url).searchParams.get('teamId');
   if (!(await teamInTournament(teamId, tournamentId))) return json({ error: 'That team couldn’t be found.' }, 404);
-  const [payments, postsToBook, facts, { data: team }, adjustments] = await Promise.all([
+  const [payments, postsToBook, facts, { data: team }, adjustments, openPages] = await Promise.all([
     listTeamPaymentsForRecord(teamId as string),
     paymentsPostToBook(tournamentId),
     loadTeamPayFacts(teamId as string),
     supabaseAdmin.from('teams').select('pay_link_sent_at, status').eq('id', teamId as string).maybeSingle(),
     listEntryAdjustments(teamId as string),
+    // 12d-1 (ask 12): a pay page open while the desk records by hand — the notice says who opened it, for what, and when.
+    openTeamPayPages(teamId as string),
   ]);
   // Online payments on this record (Club Tier Stage 12a): the pay link goes out only while the team can pay online now;
   // a refund to the card only while the club's account is still connected (after Disconnect, refunds are made in Stripe).
@@ -109,7 +112,8 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
       .eq('online_payment_id', debit.id).is('online_payment_item_id', null).is('outcome', null).maybeSingle()
     : { data: null };
   return json({
-    payments, postsToBook, online, adjustments, debit, teamStatus: (team?.status as string | null) ?? null,
+    payments, postsToBook, online, adjustments, debit, teamStatus: (team?.status as string | null) ?? null, openPages,
+    today: tournamentToday(),
     decision: decision ? { choice: decision.choice as 'send_back' | 'keep', feeBack: !!decision.fee_back, reason: (decision.reason as string | null) ?? null } : null,
     payoutsOn: !!facts?.account && !facts.account.disconnectedAt,
     // Who may answer it: whoever runs tournaments (sending it back is a refund; never the treasurer, §0f).
@@ -139,7 +143,9 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const result = await recordTeamPayment({ teamId, amount: draft.amount, paidOn: draft.paidOn, label, method: readMethod(body.method), actorId: ctx.user.id });
   if ('error' in result) return paymentErrorResponse(result.error, ctx.org.id, [draft.paidOn]);
   if (result.outcome.becamePaid) await announceTeamPaid(ctx, teamId, result.outcome.total);
-  return json({ ok: true, total: result.outcome.total, status: result.outcome.status, paymentId: result.outcome.paymentId });
+  // 12d-1 (ask 12): recorded by hand, so any pay page still open closes (the team can't pay twice).
+  const pagesClosed = await closeTeamPayPages([teamId], 'Record a payment');
+  return json({ ok: true, total: result.outcome.total, status: result.outcome.status, paymentId: result.outcome.paymentId, pagesClosed });
 }, { route: '/api/admin/tournaments/[tournamentId]/registrations/payments' });
 
 export const PATCH = withObservability(async (req: Request, { params }: { params: Promise<{ tournamentId: string }> }) => {

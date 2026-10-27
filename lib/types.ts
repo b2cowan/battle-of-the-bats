@@ -3473,6 +3473,10 @@ export type NotificationEventType =
   | 'card_refund_unmatched'      // a refund on a payment we haven't recorded yet (Stripe's events out of order)
   | 'debit_returned'             // 12c: a bank debit came back while it was clearing (nothing taken; the family emailed)
   | 'debit_reversed'             // 12c: the bank reversed a debit after it cleared (out of the book; owing again)
+  // Club Tier Stage 12d-1 (mig 390). All three Needs attention.
+  | 'online_payment_over'        // a team's online payment landed past what it owed: refund the extra, or keep it
+  | 'card_disputed'              // a card payment is disputed: amber for the person who set up payouts, info for the desk
+  | 'card_dispute_lost'          // the bank took back a disputed payment: out of the book, owing again
   //   To the people who built the schedule:
   | 'club_schedule_reply'        // a team answered the review round
   | 'club_schedule_handed_back'  // a team handed a club practice back

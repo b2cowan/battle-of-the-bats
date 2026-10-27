@@ -1,3 +1,4 @@
+import { closeTeamPayPages } from '@/lib/online-pay-pages';
 import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import {
@@ -290,6 +291,8 @@ async function applyImportPayments(input: {
         if (result.outcome.recorded) recorded++;
         noFee = result.outcome.noFee;
       }
+      // 12d-1 (ask 12): a payment recorded for a team already on the event closes any pay page it still has open.
+      if (!noFee) await closeTeamPayPages([teamId], 'import');
 
       // No fee schedule: the database has nothing to derive a status from, so a sheet "paid" is only a status, as before.
       if (noFee && plan.markPaidWithoutFee) {

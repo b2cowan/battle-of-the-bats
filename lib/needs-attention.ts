@@ -11,6 +11,7 @@ import { tournamentTracksPayments } from './tournament-payments-tracked';
 import { ourTeamIdsAmong } from './club-own-tournament-team';
 import { tournamentToday, utcToZonedInputs } from './timezone';
 import { SETTLED_WORDS as W } from './needs-attention-words';
+import { money as formatMoney } from './online-payment-words';
 import { PAYOUTS_ACCOUNT_COLUMNS, factsFromRow, payoutsState, type PayoutsAccountRow } from './online-payment-account';
 import type { SettledNotice } from './types';
 
@@ -664,6 +665,83 @@ const cardRefundUnmatched: Resolver = async rows => {
   return out;
 };
 
+/**
+ * A team paid past what it owed (12d-1, `onlinePaymentId`): waits while any of the extra still stands
+ * (`online_payment_over_left`, read live through the landing — the one module that calls it). Settles on the refund to
+ * the card, a refund recorded another way, "Keep it", or an entry raised so nothing is extra.
+ */
+const onlinePaymentOver: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const ids = uniq(rows.map(r => meta(r, 'onlinePaymentId')));
+  if (!ids.length) return out;
+  // Imported when needed: the landing imports this module (clearSettled), so a load-time import would be a cycle.
+  const { overLeft } = await import('./online-payment-landing');
+  const [ops, refunds, left] = await Promise.all([
+    rowsIn<{ id: string; rail: string; over_amount: number | null; over_kept_at: string | null; over_kept_by: string | null }>(
+      'online_payments', 'id, rail, over_amount, over_kept_at, over_kept_by', 'id', ids),
+    rowsIn<{ online_payment_id: string; stripe_refund_id: string | null; failure_reason: string | null; succeeded_at: string | null; created_by: string | null }>(
+      'online_payment_refunds', 'online_payment_id, stripe_refund_id, failure_reason, succeeded_at, created_by', 'online_payment_id', ids, q => q.eq('status', 'succeeded')),
+    overLeft(ids),
+  ]);
+  const byId = new Map(ops.map(o => [o.id, o]));
+  for (const r of rows) {
+    const id = meta(r, 'onlinePaymentId');
+    if (!id) continue;
+    const o = byId.get(id);
+    if (!o) { out.set(r.id, said(W.onlinePaymentGone, { link: null })); continue; }
+    if ((left.get(id) ?? 0) > 0) { out.set(r.id, 'waiting'); continue; }
+    if (o.over_kept_at) { out.set(r.id, { by: o.over_kept_by, at: o.over_kept_at, words: () => ({ outcome: W.overKept }) }); continue; }
+    const back = refunds.filter(f => f.online_payment_id === id);
+    const toCard = back.find(f => f.stripe_refund_id && !f.failure_reason);
+    if (toCard) {
+      const extra = formatMoney(Number(o.over_amount ?? 0));
+      out.set(r.id, { by: toCard.created_by, at: toCard.succeeded_at, words: () => ({ outcome: W.overRefunded(extra, o.rail === 'bank_debit') }) });
+    } else if (back.length) out.set(r.id, said(W.refundRecorded));
+    else out.set(r.id, said(W.overEntryRaised));
+  }
+  return out;
+};
+
+type DisputeRow = { id: string; status: string; answered: boolean; answered_at: string | null; closed_at: string | null; won_back_at: string | null };
+const DISPUTE_CLOSED = new Set(['won', 'lost', 'prevented', 'warning_closed']);
+const disputes = (rows: NoticeRow[]) =>
+  rowsIn<DisputeRow>('online_payment_disputes', 'id, status, answered, answered_at, closed_at, won_back_at', 'id', uniq(rows.map(r => meta(r, 'onlineDisputeId'))));
+
+/**
+ * A card payment is disputed (12d-1, `onlineDisputeId`; words §1.4). The answerer's copy (raised with `answerer: 'yes'`
+ * — the contract Part 3's raise keeps) clears once the answer is sent; every other copy waits for the bank's decision.
+ * Won, prevented or an inquiry that closed read "won"; lost reads lost (its own item, `card_dispute_lost`, takes over).
+ */
+const cardDisputed: Resolver = async rows => {
+  const out = new Map<string, Verdict>();
+  const byId = new Map((await disputes(rows)).map(d => [d.id, d]));
+  for (const r of rows) {
+    const id = meta(r, 'onlineDisputeId');
+    if (!id) continue;
+    const d = byId.get(id);
+    if (!d) out.set(r.id, said(W.onlinePaymentGone, { link: null }));
+    else if (DISPUTE_CLOSED.has(d.status)) out.set(r.id, said(d.status === 'lost' ? W.disputeLost : W.disputeWon, { at: d.closed_at }));
+    else if (meta(r, 'answerer') === 'yes' && d.answered) out.set(r.id, said(W.disputeAnswered, { at: d.answered_at }));
+    else out.set(r.id, 'waiting');
+  }
+  return out;
+};
+
+/**
+ * A dispute was lost (12d-1, `onlineDisputeId` + `teamId` or `registrationIds`; words §1.4): the child or team owes
+ * again — it waits, as a reversed debit does, until paid in full or ended; and settles at once if the bank later turns the
+ * loss into a win (the money is put back).
+ */
+const cardDisputeLost: Resolver = async rows => {
+  const byId = new Map((await disputes(rows)).map(d => [d.id, d]));
+  const out = await debitOwedAgain(rows);
+  for (const r of rows) {
+    const d = byId.get(meta(r, 'onlineDisputeId') ?? '');
+    if (d?.won_back_at) out.set(r.id, said(W.disputeWon, { at: d.won_back_at }));
+  }
+  return out;
+};
+
 /** THE RULEBOOK — one entry per Needs-attention kind (`NeedsAttentionKind` makes it total). */
 export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   club_hand_back_asked: handBackAsked,
@@ -687,6 +765,9 @@ export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   card_refund_unmatched: cardRefundUnmatched,
   debit_returned: debitOwedAgain,
   debit_reversed: debitOwedAgain,
+  online_payment_over: onlinePaymentOver,
+  card_disputed: cardDisputed,
+  card_dispute_lost: cardDisputeLost,
 };
 
 const isNeedsAttention = (eventType: string): eventType is NeedsAttentionKind => (NEEDS_ATTENTION_KINDS as readonly string[]).includes(eventType);

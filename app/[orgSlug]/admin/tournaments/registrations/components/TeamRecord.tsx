@@ -44,6 +44,7 @@ import { INVITE_TEAM_WORDS, LOCK_WORDS } from '@/lib/invite-only-words';
 import { formatMoney, owedAmount, paymentLine, type FeeSchedule, type PoolInfo, type PoolSlot, type TeamRecord } from '@/lib/tournament-teams';
 import styles from '../teams-admin.module.css';
 import TeamPayments from './TeamPayments';
+import { OVER_WORDS, money } from '@/lib/online-payment-words';
 
 /** What the record's autosave may send. The paid figures are not here: a payment is recorded (TeamPayments), never typed. */
 export type TeamRecordUpdates = Partial<{
@@ -100,6 +101,10 @@ export interface TeamRecordProps {
   orgQuery: string;
   /** The page re-reads its teams after a payment is recorded, changed or removed. */
   onPaymentsChanged: () => Promise<void>;
+  /** 12d-1: the paid-twice item's link: open the refund window, set, on this online payment. */
+  autoRefundId?: string | null;
+  /** 12d-1: Mark paid closed an open pay page (words §2.1 `payOpen.doneToast`), said in the payments list. */
+  payDoneSaid?: string | null;
   /** False while the event is locked (completed): read-only, the plain name, no actions. */
   canWrite: boolean;
   /** Seed feeds only the playoff bracket's "By seed number" — absent for an Exhibition. */
@@ -152,6 +157,8 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   const [leaveError, setLeaveError] = useState('');
   // A Record or change form is open in the payments list: closing the window over it asks first (KitDialog `dirty`).
   const [paymentFormOpen, setPaymentFormOpen] = useState(false);
+  // 12d-1: what an online payment brought in past what the team owed, still standing (the payments list reports it).
+  const [payOver, setPayOver] = useState<{ extraCents: number; whole: boolean; open: () => void } | null>(null);
   // Which team the head's pencil turned into its form (the read / edit mode — see toggleEdit below).
   // Declared here so the re-seed can clear it: the window stays mounted as it steps through the list.
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
@@ -373,7 +380,16 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
         {props.isClubOwnTeam ? <p className={`${screenParts.recordText} ${styles.payHeadText}`}>No fee</p> : line ? (
           <p className={`${screenParts.recordText} ${styles.payHeadText}`}>
             <span className={line.owes ? styles.owes : undefined}>{line.lead}</span>
-            {line.rest.map(r => <span key={r}> · {r}</span>)}
+            {/* 12d-1 (words §2.2): an online payment past what was owed replaces "over the fee" with its pill, which opens
+                the refund window set to the extra. A hand-recorded overage keeps "over the fee". */}
+            {(line.over && payOver ? [] : line.rest).map(r => <span key={r}> · {r}</span>)}
+            {line.over && payOver && (
+              <span className={styles.payOverPill}>
+                <button type="button" className={styles.payOverButton} onClick={payOver.open} disabled={props.busy}>
+                  <RepChip tone="warn">{payOver.whole ? OVER_WORDS.pillTwice(money(payOver.extraCents / 100)) : OVER_WORDS.pillMore(money(payOver.extraCents / 100))}</RepChip>
+                </button>
+              </span>
+            )}
           </p>
         ) : markedPaid ? (
           <p className={`${screenParts.recordText} ${styles.payHeadText}`}>{TEAMS_WORDS.paid}</p>
@@ -400,6 +416,9 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
           busy={props.busy}
           onFormOpen={setPaymentFormOpen}
           teamName={t.name}
+          autoRefundId={props.autoRefundId ?? null}
+          onOver={setPayOver}
+          doneSaid={props.payDoneSaid ?? null}
         />
       )}
       {/* R2: what was recorded stays readable; recording more is Tournament Plus. */}

@@ -17,16 +17,18 @@ export interface PatchedOk {
   promoted?: LeagueRegistration;
   /** A move that kept a paid child's price. */
   keptPrice?: boolean;
+  /** 12d-1: the family's open pay pages that Mark received closed. */
+  pagesClosed?: number;
 }
 export type Patched = PatchedOk | ({ ok: false } & Refusal);
 
 export async function patchRegistration(orgQuery: string, seasonId: string, regId: string, body: object): Promise<Patched> {
   try {
-    const r = await moneyFetch<{ registration?: LeagueRegistration; promoted?: LeagueRegistration; keptPrice?: boolean; code?: string }>(
+    const r = await moneyFetch<{ registration?: LeagueRegistration; promoted?: LeagueRegistration; keptPrice?: boolean; pagesClosed?: number; code?: string }>(
       `/api/admin/house-league/seasons/${seasonId}/registrations/${regId}${orgQuery}`,
       jsonInit('PATCH', body),
     );
-    if (r.ok && r.data.registration) return { ok: true, registration: r.data.registration, promoted: r.data.promoted, keptPrice: r.data.keptPrice };
+    if (r.ok && r.data.registration) return { ok: true, registration: r.data.registration, promoted: r.data.promoted, keptPrice: r.data.keptPrice, pagesClosed: r.data.pagesClosed };
     return { ok: false, status: r.status, code: r.data.code ?? null, error: refusalText(r.data, MONEY_REFUSAL.failed) };
   } catch {
     return { ok: false, status: 0, code: null, error: MONEY_REFUSAL.failed };

@@ -1,3 +1,4 @@
+import { closeTeamPayPages } from '@/lib/online-pay-pages';
 import { teamPayNowLink } from '@/lib/online-payment-receipt';
 import { NextRequest, NextResponse } from 'next/server';
 import {
@@ -319,6 +320,8 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   for (const team of dueTeams) {
     const paid = await payTeamDue({ teamId: team.id, actorId: ctx.user.id, scope: bulkAction === 'mark_deposit_paid' ? 'deposit' : 'all' });
     if ('error' in paid) return paymentErrorResponse(paid.error, ctx.org.id);
+    // 12d-1 (ask 12): recorded by hand, so any pay page still open for this team closes.
+    if (paid.outcome.recorded) await closeTeamPayPages([team.id], 'the bulk Mark paid');
     if (paid.outcome.noFee && bulkAction === 'mark_paid') {
       // No fee schedule: nothing is owed, so only the status is marked (as before).
       const { error } = await supabaseAdmin.from('teams').update({ payment_status: 'paid', fee_changed_by: ctx.user.id }).eq('id', team.id);

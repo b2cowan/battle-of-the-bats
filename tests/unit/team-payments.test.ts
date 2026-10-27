@@ -64,7 +64,7 @@ describe('the summary line', () => {
   });
   it('paid in full, and over the fee', () => {
     assert.deepEqual(paymentLine(team(300), WITH_DEPOSIT, '2026-10-01'), { lead: 'Paid in full · $300', owes: false, rest: [] });
-    assert.deepEqual(paymentLine(team(350), WITH_DEPOSIT, '2026-10-01'), { lead: 'Paid $350', owes: false, rest: ['$50 over the fee'] });
+    assert.deepEqual(paymentLine(team(350), WITH_DEPOSIT, '2026-10-01'), { lead: 'Paid $350', owes: false, rest: ['$50 over the fee'], over: true });
   });
   it('past due is said after what was received', () => {
     assert.deepEqual(paymentLine(team(0), WITH_DEPOSIT, '2026-12-01'), { lead: 'Owes $300', owes: true, rest: ['past due'] });

@@ -697,6 +697,12 @@
 .refCopy:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 .payEntry { margin: 0.25rem 0 0.5rem; font-size: var(--type-support); color: var(--text-secondary); }
 .payEntry p { margin: 0; }
+/* 12d-1: the paid-twice pill in the record's summary; on a phone it wraps to its own line (words §2.2). */
+.payOverPill { display: inline-block; margin-left: 0.4rem; vertical-align: middle; }
+.payOverButton { background: none; border: 0; padding: 0; cursor: pointer; min-height: var(--tap-min, 44px); display: inline-flex; align-items: center; }
+.payOverButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 999px; }
+@media (max-width: 640px) { .payOverPill { display: block; margin-left: 0; } }
+
 .payTagSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
 /* 12c Part 6: a team ended while its bank debit clears — what happens when it clears (one choice per row, 44px tall). */
 .payChoice { display: flex; align-items: flex-start; gap: 0.5rem; min-height: 44px; padding: 0.35rem 0; cursor: pointer; }

@@ -13,12 +13,13 @@
  * corrected one, so saving as you type would bring back one line per keystroke. Remove asks first and says what happens to the
  * line. The summary line and "Mark paid" are the record's own, above this; the paid figures are never typed.
  */
-import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { TEAM_ENTRY_WORDS as EW, TEAM_ROW_WORDS as OW, REFUND_WORDS as RW, SCOPE_WORDS, money, reasonShort, receiptLabel } from '@/lib/online-payment-words';
+import { TEAM_ENTRY_WORDS as EW, TEAM_ROW_WORDS as OW, REFUND_WORDS as RW, OVER_WORDS as XW, PAY_OPEN_WORDS as PW, SCOPE_WORDS, howPaidWords, money, reasonShort, receiptLabel } from '@/lib/online-payment-words';
 import type { TeamDebit } from '@/lib/team-pay-facts';
-import { PaymentViewWindow, RefundWindow, type RefundSend } from './OnlinePaymentWindows';
+import { KeepOverWindow, PaymentViewWindow, RefundWindow, type OverPreset, type RefundSend } from './OnlinePaymentWindows';
+import type { OpenPayPage } from '@/lib/online-pay-pages';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import DateInput from '@/components/shared/DateInput';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -51,7 +52,17 @@ interface Props {
   onFormOpen?: (open: boolean) => void;
   /** The team's name, for the refund window's title (Club Tier Stage 12a). */
   teamName?: string;
+  /** 12d-1: open the refund window, set, on this payment once the list has loaded (the paid-twice item's link). */
+  autoRefundId?: string | null;
+  /** 12d-1: what a team paid past what it owed, still standing, for the summary's pill (null when nothing is, or this
+   *  reader may not refund: the treasurer reads the summary plain). `open` opens the refund window set to it. */
+  onOver?: (over: { extraCents: number; whole: boolean; open: () => void } | null) => void;
+  /** 12d-1: the record's Mark paid closed an open pay page, said in this list's status line. */
+  doneSaid?: string | null;
 }
+
+/** 12d-1: the extra still standing on a posted online payment, or null. */
+const overOf = (p: TeamPayment) => (p.status === 'posted' && p.online?.over && p.online.over.leftCents > 0 ? p.online.over : null);
 
 /** Online payments on this record (Club Tier Stage 12a): may the pay link go out, when it last did, may a card be refunded. */
 type OnlineInfo = { payLink: boolean; payLinkSentAt: string | null; refunds: boolean };
@@ -85,7 +96,7 @@ const toMethod = (v: string): '' | PaymentMethod => ((PAYMENT_METHODS as readonl
 const amountText = (n: number) => String(Math.round(n * 100) / 100);
 
 export default function TeamPayments(props: Props) {
-  const { teamId, tournamentId, orgQuery, fee, today, canRecord, paidTotal, onChanged, busy = false, onFormOpen, teamName = '' } = props;
+  const { teamId, tournamentId, orgQuery, fee, today, canRecord, paidTotal, onChanged, busy = false, onFormOpen, teamName = '', autoRefundId = null, onOver, doneSaid = null } = props;
   const uid = useId();
   const [payments, setPayments] = useState<TeamPayment[] | null>(null);
   const [postsToBook, setPostsToBook] = useState(false);
@@ -110,6 +121,10 @@ export default function TeamPayments(props: Props) {
   const [clearReason, setClearReason] = useState('');
   const [clearError, setClearError] = useState('');
   const [clearSaving, setClearSaving] = useState(false);
+  // 12d-1: pay pages open now (ask 12), the club's day for their clock, and the "Keep it" window (ask 10).
+  const [openPages, setOpenPages] = useState<OpenPayPage[]>([]);
+  const [clubToday, setClubToday] = useState(today);
+  const [keeping, setKeeping] = useState<TeamOnlinePayment | null>(null);
 
   const base = `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registrations/payments`;
   const orgParam = orgQuery ? orgQuery.replace(/^\?/, '&') : '';
@@ -129,6 +144,8 @@ export default function TeamPayments(props: Props) {
       setDecision(data.decision ?? null);
       setPayoutsOn(data.payoutsOn === true);
       setCanDecide(data.canDecide === true);
+      setOpenPages((data.openPages as OpenPayPage[] | undefined) ?? []);
+      if (typeof data.today === 'string') setClubToday(data.today);
       // A2's box: on when the club declined the team, off when the team withdrew (ruled §7.5).
       setClearFeeOn(data.teamStatus !== 'withdrawn');
     } catch {
@@ -158,18 +175,19 @@ export default function TeamPayments(props: Props) {
 
   /** One write: send it, say why in the form if it fails; on success the form closes at once (`done`), then the list and the
    *  page are re-read. */
-  async function send(method: 'POST' | 'PATCH' | 'DELETE', body: Record<string, unknown>, fail: (message: string) => void, done: () => void): Promise<void> {
+  async function send(method: 'POST' | 'PATCH' | 'DELETE', body: Record<string, unknown>, fail: (message: string) => void, done: (data: Record<string, unknown>) => void): Promise<void> {
+    let data: Record<string, unknown> = {};
     try {
       const res = await fetch(`${base}${orgQuery}`, {
         method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
-      const data = await res.json().catch(() => ({}));
+      data = await res.json().catch(() => ({}));
       if (!res.ok) { fail(typeof data.error === 'string' ? data.error : 'Couldn’t save the payment. Try again.'); return; }
     } catch {
       fail('Couldn’t save the payment. Try again.');
       return;
     }
-    done();
+    done(data);
     await Promise.all([load(), onChanged()]);
   }
 
@@ -191,9 +209,15 @@ export default function TeamPayments(props: Props) {
     if (problem) { setForm({ ...form, error: problem }); return; }
     const row = due.find(d => d.key === form.key) ?? null;
     setForm({ ...form, error: '', saving: true });
+    // 12d-1 (words §2.1): what the team still owes after this, for "the pay link still works for…".
+    const leftAfter = Math.round(((fee.totalFeeAmount ?? 0) - paid - amount) * 100) / 100;
     await send('POST', { teamId, amount, paidOn: form.paidOn, label: labelForDue(row), method: form.how || null },
       message => setForm(f => (f ? { ...f, error: message, saving: false } : f)),
-      () => setForm(null));
+      data => {
+        setForm(null);
+        const closed = Number(data.pagesClosed ?? 0);
+        if (closed > 0) setFlash(`${PW.doneToast(money(amount), teamName, closed > 1)}${leftAfter > 0 ? ` ${PW.partNote(money(leftAfter), false)}` : ''}`);
+      });
   }
 
   function openEdit(p: TeamPayment) {
@@ -263,6 +287,46 @@ export default function TeamPayments(props: Props) {
   }
 
   const hint = postsToBook ? W.hintBook : W.hintTeamOnly;
+
+  // ── 12d-1: paid twice (ask 10) ──
+  const received = payments ? receivedOrder(payments) : [];
+  const overRow = online?.refunds ? received.find(p => overOf(p)) ?? null : null;
+  /** The refund window's preset for a payment with extra still standing; {howPaid} is the payment just before it. */
+  const presetFor = (o: TeamOnlinePayment): OverPreset | null => {
+    const at = received.findIndex(p => p.online?.id === o.id);
+    const row = at >= 0 ? received[at] : null;
+    const over = row ? overOf(row) : null;
+    if (!over) return null;
+    const before = received.slice(0, at).reverse().find(p => p.status === 'posted');
+    return { leftCents: over.leftCents, whole: over.whole, howPaid: before ? howPaidWords(before.online ? 'online_card' : before.method) : null };
+  };
+  const overKey = overRow?.online?.over ? `${overRow.online.id}:${overRow.online.over.leftCents}:${overRow.online.over.whole}` : '';
+  useEffect(() => {
+    const p = overRow?.online;
+    const o = p?.over;
+    onOver?.(p && o ? { extraCents: o.leftCents, whole: o.whole, open: () => setRefunding({ p, anotherWay: false }) } : null);
+  }, [overKey]); // eslint-disable-line react-hooks/exhaustive-deps -- keyed on what the pill shows
+  useEffect(() => () => onOver?.(null), [onOver]);
+  // The item's link opens the window once, set (only for a reader who may refund).
+  const autoDone = useRef(false);
+  useEffect(() => {
+    if (autoDone.current || !autoRefundId || !payments || !online) return;
+    autoDone.current = true;
+    const row = receivedOrder(payments).find(p => p.online?.id === autoRefundId);
+    if (online.refunds && row?.online && overOf(row)) setRefunding({ p: row.online, anotherWay: false });
+  }, [autoRefundId, payments, online]);
+  useEffect(() => { if (doneSaid) setFlash(doneSaid); }, [doneSaid]);
+
+  async function keepOver(reason: string): Promise<string | null> {
+    if (!keeping) return null;
+    const extra = money((keeping.over?.leftCents ?? 0) / 100);
+    const { error } = await onlineSend({ action: 'keep_over', onlinePaymentId: keeping.id, reason });
+    if (error) return error;
+    setKeeping(null);
+    setFlash(XW.keepDone(extra, teamName));
+    await load();
+    return null;
+  }
 
   const fields = (d: Draft, set: (next: Draft) => void, prefix: string) => (
     <div className={styles.payFormGrid}>
@@ -357,6 +421,14 @@ export default function TeamPayments(props: Props) {
   return (
     <>
       {payments === null && !loadFailed && <p className={screenParts.recordText}>{W.loading}</p>}
+      {/* 12d-1 (ask 12, words §2.1): a pay page is open, and recording closes it. A notice, never a block. */}
+      {canRecord && openPages.length > 0 && (
+        <p className={ck.notice} role="note">
+          {openPages.length > 1
+            ? PW.noticeMany(openPages.length, null)
+            : PW.notice(openPages[0].openedBy, money(openPages[0].amountCents / 100), openPages[0].openedAt, clubToday, false)}
+        </p>
+      )}
       {loadFailed && (
         <p className={styles.payErr} role="alert">
           {W.loadError} <button type="button" className={styles.inlineLink} onClick={() => void load()}>{W.retry}</button>
@@ -458,6 +530,11 @@ export default function TeamPayments(props: Props) {
                     if (p.online.refund === 'failed') return <span className={styles.payChip}><RepChip tone="warn">{OW.refundFailed(p.online.rail === 'bank_debit')}</RepChip></span>;
                     return null;
                   })()}
+                  {/* 12d-1 (words §2.2): the extra, under its row, for whoever may refund it; the row stays "In ledger". */}
+                  {online?.refunds && overOf(p) && (
+                    <span className={styles.payTagSub}>{overOf(p)!.whole ? XW.tagTwice : XW.tagMore(money(overOf(p)!.leftCents / 100))}</span>
+                  )}
+                  {p.online?.over?.keptReason && <span className={styles.payTagSub}>{XW.keptLine(money(p.online.over.extraCents / 100), p.online.over.keptReason)}</span>}
                 </span>
                 <span className={styles.payAmt}>{formatPaymentMoney(p.amount)}</span>
                 {p.online ? (
@@ -468,6 +545,9 @@ export default function TeamPayments(props: Props) {
                     )}
                     {online?.refunds && p.online.refund === 'failed' && (
                       <CoachToolbarMenuItem label={OW.menuAnotherWay} onSelect={() => setRefunding({ p: p.online!, anotherWay: true })} />
+                    )}
+                    {online?.refunds && overOf(p) && p.online.refund !== 'failed' && p.online.refund !== 'pending' && (
+                      <CoachToolbarMenuItem label={XW.menuKeep} onSelect={() => setKeeping(p.online!)} />
                     )}
                   </CoachToolbarMenu>
                 ) : canRecord
@@ -520,9 +600,12 @@ export default function TeamPayments(props: Props) {
         const other = rows.find(r => r.online && r.online.id !== refunding.p.id && r.status !== 'refunded' && r.online.leftCents > 0)?.online;
         return (
           <RefundWindow p={refunding.p} teamName={teamName} anotherWay={refunding.anotherWay} send={refund} onClose={() => setRefunding(null)}
-            otherLabel={other ? SCOPE_WORDS.scope[other.scope] : null} />
+            otherLabel={other ? SCOPE_WORDS.scope[other.scope] : null} over={refunding.anotherWay ? null : presetFor(refunding.p)} />
         );
       })()}
+      {keeping && (
+        <KeepOverWindow teamName={teamName} extraCents={keeping.over?.leftCents ?? 0} keep={keepOver} onClose={() => setKeeping(null)} />
+      )}
     </>
   );
 }

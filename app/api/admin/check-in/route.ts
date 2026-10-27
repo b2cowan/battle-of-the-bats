@@ -24,6 +24,7 @@ import { paymentErrorResponse, payTeamDue, removeTeamPayment } from '@/lib/team-
 import { isOurTournamentTeam, ourTournamentTeamIds } from '@/lib/club-own-tournament-team';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
+import { closeTeamPayPages } from '@/lib/online-pay-pages';
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -243,6 +244,8 @@ export const POST = withObservability(async (req: Request) => {
       // schedule has nothing to pay: only its status is marked. The gate sends no email or bell (the quiet path, 7a).
       const paid = await payTeamDue({ teamId, actorId: ctx.user.id, scope: 'all' });
       if ('error' in paid) return paymentErrorResponse(paid.error, ctx.org.id);
+      // 12d-1 (ask 12): recorded by hand, so any pay page still open closes (no notice on this screen; the drawn three warn).
+      if (paid.outcome.recorded) await closeTeamPayPages([teamId], 'check-in');
       if (paid.outcome.noFee) {
         const { error: paidError } = await supabaseAdmin.from('teams').update({
           payment_status: 'paid', payment_collected_at: now, fee_changed_by: ctx.user.id,

@@ -33,7 +33,9 @@ const LAND_RPCS = ['online_payment_land', 'online_payment_league_land', 'online_
   // 12b Part 5 (mig 375): a house-league refund's booking and its "sent another way".
   'online_payment_league_refund_book', 'online_payment_league_refund_resolve',
   // 12c Part 1 (mig 382): a team's part refund, and a bank debit clearing or coming back.
-  'online_payment_team_refund_book', 'online_payment_clearing', 'online_payment_returned'];
+  'online_payment_team_refund_book', 'online_payment_clearing', 'online_payment_returned',
+  // 12d-1 (migs 390–391): a dispute's state, the extra still standing on a team payment, and a payment reversed.
+  'online_payment_dispute_apply', 'online_payment_over_left', 'online_payment_reverse'];
 const MIG_12B_REFUNDS = 'supabase/migrations/375_a_house_league_refund_goes_back_to_the_card.sql';
 const fnBody = (sql: string, fn: string) => new RegExp(`FUNCTION public\\.${fn}\\([\\s\\S]*?\\nEND \\$\\$;`).exec(sql)?.[0] ?? '';
 

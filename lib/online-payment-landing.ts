@@ -15,7 +15,7 @@ import { bankReturnReason } from './bank-debit';
 import { sendDebitReturnedEmail, sendDebitReversedEmail, sendDebitStartedEmail } from './bank-debit-email';
 import { recordDebitFee } from './platform-debit-fee';
 import { possessive } from './utils';
-import { DEBIT_NOTICE_WORDS as DW, LEAGUE_ONLINE_NOTICE_WORDS as LW, cardLabel, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney, reasonFull } from './online-payment-words';
+import { DEBIT_NOTICE_WORDS as DW, LEAGUE_ONLINE_NOTICE_WORDS as LW, OVER_WORDS as OW, cardLabel, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney, reasonFull } from './online-payment-words';
 import { formatStoredDate } from './timezone';
 import type { Organization, OrgRole } from './types';
 
@@ -67,7 +67,8 @@ async function refundPeople(org: Organization): Promise<string[]> {
 async function raiseOnce(p: {
   org: Organization; userIds: string[];
   eventType: 'payouts_need_attention' | 'online_payment_not_recorded' | 'card_refund_failed'
-    | 'card_refund_whose' | 'card_refund_still_enrolled' | 'card_refund_unmatched' | 'debit_returned' | 'debit_reversed';
+    | 'card_refund_whose' | 'card_refund_still_enrolled' | 'card_refund_unmatched' | 'debit_returned' | 'debit_reversed'
+    | 'online_payment_over';
   subjectKey: string; subjectId: string; title: string; body: string; link: string;
   /** More facts the notice's resolver reads (never part of its one-open-copy key, mig 366/374). */
   extra?: Record<string, string>;
@@ -206,17 +207,22 @@ async function raiseLeagueUnrecorded(op: OnlineRow): Promise<void> {
     const child = reg ? `${reg.player_first_name} ${reg.player_last_name}` : u.description;
     const guardian = reg && (reg.guardian_first_name || reg.guardian_last_name)
       ? [reg.guardian_first_name, reg.guardian_last_name].filter(Boolean).join(' ') : null;
+    // 12d words §2.3: a fee already marked received reads "paid twice", and its first door is the refund to the card.
+    const twice = u.land_error === 'already_received';
+    const date = day ? formatStoredDate(day, { withYear: false }) : null;
     await raiseOnce({
       org, userIds: people, eventType: 'online_payment_not_recorded',
       subjectKey: 'onlinePaymentItemId', subjectId: u.id,
-      title: LW.unrecordedTitle(child, op.rail === 'bank_debit'),
-      body: LW.unrecordedBody(guardian, formatMoney(Number(u.amount)), day ? formatStoredDate(day, { withYear: false }) : null, child, leagueUnrecordedWhy(u.land_error), op.rail === 'bank_debit'),
-      link: recordHref(org, op, { regId: u.registration_id }),
+      title: twice ? LW.unrecordedTitleTwice(possessive(child)) : LW.unrecordedTitle(child, op.rail === 'bank_debit'),
+      body: twice
+        ? LW.unrecordedBodyTwice(guardian, date, possessive(child), op.rail === 'bank_debit')
+        : LW.unrecordedBody(guardian, formatMoney(Number(u.amount)), date, child, leagueUnrecordedWhy(u.land_error), op.rail === 'bank_debit'),
+      link: recordHref(org, op, { regId: u.registration_id, at: twice ? 'card' : 'fee' }),
     });
   }
 }
 
-function cardOf(session: Stripe.Checkout.Session): { intent: string | null; charge: string | null; brand: string | null; last4: string | null; bankLast4: string | null } {
+function cardOf(session: Stripe.Checkout.Session): { intent: string | null; charge: string | null; brand: string | null; last4: string | null; bankLast4: string | null; country: string | null } {
   const pi = session.payment_intent;
   const intent = typeof pi === 'string' ? pi : pi?.id ?? null;
   const ch = typeof pi === 'object' && pi ? pi.latest_charge : null;
@@ -226,7 +232,9 @@ function cardOf(session: Stripe.Checkout.Session): { intent: string | null; char
   const pm = typeof pi === 'object' && pi ? pi.payment_method : null;
   const bankLast4 = (typeof ch === 'object' && ch ? ch.payment_method_details?.acss_debit?.last4 : null)
     ?? (typeof pm === 'object' && pm ? pm.acss_debit?.last4 : null) ?? null;
-  return { intent, charge, brand: card?.brand ?? null, last4: card?.last4 ?? null, bankLast4 };
+  // 12d-1: the card's country (Part 4 bills Stripe's extra cost on a card issued outside the club's country from it).
+  const country = (card?.country ?? '').toUpperCase();
+  return { intent, charge, brand: card?.brand ?? null, last4: card?.last4 ?? null, bankLast4, country: /^[A-Z]{2}$/.test(country) ? country : null };
 }
 
 /**
@@ -523,6 +531,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     // answer a desk gave while the debit cleared plus the receipt (review 2026-10-26: a crash between the landing's commit
     // and those steps left a "send it back" answer waiting forever). Each is once-only, so a plain replay changes nothing.
     if (op.flow === 'league_signup') await raiseLeagueUnrecorded(op);
+    else await raiseOverpaid(op.id); // 12d-1: the row is the truth, so a replay still owes the item a crash missed
     await carryOutDecisions(op.id);
     await sendOnlineReceiptOnce(op.id);
     return 'already';
@@ -579,8 +588,12 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     await sendOnlineReceiptOnce(op.id);
     return 'not_recorded';
   }
+  await writeCardCountry(op.id, card);
   await sendOnlineReceiptOnce(op.id);
   await carryOutDecisions(op.id); // 12c Part 6: a team declined while its debit cleared
+  // 12d-1 (ask 10): booked in full, and flagged when it was past what the team owed. Read from the row, never from the
+  // landing's answer (a replay answers `already` without it).
+  await raiseOverpaid(op.id);
   if (!(landed as { already?: boolean } | null)?.already) await reconcileDashboardRefunds(stripeAccountId, op.id);
   return (landed as { already?: boolean } | null)?.already ? 'already' : 'landed';
 }
@@ -623,6 +636,7 @@ async function landLeague(
     return 'not_recorded';
   }
   const result = landed as { already?: boolean; unrecorded?: unknown[] } | null;
+  await writeCardCountry(op.id, card);
   // Notices are read from the database (a replay included), so a crash between the commit and here loses none.
   await raiseLeagueUnrecorded(op);
   await carryOutDecisions(op.id); // 12c Part 6
@@ -638,6 +652,89 @@ async function landLeague(
 function isTransientDbError(error: { code?: string | null; message?: string }): boolean {
   const code = error.code ?? '';
   return /^(40|53|57)/.test(code) || code === '55P03';
+}
+
+// ── Paid twice (12d-1 Part 2, ask 10) ───────────────────────────────────────────────────────────
+
+/** 12d-1: the card's country, written once after landing (outside the landing's write flag; mig 390 leaves it open). */
+async function writeCardCountry(opId: string, card: ReturnType<typeof cardOf>): Promise<void> {
+  if (!card.country) return;
+  const { error } = await supabaseAdmin.from('online_payments').update({ card_country: card.country })
+    .eq('id', opId).is('card_country', null);
+  if (error) console.error('[online-payment-landing] couldn’t store the card’s country:', opId, error.message);
+}
+
+/**
+ * The extra still standing on each team payment (`online_payment_over_left`, read live): 0 once it is refunded, a refund
+ * is recorded another way, the entry is raised, or the club kept it. Read here only (the online-payments guard), for
+ * the landing, the team's record and the item's rule.
+ */
+export async function overLeft(onlinePaymentIds: readonly string[]): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  for (const id of new Set(onlinePaymentIds)) {
+    const { data, error } = await supabaseAdmin.rpc('online_payment_over_left', { p_online_payment: id });
+    if (error) throw new Error(error.message);
+    out.set(id, Math.round(Number(data ?? 0) * 100));
+  }
+  return out;
+}
+
+/** Whoever runs tournaments and the owner: who hears that a team paid past what it owed (words §2.2). */
+async function overPeople(org: Organization): Promise<string[]> {
+  const members = await activeMembers(org.id);
+  return [...new Set(members.filter(m => canRefundOnline(m, org) || canConnectPayouts(m)).map(m => m.user_id))];
+}
+
+/** Where the item opens: the team's record, with the refund window set to the extra (`refund`). */
+export function overHref(org: Pick<Organization, 'slug'>, op: { id: string; tournament_id: string | null; team_id: string | null }, refund = true): string {
+  const q = new URLSearchParams({ tournament: op.tournament_id ?? '', ...(op.team_id ? { team: op.team_id } : {}), ...(refund ? { refund: op.id } : {}) });
+  return `/${org.slug}/admin/tournaments/registrations?${q.toString()}`;
+}
+
+/**
+ * Raise "paid twice" / "paid more than it owed" once, while the extra still stands. Called after every landing of a team
+ * payment, a replay included: the row is the truth, and `raiseOnce` never doubles an open copy. Nothing when nothing was
+ * extra, or the extra is already settled (the item's own rule clears a copy that is still up).
+ */
+export async function raiseOverpaid(onlinePaymentId: string): Promise<void> {
+  const { data: op } = await supabaseAdmin.from('online_payments')
+    .select('id, org_id, flow, team_id, tournament_id, total_amount, receipt_no, paid_on, rail, over_amount, over_whole, description')
+    .eq('id', onlinePaymentId).maybeSingle();
+  if (!op || op.flow !== 'tournament_team' || op.over_amount == null) return;
+  const left = (await overLeft([op.id as string])).get(op.id as string) ?? 0;
+  if (left <= 0) return;
+  const org = await orgById(op.org_id as string);
+  if (!org) return;
+  const { data: team } = op.team_id ? await supabaseAdmin.from('teams').select('name').eq('id', op.team_id as string).maybeSingle() : { data: null };
+  const name = (team?.name as string | undefined) ?? (op.description as string).split(' · ')[0];
+  const extra = formatMoney(left / 100);
+  const amount = formatMoney(Number(op.total_amount));
+  const receipt = String(op.receipt_no ?? '');
+  const day = op.paid_on ? formatStoredDate(op.paid_on as string, { withYear: false }) : '';
+  const bank = op.rail === 'bank_debit';
+  await raiseOnce({
+    org, userIds: await overPeople(org), eventType: 'online_payment_over',
+    subjectKey: 'onlinePaymentId', subjectId: op.id as string,
+    title: op.over_whole ? OW.titleTwice(name, extra) : OW.titleMore(name, extra),
+    body: op.over_whole ? OW.bodyTwice(amount, receipt, day, bank) : OW.bodyMore(amount, receipt, day, extra, bank),
+    link: overHref(org, { id: op.id as string, tournament_id: (op.tournament_id as string | null) ?? null, team_id: (op.team_id as string | null) ?? null }),
+  });
+}
+
+/**
+ * "Keep it" (§7 ruling 5): the club keeps the extra, with a reason, as a NOTE: no credit, no money moved, no book line.
+ * Only while some of it is still extra. The item clears for everyone it went to.
+ */
+export async function keepOverpayment(p: { onlinePaymentId: string; reason: string; actorId: string }): Promise<'kept' | 'nothing_extra'> {
+  const left = (await overLeft([p.onlinePaymentId])).get(p.onlinePaymentId) ?? 0;
+  if (left <= 0) return 'nothing_extra';
+  const { data, error } = await supabaseAdmin.from('online_payments')
+    .update({ over_kept_reason: p.reason, over_kept_by: p.actorId, over_kept_at: new Date().toISOString() })
+    .eq('id', p.onlinePaymentId).not('over_amount', 'is', null).is('over_kept_at', null).select('org_id').maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return 'nothing_extra';
+  await clearSettled({ orgIds: [data.org_id as string], kinds: ['online_payment_over'] });
+  return 'kept';
 }
 
 /** A Checkout Session expired unpaid: the payment closes, so the team can open a new one. */

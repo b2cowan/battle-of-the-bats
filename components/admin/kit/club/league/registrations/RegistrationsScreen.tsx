@@ -410,7 +410,7 @@ export default function RegistrationsScreen() {
       whys.push(refused ? whyOf(refused.refusal, { division: divisionName(reg.divisionId), free: owesNow(reg, season!) <= 0 }) : skipWhy(reg));
       stayed.push(id);
     }
-    if (requested.length === 1 && out.done.length === 1) { afterWrite(false); say(RECV_WORDS.done(nameOf(requested[0]))); clearSelection(); return; }
+    if (requested.length === 1 && out.done.length === 1) { afterWrite(false); say(out.said ?? RECV_WORDS.done(nameOf(requested[0]))); clearSelection(); return; }
     present(bulkResult({ verb: 'markReceived', ok: out.done.length, tally: tallyWhy(whys) }), stayed, false);
   }
 

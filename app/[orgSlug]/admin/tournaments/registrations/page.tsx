@@ -89,9 +89,10 @@ import SharedPaymentDialog from './components/SharedPaymentDialog';
 import AddOurTeamsWindow, { type OwnTeamOption } from './components/AddOurTeamsWindow';
 import {
   buildListBands, buildSlotBands, computePaymentStatus, getEffectiveFee, hasDepositStep,
-  narrowSlotBands, nextOpenSlot, paymentFact, recordOrder, sortedPools,
+  narrowSlotBands, nextOpenSlot, owedAmount, paymentFact, recordOrder, sortedPools,
   type BandKind, type FeeMode, type FeeSchedule, type PoolInfo, type PoolSlot, type Status, type TeamRecord,
 } from '@/lib/tournament-teams';
+import { PAY_OPEN_WORDS, money } from '@/lib/online-payment-words';
 import LoadingState from '@/components/shared/LoadingState';
 
 const SAME_ORIGIN_FETCH: RequestInit = { credentials: 'same-origin' };
@@ -224,6 +225,10 @@ export default function UnifiedTeamsPage() {
   const attentionQueryAppliedRef = useRef<string | null>(null);
   const divisionQueryAppliedRef = useRef<string | null>(null);
   const paymentQueryAppliedRef = useRef<string | null>(null);
+  // 12d-1: the paid-twice item opens its team (?team=…), with the refund window set (?refund=…).
+  const teamQueryAppliedRef = useRef<string | null>(null);
+  // 12d-1 (ask 12): Mark paid closed an open pay page — said once in that team's payments list.
+  const [payDone, setPayDone] = useState<{ teamId: string; said: string } | null>(null);
   const landedRef = useRef<string | null>(null);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [paymentInstructions, setPaymentInstructions] = useState('');
@@ -1254,7 +1259,7 @@ export default function UnifiedTeamsPage() {
     const tid = currentTournament?.id;
     if (!hasLoadedInitial || !tid || landedRef.current === tid) return;
     landedRef.current = tid;
-    if (searchParams.get('division') || searchParams.get('attention')) return;
+    if (searchParams.get('division') || searchParams.get('attention') || searchParams.get('team')) return;
     const withReview = divisions.find(d => (reviewByDivision.get(d.id) ?? 0) > 0);
     if (withReview) setSelectedDivisionId(withReview.id);
   }, [hasLoadedInitial, currentTournament?.id, divisions, reviewByDivision, searchParams]);
@@ -1604,6 +1609,37 @@ export default function UnifiedTeamsPage() {
     attentionQueryAppliedRef.current = token;
     focusAttentionBucket(attentionParam, validDivisionParam);
   }, [attentionParam, currentTournament?.id, divisionParam, divisions, focusAttentionBucket, hasLoadedInitial]);
+
+  // 12d-1: a Needs-attention item's link to one team (?team=…): its division, and its record open.
+  const teamParam = searchParams.get('team');
+  const refundParam = searchParams.get('refund');
+  useEffect(() => {
+    if (!hasLoadedInitial || !currentTournament?.id || !teamParam) return;
+    const reg = regs.find(r => r.id === teamParam);
+    if (!reg) return;
+    const token = `${currentTournament.id}:${teamParam}`;
+    if (teamQueryAppliedRef.current === token) return;
+    teamQueryAppliedRef.current = token;
+    setActiveAttentionKey(null);
+    setSelectedDivisionId(reg.division_id);
+    setOpenTeamId(reg.id);
+  }, [currentTournament?.id, hasLoadedInitial, regs, teamParam]);
+
+  /** Mark paid (the record's): the rest of the fee recorded as a payment. 12d-1: a pay page it closed is said. */
+  function markPaid(team: TeamRecord) {
+    const owed = owedAmount(team, feeOf(team));
+    void withWorking(team.id, 'That didn’t save', async () => {
+      const res = await fetch(`/api/admin/teams${orgQuery}`, {
+        credentials: 'same-origin', method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [team.id], updates: { paymentStatus: 'paid' } }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Couldn’t save');
+      const closed = Number(data.pagesClosed ?? 0);
+      if (closed > 0) setPayDone({ teamId: team.id, said: PAY_OPEN_WORDS.doneToast(money(owed), team.name, closed > 1) });
+      await Promise.all([load(), loadPoolSlots()]);
+    });
+  }
 
   // J1-067: honor dashboard payment deep-links (?payment=paid|deposit|pending).
   const paymentParam = searchParams.get('payment');
@@ -2199,7 +2235,9 @@ export default function UnifiedTeamsPage() {
           onAccept={acceptTeam}
           onReject={rejectTeam}
           onPromote={handlePromote}
-          onMarkPaid={team => patch(team.id, { paymentStatus: 'paid' })}
+          onMarkPaid={markPaid}
+          autoRefundId={teamParam === openTeam.id ? refundParam : null}
+          payDoneSaid={payDone?.teamId === openTeam.id ? payDone.said : null}
           onMarkUnpaid={team => patch(team.id, { paymentStatus: 'pending' })}
           onResend={resendAccessLink}
           onDelete={handleDelete}

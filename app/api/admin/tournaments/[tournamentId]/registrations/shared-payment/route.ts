@@ -7,6 +7,7 @@ import { tournamentInOrg } from '@/lib/org-references';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { tournamentToday } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
+import { closeTeamPayPages } from '@/lib/online-pay-pages';
 
 /** One team's share of one transfer; far above any entry fee, far below the column's limit. */
 const MOST_PER_TEAM = 1_000_000;
@@ -44,5 +45,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     p_actor: ctx.user.id, p_day, p_method: method, p_reference: reference,
   });
   if (error) return paymentErrorResponse(error, ctx.org.id, [p_day]);
+  // 12d-1 (ask 12): every team on the shared transfer was recorded by hand, so their open pay pages close.
+  await closeTeamPayPages(allocations.map((a: { teamId: string }) => a.teamId), 'a shared payment');
   return NextResponse.json({ receiptId: data });
 }, { route: '/api/admin/tournaments/[tournamentId]/registrations/shared-payment' });

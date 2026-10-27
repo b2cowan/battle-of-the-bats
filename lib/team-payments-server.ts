@@ -5,6 +5,7 @@ import { moveRefused } from './club-money-route';
 import { supabaseAdmin } from './supabase-admin';
 import type { EntryAdjustment, PaymentLabel, PaymentMethod, TeamOnlinePayment, TeamPayment, TeamRefund } from './team-payments';
 import { resolvePersonNamer } from './db';
+import { overLeft } from './online-payment-landing';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -185,7 +186,7 @@ export async function listTeamPaymentsForRecord(teamId: string): Promise<TeamPay
   if (onlineIds.length) {
     const [{ data: ops, error: opError }, { data: refunds, error: refundError }] = await Promise.all([
       supabaseAdmin.from('online_payments')
-        .select('id, receipt_no, card_brand, card_last4, base_amount, fee_amount, total_amount, fee_payer, payer_email, paid_at, livemode, scope, rail, bank_last4, clearing_at, reversed_at, return_reason')
+        .select('id, receipt_no, card_brand, card_last4, base_amount, fee_amount, total_amount, fee_payer, payer_email, paid_at, livemode, scope, rail, bank_last4, clearing_at, reversed_at, return_reason, over_amount, over_whole, over_kept_reason')
         .in('id', onlineIds),
       supabaseAdmin.from('online_payment_refunds')
         .select('id, online_payment_id, status, succeeded_at, created_at, amount, fee_refunded, origin, part_refund, partial_reason, failed_at, failure_reason, stripe_refund_id, created_by, resolved_by, booked_at, family_emailed_at, family_email_failed_at')
@@ -249,8 +250,18 @@ export async function listTeamPaymentsForRecord(teamId: string): Promise<TeamPay
         returnReason: (p.return_reason as string | null) ?? null,
         leftCents: cents(p.base_amount) - (usedCents.get(p.id as string) ?? 0),
         refunds: byPayment.get(p.id as string) ?? [],
+        // 12d-1: what was extra; what still stands is read live below.
+        over: p.over_amount == null ? null : {
+          extraCents: cents(p.over_amount), whole: p.over_whole === true, leftCents: 0, keptReason: (p.over_kept_reason as string | null) ?? null,
+        },
       });
     }
+  }
+  // 12d-1 (ask 10): what of each payment's extra still stands, read live (`online_payment_over_left`, the landing's).
+  const overIds = [...online.values()].filter(o => o.over).map(o => o.id);
+  if (overIds.length) {
+    const left = await overLeft(overIds);
+    for (const o of online.values()) if (o.over) o.over.leftCents = left.get(o.id) ?? 0;
   }
   return rows.map(r => ({
     ...toPayment(r),

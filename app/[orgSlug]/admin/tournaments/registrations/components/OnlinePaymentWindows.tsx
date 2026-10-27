@@ -13,6 +13,11 @@
  *                      "All of it" is gone once part has been refunded. The same window records the refund sent ANOTHER
  *                      way after a refund to the card came back (F6).
  *
+ *   12d-1 (words §2.2) — paid twice: the refund window opens SET. All of it extra → "All of it", the fee box ticked with its
+ *                      why, and no "who is ending this?" (nobody is). Part of it extra → "Part of it" at the extra, the
+ *                      reason filled in. Every choice stays the refunder's. **Keep it** is the club keeping the extra, as a
+ *                      note with a reason (§7 ruling 5): no credit, no money moved.
+ *
  * Both open over the team's record (`raised`). The refund asks (create asks): nothing moves until the button is pressed.
  */
 import { useEffect, useState } from 'react';
@@ -22,7 +27,7 @@ import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import { formatStoredDate } from '@/lib/timezone';
 import {
-  PAY_VIEW_WORDS as V, REFUND_WORDS as R, SCOPE_WORDS, cardLabel, money, paidAtLabel, receiptLabel,
+  OVER_WORDS as O, PAY_VIEW_WORDS as V, REFUND_WORDS as R, SCOPE_WORDS, cardLabel, money, paidAtLabel, receiptLabel,
 } from '@/lib/online-payment-words';
 import { CARD_REFUND_WORDS } from '@/lib/house-league-money-words';
 import { clockOf } from '@/lib/league-card-refunds';
@@ -132,7 +137,10 @@ export type RefundSend =
   | { kind: 'part'; amount: number; partialReason: string; note: string | null }
   | { kind: 'anotherWay'; feeIncluded: boolean; reason: 'organizer_ended' | 'team_left' | null; note: string | null };
 
-export function RefundWindow({ p, teamName, anotherWay, send, onClose, otherLabel = null }: {
+/** 12d-1: what a team paid past what it owed, for the refund window's preset (words §2.2). */
+export type OverPreset = { leftCents: number; whole: boolean; howPaid: string | null };
+
+export function RefundWindow({ p, teamName, anotherWay, send, onClose, otherLabel = null, over = null }: {
   p: TeamOnlinePayment;
   teamName: string;
   /** Record a refund the club made another way (after a refund to the card came back), rather than refund to the card. */
@@ -141,16 +149,21 @@ export function RefundWindow({ p, teamName, anotherWay, send, onClose, otherLabe
   onClose: () => void;
   /** The team's OTHER online payment ("balance" / "deposit"), when there is one, for "Refund the rest from the balance’s ⋯". */
   otherLabel?: string | null;
+  /** 12d-1: the extra still standing on this payment — the window opens set to it. */
+  over?: OverPreset | null;
 }) {
   const teamPaidFee = p.feePaidByPayer && p.feeCents > 0;
   const partDone = p.refunds.filter(r => r.part && r.state !== 'failed');
   const untouched = p.leftCents >= p.baseCents && partDone.length === 0;
-  const [choice, setChoice] = useState<'all' | 'part' | null>(anotherWay ? 'all' : null);
+  // Paid twice, untouched: all of it, with the fee (the team shouldn't pay a fee on money it didn't owe). Otherwise the extra.
+  const overAll = !anotherWay && !!over && over.whole && untouched;
+  const overPart = !anotherWay && !!over && !overAll && over.leftCents > 0;
+  const [choice, setChoice] = useState<'all' | 'part' | null>(anotherWay || overAll ? 'all' : overPart ? 'part' : null);
   const [reason, setReason] = useState<'organizer_ended' | 'team_left'>('organizer_ended');
   const [feeIncluded, setFeeIncluded] = useState(true);
   const [touched, setTouched] = useState(false);
-  const [amount, setAmount] = useState('');
-  const [partReason, setPartReason] = useState('');
+  const [amount, setAmount] = useState(overPart && over ? String(Math.min(over.leftCents, p.leftCents) / 100) : '');
+  const [partReason, setPartReason] = useState(over && !anotherWay ? (over.whole ? O.prefillTwice : O.prefillMore) : '');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -179,12 +192,13 @@ export function RefundWindow({ p, teamName, anotherWay, send, onClose, otherLabe
     setBusy(true);
     const body: RefundSend = choice === 'part'
       ? { kind: 'part', amount: typedCents / 100, partialReason: partReason.trim(), note: note.trim() || null }
-      : { kind: anotherWay ? 'anotherWay' : 'all', feeIncluded: teamPaidFee && feeIncluded, reason: teamPaidFee ? reason : null, note: note.trim() || null };
+      : { kind: anotherWay ? 'anotherWay' : 'all', feeIncluded: teamPaidFee && feeIncluded, reason: teamPaidFee && !overAll ? reason : null, note: note.trim() || null };
     const failed = await send(body);
     if (failed) { setError(failed); setBusy(false); }
   }
 
   const why = !teamPaidFee ? null
+    : overAll ? (feeIncluded ? O.feeWhy : R.feeOffWhy(dollars(p.baseCents)))
     : touched ? (feeIncluded ? R.feeOnChanged(dollars(p.feeCents)) : R.feeOffWhy(dollars(p.baseCents)))
       : reason === 'organizer_ended' ? R.feeOnWhy(dollars(p.feeCents)) : R.feeOffWhy(dollars(p.baseCents));
   const partSum = partDone.reduce((n, r) => n + r.amountCents, 0);
@@ -219,7 +233,7 @@ export function RefundWindow({ p, teamName, anotherWay, send, onClose, otherLabe
             <label>
               <input type="radio" name="refund-how-much" checked={choice === 'all'} onChange={() => setChoice('all')} />
               {' '}{bank ? R.choiceAllBank(p.bankLast4 ?? '') : R.choiceAll(cardLabel(p.brand, p.last4))}
-              <span className={ck.hint}> · {bank ? R.arrivesBank : R.arrives}</span>
+              <span className={ck.hint}> · {overAll && over ? O.allSub(over.howPaid) : bank ? R.arrivesBank : R.arrives}</span>
             </label>
           )}
           <label>
@@ -250,11 +264,14 @@ export function RefundWindow({ p, teamName, anotherWay, send, onClose, otherLabe
       )}
       {choice === 'all' && teamPaidFee && (
         <>
-          <fieldset className={styles.refundChoice}>
-            <legend className={ck.label}>{R.whoLabel}</legend>
-            <label><input type="radio" name="refund-who" checked={reason === 'organizer_ended'} onChange={() => pickReason('organizer_ended')} /> {R.whoOrganizer}</label>
-            <label><input type="radio" name="refund-who" checked={reason === 'team_left'} onChange={() => pickReason('team_left')} /> {R.whoTeam}</label>
-          </fieldset>
+          {/* Paid twice: nobody is ending anything, so the question is not asked. */}
+          {!overAll && (
+            <fieldset className={styles.refundChoice}>
+              <legend className={ck.label}>{R.whoLabel}</legend>
+              <label><input type="radio" name="refund-who" checked={reason === 'organizer_ended'} onChange={() => pickReason('organizer_ended')} /> {R.whoOrganizer}</label>
+              <label><input type="radio" name="refund-who" checked={reason === 'team_left'} onChange={() => pickReason('team_left')} /> {R.whoTeam}</label>
+            </fieldset>
+          )}
           <label className={styles.refundFee}>
             <input type="checkbox" checked={feeIncluded} onChange={e => { setTouched(true); setFeeIncluded(e.target.checked); }} />
             <span>{R.feeCheckbox(dollars(p.feeCents), dollars(p.totalCents))}</span>
@@ -269,6 +286,46 @@ export function RefundWindow({ p, teamName, anotherWay, send, onClose, otherLabe
           <span className={ck.hint}>{R.noteHint}</span>
         </label>
       )}
+      {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
+    </KitDialog>
+  );
+}
+
+/**
+ * KEEP IT (12d-1, §7 ruling 5): the club keeps what a team paid past what it owed. A note with a reason: the team carries
+ * no credit, nothing moves, nothing is booked. The item clears for everyone it went to.
+ */
+export function KeepOverWindow({ teamName, extraCents, keep, onClose }: {
+  teamName: string;
+  extraCents: number;
+  keep: (reason: string) => Promise<string | null>;
+  onClose: () => void;
+}) {
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const extra = dollars(extraCents);
+
+  async function go() {
+    if (!reason.trim()) { setError(O.keepReasonError); return; }
+    setBusy(true); setError(null);
+    const failed = await keep(reason.trim());
+    if (failed) { setError(failed); setBusy(false); }
+  }
+
+  return (
+    <KitDialog kind="question" raised title={O.keepTitle(teamName, extra)} onClose={onClose} busy={busy}
+      footer={(
+        <>
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{R.cancel}</button>
+          <button type="button" className="btn btn-lime" onClick={() => void go()} disabled={busy}>{busy ? O.keepWorking : O.keepButton}</button>
+        </>
+      )}>
+      <p>{O.keepBody(teamName, extra)}</p>
+      <label className={ck.field}>
+        <span className={ck.label}>{O.keepReason}<span className={ck.required} aria-hidden>*</span></span>
+        <input className={ck.input} maxLength={500} value={reason} onChange={e => setReason(e.target.value)} aria-required="true" autoFocus />
+      </label>
       {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
     </KitDialog>
   );

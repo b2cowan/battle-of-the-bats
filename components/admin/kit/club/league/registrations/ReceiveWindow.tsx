@@ -7,13 +7,15 @@
  * the result. A closed fiscal year refuses the batch whole on its first line — every line is dated the same — and nothing
  * was recorded (§2.2).
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { repKit } from '../../RepKit';
 import { DayField, FormError, MethodField, moneyKit } from '../../money/MoneyKit';
 import { BULK_WORDS, RECV_WORDS } from '@/lib/house-league-money-words';
 import { formatLeagueMoney } from '@/lib/league-money';
+import { PAY_OPEN_WORDS, money } from '@/lib/online-payment-words';
+import type { OpenPayPage } from '@/lib/online-pay-pages';
 import { receiveDayError, regDay, type Refusal } from '@/lib/house-league-registrations';
 import type { DuesPaymentMethod, LeagueRegistration } from '@/lib/types';
 import { patchRegistration } from './api';
@@ -33,6 +35,8 @@ export interface ReceiveTarget {
 export interface ReceiveOutcome {
   done: string[];
   refused: { id: string; refusal: Refusal }[];
+  /** 12d-1: one child received, and its family's open pay page closed — the screen says this instead (words §2.1). */
+  said?: string;
 }
 
 export default function ReceiveWindow({
@@ -54,6 +58,18 @@ export default function ReceiveWindow({
   const [method, setMethod] = useState<DuesPaymentMethod | ''>('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // 12d-1 (ask 12): a pay page the family left open — read for one child (the drawn window); a batch still closes them.
+  const [open, setOpen] = useState<{ pages: OpenPayPage[]; today: string } | null>(null);
+  const soleId = targets.length === 1 ? targets[0]?.reg.id ?? null : null;
+  useEffect(() => {
+    if (!soleId) return;
+    let live = true;
+    fetch(`/api/admin/house-league/seasons/${seasonId}/registrations/${soleId}${orgQuery}`, { credentials: 'same-origin' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (live && d && Array.isArray(d.openPages)) setOpen({ pages: d.openPages as OpenPayPage[], today: String(d.today ?? today) }); })
+      .catch(() => null);
+    return () => { live = false; };
+  }, [soleId, seasonId, orgQuery, today]);
 
   const many = targets.length > 1;
   const one = targets[0];
@@ -69,7 +85,11 @@ export default function ReceiveWindow({
     const out: ReceiveOutcome = { done: [], refused: [] };
     for (const t of targets) {
       const r = await patchRegistration(orgQuery, seasonId, t.reg.id, { money: { kind: 'receive', day, method: method || null } });
-      if (r.ok) { out.done.push(t.reg.id); continue; }
+      if (r.ok) {
+        out.done.push(t.reg.id);
+        if (!many && (r.pagesClosed ?? 0) > 0) out.said = PAY_OPEN_WORDS.doneToast(formatLeagueMoney(t.owing), t.name, (r.pagesClosed ?? 0) > 1);
+        continue;
+      }
       // A closed fiscal year refuses every line the same way: stop at the first, and say nothing was recorded.
       if (r.code === 'year_closed' && out.done.length === 0) {
         setError(many ? BULK_WORDS.closedBatch(r.error) : r.error);
@@ -107,6 +127,13 @@ export default function ReceiveWindow({
       )}
     >
       <FormError>{error}</FormError>
+      {open && open.pages.length > 0 && (
+        <p className={ck.notice} role="note">
+          {open.pages.length > 1
+            ? PAY_OPEN_WORDS.noticeMany(open.pages.length, one.reg.playerFirstName)
+            : PAY_OPEN_WORDS.notice(open.pages[0].openedBy, money(open.pages[0].amountCents / 100), open.pages[0].openedAt, open.today, true)}
+        </p>
+      )}
       <div className={ck.field}>
         <span className={ck.label}>{many ? RECV_WORDS.bulk.totalLabel : RECV_WORDS.amountLabel}</span>
         <div className={repKit.readonlyValue}>

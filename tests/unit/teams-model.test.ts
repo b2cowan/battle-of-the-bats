@@ -154,6 +154,6 @@ describe('payment words (T5, D10)', () => {
     assert.deepEqual(paymentLine(team('x', 'accepted', { totalPaid: 475 }), fee, '2026-06-10'),
       { lead: 'Paid in full · $475', owes: false, rest: [] });
     assert.deepEqual(paymentLine(team('x', 'accepted', { depositPaid: 150, totalPaid: 500 }), fee, '2026-06-10'),
-      { lead: 'Paid $500', owes: false, rest: ['$25 over the fee'] });
+      { lead: 'Paid $500', owes: false, rest: ['$25 over the fee'], over: true });
   });
 });

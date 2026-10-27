@@ -102,6 +102,10 @@ export const LEAGUE_ONLINE_NOTICE_WORDS = {
   unrecordedTitle: (child: string, bank = false) => `A ${bank ? 'bank debit' : 'card payment'} for ${child} couldn’t be recorded`,
   unrecordedBody: (guardian: string | null, amount: string, date: string | null, child: string, why: string, bank = false) =>
     `${guardian ?? 'The family'} paid ${amount} by ${bank ? 'bank debit' : 'card'}${date ? ` on ${date}` : ''} for ${child}, but it couldn’t go on the registration: ${why}. The money is in the club’s Stripe balance. Refund it to the ${bank ? 'bank account' : 'card'}.`,
+  // 12d words §2.3: only the "already marked received" reason gets a plain label; every other reason keeps the words above.
+  unrecordedTitleTwice: (childPossessive: string) => `${childPossessive} fee was paid twice`,
+  unrecordedBodyTwice: (guardian: string | null, date: string | null, childPossessive: string, bank = false) =>
+    `${guardian ?? 'The family'} paid by ${bank ? 'bank debit' : 'card'}${date ? ` on ${date}` : ''}, after ${childPossessive} fee was already marked received. The money is in the club’s Stripe balance. Refund it to the ${bank ? 'bank account' : 'card'}.`,
   // Derived: the whole landing threw (the season is gone, Stripe's amount differs) — no child's share is on a registration.
   unrecordedSignupTitle: 'A house-league card payment couldn’t be recorded',
   unrecordedSignupTitleBank: 'A house-league bank debit couldn’t be recorded',
@@ -624,6 +628,77 @@ export const DEBIT_NOTICE_WORDS = {
   owesAgain: (who: string, amount: string, many: boolean) => `${who} ${many ? 'owe' : 'owes'} ${amount} again`,
   /** The family's own sentence (§2.2 reversedBody's `{owesAgain}`). */
   owingAgain: (amount: string) => `${amount} is owing again`,
+} as const;
+
+/**
+ * PAID TWICE (Club Tier Stage 12d-1 Part 2; words CLUB_TIER_STAGE12D_COPY.md §2.2). "Paid twice" when the whole payment
+ * was extra (the team had already paid in full), "more than owed" when only part was (D8: never "paid twice" for a team
+ * that simply owed less). `bank` words the bank-debit rail. "Keep it" is a note, never a credit (owner, §7 ruling 5): the
+ * button and the window's body are the ruling's; the title, toast and settled line drop "as a credit" to match it.
+ */
+export const OVER_WORDS = {
+  pillTwice: (extra: string) => `${extra} paid twice`,
+  pillMore: (extra: string) => `${extra} more than owed`,
+  tagTwice: 'Paid after the team had already paid in full. Refund it from ⋯.',
+  tagMore: (extra: string) => `Paid more than the team owed. Refund the extra ${extra} from ⋯.`,
+  menuKeep: 'Keep it',
+  titleTwice: (team: string, extra: string) => `${team} paid ${extra} twice`,
+  titleMore: (team: string, extra: string) => `${team} paid ${extra} more than it owed`,
+  bodyTwice: (amount: string, receiptNo: string, day: string, bank: boolean) =>
+    `A ${bank ? 'bank debit' : 'card payment'} of ${amount} (receipt ${receiptNo}) landed on ${day} after the team had already paid in full. The money is in the club’s Stripe balance. Refund it to the ${bank ? 'bank account' : 'card'}.`,
+  bodyMore: (amount: string, receiptNo: string, day: string, extra: string, bank: boolean) =>
+    `A ${bank ? 'bank debit' : 'card payment'} of ${amount} (receipt ${receiptNo}) landed on ${day}, ${extra} more than the team owed. The money is in the club’s Stripe balance. Refund the extra ${extra} to the ${bank ? 'bank account' : 'card'}.`,
+  // The settled lines live with the others (SETTLED_WORDS.overRefunded / overKept / overEntryRaised).
+  // The refund window it opens (12c's, set; words §2.2 `refund.twice.*` / `refund.more.*`).
+  allSub: (howPaid: string | null) => (howPaid ? `Paid twice: the team had already paid ${howPaid}` : 'Paid twice: the team had already paid in full'),
+  prefillTwice: 'Paid twice',
+  prefillMore: 'Paid more than the team owed',
+  feeWhy: 'The processing fee comes back too, because the team shouldn’t pay a fee on money it didn’t owe.',
+  // "Keep it" (§7 ruling 5: a note).
+  keepTitle: (team: string, extra: string) => `Keep ${possessive(team)} extra ${extra}?`,
+  keepBody: (team: string, extra: string) => `${team} paid ${extra} more than it owed. The club keeps the money. Say why.`,
+  keepReason: 'Reason',
+  keepReasonError: 'Say why the club keeps it.',
+  keepButton: 'Keep it',
+  keepWorking: 'Saving…',
+  keepDone: (extra: string, team: string) => `Kept ${extra} paid by ${team}.`,
+  keptLine: (extra: string, reason: string) => `Kept ${extra} · ${reason}`,
+  keepGone: 'Nothing on this payment is extra any more.',
+} as const;
+
+/** `{howPaid}`: the earlier payment's method, lowercase in a sentence ("by e-transfer", "online"). */
+export function howPaidWords(method: string | null | undefined): string | null {
+  switch (method) {
+    case 'etransfer': return 'by e-transfer';
+    case 'cash': return 'in cash';
+    case 'cheque': return 'by cheque';
+    case 'card': return 'by card';
+    case 'online_card': case 'online_bank': return 'online';
+    default: return null;
+  }
+}
+
+/** "7:59 p.m." today, "Nov 11 at 7:59 p.m." another day: the moment a pay page opened, in the club's zone. */
+function openedWhen(iso: string, today: string): string {
+  const z = utcToZonedInputs(iso);
+  return z.date === today ? `at ${formatTime(z.time)}` : `on ${formatStoredDate(z.date, { withYear: false })} at ${formatTime(z.time)}`;
+}
+
+/**
+ * A PAY PAGE IS OPEN WHILE THE DESK RECORDS BY HAND (12d-1 Part 2, ask 12; words §2.1). An info notice in the form, never
+ * a block: recording closes the page. `family` swaps the team's words for a house-league family's.
+ */
+export const PAY_OPEN_WORDS = {
+  // The clock ends "p.m.", so the sentence's own full stop is absorbed ("…at 7:59 p.m. Recording…").
+  notice: (who: string | null, amount: string, openedAt: string, today: string, family: boolean) =>
+    `${who ?? (family ? 'The family' : 'The team’s contact')} opened a pay page for ${amount} ${openedWhen(openedAt, today)} Recording this closes it, so the ${family ? 'family' : 'team'} can’t pay twice.`,
+  noticeMany: (n: number, childFirst: string | null) =>
+    childFirst
+      ? `${n} pay pages are open for ${childFirst}. Recording this closes them, so the family can’t pay twice.`
+      : `${n} pay pages are open for this team. Recording this closes them, so the team can’t pay twice.`,
+  doneToast: (amount: string, name: string, many: boolean) =>
+    `Recorded ${amount} for ${name}. ${many ? 'The open pay pages are closed.' : 'The open pay page is closed.'}`,
+  partNote: (left: string, family: boolean) => `The ${family ? 'family’s' : 'team’s'} pay link still works for the ${left} still owing.`,
 } as const;
 
 /** The line on the club's FieldLogicHQ invoice for Stripe's returned-debit fee (§0k answer 2; words via /marketing). */

@@ -70,6 +70,14 @@ export const SETTLED_WORDS = {
   refundOnMany: 'It’s on their registrations.',
   payLinkEmailed: (who: string | null, you: boolean) => (you ? 'You emailed the pay link' : who ? `Pay link emailed by ${who}` : 'Pay link emailed'),
   keptEnrolled: (child: string, who: string | null, you: boolean) => (you ? `You kept ${child} enrolled` : who ? `${who} kept ${child} enrolled` : `${child} stays enrolled`),
+  // 12d words §2.2 (paid twice) and §1.4 (a dispute). "The dispute was lost." is derived: the words give the lost
+  // dispute its own item (`card_dispute_lost`), and the disputed item it replaces needs a line of its own.
+  overRefunded: (extra: string, bank: boolean) => `Refunded ${extra} to the ${bank ? 'bank account' : 'card'}`,
+  overKept: 'Kept by the club',
+  overEntryRaised: 'The entry was raised, so nothing is extra.',
+  disputeWon: 'The club won the dispute.',
+  disputeAnswered: 'Answered in Stripe. The bank decides.',
+  disputeLost: 'The dispute was lost.',
 
   // Requests holding a coach's payout (team_request_holding_payout)
   allSettled: (n: number) => (n === 1 ? 'The request is settled.' : n === 2 ? 'Both requests are settled.' : `All ${n} requests are settled.`),
