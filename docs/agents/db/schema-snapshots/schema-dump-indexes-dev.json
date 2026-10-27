@@ -1577,7 +1577,7 @@
   {
     "tablename": "notifications",
     "indexname": "notifications_one_open_online_payments_notice",
-    "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text])))"
+    "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'onlineDisputeId'::text), (metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text, 'card_disputed'::text, 'card_dispute_lost'::text, 'online_payment_over'::text])))"
   },
   {
     "tablename": "notifications",
@@ -1587,7 +1587,7 @@
   {
     "tablename": "notifications",
     "indexname": "notifications_org_needs_attention_idx",
-    "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
   },
   {
     "tablename": "notifications",
@@ -1597,7 +1597,7 @@
   {
     "tablename": "notifications",
     "indexname": "notifications_user_needs_attention_idx",
-    "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
   },
   {
     "tablename": "notifications",
@@ -1623,6 +1623,31 @@
     "tablename": "online_payment_clear_decisions",
     "indexname": "online_payment_clear_decisions_pkey",
     "indexdef": "CREATE UNIQUE INDEX online_payment_clear_decisions_pkey ON public.online_payment_clear_decisions USING btree (id)"
+  },
+  {
+    "tablename": "online_payment_disputes",
+    "indexname": "online_payment_disputes_open_idx",
+    "indexdef": "CREATE INDEX online_payment_disputes_open_idx ON public.online_payment_disputes USING btree (org_id) WHERE (status = ANY (ARRAY['warning_needs_response'::text, 'warning_under_review'::text, 'needs_response'::text, 'under_review'::text]))"
+  },
+  {
+    "tablename": "online_payment_disputes",
+    "indexname": "online_payment_disputes_org_idx",
+    "indexdef": "CREATE INDEX online_payment_disputes_org_idx ON public.online_payment_disputes USING btree (org_id)"
+  },
+  {
+    "tablename": "online_payment_disputes",
+    "indexname": "online_payment_disputes_payment_idx",
+    "indexdef": "CREATE INDEX online_payment_disputes_payment_idx ON public.online_payment_disputes USING btree (online_payment_id)"
+  },
+  {
+    "tablename": "online_payment_disputes",
+    "indexname": "online_payment_disputes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_disputes_pkey ON public.online_payment_disputes USING btree (id)"
+  },
+  {
+    "tablename": "online_payment_disputes",
+    "indexname": "online_payment_disputes_stripe_key",
+    "indexdef": "CREATE UNIQUE INDEX online_payment_disputes_stripe_key ON public.online_payment_disputes USING btree (stripe_dispute_id)"
   },
   {
     "tablename": "online_payment_items",
@@ -1743,6 +1768,16 @@
     "tablename": "online_payments",
     "indexname": "online_payments_org_idx",
     "indexdef": "CREATE INDEX online_payments_org_idx ON public.online_payments USING btree (org_id, created_at DESC)"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_over_idx",
+    "indexdef": "CREATE INDEX online_payments_over_idx ON public.online_payments USING btree (team_id) WHERE ((over_amount IS NOT NULL) AND (over_kept_at IS NULL))"
+  },
+  {
+    "tablename": "online_payments",
+    "indexname": "online_payments_over_kept_by_idx",
+    "indexdef": "CREATE INDEX online_payments_over_kept_by_idx ON public.online_payments USING btree (over_kept_by) WHERE (over_kept_by IS NOT NULL)"
   },
   {
     "tablename": "online_payments",
@@ -2515,21 +2550,6 @@
     "indexdef": "CREATE INDEX platform_catalog_change_requests_target_version_id_idx ON public.platform_catalog_change_requests USING btree (target_version_id)"
   },
   {
-    "tablename": "platform_debit_fees",
-    "indexname": "platform_debit_fees_key",
-    "indexdef": "CREATE UNIQUE INDEX platform_debit_fees_key ON public.platform_debit_fees USING btree (online_payment_id, kind)"
-  },
-  {
-    "tablename": "platform_debit_fees",
-    "indexname": "platform_debit_fees_pkey",
-    "indexdef": "CREATE UNIQUE INDEX platform_debit_fees_pkey ON public.platform_debit_fees USING btree (id)"
-  },
-  {
-    "tablename": "platform_debit_fees",
-    "indexname": "platform_debit_fees_unbilled_idx",
-    "indexdef": "CREATE INDEX platform_debit_fees_unbilled_idx ON public.platform_debit_fees USING btree (org_id) WHERE ((billed_at IS NULL) AND (exempt_reason IS NULL))"
-  },
-  {
     "tablename": "platform_email_templates",
     "indexname": "platform_email_templates_pkey",
     "indexdef": "CREATE UNIQUE INDEX platform_email_templates_pkey ON public.platform_email_templates USING btree (key)"
@@ -2553,6 +2573,26 @@
     "tablename": "platform_events",
     "indexname": "platform_events_pkey",
     "indexdef": "CREATE UNIQUE INDEX platform_events_pkey ON public.platform_events USING btree (id)"
+  },
+  {
+    "tablename": "platform_fee_invoices",
+    "indexname": "platform_fee_invoices_period_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_period_key ON public.platform_fee_invoices USING btree (org_id, livemode, period_start)"
+  },
+  {
+    "tablename": "platform_fee_invoices",
+    "indexname": "platform_fee_invoices_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_pkey ON public.platform_fee_invoices USING btree (id)"
+  },
+  {
+    "tablename": "platform_fee_invoices",
+    "indexname": "platform_fee_invoices_stripe_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_stripe_key ON public.platform_fee_invoices USING btree (stripe_invoice_id) WHERE (stripe_invoice_id IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_fee_invoices",
+    "indexname": "platform_fee_invoices_unpaid_idx",
+    "indexdef": "CREATE INDEX platform_fee_invoices_unpaid_idx ON public.platform_fee_invoices USING btree (org_id) WHERE (status = 'open'::text)"
   },
   {
     "tablename": "platform_feedback_replies",
@@ -2658,6 +2698,36 @@
     "tablename": "platform_status_reading",
     "indexname": "platform_status_reading_pkey",
     "indexdef": "CREATE UNIQUE INDEX platform_status_reading_pkey ON public.platform_status_reading USING btree (id)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_dispute_idx",
+    "indexdef": "CREATE INDEX platform_stripe_fees_dispute_idx ON public.platform_stripe_fees USING btree (dispute_id) WHERE (dispute_id IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_invoice_idx",
+    "indexdef": "CREATE INDEX platform_stripe_fees_invoice_idx ON public.platform_stripe_fees USING btree (fee_invoice_id) WHERE (fee_invoice_id IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_key ON public.platform_stripe_fees USING btree (online_payment_id, kind, dispute_id) NULLS NOT DISTINCT"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_org_idx",
+    "indexdef": "CREATE INDEX platform_stripe_fees_org_idx ON public.platform_stripe_fees USING btree (org_id)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_pkey ON public.platform_stripe_fees USING btree (id)"
+  },
+  {
+    "tablename": "platform_stripe_fees",
+    "indexname": "platform_stripe_fees_unbilled_idx",
+    "indexdef": "CREATE INDEX platform_stripe_fees_unbilled_idx ON public.platform_stripe_fees USING btree (org_id) WHERE ((billed_at IS NULL) AND (exempt_reason IS NULL))"
   },
   {
     "tablename": "platform_user_notes",

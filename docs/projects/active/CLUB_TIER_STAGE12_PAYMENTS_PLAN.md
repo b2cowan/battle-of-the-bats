@@ -113,6 +113,72 @@
     leaves Stripe's foreign-card extra the club's.
   The build is split in two (12d-1: overpayment, disputes, billing every club; 12d-2: payouts
   tab, leaving, terms, platform-admin view): `CLUB_TIER_STAGE12D1_BUILD_PROMPT.md`, `CLUB_TIER_STAGE12D2_BUILD_PROMPT.md`.
+- **12d-1 build state (opened 2026-10-27).**
+  **⚖ Owner 2026-10-27, the build's four asks (all as recommended):**
+  1. **Go on the UX summary**, including: every hand-recording path closes an open pay page (Record a payment, Mark paid,
+     Mark received, AND check-in, the bulk Mark paid, import, team creation — found in the census; only the three drawn
+     screens show the warning); and the **fallback**: if Stripe's own figure for the foreign-card extra (or a dispute fee)
+     cannot be read per payment, it is billed from Stripe's published rate held as ONE constant beside
+     `ONLINE_PAYMENT_RATES`, matched to the Facts doc (the CA$5 debit fee is held that way already).
+  2. **One new daily scheduled job** (owner asked for it, this conversation): the dispute email three days before it is due,
+     the one reminder on an unpaid fee invoice, and the monthly fee invoice. Its own commit (AGENCY_RULES, watched paths).
+  3. **A club with no subscription invoice gets ONE invoice a month, sent on the 1st**, gathering the month's fees. (The
+     prompt's "sent when the first fee of the month arrives" was dropped: every later fee that month would wait for the
+     next month's first fee, which may never come.)
+  4. **The club reads its Stripe fees on Settings › Plan & billing** (a short list: what, when, billed / unpaid, Pay the
+     invoice) plus the fee line already on the dispute or returned-debit record.
+  Builder's call, stated to the owner: a dispute is its own record (a table), not columns on the payment.
+  **Resolved from the words, not reopened:** a CANCELLED club is invoiced too (round 3 "no subscription invoice → its own
+  invoice"; the words doc §1.7 wins over D3's "those fees are ours"); the dispute emails go to the person who set up payouts
+  alone (words §1.6 wins over the drawing's provisional "and the owner if they differ").
+  **Stripe facts, read 2026-10-27 from Stripe's current docs (API `2026-04-22.dahlia`; accounts on `2026-09-30.preview`):**
+  - Code census: no comp is a Stripe object. Free time and the Founding comp are `org_overrides` rows; a Founding club has no
+    `stripe_subscription_id`; there are no coupons/discounts anywhere. So "a discount eats the fee line" cannot happen today,
+    and every comped/free/cancelled club takes the standalone invoice.
+  - Disputes on our direct charges arrive on the Connect webhook (`event.account` set): `charge.dispute.created`,
+    `.updated`, `.closed`, `.funds_withdrawn`, `.funds_reinstated` (docs list them; they state no order — build for any).
+    Statuses `warning_needs_response`/`warning_under_review`/`warning_closed` (an inquiry, mostly Amex/Discover; no fee when
+    resolved), `needs_response`, `under_review`, `won`, `lost`, `prevented`; won/lost is the `status` itself. More than one
+    dispute per charge is possible ("extremely rare"); a lost dispute can later turn to won. `evidence_details.due_by` = the
+    answer-by time (0 when the bank allows no response). The disputed amount comes out of the CONNECTED account's balance;
+    with `losses_collector: 'stripe'`, Stripe covers a negative balance.
+  - **The dispute fees are the PLATFORM's** (`fees_collector: 'application'`): received fee and countered (answering) fee,
+    the latter returned on a win (disputes after 2025-06-17). Stripe's figures today: CA$15 + CA$15 (never typed: printed
+    from the record).
+  - Answer in Stripe: the Express Dashboard manages disputes, and with Stripe-covered losses it cannot be turned off;
+    reached by our single-use login link (`dashboardLink`), then a code to the account's email/phone. Never emailed.
+  - Foreign card: the charge carries `payment_method_details.card.country`; Stripe's fee is paid by the PLATFORM. Published
+    CA rate: +0.8% for an international card; currency conversion (+2%) cannot apply (a CAD charge on a CAD account).
+    `fee_details` lists only `stripe_fee` / `application_fee` / … — no international line (to confirm by probe).
+  - Standalone invoice: `invoices.create` (`collection_method: 'send_invoice'`, `days_until_due`,
+    `pending_invoice_items_behavior` defaults to `exclude` → items are created with `invoice:`), finalize without
+    `sendInvoice` and with `auto_advance: false` → Stripe sends no invoice email; `hosted_invoice_url` after finalizing;
+    `invoice.paid` says paid (also for paid-out-of-band). Stripe Invoicing (Starter): 0.4% per paid invoice; credit notes
+    on a paid invoice can credit the customer balance (applied to the next invoice).
+  - **Sandbox probe, 2026-10-27** (`.probe/s12d1-dispute-probe.cjs`, `s12d1-debit-probe.cjs`; the 12a walk club's test
+    account, `fees_collector: 'application'` confirmed on it): **a CARD dispute's CA$15 fee came out of the CLUB's own
+    Stripe balance** (the dispute's balance transaction on the connected account: amount −50.00, fee 15.00 "Dispute fee",
+    net −65.00; nothing on the platform's balance), **contradicting the docs' fee-payer table**. **A BANK DEBIT's dispute
+    fee (CA$5) was charged to the PLATFORM** (a platform `stripe_fee` balance transaction "Dispute fee", −5.00, whose
+    `source` is the dispute id), nothing on the club's. A failed debit drew **no failure fee on either side**, and Stripe
+    returned our application fee to the club by itself. No countered (answering) fee appeared anywhere after evidence was
+    submitted by API. Card processing fees do not appear on the platform's balance per charge (a bank debit's do, `source`
+    = the charge), so **the foreign-card extra has no per-payment Stripe figure → the ruled fallback (the published rate,
+    one constant)**. A lost dispute withdrew the WHOLE charge (our application fee included) from the club and left our
+    fee untouched (matches the held ruling: a lost dispute does not return our fee). Events seen: `created` →
+    `funds_withdrawn` → `updated` (under_review) → `closed` / `funds_reinstated`; an inquiry (`warning_needs_response`)
+    takes nothing.
+  **⚖ Owner 2026-10-27, after the probe:**
+  5. **Bill only what Stripe charged us.** Each dispute is read from Stripe: a fee Stripe took from the club's balance is
+     recorded on the dispute and never invoiced; a fee Stripe charged FieldLogicHQ (a platform balance transaction whose
+     source is the dispute) is billed at Stripe's figure. A club is never charged twice. If live charges us without a
+     per-dispute record, we absorb it until confirmed with Stripe (the builder drafts the support question).
+  6. **The new sentence for a fee taken from the club's balance, as drafted:** "Stripe took its dispute fee,
+     {disputeFee}, from the club’s Stripe balance." After an answer: "Answering added {answeringFee}, also from the
+     club’s Stripe balance. It comes back if you win." Printed only when Stripe reports each figure.
+  **Found, not ruled (for the owner at the end of the build):** under ruling 5's principle, 12c's CA$5 for a RETURNED
+  (failed) debit is billed from the constant though the sandbox showed Stripe charging nobody for one; a REVERSED debit's
+  fee does have Stripe's own figure (the platform balance transaction above), which Part 4 reads instead of the constant.
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 

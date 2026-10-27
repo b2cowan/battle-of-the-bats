@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-27",
-  "total": 866,
+  "total": 963,
   "counts": {
-    "tables": 31,
-    "columns": 434,
-    "indexes": 138,
-    "constraints": 129,
-    "rls": 134
+    "tables": 33,
+    "columns": 488,
+    "indexes": 152,
+    "constraints": 137,
+    "rls": 153
   },
   "items": [
     {
@@ -178,6 +178,38 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:online_payment_disputes.online_payment_disputes_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_disputes.online_payment_disputes_answered_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_disputes.online_payment_disputes_fee_paid_from_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_disputes.online_payment_disputes_held_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_disputes.online_payment_disputes_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_disputes.online_payment_disputes_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_disputes.online_payment_disputes_stripe_fee_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payment_disputes.online_payment_disputes_won_back_chk",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:online_payment_items.online_payment_items_amount_chk",
       "sig": ""
     },
@@ -238,6 +270,10 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:online_payments.online_payments_card_country_chk",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:online_payments.online_payments_currency_chk",
       "sig": ""
     },
@@ -255,6 +291,14 @@
     },
     {
       "key": "check:only-dev:online_payments.online_payments_flow_shape_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payments.online_payments_over_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:online_payments.online_payments_over_kept_chk",
       "sig": ""
     },
     {
@@ -398,27 +442,23 @@
       "sig": ""
     },
     {
-      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_amount_check",
+      "key": "check:only-dev:platform_fee_invoices.platform_fee_invoices_final_chk",
       "sig": ""
     },
     {
-      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_bill_error_check",
+      "key": "check:only-dev:platform_fee_invoices.platform_fee_invoices_paid_chk",
       "sig": ""
     },
     {
-      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_billed_chk",
+      "key": "check:only-dev:platform_fee_invoices.platform_fee_invoices_period_start_check",
       "sig": ""
     },
     {
-      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_exempt_chk",
+      "key": "check:only-dev:platform_fee_invoices.platform_fee_invoices_send_error_check",
       "sig": ""
     },
     {
-      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_exempt_reason_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:platform_debit_fees.platform_debit_fees_kind_check",
+      "key": "check:only-dev:platform_fee_invoices.platform_fee_invoices_status_check",
       "sig": ""
     },
     {
@@ -487,6 +527,42 @@
     },
     {
       "key": "check:only-dev:platform_status_reading.platform_status_reading_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_stripe_fees.platform_stripe_fees_amount_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_stripe_fees.platform_stripe_fees_bill_error_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_stripe_fees.platform_stripe_fees_billed_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_stripe_fees.platform_stripe_fees_billed_on_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_stripe_fees.platform_stripe_fees_dispute_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_stripe_fees.platform_stripe_fees_exempt_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_stripe_fees.platform_stripe_fees_exempt_reason_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_stripe_fees.platform_stripe_fees_kind_chk",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_stripe_fees.platform_stripe_fees_source_chk",
       "sig": ""
     },
     {
@@ -1070,6 +1146,106 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:online_payment_disputes.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.answered",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.answered_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.closed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.due_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.fee_paid_from",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.held",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.livemode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.lost_booked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.online_payment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.opened_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.opened_emailed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.read_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.reminder_emailed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.stripe_dispute_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.stripe_fee",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.taken_back",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.won_back",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payment_disputes.won_back_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:online_payment_items.amount",
       "sig": ""
     },
@@ -1242,6 +1418,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:online_payments.card_country",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:online_payments.card_last4",
       "sig": ""
     },
@@ -1299,6 +1479,26 @@
     },
     {
       "key": "column:only-dev:online_payments.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.over_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.over_kept_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.over_kept_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.over_kept_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:online_payments.over_whole",
       "sig": ""
     },
     {
@@ -1786,47 +1986,75 @@
       "sig": ""
     },
     {
-      "key": "column:only-dev:platform_debit_fees.amount",
+      "key": "column:only-dev:platform_fee_invoices.amount_due",
       "sig": ""
     },
     {
-      "key": "column:only-dev:platform_debit_fees.bill_error",
+      "key": "column:only-dev:platform_fee_invoices.created_at",
       "sig": ""
     },
     {
-      "key": "column:only-dev:platform_debit_fees.billed_at",
+      "key": "column:only-dev:platform_fee_invoices.due_at",
       "sig": ""
     },
     {
-      "key": "column:only-dev:platform_debit_fees.created_at",
+      "key": "column:only-dev:platform_fee_invoices.emailed_at",
       "sig": ""
     },
     {
-      "key": "column:only-dev:platform_debit_fees.exempt_reason",
+      "key": "column:only-dev:platform_fee_invoices.finalized_at",
       "sig": ""
     },
     {
-      "key": "column:only-dev:platform_debit_fees.id",
+      "key": "column:only-dev:platform_fee_invoices.hosted_invoice_url",
       "sig": ""
     },
     {
-      "key": "column:only-dev:platform_debit_fees.kind",
+      "key": "column:only-dev:platform_fee_invoices.id",
       "sig": ""
     },
     {
-      "key": "column:only-dev:platform_debit_fees.livemode",
+      "key": "column:only-dev:platform_fee_invoices.invoice_number",
       "sig": ""
     },
     {
-      "key": "column:only-dev:platform_debit_fees.online_payment_id",
+      "key": "column:only-dev:platform_fee_invoices.livemode",
       "sig": ""
     },
     {
-      "key": "column:only-dev:platform_debit_fees.org_id",
+      "key": "column:only-dev:platform_fee_invoices.org_id",
       "sig": ""
     },
     {
-      "key": "column:only-dev:platform_debit_fees.stripe_invoice_item_id",
+      "key": "column:only-dev:platform_fee_invoices.paid_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_fee_invoices.period_start",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_fee_invoices.reminded_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_fee_invoices.send_error",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_fee_invoices.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_fee_invoices.stripe_customer_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_fee_invoices.stripe_invoice_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_fee_invoices.updated_at",
       "sig": ""
     },
     {
@@ -2011,6 +2239,70 @@
     },
     {
       "key": "column:only-dev:platform_status_reading.reading",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.amount_source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.bill_attempts",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.bill_error",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.billed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.billed_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.dispute_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.exempt_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.fee_invoice_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.livemode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.online_payment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_stripe_fees.stripe_invoice_item_id",
       "sig": ""
     },
     {
@@ -2462,6 +2754,18 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:online_payment_disputes.online_payment_disputes_online_payment_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_disputes.online_payment_disputes_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payment_disputes.online_payment_disputes_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:online_payment_items.online_payment_items_entry_fk",
       "sig": ""
     },
@@ -2523,6 +2827,10 @@
     },
     {
       "key": "constraint:only-dev:online_payments.online_payments_org_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:online_payments.online_payments_over_kept_by_fkey",
       "sig": ""
     },
     {
@@ -2618,15 +2926,11 @@
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:platform_debit_fees.platform_debit_fees_online_payment_id_fkey",
+      "key": "constraint:only-dev:platform_fee_invoices.platform_fee_invoices_org_id_fkey",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:platform_debit_fees.platform_debit_fees_org_id_fkey",
-      "sig": ""
-    },
-    {
-      "key": "constraint:only-dev:platform_debit_fees.platform_debit_fees_pkey",
+      "key": "constraint:only-dev:platform_fee_invoices.platform_fee_invoices_pkey",
       "sig": ""
     },
     {
@@ -2663,6 +2967,26 @@
     },
     {
       "key": "constraint:only-dev:platform_status_reading.platform_status_reading_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_stripe_fees.platform_stripe_fees_dispute_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_stripe_fees.platform_stripe_fees_invoice_fk",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_stripe_fees.platform_stripe_fees_online_payment_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_stripe_fees.platform_stripe_fees_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_stripe_fees.platform_stripe_fees_pkey",
       "sig": ""
     },
     {
@@ -2799,11 +3123,11 @@
     },
     {
       "key": "index:changed:notifications_org_needs_attention_idx",
-      "sig": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+      "sig": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
     },
     {
       "key": "index:changed:notifications_user_needs_attention_idx",
-      "sig": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+      "sig": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
     },
     {
       "key": "index:only-dev:accounting_entries_league_registration_idx",
@@ -2974,6 +3298,26 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:online_payment_disputes_open_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_disputes_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_disputes_payment_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_disputes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payment_disputes_stripe_key",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:online_payment_items_entry_key",
       "sig": ""
     },
@@ -3067,6 +3411,14 @@
     },
     {
       "key": "index:only-dev:online_payments_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payments_over_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:online_payments_over_kept_by_idx",
       "sig": ""
     },
     {
@@ -3186,15 +3538,19 @@
       "sig": ""
     },
     {
-      "key": "index:only-dev:platform_debit_fees_key",
+      "key": "index:only-dev:platform_fee_invoices_period_key",
       "sig": ""
     },
     {
-      "key": "index:only-dev:platform_debit_fees_pkey",
+      "key": "index:only-dev:platform_fee_invoices_pkey",
       "sig": ""
     },
     {
-      "key": "index:only-dev:platform_debit_fees_unbilled_idx",
+      "key": "index:only-dev:platform_fee_invoices_stripe_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_fee_invoices_unpaid_idx",
       "sig": ""
     },
     {
@@ -3251,6 +3607,30 @@
     },
     {
       "key": "index:only-dev:platform_status_reading_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_stripe_fees_dispute_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_stripe_fees_invoice_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_stripe_fees_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_stripe_fees_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_stripe_fees_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_stripe_fees_unbilled_idx",
       "sig": ""
     },
     {
@@ -3386,6 +3766,10 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:online_payment_disputes",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:online_payment_items",
       "sig": ""
     },
@@ -3422,7 +3806,7 @@
       "sig": ""
     },
     {
-      "key": "table:only-dev:platform_debit_fees",
+      "key": "table:only-dev:platform_fee_invoices",
       "sig": ""
     },
     {
@@ -3443,6 +3827,10 @@
     },
     {
       "key": "table:only-dev:platform_status_reading",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:platform_stripe_fees",
       "sig": ""
     },
     {

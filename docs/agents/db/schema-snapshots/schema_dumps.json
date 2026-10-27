@@ -8435,6 +8435,231 @@
         "column_default": null
       },
       {
+        "table_name": "online_payment_disputes",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 3,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 4,
+        "column_name": "stripe_dispute_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 5,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 6,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 7,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 8,
+        "column_name": "held",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 9,
+        "column_name": "due_by",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 10,
+        "column_name": "answered",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 11,
+        "column_name": "answered_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 12,
+        "column_name": "stripe_fee",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 13,
+        "column_name": "fee_paid_from",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 14,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 15,
+        "column_name": "opened_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 16,
+        "column_name": "closed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 17,
+        "column_name": "read_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 18,
+        "column_name": "lost_booked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 19,
+        "column_name": "taken_back",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 20,
+        "column_name": "won_back_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 21,
+        "column_name": "won_back",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 22,
+        "column_name": "opened_emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 23,
+        "column_name": "reminder_emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 24,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "pos": 25,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "online_payment_items",
         "pos": 1,
         "column_name": "id",
@@ -9169,6 +9394,60 @@
         "column_name": "stripe_dispute_id",
         "data_type": "text",
         "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 43,
+        "column_name": "card_country",
+        "data_type": "character",
+        "udt_name": "bpchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 44,
+        "column_name": "over_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 45,
+        "column_name": "over_whole",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 46,
+        "column_name": "over_kept_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 47,
+        "column_name": "over_kept_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 48,
+        "column_name": "over_kept_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -13385,105 +13664,6 @@
         "column_default": "now()"
       },
       {
-        "table_name": "platform_debit_fees",
-        "pos": 1,
-        "column_name": "id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": "gen_random_uuid()"
-      },
-      {
-        "table_name": "platform_debit_fees",
-        "pos": 2,
-        "column_name": "org_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_debit_fees",
-        "pos": 3,
-        "column_name": "online_payment_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_debit_fees",
-        "pos": 4,
-        "column_name": "kind",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_debit_fees",
-        "pos": 5,
-        "column_name": "amount",
-        "data_type": "numeric",
-        "udt_name": "numeric",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_debit_fees",
-        "pos": 6,
-        "column_name": "livemode",
-        "data_type": "boolean",
-        "udt_name": "bool",
-        "is_nullable": "NO",
-        "column_default": "false"
-      },
-      {
-        "table_name": "platform_debit_fees",
-        "pos": 7,
-        "column_name": "exempt_reason",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_debit_fees",
-        "pos": 8,
-        "column_name": "stripe_invoice_item_id",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_debit_fees",
-        "pos": 9,
-        "column_name": "billed_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_debit_fees",
-        "pos": 10,
-        "column_name": "bill_error",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "platform_debit_fees",
-        "pos": 11,
-        "column_name": "created_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
-      },
-      {
         "table_name": "platform_email_templates",
         "pos": 1,
         "column_name": "key",
@@ -13730,6 +13910,168 @@
         "table_name": "platform_events",
         "pos": 14,
         "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 3,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 4,
+        "column_name": "period_start",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 5,
+        "column_name": "stripe_customer_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 6,
+        "column_name": "stripe_invoice_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 7,
+        "column_name": "invoice_number",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 8,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 9,
+        "column_name": "amount_due",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 10,
+        "column_name": "hosted_invoice_url",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 11,
+        "column_name": "due_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 12,
+        "column_name": "finalized_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 13,
+        "column_name": "emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 14,
+        "column_name": "reminded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 15,
+        "column_name": "paid_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 16,
+        "column_name": "send_error",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 17,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 18,
+        "column_name": "updated_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -14355,6 +14697,150 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 3,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 4,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 5,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 6,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 7,
+        "column_name": "exempt_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 8,
+        "column_name": "stripe_invoice_item_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 9,
+        "column_name": "billed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 10,
+        "column_name": "bill_error",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 12,
+        "column_name": "dispute_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 13,
+        "column_name": "amount_source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'rate'::text"
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 14,
+        "column_name": "billed_on",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 15,
+        "column_name": "fee_invoice_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "pos": 16,
+        "column_name": "bill_attempts",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
       },
       {
         "table_name": "platform_user_notes",
@@ -27524,6 +28010,20 @@
         "constraint_name": "online_payment_clear_decisions_refund_id_fkey"
       },
       {
+        "table_name": "online_payment_disputes",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_disputes_online_payment_id_fkey"
+      },
+      {
+        "table_name": "online_payment_disputes",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "online_payment_disputes_org_id_fkey"
+      },
+      {
         "table_name": "online_payment_items",
         "column_name": "entry_id",
         "foreign_table": "accounting_entries",
@@ -27620,6 +28120,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "online_payments_org_fk"
+      },
+      {
+        "table_name": "online_payments",
+        "column_name": "over_kept_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "online_payments_over_kept_by_fkey"
       },
       {
         "table_name": "online_payments",
@@ -28175,25 +28682,18 @@
         "constraint_name": "platform_catalog_change_requests_target_version_id_fkey"
       },
       {
-        "table_name": "platform_debit_fees",
-        "column_name": "online_payment_id",
-        "foreign_table": "online_payments",
-        "foreign_column": "id",
-        "constraint_name": "platform_debit_fees_online_payment_id_fkey"
-      },
-      {
-        "table_name": "platform_debit_fees",
-        "column_name": "org_id",
-        "foreign_table": "organizations",
-        "foreign_column": "id",
-        "constraint_name": "platform_debit_fees_org_id_fkey"
-      },
-      {
         "table_name": "platform_events",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "platform_events_org_id_fkey"
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "platform_fee_invoices_org_id_fkey"
       },
       {
         "table_name": "platform_feedback_replies",
@@ -28215,6 +28715,34 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "platform_refunds_org_id_fkey"
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "column_name": "dispute_id",
+        "foreign_table": "online_payment_disputes",
+        "foreign_column": "id",
+        "constraint_name": "platform_stripe_fees_dispute_id_fkey"
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "column_name": "fee_invoice_id",
+        "foreign_table": "platform_fee_invoices",
+        "foreign_column": "id",
+        "constraint_name": "platform_stripe_fees_invoice_fk"
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "platform_stripe_fees_online_payment_id_fkey"
+      },
+      {
+        "table_name": "platform_stripe_fees",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "platform_stripe_fees_org_id_fkey"
       },
       {
         "table_name": "platform_user_notes",
@@ -32960,7 +33488,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_one_open_online_payments_notice",
-        "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text])))"
+        "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'onlineDisputeId'::text), (metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text, 'card_disputed'::text, 'card_dispute_lost'::text, 'online_payment_over'::text])))"
       },
       {
         "tablename": "notifications",
@@ -32970,7 +33498,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_org_needs_attention_idx",
-        "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+        "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
       },
       {
         "tablename": "notifications",
@@ -32980,7 +33508,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_user_needs_attention_idx",
-        "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+        "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
       },
       {
         "tablename": "notifications",
@@ -33006,6 +33534,31 @@
         "tablename": "online_payment_clear_decisions",
         "indexname": "online_payment_clear_decisions_pkey",
         "indexdef": "CREATE UNIQUE INDEX online_payment_clear_decisions_pkey ON public.online_payment_clear_decisions USING btree (id)"
+      },
+      {
+        "tablename": "online_payment_disputes",
+        "indexname": "online_payment_disputes_open_idx",
+        "indexdef": "CREATE INDEX online_payment_disputes_open_idx ON public.online_payment_disputes USING btree (org_id) WHERE (status = ANY (ARRAY['warning_needs_response'::text, 'warning_under_review'::text, 'needs_response'::text, 'under_review'::text]))"
+      },
+      {
+        "tablename": "online_payment_disputes",
+        "indexname": "online_payment_disputes_org_idx",
+        "indexdef": "CREATE INDEX online_payment_disputes_org_idx ON public.online_payment_disputes USING btree (org_id)"
+      },
+      {
+        "tablename": "online_payment_disputes",
+        "indexname": "online_payment_disputes_payment_idx",
+        "indexdef": "CREATE INDEX online_payment_disputes_payment_idx ON public.online_payment_disputes USING btree (online_payment_id)"
+      },
+      {
+        "tablename": "online_payment_disputes",
+        "indexname": "online_payment_disputes_pkey",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_disputes_pkey ON public.online_payment_disputes USING btree (id)"
+      },
+      {
+        "tablename": "online_payment_disputes",
+        "indexname": "online_payment_disputes_stripe_key",
+        "indexdef": "CREATE UNIQUE INDEX online_payment_disputes_stripe_key ON public.online_payment_disputes USING btree (stripe_dispute_id)"
       },
       {
         "tablename": "online_payment_items",
@@ -33126,6 +33679,16 @@
         "tablename": "online_payments",
         "indexname": "online_payments_org_idx",
         "indexdef": "CREATE INDEX online_payments_org_idx ON public.online_payments USING btree (org_id, created_at DESC)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_over_idx",
+        "indexdef": "CREATE INDEX online_payments_over_idx ON public.online_payments USING btree (team_id) WHERE ((over_amount IS NOT NULL) AND (over_kept_at IS NULL))"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_over_kept_by_idx",
+        "indexdef": "CREATE INDEX online_payments_over_kept_by_idx ON public.online_payments USING btree (over_kept_by) WHERE (over_kept_by IS NOT NULL)"
       },
       {
         "tablename": "online_payments",
@@ -33898,21 +34461,6 @@
         "indexdef": "CREATE INDEX platform_catalog_change_requests_target_version_id_idx ON public.platform_catalog_change_requests USING btree (target_version_id)"
       },
       {
-        "tablename": "platform_debit_fees",
-        "indexname": "platform_debit_fees_key",
-        "indexdef": "CREATE UNIQUE INDEX platform_debit_fees_key ON public.platform_debit_fees USING btree (online_payment_id, kind)"
-      },
-      {
-        "tablename": "platform_debit_fees",
-        "indexname": "platform_debit_fees_pkey",
-        "indexdef": "CREATE UNIQUE INDEX platform_debit_fees_pkey ON public.platform_debit_fees USING btree (id)"
-      },
-      {
-        "tablename": "platform_debit_fees",
-        "indexname": "platform_debit_fees_unbilled_idx",
-        "indexdef": "CREATE INDEX platform_debit_fees_unbilled_idx ON public.platform_debit_fees USING btree (org_id) WHERE ((billed_at IS NULL) AND (exempt_reason IS NULL))"
-      },
-      {
         "tablename": "platform_email_templates",
         "indexname": "platform_email_templates_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_email_templates_pkey ON public.platform_email_templates USING btree (key)"
@@ -33936,6 +34484,26 @@
         "tablename": "platform_events",
         "indexname": "platform_events_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_events_pkey ON public.platform_events USING btree (id)"
+      },
+      {
+        "tablename": "platform_fee_invoices",
+        "indexname": "platform_fee_invoices_period_key",
+        "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_period_key ON public.platform_fee_invoices USING btree (org_id, livemode, period_start)"
+      },
+      {
+        "tablename": "platform_fee_invoices",
+        "indexname": "platform_fee_invoices_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_pkey ON public.platform_fee_invoices USING btree (id)"
+      },
+      {
+        "tablename": "platform_fee_invoices",
+        "indexname": "platform_fee_invoices_stripe_key",
+        "indexdef": "CREATE UNIQUE INDEX platform_fee_invoices_stripe_key ON public.platform_fee_invoices USING btree (stripe_invoice_id) WHERE (stripe_invoice_id IS NOT NULL)"
+      },
+      {
+        "tablename": "platform_fee_invoices",
+        "indexname": "platform_fee_invoices_unpaid_idx",
+        "indexdef": "CREATE INDEX platform_fee_invoices_unpaid_idx ON public.platform_fee_invoices USING btree (org_id) WHERE (status = 'open'::text)"
       },
       {
         "tablename": "platform_feedback_replies",
@@ -34041,6 +34609,36 @@
         "tablename": "platform_status_reading",
         "indexname": "platform_status_reading_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_status_reading_pkey ON public.platform_status_reading USING btree (id)"
+      },
+      {
+        "tablename": "platform_stripe_fees",
+        "indexname": "platform_stripe_fees_dispute_idx",
+        "indexdef": "CREATE INDEX platform_stripe_fees_dispute_idx ON public.platform_stripe_fees USING btree (dispute_id) WHERE (dispute_id IS NOT NULL)"
+      },
+      {
+        "tablename": "platform_stripe_fees",
+        "indexname": "platform_stripe_fees_invoice_idx",
+        "indexdef": "CREATE INDEX platform_stripe_fees_invoice_idx ON public.platform_stripe_fees USING btree (fee_invoice_id) WHERE (fee_invoice_id IS NOT NULL)"
+      },
+      {
+        "tablename": "platform_stripe_fees",
+        "indexname": "platform_stripe_fees_key",
+        "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_key ON public.platform_stripe_fees USING btree (online_payment_id, kind, dispute_id) NULLS NOT DISTINCT"
+      },
+      {
+        "tablename": "platform_stripe_fees",
+        "indexname": "platform_stripe_fees_org_idx",
+        "indexdef": "CREATE INDEX platform_stripe_fees_org_idx ON public.platform_stripe_fees USING btree (org_id)"
+      },
+      {
+        "tablename": "platform_stripe_fees",
+        "indexname": "platform_stripe_fees_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_stripe_fees_pkey ON public.platform_stripe_fees USING btree (id)"
+      },
+      {
+        "tablename": "platform_stripe_fees",
+        "indexname": "platform_stripe_fees_unbilled_idx",
+        "indexdef": "CREATE INDEX platform_stripe_fees_unbilled_idx ON public.platform_stripe_fees USING btree (org_id) WHERE ((billed_at IS NULL) AND (exempt_reason IS NULL))"
       },
       {
         "tablename": "platform_user_notes",
@@ -37991,6 +38589,60 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "online_payment_disputes",
+        "detail": "online_payment_disputes_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_disputes",
+        "detail": "online_payment_disputes_answered_chk",
+        "check_clause": "(answered OR (answered_at IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_disputes",
+        "detail": "online_payment_disputes_fee_paid_from_check",
+        "check_clause": "((fee_paid_from IS NULL) OR (fee_paid_from = ANY (ARRAY['club'::text, 'platform'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_disputes",
+        "detail": "online_payment_disputes_held_check",
+        "check_clause": "(held >= (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_disputes",
+        "detail": "online_payment_disputes_reason_check",
+        "check_clause": "((reason IS NULL) OR (char_length(reason) <= 60))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_disputes",
+        "detail": "online_payment_disputes_status_check",
+        "check_clause": "(status = ANY (ARRAY['warning_needs_response'::text, 'warning_under_review'::text, 'warning_closed'::text, 'needs_response'::text, 'under_review'::text, 'won'::text, 'lost'::text, 'prevented'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_disputes",
+        "detail": "online_payment_disputes_stripe_fee_check",
+        "check_clause": "((stripe_fee IS NULL) OR (stripe_fee >= (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payment_disputes",
+        "detail": "online_payment_disputes_won_back_chk",
+        "check_clause": "((won_back_at IS NULL) OR (lost_booked_at IS NOT NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "online_payment_disputes",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "online_payment_items",
         "detail": "online_payment_items_amount_chk",
         "check_clause": "((amount > (0)::numeric) AND (amount <= (1000000)::numeric) AND (fee_share >= (0)::numeric))"
@@ -38083,13 +38735,19 @@
         "kind": "CHECK",
         "table_name": "online_payments",
         "detail": "online_payments_bank_chk",
-        "check_clause": "(((rail = 'bank_debit'::text) OR ((bank_last4 IS NULL) AND (clearing_at IS NULL) AND (returned_at IS NULL) AND (stripe_dispute_id IS NULL))) AND ((bank_last4 IS NULL) OR (bank_last4 ~ '^[0-9]{3,4}$'::text)) AND ((return_detail IS NULL) OR (char_length(return_detail) <= 200)))"
+        "check_clause": "(((rail = 'bank_debit'::text) OR ((bank_last4 IS NULL) AND (clearing_at IS NULL) AND (returned_at IS NULL))) AND ((bank_last4 IS NULL) OR (bank_last4 ~ '^[0-9]{3,4}$'::text)) AND ((return_detail IS NULL) OR (char_length(return_detail) <= 200)))"
       },
       {
         "kind": "CHECK",
         "table_name": "online_payments",
         "detail": "online_payments_base_chk",
         "check_clause": "((base_amount > (0)::numeric) AND (base_amount <= (1000000)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_card_country_chk",
+        "check_clause": "((card_country IS NULL) OR (card_country ~ '^[A-Z]{2}$'::text))"
       },
       {
         "kind": "CHECK",
@@ -38120,6 +38778,18 @@
         "table_name": "online_payments",
         "detail": "online_payments_flow_shape_chk",
         "check_clause": "(((flow = 'tournament_team'::text) AND (season_id IS NULL) AND (signup_key IS NULL)) OR ((flow = 'league_signup'::text) AND (tournament_id IS NULL) AND (team_id IS NULL) AND (signup_key IS NOT NULL) AND ((char_length(signup_key) >= 1) AND (char_length(signup_key) <= 64)) AND (scope = 'full'::text)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_over_chk",
+        "check_clause": "(((over_amount IS NULL) = (over_whole IS NULL)) AND ((over_amount IS NULL) OR (over_amount > (0)::numeric)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "online_payments",
+        "detail": "online_payments_over_kept_chk",
+        "check_clause": "(((over_kept_at IS NULL) = (over_kept_reason IS NULL)) AND ((over_kept_reason IS NULL) OR ((char_length(btrim(over_kept_reason)) >= 1) AND (char_length(btrim(over_kept_reason)) <= 500))) AND ((over_kept_at IS NULL) OR (over_amount IS NOT NULL)))"
       },
       {
         "kind": "CHECK",
@@ -38974,48 +39644,6 @@
         "check_clause": null
       },
       {
-        "kind": "CHECK",
-        "table_name": "platform_debit_fees",
-        "detail": "platform_debit_fees_amount_check",
-        "check_clause": "(amount > (0)::numeric)"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_debit_fees",
-        "detail": "platform_debit_fees_bill_error_check",
-        "check_clause": "((bill_error IS NULL) OR (char_length(bill_error) <= 500))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_debit_fees",
-        "detail": "platform_debit_fees_billed_chk",
-        "check_clause": "((stripe_invoice_item_id IS NULL) = (billed_at IS NULL))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_debit_fees",
-        "detail": "platform_debit_fees_exempt_chk",
-        "check_clause": "((exempt_reason IS NULL) OR (billed_at IS NULL))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_debit_fees",
-        "detail": "platform_debit_fees_exempt_reason_check",
-        "check_clause": "((exempt_reason IS NULL) OR (exempt_reason = ANY (ARRAY['comped'::text, 'no_subscription'::text, 'test_mode'::text])))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "platform_debit_fees",
-        "detail": "platform_debit_fees_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['returned'::text, 'reversed'::text]))"
-      },
-      {
-        "kind": "RLS",
-        "table_name": "platform_debit_fees",
-        "detail": "ENABLED",
-        "check_clause": null
-      },
-      {
         "kind": "RLS",
         "table_name": "platform_email_templates",
         "detail": "ENABLED",
@@ -39024,6 +39652,42 @@
       {
         "kind": "RLS",
         "table_name": "platform_events",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_fee_invoices",
+        "detail": "platform_fee_invoices_final_chk",
+        "check_clause": "((status = 'draft'::text) OR ((stripe_invoice_id IS NOT NULL) AND (finalized_at IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_fee_invoices",
+        "detail": "platform_fee_invoices_paid_chk",
+        "check_clause": "((status = 'paid'::text) = (paid_at IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_fee_invoices",
+        "detail": "platform_fee_invoices_period_start_check",
+        "check_clause": "(EXTRACT(day FROM period_start) = (1)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_fee_invoices",
+        "detail": "platform_fee_invoices_send_error_check",
+        "check_clause": "((send_error IS NULL) OR (char_length(send_error) <= 500))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_fee_invoices",
+        "detail": "platform_fee_invoices_status_check",
+        "check_clause": "(status = ANY (ARRAY['draft'::text, 'open'::text, 'paid'::text, 'void'::text, 'uncollectible'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_fee_invoices",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -39192,6 +39856,66 @@
       {
         "kind": "RLS",
         "table_name": "platform_status_reading",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_stripe_fees",
+        "detail": "platform_stripe_fees_amount_chk",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_stripe_fees",
+        "detail": "platform_stripe_fees_bill_error_chk",
+        "check_clause": "((bill_error IS NULL) OR (char_length(bill_error) <= 500))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_stripe_fees",
+        "detail": "platform_stripe_fees_billed_chk",
+        "check_clause": "((stripe_invoice_item_id IS NULL) = (billed_at IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_stripe_fees",
+        "detail": "platform_stripe_fees_billed_on_chk",
+        "check_clause": "(((billed_at IS NULL) = (billed_on IS NULL)) AND ((billed_on IS NULL) OR (billed_on = ANY (ARRAY['subscription'::text, 'own_invoice'::text]))) AND ((billed_on IS DISTINCT FROM 'subscription'::text) OR (fee_invoice_id IS NULL)) AND ((billed_on IS DISTINCT FROM 'own_invoice'::text) OR (fee_invoice_id IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_stripe_fees",
+        "detail": "platform_stripe_fees_dispute_chk",
+        "check_clause": "((kind = ANY (ARRAY['dispute'::text, 'dispute_answer'::text, 'dispute_answer_returned'::text])) = (dispute_id IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_stripe_fees",
+        "detail": "platform_stripe_fees_exempt_chk",
+        "check_clause": "((exempt_reason IS NULL) OR (billed_at IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_stripe_fees",
+        "detail": "platform_stripe_fees_exempt_reason_chk",
+        "check_clause": "((exempt_reason IS NULL) OR (exempt_reason = ANY (ARRAY['comped'::text, 'no_subscription'::text, 'test_mode'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_stripe_fees",
+        "detail": "platform_stripe_fees_kind_chk",
+        "check_clause": "(kind = ANY (ARRAY['returned'::text, 'reversed'::text, 'dispute'::text, 'dispute_answer'::text, 'dispute_answer_returned'::text, 'foreign_card'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_stripe_fees",
+        "detail": "platform_stripe_fees_source_chk",
+        "check_clause": "(amount_source = ANY (ARRAY['stripe'::text, 'rate'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_stripe_fees",
         "detail": "ENABLED",
         "check_clause": null
       },

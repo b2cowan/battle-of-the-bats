@@ -7431,27 +7431,101 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:online_payment_clear_decisions.refund_id -->
 **`decided_by`** (FK → `auth.users` ON DELETE SET NULL; the refund's "Refunded by") / **`decided_at`** / **`outcome`** (text, CHECK `sent_back` | `kept` | `returned` | `failed` | `void` — `void` from mig 388: the registration was put back (or the team accepted again) before the debit cleared, so the child simply paid and nothing is sent back or kept; `failed` raises the refund-didn't-reach item worded for a bank account; NULL while the debit clears; partial index on the open ones) / **`outcome_at`** (set exactly when `outcome` is, `online_payment_clear_decisions_outcome_chk`) / **`refund_id`** (FK → `online_payment_refunds.id` ON DELETE SET NULL — the send-back's refund, whose own failure raises the refund-didn't-reach item).
 
-## `platform_debit_fees`
-<!-- dict:table:platform_debit_fees -->
+## `platform_stripe_fees`
+<!-- dict:table:platform_stripe_fees -->
 
-**Purpose (migration 387, Stage 12c Part 6, 2026-10-26 — plan §0k answer 2, owner ruling):** Stripe charges the **platform** a fee for each returned or reversed bank debit (`fees_collector = application`; the fee payer can't be set per fee). The owner ruled it is the club's: **one row per debit and kind**, billed as a "Returned bank debit" line on the club's next FieldLogicHQ invoice (a pending Stripe invoice item on the club's subscription, which Stripe adds to the next invoice by itself — `lib/platform-debit-fee.ts`). A comped club (the Founding Season comp) or one with no live subscription is **not billed**: `exempt_reason` says why and FieldLogicHQ absorbs it. The amount is `RETURNED_BANK_DEBIT_FEE_CENTS` at the time (canonical record: PLAN_PRICING_FACTS.md), kept so a later price never rewrites what was charged. RLS on, grants to `anon`/`authenticated` revoked: server-only.
+**Purpose (migration 387 as `platform_debit_fees`, Stage 12c Part 6; renamed and widened by migration 390, Stage 12d-1, 2026-10-27):** **every Stripe fee a club's online payments cost the platform, recovered from the club on every plan** (owner 2026-10-26: "comped clubs do not get any reprieve on stripe fees in any capacity"). One row per payment and kind (and per dispute for a dispute's kinds; unique `platform_stripe_fees_key` on `online_payment_id, kind, dispute_id` NULLS NOT DISTINCT, so a replayed event records it once and a second dispute's fee is its own row). **Only a fee Stripe charged the PLATFORM is recorded** (owner 2026-10-27, "bill only what Stripe charged us"): the 12d-1 sandbox probe showed a card dispute's fee taken from the club's own Stripe balance (recorded on `online_payment_disputes.fee_paid_from = 'club'`, never here), and a bank debit's dispute fee charged to the platform (a platform balance transaction whose `source` is the dispute). Billed as a line on the club's subscription's next invoice (a pending Stripe invoice item on the subscription) when it has a live one, otherwise on the club's own monthly invoice (`platform_fee_invoices`). `lib/platform-debit-fee.ts`. RLS on, grants to `anon`/`authenticated` revoked: server-only.
 
-<!-- dict:col:platform_debit_fees.id -->
-<!-- dict:col:platform_debit_fees.org_id -->
-<!-- dict:col:platform_debit_fees.online_payment_id -->
-<!-- dict:col:platform_debit_fees.kind -->
-**`id`** (uuid PK; the invoice item's idempotency key `debit-fee:{id}`) / **`org_id`** (FK → `organizations.id` ON DELETE CASCADE) / **`online_payment_id`** (FK → `online_payments.id` ON DELETE CASCADE) / **`kind`** (text, CHECK `returned` | `reversed`; unique with the payment — a replayed event records it once).
+<!-- dict:col:platform_stripe_fees.id -->
+<!-- dict:col:platform_stripe_fees.org_id -->
+<!-- dict:col:platform_stripe_fees.online_payment_id -->
+<!-- dict:col:platform_stripe_fees.kind -->
+<!-- dict:col:platform_stripe_fees.dispute_id -->
+**`id`** (uuid PK; the invoice item's idempotency key) / **`org_id`** (FK → `organizations.id` ON DELETE CASCADE, indexed) / **`online_payment_id`** (FK → `online_payments.id` ON DELETE CASCADE) / **`kind`** (text, CHECK `platform_stripe_fees_kind_chk`: `returned` | `reversed` (a bank debit that came back, 12c) | `dispute` | `dispute_answer` | `dispute_answer_returned` (a card dispute's fee, the answering fee, and that fee given back on a win — a **credit**, billed as a negative line) | `foreign_card` (Stripe's extra on a card issued outside the club's country, owner 2026-10-27)) / **`dispute_id`** (FK → `online_payment_disputes.id` ON DELETE CASCADE, partial index; set exactly for the three dispute kinds, `platform_stripe_fees_dispute_chk`).
 
-<!-- dict:col:platform_debit_fees.amount -->
-<!-- dict:col:platform_debit_fees.livemode -->
-<!-- dict:col:platform_debit_fees.exempt_reason -->
-**`amount`** (numeric(12,2), `> 0`) / **`livemode`** (boolean — the debit's mode) / **`exempt_reason`** (text, CHECK `comped` | `no_subscription` | `test_mode`; never with `billed_at`, `platform_debit_fees_exempt_chk`) — what is owed, and why it is not billed.
+<!-- dict:col:platform_stripe_fees.amount -->
+<!-- dict:col:platform_stripe_fees.amount_source -->
+<!-- dict:col:platform_stripe_fees.livemode -->
+<!-- dict:col:platform_stripe_fees.exempt_reason -->
+**`amount`** (numeric(12,2), `> 0`; the sign is the kind's) / **`amount_source`** (text NOT NULL default `rate`, CHECK `stripe` | `rate` — Stripe's own figure at the time, or the published rate held as one constant in `lib/plan-config.ts` (canonical record PLAN_PRICING_FACTS.md) where Stripe gives no per-payment figure: 12c's CA$5 and the foreign-card extra) / **`livemode`** (boolean — the payment's mode) / **`exempt_reason`** (text, CHECK `comped` | `no_subscription` | `test_mode`; never with `billed_at`, `platform_stripe_fees_exempt_chk`) — **only `test_mode` is written from mig 390 on**; the other two are 12c rows from before the owner's ruling.
 
-<!-- dict:col:platform_debit_fees.stripe_invoice_item_id -->
-<!-- dict:col:platform_debit_fees.billed_at -->
-<!-- dict:col:platform_debit_fees.bill_error -->
-<!-- dict:col:platform_debit_fees.created_at -->
-**`stripe_invoice_item_id`** / **`billed_at`** (set together, `platform_debit_fees_billed_chk`) / **`bill_error`** (text ≤ 500 — e.g. a subscription billed in another currency, held for a person) / **`created_at`** — billed when, or why not yet. The unbilled, non-exempt rows have a partial index (the support console's follow-up).
+<!-- dict:col:platform_stripe_fees.stripe_invoice_item_id -->
+<!-- dict:col:platform_stripe_fees.billed_at -->
+<!-- dict:col:platform_stripe_fees.billed_on -->
+<!-- dict:col:platform_stripe_fees.fee_invoice_id -->
+<!-- dict:col:platform_stripe_fees.bill_error -->
+<!-- dict:col:platform_stripe_fees.bill_attempts -->
+<!-- dict:col:platform_stripe_fees.created_at -->
+**`stripe_invoice_item_id`** / **`billed_at`** (set together, `platform_stripe_fees_billed_chk`) / **`billed_on`** (text, CHECK `subscription` | `own_invoice`; set exactly when billed, `platform_stripe_fees_billed_on_chk`, NULL-safe) / **`fee_invoice_id`** (FK → `platform_fee_invoices.id` ON DELETE RESTRICT, partial index; required for `own_invoice`, forbidden for `subscription`; may be set before billing while the club's invoice is a draft) / **`bill_error`** (text ≤ 500, held for a person; shown and retried in platform admin) / **`bill_attempts`** (integer, default 0) / **`created_at`** — billed how and when, or why not yet. The unbilled, non-exempt rows have a partial index.
+
+## `online_payment_disputes`
+<!-- dict:table:online_payment_disputes -->
+
+**Purpose (migration 390, Stage 12d-1, 2026-10-27 — words CLUB_TIER_STAGE12D_COPY.md §1):** **one row per Stripe dispute on an online payment, an inquiry included, either rail** (a payment can be disputed twice; unique on `stripe_dispute_id`). Written ONLY by **`online_payment_dispute_apply`**, which the Connect webhook calls with Stripe's **current** dispute (re-read on every event), so replays and out-of-order events write the same row; a decided dispute is never reopened by a stale open read. In the same transaction, under the money writers' lock order (tournament → team, or season → registrations by id → payment → dispute): a **card** dispute **lost** books once through `online_payment_reverse` (the payment's lines out of the book beside the receipt, never deleting it; `lost_booked_at`, `taken_back`); **won after a loss** puts back exactly what the loss took, once, as a fresh receipt line in each flow's own writer (a team: a plain `Payment` by `online_card` with no `online_payment_id`; a child: `club_league_money('receive_decided')`, which refuses a child received meanwhile — handed back as `won_back.refused` for the "paid twice after all" item — and a team that paid again another way is flagged on the payment's `over_amount`). A bank debit's loss stays 12c's own path. Known, not built (/dba 2026-10-27, "extremely rare"): a loss after a win-after-loss, or a second dispute lost on a payment already reversed, books nothing more. RLS on, grants to `anon`/`authenticated` revoked: server-only.
+
+<!-- dict:col:online_payment_disputes.id -->
+<!-- dict:col:online_payment_disputes.org_id -->
+<!-- dict:col:online_payment_disputes.online_payment_id -->
+<!-- dict:col:online_payment_disputes.stripe_dispute_id -->
+**`id`** (uuid PK) / **`org_id`** (FK → `organizations.id` ON DELETE CASCADE, indexed) / **`online_payment_id`** (FK → `online_payments.id` ON DELETE CASCADE, indexed) / **`stripe_dispute_id`** (text, UNIQUE) — the club, the disputed payment, Stripe's dispute.
+
+<!-- dict:col:online_payment_disputes.status -->
+<!-- dict:col:online_payment_disputes.reason -->
+<!-- dict:col:online_payment_disputes.amount -->
+<!-- dict:col:online_payment_disputes.held -->
+<!-- dict:col:online_payment_disputes.due_by -->
+<!-- dict:col:online_payment_disputes.answered -->
+<!-- dict:col:online_payment_disputes.answered_at -->
+**`status`** (text, Stripe's enum: `warning_needs_response` | `warning_under_review` | `warning_closed` (an inquiry: the bank only asking, nothing taken) | `needs_response` | `under_review` | `won` | `lost` | `prevented`; partial index on the open ones) / **`reason`** (text ≤ 60, Stripe's raw reason; the screen maps it or prints nothing, never "fraud") / **`amount`** (numeric, `> 0`, the disputed amount) / **`held`** (numeric ≥ 0, what Stripe says it took from the club's balance net of what it reinstated) / **`due_by`** (timestamptz, Stripe's `evidence_details.due_by`) / **`answered`** + **`answered_at`** (evidence submitted, as Stripe reports it; `answered_at` set the first time).
+
+<!-- dict:col:online_payment_disputes.stripe_fee -->
+<!-- dict:col:online_payment_disputes.fee_paid_from -->
+<!-- dict:col:online_payment_disputes.livemode -->
+**`stripe_fee`** (numeric ≥ 0, Stripe's dispute fee as Stripe reported it) / **`fee_paid_from`** (text, CHECK `club` | `platform` — whose Stripe balance it came from; `club` means nothing is billed, `platform` means it is recovered through `platform_stripe_fees`) / **`livemode`** (must match the payment's; `online_payment_dispute_apply` refuses a mismatch).
+
+<!-- dict:col:online_payment_disputes.opened_at -->
+<!-- dict:col:online_payment_disputes.closed_at -->
+<!-- dict:col:online_payment_disputes.read_at -->
+<!-- dict:col:online_payment_disputes.lost_booked_at -->
+<!-- dict:col:online_payment_disputes.taken_back -->
+<!-- dict:col:online_payment_disputes.won_back_at -->
+<!-- dict:col:online_payment_disputes.won_back -->
+**`opened_at`** (Stripe's `created`) / **`closed_at`** (set when won, lost, an inquiry closed or prevented) / **`read_at`** (the last read applied) / **`lost_booked_at`** + **`taken_back`** (jsonb `{amount, children:[{registrationId, amount, entryId, description}]}` — what the loss took out of the book) / **`won_back_at`** + **`won_back`** (jsonb `{back:[…], refused:[…]}` — what a later win put back; only after a loss, `online_payment_disputes_won_back_chk`).
+
+<!-- dict:col:online_payment_disputes.opened_emailed_at -->
+<!-- dict:col:online_payment_disputes.reminder_emailed_at -->
+<!-- dict:col:online_payment_disputes.created_at -->
+<!-- dict:col:online_payment_disputes.updated_at -->
+**`opened_emailed_at`** / **`reminder_emailed_at`** (the two emails to the person who set up payouts — when it opens, and three days before it is due while unanswered — each once) / **`created_at`** / **`updated_at`**.
+
+## `platform_fee_invoices`
+<!-- dict:table:platform_fee_invoices -->
+
+**Purpose (migration 390, Stage 12d-1, 2026-10-27 — owner rulings 2026-10-27):** a club with no subscription invoice to ride on (comped, free, cancelled) is sent **ONE invoice a month** for its Stripe fees (`platform_stripe_fees` with `billed_on = 'own_invoice'`), on the 1st, **in our email** (Stripe's own invoice email off), paid on Stripe's hosted invoice page. Unpaid: shown in platform admin, **one** reminder email, nothing switches off. Unique per club, mode and month. RLS on, grants to `anon`/`authenticated` revoked: server-only.
+
+<!-- dict:col:platform_fee_invoices.id -->
+<!-- dict:col:platform_fee_invoices.org_id -->
+<!-- dict:col:platform_fee_invoices.livemode -->
+<!-- dict:col:platform_fee_invoices.period_start -->
+<!-- dict:col:platform_fee_invoices.stripe_customer_id -->
+**`id`** (uuid PK) / **`org_id`** (FK → `organizations.id` ON DELETE CASCADE) / **`livemode`** / **`period_start`** (date, the 1st of the month the fees belong to) / **`stripe_customer_id`** (the club's FieldLogicHQ billing customer; created if the club had none).
+
+<!-- dict:col:platform_fee_invoices.stripe_invoice_id -->
+<!-- dict:col:platform_fee_invoices.invoice_number -->
+<!-- dict:col:platform_fee_invoices.status -->
+<!-- dict:col:platform_fee_invoices.amount_due -->
+<!-- dict:col:platform_fee_invoices.hosted_invoice_url -->
+<!-- dict:col:platform_fee_invoices.due_at -->
+<!-- dict:col:platform_fee_invoices.finalized_at -->
+**`stripe_invoice_id`** (partial UNIQUE) / **`invoice_number`** / **`status`** (text, CHECK `draft` | `open` | `paid` | `void` | `uncollectible`; anything past draft names its Stripe invoice and `finalized_at`, `platform_fee_invoices_final_chk`; partial index on the open ones) / **`amount_due`** / **`hosted_invoice_url`** (Stripe's pay page, re-read before each email: it expires) / **`due_at`** / **`finalized_at`**.
+
+<!-- dict:col:platform_fee_invoices.emailed_at -->
+<!-- dict:col:platform_fee_invoices.reminded_at -->
+<!-- dict:col:platform_fee_invoices.paid_at -->
+<!-- dict:col:platform_fee_invoices.send_error -->
+<!-- dict:col:platform_fee_invoices.created_at -->
+<!-- dict:col:platform_fee_invoices.updated_at -->
+**`emailed_at`** / **`reminded_at`** (our two emails, each once) / **`paid_at`** (set exactly when `paid`, `platform_fee_invoices_paid_chk`; from Stripe's `invoice.paid`) / **`send_error`** (text ≤ 500) / **`created_at`** / **`updated_at`**.
 
 ## `tournament_team_entry_adjustments`
 <!-- dict:table:tournament_team_entry_adjustments -->
@@ -7555,7 +7629,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 **Gotchas (read first):**
 1. **`status`: `open` → `paid` → `refunded`, or `open` → `expired`.** `paid` means Stripe took the money — it does NOT mean the club's records were written; that is `landed_at`. The CHECK `online_payments_paid_chk` requires `paid_at`, `stripe_payment_intent_id` and `receipt_no` for `paid`/`refunded`.
-2. **`online_payment_land(...)` is the landing** (Stripe says paid → the tournament's own writer records it), security-definer, service-role only, idempotent (a landed payment answers `{already:true}`). It records the payment with NO method through `tournament_team_payment_record`, then stamps the team payment row `method = 'online_card'` and `online_payment_id`, and sets the posted ledger line's `payment_method = 'online_card'`. The day is the payment's day in Toronto, clamped to today and **moved to today when it sits inside a closed fiscal year** (`club_books_closed_through`, mig 318) — the real moment stays in `paid_at`; `paid_on` is the booked day. When `fee_payer = 'club'`, `fee_amount > 0` and the tournament's book is on, it also posts one "Payment processing" money-out line (`processing_cost_entry_id`).
+2. **`online_payment_land(...)` is the landing** (Stripe says paid → the tournament's own writer records it), security-definer, service-role only, idempotent (a landed payment answers `{already:true}`). It records the payment with NO method through `tournament_team_payment_record`, then stamps the team payment row `method = 'online_card'` and `online_payment_id`, and sets the posted ledger line's `payment_method = 'online_card'`. The day is the payment's day in Toronto, clamped to today and **moved to today when it sits inside a closed fiscal year** (`club_books_closed_through`, mig 318) — the real moment stays in `paid_at`; `paid_on` is the booked day. When `fee_payer = 'club'`, `fee_amount > 0` and the tournament's book is on, it also posts one "Payment processing" money-out line (`processing_cost_entry_id`). **Since migration 390** it measures what the team owed before this payment (the fee less what is paid net of part refunds, under the team's lock) and records anything past it on `over_amount` / `over_whole`: the payment still books in full (the book says what Stripe says), and the desk is told (words §2.2).
 3. **A landing that throws must not lose the fact that Stripe took the money.** The caller catches and calls `online_payment_land_failed(...)`, which keeps the payment `paid`, numbered, with `land_error` set (≤ 500 chars) and `landed_at` NULL; the app raises an `online_payment_not_recorded` Needs-attention row. Typical causes: the team was linked as "our team" after the page opened, the team was deleted, a closed year.
 4. **Lock order (mig 345's, extended) — tournament row (`club_tournament_fee_word`, only when the book is on) → team row → THIS row → the refund row → ledger lines.** Never lock an online payment before its team: landing and refund would take the two locks in opposite orders.
 5. **One open Checkout per team** (`online_payments_one_open_per_team`, partial unique on `team_id WHERE status IN ('open','clearing')` since mig 382 — a clearing bank debit holds the slot too, gotcha 15): the pay route asks Stripe for the page FIRST and records the row after (with its session id), so two presses can never leave two payable pages — the press that loses the insert expires its own session at once and hands back the winner's. A Stripe read that fails is never taken as a closed session (review 2026-10-25, H1).
@@ -7568,7 +7642,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 12. **House league (migration 374, Stage 12b): `flow = 'league_signup'`.** One payment per Checkout for ONE sign-up, covering one or more children — the children are rows of **`online_payment_items`**, each with its amount and its share of the fee (the base is their sum). The shape is a CHECK (`online_payments_flow_shape_chk`): a team payment never carries a season or `signup_key`; a league payment never a team or tournament, always a `signup_key`, and `scope = 'full'` (house league has no deposit: a payment covers what is owing). Opened by **`online_payment_league_open(...)`** (the payment and its items in one transaction; every child must be an accepted registration of the season owing at least its amount) once the Checkout Session exists, as 12a's route does. **One open Checkout per sign-up** (`online_payments_one_open_per_signup`, partial unique on `(season_id, signup_key) WHERE status='open' AND flow='league_signup'`).
 13. **`online_payment_league_land(...)` is the house-league landing** — security-definer, service-role only, idempotent (`{already:true}` before and after its locks). Lock order is the ending's (mig 369): the season (`FOR NO KEY UPDATE`) → the children's registrations (id order) → this row → its items. Each child's fee goes through **THE house-league writer `club_league_money('receive', amount, day, 'online_card')` with no actor** (`created_by` NULL = Stripe), and the item records the line (`online_payment_items.entry_id`). A child the writer refuses (`ended`, `already_received`, `over`, `not_accepted`, a deleted registration = `gone`) does NOT undo the others: the payment is still `paid` and `landed_at` is set, the item keeps the refusal in `land_error`, and the payment's `land_error` reads "Not recorded for n of m children" — the app raises one `online_payment_not_recorded` notice per child (metadata `onlinePaymentItemId`), settled when that child's share is refunded. A passing lock conflict re-raises so Stripe's redelivery retries the whole landing. The day rule is the tournament landing's (gotcha 2). A club-paid fee posts ONE "Payment processing" cost per payment through `online_payment_league_post_out` (see `accounting_entries` / `online_payment_items`). A landing that throws as a whole goes to `online_payment_land_failed` as in gotcha 3.
 14. **`partly_refunded`** (status, mig 374) is for 12b's partial refunds (L1) and, since mig 382, a team's part refunds (`online_payment_team_refund_book`). Readers that list paid payments must read `paid`, `partly_refunded` and `refunded`.
-15. **Bank debit (migration 382, Stage 12c, plan §0j/§0k): `rail = 'bank_debit'`.** A Canadian pre-authorized debit, chosen by the payer's button (each button opens its own Checkout, since the fee differs by rail; the team route inserts the rail, `online_payment_league_open` takes `p_rail`). Its life: `open` → **`clearing`** (`online_payment_clearing`, at `checkout.session.completed` with the session unpaid; sets `clearing_at` and `bank_last4`) → **`paid`** through the flow's own landing at `async_payment_succeeded` (receipt number given THEN; the row and line say `online_bank`) — or → **`returned`** (`online_payment_returned`, at `async_payment_failed`: nothing taken, NO book line, `returned_at`, `return_reason`). **A clearing debit is not received:** no `tournament_team_payments` row, no house-league line, no receipt number (`online_payments_state_chk`: clearing ⇒ bank rail, `clearing_at` set, not landed). **No second payment while one clears:** the per-team one-open index covers `open` AND `clearing`; per sign-up, `online_payment_league_open` refuses any child already in an open or clearing payment, and the sign-up index covers `open` only (**migration 386** narrowed it from mig 382's `open`+`clearing`, so a brother or sister NOT on a clearing debit can still pay, copy §2.2). **A returned debit never lands:** both landings answer `{already:true, returned:true}` and `online_payment_land_failed` skips it. Every step is a guarded transition, so replayed or out-of-order events change nothing: clearing only from `open`, returned only from `open`/`clearing` before landing; a "succeeded" that arrives before "completed" lands from `open` (the app records the clearing first so `bank_last4` is kept). **`reversed`** (and `reversed_at`, `stripe_dispute_id`) is a debit the bank reversed AFTER it cleared (a dispute, auto-lost): **`online_payment_reverse`** (migration 387, at `charge.dispute.created` on a bank-debit charge only — card disputes are 12d) writes it once — house league one `club_league_money('reverse')` line per landed child (an `expense`, `category 'registration_returned'`, outside Refunds), a tournament team's payment row `reversed` with a "Returned by the bank" line — and never deletes the receipt. **Since mig 388** each line is what is STILL received from that payment (a child's share less its booked refunds net of any fee given back; a team's row less its part refunds; a row refunded in full adds none), a second call with the same dispute answers `already`, and the trigger `online_payments_reversed_sticky` keeps `reversed` once set (a refund finishing later can't move it back). Each returned or reversed debit records Stripe's fee against the club (`platform_debit_fees`). A debit that ends while it clears carries its desk's answer in `online_payment_clear_decisions`.
+15. **Bank debit (migration 382, Stage 12c, plan §0j/§0k): `rail = 'bank_debit'`.** A Canadian pre-authorized debit, chosen by the payer's button (each button opens its own Checkout, since the fee differs by rail; the team route inserts the rail, `online_payment_league_open` takes `p_rail`). Its life: `open` → **`clearing`** (`online_payment_clearing`, at `checkout.session.completed` with the session unpaid; sets `clearing_at` and `bank_last4`) → **`paid`** through the flow's own landing at `async_payment_succeeded` (receipt number given THEN; the row and line say `online_bank`) — or → **`returned`** (`online_payment_returned`, at `async_payment_failed`: nothing taken, NO book line, `returned_at`, `return_reason`). **A clearing debit is not received:** no `tournament_team_payments` row, no house-league line, no receipt number (`online_payments_state_chk`: clearing ⇒ bank rail, `clearing_at` set, not landed). **No second payment while one clears:** the per-team one-open index covers `open` AND `clearing`; per sign-up, `online_payment_league_open` refuses any child already in an open or clearing payment, and the sign-up index covers `open` only (**migration 386** narrowed it from mig 382's `open`+`clearing`, so a brother or sister NOT on a clearing debit can still pay, copy §2.2). **A returned debit never lands:** both landings answer `{already:true, returned:true}` and `online_payment_land_failed` skips it. Every step is a guarded transition, so replayed or out-of-order events change nothing: clearing only from `open`, returned only from `open`/`clearing` before landing; a "succeeded" that arrives before "completed" lands from `open` (the app records the clearing first so `bank_last4` is kept). **`reversed`** (and `reversed_at`, `stripe_dispute_id`) is a debit the bank reversed AFTER it cleared (a dispute, auto-lost): **`online_payment_reverse`** (migration 387, at `charge.dispute.created` on a bank-debit charge only — card disputes are 12d) writes it once — house league one `club_league_money('reverse')` line per landed child (an `expense`, `category 'registration_returned'`, outside Refunds), a tournament team's payment row `reversed` with a "Returned by the bank" line — and never deletes the receipt. **Since mig 388** each line is what is STILL received from that payment (a child's share less its booked refunds net of any fee given back; a team's row less its part refunds; a row refunded in full adds none), a second call with the same dispute answers `already`, and the trigger `online_payments_reversed_sticky` keeps `reversed` once set (a refund finishing later can't move it back). Each returned or reversed debit records Stripe's fee against the club (`platform_stripe_fees`, renamed from `platform_debit_fees` by mig 390). A debit that ends while it clears carries its desk's answer in `online_payment_clear_decisions`.
 
 <!-- dict:col:online_payments.id -->
 **`id`** (uuid PK, default `gen_random_uuid()`) — also the `source_entity_id` of the "Payment processing" ledger line a club-pays payment posts (`accounting_entries.source_module = 'online_payment'`).
@@ -7635,7 +7709,17 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 
 <!-- dict:col:online_payments.reversed_at -->
 <!-- dict:col:online_payments.stripe_dispute_id -->
-**`reversed_at`** (timestamptz, nullable) / **`stripe_dispute_id`** (text, nullable, partial UNIQUE `online_payments_dispute_key`; migration 382) — a debit the bank reversed after it cleared (Stripe reports it as a dispute that cannot be contested). Its writer is a later 12c migration (Part 6).
+**`reversed_at`** (timestamptz, nullable) / **`stripe_dispute_id`** (text, nullable, partial UNIQUE `online_payments_dispute_key`; migration 382) — the dispute a payment was reversed on: a bank debit the bank reversed after it cleared (12c, `online_payment_reverse` at `charge.dispute.created`), or, **since migration 390**, a CARD payment whose dispute was lost (`online_payment_dispute_apply`; `online_payments_bank_chk` no longer keeps it bank-only). Every dispute, an inquiry included, is its own row in `online_payment_disputes`.
+
+<!-- dict:col:online_payments.card_country -->
+**`card_country`** (char(2), nullable, CHECK upper-case ISO; migration 390) — the card's issuing country from Stripe's charge, written by the server after the landing. A card from outside the club's connected account's country (`org_payment_accounts.country`, never a typed "CA") costs Stripe more, and that extra is billed to the club (`platform_stripe_fees.kind = 'foreign_card'`); the family pays the ordinary price.
+
+<!-- dict:col:online_payments.over_amount -->
+<!-- dict:col:online_payments.over_whole -->
+<!-- dict:col:online_payments.over_kept_reason -->
+<!-- dict:col:online_payments.over_kept_by -->
+<!-- dict:col:online_payments.over_kept_at -->
+**`over_amount`** (numeric, `> 0`, nullable) / **`over_whole`** (boolean, set with it, `online_payments_over_chk`) — **a tournament team's online payment that landed past what the team owed** (migration 390, words §2.2): `online_payment_land` books it in full and records the extra; `over_whole` when the team had already paid in full ("paid twice"), else "more than owed". Landing-only (`online_payments_guard`); also set by a win after a lost dispute when the team had paid again meanwhile. **The extra still standing is read live** by `online_payment_over_left(id)` (what is paid past the fee now, never above `over_amount`, 0 once kept), so a refund, a refund recorded another way or a raised entry clears it with nothing stamped; partial index on the unkept ones. **`over_kept_reason`** (text 1–500) / **`over_kept_by`** (FK → `auth.users` ON DELETE SET NULL, partial index) / **`over_kept_at`** — the club's "Keep it" note (owner 2026-10-27: a note, never a credit), all three set together (`online_payments_over_kept_chk`).
 
 <!-- dict:col:online_payments.livemode -->
 **`livemode`** (boolean, NOT NULL, default false) — whether the charge was live mode; a payment keeps its own value across account switches.

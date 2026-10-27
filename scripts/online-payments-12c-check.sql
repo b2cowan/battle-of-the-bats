@@ -421,9 +421,10 @@ BEGIN
   v_res := online_payment_reverse(v_lop, 'dp_c12_jack', 'insufficient_funds', NULL);
   IF NOT (v_res ->> 'already')::boolean THEN RAISE EXCEPTION 'FAIL T25: reversed twice'; END IF;
   v_err := NULL;
-  BEGIN PERFORM online_payment_reverse((SELECT id FROM online_payments WHERE org_id = v_org AND rail = 'card' AND landed_at IS NOT NULL LIMIT 1), 'dp_x', NULL, NULL);
+  BEGIN PERFORM online_payment_reverse((SELECT id FROM online_payments WHERE org_id = v_org AND rail = 'card' AND landed_at IS NOT NULL LIMIT 1), NULL, NULL, NULL);
   EXCEPTION WHEN others THEN v_err := SQLERRM; END;
-  IF v_err IS DISTINCT FROM 'Only a bank debit is reversed here.' THEN RAISE EXCEPTION 'FAIL T25: a card payment reversed (%)', v_err; END IF;
+  -- Mig 390: a card is reversed only by a lost dispute (12d-1's own check covers that path).
+  IF v_err IS DISTINCT FROM 'A card payment is reversed only by a lost dispute.' THEN RAISE EXCEPTION 'FAIL T25: a card payment reversed (%)', v_err; END IF;
 
   -- T26 · a team's cleared debit reversed: its row reads reversed and leaves the paid figure; a "Returned by the bank" line.
   SELECT id INTO v_op FROM online_payments WHERE team_id = v_bankteam AND rail = 'bank_debit' AND landed_at IS NOT NULL LIMIT 1;
@@ -441,13 +442,13 @@ BEGIN
     RAISE EXCEPTION 'FAIL T26: a team''s reversal (%)', v_res; END IF;
 
   -- T27 · one failure fee per debit and kind; a billed row carries its invoice item; an exempt one is never billed.
-  INSERT INTO platform_debit_fees(org_id, online_payment_id, kind, amount) VALUES (v_org, v_op, 'reversed', 5);
+  INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount) VALUES (v_org, v_op, 'reversed', 5);
   v_ok := false;
-  BEGIN INSERT INTO platform_debit_fees(org_id, online_payment_id, kind, amount) VALUES (v_org, v_op, 'reversed', 5);
+  BEGIN INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount) VALUES (v_org, v_op, 'reversed', 5);
   EXCEPTION WHEN unique_violation THEN v_ok := true; END;
   IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T27: a fee recorded twice'; END IF;
   v_ok := false;
-  BEGIN INSERT INTO platform_debit_fees(org_id, online_payment_id, kind, amount, exempt_reason, stripe_invoice_item_id, billed_at)
+  BEGIN INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount, exempt_reason, stripe_invoice_item_id, billed_at)
     VALUES (v_org, v_lop, 'reversed', 5, 'comped', 'ii_x', now());
   EXCEPTION WHEN check_violation THEN v_ok := true; END;
   IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T27: an exempt fee billed'; END IF;

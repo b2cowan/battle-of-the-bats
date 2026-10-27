@@ -3120,6 +3120,36 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "online_payment_disputes",
+    "constraint_name": "online_payment_disputes_online_payment_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_id",
+    "foreign_table": "online_payments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_disputes",
+    "constraint_name": "online_payment_disputes_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payment_disputes",
+    "constraint_name": "online_payment_disputes_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "online_payment_items",
     "constraint_name": "online_payment_items_entry_fk",
     "constraint_type": "FOREIGN KEY",
@@ -3277,6 +3307,16 @@
     "foreign_table": "organizations",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "online_payments",
+    "constraint_name": "online_payments_over_kept_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "over_kept_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {
@@ -4710,36 +4750,6 @@
     "update_rule": "NO ACTION"
   },
   {
-    "table_name": "platform_debit_fees",
-    "constraint_name": "platform_debit_fees_online_payment_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "online_payment_id",
-    "foreign_table": "online_payments",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "platform_debit_fees",
-    "constraint_name": "platform_debit_fees_org_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "org_id",
-    "foreign_table": "organizations",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "platform_debit_fees",
-    "constraint_name": "platform_debit_fees_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
     "table_name": "platform_email_templates",
     "constraint_name": "platform_email_templates_pkey",
     "constraint_type": "PRIMARY KEY",
@@ -4762,6 +4772,26 @@
   {
     "table_name": "platform_events",
     "constraint_name": "platform_events_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_fee_invoices",
+    "constraint_name": "platform_fee_invoices_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_fee_invoices",
+    "constraint_name": "platform_fee_invoices_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
@@ -4912,6 +4942,56 @@
   {
     "table_name": "platform_status_reading",
     "constraint_name": "platform_status_reading_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_stripe_fees",
+    "constraint_name": "platform_stripe_fees_dispute_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "dispute_id",
+    "foreign_table": "online_payment_disputes",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_stripe_fees",
+    "constraint_name": "platform_stripe_fees_invoice_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "fee_invoice_id",
+    "foreign_table": "platform_fee_invoices",
+    "foreign_column": "id",
+    "delete_rule": "RESTRICT",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_stripe_fees",
+    "constraint_name": "platform_stripe_fees_online_payment_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "online_payment_id",
+    "foreign_table": "online_payments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_stripe_fees",
+    "constraint_name": "platform_stripe_fees_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_stripe_fees",
+    "constraint_name": "platform_stripe_fees_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
