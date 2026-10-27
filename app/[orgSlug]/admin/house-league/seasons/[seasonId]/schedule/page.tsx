@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { AlertTriangle, Calendar, Clock, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
+import { AlertTriangle, Calendar, CalendarClock, Clock, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { ORG_TIME_ZONE, formatInOrgZone, orgWeekKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
@@ -24,7 +24,9 @@ import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachT
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import HouseLeagueTimeWindow from '@/components/admin/kit/club/league/time/HouseLeagueTimeWindow';
 import HouseLeagueTimeLine, { showTimeLine, useBuildsSchedules } from '@/components/admin/kit/club/league/time/HouseLeagueTimeLine';
-import { LEAGUE_TIME_WORDS, type LeagueTime } from '@/lib/league-time';
+import { LEAGUE_TIME_WORDS, type LeagueTime, type LeagueUse } from '@/lib/league-time';
+import PracticeTimeWindow from '@/components/admin/kit/club/league/time/PracticeTimeWindow';
+import { PRACTICE_TIME_WORDS } from '@/lib/league-practice-time';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { RecordDelete, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
 import { useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
@@ -903,6 +905,11 @@ export default function SchedulePage() {
   const [leagueTime, setLeagueTime] = useState<LeagueTime | null>(null);
   // The window mounts only once the season has loaded, so the server's render and the first client render agree.
   const [timeOpen, setTimeOpen] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('time') === '1');
+  // Practice time (Part 4, frame h1): Tools › Practice time. Its "+ Give U12 more time" opens House league's time on that
+  // piece (`timeOn`), and Practice time comes back when it closes (`backToPractice`).
+  const [practiceTimeOpen, setPracticeTimeOpen] = useState(false);
+  const [timeOn, setTimeOn] = useState<LeagueUse | null>(null);
+  const [backToPractice, setBackToPractice] = useState(false);
   const loadLeagueTime = useCallback(async () => {
     const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/time${orgQuery}`, { cache: 'no-store' }).catch(() => null);
     // A failed re-read keeps the last good line rather than hiding it (/review).
@@ -1317,11 +1324,35 @@ export default function SchedulePage() {
   // a window unmounted by that swap would stand and drop its Back step twice (/review 2026-10-27, ?time=1).
   const timeWindow = timeOpen && season ? (
     <HouseLeagueTimeWindow orgSlug={orgSlug} seasonId={seasonId} seasonName={season.name}
-      canDivide={canManage} schedulesHref={buildsSchedules ? `/${orgSlug}/admin/schedules` : null}
-      onClose={() => setTimeOpen(false)} onChanged={() => void loadLeagueTime()} />
+      canDivide={canManage} schedulesHref={buildsSchedules ? `/${orgSlug}/admin/schedules` : null} openOn={timeOn ?? undefined}
+      onClose={() => {
+        setTimeOpen(false);
+        setTimeOn(null);
+        if (backToPractice) { setBackToPractice(false); setPracticeTimeOpen(true); }
+      }}
+      onChanged={() => void loadLeagueTime()} />
+  ) : null;
+  // Practice time, mounted beside it for the same reason.
+  const practiceTimeWindow = practiceTimeOpen && season && selectedDiv ? (
+    <PracticeTimeWindow orgSlug={orgSlug} seasonId={seasonId} seasonName={season.name}
+      divisionId={selectedDiv.id} divisionName={selectedDiv.name}
+      onClose={() => setPracticeTimeOpen(false)}
+      onGiveMore={() => {
+        setPracticeTimeOpen(false);
+        setBackToPractice(true);
+        setTimeOn({ divisionId: selectedDiv.id, kind: 'practices' });
+        setTimeOpen(true);
+      }}
+      onHandedOut={() => {
+        setPracticeTimeOpen(false);
+        setViewMode('practices');
+        if (selectedTeamId) void loadPractices(selectedTeamId);
+        void loadHealth();
+        void loadLeagueTime();
+      }} />
   ) : null;
 
-  if (loading) return <><LoadingState label="Loading the schedule…" />{timeWindow}</>;
+  if (loading) return <><LoadingState label="Loading the schedule…" />{timeWindow}{practiceTimeWindow}</>;
 
   if (!hasAccess) {
     return (
@@ -1439,6 +1470,10 @@ export default function SchedulePage() {
           <CoachToolbarMenu label={LEAGUE_TIME_WORDS.tools} icon={<MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
             collapseOnPhone bareOnPhone drawerOnPhone drawerTitle={LEAGUE_TIME_WORDS.tools} triggerClassName={tb.tool}>
             <CoachToolbarMenuItem icon={<Clock size={15} aria-hidden />} label={LEAGUE_TIME_WORDS.title} onSelect={() => setTimeOpen(true)} />
+            {/* Practice time (Part 4): the league's runners on a live season, for the division picked. */}
+            {canManage && selectedDiv && (
+              <CoachToolbarMenuItem icon={<CalendarClock size={15} aria-hidden />} label={PRACTICE_TIME_WORDS.title} onSelect={() => setPracticeTimeOpen(true)} />
+            )}
             {viewMode !== 'practices' && <>
               <CoachToolbarMenuSeparator />
               <CoachToolbarMenuHeading>{LEAGUE_TIME_WORDS.exportHeading}</CoachToolbarMenuHeading>
@@ -1781,6 +1816,7 @@ export default function SchedulePage() {
     </div>
     {/* Second in both returns, so the loading swap keeps it mounted. */}
     {timeWindow}
+    {practiceTimeWindow}
     </>
   );
 }

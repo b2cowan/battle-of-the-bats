@@ -1,0 +1,24 @@
+/* Practice time (Club Tier Stage 11b Part 4, frame h1) — the window's own few pieces; rows and fields are the kit's. */
+.section { margin: 0 0 1.25rem; }
+.section:last-child { margin-bottom: 0; }
+.head {
+  margin: 0 0 0.5rem;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-primary);
+}
+.from { font-weight: 400; color: var(--text-tertiary); }
+.door { margin-top: 0.5rem; padding: 0; background: none; border: 0; cursor: pointer; text-align: left; }
+/* Each practice and Teams at once side by side, on a phone too (the drawn 390). */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem; }
+/* The result: its fact in bold, then the turns. */
+.result { flex-direction: column; gap: 0.2rem; margin-bottom: 0.5rem; }
+.result b { color: var(--text-primary); font-weight: 650; }
+/* The drawn short foot and result on a phone (frame h1, 390). */
+.phone { display: none; }
+@media (max-width: 640px) {
+  .desk { display: none; }
+  .phone { display: inline; }
+  .result .phone { display: block; }
+  .door { min-height: var(--tap-min, 44px); }
+}

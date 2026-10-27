@@ -45,10 +45,12 @@ type Level =
   | { kind: 'choose'; pick: string | null }
   | { kind: 'piece'; use: LeagueUse; stage: PieceStage };
 
-export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, canDivide, schedulesHref, onClose, onChanged }: {
+export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, canDivide, schedulesHref, openOn, onClose, onChanged }: {
   orgSlug: string;
   seasonId: string;
   seasonName: string;
+  /** Opens on this piece, House league's time behind it (Practice time's "+ Give U12 more time", Part 4). */
+  openOn?: LeagueUse;
   /** Runs this season (owner, admin, league admin on a live season): Give it to and the piece's ticks show. */
   canDivide: boolean;
   /** The club's Schedules, when this member builds them (an owner or an admin on a plan with the scheduler). */
@@ -60,7 +62,7 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
   const [time, setTime] = useState<LeagueTime | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [levels, setLevels] = useState<Level[]>([{ kind: 'top' }]);
+  const [levels, setLevels] = useState<Level[]>(() => (openOn ? [{ kind: 'top' }, { kind: 'piece', use: openOn, stage: {} }] : [{ kind: 'top' }]));
   /** The question on Save: the practices it would remove, and the changes waiting on the answer. */
   const [asking, setAsking] = useState<{ changes: LeagueTimeChange[]; teams: string[]; count: number; parts: number; all: boolean; minutes: number } | null>(null);
   const router = useRouter();
