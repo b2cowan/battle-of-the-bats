@@ -44,6 +44,8 @@ import ck from './ClubKit.module.css';
 import styles from './Billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import StripeFeesList from './StripeFeesList';
+import PaymentsEndingSection from './PaymentsEndingSection';
+import type { EndingSection } from '@/lib/online-payment-endings';
 
 const BANDS: OrgPlan[] = ['club', 'club_large'];
 
@@ -59,7 +61,11 @@ const CLUB_INCLUDES = [
 ];
 
 type MoveInfo = { live: boolean; scheduledMove: { toPlan: OrgPlan; effectiveAt: string | null } | null };
-type Preflight = { retentionDays: number; tournaments: unknown[]; cancelled: { at: string | null; keptUntil: string | null } | null };
+type Preflight = {
+  retentionDays: number; tournaments: unknown[]; cancelled: { at: string | null; keptUntil: string | null } | null;
+  /** 12d-2 (words §4.3): online payments stop now — what is owed, open and clearing; the Stripe account stays the club's. */
+  onlinePayments?: EndingSection | null;
+};
 type Gating = Partial<Record<OrgPlan, boolean>>;
 
 /** The chip's tone per billing status; its words are the product's one set (owner Q10). */
@@ -511,6 +517,7 @@ export default function BillingKit() {
               : ''}{' '}
             Reactivating brings it all back: the public site, every team’s coach portal and your tournaments.
           </p>
+          <PaymentsEndingSection section={preflight?.onlinePayments} ending={{ kind: 'cancel' }} />
           <div className={ck.field}>
             <label className={ck.label} htmlFor="kit-cancel-reason">Why are you cancelling?</label>
             <textarea id="kit-cancel-reason" className={ck.textarea} value={cancelReason} onChange={e => setCancelReason(e.target.value)} rows={3} />

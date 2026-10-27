@@ -22,6 +22,8 @@ import { stepOf } from '@/components/coaches/backStep';
 import KitDialog from './KitDialog';
 import BirthdayCutoffCard, { loadBirthdayCutoffs, type CardData } from './BirthdayCutoffCard';
 import PayoutsCard, { loadPayouts, type PayoutsView } from './PayoutsCard';
+import PaymentsEndingSection from './PaymentsEndingSection';
+import type { EndingSection } from '@/lib/online-payment-endings';
 import PageNotice, { useNotice } from './PageNotice';
 import ck from './ClubKit.module.css';
 import styles from './Settings.module.css';
@@ -52,6 +54,8 @@ export default function SettingsKit() {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useNotice();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  // 12d-2 (words §4.4): "Your online payments" in the deletion window, read when the window opens (owner only).
+  const [deletePayments, setDeletePayments] = useState<EndingSection | null>(null);
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteSending, setDeleteSending] = useState(false);
   const [deleteSent, setDeleteSent] = useState(false);
@@ -200,6 +204,12 @@ export default function SettingsKit() {
     if (settings) adopt(settings);
   }
 
+  async function loadDeletePayments() {
+    const res = await fetch(`/api/admin/org/request-deletion${orgQuery}`, { credentials: 'same-origin' }).catch(() => null);
+    const d = res?.ok ? await res.json().catch(() => null) : null;
+    setDeletePayments((d?.onlinePayments as EndingSection | null | undefined) ?? null);
+  }
+
   async function requestDeletion() {
     setDeleteSending(true);
     try {
@@ -302,7 +312,7 @@ export default function SettingsKit() {
               <p className={styles.sent}><CheckCircle2 size={14} aria-hidden /> Request sent — we’ll be in touch.</p>
             ) : (
               <div className={styles.imageActions}>
-                <button type="button" className={`btn btn-outline ${styles.dangerText}`} onClick={() => setDeleteOpen(true)}>Request account deletion…</button>
+                <button type="button" className={`btn btn-outline ${styles.dangerText}`} onClick={() => { setDeleteOpen(true); void loadDeletePayments(); }}>Request account deletion…</button>
               </div>
             )}
           </section>
@@ -325,6 +335,7 @@ export default function SettingsKit() {
           }
         >
           <p>We’ll contact you to confirm before anything is deleted. Deleting removes your organization and all its data for good.</p>
+          <PaymentsEndingSection section={deletePayments} ending={{ kind: 'delete' }} />
           <div className={ck.field}>
             <label className={ck.label} htmlFor="settings-delete-reason">Why are you leaving?</label>
             <textarea id="settings-delete-reason" className={ck.textarea} value={deleteReason} onChange={e => setDeleteReason(e.target.value)} rows={3} maxLength={1000} />

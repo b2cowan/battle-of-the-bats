@@ -71,6 +71,9 @@ export interface RegsRead {
   today: string;
   /** 12b: the club takes card payments, so owing rows can be emailed their pay link. */
   payLinks?: boolean;
+  /** 12d-2: the club's payouts are still connected (a clearing debit's answer works after a downgrade; the plan never
+   *  stops it). */
+  payoutsOn?: boolean;
   /** 12b: card payments that couldn't go on a registration, by registration (the refund door). */
   unrecordedCard?: Record<string, { itemId: string; amount: number }[]>;
   /** 12b: booked card refunds Stripe returned, by registration ("sent another way"). */

@@ -17,6 +17,7 @@ import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import type { OrgPlan } from '@/lib/types';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
+import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
 
 type ConfirmBody = {
   targetPlan?: unknown;
@@ -139,6 +140,8 @@ export const POST = withObservability(async (req: Request) => {
     })
     .eq('id', ctx.org.id);
   if (orgError) return captureAndJson(orgError, { error: orgError.message }, 500);
+  // 12d-2 (ask 11): this downgrade takes effect now, so a plan without online payments closes the open pay pages now.
+  await closePagesIfPaymentsEnded(ctx.org.id, 'owner downgrade');
 
   await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_downgrade_confirmed', {
     fromPlan: ownPlanOf(ctx.org),

@@ -347,6 +347,98 @@ export function payoutsWords(home: PayoutsHome): typeof PAYOUTS_WORDS_FAMILIES {
   return home === 'club' ? PAYOUTS_WORDS_FAMILIES : PAYOUTS_WORDS;
 }
 
+/** "23 families still owe a house-league fee, and 2 teams still owe a tournament fee" (words §4.1 `disconnect.owing`). */
+function oweClauses(families: number, teams: number): string {
+  const f = families === 1 ? '1 family still owes a house-league fee' : `${families} families still owe a house-league fee`;
+  const t = teams === 1 ? '1 team still owes a tournament fee' : `${teams} teams still owe a tournament fee`;
+  return [families ? f : null, teams ? t : null].filter(Boolean).join(', and ');
+}
+
+/** "23 families and 2 teams still owe today." (words §4.2 `{owe}`), or nothing. */
+function oweToday(families: number, teams: number): string {
+  const f = families === 1 ? '1 family' : `${families} families`;
+  const t = teams === 1 ? '1 team' : `${teams} teams`;
+  if (families && teams) return `${f} and ${t} still owe today.`;
+  if (families) return `${f} still ${families === 1 ? 'owes' : 'owe'} today.`;
+  if (teams) return `${t} still ${teams === 1 ? 'owes' : 'owe'} today.`;
+  return '';
+}
+
+/** LEAVING ONLINE PAYMENTS (12d-2 Part 3; words CLUB_TIER_STAGE12D_COPY.md §4). One rule (ask 4): no ending disconnects
+ *  the Stripe account; every ending closes open pay pages and counts them (ask 11). Marked "derived": no words-doc key,
+ *  owed to /marketing. */
+export const LEAVING_WORDS = {
+  oweToday,
+  disconnect: {
+    owing: (families: number, teams: number) => (families || teams ? `${oweClauses(families, teams)}. They can pay you another way.` : 'Nobody owes anything right now.'),
+    pages: (n: number) => (n === 1 ? '1 pay page is open right now. It closes when you disconnect.' : `${n} pay pages are open right now. They close when you disconnect.`),
+    disputes: (n: number, due: string | null) => (n === 1
+      ? `1 card dispute is open. Answer it in Stripe${due ? ` by ${due}` : ''}; Stripe holds its money until the bank decides.`
+      : `${n} card disputes are open. Answer them in Stripe by their due dates; Stripe holds their money until the banks decide.`),
+    past: 'Payments already made stay in your books. Refunds of them are made in Stripe, and your Stripe account stays yours.',
+  },
+  move: {
+    heading: (dateLong: string) => `Online payments stop on ${dateLong}`,
+    stops: (owe: string) => `Families and teams see your “How to pay” text instead of Pay now, and any pay pages still open then close.${owe ? ` ${owe}` : ''}`,
+    finish: 'Bank debits still clearing finish and reach you. Refunds and disputes of payments already made keep working here, as now.',
+    connected: 'Your payouts stay connected, so moving back up turns online payments on again.',
+  },
+  cancel: {
+    heading: 'Online payments stop now',
+    stops: (owe: string) => `Nobody can pay you online; pay pages still open close.${owe ? ` ${owe}` : ''}`,
+    pages: (n: number) => (n === 1 ? '1 pay page is open right now.' : `${n} pay pages are open right now.`),
+    clearing: (n: number) => (n === 1 ? '1 bank debit is still clearing. It finishes and reaches your bank.' : `${n} bank debits are still clearing. They finish and reach your bank.`),
+    stripe: (disputes: number) => (disputes
+      ? `Your Stripe account stays yours: money in it keeps paying out to your bank. Refunds and the ${disputes} open ${disputes === 1 ? 'dispute' : 'disputes'} are handled in Stripe while you’re suspended.`
+      : 'Your Stripe account stays yours: money in it keeps paying out to your bank. Refunds are handled in Stripe while you’re suspended.'),
+  },
+  delete: {
+    heading: 'Your online payments',
+    waiting: (disputes: number, clearing: number) => {
+      const d = disputes === 1 ? '1 card dispute is open' : `${disputes} card disputes are open`;
+      const c = clearing === 1 ? '1 bank debit is still clearing' : `${clearing} bank debits are still clearing`;
+      const parts = [disputes ? d : null, clearing ? c : null].filter(Boolean);
+      return parts.length ? `${parts.join(' and ')}. We wait for them before deleting.` : null;
+    },
+    owe: (owe: string) => (owe ? `${owe} Their pay pages close when we disconnect.` : null),
+    disconnect: 'We disconnect your payouts before deleting. Your Stripe account stays yours, with any money in it.',
+    export: 'Your payment records here are deleted with everything else. Export them first from Accounting.',
+  },
+  ending: {
+    title: (dateLong: string) => `Online payments stop on ${dateLong}`,
+    body: (endingSentence: string, owe: string) =>
+      `${endingSentence} Families and teams will see your “How to pay” text instead of Pay now.${owe ? ` ${owe}` : ''} Your payouts stay connected.`,
+    emailSubject: (clubName: string, dateLong: string) => `Online payments for ${clubName} stop on ${dateLong}`,
+    emailBody: (owe: string) =>
+      `From then, families and teams see your “How to pay” text instead of Pay now, and pay pages still open close.${owe ? ` ${owe}` : ''} Bank debits still clearing finish and reach you, and your Stripe account stays yours.`,
+    emailButton: 'Open billing',
+    // The comp's own sentence is the billing page's (words §4.2: reused, not reworded).
+    compSentence: (targetPlan: string, dateLong: string) => `Your organization moves to the free ${targetPlan} plan on ${dateLong}.`,
+    // Derived (owner 2026-10-27: a failed payment is warned the day it fails, with no date): owed to /marketing.
+    failedTitle: 'Online payments stop if the subscription payment doesn’t go through',
+    failedSentence: (clubName: string) => `${possessive(clubName)} subscription payment didn’t go through. If it still doesn’t, ${clubName} is suspended and online payments stop.`,
+    failedSubject: (clubName: string) => `Online payments for ${clubName} stop if the subscription payment doesn’t go through`,
+  },
+  // Derived (console words, owed to /marketing): what the operator's cancel or plan change stops, from the same count.
+  operator: (o: { familiesOwing: number; teamsOwing: number; openPages: number; debitsClearing: number; openDisputes: number }, when: 'now' | 'on the move') => {
+    const parts = [
+      oweToday(o.familiesOwing, o.teamsOwing).replace(/\.$/, ''),
+      o.openPages ? (o.openPages === 1 ? '1 pay page closes' : `${o.openPages} pay pages close`) : '',
+      o.debitsClearing ? (o.debitsClearing === 1 ? '1 bank debit is still clearing' : `${o.debitsClearing} bank debits are still clearing`) : '',
+      o.openDisputes ? (o.openDisputes === 1 ? '1 card dispute is open' : `${o.openDisputes} card disputes are open`) : '',
+    ].filter(Boolean);
+    const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0] ?? '';
+    return `Online payments stop ${when === 'now' ? 'now' : 'on the move'}${list ? `: ${list}` : ''}. The club’s Stripe account stays connected.`;
+  },
+  // Derived: the Payouts card after an ending while the account stays connected (the drawing's "wind-down card"; the
+  // words doc has none). Built from §4.2's own sentences.
+  windDown: {
+    pill: 'Online payments off',
+    title: 'Your plan doesn’t include online payments',
+    body: 'Families and teams see your “How to pay” text instead of Pay now. Refunds and disputes of payments already made keep working here, as now.',
+  },
+} as const;
+
 /** THE PAYOUTS LIST (12d-2 Part 2; words CLUB_TIER_STAGE12D_COPY.md §3). The line names live beside the mapping
  *  (`PAYOUT_LINE_WORDS`, lib/online-payouts-map.ts). Marked "derived": no words-doc key, owed to /marketing. */
 export const PAYOUTS_LIST_WORDS = {

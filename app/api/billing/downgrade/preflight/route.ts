@@ -7,6 +7,7 @@ import {
 } from '@/lib/billing-retention';
 import { withObservability } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
+import { endingSection } from '@/lib/online-payment-endings';
 
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org the caller is viewing (multi-org owners), NOT their home org — fail closed.
@@ -28,5 +29,6 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const preflight = await buildDowngradePreflight(ctx.org, targetPlan);
-  return Response.json(preflight);
+  // 12d-2 (words §4.2): a move to a plan without online payments says what stops and what is still owed today.
+  return Response.json({ ...preflight, onlinePayments: await endingSection(ctx.org.id, { targetPlan }) });
 }, { route: '/api/billing/downgrade/preflight' });

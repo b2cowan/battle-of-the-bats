@@ -16,7 +16,9 @@ export const DISPUTE_STATUSES = [
 ] as const;
 export type DisputeStatus = typeof DISPUTE_STATUSES[number];
 
-const OPEN = new Set<string>(['warning_needs_response', 'warning_under_review', 'needs_response', 'under_review']);
+/** The open statuses (mig 390's partial index `online_payment_disputes_open_idx` holds the same four). */
+export const OPEN_DISPUTE_STATUSES = ['warning_needs_response', 'warning_under_review', 'needs_response', 'under_review'] as const;
+const OPEN = new Set<string>(OPEN_DISPUTE_STATUSES);
 
 export const isDisputeOpen = (status: string): boolean => OPEN.has(status);
 export const isInquiry = (status: string): boolean => status.startsWith('warning_');

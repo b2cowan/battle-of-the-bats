@@ -36,6 +36,7 @@ import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
 import { withObservability } from '@/lib/observability';
 import { isTheRecordsSubscription, recordFollowsSubscription, subscriptionIsPaying } from '@/lib/stripe-billing-state';
+import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -730,6 +731,8 @@ export const POST = withObservability(async (req: Request) => {
               billing_suspension_reason: 'Stripe subscription deleted',
             })
             .eq('stripe_customer_id', customerId);
+          // 12d-2 (ask 11): a suspension the owner didn't choose stops online payments now — open pay pages close.
+          await closePagesIfPaymentsEnded(org.id, 'stripe suspension', { ended: true });
 
           await writePlatformEvent({
             eventType: 'subscription_canceled',

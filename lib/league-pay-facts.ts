@@ -309,6 +309,15 @@ export async function clubTakesCards(org: Pick<Organization, 'id' | 'planId'>): 
   return takesPayments(factsFromRow(data as PayoutsAccountRow | null));
 }
 
+/** The club's payouts are still connected (12d-2, ask 4): what comes AFTER the money — a clearing debit's answer at the
+ *  end of a registration, sending it back when it clears — keeps working on a plan without online payments. Only the
+ *  launch switch and a Disconnect stop it; never the plan. */
+export async function clubPayoutsConnected(orgId: string): Promise<boolean> {
+  if (!onlinePaymentsOn()) return false;
+  const { data } = await supabaseAdmin.from('org_payment_accounts').select('disconnected_at').eq('org_id', orgId).maybeSingle();
+  return !!data && !data.disconnected_at;
+}
+
 /** Why the family cannot pay online right now, in words (copy §11): the pay route's JSON and the page say the same. */
 export function leagueRefusalMessage(f: Pick<LeaguePayFacts, 'refusal' | 'children' | 'org'>, contactEmail: string | null): string | null {
   const first = f.children[0];
@@ -407,7 +416,7 @@ export async function loadLeaguePayFacts(registrationId: string): Promise<League
 
   const ended = (s: string) => s === 'declined' || s === 'withdrawn';
   let refusal: LeaguePayRefusal = null;
-  if (!onlinePaymentsOn() || !hasPlanFeature(org.planId, 'online_payments')) refusal = 'switch_off';
+  if (!onlinePaymentsOn()) refusal = 'switch_off';
   else if (!takesPayments(account)) refusal = 'not_taking_payments';
   else if (unrecorded) refusal = 'unrecorded_payment';
   else if (owingCents <= 0) {
@@ -417,6 +426,9 @@ export async function loadLeaguePayFacts(registrationId: string): Promise<League
     else if (children.some(c => c.receivedCents > 0)) refusal = 'already_paid';
     else refusal = 'nothing_owed';
   }
+  // 12d-2 (ask 4): a plan without online payments stops Pay now and nothing else — checked LAST, so a wound-down club's
+  // family still sees a debit clearing and a fee already paid; one still owing sees the club's “How to pay” text.
+  if (refusal === null && !hasPlanFeature(org.planId, 'online_payments')) refusal = 'switch_off';
 
   return {
     org, season, anchorId: anchor.id, signupKey: anchor.signup_ref ?? anchor.id, guardianEmail: anchor.guardian_email,

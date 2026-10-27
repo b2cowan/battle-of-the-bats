@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, scopeGuard, unauthorized, forbidden, requireTournamentInOrg } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { hasPlanFeature } from '@/lib/plan-features';
 import { onlinePaymentsOn, ONLINE_PAYMENTS_OFF_ERROR } from '@/lib/online-payments-switch';
 import { canRefundOnline } from '@/lib/online-payment-access';
 import { DisputeOpenError, keepOverpayment, recordRefundAnotherWay, refundOnlinePayment, refundTeamPart, resolveLeagueRefundAnotherWay, settleDecisionAfterSave } from '@/lib/online-payment-landing';
@@ -37,7 +36,10 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
-  if (!onlinePaymentsOn() || !hasPlanFeature(ctx.org.planId, 'online_payments')) return json({ error: ONLINE_PAYMENTS_OFF_ERROR }, 404);
+  // 12d-2 (ask 4): refunds, a clearing debit's answer and keeping an extra are after the money, so they keep working on a
+  // plan without online payments; only the launch switch stops them. Email the pay link refuses by the plan in its own
+  // facts (the refusal checked last).
+  if (!onlinePaymentsOn()) return json({ error: ONLINE_PAYMENTS_OFF_ERROR }, 404);
   if (!canRefundOnline({ role: ctx.role, capabilities: ctx.capabilities }, ctx.org)) return forbidden();
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;

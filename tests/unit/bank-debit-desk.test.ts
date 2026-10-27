@@ -118,7 +118,8 @@ describe('ending while it clears (words §3.3)', () => {
   it('the route stores the answer before the ending, and refuses a send-back without the fee right or payouts', () => {
     const route = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
     assert.match(route, /if \(!clearAsk\) return NextResponse\.json\(\{ error: END_WORDS\.clear\.footChoose/);
-    assert.match(route, /clearAsk\.choice === 'send_back'\) \{\s*if \(!canMarkLeagueFeePaid\(ctx!\)\) return forbidden\(\);\s*if \(!\(await clubTakesCards/);
+    assert.match(route, /clearAsk\.choice === 'send_back'\) \{\s*if \(!canMarkLeagueFeePaid\(ctx!\)\) return forbidden\(\);\s*if \(!\(await clubPayoutsConnected/);
+    // 12d-2 (ask 4): the answer is after the money — it reads the connection, never the plan.
     // Stored BEFORE the ending (review of the whole): a debit landing in between finds it, a failed save tells the desk,
     // and a refused ending takes the answer back — the family is never emailed an answer that isn't stored.
     assert.ok(route.indexOf("from('online_payment_clear_decisions').insert") < route.indexOf('const ended = await endLeagueRegistration'));
@@ -180,7 +181,9 @@ describe('payouts: both rates, and Disconnect counts what is clearing (words §3
     const route = readCode('app/api/admin/payouts/route.ts');
     assert.match(route, /bankRateLabel: bank \? onlineFeeRateLabel\('bankDebit'\) : null/);
     assert.match(route, /onlineFee\(16_500, facts\?\.feePayer \?\? 'family', 'bankDebit'\)/);
-    assert.match(route, /debitsClearing: isOwner && facts && !facts\.disconnectedAt \? await debitsClearing/);
+    // 12d-2: the Disconnect window's counts come from the one count every ending reads.
+    assert.match(route, /const out = isOwner && facts && !facts\.disconnectedAt \? await readOutstanding\(ctx\.org\.id\)/);
+    assert.match(route, /debitsClearing: out\?\.debitsClearing \?\? null,/);
     assert.match(readCode('components/admin/kit/club/PayoutsCard.tsx'), /\{clearing > 0 && <p>\{W\.disconnect\.clearing\(clearing\)\}<\/p>\}/);
   });
 });

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { hasPlanFeature } from '@/lib/plan-features';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 import { canConnectPayouts } from '@/lib/online-payment-access';
 import { onboardingLink } from '@/lib/stripe-connect';
@@ -22,7 +21,9 @@ export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole({ orgSlug: orgSlug ?? undefined, requireOrgSlug: true });
   if (!ctx) return NextResponse.redirect(new URL(`/auth/login?next=${encodeURIComponent(url.pathname + url.search)}`, url.origin));
   const home = new URL(payoutsHref(ctx.org), url.origin);
-  if (!onlinePaymentsOn() || !hasPlanFeature(ctx.org.planId, 'online_payments') || !canConnectPayouts({ role: ctx.role })) {
+  // 12d-2 (ask 4): not plan-gated — an account still connected after a downgrade can still finish what Stripe asks for
+  // (the needs-attention fix-up returns here). It only re-reads an account that exists and isn't disconnected (below).
+  if (!onlinePaymentsOn() || !canConnectPayouts({ role: ctx.role })) {
     return NextResponse.redirect(home);
   }
   const { data: row } = await supabaseAdmin.from('org_payment_accounts').select('stripe_account_id, disconnected_at').eq('org_id', ctx.org.id).maybeSingle();

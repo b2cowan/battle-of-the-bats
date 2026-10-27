@@ -80,7 +80,10 @@ async function raiseOnce(p: {
   if (!p.userIds.length) return;
   await notify({
     orgId: p.org.id, userIds: p.userIds, eventType: p.eventType, title: p.title, body: p.body, link: p.link,
-    metadata: { ...p.extra, [p.subjectKey]: p.subjectId }, requiredFeature: 'online_payments',
+    // ⚠ No plan guard (12d-2, ask 4): a club wound down by a downgrade keeps its account connected, and its debits,
+    // refunds and disputes still finish — their items must keep arriving. Only events on the club's own account raise
+    // these, so a club that never connected never gets one.
+    metadata: { ...p.extra, [p.subjectKey]: p.subjectId },
   });
 }
 

@@ -11,7 +11,7 @@ import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { readRegistrationDisputes } from '@/lib/online-dispute-read';
 import { loadSeasonMoneyLines } from '@/lib/league-money-read';
-import { clubTakesCards, loadCardRefunds, loadRegistrationDebits, loadUnassignedRefunds, returnedCardRefunds, unrecordedCardShares } from '@/lib/league-pay-facts';
+import { clubPayoutsConnected, clubTakesCards, loadCardRefunds, loadRegistrationDebits, loadUnassignedRefunds, returnedCardRefunds, unrecordedCardShares } from '@/lib/league-pay-facts';
 
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
@@ -44,7 +44,7 @@ export const GET = withObservability(async (req: Request,
   // The money on every row (Club Tier 9b-2): each registration's book lines and its price history, read one way — the
   // screen turns them into the Fee cell through lib/league-money.ts. Readers of the season read the fee as before.
   // Read beside the season check; nothing is returned until it passes.
-  const [season, { data, error }, lines, changes, payLinks] = await Promise.all([
+  const [season, { data, error }, lines, changes, payLinks, payoutsOn] = await Promise.all([
     getLeagueSeasonById(seasonId, ctx!.org.id),
     q,
     loadSeasonMoneyLines(ctx!.org.id, seasonId),
@@ -53,6 +53,9 @@ export const GET = withObservability(async (req: Request,
       .eq('org_id', ctx!.org.id).eq('season_id', seasonId).order('changed_at', { ascending: true }),
     // 12b: the club takes card payments, so an owing row offers "Email the pay link".
     clubTakesCards(ctx!.org),
+    // 12d-2 (ask 4): a clearing debit's answer at the end of a registration is after the money — it keeps working after a
+    // downgrade, so it reads the connection, not the plan.
+    clubPayoutsConnected(ctx!.org.id),
   ]);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -82,7 +85,7 @@ export const GET = withObservability(async (req: Request,
     refundEntryId: (c.refund_entry_id as string | null) ?? null,
   }));
 
-  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday(), payLinks, unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits, disputes });
+  return NextResponse.json({ registrations, money, priceChanges, today: tournamentToday(), payLinks, payoutsOn, unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits, disputes });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations' });
 
 

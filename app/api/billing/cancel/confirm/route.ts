@@ -17,6 +17,7 @@ import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from '@/lib/coa
 import type { OrgPlan } from '@/lib/types';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
+import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
 
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org the caller is acting on (multi-org owners), NOT their home org — fail closed
@@ -301,6 +302,8 @@ export const POST = withObservability(async (req: Request) => {
     })
     .eq('id', ctx.org.id);
   if (orgError) return captureAndJson(orgError, { error: orgError.message }, 500);
+  // 12d-2 (ask 11): a cancel stops online payments now — the open pay pages close (the account stays connected, ask 4).
+  await closePagesIfPaymentsEnded(ctx.org.id, 'owner cancel', { ended: true });
 
   await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_cancellation_confirmed', {
     fromPlan: ownPlanOf(ctx.org),

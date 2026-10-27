@@ -15,6 +15,8 @@ import { PAYMENTS_TERMS_VERSION } from '@/lib/online-payment-words';
 import { effectiveOrgFactsForId } from '@/lib/entitlement-grants';
 import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { endingNotice, readOutstanding, upcomingEnding } from '@/lib/online-payment-endings';
+import { closeClubPayPages } from '@/lib/online-pay-pages';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,15 +29,23 @@ export const dynamic = 'force-dynamic';
 
 const refused = () => NextResponse.json({ error: ONLINE_PAYMENTS_OFF_ERROR }, { status: 404 });
 
-type PayoutsContext = { ctx: NonNullable<Awaited<ReturnType<typeof getAuthContextWithRole>>>; isOwner: boolean };
+type PayoutsContext = { ctx: NonNullable<Awaited<ReturnType<typeof getAuthContextWithRole>>>; isOwner: boolean; planOffers: boolean };
 
 async function context(orgSlug: string | null): Promise<PayoutsContext | Response> {
   const ctx = await getAuthContextWithRole({ orgSlug: orgSlug ?? undefined, requireOrgSlug: true });
   if (!ctx) return unauthorized();
-  if (!onlinePaymentsOn() || !hasPlanFeature(ctx.org.planId, 'online_payments')) return refused();
+  if (!onlinePaymentsOn()) return refused();
+  // 12d-2 (ask 4): a plan without online payments still has its account connected — the card stays as the wind-down card
+  // (Open Stripe, Disconnect, the record, the payouts list); only setting up (connect) needs the plan. A club that never
+  // connected on such a plan has no card at all.
+  const planOffers = hasPlanFeature(ctx.org.planId, 'online_payments');
+  if (!planOffers) {
+    const { data } = await supabaseAdmin.from('org_payment_accounts').select('org_id').eq('org_id', ctx.org.id).maybeSingle();
+    if (!data) return refused();
+  }
   const member = { role: ctx.role, capabilities: ctx.capabilities };
   if (!canSeePayouts(member, ctx.org)) return forbidden();
-  return { ctx, isOwner: canConnectPayouts(member) };
+  return { ctx, isOwner: canConnectPayouts(member), planOffers };
 }
 
 async function readAccount(orgId: string): Promise<PayoutsAccountRow & {
@@ -47,22 +57,6 @@ async function readAccount(orgId: string): Promise<PayoutsAccountRow & {
     .eq('org_id', orgId)
     .maybeSingle();
   return data as never;
-}
-
-/** 12c Part 6 (words §3.8): the club's bank debits still clearing — they finish after a Disconnect, and the window says so. */
-async function debitsClearing(orgId: string): Promise<number> {
-  const { count } = await supabaseAdmin.from('online_payments').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('status', 'clearing');
-  return count ?? 0;
-}
-
-/** Teams that still owe on an event that isn't over — the disconnect window's count. */
-async function teamsStillOwing(orgId: string): Promise<number> {
-  const { data: ts } = await supabaseAdmin.from('tournaments').select('id').eq('org_id', orgId).in('status', ['draft', 'active']);
-  const ids = (ts ?? []).map(t => t.id as string);
-  if (!ids.length) return 0;
-  const { count } = await supabaseAdmin.from('teams').select('id', { count: 'exact', head: true })
-    .in('tournament_id', ids).eq('status', 'accepted').neq('payment_status', 'paid');
-  return count ?? 0;
 }
 
 async function audit(orgId: string, actorId: string, action: string, payload: Record<string, unknown>) {
@@ -87,6 +81,9 @@ export const GET = withObservability(async (req: Request) => {
   // on an account that takes it; an account that doesn't prints today's card-only line.
   const bank = !facts || takesBankDebit(facts);
   const bankExample = onlineFee(16_500, facts?.feePayer ?? 'family', 'bankDebit');
+  // 12d-2 (words §4.1, ask 11): the Disconnect window's counts — the owner's, while connected. One read for every ending.
+  // A failed count leaves the window's counts out rather than failing the card (the window never says "nobody owes" then).
+  const out = isOwner && facts && !facts.disconnectedAt ? await readOutstanding(ctx.org.id).catch(() => null) : null;
   return NextResponse.json({
     state: payoutsState(facts),
     isOwner,
@@ -103,14 +100,24 @@ export const GET = withObservability(async (req: Request) => {
     connectedAt: row?.connected_at ?? null,
     disconnectedAt: row?.disconnected_at ?? null,
     disconnectedBy: row?.disconnected_at ? await nameOf(row.disconnected_by) : null,
-    teamsStillOwing: isOwner && facts && !facts.disconnectedAt ? await teamsStillOwing(ctx.org.id) : null,
-    debitsClearing: isOwner && facts && !facts.disconnectedAt ? await debitsClearing(ctx.org.id) : null,
+    teamsStillOwing: out?.teamsOwing ?? null,
+    debitsClearing: out?.debitsClearing ?? null,
+    familiesOwing: out?.familiesOwing ?? null,
+    openPages: out?.openPages ?? null,
+    openDisputes: out?.openDisputes ?? null,
+    firstDisputeDue: out?.firstDisputeDue ?? null,
     // 12d-1 Part 4 (words §3.4): a club that pays nothing for its plan reads "Your plan doesn't change" beside the
     // other-fees line, so a Stripe fee is never read as its comp being withdrawn. An extra read: a failure omits it.
     planFree: await planIsFree(ctx.org.id),
     // 12d-2 (words §3.3, ask 5): a club without Accounting reads its payouts on the owner's card instead of a tab.
     hasAccounting: hasModuleEntitlement(ctx.org, 'module_accounting'),
     everConnected: !!row,
+    // 12d-2: the plan no longer offers online payments while the account stays connected — the wind-down card.
+    windDown: !c.planOffers,
+    // 12d-2 (words §4.2): an ending the owner didn't choose is told on the card (the item and email are the daily job's).
+    ending: isOwner && facts && !facts.disconnectedAt && c.planOffers
+      ? await upcomingEnding(ctx.org.id).then(e => (e ? endingNotice(e, ctx.org.name, out) : null)).catch(() => null)
+      : null,
   });
 }, { route: '/api/admin/payouts' });
 
@@ -159,6 +166,8 @@ export const POST = withObservability(async (req: Request) => {
 
   switch (body.action) {
     case 'connect': {
+      // Setting up (or up again) is a NEW payment door: the plan must offer online payments (12d-2, ask 4).
+      if (!c.planOffers) return refused();
       // "Before you set up payouts": the who-pays choice and the terms, recorded before Stripe (owner 2026-10-24).
       if (body.agreeToTerms !== true) return NextResponse.json({ error: 'Agree to the payments terms first.' }, { status: 400 });
       const feePayer: OnlineFeePayer = ONLINE_FEE_PAYERS.includes(body.feePayer) ? body.feePayer : 'family';
@@ -204,7 +213,9 @@ export const POST = withObservability(async (req: Request) => {
       if (!row || row.disconnected_at) return NextResponse.json({ ok: true });
       // A1: stops new payments. Past payments stay in the books; their refunds are made in Stripe.
       await supabaseAdmin.from('org_payment_accounts').update({ disconnected_at: now, disconnected_by: ctx.user.id, updated_at: now }).eq('org_id', ctx.org.id);
-      await audit(ctx.org.id, ctx.user.id, 'payouts_disconnected', { stripeAccountId: row.stripe_account_id });
+      // 12d-2 (ask 11): every ending closes the club's open pay pages. A debit already submitted is no open page.
+      const pagesClosed = await closeClubPayPages(ctx.org.id, 'disconnect');
+      await audit(ctx.org.id, ctx.user.id, 'payouts_disconnected', { stripeAccountId: row.stripe_account_id, pagesClosed });
       return NextResponse.json({ ok: true });
     }
     default:

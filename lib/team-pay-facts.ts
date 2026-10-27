@@ -100,7 +100,7 @@ export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | n
   } : null;
 
   let refusal: TeamPayFacts['refusal'] = null;
-  if (!onlinePaymentsOn() || !hasPlanFeature(org.planId, 'online_payments')) refusal = 'switch_off';
+  if (!onlinePaymentsOn()) refusal = 'switch_off';
   else if (!takesPayments(account)) refusal = 'not_taking_payments';
   else if (!tournamentTracksPayments(t.settings)) refusal = 'not_tracked';
   else if (team.status !== 'accepted') refusal = 'not_accepted';
@@ -109,6 +109,9 @@ export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | n
   else if (debit?.state === 'clearing') refusal = 'clearing';
   else if (await isOurTournamentTeam(org.id, teamId)) refusal = 'our_team';
   else if (!options) refusal = 'nothing_owed';
+  // 12d-2 (ask 4): a plan without online payments stops Pay now and nothing else. Checked LAST, so a club wound down by
+  // a downgrade still shows its clearing debit, its receipts and the desk's refunds; only a new payment is refused.
+  if (refusal === null && !hasPlanFeature(org.planId, 'online_payments')) refusal = 'switch_off';
 
   return {
     teamId,

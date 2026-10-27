@@ -19,6 +19,7 @@ import { TEAM_RECORD_WORDS } from '@/lib/registration-words';
 import { closeTeamPayPages, openTeamPayPages } from '@/lib/online-pay-pages';
 import { readDisputes } from '@/lib/online-dispute-read';
 import type { DisputeRecord } from '@/lib/online-payment-dispute';
+import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 
 /**
  * A TEAM'S PAYMENTS — the Teams record's Payment section (mig 345; TEAM_PAYMENTS_LIST_PLAN.md).
@@ -115,7 +116,8 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
   const online = {
     payLink: facts?.refusal === null && canRefundOnline(member, g.ctx.org),
     payLinkSentAt: (team?.pay_link_sent_at as string | null) ?? null,
-    refunds: facts?.refusal !== 'switch_off' && !!facts?.account && !facts.account.disconnectedAt && canRefundOnline(member, g.ctx.org),
+    // 12d-2 (ask 4): refunds keep working after a downgrade — the launch switch alone stops them, never the plan.
+    refunds: onlinePaymentsOn() && !!facts?.account && !facts.account.disconnectedAt && canRefundOnline(member, g.ctx.org),
   };
   // 12c Part 6 (words §3.7): the team's bank debit — clearing, returned, or reversed — and, for one ended while it clears,
   // what happens when it clears.

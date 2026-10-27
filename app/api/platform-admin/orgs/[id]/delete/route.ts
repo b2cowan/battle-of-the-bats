@@ -9,6 +9,8 @@ import type { OrgPlan } from '@/lib/types';
 import { withObservability, captureError } from '@/lib/observability';
 import { stopClubDomain } from '@/lib/club-domain-service';
 import { clubDomainDeps } from '@/lib/club-domain-deps';
+import { inFlightRefusal, moneyInFlight, readOutstanding } from '@/lib/online-payment-endings';
+import { closeClubPayPages } from '@/lib/online-pay-pages';
 
 type OrgRow = {
   id: string;
@@ -60,6 +62,9 @@ export const GET = withObservability(async (_req: NextRequest,
 
   const hasActiveSubscription =
     !!org.stripe_subscription_id && org.subscription_status !== 'canceled';
+  // 12d-2 (owner ruling 2): the window names the money in flight before Delete is pressed, as the refusal will.
+  const outstanding = await readOutstanding(id).catch(() => null);
+  const inFlight = outstanding ? moneyInFlight(outstanding) : [];
 
   return NextResponse.json({
     orgName: org.name,
@@ -73,6 +78,7 @@ export const GET = withObservability(async (_req: NextRequest,
     tournamentCount: tournamentCount.count ?? 0,
     coachesLinkCount: coachesLinkCount.count ?? 0,
     retentionRecordCount: retentionCount.count ?? 0,
+    paymentsInFlight: !outstanding ? 'Couldn’t read this club’s online payments. Try again.' : inFlight.length ? inFlightRefusal(inFlight) : null,
   });
 }, { route: '/api/platform-admin/orgs/[id]/delete' });
 
@@ -126,6 +132,21 @@ export const DELETE = withObservability(async (req: NextRequest,
       { status: 400 }
     );
   }
+
+  // 12d-2 (owner ruling 2, 2026-10-27): money in flight waits — an open card dispute, a bank debit clearing, a Stripe fee
+  // not billed or whose billing failed, the club's own Stripe-fee invoice unpaid. A count that can't be read refuses too:
+  // the money record of a club that still owes must never vanish silently.
+  const outstanding = await readOutstanding(id).catch(() => null);
+  if (!outstanding) {
+    return NextResponse.json({ error: 'Couldn’t read this club’s online payments. Try again.' }, { status: 503 });
+  }
+  const inFlight = moneyInFlight(outstanding);
+  if (inFlight.length) {
+    return NextResponse.json({ error: inFlightRefusal(inFlight), inFlight }, { status: 409 });
+  }
+  // We disconnect before deleting (words §4.4): the club's open pay pages close first, so no family pays a club that is
+  // gone. The Stripe account itself stays the club's, with any money in it (ask 4).
+  if (outstanding.connected) await closeClubPayPages(id, 'operator delete');
 
   // Notify the org owner before deletion so they get one last email while the
   // org data (and owner lookup) still exists.

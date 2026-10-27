@@ -5,6 +5,16 @@ import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
+import { endingSection } from '@/lib/online-payment-endings';
+
+/** 12d-2 (words §4.4): the deletion window's "Your online payments" section — the owner's, from the one count. */
+export const GET = withObservability(async (req: Request) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
+  if (!ctx) return unauthorized();
+  if (ctx.role !== 'owner') return forbidden();
+  return NextResponse.json({ onlinePayments: await endingSection(ctx.org.id, { includeDisconnected: true }) });
+}, { route: '/api/admin/org/request-deletion' });
 
 export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;

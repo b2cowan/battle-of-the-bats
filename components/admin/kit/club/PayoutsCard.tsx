@@ -14,7 +14,7 @@
 import { useCallback, useState } from 'react';
 import { Check, Pencil, Unplug } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
-import { TERMS_PLACEHOLDER, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
+import { LEAVING_WORDS, TERMS_PLACEHOLDER, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
 import type { PayoutsState } from '@/lib/online-payment-account';
 import type { OnlineFeePayer } from '@/lib/online-payment-fee';
 import KitDialog from './KitDialog';
@@ -44,6 +44,12 @@ export type PayoutsView = {
   teamsStillOwing: number | null;
   /** 12c Part 6: bank debits still clearing (the Disconnect window says they finish). */
   debitsClearing?: number | null;
+  /** 12d-2 (words §4.1): house-league families still owing, open pay pages (closed by Disconnect), open card disputes and
+   *  the soonest answer-by. Null when not counted (not the owner, disconnected, or the count failed). */
+  familiesOwing?: number | null;
+  openPages?: number | null;
+  openDisputes?: number | null;
+  firstDisputeDue?: string | null;
   /** 12d-1 Part 4: the club pays nothing for its plan (free time or the Founding comp), so the other-fees line adds
    *  "Your plan doesn't change" (words §3.4 `record.otherFeesPlan`). */
   planFree?: boolean;
@@ -51,6 +57,10 @@ export type PayoutsView = {
   hasAccounting?: boolean;
   /** 12d-2: the club has connected payouts at some time (a payouts list exists). */
   everConnected?: boolean;
+  /** 12d-2: the plan no longer offers online payments while the account stays connected (the wind-down card). */
+  windDown?: boolean;
+  /** 12d-2 (words §4.2): an ending the owner didn't choose is coming (a comp ending, a failed subscription payment). */
+  ending?: { title: string; body: string } | null;
 };
 
 const PILL_TONE: Record<PayoutsState, ChipTone> = {
@@ -120,13 +130,18 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
             ? (view.paymentsOn ? W.needsBodyStillOn(view.deadline ? formatStoredDate(view.deadline, { withYear: false }) : null) : W.needsBody)
             : W.disconnectedBody(formatStoredDate(view.disconnectedAt, { withYear: false }), view.disconnectedBy);
   const hasRecord = state === 'setting_up' || state === 'taking_payments' || state === 'needs_attention';
+  // 12d-2 (ask 4, the drawing's wind-down card): the plan no longer offers online payments, but the account stays connected —
+  // refunds, disputes and payouts carry on, and nothing here sets up again (that needs the plan).
+  const wind = !!view.windDown && state !== 'disconnected' && state !== 'not_set_up';
+  const WD = LEAVING_WORDS.windDown;
+  const showPrimary = !view.windDown || hasRecord;
 
   return (
     <>
       <section className={styles.card} aria-labelledby="settings-payouts" id="payouts">
         <div className={pc.head}>
           <span className={pc.eyebrow}>{W.eyebrow}</span>
-          <RepChip tone={PILL_TONE[state]}>{W.pill[state]}</RepChip>
+          <RepChip tone={wind ? 'neutral' : PILL_TONE[state]}>{wind ? WD.pill : W.pill[state]}</RepChip>
           {view.testMode && <RepChip tone="info">{W.testChip}</RepChip>}
           {hasRecord && isOwner && (
             <button
@@ -140,22 +155,27 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
             </button>
           )}
         </div>
-        <h2 id="settings-payouts" className={styles.cardTitle}>{state === 'needs_attention' && view.paymentsOn ? W.needsTitleStillOn : W.title[state]}</h2>
+        <h2 id="settings-payouts" className={styles.cardTitle}>{wind ? WD.title : state === 'needs_attention' && view.paymentsOn ? W.needsTitleStillOn : W.title[state]}</h2>
         {view.testMode && <p className={ck.hint}>{W.testLine}</p>}
-        <p className={pc.body}>{body}</p>
-        {state !== 'disconnected' && <p className={ck.hint}>{W.ratesLine(view.rateLabel, view.bankRateLabel ?? null)}</p>}
+        {view.ending && (
+          <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">
+            <div className={ck.noticeBody}><b>{view.ending.title}</b> {view.ending.body}</div>
+          </div>
+        )}
+        <p className={pc.body}>{wind ? `${WD.body} ${LEAVING_WORDS.move.connected}` : body}</p>
+        {state !== 'disconnected' && !wind && <p className={ck.hint}>{W.ratesLine(view.rateLabel, view.bankRateLabel ?? null)}</p>}
 
         {hasRecord && (
           <PayoutsRecord orgSlug={orgSlug} home={home} view={view} editing={editing && isOwner} onSaved={next => setView(v => (v ? { ...v, ...next } : v))} />
         )}
 
-        {isOwner ? (
+        {isOwner ? (showPrimary && (
           <div className={pc.actions}>
             <button type="button" className="btn btn-lime" onClick={primary} disabled={opening}>
               {opening ? W.opening : W.button[state]}
             </button>
           </div>
-        ) : (
+        )) : (
           state !== 'taking_payments' && <p className={ck.hint}>{W.ownerOnly(home)}</p>
         )}
         {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
@@ -184,8 +204,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
         <DisconnectWindow
           orgSlug={orgSlug}
           home={home}
-          owing={view.teamsStillOwing ?? 0}
-          clearing={view.debitsClearing ?? 0}
+          view={view}
           onClose={() => setDisconnecting(false)}
           onDone={async () => { setDisconnecting(false); setEditing(false); await reload(); }}
         />
@@ -355,9 +374,14 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
 }
 
 /** Disconnect (copy §5): asks, with how many teams still owe. Stops new payments; nothing already paid changes. */
-function DisconnectWindow({ orgSlug, home, owing, clearing = 0, onClose, onDone }: {
-  orgSlug: string; home: PayoutsHome; owing: number; clearing?: number; onClose: () => void; onDone: () => void;
+function DisconnectWindow({ orgSlug, home, view, onClose, onDone }: {
+  orgSlug: string; home: PayoutsHome; view: PayoutsView; onClose: () => void; onDone: () => void;
 }) {
+  const L = LEAVING_WORDS.disconnect;
+  const counted = view.teamsStillOwing != null;
+  const clearing = view.debitsClearing ?? 0;
+  const pages = view.openPages ?? 0;
+  const disputes = view.openDisputes ?? 0;
   const W = payoutsWords(home);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -385,9 +409,13 @@ function DisconnectWindow({ orgSlug, home, owing, clearing = 0, onClose, onDone 
       }
     >
       <p>{W.disconnect.stops}</p>
-      <p>{W.disconnect.owing(owing)}</p>
+      {/* 12d-2 words §4.1: the club home counts families too (it said "No team owes" beside families still owing);
+          Tournament Plus keeps its teams-only words. A count that failed is left out, never read as nobody. */}
+      {counted && <p>{home === 'club' ? L.owing(view.familiesOwing ?? 0, view.teamsStillOwing ?? 0) : W.disconnect.owing(view.teamsStillOwing ?? 0)}</p>}
+      {pages > 0 && <p>{L.pages(pages)}</p>}
       {clearing > 0 && <p>{W.disconnect.clearing(clearing)}</p>}
-      <p>{W.disconnect.past}</p>
+      {disputes > 0 && <p>{L.disputes(disputes, view.firstDisputeDue ? formatStoredDate(view.firstDisputeDue, { withYear: false }) : null)}</p>}
+      <p>{L.past}</p>
       {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
     </KitDialog>
   );

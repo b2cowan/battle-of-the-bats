@@ -34,6 +34,8 @@ import { subscriptionStatusLabel } from '@/lib/platform-labels';
 import styles from './billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import StripeFeesList from '@/components/admin/kit/club/StripeFeesList';
+import PaymentsEndingSection, { moveDateLong } from '@/components/admin/kit/club/PaymentsEndingSection';
+import type { EndingSection } from '@/lib/online-payment-endings';
 
 
 const STATUS_BADGE: Record<SubscriptionStatus, string> = {
@@ -63,6 +65,8 @@ type DowngradePreflight = {
   tournaments: BillingTournamentSummary[];
   overLimitTournamentCount: number;
   retentionDays: number;
+  /** 12d-2 (words §4.2): online payments stop on this move (null when the plan moved to keeps them, or none connected). */
+  onlinePayments?: EndingSection | null;
 };
 
 type CancellationPreflight = {
@@ -71,6 +75,8 @@ type CancellationPreflight = {
   tournaments: BillingTournamentSummary[];
   retentionDays: number;
   shutsDown: string[];
+  /** 12d-2 (words §4.3): online payments stop now. */
+  onlinePayments?: EndingSection | null;
 };
 
 // The free plan is the invite-only event and a Premium coach's tournament follows it (the free tournament tier, built
@@ -1375,6 +1381,8 @@ function BillingPagePlans() {
           ) : (
             <p className={styles.statusNote}>Your current tournament usage fits this plan. No tournaments need to move into retention.</p>
           )}
+          {/* 12d-2 (words §4.2): this downgrade takes effect now, so its move date is today. */}
+          <PaymentsEndingSection section={downgradePreflight.onlinePayments} ending={{ kind: 'move', dateLong: moveDateLong(null) }} />
           <textarea
             className={styles.reasonInput}
             value={downgradeReason}
@@ -1420,6 +1428,7 @@ function BillingPagePlans() {
               </ul>
             </section>
           </div>
+          <PaymentsEndingSection section={cancelPreflight.onlinePayments} ending={{ kind: 'cancel' }} />
           <textarea
             className={styles.reasonInput}
             value={cancelReason}

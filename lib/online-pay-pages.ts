@@ -134,3 +134,30 @@ export async function closeChildPayPages(registrationIds: readonly string[], whe
     return 0;
   }
 }
+
+// ── Every ending closes the club's open pages (Club Tier Stage 12d-2, ask 11) ──────────────────────────────────────
+
+async function clubRows(orgId: string): Promise<OpenRow[]> {
+  const { data, error } = await supabaseAdmin.from('online_payments').select(OPEN_COLS).eq('org_id', orgId).eq('status', 'open');
+  if (error) throw error;
+  return (data ?? []) as OpenRow[];
+}
+
+/** How many pay pages the club has open right now (the ending windows' count, words §4.1 `disconnect.pages`). */
+export async function countClubPayPages(orgId: string): Promise<number> {
+  const { count, error } = await supabaseAdmin.from('online_payments').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('status', 'open');
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/** An ending (Disconnect, a downgrade on its date, a cancel, a deletion) closes every open pay page of the club. A bank
+ *  debit already submitted is no open page (its session completed), so it clears or returns as it would have. Never
+ *  throws: a page that could not be closed expires at Stripe within a day, and the landing catches one paid meanwhile. */
+export async function closeClubPayPages(orgId: string, where: string): Promise<number> {
+  try {
+    return await closeRows(await clubRows(orgId), where);
+  } catch (e) {
+    console.error(`[online-pay-pages] couldn’t read the club’s open pay pages at ${where}:`, e instanceof Error ? e.message : String(e));
+    return 0;
+  }
+}

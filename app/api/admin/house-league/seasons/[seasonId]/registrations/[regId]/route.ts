@@ -34,7 +34,7 @@ import { sendLeaguePayLink } from '@/lib/online-payment-receipt';
 import { answerStillEnrolled, leagueEndingRefundHtml, leagueRefundMail, sendLeagueRefundEmail, stampRefundEmailed, stillEnrolledRefund } from '@/lib/online-refund-email';
 import type { EmailKind } from '@/lib/email-kinds';
 import { leagueCardShares, refundLeagueToCard, resolveLeagueRefundAnotherWay } from '@/lib/online-payment-landing';
-import { clubTakesCards, loadRegistrationDebits, returnedCardRefunds, unrecordedCardShares, isRegClearing } from '@/lib/league-pay-facts';
+import { clubPayoutsConnected, clubTakesCards, loadRegistrationDebits, returnedCardRefunds, unrecordedCardShares, isRegClearing } from '@/lib/league-pay-facts';
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 
 
@@ -630,7 +630,7 @@ export const PATCH = withObservability(async (req: Request,
       if (!clearAsk) return NextResponse.json({ error: END_WORDS.clear.footChoose(formatLeagueMoney(clearDebit.shareCents / 100)), code: 'clear_choice' }, { status: 409 });
       if (clearAsk.choice === 'send_back') {
         if (!canMarkLeagueFeePaid(ctx!)) return forbidden();
-        if (!(await clubTakesCards(ctx!.org))) return NextResponse.json({ error: END_WORDS.clear.disconnected, code: 'clear_disconnected' }, { status: 409 });
+        if (!(await clubPayoutsConnected(ctx!.org.id))) return NextResponse.json({ error: END_WORDS.clear.disconnected, code: 'clear_disconnected' }, { status: 409 });
       }
     }
     // 12c Part 6 (review of the whole): the answer for the clearing debit is stored FIRST — a debit that lands in between

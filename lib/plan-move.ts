@@ -253,6 +253,13 @@ export async function applyPlanChangeSideEffects(p: {
   const revokedComps = foundingCompAppliesToPlan(p.toPlan)
     ? 0
     : await revokeFoundingSeasonComp(p.orgId, p.actor);
+  // 12d-2 (ask 11): a move onto a plan without online payments closes the club's open pay pages on the move date (the
+  // webhook's flip for a scheduled down-move, the operator's change). After the comp revoke, so the plan read is final.
+  // Loaded here, not at the top: the endings module is server-only, and this one is loaded by unit tests.
+  if (p.fromPlan !== p.toPlan) {
+    const { closePagesIfPaymentsEnded } = await import('./online-payment-endings');
+    await closePagesIfPaymentsEnded(p.orgId, `plan move (${p.actor})`);
+  }
   return { clearedTeamLimit, revokedComps };
 }
 

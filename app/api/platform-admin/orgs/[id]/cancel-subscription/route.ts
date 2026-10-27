@@ -17,6 +17,7 @@ import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { PLAN_CONFIG, getEffectiveTeamLimit } from '@/lib/plan-config';
 import type { OrgPlan, Organization } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
+import { closePagesIfPaymentsEnded, endingSection } from '@/lib/online-payment-endings';
 
 type OrgRow = {
   id: string;
@@ -81,6 +82,8 @@ export const GET = withObservability(async (_req: NextRequest,
     planId: orgRow.plan_id,
     planLabel: PLAN_CONFIG[orgRow.plan_id as OrgPlan]?.label ?? orgRow.plan_id,
     ...preflight,
+    // 12d-2 (words §4.3): the operator sees what the owner would — what stops, what is owed and clearing.
+    onlinePayments: await endingSection(id),
   });
 }, { route: '/api/platform-admin/orgs/[id]/cancel-subscription' });
 
@@ -232,6 +235,8 @@ export const POST = withObservability(async (req: NextRequest,
   if (updateError) {
     return captureAndJson(updateError, { error: updateError.message }, 500);
   }
+  // 12d-2 (ask 11): the operator's cancel is an ending too — the club's open pay pages close; the account stays (ask 4).
+  await closePagesIfPaymentsEnded(id, 'operator cancel', { ended: true });
 
   await writePlatformAuditLog(
     auth.user.email!,

@@ -2,6 +2,7 @@ import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth'
 import { buildCancellationPreflight } from '@/lib/billing-retention';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { endingSection } from '@/lib/online-payment-endings';
 
 /**
  * GET /api/billing/cancel/preflight — what cancelling would do. Owner-only.
@@ -40,5 +41,6 @@ export const GET = withObservability(async (req: Request) => {
     };
   }
 
-  return Response.json({ ...preflight, cancelled });
+  // 12d-2 (words §4.3): what stops now, what is still owed and clearing, and that the Stripe account stays the club's.
+  return Response.json({ ...preflight, cancelled, onlinePayments: await endingSection(ctx.org.id) });
 }, { route: '/api/billing/cancel/preflight' });

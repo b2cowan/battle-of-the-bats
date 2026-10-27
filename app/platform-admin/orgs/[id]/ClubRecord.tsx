@@ -34,6 +34,8 @@ import { roleLabel } from '@/lib/member-access';
 import { subscriptionStatusChip } from '../../chips';
 import kit from '../../console.module.css';
 import styles from '../../record.module.css';
+import { LEAVING_WORDS } from '@/lib/online-payment-words';
+import type { EndingSection } from '@/lib/online-payment-endings';
 
 const NOT_IN_STORY = 'Not in the Story yet: account emails such as password resets.';
 /** For a role without the Stripe-reading power (A2): the money entries it does not see, said once (drawing D). */
@@ -873,7 +875,7 @@ function NoteWindow({ orgId, orgName, onDone, onClose }: { orgId: string; orgNam
 function CancelWindow({ orgId, orgName, hasStripe, onDone, onClose }: {
   orgId: string; orgName: string; hasStripe: boolean; onDone: (message: string | null) => void; onClose: () => void;
 }) {
-  const [pre, setPre] = useState<{ activeTournamentCount?: number; retentionDays?: number; shutsDown?: string[] } | null>(null);
+  const [pre, setPre] = useState<{ activeTournamentCount?: number; retentionDays?: number; shutsDown?: string[]; onlinePayments?: EndingSection | null } | null>(null);
   const [notify, setNotify] = useState(false);
   useEffect(() => {
     void sendJson(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, 'GET').then(({ ok, data }) => { if (ok) setPre(data); });
@@ -905,6 +907,8 @@ function CancelWindow({ orgId, orgName, hasStripe, onDone, onClose }: {
           <ul className={kit.caption}>{pre.shutsDown.map(s => <li key={s}>{s}</li>)}</ul>
         </div>
       )}
+      {/* 12d-2 (words §4.3, ask 11): the same count the owner reads, in the console's words. */}
+      {pre?.onlinePayments && <p className={kit.caption}>{LEAVING_WORDS.operator(pre.onlinePayments.outstanding, 'now')}</p>}
       <label className={kit.check}>
         <input type="checkbox" checked={notify} onChange={e => setNotify(e.target.checked)} />
         Email the owner that it is cancelled (this reaches an inbox and cannot be taken back)
@@ -917,19 +921,22 @@ function CancelWindow({ orgId, orgName, hasStripe, onDone, onClose }: {
 function DeleteWindow({ orgId, orgName, orgSlug, hasStripeCustomer, onDone, onClose }: {
   orgId: string; orgName: string; orgSlug: string; hasStripeCustomer: boolean; onDone: () => void; onClose: () => void;
 }) {
-  const [pre, setPre] = useState<{ hasActiveSubscription?: boolean; memberCount?: number; tournamentCount?: number; coachesLinkCount?: number; retentionRecordCount?: number } | null>(null);
+  const [pre, setPre] = useState<{ hasActiveSubscription?: boolean; memberCount?: number; tournamentCount?: number; coachesLinkCount?: number; retentionRecordCount?: number; paymentsInFlight?: string | null } | null>(null);
   const [typed, setTyped] = useState('');
   const [notify, setNotify] = useState(false);
   const [dropStripe, setDropStripe] = useState(false);
   useEffect(() => {
     void sendJson(`/api/platform-admin/orgs/${orgId}/delete`, 'GET').then(({ ok, data }) => { if (ok) setPre(data); });
   }, [orgId]);
-  const blocked = !!pre?.hasActiveSubscription;
+  // 12d-2 (owner ruling 2): money in flight (an open dispute, a clearing debit, an unpaid or failed Stripe fee) waits too.
+  const inFlight = pre?.paymentsInFlight ?? null;
+  const blocked = !!pre?.hasActiveSubscription || !!inFlight;
   return (
     <RecordWindow
       title={`Delete ${orgName}`}
-      sentence={blocked
+      sentence={pre?.hasActiveSubscription
         ? <>{orgName} still has a running subscription. <strong>Cancel the subscription first</strong>, then delete the club.</>
+        : inFlight ? <>{inFlight}</>
         : <>{orgName} and everything in it — {pre?.memberCount ?? 0} member{pre?.memberCount === 1 ? '' : 's'}, {pre?.tournamentCount ?? 0} tournament{pre?.tournamentCount === 1 ? '' : 's'}
           {pre?.coachesLinkCount ? `, ${pre.coachesLinkCount} coaches portal link${pre.coachesLinkCount === 1 ? '' : 's'}` : ''} — are removed. <strong>This cannot be taken back.</strong></>}
       footNote="Invoice history stays in Stripe."

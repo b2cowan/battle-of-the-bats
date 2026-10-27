@@ -159,7 +159,7 @@ export default function RegistrationsScreen() {
     if (withTeams) setTeams((teamsRes?.ok ? teamsRes.data.teams ?? [] : []).map(t => ({ id: t.id, name: t.name, divisionId: t.divisionId })));
     setRead({
       registrations: regsRes.data.registrations ?? [], money: regsRes.data.money ?? {},
-      priceChanges: regsRes.data.priceChanges ?? [], today: regsRes.data.today, payLinks: !!regsRes.data.payLinks,
+      priceChanges: regsRes.data.priceChanges ?? [], today: regsRes.data.today, payLinks: !!regsRes.data.payLinks, payoutsOn: !!regsRes.data.payoutsOn,
       unrecordedCard: regsRes.data.unrecordedCard ?? {}, returnedRefunds: regsRes.data.returnedRefunds ?? {},
       cardRefunds: regsRes.data.cardRefunds ?? {}, notMatched: regsRes.data.notMatched ?? {}, debits: regsRes.data.debits ?? {},
       disputes: regsRes.data.disputes ?? {},
@@ -800,7 +800,7 @@ export default function RegistrationsScreen() {
           raised={raised}
           stripeRefundIds={act.stripeRefundIds}
           debit={read?.debits?.[act.id] ?? null}
-          payoutsOn={!!read?.payLinks}
+          payoutsOn={!!read?.payoutsOn}
           canRefund={rights.takeFees}
           onClose={() => setAct(null)}
           onChanged={() => void load()}
