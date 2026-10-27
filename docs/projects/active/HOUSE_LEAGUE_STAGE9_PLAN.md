@@ -757,4 +757,6 @@ open it, and the menu's top level is Stage 13's.
   not drawn; (2) walk Parts 3 and 4 together now. **Owed:** /marketing's one pass on the [marketing] words, then the settled
   set appended to `HOUSE_LEAGUE_STAGE9D2_11B_COPY.md`; the k2 row figure's practice count ("12 hours · 10 practices a week",
   copy ruling 9) is not built; the dev server restart (new files); `/docs` (Part 6). **Next:** Part 5 (Send the changes'
-  house-league rows and the emails).
+  house-league rows and the emails), `CLUB_TIER_STAGE11B_PART5_BUILD_PROMPT.md`. **⚠ Found writing it (dev only):** the club's
+  Send the changes never passes the step's house-league argument, so a send that moves, clears or takes back house-league time
+  with practices on it is refused as stale on every try — unreachable until Part 4 made practices; Part 5 fixes it first.
