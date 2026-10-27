@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  groupLeagueTime, hasNotGiven, hoursAWeek, leagueTimeMinutes, partsWords, readGiveBody,
+  daysAndClocksWords, divisionTimeLine, groupLeagueTime, groupTick, hasNotGiven, hoursAWeek, leaguePiece, leagueTimeMinutes,
+  LEAGUE_TIME_WORDS, partsWords, partTick, pieceChanges, pieceDayWords, pieceMinutes, piecePartWords, practicesRemovedBy,
+  readChangesBody, rowChanges, stageParts, timeLineWords, toggleParts,
   type LeagueTimeSlot,
 } from '../../lib/league-time.ts';
 
@@ -117,25 +119,115 @@ describe('partsWords — one facility, a venue, every day', () => {
   });
 });
 
-describe('readGiveBody — a give names its slots and who they go to', () => {
-  const id = U12;
-  it('takes a division’s games or practice time, from Not given yet', () => {
-    assert.deepEqual(readGiveBody({ slotIds: [id, id], divisionId: U14, kind: 'games', from: null }),
-      { slotIds: [id], divisionId: U14, kind: 'games', from: null });
+describe('readChangesBody — a Save names each slot once, what the window saw on it, and what it gets', () => {
+  const A = U12, B = U14;
+  it('takes a mixed Save: one slot given, another given back', () => {
+    const body = { changes: [{ slotId: A, from: null, to: games14 }, { slotId: B, from: practice12, to: null }] };
+    assert.deepEqual(readChangesBody(body), body.changes);
   });
-  it('takes a give back (kind null), dropping any division, from the use the window saw', () => {
-    assert.deepEqual(readGiveBody({ slotIds: [id], divisionId: U14, kind: null, from: { divisionId: U14, kind: 'practices' } }),
-      { slotIds: [id], divisionId: null, kind: null, from: { divisionId: U14, kind: 'practices' } });
+  it('refuses a change that doesn’t say what it saw, or where it goes (/ux: never a give over unseen time)', () => {
+    assert.equal(readChangesBody({ changes: [{ slotId: A, to: games14 }] }), null);
+    assert.equal(readChangesBody({ changes: [{ slotId: A, from: null }] }), null);
+    assert.equal(readChangesBody({ changes: [{ slotId: A, from: { kind: 'games' }, to: null }] }), null);
   });
-  it('refuses a give that doesn’t say what it saw (/ux: the SQL step overwrites whoever holds a slot)', () => {
-    assert.equal(readGiveBody({ slotIds: [id], divisionId: U14, kind: 'games' }), null);
-    assert.equal(readGiveBody({ slotIds: [id], divisionId: U14, kind: 'games', from: { kind: 'games' } }), null);
+  it('refuses a slot named twice, an unknown kind, no changes or a malformed id', () => {
+    assert.equal(readChangesBody({ changes: [{ slotId: A, from: null, to: games14 }, { slotId: A, from: null, to: games12 }] }), null);
+    assert.equal(readChangesBody({ changes: [{ slotId: A, from: null, to: { divisionId: U12, kind: 'tryouts' } }] }), null);
+    assert.equal(readChangesBody({ changes: [] }), null);
+    assert.equal(readChangesBody({ changes: [{ slotId: 'nope', from: null, to: null }] }), null);
+    assert.equal(readChangesBody(null), null);
   });
-  it('refuses a use with no division, an unknown kind, no slots or a malformed id', () => {
-    assert.equal(readGiveBody({ slotIds: [id], kind: 'games', from: null }), null);
-    assert.equal(readGiveBody({ slotIds: [id], divisionId: U14, kind: 'tryouts', from: null }), null);
-    assert.equal(readGiveBody({ slotIds: [], divisionId: U14, kind: 'games', from: null }), null);
-    assert.equal(readGiveBody({ slotIds: ['nope'], divisionId: U14, kind: 'games', from: null }), null);
-    assert.equal(readGiveBody(null), null);
+  it('a whole row given in one pick is one change per slot, from the row’s use', () => {
+    const open = sources[0].stretches[0].rows[2];
+    const changes = rowChanges(open, games12);
+    assert.equal(changes.length, 8);
+    assert.ok(changes.every(c => c.from === null && c.to === games12));
+  });
+});
+
+describe('A division’s piece — parts without their use, ticks that stage, one Save (ruled 2026-10-27)', () => {
+  // Mixed: U12 holds one of Saturday 11:30's two weeks on Diamond 1 (a one-date Use, or a schedule extended).
+  const sat = weekly(6, '11:30', '13:00', D1, 'B', null);
+  const mixedSlots = [...slots.filter(s => !(s.weekday === 6 && s.start === '11:30')), { ...sat[0], use: games12 }, sat[1]];
+  const mixedSources = groupLeagueTime({
+    slots: mixedSlots,
+    schedules: [{ id: SCHEDULE, name: 'Maple Grove · summer 2027', startsOn: '2027-06-01', endsOn: '2027-08-31' }],
+    divisions: [{ id: U12, name: 'U12' }, { id: U14, name: 'U14' }],
+    placeOf: (_v, f) => (f === D1 ? 'Diamond 1' : 'Diamond 2'), venueOf: () => 'Maple Grove Park',
+  });
+  const piece = leaguePiece(mixedSources, games12);
+  const parts = piece.flatMap(s => s.days.flatMap(d => d.parts));
+  const find = (weekday: number, start: string, place: string) => parts.find(p => p.weekday === weekday && p.start === start && p.place === place)!;
+
+  it('groups by stretch, then weekday, each part one clock on one facility', () => {
+    assert.equal(piece.length, 2);
+    assert.deepEqual(piece[0].days.map(d => pieceDayWords(d.weekday)), ['Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays']);
+    assert.equal(piecePartWords(piece[0].days[1].parts[0]), '6:00–7:30 p.m. · Diamond 1');
+    assert.equal(piece[0].days[1].parts.length, 4);
+  });
+  it('a part is mine, free, held, or mixed — a held part has no box', () => {
+    assert.equal(partTick(find(2, '18:00', 'Diamond 1'), {}), 'on');
+    assert.equal(partTick(find(2, '19:30', 'Diamond 1'), {}), 'off');
+    assert.equal(partTick(find(1, '18:00', 'Diamond 1'), {}), null);
+    assert.deepEqual(find(1, '18:00', 'Diamond 1').held.map(h => h.use), [practice12]);
+    const mixed = find(6, '11:30', 'Diamond 1');
+    assert.equal(partTick(mixed, {}), 'mixed');
+    assert.equal(LEAGUE_TIME_WORDS.piece.ofDates(mixed.mine.length, mixed.mine.length + mixed.free.length), '1 of 2 dates');
+  });
+  it('ticking a mixed part takes its free dates; unticking gives this division’s back', () => {
+    const mixed = find(6, '11:30', 'Diamond 1');
+    const on = toggleParts([mixed], {});
+    assert.equal(on[mixed.key], 'all');
+    assert.deepEqual(pieceChanges(piece, games12, on), mixed.free.map(slotId => ({ slotId, from: null, to: games12 })));
+    const off = toggleParts([mixed], on);
+    assert.deepEqual(pieceChanges(piece, games12, off), mixed.mine.map(slotId => ({ slotId, from: games12, to: null })));
+  });
+  it('a group tick is tri-state and toggles everything with a box under it', () => {
+    const tuesdays = piece[0].days[1].parts;
+    assert.equal(groupTick(tuesdays, {}), 'mixed');
+    const all = toggleParts(tuesdays, {});
+    assert.equal(groupTick(tuesdays, all), 'on');
+    // Only the two free Tuesday parts are changes: the two already U12's drop out.
+    assert.equal(Object.keys(all).length, 2);
+    assert.equal(groupTick(tuesdays, toggleParts(tuesdays, all)), 'off');
+    // Mondays are all U12 practice time: no box at all.
+    assert.equal(groupTick(piece[0].days[0].parts, {}), null);
+  });
+  it('a stage back to how a part already is drops out of the count', () => {
+    const p = find(2, '19:30', 'Diamond 1');
+    assert.deepEqual(stageParts([p], stageParts([p], {}, 'all'), 'none'), {});
+  });
+  it('the piece’s hours count the parts it has or is staged to have', () => {
+    assert.equal(hoursAWeek(pieceMinutes(piece, {})), '7.5 hours a week');
+    assert.equal(hoursAWeek(pieceMinutes(piece, toggleParts(piece[0].days[1].parts, {}))), '10.5 hours a week');
+  });
+  it('giving back time with practices on it removes the ones on time that stops being their practice time', () => {
+    const practices = [{ slotId: 'p1', divisionId: U12, team: 'Reds' }, { slotId: 'p2', divisionId: U12, team: 'Blues' }];
+    assert.deepEqual(practicesRemovedBy([{ slotId: 'p1', from: practice12, to: null }], practices), [practices[0]]);
+    assert.deepEqual(practicesRemovedBy([{ slotId: 'p2', from: practice12, to: practice12 }], practices), []);
+    assert.equal(LEAGUE_TIME_WORDS.ask.title('U12', 'practices', 2, false), 'Give back 2 parts of U12’s practice time?');
+    assert.equal(LEAGUE_TIME_WORDS.ask.title('U12', 'practices', 4, true), 'Give back all of U12’s practice time?');
+    assert.equal(LEAGUE_TIME_WORDS.ask.note(['U12 Blue', 'U12 Red']),
+      'U12 Blue and U12 Red have practices on this time. Saving removes the ones still to come. Past practices stay.');
+    assert.equal(LEAGUE_TIME_WORDS.ask.confirm(6), 'Save and remove 6 practices');
+  });
+});
+
+describe('The time line — where a division’s time comes from, days and clocks, no facilities', () => {
+  it('says games and practice time, each as its own clause', () => {
+    const w = timeLineWords('U12', divisionTimeLine(sources, U12))!;
+    assert.equal(`${w.lead}${w.schedules.join(' and ')}${w.tail}`,
+      'U12’s time comes from the club’s schedule, Maple Grove · summer 2027. Games: Tue and Thu, 6:00–7:30 p.m. Practice time: Mon and Wed, 6:00–9:00 p.m.');
+  });
+  it('a clause only for what the division has; none at all is no line of time', () => {
+    const w = timeLineWords('U14', divisionTimeLine(sources, U14))!;
+    assert.equal(w.tail, '. Games: Sat, 10:00–11:30 a.m.');
+    assert.equal(timeLineWords('U9', divisionTimeLine(sources, '44444444-4444-4444-8444-444444444444')), null);
+    assert.equal(LEAGUE_TIME_WORDS.line.none('U9'), 'U9 has no time from the club yet.');
+  });
+  it('two clocks on one day read joined; a day’s facilities never repeat it', () => {
+    assert.equal(daysAndClocksWords([
+      { weekday: 6, start: '10:00', end: '11:30' }, { weekday: 6, start: '13:00', end: '14:00' }, { weekday: 6, start: '10:00', end: '11:30' },
+    ]), 'Sat, 10:00–11:30 a.m. and 1:00–2:00 p.m.');
   });
 });

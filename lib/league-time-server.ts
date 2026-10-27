@@ -7,25 +7,27 @@ import { weekdayOf } from './permit-time';
 import { utcToZonedInputs } from './timezone';
 import { HOUSE_LEAGUE } from './club-schedule-holders';
 import {
-  groupLeagueTime, keyOfUse, LEAGUE_TIME_REFUSALS as R,
-  type LeagueTime, type LeagueTimeSchedule, type LeagueTimeSlot, type LeagueUse, type LeagueUseKind,
+  groupLeagueTime, LEAGUE_TIME_REFUSALS as R,
+  type LeagueTime, type LeagueTimeChange, type LeagueTimeSchedule, type LeagueTimeSlot, type LeagueUseKind,
 } from './league-time';
 import type { LeagueSeason } from './types';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * HOUSE LEAGUE'S TIME, SERVER SIDE (Club Tier Stage 11b Part 3; plan HOUSE_LEAGUE_STAGE9_PLAN.md §0h 9d2·5 + 9d2·15).
- * The read behind the window (lib/league-time.ts groups it) and the league admin's one write: giving house-league slots to
- * a division's game time or practice time, or back to Not given yet — through the SQL step `league_slot_uses_set`
- * (migs 392–393), which locks each slot in id order and reads it again. TypeScript never writes a use or a practice's
- * slot link itself (the scheduler guard holds both to the SQL steps).
+ * The read behind the window (lib/league-time.ts groups it) and the league admin's one write: a set of changes, each a
+ * house-league slot moving from the use the window saw to a division's game time or practice time, or back to Not given
+ * yet — through the SQL step `league_slot_uses_apply` (mig 394), which applies every change or none, locks each slot in
+ * id order and reads it again, and refuses `changed` unless each slot still holds what the window saw. TypeScript never
+ * writes a use or a practice's slot link itself (the scheduler guard holds both to the SQL steps).
  *
  * ⚖ WHO: the routes ask `houseLeagueRefusal` — `read` for the window (owner, admin, league admin, the registrar), `run` on
- * the season for a give (owner, admin, league admin on a live season). Never `isScheduleBuilder`: the league admin reaches
+ * the season for a Save (owner, admin, league admin on a live season). Never `isScheduleBuilder`: the league admin reaches
  * house league's time through house league, never through the club's scheduler gate.
  * ⚖ WHAT: live slots of FINAL schedules house league holds, still to come, inside the season's dates when it has them, and
- * not another season's (lib/league-time.ts, the header). A give asks the same of every slot it names, here and again in
- * SQL; a slot that stopped being one of them in between refuses `changed`, and the window reads again.
+ * not another season's (lib/league-time.ts, the header). A Save asks the season's dates here (they are club days, in the
+ * club's zone) and everything else again in SQL under the lock; a slot that stopped being one refuses `changed`, whole,
+ * and the window reads again.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -87,6 +89,7 @@ export async function readLeagueTime(orgId: string, season: LeagueSeason): Promi
     .map(s => ({ id: s.id, name: s.name, startsOn: s.starts_on, endsOn: s.ends_on }))
     .sort((a, b) => a.startsOn.localeCompare(b.startsOn) || a.name.localeCompare(b.name));
   const divisionList = divisions.map(d => ({ id: d.id, name: d.name }));
+  const practices = await practicesStillToCome(orgId, season.id, mine.map(r => r.id));
   return {
     sources: groupLeagueTime({
       slots, schedules: ordered, divisions: divisionList,
@@ -94,44 +97,55 @@ export async function readLeagueTime(orgId: string, season: LeagueSeason): Promi
       venueOf: v => places.venueName.get(v) ?? '',
     }),
     divisions: divisionList,
+    practices,
   };
 }
 
-export type GiveResult =
+/** The practices still to come on these slots (not cancelled), with their teams' names: what giving the time back
+ *  removes (the piece's question on Save, the club view's one-date Use). */
+async function practicesStillToCome(orgId: string, seasonId: string, slotIds: readonly string[]): Promise<LeagueTime['practices']> {
+  if (!slotIds.length) return [];
+  const now = new Date().toISOString();
+  const rows = await fetchAllIn<{ id: string; club_schedule_slot_id: string; division_id: string; team_id: string }>(slotIds, (c, a, b) => supabaseAdmin
+    .from('league_practices').select('id, club_schedule_slot_id, division_id, team_id')
+    .eq('org_id', orgId).eq('season_id', seasonId).in('club_schedule_slot_id', c).gt('scheduled_at', now).neq('status', 'cancelled')
+    .order('id').range(a, b));
+  const teamIds = [...new Set(rows.map(r => r.team_id))];
+  const teams = teamIds.length
+    ? await fetchAllIn<{ id: string; name: string }>(teamIds, (c, a, b) => supabaseAdmin
+      .from('league_teams').select('id, name').eq('season_id', seasonId).in('id', c).order('id').range(a, b))
+    : [];
+  const name = new Map(teams.map(t => [t.id, t.name]));
+  return rows.map(r => ({ slotId: r.club_schedule_slot_id, divisionId: r.division_id, team: name.get(r.team_id) ?? '' }));
+}
+
+export type SaveResult =
   | { ok: true; slots: number; practicesRemoved: number }
   | { ok: false; status: number; code: string; error: string };
 
-const refused = (status: number, code: string, error: string): GiveResult => ({ ok: false, status, code, error });
+const refused = (status: number, code: string, error: string): SaveResult => ({ ok: false, status, code, error });
 
 /**
- * THE GIVE: the slots to a division's game time or practice time, or back to Not given yet. Every slot must still be one
- * the window offers (house league's, live, final, still to come, in the season, not another season's): a slot that
- * stopped being one refuses `changed`, whole — never a give of part of what the league admin picked.
+ * THE SAVE: every change, or none. Each slot must be inside the season's dates (asked here: a club day needs the club's
+ * zone) and everything else under the step's lock — house league's, live, final, still to come, not another season's,
+ * and still holding `from`. One that isn't refuses `changed`, whole: never part of what the league admin saved.
  */
-export async function giveLeagueTime(p: {
-  orgId: string; season: LeagueSeason; actorId: string;
-  slotIds: string[]; divisionId: string | null; kind: LeagueUseKind | null; from: LeagueUse | null;
-}): Promise<GiveResult> {
-  const rows = await houseLeagueSlotRows(p.orgId, p.season, p.slotIds);
-  if (rows.length !== p.slotIds.length) return refused(409, 'changed', R.changed);
-  // Each slot still holds what the window saw — never a give over a division's time the league admin didn't see taken.
-  // (A read before the step: the step locks each slot, so the window between is a request's width, not a stale window's.)
-  const uses = await usesOf(p.orgId, p.slotIds);
-  const seen = keyOfUse(p.from);
-  if (p.slotIds.some(id => { const u = uses.get(id); return keyOfUse(u ? { divisionId: u.division_id, kind: u.kind } : null) !== seen; })) {
-    return refused(409, 'changed', R.changed);
-  }
-  const { data, error } = await supabaseAdmin.rpc('league_slot_uses_set', {
-    p_org: p.orgId, p_season: p.season.id, p_actor: p.actorId, p_slots: p.slotIds, p_division: p.divisionId, p_kind: p.kind,
+export async function saveLeagueTime(p: {
+  orgId: string; season: LeagueSeason; actorId: string; changes: LeagueTimeChange[];
+}): Promise<SaveResult> {
+  const ids = p.changes.map(c => c.slotId);
+  const rows = await houseLeagueSlotRows(p.orgId, p.season, ids);
+  if (rows.length !== ids.length) return refused(409, 'changed', R.changed);
+  const { data, error } = await supabaseAdmin.rpc('league_slot_uses_apply', {
+    p_org: p.orgId, p_season: p.season.id, p_actor: p.actorId, p_changes: p.changes,
   });
   if (error) {
-    const msg = error.message ?? '';
-    if (/\buse_(kind|division)\b/.test(msg)) return refused(400, 'bad_request', R.badRequest);
-    if (/\buse_(slot|season)\b/.test(msg)) return refused(409, 'changed', R.changed);
+    if (/\buse_(slot|season|division)\b/.test(error.message ?? '')) return refused(409, 'changed', R.changed);
     throw error;
   }
   const r = (data ?? {}) as { ok?: boolean; code?: string; slots?: number; practicesRemoved?: number };
-  if (r.ok) return { ok: true, slots: r.slots ?? p.slotIds.length, practicesRemoved: r.practicesRemoved ?? 0 };
+  if (r.ok) return { ok: true, slots: r.slots ?? ids.length, practicesRemoved: r.practicesRemoved ?? 0 };
+  if (r.code === 'bad_request') return refused(400, 'bad_request', R.badRequest);
   if (r.code === 'not_found') return refused(404, 'not_found', R.notFound);
   if (r.code === 'season_closed') return refused(423, 'season_closed', R.seasonClosed);
   return refused(409, 'changed', R.changed);

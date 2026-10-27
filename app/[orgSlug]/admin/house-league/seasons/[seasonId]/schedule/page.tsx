@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { AlertTriangle, Calendar, Plus, X, Wand2 } from 'lucide-react';
+import { AlertTriangle, Calendar, Clock, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { ORG_TIME_ZONE, formatInOrgZone, orgWeekKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
@@ -20,10 +20,15 @@ import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICSFromInstants, houseLeagueCalendarEntries,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
-import ExportMenu from '@/components/admin/ExportMenu';
+import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
+import tb from '@/components/admin/tournament/AdminToolbar.module.css';
+import HouseLeagueTimeWindow from '@/components/admin/kit/club/league/time/HouseLeagueTimeWindow';
+import HouseLeagueTimeLine, { showTimeLine } from '@/components/admin/kit/club/league/time/HouseLeagueTimeLine';
+import { LEAGUE_TIME_WORDS, type LeagueTime } from '@/lib/league-time';
+import { canOpenClubSchedules } from '@/lib/club-schedule-gate';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { RecordDelete } from '@/components/admin/kit/club/RepKit';
-import { useAdminKit, useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { RecordDelete, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
+import { useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { ClubVenueOption, LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice, OrgVenue } from '@/lib/types';
@@ -858,11 +863,10 @@ function CancelPracticeModal({
 
 export default function SchedulePage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole } = useOrg();
   // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
   const kx = useKitStyle();
   const B = useKitButtons(LEGACY_BUTTONS);
-  const kit = useAdminKit();
   // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
@@ -893,6 +897,26 @@ export default function SchedulePage() {
   // else who opens house league reads. A control a person can't use is absent.
   const canManage = !!useSeasonAccess(season)?.run;
   const hasAccess = !!useHouseLeagueAccess()?.read;
+
+  // House league's time (Club Tier Stage 11b Part 3): the time line reads it; Tools, the line and `?time=1` (the club
+  // schedule's "← House league's time" replays the open) open its window.
+  const buildsSchedules = canOpenClubSchedules({ planId: currentOrg?.planId, role: userRole });
+  const [leagueTime, setLeagueTime] = useState<LeagueTime | null>(null);
+  // The window mounts only once the season has loaded, so the server's render and the first client render agree.
+  const [timeOpen, setTimeOpen] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('time') === '1');
+  const loadLeagueTime = useCallback(async () => {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/time${orgQuery}`, { cache: 'no-store' }).catch(() => null);
+    setLeagueTime(res?.ok ? await res.json().catch(() => null) : null);
+  }, [seasonId, orgQuery]);
+  useDeferredLoad(!!orgQuery, loadLeagueTime);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('time') !== '1') return;
+    // Taken off the address before the window's own Back step stands on it, so a reload doesn't open it again.
+    params.delete('time');
+    const rest = params.toString();
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${rest ? `?${rest}` : ''}`);
+  }, []);
 
   // ── Load data ──────────────────────────────────────────────────────────────
 
@@ -1312,6 +1336,12 @@ export default function SchedulePage() {
         backTo={{ href: backHref, label: season?.name ?? 'Season' }}
       />
 
+      {/* The time line (Stage 11b Part 3): where this division's time comes from, and the door to House league's time. */}
+      {leagueTime && selectedDivId && showTimeLine(leagueTime, buildsSchedules) && (
+        <HouseLeagueTimeLine time={leagueTime} divisionId={selectedDivId}
+          divisionName={divisions.find(d => d.id === selectedDivId)?.name ?? ''} onOpen={() => setTimeOpen(true)} />
+      )}
+
       {/* Toolbar */}
       <div className={styles.scheduleToolbar}>
         {divisions.length > 1 && (
@@ -1364,32 +1394,6 @@ export default function SchedulePage() {
           </>
         )}
 
-        {viewMode !== 'practices' && (
-          <>
-            <div className={styles.toolbarSep} />
-            {/* Exports are a paid-League capability. The free League Starter floor hides the menu.
-                NOTE: exports are 100% client-side today (no server route). If a server export route
-                is ever added for house-league it MUST guard isFreeFloorLeague(org) → 403. */}
-            {currentOrg && isFreeFloorLeague(currentOrg) ? (
-              <span
-                title="Exports are part of League. Upgrade to export your schedule, standings, and registrations."
-                className={kit ? 'badge badge-neutral' : undefined}
-                style={kit ? undefined : { fontFamily: 'var(--font-data)', fontSize: '0.7rem', letterSpacing: '0.04em', color: 'var(--data-gray)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.35rem 0.6rem', whiteSpace: 'nowrap' }}
-              >
-                Exports · League
-              </span>
-            ) : (
-              <ExportMenu
-                formats={['xlsx', 'csv', 'ics']}
-                onExportXLSX={handleExportXLSX}
-                onExportCSV={handleExportCSV}
-                onExportICS={handleExportICS}
-                disabled={games.length === 0}
-              />
-            )}
-          </>
-        )}
-
         {viewMode === 'practices' && (
           <>
             {teams.length > 0 && (
@@ -1415,7 +1419,37 @@ export default function SchedulePage() {
             )}
           </>
         )}
+
+        {/* Tools ⋯ at the toolbar's right end (Stage 11b Part 3; ruled 9d-2, card 7): House league's time, then Export as
+            a flat group — where 9d-2a's toolbar rebuild puts it, so that rebuild never moves it. Export shows where it
+            showed before (not on Practices), and keeps its free-floor case: exports are a paid-League capability, so the
+            free League Starter floor reads why instead. NOTE: exports are 100% client-side today (no server route). If a
+            server export route is ever added for house-league it MUST guard isFreeFloorLeague(org) → 403. */}
+        <div style={{ marginLeft: 'auto' }}>
+          <CoachToolbarMenu label={LEAGUE_TIME_WORDS.tools} icon={<MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
+            collapseOnPhone bareOnPhone drawerOnPhone drawerTitle={LEAGUE_TIME_WORDS.tools} triggerClassName={tb.tool}>
+            <CoachToolbarMenuItem icon={<Clock size={15} aria-hidden />} label={LEAGUE_TIME_WORDS.title} onSelect={() => setTimeOpen(true)} />
+            {viewMode !== 'practices' && <>
+              <CoachToolbarMenuSeparator />
+              <CoachToolbarMenuHeading>{LEAGUE_TIME_WORDS.exportHeading}</CoachToolbarMenuHeading>
+              {currentOrg && isFreeFloorLeague(currentOrg)
+                ? <CoachToolbarMenuItem disabled label="Exports · League"
+                    hint="Exports are part of League. Upgrade to export your schedule, standings, and registrations." onSelect={() => {}} />
+                : <>
+                    <CoachToolbarMenuItem label={LEAGUE_TIME_WORDS.excel} disabled={games.length === 0} onSelect={() => void handleExportXLSX()} />
+                    <CoachToolbarMenuItem label={LEAGUE_TIME_WORDS.csv} disabled={games.length === 0} onSelect={() => void handleExportCSV()} />
+                    <CoachToolbarMenuItem label={LEAGUE_TIME_WORDS.calendar} disabled={games.length === 0} onSelect={() => void handleExportICS()} />
+                  </>}
+            </>}
+          </CoachToolbarMenu>
+        </div>
       </div>
+
+      {timeOpen && season && (
+        <HouseLeagueTimeWindow orgSlug={orgSlug} seasonId={seasonId} seasonName={season.name}
+          canDivide={canManage} schedulesHref={buildsSchedules ? `/${orgSlug}/admin/schedules` : null}
+          onClose={() => setTimeOpen(false)} onChanged={() => void loadLeagueTime()} />
+      )}
 
       {/* Schedule health — clashes + what could not be checked (games AND practices) */}
       {health && health.conflicts.length > 0 && (

@@ -33,3 +33,72 @@
 
 /* The owner's rare door when everything is divided: it ends the body (decision_rare_door_ends_body). */
 .more { margin-top: 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+
+/* A division's row opens its piece (the ›): a plain glyph button on the kit's tap floor. */
+.open {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: var(--tap-min, 44px); height: var(--tap-min, 44px); margin: -0.5rem -0.5rem -0.5rem 0;
+  border: 0; border-radius: 8px; background: transparent; color: var(--text-tertiary); cursor: pointer;
+}
+.open:hover { color: var(--text-primary); background: var(--home-olive-soft); }
+
+/* ── A division's piece (drawings "A piece's window" b–g): stretches, their weekdays, their parts ── */
+.piece { display: flex; flex-direction: column; gap: 0.9rem; }
+.pieceStretch { display: flex; flex-direction: column; }
+.stretchHead { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.25rem; }
+.stretchHead .stretchTitle { margin: 0; }
+.day { display: flex; flex-direction: column; }
+.weekday {
+  display: flex; align-items: center; gap: 0.6rem; min-height: 40px;
+  padding-left: 1.25rem; font-weight: 600; color: var(--text-primary);
+}
+.part {
+  display: flex; align-items: center; gap: 0.6rem; min-height: 40px; padding: 0.15rem 0.5rem;
+  border-radius: 6px; color: var(--text-primary);
+}
+.partSub { padding-left: 2.5rem; cursor: pointer; }
+.partHeld { cursor: default; color: var(--text-secondary); }
+/* A staged change wears the kit's quiet tint until Save. */
+.partChanged { background: var(--home-olive-soft); }
+.noBox { display: inline-block; width: 22px; flex: none; }
+.partText { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.partUnder { display: none; }
+.partRight { flex: none; font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; }
+.holder {
+  border: 0; background: none; padding: 0; font: inherit; color: var(--text-primary);
+  text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+}
+.choices { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.choices > legend { padding: 0; margin-bottom: 0.5rem; }
+.choice { display: flex; align-items: center; gap: 0.6rem; min-height: 40px; cursor: pointer; }
+
+@media (max-width: 640px) {
+  /* Part rows are 56px; the facility and the hours (or the holder) sit under the part (frame f). */
+  .part { min-height: 56px; }
+  .partSub { padding-left: 1.75rem; }
+  .weekday { padding-left: 0.5rem; min-height: 48px; }
+  .placeDesk, .partRight { display: none; }
+  .partUnder { display: block; font-size: var(--type-support); color: var(--text-secondary); }
+  .choice { min-height: var(--tap-min, 44px); }
+}
+
+/* ── The time line under the house-league Schedule page's title (drawings "The schedule page" c) ── */
+.line {
+  display: flex; align-items: flex-start; gap: 0.5rem; margin: -0.25rem 0 0.9rem;
+  font-size: var(--type-support); line-height: 1.5; color: var(--text-secondary);
+}
+.line b { font-weight: 600; color: var(--text-primary); }
+.lineIcon { flex: none; margin-top: 0.2rem; color: var(--text-tertiary); }
+.lineDoor {
+  border: 0; background: none; padding: 0; font: inherit; color: var(--text-primary); font-weight: 600;
+  text-decoration: underline; text-underline-offset: 2px; cursor: pointer; white-space: nowrap;
+}
+.linePhone { display: none; }
+
+@media (max-width: 640px) {
+  /* A phone reads one line. */
+  .lineDesk { display: none; }
+  .linePhone { display: flex; align-items: center; gap: 0.3rem; min-width: 0; }
+  .linePhoneText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .line { align-items: center; }
+}
