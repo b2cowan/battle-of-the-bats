@@ -50,10 +50,10 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 });
   }
   if (!VALID_TYPES.has(campaignType)) {
-    return NextResponse.json({ error: 'Invalid campaign type' }, { status: 400 });
+    return NextResponse.json({ error: 'Pick a kind of promotion from the list' }, { status: 400 });
   }
   if (!VALID_STATUSES.has(status)) {
-    return NextResponse.json({ error: 'Invalid campaign status' }, { status: 400 });
+    return NextResponse.json({ error: 'Pick a promotion status from the list' }, { status: 400 });
   }
 
   const rawTrialDays = typeof body.trial_days === 'number'
@@ -121,7 +121,7 @@ export const PATCH = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Missing id' }, { status: 400 });
   }
   if (!status || !VALID_STATUSES.has(status)) {
-    return NextResponse.json({ error: 'Invalid campaign status' }, { status: 400 });
+    return NextResponse.json({ error: 'Pick a promotion status from the list' }, { status: 400 });
   }
 
   const { data: current, error: currentError } = await supabaseAdmin
@@ -134,7 +134,7 @@ export const PATCH = withObservability(async (req: Request) => {
     return NextResponse.json({ error: currentError.message }, { status: 500 });
   }
   if (!current) {
-    return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Promotion not found' }, { status: 404 });
   }
 
   const { data, error } = await supabaseAdmin

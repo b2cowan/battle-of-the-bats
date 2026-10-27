@@ -23,6 +23,8 @@ import { useMemo, useState } from 'react';
 import { derivedMeta, derivedSeoDescriptionFrom } from '@/lib/walkthrough-derive';
 import type { WalkthroughPersona } from '@/lib/walkthrough-content';
 import { useStudioSave } from './useStudioSave';
+import { consoleDay } from '@/lib/console-dates';
+import kit from '../console.module.css';
 import styles from './pitch-deck-studio.module.css';
 
 /** The slice of a slide this editor needs — built slides only, already in deck order. */
@@ -105,7 +107,7 @@ export default function PullEditor({
 
   const sourceLine =
     source === 'saved'
-      ? `The page is showing a saved pull${savedAt ? ` — saved ${savedAt.slice(0, 10)}` : ''}${savedBy ? ` by ${savedBy}` : ''}.`
+      ? `The page is showing a saved pull${savedAt ? ` — saved ${consoleDay(savedAt)}` : ''}${savedBy ? ` by ${savedBy}` : ''}.`
       : 'The page is showing the code default — no saved pull.';
 
   return (
@@ -113,16 +115,16 @@ export default function PullEditor({
       {/* ⚠ Only this screen can tell an outage from an empty table — the page falls back
           identically for both, so the sentence has to live here. */}
       {storeUnreachable && (
-        <p className={styles.deckProblem}>
+        <p className={kit.fieldError}>
           ⚠ The pull store could not be read just now — the page is safely on the code default,
           and saving is unlikely to work until the store is back.
         </p>
       )}
-      <p className={styles.sourceLine}>{sourceLine}</p>
+      <p className={kit.caption}>{sourceLine}</p>
 
       {canWrite ? (
         <>
-          <p className={styles.orderLabel}>On the page · order always follows the deck</p>
+          <p className={kit.eye}>On the page · order always follows the deck</p>
           <div className={styles.pullChecks}>
             {slides.map(s => (
               <label key={s.id} className={styles.pullCheck}>
@@ -142,7 +144,7 @@ export default function PullEditor({
               warning below already owns that state. */}
           {chosen.length > 0 && (
             <div className={styles.preview}>
-              <p className={styles.previewLabel}>The page will say, all by itself:</p>
+              <p className={kit.eye}>The page will say, all by itself:</p>
               <p className={styles.previewMeta}>{derivedMeta(chosen.length)}</p>
               <p className={styles.previewDesc}>
                 {derivedSeoDescriptionFrom(subject, chosen.map(s => s.seoPhrase))}
@@ -151,33 +153,34 @@ export default function PullEditor({
           )}
 
           {problems.map(p => (
-            <p key={p} className={styles.deckProblem}>⚠ {p}</p>
+            <p key={p} className={kit.fieldError}>⚠ {p}</p>
           ))}
           {chosen.length === 0 && (
-            <p className={styles.deckProblem}>
+            <p className={kit.fieldError}>
               ⚠ The page would show no panels at all — a pull needs at least one slide.
             </p>
           )}
-          {note && <p className={styles.saveNote}>{note}</p>}
+          {note && <div className={`${kit.notice} ${kit.noticeGood}`} role="status">{note}</div>}
 
-          <div className={styles.editorActions}>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={save}
-              disabled={busy || !dirty || chosen.length === 0}
-            >
-              {busy ? 'Working…' : 'Publish this pull'}
-            </button>
-            {source === 'saved' && (
-              <button type="button" className="btn btn-secondary btn-sm" onClick={clearSaved} disabled={busy}>
-                Return to the code default
-              </button>
-            )}
-          </div>
+          {/* Absent beats disabled: Publish is drawn only once there is a change to publish
+              (it stays drawn, reading "Working…", while the save runs). */}
+          {((dirty && chosen.length > 0) || source === 'saved') && (
+            <div className={kit.formActions}>
+              {dirty && chosen.length > 0 && (
+                <button type="button" className="btn btn-secondary btn-sm" onClick={save} disabled={busy}>
+                  {busy ? 'Working…' : 'Publish this pull'}
+                </button>
+              )}
+              {source === 'saved' && (
+                <button type="button" className="btn btn-secondary btn-sm" onClick={clearSaved} disabled={busy}>
+                  Return to the code default
+                </button>
+              )}
+            </div>
+          )}
         </>
       ) : (
-        <p className={styles.caveat}>Your role can read this room but not change what a page shows.</p>
+        <p className={kit.caption}>Your role can read this room but not change what a page shows.</p>
       )}
     </div>
   );

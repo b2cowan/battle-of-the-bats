@@ -433,6 +433,8 @@ export default function EmailDashboardClient({
   return (
     <div className={kit.page}>
       <AdminPageHeader title="Campaigns" />
+      {/* Its one line (Stage 7, owner Q5): what it is, and that leads are never emailed from here. */}
+      <p className={`${kit.caption} ${kit.captionTight}`}>Planned marketing emails to customers we already have. Leads are never emailed from here.</p>
 
       {/* Result banner */}
       {lastResult && (

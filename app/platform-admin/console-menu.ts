@@ -16,7 +16,7 @@ import type { PlatformRole } from '../../lib/platform-auth';
 /** A lucide icon, by name — the rail maps each to its component. */
 export type MenuIcon =
   | 'today' | 'clubs' | 'people' | 'free_time' | 'retention' | 'status' | 'errors' | 'feedback' | 'sent' | 'leads' | 'campaigns' | 'decks'
-  | 'plans' | 'approval' | 'bulk' | 'templates' | 'export' | 'staff' | 'audit' | 'terminal' | 'wallet';
+  | 'plans' | 'approval' | 'bulk' | 'templates' | 'export' | 'staff' | 'audit' | 'terminal' | 'wallet' | 'numbers';
 
 export type MenuItem = { href: string; label: string; icon: MenuIcon; area: PlatformArea };
 export type MenuGroup = { label: string; items: MenuItem[] };
@@ -57,6 +57,9 @@ export function baseMenuGroups(devTools: boolean): MenuGroup[] {
         { href: '/platform-admin/email', label: 'Campaigns', icon: 'campaigns', area: 'email' },
         // Company-owned pitch material aimed at people who are not customers yet.
         { href: '/platform-admin/pitch-deck-studio', label: 'Pitch decks', icon: 'decks', area: 'pitch_deck_studio' },
+        // Every role (Stage 7, S7-D6): for Support, Billing and Read only it is the Growth group's only entry. Today's
+        // foot link stays.
+        { href: '/platform-admin/business-numbers', label: 'Business numbers', icon: 'numbers', area: 'overview' },
       ],
     },
     {

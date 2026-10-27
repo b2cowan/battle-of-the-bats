@@ -20,6 +20,7 @@
  */
 import type { ReactNode } from 'react';
 import { PICTURE_FRESHNESS_IS_UNCHECKED, type SlideReport } from './report';
+import kit from '../console.module.css';
 import styles from './pitch-deck-studio.module.css';
 
 const CLASS_LABEL: Record<string, string> = {
@@ -60,12 +61,12 @@ export default function SlideCard({
   const stranded = pages.length === 0;
 
   return (
-    <article className={styles.slideCard}>
+    <article className={`${kit.card} ${kit.cardPad} ${styles.slideCard}`}>
       <div className={styles.slidePicture}>
         {picture && stage ? (
           <>
             {stage}
-            <p className={styles.pictureCaption}>{picture.caption}</p>
+            <p className={`${kit.caption} ${styles.pictureCaption}`}>{picture.caption}</p>
           </>
         ) : (
           // Reachable only if a capture is declared without a recorded size. The public page has
@@ -79,11 +80,11 @@ export default function SlideCard({
       <div className={styles.slideWords}>
         <div className={styles.slideTop}>
           <span className={styles.slideNum}>{slide.id}</span>
-          <span className={styles.badge}>{CLASS_LABEL[r.imageClass] ?? r.imageClass}</span>
+          <span className={`${kit.chip} ${kit.chipQuiet}`}>{CLASS_LABEL[r.imageClass] ?? r.imageClass}</span>
           {stranded ? (
-            <span className={`${styles.badge} ${styles.badgeStranded}`}>Slideshow only</span>
+            <span className={`${kit.chip} ${kit.chipWarn}`}>Slideshow only</span>
           ) : (
-            <span className={`${styles.badge} ${styles.badgeLive}`}>Published</span>
+            <span className={`${kit.chip} ${kit.chipOk}`}>Published</span>
           )}
         </div>
 
@@ -132,7 +133,7 @@ export default function SlideCard({
           <dd className={styles.factValue}>
             {health.kind === 'drawing' ? (
               <>
-                <span className={styles.mono}>{health.drawingId}</span>
+                <span className={kit.code}>{health.drawingId}</span>
                 {/* ⚠ NOT A GREEN TICK. Nearly half the library lands here — the capture
                     check has no manifest entry to look at, and pretending otherwise would be a
                     pass that means nothing on nearly half the screen. */}
@@ -144,7 +145,7 @@ export default function SlideCard({
               </>
             ) : (
               <>
-                <span className={styles.mono}>{health.publicPath}</span>
+                <span className={kit.code}>{health.publicPath}</span>
                 {health.problems.length > 0 ? (
                   health.problems.map(p => (
                     <span key={p} className={styles.problem}>{p}</span>
@@ -154,7 +155,7 @@ export default function SlideCard({
                     Declared properly: file{health.present === null ? ' recorded' : ' present'}, size{' '}
                     {health.size ? `${health.size.w}×${health.size.h}` : 'missing'}, description and
                     caption both written. Taken at {health.captureWidth}px from{' '}
-                    <span className={styles.mono}>{health.demoPath}</span>.
+                    <span className={kit.code}>{health.demoPath}</span>.
                   </span>
                 )}
                 {/* ⚠ THE AGE SITS DIRECTLY ABOVE THE SENTENCE THAT LIMITS IT, and that adjacency is

@@ -52,7 +52,7 @@ const CHANGE_REQUEST_TYPES = [
   { value: 'addon', label: 'Add-on' },
   { value: 'pricing', label: 'Pricing' },
   { value: 'grandfathering', label: 'Grandfathering' },
-  { value: 'campaign', label: 'Campaign' },
+  { value: 'campaign', label: 'Promotion' },
   { value: 'trial', label: 'Trial' },
 ];
 

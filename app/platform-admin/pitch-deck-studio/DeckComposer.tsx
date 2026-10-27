@@ -18,11 +18,14 @@
  * a fresh server truth is the exact High-severity bug stage B shipped and fixed.
  *
  * One component, three postures: a STANDING deck (persona, code fallback behind it), a CUSTOM
- * deck (owner-created row — the club deck, a prospect deck), and NEW (the creation form).
+ * deck (owner-created row — the club deck, a prospect deck), and NEW (the creation window).
  */
 import { useState, type ReactNode } from 'react';
 import type { WalkthroughPersona } from '@/lib/walkthrough-content';
 import { useStudioSave } from './useStudioSave';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
+import { consoleDay } from '@/lib/console-dates';
+import kit from '../console.module.css';
 import styles from './pitch-deck-studio.module.css';
 
 /** The slice of a slide the composer needs — small props, never the library module. */
@@ -83,6 +86,8 @@ export default function DeckComposer({
   const [previewId, setPreviewId] = useState<string | null>(null);
   const { busy, problems, note, setNote, run: call } = useStudioSave();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // The New deck window (NEW posture only) — the door is a button, the form lives in a window.
+  const [open, setOpen] = useState(false);
 
   const dirty =
     order.join(' ') !== current.join(' ') ||
@@ -145,12 +150,13 @@ export default function DeckComposer({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, purpose, slideIds: order }),
         }),
-      'Deck created — its unlisted link is below its new card.',
+      'Deck created — its unlisted link is on its new card in Your decks.',
       () => {
         setOrder([]);
         setName('');
         setPurpose('');
         setPreviewId(null);
+        setOpen(false);
       },
     );
   };
@@ -176,58 +182,60 @@ export default function DeckComposer({
 
   if (!canWrite) {
     return (
-      <p className={styles.caveat}>Your role can read this room but not compose a deck.</p>
+      <p className={kit.caption}>Your role can read this room but not compose a deck.</p>
     );
   }
 
-  return (
-    <div className={styles.editor}>
-      {storeUnreachable && (
-        <p className={styles.deckProblem}>
-          ⚠ The deck store could not be read just now — the page is safely on the code running
-          order, and saving is unlikely to work until the store is back.
-        </p>
-      )}
-      {target.kind === 'standing' && (
-        <p className={styles.sourceLine}>
-          {source === 'saved'
-            ? `The running order is a saved deck${savedAt ? ` — saved ${savedAt.slice(0, 10)}` : ''}${savedBy ? ` by ${savedBy}` : ''}.`
-            : 'The running order is the code default — no saved deck.'}
-        </p>
-      )}
+  const isNew = target.kind === 'new';
+  const named = target.kind === 'standing' || !!name.trim();
+  // Something to publish: a change that can be saved. Absent beats disabled — a button that
+  // cannot act is not drawn (it stays drawn while the save runs, reading "Working…").
+  const canPublish = dirty && order.length > 0 && named;
+  const typed = !!name.trim() || !!purpose.trim() || order.length > 0;
 
-      {(target.kind === 'custom' || target.kind === 'new') && (
-        <div className={styles.deckFields}>
-          <label className={styles.deckField}>
-            <span className={styles.fieldLabel}>Name · internal only, never rendered publicly</span>
-            <input
-              className={styles.textInput}
-              value={name}
-              maxLength={120}
-              disabled={busy}
-              onChange={e => { setNote(null); setName(e.target.value); }}
-              placeholder="e.g. Riverdale pitch — June call"
-            />
-          </label>
-          <label className={styles.deckField}>
-            <span className={styles.fieldLabel}>Purpose · what this deck is for</span>
-            <input
-              className={styles.textInput}
-              value={purpose}
-              maxLength={500}
-              disabled={busy}
-              onChange={e => { setNote(null); setPurpose(e.target.value); }}
-              placeholder="e.g. A club asking about the coach portal first"
-            />
-          </label>
-        </div>
-      )}
+  const storeProblem = storeUnreachable && (
+    <p className={kit.fieldError}>
+      ⚠ The deck store could not be read just now — the page is safely on the code running
+      order, and saving is unlikely to work until the store is back.
+    </p>
+  );
 
-      <p className={styles.orderLabel}>
+  const fields = (target.kind === 'custom' || isNew) && (
+    <div className={kit.formGrid}>
+      <label className={kit.fieldGroup}>
+        <span className={kit.label}>
+          Name · internal only, never rendered publicly<span className={kit.req} aria-hidden>*</span>
+        </span>
+        <input
+          className={kit.field}
+          value={name}
+          maxLength={120}
+          disabled={busy}
+          onChange={e => { setNote(null); setName(e.target.value); }}
+          placeholder="e.g. Riverdale pitch — June call"
+        />
+      </label>
+      <label className={kit.fieldGroup}>
+        <span className={kit.label}>Purpose · what this deck is for</span>
+        <input
+          className={kit.field}
+          value={purpose}
+          maxLength={500}
+          disabled={busy}
+          onChange={e => { setNote(null); setPurpose(e.target.value); }}
+          placeholder="e.g. A club asking about the coach portal first"
+        />
+      </label>
+    </div>
+  );
+
+  const running = (
+    <>
+      <p className={kit.eye}>
         Running order · top is first{order.length > 0 ? ` · ${order.length} slides` : ''}
       </p>
       {order.length === 0 && (
-        <p className={styles.caveat}>No slides yet — add them from the picker below.</p>
+        <p className={kit.caption}>No slides yet — add them from the picker below.</p>
       )}
       <ol className={styles.composerRows}>
         {order.map((id, i) => (
@@ -253,10 +261,10 @@ export default function DeckComposer({
       </ol>
 
       {addable.length > 0 && (
-        <label className={styles.addRow}>
-          <span className={styles.fieldLabel}>Add a slide · any built slide in the library</span>
+        <label className={kit.fieldGroup}>
+          <span className={kit.label}>Add a slide · any built slide in the library</span>
           <select
-            className={styles.select}
+            className={kit.select}
             value=""
             disabled={busy}
             onChange={e => e.target.value && add(e.target.value)}
@@ -273,7 +281,7 @@ export default function DeckComposer({
           shown here, so the composer can never frame a slide differently from the page. */}
       {previewId && stages[previewId] && (
         <figure className={styles.composerPreview}>
-          <figcaption className={styles.previewLabel}>
+          <figcaption className={kit.eye}>
             {previewId} in the real frame — exactly as a page or present mode shows it
           </figcaption>
           {stages[previewId]}
@@ -282,57 +290,119 @@ export default function DeckComposer({
       {/* A selected row with nothing to show would read as a broken preview — say why instead
           (a slide declared but not yet captured, or a planned number with no artwork). */}
       {previewId && !stages[previewId] && (
-        <p className={styles.caveat}>
+        <p className={kit.caption}>
           No picture resolves for {previewId} yet — a page would render its words over an empty
           stage.
         </p>
       )}
+    </>
+  );
 
-      {problems.map(p => (
-        <p key={p} className={styles.deckProblem}>⚠ {p}</p>
-      ))}
-      {note && <p className={styles.saveNote}>{note}</p>}
+  const refusals = problems.map(p => (
+    <p key={p} className={kit.fieldError}>⚠ {p}</p>
+  ));
+
+  // ── NEW: a door that opens a window holding the same fields and the same create call ──────
+  if (isNew) {
+    const creatable = !!name.trim() && order.length > 0;
+    return (
+      <div className={styles.doorWrap}>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setNote(null); setOpen(true); }}>
+          New deck
+        </button>
+        {note && !open && <div className={`${kit.notice} ${kit.noticeGood}`} role="status">{note}</div>}
+        {open && (
+          <KitDialog
+            kind="form"
+            title="New deck"
+            onClose={() => setOpen(false)}
+            busy={busy}
+            dirty={typed}
+            footerStart={creatable ? undefined : <span>Name the deck and add at least one slide to create it.</span>}
+            footer={(
+              <>
+                <button type="button" className="btn btn-outline" onClick={() => setOpen(false)} disabled={busy}>
+                  Cancel
+                </button>
+                {(creatable || busy) && (
+                  <button type="button" className="btn btn-primary" onClick={save} disabled={busy}>
+                    {busy ? 'Working…' : 'Create this deck'}
+                  </button>
+                )}
+              </>
+            )}
+          >
+            <div className={styles.windowBody}>
+              <p className={kit.caption}>
+                Name it for yourself — a prospect deck’s name is your internal label and never
+                appears on the link.
+              </p>
+              {storeProblem}
+              {fields}
+              {running}
+              {refusals}
+            </div>
+          </KitDialog>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.editor}>
+      {storeProblem}
+      {target.kind === 'standing' && (
+        <p className={kit.caption}>
+          {source === 'saved'
+            ? `The running order is a saved deck${savedAt ? ` — saved ${consoleDay(savedAt)}` : ''}${savedBy ? ` by ${savedBy}` : ''}.`
+            : 'The running order is the code default — no saved deck.'}
+        </p>
+      )}
+
+      {fields}
+      {running}
+      {refusals}
+      {note && <div className={`${kit.notice} ${kit.noticeGood}`} role="status">{note}</div>}
 
       {target.kind === 'standing' && (
         // Decision 1, said out loud rather than asked about: the pull is a set, render
         // normalises, so this order IS the page's order the moment it is published.
-        <p className={styles.caveat}>
+        <p className={`${kit.caption} ${styles.lead}`}>
           This deck is published on <strong>{target.publishedPath}</strong> — the page, its pull
           and present mode will follow this order as soon as you publish.
         </p>
       )}
 
-      <div className={styles.editorActions}>
-        <button
-          type="button"
-          className="btn btn-secondary btn-sm"
-          onClick={save}
-          disabled={busy || !dirty || order.length === 0 || (target.kind !== 'standing' && !name.trim())}
-        >
-          {busy ? 'Working…' : target.kind === 'new' ? 'Create this deck' : 'Publish this running order'}
-        </button>
-        {target.kind === 'standing' && source === 'saved' && (
-          <button type="button" className="btn btn-secondary btn-sm" onClick={revert} disabled={busy}>
-            Return to the code default
-          </button>
-        )}
-        {target.kind === 'custom' && (
-          confirmingDelete ? (
-            <>
-              <button type="button" className="btn btn-danger btn-sm" onClick={destroy} disabled={busy}>
-                Really delete — its link dies with it
-              </button>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setConfirmingDelete(false)} disabled={busy}>
-                Keep it
-              </button>
-            </>
-          ) : (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setConfirmingDelete(true)} disabled={busy}>
-              Delete this deck
+      {(canPublish || (target.kind === 'standing' && source === 'saved') || target.kind === 'custom') && (
+        <div className={kit.formActions}>
+          {canPublish && (
+            <button type="button" className="btn btn-secondary btn-sm" onClick={save} disabled={busy}>
+              {busy ? 'Working…' : 'Publish this running order'}
             </button>
-          )
-        )}
-      </div>
+          )}
+          {target.kind === 'standing' && source === 'saved' && (
+            <button type="button" className="btn btn-secondary btn-sm" onClick={revert} disabled={busy}>
+              Return to the code default
+            </button>
+          )}
+          {target.kind === 'custom' && (
+            confirmingDelete ? (
+              <>
+                <button type="button" className="btn btn-danger btn-sm" onClick={destroy} disabled={busy}>
+                  Really delete — its link dies with it
+                </button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setConfirmingDelete(false)} disabled={busy}>
+                  Keep it
+                </button>
+              </>
+            ) : (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setConfirmingDelete(true)} disabled={busy}>
+                Delete this deck
+              </button>
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 }

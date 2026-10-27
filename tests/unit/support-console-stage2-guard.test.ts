@@ -329,7 +329,7 @@ describe('9 · the menu by job', () => {
       'Customers: Clubs & portals, People, Free time, Retention',
       // Stage 5 joined Status (first) and Sent emails to the group; it made no new group (drawing A).
       'Health: Status, Errors, Feedback, Sent emails',
-      'Growth: Leads, Campaigns, Pitch decks',
+      'Growth: Leads, Campaigns, Pitch decks, Business numbers',
       'Product: Plans & pricing, Approval queue, Bulk changes, Email templates, Export registry',
       'Records: Staff, Audit log',
       'System: Dev tools',
@@ -342,7 +342,7 @@ describe('9 · the menu by job', () => {
       ['app/platform-admin/orgs/OrgsClient.tsx', /AdminPageHeader title="Clubs & portals"/],
       ['app/platform-admin/customer-users/PeopleClient.tsx', /AdminPageHeader title="People"/],
       ['app/platform-admin/observability/page.tsx', /title="Errors"/],
-      ['app/platform-admin/early-access/EarlyAccessClient.tsx', /AdminPageHeader title="Leads"/],
+      ['app/platform-admin/early-access/page.tsx', /AdminPageHeader title="Leads"/],
       ['app/platform-admin/email/EmailDashboardClient.tsx', /AdminPageHeader title="Campaigns"/],
       ['app/platform-admin/pitch-deck-studio/page.tsx', /AdminPageHeader title="Pitch decks"/],
       ['app/platform-admin/bulk-operations/BulkOperationsClient.tsx', /AdminPageHeader title="Bulk changes"/],

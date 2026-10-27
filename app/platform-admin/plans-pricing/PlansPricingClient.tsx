@@ -843,7 +843,7 @@ export default function PlansPricingClient({
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Unable to create campaign');
+      if (!res.ok) throw new Error(json.error ?? 'Unable to create promotion');
 
       setCatalogCampaigns(prev => [json.campaign, ...prev]);
       setCampaignDraft({
@@ -858,7 +858,7 @@ export default function PlansPricingClient({
         trial_days: '',
         notes: '',
       });
-      setCatalogSaved('Campaign created');
+      setCatalogSaved('Promotion created');
     } catch (err) {
       setCatalogError((err as Error).message);
     } finally {
@@ -877,12 +877,12 @@ export default function PlansPricingClient({
         body: JSON.stringify({ id, status }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Unable to update campaign');
+      if (!res.ok) throw new Error(json.error ?? 'Unable to update promotion');
 
       setCatalogCampaigns(prev => prev.map(item =>
         item.id === id ? json.campaign : item,
       ));
-      setCatalogSaved('Campaign updated');
+      setCatalogSaved('Promotion updated');
     } catch (err) {
       setCatalogError((err as Error).message);
     } finally {
@@ -1861,7 +1861,7 @@ export default function PlansPricingClient({
             <strong className={kit.bandValue}>{catalogChangeRequests.length}</strong>
           </div>
           <div className={kit.bandCell}>
-            <span className={kit.bandLabel}>Campaigns</span>
+            <span className={kit.bandLabel}>Promotions</span>
             <strong className={kit.bandValue}>{catalogCampaigns.length}</strong>
           </div>
         </div>
@@ -1885,7 +1885,7 @@ export default function PlansPricingClient({
           </select>
           <p className={kit.caption}>
             {catalogView === 'planning'
-              ? 'Campaign work stays here; request approvals and status changes live in the central queue.'
+              ? 'Promotion work stays here; request approvals and status changes live in the central queue.'
               : catalogView === 'matrix'
                 ? 'Review, draft, and publish plan/module entitlement changes.'
                 : 'Review baseline plan versions and add-on catalog records.'}
@@ -1917,11 +1917,8 @@ export default function PlansPricingClient({
 
             <section className={kit.section}>
               <div>
-                <h2 className={kit.sectionTitle}>Campaign tracking</h2>
-                <p className={kit.sectionLede}>
-                  Track coupon, promo, trial, launch, and retention campaigns separately from live Stripe
-                  price IDs.
-                </p>
+                <h2 className={kit.sectionTitle}>Promotions</h2>
+                <p className={kit.sectionLede}>For the record · not linked to checkout or Stripe</p>
               </div>
 
               {canManageProduct && (
@@ -2036,7 +2033,7 @@ export default function PlansPricingClient({
                         onClick={createCampaign}
                         disabled={catalogBusy === 'campaign' || !campaignDraft.title.trim()}
                       >
-                        {catalogBusy === 'campaign' ? <Loader size={14} className={kit.spin} /> : 'Add campaign'}
+                        {catalogBusy === 'campaign' ? <Loader size={14} className={kit.spin} /> : 'Add promotion'}
                       </button>
                     </div>
                   </div>
@@ -2048,7 +2045,7 @@ export default function PlansPricingClient({
                   <table className={kit.comfortable}>
                     <thead>
                       <tr>
-                        <th>Campaign</th>
+                        <th>Promotion</th>
                         <th>Status</th>
                         <th>Type</th>
                         <th>Target plans</th>
@@ -2060,7 +2057,7 @@ export default function PlansPricingClient({
                     <tbody>
                       {catalogCampaigns.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className={kit.empty}>No product campaigns yet.</td>
+                          <td colSpan={7} className={kit.empty}>No promotions yet.</td>
                         </tr>
                       ) : catalogCampaigns.map(campaign => (
                         <tr key={campaign.id}>

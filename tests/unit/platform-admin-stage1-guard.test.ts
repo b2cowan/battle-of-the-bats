@@ -112,6 +112,8 @@ describe('the support console wears the house look (Stage 1)', () => {
       // Stage 5 (owner Q1/Q3 2026-10-26) added Status and Sent emails to Health.
       '/platform-admin/retention', '/platform-admin/status', '/platform-admin/observability', '/platform-admin/feedback',
       '/platform-admin/sent-emails', '/platform-admin/early-access', '/platform-admin/email', '/platform-admin/pitch-deck-studio',
+      // Stage 7 (owner S7-D6 2026-10-27) added Business numbers to Growth, for every role.
+      '/platform-admin/business-numbers',
       '/platform-admin/plans-pricing', '/platform-admin/change-requests', '/platform-admin/bulk-operations',
       '/platform-admin/email-templates', '/platform-admin/exports', '/platform-admin/users', '/platform-admin/audit',
     ], 'the same pages, in the menu by job — no entry added or dropped');
