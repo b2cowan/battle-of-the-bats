@@ -229,6 +229,8 @@ export default function UnifiedTeamsPage() {
   const teamQueryAppliedRef = useRef<string | null>(null);
   // 12d-1 (ask 12): Mark paid closed an open pay page — said once in that team's payments list.
   const [payDone, setPayDone] = useState<{ teamId: string; said: string } | null>(null);
+  // 12d-1: the refund the item's link asked for, held until the record it opened is left (never re-opened from the URL).
+  const [linkRefund, setLinkRefund] = useState<{ teamId: string; onlinePaymentId: string } | null>(null);
   const landedRef = useRef<string | null>(null);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [paymentInstructions, setPaymentInstructions] = useState('');
@@ -1623,7 +1625,8 @@ export default function UnifiedTeamsPage() {
     setActiveAttentionKey(null);
     setSelectedDivisionId(reg.division_id);
     setOpenTeamId(reg.id);
-  }, [currentTournament?.id, hasLoadedInitial, regs, teamParam]);
+    setLinkRefund(refundParam ? { teamId: reg.id, onlinePaymentId: refundParam } : null);
+  }, [currentTournament?.id, hasLoadedInitial, regs, teamParam, refundParam]);
 
   /** Mark paid (the record's): the rest of the fee recorded as a payment. 12d-1: a pay page it closed is said. */
   function markPaid(team: TeamRecord) {
@@ -1635,6 +1638,7 @@ export default function UnifiedTeamsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Couldn’t save');
+      setRegs(prev => prev.map(r => (r.id === team.id ? { ...r, paymentStatus: 'paid' } : r)));
       const closed = Number(data.pagesClosed ?? 0);
       if (closed > 0) setPayDone({ teamId: team.id, said: PAY_OPEN_WORDS.doneToast(money(owed), team.name, closed > 1) });
       await Promise.all([load(), loadPoolSlots()]);
@@ -2229,14 +2233,14 @@ export default function UnifiedTeamsPage() {
           position={openIndex >= 0 ? `${openIndex + 1} of ${order.length}` : ''}
           positionWide={openIndex >= 0 ? TEAM_RECORD_WORDS.positionWide(`${openIndex + 1} of ${order.length}`, selectedGroup.name) : ''}
           busy={working === openTeam.id || working === 'bulk'}
-          onStep={id => setOpenTeamId(id)}
-          onClose={() => setOpenTeamId(null)}
+          onStep={id => { setOpenTeamId(id); setLinkRefund(null); setPayDone(null); }}
+          onClose={() => { setOpenTeamId(null); setLinkRefund(null); setPayDone(null); }}
           onSave={saveTeam}
           onAccept={acceptTeam}
           onReject={rejectTeam}
           onPromote={handlePromote}
           onMarkPaid={markPaid}
-          autoRefundId={teamParam === openTeam.id ? refundParam : null}
+          autoRefundId={linkRefund?.teamId === openTeam.id ? linkRefund.onlinePaymentId : null}
           payDoneSaid={payDone?.teamId === openTeam.id ? payDone.said : null}
           onMarkUnpaid={team => patch(team.id, { paymentStatus: 'pending' })}
           onResend={resendAccessLink}

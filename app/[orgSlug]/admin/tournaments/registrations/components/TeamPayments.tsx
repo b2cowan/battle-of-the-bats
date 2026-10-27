@@ -209,13 +209,13 @@ export default function TeamPayments(props: Props) {
     if (problem) { setForm({ ...form, error: problem }); return; }
     const row = due.find(d => d.key === form.key) ?? null;
     setForm({ ...form, error: '', saving: true });
-    // 12d-1 (words §2.1): what the team still owes after this, for "the pay link still works for…".
-    const leftAfter = Math.round(((fee.totalFeeAmount ?? 0) - paid - amount) * 100) / 100;
     await send('POST', { teamId, amount, paidOn: form.paidOn, label: labelForDue(row), method: form.how || null },
       message => setForm(f => (f ? { ...f, error: message, saving: false } : f)),
       data => {
         setForm(null);
         const closed = Number(data.pagesClosed ?? 0);
+        // 12d-1 (words §2.1): what the team still owes now, from the server's own total (never this list's older figure).
+        const leftAfter = Math.round(((fee.totalFeeAmount ?? 0) - Number(data.total ?? 0)) * 100) / 100;
         if (closed > 0) setFlash(`${PW.doneToast(money(amount), teamName, closed > 1)}${leftAfter > 0 ? ` ${PW.partNote(money(leftAfter), false)}` : ''}`);
       });
   }

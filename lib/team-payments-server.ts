@@ -260,7 +260,10 @@ export async function listTeamPaymentsForRecord(teamId: string): Promise<TeamPay
   // 12d-1 (ask 10): what of each payment's extra still stands, read live (`online_payment_over_left`, the landing's).
   const overIds = [...online.values()].filter(o => o.over).map(o => o.id);
   if (overIds.length) {
-    const left = await overLeft(overIds);
+    const left = await overLeft(overIds).catch(e => {
+      console.error('[team-payments] couldn’t read what is still extra:', e instanceof Error ? e.message : String(e));
+      return new Map<string, number>();
+    });
     for (const o of online.values()) if (o.over) o.over.leftCents = left.get(o.id) ?? 0;
   }
   return rows.map(r => ({

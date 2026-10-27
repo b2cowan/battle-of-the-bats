@@ -156,7 +156,9 @@ export function RefundWindow({ p, teamName, anotherWay, send, onClose, otherLabe
   const partDone = p.refunds.filter(r => r.part && r.state !== 'failed');
   const untouched = p.leftCents >= p.baseCents && partDone.length === 0;
   // Paid twice, untouched: all of it, with the fee (the team shouldn't pay a fee on money it didn't owe). Otherwise the extra.
-  const overAll = !anotherWay && !!over && over.whole && untouched;
+  // `whole` is frozen at landing; what is extra NOW can shrink (a fee raised, a hand payment taken back), so "All of it"
+  // is set only while every dollar of the payment is still extra (/review 2026-10-27). Otherwise it opens at the extra.
+  const overAll = !anotherWay && !!over && over.whole && untouched && over.leftCents >= p.baseCents;
   const overPart = !anotherWay && !!over && !overAll && over.leftCents > 0;
   const [choice, setChoice] = useState<'all' | 'part' | null>(anotherWay || overAll ? 'all' : overPart ? 'part' : null);
   const [reason, setReason] = useState<'organizer_ended' | 'team_left'>('organizer_ended');

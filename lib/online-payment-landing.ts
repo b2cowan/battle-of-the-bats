@@ -559,6 +559,9 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
   const mismatch = session.amount_total !== expected || (session.currency ?? '').toLowerCase() !== 'cad'
     ? `Stripe took ${(session.amount_total ?? 0) / 100} ${(session.currency ?? '').toUpperCase()}, not the ${expected / 100} CAD the page asked for`
     : null;
+  // 12d-1: the card's country, written once Stripe says it is paid, before the landing (a payment that can't be recorded
+  // is still the club's cost on a card from outside its country; Part 4 bills from it).
+  await writeCardCountry(op.id, card);
   if (op.flow === 'league_signup') return landLeague(op, paidAt, card, mismatch);
 
   const { data: landed, error: landError } = mismatch
@@ -588,7 +591,6 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     await sendOnlineReceiptOnce(op.id);
     return 'not_recorded';
   }
-  await writeCardCountry(op.id, card);
   await sendOnlineReceiptOnce(op.id);
   await carryOutDecisions(op.id); // 12c Part 6: a team declined while its debit cleared
   // 12d-1 (ask 10): booked in full, and flagged when it was past what the team owed. Read from the row, never from the
@@ -636,7 +638,6 @@ async function landLeague(
     return 'not_recorded';
   }
   const result = landed as { already?: boolean; unrecorded?: unknown[] } | null;
-  await writeCardCountry(op.id, card);
   // Notices are read from the database (a replay included), so a crash between the commit and here loses none.
   await raiseLeagueUnrecorded(op);
   await carryOutDecisions(op.id); // 12c Part 6
@@ -670,13 +671,21 @@ async function writeCardCountry(opId: string, card: ReturnType<typeof cardOf>): 
  * the landing, the team's record and the item's rule.
  */
 export async function overLeft(onlinePaymentIds: readonly string[]): Promise<Map<string, number>> {
-  const out = new Map<string, number>();
-  for (const id of new Set(onlinePaymentIds)) {
+  const ids = [...new Set(onlinePaymentIds)];
+  if (!ids.length) return new Map();
+  // The SQL measures the team's whole surplus, capped by this payment's own extra: with two extras on one team, a payment
+  // refunded in full would still read the other's (/review 2026-10-27). A payment that no longer counts has none left.
+  const { data: gone, error: goneError } = await supabaseAdmin.from('online_payments').select('id')
+    .in('id', ids).in('status', ['refunded', 'reversed', 'returned']);
+  if (goneError) throw new Error(goneError.message);
+  const none = new Set((gone ?? []).map(g => g.id as string));
+  const read = await Promise.all(ids.map(async id => {
+    if (none.has(id)) return [id, 0] as const;
     const { data, error } = await supabaseAdmin.rpc('online_payment_over_left', { p_online_payment: id });
     if (error) throw new Error(error.message);
-    out.set(id, Math.round(Number(data ?? 0) * 100));
-  }
-  return out;
+    return [id, Math.round(Number(data ?? 0) * 100)] as const;
+  }));
+  return new Map(read);
 }
 
 /** Whoever runs tournaments and the owner: who hears that a team paid past what it owed (words §2.2). */
@@ -697,6 +706,16 @@ export function overHref(org: Pick<Organization, 'slug'>, op: { id: string; tour
  * extra, or the extra is already settled (the item's own rule clears a copy that is still up).
  */
 export async function raiseOverpaid(onlinePaymentId: string): Promise<void> {
+  // Never throws (/review 2026-10-27): it runs inside the landing, before steps a replay owes (the receipt, a clearing
+  // answer, dashboard refunds). A failure here is logged; the item's rule and the next landing read the row again.
+  try {
+    await raiseOverpaidNow(onlinePaymentId);
+  } catch (e) {
+    console.error('[online-payment-landing] couldn’t raise the paid-twice item:', onlinePaymentId, e instanceof Error ? e.message : String(e));
+  }
+}
+
+async function raiseOverpaidNow(onlinePaymentId: string): Promise<void> {
   const { data: op } = await supabaseAdmin.from('online_payments')
     .select('id, org_id, flow, team_id, tournament_id, total_amount, receipt_no, paid_on, rail, over_amount, over_whole, description')
     .eq('id', onlinePaymentId).maybeSingle();
@@ -725,9 +744,13 @@ export async function raiseOverpaid(onlinePaymentId: string): Promise<void> {
  * "Keep it" (§7 ruling 5): the club keeps the extra, with a reason, as a NOTE: no credit, no money moved, no book line.
  * Only while some of it is still extra. The item clears for everyone it went to.
  */
-export async function keepOverpayment(p: { onlinePaymentId: string; reason: string; actorId: string }): Promise<'kept' | 'nothing_extra'> {
+export async function keepOverpayment(p: { onlinePaymentId: string; reason: string; actorId: string }): Promise<'kept' | 'nothing_extra' | 'refund_pending'> {
   const left = (await overLeft([p.onlinePaymentId])).get(p.onlinePaymentId) ?? 0;
   if (left <= 0) return 'nothing_extra';
+  // A refund on its way may be taking the extra back: the club can't also keep it (/review 2026-10-27).
+  const { count: pending } = await supabaseAdmin.from('online_payment_refunds').select('id', { count: 'exact', head: true })
+    .eq('online_payment_id', p.onlinePaymentId).eq('status', 'pending');
+  if ((pending ?? 0) > 0) return 'refund_pending';
   const { data, error } = await supabaseAdmin.from('online_payments')
     .update({ over_kept_reason: p.reason, over_kept_by: p.actorId, over_kept_at: new Date().toISOString() })
     .eq('id', p.onlinePaymentId).not('over_amount', 'is', null).is('over_kept_at', null).select('org_id').maybeSingle();

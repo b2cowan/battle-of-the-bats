@@ -553,6 +553,7 @@ export const POST = withObservability(async (req: Request) => {
     // as the sum of the team's payments (tests/unit/team-payments-guard.test.ts).
     const paidNow = new Map<string, number>();
     const markedByPayment = new Set<string>();
+    let pagesClosed = 0;
     // 12c Part 6 (words §3.2): a bank debit on its way is the payment; it goes in the record when it clears. Checked for
     // the whole batch FIRST, so a refusal never leaves the teams before it already paid (review 2026-10-26).
     const toMark = items.filter(i => i.updates.payment_status === 'paid').map(i => i.id);
@@ -572,6 +573,9 @@ export const POST = withObservability(async (req: Request) => {
         // full) leaves the status to this update, so the team reads paid.
         if (!paid.outcome.noFee && paid.outcome.recorded) {
           markedByPayment.add(item.id);
+          // 12d-1 (ask 12): recorded by hand, so its open pay pages close now, before anything later in the batch can stop
+          // it (/review 2026-10-27). A team created "paid" needs none: it has never had a pay page.
+          pagesClosed += await closeTeamPayPages([item.id], 'Mark paid');
           if (paid.outcome.becamePaid) paidNow.set(item.id, paid.outcome.total);
         }
       } else if (item.updates.payment_status === 'pending' && Number(current?.total_paid ?? 0) > 0) {
@@ -740,10 +744,6 @@ export const POST = withObservability(async (req: Request) => {
       notifyTeamCoaches({ registrationIds: bellAccepted, eventType: 'team_coach_accepted', compose: TEAM_COACH_WORDS.accepted, excludeUserIds: [ctx.user.id] }),
       notifyTeamCoaches({ registrationIds: bellDeclined, eventType: 'team_coach_declined', compose: TEAM_COACH_WORDS.declined, excludeUserIds: [ctx.user.id] }),
     ]);
-
-    // 12d-1 (ask 12): Mark paid / Deposit paid recorded the payment, so any pay page still open closes. (A team created
-    // "paid" needs none: it has never had a pay page.)
-    const pagesClosed = markedByPayment.size ? await closeTeamPayPages([...markedByPayment], 'Mark paid') : 0;
 
     return new Response(JSON.stringify({ success: true, count: items.length, pagesClosed }), {
       status: 200,

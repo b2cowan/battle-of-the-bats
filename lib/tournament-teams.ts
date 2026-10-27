@@ -142,7 +142,8 @@ export function paymentLine(team: TeamRecord, fee: FeeSchedule, today: string): 
   const owed = owedAmount(team, fee);
   if (owed <= 0) {
     const over = Math.round((team.totalPaid - fee.totalFeeAmount) * 100) / 100;
-    // `over`: 12d-1's pill replaces "over the fee" when the extra came from an online payment (words §2.2 `teamRec.*`).
+    // `over`: any overage. The record swaps "over the fee" for 12d-1's pill only when the payments list reports extra
+    // still standing on an ONLINE payment (words §2.2 `teamRec.*`); a hand-recorded overage keeps these words.
     if (over > 0) return { lead: TEAM_RECORD_WORDS.paidAmount(formatMoney(team.totalPaid)), owes: false, rest: [TEAM_RECORD_WORDS.overFee(formatMoney(over))], over: true };
     return { lead: TEAM_RECORD_WORDS.paidInFull(formatMoney(fee.totalFeeAmount)), owes: false, rest: [] };
   }

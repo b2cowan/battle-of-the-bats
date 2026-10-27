@@ -87,6 +87,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     if (!reason) return json({ error: OVER_WORDS.keepReasonError }, 400);
     const kept = await keepOverpayment({ onlinePaymentId: body.onlinePaymentId, reason, actorId: ctx.user.id });
     if (kept === 'nothing_extra') return json({ error: OVER_WORDS.keepGone }, 409);
+    if (kept === 'refund_pending') return json({ error: OVER_WORDS.keepRefundPending }, 409);
     return json({ ok: true });
   }
 

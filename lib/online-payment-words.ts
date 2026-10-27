@@ -664,6 +664,7 @@ export const OVER_WORDS = {
   keepDone: (extra: string, team: string) => `Kept ${extra} paid by ${team}.`,
   keptLine: (extra: string, reason: string) => `Kept ${extra} · ${reason}`,
   keepGone: 'Nothing on this payment is extra any more.',
+  keepRefundPending: 'A refund on this payment is on its way. Keep it once it has gone through, if anything is still extra.',
 } as const;
 
 /** `{howPaid}`: the earlier payment's method, lowercase in a sentence ("by e-transfer", "online"). */

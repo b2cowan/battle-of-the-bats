@@ -41,7 +41,8 @@ describe('over by part, over by all (ask 10, words §2.2)', () => {
 
   it('the refund window opens set: all of it with the fee for paid twice, part of it at the extra otherwise', () => {
     const win = readCode('app/[orgSlug]/admin/tournaments/registrations/components/OnlinePaymentWindows.tsx');
-    assert.match(win, /const overAll = !anotherWay && !!over && over\.whole && untouched;/);
+    // "All of it" only while every dollar of the payment is still extra (/review: `whole` is frozen at landing).
+    assert.match(win, /const overAll = !anotherWay && !!over && over\.whole && untouched && over\.leftCents >= p\.baseCents;/);
     assert.match(win, /useState<'all' \| 'part' \| null>\(anotherWay \|\| overAll \? 'all' : overPart \? 'part' : null\)/);
     assert.match(win, /useState\(over && !anotherWay \? \(over\.whole \? O\.prefillTwice : O\.prefillMore\) : ''\)/);
     assert.match(win, /overAll \? \(feeIncluded \? O\.feeWhy :/, 'the fee box is ticked with its why');
@@ -69,6 +70,20 @@ describe('over by part, over by all (ask 10, words §2.2)', () => {
     assert.match(keep, /over_kept_reason: p\.reason, over_kept_by: p\.actorId, over_kept_at:/);
     assert.doesNotMatch(keep, /rpc\('(tournament_team_payment|online_payment_refund)/, 'keeping moves no money');
     assert.match(keep, /kinds: \['online_payment_over'\]/);
+    // Not while a refund on the payment is on its way (it may be taking the extra back).
+    assert.match(keep, /\.eq\('status', 'pending'\);\s*if \(\(pending \?\? 0\) > 0\) return 'refund_pending';/);
+  });
+
+  it('a payment refunded in full, reversed or returned has nothing extra left (two extras on one team)', () => {
+    const left = functionBody(LANDING, 'overLeft');
+    assert.match(left, /\.in\('status', \['refunded', 'reversed', 'returned'\]\)/);
+    assert.match(left, /if \(none\.has\(id\)\) return \[id, 0\] as const;/);
+  });
+
+  it('the item\'s link opens the refund window once per arrival, never again from the address', () => {
+    const page = readCode('app/[orgSlug]/admin/tournaments/registrations/page.tsx');
+    assert.match(page, /autoRefundId=\{linkRefund\?\.teamId === openTeam\.id \? linkRefund\.onlinePaymentId : null\}/);
+    assert.match(page, /onClose=\{\(\) => \{ setOpenTeamId\(null\); setLinkRefund\(null\); setPayDone\(null\); \}\}/);
   });
 });
 
@@ -77,7 +92,9 @@ describe('a replayed landing raises the item once', () => {
     const land = functionBody(LANDING, 'landCheckoutSession');
     assert.match(land, /if \(op\.flow === 'league_signup'\) await raiseLeagueUnrecorded\(op\);\s*else await raiseOverpaid\(op\.id\);/);
     assert.match(land, /await raiseOverpaid\(op\.id\);\s*if \(!\(landed as/);
-    const raise = functionBody(LANDING, 'raiseOverpaid');
+    // Never throws: it runs before steps a replay owes (the receipt, a clearing answer, dashboard refunds).
+    assert.match(functionBody(LANDING, 'raiseOverpaid'), /try \{\s*await raiseOverpaidNow\(onlinePaymentId\);\s*\} catch \(e\)/);
+    const raise = functionBody(LANDING, 'raiseOverpaidNow');
     assert.match(raise, /select\('id, org_id, flow, team_id, tournament_id, total_amount, receipt_no, paid_on, rail, over_amount, over_whole, description'\)/);
     assert.match(raise, /if \(left <= 0\) return;/, 'a settled extra is never raised again');
     assert.match(raise, /eventType: 'online_payment_over',\s*subjectKey: 'onlinePaymentId'/);
@@ -102,9 +119,9 @@ describe('a replayed landing raises the item once', () => {
 
 describe('the race: the page completes before the desk closes it', () => {
   it('a page is marked expired only when Stripe says so; one that completed is left to the landing, which flags it', () => {
-    const close = functionBody(PAGES, 'closeRows');
+    const close = functionBody(PAGES, 'closeOne');
     assert.match(close, /await expireCheckout\(r\.stripe_account_id, r\.stripe_checkout_session_id\);\s*const session = await retrieveCheckout\(/);
-    assert.match(close, /if \(session\.status !== 'expired'\) continue;\s*await expireCheckoutSession\(/);
+    assert.match(close, /if \(session\.status !== 'expired'\) return false;\s*await expireCheckoutSession\(/);
     assert.doesNotMatch(PAGES, /landCheckoutSession/, 'the close never lands a payment itself');
     // The landing books a completed page in full and measures the extra under the team's lock, whatever the desk did.
     assert.match(LAND_SQL, /SELECT f\.total INTO v_fee FROM tournament_team_fee\(v_op\.team_id\) f;/);
@@ -112,14 +129,20 @@ describe('the race: the page completes before the desk closes it', () => {
 
   it('closing never fails the hand payment that was already recorded', () => {
     for (const fn of ['closeTeamPayPages', 'closeChildPayPages']) assert.match(functionBody(PAGES, fn), /catch \(e\)[\s\S]*return 0;/);
-    assert.match(close(), /catch \(e\)/);
-    function close() { return functionBody(PAGES, 'closeRows'); }
+    // Pages close together under one deadline: a slow Stripe never makes a recorded payment look failed (a retry would
+    // record it twice).
+    const rows = functionBody(PAGES, 'closeRows');
+    assert.match(rows, /Promise\.all\(rows\.map\(r => Promise\.race\(\[\s*closeOne\(r\)\.catch\(/);
+    assert.match(PAGES, /const CLOSE_DEADLINE_MS = 8000;/);
+    // The notices' reads never break a screen.
+    for (const fn of ['openTeamPayPages', 'openChildPayPages']) assert.match(functionBody(PAGES, fn), /catch \(e\)[\s\S]*return \[\];/);
   });
 
   it('every hand-recording path closes the open pages after its own write lands', () => {
     const paths: Array<[string, RegExp]> = [
       ['app/api/admin/tournaments/[tournamentId]/registrations/payments/route.ts', /recordTeamPayment\([\s\S]*closeTeamPayPages\(\[teamId\], 'Record a payment'\)/],
-      ['app/api/admin/teams/route.ts', /closeTeamPayPages\(\[\.\.\.markedByPayment\], 'Mark paid'\)/],
+      // Each team as soon as its payment is recorded: a batch that stops later has still closed them (/review).
+      ['app/api/admin/teams/route.ts', /markedByPayment\.add\(item\.id\);[\s\S]{0,300}pagesClosed \+= await closeTeamPayPages\(\[item\.id\], 'Mark paid'\)/],
       ['app/api/admin/check-in/route.ts', /payTeamDue\([\s\S]*?if \(paid\.outcome\.recorded\) await closeTeamPayPages\(\[teamId\], 'check-in'\)/],
       ['app/api/admin/tournaments/[tournamentId]/registrations/bulk/route.ts', /if \(paid\.outcome\.recorded\) await closeTeamPayPages\(\[team\.id\], 'the bulk Mark paid'\)/],
       ['app/api/admin/tournaments/[tournamentId]/registrations/import/commit/route.ts', /if \(!noFee\) await closeTeamPayPages\(\[teamId\], 'import'\)/],
@@ -156,6 +179,9 @@ describe('house league unchanged (12b refuses a second payment at landing)', () 
     const raise = functionBody(LANDING, 'raiseLeagueUnrecorded');
     assert.match(raise, /const twice = u\.land_error === 'already_received';/);
     assert.match(raise, /at: twice \? 'card' : 'fee'/, 'its first door is the refund to the card');
+    // …and the screen opens that refund window itself: the record's card block lists only refunds already made (/review).
+    assert.match(readCode('components/admin/kit/club/league/registrations/RegistrationsScreen.tsx'),
+      /linkedAt === 'card' && cardLinked !== linked\.id[\s\S]{0,250}setCardAct\(\{ op: 'refundCard', reg: linked, id: share\.itemId, amount: share\.amount \}\)/);
     // Every other reason keeps its words.
     assert.equal(leagueUnrecordedWhy('ended'), 'the registration had already ended');
     assert.match(raise, /LW\.unrecordedTitle\(child, op\.rail === 'bank_debit'\)/);

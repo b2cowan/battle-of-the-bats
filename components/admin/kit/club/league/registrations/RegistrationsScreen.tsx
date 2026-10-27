@@ -471,6 +471,14 @@ export default function RegistrationsScreen() {
       else if (linkedAnswer === 'link' || linkedAnswer === 'keep') setEnrolledAct({ reg: linked, answer: linkedAnswer, refund: waitingRefunds[0] });
     }
   }
+  // 12d-1 (words §2.3): "paid twice" (?at=card) opens at the refund to the card. For a share that never went on the
+  // registration that is the refund window itself (the record's card block lists only refunds already made), once.
+  const [cardLinked, setCardLinked] = useState<string | null>(null);
+  if (linked && read && linkedAt === 'card' && cardLinked !== linked.id) {
+    setCardLinked(linked.id);
+    const share = read.unrecordedCard?.[linked.id]?.[0];
+    if (share && access?.takeFees) setCardAct({ op: 'refundCard', reg: linked, id: share.itemId, amount: share.amount });
+  }
   async function runEnrolled() {
     if (!enrolledAct) return;
     const { reg, answer, refund } = enrolledAct;
