@@ -17,6 +17,8 @@
 
 /* ── The Fee cell: one primary line (a pill when received or late), a quiet sub-line, a corrected line ── */
 .fee { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-width: 0; }
+.feeLead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
+.feeLead:empty { display: none; } /* a cell with only its corrected line has no lead; don't let the empty row add a gap */
 .feeNone { color: var(--text-tertiary); }
 .feePlain { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
 .feePill {

@@ -22,6 +22,8 @@ export default function FeeCell({ parts, onAlert }: { parts: FeeCellParts; onAle
   const thirdDoor = third?.refundId && onAlert ? third.refundId : null;
   return (
     <span className={css.fee}>
+      {/* The primary line and a dispute's chip share ONE line (drawn so, 12d-1 Part 3): the row stays two lines tall. */}
+      <span className={css.feeLead}>
       {alert && (onAlert
         ? (
           <button type="button" className={`${css.feePill} ${css.feeWarn} ${css.feeAlert}`} title={alert.aria} aria-label={alert.aria}
@@ -45,6 +47,7 @@ export default function FeeCell({ parts, onAlert }: { parts: FeeCellParts; onAle
           {flag.text}
         </button>
       )}
+      </span>
       {parts.sub && <span className={css.feeSub}>{parts.sub}</span>}
       {chip && chipOpen && <span className={css.feeTip}>{chip.tip}</span>}
       {flag && flagOpen && <span className={css.feeTip}>{flag.tip}</span>}

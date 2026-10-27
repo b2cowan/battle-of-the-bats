@@ -8,7 +8,7 @@
 }
 .line, .lead { margin: 0.5rem 0 0; font-size: var(--type-support); color: var(--text-secondary); }
 .line { color: var(--text-primary); font-size: var(--type-body); }
-.buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 1rem; }
 .err { margin: 0.5rem 0 0; font-size: var(--type-support); color: var(--danger); }
 .said { font-size: var(--type-support); color: var(--text-secondary); }
 .refLine { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
