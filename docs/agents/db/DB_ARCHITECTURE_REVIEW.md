@@ -28,6 +28,13 @@
 
 ---
 
+### [2026-10-27] — Finding #46: Migrations 390–391 review — a card dispute is its own record, an overpaid team is flagged, every Stripe fee is the club's (Club Tier 12d-1 Part 1)
+**Severity:** Medium (accepted risks below); the Critical/High findings were fixed before commit or in 391
+**Finding:** An independent /dba pass (pre-apply) and a four-lens /review (on c938e871a) found, and 390/391 fixed: a card's dispute id refused by mig 382's bank-only check; a label the team writer silently rewrites; a dispute-vs-refund deadlock (the dispute now takes the writers' lock order) and a dispute-vs-landing deadlock on a club whose book is off (the tournament row is now held `FOR NO KEY UPDATE`, which a payment row's foreign key never waits on — also in `online_payment_reverse` and `online_payment_team_refund_book`); a NULL-passing CHECK (`platform_stripe_fees_billed_on_chk` rewritten NULL-safe); stale reads reopening or regressing a decided dispute; refunding an overpayment lowering the team's entry instead of clearing the extra (a part refund now returns what was paid past the entry first); and a won-after-lost dispute leaving the payment permanently "reversed" (it is now restored, with a "Dispute won" line beside the "Dispute lost" one; `online_payments_reversed_sticky` lifts only under `flhq.dispute_won`).
+**Tables affected:** online_payments, online_payment_disputes, platform_stripe_fees (renamed from platform_debit_fees), platform_fee_invoices, tournament_team_payments, tournament_team_entry_adjustments
+**Recommendation (accepted risks, "extremely rare" per Stripe):** a lost card dispute books what is STILL received from the payment, as 12c's reversal does — a payment already refunded, a family-paid processing fee and a dispute for only part of a payment are not booked past it (the dispute row keeps Stripe's own amount); a loss after a win-after-loss, or a second dispute lost on a payment already reversed, books nothing more. Pre-existing and out of scope: other 12c writers (`online_payment_refund_land`) still take the tournament row `FOR UPDATE` while a book-off landing can hold the team.
+**Status:** Accepted Risk
+
 ### [2026-09-29] — Finding #45: Migration 313 review — a coach's own team moves into a club whole (`move_team_into_club`, replaces 067)
 **Severity:** Low (approved; three pre-release prod reads owed, none blocking the build)
 **Finding:** Reviewed pre-prod, after the dev apply, against the live dev catalog (read-only `.probe/tm-dba-checks.sql`) and the rolled-back dev rehearsals (`.probe/tm-rehearse*.sql`: two real workspaces moved whole, 23 and 39 tables each; wrong side refused; idempotent; cap refused under the lock; slug clash → `-2`).

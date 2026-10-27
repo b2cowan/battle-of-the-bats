@@ -448,8 +448,9 @@ BEGIN
   EXCEPTION WHEN unique_violation THEN v_ok := true; END;
   IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T27: a fee recorded twice'; END IF;
   v_ok := false;
-  BEGIN INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount, exempt_reason, stripe_invoice_item_id, billed_at)
-    VALUES (v_org, v_lop, 'reversed', 5, 'comped', 'ii_x', now());
+  -- Mig 390: says how it was billed, so only the exempt rule can refuse it.
+  BEGIN INSERT INTO platform_stripe_fees(org_id, online_payment_id, kind, amount, exempt_reason, stripe_invoice_item_id, billed_at, billed_on)
+    VALUES (v_org, v_lop, 'reversed', 5, 'comped', 'ii_x', now(), 'subscription');
   EXCEPTION WHEN check_violation THEN v_ok := true; END;
   IF NOT v_ok THEN RAISE EXCEPTION 'FAIL T27: an exempt fee billed'; END IF;
 

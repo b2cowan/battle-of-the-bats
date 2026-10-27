@@ -79,6 +79,20 @@ BEGIN
   UPDATE online_payments SET over_kept_at = now(), over_kept_reason = 'The team asked us to keep it for next year' WHERE id = v_op;
   IF online_payment_over_left(v_op) <> 0 THEN RAISE EXCEPTION 'FAIL T4: a kept extra still stands'; END IF;
 
+  -- T4b · (mig 391) refunding the extra $200 through the refund door clears it, and never lowers the team's $400 entry:
+  -- a part refund returns what was paid past the entry first.
+  v_d := online_payment_refund_open(v_op2, true, NULL, NULL, NULL, 'app', NULL, 200, 'Paid more than the team owed');
+  PERFORM online_payment_team_refund_book(v_d, 're_d1_extra', true);
+  IF online_payment_over_left(v_op2) <> 0 OR (SELECT entry_lowered FROM teams WHERE id = v_part) <> 0
+     OR (SELECT total_paid FROM teams WHERE id = v_part) <> 400 OR (SELECT payment_status FROM teams WHERE id = v_part) <> 'paid' THEN
+    RAISE EXCEPTION 'FAIL T4b: refunding the extra (left %, lowered %, paid %)', online_payment_over_left(v_op2),
+      (SELECT entry_lowered FROM teams WHERE id = v_part), (SELECT total_paid FROM teams WHERE id = v_part); END IF;
+  -- A part refund on a team that has NOT overpaid still lowers its entry (12c, §0j 3).
+  v_d := online_payment_refund_open(v_op2, true, NULL, NULL, NULL, 'app', NULL, 50, 'One game cancelled');
+  PERFORM online_payment_team_refund_book(v_d, 're_d1_part', true);
+  IF (SELECT entry_lowered FROM teams WHERE id = v_part) <> 50 THEN
+    RAISE EXCEPTION 'FAIL T4b: an ordinary part refund no longer lowers the entry (%)', (SELECT entry_lowered FROM teams WHERE id = v_part); END IF;
+
   -- T5 · a card dispute opens (needs_response): recorded once; the book is untouched (ask 3: the line stays while open).
   v_res := online_payment_dispute_apply(v_op3, 'du_d1_one', 'needs_response', 'fraudulent', 415.50, 415.50,
     now() + interval '14 days', false, 15, 'club', false, now());
@@ -126,19 +140,27 @@ BEGIN
   IF (v_res ->> 'lostNow')::boolean OR (SELECT count(*) FROM accounting_entries WHERE source_entity_id = v_op3 AND description LIKE 'Dispute lost%') <> 1 THEN
     RAISE EXCEPTION 'FAIL T8: a replayed loss booked twice (%)', v_res; END IF;
 
-  -- T9 · the lost dispute turns to won (Stripe: a late win): what the loss took comes back once, as a fresh receipt line;
-  -- the reversal and its line stay (nothing deleted to undo money).
+  -- T9 · (mig 391) the lost dispute turns to won (Stripe: a late win): the SAME payment is plain paid again — its row
+  -- posted, the payment 'paid', a "Dispute won" line beside the "Dispute lost" one (nothing deleted to undo money).
   v_res := online_payment_dispute_apply(v_op3, 'du_d1_two', 'won', 'duplicate', 415.50, 0, NULL, true, 15, 'club', false, now());
   IF NOT (v_res ->> 'wonBack')::boolean OR (SELECT total_paid FROM teams WHERE id = v_exact) <> 400
-     OR (SELECT count(*) FROM tournament_team_payments p JOIN online_payment_disputes d ON d.stripe_dispute_id = 'du_d1_two'
-          WHERE p.id = (d.won_back -> 'back' -> 0 ->> 'teamPaymentId')::uuid AND p.status = 'posted' AND p.amount = 400
-            AND p.method = 'online_card' AND p.online_payment_id IS NULL) <> 1
+     OR (SELECT status FROM tournament_team_payments WHERE online_payment_id = v_op3) <> 'posted'
+     OR (SELECT count(*) FROM tournament_team_payments WHERE team_id = v_exact AND status = 'posted') <> 1
+     OR (SELECT status FROM online_payments WHERE id = v_op3) <> 'paid'
      OR (SELECT over_amount FROM online_payments WHERE id = v_op3) IS NOT NULL
-     OR (SELECT count(*) FROM accounting_entries WHERE source_entity_id = v_op3 AND description LIKE 'Dispute lost%') <> 1 THEN
+     OR (SELECT count(*) FROM accounting_entries WHERE source_entity_id = v_op3 AND description LIKE 'Dispute lost%') <> 1
+     OR (SELECT amount FROM accounting_entries WHERE source_entity_id = v_op3 AND entry_type = 'income'
+          AND description = 'Dispute won · receipt ' || (SELECT receipt_no FROM online_payments WHERE id = v_op3)) <> 400 THEN
     RAISE EXCEPTION 'FAIL T9: a win after a loss (%)', v_res; END IF;
   v_res := online_payment_dispute_apply(v_op3, 'du_d1_two', 'won', 'duplicate', 415.50, 0, NULL, true, 15, 'club', false, now());
   IF (v_res ->> 'wonBack')::boolean OR (SELECT total_paid FROM teams WHERE id = v_exact) <> 400 THEN
     RAISE EXCEPTION 'FAIL T9: put back twice (%)', v_res; END IF;
+  -- A stale "lost" arriving after the win changes nothing: won is final.
+  v_res := online_payment_dispute_apply(v_op3, 'du_d1_two', 'lost', 'duplicate', 415.50, 415.50, NULL, false, 15, 'club', false, now());
+  IF NOT (v_res ->> 'stale')::boolean OR (SELECT status FROM online_payment_disputes WHERE stripe_dispute_id = 'du_d1_two') <> 'won'
+     OR (SELECT held FROM online_payment_disputes WHERE stripe_dispute_id = 'du_d1_two') <> 0
+     OR (SELECT status FROM online_payments WHERE id = v_op3) <> 'paid' THEN
+    RAISE EXCEPTION 'FAIL T9: a stale loss after a win (%)', v_res; END IF;
 
   -- T10 · a card payment is never reversed without its dispute.
   v_err := NULL;
@@ -170,12 +192,14 @@ BEGIN
      OR (SELECT count(*) FROM accounting_entries WHERE source_entity_id IN (v_reg, v_reg2) AND category = 'registration_fee' AND status = 'posted') <> 2 THEN
     RAISE EXCEPTION 'FAIL T11: a lost house-league dispute (%)', v_res; END IF;
 
-  -- T12 · Ivy is paid again by e-transfer; then the dispute turns to won. Henry's $150 comes back; Ivy's is refused (she
-  -- would have paid twice) and handed back for the desk.
-  PERFORM 1 FROM club_league_money(v_org, v_season, v_reg2, 'receive', NULL, v_today, 'etransfer', NULL, NULL);
+  -- T12 · (mig 391) Ivy pays $60 of her fee again by e-transfer; then the dispute turns to won. Henry's $150 comes back;
+  -- Ivy is put back the $90 she still owed, and the other $60 is handed back as extra for the desk. The payment is paid.
+  PERFORM 1 FROM club_league_money(v_org, v_season, v_reg2, 'receive', 60, v_today, 'etransfer', NULL, NULL);
   v_res := online_payment_dispute_apply(v_lop, 'du_d1_kim', 'won', 'product_not_received', 311.50, 0, NULL, true, 15, 'club', false, now());
   IF NOT (v_res ->> 'wonBack')::boolean OR league_reg_received(v_reg) <> 150 OR league_reg_received(v_reg2) <> 150
-     OR jsonb_array_length(v_res -> 'refused') <> 1 OR (v_res -> 'refused' -> 0 ->> 'registrationId')::uuid <> v_reg2 THEN
+     OR jsonb_array_length(v_res -> 'refused') <> 1 OR (v_res -> 'refused' -> 0 ->> 'registrationId')::uuid <> v_reg2
+     OR (v_res -> 'refused' -> 0 ->> 'amount')::numeric <> 60
+     OR (SELECT status FROM online_payments WHERE id = v_lop) <> 'paid' THEN
     RAISE EXCEPTION 'FAIL T12: a house-league win after a loss (%)', v_res; END IF;
 
   -- ── Every Stripe fee ──
