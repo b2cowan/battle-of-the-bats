@@ -212,7 +212,9 @@ const OVERFLOW_EXEMPT = [
 const LANDING_FAILURES = [
   'Not assigned to any teams',
   'Team not found',
-  'Page not found',
+  // 'Page not found' is NOT here: the product's own 404 eyebrow ("404 · Page not found", the S5 system screens) rides
+  // in the inline data of EVERY page, so a textContent match failed the whole sweep (found 2026-10-27, 0 of 1293 pairs
+  // measured). The 404 is held by its visible headline in VISIBLE_LANDING_FAILURES below.
   'This page could not be found',
   'Something went wrong',
   'Application error',
