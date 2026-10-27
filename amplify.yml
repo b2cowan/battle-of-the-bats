@@ -54,6 +54,17 @@ frontend:
         - echo "CLUB_DOMAINS_AMPLIFY_BRANCH=$AWS_BRANCH" >> .env.production
         - echo "CLUB_DOMAINS_AWS_ACCESS_KEY_ID=$CLUB_DOMAINS_AWS_ACCESS_KEY_ID" >> .env.production
         - echo "CLUB_DOMAINS_AWS_SECRET_ACCESS_KEY=$CLUB_DOMAINS_AWS_SECRET_ACCESS_KEY" >> .env.production
+        # The support console (Stage 5). RESEND_WEBHOOK_SECRET signs the mail service's delivery callback
+        # (/api/webhooks/resend): per branch, each its own Resend webhook. Unset ⇒ the callback answers 503 and Resend
+        # retries for about a day; emails still go. The STATUS_* keys feed Status's build and database-service lines:
+        # an IAM user allowed ONLY amplify:ListJobs on this app's master and dev branches (never GetJob: a job's log can
+        # echo settings), and a Supabase scoped token (the two projects, Project Settings + Logs read, NO Database).
+        # Unset ⇒ those lines read "Not checked". Names never start with AWS_ (Amplify reserves it) and never NEXT_PUBLIC_
+        # (tests/unit/support-console-stage5-settings-guard.test.ts).
+        - echo "RESEND_WEBHOOK_SECRET=$RESEND_WEBHOOK_SECRET" >> .env.production
+        - echo "STATUS_AMPLIFY_ACCESS_KEY_ID=$STATUS_AMPLIFY_ACCESS_KEY_ID" >> .env.production
+        - echo "STATUS_AMPLIFY_SECRET_ACCESS_KEY=$STATUS_AMPLIFY_SECRET_ACCESS_KEY" >> .env.production
+        - echo "STATUS_SUPABASE_TOKEN=$STATUS_SUPABASE_TOKEN" >> .env.production
         # NOTE: UNSUBSCRIBE_SECRET is deliberately NOT echoed here. The console var is set
         # (all-branches + dev), but production has been signing links with the insecure code
         # fallback because it was never on this copy list. Activating the console value flips

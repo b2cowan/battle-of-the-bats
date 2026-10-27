@@ -3,8 +3,10 @@ import { ChevronRight } from 'lucide-react';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { canViewPlatformArea } from '@/lib/platform-areas';
 import { getPreviousPlatformAdminVisit } from '@/lib/platform-admin-visits';
-import { countErrorsLastDay, getWaitingSnapshot, WAITING_GROUP_LABELS, WAITING_GROUPS, type WaitingQueue } from '@/lib/platform-waiting';
+import { getWaitingSnapshot, WAITING_GROUP_LABELS, WAITING_GROUPS, type WaitingQueue } from '@/lib/platform-waiting';
 import { consoleDay, consoleClock } from '@/lib/console-dates';
+import { readCheapLines } from '@/lib/platform-status';
+import { summarize } from '@/lib/platform-status-lines';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import kit from './console.module.css';
 import frame from '@/components/admin/kit/AdminKitFrame.module.css';
@@ -16,9 +18,10 @@ import styles from './today.module.css';
  *
  * What is waiting on us, as one table grouped by job: each row a queue, why its items wait, and its count in the amber
  * pill; a row opens the list that clears it. A queue with nothing waiting folds into the quiet "Clear: …" line under its
- * group, and a group with nothing waiting is one quiet line. Above it, the health line says only what the console can read
- * today — the product's own errors in 24 hours, a grey dot and no verdict (a green all-clear would vouch for builds and
- * databases nothing checks yet; Stage 5 reads those). The business numbers stay, quiet and below, one door away.
+ * group, and a group with nothing waiting is one quiet line. Above it, the health line (Support console Stage 5): the worst
+ * verdict from Status's CHEAP lines only — our own records and our database, read with Today, never Amplify or Supabase,
+ * so Today stays as fast as it was — and says plainly that builds and database services are read when Status opens. Its
+ * door goes to Status. The business numbers stay, quiet and below, one door away.
  * Roles trim it: each role sees the queues whose list it can open (`lib/platform-waiting.ts`).
  * On a phone the table becomes one framed list per group (F-41).
  */
@@ -31,11 +34,12 @@ function plural(n: number, one: string, many = `${one}s`) {
 export default async function TodayPage() {
   const auth = await requirePlatformAreaView('overview');
   const previous = auth.user.email ? await getPreviousPlatformAdminVisit(auth.user.email) : null;
-  const seesErrors = canViewPlatformArea(auth.role, 'observability');
-  const [{ queues, stats }, errors24h] = await Promise.all([
+  const seesStatus = canViewPlatformArea(auth.role, 'status');
+  const [{ queues, stats }, cheapLines] = await Promise.all([
     getWaitingSnapshot(auth.role, previous?.visited_at ?? null),
-    seesErrors ? countErrorsLastDay() : Promise.resolve(0),
+    seesStatus ? readCheapLines() : Promise.resolve([]),
   ]);
+  const health = summarize(cheapLines);
 
   const groups = WAITING_GROUPS
     .map(key => {
@@ -56,14 +60,15 @@ export default async function TodayPage() {
     <div className={kit.page}>
       <AdminPageHeader title="Today" />
 
-      {seesErrors && (
+      {seesStatus && (
         <div className={styles.health}>
-          <span className={styles.dot} aria-hidden />
+          <span className={`${styles.dot} ${health.tone === 'act' ? styles.dotAct : health.tone === 'look' ? styles.dotLook : styles.dotFine}`} aria-hidden />
           <span className={styles.healthText}>
-            <strong>{plural(errors24h, 'error')}</strong> in the last 24 hours.
-            <span className={styles.healthQuiet}> Builds and the databases are not checked here yet.</span>
+            <strong>Status: {health.tone === 'fine' ? 'all fine.' : health.lead}</strong>
+            {health.tone !== 'fine' && health.headline ? ` ${health.headline}` : ''}
+            <span className={styles.healthQuiet}> Builds and database services are read when Status opens.</span>
           </span>
-          <Link href="/platform-admin/observability" className={`${kit.door} ${styles.healthDoor}`}>Errors ›</Link>
+          <Link href="/platform-admin/status" className={`${kit.door} ${styles.healthDoor}`}>Status ›</Link>
         </div>
       )}
 

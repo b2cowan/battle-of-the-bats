@@ -15,7 +15,7 @@ import type { PlatformRole } from '../../lib/platform-auth';
 
 /** A lucide icon, by name — the rail maps each to its component. */
 export type MenuIcon =
-  | 'today' | 'clubs' | 'people' | 'free_time' | 'retention' | 'errors' | 'feedback' | 'leads' | 'campaigns' | 'decks'
+  | 'today' | 'clubs' | 'people' | 'free_time' | 'retention' | 'status' | 'errors' | 'feedback' | 'sent' | 'leads' | 'campaigns' | 'decks'
   | 'plans' | 'approval' | 'bulk' | 'templates' | 'export' | 'staff' | 'audit' | 'terminal' | 'wallet';
 
 export type MenuItem = { href: string; label: string; icon: MenuIcon; area: PlatformArea };
@@ -42,8 +42,12 @@ export function baseMenuGroups(devTools: boolean): MenuGroup[] {
     {
       label: 'Health',
       items: [
+        // Status first (Stage 5): is the platform healthy right now; every role reads it.
+        { href: '/platform-admin/status', label: 'Status', icon: 'status', area: 'status' },
         { href: '/platform-admin/observability', label: 'Errors', icon: 'errors', area: 'observability' },
         { href: '/platform-admin/feedback', label: 'Feedback', icon: 'feedback', area: 'feedback' },
+        // Every account email we sent and what happened to it (Stage 5): Super admin, Support and Billing.
+        { href: '/platform-admin/sent-emails', label: 'Sent emails', icon: 'sent', area: 'sent_emails' },
       ],
     },
     {

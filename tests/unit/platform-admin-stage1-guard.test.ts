@@ -109,8 +109,9 @@ describe('the support console wears the house look (Stage 1)', () => {
     const hrefs = all.filter(h => !extras.includes(h));
     assert.deepEqual(hrefs, [
       '/platform-admin', '/platform-admin/orgs', '/platform-admin/customer-users', '/platform-admin/free-time',
-      '/platform-admin/retention', '/platform-admin/observability', '/platform-admin/feedback',
-      '/platform-admin/early-access', '/platform-admin/email', '/platform-admin/pitch-deck-studio',
+      // Stage 5 (owner Q1/Q3 2026-10-26) added Status and Sent emails to Health.
+      '/platform-admin/retention', '/platform-admin/status', '/platform-admin/observability', '/platform-admin/feedback',
+      '/platform-admin/sent-emails', '/platform-admin/early-access', '/platform-admin/email', '/platform-admin/pitch-deck-studio',
       '/platform-admin/plans-pricing', '/platform-admin/change-requests', '/platform-admin/bulk-operations',
       '/platform-admin/email-templates', '/platform-admin/exports', '/platform-admin/users', '/platform-admin/audit',
     ], 'the same pages, in the menu by job — no entry added or dropped');

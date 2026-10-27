@@ -64,6 +64,17 @@ export type PlatformPower =
    * sixth-in-24-hours limits are the refund route's, not this list's.
    */
   | 'refund'
+  /**
+   * Reply to a feedback item by email (Support console Stage 5, owner Q5 2026-10-26): Super admin and Support. Billing
+   * and Product keep triage and have no Reply door. No reason asked (a console work tool).
+   */
+  | 'reply'
+  /**
+   * Read the sent-email log (Stage 5, owner Q3): a person's Emails tab, Health › Sent emails, Find's Sent emails group
+   * and the Story's email rows. Super admin, Support and Billing; absent for the rest. Emails to staff accounts read for
+   * Super admin only (the readers filter them in the query).
+   */
+  | 'sent_log'
   /** The dev-only seed console (and only where NEXT_PUBLIC_ENABLE_DEV_TOOLS is on). */
   | 'dev_tools';
 
@@ -94,6 +105,8 @@ export const PLATFORM_POWERS: Record<PlatformPower, readonly PlatformRole[]> = {
   records_opened:   ['super_admin'],
   find_stripe:      ['super_admin', 'billing', 'support'],
   refund:           ['super_admin', 'billing'],
+  reply:            ['super_admin', 'support'],
+  sent_log:         ['super_admin', 'support', 'billing'],
   run_jobs:         ['super_admin'],
   dev_tools:        ['super_admin'],
 };
@@ -117,8 +130,10 @@ export type PlatformArea =
   | 'free_time'
   | 'platform_users'
   | 'audit'
+  | 'status'
   | 'observability'
   | 'feedback'
+  | 'sent_emails'
   | 'email_templates'
   | 'help'
   | 'export_registry'
@@ -173,10 +188,16 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
 
   platform_users:  { viewRoles: ['super_admin'], powers: ['staff'] },
   // Errors — triage stays product's (engineering signal); support reads them.
+  // Status (Stage 5, owner Q3): verdicts and counts about the platform, nothing about any customer — every role reads it.
+  status:          { viewRoles: ALL_ROLES, powers: [] },
   observability:   { viewRoles: ['super_admin', 'product', 'support'], powers: ['errors_triage'] },
   // Customer-feedback triage — distinct from error triage. Support, billing and product triage it (F3, 2026-06-14);
-  // ⚠ it is its own power, so Billing keeps it although A1 took Support's account powers away.
-  feedback:        { viewRoles: ['super_admin', 'product', 'support', 'billing'], powers: ['feedback_triage'] },
+  // ⚠ it is its own power, so Billing keeps it although A1 took Support's account powers away. Reply (Stage 5) is a
+  // second power on the same page: Super admin and Support.
+  feedback:        { viewRoles: ['super_admin', 'product', 'support', 'billing'], powers: ['feedback_triage', 'reply'] },
+  // Health › Sent emails (Stage 5): opening it IS the sent_log power, so its view roles are that power's roles
+  // (support-console-stage5-powers-guard.test.ts holds them equal). Nothing on it changes anything.
+  sent_emails:     { viewRoles: ['super_admin', 'support', 'billing'], powers: [] },
   dev_tools:       { viewRoles: ['super_admin'], powers: ['dev_tools'] },
 };
 

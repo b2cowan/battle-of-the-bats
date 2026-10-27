@@ -24,6 +24,10 @@
   border-radius: 999px;
   background: var(--text-tertiary);
 }
+/* Status's worst cheap verdict (Stage 5): olive fine, amber look at it, red act now. */
+.dotFine { background: var(--home-olive); }
+.dotLook { background: var(--warning); }
+.dotAct { background: var(--danger); }
 .healthText { flex: 1; min-width: 12rem; }
 .healthText strong { color: var(--text-primary); font-weight: 650; }
 .healthQuiet { font-size: var(--type-support); color: var(--text-tertiary); }
