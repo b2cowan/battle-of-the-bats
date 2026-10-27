@@ -5,7 +5,7 @@ import { withObservability } from '@/lib/observability';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { onlinePaymentsOn, ONLINE_PAYMENTS_OFF_ERROR } from '@/lib/online-payments-switch';
 import { canRefundOnline } from '@/lib/online-payment-access';
-import { recordRefundAnotherWay, refundOnlinePayment, refundTeamPart, resolveLeagueRefundAnotherWay } from '@/lib/online-payment-landing';
+import { recordRefundAnotherWay, refundOnlinePayment, refundTeamPart, resolveLeagueRefundAnotherWay, settleDecisionAfterSave } from '@/lib/online-payment-landing';
 import { sendTeamPayLink } from '@/lib/online-payment-receipt';
 
 export const runtime = 'nodejs';
@@ -70,6 +70,8 @@ export const POST = withObservability(async (req: Request, { params }: { params:
       reason: choice === 'keep' ? reason : null, decided_by: ctx.user.id,
     });
     if (error) return json({ error: error.code === '23505' ? 'This bank debit already has an answer.' : error.message }, 409);
+    // The debit may have landed (or come back) between the check above and the save: settle the answer now.
+    await settleDecisionAfterSave(op.id).catch(e => console.error('[online-payments] settling a clearing answer failed:', e instanceof Error ? e.message : String(e)));
     return json({ ok: true });
   }
 
@@ -90,6 +92,9 @@ export const POST = withObservability(async (req: Request, { params }: { params:
         await resolveLeagueRefundAnotherWay(last.id as string, ctx.user.id);
         return json({ state: 'succeeded', refundId: last.id });
       }
+      // A part refund Stripe refused before taking it changed nothing (never booked): it is not a full refund to record.
+      // Falling through would open "All of it" and book the whole payment as refunded though no money moved (review 2026-10-26).
+      if (last.part_refund) return json({ error: 'That part refund didn’t go through, so nothing was refunded. Try the refund again.' }, 409);
     }
     const reason = body.reason === 'organizer_ended' || body.reason === 'team_left' ? body.reason : null;
     const note = typeof body.note === 'string' ? body.note.trim().slice(0, 1000) || null : null;

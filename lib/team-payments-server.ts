@@ -218,7 +218,12 @@ export async function listTeamPaymentsForRecord(teamId: string): Promise<TeamPay
       }]);
     }
     const latest = new Map<string, { status: string; succeeded_at: string | null }>();
-    for (const r of refunds ?? []) if (!latest.has(r.online_payment_id as string)) latest.set(r.online_payment_id as string, r as never);
+    // A part refund Stripe refused before taking it changed nothing and is on no screen (see above): it is not "the latest
+    // refund" either, or the row would show "didn't reach the card" and offer to record a refund that never began.
+    for (const r of refunds ?? []) {
+      if (r.status === 'failed' && r.part_refund && !r.booked_at) continue;
+      if (!latest.has(r.online_payment_id as string)) latest.set(r.online_payment_id as string, r as never);
+    }
     const cents = (v: unknown) => Math.round(Number(v) * 100);
     for (const p of ops ?? []) {
       const r = latest.get(p.id as string);

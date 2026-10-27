@@ -200,8 +200,17 @@ BEGIN
   IF NOT (v_res ->> 'already')::boolean OR online_payment_clearing(v_op, 'pi_c12_bank2', '6789')
      OR (SELECT total_paid FROM teams WHERE id = v_bankteam) <> 100 THEN
     RAISE EXCEPTION 'FAIL T14: a replay or a late completed moved it'; END IF;
-  -- A card payment never clears.
-  IF online_payment_clearing(v_op2, 'pi_x', NULL) THEN RAISE EXCEPTION 'FAIL T14: a card payment cleared'; END IF;
+  -- A card payment never clears. (Review 2026-10-26: this used a payment that was already refunded, so it passed on the
+  -- status alone; an OPEN card payment is the case that can fail on the rail.)
+  DECLARE v_card uuid;
+  BEGIN
+    INSERT INTO online_payments(org_id, stripe_account_id, flow, tournament_id, team_id, scope, description, base_amount,
+      fee_amount, total_amount, fee_payer, fee_pct, fee_flat, stripe_checkout_session_id)
+    VALUES (v_org, 'acct_check12c', 'tournament_team', v_event, v_bankteam, 'balance', 'Card Team · balance', 50, 2, 52,
+      'family', 0.035, 1.50, 'cs_check12c_' || gen_random_uuid()) RETURNING id INTO v_card;
+    IF (SELECT status FROM online_payments WHERE id = v_card) <> 'open' THEN RAISE EXCEPTION 'FAIL T14: the card fixture is not open'; END IF;
+    IF online_payment_clearing(v_card, 'pi_x', NULL) THEN RAISE EXCEPTION 'FAIL T14: a card payment cleared'; END IF;
+  END;
   -- T14b · a part refund of the bank debit: its "Refunds" line says online_bank and "to bank account" (/dba).
   v_ref := online_payment_refund_open(v_op, false, NULL, NULL, NULL, 'app', NULL, 10, 'Short game');
   PERFORM online_payment_team_refund_book(v_ref, 're_c12_bank', false);
@@ -405,6 +414,10 @@ BEGIN
           AND entry_type = 'expense' AND payment_method = 'online_bank') <> 1
      OR (SELECT count(*) FROM accounting_entries WHERE source_entity_id = v_reg2 AND category = 'registration_fee' AND status = 'posted') <> 1 THEN
     RAISE EXCEPTION 'FAIL T25: the reversal (%)', v_res; END IF;
+  -- Review 2026-10-26: the amount of the returned line was never read — nothing refunded, so the whole $150 comes back.
+  IF (SELECT sum(amount) FROM accounting_entries WHERE source_entity_id = v_reg2 AND category = 'registration_returned') <> 150 THEN
+    RAISE EXCEPTION 'FAIL T25: the returned line is not the $150 received (%)',
+      (SELECT sum(amount) FROM accounting_entries WHERE source_entity_id = v_reg2 AND category = 'registration_returned'); END IF;
   v_res := online_payment_reverse(v_lop, 'dp_c12_jack', 'insufficient_funds', NULL);
   IF NOT (v_res ->> 'already')::boolean THEN RAISE EXCEPTION 'FAIL T25: reversed twice'; END IF;
   v_err := NULL;
@@ -414,7 +427,14 @@ BEGIN
 
   -- T26 · a team's cleared debit reversed: its row reads reversed and leaves the paid figure; a "Returned by the bank" line.
   SELECT id INTO v_op FROM online_payments WHERE team_id = v_bankteam AND rail = 'bank_debit' AND landed_at IS NOT NULL LIMIT 1;
+  -- Review 2026-10-26: the line's AMOUNT was never read. This payment had a $10 part refund (T14b), so what the bank takes
+  -- back and the book returns is $90, never the $100 it started as.
+  IF (SELECT refunded_amount FROM tournament_team_payments WHERE online_payment_id = v_op) <> 10 THEN
+    RAISE EXCEPTION 'FAIL T26: the fixture lost its $10 part refund'; END IF;
   v_res := online_payment_reverse(v_op, 'dp_c12_team', NULL, NULL);
+  IF (SELECT amount FROM accounting_entries WHERE source_entity_id = v_op AND description LIKE 'Returned by the bank · %' AND payment_method = 'online_bank') <> 90 THEN
+    RAISE EXCEPTION 'FAIL T26: the returned line is not the $90 still received (%)',
+      (SELECT amount FROM accounting_entries WHERE source_entity_id = v_op AND description LIKE 'Returned by the bank · %' AND payment_method = 'online_bank'); END IF;
   IF (SELECT status FROM tournament_team_payments WHERE online_payment_id = v_op) <> 'reversed'
      OR (SELECT total_paid FROM teams WHERE id = v_bankteam) <> 0
      OR NOT EXISTS (SELECT 1 FROM accounting_entries WHERE source_entity_id = v_op AND description LIKE 'Returned by the bank · %' AND payment_method = 'online_bank') THEN

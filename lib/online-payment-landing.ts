@@ -475,6 +475,24 @@ async function carryOutDecisions(onlinePaymentId: string): Promise<void> {
 
 
 /**
+ * A desk's answer saved while a debit was clearing may land AFTER the debit did (the desk checked "clearing", then the
+ * webhook landed it, then the answer was written): the landing's own carry-out then found nothing, and the UI stops
+ * showing an answer once the debit is not clearing, so it would wait forever (review 2026-10-26). Called right after the
+ * answer is saved: if the debit has since landed it is carried out now, if it came back it is stamped like the others.
+ * A debit still clearing is left to the landing. Safe beside the webhook — every decision is claimed before it acts.
+ */
+export async function settleDecisionAfterSave(onlinePaymentId: string): Promise<void> {
+  const { data: op } = await supabaseAdmin.from('online_payments').select('status, landed_at').eq('id', onlinePaymentId).maybeSingle();
+  if (!op || op.status === 'clearing') return;
+  if (op.status === 'returned') {
+    await supabaseAdmin.from('online_payment_clear_decisions').update({ outcome: 'returned', outcome_at: new Date().toISOString() })
+      .eq('online_payment_id', onlinePaymentId).is('outcome', null);
+    return;
+  }
+  if (op.landed_at) await carryOutDecisions(onlinePaymentId);
+}
+
+/**
  * A Checkout Session on a club's account completed and paid → land it. Idempotent (the database function answers
  * `already`). A landing that throws — an "our team" link made after the page opened, a deleted team — keeps the payment
  * PAID and numbered, with the reason, and raises "isn't in the team's record" for whoever may refund. Stripe has the
@@ -489,8 +507,12 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
   const op = data as (OnlineRow & { rail?: string | null }) | null;
   if (!op || op.stripe_account_id !== stripeAccountId) return 'unknown';
   if (op.landed_at) {
-    // A replay still owes any child's notice a crash after the landing's commit missed (raiseLeagueUnrecorded).
+    // A replay still owes any child's notice a crash after the landing's commit missed (raiseLeagueUnrecorded), and the
+    // answer a desk gave while the debit cleared plus the receipt (review 2026-10-26: a crash between the landing's commit
+    // and those steps left a "send it back" answer waiting forever). Each is once-only, so a plain replay changes nothing.
     if (op.flow === 'league_signup') await raiseLeagueUnrecorded(op);
+    await carryOutDecisions(op.id);
+    await sendOnlineReceiptOnce(op.id);
     return 'already';
   }
   if (op.status === 'returned') return 'returned'; // 12c: a returned debit never lands

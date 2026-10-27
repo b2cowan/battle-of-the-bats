@@ -17,6 +17,7 @@ import ck from '../../ClubKit.module.css';
 import { repKit } from '../../RepKit';
 import { DayField, FormError, MethodField, TextField, moneyKit } from '../../money/MoneyKit';
 import { MONEY_REFUSAL, PRICE_WORDS } from '@/lib/house-league-money-words';
+import { REFUND_WORDS } from '@/lib/online-payment-words';
 import { formatLeagueMoney, lastPayment, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
 import { parsePrice, refundDayError, regDay, type PriceChange } from '@/lib/house-league-registrations';
 import type { DuesPaymentMethod, LeagueRegistration } from '@/lib/types';
@@ -51,7 +52,9 @@ export default function PriceWindow({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // 12b: every payment for this child came by card (only the card landing writes 'online_card').
-  const allCard = got > 0 && lines.filter(l => l.status === 'posted' && l.dir === 'in').every(l => l.method === 'online_card');
+  // 12c: a cleared bank debit is online too ('online_bank') — the difference goes back to the bank account the same way.
+  const allCard = got > 0 && lines.filter(l => l.status === 'posted' && l.dir === 'in').every(l => l.method === 'online_card' || l.method === 'online_bank');
+  const toBank = allCard && last?.method === 'online_bank';
   const [toCard, setToCard] = useState(true);
 
   const next = parsePrice(text);
@@ -71,7 +74,7 @@ export default function PriceWindow({
   const hint = got === 0 ? PRICE_WORDS.hintUnpaid(name)
     : cardRaise ? PRICE_WORDS.hintRaiseCard(name, money(diff))
     : raise ? PRICE_WORDS.hintRaise(name, paid, money(diff))
-      : lower && allCard ? PRICE_WORDS.hintLowerCard(name, paid, money(-diff))
+      : lower && allCard ? (toBank ? PRICE_WORDS.hintLowerBank : PRICE_WORDS.hintLowerCard)(name, paid, money(-diff))
       : lower ? PRICE_WORDS.hintLower(name, paid, money(-diff))
         : even ? PRICE_WORDS.hintEven(name, paid)
           : null;
@@ -99,7 +102,7 @@ export default function PriceWindow({
       if (r.status === 409) onChanged();
       return;
     }
-    onDone(cardLower ? PRICE_WORDS.doneLowerCard(name, money(next), money(-diff))
+    onDone(cardLower ? (toBank ? PRICE_WORDS.doneLowerBank : PRICE_WORDS.doneLowerCard)(name, money(next), money(-diff))
       : cardRaise ? PRICE_WORDS.doneRaiseCard(name, money(next))
       : lower ? PRICE_WORDS.doneLower(name, money(next), money(-diff)) : PRICE_WORDS.done(name, money(next)));
   }
@@ -141,8 +144,8 @@ export default function PriceWindow({
           <label className={css.choice}>
             <input type="radio" name="regs-price-back" checked={toCard} onChange={() => setToCard(true)} />
             <span>
-              <span className={css.choiceName}>{PRICE_WORDS.lowerCardChoice(money(-diff))}</span>
-              <span className={ck.hint}>{PRICE_WORDS.lowerCardSub}</span>
+              <span className={css.choiceName}>{(toBank ? PRICE_WORDS.lowerBankChoice : PRICE_WORDS.lowerCardChoice)(money(-diff))}</span>
+              <span className={ck.hint}>{toBank ? REFUND_WORDS.arrivesBank : PRICE_WORDS.lowerCardSub}</span>
             </span>
           </label>
           <label className={css.choice}>

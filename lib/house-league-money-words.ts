@@ -514,6 +514,10 @@ export const PRICE_WORDS = {
   lowerCardChoice: (diff: string) => `Refund ${diff} to the card`,
   lowerCardSub: 'Arrives in 5 to 10 business days',
   lowerOtherChoice: 'Refunded another way',
+  // 12c: the same for a child who paid by bank debit — the difference goes back to the bank account.
+  hintLowerBank: (name: string, paid: string, diff: string) => `${possessive(name)} family paid ${paid} by bank debit. ${diff} goes back to them.`,
+  lowerBankChoice: (diff: string) => `Refund ${diff} to the bank account`,
+  doneLowerBank: (name: string, price: string, diff: string) => `${possessive(name)} price is now ${price}. Refunded ${diff} to the bank account.`,
   hintRaiseCard: (name: string, diff: string) => `${possessive(name)} family will owe ${diff} more. We’ll email them a pay link for it.`,
   submitLowerCard: 'Save and refund',
   submitRaiseCard: 'Save and email',

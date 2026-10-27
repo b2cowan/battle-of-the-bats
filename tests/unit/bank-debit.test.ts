@@ -152,7 +152,8 @@ describe('the webhook and the landing (§0k)', () => {
     assert.match(carry, /\.update\(\{ outcome: 'sent_back', outcome_at: now \}\)\s*\.eq\('id', d\.id\)\.is\('outcome', null\)\.select\('id'\)\.maybeSingle\(\)/,
       'the decision is claimed before Stripe is asked');
     assert.match(carry, /if \(!item\?\.entry_id\) continue;/, 'only a share in the book is sent back');
-    assert.equal((land.match(/await carryOutDecisions\(op\.id\)/g) ?? []).length, 2, 'both flows, replays included');
+    // Both landings, and the already-landed replay (review 2026-10-26: a crash after the commit left an answer waiting).
+    assert.equal((land.match(/await carryOutDecisions\(op\.id\)/g) ?? []).length, 3, 'both flows, and the replay');
   });
 
   it('Part 6: Stripe\'s failure fee is the constant, billed on the club\'s subscription, never on a comped club', () => {
