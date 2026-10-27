@@ -719,6 +719,9 @@ export const disputeWhyShort = (reason: string | null | undefined) => (reason ? 
 
 /** A sentence that ends on a clock ("…7:59 p.m.") absorbs its own full stop (Part 2's lesson, `PAY_OPEN_WORDS.notice`). */
 export const endSentence = (s: string) => (s.endsWith('.') ? s : `${s}.`);
+/** " Answer in Stripe by {due}.", or nothing when the bank allows no answer (no due date: /review 2026-10-27). */
+const answerIn = (due: string) => (due ? ` Answer in Stripe by ${endSentence(due)}` : '');
+const answersIt = (name: string, due: string) => (due ? ` ${name} answers it in Stripe by ${endSentence(due)}` : '');
 
 /** `{due}` on a screen ("Nov 11") and with the clock ("Nov 11 at 7:59 p.m."), in the club's zone; `full` adds the year
  *  (an email, words "Dates"). */
@@ -748,6 +751,8 @@ export const DISPUTE_WORDS = {
   tip: (held: string, book: 'season' | 'tournament') =>
     `The cardholder’s bank is disputing this payment. Stripe is holding ${held} from the club’s Stripe balance until the bank decides. The payment stays in the ${book === 'season' ? 'season’s' : 'tournament’s'} book.`,
   tipAnswered: 'The cardholder’s bank is disputing this payment. Nothing is left for the club to do; the bank decides, and this can take weeks.',
+  // Derived (the item's inquiry words, §1.4) for the chip's tap on an inquiry, where nothing is held: owed to /marketing.
+  tipInquiry: 'The cardholder’s bank is asking about this payment. Nothing has been taken.',
   // §1.2 the record block.
   heading: 'The cardholder’s bank is disputing this payment',
   headingInquiry: 'The cardholder’s bank is asking about this payment',
@@ -792,13 +797,13 @@ export const DISPUTE_WORDS = {
   itemTitle: (who: string) => `${who} card payment is disputed`,
   itemTitleMany: (children: string) => `A card payment for ${children} is disputed`,
   itemBody: (payer: string, receiptNo: string, amount: string, whyFull: string, held: string, due: string) =>
-    `${payer} bank is disputing receipt ${receiptNo} (${amount})${whyFull}. Stripe has taken ${held} from the club’s Stripe balance until the bank decides. Answer in Stripe by ${endSentence(due)}`,
+    `${payer} bank is disputing receipt ${receiptNo} (${amount})${whyFull}. Stripe has taken ${held} from the club’s Stripe balance until the bank decides.${answerIn(due)}`,
   itemBodyInquiry: (payer: string, receiptNo: string, whyFull: string, due: string) =>
-    `${payer} bank is asking about receipt ${receiptNo}${whyFull}. Nothing has been taken. Answering can stop it becoming a dispute. Answer in Stripe by ${endSentence(due)}`,
+    `${payer} bank is asking about receipt ${receiptNo}${whyFull}. Nothing has been taken. Answering can stop it becoming a dispute.${answerIn(due)}`,
   itemBodyOthers: (payer: string, receiptNo: string, amount: string, name: string, due: string) =>
-    `${payer} bank is disputing receipt ${receiptNo} (${amount}). ${name} answers it in Stripe by ${endSentence(due)} If the club wins, nothing changes here.`,
+    `${payer} bank is disputing receipt ${receiptNo} (${amount}).${answersIt(name, due)} If the club wins, nothing changes here.`,
   itemBodyOthersInquiry: (payer: string, receiptNo: string, amount: string, name: string, due: string) =>
-    `${payer} bank is asking about receipt ${receiptNo} (${amount}). ${name} answers it in Stripe by ${endSentence(due)}`,
+    `${payer} bank is asking about receipt ${receiptNo} (${amount}).${answersIt(name, due)}`,
   lostTitle: (who: string) => `${who} dispute was lost`,
   lostTitleMany: (children: string) => `The dispute for ${children} was lost`,
   lostBody: (receiptNo: string, day: string, book: 'season' | 'tournament', owesAgain: string, team: boolean) =>
@@ -853,8 +858,9 @@ export const DISPUTE_EMAIL_WORDS = {
   held: 'Held by Stripe',
   heldNone: 'Nothing taken',
   answerBy: 'Answer by',
-  act: (recordPossessive: string) => `Answer it in Stripe with your evidence. ${recordPossessive} record has the facts to copy.`,
-  button: (recordPossessive: string) => `Open ${recordPossessive} record`,
+  act: (recordPossessive: string | null) => `Answer it in Stripe with your evidence. ${recordPossessive ? `${recordPossessive} record has` : 'Each child’s record has'} the facts to copy.`,
+  // Siblings: §1.4's "Open the registrations" (the link opens the season's list).
+  button: (recordPossessive: string | null) => (recordPossessive ? `Open ${recordPossessive} record` : 'Open the registrations'),
   noChange: 'If the club wins, nothing changes in your books.',
 } as const;
 

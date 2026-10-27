@@ -18,6 +18,7 @@ import { announceTeamPaid } from '@/lib/team-payment-notices';
 import { TEAM_RECORD_WORDS } from '@/lib/registration-words';
 import { closeTeamPayPages, openTeamPayPages } from '@/lib/online-pay-pages';
 import { readDisputes } from '@/lib/online-dispute-read';
+import type { DisputeRecord } from '@/lib/online-payment-dispute';
 
 /**
  * A TEAM'S PAYMENTS — the Teams record's Payment section (mig 345; TEAM_PAYMENTS_LIST_PLAN.md).
@@ -105,6 +106,10 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
   const disputes = await readDisputes({
     orgId: g.ctx.org.id, onlinePaymentIds: payments.map(p => p.online?.id).filter((x): x is string => !!x),
     viewer: { userId: g.ctx.user.id, canCopy: canRefundOnline(member, g.ctx.org) },
+  }).catch(e => {
+    // An extra never takes the record down (/review 2026-10-27).
+    console.error('[team payments] couldn’t read card disputes:', e instanceof Error ? e.message : String(e));
+    return new Map<string, DisputeRecord>();
   });
   for (const p of payments) if (p.online) p.online.dispute = disputes.get(p.online.id) ?? null;
   const online = {

@@ -98,14 +98,28 @@ describe('amber and the Stripe door are the answerer’s; no refund door while o
   });
 
   it('the team row offers no refund while a dispute is open, and a card loss reads its own words', () => {
-    assert.match(TEAM, /p\.online\.refund !== 'pending'\s*&& !isDisputeOpen\(p\.online\.dispute\?\.status \?\? ''\)/);
+    assert.match(TEAM, /p\.online\.refund !== 'pending'\s*&& !blocksRefund\(p\.online\.dispute\?\.status \?\? ''\)/);
     assert.match(TEAM, /p\.online\.rail === 'card' && p\.online\.dispute\?\.lostBookedAt\s*\? <span className=\{styles\.payTag\}>\{DPW\.teamRowLost/);
   });
 
   it('house league: the row’s refund door waits while open; "Email families who owe" leaves out a lost dispute', () => {
-    assert.match(SCREEN, /unrecordedCard\?\.\[reg\.id\]\?\.length && !isDisputeOpen\(read\?\.disputes\?\.\[reg\.id\]\?\.status \?\? ''\)\) actions\.all\.push\('refundCard'\)/);
+    assert.match(SCREEN, /unrecordedCard\?\.\[reg\.id\]\?\.length && !blocksRefund\(read\?\.disputes\?\.\[reg\.id\]\?\.status \?\? ''\)\) actions\.all\.push\('refundCard'\)/);
     assert.match(SCREEN, /lost\?\.status === 'lost' && lost\.lostBookedAt\) \{ skipped\.push\(id\); disputeSkipped \+= 1; continue; \}/);
     assert.equal(D.bulkWhy, 'a dispute was lost');
+  });
+
+  it('what this reader may not use is never sent: the facts and the owner’s fee line are blanked on the server', () => {
+    const READ = readCode('lib/online-dispute-read.ts');
+    assert.match(READ, /factsText: !canCopy \? '' : disputeFactsText\(/);
+    assert.match(READ, /stripeFee: youAnswer \? view\.stripeFee : null/);
+    // Never a long id list (the URL-length limit, the 1,000-row cap): it starts from the club's disputes.
+    assert.doesNotMatch(READ, /\.in\('registration_id'/);
+  });
+
+  it('an inquiry’s tap says nothing was taken; the band counts real disputes only', () => {
+    const inquiry = feeCell(reg(), SEASON, [paid()], TODAY, [], [], null, null, rec({ status: 'warning_needs_response', held: 0 }));
+    assert.deepEqual([inquiry.flag?.text, inquiry.flag?.tip], ['Bank asking', D.tipInquiry]);
+    assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/ledger/route.ts'), /\.in\('status', \['needs_response', 'under_review'\]\)/);
   });
 
   it('the family’s status page shows a reversal for a bank debit only (ask 2: nobody tells a family about a dispute)', () => {

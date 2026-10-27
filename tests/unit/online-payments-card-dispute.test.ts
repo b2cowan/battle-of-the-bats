@@ -102,6 +102,14 @@ describe('how a dispute reads (words §1.1–§1.2)', () => {
     assert.doesNotMatch(every.replace(/fraudulent/g, ''), /fraud/i);
   });
 
+  it('no "Answer in Stripe by ." when the bank allows no answer (no due date)', () => {
+    assert.equal(D.itemBody('Grace Kim’s', '1041', '$150.00', '', '$150.00', ''),
+      'Grace Kim’s bank is disputing receipt 1041 ($150.00). Stripe has taken $150.00 from the club’s Stripe balance until the bank decides.');
+    assert.equal(D.itemBodyOthers('Grace Kim’s', '1041', '$150.00', 'Sam Lee', ''),
+      'Grace Kim’s bank is disputing receipt 1041 ($150.00). If the club wins, nothing changes here.');
+    assert.equal(M.button(null), 'Open the registrations');
+  });
+
   it('a sentence that ends on a clock absorbs its own full stop (Part 2’s lesson)', () => {
     assert.equal(endSentence('Nov 11 at 7:59 p.m.'), 'Nov 11 at 7:59 p.m.');
     assert.equal(D.itemBody('Grace Kim’s', '1041', '$150.00', '', '$150.00', 'Nov 11 at 7:59 p.m.'),
@@ -110,8 +118,10 @@ describe('how a dispute reads (words §1.1–§1.2)', () => {
       'Grace Kim’s bank is disputing receipt 1041 ($150.00). Sam Lee answers it in Stripe by Nov 11 at 7:59 p.m. If the club wins, nothing changes here.');
   });
 
-  it('no refund while it’s open, in both flows', () => {
+  it('no refund while it’s open, in both flows; an inquiry never blocks (Stripe settles one by a refund)', () => {
     assert.equal(refundBlockedByDispute([{ status: 'won' }, { status: 'under_review' }]), true);
+    assert.equal(refundBlockedByDispute([{ status: 'warning_needs_response' }]), false);
+    assert.equal(refundBlockedByDispute([{ status: 'warning_under_review' }]), false);
     assert.equal(refundBlockedByDispute([{ status: 'lost' }]), false);
     assert.equal(isDisputeOpen('warning_needs_response'), true);
     assert.match(D.noRefund(true), /pay the team twice\.$/);
@@ -156,8 +166,11 @@ describe('who hears (ask 3, words §1.4) and no family email (ask 2)', () => {
   it('items are raised only under the rule’s own waiting condition; the lost item once, when the loss is booked', () => {
     const fn = body(LANDING, 'afterDisputeApplied');
     assert.match(fn, /if \(isDisputeOpen\(d\.status\)\) \{[\s\S]*?raiseDisputed/);
-    assert.match(fn, /if \(out\.lostNow\) await raiseDisputeLost/);
-    assert.match(fn, /out\.wonBack[\s\S]*?raiseOverpaid\(op\.id\)/);
+    // From the rows, never this call's answer (/review 2026-10-27): a failure after the commit can't lose the item; raised
+    // once ever per dispute, so a settled one is never raised again.
+    assert.match(fn, /if \(d\.lost_booked_at && !d\.won_back_at && !\(await disputeLostRaised\(op\.org_id, d\.id\)\)\) await raiseDisputeLost/);
+    assert.doesNotMatch(fn, /out\.lostNow/);
+    assert.match(fn, /if \(d\.won_back_at && op\.flow === 'tournament_team'\) await raiseOverpaid\(op\.id\)/);
     // The lost item carries what its rule reads: the team, or the children.
     assert.match(body(LANDING, 'raiseDisputeLost'), /teamId: op\.team_id[\s\S]*registrationIds:/);
   });
@@ -174,6 +187,10 @@ describe('who hears (ask 3, words §1.4) and no family email (ask 2)', () => {
 });
 
 describe('no refund while a dispute is open (words §1.2), at the one place every refund goes through', () => {
+  it('the check fails closed: a failed read refuses, never lets a second payment out', () => {
+    assert.match(body(LANDING, 'refuseWhileDisputed'), /if \(error\) throw new Error\(error\.message\);/);
+  });
+
   it('all three refunds to the card ask first', () => {
     for (const name of ['refundOnlinePayment', 'refundTeamPart', 'refundLeagueToCard']) {
       assert.match(body(LANDING, name), /await refuseWhileDisputed\(/, `${name} refuses while a dispute is open`);

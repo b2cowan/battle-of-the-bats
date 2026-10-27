@@ -15,7 +15,7 @@ import { DISPUTE_EMAIL_WORDS as M, DISPUTE_WORDS as DW, ONLINE_EMAIL_WORDS as E,
  * when Stripe reports the figure.
  */
 export function disputeOpenedEmailHtml(p: {
-  club: string; payer: string; forWhom: string; record: string; receiptNo: string; day: string; status: string;
+  club: string; payer: string; forWhom: string; record: string | null; receiptNo: string; day: string; status: string;
   reason: string | null; held: number; dueBy: string | null; stripeFee: number | null; link: string; test: boolean;
 }): { subject: string; html: string } {
   const inquiry = isInquiry(p.status);
@@ -28,7 +28,7 @@ export function disputeOpenedEmailHtml(p: {
       ? M.leadInquiry(p.payer, p.forWhom, p.receiptNo, p.day, why)
       : M.lead(p.payer, p.forWhom, p.receiptNo, p.day, why))),
     emailFactsPanel([
-      [M.held, inquiry || p.held <= 0 ? M.heldNone : money(p.held)],
+      [M.held, inquiry ? M.heldNone : money(p.held)],
       ...(dueFull ? [[M.answerBy, dueFull] as const] : []),
     ]),
     warmEmailParagraph(escapeHtml(M.act(p.record))),

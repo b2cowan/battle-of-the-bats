@@ -142,5 +142,7 @@ export function disputeChip(d: Pick<DisputeView, 'status' | 'answered' | 'dueBy'
   return isInquiry(d.status) ? 'inquiry' : 'disputed';
 }
 
-/** No refund while a dispute is open (words §1.2 `dispute.noRefund`): Stripe already took the money back. */
-export const refundBlockedByDispute = (list: readonly Pick<DisputeView, 'status'>[]): boolean => list.some(d => isDisputeOpen(d.status));
+/** No refund while a dispute is open (words §1.2 `dispute.noRefund`): Stripe already took the money back. An inquiry took
+ *  nothing, and a refund is Stripe's own way to settle one (/review 2026-10-27), so an inquiry never blocks. */
+export const blocksRefund = (status: string): boolean => isDisputeOpen(status) && !isInquiry(status);
+export const refundBlockedByDispute = (list: readonly Pick<DisputeView, 'status'>[]): boolean => list.some(d => blocksRefund(d.status));

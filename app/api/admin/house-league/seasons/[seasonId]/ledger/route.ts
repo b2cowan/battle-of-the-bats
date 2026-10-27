@@ -156,7 +156,8 @@ export const GET = withObservability(async (_req: Request,
   // 12d-1 Part 3 (words §1.5 `band.disputed`): open card disputes on this season's payments, and what Stripe holds.
   const { data: openDisputes } = await supabaseAdmin.from('online_payment_disputes')
     .select('held, online_payments!inner(season_id)').eq('org_id', ctx!.org.id).eq('online_payments.season_id', seasonId)
-    .in('status', ['warning_needs_response', 'warning_under_review', 'needs_response', 'under_review']);
+    // A dispute, never an inquiry: an inquiry took nothing and puts nothing at risk (/review 2026-10-27).
+    .in('status', ['needs_response', 'under_review']);
   const disputed = {
     n: (openDisputes ?? []).length,
     held: Math.round(((openDisputes ?? []) as Array<{ held: number }>).reduce((s, d) => s + Number(d.held) * 100, 0)) / 100,

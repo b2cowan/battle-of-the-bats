@@ -111,7 +111,7 @@ export async function readDisputes(p: {
       const t = op.team_id ? teams.get(op.team_id) : undefined;
       const tName = t?.name ?? '';
       const tour = Array.isArray(t?.tournaments) ? t?.tournaments[0]?.name : t?.tournaments?.name;
-      forLine = `${possessive(tName)} ${SCOPE_WORDS.scope[op.scope ?? 'full']} for ${tour ?? ''}`.trim();
+      forLine = `${possessive(tName)} ${SCOPE_WORDS.scope[op.scope ?? 'full']}${tour ? ` for ${tour}` : ''}`;
       payerName = t?.coach?.trim() || null;
       registeredDay = day(t?.registered_at, true);
       registeredBy = payerName;
@@ -140,15 +140,21 @@ export async function readDisputes(p: {
       policy ? D.factPolicy : null,
       op.receipt_emailed_at && op.payer_email ? D.factReceipt(receiptNo, op.payer_email, day(op.receipt_emailed_at)!) : null,
     ].filter((x): x is string => !!x);
+    const youAnswer = answerer.ids.includes(p.viewer.userId);
+    const canCopy = p.viewer.canCopy || youAnswer;
     out.set(op.id, {
       ...view,
+      // What this reader may not use is never sent (/review 2026-10-27): the clipboard text carries the payer's details,
+      // and the fee line is the owner's.
+      stripeFee: youAnswer ? view.stripeFee : null,
+      feePaidFrom: youAnswer ? view.feePaidFrom : null,
       receiptNo: op.receipt_no,
       answererName: answerer.name ?? 'The owner',
-      youAnswer: answerer.ids.includes(p.viewer.userId),
-      canCopy: p.viewer.canCopy || answerer.ids.includes(p.viewer.userId),
-      showFee: answerer.ids.includes(p.viewer.userId),
-      factsList: childList(facts),
-      factsText: disputeFactsText({
+      youAnswer,
+      canCopy,
+      showFee: youAnswer,
+      factsList: canCopy ? childList(facts) : '',
+      factsText: !canCopy ? '' : disputeFactsText({
         test: !op.livemode, receiptNo, amount, paidDay: day(op.paid_on, true) ?? '', cardLast4: op.card_last4,
         payerName, payerEmail: op.payer_email, forLine, registeredDay, registeredBy, refundPolicy: policy,
         receiptEmailedDay: day(op.receipt_emailed_at, true), club, contactEmail: contact,
@@ -168,10 +174,18 @@ export async function readRegistrationDisputes(p: {
   orgId: string; registrationIds: readonly string[]; viewer: { userId: string; canCopy: boolean };
 }): Promise<Record<string, DisputeRecord>> {
   if (!p.registrationIds.length) return {};
+  // Start from the club's disputes, which are few, never from a season's registrations (/review 2026-10-27: a long id
+  // list rides in the URL and fails on its length, and a select stops at 1,000 rows without an error).
+  const { data: disputed, error: dErr } = await supabaseAdmin.from('online_payment_disputes').select('online_payment_id').eq('org_id', p.orgId);
+  if (dErr) throw dErr;
+  const payIds = [...new Set(((disputed ?? []) as Array<{ online_payment_id: string }>).map(d => d.online_payment_id))];
+  if (!payIds.length) return {};
+  const shown = new Set(p.registrationIds);
   const { data, error } = await supabaseAdmin.from('online_payment_items')
-    .select('online_payment_id, registration_id, created_at').in('registration_id', [...p.registrationIds]).order('created_at', { ascending: false });
+    .select('online_payment_id, registration_id, created_at').in('online_payment_id', payIds).order('created_at', { ascending: false });
   if (error) throw error;
-  const items = (data ?? []) as Array<{ online_payment_id: string; registration_id: string }>;
+  const items = ((data ?? []) as Array<{ online_payment_id: string; registration_id: string | null }>)
+    .filter((i): i is { online_payment_id: string; registration_id: string } => !!i.registration_id && shown.has(i.registration_id));
   const byPay = await readDisputes({ orgId: p.orgId, onlinePaymentIds: items.map(i => i.online_payment_id), viewer: p.viewer });
   const out: Record<string, DisputeRecord> = {};
   for (const i of items) {

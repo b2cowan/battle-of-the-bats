@@ -118,7 +118,7 @@ export default function DisputeBlock({ d, orgSlug, team, isPhone = false }: {
   const rows: Array<readonly [string, ReactNode] | null> = [
     [D.opened, day(d.openedAt)],
     why ? [D.why, why.charAt(0).toUpperCase() + why.slice(1)] : null,
-    [D.held, inquiry || d.held <= 0 ? D.heldNone : D.heldValue(money(d.held))],
+    [D.held, inquiry ? D.heldNone : D.heldValue(money(d.held > 0 ? d.held : d.amount))],
     d.answered
       ? [D.answeredLabel, day(d.answeredAt)]
       : d.dueBy ? [pastDue ? D.wasDueLabel : D.answerByLabel, disputeDue(d.dueBy, { clock: true })] : null,
@@ -153,7 +153,7 @@ export default function DisputeBlock({ d, orgSlug, team, isPhone = false }: {
       {copied === 'failed' && <p className={css.said} role="status">{isPhone ? R.copyFailed : R.copyFailedDesk}</p>}
       {d.canCopy && d.factsList && <p className={css.lead}>{D.factsLead(d.factsList)}</p>}
       {!d.youAnswer && <p className={css.lead}>{D.onlyAnswerer(d.answererName, d.openedEmailedAt ? day(d.openedEmailedAt) : null, team)}</p>}
-      {d.canCopy && <p className={css.lead}>{D.noRefund(team)}</p>}
+      {d.canCopy && !inquiry && <p className={css.lead}>{D.noRefund(team)}</p>}
     </section>
   );
 }

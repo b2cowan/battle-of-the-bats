@@ -63,7 +63,7 @@ import MoveWindow, { type MoveOutcome, type MoveTarget } from './MoveWindow';
 import PriceWindow from './PriceWindow';
 import ReceiveWindow, { type ReceiveOutcome, type ReceiveTarget } from './ReceiveWindow';
 import RegistrationRecordWindow from './RegistrationRecordWindow';
-import { isDisputeOpen } from '@/lib/online-payment-dispute';
+import { blocksRefund } from '@/lib/online-payment-dispute';
 import { DISPUTE_WORDS } from '@/lib/online-payment-words';
 import RegistrationsList, { type RegRowModel, type RowNote } from './RegistrationsList';
 import UndoWindow from './UndoWindow';
@@ -292,7 +292,7 @@ export default function RegistrationsScreen() {
     const actions = rowActions(reg, fee.state, linesOf(reg.id), rights, read?.debits?.[reg.id]?.state === 'clearing');
     // 12b: a card payment that couldn't go on this row, or a card refund that came back — the desk's doors (any tab).
     // 12d-1 Part 3 (words §1.2): no refund to the card while a dispute on it is open (the record's block says why).
-    if (rights.takeFees && read?.unrecordedCard?.[reg.id]?.length && !isDisputeOpen(read?.disputes?.[reg.id]?.status ?? '')) actions.all.push('refundCard');
+    if (rights.takeFees && read?.unrecordedCard?.[reg.id]?.length && !blocksRefund(read?.disputes?.[reg.id]?.status ?? '')) actions.all.push('refundCard');
     if (rights.takeFees && read?.returnedRefunds?.[reg.id]?.length) actions.all.push('refundAnotherWay');
     const sheet = actions.all.map(k => itemFor(k, reg, fee, division));
     const primaryLabel = actions.primary === 'approve' ? REGS_WORDS.act.approve

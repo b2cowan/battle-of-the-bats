@@ -428,7 +428,8 @@ export async function disputeAnswerer(orgId: string): Promise<{ ids: string[]; u
   ]);
   const email = u?.user?.email ?? null;
   const metaName = (u?.user?.user_metadata as { full_name?: string; name?: string } | undefined);
-  const name = (m?.display_name as string | null) || metaName?.full_name || metaName?.name || email;
+  // Never the sign-in email as a name (/review 2026-10-27): every reader of the record sees this name.
+  const name = (m?.display_name as string | null) || metaName?.full_name || metaName?.name || null;
   return { ids, userId: lead, name: name ?? null, email };
 }
 
@@ -509,9 +510,13 @@ async function afterDisputeApplied(onlinePaymentId: string, out: { disputeId: st
     await raiseDisputed(org, op, d);
     if (!d.opened_emailed_at) await sendDisputeOpenedEmail(org, op, d);
   }
-  if (out.lostNow) await raiseDisputeLost(org, op, d);
-  // A loss later turned to a win puts the money back; what the team paid again meanwhile is extra (Part 2's item).
-  if (out.wonBack && op.flow === 'tournament_team' && Number(out.over ?? 0) > 0) await raiseOverpaid(op.id);
+  // Read from the rows, not this call's answer (/review 2026-10-27): a failure after the commit would otherwise lose the item
+  // for good, since a redelivery finds the loss already booked. Raised once ever per dispute, so an item the child or team
+  // already settled is never raised again by a later event.
+  if (d.lost_booked_at && !d.won_back_at && !(await disputeLostRaised(op.org_id, d.id))) await raiseDisputeLost(org, op, d);
+  // A loss later turned to a win puts the money back; what the team paid again meanwhile is extra (Part 2's item, which
+  // raises only while the extra still stands, so a replay never reopens it).
+  if (d.won_back_at && op.flow === 'tournament_team') await raiseOverpaid(op.id);
   await clearSettled({ orgIds: [op.org_id], kinds: ['card_disputed', 'card_dispute_lost', 'online_payment_over'] });
 }
 
@@ -536,7 +541,7 @@ async function raiseDisputed(org: Organization, op: DisputedPay, d: DisputeRow):
       org, userIds: answerer.ids, eventType: 'card_disputed', subjectKey: 'onlineDisputeId', subjectId: d.id, title, link,
       body: inquiry
         ? DISPUTE_WORDS.itemBodyInquiry(who.payer, receipt, disputeWhyFull(d.reason), due)
-        : DISPUTE_WORDS.itemBody(who.payer, receipt, amount, disputeWhyFull(d.reason), formatMoney(Number(d.held)), due),
+        : DISPUTE_WORDS.itemBody(who.payer, receipt, amount, disputeWhyFull(d.reason), formatMoney(disputeHeld(d)), due),
       extra: { ...extra, answerer: 'yes' },
     });
   }
@@ -548,6 +553,14 @@ async function raiseDisputed(org: Organization, op: DisputedPay, d: DisputeRow):
       : DISPUTE_WORDS.itemBodyOthers(who.payer, receipt, amount, name, due),
     extra,
   });
+}
+
+/** Was the lost item ever raised for this dispute (open or settled)? It is raised once, never reopened. */
+async function disputeLostRaised(orgId: string, disputeId: string): Promise<boolean> {
+  const { count, error } = await supabaseAdmin.from('notifications').select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId).eq('event_type', 'card_dispute_lost').eq('metadata->>onlineDisputeId', disputeId);
+  if (error) throw new Error(error.message);
+  return (count ?? 0) > 0;
 }
 
 /** "The dispute was lost" (§1.4): to the desk and the owner, once, when the loss is booked. It clears itself when the child
@@ -598,8 +611,8 @@ async function sendDisputeOpenedEmail(org: Organization, op: DisputedPay, d: Dis
     const who = await disputeWho(op);
     const forWhom = who.many ?? who.name;
     const html = disputeOpenedEmailHtml({
-      club: org.name, payer: who.payer, forWhom, record: who.record, receiptNo: String(op.receipt_no ?? ''),
-      day: formatStoredDate(op.paid_on, { withYear: true }), status: d.status, reason: d.reason, held: Number(d.held),
+      club: org.name, payer: who.payer, forWhom, record: who.many ? null : who.record, receiptNo: String(op.receipt_no ?? ''),
+      day: formatStoredDate(op.paid_on, { withYear: true }), status: d.status, reason: d.reason, held: disputeHeld(d),
       dueBy: d.due_by, stripeFee: d.fee_paid_from === 'club' ? d.stripe_fee : null,
       link: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}${recordHref(org, op, who.firstReg && !who.many ? { regId: who.firstReg } : undefined)}`,
       test: !op.livemode,
@@ -612,13 +625,20 @@ async function sendDisputeOpenedEmail(org: Organization, op: DisputedPay, d: Dis
   }
 }
 
+/** What Stripe holds: its own figure, or — read before Stripe attached the withdrawal — the disputed amount, which a
+ *  dispute (never an inquiry) always withdraws (/review 2026-10-27: the item and the one email said "$0.00"). */
+const disputeHeld = (d: Pick<DisputeRow, 'held' | 'amount' | 'status'>) =>
+  (Number(d.held) > 0 || isInquiry(d.status) ? Number(d.held) : Number(d.amount));
+
 /**
  * Refunds wait while a dispute is open (words §1.2 `dispute.noRefund`): Stripe already took the money back, and a refund
  * on top would pay the family or team twice. Asked by every refund to the card before it opens.
  */
 export class DisputeOpenError extends Error {}
 async function refuseWhileDisputed(onlinePaymentId: string): Promise<void> {
-  const { data } = await supabaseAdmin.from('online_payment_disputes').select('status, online_payments!inner(flow)').eq('online_payment_id', onlinePaymentId);
+  const { data, error } = await supabaseAdmin.from('online_payment_disputes').select('status, online_payments!inner(flow)').eq('online_payment_id', onlinePaymentId);
+  // Closed, never open (/review 2026-10-27): a failed read must not let a second payment out on a disputed one.
+  if (error) throw new Error(error.message);
   const rows = (data ?? []) as unknown as Array<{ status: string; online_payments: { flow: string } | { flow: string }[] }>;
   if (!refundBlockedByDispute(rows)) return;
   const pay = rows[0]?.online_payments;

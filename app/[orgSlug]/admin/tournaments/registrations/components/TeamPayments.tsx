@@ -22,7 +22,7 @@ import { KeepOverWindow, PaymentViewWindow, RefundWindow, type OverPreset, type 
 import type { OpenPayPage } from '@/lib/online-pay-pages';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import DisputeBlock, { disputeShows } from '@/components/admin/kit/club/DisputeBlock';
-import { disputeChip, isDisputeOpen, type DisputeRecord } from '@/lib/online-payment-dispute';
+import { blocksRefund, disputeChip, type DisputeRecord } from '@/lib/online-payment-dispute';
 import { DISPUTE_WORDS as DPW, disputeDue } from '@/lib/online-payment-words';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useParams } from 'next/navigation';
@@ -562,7 +562,7 @@ export default function TeamPayments(props: Props) {
                   <CoachToolbarMenu variant="glyph" overWindow label={OW.menuLabel} icon={<MoreHorizontal size={16} aria-hidden />} disabled={locked}>
                     <CoachToolbarMenuItem label={OW.menuView} onSelect={() => setViewing(p.online!)} />
                     {online?.refunds && p.status !== 'refunded' && p.status !== 'reversed' && p.online.leftCents > 0 && p.online.refund !== 'pending'
-                      && !isDisputeOpen(p.online.dispute?.status ?? '') && (
+                      && !blocksRefund(p.online.dispute?.status ?? '') && (
                       <CoachToolbarMenuItem label={OW.menuRefund(p.online.rail === 'bank_debit')} onSelect={() => setRefunding({ p: p.online!, anotherWay: false })} />
                     )}
                     {online?.refunds && p.online.refund === 'failed' && (

@@ -69,6 +69,10 @@ export const GET = withObservability(async (req: Request,
     readRegistrationDisputes({
       orgId: ctx!.org.id, registrationIds: [...shown],
       viewer: { userId: ctx!.user.id, canCopy: !houseLeagueRefusal(ctx, 'takeFees') },
+    }).catch(e => {
+      // An extra never takes the list down (/review 2026-10-27): the rows read as they did before 12d-1.
+      console.error('[registrations] couldn’t read card disputes:', e instanceof Error ? e.message : String(e));
+      return {};
     }),
   ]);
   const priceChanges = (changes.data ?? []).map(c => ({

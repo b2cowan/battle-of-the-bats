@@ -286,7 +286,7 @@ export function feeCell(
     const D = DISPUTE_WORDS;
     const kind = disputeChip(dispute);
     if (kind) {
-      flag = { text: D.chip[kind], tone: dispute.youAnswer ? 'warn' : 'info', tip: dispute.answered ? D.tipAnswered : D.tip(money(dispute.held), 'season') };
+      flag = { text: D.chip[kind], tone: dispute.youAnswer ? 'warn' : 'info', tip: dispute.answered ? D.tipAnswered : kind === 'inquiry' ? D.tipInquiry : D.tip(money(dispute.held > 0 ? dispute.held : dispute.amount), 'season') };
       sub = dispute.answered ? D.answered(regDay(dispute.answeredAt, today))
         : kind === 'notAnswered' ? D.wasDue(disputeDue(dispute.dueBy))
           : dispute.dueBy ? (dispute.youAnswer ? D.answerByYou(disputeDue(dispute.dueBy)) : D.answerBy(dispute.answererName, disputeDue(dispute.dueBy))) : sub;
