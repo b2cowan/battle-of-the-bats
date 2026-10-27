@@ -244,8 +244,10 @@
   `hello@fieldlogichq.ca` stays until then. (5) **The single "Email the pay link" after a lost dispute WARNS, never
   skips** (the desk member's own choice; the bulk send keeps skipping). (6) **A fee put on a subscription that is
   cancelled or discounted before its invoice is caught by the club's own monthly invoice** (the pending line removed from
-  Stripe, the fee billed on the own invoice once). (7) A credits-only month: recommendation put to the owner, not ruled.
-  Rulings 2, 3, 5, 6 are built in Part 5, before its help (`CLUB_TIER_STAGE12D1_PART5_PROMPT.md` §0).
+  Stripe, the fee billed on the own invoice once). (7) **A returned answering fee goes back against the invoice that
+  carried the answering fee** (a Stripe credit note: refunded to the card when that invoice was paid, lowering it while
+  open; netted on the same invoice, as today, when both fall in one month) — a credit never waits for a later fee.
+  Rulings 2, 3, 5, 6, 7 are built in Part 5, before its help (`CLUB_TIER_STAGE12D1_PART5_PROMPT.md` §0).
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 

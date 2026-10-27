@@ -33,7 +33,13 @@ Build, test, `/review`, commit each before §1:
   daily job finds a `billed_on = 'subscription'` fee whose Stripe line is still pending on a subscription that can no
   longer carry it, deletes that pending line from Stripe, and returns the fee to unbilled — billed once, never twice
   (read the line from Stripe before and after).
-- **(7) A credits-only month** — awaiting the owner's ruling on the recommendation (see "Open with the owner").
+- **(7) A returned answering fee goes back against the invoice that carried the answering fee.** When the answering fee
+  is already billed: a Stripe credit note on THAT invoice — refunded to the card when it was paid, lowering what is owed
+  while it is open (a subscription invoice or the club's own). When both fall in one month they net on that month's
+  invoice, as today. A credit never waits for a later fee, and the Plan & billing list reads it as returned on its day
+  (never "next 1st"); words to `/marketing`. Once only per credit (store the credit note's id on the fee row — a
+  migration, with the dictionary). Check Stripe's credit-note docs (refund vs. credit balance on a paid invoice), not
+  memory.
 
 ## 1 · Help (`/docs`)
 
@@ -97,10 +103,6 @@ the Facts doc (built status only, no rate moves); TODO.md's one line.
 
 ## Open with the owner (don't build around; carry into the walk where they show)
 
-- **(7) A credits-only month** (a returned answering fee with nothing to set it against): the recommendation put to the
-  owner is to return it against the invoice that carried the answering fee — a Stripe credit note, refunded to the card
-  if that invoice was paid, lowering it if still open; netted on the same invoice, as today, when both fall in one month.
-  Build only once ruled.
 - **(4) The invoice's contact address** is deferred to the owner's later company-wide email sweep (with noreply and
   support). Leave `hello@fieldlogichq.ca`; do not ask again.
 
