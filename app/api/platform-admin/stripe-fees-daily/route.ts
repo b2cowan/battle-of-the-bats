@@ -4,6 +4,7 @@ import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 import { isCronRequest } from '@/lib/cron-auth';
 import { bookLostDisputesSweep, sendDisputeReminders } from '@/lib/online-payment-landing';
+import { sendEndingWarnings, sendTermsNotices } from '@/lib/online-payment-owner-notices';
 import {
   releaseStrandedSubscriptionFees, remindUnpaidFeeInvoices, retryFailedFees, sendMonthlyFeeInvoices, sweepDisputeFees, syncOpenFeeInvoices,
 } from '@/lib/platform-stripe-fees';
@@ -20,7 +21,12 @@ import {
  *      returned to unbilled, before
  *   6. the club's own monthly invoice, gathering last month's fees — sent on the 1st, or the first run after it;
  *   7. the ONE reminder on an invoice past due (§7 ruling 3). Nothing switches off by itself;
- *   8. (Part 4b) a card dispute lost before its payment landed, whose booking at the landing failed.
+ *   8. (Part 4b) a card dispute lost before its payment landed, whose booking at the landing failed;
+ *   9. (12d-2, owner ruling 4) the payments terms changed: the owners' item and one email the day a club is found behind,
+ *      one reminder 14 days later (nothing while the version is counsel's draft);
+ *  10. (12d-2) an ending the owner didn't choose: the owners' item and one email (seven days before a comp runs out; the
+ *      day a subscription payment fails), and the open pay pages of a club whose plan no longer offers online payments
+ *      closed (free time runs out with no event of its own).
  * One step's failure never stops the next.
  *
  * Callers: the pg_cron scheduler (daily, via x-cron-secret) or a person with `run_jobs`, by hand.
@@ -53,6 +59,8 @@ export const POST = withObservability(async (req: Request) => {
   await run('monthly_invoices', () => sendMonthlyFeeInvoices(now));
   await run('invoice_reminders', () => remindUnpaidFeeInvoices(now));
   await run('lost_disputes', () => bookLostDisputesSweep(now));
+  await run('terms_notices', () => sendTermsNotices(now));
+  await run('ending_warnings', () => sendEndingWarnings(now));
 
   await writePlatformAuditLog(actor, null, 'stripe_fees_sweep', 'result', null, steps);
   const ok = steps.every(s => s.ok);

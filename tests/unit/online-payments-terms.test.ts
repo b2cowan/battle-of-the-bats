@@ -92,3 +92,13 @@ describe('the owner item and the emails clear and send once (the daily job)', ()
     assert.match(na, /payments_ending: paymentsEnding,/);
   });
 });
+
+describe('the daily job runs the owners’ two steps (owner ruling 4, its own commit)', () => {
+  it('after the 12d-1 steps, each in its own try so one failure never stops the next', () => {
+    const route = readCode('app/api/platform-admin/stripe-fees-daily/route.ts');
+    const lost = route.indexOf("await run('lost_disputes'");
+    const terms = route.indexOf("await run('terms_notices', () => sendTermsNotices(now));");
+    const ending = route.indexOf("await run('ending_warnings', () => sendEndingWarnings(now));");
+    assert.ok(lost > 0 && terms > lost && ending > terms);
+  });
+});
