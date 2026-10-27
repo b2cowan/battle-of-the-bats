@@ -56,8 +56,8 @@ https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX, after a design pass (18 defec
 prod is a release step with 365, 367 and 373); the Money tab, the five patterns, the charge and refund windows, recovery, the
 Story's money, the audit log's Reason column and entry window, Find by charge / invoice / invoice number, Q9 in the shared
 plan rule, Q7 on Bulk changes, Q10's words (gated), the window foot face. Gate calls, threats and the finish review are in
-"Stage 3 build gate", "Stage 3 threats → guards" and "Stage 3 finish review" below. Walks owed: ledger §384 (https://claude.ai/artifact/CBCDtZjmsd9pFr5o8toUUV, a double
-charge, found and refunded) and §385 (https://claude.ai/artifact/QNSBdd8xbeqGysxH7mTw5y, the guard rails).
+"Stage 3 build gate", "Stage 3 threats → guards" and "Stage 3 finish review" below. Ledger §384 (https://claude.ai/artifact/CBCDtZjmsd9pFr5o8toUUV, a double
+charge, found and refunded) walked 2026-10-26: 44/44, all 9 build calls accepted (full Stripe key kept). §385 (https://claude.ai/artifact/QNSBdd8xbeqGysxH7mTw5y, the guard rails) walked 2026-10-26: 26/26, all 6 build calls accepted.
 **Project index:** https://claude.ai/artifact/TLP8d5Zec4xVkTSYrQU8tp (source `PLATFORM_ADMIN_SUPPORT_CONSOLE_INDEX.html`,
 db-backed: news is a data write, never a republish).
 **Kickoff artifacts:**
@@ -175,10 +175,10 @@ belongs to the bookkeeping session.
 |---|---|---|
 | S1 Warm foundation — **BUILT 2026-10-24, walk §371 owed** | Kit, Warm / Dark, `NAV_STANDARD` in full, the 1200 frame, type ladder, words. No job changes | F1 + D1–D5. Shared: `admin-kit-switch-guard` must allow the platform shell. `NAV_STANDARD.md` drops its platform line. K-10 and the "operator shells stay dark" log line retired. Console CSS written as plain rules, so the old-look gate stays at 0 |
 | S2 Find, menu, Today, record — **BUILT 2026-10-25 on dev, walked 2026-10-25 (§377, 60 of 60, all calls accepted)** (drawings Ub7fXLh29SC34Zp4oqKUx1, walk GqozHVh1Bg2FLqSKEM78Xs) | Global Find (server-side, no 1,000 cap), menu by job, one rulebook (matrix = APIs), Today, a record with Story; a person record (new) | Find is a new read surface: drawn and reviewed as a security change. No proxy change. One migration: the read-only lookup over sign-in records |
-| S3 Money — **BUILT + COMMITTED 2026-10-26 (`270211ca0` · `4bfc9ca41` · `6c6d0da7e` · `d77ee9da9` · `e764efd90` · docs `bc9616345`); walks §384 + §385 owed; mig 380 prod at release** (DRAWN + RULED 2026-10-26, all 12 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_BUILD_PROMPT.md`) (drawings FdTWB58ne1jgsBXSwutdLX, source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_DRAWINGS.html`, captures `.probe/pasc/cap-s3/` via `capture-s3b.mjs`, render check `render-s3.mjs`; see "Stage 3 findings") | Stripe read on the Money tab, duplicate labels, refund (Q7), reason column in the audit log, bulk = single plan change (closed; the shared rule carries M6), M6 (widened: every staff plan change on a paying club) | Migration (audit reason + a refunds record + one running plan grant per club if ask 8). Adversarial review on the refund write. No webhook change unless ask 4 = B |
+| S3 Money — **BUILT + COMMITTED 2026-10-26 (`270211ca0` · `4bfc9ca41` · `6c6d0da7e` · `d77ee9da9` · `e764efd90` · docs `bc9616345`); walks §384 + §385 both ✅ 2026-10-26; mig 380 prod at release** (DRAWN + RULED 2026-10-26, all 12 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_BUILD_PROMPT.md`) (drawings FdTWB58ne1jgsBXSwutdLX, source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_DRAWINGS.html`, captures `.probe/pasc/cap-s3/` via `capture-s3b.mjs`, render check `render-s3.mjs`; see "Stage 3 findings") | Stripe read on the Money tab, duplicate labels, refund (Q7), reason column in the audit log, bulk = single plan change (closed; the shared rule carries M6), M6 (widened: every staff plan change on a paying club) | Migration (audit reason + a refunds record + one running plan grant per club if ask 8). Adversarial review on the refund write. No webhook change unless ask 4 = B |
 | S4b Coaches Portal free time — **PROPOSED 2026-10-25, not ruled** | A Premium Coaches Portal reads free time from the same door S4 builds (liveness today reads the portal's own record, which grants never touch), the door shown on a portal record, and the coach Founding comp moved with the Founding access step. Sequenced by dependency: after S4 is built and walked, and together with the Founding access move (Q4), because both change the portal's own billing record and the coach Founding audience (which today ends with no warning) | /billing (coach billing). Drawn first |
 | S4 Free time — **BUILT + COMMITTED 2026-10-25 (`6c8f8fb89` · `5353f2cf3` · `e9bb0b059` · `a26ec5165`; finish pass `4071179f0` · `48205738a` · `7bc6b5441`), walk §379 owed** (drawings 5eawvGUPwQVPoWiAV7vQY5, all 11 as recommended; build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE4_BUILD_PROMPT.md`; mig 373 prod at release) | `plan_tier` grant (read-time revert, no cron) read through ONE effective-plan door with a build guard (Q1), one Give free time window, Founding as a group in a Free time list (view now, access at the Founding turn-off: Q4), customer billing page shows "Free through" (Q8), `comp_period` no longer offered (Q5), server-side past-expiry check | Prod `ENTITLEMENT_GRANTS_ENABLED=true` confirmed by the owner 2026-10-25. /billing for the customer pages and the effective-plan door. `proxy.ts` is one of the plan readers (its Tournament-tier redirect) |
-| S5 Health | Status (reads on open), Errors restyled with a person link, Feedback reply, Sent email log + delivery callback | Read-only AWS + Supabase keys on prod (owner step). Q6: the stack-health summary, a shared automation change, own commit, only on the owner's word |
+| S5 Health — **BUILT 2026-10-26 on dev (gate G1–G4 ruled; mig 389 dev; commit awaits the owner's OK; three walks owed)**; drawn + ruled 2026-10-26, build prompt `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE5_BUILD_PROMPT.md` (drawings BQmiMi3jXGKBwXQHr8UugB, source `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE5_DRAWINGS.html`; see "Stage 5 findings") | Status (reads on open), Errors restyled with a person link, Feedback record page + Reply, Sent email log + delivery callback, a kind on every send | One migration (joins 365/367/373/380); Resend webhook + signing secret, AWS list-builds key and a scoped read-only Supabase token are release owner steps (`/release`). Morning check stays on the owner's PC unchanged (Q2 = B) |
 | S6 Club release jobs | Club web addresses list + quota, set up a club from a lead, H03 | Rides the Club release |
 | S7 Growth & product | Leads, Campaigns, Pitch decks list, Plans & pricing, Approval queue, Templates, Export registry. H1 | — |
 | S8 Records | Staff + roles (Q1, M3), audit search server-side (M4), Help | A role change is a security change, drawn first |
@@ -249,6 +249,102 @@ All twelve as recommended; the full wording is in `memory/design_decisions.md` 2
 - **Q12:** Field moves into the audit entry window with the values.
 
 **Build prompt written 2026-10-26:** `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE3_BUILD_PROMPT.md`.
+
+## Owner rulings 2026-10-26 (Stage 5 drawings; paste-back, every recommended box ticked)
+
+Ten asks; the full wording is in `memory/design_decisions.md` 2026-10-26 "SUPPORT CONSOLE STAGE 5".
+- **Q1:** Status shows all four groups: our records + a database function now; the AWS list-builds key and a scoped
+  read-only Supabase token are release owner steps (a separate member if the plan allows).
+- **Q2:** B. Status reads live; the morning check stays on the owner's PC unchanged.
+- **Q3:** Status all roles; Errors unchanged; the sent log Super admin + Support + Billing (a new power), absent for the
+  rest; staff emails Super admin only.
+- **Q4:** a person link on an error for every Errors reader; a staff account Super admin only; deleted = text; nobody =
+  says so; the link follows the person record's own rule.
+- **Q5:** feedback reply by email from us, "FieldLogicHQ support" at the no-reply address, replies to
+  fieldlogichq@gmail.com, signed first name + FieldLogicHQ support, plain text, Support + Super admin (a new power), no
+  reason, New to Acknowledged, under 90 days, same address.
+- **Q6:** account emails only; no body or links; recipient, kind label, time, number, state, club, asked-for-by; no
+  subject; 90 days; Story rows for sign-up, sign-in, reset, invites, replies; Emails tab + Health "Sent emails" + Find group.
+- **Q7:** build the callback (migration, public address, secret, Resend setting, release step).
+- **Q8:** a kind required on every send call, build-enforced; account kinds logged, family kinds not; the morning-check
+  alert stays outside.
+- **Q9:** rides S5: the Errors caveat as one sentence; house clock on Errors and Feedback with the spelling gate learning
+  the leading zero; two new powers (reply, sent log); Feedback gets its own record page with triage inside. Not S5:
+  browser errors split by address (a later errors pass). Report only: the morning check's build reads failed on the
+  owner's PC 2026-10-26 (owner will look); the morning check's alert falls back to the product mail key (own commit, on
+  the owner's word).
+- **Q10:** S5-D1 lime + the note reworded; S5-D2 refresh symbol on a phone; S5-D3 keep today's words, settle in Stage 8.
+
+## Owner rulings 2026-10-26 (Stage 5 build gate; four asks, every recommended box ticked)
+
+- **G1 kind labels:** approved as listed in the gate table (37 logged kinds: sign-up/sign-in 3, invites 5, access 4,
+  plan and billing 10, feedback 2, tournament registration 13). Story rows: Password reset link, Email confirmation link,
+  Team sign-in link, the five invitations, Reply to their feedback. The table lives in `lib/email-kinds.ts` (one home).
+- **G2 team-business mail** (notifications, club asks of coaches, practice plans, payment hand-offs): **not logged in
+  Stage 5**; each still carries a kind.
+- **G3 Status thresholds:** accepted as proposed (one home, the Status module): production build failed = Act now,
+  staging build failed = Look at it; staging site > 3 s or an error = Look at it; errors last hour ≥ 10 and ≥ 3× a usual
+  hour = Look at it, ≥ 50 and ≥ 10× = Act now; error rate 24 h ≥ 1% and ≥ 2× a usual day = Look at it, ≥ 5% = Act now;
+  traffic under a quarter of a usual hour (usual ≥ 40) = Look at it; counts > 15 min old = Look at it; database > 0.5 s =
+  Look at it, no answer = Act now; connections ≥ 80% or anything stuck ≥ 5 min = Look at it, ≥ 95% = Act now; any
+  scheduled run failed in 24 h = Look at it; a production service down = Act now; a staging service down = Look at it;
+  gateway errors last hour ≥ 10 = Look at it, ≥ 100 = Act now.
+- **G4 defaults:** a reply to a Triaged item moves it to Acknowledged; Acknowledged and Resolved stay (the window's
+  sentence promises a move only when one happens); "up to 14 hours" dropped from Delayed (unsourced); the reply email's
+  foot "You're getting this because you sent us feedback from inside FieldLogicHQ. Reply to this email to reach a person
+  on our team.", signature "{first name}\nFieldLogicHQ support" (no first name, or a name that is an email address =
+  "FieldLogicHQ support" alone), quote line "On Oct 26, 2026 at 9:15 a.m., you wrote:" (/marketing 2026-10-26); the two
+  missing MANUAL_PROD_STEPS entries (373, 380) are added with the Stage 5 migration.
+- **Settled by existing rulings, applied as written:** a missing key reads Not checked, never hidden (Q1; the Supabase
+  token CAN be scoped read-only to two projects with no Database permission, so its three lines are built); tournament
+  registration emails are logged (Q6); the automatic thank-you is "Feedback received" everywhere (one spelling).
+- **Found at the gate:** Errors and Feedback print their times in the SERVER's zone (UTC on Amplify) as well as with a
+  leading zero; both move to the console clock (Toronto). The spelling gate reads source, so "learns the leading zero"
+  is a rule against `hour: '2-digit'` on a 12-hour clock. No public-address route guard existed; Stage 5 adds one.
+  Resend shows a webhook's secret only after it exists, so "secret first" is "the route answers not-ready until the
+  secret is set" (Resend retries ~27 h).
+
+## Stage 5 build (2026-10-26) — what was built, and the threats → guards
+
+Built on dev in one session after the gate (G1–G4). Migration 389 (dev 2026-10-26; prod step in MANUAL_PROD_STEPS with
+365/367/373/380). The kinds' one home is `lib/email-kinds.ts`; Status's thresholds `lib/platform-status-lines.ts`.
+- **Status** (`/platform-admin/status`, every role): 13 lines; cheap lines (our records + two database functions) read
+  every time, Today's line takes their worst verdict; provider lines (Amplify ListJobs, the staging site, Supabase health
+  + gateway count) shared through `platform_status_reading` at most every 30 s, 5 s each; a missing key = Not checked.
+- **Sender**: `kind` required on every `sendEmail` (≈50 call sites + wrappers); account and registration kinds write
+  `platform_account_emails` before the send and tag the email `flhq_row` + `flhq_db` (the project ref, since
+  OBSERVABILITY_ENV is unset on staging); a retry reuses its row (`logId`).
+- **Callback** `/api/webhooks/resend`: `RESEND_WEBHOOK_SECRET` unset = 503; Svix verify before parse; one database step.
+- **Feedback**: list restyled, record page `/platform-admin/feedback/[id]` (triage behind the pencil), Reply window and
+  route (`reply` power). Triage routes now check `feedback_triage` itself (the page also carries `reply`).
+- **Sent log**: person Emails tab, `/platform-admin/sent-emails`, the email window, Find's Sent emails group, person
+  Story rows — all on the `sent_log` power; staff addresses Super admin only; `platform_accounts_for_emails` decides "no
+  account" in one call a page.
+- **Errors**: restyled, the caveat one sentence with no counts in it (so it cannot go stale), the person link's states.
+- **Clock**: Errors and Feedback on the console clock (they printed UTC with a leading zero); the spelling gate fails on
+  `hour: '2-digit'` on a 12-hour clock and on a literal leading-zero time.
+- **Settings** (amplify.yml echoes; owner steps at the release): RESEND_WEBHOOK_SECRET, STATUS_AMPLIFY_ACCESS_KEY_ID,
+  STATUS_AMPLIFY_SECRET_ACCESS_KEY, STATUS_SUPABASE_TOKEN.
+
+**Threats → guards** (tests: `support-console-stage5-guard`, `-sent-log-guard`, `-clock-guard`,
+`public-api-routes-guard`; live: `scripts/support-console-stage5-check.sql` on dev, passed 2026-10-26):
+T1 settings guard (no browser file names a key; two server readers) · T2 Status answer shape · T3 ListJobs only, no
+commit message/log link read · T4 no `database/query`; token scope = release step · T5 the fixed gateway count · T6
+`platform_status_claim` (live S1) · T7 health function text bans · T8 signature/time/size suite · T9 live C2 · T10 live
+C3/C4 · T11 parse keeps nothing + live C1 · T12 nothing logged · T13 no content column, labels fixed · T14 Story gate ·
+T15 staff filter · T16 power-first routes · T17 search limit + trail row · T18 no recipient from the browser · T19
+replyTarget · T20 daily limit + audit · T21 one-line subject · T22 claim + once-only key + live R1/R2 · T23 reply power
+first · T24 log failure to the server log only · T25 `public-api-routes-guard` · T26 Errors person-link rule (clock
+guard) · T27 unchanged (no IP/browser shown).
+
+**/simplify + /review (high risk, security lens) 2026-10-26:** no Critical or High. Fixed: the one Medium (a reply retry more than 2 minutes after the first press could be taken as stalled and send twice, the row then reading failed) by a per-claim `claimed_at` (mig 389) and a finish conditional on the claim; an ambiguous mail-service answer (5xx, 429, key in flight) is Not confirmed with the same key, only a definite 4xx refusal is "nothing was sent"; the attempt's log row is kept from the claim; every email-window open writes the trail row (a browser-sent `from` no longer decides it); a General bounce reads "refused", never "address does not exist"; a colleague's address left the feedback conversation. Left as decided / for the release: Find's exact-address lookup is not counted against the search limit (a build decision, owner may overrule in the walk); the scheduled-jobs read now covers 24 hours of run history (EXPLAIN on prod-size data at the release).
+
+**Decisions taken in the build (for the walks):** a reply after a refusal takes a new once-only key, after no answer the
+same one; a reply stuck "sending" over 2 minutes becomes Not confirmed; the reply window's Cancel after "someone replied"
+keeps your words and won't ask again for that reply; an unreadable answer reads as not confirmed in the window; a set
+severity cannot be cleared (the status route never could); a staff asker with no name reads "FieldLogicHQ staff" to all
+but Super admin; Find's exact-address lookup is not counted against the Sent emails search limit; an unknown account
+lookup on an Errors sample reads "Could not read this account".
 
 ## Owner rulings 2026-10-25 (Stage 4 drawings; paste-back, every recommended box ticked)
 
@@ -429,6 +525,49 @@ already-ended grant "ended early".
   status override takes an optional end with no cap (walk call 14 asks the owner).
 - Help: the Bulk changes guide still lists Comp period (the product no longer offers it); the line sits beside another
   session's uncommitted rename of that section, so it is left for that session.
+
+## Stage 5 findings (verified against the code and the AWS, Supabase and Resend docs 2026-10-26, before drawing)
+
+Four helpers read the code and one read the providers' current docs; the lines each drawing turns on were opened by hand.
+Drawings: `PLATFORM_ADMIN_SUPPORT_CONSOLE_STAGE5_DRAWINGS.html` (assembled from Stage 3's head/scripts + a Stage 5 body;
+captures `.probe/pasc/cap-s5/` via `capture-s5.mjs`, render check `render-s5.mjs`).
+- **The morning check** (`scripts/stack-health.mjs`, `scripts/lib/supabase-ops.mjs`) reads Supabase with ONE account PAT
+  (`SUPABASE_ACCESS_TOKEN`, both projects; `/database/query` runs any SQL, only `sql()`'s select/with check keeps it to
+  reading) and Amplify with the PC's AWS CLI login (`list-jobs`, app `d3ld0l2bgmmlga`, branches `dev` = staging and
+  `master`). No CloudWatch. Its extras over a live read are all history: 7-day medians, size vs a week ago, advisors new
+  since the last run, heaviest-query deltas, alert de-dup, the Monday digest. Nothing in `app/`/`lib/` reads `.health/`.
+  Report-only findings: the 2026-10-26 run could not check either build (AWS CLI failed); the alert falls back to
+  `RESEND_API_KEY` when `HEALTH_RESEND_API_KEY` is unset (`stack-health.mjs:488`), against its own comments.
+- **Keys.** AWS: `amplify:ListJobs` is resource-scoped to `apps/<id>/branches/<b>`; `GetJob` returns `steps[].logUrl`
+  (a log can echo env), so the key must hold ListJobs only. Prod already has a narrowly scoped IAM user for club domains;
+  Amplify's SSR compute role exists (2025) but is unproven on Next 16 (a re:Post report). Supabase: scoped PATs exist
+  (per project, read or read-write per area) but belong to a person and share the user's 120/min limit across all their
+  tokens (`logs.all` 30/min). Project health, advisors and logs need a Management token; the metrics endpoint takes the
+  secret API key. DB vitals and `cron.job_run_details` need NO key: one SECURITY DEFINER read function (Stage 2 shape).
+- **Our own data.** `request_metrics_rollup` (5-min buckets, kept a year, `org_id` always null), `error_events`
+  (30 days; sampled: all up to 50, then 1 in 10; stores `user_id` AND `user_email`, plus IP/UA for browser errors, never
+  shown), `observability_cron_heartbeat`. No latency is recorded anywhere. Coverage: 591 of 616 `route.ts` wrapped (575
+  direct + 16 through `lib/coach-tag-routes.ts`); the unwrapped 25 are dev/sandbox/collector/manifest routes. The rate
+  divides API failures by API calls; page and browser errors have no denominator (why the screen shows 0.00% beside 64).
+- **Clock drift.** Errors and Feedback print `06:18 p.m.` (`fmtDateTime`); the console elsewhere prints `5:52 p.m.`. The
+  spelling gate misses the leading zero.
+- **Browser errors fingerprint by `window.location.pathname`** with real ids, so one fault splits per season. Not drawn.
+- **Email.** Every send goes through `lib/email.ts` `sendEmail`/`sendEmailBatch` (~53 + 2 direct calls; wrappers
+  `sendTransactionalEmail` ×25 and the family senders ×6) or `lib/email-sender.ts` `sendMarketingEmail` (campaigns, ×5,
+  the only logger, `email_sends.resend_message_id`, no delivery state). The only bypass is the stack-health alert. The
+  shared sender returns no message id and writes no row. Auth links are `generateLink` + our sender (Supabase sends none).
+  From: `RESEND_FROM` (prod `noreply@fieldlogichq.ca` per `AMPLIFY_DEV_ENV_PLAN.md`), default `onboarding@resend.dev`;
+  `ADMIN_EMAIL = fieldlogichq@gmail.com` (`lib/email.ts:40`). No webhook route, no svix dependency; `/api/*` outside
+  `/api/admin*` passes `proxy.ts` unauthenticated (the connect-webhook route is the cleaner pattern: 503 without the
+  secret, dedupe table). Resend: webhooks Svix-signed, retried ~1 day, dedupe on `svix-id`, order not promised; `GET
+  /emails/{id}` has `last_event`; 10 req/s per TEAM shared with sends; dashboard keeps 30 days; `tags` round-trip;
+  `Idempotency-Key` 24 h.
+- **Feedback.** `feedback_submissions` only: no reply/thread/notes; anonymous allowed (all ids null); signed-in rows keep
+  `user_id` + `user_email`; states new/triaged/acknowledged/resolved in code only (no CHECK); Today counts `status='new'`.
+  No item page (list + disclosure). A "we received your feedback" email already goes out, unlogged.
+- **Powers.** No status/health power; `errors_triage` = super, product; observability view = super, product, support;
+  feedback view + triage = super, product, support, billing; `customer_users` viewable by ALL roles (staff records super
+  only), so the Errors person link grants no new view. Reply and the sent log each need a new power.
 
 ## Stage 3 findings (verified against the code and Stripe's docs 2026-10-26, before drawing)
 

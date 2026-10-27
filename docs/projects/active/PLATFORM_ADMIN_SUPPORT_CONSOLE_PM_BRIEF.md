@@ -12,8 +12,8 @@ walk is next, and its one database change (tournament fees post to the club's bo
 with the release. **Stage 3 (money) drawn 2026-10-26** (https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX) **and ruled the same day, all
 twelve as recommended**; the build prompt is written. The owner also moved the audit log's raw values into its entry window
 and asked that a window's foot sentence never ship unformatted again. **Stage 3 built and committed 2026-10-26 on dev**
-(`270211ca0` · `4bfc9ca41` · `6c6d0da7e` · `d77ee9da9` · `e764efd90` · docs `bc9616345`): two owner walks wait, a double charge found and refunded (ledger §384,
-https://claude.ai/artifact/CBCDtZjmsd9pFr5o8toUUV) and the guard rails (§385, https://claude.ai/artifact/QNSBdd8xbeqGysxH7mTw5y).
+(`270211ca0` · `4bfc9ca41` · `6c6d0da7e` · `d77ee9da9` · `e764efd90` · docs `bc9616345`): the owner walked a double charge found and refunded (ledger §384,
+https://claude.ai/artifact/CBCDtZjmsd9pFr5o8toUUV) on 2026-10-26, 44 of 44 ticks and every build call accepted; the guard rails walk (§385, https://claude.ai/artifact/QNSBdd8xbeqGysxH7mTw5y) followed the same day, 26 of 26 ticks and all 6 build calls accepted.
 Two things changed from the drawings, both found while building: a Coaches Portal a club pays for is billed on the club's own
 Stripe account, so the Money tab names it as the club's rather than as a second subscription; and the plan refusal covers the
 plan and the tournament limit (what Stripe puts back), so a custom team limit on a paying Club · Association club still saves.
@@ -59,6 +59,17 @@ time ends (its own ruling), free time on a Coaches Portal. **Roles (recommended)
 (Billing up to 6 months, Super admin 12); nobody gives it to a club they belong to; Support and Product see it.
 **Success looks like:** free time in about 5 clicks that ends by itself; no club anywhere in the product still reads
 a plan whose free time has ended; the customer is never surprised by the end.
+
+**What Stage 5 means for the support team (ruled 2026-10-26, built on dev the same day; walks owed).** As built: Status shows thirteen checks and is the first entry under Health for every role; Today's health line now gives a verdict and points to Status; the delivery word on an email comes from the mail service telling us, so Sent emails and the Emails tab start filling from the release onward (nothing before it was kept); two release steps turn on the build and database-service lines and the delivery words. Originally drawn as: A new **Status** page under Health
+answers "is the platform healthy right now?": the builds, our own errors and traffic, the database and its scheduled jobs, and the
+database services. Every line has a plain verdict and one thing to do, and it is readable on a phone. Most of it needs no new key. Builds
+and the database services need two read-only keys the owner adds at the release. **Errors** shows who an error hit, as a link to
+that person and their club. **Feedback** gets its own page, and Support can **reply by email**. That reply is the only new thing a
+customer ever receives, and the window says it cannot be taken back. A person's record gains an **Emails** tab: every account email
+we sent them and what happened to it (delivered, bounced, marked as spam). An address with no account, such as an invite that never
+arrived, is found from Find. The morning check stays on the owner's PC, unchanged (ruled). **Success looks like:** "is it up?"
+answered on one page without opening Amplify, Supabase or the mail service; "I never got the email" answered in two clicks from Find;
+a customer's feedback answered from the console, once, to the right person.
 
 **Success for Stage 2 (to check in the walk):** a support person finds any customer from one box in a few keystrokes; a club's
 record answers "what happened, who, why" without opening five tabs; a live change always says what it does and keeps its reason;

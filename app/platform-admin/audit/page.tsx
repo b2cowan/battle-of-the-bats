@@ -142,7 +142,7 @@ function fmtDate(iso: string) {
 }
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-CA', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour: 'numeric', minute: '2-digit', second: '2-digit',
   });
 }
 

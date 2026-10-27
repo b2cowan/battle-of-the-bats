@@ -56,6 +56,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { LEADING_ZERO_CLOCK, twoDigitTwelveHourHits, TWO_DIGIT_RIGHT } from './lib/clock-spelling.mjs';
 
 const REPORT = process.argv.includes('--report');
 const JSON_OUT = process.argv.includes('--json');
@@ -118,6 +119,10 @@ const ENFORCED_PATTERNS = [
     pattern: /\d:\d{2}[\s\u00a0\u202f]*(AM|PM)\b/g,
     right: 'a lowercase "a.m." / "p.m." — see formatTime() in lib/utils.ts',
   },
+  /* ⏰ AND NO LEADING ZERO (owner Q9, Support console Stage 5, 2026-10-26): "6:18 p.m.", never "06:18 p.m.". Times written
+     out are this rule; times BUILT at runtime (`hour: '2-digit'`) are scanClockSource() below. Both live in
+     scripts/lib/clock-spelling.mjs so the unit test can run them on a fixture. */
+  LEADING_ZERO_CLOCK,
   /* ⚖ THE CLUB'S PERIOD IS ITS "FISCAL YEAR" (owner, Club Tier Stage 3c Ask 9, 2026-10-07): one spelling
      everywhere a club person reads it — the window, the Year pill, the close question, the refusals, the
      year-end report — and NEVER also "financial year", which would be a second name for the one period the
@@ -355,7 +360,35 @@ function scanPatterns(list) {
   return hits;
 }
 
-const violations = [...scan(ENFORCED), ...scanPatterns(ENFORCED_PATTERNS)];
+/**
+ * The clock built at runtime: `hour: '2-digit'` on a twelve-hour clock prints "06:18 p.m." (a leading zero the house
+ * clock never has). The options object is read as a whole, so a 24-hour axis label (`hour12: false`) stays legal.
+ */
+function scanClockSource() {
+  const hits = [];
+  for (const root of SCAN_ROOTS) {
+    for (const file of collectFiles(root)) {
+      if (path.extname(file) === '.css') continue;
+      const src = fs.readFileSync(file, 'utf8');
+      if (!src.includes('2-digit')) continue;
+      const raw = src.split(/\r?\n/);
+      const code = stripComments(raw, false);
+      for (const hit of twoDigitTwelveHourHits(code.join('\n'))) {
+        if (/spelling-ok/i.test(raw[hit.line - 1]) || (hit.line > 1 && /spelling-ok/i.test(raw[hit.line - 2]))) continue;
+        hits.push({
+          file: file.split(path.sep).join('/'),
+          line: hit.line,
+          found: hit.found,
+          expected: TWO_DIGIT_RIGHT,
+          text: raw[hit.line - 1].trim().slice(0, 140),
+        });
+      }
+    }
+  }
+  return hits;
+}
+
+const violations = [...scan(ENFORCED), ...scanPatterns(ENFORCED_PATTERNS), ...scanClockSource()];
 
 if (JSON_OUT) {
   const survey = scan(SURVEY);

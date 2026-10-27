@@ -42,7 +42,9 @@ const DATE_TIME_OPTS: Intl.DateTimeFormatOptions = {
   year: 'numeric',
   month: 'short',
   day: 'numeric',
-  hour: '2-digit',
+  // 'numeric', never '2-digit': a twelve-hour clock must not print a leading zero ("3:00 p.m.", not "03:00 p.m." — the house
+  // clock, spelling gate rule in scripts/lib/clock-spelling.mjs).
+  hour: 'numeric',
   minute: '2-digit',
 };
 

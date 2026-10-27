@@ -7,6 +7,27 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-26 — SUPPORT CONSOLE STAGE 5 BUILD GATE, FOUR ASKS RULED AS RECOMMENDED (owner, in the build session)
+
+**Decision (as ruled):** G1 the 37 logged email kinds and their labels approved as listed (one home: `lib/email-kinds.ts`); G2 team-business mail to coaches and club staff not logged in Stage 5 (each still carries a kind); G3 the Status thresholds accepted as proposed (one home: `lib/platform-status-lines.ts` THRESHOLDS); G4 a reply moves New or Triaged to Acknowledged, Acknowledged and Resolved stay, "up to 14 hours" dropped from Delayed, the reply email's foot/signature/quote line as /marketing wrote them, the two missing prod-step entries added. Full text: the plan's "Owner rulings 2026-10-26 (Stage 5 build gate)". S5-D1's rewording of the June 26 red rule is applied in that entry below.
+
+### 2026-10-26 — SUPPORT CONSOLE STAGE 5 (HEALTH), TEN ASKS RULED, EVERY RECOMMENDED BOX TICKED (owner, paste-back from the drawings https://claude.ai/artifact/BQmiMi3jXGKBwXQHr8UugB)
+
+**Decision (as ruled, the paste-back's words):**
+- **Q1 What Status shows:** all four groups: our records + a database function now; the AWS list-builds key + a scoped read-only Supabase token as release owner steps (separate member if the plan allows).
+- **Q2 The morning check (kickoff Q6, second half):** B. Status reads live; the morning check stays on the owner's PC unchanged.
+- **Q3 Who sees what:** Status all roles; Errors unchanged; the sent log for Super admin + Support + Billing (a new power), absent for the rest; staff emails Super admin only.
+- **Q4 The person link on an error:** links for every Errors reader; a staff account Super admin only; a deleted person = text; nobody = says so; the link follows the person record's own rule.
+- **Q5 The feedback reply (a customer-facing send):** email from us; "FieldLogicHQ support" at the no-reply address; replies go to fieldlogichq@gmail.com; signed first name + FieldLogicHQ support; plain text; Support + Super admin (a new power); no reason; New to Acknowledged; under 90 days, same address.
+- **Q6 The sent-email log:** account emails only; no body or links; recipient, kind label, time, number, state, club, asked-for-by; no subject; 90 days; Story rows for sign-up, sign-in, reset, invites, replies; an Emails tab, Health "Sent emails", and a Find group.
+- **Q7:** build the callback (migration, public address, secret, Resend setting, release step).
+- **Q8:** a kind required on every send call, build-enforced; account kinds logged, family kinds not; the morning-check alert stays outside.
+- **Q9 Found along the way:** the Errors caveat rewritten as one sentence (rides S5) · house clock on Errors and Feedback, the spelling gate learns the leading zero (rides S5) · two new powers in the rulebook, reply and the sent log (rides S5) · Feedback gets its own record page, triage moves inside it (rides S5). Findings, not S5: browser errors split by address (one issue per season), a later errors pass · REPORT ONLY: the morning check's build reads failed on the owner's PC 2026-10-26, the owner will look · REPORT ONLY: the morning check's alert falls back to the product mail key, fix in its own commit on the owner's word.
+- **Q10 Rule meetings:** S5-D1 lime + the note reworded; S5-D2 refresh symbol on a phone; S5-D3 keep today's words, settle in Stage 8.
+
+**Rationale:** the drawings' reasons beside each question; the code facts are in the plan's "Stage 5 findings".
+**Applies to:** the Health group of the support console (Status, Errors, Feedback), the sent-email log and its delivery callback, the platform powers rulebook.
+
 ### 2026-10-26 — SUPPORT CONSOLE STAGE 3 (MONEY), TWELVE ASKS RULED AS RECOMMENDED (owner, paste-back from the drawings https://claude.ai/artifact/FdTWB58ne1jgsBXSwutdLX, every recommended box ticked)
 
 **Decision (as ruled, the paste-back's words):**
@@ -9511,7 +9532,7 @@ The point is not that ink looks better than olive — it is that **two primary t
 **Decision (owner-flagged platform-admin QA walkthrough, finding B.1 — the org-detail → Billing & Access plan-change "Apply Change" button was danger-red, identical to Cancel Subscription / Delete Org / Ban User):** a console-wide rule for confirm-modal primary buttons.
 
 1. **🟢 Lime (affirmative confirm)** — routine, additive, or self-reversible operational changes: plan change (BOTH upgrade and downgrade), grant override, unban, revoke sessions, edit user info, submit-for-review, publish matrix, bulk operation, any save. Uses the lime fill/tint idiom (`btn-lime` family; module analogues e.g. `.applyBtn`, `.saveBtn`, `.modalConfirm`, `.activateBtn`, `.primaryBtn`).
-2. **🔴 Red (destructive confirm)** — and ONLY these: actions that destroy data, revoke access, or can't be undone from the UI: cancel subscription, delete org, delete user, ban user, remove platform user, revoke override, delete note, reject change request, transfer ownership (demotes existing owners). The truly irreversible subset (delete org/user) additionally arms via a typed slug/email match. (`btn-danger` family; module analogues `.confirmBtn`, `.modalConfirmDanger`, `.removeBtn`, `.dangerBtn`.)
+2. **🔴 Red (destructive confirm)** — and ONLY these: actions that destroy or take away what a customer had (data, access, money). **Reworded 2026-10-26 (owner S5-D1, Support console Stage 5):** "can't be undone from the UI" no longer makes a button red on its own — a SEND (a reset link, a reply to feedback) cannot be taken back but destroys nothing, so it is **lime**, with "It cannot be taken back." in its window's sentence. Red: cancel subscription, delete org, delete user, ban user, remove platform user, revoke override, delete note, reject change request, transfer ownership (demotes existing owners). The truly irreversible subset (delete org/user) additionally arms via a typed slug/email match. (`btn-danger` family; module analogues `.confirmBtn`, `.modalConfirmDanger`, `.removeBtn`, `.dangerBtn`.)
 3. **⚪ Ghost (neutral)** — Cancel / Dismiss / back-out. ALWAYS. Never lime, never red.
 
 **Governing principle:** colour encodes **what the action does to the world — a fixed property of the action TYPE — not the org's current state.** So NO context-aware red (rejected the "red for downgrades / red for active-Stripe orgs" idea): dynamic red appears unpredictably and trains operators to ignore it just like overuse does. **The safeguard for a "scary but reversible" action is FRICTION, not colour** — surface the consequence in the modal body (e.g. a downgrade archives tournaments over the new cap; a bulk op hits N orgs; a manual plan change on a Stripe-billed org won't change what Stripe bills) and/or require a two-click/typed confirm, while the button stays lime. Precedent the rule generalises: the customer-users Ban/Unban/Revoke modal already picks red for *ban* vs lime for *unban/revoke* off one modal — correct; we extended that discipline to org-detail, whose five confirm modals had been sharing ONE red class.
