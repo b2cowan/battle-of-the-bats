@@ -822,6 +822,13 @@ export const DISPUTE_WORDS = {
   moneyLine: (receiptNo: string, whyShort: string) => (whyShort ? `Dispute lost · ${whyShort} · receipt ${receiptNo}` : `Dispute lost · receipt ${receiptNo}`),
   moneyHow: 'Taken back by the bank',
   bulkWhy: 'a dispute was lost',
+  // Ruling 5 (owner 2026-10-27): one "Email the pay link" after a lost dispute asks first, never skips; the bulk send
+  // still leaves them out. Words owed to /marketing (the dispute words' voice).
+  sendAnywayTitle: 'Email the pay link anyway?',
+  sendAnywayBody: (team: boolean) => (team
+    ? 'This team took a card payment back through its bank, and the club lost the dispute. Payment reminders leave the team out, so it hears from a person first. You can still send the pay link.'
+    : 'This family took a card payment back through their bank, and the club lost the dispute. Email families who owe leaves them out, so they hear from a person first. You can still send the pay link.'),
+  sendAnywayGo: 'Email the pay link',
 } as const;
 
 /**

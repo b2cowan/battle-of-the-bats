@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
  *   POST { action: 'refund', onlinePaymentId, feeIncluded, reason, note }          refund to the card, in full (A12)
  *   POST { action: 'refund', onlinePaymentId, amount, partialReason, note }       12c: part of it (never the fee; lowers the entry)
  *   POST { action: 'refund_another_way', onlinePaymentId, feeIncluded, reason, note }  after a refund to the card came back
- *   POST { action: 'email_pay_link', teamId }                                      "Email the pay link" → "Pay link sent"
+ *   POST { action: 'email_pay_link', teamId, despiteLostDispute? }                 "Email the pay link" → "Pay link sent"
  *   POST { action: 'clear_decision', onlinePaymentId, choice, feeBack, reason }    12c Part 6: a team ended while its bank debit
  *                                                                                  clears — send it back or keep it, when it clears
  *   POST { action: 'keep_over', onlinePaymentId, reason }                          12d-1: the club keeps what a team paid past
@@ -49,8 +49,9 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     if (typeof body.teamId !== 'string' || !UUID.test(body.teamId)) return json({ error: 'That team couldn’t be found.' }, 404);
     const { data: team } = await supabaseAdmin.from('teams').select('tournament_id').eq('id', body.teamId).maybeSingle();
     if (team?.tournament_id !== tournamentId) return json({ error: 'That team couldn’t be found.' }, 404);
-    const sent = await sendTeamPayLink(body.teamId);
-    if ('error' in sent) return json({ error: sent.error }, 409);
+    // Ruling 5: after a lost card dispute, one send asks first and goes on `despiteLostDispute`.
+    const sent = await sendTeamPayLink(body.teamId, { despiteLostDispute: body.despiteLostDispute === true });
+    if ('error' in sent) return json({ error: sent.error, ...(sent.disputeLost === 'ask' ? { code: 'dispute_lost_ask' } : {}) }, 409);
     return json(sent);
   }
 

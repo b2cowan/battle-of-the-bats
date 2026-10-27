@@ -27,7 +27,7 @@ import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import { formatStoredDate } from '@/lib/timezone';
 import {
-  OVER_WORDS as O, PAY_VIEW_WORDS as V, REFUND_WORDS as R, SCOPE_WORDS, cardLabel, money, paidAtLabel, receiptLabel,
+  DISPUTE_WORDS, OVER_WORDS as O, PAY_VIEW_WORDS as V, REFUND_WORDS as R, SCOPE_WORDS, cardLabel, money, paidAtLabel, receiptLabel,
 } from '@/lib/online-payment-words';
 import { CARD_REFUND_WORDS } from '@/lib/house-league-money-words';
 import { clockOf } from '@/lib/league-card-refunds';
@@ -329,6 +329,25 @@ export function KeepOverWindow({ teamName, extraCents, keep, onClose }: {
         <input className={ck.input} maxLength={500} value={reason} onChange={e => setReason(e.target.value)} aria-required="true" autoFocus />
       </label>
       {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
+    </KitDialog>
+  );
+}
+
+/**
+ * 12d-1 ruling 5 (owner 2026-10-27): "Email the pay link" for a team whose card dispute was lost asks first. The payment
+ * reminders leave such a team out; one send is the desk's choice, never skipped.
+ */
+export function PayLinkAnywayWindow({ send, onClose }: { send: () => Promise<void>; onClose: () => void }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <KitDialog kind="question" raised title={DISPUTE_WORDS.sendAnywayTitle} onClose={onClose} busy={busy}
+      footer={(
+        <>
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{R.cancel}</button>
+          <button type="button" className="btn btn-lime" onClick={() => { setBusy(true); void send(); }} disabled={busy}>{DISPUTE_WORDS.sendAnywayGo}</button>
+        </>
+      )}>
+      <p>{DISPUTE_WORDS.sendAnywayBody(true)}</p>
     </KitDialog>
   );
 }

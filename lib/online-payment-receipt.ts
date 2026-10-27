@@ -207,7 +207,10 @@ export async function sendRefundEmail(refundId: string, extra?: { lead?: string;
  * "Email the pay link" (copy §15): the team's link, to the team's contact, in the club's name. Only while the team can pay
  * online now; stamps "Pay link sent" on the record. The amount is the fee schedule's, never the processing fee.
  */
-export async function sendTeamPayLink(teamId: string): Promise<{ sentTo: string; sentAt: string } | { error: string }> {
+export async function sendTeamPayLink(
+  teamId: string,
+  opts: { despiteLostDispute?: boolean } = {},
+): Promise<{ sentTo: string; sentAt: string } | { error: string; disputeLost?: 'ask' }> {
   const facts = await loadTeamPayFacts(teamId);
   if (!facts) return { error: 'That team couldn’t be found.' };
   const refusal = refusalMessage(facts);
@@ -215,6 +218,8 @@ export async function sendTeamPayLink(teamId: string): Promise<{ sentTo: string;
   if (!facts.teamEmail) return { error: 'This team has no email address.' };
   const payLink = teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId });
   if (!payLink) return { error: 'Pay links aren’t set up on this server.' };
+  // Owner ruling 5 (2026-10-27): after a lost card dispute the reminders leave the team out; one send asks first.
+  if (!opts.despiteLostDispute && await teamLostDispute(teamId)) return { error: DISPUTE_WORDS.sendAnywayBody(true), disputeLost: 'ask' };
   const face = await systemMailFace({
     id: facts.org.id, name: facts.org.name, logoUrl: facts.org.logoUrl ?? null,
     themePreset: facts.org.themePreset ?? null, themePrimary: facts.org.themePrimary ?? null, themeAccent: facts.org.themeAccent ?? null,
@@ -243,16 +248,16 @@ export async function sendLeaguePayLink(
   registrationId: string,
   raised?: { child: string; from: string; to: string; diff: string } | null,
   refunded?: { child: string; childFirst: string; owing: string; blockHtml: string } | null,
-  opts: { bulk?: boolean } = {},
-): Promise<{ sentTo: string; sentAt: string } | { error: string; disputeLost?: true }> {
+  opts: { bulk?: boolean; despiteLostDispute?: boolean } = {},
+): Promise<{ sentTo: string; sentAt: string } | { error: string; disputeLost?: 'skipped' | 'ask' }> {
   const facts = await loadLeaguePayFacts(registrationId);
   if (!facts) return { error: 'That registration couldn’t be found.' };
   // 12d-1 Part 4 (words §1.5): "Email families who owe" leaves out a family with any child still owing after a lost card
   // dispute — it took its money back through its bank, and hears from a person, not a reminder. On the server, so a lost
-  // SIBLING is caught too (the bulk send picks one child per sign-up). A desk member's single send is their own choice.
-  if (opts.bulk && facts.shares.length && await anyLostDispute(facts.shares.map(s => s.registrationId))) {
-    return { error: DISPUTE_WORDS.bulkWhy, disputeLost: true };
-  }
+  // SIBLING is caught too (the bulk send picks one child per sign-up). A desk member's single send is their own choice,
+  // asked first (owner ruling 5, 2026-10-27: it warns, never skips), below the refusals so a send that can't go never asks.
+  const lost = facts.shares.length > 0 && await anyLostDispute(facts.shares.map(s => s.registrationId));
+  if (opts.bulk && lost) return { error: DISPUTE_WORDS.bulkWhy, disputeLost: 'skipped' };
   if (facts.refusal === 'clearing') {
     // 12c Part 6 (words §3.2): every child still owing is on a bank debit on its way.
     return { error: REGS_WORDS.payLink.clearingLink(childList(facts.children.filter(c => c.clearingCents > 0).map(c => `${c.firstName} ${c.lastName}`))) };
@@ -261,6 +266,7 @@ export async function sendLeaguePayLink(
   if (!facts.guardianEmail) return { error: 'This family has no email address.' };
   const payLink = leaguePayUrl(appUrl(), { orgSlug: facts.org.slug, seasonSlug: facts.season.slug, registrationId });
   if (!payLink) return { error: 'Pay links aren’t set up on this server.' };
+  if (lost && !opts.despiteLostDispute) return { error: DISPUTE_WORDS.sendAnywayBody(false), disputeLost: 'ask' };
   const face = await systemMailFace({
     id: facts.org.id, name: facts.org.name, logoUrl: facts.org.logoUrl ?? null,
     themePreset: facts.org.themePreset ?? null, themePrimary: facts.org.themePrimary ?? null, themeAccent: facts.org.themeAccent ?? null,
@@ -285,6 +291,13 @@ export async function sendLeaguePayLink(
   const sentAt = new Date().toISOString();
   await supabaseAdmin.from('league_registrations').update({ pay_link_sent_at: sentAt }).in('id', facts.shares.map(s => s.registrationId));
   return { sentTo: facts.guardianEmail, sentAt };
+}
+
+/** A card dispute lost (and not won back since) on one of this team's payments, as the payment reminders read it. */
+async function teamLostDispute(teamId: string): Promise<boolean> {
+  const { count } = await supabaseAdmin.from('online_payment_disputes').select('id, online_payments!inner(team_id)', { count: 'exact', head: true })
+    .eq('online_payments.team_id', teamId).eq('status', 'lost').not('lost_booked_at', 'is', null).is('won_back_at', null);
+  return (count ?? 0) > 0;
 }
 
 /** A card dispute lost (and not won back since) on a payment for any of these children. Small: a family's children. */

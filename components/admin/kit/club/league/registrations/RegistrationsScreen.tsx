@@ -85,6 +85,7 @@ type Act =
   | { kind: 'undo'; id: string; payment: LeagueMoneyLine }
   | { kind: 'email'; ids: string[] }
   | { kind: 'confirm'; verb: 'approve' | 'promote' | 'waitlist'; ids: string[] }
+  | { kind: 'payLinkAnyway'; reg: LeagueRegistration }
   | { kind: 'add' };
 
 interface TeamLite { id: string; name: string; divisionId: string }
@@ -501,10 +502,12 @@ export default function RegistrationsScreen() {
   }
 
   // ── The pay link (12b copy §5) ─────────────────────────────────────────────────────────────────
-  async function payLinkOne(reg: LeagueRegistration) {
+  async function payLinkOne(reg: LeagueRegistration, despiteLostDispute = false) {
     markBusy([reg.id], true);
-    const r = await patchRegistration(orgQuery, seasonId, reg.id, { payLink: true });
+    const r = await patchRegistration(orgQuery, seasonId, reg.id, despiteLostDispute ? { payLink: true, despiteLostDispute } : { payLink: true });
     markBusy([reg.id], false);
+    // 12d-1 ruling 5: after a lost card dispute (this child's or a sibling's, the server's answer) the send asks first.
+    if (!r.ok && r.code === 'dispute_lost_ask') { setAct({ kind: 'payLinkAnyway', reg }); return; }
     if (!r.ok) { setNotes(n => ({ ...n, [reg.id]: { text: r.error } })); return; }
     afterWrite(false);
     say(REGS_WORDS.payLink.sent(reg.guardianEmail));
@@ -920,6 +923,15 @@ export default function RegistrationsScreen() {
           onClose={() => setAct(null)}
           onShowNoFamily={() => setAct(null)}
           onSent={said => { setAct(null); say(said); clearSelection(); }}
+        />
+      )}
+      {act?.kind === 'payLinkAnyway' && (
+        <ConfirmWindow
+          title={DISPUTE_WORDS.sendAnywayTitle}
+          body={DISPUTE_WORDS.sendAnywayBody(false)}
+          go={DISPUTE_WORDS.sendAnywayGo}
+          onClose={() => setAct(null)}
+          onConfirm={async () => { const reg = act.reg; setAct(null); await payLinkOne(reg, true); }}
         />
       )}
       {act?.kind === 'confirm' && (

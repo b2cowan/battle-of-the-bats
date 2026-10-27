@@ -18,7 +18,7 @@ import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { TEAM_ENTRY_WORDS as EW, TEAM_ROW_WORDS as OW, REFUND_WORDS as RW, OVER_WORDS as XW, PAY_OPEN_WORDS as PW, SCOPE_WORDS, howPaidWords, money, reasonShort, receiptLabel } from '@/lib/online-payment-words';
 import type { TeamDebit } from '@/lib/team-pay-facts';
-import { KeepOverWindow, PaymentViewWindow, RefundWindow, type OverPreset, type RefundSend } from './OnlinePaymentWindows';
+import { KeepOverWindow, PayLinkAnywayWindow, PaymentViewWindow, RefundWindow, type OverPreset, type RefundSend } from './OnlinePaymentWindows';
 import type { OpenPayPage } from '@/lib/online-pay-pages';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import DisputeBlock, { disputeShows } from '@/components/admin/kit/club/DisputeBlock';
@@ -132,6 +132,8 @@ export default function TeamPayments(props: Props) {
   const [openPages, setOpenPages] = useState<OpenPayPage[]>([]);
   const [clubToday, setClubToday] = useState(today);
   const [keeping, setKeeping] = useState<TeamOnlinePayment | null>(null);
+  // 12d-1 ruling 5: "Email the pay link" after a lost card dispute asks first.
+  const [linkAnyway, setLinkAnyway] = useState(false);
 
   const base = `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registrations/payments`;
   const orgParam = orgQuery ? orgQuery.replace(/^\?/, '&') : '';
@@ -267,9 +269,10 @@ export default function TeamPayments(props: Props) {
     }
   }
 
-  async function emailPayLink() {
+  async function emailPayLink(despiteLostDispute = false) {
     setFlash(null);
-    const { error, data } = await onlineSend({ action: 'email_pay_link', teamId });
+    const { error, data } = await onlineSend({ action: 'email_pay_link', teamId, ...(despiteLostDispute ? { despiteLostDispute } : {}) });
+    if (error && data.code === 'dispute_lost_ask') { setLinkAnyway(true); return; }
     setFlash(error ? OW.linkFailedToast : OW.linkSentToast(String(data.sentTo ?? '')));
     if (!error) setOnline(o => (o ? { ...o, payLinkSentAt: String(data.sentAt ?? new Date().toISOString()) } : o));
   }
@@ -629,6 +632,9 @@ export default function TeamPayments(props: Props) {
             otherLabel={other ? SCOPE_WORDS.scope[other.scope] : null} over={refunding.anotherWay ? null : presetFor(refunding.p)} />
         );
       })()}
+      {linkAnyway && (
+        <PayLinkAnywayWindow onClose={() => setLinkAnyway(false)} send={async () => { setLinkAnyway(false); await emailPayLink(true); }} />
+      )}
       {keeping && (
         <KeepOverWindow teamName={teamName} extraCents={keeping.over?.leftCents ?? 0} keep={keepOver} onClose={() => setKeeping(null)} />
       )}

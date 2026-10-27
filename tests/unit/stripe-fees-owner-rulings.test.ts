@@ -55,3 +55,36 @@ describe('ruling 3: a returned debit is billed at Stripe\'s own figure, nothing 
     assert.match(sweep, /for \(const id of returnedIds\) if \(!recorded\.has\(id\)\) await recordReturnedDebitFee\(id\);/);
   });
 });
+
+describe('ruling 5: one "Email the pay link" after a lost card dispute warns, never skips; the bulk send still skips', () => {
+  const RECEIPT = readCode('lib/online-payment-receipt.ts');
+
+  it('house league: the bulk send skips the family; one send asks, and goes when the desk says so', () => {
+    const league = /export async function sendLeaguePayLink[\s\S]*?\n}\n/.exec(RECEIPT)?.[0] ?? '';
+    assert.match(league, /if \(opts\.bulk && lost\) return \{ error: DISPUTE_WORDS\.bulkWhy, disputeLost: 'skipped' \};/);
+    assert.match(league, /if \(lost && !opts\.despiteLostDispute\) return \{ error: DISPUTE_WORDS\.sendAnywayBody\(false\), disputeLost: 'ask' \};/);
+    // Asked only once nothing else refuses: a send that can't go never asks first.
+    assert.ok(league.indexOf("disputeLost: 'ask'") > league.indexOf('if (!payLink)'), 'after every refusal');
+    const route = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
+    assert.match(route, /despiteLostDispute: body\.despiteLostDispute === true/);
+    assert.match(route, /sent\.disputeLost === 'ask' \? 'dispute_lost_ask'/);
+    const screen = readCode('components/admin/kit/club/league/registrations/RegistrationsScreen.tsx');
+    assert.match(screen, /if \(!r\.ok && r\.code === 'dispute_lost_ask'\) \{ setAct\(\{ kind: 'payLinkAnyway', reg \}\); return; \}/);
+    assert.match(screen, /await payLinkOne\(reg, true\)/);
+    // The bulk loop never sends the "anyway" flag.
+    const bulk = /async function runBulkPayLink[\s\S]*?\n  }\n/.exec(screen)?.[0] ?? '';
+    assert.doesNotMatch(bulk, /despiteLostDispute/);
+  });
+
+  it('a tournament team: the reminders skip it; one send asks first, the same way', () => {
+    const team = /export async function sendTeamPayLink[\s\S]*?\n}\n/.exec(RECEIPT)?.[0] ?? '';
+    assert.match(team, /if \(!opts\.despiteLostDispute && await teamLostDispute\(teamId\)\) return \{ error: DISPUTE_WORDS\.sendAnywayBody\(true\), disputeLost: 'ask' \};/);
+    assert.ok(team.indexOf("disputeLost: 'ask'") > team.indexOf('if (!payLink)'), 'after every refusal');
+    const lost = /async function teamLostDispute[\s\S]*?\n}\n/.exec(RECEIPT)?.[0] ?? '';
+    assert.match(lost, /\.eq\('status', 'lost'\)\.not\('lost_booked_at', 'is', null\)\.is\('won_back_at', null\)/, 'as the reminders read it');
+    const pay = readCode('app/[orgSlug]/admin/tournaments/registrations/components/TeamPayments.tsx');
+    assert.match(pay, /if \(error && data\.code === 'dispute_lost_ask'\) \{ setLinkAnyway\(true\); return; \}/);
+    assert.match(pay, /<PayLinkAnywayWindow onClose=\{\(\) => setLinkAnyway\(false\)\} send=\{async \(\) => \{ setLinkAnyway\(false\); await emailPayLink\(true\); \}\} \/>/);
+    assert.match(readCode('app/api/admin/tournaments/[tournamentId]/registrations/payment-reminders/route.ts'), /!lostTeams\.has\(team\.id\)/);
+  });
+});
