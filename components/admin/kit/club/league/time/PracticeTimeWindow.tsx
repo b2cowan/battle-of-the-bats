@@ -6,7 +6,7 @@ import { repKit, useDeferredLoad } from '../../RepKit';
 import LoadingState from '@/components/shared/LoadingState';
 import { hoursAWeek, partsShapes } from '@/lib/league-time';
 import {
-  planPractices, PRACTICE_MINUTES, TEAMS_AT_ONCE, PRACTICE_TIME_WORDS as W,
+  planPractices, PRACTICE_MINUTES, PRACTICES_A_WEEK, TEAMS_AT_ONCE, PRACTICE_TIME_WORDS as W,
   type PracticeSettings, type PracticeTimeRead,
 } from '@/lib/league-practice-time';
 import { facilityListWords } from '@/lib/permit-words';
@@ -101,9 +101,12 @@ export default function PracticeTimeWindow({ orgSlug, seasonId, seasonName, divi
         </div>
       );
     } else {
+      // The time holds fewer than the pick: the line says so, in amber.
+      const fewer = settings && plan.perTeam < settings.practicesAWeek;
       result = (
-        <div className={`${ck.notice} ${p.result}`}>
+        <div className={`${ck.notice} ${fewer ? ck.noticeWarn : ''} ${p.result}`}>
           <b>{W.everyTeam(plan.perTeam)}{plan.openAWeek > 0 && <span className={p.desk}> {W.open(plan.openAWeek)}</span>}</b>
+          {fewer && <span>{W.notRoomFor(settings.practicesAWeek)}</span>}
           {plan.openAWeek > 0 && <span className={p.phone}>{W.open(plan.openAWeek)}</span>}
           {plan.turns && <span className={p.desk}>{W.turns}</span>}
         </div>
@@ -169,6 +172,13 @@ export default function PracticeTimeWindow({ orgSlug, seasonId, seasonName, divi
                     <select className={ck.select} value={settings.teamsAtOnce} disabled={busy}
                       onChange={e => setSettings({ ...settings, teamsAtOnce: Number(e.target.value) })}>
                       {TEAMS_AT_ONCE.map(n => <option key={n} value={n}>{W.perFacility(n)}</option>)}
+                    </select>
+                  </label>
+                  <label className={ck.field}>
+                    <span className={ck.label}>{W.practicesAWeek}</span>
+                    <select className={ck.select} value={settings.practicesAWeek} disabled={busy}
+                      onChange={e => setSettings({ ...settings, practicesAWeek: Number(e.target.value) })}>
+                      {PRACTICES_A_WEEK.map(n => <option key={n} value={n}>{W.aWeek(n)}</option>)}
                     </select>
                   </label>
                 </div>

@@ -3,7 +3,8 @@ import { supabaseAdmin } from './supabase-admin';
 import { getDivisionsForSeason, getTeamsForDivision } from './db';
 import { readClubPlaces } from './permit-lookup';
 import { weekdayOf } from './permit-time';
-import { utcToZonedInputs } from './timezone';
+import { mondayOfDay, utcToZonedInputs } from './timezone';
+import { fetchAllIn } from './supabase-paging';
 import { formatVenueLocation } from './venue-label';
 import { houseLeagueSlotRows, usesOf } from './league-time-server';
 import { LEAGUE_TIME_REFUSALS } from './league-time';
@@ -58,7 +59,12 @@ export async function readPracticeTime(orgId: string, season: LeagueSeason, divi
       };
     })
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt) || a.placeKey.localeCompare(b.placeKey));
-  const saved = stored.data ? readSettings({ practiceMinutes: stored.data.practice_minutes, teamsAtOnce: stored.data.teams_at_once }) : null;
+  const saved = stored.data
+    ? readSettings({
+      practiceMinutes: stored.data.practice_minutes, teamsAtOnce: stored.data.teams_at_once,
+      practicesAWeek: await practicesAWeekNow(orgId, slots.map(x => x.id)),
+    })
+    : null;
   return {
     division: { id: division.id, name: division.name },
     slots,
@@ -66,6 +72,24 @@ export async function readPracticeTime(orgId: string, season: LeagueSeason, divi
     settings: saved ?? DEFAULT_SETTINGS,
     saved: !!saved,
   };
+}
+
+/**
+ * Practices a week as handed out now: the most any team has in one week, still to come on the division's practice time
+ * (1–3; 1 when none). Read from the practices rather than stored, so the window reopens on what is really there and a
+ * second hand-out never quietly drops a team to fewer (owner 2026-10-27).
+ */
+async function practicesAWeekNow(orgId: string, slotIds: readonly string[]): Promise<number> {
+  if (!slotIds.length) return 1;
+  const rows = await fetchAllIn<{ id: string; team_id: string; scheduled_at: string }>(slotIds, (c, a, b) => supabaseAdmin
+    .from('league_practices').select('id, team_id, scheduled_at').eq('org_id', orgId).in('club_schedule_slot_id', c)
+    .neq('status', 'cancelled').gt('scheduled_at', new Date().toISOString()).order('id').range(a, b));
+  const perWeek = new Map<string, number>();
+  for (const r of rows) {
+    const key = `${r.team_id}|${mondayOfDay(utcToZonedInputs(r.scheduled_at).date)}`;
+    perWeek.set(key, (perWeek.get(key) ?? 0) + 1);
+  }
+  return Math.min(3, Math.max(1, ...perWeek.values()));
 }
 
 export type HandOutResult =
@@ -92,7 +116,9 @@ export async function handOutPractices(p: { orgId: string; season: LeagueSeason;
 
   const { data, error } = await supabaseAdmin.rpc('league_practices_hand_out', {
     p_org: p.orgId, p_season: p.season.id, p_division: read.division.id, p_actor: p.actorId,
-    p_slots: plan.slotIds, p_rows: rows, p_settings: p.body.settings,
+    // The step keeps the two settings it knows; practices a week is the plan's, read back from the practices.
+    p_slots: plan.slotIds, p_rows: rows,
+    p_settings: { practiceMinutes: p.body.settings.practiceMinutes, teamsAtOnce: p.body.settings.teamsAtOnce },
   });
   if (error) {
     const message = error.message ?? '';

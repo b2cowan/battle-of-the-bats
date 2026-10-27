@@ -54,7 +54,7 @@ function assertFloors(rows: readonly PlannedPractice[], teamsAtOnce: number) {
 
 describe('Practice time: the drawing\'s numbers', () => {
   const slots = drawn();
-  const plan = planPractices({ slots, teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+  const plan = planPractices({ slots, teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
 
   it('every team gets 1 practice a week, 2 slots stay open, 10 practices a week', () => {
     assert.equal(plan.seatsAWeek, 12);
@@ -95,27 +95,29 @@ describe('Practice time: the drawing\'s numbers', () => {
       const clocks = mine.map(r => clock(r.scheduledAt));
       const sharers = plan.rows.filter(r => partOf(r) === partOf(mine[0]) && weekOf(r.scheduledAt) === weekOf(mine[0].scheduledAt)).length;
       if (sharers === 3) assert.equal(new Set(clocks.slice(0, 3)).size, 3, `${t.name}: ${clocks.join(', ')}`);
-      else assert.equal(new Set(clocks).size, 2, `${t.name} shares the two early times: ${clocks.join(', ')}`);
+      else assert.equal(new Set(clocks).size, sharers, `${t.name} alone keeps the early time: ${clocks.join(', ')}`);
     }
     assert.equal(plan.turns, true);
     assert.equal(W.turns, 'Teams take turns at the early and late times, week by week.');
   });
 
-  it('the open slots are the late ones on the parts with room to spare', () => {
+  it('the earliest evenings fill first: the open slots are the last part\'s later times (owner 2026-10-27)', () => {
+    const lastPart = new Set(slots.filter(s => s.weekday === 3 && s.place === 'Diamond 2').map(s => s.id));
     for (const week of byWeek(plan.rows)) {
-      const late = week.filter(r => clock(r.scheduledAt) === '00:00'); // 8:00 p.m. Eastern = 00:00 UTC
-      assert.equal(late.length, 2, 'two parts are full; the two with room leave 8:00 p.m. open');
+      const onLast = week.filter(r => lastPart.has(r.slotId));
+      assert.equal(onLast.length, 1, 'three parts full, one team on the last');
+      assert.equal(clock(onLast[0].scheduledAt), '22:00', 'its 6:00 p.m.; 7:00 and 8:00 stay open'); // 6:00 p.m. Eastern
     }
   });
 
   it('a second hand-out mid-season keeps the same rotation (the turns follow the calendar)', () => {
-    const later = planPractices({ slots: slots.filter(s => s.day >= '2027-06-21'), teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    const later = planPractices({ slots: slots.filter(s => s.day >= '2027-06-21'), teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
     const key = (r: PlannedPractice) => `${r.slotId}|${r.teamId}|${r.scheduledAt}`;
     assert.deepEqual(later.rows.map(key).sort(), plan.rows.filter(r => r.scheduledAt >= '2027-06-21').map(key).sort());
   });
 
   it('the same inputs plan the same practices (the server plans again and must agree with the window)', () => {
-    const again = planPractices({ slots: [...slots].reverse(), teams: [...teams(10)].reverse(), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    const again = planPractices({ slots: [...slots].reverse(), teams: [...teams(10)].reverse(), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
     assert.deepEqual(again.rows.map(r => `${r.slotId}|${r.teamId}|${r.scheduledAt}`).sort(), plan.rows.map(r => `${r.slotId}|${r.teamId}|${r.scheduledAt}`).sort());
   });
 
@@ -131,10 +133,10 @@ describe('Practice time: the drawing\'s numbers', () => {
 describe('Practice time: teams at once', () => {
   const monday = weekly(1, '18:00', '21:00', 'Diamond 1', 3);
   it('2 teams at once halves the practice times needed: 6 teams fit one diamond\'s three hours', () => {
-    const one = planPractices({ slots: monday, teams: teams(6), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    const one = planPractices({ slots: monday, teams: teams(6), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
     assert.equal(one.perTeam, 0);
     assert.equal(one.goWithout, 3);
-    const two = planPractices({ slots: monday, teams: teams(6), settings: { practiceMinutes: 60, teamsAtOnce: 2 } });
+    const two = planPractices({ slots: monday, teams: teams(6), settings: { practiceMinutes: 60, teamsAtOnce: 2, practicesAWeek: 1 } });
     assert.equal(two.seatsAWeek, 6);
     assert.equal(two.perTeam, 1);
     assert.equal(two.openAWeek, 0);
@@ -152,7 +154,7 @@ describe('Practice time: when the time is short, the teams take turns going with
   const cut = [1, 3].flatMap(day => ['Diamond 1', 'Diamond 2'].flatMap(place => [
     ...weekly(day, '18:00', '19:30', place, 10), ...weekly(day, '19:30', '21:00', place, 10),
   ]));
-  const plan = planPractices({ slots: cut, teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+  const plan = planPractices({ slots: cut, teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
 
   it('8 seats for 10 teams: 8 a week, 2 go without', () => {
     assert.equal(plan.seatsAWeek, 8);
@@ -175,7 +177,7 @@ describe('Practice time: when the time is short, the teams take turns going with
 
 describe('Practice time: what doesn\'t fit', () => {
   it('a practice longer than every slot fits nowhere — said in words, never a raw error', () => {
-    const plan = planPractices({ slots: drawn(), teams: teams(10), settings: { practiceMinutes: 240, teamsAtOnce: 1 } });
+    const plan = planPractices({ slots: drawn(), teams: teams(10), settings: { practiceMinutes: 240, teamsAtOnce: 1, practicesAWeek: 1 } });
     assert.equal(plan.rows.length, 0);
     assert.equal(plan.seatsAWeek, 0);
     assert.equal(plan.practicesAWeek, 0);
@@ -185,7 +187,7 @@ describe('Practice time: what doesn\'t fit', () => {
 
   it('a slot shorter than a practice stays open; the rest is planned', () => {
     const slots = [...drawn(), ...weekly(5, '18:00', '18:45', 'Diamond 1')];
-    const plan = planPractices({ slots, teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    const plan = planPractices({ slots, teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
     assert.equal(plan.tooShort, 1);
     assert.equal(plan.seatsAWeek, 12);
     assert.equal(plan.practicesAWeek, 10);
@@ -197,7 +199,7 @@ describe('Practice time: what doesn\'t fit', () => {
   });
 
   it('a division with no practice time plans nothing', () => {
-    const plan = planPractices({ slots: [], teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    const plan = planPractices({ slots: [], teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
     assert.deepEqual(plan.rows, []);
     assert.deepEqual(plan.slotIds, []);
     assert.equal(plan.seatsAWeek, 0);
@@ -205,7 +207,7 @@ describe('Practice time: what doesn\'t fit', () => {
   });
 
   it('a division with no teams plans nothing over its time', () => {
-    const plan = planPractices({ slots: drawn(), teams: [], settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    const plan = planPractices({ slots: drawn(), teams: [], settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
     assert.equal(plan.rows.length, 0);
     assert.equal(plan.openAWeek, 12);
   });
@@ -213,7 +215,7 @@ describe('Practice time: what doesn\'t fit', () => {
 
 describe('Practice time: two a week, and a week the club took a date back', () => {
   it('5 teams on the drawing\'s time: 2 a week each, on two different days', () => {
-    const plan = planPractices({ slots: drawn(), teams: teams(5), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    const plan = planPractices({ slots: drawn(), teams: teams(5), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 2 } });
     assert.equal(plan.perTeam, 2);
     assert.equal(plan.practicesAWeek, 10);
     assert.equal(plan.openAWeek, 2);
@@ -230,7 +232,7 @@ describe('Practice time: two a week, and a week the club took a date back', () =
   it('a missing Monday on Diamond 1: two of its three teams take that week\'s open seats, the third goes without', () => {
     const slots = drawn();
     const gone = slots.find(s => s.weekday === 1 && s.place === 'Diamond 1' && s.day === '2027-06-14')!;
-    const plan = planPractices({ slots: slots.filter(s => s !== gone), teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    const plan = planPractices({ slots: slots.filter(s => s !== gone), teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
     const weeks = byWeek(plan.rows);
     assert.equal(weeks[0].length, 10);
     assert.equal(weeks[1].length, 9, 'nine seats that week, all used');
@@ -242,14 +244,14 @@ describe('Practice time: two a week, and a week the club took a date back', () =
 describe('Practice time: a hand-out says what it saw', () => {
   const D = '11111111-1111-4111-8111-111111111111', S = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', T = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
   it('takes a division, the two settings and the slots and teams the window planned over', () => {
-    assert.deepEqual(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1 }, saw: { slotIds: [S.toUpperCase()], teamIds: [T] } }),
-      { divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1 }, saw: { slotIds: [S], teamIds: [T] } });
+    assert.deepEqual(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 }, saw: { slotIds: [S.toUpperCase()], teamIds: [T] } }),
+      { divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 }, saw: { slotIds: [S], teamIds: [T] } });
   });
   it('refuses rows (the server plans), a missing saw, bad settings or a bad id', () => {
-    assert.equal(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1 } }), null);
-    assert.equal(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 5, teamsAtOnce: 1 }, saw: { slotIds: [], teamIds: [] } }), null);
-    assert.equal(readHandOutBody({ divisionId: 'u12', settings: { practiceMinutes: 60, teamsAtOnce: 1 }, saw: { slotIds: [], teamIds: [] } }), null);
-    assert.equal(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1 }, saw: { slotIds: ['s1'], teamIds: [] } }), null);
+    assert.equal(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } }), null);
+    assert.equal(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 5, teamsAtOnce: 1, practicesAWeek: 1 }, saw: { slotIds: [], teamIds: [] } }), null);
+    assert.equal(readHandOutBody({ divisionId: 'u12', settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 }, saw: { slotIds: [], teamIds: [] } }), null);
+    assert.equal(readHandOutBody({ divisionId: D, settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 }, saw: { slotIds: ['s1'], teamIds: [] } }), null);
   });
   it('compares what it saw in any order', () => {
     assert.equal(sameIds([S, T], [T.toUpperCase(), S]), true);
@@ -286,10 +288,36 @@ describe('A practice\'s window (h2): Repeats and From', () => {
   });
 });
 
+describe('Practice time: Practices a week (owner 2026-10-27)', () => {
+  it('2 at once and 1 a week: the drawing\'s 10 teams fit Mondays, and Wednesdays stay free', () => {
+    const slots = drawn();
+    const plan = planPractices({ slots, teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 2, practicesAWeek: 1 } });
+    assert.equal(plan.perTeam, 1);
+    assert.equal(plan.practicesAWeek, 10);
+    assert.equal(plan.openAWeek, 14);
+    const weekday = new Map(slots.map(s => [s.id, s.weekday]));
+    assert.deepEqual([...new Set(plan.rows.map(r => weekday.get(r.slotId)))], [1], 'Mondays only');
+    assertFloors(plan.rows, 2);
+  });
+  it('a pick the time can\'t hold gives every team what fits, and the window says so', () => {
+    const plan = planPractices({ slots: drawn(), teams: teams(10), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 2 } });
+    assert.equal(plan.perTeam, 1);
+    assert.equal(plan.practicesAWeek, 10);
+    assert.equal(W.notRoomFor(2), 'There isn’t time for 2 a week.');
+    assert.equal(W.aWeek(1), '1 a week');
+  });
+  it('3 a week for 4 teams uses three evenings each, never two at once', () => {
+    const slots = [1, 2, 3, 4].flatMap(d => weekly(d, '18:00', '20:00', 'Diamond 1', 2));
+    const plan = planPractices({ slots, teams: teams(4), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 3 } });
+    assert.equal(plan.perTeam, 2, 'eight seats for four teams hold 2 each, not 3');
+    assertFloors(plan.rows, 1);
+  });
+});
+
 describe('Practice time: the club changes its time mid-season (/review 2026-10-27)', () => {
   it('Mondays for five weeks, then Wednesdays: every team practises every week, never half the weeks', () => {
     const slots = [...weekly(1, '18:00', '20:00', 'Diamond 1', 5), ...weekly(3, '18:00', '20:00', 'Diamond 1', 5, 5)];
-    const plan = planPractices({ slots, teams: teams(2), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    const plan = planPractices({ slots, teams: teams(2), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
     assert.equal(plan.perTeam, 1);
     assert.equal(plan.practicesAWeek, 2);
     for (const week of byWeek(plan.rows)) assert.equal(week.length, 2);
@@ -298,14 +326,14 @@ describe('Practice time: the club changes its time mid-season (/review 2026-10-2
   });
   it('a one-off Saturday never counts as a week\'s time: the figures are the typical week\'s', () => {
     const slots = [...weekly(1, '18:00', '20:00', 'Diamond 1', 10), ...weekly(6, '10:00', '12:00', 'Diamond 1', 1)];
-    const plan = planPractices({ slots, teams: teams(4), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    const plan = planPractices({ slots, teams: teams(4), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
     assert.equal(plan.seatsAWeek, 2);
     assert.equal(plan.perTeam, 0);
     assert.equal(plan.goWithout, 2);
   });
   it('a slot that ends at midnight holds its practices', () => {
     const slots = weekly(5, '21:00', '00:00', 'Diamond 1', 2);
-    const plan = planPractices({ slots, teams: teams(3), settings: { practiceMinutes: 60, teamsAtOnce: 1 } });
+    const plan = planPractices({ slots, teams: teams(3), settings: { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 } });
     assert.equal(plan.tooShort, 0);
     assert.equal(plan.seatsAWeek, 3);
     assert.equal(plan.perTeam, 1);
@@ -322,10 +350,12 @@ describe('Practice time: the club changes its time mid-season (/review 2026-10-2
 
 describe('Practice time: settings', () => {
   it('reads the step\'s ranges and nothing else', () => {
-    assert.deepEqual(readSettings({ practiceMinutes: 60, teamsAtOnce: 1 }), { practiceMinutes: 60, teamsAtOnce: 1 });
-    assert.deepEqual(readSettings({ practiceMinutes: '90', teamsAtOnce: '2' }), { practiceMinutes: 90, teamsAtOnce: 2 });
-    for (const bad of [{ practiceMinutes: 10, teamsAtOnce: 1 }, { practiceMinutes: 241, teamsAtOnce: 1 }, { practiceMinutes: 60, teamsAtOnce: 5 },
-      { practiceMinutes: 60, teamsAtOnce: 0 }, { practiceMinutes: 60.5, teamsAtOnce: 1 }, null, {}]) {
+    assert.deepEqual(readSettings({ practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 }), { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 });
+    assert.deepEqual(readSettings({ practiceMinutes: '90', teamsAtOnce: '2', practicesAWeek: '2' }), { practiceMinutes: 90, teamsAtOnce: 2, practicesAWeek: 2 });
+    assert.equal(readSettings({ practiceMinutes: 60, teamsAtOnce: 1 }), null, 'practices a week is required');
+    assert.equal(readSettings({ practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 4 }), null);
+    for (const bad of [{ practiceMinutes: 10, teamsAtOnce: 1, practicesAWeek: 1 }, { practiceMinutes: 241, teamsAtOnce: 1, practicesAWeek: 1 }, { practiceMinutes: 60, teamsAtOnce: 5 },
+      { practiceMinutes: 60, teamsAtOnce: 0 }, { practiceMinutes: 60.5, teamsAtOnce: 1, practicesAWeek: 1 }, null, {}]) {
       assert.equal(readSettings(bad), null, JSON.stringify(bad));
     }
   });

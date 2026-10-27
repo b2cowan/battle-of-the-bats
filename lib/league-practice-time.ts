@@ -8,11 +8,13 @@
  * kind `practices`). The plan:
  *   1. cuts each slot into practices of one length from its start ("6:00–9:00" at 60 minutes → 6:00, 7:00, 8:00), each
  *      with room for `teamsAtOnce` teams on the slot's facility — a SEAT. A slot shorter than a practice stays open.
- *   2. gives every team the SAME number of practices a week where the time allows (a week's seats ÷ teams, rounded down);
- *      the rest of the seats stay open. Fewer seats than teams: every team goes round one ring of the week's seats, one
- *      step a week, so the teams take turns going without equally (never the same teams all season).
+ *   2. gives every team the SAME number of practices a week: the league admin's pick (Practices a week, 1–3, owner
+ *      2026-10-27), or fewer when the time holds fewer (a week's seats ÷ teams, rounded down); the rest stays open. Fewer
+ *      seats than teams: every team goes round one ring of the week's seats, one step a week, so the teams take turns
+ *      going without equally (never the same teams all season).
  *   3. keeps a team on the same PART every week (one weekday, one clock, one facility — lib/league-time.ts's unit); a team
- *      with two a week gets two days when it can, and never two parts that overlap.
+ *      with two a week gets two days when it can, and never two parts that overlap. The earliest parts fill first, so
+ *      time to spare is whole evenings left open.
  *   4. moves a part's teams through its practices one step a week, so the early and late times are shared ("Teams take
  *      turns at the early and late times, week by week"). A part with room to spare uses its earliest practices: the
  *      open one is the late one, every week.
@@ -54,7 +56,9 @@ export interface PracticeTimeSlot {
 }
 
 export interface PracticeTimeTeam { id: string; name: string }
-export interface PracticeSettings { practiceMinutes: number; teamsAtOnce: number }
+/** Each practice's length, teams at once on a facility, and practices a week for every team (owner 2026-10-27: a pick,
+ *  1 to 3, starting at 1 — the rest of the time stays open; never "as many as fit"). */
+export interface PracticeSettings { practiceMinutes: number; teamsAtOnce: number; practicesAWeek: number }
 
 /** One practice the plan hands out: its slot, team and instants (the step writes the SLOT's place). */
 export interface PlannedPractice { slotId: string; teamId: string; scheduledAt: string; endsAt: string }
@@ -65,7 +69,7 @@ export interface PracticePlan {
   slotIds: string[];
   /** A week's seats across the division's parts. */
   seatsAWeek: number;
-  /** Practices a week for every team (0 when the time is short). */
+  /** Practices a week for every team (0 when the time is short); below the pick when the time holds fewer. */
   perTeam: number;
   /** What the lime counts: practices handed out in a week. */
   practicesAWeek: number;
@@ -79,8 +83,8 @@ export interface PracticePlan {
   tooShort: number;
 }
 
-/** What the route answers: the division, its practice time still to come, its teams, and the saved settings (or the
- *  defaults, `saved` false, before the first hand-out). */
+/** What the route answers: the division, its practice time still to come, its teams, and the settings it opens on — the
+ *  saved length and teams at once, practices a week read from what is handed out now (the defaults before the first). */
 export interface PracticeTimeRead {
   division: { id: string; name: string };
   slots: PracticeTimeSlot[];
@@ -118,15 +122,17 @@ export const sameIds = (a: readonly string[], b: readonly string[]) =>
 /** Each practice's lengths, and teams at once (the step's floors: 15–240 minutes, 1–4 teams). */
 export const PRACTICE_MINUTES = [30, 45, 60, 75, 90, 120] as const;
 export const TEAMS_AT_ONCE = [1, 2, 3, 4] as const;
-export const DEFAULT_SETTINGS: PracticeSettings = { practiceMinutes: 60, teamsAtOnce: 1 };
+export const PRACTICES_A_WEEK = [1, 2, 3] as const;
+export const DEFAULT_SETTINGS: PracticeSettings = { practiceMinutes: 60, teamsAtOnce: 1, practicesAWeek: 1 };
 
 /** Settings as a body or a stored row carries them; null when out of the step's range. */
 export function readSettings(v: unknown): PracticeSettings | null {
   const r = (v ?? {}) as Record<string, unknown>;
-  const practiceMinutes = Number(r.practiceMinutes), teamsAtOnce = Number(r.teamsAtOnce);
+  const practiceMinutes = Number(r.practiceMinutes), teamsAtOnce = Number(r.teamsAtOnce), practicesAWeek = Number(r.practicesAWeek);
   if (!Number.isInteger(practiceMinutes) || practiceMinutes < 15 || practiceMinutes > 240) return null;
   if (!Number.isInteger(teamsAtOnce) || teamsAtOnce < 1 || teamsAtOnce > 4) return null;
-  return { practiceMinutes, teamsAtOnce };
+  if (!Number.isInteger(practicesAWeek) || practicesAWeek < 1 || practicesAWeek > 3) return null;
+  return { practiceMinutes, teamsAtOnce, practicesAWeek };
 }
 
 const MIN = 60_000;
@@ -182,8 +188,9 @@ function partsOf(slots: readonly PracticeTimeSlot[], s: PracticeSettings): Part[
 
 /**
  * Each team's parts for `k` practices a week: round by round, each team takes a part with a seat left that it isn't on
- * and that doesn't overlap its others — a new weekday first, then the part with the most seats left (so the open seats
- * spread), then the week's order. Null when some team can't get `k` (the caller tries one fewer).
+ * and that doesn't overlap its others — a new weekday first, then the week's order: the earliest parts fill first, so time
+ * to spare is whole evenings left open (owner 2026-10-27: 2 at once and 1 a week uses Mondays and leaves Wednesdays free).
+ * Null when some team can't get `k` (the caller tries one fewer).
  */
 function membersFor(parts: readonly Part[], teams: readonly PracticeTimeTeam[], k: number): Map<string, string[]> | null {
   const left = new Map(parts.map(p => [p.key, p.seats]));
@@ -195,7 +202,7 @@ function membersFor(parts: readonly Part[], teams: readonly PracticeTimeTeam[], 
       const options = parts.filter(p => left.get(p.key)! > 0 && !have.includes(p) && !have.some(h => overlap(h, p)));
       if (!options.length) return null;
       const newDay = (p: Part) => (have.some(h => h.weekday === p.weekday) ? 1 : 0);
-      const pick = [...options].sort((a, b) => newDay(a) - newDay(b) || left.get(b.key)! - left.get(a.key)! || a.order - b.order)[0];
+      const pick = [...options].sort((a, b) => newDay(a) - newDay(b) || a.order - b.order)[0];
       have.push(pick);
       members.get(pick.key)!.push(t.id);
       left.set(pick.key, left.get(pick.key)! - 1);
@@ -227,10 +234,11 @@ export function planPractices(p: {
     shape.weeks.push(week);
     shapes.set(key, shape);
   }
-  /** One shape's plan: the same number for every team, as many as its parts allow; fewer seats than teams is short. */
+  /** One shape's plan: the same number for every team — the pick, or as many as its parts allow when that is fewer; fewer
+   *  seats than teams is short. */
   const planShape = (here: readonly Part[]) => {
     const seats = here.reduce((n, x) => n + x.seats, 0);
-    let perTeam = teams.length ? Math.floor(seats / teams.length) : 0;
+    let perTeam = teams.length ? Math.min(s.practicesAWeek, Math.floor(seats / teams.length)) : 0;
     let members: Map<string, string[]> | null = null;
     while (perTeam > 0 && !(members = membersFor(here, teams, perTeam))) perTeam -= 1;
     return { seats, perTeam, short: perTeam === 0, members: members ?? new Map<string, string[]>() };
@@ -291,6 +299,10 @@ export const PRACTICE_TIME_WORDS = {
   minutes: (n: number) => `${n} minutes`,
   perFacility: (n: number) => `${n} per facility`,
   everyTeam: (n: number) => `Every team gets ${pluralize(n, 'practice')} a week.`,
+  /** [marketing] the third field (owner 2026-10-27), its choices, and the line when the time holds fewer than the pick. */
+  practicesAWeek: 'Practices a week',
+  aWeek: (n: number) => `${n} a week`,
+  notRoomFor: (n: number) => `There isn’t time for ${n} a week.`,
   open: (n: number) => (n === 1 ? '1 slot stays open.' : `${n} slots stay open.`),
   turns: 'Teams take turns at the early and late times, week by week.',
   /** [marketing] the time is short: who goes without, and that it goes round. */

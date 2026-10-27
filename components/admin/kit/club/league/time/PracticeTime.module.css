@@ -9,8 +9,12 @@
 }
 .from { font-weight: 400; color: var(--text-tertiary); }
 .door { margin-top: 0.5rem; padding: 0; background: none; border: 0; cursor: pointer; text-align: left; }
-/* Each practice and Teams at once side by side, on a phone too (the drawn 390). */
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem; }
+/* Each practice, Teams at once and Practices a week: three across on a desk, two across on a phone (the drawn 390 had
+   two fields; the third, ruled 2026-10-27, wraps under them). */
+.grid2 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 0.75rem; }
+@media (max-width: 640px) {
+  .grid2 { grid-template-columns: 1fr 1fr; }
+}
 /* The result: its fact in bold, then the turns. */
 .result { flex-direction: column; gap: 0.2rem; margin-bottom: 0.5rem; }
 .result b { color: var(--text-primary); font-weight: 650; }
