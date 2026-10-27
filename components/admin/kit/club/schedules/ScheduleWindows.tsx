@@ -136,19 +136,19 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
   const shared = slot.teamIds.length > 1;
   if (confirmTo) {
     const to = confirmTo.length ? joinWithAnd(confirmTo.map(nameOf)) : null;
-    const when = `${dayHead(slot.day)} · ${slotTime(slot)}`;
+    const day = dayHead(slot.day), start = formatTime(slot.startClock);
     return (
-      <KitDialog kind="question" eyebrow={W.slotEyebrow(view.schedule.name)} title={to ? W.takeBackTitle(when, to) : W.takeBackOpenTitle(when)}
+      <KitDialog kind="question" eyebrow={W.slotEyebrow(view.schedule.name)} title={to ? W.takeBackTitle(day, start, to) : W.takeBackClearTitle(day, start)}
         identity={where} onClose={() => setConfirmTo(null)} busy={busy}
         footer={(
           <>
             <button type="button" className="btn btn-outline" onClick={() => setConfirmTo(null)} disabled={busy}>{W.cancel}</button>
             <button type="button" className="btn btn-lime" onClick={() => { const ids = confirmTo; setConfirmTo(null); onChangeTeams(ids); }} disabled={busy}>
-              {to ? W.giveItTo(to) : W.openIt}
+              {to ? W.giveItTo(to) : W.clearSlot}
             </button>
           </>
         )}>
-        <p>{W.takeBackPractices(slot.houseLeague!.practiceTeams, DAY_NAMES[slot.weekday])}</p>
+        <p>{W.takeBackPractices(slot.houseLeague!.practiceTeams)}</p>
         <p className={sch.quiet}>{W.takeBackWait}</p>
       </KitDialog>
     );

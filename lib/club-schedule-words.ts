@@ -61,9 +61,9 @@ export const SCHEDULE_REFUSALS = {
   who: 'Only the club’s owner or an admin builds schedules.',
   nothingToSchedule: 'There are no rep teams with a season running to hand time to yet.',
   nothingToScheduleLeague: 'There are no rep teams or house-league seasons running to hand time to yet.',
-  repTeamsClosed: 'This schedule hands time to rep teams, and Rep Teams isn’t open to you. The owner or an admin who runs it can change it.',
-  slotBoth: 'A slot is held by teams or by house league, never both.',
-  ruleNamesHouseLeague: 'A rule names house league. Its league admins divide its time, so take it out of the rule.',
+  repTeamsClosed: 'This schedule gives time to rep teams, and your access doesn’t include Rep teams. An owner or an admin with Rep teams can change it.',
+  slotBoth: 'A slot is held by rep teams or by house league, never both.',
+  ruleNamesHouseLeague: 'A rule names house league. Its league admins divide its time, so take house league out of the rule.',
   notFound: 'That schedule isn’t here any more. Reload the page.',
   changed: 'This schedule changed since you opened it. Reload it to see the change, then try again.',
   alreadyFinal: 'This schedule is already final. Its changes go with Send the changes.',
@@ -725,15 +725,16 @@ export const SCHEDULE_SCREEN_WORDS = {
   nobody: 'Nobody (open)',
   repTeams: 'Rep teams',
   heldByHouseLeague: 'House league',
-  repSlotReads: 'A rep team holds this time. The owner or an admin can give it to house league.',
+  repSlotReads: 'A rep team holds this time. An owner or an admin can give it to house league.',
   // The club takes time back (k5, 9d2·16 — the practices half; the games half arrives with 9d-2b).
-  takeBackTitle: (when: string, to: string) => `Give ${when} to ${to}?`,
-  takeBackOpenTitle: (when: string) => `Open ${when}?`,
-  takeBackPractices: (teams: string[], weekday: string) =>
-    `House league uses this time: ${joinWithAnd(teams.map(possessive))} practices on ${weekday}s. Their coaches and families are told when you send the changes.`,
+  // One slot (the settled repeating form is k5's "Give every Thursday at 6:00 p.m. on {facility} to {team}?"; the window's
+  // identity line already names the facility). Settled by /marketing 2026-10-27 (HOUSE_LEAGUE_STAGE9D2_11B_COPY.md).
+  takeBackTitle: (day: string, start: string, to: string) => `Give ${day} at ${start} to ${to}?`,
+  takeBackClearTitle: (day: string, start: string) => `Clear ${day} at ${start}?`,
+  takeBackPractices: (teams: string[]) =>
+    `House league uses this time: the ${joinWithAnd(teams.map(possessive))} practices. Their coaches and families are told when you send the changes.`,
   takeBackWait: 'Nothing changes until you send the changes.',
   giveItTo: (to: string) => `Give it to ${to}`,
-  openIt: 'Open it',
   lockSlot: 'Lock this slot',
   unlockSlot: 'Unlock this slot',
   swapWith: 'Swap with…',

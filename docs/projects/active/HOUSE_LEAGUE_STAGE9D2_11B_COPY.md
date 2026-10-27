@@ -131,3 +131,22 @@ family may never have been told the practice time.
 
 - Changes to send, Needs a new date, Give it a new date, Publish schedule and the families' game emails: 9d-2a/9d-2b's words.
 - The first practice notice and anything a family's own calendar says: 9d-3.
+
+## Added by the build, settled 2026-10-27 (/marketing, after 11b Parts 1–2)
+
+Strings the Parts 1–2 build needed that the drawings did not carry. Same house rules.
+
+| Where | Built as | Settled | Why |
+|---|---|---|---|
+| k5 for ONE slot (the slot window changes one slot; the repeating form above stays k5's) | Give Thu, Jun 3 · 6:00 – 7:30 p.m. to 15U AAA? | **Give {Thu, Jun 3} at {6:00 p.m.} to {team}?** | The settled k5 shape ("at {start}"); the window's identity line already names the facility. |
+| k5 when the club clears the slot | Open {when}? · lime "Open it" | **Clear {Thu, Jun 3} at {6:00 p.m.}?** · lime **Clear this slot** | "Open" reads as opening a window; Clear this slot is the slot's own shipped door. |
+| k5's body, one slot | House league uses this time: Reds’ and Blues’ practices on Thursdays. … | **House league uses this time: the {Reds’ and Blues’} practices. Their coaches and families are told when you send the changes.** | One slot has one date (the title says it); "the" once, possessives through `possessive()`. |
+| k5's foot | (the settled line added "U12's league admins are told then") | **Nothing changes until you send the changes.** | League admins aren't told until Part 5 builds it; never promise a notice that doesn't go. Restore the half-sentence when it does. |
+| k5's lime | Give it to {team} | **Give it to {team}** | As settled. |
+| A rep slot, read by a league admin (h3, Part 3) | The owner or an admin can give it to house league. | **A rep team holds this time. An owner or an admin can give it to house league.** | "An owner or an admin", as k4 says it. |
+| Give it to's groups | Rep teams · Programs · House league | **Rep teams** · **Programs** · **House league** | Sentence case, as every program name. |
+| Refusal: both holders on one slot | A slot is held by teams or by house league, never both. | **A slot is held by rep teams or by house league, never both.** | Names whose teams. |
+| Refusal: a rule naming house league (defensive) | … so take it out of the rule. | **A rule names house league. Its league admins divide its time, so take house league out of the rule.** | "it" was ambiguous. |
+| Refusal: nothing to schedule, a club with house league | — | **There are no rep teams or house-league seasons running to hand time to yet.** | Beside the shipped rep-only sentence, which a club without house league keeps. |
+| Refusal: a rep schedule, opened by a member without Rep teams | This schedule hands time to rep teams, and Rep Teams isn’t open to you. … | **This schedule gives time to rep teams, and your access doesn’t include Rep teams. An owner or an admin with Rep teams can change it.** | "Give", the control's verb; says what to do; "Rep teams" in sentence case (the spelling gate). |
+| Help, the schedule's page | Click a slot to **Give it to** a team or house league, … | **Click a slot to give it to a team or house league (Give it to), Lock or Unlock it, …** | A label used as a verb read oddly; the control is named after the plain words. |

@@ -756,7 +756,7 @@ const orgHelp: HelpPageContent = {
                 <li>Pick the weeks: <strong>This week only</strong>, <strong>This &amp; later weeks</strong> or <strong>Every week</strong>.</li>
                 <li>The notice at the foot says what moved, with <strong>Undo</strong>.</li>
               </ol>
-              <p>A slot moved by hand locks itself, so a regenerate never moves it back. A shared slot moves from its window, not by dragging. Click a slot to <strong>Give it to</strong> a team or house league, <strong>Lock</strong> or <strong>Unlock</strong> it, <strong>Swap with&hellip;</strong> another, or <strong>Clear this slot</strong>. <strong>Tools</strong> holds <strong>Settings&hellip;</strong>, <strong>Regenerate the unlocked slots&hellip;</strong>, <strong>Lock this week</strong>, <strong>Clear this week&hellip;</strong>, the <strong>Send log</strong> and <strong>Delete this draft&hellip;</strong>.</p>
+              <p>A slot moved by hand locks itself, so a regenerate never moves it back. A shared slot moves from its window, not by dragging. Click a slot to give it to a team or house league (<strong>Give it to</strong>), <strong>Lock</strong> or <strong>Unlock</strong> it, <strong>Swap with&hellip;</strong> another, or <strong>Clear this slot</strong>. <strong>Tools</strong> holds <strong>Settings&hellip;</strong>, <strong>Regenerate the unlocked slots&hellip;</strong>, <strong>Lock this week</strong>, <strong>Clear this week&hellip;</strong>, the <strong>Send log</strong> and <strong>Delete this draft&hellip;</strong>.</p>
             </>
           ),
         },
