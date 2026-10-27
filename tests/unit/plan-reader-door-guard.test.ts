@@ -50,6 +50,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   // ── through the door ──
   'lib/directory.ts': ['through', 'the sitemaps fold every row through the door; the followable filter keeps stored "canceled" (a cancel also makes the club not public, so no grant can make it discoverable)'],
   'lib/fan-follows.ts': ['through', 'selects status, the door decides cancelled'],
+  'lib/platform-online-payments.ts': ['through', 'the console’s Online payments tab (Club Tier 12d-2) names a suspension from the stored status; the plan it reads is the door’s (effectiveOrgFactsForId)'],
   'lib/scores-feed.ts': ['through', 'selects status, the door decides cancelled'],
   'lib/user-contexts.ts': ['through', 'membership reads fold through withEffectiveOrgs'],
   'lib/invite-acceptance.ts': ['through', 'folds through withEffectiveOrgs before routing'],

@@ -26,7 +26,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Inbox, Building2, Users, Gift, ArchiveRestore, AlertTriangle, MessageSquare, Target, Send, Presentation, Tag, Activity, Mail,
-  ClipboardCheck, Layers, FileText, Download, ShieldCheck, ScrollText, Terminal, HelpCircle, Wallet, Eye, ChevronRight, BarChart3,
+  ClipboardCheck, Layers, FileText, Download, ShieldCheck, ScrollText, Terminal, HelpCircle, Wallet, Eye, ChevronRight, BarChart3, CreditCard,
 } from 'lucide-react';
 import { CollapseSidebarRow, SidebarStripTip } from '@/components/shared/SidebarStrip';
 import strip from '@/components/shared/SidebarStrip.module.css';
@@ -45,7 +45,7 @@ const ICONS: Record<MenuIcon, typeof Inbox> = {
   today: Inbox, clubs: Building2, people: Users, free_time: Gift, retention: ArchiveRestore, status: Activity, errors: AlertTriangle, sent: Mail,
   feedback: MessageSquare, leads: Target, campaigns: Send, decks: Presentation, plans: Tag, approval: ClipboardCheck,
   bulk: Layers, templates: FileText, export: Download, staff: ShieldCheck, audit: ScrollText, terminal: Terminal, wallet: Wallet,
-  numbers: BarChart3,
+  numbers: BarChart3, payments: CreditCard,
 };
 
 const DEV_TOOLS_ON = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true';

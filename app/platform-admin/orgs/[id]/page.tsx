@@ -15,6 +15,7 @@ import { earliestLastDay, grantablePlansAbove, isGrantRunning, lastDayOfInstant,
 import { isFoundingSeasonCompExpiry } from '@/lib/plan-config';
 import { stripeStillBills } from '@/lib/stripe-billing-state';
 import ClubRecord, { type ClubRecordProps } from './ClubRecord';
+import { readClubOnlinePayments } from '@/lib/platform-online-payments';
 
 /**
  * A club's record (Support console Stage 2, owner rulings A4 + A6 + R2 + R6, 2026-10-25; drawings Ub7fXLh29SC34Zp4oqKUx1,
@@ -117,6 +118,8 @@ export default async function ClubRecordPage({ params, searchParams }: {
   ]);
   const org = orgRes.data;
   if (!org) notFound();
+  // Club Tier 12d-2: the Online payments tab's read — ours only (no Stripe call), for the roles that read Stripe's records.
+  const onlinePayments = readsStripe ? await readClubOnlinePayments(id).catch(() => 'failed' as const) : null;
 
   const members = memberRows.map(m => {
     const p = people.get(m.user_id);
@@ -201,6 +204,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
       delete: hasPlatformPower(auth.role, 'delete_records'),
       emailOwner: hasPlatformPower(auth.role, 'email_owner'),
     },
+    onlinePayments,
     money: {
       readsStripe,
       billsClub: hasPlatformPower(auth.role, 'club_billing'),

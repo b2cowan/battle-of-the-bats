@@ -134,6 +134,7 @@ export type PlatformArea =
   | 'observability'
   | 'feedback'
   | 'sent_emails'
+  | 'online_payments'
   | 'email_templates'
   | 'help'
   | 'export_registry'
@@ -198,6 +199,10 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
   // Health › Sent emails (Stage 5): opening it IS the sent_log power, so its view roles are that power's roles
   // (support-console-stage5-powers-guard.test.ts holds them equal). Nothing on it changes anything.
   sent_emails:     { viewRoles: ['super_admin', 'support', 'billing'], powers: [] },
+  // Health › Online payments and a club's Online payments tab (Club Tier 12d-2; ask 7, read only; owner ruling 3,
+  // 2026-10-27): the roles that already read a club's Stripe records, held equal to that power — one rulebook, never a
+  // second list. Nothing on either page writes.
+  online_payments: { viewRoles: PLATFORM_POWERS.find_stripe, powers: [] },
   dev_tools:       { viewRoles: ['super_admin'], powers: ['dev_tools'] },
 };
 

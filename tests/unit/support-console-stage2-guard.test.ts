@@ -328,7 +328,7 @@ describe('9 · the menu by job', () => {
       // Stage 4 renamed Founding season → Free time, in the same place (owner ruling Q4).
       'Customers: Clubs & portals, People, Free time, Retention',
       // Stage 5 joined Status (first) and Sent emails to the group; it made no new group (drawing A).
-      'Health: Status, Errors, Feedback, Sent emails',
+      'Health: Status, Errors, Feedback, Sent emails, Online payments',
       'Growth: Leads, Campaigns, Pitch decks, Business numbers',
       'Product: Plans & pricing, Approval queue, Bulk changes, Email templates, Export registry',
       'Records: Staff, Audit log',

@@ -95,7 +95,9 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
     supabaseAdmin.from('org_audit_log').select('id, actor_id, target_id, action, payload, created_at')
       .eq('org_id', orgId)
       .in('action', ['member_invited', 'member_removed', 'role_changed', 'member_suspended', 'member_reinstated',
-        'team_moved_into_club', 'plan_moved_up', 'plan_move_scheduled', 'payouts_connected', 'payouts_disconnected'])
+        'team_moved_into_club', 'plan_moved_up', 'plan_move_scheduled', 'payouts_connected', 'payouts_disconnected',
+        // Club Tier 12d-2 (Part 5): who pays the fee, the terms agreed, an account Stripe closed.
+        'payouts_fee_payer_changed', 'payouts_terms_agreed', 'payouts_closed_by_stripe'])
       .order('created_at', { ascending: false }).limit(SOURCE_CAP),
     supabaseAdmin.from('organization_members').select('user_id, role, status, invited_at, accepted_at, invited_email')
       .eq('organization_id', orgId).limit(SOURCE_CAP),
@@ -353,6 +355,12 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
       entries.push({ key, at: r.created_at, kind: 'billing', title: `${r.action === 'plan_moved_up' ? 'Moved up' : 'Plan move scheduled'}: ${planName(p.from)} → ${planName(p.to)}`, who: actor, why: null, moneyEvent: 'moved' });
     } else if (r.action === 'payouts_connected' || r.action === 'payouts_disconnected') {
       entries.push({ key, at: r.created_at, kind: 'billing', title: r.action === 'payouts_connected' ? 'Family payments connected' : 'Family payments disconnected', who: actor, why: null });
+    } else if (r.action === 'payouts_fee_payer_changed' || r.action === 'payouts_terms_agreed' || r.action === 'payouts_closed_by_stripe') {
+      // 12d-2 (derived Story words, owed to /marketing).
+      const title = r.action === 'payouts_fee_payer_changed'
+        ? ((r.payload as { feePayer?: string } | null)?.feePayer === 'club' ? 'The club pays the processing fee now' : 'Families and teams pay the processing fee now')
+        : r.action === 'payouts_terms_agreed' ? 'Payments terms agreed' : 'Stripe closed the payouts account';
+      entries.push({ key, at: r.created_at, kind: 'billing', title, who: r.action === 'payouts_closed_by_stripe' ? null : actor, why: null });
     }
   }
   // Joined: an invite accepted later than it was sent (an existing account added at once is the invite itself).

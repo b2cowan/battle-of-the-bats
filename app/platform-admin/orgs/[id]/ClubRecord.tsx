@@ -34,19 +34,25 @@ import { roleLabel } from '@/lib/member-access';
 import { subscriptionStatusChip } from '../../chips';
 import kit from '../../console.module.css';
 import styles from '../../record.module.css';
-import { LEAVING_WORDS } from '@/lib/online-payment-words';
+import { LEAVING_WORDS, PA_WORDS } from '@/lib/online-payment-words';
+import { hasPlanFeature } from '@/lib/plan-features';
+import type { ClubOnlinePayments } from '@/lib/platform-online-payments';
+import type { OrgPlan } from '@/lib/types';
+import OnlinePaymentsTab from './OnlinePaymentsTab';
 import type { EndingSection } from '@/lib/online-payment-endings';
 
 const NOT_IN_STORY = 'Not in the Story yet: account emails such as password resets.';
 /** For a role without the Stripe-reading power (A2): the money entries it does not see, said once (drawing D). */
 const MONEY_ROLES_LINE = 'Money entries (charges, refunds and their reasons) are shown to Super admin, Billing and Support.';
 
-type Tab = 'story' | 'money' | 'access' | 'people';
+type Tab = 'story' | 'money' | 'access' | 'people' | 'payments';
 const TABS: Array<{ key: Tab; label: string }> = [
   { key: 'story', label: 'Story' },
   { key: 'money', label: 'Money' },
   { key: 'access', label: 'Access' },
   { key: 'people', label: 'People & tournaments' },
+  // Club Tier 12d-2 (words §6.1 `pa.tab`): the fifth tab, only for a club that connected payouts at some time.
+  { key: 'payments', label: PA_WORDS.tab },
 ];
 /** The old record's tab names, so a link written before Stage 2 (Retention's, the Founding desk's) opens the right tab. */
 const OLD_TABS: Record<string, Tab> = { billing: 'money', entitlements: 'access', support: 'access', activity: 'story' };
@@ -82,6 +88,9 @@ export type ClubRecordProps = {
   story: { entries: StoryEntry[]; total: number };
   planOptions: Array<{ id: string; label: string; tournamentLimit: number; teamLimit: number }>;
   can: { support: boolean; billing: boolean; sections: boolean; delete: boolean; emailOwner: boolean };
+  /** Club Tier 12d-2: the Online payments tab's read (the roles that read Stripe's records; null = no tab — never
+   *  connected, or a role without it; 'failed' = the tab shows, its read offers Read again). */
+  onlinePayments: ClubOnlinePayments | 'failed' | null;
   /** The Money tab (Stage 3): our record's side, and whether this role reads Stripe's (A2). */
   money: { readsStripe: boolean; billsClub?: boolean; ours: OurMoneyRecord };
   /** Giving free time (a giver only): what the console knows before the click, and the window's bounds. */
@@ -188,6 +197,10 @@ export default function ClubRecord(props: ClubRecordProps) {
   const stopEditing = () => { setEditing(false); requestAnimationFrame(() => pencilRef.current?.focus()); };
 
   /** Every held change in one sentence (R3), built as pieces so a club's name is never read as markup. */
+  const op = props.onlinePayments && props.onlinePayments !== 'failed' ? props.onlinePayments : null;
+  const movesOffOnlinePayments = op?.outstanding && !op.account.disconnectedAt && !hasPlanFeature(form.planId as OrgPlan, 'online_payments')
+    ? op.outstanding : null;
+
   function saveSentence(): ReactNode {
     const b = (text: string) => <strong>{text}</strong>;
     const { tournamentLimit: fromTournaments, teamLimit: fromTeams } = org;
@@ -203,6 +216,8 @@ export default function ClubRecord(props: ClubRecordProps) {
         {changes.teamLimit && <>Its team limit goes from {b(limitWords(fromTeams))} to {b(form.teamLimit.trim() || `the plan’s ${plan?.teamLimit ?? ''}`.trim())} now. </>}
         {sectionsOn.length > 0 && turns(sectionsOn, 'on')}
         {sectionsOff.length > 0 && turns(sectionsOff, 'off')}
+        {/* 12d-2 (ask 11): a move onto a plan without online payments says what stops, from the club's one count. */}
+        {changes.plan && movesOffOnlinePayments && <>{LEAVING_WORDS.operator(movesOffOnlinePayments, 'on the move')} </>}
         The owner is not emailed.
       </>
     );
@@ -343,7 +358,10 @@ export default function ClubRecord(props: ClubRecordProps) {
     return null;
   };
 
-  const counts: Partial<Record<Tab, number>> = { story: props.story.total, people: props.members.length + props.tournaments.length };
+  const counts: Partial<Record<Tab, number>> = {
+    story: props.story.total, people: props.members.length + props.tournaments.length,
+    payments: props.onlinePayments && props.onlinePayments !== 'failed' ? props.onlinePayments.openItems : 0,
+  };
 
   return (
     <div className={kit.page}>
@@ -493,7 +511,7 @@ export default function ClubRecord(props: ClubRecordProps) {
           </div>
 
           <div className={kit.tabs} role="tablist">
-            {TABS.map(t => (
+            {TABS.filter(t => t.key !== 'payments' || props.onlinePayments !== null).map(t => (
               <button key={t.key} type="button" role="tab" aria-selected={tab === t.key}
                 className={`${kit.tab}${tab === t.key ? ` ${kit.tabOn}` : ''}`} onClick={() => setTab(t.key)}>
                 {t.label}{counts[t.key] ? <span className={kit.tabCount}>{counts[t.key]}</span> : null}
@@ -531,6 +549,10 @@ export default function ClubRecord(props: ClubRecordProps) {
               )}
               <div className={styles.tline}>{NOT_IN_STORY}{props.money.readsStripe ? '' : ` ${MONEY_ROLES_LINE}`}</div>
             </div>
+          )}
+
+          {tab === 'payments' && props.onlinePayments !== null && (
+            <OnlinePaymentsTab orgId={org.id} initial={props.onlinePayments === 'failed' ? null : props.onlinePayments} />
           )}
 
           {tab === 'money' && (

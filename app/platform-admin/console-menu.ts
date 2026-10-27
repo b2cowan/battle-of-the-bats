@@ -16,7 +16,7 @@ import type { PlatformRole } from '../../lib/platform-auth';
 /** A lucide icon, by name — the rail maps each to its component. */
 export type MenuIcon =
   | 'today' | 'clubs' | 'people' | 'free_time' | 'retention' | 'status' | 'errors' | 'feedback' | 'sent' | 'leads' | 'campaigns' | 'decks'
-  | 'plans' | 'approval' | 'bulk' | 'templates' | 'export' | 'staff' | 'audit' | 'terminal' | 'wallet' | 'numbers';
+  | 'plans' | 'approval' | 'bulk' | 'templates' | 'export' | 'staff' | 'audit' | 'terminal' | 'wallet' | 'numbers' | 'payments';
 
 export type MenuItem = { href: string; label: string; icon: MenuIcon; area: PlatformArea };
 export type MenuGroup = { label: string; items: MenuItem[] };
@@ -48,6 +48,8 @@ export function baseMenuGroups(devTools: boolean): MenuGroup[] {
         { href: '/platform-admin/feedback', label: 'Feedback', icon: 'feedback', area: 'feedback' },
         // Every account email we sent and what happened to it (Stage 5): Super admin, Support and Billing.
         { href: '/platform-admin/sent-emails', label: 'Sent emails', icon: 'sent', area: 'sent_emails' },
+        // Every club's online payments that need a look (Club Tier 12d-2, words §6.2): read only.
+        { href: '/platform-admin/online-payments', label: 'Online payments', icon: 'payments', area: 'online_payments' },
       ],
     },
     {

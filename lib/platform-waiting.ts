@@ -25,6 +25,7 @@ import { freeTimeEndingCount, getStaffFreeTime } from './free-time-list';
 import { LIVE_MARKETING_EMAIL_KEYS } from './marketing-email-defaults';
 import { readLeadBook, readOffers } from './lead-book';
 import { followUpDue, needsYou } from './lead-numbers';
+import { readOnlinePaymentsHealth } from './platform-online-payments';
 
 export type WaitingGroupKey = 'customers' | 'health' | 'growth' | 'product';
 
@@ -71,6 +72,8 @@ const QUEUES: QueueDef[] = [
   { key: 'trials_ending', group: 'customers', label: 'Trials ending', why: 'A trial that ends in the next 14 days', clearLabel: 'trials ending in 14 days', href: '/platform-admin/orgs?filter=trial_ending', entry: 'organizations' },
   { key: 'new_errors', group: 'health', label: 'New errors', why: 'An error first seen since your last visit', clearLabel: 'new errors', href: '/platform-admin/observability', entry: 'observability' },
   { key: 'new_feedback', group: 'health', label: 'New feedback', why: 'A message from inside the product nobody has triaged', clearLabel: 'new feedback', href: '/platform-admin/feedback', entry: 'feedback' },
+  // Club Tier 12d-2 (words §6.1 `pa.rail`: the count is the length of the Health list).
+  { key: 'online_payments', group: 'health', label: 'Online payments', why: 'A club’s online payments need a look: a dispute, a closed account, a message we couldn’t process, an unpaid fee', clearLabel: 'online payments', href: '/platform-admin/online-payments', entry: 'online_payments' },
   // Growth (Stage 7, owner Q9 d): the three lead rows count through the one definition (lib/lead-numbers.ts); stuck is
   // shown on Leads and is never a row here.
   { key: 'new_leads', group: 'growth', label: 'New leads', why: 'A lead nobody has answered yet', clearLabel: 'new leads', href: '/platform-admin/early-access', entry: 'early_access' },
@@ -190,6 +193,8 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
     wants('free_time_ending') ? getStaffFreeTime().then(freeTimeEndingCount).catch(() => 0) : Promise.resolve(0),
     wantsLeads ? leadCounts().catch(() => null) : Promise.resolve(null),
   ]);
+  // A list that could not be read is "Not read", never 0 (Stage 7).
+  const onlinePayments = wants('online_payments') ? await readOnlinePaymentsHealth().then(r => r.length).catch(() => null) : 0;
 
   const counts: Record<string, number> = {
     owner_inactive: stats.alerts.orgsWithInactiveOwner,
@@ -206,6 +211,7 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
     follow_ups_due: leads?.followUpsDue ?? 0,
     signup_to_confirm: leads?.toConfirm ?? 0,
     approval_queue: approvals,
+    online_payments: onlinePayments ?? 0,
   };
   const sinceVisit = stats.alerts.newPastDueSinceLastVisit;
 
@@ -216,6 +222,7 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
       why: typeof q.why === 'function' ? q.why({ sinceVisit }) : q.why,
       count: counts[q.key] ?? 0,
       ...(LEAD_QUEUES.has(q.key) && wantsLeads && !leads ? { notRead: true } : {}),
+      ...(q.key === 'online_payments' && onlinePayments === null ? { notRead: true } : {}),
     })),
     entryCounts: wantsLeads && leads ? { early_access: leads.needYou } : {},
   };

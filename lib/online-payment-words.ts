@@ -1207,3 +1207,60 @@ export const BANK_DEBIT_EMAIL_WORDS = {
   reversedReason: (reasonFull: string) => `Your bank’s reason${reasonFull}.`,
   reversedOwes: (receiptNo: string, owesAgain: string) => `Receipt ${receiptNo} no longer counts, so ${owesAgain}.`,
 } as const;
+
+/** THE CONSOLE'S ONLINE PAYMENTS, READ ONLY (12d-2 Part 5; words CLUB_TIER_STAGE12D_COPY.md §6). Internal, but product
+ *  words: sentence case, the house clock, no "Stripe error" jargon. The fee panel's words are `STRIPE_FEE_WORDS.pa*`. */
+export const PA_WORDS = {
+  rail: 'Online payments',
+  tab: 'Online payments',
+  test: 'Test mode. Nothing here is real money.',
+  tileAccount: 'Account',
+  connected: (day: string, name: string | null) => (name ? `Connected ${day} by ${name}` : `Connected ${day}`),
+  disconnected: (day: string, name: string | null) => (name ? `Disconnected ${day} by ${name}` : `Disconnected ${day}`),
+  endedPlan: (day: string | null, targetPlan: string) => `Online payments ended${day ? ` ${day}` : ''}: the plan moved to ${targetPlan}`,
+  endedSuspended: (day: string | null) => `Online payments ended${day ? ` ${day}` : ''}: the organization was suspended`,
+  stripeClosed: (day: string) => `Stripe closed this account on ${day}`,
+  tileTerms: 'Terms',
+  termsDraft: 'Draft',
+  termsVersion: (versionDate: string) => `Version of ${versionDate}`,
+  termsStale: 'Out of date',
+  termsSubDraft: (day: string) => `Agreed ${day} · ask again at final`,
+  termsSub: (day: string) => `Agreed ${day}`,
+  termsSubStale: (day: string) => `Agreed ${day} · newer terms exist`,
+  termsNone: 'Not agreed',
+  tileVolume: 'Last 30 days',
+  volumeSub: (payments: number, refunds: number) =>
+    `${payments === 1 ? '1 payment' : `${payments} payments`} · ${refunds === 1 ? '1 refund' : `${refunds} refunds`}`,
+  tileClearing: 'Clearing',
+  clearingSub: (n: number) => (n === 1 ? '1 bank debit' : `${n} bank debits`),
+  tileDisputes: 'Open disputes',
+  disputesSub: (fees: string) => `${fees} in Stripe’s fees so far`,
+  panelDisputes: 'Open disputes',
+  col: { payment: 'Payment', why: 'Why', answerBy: 'Answer by', held: 'Held', message: 'Message', error: 'Error', received: 'Received', tries: 'Tries' },
+  disputeRow: (receiptNo: string, home: string) => `Receipt ${receiptNo} · ${home}`,
+  showPlayer: 'Show the player',
+  playerLogged: 'Opening a name is logged.',
+  panelMessages: 'Stripe messages we couldn’t process',
+  messagesStopped: 'Stopped retrying',
+  panelFees: 'Fees billed to the club',
+  empty: 'Nothing is open.',
+  // Derived: the tab's own read failed (the console's "could not be read" shape).
+  readFailed: 'The club’s online payments could not be read. Try again.',
+  health: {
+    title: 'Online payments',
+    needs: 'Needs a look',
+    col: { club: 'Club', what: 'What', since: 'Since' },
+    dispute: (n: number, due: string | null) => (n === 1
+      ? `1 open dispute${due ? `, due ${due}` : ''}`
+      : `${n} open disputes${due ? `, first due ${due}` : ''}`),
+    disconnected: (n: number) => (n === 1 ? 'Disconnected with 1 dispute open' : `Disconnected with ${n} disputes open`),
+    closed: 'Stripe closed the account',
+    messages: (n: number) => (n === 1 ? '1 Stripe message failed' : `${n} Stripe messages failed`),
+    terms: 'Not on the current payments terms',
+    invoice: 'An invoice for Stripe fees is unpaid',
+    // Derived from `pa.fee.billed.error` ("Couldn't be billed"): the build prompt's failed fee billing row.
+    feeFailed: 'A Stripe fee couldn’t be billed',
+    empty: 'Nothing needs a look.',
+    readFailed: 'The list could not be read. Try again.',
+  },
+} as const;
