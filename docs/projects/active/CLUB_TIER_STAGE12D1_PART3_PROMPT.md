@@ -54,7 +54,14 @@
    - `check:layout` needs the UAT fixture: on 2026-10-27 **every** house-league and tournament screen landed on "Page not
      found" (untouched screens too), after the sessions were refreshed. Re-seeding signs every session out (memory:
      "A seed's password reset signs everyone out"): ask before you seed.
-6. **"Keep it" words were adapted** to ruling 5 (a note, never a credit): the title, toast and settled line drop "as a
+6. **Part 2's /review (fixes committed after `23510b099`) left one open item that needs a migration**, so take it to
+   `/dba` in this part or the next: `online_payment_over_left` measures the team's WHOLE surplus, capped by each
+   payment's own extra. With two extras on one team, a part refund of one can leave the other still flagged. A payment
+   refunded in full, reversed or returned already reads 0 (the TS read checks its status). Your loss-then-win path can
+   create a second extra on the same team, so it makes this case likelier. Also recorded, not fixed: the paid-twice
+   settled line is chosen from refund rows, not the cause; the pill shows only the online extra when a hand overage is
+   larger.
+7. **"Keep it" words were adapted** to ruling 5 (a note, never a credit): the title, toast and settled line drop "as a
    credit" (`OVER_WORDS.keepTitle`, `keepDone`, `SETTLED_WORDS.overKept` "Kept by the club"). Flag for `/marketing`
    with Part 3's own derived words.
 
