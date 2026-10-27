@@ -653,3 +653,15 @@ open it, and the menu's top level is Stage 13's.
   which has no plan). Logged as **9d-3** in §4 (the first practice notice, a house-league team's calendar for its coach and
   families, what a family's own calendar carries), drawn after 9d-2b and before 9e. **Next:** /marketing on the words, then
   the 11b build prompt.
+- **2026-10-27 — 11b's words settled by /marketing:** `HOUSE_LEAGUE_STAGE9D2_11B_COPY.md` (the build cites it; it wins over
+  the drawings). One shipped word changes for rep teams too: a slot's "Change team" becomes **Give it to**, because the list
+  now holds House league. Sentences say **facility**, never a sport's name for one; screens say **league admin**. The
+  house-league coach's practice-change email takes the rep coach's shape ("{schedule}: {team}'s practices changed"); the
+  families' practice-change email is new and stands on its own (no link: no family page shows practices).
+- **2026-10-27 — 11b build prompt written:** `CLUB_TIER_STAGE11B_BUILD_PROMPT.md` (leads from a helper census, the three
+  load-bearing ones re-read by hand: the slot holder is a rep team in the database floor, mig 326; `resolveScheduler` says
+  "11b — not here"; `league_practices` / `league_games` have no slot link; highest migration 390). Eight arguments before
+  code, among them: house league as its own holder table, never a fake team; the league admin's division uses on their own
+  table, owned by a season; **house league not billed** (not asked: the owner's yes in the UX summary); **League Plus becomes
+  schedulable**; and **frame h5 contradicts 9d2·15** (it lets the club pair a division with a rep team): the prompt says not to
+  build it, the club's sharing rules name House league as one party.

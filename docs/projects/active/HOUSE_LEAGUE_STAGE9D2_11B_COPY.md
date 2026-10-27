@@ -1,0 +1,133 @@
+# Club Tier 11b — house league in the club's schedule: the words (settled by /marketing, 2026-10-27)
+
+The words the 11b build uses. Source: the 11b tab of `HOUSE_LEAGUE_STAGE9D2_DRAWINGS.html` (frames k1–k5, h1–h5;
+https://claude.ai/artifact/TdXm5jmTEJ9qPvR3T5H9qU) and the rulings in `HOUSE_LEAGUE_STAGE9_PLAN.md` §0h (9d2·2, ·5, ·13,
+·15, ·16). **Where a drawing and this file differ, this file wins.** The 9d-2 words (Changes to send, Needs a new date, the
+families' game emails) are settled with 9d-2a/9d-2b and are only cited here.
+
+House rules applied throughout: "8:00 a.m."; lowercase "house league" mid-sentence (the product already writes it so);
+**"league admin"** on screen, never "convenor" (the role's name in Members and the help); sport-neutral sentences, so a
+venue's own names ("Diamond 1", "Field 3") appear only as the club's data, and our sentences say **facility**, the word New
+schedule already uses; numbers through `pluralize()`; possessives through `possessive()`.
+
+## ⚠ One change to a shipped word (rep teams see it too)
+
+| Where | Today | Settled | Why |
+|---|---|---|---|
+| A slot's window, the dropdown's label | Change team | **Give it to** | The list now holds House league, which is not a team. One word for the one control, the same word the league admin's House league's time uses. "Nobody (open)" stays as its first choice. |
+| A slot held by house league, its fact | Team | **Held by** · "House league · U12 games" | The word `slotHeld` already exists; a rep team's slot keeps "Team". |
+
+## The club gives house league its time (owner and admin)
+
+| Frame | Drawn | Settled | Why |
+|---|---|---|---|
+| k1 New schedule, step 2, the row | House league | **House league** | — |
+| k1 the row's sentence (whole schedule) | All of it. Its league admins divide it among divisions and teams. | **Its league admins divide it among divisions and teams.** | "All of it" repeats the 100% beside it. |
+| k1 the row's sentence (a share) | As one row, never by division | **Its league admins divide its share.** | The drawing's note was for you, not the owner. |
+| k1 hint (all house league) | A schedule that is all house league needs no drafts: the time goes to house league as it stands. Split, prime time and the club's rules apply to the rep teams' share only. | **All of it goes to house league, so there are no drafts to choose from.** (The split, prime time and rules fields are absent, not explained.) | Absent beats explained; the one fact the owner needs is why step 2 has no drafts. |
+| k1 hint (a share) | The drafts place house league's slots as they place a team's, then the league admins divide them. | **The drafts place house league's slots like a team's. Its league admins divide them after you send.** | Says when the league admins get it. |
+| k1 foot sentence | House league gets 30 hours a week, each diamond counted, Jun 1 – Aug 31. Its league admins see it at once. | **House league gets 30 hours a week across 2 facilities, Jun 1 – Aug 31. Its league admins can divide it right away.** | Sport-neutral, and says what they can do. |
+| k1 lime | Give it to house league | **Give it to house league** | Same verb as the dropdown. |
+
+## House league's time (owner, admin, league admin; the registrar reads)
+
+| Frame | Drawn | Settled | Why |
+|---|---|---|---|
+| k2 window title | House league's time | **House league's time** | Plain, and it names whose time it is. |
+| k2 Tools item / time line door | Tools › House league's time · "Open it" | **House league's time** (Tools) · the time line ends **"House league's time →"** | The door names where it goes. |
+| k2 source line | Given by the club in {schedule} · {dates} · {venue} | **Given by the club in {schedule} · {dates} · {venue}** | — |
+| k2 hours line | Hours count each diamond: 3 hours on two diamonds is 6. | **Hours add up across facilities: 3 hours on 2 facilities is 6.** | Sport-neutral (the drawing's sentence named a sport's facility). |
+| k2 a division's games | U12 games | **U12 games** | — |
+| k2 a division's practices | U12 practice time | **U12 practice time** | Matches the Practice time window it opens. |
+| k2 what's left | Not given yet | **Not given yet** | Distinct from the club's "Open" (time no program holds). |
+| k2 row figures | 6 hours · 4 games a week | **6 hours · 4 games a week** / **12 hours · 10 practices a week** / **4.5 hours a week** | Hours first, the count second. |
+| k2 the action | Give it to | **Give it to** → **U12 games** · **U12 practice time** (one pair per division) | — |
+| k2 foot | Only the club changes how much time house league has. | **Only an owner or an admin changes how much time house league has.** | Names who, as k4 does. |
+
+## Generate games, step 1 (9d-2a uses these; listed here because 11b's time feeds it)
+
+| Frame | Drawn | Settled | Why |
+|---|---|---|---|
+| c1 section | U12's game time · from house league's time | **U12's game time · from house league's time** | — |
+| c1 door | Change it in House league's time | **Change it in House league's time** | — |
+| c1 foot | Game length is the slot's: 90 minutes. | **Each game is 90 minutes, the length of a slot.** | Leads with the fact a league admin wants. |
+| k3 note | U12 has no game time yet. Give it some of house league's time. | **U12 has no game time yet. Give it some of house league's time.** | — |
+| k3 section | House league's time not given yet | **Not given yet** | The window already says whose time it is. |
+| k3 hint | Mondays and Wednesdays are U12's practice time, so they aren't offered. Need part of a stretch, such as one diamond? Divide it in House league's time, then come back here. | **Time already given to a division isn't offered. Need only part of it, such as one facility? Divide it in House league's time first.** (the last four words are the door) | Generic, so it holds for any club. |
+| k3 foot | Given to U12 as its game time. House league keeps the rest. | **Given to U12 as its game time. The rest stays not given.** | Says where the rest goes in the window's own words. |
+
+## When there is nothing to give (k4)
+
+| Who | Drawn | Settled |
+|---|---|---|
+| League admin, all of it with divisions | House league has no time left to give. The club gives house league its time: an owner or an admin does it in Schedules. · Take time back from another division | **House league has no time left to give. An owner or an admin gives house league its time, in Schedules.** · link **Take time back from another division** |
+| League admin, the club gave none | The club hasn't given house league any time yet | **The club hasn't given house league any time yet. An owner or an admin gives it, in Schedules.** (no link) |
+| Owner or admin | House league has no time left to give. / You run the club's Schedules too: … / Give house league more time | **House league has no time left to give.** · hint **Give it more from one of the club's permits, then come back here.** · lime **Give house league more time** · foot **Nothing is saved yet.** |
+
+## Practice time (h1)
+
+| Drawn | Settled | Why |
+|---|---|---|
+| Practice time (title) | **Practice time** | — |
+| U12's practice time · from house league's time | **U12's practice time · from house league's time** | — |
+| + Give U12 more time | **+ Give U12 more time** | — |
+| Each practice · 60 minutes / Teams at once · 1 a diamond | **Each practice** · 60 minutes / **Teams at once** · **1 per facility** | Sport-neutral. |
+| Every team gets one practice a week. 2 slots stay open. | **Every team gets 1 practice a week. 2 slots stay open.** | Numerals, as every count on the screen. |
+| Who gets 6:00 and who gets 8:00 takes turns week by week. | **Teams take turns at the early and late times, week by week.** | Holds for any hours. |
+| Practices land on the schedule and each coach's page. Families aren't told. | **The practices show on the schedule and on each coach's team page. Families aren't emailed.** | 9d-3 decides the first notice; a later *change* does email them (9d2·2). |
+| Hand out 10 practices a week | **Hand out 10 practices a week** | — |
+
+## The club takes time back (k5, 9d2·16)
+
+| Drawn | Settled |
+|---|---|
+| Give Thursdays 6:00 – 7:30 p.m. on Diamond 1 to 15U AAA? | **Give every Thursday at 6:00 p.m. on {facility} to {team}?** (the slot's own repeat words, `slotRepeats`) |
+| House league uses this time: U12 games, 12 published games from Jun 3. | **House league uses this time: 12 published U12 games, from Thu, Jun 3.** |
+| When you send the changes, 15U AAA gets the slot and those games wait under Needs a new date in U12's Changes to send. Families see the old dates until a league admin gives new ones and sends, once. Games already played stay as they are; draft games come off the draft. | **When you send the changes, these games move to Needs a new date in U12's Changes to send. Families keep the old dates until a league admin gives new ones and sends. Games already played stay; draft games come off the draft.** |
+| (practices on it) | **House league uses this time: the {team}'s practices on {weekday}s. Their coaches and families are told when you send the changes.** |
+| Waits in Send the changes, where Not yet puts it back. U12's league admins are told when it goes. | **Nothing changes until you send the changes. U12's league admins are told then.** |
+| Give it to 15U AAA | **Give it to {team}** |
+
+## Send the changes, with house league in it (h4)
+
+Shipped words kept: the title **Send the changes**, `whoChanges` ("Who is told · N people"), the button `sendToPeople`
+("Send to N people"), each row `changeTeamLine` ("{team} · {line}").
+
+| Drawn | Settled | Why |
+|---|---|---|
+| Reds practice · Sundays from Nov 8 · ~~Field 1~~ Field 3 … | **Reds · Sundays from Nov 8: Field 1 → Field 3, 11:00 a.m. → 12:30 p.m.** (the shipped row) | One row shape for every team. |
+| House league · U9 Rookie · the Reds' 2 coaches and 11 families | **House league · U9 Rookie · 2 coaches and 11 families** | — |
+| U9 Rookie games · Sun, Nov 15 · ~~Field 2~~ Field 4 / 2 games move · they wait in U9 Rookie's Changes to send | **U9 Rookie games · Sun, Nov 15: Field 2 → Field 4** / **2 games move. A league admin sends them to families from U9 Rookie's Changes to send.** | Says who sends. |
+| A practice change reaches that team's families too (ask 2). Game changes don't go from here: … | `changesHint` gains one sentence: **"A house-league team's families get one email too. House league's game changes go out from the season."** | The ask number was for you. |
+
+## The house-league coach's email (h4)
+
+**Same shape as the rep coach's** `changesEmail` (one email family; only the noun differs, because a house-league coach
+never sees the scheduler and their team page says "Practice"):
+
+| Part | Settled |
+|---|---|
+| Subject | **{schedule}: {team}'s practices changed** |
+| Opening | **{club} changed {team}'s practices on {schedule}:** |
+| Lines | the Send the changes rows, one per change ("Sundays from Nov 8: Field 1 → Field 3, 11:00 a.m. → 12:30 p.m.") |
+| Link | **Open {team}'s team page →** |
+| Outro | **Your families get this change too. Everything else stays as it was.** |
+| Foot | **Times in Eastern time.** (the org's zone, once) |
+
+## The families' practice-change email (new; 9d2·2)
+
+One email per household per send, one part per child, as 9d2·2 rules for games. It must stand on its own: until 9d-3, a
+family may never have been told the practice time.
+
+| Part | Settled |
+|---|---|
+| Subject | **{team}'s practices changed** (several children: **Practices changed for {team} and {team}**) |
+| Opening | **{club} changed {child}'s practices with {team}, from {first changed date}:** |
+| Now / Was | **Now: Sundays, 12:30 – 2:00 p.m. · Lakeshore Dome · Field 3** / **Was: Sundays, 11:00 a.m. – 12:30 p.m. · Field 1** (Now first, in full; Was only what changed) |
+| Close | **Questions? Ask {team}'s coach.** (no link: families have no page that shows practices; the public team page is games only, ruled) |
+| Foot | the season sentence 9d1·11 settled (**"Sent by {club} because your family is registered in {season}."**) and **Times in Eastern time.** |
+
+## Not settled here
+
+- Changes to send, Needs a new date, Give it a new date, Publish schedule and the families' game emails: 9d-2a/9d-2b's words.
+- The first practice notice and anything a family's own calendar says: 9d-3.
