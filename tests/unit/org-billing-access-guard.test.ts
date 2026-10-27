@@ -67,6 +67,7 @@ const ALLOWED_SUSPENDED_ORG_FILES: Record<string, string> = {
   'app/[orgSlug]/admin/rep-teams/layout.tsx': 'page layer — its own module gate redirects out',
   'app/[orgSlug]/admin/accounting/layout.tsx': 'page layer — its own module gate (canOpenModule, closed on a cancelled org) redirects out',
   'app/[orgSlug]/admin/families/layout.tsx': 'page layer — its own module gate (canOpenFamilies: the plan half closes on a cancelled org) redirects out (Club Tier Stage 5b)',
+  'app/[orgSlug]/admin/accounting/payouts/page.tsx': 'page layer — notFound() for a cancelled org SERVER-side (its own isOrgBillingSuspended check); it renders beside the Accounting layout, whose gate redirects out (Club Tier 12d-2)',
   'lib/tournament-preview.ts': 'page resolver — opts out only to 404 a cancelled org SERVER-side (it does its own isOrgBillingSuspended check)',
 };
 

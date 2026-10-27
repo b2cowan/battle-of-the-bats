@@ -18,6 +18,7 @@ import { TERMS_PLACEHOLDER, money, payoutsWords, type PayoutsHome } from '@/lib/
 import type { PayoutsState } from '@/lib/online-payment-account';
 import type { OnlineFeePayer } from '@/lib/online-payment-fee';
 import KitDialog from './KitDialog';
+import PayoutsDisclosure from './money/PayoutsDisclosure';
 import { RecordAction, RepChip, SavePill, type ChipTone } from './RepKit';
 import ck from './ClubKit.module.css';
 import styles from './Settings.module.css';
@@ -46,6 +47,10 @@ export type PayoutsView = {
   /** 12d-1 Part 4: the club pays nothing for its plan (free time or the Founding comp), so the other-fees line adds
    *  "Your plan doesn't change" (words §3.4 `record.otherFeesPlan`). */
   planFree?: boolean;
+  /** 12d-2 (words §3.3): the club has Accounting, where its payouts list lives; without it the owner's card carries it. */
+  hasAccounting?: boolean;
+  /** 12d-2: the club has connected payouts at some time (a payouts list exists). */
+  everConnected?: boolean;
 };
 
 const PILL_TONE: Record<PayoutsState, ChipTone> = {
@@ -154,6 +159,10 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
           state !== 'taking_payments' && <p className={ck.hint}>{W.ownerOnly(home)}</p>
         )}
         {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
+
+        {/* 12d-2 (words §3.3): the payouts list, collapsed, for a club without Accounting — before Disconnect, which still
+            ends the card's body. */}
+        {isOwner && view.everConnected && view.hasAccounting === false && <PayoutsDisclosure orgSlug={orgSlug} />}
 
         {isOwner && (state === 'taking_payments' || state === 'needs_attention' || state === 'setting_up') && (
           <div className={pc.recordEnd}>

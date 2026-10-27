@@ -221,6 +221,24 @@ export async function listRefunds(accountId: string, paymentIntentId: string): P
   return page.data;
 }
 
+/** One page of the club's payouts arriving in a window of Stripe days (12d-2, the Payouts tab), newest first, with the
+ *  bank account each went to. Read only. */
+export async function listPayoutsPage(accountId: string, arrival: { gte: number; lte: number }, startingAfter?: string): Promise<Stripe.ApiList<Stripe.Payout>> {
+  return getStripe().payouts.list(
+    { limit: 100, arrival_date: arrival, expand: ['data.destination'], ...(startingAfter ? { starting_after: startingAfter } : {}) },
+    on(accountId),
+  );
+}
+
+/** One page of what is inside an AUTOMATIC payout (12d-2): Stripe lists contents for automatic payouts only. Each line's
+ *  source is expanded one level, so a refund or a dispute names its charge. Read only. */
+export async function listPayoutLinesPage(accountId: string, payoutId: string, startingAfter?: string): Promise<Stripe.ApiList<Stripe.BalanceTransaction>> {
+  return getStripe().balanceTransactions.list(
+    { payout: payoutId, limit: 100, expand: ['data.source'], ...(startingAfter ? { starting_after: startingAfter } : {}) },
+    on(accountId),
+  );
+}
+
 /**
  * The two Connect webhooks, each with its own signing secret — never the billing webhook's (plan §0d):
  *   - the PAYMENTS webhook: v1 snapshot events from clubs' connected accounts (checkout, refunds);

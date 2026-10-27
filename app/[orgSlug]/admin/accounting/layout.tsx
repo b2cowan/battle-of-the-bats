@@ -4,6 +4,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { canOpenModule } from '@/lib/member-access';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import AccountingFrame from '@/components/admin/kit/club/money/AccountingFrame';
+import { clubHasPayouts } from '@/lib/online-payouts';
 
 /**
  * ACCOUNTING — ONE PAGE WITH TABS (⚖ Club Tier Stage 3a, Ask 2 option B, owner 2026-09-30).
@@ -34,7 +35,7 @@ export default async function AccountingLayout({
   }
 
   return (
-    <AccountingFrame orgSlug={ctx.org.slug} runsRepTeams={hasModuleEntitlement(ctx.org, 'module_rep_teams')}>
+    <AccountingFrame orgSlug={ctx.org.slug} runsRepTeams={hasModuleEntitlement(ctx.org, 'module_rep_teams')} hasPayouts={await clubHasPayouts(ctx.org.id)}>
       {children}
     </AccountingFrame>
   );

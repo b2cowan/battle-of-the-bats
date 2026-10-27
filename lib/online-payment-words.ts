@@ -347,6 +347,57 @@ export function payoutsWords(home: PayoutsHome): typeof PAYOUTS_WORDS_FAMILIES {
   return home === 'club' ? PAYOUTS_WORDS_FAMILIES : PAYOUTS_WORDS;
 }
 
+/** THE PAYOUTS LIST (12d-2 Part 2; words CLUB_TIER_STAGE12D_COPY.md §3). The line names live beside the mapping
+ *  (`PAYOUT_LINE_WORDS`, lib/online-payouts-map.ts). Marked "derived": no words-doc key, owed to /marketing. */
+export const PAYOUTS_LIST_WORDS = {
+  tab: 'Payouts',
+  find: 'Find an amount, a name or a receipt',
+  dest: (last4: string) => `Paid out to the bank account ending ${last4}`,
+  col: { sent: 'Sent', arrives: 'Arrives', status: 'Status', amount: 'Amount', date: 'Date', who: 'Who', what: 'What', receipt: 'Receipt' },
+  status: { on_its_way: 'On its way', paid: 'Paid', failed: 'Didn’t arrive' },
+  counts: (payments: number, refunds: number) => {
+    const p = payments === 1 ? '1 payment' : `${payments} payments`;
+    if (!refunds) return p;
+    return `${p}, ${refunds === 1 ? '1 refund' : `${refunds} refunds`}`;
+  },
+  /** Phone row (words §3.1 `payouts.col.*`): "{amount} · {arrives or paid day}". */
+  phoneRow: (amount: string, day: string) => `${amount} · ${day}`,
+  phoneArrives: (day: string) => `arrives ${day}`,
+  total: (last4: string | null, day: string) => (last4 ? `Paid to the bank account ending ${last4} on ${day}` : `Paid to the bank account on ${day}`),
+  note: 'Amounts are what reached the club: after the processing fee when the club pays it.',
+  noManual: 'Stripe lists what’s inside automatic payouts only.',
+  // Derived: a payout Stripe hasn't finished matching yet (`reconciliation_status: in_progress`).
+  matching: 'Stripe is still listing what’s inside this payout. Look again in a few minutes.',
+  // Derived: a payout that didn't arrive carries nothing; its money stays in the club's Stripe balance.
+  failedNone: 'This money stayed in the club’s Stripe balance. The next payout to a working account carries it.',
+  loading: 'Loading payouts…',
+  error: 'Stripe didn’t answer. Try again.',
+  retry: 'Try again',
+  empty: 'No payouts yet. Stripe sends the first one on its schedule after the first payment.',
+  emptyDates: 'No payouts in these dates.',
+  // Derived: Find matched nothing in the chosen dates.
+  emptyFind: 'No payouts match.',
+  exportFailed: 'The export didn’t finish. Try again.',
+  fail: {
+    info: (reason: string, answerer: string | null) => `Didn’t arrive${reason}${answerer ? ` · ${answerer} fixes it in Stripe` : ''}`,
+    owner: (reason: string) => `Didn’t arrive${reason}`,
+    ownerAria: 'Payout didn’t arrive. Fix in Stripe.',
+    reason: { closed: ': the bank account is closed', invalid: ': the bank account details aren’t valid' } as Record<string, string>,
+    tip: 'It clears itself when Stripe’s next payout to a working account goes through and carries this money.',
+  },
+  card: {
+    heading: 'Payouts to your bank',
+    summary: (onItsWay: string | null, lastPaid: { amount: string; day: string } | null) => {
+      if (onItsWay && lastPaid) return `${onItsWay} on its way · last paid ${lastPaid.amount} on ${lastPaid.day}`;
+      if (onItsWay) return `${onItsWay} on its way`;
+      if (lastPaid) return `Last paid ${lastPaid.amount} on ${lastPaid.day}`;
+      return null;
+    },
+  },
+  // The export's columns (words §3.1 `payouts.export`: one row per payment with its payout's date and amount beside it).
+  exportCols: ['Payout sent', 'Payout arrives', 'Payout status', 'Payout amount', 'Date', 'Who', 'What', 'Receipt', 'Amount'],
+} as const;
+
 /** The team's pay page and the pay block (copy §8, §9, §13 and §18). */
 export const PAY_WORDS = {
   who: (team: string, division: string | null) => (division ? `${team} · ${division}` : team),

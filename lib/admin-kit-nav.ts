@@ -337,13 +337,17 @@ export function tournamentBarKeys(phase: TournamentPhase): readonly string[] {
  * Teams Ask 1, 2026-10-16) — one step further along, not to the back. The coach row's order is the
  * one that did not move.
  */
-export type AccountingTabId = 'overview' | 'teams' | 'ledger' | 'allocations' | 'payment-requests' | 'budget' | 'budget-vs-actual';
+export type AccountingTabId = 'overview' | 'teams' | 'ledger' | 'allocations' | 'payment-requests' | 'budget' | 'budget-vs-actual' | 'payouts';
+
+/** `hasPayouts`: the club has connected payouts at some time (Club Tier 12d-2, words §3.1 and §7 question 6: the Payouts
+ *  tab is hidden for a club that never connected). Optional: a reader that doesn't know never names the tab. */
+export type AccountingTabOpts = { runsRepTeams: boolean; hasPayouts?: boolean };
 
 /** `views`: the tab also lights one level under its address — its records are views OF the tab (a team's account inside
  *  Teams), each naming itself; every other tab lights on its own address only. */
 export type AccountingTab = { id: AccountingTabId; label: string; href: string; views?: true };
 
-export function accountingTabs(base: string, opts: { runsRepTeams: boolean }): AccountingTab[] {
+export function accountingTabs(base: string, opts: AccountingTabOpts): AccountingTab[] {
   const a = `${base}/accounting`;
   return [
     { id: 'overview' as const, label: 'Overview', href: a },
@@ -355,6 +359,9 @@ export function accountingTabs(base: string, opts: { runsRepTeams: boolean }): A
       { id: 'payment-requests' as const, label: 'Payment requests', href: `${a}/payment-requests` },
     ] : []),
     { id: 'budget-vs-actual' as const, label: 'Budget vs. Actual', href: `${a}/budget-vs-actual` },
+    // ⚖ LAST in the row, for everyone who reads Accounting (12d-2, ask 5): the treasurer matches a Stripe payout to the
+    // bank statement here, needing neither Stripe nor the owner.
+    ...(opts.hasPayouts ? [{ id: 'payouts' as const, label: 'Payouts', href: `${a}/payouts` }] : []),
   ];
 }
 
@@ -366,7 +373,7 @@ export function accountingTabs(base: string, opts: { runsRepTeams: boolean }): A
  * club's OWN tab list: where the club runs no rep teams, the loop's addresses are no tab (a tab row with nothing lit is
  * the frame lying about where you are).
  */
-export function accountingTabFor(pathname: string, base: string, opts: { runsRepTeams: boolean }): AccountingTabId | null {
+export function accountingTabFor(pathname: string, base: string, opts: AccountingTabOpts): AccountingTabId | null {
   return litTab(accountingTabs(base, opts), pathname);
 }
 

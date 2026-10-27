@@ -14,6 +14,7 @@ import { stripeProfileFor } from '@/lib/online-payment-profile';
 import { PAYMENTS_TERMS_VERSION } from '@/lib/online-payment-words';
 import { effectiveOrgFactsForId } from '@/lib/entitlement-grants';
 import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -107,6 +108,9 @@ export const GET = withObservability(async (req: Request) => {
     // 12d-1 Part 4 (words §3.4): a club that pays nothing for its plan reads "Your plan doesn't change" beside the
     // other-fees line, so a Stripe fee is never read as its comp being withdrawn. An extra read: a failure omits it.
     planFree: await planIsFree(ctx.org.id),
+    // 12d-2 (words §3.3, ask 5): a club without Accounting reads its payouts on the owner's card instead of a tab.
+    hasAccounting: hasModuleEntitlement(ctx.org, 'module_accounting'),
+    everConnected: !!row,
   });
 }, { route: '/api/admin/payouts' });
 

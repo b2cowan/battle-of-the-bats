@@ -23,17 +23,19 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HubTabBar from '@/components/shared/HubTabBar';
 import { repKit } from '../RepKit';
 
-export default function AccountingFrame({ orgSlug, runsRepTeams, children }: {
+export default function AccountingFrame({ orgSlug, runsRepTeams, hasPayouts = false, children }: {
   orgSlug: string;
   /** Teams, Allocations and Payment requests are the club ↔ team loop: only for a club that runs rep teams. */
   runsRepTeams: boolean;
+  /** 12d-2: the club has connected payouts at some time, so the Payouts tab ends the row (decided on the server). */
+  hasPayouts?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
   const { currentOrg } = useOrg();
   const base = `/${orgSlug}/admin`;
-  const tab = accountingTabFor(pathname, base, { runsRepTeams });
-  const tabs = accountingTabs(base, { runsRepTeams });
+  const tab = accountingTabFor(pathname, base, { runsRepTeams, hasPayouts });
+  const tabs = accountingTabs(base, { runsRepTeams, hasPayouts });
   const lit = tabs.find(t => t.id === tab);
   // The browser tab names the lit tab on the tab's OWN address. ⚠ Not on a view under it (a team's account): the page
   // names itself ("11U AA · Teams · Accounting", its own `usePageTitle`), and a parent's effect runs AFTER its child's, so
