@@ -723,4 +723,5 @@ open it, and the menu's top level is Stage 13's.
   rep slots' times and places show by ruling; the season-date check is TypeScript's (club days need the club's zone);
   Tools' trigger sits outside `tb.toolbar` (a visual check owed); a member without house league gets a blank club-schedule
   page. **Owed:** the dev server restart before the owner tests (new files); `/docs` (Part 6); the 11b walk at the end of 11b.
-  **Next:** Part 4 (Practice time) per the 11b order.
+  **Next:** Part 4 (Practice time), `CLUB_TIER_STAGE11B_PART4_BUILD_PROMPT.md`. Offered to the owner 2026-10-27, not ruled:
+  walk Parts 3 and 4 together right after Part 4 (the prompt asks at hand-off).
