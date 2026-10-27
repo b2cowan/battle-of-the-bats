@@ -388,14 +388,18 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
       .eq('org_id', c.orgId).in('club_schedule_slot_id', ch).order('id').range(a, b)),
   ]);
   if (!uses.size && !practices.length) return null;
-  // A slot made since the last send is the only place a moved use can have gone (/review 2026-10-27).
-  const [{ told }, made] = await Promise.all([
+  // Time house league came to hold since the last send — a slot made since, or given to house league since (a hand drag
+  // on the grid swaps holders, it makes no slot) — is the only place a moved use can have gone (/review 2026-10-27).
+  const [{ told }, made, held] = await Promise.all([
     lastSends(c.orgId, c.loaded.row.id),
     fetchAllIn<{ id: string; created_at: string }>(slotIds, (ch, a, b) => supabaseAdmin
       .from('club_schedule_slots').select('id, created_at').eq('org_id', c.orgId).in('id', ch).order('id').range(a, b)),
+    fetchAllIn<{ slot_id: string; created_at: string }>(slotIds, (ch, a, b) => supabaseAdmin
+      .from('club_schedule_slot_programs').select('slot_id, created_at').eq('org_id', c.orgId).in('slot_id', ch).order('slot_id').range(a, b)),
   ]);
-  const madeAt = new Map(made.map(s => [s.id, Date.parse(s.created_at)]));
-  const sinceSent = (id: string) => !told || (madeAt.get(id) ?? 0) > Date.parse(told.sent_at);
+  const heldSince = new Map(made.map(s => [s.id, Date.parse(s.created_at)]));
+  for (const p of held) heldSince.set(p.slot_id, Math.max(heldSince.get(p.slot_id) ?? 0, Date.parse(p.created_at)));
+  const sinceSent = (id: string) => !told || (heldSince.get(id) ?? 0) > Date.parse(told.sent_at);
 
   const slots: LeagueSlot[] = c.loaded.slots.map(s => ({
     id: s.id, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), venueId: s.venueId, facilityId: s.facilityId,

@@ -1,6 +1,3 @@
-import { diffAgainstSent, type DiffSlot, type SentPractice } from './club-schedule-engine';
-import { HOUSE_LEAGUE } from './club-schedule-holders';
-
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * SEND THE CHANGES, HOUSE LEAGUE'S HALF (Club Tier Stage 11b Part 5; frames h4 and k5; rulings 9d2·2, 9d2·16; plan
@@ -9,12 +6,16 @@ import { HOUSE_LEAGUE } from './club-schedule-holders';
  * (migs 392–393). Send the changes makes them land, in the one step `club_schedule_apply_changes`, through its
  * `p_league` — and this is the plan of it, from the schedule as sent (the uses and practices) and as it is now (the slots).
  *
- *   · A USE FOLLOWS ITS TIME. `diffAgainstSent`, with house league as the one holder (`HOUSE_LEAGUE`) and each USE as the
- *     thing that was sent: a use on a removed slot is a loss, a live house-league slot with no use a gain, and a loss and
- *     a gain in the same week are one move (paired in time order) — exactly the rep side's rule for a team's practice. The
- *     use is carried to its new slot first, so the moved practices land on their division's practice time.
- *   · ⚖ TIME TAKEN BACK NEVER CARRIES (9d2·16): a use on a slot the club took back or cleared (live, house league no
- *     longer holding it) is kept out of the pairing — its practices go, even when house league gained a slot that week.
+ *   · A USE FOLLOWS ITS TIME. A use on time house league lost (a removed slot, or one the club gave away or cleared) is a
+ *     loss; house-league time GAINED SINCE THE LAST SEND with no use is a gain; a loss and a gain in the same week are one
+ *     move — the rep side's same-week rule, but paired NEAREST FIRST (closest start times first), not in time order: with
+ *     a Thursday taken back and a Sunday moved in one week, time order gave the new Sunday to Thursday's use and cancelled
+ *     Sunday's own (found by the Part 5 end-to-end probe, 2026-10-27). The use is carried to its new slot first, so the
+ *     moved practices land on their division's practice time. ⚠ A hand drag on the grid is a holder swap
+ *     (the old slot opens, the new one becomes house league's), never a new slot — so the pairing reads gained time by when
+ *     house league came to hold it, not by when the slot was made (/review of the walk, 2026-10-27).
+ *   · ⚖ TIME TAKEN BACK (9d2·16): with nothing gained that week, its practices go. Older time with no use is Not given yet,
+ *     never a gain — a division is never carried onto time the club didn't move it to.
  *   · A PRACTICE MOVES WITH ITS USE by the slot's own shift (h4: "11:00 a.m. → 12:30 p.m."), its length kept, its place
  *     the new slot's. One that would not fit inside the new slot, or that the use no longer covers (another division, a
  *     game use), is CANCELLED rather than asked of the step, which refuses such a move (`changed`) — choosing a new time
@@ -25,8 +26,9 @@ import { HOUSE_LEAGUE } from './club-schedule-holders';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-/** A slot of the schedule, removed ones included (they are where a moved use waits). `isNew`: made since the last send —
- *  only such a slot is where a moved use can have gone (an older one with no use is time not given yet, never a move). */
+/** A slot of the schedule, removed ones included (they are where a moved use waits). `isNew`: house league came to hold it
+ *  since the last send (the slot was made, or given to house league, since) — only such time is where a moved use can have
+ *  gone (an older one with no use is time not given yet, never a move). */
 export interface LeagueSlot { id: string; startMs: number; endMs: number; venueId: string; facilityId: string | null; removed: boolean; houseLeague: boolean; isNew: boolean }
 /** How a league admin divided a house-league slot (one per slot). */
 export interface LeagueUse { slotId: string; seasonId: string; divisionId: string | null; kind: 'games' | 'practices' }
@@ -62,17 +64,20 @@ export function planLeagueChanges(p: {
   // The time house league holds that the pairing reads: a slot with a use (never gained), and a NEW slot with none (where
   // a moved use can go). An older slot with no use is Not given yet — pairing to it would carry a division onto time the
   // club never moved it to (/review 2026-10-27).
-  const held = p.slots.filter(s => !s.removed && s.houseLeague && (useBySlot.has(s.id) || s.isNew));
-  // The uses the pairing reads: on a removed slot (it may follow its time) or on time house league still holds (so that
-  // slot is never read as gained). A use on time taken back is left out: it never carries (9d2·16).
-  const paired = p.uses.filter(u => { const s = slotById.get(u.slotId); return s && (s.removed || s.houseLeague); });
-  const diff = diffAgainstSent(
-    held.map((s): DiffSlot => ({ id: s.id, key: s.id, week: p.weekOfMs(s.startMs), startMs: s.startMs })),
-    new Map(held.map(s => [s.id, [HOUSE_LEAGUE]])),
-    paired.map((u): SentPractice => ({ id: u.slotId, teamId: HOUSE_LEAGUE, slotId: u.slotId, cancelled: false, startMs: slotById.get(u.slotId)!.startMs })),
-    p.weekOfMs,
-  );
-  const carried = new Map(diff.moves.map(m => [m.practiceId, m.toKey]));
+  const isHeld = (s: LeagueSlot) => !s.removed && s.houseLeague;
+  const lost = p.uses.map(u => slotById.get(u.slotId)).filter((s): s is LeagueSlot => !!s && !isHeld(s));
+  const gained = p.slots.filter(s => isHeld(s) && s.isNew && !useBySlot.has(s.id));
+  // Every same-week pair, closest start times first (ties by id, so the plan is the same on every read); each loss and
+  // each gain is used once.
+  const pairs = lost.flatMap(l => gained.filter(g => p.weekOfMs(g.startMs) === p.weekOfMs(l.startMs))
+    .map(g => ({ from: l.id, to: g.id, gap: Math.abs(g.startMs - l.startMs) })))
+    .sort((a, b) => a.gap - b.gap || a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
+  const carried = new Map<string, string>(), taken = new Set<string>();
+  for (const pr of pairs) {
+    if (carried.has(pr.from) || taken.has(pr.to)) continue;
+    carried.set(pr.from, pr.to);
+    taken.add(pr.to);
+  }
 
   const step: LeagueStepArg = { uses: [...carried].map(([from, to]) => ({ from, to })), cancel: [], updates: [] };
   const changes: LeagueChange[] = [];

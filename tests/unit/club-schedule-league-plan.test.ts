@@ -94,14 +94,23 @@ describe('a weekly move reads as one row, "from" only when it runs to the end', 
 });
 
 describe('time house league loses (k5, 9d2·16)', () => {
-  it('taken back for a rep team: its practices are cancelled, and its use never carries — even to a slot gained that week', () => {
-    const slots = [slot('b', '2026-11-12', '18:00', '21:00', { houseLeague: false }), slot('free', '2026-11-13', '18:00', '21:00', { isNew: true })];
+  it('taken back for a rep team, nothing gained that week: its practices are cancelled (older undivided time never takes them)', () => {
+    const slots = [slot('b', '2026-11-12', '18:00', '21:00', { houseLeague: false }), slot('free', '2026-11-13', '18:00', '21:00')];
     const p = plan(slots, [use('b')], [practice('p1', 'reds', 'b', '2026-11-12', '18:00', '19:00')]);
     assert.deepEqual(p.step.uses, []);
     assert.deepEqual(p.step.cancel, ['p1']);
     assert.equal(p.changes[0].kind, 'cancelled');
     const rows = leagueRows(p.changes, facesFor(slots), []);
     assert.equal(leagueRowLine(rows[0], placeOf), 'Thu, Nov 12, 6:00 p.m. · Field 1: cancelled');
+  });
+  it('a hand drag on the grid (a holder swap: the old slot opens, the new one becomes house league’s) is a MOVE', () => {
+    const slots = [slot('tue', '2026-11-10', '18:00', '21:00', { houseLeague: false }), slot('thu', '2026-11-12', '18:00', '21:00', { isNew: true })];
+    const p = plan(slots, [use('tue')], [practice('p1', 'reds', 'tue', '2026-11-10', '18:00', '19:00')]);
+    assert.deepEqual(p.step.uses, [{ from: 'tue', to: 'thu' }]);
+    assert.equal(Date.parse(p.step.updates[0].scheduledAt), ms('2026-11-12', '18:00'));
+    assert.deepEqual(p.step.cancel, []);
+    const rows = leagueRows(p.changes, facesFor(slots), []);
+    assert.equal(leagueRowLine(rows[0], placeOf), 'Tue, Nov 10 → Thu, Nov 12');
   });
   it('a slot cleared from the schedule, nothing in its week: cancelled', () => {
     const slots = [slot('c', '2026-11-12', '18:00', '21:00', { removed: true })];
@@ -134,6 +143,19 @@ describe('the /review of Part 5', () => {
     const p = plan(slots, [use('a')], [practice('p1', 'reds', 'a', '2026-11-08', '11:00', '12:30')]);
     assert.deepEqual(p.step.uses, [{ from: 'a', to: 'fri' }]);
     assert.equal(p.step.updates[0].slotId, 'fri');
+  });
+  it('nearest first: a Thursday taken back never takes the Sunday that Sunday’s own slot moved to', () => {
+    const slots = [
+      slot('thu', '2026-11-12', '18:00', '21:00', { houseLeague: false }),
+      slot('sun', '2026-11-15', '11:00', '14:00', { removed: true }),
+      slot('sun2', '2026-11-15', '12:30', '15:30', { facilityId: F3, isNew: true }),
+    ];
+    const p = plan(slots, [use('thu'), use('sun')], [
+      practice('pt', 'reds', 'thu', '2026-11-12', '18:00', '19:00'), practice('ps', 'reds', 'sun', '2026-11-15', '11:00', '12:30'),
+    ]);
+    assert.deepEqual(p.step.uses, [{ from: 'sun', to: 'sun2' }]);
+    assert.deepEqual(p.step.cancel, ['pt']);
+    assert.deepEqual(p.step.updates.map(u => u.practiceId), ['ps']);
   });
   it('a slot replaced at the same time and place: the practice follows the slot, and nobody is told', () => {
     const slots = [slot('a', '2026-11-08', '11:00', '14:00', { removed: true }), slot('a2', '2026-11-08', '11:00', '13:00', { isNew: true })];

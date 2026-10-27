@@ -45,14 +45,16 @@ export function leagueRowLine(r: LeagueRow, placeOf: (f: PracticeFace) => League
   if (r.kind === 'cancelled' || !r.now) return `${when}, ${formatTime(r.was.startClock)} · ${short(was)}: cancelled`;
   const now = placeOf(r.now);
   const parts: string[] = [];
-  if (r.now.day !== r.was.day) {
-    parts.push(r.days.length === 1 ? `${formatShortWeekdayDate(r.was.day)} → ${formatShortWeekdayDate(r.now.day)}` : `${weekdayPlural(r.was.weekday)} → ${weekdayPlural(r.now.weekday)}`);
-  }
+  // One date moved to another day reads as the move itself: "Tue, Nov 10 → Thu, Nov 12, 6:00 p.m. → 7:30 p.m.".
+  const oneDayMoved = r.days.length === 1 && r.now.day !== r.was.day;
+  if (oneDayMoved) parts.push(`${formatShortWeekdayDate(r.was.day)} → ${formatShortWeekdayDate(r.now.day)}`);
+  else if (r.now.day !== r.was.day) parts.push(`${weekdayPlural(r.was.weekday)} → ${weekdayPlural(r.now.weekday)}`);
   if (!samePlace(r.was, r.now)) {
     // Two venues can share a facility's name ("Field 1"): the venue joins the words when the venue moved.
     parts.push(r.was.venueId === r.now.venueId ? `${short(was)} → ${short(now)}` : `${full(was)} → ${full(now)}`);
   }
   if (r.now.startClock !== r.was.startClock) parts.push(`${formatTime(r.was.startClock)} → ${formatTime(r.now.startClock)}`);
+  if (oneDayMoved) return parts.join(', ');
   return `${when}: ${parts.length ? parts.join(', ') : `${short(was)} → ${short(now)}`}`;
 }
 
