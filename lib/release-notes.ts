@@ -44,6 +44,60 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-10-27',
+    title: "House league gets its own seasons, teams, drafts and practice time, a club's own website, and a new look across FieldLogicHQ",
+    highlights: [
+      {
+        category: 'new',
+        text: 'House league seasons now have their own page: create a season in three answers, set prices and an early bird for each age group, and follow a checklist of what is left. Families see the early bird before they register and can sign several children up in one go, with one email.',
+      },
+      {
+        category: 'new',
+        text: "Registrations shows what each child owes, what was paid and what was returned, and each season gets its own Money page. A family can ask to withdraw a child, and ending a registration asks what happened to the money.",
+      },
+      {
+        category: 'new',
+        text: "House league teams and the draft are rebuilt: rate your players, lock a coach's child to their team, keep brothers and sisters together, and run a balanced draft. Move players by hand and publish one division at a time, with one email per family.",
+      },
+      {
+        category: 'new',
+        text: "House league coaches get their own sign-in and a team page listing their players, with each family's name, email and phone. Families see their child's team and coach on their status page once the division is published, and any move after that.",
+      },
+      {
+        category: 'new',
+        text: "The club gives house league its share of the schedule, and house league plans its practices within that time, week by week, in the new Practice time window. Send the changes moves the practices and tells the families and coaches they touch.",
+      },
+      {
+        category: 'new',
+        text: 'Emails to families now share one place: each season has its own set of emails, and Email families keeps a sent history showing whom each one reached. Registrations, the Who list and family emails all open the same window, which shows your sending allowance.',
+      },
+      {
+        category: 'new',
+        text: "A club can run its own website: a Public site editor with a live preview, your sections in your order, an About page, a sponsors strip, and tryouts and team pages. Family emails go out in your club's name and colours.",
+      },
+      {
+        category: 'new',
+        text: "A new Tournaments tab lists your club's current, upcoming and past tournaments. A club can enter its own teams in a tournament it hosts, and the coach's Tournaments list is now one tidy list for Coming up and Finished.",
+      },
+      {
+        category: 'improved',
+        text: 'FieldLogicHQ has a new look: a refined mark and wordmark, warmer and plainer marketing pages, and one friendly design for every email and for the not-found, error, offline and paused-account screens.',
+      },
+      {
+        category: 'improved',
+        text: 'Every date and time field opens our own calendar on a computer and your device\'s picker on a phone or tablet. Phone numbers lay themselves out as you type, and a table row that opens a record now opens from anywhere on the row.',
+      },
+      {
+        category: 'improved',
+        text: "Plan & billing now says \"Free through\" with the date when you are on free time, in amber for the last 14 days. In the Premium Coaches Portal, a team's public page and Subscribe calendar show games and tournaments only, never practices.",
+      },
+      {
+        category: 'fixed',
+        text: "A club's own team no longer counts as owing in a tournament's Payments tiles, health counts or payment filters. A refund to a bank account now says \"bank account\" instead of \"card\", and a coach invite that did not send says so and can be sent again.",
+      },
+    ],
+  },
+  {
     date: '2026-10-20',
     title: "One account step for every way in, a numbered sponsor invoice on your team's paper, and Schedule health in one window",
     highlights: [
