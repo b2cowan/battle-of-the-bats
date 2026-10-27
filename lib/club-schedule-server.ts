@@ -68,8 +68,29 @@ export interface SchedulerCtx {
   canMoney: boolean;
   /** Something to hand time to: rep teams this member can open, or house league (Stage 11b). */
   canSchedule: boolean;
-  /** The club has house league (its plan, a free floor or a section): House league is offered as a holder (Stage 11b). */
+  /** The club runs house league (its plan, a free floor or a section, and a season not finished): House league is offered
+   *  as a holder (Stage 11b). */
   houseLeague: boolean;
+  /** This member opens Rep Teams: the rep teams are offered, and a schedule that hands them time is theirs to change
+   *  (/review 2026-10-27 — house league opening the door must not open the rep teams to a member the owner kept out). */
+  repTeams: boolean;
+}
+
+/** A house-league season that isn't finished: something of house league's to hand time to (the rep teams' "running
+ *  season", Ask 15). One read. */
+async function houseLeagueRuns(orgId: string): Promise<boolean> {
+  const { count, error } = await supabaseAdmin.from('league_seasons').select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId).not('status', 'in', '("completed","archived")');
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+/** A schedule that hands time to rep teams (its ticked teams or its slots), refused to a member who can't open Rep Teams
+ *  (the plan dropped them, or the owner kept this member out) — in words, never a 500. Null when theirs to change. */
+export function repTeamsRefusal(s: SchedulerCtx, loaded: LoadedSchedule): Response | null {
+  if (s.repTeams) return null;
+  const touches = teamsOnly(loaded.settings.teamIds).length > 0 || loaded.slots.some(x => teamsOnly(x.teamIds).length > 0);
+  return touches ? refusal(403, 'rep_teams_closed', R.repTeamsClosed) : null;
 }
 
 /** THE GATE: signed in, the plan carries the scheduler, an owner or an admin. `write` also needs something to hand time
@@ -82,10 +103,12 @@ export async function resolveScheduler(req: Request, opts: { write?: boolean } =
   if (!clubSchedulerOn(ctx.org.planId)) return { error: refusal(403, 'plan_lacks_scheduler', R.plan) };
   if (!isScheduleBuilder(ctx.role)) return { error: refusal(403, 'not_a_builder', R.who) };
   const repTeams = hasModuleEntitlement(ctx.org, 'module_rep_teams') && canOpenModule(ctx, ctx.org, 'module_rep_teams');
-  const houseLeague = hasModuleEntitlement(ctx.org, 'module_house_league');
+  const houseLeague = hasModuleEntitlement(ctx.org, 'module_house_league') && await houseLeagueRuns(ctx.org.id);
   const canSchedule = repTeams || houseLeague;
-  if (opts.write && !canSchedule) return { error: refusal(409, 'nothing_to_schedule', R.nothingToSchedule) };
-  return { ctx, canMoney: canMoveClubMoney(ctx, ctx.org), canSchedule, houseLeague };
+  if (opts.write && !canSchedule) {
+    return { error: refusal(409, 'nothing_to_schedule', hasModuleEntitlement(ctx.org, 'module_house_league') ? R.nothingToScheduleLeague : R.nothingToSchedule) };
+  }
+  return { ctx, canMoney: canMoveClubMoney(ctx, ctx.org), canSchedule, houseLeague, repTeams };
 }
 
 /** A database refusal (the floor: mig 326's raises) said in words, never a 500. Null when it isn't one of ours. */
@@ -147,7 +170,9 @@ export const HOUSE_LEAGUE_HOLDER: ClubTeam = {
 
 /** Every unarchived rep team of the club with its group and its running season — in the club's group order, then "Not in
  *  a group", each by name; then House league when `houseLeague` (Stage 11b). One read of each table. */
-export async function readClubTeams(orgId: string, opts: { houseLeague?: boolean } = {}): Promise<ClubTeam[]> {
+export async function readClubTeams(orgId: string, opts: { houseLeague?: boolean; repTeams?: boolean } = {}): Promise<ClubTeam[]> {
+  // A member who can't open Rep Teams is offered none (/review 2026-10-27); house league alone, when it runs.
+  if (opts.repTeams === false) return opts.houseLeague ? [{ ...HOUSE_LEAGUE_HOLDER }] : [];
   const [teams, groups, seasons] = await Promise.all([
     fetchAll<{ id: string; name: string; group_id: string | null; color: string | null }>((a, b) => supabaseAdmin.from('rep_teams')
       .select('id, name, group_id, color').eq('org_id', orgId).eq('is_archived', false).order('id').range(a, b)),
@@ -168,7 +193,7 @@ export async function readClubTeams(orgId: string, opts: { houseLeague?: boolean
   });
   out.sort((a, b) => a.groupOrder - b.groupOrder || (a.groupName ?? '').localeCompare(b.groupName ?? '')
     || a.name.localeCompare(b.name, 'en-CA', { numeric: true }));
-  return opts.houseLeague ? [...out, HOUSE_LEAGUE_HOLDER] : out;
+  return opts.houseLeague ? [...out, { ...HOUSE_LEAGUE_HOLDER }] : out;
 }
 
 // ── A schedule, read whole ───────────────────────────────────────────────────────────────────────
@@ -660,6 +685,8 @@ export interface ScheduleListRow {
   id: string; name: string; state: ScheduleRow['state']; changedSinceSent: boolean; startsOn: string; endsOn: string;
   band: 'in_use' | 'coming_up' | 'ended';
   places: string[]; teams: number; handedOut: number; open: number;
+  /** It hands time to rep teams (its ticks or its slots) — a member who can't open Rep Teams isn't shown it (11b review). */
+  repTeams: boolean;
   lastSent: { at: string; by: string | null } | null;
 }
 
@@ -694,6 +721,7 @@ export async function scheduleList(orgId: string): Promise<ScheduleListRow[]> {
       band: r.ends_on < today ? 'ended' as const : r.starts_on > today ? 'coming_up' as const : 'in_use' as const,
       places: [...new Set(placeWords)], teams: read.ok ? read.value.teamIds.length : 0,
       handedOut, open: Math.max(0, mine.length - handedOut),
+      repTeams: (read.ok && teamsOnly(read.value.teamIds).length > 0) || mine.some(s => (s.club_schedule_slot_teams ?? []).length > 0),
       lastSent: r.sent_at ? { at: r.sent_at, by: nameOf(r.sent_by) } : null,
     };
   }).sort((a, b) => a.startsOn.localeCompare(b.startsOn) || a.name.localeCompare(b.name));
@@ -855,7 +883,7 @@ export interface ScheduleRequest {
 
 /** A schedule's time and settings off a request, checked against the club's teams, places and groups — what Generate,
  *  Save as a draft and a regenerate all read first. */
-export async function readScheduleRequest(orgId: string, body: Record<string, unknown>, opts: { houseLeague?: boolean } = {}): Promise<{ ok: true; value: ScheduleRequest } | { ok: false; response: Response }> {
+export async function readScheduleRequest(orgId: string, body: Record<string, unknown>, opts: { houseLeague?: boolean; repTeams?: boolean } = {}): Promise<{ ok: true; value: ScheduleRequest } | { ok: false; response: Response }> {
   const t = readTimeBody(body);
   if (!t.ok) return { ok: false, response: refusal(400, t.code, t.error) };
   const [teams, places] = await Promise.all([readClubTeams(orgId, opts), readClubPlaces(orgId)]);

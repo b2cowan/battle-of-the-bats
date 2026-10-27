@@ -795,7 +795,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   })();
   const allNone = (
     <span className={mk.allNone}>
-      <button type="button" className={ck.link} onClick={() => tickTo(running.map(t => t.id))}>{W.all}</button>
+      <button type="button" className={ck.link} onClick={() => tickTo((runningTeams.length ? runningTeams : running).map(t => t.id))}>{W.all}</button>
       <span aria-hidden>·</span>
       <button type="button" className={ck.link} onClick={() => tickTo([])}>{W.none}</button>
     </span>

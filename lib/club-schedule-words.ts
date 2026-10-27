@@ -59,7 +59,9 @@ export const houseLeagueUse = (division: string, kind: 'games' | 'practices') =>
 export const SCHEDULE_REFUSALS = {
   plan: 'The club scheduler is part of League Plus and Club.',
   who: 'Only the club’s owner or an admin builds schedules.',
-  nothingToSchedule: 'There are no rep teams with a season running, and no house league, to hand time to yet.',
+  nothingToSchedule: 'There are no rep teams with a season running to hand time to yet.',
+  nothingToScheduleLeague: 'There are no rep teams or house-league seasons running to hand time to yet.',
+  repTeamsClosed: 'This schedule hands time to rep teams, and Rep Teams isn’t open to you. The owner or an admin who runs it can change it.',
   slotBoth: 'A slot is held by teams or by house league, never both.',
   ruleNamesHouseLeague: 'A rule names house league. Its league admins divide its time, so take it out of the rule.',
   notFound: 'That schedule isn’t here any more. Reload the page.',

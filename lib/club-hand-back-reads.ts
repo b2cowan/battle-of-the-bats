@@ -214,14 +214,19 @@ export async function keptHandBacks(orgId: string, scheduleId: string, holds: Re
 export type HandedBackSlot = 'open' | 'taken' | 'returned' | 'removed' | 'started';
 
 /** A slot as the handed-back reads select it: `starts_at, removed_at, club_schedule_slot_teams ( team_id )`. */
-export interface StandingSlot { starts_at: string; removed_at: string | null; club_schedule_slot_teams: { team_id: string }[] | null }
+export interface StandingSlot {
+  starts_at: string; removed_at: string | null; club_schedule_slot_teams: { team_id: string }[] | null;
+  /** House league holding it (Stage 11b): the club gave it on — `taken`, as another team's. */
+  club_schedule_slot_programs?: { program: string } | { program: string }[] | null;
+}
 
 /** WHERE A HANDED-BACK SUNDAY STANDS NOW, for `teamId` — the one reading the practice's end, Take it back's rows and the
  *  club's Answer (D3's open / gone count) all share. A slot that is gone (deleted) reads `removed`. */
 export function slotStanding(slot: StandingSlot | null | undefined, teamId: string, now: string): HandedBackSlot {
   if (!slot || slot.removed_at) return 'removed';
   const teams = (slot.club_schedule_slot_teams ?? []).map(t => t.team_id);
-  if (teams.some(t => t !== teamId)) return 'taken';
+  const program = slot.club_schedule_slot_programs;
+  if (teams.some(t => t !== teamId) || (Array.isArray(program) ? program.length > 0 : !!program)) return 'taken';
   if (teams.length) return 'returned';
   return slot.starts_at <= now ? 'started' : 'open';
 }
@@ -305,7 +310,7 @@ export async function practiceHandBacks(orgId: string, teamId: string, slotIds: 
       .select('id, late_for, state, asked_at, closed_at, asked_cents, accepted_cents, credited_cents, to_pay_cents, decline_reason, club_schedule_hand_back_slots ( id )')
       .eq('org_id', orgId).in('late_for', c).in('state', ['waiting', 'accepted', 'declined']).order('id').range(a, b)),
     fetchAllIn<StandingSlot & { id: string }>([...bySlot.keys()], (c, a, b) => supabaseAdmin
-      .from('club_schedule_slots').select('id, starts_at, removed_at, club_schedule_slot_teams ( team_id )').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
+      .from('club_schedule_slots').select('id, starts_at, removed_at, club_schedule_slot_teams ( team_id ), club_schedule_slot_programs ( program )').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
   ]);
   const lateOf = new Map<string, LateRow>();
   for (const l of lates) {

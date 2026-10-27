@@ -2,13 +2,13 @@
 
 **Generated:** 2026-10-27 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 1012 divergence(s)** across dev/prod.
+**⚠️ 1014 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 36 | 0 | — |
 | Columns | 507 | 1 | 0 |
-| Indexes | 158 | 0 | 2 |
+| Indexes | 160 | 0 | 2 |
 | Constraints | 151 | 0 | — |
 | RLS / CHECK | 157 | 0 | 0 (RLS state) |
 
@@ -571,7 +571,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (158)
+### Only in DEV (160)
 - `accounting_entries_league_registration_idx`
 - `club_schedule_slot_programs_org_idx`
 - `club_schedule_slot_programs_pkey`
@@ -592,6 +592,7 @@ _none_
 - `league_player_ratings_org_id_idx`
 - `league_player_ratings_pkey`
 - `league_player_ratings_season_idx`
+- `league_practice_time_division_idx`
 - `league_practice_time_org_idx`
 - `league_practice_time_pkey`
 - `league_practices_club_slot_uq`
@@ -609,6 +610,7 @@ _none_
 - `league_season_notices_org_idx`
 - `league_season_notices_pkey`
 - `league_season_notices_season_idx`
+- `league_slot_uses_division_idx`
 - `league_slot_uses_org_idx`
 - `league_slot_uses_pkey`
 - `league_slot_uses_season_idx`

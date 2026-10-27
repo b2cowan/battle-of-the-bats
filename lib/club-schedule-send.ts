@@ -505,7 +505,7 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
   const finalRows = kind === 'final' ? scheduled.flatMap(t => t.season ? c.slots.filter(s => (c.assignments.get(s.key) ?? []).includes(t.id)).map(s => rowFor(c, s, t.id, t.season!.id)) : []) : undefined;
   const changedTeams = plan ? plan.byTeam.size : 0;
   const statement = kind === 'review' ? W.reviewStatement(replyBy)
-    : kind === 'final' ? W.finalStatement(c.slots.filter(s => (c.assignments.get(s.key) ?? []).length).length, scheduled.length)
+    : kind === 'final' ? W.finalStatement(c.slots.filter(s => teamsOnly(c.assignments.get(s.key) ?? []).length).length, scheduled.length)
     : W.changesStatement(changedTeams, handedBack.map(h => h.teamName));
   return {
     kind, scheduleId: row.id, version: row.version, statement, teams, unreachable, blockers, correctionBlocked, replyBy,

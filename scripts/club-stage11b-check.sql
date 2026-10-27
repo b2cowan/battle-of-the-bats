@@ -129,8 +129,9 @@ BEGIN
     v_code := 'wrote';
   EXCEPTION WHEN raise_exception THEN v_code := split_part(SQLERRM, ':', 1); END;
   IF v_code IS DISTINCT FROM 'slot_full' THEN RAISE EXCEPTION 'FAIL T5: two practices at once on a 1-at-once slot (%)', v_code; END IF;
-  INSERT INTO league_practices(season_id, division_id, team_id, org_id, scheduled_at, ends_at, status)
-  VALUES (v_season, v_div, v_t2, v_org, v_at + interval '7 days 30 minutes', v_at + interval '7 days 90 minutes', 'scheduled')
+  -- (another club-time practice of the team's — mig 393: a practice booked by hand never refuses, see T11)
+  INSERT INTO league_practices(season_id, division_id, team_id, org_id, scheduled_at, ends_at, status, club_schedule_slot_id)
+  VALUES (v_season, v_div, v_t2, v_org, v_at + interval '7 days 30 minutes', v_at + interval '7 days 90 minutes', 'scheduled', v_c)
   RETURNING id INTO v_p;
   BEGIN
     v_res := league_practices_hand_out(v_org, v_season, v_div, NULL, ARRAY[v_b], jsonb_build_array(
@@ -195,13 +196,13 @@ BEGIN
      OR NOT EXISTS (SELECT 1 FROM league_slot_uses WHERE slot_id = v_moved AND division_id = v_div AND kind = 'practices') THEN
     RAISE EXCEPTION 'FAIL T7: the use and practices did not follow the time'; END IF;
 
-  -- T8 · the club takes slot B back for a rep team (in place): its use goes at once, and Send the changes refuses until
-  -- the practices on it are cancelled; with them cancelled it lands.
+  -- T8 · the club takes slot B back for a rep team (in place): its use WAITS for Send the changes (mig 393), which refuses
+  -- until the practices on it are cancelled; with them cancelled it lands, and the use goes.
   SELECT version INTO v_ver FROM club_schedules WHERE id = v_sched;
   v_res := club_schedule_edit_slots(v_org, v_sched, NULL, v_ver, jsonb_build_array(
     jsonb_build_object('slotId', v_b, 'teamIds', jsonb_build_array(v_team), 'program', NULL)));
-  IF NOT (v_res->>'ok')::boolean OR EXISTS (SELECT 1 FROM league_slot_uses WHERE slot_id = v_b) THEN
-    RAISE EXCEPTION 'FAIL T8: taking the slot back (%)', v_res; END IF;
+  IF NOT (v_res->>'ok')::boolean OR NOT EXISTS (SELECT 1 FROM league_slot_uses WHERE slot_id = v_b) THEN
+    RAISE EXCEPTION 'FAIL T8: taking the slot back lost its use before the send (%)', v_res; END IF;
   INSERT INTO club_schedule_sends(org_id, schedule_id, kind) VALUES (v_org, v_sched, 'changes') RETURNING id INTO v_send;
   SELECT version INTO v_ver FROM club_schedules WHERE id = v_sched;
   BEGIN
@@ -214,8 +215,36 @@ BEGIN
     '{}'::jsonb, '[]'::jsonb, jsonb_build_object('cancel',
       (SELECT jsonb_agg(lp.id) FROM league_practices lp WHERE lp.club_schedule_slot_id = v_b)));
   IF NOT (v_res->>'ok')::boolean OR (v_res->'league'->>'cancelled')::integer <> 2
-     OR EXISTS (SELECT 1 FROM league_practices WHERE club_schedule_slot_id = v_b AND status <> 'cancelled') THEN
-    RAISE EXCEPTION 'FAIL T8: the cancelled practices (%)', v_res; END IF;
+     OR EXISTS (SELECT 1 FROM league_practices WHERE club_schedule_slot_id = v_b AND status <> 'cancelled')
+     OR EXISTS (SELECT 1 FROM league_slot_uses WHERE slot_id = v_b) THEN
+    RAISE EXCEPTION 'FAIL T8: the cancelled practices, or the use left behind (%)', v_res; END IF;
+
+  -- T10 · a practice already HELD on time the club took back never blocks Send the changes (mig 393).
+  INSERT INTO club_schedule_slots(org_id, schedule_id, org_venue_id, starts_at, ends_at)
+  VALUES (v_org, v_sched, v_venue, now() - interval '3 days', now() - interval '3 days' + interval '1 hour') RETURNING id INTO v_c;
+  INSERT INTO club_schedule_slot_programs(slot_id, program, org_id) VALUES (v_c, 'house_league', v_org);
+  INSERT INTO league_practices(season_id, division_id, team_id, org_id, scheduled_at, ends_at, status, club_schedule_slot_id)
+  VALUES (v_season, v_div, v_t1, v_org, now() - interval '3 days', now() - interval '3 days' + interval '1 hour', 'scheduled', v_c);
+  DELETE FROM club_schedule_slot_programs WHERE slot_id = v_c;
+  INSERT INTO club_schedule_sends(org_id, schedule_id, kind) VALUES (v_org, v_sched, 'changes') RETURNING id INTO v_send;
+  SELECT version INTO v_ver FROM club_schedules WHERE id = v_sched;
+  v_res := club_schedule_apply_changes(v_org, v_sched, NULL, v_ver, '[]'::jsonb, '[]'::jsonb, '{}'::uuid[], NULL, v_send,
+                                       '{}'::jsonb, '[]'::jsonb, NULL);
+  IF NOT (v_res->>'ok')::boolean THEN RAISE EXCEPTION 'FAIL T10: a held practice blocked the send (%)', v_res; END IF;
+
+  -- T11 · Practice time: a practice booked by hand never refuses a hand-out; the place is the SLOT's, not the request's;
+  -- out-of-range settings are refused in words.
+  INSERT INTO league_practices(season_id, division_id, team_id, org_id, scheduled_at, ends_at, status)
+  VALUES (v_season, v_div, v_t1, v_org, v_at + interval '1 hour 30 minutes', v_at + interval '2 hours 30 minutes', 'scheduled');
+  v_res := league_practices_hand_out(v_org, v_season, v_div, NULL, ARRAY[v_moved], jsonb_build_array(
+    jsonb_build_object('slotId', v_moved, 'teamId', v_t1, 'scheduledAt', v_at + interval '1 hour', 'endsAt', v_at + interval '2 hours',
+                       'venueId', gen_random_uuid(), 'facilityId', gen_random_uuid())),
+    '{"practiceMinutes": 60, "teamsAtOnce": 1}'::jsonb);
+  IF NOT (v_res->>'ok')::boolean THEN RAISE EXCEPTION 'FAIL T11: a hand-booked practice refused the hand-out (%)', v_res; END IF;
+  IF (SELECT org_venue_id FROM league_practices WHERE club_schedule_slot_id = v_moved AND team_id = v_t1) IS DISTINCT FROM v_venue THEN
+    RAISE EXCEPTION 'FAIL T11: the practice took the request''s place, not the slot''s'; END IF;
+  v_res := league_practices_hand_out(v_org, v_season, v_div, NULL, ARRAY[v_moved], '[]'::jsonb, '{"practiceMinutes": 999}'::jsonb);
+  IF v_res->>'code' IS DISTINCT FROM 'bad_settings' THEN RAISE EXCEPTION 'FAIL T11: 999-minute practices (%)', v_res; END IF;
 
   -- T9 · a finished season divides nothing and hands out nothing.
   UPDATE league_seasons SET status = 'completed' WHERE id = v_season;

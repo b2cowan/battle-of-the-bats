@@ -20,6 +20,7 @@ import { moveLanding, type PrimeTime, type ScheduleSettings, type slotHolds } fr
 import { teamColor } from './team-color';
 import type { Slot } from './club-schedule-engine';
 import { billShares, pricedMinutes, type BillSlot } from './club-schedule-bill';
+import { isProgramHolder } from './club-schedule-holders';
 import type { ScheduleAsk, ScheduleListRow, ScheduleView, SlotView } from './club-schedule-server';
 
 export type { ScheduleAsk, ScheduleListRow, ScheduleView, SlotView };
@@ -342,8 +343,9 @@ export function dropVerdict(p: {
   const swapWith = landing.kind === 'swap' ? landing.withTeam : null;
   const overlaps = (a: Pick<SlotView, 'startsAt' | 'endsAt'>, b: Pick<SlotView, 'startsAt' | 'endsAt'>) => a.startsAt < b.endsAt && b.startsAt < a.endsAt;
   // The one refusal: the team (or the team it swaps with) in two slots at once.
+  // House league holds many slots at once (Stage 11b): the refusal and the day cap are a TEAM's.
   const twice = (team: string, at: SlotView, leaving: SlotView) =>
-    p.slots.find(s => s.key !== leaving.key && s.key !== at.key && s.teamIds.includes(team) && overlaps(s, at));
+    isProgramHolder(team) ? undefined : p.slots.find(s => s.key !== leaving.key && s.key !== at.key && s.teamIds.includes(team) && overlaps(s, at));
   const overlapReason = (team: string, existing: SlotView) =>
     `${p.nameOf(team)} already has ${formatShortWeekdayDate(existing.day)}, ${slotTime(existing)} at ${p.placeOf(existing)}. This ${swapWith ? 'swap' : 'move'} would overlap it.`;
   const incomingConflict = twice(teamId, to, from);
@@ -356,7 +358,7 @@ export function dropVerdict(p: {
   // hand edits still follow the schedule's warn-and-allow convention for non-overlap rules.
   const dailyCap = p.settings.rules.maxPerDay;
   if (dailyCap != null && from.day !== to.day) {
-    const alreadyOn = (team: string, day: string) => p.slots.filter(s => s.day === day && s.teamIds.includes(team)).length;
+    const alreadyOn = (team: string, day: string) => (isProgramHolder(team) ? 0 : p.slots.filter(s => s.day === day && s.teamIds.includes(team)).length);
     if (alreadyOn(teamId, to.day) >= dailyCap) {
       return { kind: 'warn', reason: `${p.nameOf(teamId)} would have more than ${dailyCap} ${dailyCap === 1 ? 'practice' : 'practices'} on ${formatShortWeekdayDate(to.day)}` };
     }

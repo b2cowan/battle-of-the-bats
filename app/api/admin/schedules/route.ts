@@ -39,11 +39,13 @@ export const GET = withObservability(async (req: Request) => {
   if ('error' in r) return r.error;
   const orgId = r.ctx.org.id;
   if (!r.canSchedule) return NextResponse.json({ schedules: [], nothingToSchedule: true, canMoney: r.canMoney });
-  const teams = await readClubTeams(orgId, { houseLeague: r.houseLeague });
+  const teams = await readClubTeams(orgId, { houseLeague: r.houseLeague, repTeams: r.repTeams });
   const nothingToSchedule = !teams.some(t => t.season);
 
   if (new URL(req.url).searchParams.get('new') !== '1') {
-    return NextResponse.json({ schedules: await scheduleList(orgId), nothingToSchedule, canMoney: r.canMoney });
+    // A member who can't open Rep Teams sees house league's schedules only (11b review).
+    const schedules = (await scheduleList(orgId)).filter(s => r.repTeams || !s.repTeams);
+    return NextResponse.json({ schedules, nothingToSchedule, canMoney: r.canMoney });
   }
 
   const [places, permits, schedules, groups] = await Promise.all([
@@ -88,7 +90,7 @@ export const POST = withObservability(async (req: Request) => {
     return schedulerRefusal(400, 'bad_start', 'Pick what the schedule starts from again.');
   }
   const [asked, prices, from] = await Promise.all([
-    readScheduleRequest(orgId, body, { houseLeague: r.houseLeague }),
+    readScheduleRequest(orgId, body, { houseLeague: r.houseLeague, repTeams: r.repTeams }),
     readPrices(orgId, permitId),
     // "Last year's schedule" — one of THIS club's (a plain link, never another club's id).
     fromSchedule ? supabaseAdmin.from('club_schedules').select('id').eq('id', fromSchedule).eq('org_id', orgId).maybeSingle() : null,

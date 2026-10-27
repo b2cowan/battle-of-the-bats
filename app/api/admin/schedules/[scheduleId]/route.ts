@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { clearSettled } from '@/lib/needs-attention';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import {
-  draftToSave, editSlotsStep, loadSchedule, readBill, readClubTeams, readName, readPrices, readScheduleRequest, resolveScheduler,
+  draftToSave, editSlotsStep, loadSchedule, readBill, readClubTeams, readName, readPrices, readScheduleRequest, repTeamsRefusal, resolveScheduler,
   roomChecker, saveScheduleStep, scheduleView, schedulerRefusal, timePayload,
 } from '@/lib/club-schedule-server';
 import { changesSummary, sendLog } from '@/lib/club-schedule-send';
@@ -40,6 +40,8 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   const { scheduleId } = await params;
   const loaded = await loadSchedule(r.ctx.org.id, scheduleId);
   if (!loaded) return schedulerRefusal(404, 'not_found', R.notFound);
+  const closed = repTeamsRefusal(r, loaded);
+  if (closed) return closed;
   const [view, replies, log, changes] = await Promise.all([
     scheduleView(r.ctx.org.id, loaded, r.canMoney, { houseLeague: r.houseLeague }),
     scheduleReplies(r.ctx.org.id, scheduleId),
@@ -60,6 +62,8 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   const body = await req.json().catch(() => ({})) as Record<string, unknown>;
   const loaded = await loadSchedule(orgId, scheduleId);
   if (!loaded) return schedulerRefusal(404, 'not_found', R.notFound);
+  const closed = repTeamsRefusal(r, loaded);
+  if (closed) return closed;
   const version = Number(body.version);
   if (!Number.isInteger(version) || version !== loaded.row.version) return schedulerRefusal(409, 'changed', R.changed, { version: loaded.row.version });
 
@@ -73,7 +77,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
 
     if (body.action === 'regenerate') {
       const [asked, prices] = await Promise.all([
-        readScheduleRequest(orgId, body, { houseLeague: r.houseLeague }),
+        readScheduleRequest(orgId, body, { houseLeague: r.houseLeague, repTeams: r.repTeams }),
         readPrices(orgId, loaded.row.bill_permit_id ?? loaded.row.started_from_permit_id),
       ]);
       if (!asked.ok) return asked.response;
@@ -95,7 +99,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       // asks it too — what it puts back must still fit the schedule's sharing rules.
       const crowds = (body.edits as Record<string, unknown>[]).some(e => Array.isArray(e?.teamIds) && e.teamIds.length > 1);
       const [teams, prices] = await Promise.all([
-        readClubTeams(orgId, { houseLeague: r.houseLeague }),
+        readClubTeams(orgId, { houseLeague: r.houseLeague, repTeams: r.repTeams }),
         crowds ? readPrices(orgId, loaded.row.bill_permit_id ?? loaded.row.started_from_permit_id) : null,
       ]);
       const running = new Set(teams.filter(x => x.season).map(x => x.id));
@@ -170,6 +174,11 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   if (error) throw error;
   if (!data) return schedulerRefusal(404, 'not_found', R.notFound);
   if (data.state === 'final') return schedulerRefusal(409, 'final_delete', R.finalDelete);
+  if (!r.repTeams) {
+    const loaded = await loadSchedule(r.ctx.org.id, scheduleId);
+    const closed = loaded ? repTeamsRefusal(r, loaded) : null;
+    if (closed) return closed;
+  }
   // The schedule's blocks, dates off, slots, replies and sends go with it (ON DELETE CASCADE).
   const { data: gone, error: delError } = await supabaseAdmin.from('club_schedules').delete().eq('id', scheduleId).eq('org_id', r.ctx.org.id)
     .neq('state', 'final').select('id');

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { cutSlots, generateDrafts, heldSlots, teamTwice, type EngineInput, type EngineTeam } from '../../lib/club-schedule-engine.ts';
-import { defaultSettings, type ScheduleSettings } from '../../lib/club-schedule-settings.ts';
+import { defaultSettings, readScheduleSettings, type ScheduleSettings } from '../../lib/club-schedule-settings.ts';
 import { billShares, pricedMinutes, sharesAtRate } from '../../lib/club-schedule-bill.ts';
 import { HOUSE_LEAGUE, isProgramHolder, storedHolders, teamsOnly } from '../../lib/club-schedule-holders.ts';
 import type { TimeBlock } from '../../lib/permit-time.ts';
@@ -44,6 +44,21 @@ describe('the edges: house league in, house league out', () => {
     assert.deepEqual([...shares.shares.keys()], ['t1']);
     assert.equal(shares.totalCents, 15000, 'the rep team pays its own 90 minutes, not house league\'s');
     assert.deepEqual([...sharesAtRate(priced, 100 / 60, undefined).keys()], ['t1']);
+  });
+});
+
+describe('the settings: house league is a holder, never a rule\'s team (/review 2026-10-27)', () => {
+  const T = '0b9a1d3e-5c4f-4a7b-9e21-6d0c8f1a2b3c';
+  it('a schedule\'s holders may name house league — the settings read it, as every route reads them first', () => {
+    const r = readScheduleSettings({ ...defaultSettings(), teamIds: [T, HOUSE_LEAGUE], split: { method: 'weekly', values: { [T]: 2, [HOUSE_LEAGUE]: 30 } } },
+      { teamIds: new Set([T, HOUSE_LEAGUE]) });
+    assert.ok(r.ok, JSON.stringify(r));
+    assert.equal(r.ok && r.value.split.values[HOUSE_LEAGUE], 30, 'house league\'s week is the time\'s, not a team\'s 21');
+  });
+  it('a rule never names house league', () => {
+    const base = defaultSettings();
+    const r = readScheduleSettings({ ...base, teamIds: [T, HOUSE_LEAGUE], rules: { ...base.rules, daysOff: [{ teamId: HOUSE_LEAGUE, date: '2027-06-07', weekday: null, note: null }] } });
+    assert.equal(r.ok, false);
   });
 });
 

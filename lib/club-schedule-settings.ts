@@ -23,6 +23,7 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import { isUuid } from './utils';
+import { HOUSE_LEAGUE } from './club-schedule-holders';
 import { isCalendarDate } from './timezone';
 
 /**
@@ -124,6 +125,7 @@ export const SETTINGS_LIMITS = {
   atOnce: { min: 2, max: 4 },
   teams: 60,
   perWeek: 21,
+  houseLeaguePerWeek: 500,
   windows: 20,
   daysOff: 200,
   fieldsBy: 20,
@@ -227,6 +229,10 @@ const wholeIn = (v: unknown, min: number, max: number): number | null => {
 
 const ids = (v: unknown): string[] | null =>
   Array.isArray(v) && v.every(isUuid) ? [...new Set(v as string[])] : null;
+/** The holders a schedule gives time to: rep teams, and House league (Stage 11b) — the one non-team holder. A RULE's teams
+ *  stay `ids` (no team rule names house league). */
+const holderIds = (v: unknown): string[] | null =>
+  Array.isArray(v) && v.every(x => isUuid(x) || x === HOUSE_LEAGUE) ? [...new Set(v as string[])] : null;
 
 const weekday = (v: unknown): number | null => wholeIn(v, 1, 7);
 
@@ -273,7 +279,7 @@ export function readScheduleSettings(raw: unknown, known: {
   const changeoverMinutes = wholeIn(r.changeoverMinutes ?? 0, L.changeoverMinutes.min, L.changeoverMinutes.max);
   if (changeoverMinutes === null) return no('bad_changeover', 'The changeover is between 0 and 120 minutes.');
 
-  const teamIds = ids(r.teamIds ?? []);
+  const teamIds = holderIds(r.teamIds ?? []);
   if (!teamIds) return no('bad_teams', 'Pick the teams again.');
   if (teamIds.length > L.teams) return no('too_many_teams', `A schedule hands time to at most ${L.teams} teams.`);
   if (known.teamIds && teamIds.some(t => !known.teamIds!.has(t))) {
@@ -294,7 +300,9 @@ export function readScheduleSettings(raw: unknown, known: {
         if (!Number.isFinite(n) || n <= 0 || n > 100) return no('bad_share', 'Each team needs a percentage above zero.');
         values[t] = Math.round(n * 100) / 100;
       } else {
-        if (!Number.isInteger(n) || n < 1 || n > L.perWeek) return no('bad_share', `Each team needs between 1 and ${L.perWeek} slots a week.`);
+        // House league holds many slots a week (its league admins divide them): its ceiling is the time's, not a team's.
+        const most = t === HOUSE_LEAGUE ? L.houseLeaguePerWeek : L.perWeek;
+        if (!Number.isInteger(n) || n < 1 || n > most) return no('bad_share', `Each team needs between 1 and ${most} slots a week.`);
         values[t] = n;
       }
     }

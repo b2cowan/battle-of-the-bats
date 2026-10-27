@@ -1,10 +1,10 @@
 {
   "generated": "2026-10-27",
-  "total": 1012,
+  "total": 1014,
   "counts": {
     "tables": 36,
     "columns": 508,
-    "indexes": 160,
+    "indexes": 162,
     "constraints": 151,
     "rls": 157
   },
@@ -3362,6 +3362,10 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_practice_time_division_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:league_practice_time_org_idx",
       "sig": ""
     },
@@ -3427,6 +3431,10 @@
     },
     {
       "key": "index:only-dev:league_season_notices_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_slot_uses_division_idx",
       "sig": ""
     },
     {

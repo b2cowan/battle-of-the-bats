@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { isUuid } from '@/lib/utils';
 import { generateDrafts, seatCounts, shareTargets } from '@/lib/club-schedule-engine';
-import { buildEngineInput, loadSchedule, readScheduleRequest, resolveScheduler, schedulerRefusal, teamNamer } from '@/lib/club-schedule-server';
+import { buildEngineInput, loadSchedule, readScheduleRequest, repTeamsRefusal, resolveScheduler, schedulerRefusal, teamNamer } from '@/lib/club-schedule-server';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, measureLines, warningLine } from '@/lib/club-schedule-words';
 
 // ---------------------------------------------------------------------------
@@ -26,11 +26,13 @@ export const POST = withObservability(async (req: Request) => {
   const scheduleId = isUuid(body.scheduleId) ? body.scheduleId : null;
   if (body.scheduleId && !scheduleId) return schedulerRefusal(404, 'not_found', R.notFound);
   const [asked, loaded] = await Promise.all([
-    readScheduleRequest(orgId, body, { houseLeague: r.houseLeague }),
+    readScheduleRequest(orgId, body, { houseLeague: r.houseLeague, repTeams: r.repTeams }),
     scheduleId ? loadSchedule(orgId, scheduleId) : null,
   ]);
   if (!asked.ok) return asked.response;
   if (scheduleId && !loaded) return schedulerRefusal(404, 'not_found', R.notFound);
+  const closed = loaded ? repTeamsRefusal(r, loaded) : null;
+  if (closed) return closed;
   const { time, teams, places, settings } = asked.value;
   const permitId = isUuid(body.startedFromPermitId) ? body.startedFromPermitId
     : loaded?.row.bill_permit_id ?? loaded?.row.started_from_permit_id ?? null;

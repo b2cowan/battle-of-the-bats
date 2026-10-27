@@ -75,7 +75,7 @@ describe('1 · the Schedules row is there only where time can be handed out', ()
     const onlyHouseLeague = (c: string) => c === 'module_house_league';
     assert.equal(link({ planId: 'league', canUse: onlyHouseLeague as never })?.href, '/riverdale/admin/schedules');
     assert.equal(link({ planId: 'league', canUse: onlyHouseLeague as never, role: 'league_admin' }), null);
-    assert.equal(link({ planId: 'league', canUse: (c => c === 'module_families') as never }), null);
+    assert.equal(link({ planId: 'league', canUse: ((c: string) => c === 'module_families') as never }), null);
   });
   it('the rail and the phone’s More sheet carry it under Calendar, never on a tournament-only rail', () => {
     const rail = readCode(RAIL);

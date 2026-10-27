@@ -271,7 +271,7 @@ export async function answerView(orgId: string, handBackId: string, canMove: boo
   const lateRead = summary.lateFor ? Promise.all([
     supabaseAdmin.from('club_schedule_hand_backs').select('asked_at, asked_by').eq('id', summary.lateFor).eq('org_id', orgId).maybeSingle(),
     fetchAllIn<StandingSlot & { id: string }>(summary.sundays.map(s => s.slotId).filter((s): s is string => !!s), (c, a, b) => supabaseAdmin
-      .from('club_schedule_slots').select('id, starts_at, removed_at, club_schedule_slot_teams ( team_id )').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
+      .from('club_schedule_slots').select('id, starts_at, removed_at, club_schedule_slot_teams ( team_id ), club_schedule_slot_programs ( program )').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
   ]) : Promise.resolve(null);
   const [req, places, schedRow, pool, room, staff, nameOf, lateRows] = await Promise.all([
     supabaseAdmin.from('rep_team_payment_requests').select('id').eq('org_id', orgId).eq('club_hand_back_id', handBackId).maybeSingle(),
@@ -481,7 +481,7 @@ export async function takeBackPlan(orgId: string, teamId: string, event: RepTeam
   if (!hb || !hb.canTakeBack) return fail(409, 'nothing', W.refuse.takeBackNothing);
   const [rows, holds] = await Promise.all([
     fetchAll<{ slot_id: string | null; starts_at: string; club_schedule_slots: (StandingSlot & { ends_at: string }) | null }>((a, b) => supabaseAdmin
-      .from('club_schedule_hand_back_slots').select('slot_id, starts_at, club_schedule_slots ( starts_at, ends_at, removed_at, club_schedule_slot_teams ( team_id ) )')
+      .from('club_schedule_hand_back_slots').select('slot_id, starts_at, club_schedule_slots ( starts_at, ends_at, removed_at, club_schedule_slot_teams ( team_id ), club_schedule_slot_programs ( program ) )')
       .eq('org_id', orgId).eq('hand_back_id', hb.id).eq('handed_back', true).order('id').range(a, b)),
     // The team's own Sundays on the schedule: it never holds two at once (the schedule's one rule — the step skips one).
     fetchAll<{ starts_at: string; ends_at: string }>((a, b) => supabaseAdmin.from('club_schedule_slots')

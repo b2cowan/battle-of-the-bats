@@ -66,8 +66,15 @@ describe('the scheduler rides League Plus and both Club bands, checked on the se
     assert.match(gate, /hasModuleEntitlement\(ctx\.org, 'module_rep_teams'\)/);
     // ⚖ Changed 2026-10-27 (Stage 11b, 9d2·15): house league is a holder of the club's time, so a club with house league
     // has something to schedule — League Plus included. Still the owner or an admin only (the line above `isScheduleBuilder`).
-    assert.match(gate, /const houseLeague = hasModuleEntitlement\(ctx\.org, 'module_house_league'\);/);
+    // A club that RUNS house league (a season not finished), as a rep team needs its running season (11b review).
+    assert.match(gate, /const houseLeague = hasModuleEntitlement\(ctx\.org, 'module_house_league'\) && await houseLeagueRuns\(ctx\.org\.id\);/);
     assert.match(gate, /const canSchedule = repTeams \|\| houseLeague;/);
+    // House league opening the door never opens the rep teams to a member the owner kept out (11b review).
+    assert.match(gate, /canSchedule, houseLeague, repTeams \}/);
+    assert.match(functionBody(readCode('lib/club-schedule-server.ts'), 'readClubTeams'), /if \(opts\.repTeams === false\) return/);
+    for (const f of ['app/api/admin/schedules/[scheduleId]/route.ts', 'app/api/admin/schedules/[scheduleId]/send/route.ts', 'app/api/admin/schedules/generate/route.ts']) {
+      assert.match(readCode(f), /repTeamsRefusal\(r, loaded\)/, `${f} refuses a rep schedule to a member without Rep Teams`);
+    }
     assert.match(gate, /canMoney: canMoveClubMoney\(ctx, ctx\.org\)/);
   });
   it('⚖ Stage 11b: house league is taken back out at every edge — the database, the bill, the send, the rules', () => {

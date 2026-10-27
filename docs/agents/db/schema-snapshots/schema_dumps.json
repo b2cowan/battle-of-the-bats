@@ -28157,8 +28157,8 @@
       {
         "table_name": "league_slot_uses",
         "column_name": "slot_id",
-        "foreign_table": "club_schedule_slot_programs",
-        "foreign_column": "slot_id",
+        "foreign_table": "club_schedule_slots",
+        "foreign_column": "id",
         "constraint_name": "league_slot_uses_slot_id_fkey"
       },
       {
@@ -33524,6 +33524,11 @@
       },
       {
         "tablename": "league_practice_time",
+        "indexname": "league_practice_time_division_idx",
+        "indexdef": "CREATE INDEX league_practice_time_division_idx ON public.league_practice_time USING btree (division_id)"
+      },
+      {
+        "tablename": "league_practice_time",
         "indexname": "league_practice_time_org_idx",
         "indexdef": "CREATE INDEX league_practice_time_org_idx ON public.league_practice_time USING btree (org_id)"
       },
@@ -33701,6 +33706,11 @@
         "tablename": "league_seasons",
         "indexname": "league_seasons_pkey",
         "indexdef": "CREATE UNIQUE INDEX league_seasons_pkey ON public.league_seasons USING btree (id)"
+      },
+      {
+        "tablename": "league_slot_uses",
+        "indexname": "league_slot_uses_division_idx",
+        "indexdef": "CREATE INDEX league_slot_uses_division_idx ON public.league_slot_uses USING btree (division_id)"
       },
       {
         "tablename": "league_slot_uses",

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
-import { loadSchedule, resolveScheduler, schedulerRefusal } from '@/lib/club-schedule-server';
+import { loadSchedule, repTeamsRefusal, resolveScheduler, schedulerRefusal } from '@/lib/club-schedule-server';
 import { previewSend, sendSchedule, type SendKind } from '@/lib/club-schedule-send';
 import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 
@@ -31,6 +31,8 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   if (!KINDS.includes(kind)) return schedulerRefusal(400, 'bad_kind', 'Send for review, final, or the changes.');
   const loaded = await loadSchedule(r.ctx.org.id, scheduleId);
   if (!loaded) return schedulerRefusal(404, 'not_found', R.notFound);
+  const closed = repTeamsRefusal(r, loaded);
+  if (closed) return closed;
   const p = await previewSend(r, loaded, kind, { replyBy: url.searchParams.get('replyBy') });
   // The step's own rows and the money's working stay on the server; the screen gets what it says. A bill's figures read
   // only to a money reader (as the schedule's page strips them): for anyone else a team's bill, its correction and an
@@ -60,6 +62,8 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   if (!KINDS.includes(kind)) return schedulerRefusal(400, 'bad_kind', 'Send for review, final, or the changes.');
   const loaded = await loadSchedule(r.ctx.org.id, scheduleId);
   if (!loaded) return schedulerRefusal(404, 'not_found', R.notFound);
+  const closed = repTeamsRefusal(r, loaded);
+  if (closed) return closed;
   const out = await sendSchedule(r, loaded, kind, body);
   if (!out.ok) return out.response;
   return NextResponse.json(out);
