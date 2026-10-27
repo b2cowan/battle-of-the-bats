@@ -1,0 +1,309 @@
+<title>12d-2 · Payouts and terms</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 12c walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 12d-2 · §404</span>
+    <h1>12d-2, payouts and the terms</h1>
+    <p class="sub">Written 2026-10-27 for the 12d-2 build (<code>ffee7864c</code> to <code>2a171752a</code>). One purpose: a club can match a bank line to the people behind it without Stripe or the owner, and the owner can see, and agree again to, the payments terms.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>The treasurer sees “STRIPE 1,284.50” on the bank statement and needs to know whose money it was. You check the new <strong>Payouts</strong> tab at the end of Accounting: what it lists, how <strong>Find</strong> matches an amount, a name and a receipt, what an opened payout holds, and the Export (part A). Then the same list folded on the owner’s card for a club with no Accounting (part B).</p>
+    <p>Then the terms: who agreed to the payments terms and when, read on the owner’s card (part C). The real test follows: you change the terms’ version on dev, so the owner is asked to agree again, with payments still on (part D). Last, the set-up window gives Continue to Stripe only once the box is ticked (part E).</p>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>Payouts is the last tab in Accounting, for everyone who reads Accounting; a club that never connected has no tab and its address is “Page not found”.</li>
+      <li>Find takes an amount as the bank prints it, part of a name, or a whole receipt number, and nothing else; every list ends honestly (“No payouts in these dates.”, “No payouts match.”, “Stripe didn’t answer. Try again.”).</li>
+      <li>An opened payout lists Date · Who · What · Receipt · Amount, closes on “Paid to the bank account ending … on …”, and no line reads as a bare Stripe word.</li>
+      <li>The treasurer has no button on the tab that moves money; a payout that didn’t arrive is a plain line for them and an amber button for the owner.</li>
+      <li>The owner reads who agreed to the terms, when, and to which version. When the version changes the owner gets a notice and a row that says there are newer terms; online payments stay on.</li>
+      <li>Agree is absent until the box is ticked, in both windows (agree again, and set up payouts). Changing who pays the fee waits for the new terms.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li>Leaving online payments (disconnect, downgrade, cancel, delete, the ending warning) and the support console: walk §405.</li>
+      <li>Both emails about the terms (the day they change, the reminder 14 days later) are sent by the daily job, and localhost cannot send. They go in the Amplify dev end-to-end pass (part F, held). The owner’s Needs attention item for new terms comes from the same daily job, so its two steps in part D are held too.</li>
+      <li>A payout that didn’t arrive and a manual payout can’t be made on demand in test mode; their steps are held unless one already exists in Stripe’s test account.</li>
+      <li>Paid twice, disputes and Stripe fees: walks §395 and §396.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private.</p>
+    <dl class="facts">
+      <dt>Dev server</dt><dd>Running at <code>http://localhost:3000</code>. Restart it once before part D’s first step (the builder step changes a shared module).</dd>
+      <dt>Payouts in test mode</dt><dd>UAT Rep Club’s test Stripe account pays out daily, automatically, with a 7-day delay. The payouts tab reads Stripe live, so a payout exists only once Stripe has made one. If part A step A3 shows “No payouts yet…”, mark A3 and the steps that need a payout as <strong>Held</strong> and come back after Stripe’s next daily payout.<br>To put money in the account that is available at once, a family can pay with the test card <code>4000 0000 0000 0077</code> (any future date, any CVC); that payment goes in the next payout. Other test card: <code>4242 4242 4242 4242</code>.</dd>
+      <dt>Stripe window (only for that payment)</dt><dd><pre>C:\tools\stripe\stripe.exe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,charge.dispute.updated,charge.dispute.closed,charge.dispute.funds_withdrawn,charge.dispute.funds_reinstated,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook</pre></dd>
+      <dt>Part D changes a constant</dt><dd>One line in <code>lib/online-payment-words.ts</code>: <code>PAYMENTS_TERMS_VERSION</code>. D1 sets it to a date; D10 puts it back and resets UAT Rep Club’s row. Nothing else in the product reads a version from anywhere.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <p>One browser window per person. Passwords are in <code>.env.local</code> (the <code>UAT_REP_CLUB_*_PASSWORD</code> and <code>UAT_ORG_OWNER_PASSWORD</code> entries); this page never prints them. Dev only.</p>
+    <dl class="facts">
+      <dt>Club</dt><dd><code>uat-rep-club</code> (UAT Rep Club): a Club plan with Accounting and a connected test payouts account. <code>node scripts/seed-club-fixture.mjs</code> rebuilds it and resets these passwords.</dd>
+      <dt>Owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · the one who set up payouts</dd>
+      <dt>Treasurer</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code></dd>
+      <dt>Owner of UAT Club Org</dt><dd><code>uat-owner@uat-test-org.local</code> · a Club plan that never connected payouts (parts A16 and E). It also owns <code>uat-plus-org</code>.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Where and on what</h2>
+    <dl class="facts">
+      <dt>Payouts tab</dt><dd><code>/uat-rep-club/admin/accounting/payouts</code></dd>
+      <dt>Owner’s card</dt><dd>Settings › Payouts: <code>/uat-rep-club/admin/org/settings#payouts</code></dd>
+      <dt>Clubs for part B</dt><dd>A club with payouts and no Accounting does not exist on dev today (UAT Rep Club is the only club with a payouts account), so part B’s steps B2 to B4 are held.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 's12d2-walk-payouts-terms-v1';
+  var TITLE = '12d-2 payouts and terms walk §404 (2026-10-27)';
+  var O = 'Owner, computer · uat-club-owner@uat-rep-club.local';
+  var TR = 'Treasurer, computer · uat-club-treasurer@uat-rep-club.local';
+  var OC = 'Owner of UAT Club Org, computer · uat-owner@uat-test-org.local';
+  var B = 'Builder (you, with the code open)';
+  var HELD = ['Did it', 'Held'];
+  var PARTS = [
+    { id: 'A', title: 'Accounting › Payouts, as the treasurer', steps: [
+      { who: TR, do: 'Open Accounting and read the tab row. Press <strong>Payouts</strong>.', see: 'Payouts is the LAST tab in the row, after the others. The address is <code>/uat-rep-club/admin/accounting/payouts</code> and it opens without a further sign-in.' },
+      { who: TR, do: 'Read the top of the page.', see: 'A toolbar: the date field, a search box “Find an amount, a name or a receipt”, and <strong>Export</strong> pinned to the right. The date field reads from the first of last month to today (on Oct 27 it reads “Sep 1 – Oct 27”). Under it a line “Paid out to the bank account ending (four digits)” with an info chip “Test mode”.' },
+      { who: TR, opts: HELD, do: 'Read the list.', see: 'If it reads “No payouts yet. Stripe sends the first one on its schedule after the first payment.”, tick <strong>Held</strong> here and on A5 to A13, and come back after Stripe’s daily payout. Otherwise: newest first, columns Sent · Arrives · Status · Amount. Status is an info chip “On its way”, or “Paid” with a quiet count beside it (“3 payments”, “2 payments, 1 refund”). Amounts are in dollars with cents.', call: 'Builder’s call: a payout still on its way is kept whatever its arrival date, and the default dates are the first of last month to today, not the season.' },
+      { who: TR, do: 'Open the date field and pick a short range far in the past (for example Jan 1 to Jan 2).', see: 'The list is replaced by “No payouts in these dates.” (never the first sentence, which is only for the default dates). Put the dates back.' },
+      { who: TR, opts: HELD, do: 'In Find type the amount of one payout exactly as a bank prints it, for example <code>1284.50</code> (try it with a dollar sign and a comma too, then with just the digits).', see: 'Only the payout of that amount stays (and any payout that holds a payment of that amount). Clear Find: every payout is back. Type something that matches nothing, like <code>zzz</code>: “No payouts match.”' },
+      { who: TR, opts: HELD, do: 'In Find type part of a family’s or team’s name that you know is inside a payout (for example <code>Disputewalk</code>).', see: 'The payouts that hold that name stay; the others go. Capitals don’t matter.' },
+      { who: TR, opts: HELD, do: 'In Find type the whole receipt number of a payment inside a payout. Then type only its first digits.', see: 'The whole number finds the payout that holds it. A fragment finds nothing (“No payouts match.”), so 1084 never finds 10840.' },
+      { who: TR, opts: HELD, do: 'Clear Find. Open one payout (press the row or its arrow).', see: 'It opens under its row with columns Date · Who · What · Receipt · Amount. It closes on one line “Paid to the bank account ending (four digits) on (the day it arrives)” with the payout’s amount, and under it the note “Amounts are what reached the club: after the processing fee when the club pays it.” Press the arrow again: it closes.' },
+      { who: TR, opts: HELD, do: 'Read the What column of each payout you can open.', see: 'Every line reads as one of these: “House league · card” or “House league · bank debit”; a team’s payment as “(tournament name) deposit · card” (or balance, or entry fee); “Refund to the card” as a negative amount with a real minus sign (“−$150.00”); “Dispute” and “Dispute won”; “Processing fee returned”; “Returned by the bank”; “Stripe fee”; “Not from FieldLogicHQ” for money Stripe holds that we didn’t record. Who names the child or the team. No line reads as a bare Stripe word such as “charge”, “adjustment” or “payment”.', call: 'Builder’s calls: those line names are derived words (owed to /marketing). A line past 2,000 in one payout is cut without a flag.' },
+      { who: TR, opts: HELD, do: 'Make the browser window phone-narrow (or use a phone) and open the same payout.', see: 'Each payout is a row “$amount · arrives (day)” (or “paid”) with its status beside it. Opened, each line reads “(day) who · receipt · amount”, then the total line and the note.' },
+      { who: TR, opts: HELD, do: 'Press <strong>Export</strong> and choose Excel. Then Export again and choose CSV.', see: 'Two files download. The names say <code>payouts-test</code> (test mode) and the two dates. The columns are Payout sent · Payout arrives · Payout status · Payout amount · Date · Who · What · Receipt · Amount, one row per line with its payout’s date and amount beside it. A payout with no lines (a manual one) has one row carrying its reason.' },
+      { who: TR, opts: HELD, do: 'If a manual payout exists in the test account (one pressed in Stripe’s dashboard), open it.', see: 'In place of rows: “Stripe lists what’s inside automatic payouts only.” A payout Stripe is still matching says “Stripe is still listing what’s inside this payout. Look again in a few minutes.” Held when the account has no manual payout.' },
+      { who: TR, opts: HELD, do: 'If a payout that didn’t arrive exists, read its status. Then sign in as the owner, open the same tab and read it again.', see: 'Treasurer: a plain info-colour line “Didn’t arrive: the bank account is closed · (the owner’s name) fixes it in Stripe” (the reason is left out when it is not one of the two Stripe codes we map), with the tip “It clears itself when Stripe’s next payout to a working account goes through and carries this money.” on hover. Owner: an amber pill “Didn’t arrive…” that is a button; pressing it reads “Opening Stripe…” and opens Stripe’s dashboard. Opened, a failed payout says “This money stayed in the club’s Stripe balance. The next payout to a working account carries it.” Held when none exists (it can’t be made on localhost).' },
+      { who: TR, do: 'Turn the browser offline (DevTools › Network › Offline), change the date field, then read the page. Turn the network back on and press <strong>Try again</strong>. Also reload the page and watch the first second.', see: 'On reload a loading line “Loading payouts…” shows briefly. Offline: “Stripe didn’t answer. Try again.” stays (it does not clear itself) with a <strong>Try again</strong> button, and no old list is shown as current. After Try again the list is back.' },
+      { who: TR, do: 'Look for anything on this tab (and on the Accounting overview’s status line) that would change payouts, then open Settings from the menu if it appears.', see: 'The tab holds only the date field, Find, Export and the list. No Open Stripe, no Disconnect, no Set up. The Accounting overview reads a quiet line “Taking payments · Online payments go to the club’s bank account.” with no button. Nothing in Settings › Payouts is the treasurer’s to change.' },
+      { who: OC, do: 'Sign in as the owner of UAT Club Org (no payouts account). Open Accounting and read the tab row. Then type <code>/uat-club-org/admin/accounting/payouts</code> in the address bar.', see: 'The tab row has NO Payouts tab. The address answers “Page not found”. (A club that never connected has nothing to list.)' }
+    ]},
+    { id: 'B', title: 'The owner’s card, for a club without Accounting', steps: [
+      { who: O, do: 'Open Settings › Payouts on UAT Rep Club (it has Accounting) and read the whole card.', see: 'The card shows its state, rates, the record and the buttons as before, with NO fold called “Payouts to your bank”: this club reads its payouts on the Accounting tab. “Disconnect payouts” still ends the card.' },
+      { who: O, opts: HELD, do: 'Only on a club with payouts and no Accounting: open Settings › Payouts and read the card without opening anything.', see: 'Held: no such club exists on dev. When one does: a CLOSED fold titled “Payouts to your bank” with its summary beside it: “$… on its way · last paid $… on (day)”, or only one half (“$… on its way”, “Last paid $… on (day)”), or, with no payouts at all, “No payouts yet. Stripe sends the first one on its schedule after the first payment.”' },
+      { who: O, opts: HELD, do: 'Open the fold. Leave Settings and come back.', see: 'Held: as B2. Opened, the same list as the tab (date field, Find, Export, the Paid out to line). Back on the card it is closed again, every time.' },
+      { who: O, opts: HELD, do: 'Scroll to the end of the card.', see: 'Held: as B2. “Disconnect payouts” still ends the card, below the fold.' }
+    ]},
+    { id: 'C', title: 'The terms read-out on the owner’s card', steps: [
+      { who: O, do: 'Open Settings › Payouts and read the record (the rows under the rates), without pressing the pencil.', see: 'Three rows: Processing fee, Refund policy and <strong>Payments terms</strong>. The terms row reads “Agreed by (the owner’s name) on (a date, in full: October 27, 2026), to the draft. You’ll be asked again when the final terms are ready.” There is no link beside it while the terms are the draft.', call: 'If the Payments terms row is missing, the account has no recorded agreement: that is a finding, not a pass.' },
+      { who: O, do: 'Press the pencil on the card, read the record, then press the ✓.', see: 'The record flips whole into its two editable parts (who pays the fee, the refund policy). Payments terms is a read-out, not a field: it is not in the edit form. Back on ✓ it is there again.' }
+    ]},
+    { id: 'D', title: 'The terms change: agree again', steps: [
+      { who: B, do: 'In <code>lib/online-payment-words.ts</code> change <code>PAYMENTS_TERMS_VERSION</code> from <code>placeholder-counsel-pending</code> to a date, for example <code>2026-10-27</code>. Restart the dev server and wait for “Ready”.', see: 'A published version IS its date. Nothing else is changed. The page now behaves as if counsel published new terms today.', call: 'Never published by the builder: this is a dev-only edit; D10 reverses it.' },
+      { who: O, do: 'Reload Settings › Payouts and read the card.', see: 'The pill still reads “Taking payments” (payments stay on). An amber notice near the top: “The payments terms changed on October 27, 2026. Online payments stay on. Agree to the new terms before you set up payouts again or change who pays the fee.” with a <strong>Read and agree</strong> button. The Payments terms row now reads “Agreed by (name) on (date), to the draft. There are newer terms to read. · Read and agree”.' },
+      { who: O, do: 'Press <strong>Read and agree</strong> in the notice.', see: 'A window titled “The new payments terms”. Under “The terms” the placeholder text “[PAYMENTS TERMS — counsel to write]” (counsel’s text isn’t written; the window never invents one). NO “What changed” section (counsel’s summary is empty, so the section is left out, not shown blank). A box “I agree to the FieldLogicHQ payments terms for UAT Rep Club.” The footer has <strong>Not now</strong> and NO Agree button.' },
+      { who: O, do: 'Tick the box, then untick it, then tick it again. Then press <strong>Not now</strong>.', see: 'Agree appears when the box is ticked and goes away when it is unticked: absent, never greyed. Not now closes the window and changes nothing: the notice and the row are still there.' },
+      { who: O, do: 'Press the pencil on the card and read the record.', see: 'In place of the two choices under “Who pays the processing fee” the line “Agree to the new payments terms to change who pays the processing fee.” with a <strong>Read and agree</strong> link. The refund policy box still edits. Press the link: the same window opens. Press Not now, then ✓.' },
+      { who: O, opts: HELD, do: 'Open Needs attention.', see: 'Held — the daily job. That job (not a page load) creates the owner’s item, and it creates it with the email. When the daily job has run since D1: an item “New payments terms to agree to”: “FieldLogicHQ’s payments terms changed on October 27, 2026. Online payments stay on while you read them.” with a Read and agree button that opens the card.' },
+      { who: O, do: 'Open Read and agree again, tick the box and press <strong>Agree</strong>.', see: 'The button reads “Agreeing…”, then “Agreed. Thank you.” shows and the window closes. The amber notice is gone. The Payments terms row now reads “Agreed by (name) on (today), version of October 27, 2026 · Read the terms”. The pill is unchanged.' },
+      { who: O, do: 'Press <strong>Read the terms</strong> in that row.', see: 'A window titled “The terms” with the placeholder text only: no box and no Agree. Close it.' },
+      { who: O, opts: HELD, do: 'Open Needs attention again.', see: 'Held when D6 was held. Otherwise the terms item has cleared itself: it shows settled, saying the owner agreed, and is no longer open. Nothing was pressed on it.' },
+      { who: B, do: 'Put the version back and reset UAT Rep Club’s row so the walk can be run again. In <code>lib/online-payment-words.ts</code> set <code>PAYMENTS_TERMS_VERSION</code> back to <code>placeholder-counsel-pending</code>, then:<pre>node scripts/db-query.mjs --dev -q "update org_payment_accounts set terms_version=&#39;placeholder-counsel-pending&#39;, terms_notice_version=null, terms_notice_at=null, terms_reminded_at=null where org_id=(select id from organizations where slug=&#39;uat-rep-club&#39;)"</pre>Restart the dev server.', see: 'The command prints no error. Settings › Payouts again reads “…to the draft. You’ll be asked again when the final terms are ready.” with no notice.', call: 'Without the reset, the club would stay “agreed to a dated version” while the constant is the draft, and read as behind.' }
+    ]},
+    { id: 'E', title: 'Set-up window: Continue to Stripe only once the box is ticked', steps: [
+      { who: OC, do: 'Open Settings › Payouts on UAT Club Org (<code>/uat-club-org/admin/org/settings#payouts</code>) and read the card.', see: 'The pill reads “Not set up”. The title is “Let families and teams pay online”. The button is <strong>Set up payouts</strong>. Nothing about terms is shown yet.' },
+      { who: OC, do: 'Press <strong>Set up payouts</strong> and read the window “Before you set up payouts”.', see: 'What it costs: the card and bank rates, then “Stripe may charge other fees on your payments, such as for a card dispute, a returned bank debit or a card issued outside your country. FieldLogicHQ passes them on to you on an invoice.” Who pays it: two choices. Where the money goes, Refunds, and a box “I agree to the FieldLogicHQ payments terms for UAT Club Org.” with a Read the terms link.' },
+      { who: OC, do: 'Look at the footer. Tick the box, then untick it. Then press <strong>Cancel</strong>. Do NOT press Continue to Stripe.', see: 'Before the box is ticked the footer holds only <strong>Cancel</strong> (no Continue to Stripe, not even a greyed one). Ticked: <strong>Continue to Stripe</strong> appears. Unticked: it goes again. Cancel closes the window and nothing was started.' }
+    ]},
+    { id: 'F', title: 'Emails about the terms', steps: [
+      { who: O, opts: HELD, do: 'The email the day the terms change (check the owner’s inbox after D1 and the daily job).', see: 'Held — the Amplify dev end-to-end pass. When sent: subject “New payments terms for UAT Rep Club”, “FieldLogicHQ’s payments terms changed on October 27, 2026. Online payments for UAT Rep Club stay on while you read them.”, “Please read and agree. You’ll need the new terms to set up payouts again, to reconnect, or to change who pays the processing fee.”, and a button “Read and agree” that opens the Payouts card. Sent once; nothing is sent while the terms are the draft.' },
+      { who: O, opts: HELD, do: 'The reminder 14 days later, if the owner still hasn’t agreed.', see: 'Held — the Amplify dev end-to-end pass. When sent: subject “Reminder: new payments terms for UAT Rep Club”, lead “You haven’t agreed to the new payments terms yet. Online payments for UAT Rep Club are still on.”, then the same body and button. One reminder only, and none once the owner has agreed.' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held"). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

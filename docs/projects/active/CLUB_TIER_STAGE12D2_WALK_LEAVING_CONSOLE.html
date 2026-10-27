@@ -1,0 +1,310 @@
+<title>12d-2 · Leaving and console</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 12c walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 12d-2 · §405</span>
+    <h1>12d-2, leaving online payments and the console</h1>
+    <p class="sub">Written 2026-10-27 for the 12d-2 build (<code>ffee7864c</code> to <code>2a171752a</code>). One purpose: when a club stops taking online payments, in any of the ways it can, it is told exactly what is outstanding first and nothing about its Stripe account is touched; and the support team can read a club’s online payments, and every club’s trouble, in one place that changes nothing.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>One rule: no ending disconnects the club’s Stripe account. You check what each window <em>says</em> is outstanding: families and teams still owing, pay pages open right now, bank debits clearing, open card disputes. Disconnect (part A), cancel and the downgrade of a Tournament Plus club (part B), and a request to delete (part C) are all read and then cancelled; none of them is carried out. After a plan loses online payments the owner’s card turns into the wind-down card (part D), and an ending the owner didn’t choose is warned about in advance (part E).</p>
+    <p>Then the console (part F): a club’s <strong>Online payments</strong> tab, <strong>Health › Online payments</strong> across every club, who can open them, the operator’s own Delete, cancel and plan-change windows, and the Story lines. Emails are held (part G).</p>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>The Disconnect window counts families and teams that owe, the pay pages open now (a number that rises when a family opens a page and falls when the family pays), and the open disputes with their due date. A count that can’t be read is left out and never reads as nobody.</li>
+      <li>Cancel, downgrade and deletion windows carry the same facts in their own section and say the Stripe account stays the club’s.</li>
+      <li>Nothing in this walk disconnects UAT Rep Club or deletes anything. The wind-down card appears only for a club whose plan lost online payments, and it undoes by moving the plan back.</li>
+      <li>The console tab is read only: no Retry on its fee panel, a child’s name only after pressing “Show the player”, and every opening is logged. Never a card or bank number.</li>
+      <li>Super admin, Billing and Support open Online payments (club tab, Health list, Today’s count); Product, Growth and Read only have no entry, and the page sends them away.</li>
+      <li>The operator’s Delete window names the money in flight and cannot be confirmed.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li>The Payouts tab and the payments terms: walk §404. Steps F14 to F16 read what its part D leaves in the club’s Story.</li>
+      <li>Every email: the ending warning, and the warning for a failed subscription payment (part G, held). The daily job sends them and localhost cannot.</li>
+      <li>Actually disconnecting, cancelling, deleting or downgrading UAT Rep Club: it is the shared test club for every walk. Only part D moves its plan, and says so; if you’d rather not, mark D Held.</li>
+      <li>A failed subscription payment that warns the owner the day it fails: can’t be produced on localhost. The Amplify dev end-to-end pass.</li>
+      <li>Held for the owner, not built: the drawn line “Your How to pay text is empty · Write it now” in the Disconnect window (How to pay belongs to a season or a tournament, and the card has no such field).</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private.</p>
+    <dl class="facts">
+      <dt>Dev server</dt><dd>Running at <code>http://localhost:3000</code>.</dd>
+      <dt>Stripe window</dt><dd>One (the payments window, for step A5’s family payment):<pre>C:\tools\stripe\stripe.exe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,charge.dispute.updated,charge.dispute.closed,charge.dispute.funds_withdrawn,charge.dispute.funds_reinstated,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook</pre></dd>
+      <dt>Test cards</dt><dd>Any future date, any CVC. <code>4242 4242 4242 4242</code> pays; <code>4000 0000 0000 0077</code> pays and makes the money available at once.</dd>
+      <dt>The world</dt><dd>UAT Rep Club has a connected TEST Stripe account, one open card dispute, and payments in both flows (house league and the tournament). It is the only club on dev with a payouts account, so a Tournament Plus club with payouts does not exist (step B3 is held for that reason).</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <p>One browser window per person. Families use a private window with no login. Passwords are in <code>.env.local</code> (<code>UAT_REP_CLUB_*_PASSWORD</code>); this page never prints them. Dev only.</p>
+    <dl class="facts">
+      <dt>Club</dt><dd><code>uat-rep-club</code> (UAT Rep Club), a Club plan. <code>node scripts/seed-club-fixture.mjs</code> rebuilds it.</dd>
+      <dt>Owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code></dd>
+      <dt>Platform admin</dt><dd>Your own Super admin sign-in. For the other roles in F9 and F10: Staff › add a person with that role, or use one that exists.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Where and on what</h2>
+    <dl class="facts">
+      <dt>Owner’s card</dt><dd>Settings › Payouts: <code>/uat-rep-club/admin/org/settings#payouts</code></dd>
+      <dt>Plan &amp; billing</dt><dd><code>/uat-rep-club/admin/org/billing</code></dd>
+      <dt>Sign-up</dt><dd><code>/uat-rep-club/league/2026-fall-house-league/register</code> (U9 Rookie, born 2014 or 2015). The walk signs up <em>Opal Pagewalk</em>, and in part D <em>Quinn Pagewalk</em>.</dd>
+      <dt>Console</dt><dd>Clubs &amp; portals › UAT Rep Club, and Health › Online payments: <code>/platform-admin/online-payments</code></dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 's12d2-walk-leaving-console-v1';
+  var TITLE = '12d-2 leaving and console walk §405 (2026-10-27)';
+  var O = 'Owner, computer · uat-club-owner@uat-rep-club.local';
+  var PA = 'Platform admin, Super admin, computer';
+  var F = 'A family, private window, no login';
+  var HELD = ['Did it', 'Held'];
+  var PARTS = [
+    { id: 'A', title: 'Disconnect payouts: what the window counts', steps: [
+      { who: O, do: 'Open Settings › Payouts. At the very end of the card press <strong>Disconnect payouts</strong>. Read the whole window, write the numbers in the notes, then press <strong>Cancel</strong>.', see: 'A window “Disconnect payouts?”. In order: “Families and teams stop seeing Pay now right away, and pay links already emailed show your “How to pay” text instead.”; then who owes: “N families still owe a house-league fee, and M teams still owe a tournament fee. They can pay you another way.” (a clause drops at zero; with none: “Nobody owes anything right now.”); then, only if a page is open, “N pay pages are open right now. They close when you disconnect.”; then, only if a card dispute is open, “1 card dispute is open. Answer it in Stripe by (a short date); Stripe holds its money until the bank decides.”; last “Payments already made stay in your books. Refunds of them are made in Stripe, and your Stripe account stays yours.” The buttons are Cancel and a red Disconnect. Cancel closes it and the card still reads “Taking payments”.', call: 'Builder’s call: a count that failed is left out of the window, never shown as nobody.' },
+      { who: F, do: 'Sign up ONE child, <em>Opal Pagewalk</em>, in U9 Rookie with your email. Choose to pay by card. When Stripe’s secure page opens, STOP. Leave that tab open and do not pay.', see: 'Stripe’s payment page is showing, unpaid. (That is one open pay page, and one more family owing.)' },
+      { who: O, do: 'Open Disconnect payouts again and read the counts. Cancel.', see: 'One more family owes than in A1, and the pay-pages line reads one higher: “1 pay page is open right now. It closes when you disconnect.” if there were none before, otherwise N+1 “…pay pages are open right now. They close when you disconnect.” Everything else is as in A1.' },
+      { who: O, do: 'Read the dispute line against Needs attention (it should name the same dispute) and the Money page. Then press Cancel on the window.', see: 'The window’s due date is the soonest of the open disputes’ answer-by dates, in a short form (“Nov 5”), matching the dispute in Needs attention. Plural, if more than one dispute is open: “N card disputes are open. Answer them in Stripe by their due dates; Stripe holds their money until the banks decide.”' },
+      { who: F, do: 'In Opal’s open Stripe tab pay with <code>4242 4242 4242 4242</code>. Then, as the owner, open Disconnect payouts again and Cancel.', see: '“Paid, thank you”. Now one FEWER family owes and one FEWER pay page is open than in A3 (the page is finished, not open). The Stripe window prints <code>checkout.session.completed</code> and <code>[200]</code>.' },
+      { who: O, opts: HELD, do: 'Only if a bank debit is clearing for the club: read the Disconnect window.', see: 'Held when none is clearing. Otherwise a line between the owing and the dispute lines: “1 bank debit is still clearing. It’ll finish, and its money still reaches you.” (or “N bank debits are still clearing. They’ll finish, and their money still reaches you.”).' }
+    ]},
+    { id: 'B', title: 'Cancel and the downgrade: Online payments stop', steps: [
+      { who: O, opts: HELD, do: 'Open Plan &amp; billing and find “Reduce or cancel”. Press <strong>Cancel and suspend UAT Rep Club…</strong>. Scroll the window.', see: 'Held when the club has no “Reduce or cancel” section (a club on free time or a comped plan doesn’t get one). Otherwise the window “Cancel and suspend UAT Rep Club?” holds its red notice and “Everything is kept for N days…”, then a section headed <strong>Online payments stop now</strong>: “Nobody can pay you online; pay pages still open close. N families and M teams still owe today.”; “N pay pages are open right now.” (only when one is); “N bank debits are still clearing. They finish and reach your bank.” (only when one is); and “Your Stripe account stays yours: money in it keeps paying out to your bank. Refunds and the 1 open dispute are handled in Stripe while you’re suspended.”' },
+      { who: O, opts: HELD, do: 'Press the button that begins “Keep” (it names the plan). Do NOT press Cancel and suspend.', see: 'Held when B1 was. Otherwise the window closes and the club is unchanged: the plan still reads “Your plan”, and Settings › Payouts still reads “Taking payments”.' },
+      { who: O, opts: HELD, do: 'On a Tournament Plus club that has connected payouts, open Plan &amp; billing, choose a lower plan, and read the review card before confirming. Do NOT confirm.', see: 'Held: no Tournament Plus club on dev has a payouts account (UAT Rep Club is the only one). When one does: below the tournament list a section headed <strong>Online payments stop on (a date in full: October 27, 2026)</strong>: “Families and teams see your “How to pay” text instead of Pay now, and any pay pages still open then close. N families and M teams still owe today.”; “Bank debits still clearing finish and reach you. Refunds and disputes of payments already made keep working here, as now.”; “Your payouts stay connected, so moving back up turns online payments on again.” It does not say how many pages are open (they can’t be counted ahead).' }
+    ]},
+    { id: 'C', title: 'Ask us to delete', steps: [
+      { who: O, do: 'Open Settings, find the “Delete organization” card and press <strong>Request account deletion…</strong>. Read the window.', see: 'A window “Ask us to delete UAT Rep Club?” with the sentence “We’ll contact you to confirm before anything is deleted…”. Then a section headed <strong>Your online payments</strong>: “1 card dispute is open. We wait for them before deleting.” (and, if any: “… and N bank debits are still clearing…”); “N families and M teams still owe today. Their pay pages close when we disconnect.”; “We disconnect your payouts before deleting. Your Stripe account stays yours, with any money in it.”; “Your payment records here are deleted with everything else. Export them first from Accounting.” Then the reason box.', call: 'Builder’s call: this window names disputes and debits only (as the words do), though the operator’s own Delete in part F also waits for unpaid Stripe fees.' },
+      { who: O, do: 'Press <strong>Cancel</strong>. Do NOT send the request.', see: 'The window closes; the card still shows the “Request account deletion…” button, not “Request sent — we’ll be in touch.”' }
+    ]},
+    { id: 'D', title: 'A plan without online payments: the wind-down card', steps: [
+      { who: F, opts: HELD, do: 'First, in a private window, sign up another child, <em>Quinn Pagewalk</em>, choose card and STOP on Stripe’s page (unpaid, left open).', see: 'Held — this part moves the shared test club’s plan, so mark D1 to D4 Held if you don’t want to. A Stripe payment page is showing, open.', call: 'Only UAT Rep Club has a payouts account on dev, so there is no disposable club for this part. Its only cost is moving UAT Rep Club down and, in D4, back up.' },
+      { who: PA, opts: HELD, do: 'Club record › Access: press the pencil, change the plan to one without online payments (a Tournament plan), and confirm the change.', see: 'Held when D1 was. The confirmation sentence (the same as F13) says online payments stop on the move. Saved: the record reads the new plan.' },
+      { who: O, opts: HELD, do: 'Open the Payouts card (for a Tournament plan it is under Settings &amp; access › Payouts). Reload Quinn’s Stripe tab. Open the family sign-up page for a new child.', see: 'Held when D1 was. The card’s pill reads <strong>Online payments off</strong> (grey, not green) and its title “Your plan doesn’t include online payments”, with “Families and teams see your “How to pay” text instead of Pay now. Refunds and disputes of payments already made keep working here, as now. Your payouts stay connected, so moving back up turns online payments on again.” The rates line is gone. Quinn’s Stripe page says it expired / can’t be completed. The sign-up shows the club’s “How to pay” text, not a Pay now button.' },
+      { who: PA, opts: HELD, do: 'Move the plan back to the Club plan.', see: 'Held when D1 was. Settings › Payouts reads “Taking payments” again and a new sign-up offers Pay now. Nothing was disconnected at any point.' }
+    ]},
+    { id: 'E', title: 'An ending the owner didn’t choose: the warning', steps: [
+      { who: PA, opts: HELD, do: 'Give UAT Rep Club free time that ends within seven days onto a plan without online payments (Free time, or the club record’s Free time).', see: 'Held — only UAT Rep Club could show this, and there is no disposable club with payouts. When done: the club’s billing shows its free time ending.', call: 'If you do this, take the free time off when you finish, as for D.' },
+      { who: O, opts: HELD, do: 'Open Settings › Payouts and read the top of the card.', see: 'Held when E1 was. An amber notice: <strong>Online payments stop on (the date)</strong>, then “Your organization moves to the free (plan) plan on (the date). Families and teams will see your “How to pay” text instead of Pay now. N families and M teams still owe today. Your payouts stay connected.” The card itself is unchanged below it; payments still work.' },
+      { who: O, opts: HELD, do: 'Open Needs attention.', see: 'Held — the daily job: it creates the owner’s item (and sends the email) when the end is seven days away. When it has run: an item with the same title and sentence. A failed subscription payment is warned the day it fails, with no date: “Online payments stop if the subscription payment doesn’t go through”; it can’t be produced on localhost (the Amplify dev end-to-end pass).' }
+    ]},
+    { id: 'F', title: 'The console: Online payments', steps: [
+      { who: PA, do: 'Open Clubs &amp; portals › UAT Rep Club and read the tab row. Then open UAT Club Org’s record and read its tab row; add <code>?tab=payments</code> to its address.', see: 'UAT Rep Club has a tab <strong>Online payments</strong>, after the others, with a count when something is open. UAT Club Org (never connected) has no such tab, and <code>?tab=payments</code> opens the Story instead.' },
+      { who: PA, do: 'Open UAT Rep Club’s Online payments tab and read the top.', see: 'First a callout “Test mode. Nothing here is real money.” Then five tiles: <strong>Account</strong> (“Taking payments”, “Connected (day) by (name)”); <strong>Terms</strong> (“Draft”, “Agreed (day) · ask again at final”); <strong>Last 30 days</strong> (a dollar total, “N payments · M refunds”); <strong>Clearing</strong> (a number, “N bank debits”); <strong>Open disputes</strong> (a number, and “$… in Stripe’s fees so far” only when there are fees). No card or bank number anywhere on the tab.' },
+      { who: PA, do: 'Press the Open disputes tile. Read the panel.', see: 'The page scrolls to a card headed “Open disputes”: columns Payment · Why · Answer by · Held. The row reads “Receipt N · (house league, or the tournament’s name)”; Why is the cardholder’s reason in plain words; Answer by a short date; Held a dollar amount. No child’s name yet; a button “Show the player” under the receipt.' },
+      { who: PA, do: 'Press <strong>Show the player</strong>.', see: 'The name appears (the child or team that payment was for, or several names), with the small line “Opening a name is logged.” under it. Reloading hides it again.', call: 'Builder’s call: the opening is logged on the server; the walk does not read the log.' },
+      { who: PA, do: 'Scroll the tab below the disputes.', see: 'A card “Fees billed to the club” listing the Stripe fees (the 12d-1 panel), with NO Retry button (Retry stays on the Money tab). A card “Stripe messages we couldn’t process” appears ONLY when one is failing (never an empty table); and “Stopped retrying” only when some have failed for 30 days. A club with nothing open reads “Nothing is open.”' },
+      { who: PA, do: 'Open Health › Online payments in the menu (<code>/platform-admin/online-payments</code>).', see: 'A page “Online payments” with one card “Needs a look”: columns Club · What · Since. UAT Rep Club’s row reads “1 open dispute, due (short date)” (“N open disputes, first due …” if more), most urgent first. Other clubs only if they have something. With nothing: “Nothing needs a look.” A list that can’t be read says “The list could not be read. Try again.” and never “Nothing needs a look.”' },
+      { who: PA, do: 'Press UAT Rep Club’s name in that row.', see: 'It opens that club’s record on the Online payments tab (<code>?tab=payments</code>).' },
+      { who: PA, do: 'Open Today and the menu’s Health group.', see: 'Today’s Health group has a row “Online payments” whose count equals the number of rows on the Health list. The menu’s Online payments entry carries the same amber count. (Close and add nothing: nothing here can be cleared from Today.)' },
+      { who: PA, opts: HELD, do: 'Sign in as a Billing staff person, then a Support staff person. Look for the menu entry, open the page, and open a club record.', see: 'Held when no such staff accounts exist (create them under Staff). Both see Health › Online payments, the page opens, and the club has its Online payments tab. Neither can change anything on it.' },
+      { who: PA, opts: HELD, do: 'Sign in as Product, then Growth, then Read only. Look at the menu, then type <code>/platform-admin/online-payments</code> in the address bar, then open a club record.', see: 'Held when no such staff accounts exist. None has an Online payments entry in the menu. The address sends each of them back to Today. A club record has no Online payments tab (<code>?tab=payments</code> opens the Story).' },
+      { who: PA, do: 'On UAT Rep Club’s record, at the end of Access press <strong>Delete the club</strong>. Read the window. Do NOT confirm. Press <strong>Keep it</strong>.', see: 'A window “Delete UAT Rep Club”. Where it usually names the members and tournaments, it reads “This club’s online payments still have money in flight: 1 card dispute is open (and any bank debits clearing, Stripe fees not yet billed or that couldn’t be billed, or unpaid fee invoices, each named). Wait for them to finish, then delete. Its Online payments tab shows each.” The “Type uat-rep-club to confirm” box and both tick-boxes are greyed out and the red button cannot be pressed. Keep it closes the window.', call: 'Owner ruling 2: the operator’s Delete waits for money in flight; the owner’s “Ask us to delete” (part C) is never refused.' },
+      { who: PA, opts: HELD, do: 'If the record offers “Cancel the subscription” (a club with a subscription), open it and read the window. Press Keep it.', see: 'Held when the club has no subscription (UAT Rep Club may not). Otherwise a window “Cancel the subscription for UAT Rep Club” with a small line: “Online payments stop now: N families and M teams still owe today, N pay pages close and 1 card dispute is open. The club’s Stripe account stays connected.” (each part drops at zero).' },
+      { who: PA, do: 'On Access press the pencil and choose a plan without online payments (a Tournament plan). Read the sentence the page builds about your changes. Do NOT confirm: put the plan back, or press Cancel.', see: 'The sentence “UAT Rep Club moves from Club to (the new plan).” followed by “Online payments stop on the move: N families and M teams still owe today, … 1 card dispute is open. The club’s Stripe account stays connected.” then “The owner is not emailed.” Nothing saved.', call: 'If this sentence is not shown before a confirm button, say so in the notes: it was built to appear before the change is saved.' },
+      { who: PA, opts: HELD, do: 'After walk §404 part D step D7 (the owner agreed to the new terms): open the Story tab.', see: 'Held when that walk’s part D hasn’t been run. Otherwise an entry “Payments terms agreed” with the owner’s name, in the Billing kind.' },
+      { who: O, opts: HELD, do: 'On Settings › Payouts press the pencil, choose the OTHER choice under “Who pays the processing fee”, wait for it to save, choose the first one again, press ✓. Then, as platform admin, reopen the Story tab.', see: 'Held when the terms are behind (walk §404 part D is in force; the choice is refused then). Otherwise two entries: “Families and teams pay the processing fee now” and “The club pays the processing fee now” (in the order you chose them), each with the owner’s name.', call: 'Builder’s call: a third Story line, “Stripe closed the payouts account”, can’t be produced on localhost.' },
+      { who: PA, opts: HELD, do: 'While walk §404 part D is in force (steps D1 to D6, before the owner agrees): read the Terms tile and Health › Online payments.', see: 'Held when that walk is not in progress. Otherwise the Terms tile reads “Out of date” with “Agreed (day) · newer terms exist”, and the Health list has a row for UAT Rep Club: “Not on the current payments terms”. After the owner agrees it reads “Version of (the date, in full)” and the row is gone.' }
+    ]},
+    { id: 'G', title: 'Emails about an ending', steps: [
+      { who: O, opts: HELD, do: 'The warning seven days before free time ends onto a plan without online payments (check the owner’s inbox).', see: 'Held — the Amplify dev end-to-end pass. When sent: subject “Online payments for UAT Rep Club stop on (date)”, the billing page’s own sentence (“Your organization moves to the free (plan) plan on (date).”), “From then, families and teams see your “How to pay” text instead of Pay now, and pay pages still open close.” with the owing count, “Bank debits still clearing finish and reach you, and your Stripe account stays yours.” and a button “Open billing”. Sent once, from FieldLogicHQ.' },
+      { who: O, opts: HELD, do: 'The warning the day a subscription payment fails (check the owner’s inbox).', see: 'Held — the Amplify dev end-to-end pass. When sent: subject “Online payments for UAT Rep Club stop if the subscription payment doesn’t go through”, “UAT Rep Club’s subscription payment didn’t go through. If it still doesn’t, UAT Rep Club is suspended and online payments stop.” No date.' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held"). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
