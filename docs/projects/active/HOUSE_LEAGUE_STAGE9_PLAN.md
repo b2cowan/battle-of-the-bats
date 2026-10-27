@@ -705,3 +705,22 @@ open it, and the menu's top level is Stage 13's.
   time someone else changed refuses `changed`), the k2 window with the corrected empty states, the route gated
   read / run-on-the-season, 14 tests. **Next:** `CLUB_TIER_STAGE11B_PART3_BUILD_PROMPT.md` (the second half: one atomic Save
   as a new SQL step, the piece level, Choose parts, Tools + the time line, then the league admin's club-schedule view).
+- **2026-10-27 · 11b Part 3: second half BUILT, words settled, /review done** (prompt `CLUB_TIER_STAGE11B_PART3_BUILD_PROMPT.md`).
+  Commits: `9e3b703d2` (mig 394 `league_slot_uses_apply` — every change of a Save or none, `from` checked under the lock;
+  `league_slot_uses_set` KEPT unchanged for the SQL checks, the window writes only through the new step) · `89d10dbab` (the
+  piece level, Choose parts, Tools ⋯ with Export inside and its free-floor case, the time line, `?time=1`) · `c639761a1`
+  (the league admin in the club's schedule: a new read route answering an allow-list projection, never `scheduleView`;
+  rep team names only for a viewer who can open Rep teams; the one-date Use) · `34c2952cf` (/marketing's words, appended to
+  `HOUSE_LEAGUE_STAGE9D2_11B_COPY.md` "Part 3"; the k2 row-figures row amended per ruling 9) · `ef76f6cdc` (/review, mig 397:
+  a Save waits out Send the changes by locking the schedules first, the season held, both keys required, no-ops change
+  nothing; group-scoped rep names; stale ticks pruned; the week grid follows the answered week). **Migs 394 + 397 applied to
+  DEV only**; both pending for prod in `MANUAL_PROD_STEPS.json`, before the promote that ships 11b. **Found and fixed in the
+  words pass:** the free League floor's export lock named "League" (the free plan) — exports are League Plus's; fixed on the
+  Schedule page and the Registrations badge. **Builder's calls:** the question on Save shows only when practices still to
+  come sit on the time (none exist until Part 4; tested with fixtures); Cancel and Back drop a piece's ticks, × asks first;
+  a phone reads the club's schedule as a list of days, Use is desk-only. **Recorded, not changed (/review Low):** the club's
+  schedule is readable by URL for any final schedule house league holds a slot in (wider than the listed sources, no leak);
+  rep slots' times and places show by ruling; the season-date check is TypeScript's (club days need the club's zone);
+  Tools' trigger sits outside `tb.toolbar` (a visual check owed); a member without house league gets a blank club-schedule
+  page. **Owed:** the dev server restart before the owner tests (new files); `/docs` (Part 6); the 11b walk at the end of 11b.
+  **Next:** Part 4 (Practice time) per the 11b order.

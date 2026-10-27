@@ -1478,7 +1478,10 @@ and team practice time, never the club. Drawn: the Practices view with the From 
 read-first window, house-league teams in the slot window's Change team list by division, a rep team's slot read-only for
 a league admin, the owner's move reaching the house-league coaches (never families) through Send the changes, a
 division as a sharing group, and the absent state without the club scheduler. Today `isScheduleBuilder` admits owner
-and admin only.
+and admin only. **2026-10-27 · Part 3 built** (`HOUSE_LEAGUE_STAGE9_PLAN.md` §9 has the commits): a league admin reads a
+club schedule through a HOUSE-LEAGUE route (an allow-list projection, rep names only with Rep teams and within the
+member's groups) and changes one date of house-league time there; the scheduler's gate is unchanged. Its one write,
+`league_slot_uses_apply` (migs 394, 397), locks the schedule before the slots, as Send the changes does.
 
 **Gates to add:** a "one model of time" guard (no second slot table); the screens guards; the arithmetic of a permit's
 use recomputed from rows (the `check:club-money-arithmetic` pattern) for the Held / Booked / Unused band.
