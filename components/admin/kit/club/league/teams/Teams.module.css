@@ -185,7 +185,7 @@
   font-size: var(--type-body);
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 .poolBar b { color: var(--text-primary); font-weight: 650; }
 .card {
@@ -319,7 +319,7 @@
   border: 1px solid var(--home-line);
   border-radius: 10px;
   background: var(--card-bg);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-lg);
   font-size: var(--type-body);
   color: var(--text-primary);
   cursor: default;
