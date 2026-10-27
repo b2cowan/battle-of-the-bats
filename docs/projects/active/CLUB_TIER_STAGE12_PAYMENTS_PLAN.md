@@ -34,8 +34,8 @@
   2026-10-26 and declared prod-pending in MANUAL_PROD_STEPS.json (385 is 9d-1's). `scripts/online-payments-12c-check.sql`
   T1–T30 on dev; house-league-money-check and the stage 7 atomicity checks still pass. Sandbox: the UAT club's account has
   `acss_debit_payments` active and a bank-debit Checkout opens on it as a direct charge with our fee; Stripe sends the
-  agreement and each debit's notice itself. **Walks owed: §389 (a refund you can see, a refund made in Stripe, a team's part
-  refund) and §390 (bank debit).** The returned CA$5 is `RETURNED_BANK_DEBIT_FEE_CENTS` (`lib/plan-config.ts`, Facts doc).
+  agreement and each debit's notice itself. **Walk §389 (a refund you can see, a refund made in Stripe, a team's part
+  refund) walked 2026-10-26, 44 of 44 checked, 8 marked Held (B9, D6, E12, G1–G5).** **Walk §390 (bank debit) walked 2026-10-26, 32 of 32 checked, 4 marked Held (A4, C6, E3, F6), no changes asked.** The returned CA$5 is `RETURNED_BANK_DEBIT_FEE_CENTS` (`lib/plan-config.ts`, Facts doc).
   **Owner step:** the Connect destination on Amplify dev and prod also sends `checkout.session.async_payment_failed` and
   `charge.dispute.created` (`docs/agents/ops/stripe-setup-guide.md`). **Named, not built (from /review):** a part deposit
   clearing hides past due for the whole team; a mixed bulk pay-link skip names one reason; a returned-debit fee whose invoice

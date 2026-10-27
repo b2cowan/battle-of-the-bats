@@ -45,7 +45,7 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
    accepts a team, it pays its deposit or full entry by card from the acceptance email, and pays the balance from the
    reminder email.
 5. **12c · Bank debit,** for house league and tournaments at once.
-   **Built 2026-10-26, two walks owed (ledger §389 refunds, §390 bank debit).** What a person sees now: a **family**
+   **Built 2026-10-26; both walks done 2026-10-26 (ledger §389 refunds 44 of 44, §390 bank debit 32 of 32; held steps wait for the Amplify dev pass).** What a person sees now: a **family**
    can pay by bank debit as well as by card once the club's Stripe account is approved for it. The debit takes days to
    clear, the child's spot is held meanwhile, and the family can't pay twice. If the bank sends it back, the family is
    emailed a way to pay. The **registrar** sees "clearing" on the row, and a fourth figure, Clearing, on the Money band.
