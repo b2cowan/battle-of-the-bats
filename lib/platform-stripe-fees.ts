@@ -152,12 +152,20 @@ export type BillOutcome = 'billed' | 'own_invoice' | 'test_mode' | 'error' | 'do
 async function subscriptionToRide(orgId: string): Promise<{ customer: string; subscription: string } | null> {
   const { data: org } = await supabaseAdmin.from('organizations').select('stripe_customer_id, stripe_subscription_id').eq('id', orgId).maybeSingle();
   if (!org?.stripe_customer_id || !org.stripe_subscription_id) return null;
-  const sub = await stripe.subscriptions.retrieve(org.stripe_subscription_id as string);
+  let sub: Stripe.Subscription;
+  try {
+    sub = await stripe.subscriptions.retrieve(org.stripe_subscription_id as string);
+  } catch (err) {
+    // A subscription Stripe no longer has is no subscription (/review 4b: it failed the fee for good); anything else retries.
+    if ((err as { code?: string }).code === 'resource_missing') return null;
+    throw err;
+  }
   if (!LIVE_SUBSCRIPTION.has(sub.status) || sub.cancel_at_period_end) return null;
   // A discount applies to every line on its invoice, the fee included: such a club gets its own invoice (build prompt).
   if ((sub.discounts?.length ?? 0) > 0) return null;
-  // FieldLogicHQ bills in Canadian dollars; a fee on a subscription in another currency would be a wrong amount.
-  if (sub.currency !== 'cad') throw new Error(`The subscription bills in ${sub.currency}, not CAD.`);
+  // FieldLogicHQ bills fees in Canadian dollars: a subscription in another currency can't carry one, so the club's own
+  // invoice does (/review 4b: it was an error retried five times, then never billed).
+  if (sub.currency !== 'cad') return null;
   return { customer: org.stripe_customer_id as string, subscription: sub.id };
 }
 
@@ -185,7 +193,11 @@ export async function billFee(feeId: string): Promise<BillOutcome> {
       await supabaseAdmin.from('platform_stripe_fees').update({ bill_error: null }).eq('id', f.id);
       return 'own_invoice';
     }
-    const item = await stripe.invoiceItems.create({
+    // Read back first: Stripe's key lasts 24 hours, and the next try may be the monthly run weeks later (/review 4b).
+    const since = Math.floor(new Date(f.created_at).getTime() / 1000) - 3600;
+    const already = (await stripe.invoiceItems.list({ customer: ride.customer, created: { gte: since }, limit: 100 }).autoPagingToArray({ limit: 1000 }))
+      .find(i => i.metadata?.platform_stripe_fee_id === f.id);
+    const item = already ?? await stripe.invoiceItems.create({
       customer: ride.customer, subscription: ride.subscription, amount: signedCents(f), currency: 'cad',
       description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
     }, { idempotencyKey: `stripe-fee:${f.id}` });
@@ -241,6 +253,11 @@ export async function sendMonthlyFeeInvoices(now: Date = new Date()): Promise<{ 
         .eq('org_id', orgId).eq('livemode', live).eq('period_start', periodStart).neq('status', 'paid');
     }
   }
+  // An invoice that went out but whose email failed is emailed by the next run, whether or not its club has a new fee
+  // (/review 4b: only a club with an unbilled fee was visited, and the reminder waits on the first email).
+  const { data: unsent } = await supabaseAdmin.from('platform_fee_invoices').select('id')
+    .eq('status', 'open').eq('livemode', live).is('emailed_at', null).limit(200);
+  for (const r of (unsent ?? []) as Array<{ id: string }>) await emailFeeInvoice(r.id);
   return { sent, failed };
 }
 
@@ -254,9 +271,14 @@ async function invoiceOneClub(orgId: string, candidates: FeeRow[], periodStart: 
     if (outcome === 'own_invoice') fees.push(f);
   }
   let row = await invoiceRow(orgId, live, periodStart);
+  // A fee claimed by an EARLIER month's invoice that a run left unfinished is finished with that invoice, never moved.
+  for (const id of new Set(fees.map(f => f.fee_invoice_id).filter((x): x is string => !!x && x !== row?.id))) {
+    const { data: earlier } = await supabaseAdmin.from('platform_fee_invoices').select(INVOICE_COLUMNS).eq('id', id).maybeSingle();
+    if (earlier) await completeInvoice(earlier as InvoiceRow, fees.filter(f => f.fee_invoice_id === id), false);
+  }
   if (row && row.status !== 'draft') {
-    // This month's invoice already went: anything left waits for the next one (and finishes its email/stamp if owed).
-    if (!row.emailed_at && row.status === 'open') await emailFeeInvoice(row.id);
+    // This month's invoice already went: its own lines are finished with it (stamped, emailed); anything new waits.
+    await completeInvoice(row, fees.filter(f => f.fee_invoice_id === row!.id), false);
     return false;
   }
   const ours = fees.filter(f => !f.fee_invoice_id || f.fee_invoice_id === row?.id);
@@ -274,39 +296,72 @@ async function invoiceOneClub(orgId: string, candidates: FeeRow[], periodStart: 
     if (!row) throw new Error('The invoice row wasn’t written.');
   }
 
-  let invoiceId = row.stripe_invoice_id;
-  if (!invoiceId) {
-    const inv = await stripe.invoices.create({
+  if (!row.stripe_invoice_id) {
+    // A run that created the invoice but stopped before storing it finds it by our metadata (Stripe's key lasts 24 hours).
+    const found = (await stripe.invoices.list({ customer: row.stripe_customer_id, status: 'draft', limit: 100 }))
+      .data.find(i => i.metadata?.[FEE_INVOICE_META] === row!.id);
+    const inv = found ?? await stripe.invoices.create({
       customer: row.stripe_customer_id, collection_method: 'send_invoice', days_until_due: FEE_INVOICE_DAYS_DUE, auto_advance: false,
       pending_invoice_items_behavior: 'exclude', currency: 'cad',
       description: W.memo(org.name as string), footer: W.footer(PLATFORM_CONTACT_EMAIL),
       metadata: { [FEE_INVOICE_META]: row.id, org_id: orgId },
     }, { idempotencyKey: `fee-invoice:${row.id}` });
-    invoiceId = inv.id!;
-    await supabaseAdmin.from('platform_fee_invoices').update({ stripe_invoice_id: invoiceId, updated_at: new Date().toISOString() }).eq('id', row.id);
+    await supabaseAdmin.from('platform_fee_invoices').update({ stripe_invoice_id: inv.id!, updated_at: new Date().toISOString() }).eq('id', row.id);
+    row = { ...row, stripe_invoice_id: inv.id! };
   }
+  return completeInvoice(row, ours, true);
+}
 
-  // One line per fee: read back what Stripe already holds before adding (a run that stopped after a line was added).
-  const existing = await stripe.invoiceItems.list({ invoice: invoiceId, limit: 100 });
-  const onInvoice = new Map(existing.data.map(i => [i.metadata?.platform_stripe_fee_id ?? '', i.id]));
-  for (const f of ours) {
-    const { error: claimError } = await supabaseAdmin.from('platform_stripe_fees').update({ fee_invoice_id: row.id })
-      .eq('id', f.id).is('billed_at', null).or(`fee_invoice_id.is.null,fee_invoice_id.eq.${row.id}`);
-    if (claimError) throw claimError;
-    const itemId = onInvoice.get(f.id) ?? (await stripe.invoiceItems.create({
-      customer: row.stripe_customer_id, invoice: invoiceId, amount: signedCents(f), currency: 'cad',
-      description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: orgId },
-    }, { idempotencyKey: `stripe-fee:${f.id}:${invoiceId}` })).id;
-    await supabaseAdmin.from('platform_stripe_fees')
-      .update({ stripe_invoice_item_id: itemId, billed_at: new Date().toISOString(), billed_on: 'own_invoice', bill_error: null })
-      .eq('id', f.id).is('billed_at', null);
+/**
+ * Finish one invoice from Stripe's own state, so a run that stopped at any step finishes on the next (/review 4b: a fee
+ * was stamped billed as its line went on, so a run that stopped before the finalize or the email left the club out of
+ * every later run). A draft takes its lines (one per fee, read back first; `mayAdd` lets it claim a fee no invoice has),
+ * is finalized with Stripe's own email off, and only then are its fees stamped billed; an invoice already finalized takes
+ * no new line and is never finalized twice. Then our email, once. True when this call finalized it.
+ */
+async function completeInvoice(row: InvoiceRow, fees: FeeRow[], mayAdd: boolean): Promise<boolean> {
+  const invoiceId = row.stripe_invoice_id;
+  if (!invoiceId) return false;
+  let inv = await stripe.invoices.retrieve(invoiceId);
+  const draft = inv.status === 'draft';
+  const existing = await stripe.invoiceItems.list({ invoice: invoiceId, limit: 100 }).autoPagingToArray({ limit: 10000 });
+  const onInvoice = new Map(existing.map(i => [i.metadata?.platform_stripe_fee_id ?? '', i.id]));
+  let lines = 0;
+  for (const f of fees) {
+    if (f.fee_invoice_id !== row.id) {
+      if (!draft || !mayAdd) continue;
+      // The claim is what keeps `billFee` off this fee; a fee another runner took meanwhile is left to it.
+      const { data: claimed, error: claimError } = await supabaseAdmin.from('platform_stripe_fees').update({ fee_invoice_id: row.id })
+        .eq('id', f.id).is('billed_at', null).is('fee_invoice_id', null).select('id');
+      if (claimError) throw claimError;
+      if (!claimed?.length) continue;
+    }
+    let itemId = onInvoice.get(f.id) ?? null;
+    if (!itemId && !draft) {
+      // Claimed but never put on an invoice that has since gone: released to next month's.
+      await supabaseAdmin.from('platform_stripe_fees').update({ fee_invoice_id: null }).eq('id', f.id).is('billed_at', null).eq('fee_invoice_id', row.id);
+      continue;
+    }
+    if (!itemId) {
+      itemId = (await stripe.invoiceItems.create({
+        customer: row.stripe_customer_id, invoice: invoiceId, amount: signedCents(f), currency: 'cad',
+        description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: row.org_id },
+      }, { idempotencyKey: `stripe-fee:${f.id}:${invoiceId}` })).id;
+    }
+    await supabaseAdmin.from('platform_stripe_fees').update({ stripe_invoice_item_id: itemId }).eq('id', f.id).is('billed_at', null);
+    lines += 1;
   }
+  if (draft && !lines) return false;
 
   // Finalized with Stripe's own email off (auto_advance false, never sendInvoice): the email is ours.
-  const final = await stripe.invoices.finalizeInvoice(invoiceId, { auto_advance: false });
-  await writeInvoiceState(row.id, final);
+  if (draft) inv = await stripe.invoices.finalizeInvoice(invoiceId, { auto_advance: false });
+  await writeInvoiceState(row.id, inv);
+  const { error: stampError } = await supabaseAdmin.from('platform_stripe_fees')
+    .update({ billed_at: new Date().toISOString(), billed_on: 'own_invoice', bill_error: null })
+    .eq('fee_invoice_id', row.id).is('billed_at', null).not('stripe_invoice_item_id', 'is', null);
+  if (stampError) throw stampError;
   await emailFeeInvoice(row.id);
-  return true;
+  return draft;
 }
 
 async function invoiceRow(orgId: string, live: boolean, periodStart: string): Promise<InvoiceRow | null> {

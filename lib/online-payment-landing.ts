@@ -1,6 +1,7 @@
 import 'server-only';
 import type Stripe from 'stripe';
 import { supabaseAdmin } from './supabase-admin';
+import { hasRecentNotification } from './db';
 import { notify } from './notify';
 import { clearSettled } from './needs-attention';
 import { getOrganizationBySlugForServer } from './server-organizations';
@@ -580,12 +581,10 @@ async function raiseDisputed(org: Organization, op: DisputedPay, d: DisputeRow):
   });
 }
 
-/** Was the lost item ever raised for this dispute (open or settled)? It is raised once, never reopened. */
+/** Was the lost item ever raised for this dispute (open or settled)? It is raised once, never reopened. Read through the
+ *  one dedupe helper (`hasRecentNotification`, keyed by org AND event type), never the notifications table here. */
 async function disputeLostRaised(orgId: string, disputeId: string): Promise<boolean> {
-  const { count, error } = await supabaseAdmin.from('notifications').select('id', { count: 'exact', head: true })
-    .eq('org_id', orgId).eq('event_type', 'card_dispute_lost').eq('metadata->>onlineDisputeId', disputeId);
-  if (error) throw new Error(error.message);
-  return (count ?? 0) > 0;
+  return hasRecentNotification(orgId, 'card_dispute_lost', { onlineDisputeId: disputeId }, '1970-01-01T00:00:00Z');
 }
 
 /** "The dispute was lost" (§1.4): to the desk and the owner, once, when the loss is booked. It clears itself when the child
@@ -853,7 +852,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
     await recordForeignCardFee(op.id); // 12d-1 Part 4: once; a crash before it is caught here
     await carryOutDecisions(op.id);
     await sendOnlineReceiptOnce(op.id);
-    await bookDisputesLostBeforeLanding(stripeAccountId, op.id); // 12d-1 Part 4b: a crash before it is caught here
+    await bookDisputesLostBeforeLanding(stripeAccountId, op.id).catch(lostBookingFailed); // 12d-1 Part 4b: a crash before it is caught here
     return 'already';
   }
   if (op.status === 'returned') return 'returned'; // 12c: a returned debit never lands
@@ -887,7 +886,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
   await recordForeignCardFee(op.id);
   if (op.flow === 'league_signup') {
     const result = await landLeague(op, paidAt, card, mismatch);
-    await bookDisputesLostBeforeLanding(stripeAccountId, op.id);
+    await bookDisputesLostBeforeLanding(stripeAccountId, op.id).catch(lostBookingFailed);
     return result;
   }
 
@@ -924,7 +923,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
   // landing's answer (a replay answers `already` without it).
   await raiseOverpaid(op.id);
   if (!(landed as { already?: boolean } | null)?.already) await reconcileDashboardRefunds(stripeAccountId, op.id);
-  await bookDisputesLostBeforeLanding(stripeAccountId, op.id);
+  await bookDisputesLostBeforeLanding(stripeAccountId, op.id).catch(lostBookingFailed);
   return (landed as { already?: boolean } | null)?.already ? 'already' : 'landed';
 }
 
@@ -950,6 +949,34 @@ async function bookDisputesLostBeforeLanding(stripeAccountId: string, onlinePaym
       payment_intent: (op.stripe_payment_intent_id as string | null) ?? null,
     });
   }
+}
+
+/** At a landing the booking never fails the landing (/review 4b: a family's receipt check read "unknown", and Stripe
+ *  retried the landing for days); the daily job's sweep books what it missed. */
+function lostBookingFailed(e: unknown): void {
+  console.error('[online-payment-landing] a dispute lost before landing wasn’t booked; the daily job retries:', e instanceof Error ? e.message : String(e));
+}
+
+/**
+ * The daily job's sweep (12d-1 Part 4b): a card dispute lost before its payment landed, on a payment that has landed since,
+ * whose booking at the landing failed. Bounded to payments landed in the last week (the landing books it; this only
+ * catches a failure), so a loss that can never book is not re-read from Stripe for ever.
+ */
+export async function bookLostDisputesSweep(now: Date = new Date()): Promise<number> {
+  const since = new Date(now.getTime() - 7 * 86_400_000).toISOString();
+  const { data, error } = await supabaseAdmin.from('online_payment_disputes')
+    .select('online_payment_id, online_payments!inner(stripe_account_id, rail, landed_at)')
+    .eq('status', 'lost').is('lost_booked_at', null)
+    .eq('online_payments.rail', 'card').gte('online_payments.landed_at', since).limit(100);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as Array<{ online_payment_id: string; online_payments: { stripe_account_id: string } }>;
+  let n = 0;
+  for (const id of new Set(rows.map(r => r.online_payment_id))) {
+    const acct = rows.find(r => r.online_payment_id === id)!.online_payments.stripe_account_id;
+    try { await bookDisputesLostBeforeLanding(acct, id); n += 1; }
+    catch (e) { lostBookingFailed(e); }
+  }
+  return n;
 }
 
 /**

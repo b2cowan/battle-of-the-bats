@@ -3,7 +3,7 @@ import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 import { isCronRequest } from '@/lib/cron-auth';
-import { sendDisputeReminders } from '@/lib/online-payment-landing';
+import { bookLostDisputesSweep, sendDisputeReminders } from '@/lib/online-payment-landing';
 import {
   remindUnpaidFeeInvoices, retryFailedFees, sendMonthlyFeeInvoices, sweepDisputeFees, syncOpenFeeInvoices,
 } from '@/lib/platform-stripe-fees';
@@ -17,7 +17,8 @@ import {
  *   3. a retry of every fee whose billing failed (a passing Stripe error);
  *   4. Stripe's own state of every invoice still open (a missed webhook never leaves one unpaid on our side);
  *   5. the club's own monthly invoice, gathering last month's fees — sent on the 1st, or the first run after it;
- *   6. the ONE reminder on an invoice past due (§7 ruling 3). Nothing switches off by itself.
+ *   6. the ONE reminder on an invoice past due (§7 ruling 3). Nothing switches off by itself;
+ *   7. (Part 4b) a card dispute lost before its payment landed, whose booking at the landing failed.
  * One step's failure never stops the next.
  *
  * Callers: the pg_cron scheduler (daily, via x-cron-secret) or a person with `run_jobs`, by hand.
@@ -48,6 +49,7 @@ export const POST = withObservability(async (req: Request) => {
   await run('sync_invoices', () => syncOpenFeeInvoices());
   await run('monthly_invoices', () => sendMonthlyFeeInvoices(now));
   await run('invoice_reminders', () => remindUnpaidFeeInvoices(now));
+  await run('lost_disputes', () => bookLostDisputesSweep(now));
 
   await writePlatformAuditLog(actor, null, 'stripe_fees_sweep', 'result', null, steps);
   const ok = steps.every(s => s.ok);

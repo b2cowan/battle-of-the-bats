@@ -20,7 +20,10 @@ describe('one billing path for every fee kind', () => {
     assert.match(ride, /if \(!org\?\.stripe_customer_id \|\| !org\.stripe_subscription_id\) return null;/, 'no subscription → its own invoice');
     assert.match(ride, /if \(!LIVE_SUBSCRIPTION\.has\(sub\.status\) \|\| sub\.cancel_at_period_end\) return null;/, 'cancelled → its own invoice');
     assert.match(ride, /if \(\(sub\.discounts\?\.length \?\? 0\) > 0\) return null;/, 'a discount would eat the line → its own invoice');
-    assert.match(ride, /if \(sub\.currency !== 'cad'\) throw/);
+    // /review 4b: a subscription in another currency, or one Stripe no longer has, sends the fee to the club's own invoice
+    // (it was an error retried five times, then never billed).
+    assert.match(ride, /if \(sub\.currency !== 'cad'\) return null;/);
+    assert.match(ride, /code === 'resource_missing'\) return null;/);
     const bill = /export async function billFee[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
     assert.match(bill, /if \(!ride\) \{[\s\S]*?return 'own_invoice';/);
     assert.match(bill, /subscription: ride\.subscription, amount: signedCents\(f\)/);
@@ -59,9 +62,26 @@ describe('one billing path for every fee kind', () => {
     assert.doesNotMatch(src, /sendInvoice\(/, 'Stripe never sends it; we do');
     assert.match(src, /metadata: \{ \[FEE_INVOICE_META\]: row\.id, org_id: orgId \}/);
     assert.match(src, /idempotencyKey: `fee-invoice:\$\{row\.id\}`/);
-    assert.match(src, /const existing = await stripe\.invoiceItems\.list\(\{ invoice: invoiceId, limit: 100 \}\);/);
+    assert.match(src, /const existing = await stripe\.invoiceItems\.list\(\{ invoice: invoiceId, limit: 100 \}\)\.autoPagingToArray\(/);
     assert.match(src, /kind: 'stripe_fee_invoice', orgId: row\.org_id, idempotencyKey: `fee-invoice-email:\$\{row\.id\}`/);
     assert.match(src, /kind: 'stripe_fee_invoice_reminder'[\s\S]{0,80}idempotencyKey: `fee-invoice-reminder:\$\{row\.id\}`/);
+  });
+
+  it('a run that stopped at any step finishes on the next (/review 4b)', () => {
+    const src = readCode(FEES);
+    const done = /async function completeInvoice[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+    // Fees are stamped billed only after the finalize, so a run that stopped before it leaves them for the next run.
+    assert.ok(done.indexOf('finalizeInvoice(') > 0 && done.indexOf("billed_on: 'own_invoice'") > done.indexOf('finalizeInvoice('), 'billed after the finalize');
+    assert.equal((src.match(/billed_on: 'own_invoice'/g) ?? []).length, 1, 'one place stamps an own-invoice fee billed');
+    // Stripe's own state decides: an invoice already finalized takes no new line and is never finalized twice.
+    assert.match(done, /const draft = inv\.status === 'draft';/);
+    assert.match(done, /if \(draft\) inv = await stripe\.invoices\.finalizeInvoice\(/);
+    // An invoice whose email failed is emailed by the next run, whatever its club's fees.
+    const monthly = /export async function sendMonthlyFeeInvoices[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+    assert.match(monthly, /\.eq\('status', 'open'\)\.eq\('livemode', live\)\.is\('emailed_at', null\)/);
+    // A subscription line is read back before it is added (Stripe's key lasts 24 hours).
+    const bill = /export async function billFee[\s\S]*?\n}\n/.exec(src)?.[0] ?? '';
+    assert.ok(bill.indexOf('invoiceItems.list(') > 0 && bill.indexOf('invoiceItems.list(') < bill.indexOf('invoiceItems.create('), 'read back first');
   });
 
   it('the billing webhook writes a fee invoice to its own row before the subscription cases can read it', () => {
@@ -96,8 +116,15 @@ describe('a card issued outside the club’s country', () => {
   it('recorded in both flows once Stripe says paid, and on a replay', () => {
     const land = readCode('lib/online-payment-landing.ts');
     const body = /export async function landCheckoutSession[\s\S]*?\n}\n/.exec(land)?.[0] ?? '';
-    assert.ok(body.indexOf('await recordForeignCardFee(op.id);') < body.indexOf("if (op.flow === 'league_signup') return landLeague("), 'before the flows split');
+    const split = body.indexOf("if (op.flow === 'league_signup') {");
+    assert.ok(split > 0 && body.indexOf('await recordForeignCardFee(op.id);') < split, 'before the flows split');
     assert.equal((body.match(/await recordForeignCardFee\(op\.id\)/g) ?? []).length, 2, 'the landing and the replay');
+  });
+
+  it('a dispute lost before the payment landed is booked at the landing: both flows, and on a replay (Part 4b)', () => {
+    const land = readCode('lib/online-payment-landing.ts');
+    const body = /export async function landCheckoutSession[\s\S]*?\n}\n/.exec(land)?.[0] ?? '';
+    assert.equal((body.match(/await bookDisputesLostBeforeLanding\(stripeAccountId, op\.id\)/g) ?? []).length, 3, 'replay, house league, tournament');
   });
 });
 
