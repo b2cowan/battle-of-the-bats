@@ -178,11 +178,26 @@ Live mode has no knowledge of your test products. Repeat Step 3 from Stage 2 whi
 Go to **Developers → Webhooks → Add endpoint**.
 
 - **Endpoint URL:** `https://yourdomain.com/api/billing/webhook`
-- **Events to listen to:**
+- **Events to listen to** (every event `app/api/billing/webhook/route.ts` acts on, re-checked 2026-10-27; this list
+  used to stop at the first four and was behind the code):
   - `customer.subscription.created`
   - `customer.subscription.updated`
   - `customer.subscription.deleted`
+  - `customer.subscription.trial_will_end`
+  - `checkout.session.completed` (the Founding Season card on file)
+  - `payment_method.attached`, `payment_method.detached`
+  - `invoice.payment_succeeded`
   - `invoice.payment_failed`
+  - `invoice.paid`, `invoice.voided`, `invoice.marked_uncollectible`, `invoice.finalized` — a club's own **Stripe-fees
+    invoice** (Stage 12d-1, below). The route sends every `invoice.*` event that carries the fee-invoice metadata to
+    that invoice's own row and nothing else, and re-reads the invoice from Stripe, so any of these keeps it current. The
+    two `invoice.payment_*` events above already cover a paid one; these four add a voided or written-off one.
+
+> **Stripe-fees invoices (Club Tier Stage 12d-1).** A club with no subscription invoice to carry its Stripe fees (a
+> comped or free club, or a discounted subscription) gets its own monthly invoice on the 1st, raised on the **platform**
+> account, so its events arrive here, not at the Connect webhook. The product raises it to be paid on Stripe's hosted page
+> (`send_invoice`), with auto-advance off and Stripe's own invoice email never sent; FieldLogicHQ sends the email. The daily job (migration 395) also
+> re-reads every open fee invoice, so a missed event is caught the next morning.
 
 Click **Add endpoint**. On the next screen, click **Reveal** under **Signing secret** to see your live `whsec_...`. Copy it.
 
@@ -256,7 +271,7 @@ does not take any positional arguments".
 Window 1 — payments and refunds on the clubs' accounts:
 
 ```
-stripe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook
+stripe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,charge.dispute.updated,charge.dispute.closed,charge.dispute.funds_withdrawn,charge.dispute.funds_reinstated,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook
 ```
 
 Window 2 — the clubs' accounts themselves:
@@ -278,8 +293,9 @@ Developers → Webhooks), create two. The form first asks where events come from
 
 1. **Connected accounts**, payload **Snapshot**, API version **2026-04-22.dahlia**. Events:
    `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`,
-   `checkout.session.expired`, `charge.dispute.created`, `refund.created`, `refund.updated`, `refund.failed` (the two
-   bank-debit events — a debit that comes back, and one the bank reverses after it cleared — added with Stage 12c). Endpoint: `https://<staging address>/api/payments/connect-webhook`.
+   `checkout.session.expired`, `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`,
+   `charge.dispute.funds_withdrawn`, `charge.dispute.funds_reinstated`, `refund.created`, `refund.updated`,
+   `refund.failed`. Endpoint: `https://<staging address>/api/payments/connect-webhook`.
    Copy its signing secret into Amplify's `STRIPE_CONNECT_WEBHOOK_SECRET`.
 2. **Your account**, payload **Thin**. Events: `v2.core.account[requirements].updated`,
    `v2.core.account[configuration.merchant].capability_status_updated`, `v2.core.account.closed`. Endpoint:
@@ -288,6 +304,21 @@ Developers → Webhooks), create two. The form first asks where events come from
 
 Then redeploy. The build copies both secrets in (`amplify.yml`). Production keeps online payments switched off, so it
 needs neither yet.
+
+### ⚑ Owner's step — the events Stages 12c and 12d-1 added (one list)
+
+These are dashboard settings, so they are the owner's to change; no build session touches them. If the staging
+destinations were made before 12c, add all of these at once:
+
+| Destination | Add | Why |
+|---|---|---|
+| Connected accounts (`/api/payments/connect-webhook`) | `checkout.session.async_payment_failed` | 12c: a bank debit that comes back before it settles |
+| Connected accounts | `charge.dispute.created` | 12c: a bank debit the bank reverses after it cleared; 12d-1: a card dispute opens |
+| Connected accounts | `charge.dispute.updated`, `charge.dispute.closed`, `charge.dispute.funds_withdrawn`, `charge.dispute.funds_reinstated` | 12d-1: a card dispute moves (answered, won, lost), and Stripe's dispute fee is taken or returned. Without `closed`, a dispute never shows as won or lost |
+| Platform billing (`/api/billing/webhook`) | `invoice.paid`, `invoice.voided`, `invoice.marked_uncollectible`, `invoice.finalized` — plus `invoice.payment_succeeded` / `invoice.payment_failed` if the destination lacks them | 12d-1: a club's own Stripe-fees invoice turns paid, void or written off in platform admin |
+
+The webhook re-reads each dispute and each fee invoice from Stripe on every event, so the order the events arrive in
+does not matter, and an extra event costs one read.
 
 Why two and not one thin destination (probe 2026-10-25): Stripe accepts one thin destination carrying both, but the
 payments half would then need hand-parsed events and an extra Stripe read on every payment. That would rewrite the money

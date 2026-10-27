@@ -73,6 +73,12 @@ receives every fee in full; a club can choose to pay the fee itself instead. The
    the club's country. A club without a subscription invoice gets its own invoice. The family is never charged more,
    and the terms will say these charges are possible. Success: no payment moves in Stripe that the club can't see and
    act on in the product, and no Stripe fee is left for FieldLogicHQ to absorb.
+   **12d-1 built and committed 2026-10-27** (disputes, paid twice, every club pays its Stripe fees), with its help and two
+   owner walks: paid twice (https://claude.ai/artifact/GmV1oKgXPb1RmVRNSeHw2i) and disputes and fees
+   (https://claude.ai/artifact/RKnhTRAFymveVggrXCUTnG). Five follow-up rulings of 2026-10-27 are built next (Part 5b): a
+   cancelled club still sees its fee list, a returned debit is billed only what Stripe charged, a single pay-link email
+   after a lost dispute warns, a stranded fee moves to the club's own invoice, and a returned answering fee is credited
+   against the invoice that carried it.
 
 ## Who sees what
 

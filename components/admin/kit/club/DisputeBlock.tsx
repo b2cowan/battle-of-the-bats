@@ -77,6 +77,7 @@ export default function DisputeBlock({ d, orgSlug, team, isPhone = false }: {
     setOpening(true);
     setOpenFailed(false);
     try {
+      // org-slug-ok: sent in the body
       const res = await fetch('/api/admin/payouts', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orgSlug, action: 'dashboard' }),
       });

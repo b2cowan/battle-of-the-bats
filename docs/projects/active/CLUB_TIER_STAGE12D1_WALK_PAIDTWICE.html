@@ -1,0 +1,292 @@
+<title>12d-1 · Paid twice</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 12c walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 12d-1 · §395</span>
+    <h1>Paid twice</h1>
+    <p class="sub">Written 2026-10-27. One purpose: a team or a family never pays twice without the desk knowing. Recording by hand while a pay page is open warns and closes the page; a payment that lands anyway is flagged and put right.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Two halves. <strong>Stop it:</strong> the desk is told when a pay page is open, and recording a payment by hand closes it (parts A and B). <strong>Catch it:</strong> when a team’s card payment lands after the team has already paid, it is booked, flagged with a pill, a line under the payment and a Needs attention item, and the refund window opens set to the extra; or the club keeps it with a reason (parts C and D). House league already refuses such a payment; it now gets a plain label (part E).</p>
+    <p>Parts C, D and E stage the real race (the team pays at the same moment the desk records), which needs a little setup: one Stripe window stopped for a minute and one browser setting. Each step says exactly what to do.</p>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>An open pay page is named, with who opened it, the amount and the time, before you record by hand, and it is a note, never a block.</li>
+      <li>Recording by hand closes the open page, and the team or family cannot then pay on it.</li>
+      <li>A team payment that lands after the team paid in full reads “… paid twice”; one that lands on a team owing less reads “… more than owed”. Never the other way round.</li>
+      <li>The refund window opens set: all of it with the fee for paid twice; part of it at the extra otherwise.</li>
+      <li>“Keep it” is a note with a reason, not a credit. The pill and the item clear themselves once the extra is refunded or kept.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li>Card disputes and Stripe fees: walk §396.</li>
+      <li>A bank debit paid twice. The bank path cannot be staged on localhost; the words and the database checks cover it.</li>
+      <li>Emails, beyond the held boxes. Localhost cannot send; they are in the one end-to-end pass on Amplify dev.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts">
+      <dt>Dev server</dt><dd>Running at <code>http://localhost:3000</code>. <code>PAY_LINK_SECRET</code> (32+ characters) is set in <code>.env.local</code>.</dd>
+      <dt>Stripe windows</dt><dd>Both <code>stripe listen</code> windows from <code>docs/agents/ops/stripe-setup-guide.md</code> › “Local — two listen windows”. Window 1 (payments, with the dispute events 12d-1 added):<pre>C:\tools\stripe\stripe.exe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,charge.dispute.updated,charge.dispute.closed,charge.dispute.funds_withdrawn,charge.dispute.funds_reinstated,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook</pre>Window 2 (the club’s account):<pre>C:\tools\stripe\stripe.exe listen --events-from '@self' --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events</pre>Keep the quotes exactly; PowerShell drops an unquoted <code>@word</code>.</dd>
+      <dt>Test card</dt><dd>Use Stripe’s <strong>Canadian</strong> test card <code>4000 0012 4000 0000</code>, any future date, any CVC. (The usual <code>4242…</code> card is issued in the US, which adds a foreign-card fee to the club’s bill: that is walk §396’s subject, not this one’s.)</dd>
+      <dt>Staging the race</dt><dd>Parts C, D and E. (1) Stop window 1 with Ctrl+C, so the payment isn’t heard at once. (2) In the private window, on Stripe’s page and before you pay, open DevTools (F12) › the ⋮ menu › More tools › <strong>Network request blocking</strong>; tick “Enable network request blocking” and add the pattern <code>localhost:3000</code>. Stripe takes the payment, but its return to our page is blocked. (3) The desk records by hand. (4) Untick “Enable network request blocking”, reload the blocked tab, and the payment lands. (5) Start window 1 again with the same command.</dd>
+      <dt>A team’s pay link</dt><dd>A team reaches its pay page through an email; localhost cannot send, so build the link yourself. Find the team’s id with <code>node scripts/db-query.mjs --dev -q "select id from teams where name='TEAM NAME'"</code>, then from the project folder run:<pre>node -e "const c=require('crypto'),fs=require('fs');const s=fs.readFileSync('.env.local','utf8').split(/\r?\n/).find(l=>l.startsWith('PAY_LINK_SECRET=')).slice(16).trim();const id=process.argv[1];console.log('http://localhost:3000/uat-rep-club/uat-rep-club-invitational-2026/pay/'+Buffer.from(id.replace(/-/g,''),'hex').toString('base64url')+'.'+c.createHmac('sha256',s).update('team-pay:'+id).digest().subarray(0,16).toString('base64url'))" TEAM-ID</pre></dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <p>One browser window per person. Teams and families use a private window with no login. Dev only, keep this page private.</p>
+    <dl class="facts">
+      <dt>Club</dt><dd><code>uat-rep-club</code> (UAT Rep Club). If it looks wrong or empty, <code>node scripts/seed-club-fixture.mjs</code> rebuilds it, which resets the passwords below.</dd>
+      <dt>Owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (runs tournaments; parts A, C, D)</dd>
+      <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code> (parts B, E)</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Where and on what</h2>
+    <dl class="facts">
+      <dt>Payouts</dt><dd>UAT Rep Club’s test Stripe account is connected and taking payments. If Settings › Payouts doesn’t read “Taking payments”, stop and tell Claude.</dd>
+      <dt>Tournament</dt><dd><strong>UAT Rep Club Invitational 2026</strong>, division 15U, with a deposit and an entry fee, at <code>/uat-rep-club/admin/tournaments/registrations</code>. The walk adds three teams of its own: <em>Walk Twice Team</em>, <em>Walk Again Team</em>, <em>Walk More Team</em>. Add each with “Add team” › “Add team manually”, division 15U, “Payment status” left on “Unpaid”, and an email you can read.</dd>
+      <dt>House league</dt><dd><strong>2026 Fall House League</strong>, division U9 Rookie (born 2014 or 2015). Sign-up: <code>/uat-rep-club/league/2026-fall-house-league/register</code>. Registrations: <code>/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/registrations</code>. The walk signs up <em>Pia Twicewalk</em> and <em>Rex Againwalk</em>.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 's12d1-walk-paidtwice-v1';
+  var TITLE = '12d-1 paid twice walk §395 (2026-10-27)';
+  var O = 'Owner, computer · uat-club-owner@uat-rep-club.local', R = 'Registrar, computer · uat-club-registrar@uat-rep-club.local';
+  var T = 'The team’s contact, private window, no login', F = 'A family, private window, no login';
+  var HELD = ['Did it', 'Held'];
+  var PARTS = [
+    { id: 'A', title: 'A team’s pay page is open while the desk records', steps: [
+      { who: O, do: 'Add <em>Walk Twice Team</em> (see “Where and on what”), find its id and build its pay link (see “Before you start”).', see: 'The team is in the list; its record’s summary reads “Owes $…”.' },
+      { who: T, do: 'Open the pay link. Keep the deposit chosen, give an email, and press “Pay $… by card”. On Stripe’s page do NOT pay. Leave that tab open.', see: 'Stripe’s secure payment page, for the deposit.' },
+      { who: O, do: 'Reload Walk Twice Team’s record and read the Payment section, where you record a payment.', see: 'An info note: “(the contact’s name) opened a pay page for $… at (time). Recording this closes it, so the team can’t pay twice.” With no contact name on file it begins “The team’s contact opened…”. It is a note, not a block: recording is still offered.', call: 'Builder’s call: the note shows on the drawn screens (this one and house league’s Mark received). The build found nine ways to record a payment by hand (the shared payment and the family record among them); every one closes an open page, most without a note first (step A6).' },
+      { who: O, do: 'Record the deposit as an e-transfer, the usual way (Record on the due row).', see: 'A message “Recorded $… for Walk Twice Team. The open pay page is closed.”, then “The team’s pay link still works for the $… still owing.” The note is gone and the summary owes the balance.' },
+      { who: T, do: 'Go back to the Stripe tab and try to pay with the Canadian test card. Then open the pay link again.', see: 'Stripe refuses: the page is no longer open (Stripe’s own words). Nothing is charged. The pay link now offers “Pay the balance”, for what is still owing.' },
+      { who: O, do: 'From the pay link, have the team press “Pay $… by card” for the balance and leave Stripe’s page unpaid. Then on the tournament’s Teams list use <strong>Mark paid</strong> on Walk Twice Team. Afterwards, try to pay in the team’s Stripe tab.', see: 'Mark paid shows no note before it marks the team paid. The team’s Stripe page then refuses payment, because marking paid closed it.', call: 'Builder’s call to confirm or reverse: Mark paid closes the page without warning first (it isn’t one of the three drawn screens).' }
+    ]},
+    { id: 'B', title: 'House league: Mark received while a family’s page is open', steps: [
+      { who: F, do: 'Sign up ONE child, <em>Pia Twicewalk</em>, in U9 Rookie, with your email. On the confirmation, press “Pay $… by card”. On Stripe’s page do NOT pay. Leave that tab open.', see: 'Stripe’s secure payment page for Pia’s fee.' },
+      { who: R, do: 'On Registrations (tab “Active”), find Pia Twicewalk and press Mark received.', see: 'The window “Mark Pia’s fee received” carries the note “(the guardian’s name) opened a pay page for $… at (time). Recording this closes it, so the family can’t pay twice.” Its buttons are the usual Cancel and Mark received.' },
+      { who: R, do: 'Set How to e-transfer and press Mark received. Then, in the family’s Stripe tab, try to pay.', see: 'Pia’s Fee cell reads received. Stripe refuses the payment: the page was closed. Nothing is charged.' }
+    ]},
+    { id: 'C', title: 'A team pays after it had already paid in full', steps: [
+      { who: O, do: 'Add <em>Walk Again Team</em>, find its id and build its pay link.', see: 'The record’s summary reads “Owes $…”.' },
+      { who: T, do: 'Stage the race (see “Before you start”): stop window 1; open the pay link; choose “Pay in full”; give an email; press “Pay $… by card”; turn on request blocking for <code>localhost:3000</code>; pay with the Canadian test card.', see: 'Stripe takes the payment. Its return to our page is blocked (a browser error page). Nothing in our app knows yet.' },
+      { who: O, do: 'Open Walk Again Team’s record. Record the whole entry as an e-transfer.', see: 'The open-page note showed first. The team now reads paid in full.', call: 'Builder’s call: when Stripe says the page already completed, it is left for the payment to land and be flagged (the race is caught, not refused).' },
+      { who: T, do: 'Untick request blocking and reload the blocked tab. Then start window 1 again.', see: '“Confirming your payment” for a few seconds, then “Paid, thank you” and the receipt.' },
+      { who: O, do: 'Reload Walk Again Team’s record and read the Payment section.', see: 'An amber pill “$… paid twice” by the heading (the whole online payment), and the summary “Paid · $… received of $…”. Under the online payment’s row: “Paid after the team had already paid in full. Refund it from ⋯.” The row stays in the book.' },
+      { who: O, do: 'Open Needs attention.', see: 'An item “Walk Again Team paid $… twice”: “A card payment of $… (receipt N) landed on (day) after the team had already paid in full. The money is in the club’s Stripe balance. Refund it to the card.” It opens the team with the refund window already open.', call: 'Builder’s call: the item has one link and no buttons (items carry none).' },
+      { who: O, do: 'Read the refund window, then press its refund button.', see: '“All of it” is chosen, with “Paid twice: the team had already paid by e-transfer” under it. No “Who is ending this?” question. The processing fee box is ticked: “The processing fee comes back too, because the team shouldn’t pay a fee on money it didn’t owe.” After the refund, the pill is gone and the item settles “Refunded $… to the card”.' }
+    ]},
+    { id: 'D', title: 'A team pays more than it owed, and the club keeps it', steps: [
+      { who: O, do: 'Add <em>Walk More Team</em>, find its id and build its pay link.', see: 'The record’s summary reads “Owes $…”.' },
+      { who: T, do: 'Stage the race again: stop window 1; “Pay in full”; press “Pay $… by card”; block <code>localhost:3000</code>; pay with the Canadian test card.', see: 'Stripe takes it; the return is blocked.' },
+      { who: O, do: 'In Walk More Team’s record, record ONLY the deposit as an e-transfer.', see: 'Recorded. The team still owes the balance.' },
+      { who: T, do: 'Unblock, reload the tab, and start window 1 again.', see: '“Paid, thank you”.' },
+      { who: O, do: 'Reload the record. Then open Needs attention, and the item.', see: 'The pill reads “$… more than owed”, never “paid twice”. Under the row: “Paid more than the team owed. Refund the extra $… from ⋯.” The item reads “Walk More Team paid $… more than it owed”. Its refund window opens on “Part of it” at the extra, with the reason “Paid more than the team owed” filled in. Press Cancel.' },
+      { who: O, do: 'Open the online payment row’s ⋯ and choose <strong>Keep it</strong>. Press Keep it with the reason empty, then type a reason and press Keep it.', see: 'Window “Keep Walk More Team’s extra $…?”: “Walk More Team paid $… more than it owed. The club keeps the money. Say why.” Empty: “Say why the club keeps it.” Then a message “Kept $… paid by Walk More Team.”, the row reads “Kept $… · (your reason)”, the pill is gone and the item settles “Kept by the club”. Nothing calls it a credit.', call: 'Builder’s call: the window’s title, message and settled line drop “as a credit” to match the ruling (a note, never a credit).' }
+    ]},
+    { id: 'E', title: 'House league: a family pays after the fee was marked received', steps: [
+      { who: F, do: 'Sign up ONE child, <em>Rex Againwalk</em>, in U9 Rookie. Stage the race: stop window 1; press “Pay $… by card”; block <code>localhost:3000</code>; pay with the Canadian test card.', see: 'Stripe takes it; the return is blocked.' },
+      { who: R, do: 'Mark Rex’s fee received (e-transfer).', see: 'The open-page note showed in the window; Rex reads received.' },
+      { who: F, do: 'Unblock, reload the tab, and start window 1 again.', see: 'Write down what the family’s page says.' },
+      { who: R, do: 'Open Needs attention.', see: 'An item “Rex’s fee was paid twice”: “(the guardian’s name) paid by card on (day), after Rex’s fee was already marked received. The money is in the club’s Stripe balance. Refund it to the card.” The payment is not added to Rex’s fee (house league refuses a second payment). Refund it to the card from where the item leads; the item clears.' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held"). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

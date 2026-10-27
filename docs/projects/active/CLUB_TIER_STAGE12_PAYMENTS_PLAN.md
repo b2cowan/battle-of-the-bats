@@ -248,6 +248,19 @@
   carried the answering fee** (a Stripe credit note: refunded to the card when that invoice was paid, lowering it while
   open; netted on the same invoice, as today, when both fall in one month) — a credit never waits for a later fee.
   Rulings 2, 3, 5, 6, 7 are built in Part 5, before its help (`CLUB_TIER_STAGE12D1_PART5_PROMPT.md` §0).
+  **Part 5 (first session, 2026-10-27): help, the setup guide, the gates and the walks, committed BEFORE §0.** The session
+  read an early draft of the Part 5 prompt (no §0); the owner chose to commit the work and hand §0 to a fresh session,
+  `CLUB_TIER_STAGE12D1_PART5B_PROMPT.md`, which builds rulings 2, 3, 5, 6, 7 and then trues up the help and walk §396.
+  Built: help in tournaments (paid twice; a card dispute in two topics; the refund line; three Needs attention items),
+  house league (two dispute topics; the open-page note on Mark received; "…'s fee was paid twice"), families, and a new
+  org section `stripe-fees`; the Stripe setup guide's dispute events, billing-webhook events and one owner's-step table;
+  `DisputeBlock.tsx`'s `org-slug-ok`. Found: the prompt's "12c help says a card dispute is 12d's" was false (none did); Part
+  4's Payouts help said both dispute fees "go on the same invoice", corrected to ruling 5 (a fee from the club's own
+  balance is never billed). Tests: the done list is covered (107 pass; nothing added). Not done: `check:layout` (aborted at
+  the memory floor, then every screen "Page not found"); `check:demos` red since 12c Part 4 (`registration-attention.ts`'s
+  extensionless import), not 12d-1's, for the owner. Walks: ledger §395 paid twice
+  (https://claude.ai/artifact/GmV1oKgXPb1RmVRNSeHw2i), §396 disputes and fees
+  (https://claude.ai/artifact/RKnhTRAFymveVggrXCUTnG).
 
 ## 0b · Rulings (owner paste-back, 2026-10-25)
 

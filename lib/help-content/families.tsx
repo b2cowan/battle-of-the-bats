@@ -252,7 +252,7 @@ const familiesHelp: HelpPageContent = {
               </p>
               <HelpSteps>
                 <li>Type the <strong>Amount received</strong>. It is placed down the children who owe, in the record&rsquo;s order, and two figures keep count: <strong>Placed</strong> and <strong>Left to place</strong>.</li>
-                <li>A house-league child: tick <strong>Whole fee</strong>. The fee is marked received in the club&rsquo;s books now, the same as <strong>Mark received</strong> on House league &rsaquo; Registrations.</li>
+                <li>A house-league child: tick <strong>Whole fee</strong>. The fee is marked received in the club&rsquo;s books now, the same as <strong>Mark received</strong> on House league &rsaquo; Registrations. A pay page the family left open for that child closes, so they can&rsquo;t pay twice.</li>
                 <li>A rep child: the amount goes to the team&rsquo;s head coach to record. The club never records into a team&rsquo;s own book.</li>
                 <li>Set the <strong>Date received</strong> (not after today) and <strong>How</strong>. A house-league fee keeps both in the season&rsquo;s book. Add a <strong>Note</strong> if you want one &mdash; a cheque number goes there.</li>
                 <li>Read the line at the bottom. It says what pressing will do, child by child. All of the amount must be placed before the button appears.</li>

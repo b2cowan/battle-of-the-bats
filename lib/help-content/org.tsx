@@ -1071,7 +1071,7 @@ const orgHelp: HelpPageContent = {
           content: (
             <>
               <p>On the League and Club plans, <strong>Payouts</strong> is a card on Settings, after <strong>Your public site</strong> and before <strong>Delete organization</strong>. The owner connects the organization&rsquo;s own Stripe account there, chooses who pays the processing fee (<strong>Families and teams pay it</strong> or <strong>The club pays it</strong>; on Tournament Plus the first reads <strong>Teams pay it</strong>), can write a one- or two-sentence <strong>Refund policy</strong> that teams see beside the pay button, and can <strong>Disconnect payouts</strong>. The card prints both rates, <em>Processing fee: &hellip; per card payment, &hellip; per bank debit</em>, from FieldLogicHQ&rsquo;s current rates; an account that doesn&rsquo;t take bank debit shows the card rate alone. <strong>Before you set up payouts</strong> says the same under <em>What it costs</em>, with a worked line for an example fee by card and by bank debit.</p>
-              <p>The choice is one setting for the whole organization. It covers teams paying tournament entry fees and families paying house-league registration fees by card, and house-league families see <strong>Pay now</strong> only once payouts are set up. Only the owner connects; a treasurer sees the state as a line on the Accounting Overview and on a season&rsquo;s Money page. Bank debit is offered to families and teams only once Stripe has approved your account for it. <strong>Disconnect payouts?</strong> says how many bank debits are still clearing; they finish, and their money still reaches you. When a bank debit comes back, Stripe charges a fee: it is billed to the club as a <em>Returned bank debit</em> line on its next FieldLogicHQ invoice. A club with no subscription invoice, such as a complimentary or free plan, is sent an invoice of its own. Stripe&rsquo;s fees are passed on to every club on every plan. Cards issued outside your country carry an extra Stripe fee, passed on the same way. A card dispute costs the club Stripe&rsquo;s dispute fee, and a second fee if you answer it that Stripe gives back if you win; both go on the same invoice. A payment made with a card issued outside your country costs Stripe more, and that extra fee is billed to the club on the same invoice; the family pays the ordinary price. It needs a plan that includes online payments, and the card isn&rsquo;t shown where they&rsquo;re not offered. The full guide, including what teams see and how refunds work, is <a href="../help/tournaments#online-payments">Let teams pay online by card</a> in the Tournaments guide.</p>
+              <p>The choice is one setting for the whole organization. It covers teams paying tournament entry fees and families paying house-league registration fees by card, and house-league families see <strong>Pay now</strong> only once payouts are set up. Only the owner connects; a treasurer sees the state as a line on the Accounting Overview and on a season&rsquo;s Money page. Bank debit is offered to families and teams only once Stripe has approved your account for it. <strong>Disconnect payouts?</strong> says how many bank debits are still clearing; they finish, and their money still reaches you. Stripe can charge other fees on your payments: when a bank debit comes back, when a card payment is disputed, and when a card issued outside your country is used. The card says so under the rates: <em>Other Stripe fees, such as for disputes, returned bank debits and cards issued outside your country, are billed to the club.</em> FieldLogicHQ passes them on to every club on every plan, and the family or team pays the ordinary price; see <a href="../help/org#stripe-fees">Stripe fees on your online payments</a>. It needs a plan that includes online payments, and the card isn&rsquo;t shown where they&rsquo;re not offered. The full guide, including what teams see and how refunds work, is <a href="../help/tournaments#online-payments">Let teams pay online by card</a> in the Tournaments guide.</p>
             </>
           ),
         },
@@ -1141,6 +1141,36 @@ const orgHelp: HelpPageContent = {
           ),
         },
       ],
+    },
+    {
+      id: 'stripe-fees',
+      heading: 'Stripe fees on your online payments',
+      summary: 'The Stripe fees your online payments can cause, how FieldLogicHQ passes them on to every club on every plan, and the Stripe fees list on Plan & billing.',
+      keywords: ['stripe fees', 'stripe fee', 'dispute fee', 'card dispute fee', 'answering fee', 'returned bank debit fee', 'returned bank debit', 'card issued outside your country', 'foreign card', 'extra fee', 'fee invoice', 'invoice of its own', 'pay the invoice', 'complimentary plan', 'free plan', 'plan and billing', 'credited to your account', 'other stripe fees'],
+      searchText: 'stripe fees on your online payments other stripe fees billed to the club passed on to every club on every plan your plan doesnt change complimentary free plan comped not exempt returned bank debit fee card dispute fee answering fee comes back if you win credited to your account taken from the clubs stripe balance extra fee for a card issued outside your country card from another country foreign card international card family never charged more refunded payment fee stays next fieldlogichq invoice invoice of its own sent on the 1st due in 30 days email from fieldlogichq pay the invoice stripes secure page reminder plan and billing stripe fees list on your next invoice on your dec 1 invoice invoice due paid couldnt be billed yet not billed test mode owner only',
+      links: [
+        { label: 'Plan & billing', href: '../org/billing' },
+      ],
+      content: (
+        <>
+          <p>When your organization takes payments online, Stripe charges some fees that those payments cause. FieldLogicHQ passes them on to every club on every plan, a complimentary or free plan included. Your plan doesn&rsquo;t change, and the family or team never pays more.</p>
+          <HelpDefs>
+            <HelpDef term="A returned bank debit">Stripe&rsquo;s fee when a bank debit comes back or is reversed.</HelpDef>
+            <HelpDef term="A card dispute">A fee for the dispute, and a second one if you answer it, which comes back if you win. Stripe often takes these from the club&rsquo;s own Stripe balance, and then nothing is billed. Only a fee Stripe charged FieldLogicHQ is passed on, at Stripe&rsquo;s figure, so a fee is never charged twice. The payment&rsquo;s record tells the owner which it was.</HelpDef>
+            <HelpDef term="A card issued outside your country">Stripe charges more for it. The extra is billed to the club at FieldLogicHQ&rsquo;s published rate on what the card was charged, and it stays billed if the payment is later refunded. The family or team pays the ordinary price and is never told.</HelpDef>
+          </HelpDefs>
+          <p><strong>Where they&rsquo;re billed.</strong> A club with a paid subscription gets each fee as a line on its next FieldLogicHQ invoice. Otherwise, for example on a complimentary or free plan, the club gets an invoice of its own on the 1st of the month for the month before. It comes in an email from FieldLogicHQ to the owner, is due in 30 days, and <strong>Pay the invoice</strong> opens Stripe&rsquo;s secure page. One reminder follows if it is still unpaid after the due date.</p>
+          <p><strong>The list on Plan &amp; billing.</strong> Once your organization has a Stripe fee, the owner&rsquo;s <strong>Plan &amp; billing</strong> page shows <strong>Stripe fees</strong>: each fee, its amount, and where it stands:</p>
+          <HelpDefs>
+            <HelpDef term="On your next FieldLogicHQ invoice">It rides on your subscription&rsquo;s next invoice.</HelpDef>
+            <HelpDef term="On your Dec 1 invoice">It waits for the next invoice of its own.</HelpDef>
+            <HelpDef term="Invoice N &middot; due, or paid">It is on an invoice of its own. While that invoice is open, <strong>Pay the invoice</strong> is beside it.</HelpDef>
+            <HelpDef term="Credited to your account">An answering fee Stripe gave back after you won a dispute. It comes off your bill.</HelpDef>
+            <HelpDef term="Couldn&rsquo;t be billed yet">FieldLogicHQ sees it and bills it again. There is nothing for you to do.</HelpDef>
+            <HelpDef term="Not billed: test mode">Nothing moves while payouts are in test mode.</HelpDef>
+          </HelpDefs>
+        </>
+      ),
     },
     {
       id: 'public-site-editor',

@@ -1,0 +1,303 @@
+<title>12d-1 · Disputes and Stripe fees</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 12c walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier · Stage 12d-1 · §396</span>
+    <h1>Disputes and Stripe fees</h1>
+    <p class="sub">Written 2026-10-27. One purpose: a card dispute is seen and answered by the one person who can, and every Stripe fee a club’s payments cause reaches that club’s bill, a club with no subscription included.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Until now a card dispute was dropped without a word. You check that it shows on the payment, quietly for the desk and in amber for the owner who set up payouts; that only the owner gets <strong>Answer in Stripe</strong>; that <strong>Copy the facts</strong> holds what we know; that no refund is offered while it is open; and what a win and a loss do (parts A to D).</p>
+    <p>Then the money it costs: a card issued outside the club’s country, a dispute fee Stripe charged FieldLogicHQ, and the club’s own monthly invoice, which UAT Rep Club gets because it has no subscription for the fees to ride on, just like a complimentary club (part E).</p>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>A disputed payment stays paid and in the book while it is open. The owner sees amber and Answer in Stripe; everyone else sees it quietly, with the owner’s name as the one who answers.</li>
+      <li>No refund is offered on a payment under dispute; a bank that is only asking blocks nothing.</li>
+      <li>Won: plain paid again. Lost: the payment is taken back beside its receipt (nothing deleted), and the child or team owes again.</li>
+      <li>“Fraud” never appears. Nothing is sent to the family or team.</li>
+      <li>Every fee on the club’s list names a receipt and a day, never a child; the amounts come from Stripe or the published rate and are never typed.</li>
+      <li>The club’s own invoice arrives, is paid on Stripe’s page, and reads paid.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li>Paid twice: walk §395.</li>
+      <li>A bank debit that comes back, and its fee on the club’s invoice: it can’t be produced on localhost (as in 12c). It goes in the Amplify end-to-end pass.</li>
+      <li>The email three days before an answer is due, and the unpaid invoice’s reminder: both are the daily job’s (running on dev since 2026-10-27), and both are emails, so they go in the Amplify end-to-end pass.</li>
+      <li>Emails, beyond the held boxes. Localhost cannot send.</li>
+      <li>The Payouts tab, leaving, and the payments terms: those are 12d-2.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts">
+      <dt>Dev server</dt><dd>Running at <code>http://localhost:3000</code>. <code>PAY_LINK_SECRET</code> is set in <code>.env.local</code>.</dd>
+      <dt>Stripe windows</dt><dd>Three. Window 1 (payments, now with every dispute event):<pre>C:\tools\stripe\stripe.exe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,charge.dispute.updated,charge.dispute.closed,charge.dispute.funds_withdrawn,charge.dispute.funds_reinstated,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook</pre>Window 2 (the club’s account):<pre>C:\tools\stripe\stripe.exe listen --events-from '@self' --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events</pre>Window 3 (FieldLogicHQ’s own billing, for the invoice in part E):<pre>C:\tools\stripe\stripe.exe listen --forward-to localhost:3000/api/billing/webhook</pre><code>STRIPE_WEBHOOK_SECRET</code> in <code>.env.local</code> must be the value <code>stripe listen --print-secret</code> prints; restart the dev server if you change it.</dd>
+      <dt>Test cards</dt><dd>Any future date, any CVC.<br><code>4000 0000 0000 0259</code> · a payment that is then disputed (Stripe’s test card).<br><code>4000 0000 0000 1976</code> · a payment the bank only asks about (an inquiry).<br><code>4242 4242 4242 4242</code> · an ordinary payment on a card issued in the US.<br>Both dispute cards are issued in the US too, so each of those payments also carries the foreign-card fee.</dd>
+      <dt>Answering in Stripe</dt><dd><strong>Answer in Stripe</strong> opens the club’s Stripe dashboard. In the dispute’s form, put <code>winning_evidence</code> or <code>losing_evidence</code> in the text box and submit; Stripe’s test mode then decides it within a minute. If that dashboard offers no form, run the helper with the record’s Stripe reference (it starts <code>du_</code>):<pre>node --env-file=.env.local .probe/s12d1-p5-answer.cjs du_XXXX win</pre>(or <code>lose</code>).</dd>
+      <dt>A team’s pay link</dt><dd>Find the team’s id with <code>node scripts/db-query.mjs --dev -q "select id from teams where name='TEAM NAME'"</code>, then:<pre>node -e "const c=require('crypto'),fs=require('fs');const s=fs.readFileSync('.env.local','utf8').split(/\r?\n/).find(l=>l.startsWith('PAY_LINK_SECRET=')).slice(16).trim();const id=process.argv[1];console.log('http://localhost:3000/uat-rep-club/uat-rep-club-invitational-2026/pay/'+Buffer.from(id.replace(/-/g,''),'hex').toString('base64url')+'.'+c.createHmac('sha256',s).update('team-pay:'+id).digest().subarray(0,16).toString('base64url'))" TEAM-ID</pre></dd>
+      <dt>The monthly invoice</dt><dd>The club’s own invoice is sent on the 1st for the fees before it. To see one today, part E runs that monthly step as if it were next month:<pre>node --env-file=.env.local --import ./tests/ts-resolver.mjs .probe/s12d1-p5-monthly.mjs</pre>It uses the test key only, and bills every club with fees waiting on dev, in Stripe’s test mode.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <p>One browser window per person. Families and teams use a private window with no login. Dev only, keep this page private.</p>
+    <dl class="facts">
+      <dt>Club</dt><dd><code>uat-rep-club</code> (UAT Rep Club). <code>node scripts/seed-club-fixture.mjs</code> rebuilds it and resets these passwords.</dd>
+      <dt>Owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> · set up payouts, so the one who answers; also runs tournaments</dd>
+      <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code> · the house-league desk</dd>
+      <dt>Treasurer</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>Platform admin</dt><dd>Your own platform-admin sign-in (part E, last step).</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Where and on what</h2>
+    <dl class="facts">
+      <dt>Payouts</dt><dd>UAT Rep Club’s test Stripe account is connected and taking payments. It has no FieldLogicHQ subscription, so its Stripe fees go on an invoice of its own.</dd>
+      <dt>House league</dt><dd><strong>2026 Fall House League</strong>, U9 Rookie (born 2014 or 2015). Sign-up: <code>/uat-rep-club/league/2026-fall-house-league/register</code>. Registrations: <code>/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/registrations</code>; Money: the same ending <code>/money</code>. The walk signs up <em>Lou Disputewalk</em> and <em>Ivy Askwalk</em>.</dd>
+      <dt>Tournament</dt><dd><strong>UAT Rep Club Invitational 2026</strong>, division 15U. The walk adds <em>Walk Lost Team</em> and <em>Walk Abroad Team</em> (“Add team” › “Add team manually”, 15U, “Unpaid”, an email you can read).</dd>
+      <dt>Plan &amp; billing</dt><dd><code>/uat-rep-club/admin/org/billing</code> (the owner’s page).</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = 's12d1-walk-disputes-fees-v1';
+  var TITLE = '12d-1 disputes and fees walk §396 (2026-10-27)';
+  var O = 'Owner, computer · uat-club-owner@uat-rep-club.local', R = 'Registrar, computer · uat-club-registrar@uat-rep-club.local';
+  var TR = 'Treasurer, computer · uat-club-treasurer@uat-rep-club.local', PA = 'Platform admin, computer';
+  var T = 'The team’s contact, private window, no login', F = 'A family, private window, no login';
+  var HELD = ['Did it', 'Held'];
+  var PARTS = [
+    { id: 'A', title: 'A family’s card payment is disputed', steps: [
+      { who: F, do: 'Sign up ONE child, <em>Lou Disputewalk</em>, in U9 Rookie, with your email. Pay by card with <code>4000 0000 0000 0259</code>.', see: '“Paid, thank you”. Within a minute window 1 prints <code>charge.dispute.created</code> and <code>[200]</code> (then <code>charge.dispute.funds_withdrawn</code>).' },
+      { who: R, do: 'On Registrations (tab “Active”) find Lou Disputewalk. Read the Fee cell, then tap its chip.', see: 'The paid line stays, with an info-colour (not amber) chip “Disputed”. The second line reads “(the owner’s name) answers by (date)”. The tap: “The cardholder’s bank is disputing this payment. Stripe is holding $… from the club’s Stripe balance until the bank decides. The payment stays in the season’s book.”' },
+      { who: R, do: 'Open the row’s ⋯ › “View the payment”, and read the block in the Fee section.', see: 'Heading “The cardholder’s bank is disputing this payment” with an info pill “Answer by …”. Rows: Opened; Why (“The cardholder says they didn’t make this payment”); Held by Stripe (“$…, taken from the club’s Stripe balance until the bank decides”); Answer by (a full date with its clock); Stripe reference with its copy. One button, <strong>Copy the facts</strong>, and NO Answer in Stripe. “Only (the owner’s name), who set up payouts, can sign in to Stripe. We emailed … on …. If the family calls, they can withdraw it with their bank.” and “No refund while it’s open: Stripe has already taken the money back, and a refund on top would pay the family twice.” No Dispute fee row. The word “fraud” appears nowhere.' },
+      { who: R, do: 'Open the row’s ⋯ again.', see: 'No way to refund Lou’s payment to the card while it is open.' },
+      { who: R, do: 'Press <strong>Copy the facts</strong>, then paste into this part’s notes box.', see: 'The button reads “Copied” briefly. The pasted text starts “Test mode: no money moved.”, then one line each: “Disputed payment: receipt N, $…, paid (day) by card ending 0259.”, “Paid by …”, “For: Lou Disputewalk, U9 Rookie, 2026 Fall House League with UAT Rep Club.”, “Registered (day) by …”, “The payer entered the card on Stripe’s secure payment page.”, the refund policy in quotes (if the club has one), the receipt-emailed line (only if that email went), and “Contact: UAT Rep Club, ….” No line is guessed or blank.', call: 'Builder’s call: Copy the facts is one labelled button on a phone too (the symbol-alone rule is for references).' },
+      { who: R, do: 'Open Needs attention.', see: 'A quiet (not amber) item “Lou’s card payment is disputed”: “(the guardian)’s bank is disputing receipt N ($…). (the owner’s name) answers it in Stripe by …. If the club wins, nothing changes here.”', call: 'Builder’s call: the desk gets its own quiet copy of the item (the handoff said the owner only).' },
+      { who: R, do: 'Open Money.', see: 'Under the band: “1 card payment is disputed. Stripe is holding $… from the club’s balance until the bank decides; it stays in Received until then.” Received still counts Lou.' },
+      { who: TR, do: 'Open the same Money page and, if Registrations opens for you, Lou’s record.', see: 'The same note. The record’s block reads the same facts with no buttons at all.' },
+      { who: O, do: 'Open Lou’s record (Registrations › ⋯ › View the payment) and read the block.', see: 'The block and its pill are AMBER. Both buttons: <strong>Answer in Stripe</strong> and <strong>Copy the facts</strong>, and no “Only … can sign in” line. A <strong>Dispute fee</strong> row reads either “Stripe took its dispute fee, $…, from the club’s Stripe balance.” or “Stripe’s dispute fee, $…, goes on a FieldLogicHQ invoice. Your plan doesn’t change; Stripe’s fees are passed on to every club.” Note which one in the notes box: part E depends on it.', call: 'Builder’s call: the answering fee isn’t printed (Stripe doesn’t break it out).' },
+      { who: O, do: 'Open Needs attention.', see: 'An amber item “Lou’s card payment is disputed”: “(the guardian)’s bank is disputing receipt N ($…): the cardholder says they didn’t make this payment. Stripe has taken $… from the club’s Stripe balance until the bank decides. Answer in Stripe by ….”' },
+      { who: O, opts: HELD, do: 'The dispute email to the owner (check your inbox).', see: 'Held. When sent: subject “A card payment to UAT Rep Club is disputed”, Held by Stripe and Answer by, “Answer it in Stripe with your evidence. Lou’s record has the facts to copy.”, a button “Open Lou’s record”, and “If the club wins, nothing changes in your books.” Nothing goes to the family.' }
+    ]},
+    { id: 'B', title: 'Answer it, and win', steps: [
+      { who: O, do: 'In Lou’s record press <strong>Answer in Stripe</strong>. In Stripe, answer the dispute with <code>winning_evidence</code> (or run the helper with <code>win</code>).', see: 'The button reads “Opening Stripe…”, then Stripe opens (“Stripe didn’t open. Try again.” in place if it can’t). Window 1 prints <code>charge.dispute.updated</code>, then <code>charge.dispute.closed</code>.' },
+      { who: O, do: 'Reload Lou’s record and Registrations.', see: 'The block reads “Dispute won” and “Won (day). The money is back in the club’s Stripe balance.” The Fee cell is plain paid, its second line ending “· dispute won (day)”. The owner’s item has settled.' },
+      { who: R, do: 'Reload Needs attention, Money, and the row’s ⋯.', see: 'The quiet item settled with “The club won the dispute.” The Money note is gone. The refund to the card is offered again.' }
+    ]},
+    { id: 'C', title: 'A team’s dispute is lost', steps: [
+      { who: O, do: 'Add <em>Walk Lost Team</em>, find its id and build its pay link.', see: 'The record owes the entry.' },
+      { who: T, do: 'Open the pay link and pay the deposit with <code>4000 0000 0000 0259</code>.', see: '“Paid, thank you”. Window 1 prints <code>charge.dispute.created</code>.' },
+      { who: O, do: 'Reload Walk Lost Team’s record.', see: 'The deposit row carries an amber “Disputed” chip with “Answer by …” under it. The amber block sits under the payments, with both buttons. The row’s ⋯ offers no refund to the card. Copy the facts reads “For: Walk Lost Team’s deposit for UAT Rep Club Invitational 2026.” and “Registered (day) by ….”' },
+      { who: O, do: 'Answer in Stripe with <code>losing_evidence</code> (or the helper with <code>lose</code>).', see: 'Window 1 prints <code>charge.dispute.closed</code>.' },
+      { who: O, do: 'Reload the record.', see: 'The deposit row is struck through: “Taken back by the bank, (day)”, and it is still there (nothing deleted). The summary owes the deposit again. The block reads “Dispute lost” with an amber pill “Owing again”: “Lost (day). The bank took back receipt N. It’s out of the tournament’s book, and Walk Lost Team owes $… again.”' },
+      { who: O, do: 'Open Needs attention.', see: 'An amber item “Walk Lost Team’s dispute was lost”: “The bank took back receipt N on (day). It’s out of the tournament’s book, and Walk Lost Team owes $… again. We haven’t emailed the team.” (The owner’s earlier dispute item has settled.)', call: 'Builder’s call: the settled line “The dispute was lost.” is derived (owed to /marketing).' }
+    ]},
+    { id: 'D', title: 'A bank only asking', steps: [
+      { who: F, do: 'Sign up ONE child, <em>Ivy Askwalk</em>, and pay by card with <code>4000 0000 0000 1976</code>.', see: '“Paid, thank you”; window 1 prints <code>charge.dispute.created</code>.' },
+      { who: O, do: 'Read Ivy’s Fee cell, her record’s block, and the row’s ⋯. Then Needs attention.', see: 'The chip reads “Bank asking”. The heading reads “The cardholder’s bank is asking about this payment”; Held by Stripe reads “Nothing taken yet”; there is NO “No refund while it’s open” line, and the refund to the card IS offered. The item: “…is asking about receipt N. Nothing has been taken. Answering can stop it becoming a dispute. Answer in Stripe by ….” Don’t refund.', call: 'Builder’s call: an inquiry never blocks a refund (Stripe settles one by a refund).' }
+    ]},
+    { id: 'E', title: 'Stripe fees and the club’s own invoice', steps: [
+      { who: O, do: 'Open Settings and read the Payouts card under its rates.', see: '“Other Stripe fees, such as for disputes, returned bank debits and cards issued outside your country, are billed to the club.”, with “Your plan doesn’t change.” after it if the club pays nothing for its plan. Never “outside Canada”.' },
+      { who: O, do: 'Add <em>Walk Abroad Team</em>, build its pay link, and have the team pay the deposit with <code>4242 4242 4242 4242</code>. Read the pay button and the receipt.', see: 'The button and the receipt show the deposit and the processing fee only: nothing extra for a card from another country.' },
+      { who: O, do: 'Open Plan &amp; billing.', see: 'A <strong>Stripe fees</strong> section: “Stripe charges these fees on your online payments, and FieldLogicHQ passes them on to every club.” Rows read “Extra fee for a card issued outside your country · receipt N · (day)”, one for each payment on a US card in this walk; a “Card dispute fee · receipt N · (day)” row only if step A9 said the fee goes on a FieldLogicHQ invoice. Each row’s status reads “On your (next 1st) invoice”. No child’s name anywhere.', call: 'Builder’s call: the foreign-card extra is the published rate on what the card was charged (Stripe gives no per-payment figure), recorded once Stripe says paid; the list shows for every plan and is absent until a fee exists.' },
+      { who: O, do: 'Run the monthly step (see “Before you start”), then reload Plan &amp; billing.', see: 'The command prints <code>{ sent: 1, failed: 0 }</code> or more (other clubs on dev may have fees). The rows now read “Invoice N · due (a day 30 days on)”, and <strong>Pay the invoice</strong> appears once.', call: 'Builder’s call: the club’s own invoice is due in 30 days (our choice, not Stripe’s).' },
+      { who: O, opts: HELD, do: 'The invoice email to the owner (check your inbox).', see: 'Held. When sent: subject “Invoice N from FieldLogicHQ: Stripe fees for UAT Rep Club”, the lead “Stripe charged FieldLogicHQ $… in fees on UAT Rep Club’s online payments, and we pass them on to every club, on every plan. Your plan doesn’t change.”, the lines, Total and Due, a reason naming only the kinds on it, “Pay the invoice”, and “Questions: hello@fieldlogichq.ca.”' },
+      { who: O, do: 'Press <strong>Pay the invoice</strong> and read Stripe’s page; pay it with <code>4242 4242 4242 4242</code>. Then reload Plan &amp; billing.', see: 'Stripe’s invoice page lists the same lines (by receipt, no child), the memo “Stripe fees on UAT Rep Club’s online payments. Your plan doesn’t change; Stripe’s fees are passed on to every club.” and “Questions: hello@fieldlogichq.ca.” Window 3 prints <code>invoice.paid</code> and <code>[200]</code>. The rows read “Invoice N · paid (day)” and Pay the invoice is gone.' },
+      { who: PA, do: 'In platform admin, open UAT Rep Club › Money.', see: 'The invoice shows as a Stripe-fees invoice, paid, never with the “not the subscription’s” warning; the club’s fees list beside it. Nothing about the club changed when the invoice was open.' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held"). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
