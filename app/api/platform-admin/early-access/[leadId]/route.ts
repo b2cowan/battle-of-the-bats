@@ -34,9 +34,10 @@ type LeadRow = Record<string, unknown> & {
   internal_status: string;
   linked_at: string | null;
   lost_reason: string | null;
+  do_not_contact_at: string | null;
 };
 
-const SELECT = `${EARLY_ACCESS_SELECT}, source, source_words, lost_reason, linked_at, step_changed_at`;
+const SELECT = `${EARLY_ACCESS_SELECT}, source, source_words, lost_reason, linked_at, step_changed_at, do_not_contact_at`;
 
 function cleanWords(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -108,6 +109,8 @@ export const PATCH = withObservability(async (req: NextRequest,
       return NextResponse.json({ error: 'Pick why it was lost before saving.', field: 'lostReason' }, { status: 400 });
     }
     update.lost_reason = reason;
+    // Asking not to be contacted is a lasting mark (mig 404): it stays when the step later moves, until someone allows contact.
+    if (reason === 'asked_not_to_contact' && !current.do_not_contact_at) update.do_not_contact_at = now;
   } else if (current.lost_reason) {
     update.lost_reason = null;
   }

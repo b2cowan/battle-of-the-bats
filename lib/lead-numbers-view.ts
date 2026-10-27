@@ -7,10 +7,7 @@
 import { consoleDate, consoleDay } from './console-dates';
 import { tournamentToday } from './timezone';
 import { leadPageLabel } from './early-access-admin';
-import { leadNumbers, type AccountsRead, type GroupRow, type LeadFacts, type LeadNumbers, type PayRead } from './lead-numbers';
-
-/** Purchases were first recorded in the events table on this day (commit 6de082f2f); paying by month starts here. */
-export const PAYING_RECORDED_FROM = '2026-10-25';
+import { leadNumbers, PAYING_RECORDED_FROM, type AccountsRead, type GroupRow, type LeadFacts, type LeadNumbers, type PayRead } from './lead-numbers';
 
 export type PeriodKey = 'all' | 'month' | '30' | '90' | 'year';
 export type PeriodPick = { key: PeriodKey; from: string | null; to: string | null; label: string };
@@ -75,11 +72,11 @@ export function numbersView(all: LeadFacts[], period: PeriodPick, f: NumbersFilt
         text: `of those leads, the ones linked to a club or a Coaches Portal by a person (an offered match they confirmed, or by hand), at any time up to today.${numbers.signedUp ? ` ${numbers.offered} of the ${numbers.signedUp} were offered matches.` : ''}`,
       },
       { term: 'Pay now', text: 'of those, the ones paying today: their own plan is not the free Tournament plan, their billing is active, and a real subscription stands behind it. A trial, free time and a Founding Season comp are not paying.' },
-      { term: 'Time to sign up', text: 'days from the lead’s first form to the day its club or portal was created, not the day staff linked it.' },
+      { term: 'Time to sign up', text: 'days from the lead’s first form to the day its club or portal was created, not the day staff linked it. A club that already existed before the first form is still Signed up, but is left out of this figure.' },
       { term: 'Link tag', text: 'the tag on the link a lead arrived by, from our short list. A lead that filled the form again keeps its first tag. Leads with no tag are counted too, so the tagged ones are not mistaken for all of them.' },
       { term: 'What it cannot know', text: `whether a charge was actually collected or how much; how a lead heard of us unless staff recorded it or the visitor said; a club that signed up under a different address from the lead’s until someone links it; anything before ${first ? consoleDay(first) : 'the first lead'}.` },
     ],
-    payingFrom: `Paying by month starts on ${consoleDate(`${PAYING_RECORDED_FROM}T12:00:00Z`)}, the day we began recording when a subscription starts. Until then, Pay now is today’s count only.`,
+    payingFrom: `“Started a subscription” counts the leads of each month whose club began a subscription of its own, from ${consoleDate(`${PAYING_RECORDED_FROM}T12:00:00Z`)}, the day we began recording when one starts. Earlier months show no figure, and that first month counts only starts from that day. Pay now is today’s count.`,
     filterOptions: {
       plans: [...new Set(all.flatMap(l => l.plans))],
       tags: [...new Set(all.map(l => l.refTag).filter((x): x is string => !!x))],

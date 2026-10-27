@@ -3998,6 +3998,15 @@
         "column_default": null
       },
       {
+        "table_name": "early_access_leads",
+        "pos": 38,
+        "column_name": "do_not_contact_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "email_batches",
         "pos": 1,
         "column_name": "id",
@@ -38691,6 +38700,12 @@
         "table_name": "early_access_lead_submissions",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "early_access_leads",
+        "detail": "early_access_leads_asked_not_to_contact_sticks",
+        "check_clause": "((lost_reason IS DISTINCT FROM 'asked_not_to_contact'::text) OR (do_not_contact_at IS NOT NULL))"
       },
       {
         "kind": "CHECK",

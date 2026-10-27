@@ -113,8 +113,8 @@ textarea { width: 100%; min-height: 52px; font: 14px/1.5 var(--font-body); paddi
     ["cause", "Make three logged emails", "a person’s record and the public registration page", "Super admin", [
       ["Open Find (press / on any console page), type uat-owner@uat-test-org.local, and open that person. Press “Send a reset link”, give any reason, and confirm.",
        "The record confirms the link was sent and nothing errors. On dev with no mail key no email arrives; that is expected."],
-      ["Find the staff address support@dev.local the same way (as Super admin you may open staff records). Press “Send a reset link”, give any reason, and confirm.",
-       "The same confirmation. This one is the email to a staff account that sections 5 and 6 need."],
+      ["Staff are not customers, so Find and People do not list them and there is no “Send a reset link” button for a staff account: do not look for one. Instead, in a private window open {{http://localhost:3000/platform-admin/login}}, press “Forgot password?”, type {{support@dev.local}} and press “Send reset link”. Then close the window.",
+       "The page says “If an account exists for support@dev.local, a reset link is on its way. Check your inbox.” (it says the same for any address). On dev with no mail key no email arrives; that is expected. This one is the email to a staff account that the “Emails to a staff account” section needs."],
       ["Open any dev tournament’s public registration page (or add a team to a dev tournament from its admin Teams page) and register a team with the contact email {{walk-noaccount-1@example.com}}.",
        "The registration goes through. That address has no account anywhere, which is what the next sections look for."],
       ["Press / and type {{walk-noaccount-1@example.com}} again. Do not open anything yet.",

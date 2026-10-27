@@ -216,7 +216,7 @@ button.bandCell:focus-visible { outline: 2px solid var(--home-olive); outline-of
 .chipQuiet { background: transparent; color: var(--text-tertiary); }
 
 /* ── Tabs: an underline on the current one, sentence case ── */
-.tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--home-line); overflow-x: auto; }
+.tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--home-line); overflow-x: auto; overflow-y: hidden; }
 .tab {
   padding: 0.65rem 0.9rem;
   margin-bottom: -1px;

@@ -4,7 +4,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { daysToSignUp, isStuck, leadNumbers, needsYou, selfConfirmed, stepCounts, type LeadFacts, type PayRead } from '../../lib/lead-numbers.ts';
+import { clubPredatesLead, daysToSignUp, isStuck, leadNumbers, needsYou, selfConfirmed, stepCounts, type LeadFacts, type PayRead } from '../../lib/lead-numbers.ts';
 import { paysNow } from '../../lib/plan-growth.ts';
 import { leadPageLabel } from '../../lib/early-access-admin.ts';
 import { readCode } from './_source-code.ts';
@@ -49,8 +49,17 @@ describe('Stage 7 · the one definition', () => {
   it('counts time to sign up to the club’s creation, not the link', () => {
     assert.equal(daysToSignUp(LEADS[0]), 83);
     assert.deepEqual(all.timeToSignUp, { middle: 10, quickest: 4, slowest: 83 });
-    // A club made before the lead's form counts as 0, never negative.
-    assert.equal(daysToSignUp(lead({ createdAt: '2026-10-01T00:00:00Z', signedUpAt: '2026-09-01T00:00:00Z' })), 0);
+    // A club made before the lead's form is an existing customer: no days (so it is left out of the spread), not 0.
+    const older = { createdAt: '2026-10-01T00:00:00Z', signedUpAt: '2026-09-01T00:00:00Z' };
+    assert.equal(daysToSignUp(older), null);
+    assert.equal(clubPredatesLead(older), true);
+    // Made minutes before the form, or the same day after it: still a sign-up, 0 days.
+    assert.equal(daysToSignUp({ createdAt: '2026-10-01T12:00:00Z', signedUpAt: '2026-10-01T11:55:00Z' }), 0);
+    assert.equal(clubPredatesLead({ createdAt: '2026-10-01T12:00:00Z', signedUpAt: '2026-10-01T11:55:00Z' }), false);
+    // It is still Signed up, just not counted in Time to sign up.
+    const older2 = leadNumbers([lead({ id: 'old', step: 'converted', linkedAt: '2026-10-02T00:00:00Z', ...older, orgId: 'org-x', linkMethod: 'by_hand' })], { from: null, to: null }, PAY, ACCOUNTS, new Set(['org-x']));
+    assert.equal(older2.signedUp, 1);
+    assert.equal(older2.timeToSignUp, null);
   });
 
   it('a failed read is "Not read" (null), never 0 or 0%; a rate with nothing behind it is a dash (null)', () => {
@@ -158,5 +167,24 @@ describe('Stage 7 finish pass · a lead belongs to the console’s day, not the 
     const november = leadNumbers([late], { from: '2026-11-01', to: '2026-11-30' }, PAY, ACCOUNTS, new Set());
     assert.equal(november.arrived, 0, 'not in November');
     assert.deepEqual(october.byMonth.map(m => m.month), ['2026-10']);
+  });
+});
+
+describe('Month by month · started a subscription', () => {
+  const ls = [
+    lead({ id: 'sep', createdAt: '2026-09-10T00:00:00Z', step: 'converted', linkedAt: '2026-09-12T00:00:00Z', signedUpAt: '2026-09-11T00:00:00Z', orgId: 'org-sep', linkMethod: 'by_hand' }),
+    lead({ id: 'oct', createdAt: '2026-10-26T00:00:00Z', step: 'converted', linkedAt: '2026-10-27T00:00:00Z', signedUpAt: '2026-10-26T12:00:00Z', orgId: 'org-oct', linkMethod: 'by_hand' }),
+    lead({ id: 'oct2', createdAt: '2026-10-27T00:00:00Z', step: 'converted', linkedAt: '2026-10-27T01:00:00Z', signedUpAt: '2026-10-27T00:30:00Z', orgId: 'org-oct2', linkMethod: 'by_hand' }),
+  ];
+  const WITH: PayRead = { kind: 'read', paying: new Set(), started: new Set(['org-sep', 'org-oct']) };
+
+  it('is a dash before starts were recorded, and counts the leads of a recorded month whose club started one', () => {
+    const n = leadNumbers(ls, { from: null, to: null }, WITH, ACCOUNTS, new Set());
+    assert.deepEqual(n.byMonth.map(m => [m.month, m.started]), [['2026-09', null], ['2026-10', 1]]);
+  });
+
+  it('shows no figure when the starts were not read at all', () => {
+    assert.ok(leadNumbers(ls, { from: null, to: null }, PAY, ACCOUNTS, new Set()).byMonth.every(m => m.started === null));
+    assert.ok(leadNumbers(ls, { from: null, to: null }, { kind: 'not_read' }, ACCOUNTS, new Set()).byMonth.every(m => m.started === null));
   });
 });

@@ -326,6 +326,28 @@ export function compareRecord(ours: OurMoneyRecord, read: MoneyRead | null): Com
   return rows;
 }
 
+/** What one "Differs" chip opens (every highlight opens on click): what that difference means, in that row's figures. */
+export function differsWords(row: CompareRow, rows: CompareRow[]): string {
+  const sameCause = row.key !== 'subscription' && rows.some(r => r.key === 'subscription' && r.differs)
+    ? ' It likely has the same cause as the subscription difference below.' : '';
+  switch (row.key) {
+    case 'plan':
+      return `Stripe charges the club for ${row.stripe}; the club gets what our record says, ${row.ours}. Until they agree, the club pays for one plan and uses another.${sameCause}`;
+    case 'status':
+      return `What the club can use follows our record (${row.ours}); its card follows Stripe (${row.stripe}).${sameCause}`;
+    case 'renews':
+      return `Stripe next charges the card on ${row.stripe}. Our record says ${row.ours}, so the date we show the club is not the date its card is charged.${sameCause}`;
+    case 'subscription': {
+      const others = rows.some(r => r.key !== 'subscription' && r.differs) ? ' The other differences above likely come from it.' : '';
+      return row.stripeId
+        ? `Stripe has no subscription with our record’s number, so the Stripe column shows the club’s live one instead. Our record is following a subscription Stripe is not billing.${others}`
+        : `Stripe has no subscription with our record’s number, and no other subscription for this club.${others}`;
+    }
+    default:
+      return '';
+  }
+}
+
 const ROW_NAMES: Record<string, string> = { plan: 'the plan', status: 'the billing status', renews: 'the renewal date', subscription: 'the subscription' };
 
 /** The first line of the tab (drawing A/B): the patterns first, then the comparison. */

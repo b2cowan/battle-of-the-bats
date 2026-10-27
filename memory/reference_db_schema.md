@@ -686,8 +686,12 @@ lead_id (uuid) → early_access_leads.id NOT NULL, org_id (uuid) → organizatio
 id (uuid), lead_id (uuid) → early_access_leads.id NOT NULL, body, author_email, from_old_box (boolean), created_at, removed_by, removed_at
 - Indexes: early_access_lead_notes_lead_idx
 
+### early_access_lead_submissions
+id (uuid), lead_id (uuid) → early_access_leads.id NOT NULL, submitted_at, kind, source_path, their_words, heard_from, yes_not_applied (boolean), withdrew_consent (boolean)
+- Indexes: early_access_lead_submissions_lead_idx
+
 ### early_access_leads
-id (uuid), created_at, updated_at, last_submitted_at, submission_count (integer), status, name NOT NULL, email NOT NULL, email_normalized NOT NULL, organization_name, role, sports, plan_interest, features_interested, notes, source_path, user_agent, release_notifications_consent (boolean), metadata (jsonb), internal_status, internal_notes, last_contacted_at, last_contacted_by, converted_org_id (uuid) → organizations.id, converted_at, follow_up_due_at, next_action, source, source_words, lost_reason, link_method, linked_by, linked_at, signed_up_at, step_changed_at, heard_from, ref_tag
+id (uuid), created_at, updated_at, last_submitted_at, submission_count (integer), status, name NOT NULL, email NOT NULL, email_normalized NOT NULL, organization_name, role, sports, plan_interest, features_interested, notes, source_path, user_agent, release_notifications_consent (boolean), metadata (jsonb), internal_status, internal_notes, last_contacted_at, last_contacted_by, converted_org_id (uuid) → organizations.id, converted_at, follow_up_due_at, next_action, source, source_words, lost_reason, link_method, linked_by, linked_at, signed_up_at, step_changed_at, heard_from, ref_tag, do_not_contact_at
 - Indexes: early_access_leads_converted_org_id_idx, early_access_leads_converted_org_idx, early_access_leads_email_normalized_key, early_access_leads_internal_status_idx, idx_early_access_leads_converted_at, idx_early_access_leads_created_at, idx_early_access_leads_features_interested, idx_early_access_leads_follow_up_due_at, idx_early_access_leads_internal_status, idx_early_access_leads_plan_interest, idx_early_access_leads_status
 
 ### email_batches
@@ -899,7 +903,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, first_day
 - Indexes: org_fiscal_years_closed_by_idx, org_fiscal_years_one_name, org_fiscal_years_one_start
 
 ### org_payment_accounts
-org_id (uuid) → organizations.id NOT NULL, stripe_account_id NOT NULL, livemode (boolean), country, requirements_due, requirements_deadline, stripe_synced_at, fee_payer, refund_policy, terms_version, terms_agreed_by (uuid), terms_agreed_by_email, terms_agreed_at, connected_by (uuid), connected_at, disconnected_by (uuid), disconnected_at, created_at, updated_at, card_payments_status, card_payments_reason, onboarding_finished_at, bank_debit_status
+org_id (uuid) → organizations.id NOT NULL, stripe_account_id NOT NULL, livemode (boolean), country, requirements_due, requirements_deadline, stripe_synced_at, fee_payer, refund_policy, terms_version, terms_agreed_by (uuid), terms_agreed_by_email, terms_agreed_at, connected_by (uuid), connected_at, disconnected_by (uuid), disconnected_at, created_at, updated_at, card_payments_status, card_payments_reason, onboarding_finished_at, bank_debit_status, terms_notice_version, terms_notice_at, terms_reminded_at, ending_warned_for, ending_warned_at
 - Indexes: org_payment_accounts_stripe_account_key
 
 ### org_people
@@ -1006,7 +1010,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **245 tables** across 10 modules.
+Total: **246 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 16 tables
@@ -1016,5 +1020,5 @@ Total: **245 tables** across 10 modules.
 - Stripe / Billing: 2 tables
 - Organization / Platform Core: 8 tables
 - Platform Admin: 29 tables
-- CRM / Leads: 5 tables
+- CRM / Leads: 6 tables
 - Other: 77 tables

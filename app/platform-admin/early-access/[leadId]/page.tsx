@@ -6,7 +6,7 @@ import { readOffers, readPaying, type OfferedClub } from '@/lib/lead-book';
 import { leadTimeline } from '@/lib/lead-timeline';
 import { featureWords, lostWords, offerSentence, planWords, sourceWords, stepTone } from '@/lib/lead-views';
 import { heardFromLabel, linkTagLabel, sourceFromHeard } from '@/lib/lead-form-answers';
-import { daysToSignUp } from '@/lib/lead-numbers';
+import { clubPredatesLead, daysToSignUp } from '@/lib/lead-numbers';
 import { consoleDay } from '@/lib/console-dates';
 import { daysBetweenDateStrings, orgDayKey, tournamentToday } from '@/lib/timezone';
 import { EARLY_ACCESS_STATUS_LABELS, isEarlyAccessStatus, leadPageLabel, type EarlyAccessStatus } from '@/lib/early-access-admin';
@@ -30,12 +30,13 @@ type LeadRow = {
   converted_org_id: string | null; follow_up_due_at: string | null; next_action: string | null; source: string | null;
   source_words: string | null; lost_reason: string | null; link_method: string | null; linked_by: string | null;
   linked_at: string | null; signed_up_at: string | null; heard_from: string | null; ref_tag: string | null;
+  do_not_contact_at: string | null;
 };
 
 const COLUMNS = 'id, created_at, last_submitted_at, submission_count, internal_status, name, email, organization_name, role, sports, '
   + 'plan_interest, features_interested, notes, source_path, release_notifications_consent, last_contacted_at, last_contacted_by, '
   + 'converted_org_id, follow_up_due_at, next_action, source, source_words, lost_reason, link_method, linked_by, linked_at, '
-  + 'signed_up_at, heard_from, ref_tag';
+  + 'signed_up_at, heard_from, ref_tag, do_not_contact_at';
 
 function plural(n: number, one: string, many = `${one}s`) {
   return `${n} ${n === 1 ? one : many}`;
@@ -81,6 +82,7 @@ export default async function LeadPage({ params }: { params: Promise<{ leadId: s
       : null;
     const pay = org ? await readPaying([org.id]) : null;
     const days = daysToSignUp({ createdAt: lead.created_at, signedUpAt: lead.signed_up_at });
+    const predates = clubPredatesLead({ createdAt: lead.created_at, signedUpAt: lead.signed_up_at });
     const paying = !org ? 'The club has since been deleted.'
       : pay?.kind === 'not_read' ? 'Whether it pays could not be read just now.'
         : pay?.paying.has(org.id) ? `Paying: ${planName(org.plan_id)}.`
@@ -88,7 +90,9 @@ export default async function LeadPage({ params }: { params: Promise<{ leadId: s
             ? `Not paying yet: on a ${planName(org.plan_id)} trial${org.current_period_end ? ` until ${consoleDay(org.current_period_end)}` : ''}.`
             : `Not paying: ${planName(org.plan_id)}.`;
     signedUp = {
-      line: `Signed up on ${consoleDay(lead.signed_up_at)}${days !== null ? `, ${plural(days, 'day')} after it arrived` : ''}. `
+      line: (predates
+        ? `This club already existed: it was created on ${consoleDay(lead.signed_up_at)}, before this lead arrived. `
+        : `Signed up on ${consoleDay(lead.signed_up_at)}${days !== null ? `, ${plural(days, 'day')} after it arrived` : ''}. `)
         + `Linked by ${who(lead.linked_by)} on ${consoleDay(lead.linked_at)}. ${paying}`,
       club: org ? { id: org.id, name: org.name, sub: `${planName(org.plan_id)}${org.subscription_status === 'trialing' ? ' · trial' : ''} · ${lead.link_method === 'offered' ? 'linked from the offered match' : 'linked by hand'}` } : null,
     };
@@ -140,6 +144,9 @@ export default async function LeadPage({ params }: { params: Promise<{ leadId: s
       followUpDueAt: lead.follow_up_due_at ?? '',
     },
     linked: !!lead.linked_at,
+    doNotContact: lead.do_not_contact_at
+      ? { sentence: `Asked not to be contacted, on ${consoleDay(lead.do_not_contact_at)}.`, canAllow: lead.lost_reason !== 'asked_not_to_contact' }
+      : null,
     timeline: timeline.entries,
     timelineNotRead: timeline.notRead,
     canRemoveNotes: hasPlatformPower(auth.role, 'delete_records'),

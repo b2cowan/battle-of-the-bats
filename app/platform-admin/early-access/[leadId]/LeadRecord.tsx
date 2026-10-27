@@ -58,6 +58,8 @@ export type LeadRecordProps = {
   };
   form: { step: EarlyAccessStatus; lostReason: string; source: string; sourceWords: string; nextAction: string; followUpDueAt: string };
   linked: boolean;
+  /** "Asked not to be contacted on Oct 27", or null when the lead has not asked. It outlives the step (mig 404). */
+  doNotContact: { sentence: string; canAllow: boolean } | null;
   timeline: TimelineEntry[];
   timelineNotRead: boolean;
   canRemoveNotes: boolean;
@@ -71,7 +73,10 @@ const TEMPLATES = {
   feedback: { label: 'Feedback call', text: `Subject: Quick FieldLogicHQ feedback call\n\nHi {{name}},\n\nI saw your early-access request for {{organization}} and wanted to ask a few questions about what would make FieldLogicHQ useful for your program.\n\nWould a 20-minute call work sometime next week?` },
 } as const;
 
-type Win = 'discard' | 'note' | 'picker' | 'unlink' | { removeNote: string } | null;
+type Win = 'discard' | 'note' | 'picker' | 'unlink' | 'allowContact' | { removeNote: string } | null;
+
+/** The small print under a timeline sentence: who did it, then what else changed. */
+const byLine = (t: TimelineEntry) => [t.by && `By ${t.by}`, t.sub].filter(Boolean).join(' · ');
 
 export default function LeadRecord(p: LeadRecordProps) {
   const router = useRouter();
@@ -195,6 +200,20 @@ export default function LeadRecord(p: LeadRecordProps) {
         </div>
       )}
 
+      {p.doNotContact && (
+        <div className={`${kit.callout} ${kit.calloutWarn} ${styles.offer}`}>
+          <div>
+            <strong>{p.doNotContact.sentence}</strong>
+            <span className={kit.sub}>Never in Copy emails, and an empty email cell in an export. Moving the step does not change that.</span>
+          </div>
+          {p.doNotContact.canAllow && (
+            <span className={styles.offerActions}>
+              <button type="button" className="btn btn-outline" onClick={() => setWin('allowContact')}>Allow contact again</button>
+            </span>
+          )}
+        </div>
+      )}
+
       <div className={styles.layout}>
         <section className={kit.section}>
           <h2 className={kit.sectionTitle}>About this lead</h2>
@@ -261,8 +280,9 @@ export default function LeadRecord(p: LeadRecordProps) {
                 <span className={styles.when}>{t.when}</span>
                 <span className={styles.what}>
                   <span className={t.quiet ? styles.quiet : undefined}>{t.title}</span>
-                  {t.sub && <span className={kit.sub}>{t.sub}</span>}
+                  {!t.body && byLine(t) && <span className={kit.sub}>{byLine(t)}</span>}
                   {t.body && <span className={styles.body}>{t.body}</span>}
+                  {t.body && byLine(t) && <span className={kit.sub}>{byLine(t)}</span>}
                   {t.noteId && p.canRemoveNotes && (
                     <button type="button" className={`${kit.door} ${styles.remove}`} onClick={() => setWin({ removeNote: t.noteId! })}>Remove</button>
                   )}
@@ -298,11 +318,26 @@ export default function LeadRecord(p: LeadRecordProps) {
           }}
           onClose={() => setWin(null)} />
       )}
+      {win === 'allowContact' && (
+        <RecordWindow title="Allow contact again" sentence={<>This lead asked not to be contacted. Allowing contact puts it back in Copy emails (when it said yes to release emails) and in an export with its address. The timeline records who did it.</>}
+          cancelLabel="Keep it as it is" confirmLabel="Allow contact" askWhy={false}
+          onConfirm={async () => {
+            const { ok, data } = await sendJson(`/api/platform-admin/early-access/${p.id}/allow-contact`, 'POST', {});
+            if (!ok) return errorOf(data, 'That did not go through.');
+            setWin(null); setNotice('Contact is allowed again.'); router.refresh(); return null;
+          }}
+          onClose={() => setWin(null)} />
+      )}
       {win === 'note' && <NoteWindow leadId={p.id} title={p.title} onClose={() => setWin(null)} onDone={() => { setWin(null); setNotice('Note added.'); router.refresh(); }} />}
       {win === 'picker' && (
         <ClubPicker onClose={() => setWin(null)} onPick={async c => {
-          const ok = await act(`/api/platform-admin/early-access/${p.id}/link`, 'POST', { orgId: c.id, method: 'by_hand' }, `${c.name} is linked. The lead is Signed up.`);
-          if (ok) { setWin(null); setEditing(false); }
+          // A refusal (the lead asked not to be contacted, a stale step) is said inside the window, where the person is looking.
+          const { ok, data } = await sendJson(`/api/platform-admin/early-access/${p.id}/link`, 'POST', { orgId: c.id, method: 'by_hand' });
+          if (!ok) return errorOf(data, 'That did not go through. Try again in a moment.');
+          setNotice(`${c.name} is linked. The lead is Signed up.`);
+          router.refresh();
+          setWin(null); setEditing(false);
+          return null;
         }} />
       )}
       <UnsavedChangesGuard active={editing && changed} message="You have unsaved changes to this lead. Leave without saving them?" />
@@ -343,7 +378,8 @@ function NoteWindow({ leadId, title, onClose, onDone }: { leadId: string; title:
 
 type Club = { id: string; name: string; planId: string | null; status: string | null; joined: string | null };
 
-function ClubPicker({ onClose, onPick }: { onClose: () => void; onPick: (c: Club) => Promise<void> }) {
+/** `onPick` answers null when the link went through, or the sentence to show when it was refused. */
+function ClubPicker({ onClose, onPick }: { onClose: () => void; onPick: (c: Club) => Promise<string | null> }) {
   const [q, setQ] = useState('');
   const [clubs, setClubs] = useState<Club[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -372,7 +408,7 @@ function ClubPicker({ onClose, onPick }: { onClose: () => void; onPick: (c: Club
         <ul className={styles.picks}>
           {clubs.map(c => (
             <li key={c.id}>
-              <button type="button" className={styles.pick} onClick={() => void onPick(c)}>
+              <button type="button" className={styles.pick} onClick={() => { void onPick(c).then(refusal => { if (refusal) setError(refusal); }); }}>
                 <strong>{c.name}</strong>
                 <span className={kit.sub}>{c.planId ? planLabel(c.planId) : 'No plan'}{c.status === 'trialing' ? ' · trial' : ''}{c.joined ? ` · joined ${c.joined}` : ''}</span>
               </button>

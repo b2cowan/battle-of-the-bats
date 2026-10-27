@@ -44,8 +44,14 @@ export type LeadFacts = {
   demo: boolean;
 };
 
-/** Which linked clubs pay today, or that the billing records could not be read. */
-export type PayRead = { kind: 'read'; paying: ReadonlySet<string> } | { kind: 'not_read' };
+/** Subscription starts were first recorded in the events table on this day (commit 6de082f2f); paying by month starts here. */
+export const PAYING_RECORDED_FROM = '2026-10-25';
+
+/**
+ * Which linked clubs pay today, or that the billing records could not be read. `started` (Numbers only) is the clubs with
+ * a recorded subscription start since PAYING_RECORDED_FROM; without it Month by month shows no paying figure.
+ */
+export type PayRead = { kind: 'read'; paying: ReadonlySet<string>; started?: ReadonlySet<string> } | { kind: 'not_read' };
 /** New accounts in the period (demo clubs left out), or that they could not be read. */
 export type AccountsRead = { kind: 'read'; created: { id: string; createdAt: string }[] } | { kind: 'not_read' };
 
@@ -84,10 +90,24 @@ export function needsYou(l: LeadFacts, now: Date, today: string, hasOffer: boole
   return l.step === 'new' || followUpDue(l, today) || isStuck(l, now) || hasOffer;
 }
 
-/** Days from the first form to the club's creation; a club made before the lead counts as 0. */
-export function daysToSignUp(l: Pick<LeadFacts, 'createdAt' | 'signedUpAt'>): number | null {
+function rawDaysToSignUp(l: Pick<LeadFacts, 'createdAt' | 'signedUpAt'>): number | null {
   if (!l.signedUpAt) return null;
-  return Math.max(0, Math.round((new Date(l.signedUpAt).getTime() - new Date(l.createdAt).getTime()) / DAY));
+  return Math.round((new Date(l.signedUpAt).getTime() - new Date(l.createdAt).getTime()) / DAY);
+}
+
+/** A club that was made, by more than half a day, before the lead's first form: an existing customer filling the form. */
+export function clubPredatesLead(l: Pick<LeadFacts, 'createdAt' | 'signedUpAt'>): boolean {
+  const days = rawDaysToSignUp(l);
+  return days !== null && days < 0;
+}
+
+/**
+ * Days from the first form to the club's creation. null when there is no club date or the club was already there (it
+ * did not sign up because of this lead, so it is left out of Time to sign up rather than counted as 0).
+ */
+export function daysToSignUp(l: Pick<LeadFacts, 'createdAt' | 'signedUpAt'>): number | null {
+  const days = rawDaysToSignUp(l);
+  return days === null || days < 0 ? null : Math.max(0, days); // max: Math.round of a small negative is -0
 }
 
 function inPeriod(at: string, p: Period): boolean {
@@ -146,8 +166,11 @@ export type LeadNumbers = {
   byPlan: GroupRow[];
   bySource: GroupRow[];
   byTag: GroupRow[];
-  /** Oldest month first: YYYY-MM, how many arrived, how many of those have signed up so far. */
-  byMonth: { month: string; arrived: number; signedUp: number }[];
+  /**
+   * Oldest month first: YYYY-MM, how many arrived, how many of those have signed up so far, and how many of those
+   * started a subscription (null for a month before subscription starts were recorded, or when they could not be read).
+   */
+  byMonth: { month: string; arrived: number; signedUp: number; started: number | null }[];
 };
 
 export function leadNumbers(all: LeadFacts[], period: Period, pay: PayRead, accounts: AccountsRead, linkedOrgIds: ReadonlySet<string>): LeadNumbers {
@@ -178,7 +201,12 @@ export function leadNumbers(all: LeadFacts[], period: Period, pay: PayRead, acco
 
   const months = groupBy(leads, l => [orgDayKey(l.createdAt).slice(0, 7)]);
   const byMonth = [...months].sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, ls]) => ({ month, arrived: ls.length, signedUp: ls.filter(isSignedUp).length }));
+    .map(([month, ls]) => {
+      const started = pay.kind === 'read' && pay.started && month >= PAYING_RECORDED_FROM.slice(0, 7)
+        ? ls.filter(l => isSignedUp(l) && l.orgId && pay.started!.has(l.orgId)).length
+        : null;
+      return { month, arrived: ls.length, signedUp: ls.filter(isSignedUp).length, started };
+    });
 
   let newAccounts: LeadNumbers['newAccounts'] = null;
   if (accounts.kind === 'read') {

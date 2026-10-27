@@ -39,7 +39,7 @@ const PLAN_LABELS: Record<string, string> = {
 const ACTION_LABELS: Record<BulkActionType, string> = {
   subscription_status_override: 'Billing status override',
   plan_change: 'Plan change',
-  module_addon_enablement: 'Module add-on',
+  module_addon_enablement: 'Extra feature',
 };
 
 const PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
@@ -165,7 +165,7 @@ export default function BulkOperationsClient({
       return;
     }
     if (actionType === 'module_addon_enablement' && !targetModule) {
-      setError('Choose a module add-on.');
+      setError('Choose an extra feature.');
       return;
     }
     if (actionType === 'subscription_status_override' && !lastDay) {
@@ -239,7 +239,7 @@ export default function BulkOperationsClient({
 
       {(!canManageBilling || !canManageProduct) && (
         <div className={kit.callout}>
-          Bulk billing actions require billing access. Module add-on actions require product access.
+          Bulk billing actions require billing access. Extra feature actions require product access.
         </div>
       )}
 
@@ -334,7 +334,7 @@ export default function BulkOperationsClient({
                 <option value="subscription_status_override">Billing status override</option>
                 <option value="plan_change">Plan change</option>
                 <option value="module_addon_enablement" disabled={!canManageProduct}>
-                  Module add-on enablement{canManageProduct ? '' : ' (requires product access)'}
+                  Extra feature access{canManageProduct ? '' : ' (requires product access)'}
                 </option>
               </select>
             </label>
@@ -386,7 +386,7 @@ export default function BulkOperationsClient({
             {actionType === 'module_addon_enablement' && (
               <>
                 <label className={kit.fieldGroup}>
-                  <span className={kit.label}>Module add-on</span>
+                  <span className={kit.label}>Extra feature</span>
                   <select
                     className={`${kit.select} ${kit.wide}`}
                     value={targetModule}
@@ -408,8 +408,8 @@ export default function BulkOperationsClient({
                       setConfirming(false);
                     }}
                   >
-                    <option value="enable">Enable module override</option>
-                    <option value="disable">Remove module override</option>
+                    <option value="enable">Turn on extra feature</option>
+                    <option value="disable">Remove extra feature</option>
                   </select>
                 </label>
               </>

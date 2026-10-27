@@ -5,7 +5,8 @@
  *
  * Press / anywhere (outside a field), or click the box. Two characters or more ask the server (`POST
  * /api/platform-admin/find`, the words in the BODY — never the address, threat T6). Up to 8 a group, best match first:
- * Clubs, People (each person's clubs beneath, one row each) and, for the roles that search them, Stripe numbers.
+ * Clubs, People (each person's clubs beneath, one row each — except a club the Clubs group already shows) and, for the
+ * roles that search them, Stripe numbers.
  * ↑ ↓ move, Enter opens, Esc closes and returns focus where it was. A result only ever opens a record the role can read.
  *
  * What the panel decides, and what it does not: the server decides which groups a role searches (a group the role may
@@ -32,6 +33,13 @@ const CLUB_HREF = (id: string, money = false, chargeId?: string | null) =>
 const PERSON_HREF = (id: string) => `/platform-admin/customer-users/${id}?via=find`;
 // An email is opened by its id, never by its address: the address is the words typed, and words never ride in a web address (A3).
 const SENT_EMAIL_HREF = (id: string) => `/platform-admin/sent-emails?email=${encodeURIComponent(id)}`;
+
+// A person's clubs are listed beneath them, except the ones the Clubs group above already shows (an owner's email matches
+// the person and each of their clubs, so the same club would otherwise appear twice in one panel).
+function clubsBeneath<C extends { id: string }>(personClubs: C[], answer: FindAnswer): C[] {
+  const shown = new Set((answer.clubs?.rows ?? []).map(c => c.id));
+  return personClubs.filter(c => !shown.has(c.id));
+}
 
 function signedIn(iso: string | null): string {
   return iso ? `last signed in ${consoleDay(iso)}` : 'never signed in';
@@ -146,7 +154,7 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
     }
     for (const p of answer.people?.rows ?? []) {
       out.push({ key: `p-${p.id}`, href: PERSON_HREF(p.id) });
-      for (const club of p.clubs) out.push({ key: `p-${p.id}-${club.id}`, href: CLUB_HREF(club.id) });
+      for (const club of clubsBeneath(p.clubs, answer)) out.push({ key: `p-${p.id}-${club.id}`, href: CLUB_HREF(club.id) });
     }
     if (answer.people && answer.people.total > answer.people.rows.length) {
       out.push({ key: 'more-people', href: '/platform-admin/customer-users', onOpen: () => handListSearch('people', trimmed) });
@@ -304,7 +312,7 @@ export default function FindBox({ searchesStripe }: { searchesStripe: boolean })
                     </span>
                     <ChevronRight size={14} className={styles.chev} aria-hidden />
                   </div>
-                  {p.clubs.map(club => (
+                  {clubsBeneath(p.clubs, answer).map(club => (
                     <div key={club.id} {...row(`p-${p.id}-${club.id}`)} className={`${styles.kid}${isActive(`p-${p.id}-${club.id}`) ? ` ${styles.rowOn}` : ''}`}>
                       <span className={styles.kidText}><strong>{club.name}</strong> · {club.role}</span>
                       <ChevronRight size={14} className={styles.chev} aria-hidden />

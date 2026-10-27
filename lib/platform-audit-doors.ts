@@ -41,6 +41,7 @@ const TARGET_BY_ACTION: Record<string, Target> = {
   link_early_access_lead: LEADS,
   unlink_early_access_lead: LEADS,
   dismiss_early_access_offer: LEADS,
+  allow_early_access_contact: LEADS,
   add_early_access_note: LEADS,
   remove_early_access_note: LEADS,
   copy_early_access_emails: LEADS,

@@ -152,7 +152,7 @@ export async function readClubMoney(stripe: Stripe, customerId: string, opts: { 
 
   // The next charge is Stripe's own preview of the live subscription, never a price we work out. It starts as soon as the
   // subscriptions are read, beside the charges and invoices; a courtesy, so a failed preview reads "None", never a failed tab.
-  const subsRead = stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 20 }, READ_OPTS);
+  const subsRead = stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 20, expand: ['data.default_payment_method'] }, READ_OPTS);
   const nextRead = subsRead.then(async (list): Promise<MoneyRead['nextCharge']> => {
     const live = list.data.map(sub => toMoneySubscription(sub, opts.prices))
       .find(sub => (sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due') && !sub.cancelAtPeriodEnd);
@@ -195,7 +195,12 @@ export async function readClubMoney(stripe: Stripe, customerId: string, opts: { 
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   const cust = liveCustomer(customer);
-  const pm = cust?.invoice_settings?.default_payment_method;
+  // The card on file is the one Stripe charges next: the live subscription's own card first (a subscription bought
+  // through Checkout keeps its card there, not on the customer), then the customer's default.
+  const liveSub = subs.data.find(sub => sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due');
+  const subPm = liveSub?.default_payment_method;
+  const custPm = cust?.invoice_settings?.default_payment_method;
+  const pm = subPm && typeof subPm !== 'string' && subPm.card ? subPm : custPm;
   const card = pm && typeof pm !== 'string' && pm.card
     ? { brand: pm.card.brand, last4: pm.card.last4 ?? '', expMonth: pm.card.exp_month, expYear: pm.card.exp_year } : null;
   const oldest = moneyCharges[moneyCharges.length - 1];

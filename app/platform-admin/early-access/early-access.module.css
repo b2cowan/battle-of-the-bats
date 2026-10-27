@@ -11,7 +11,10 @@
 .scopeCount { position: absolute; right: 1.9rem; pointer-events: none; }
 .search { display: inline-flex; }
 .search input { width: 14rem; max-width: 100%; }
-.filterPanel { display: grid; gap: 0.75rem; min-width: 16rem; padding: 0.85rem; }
+/* One fixed-width column, and every dropdown exactly as wide as it: a dropdown whose longest option was wider than the
+   others (Source) used to push past the panel's edge and put a sideways scrollbar under it. */
+.filterPanel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; width: 18rem; min-width: 16rem; padding: 0.85rem; }
+.filterPanel select { width: 100%; min-width: 0; }
 
 /* ── The band's cells are doors to their step ── */
 .bandCell { text-decoration: none; color: inherit; }
@@ -23,6 +26,8 @@
 .stuck { color: var(--warning); font-weight: 600; }
 .due { color: var(--warning); font-weight: 600; }
 .quietLine { padding: 0 1rem; color: var(--text-tertiary); }
+/* The footnote under the month bars: the card already pads it, so it only needs air above (it sat on the last bar). */
+p.monthNote { margin: 1.1rem 0 0; color: var(--text-tertiary); }  /* element + class so it beats the shared caption's margin: 0 whatever the bundle order */
 .empty { display: grid; gap: 0.35rem; padding: 2.5rem 1rem; text-align: center; color: var(--text-secondary); }
 .empty strong { color: var(--text-primary); font-size: var(--type-title); }
 

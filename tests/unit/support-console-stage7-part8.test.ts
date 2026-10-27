@@ -243,14 +243,14 @@ describe('Stage 7 Part 8 · Numbers: By link tag', () => {
     assert.deepEqual(run([lead({ id: 'a' }), lead({ id: 'b' })]).byTag, []);
   });
 
-  it('once a tag is used, "No tag" is the first row so the tagged rows are not mistaken for all of them', () => {
-    const rows = run([lead({ id: 'a' }), lead({ id: 'b', refTag: 'spring-mailout' }), lead({ id: 'c', refTag: 'spring-mailout' })]).byTag;
-    assert.deepEqual(rows.map(r => [r.label, r.leads]), [['No tag', 1], ['Spring mailout', 2]]);
+  it('once a tag is used (a stored tag not on the list reads "An old link"), "No tag" is the first row so the tagged rows are not mistaken for all of them', () => {
+    const rows = run([lead({ id: 'a' }), lead({ id: 'b', refTag: 'a-mailout' }), lead({ id: 'c', refTag: 'a-mailout' })]).byTag;
+    assert.deepEqual(rows.map(r => [r.label, r.leads]), [['No tag', 1], ['An old link', 2]]);
   });
 
   it('a filtered view never draws an empty "No tag" row', () => {
-    const rows = run([lead({ id: 'b', refTag: 'spring-mailout' })]).byTag;
-    assert.deepEqual(rows.map(r => r.label), ['Spring mailout']);
+    const rows = run([lead({ id: 'b', refTag: 'a-mailout' })]).byTag;
+    assert.deepEqual(rows.map(r => r.label), ['An old link']);
   });
 
   it('the export says whether a Source is staff’s or the form’s', () => {

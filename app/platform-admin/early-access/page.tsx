@@ -50,7 +50,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   if (view === 'numbers') {
     const period = parsePeriod(sp.period, leads);
     const signedOrgIds = leads.filter(isSignedUp).map(l => l.orgId).filter((x): x is string => !!x);
-    const [pay, accounts] = await Promise.all([readPaying(signedOrgIds), readAccounts()]);
+    const [pay, accounts] = await Promise.all([readPaying(signedOrgIds, { started: true }), readAccounts()]);
     const linked = new Set(leads.map(l => l.orgId).filter((x): x is string => !!x));
     const model = numbersView(leads, period, filters, pay, accounts, linked, now);
     return (

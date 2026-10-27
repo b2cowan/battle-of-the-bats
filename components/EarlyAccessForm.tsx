@@ -22,14 +22,20 @@ const FEATURE_OPTIONS = [
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
+export type EarlyAccessSaved = { email: string; wantsUpdates: boolean };
+
 type EarlyAccessFormProps = {
   initialPlanInterest?: string[];
   initialFeaturesInterested?: string[];
+  /** Fired once the request is saved. The window swaps the form for its confirmation, so the form never
+   *  stays on screen to be submitted twice. */
+  onSaved: (saved: EarlyAccessSaved) => void;
 };
 
 export default function EarlyAccessForm({
   initialPlanInterest = ['league'],
   initialFeaturesInterested = ['house_league'],
+  onSaved,
 }: EarlyAccessFormProps) {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
@@ -43,11 +49,10 @@ export default function EarlyAccessForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formEl = event.currentTarget;
     setStatus('submitting');
     setError('');
 
-    const form = new FormData(formEl);
+    const form = new FormData(event.currentTarget);
     const payload = {
       name: String(form.get('name') ?? ''),
       email: String(form.get('email') ?? ''),
@@ -73,7 +78,7 @@ export default function EarlyAccessForm({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Unable to save your request.');
       setStatus('success');
-      formEl.reset();
+      onSaved({ email: payload.email.trim(), wantsUpdates: releaseNotificationsConsent });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to save your request.');
       setStatus('error');
@@ -163,11 +168,8 @@ export default function EarlyAccessForm({
       </label>
 
       {error && <p className={styles.error}>{error}</p>}
-      {status === 'success' && (
-        <p className={styles.success}>You&apos;re on the early-access list. We&apos;ll follow up when these workflows are ready.</p>
-      )}
 
-      <button className={styles.submit} type="submit" disabled={status === 'submitting'}>
+      <button className={styles.submit} type="submit" disabled={status === 'submitting' || status === 'success'}>
         {status === 'submitting' ? 'Saving...' : 'Join early access'}
       </button>
     </form>

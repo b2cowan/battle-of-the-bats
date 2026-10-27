@@ -47,10 +47,8 @@ export function sourceFromHeard(code: string | null | undefined): HeardFromSourc
  * (lowercase letters, digits and "-", 1 to 32 characters); this list holds which ones are real.
  */
 export const LINK_TAGS: Record<string, string> = {
-  'spring-mailout': 'Spring mailout',
-  'conference-booth': 'Conference booth',
-  'club-newsletter': 'Club newsletter',
-  'deck-follow-up': 'Deck follow-up',
+  // Empty by the owner's call (2026-10-27): a tag is added here, with its label, before the link that carries it goes out.
+  // e.g. 'spring-mailout': 'Spring mailout',
 };
 
 /** The longest tag the database accepts; anything longer is cut before the list is asked. */

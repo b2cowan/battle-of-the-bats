@@ -163,6 +163,8 @@ export async function leadTimeline(lead: {
       });
     } else if (a.action === 'unlink_early_access_lead') {
       entries.push({ ...base, title: `Unlinked ${club(str(o.orgId))}. Step: ${stepName(n.internal_status)}` });
+    } else if (a.action === 'allow_early_access_contact') {
+      entries.push({ ...base, title: 'Allowed contact again. The lead had asked not to be contacted' });
     } else if (a.action === 'dismiss_early_access_offer') {
       entries.push({ ...base, title: `Marked ${club(str(n.orgId))} as not this lead’s club`, quiet: true });
     }

@@ -21,7 +21,6 @@ import { readLeadSummary } from '@/lib/lead-book';
 import {
   getCommandCenterStats,
   getLatestPlatformMetricSnapshot,
-  MODULES,
   PLAN_ORDER,
   planLabel,
   STATUS_ORDER,
@@ -276,7 +275,7 @@ export default async function BusinessNumbersPage() {
               <div className={styles.panelHeader}>
                 <div>
                   <div className={kit.eye}>Product usage</div>
-                  <h2 className={styles.sectionTitle}>Modules and activity</h2>
+                  <h2 className={styles.sectionTitle}>Activity</h2>
                 </div>
                 <Layers size={16} />
               </div>
@@ -290,16 +289,6 @@ export default async function BusinessNumbersPage() {
                 <div className={styles.usageTile}><ShieldAlert size={15} /><strong>{stats.usage.repProgramYearsActive}</strong><span>Active rep years</span></div>
                 <div className={styles.usageTile}><CreditCard size={15} /><strong>{stats.usage.accountingEntriesTotal}</strong><span>Accounting entries</span></div>
                 <div className={styles.usageTile}><ArchiveRestore size={15} /><strong>{stats.usage.repTeamsTotal}</strong><span>Rep teams</span></div>
-              </div>
-              <div className={styles.moduleGrid}>
-                {MODULES.map(moduleDef => (
-                  <BarRow
-                    key={moduleDef.key}
-                    label={moduleDef.label}
-                    value={stats.usage.moduleCounts[moduleDef.key] ?? 0}
-                    total={orgTotal}
-                  />
-                ))}
               </div>
             </section>
           </div>

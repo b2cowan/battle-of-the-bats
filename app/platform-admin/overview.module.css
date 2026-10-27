@@ -55,7 +55,6 @@
 
 .barList,
 .compactList,
-.moduleGrid,
 .sourceList {
   display: grid;
   gap: 0.7rem;
@@ -301,12 +300,6 @@
   line-height: 1.4;
 }
 
-.moduleGrid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--home-line);
-}
-
 .panelCopy {
   margin: 0;
 }
@@ -322,8 +315,7 @@
 }
 
 @media (max-width: 900px) {
-  .dashboardGrid,
-  .moduleGrid {
+  .dashboardGrid {
     grid-template-columns: 1fr;
   }
 

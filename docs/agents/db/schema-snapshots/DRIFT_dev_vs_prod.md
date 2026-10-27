@@ -2,15 +2,15 @@
 
 **Generated:** 2026-10-27 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 1093 divergence(s)** across dev/prod.
+**⚠️ 1095 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 39 | 0 | — |
-| Columns | 545 | 1 | 0 |
+| Columns | 546 | 1 | 0 |
 | Indexes | 169 | 0 | 2 |
 | Constraints | 159 | 0 | — |
-| RLS / CHECK | 178 | 0 | 0 (RLS state) |
+| RLS / CHECK | 179 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (39)
@@ -58,7 +58,7 @@
 _none_
 
 ## Columns
-### Only in DEV (545)
+### Only in DEV (546)
 - `club_schedule_slot_programs.created_at`
 - `club_schedule_slot_programs.org_id`
 - `club_schedule_slot_programs.program`
@@ -84,6 +84,7 @@ _none_
 - `early_access_lead_submissions.their_words`
 - `early_access_lead_submissions.withdrew_consent`
 - `early_access_lead_submissions.yes_not_applied`
+- `early_access_leads.do_not_contact_at`
 - `early_access_leads.heard_from`
 - `early_access_leads.link_method`
 - `early_access_leads.linked_at`
@@ -963,7 +964,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (178)
+### CHECK only in DEV (179)
 - `club_schedule_slot_programs.club_schedule_slot_programs_program_check`
 - `early_access_lead_notes.early_access_lead_notes_author_email_check`
 - `early_access_lead_notes.early_access_lead_notes_body_check`
@@ -973,6 +974,7 @@ _none_
 - `early_access_lead_submissions.early_access_lead_submissions_kind_check`
 - `early_access_lead_submissions.early_access_lead_submissions_source_path_check`
 - `early_access_lead_submissions.early_access_lead_submissions_their_words_check`
+- `early_access_leads.early_access_leads_asked_not_to_contact_sticks`
 - `early_access_leads.early_access_leads_heard_from_check`
 - `early_access_leads.early_access_leads_internal_status_check`
 - `early_access_leads.early_access_leads_link_facts_together`

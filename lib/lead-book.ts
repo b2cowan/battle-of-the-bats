@@ -13,7 +13,7 @@ import { effectiveOrgFactsById } from './entitlement-grants';
 import { paysNow } from './plan-growth';
 import { isEarlyAccessStatus, type EarlyAccessStatus } from './early-access-admin';
 import { sourceFromHeard } from './lead-form-answers';
-import { isSignedUp, normalAddress, selfConfirmed, type AccountsRead, type LeadFacts, type PayRead } from './lead-numbers';
+import { isSignedUp, normalAddress, PAYING_RECORDED_FROM, selfConfirmed, type AccountsRead, type LeadFacts, type PayRead } from './lead-numbers';
 
 const PAGE = 1000;
 
@@ -26,6 +26,8 @@ export type BookLead = LeadFacts & {
   nextAction: string | null;
   consent: boolean;
   lostReason: string | null;
+  /** When the lead asked not to be contacted; it outlives the step (mig 404). */
+  doNotContactAt: string | null;
   heardFrom: string | null;
   sourceWords: string | null;
   orgName: string | null;
@@ -44,7 +46,7 @@ const LEAD_COLUMNS = [
   'step_changed_at', 'name', 'email', 'organization_name', 'role', 'next_action', 'release_notifications_consent',
   // The link by name: "Not this club" (early_access_lead_dismissed_offers) is a second path to organizations, so a bare
   // `organizations(name)` is ambiguous and the read fails (PGRST201).
-  'lost_reason', 'sports', 'last_contacted_at', 'notes', 'organizations!early_access_leads_converted_org_id_fkey(name)',
+  'lost_reason', 'do_not_contact_at', 'sports', 'last_contacted_at', 'notes', 'organizations!early_access_leads_converted_org_id_fkey(name)',
 ].join(', ');
 
 type LeadRow = {
@@ -53,7 +55,7 @@ type LeadRow = {
   features_interested: string[] | null; source_path: string | null; source: string | null; source_words: string | null;
   ref_tag: string | null; heard_from: string | null; follow_up_due_at: string | null; step_changed_at: string;
   name: string; email: string; organization_name: string | null; role: string | null; next_action: string | null;
-  release_notifications_consent: boolean; lost_reason: string | null; sports: string | null; last_contacted_at: string | null; notes: string | null;
+  release_notifications_consent: boolean; lost_reason: string | null; do_not_contact_at: string | null; sports: string | null; last_contacted_at: string | null; notes: string | null;
   organizations: { name: string } | { name: string }[] | null;
 };
 
@@ -140,6 +142,7 @@ export async function readLeadBook(): Promise<Read<BookLead[]>> {
         nextAction: r.next_action,
         consent: r.release_notifications_consent,
         lostReason: r.lost_reason,
+        doNotContactAt: r.do_not_contact_at,
         heardFrom: r.heard_from,
         sourceWords: r.source_words,
         orgName: org?.name ?? null,
@@ -159,10 +162,22 @@ type Workspace = { workspace_org_id: string; billing_mode: string | null; billin
  * counts with the club that pays for it otherwise — never as a second club. A Founding comp portal (`platform_override`)
  * does not pay.
  */
-export async function readPaying(orgIds: string[]): Promise<PayRead> {
+export async function readPaying(orgIds: string[], opts: { started?: boolean } = {}): Promise<PayRead> {
   const ids = [...new Set(orgIds.filter(Boolean))];
-  if (ids.length === 0) return { kind: 'read', paying: new Set() };
+  if (ids.length === 0) return { kind: 'read', paying: new Set(), ...(opts.started ? { started: new Set<string>() } : {}) };
   try {
+    // Numbers' Month by month: which of these clubs began a subscription of their own since starts were recorded.
+    let started: Set<string> | undefined;
+    if (opts.started) {
+      const startedIds = new Set<string>();
+      for (let i = 0; i < ids.length; i += 100) {
+        const { data, error: evError } = await supabaseAdmin.from('platform_events').select('org_id')
+          .eq('event_type', 'subscription_started').gte('occurred_at', `${PAYING_RECORDED_FROM}T00:00:00-04:00`).in('org_id', ids.slice(i, i + 100));
+        if (evError) return { kind: 'not_read' };
+        for (const r of (data ?? []) as { org_id: string | null }[]) if (r.org_id) startedIds.add(r.org_id);
+      }
+      started = startedIds;
+    }
     const { data: ws, error: wsError } = await supabaseAdmin.from('team_workspaces')
       .select('workspace_org_id, billing_mode, billing_owner_org_id, subscription_status, stripe_subscription_id').in('workspace_org_id', ids);
     if (wsError) return { kind: 'not_read' };
@@ -189,7 +204,7 @@ export async function readPaying(orgIds: string[]): Promise<PayRead> {
         paying.add(id);
       }
     }
-    return { kind: 'read', paying };
+    return { kind: 'read', paying, ...(started ? { started } : {}) };
   } catch {
     return { kind: 'not_read' };
   }

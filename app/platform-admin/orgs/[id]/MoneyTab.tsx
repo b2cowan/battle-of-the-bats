@@ -6,16 +6,16 @@
  * A charge opens as a record that reads first; "Refund this charge" opens the refund window for the refund power only.
  * A role without the Stripe-reading power never asks: it sees our record and one line. The rules are lib/console-money.ts.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { Flag } from 'lucide-react';
 import KitDialog, { DialogCancel } from '@/components/admin/kit/club/KitDialog';
 import { consoleClock, consoleWhen } from '@/lib/console-dates';
 import { formatStoredDate } from '@/lib/timezone';
 import { possessive } from '@/lib/utils';
 import {
-  agreeLine, cardWords, centsFromTyped, compareRecord, findPatterns, flagWords, formatCents,
+  agreeLine, cardWords, centsFromTyped, compareRecord, differsWords, findPatterns, flagWords, formatCents,
   moneyBand, paidForWords, refundDoorRefusal, remainingCents, stripeSaysWords, REFUND_REASON_MAX, REFUND_WORDS,
-  type ChargeFlag, type MoneyCharge, type MoneyRead, type OurMoneyRecord,
+  type ChargeFlag, type CompareRow, type MoneyCharge, type MoneyRead, type OurMoneyRecord,
 } from '@/lib/console-money';
 import { brandLabel } from '@/lib/online-payment-words';
 import type { ConsoleRefund } from '@/lib/console-money-store';
@@ -88,7 +88,7 @@ export default function MoneyTab({
   const fresh = (forRead: string | null): Older => ({ forRead, charges: [], before: null, exhausted: false, loading: false, failed: false });
   const [olderState, setOlder] = useState<Older>(fresh(null));
   const older = olderState.forRead === (read?.readAt ?? null) ? olderState : fresh(read?.readAt ?? null);
-  const [explain, setExplain] = useState(false);
+  const [explain, setExplain] = useState<CompareRow['key'] | null>(null); // the one "Differs" chip open
   const [openCharge, setOpenCharge] = useState<{ id: string; refund: boolean } | null>(openChargeId ? { id: openChargeId, refund: false } : null);
 
   const allCharges = useMemo(() => (read ? [...read.charges, ...older.charges] : []), [read, older.charges]);
@@ -141,13 +141,11 @@ export default function MoneyTab({
     const line = agreeLine(rows, patterns, ours.subscriptionId);
     head = (
       <div className={`${kit.callout}${line.tone === 'warn' ? ` ${kit.calloutWarn}` : line.tone === 'bad' ? ` ${kit.calloutBad}` : ''}`}>
-        {testChip}
         <span>
           {line.text}
           {line.secondSubscriptionId && <> <a className={kit.door} href={`${stripeBase}/subscriptions/${line.secondSubscriptionId}`} target="_blank" rel="noreferrer">Open it in Stripe</a></>}
           {read?.testMode && <> Test payment: no money moves.</>}
         </span>
-        <span className={kit.calloutEnd}><span className={kit.caption}>Read from Stripe at {readAt}</span>{again}</span>
       </div>
     );
   }
@@ -172,28 +170,39 @@ export default function MoneyTab({
         </div>
       )}
 
-      <h2 className={kit.sectionTitle}>The subscription</h2>
+      {/* When Stripe was read, and the one door that reads it again: they cover the whole tab, so they sit once, here. */}
+      <div className={money.headRow}>
+        <h2 className={kit.sectionTitle}>The subscription</h2>
+        {read && <span className={money.readStamp}>{testChip}<span className={kit.caption}>Read from Stripe at {readAt}</span>{again}</span>}
+      </div>
       <div className={kit.card}>
         <div className={kit.tableWrap}>
           <table className={`${kit.comfortable} ${money.compare}`}>
             <thead><tr><th aria-label="What" /><th>Our record</th><th>Stripe</th></tr></thead>
             <tbody>
               {rows.map(r => (
-                <tr key={r.key}>
-                  <th scope="row" className={`${kit.eye} ${money.rowHead}`}>{r.label}</th>
-                  <td>{r.ours}</td>
-                  <td>
-                    {m.state === 'no_customer' ? (r.key === 'plan' ? 'No Stripe customer' : '') : r.stripe}
-                    {r.stripeId && read && <> · <a className={`${kit.door} ${kit.doorSm}`} href={`${stripeBase}/${r.key === 'customer' ? 'customers' : 'subscriptions'}/${r.stripeId}`} target="_blank" rel="noreferrer">Open in Stripe</a></>}
-                    {r.differs && <> <button type="button" className={`${kit.chip} ${kit.chipWarn} ${money.chipButton}`} onClick={() => setExplain(x => !x)} aria-expanded={explain}>Differs</button></>}
-                  </td>
-                </tr>
+                <Fragment key={r.key}>
+                  <tr>
+                    <th scope="row" className={`${kit.eye} ${money.rowHead}`}>{r.label}</th>
+                    <td>{r.ours}</td>
+                    <td>
+                      {m.state === 'no_customer' ? (r.key === 'plan' ? 'No Stripe customer' : '') : r.stripe}
+                      {r.stripeId && read && <> · <a className={`${kit.door} ${kit.doorSm}`} href={`${stripeBase}/${r.key === 'customer' ? 'customers' : 'subscriptions'}/${r.stripeId}`} target="_blank" rel="noreferrer">Open in Stripe</a></>}
+                      {r.differs && <> <button type="button" className={`${kit.chip} ${kit.chipWarn} ${money.chipButton}`} onClick={() => setExplain(x => (x === r.key ? null : r.key))} aria-expanded={explain === r.key} aria-controls={`differs-${r.key}`}>Differs</button></>}
+                    </td>
+                  </tr>
+                  {r.differs && explain === r.key && (
+                    <tr id={`differs-${r.key}`} className={money.differsRow}>
+                      <td colSpan={3}>{differsWords(r, rows)}</td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
         </div>
       </div>
-      {(explain || rows.some(r => r.differs)) && (
+      {rows.some(r => r.differs) && (
         <p className={kit.caption}>Nothing here changes our record. A difference usually clears when Stripe’s next update arrives. If it is still there tomorrow, tell the product team.</p>
       )}
 
@@ -203,7 +212,6 @@ export default function MoneyTab({
             <span className={kit.count}>
               {allCharges.length} charge{allCharges.length === 1 ? '' : 's'} {older.charges.length ? 'read' : 'in the last 12 months'}, newest first
             </span>
-            <span className={`${kit.caption} ${kit.toolbarEnd}`}>From Stripe at {readAt}</span>
           </div>
           <div className={kit.card}>
             <div className={`${kit.tableWrap} table-cards`}>

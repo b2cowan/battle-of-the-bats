@@ -3,8 +3,26 @@
 /* Ours beside Stripe's: the row's name wears the kit eyebrow (`kit.eye`); it only needs its width here. */
 .rowHead { white-space: nowrap; width: 11rem; }
 
-/* A "Differs" chip is a button: it says what a difference means (every highlight opens on click). */
+/* "The subscription" with, at its right, when Stripe was read and Read again (the first line stays the verdict alone).
+   A phone wraps the stamp under the heading. */
+.headRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+.readStamp { margin-left: auto; display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+/* A "Differs" chip is a button: it opens a line under its row saying what that difference means. */
 .chipButton { cursor: pointer; font-family: inherit; }
+/* The line reads as part of its row: no rule between them. */
+tr:has(+ .differsRow), tr:has(+ .differsRow) > * { border-bottom-color: transparent; }
+tr.differsRow > td {
+  padding-top: 0;
+  font-size: var(--type-support);
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
 
 /* The line under a flagged charge, and at the top of its window. Red only for a real double charge (D-1). */
 .flag {

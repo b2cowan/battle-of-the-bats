@@ -64,6 +64,7 @@ const ACTION_LABELS: Record<string, string> = {
   link_early_access_lead: 'Linked a club to a lead',
   unlink_early_access_lead: 'Unlinked a club from a lead',
   dismiss_early_access_offer: 'Not this club (lead)',
+  allow_early_access_contact: 'Allowed contact again (lead)',
   add_early_access_note: 'Added a note to a lead',
   remove_early_access_note: 'Removed a note from a lead',
   copy_early_access_emails: 'Copied lead emails',

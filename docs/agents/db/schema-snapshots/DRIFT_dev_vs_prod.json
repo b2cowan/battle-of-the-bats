@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-27",
-  "total": 1093,
+  "total": 1095,
   "counts": {
     "tables": 39,
-    "columns": 546,
+    "columns": 547,
     "indexes": 171,
     "constraints": 159,
-    "rls": 178
+    "rls": 179
   },
   "items": [
     {
@@ -43,6 +43,10 @@
     },
     {
       "key": "check:only-dev:early_access_lead_submissions.early_access_lead_submissions_their_words_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:early_access_leads.early_access_leads_asked_not_to_contact_sticks",
       "sig": ""
     },
     {
@@ -819,6 +823,10 @@
     },
     {
       "key": "column:only-dev:early_access_lead_submissions.yes_not_applied",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:early_access_leads.do_not_contact_at",
       "sig": ""
     },
     {

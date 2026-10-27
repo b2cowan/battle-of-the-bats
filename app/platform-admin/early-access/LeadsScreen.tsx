@@ -7,13 +7,14 @@
  * the Pipeline only, the rounded scope picker carrying the amber "Needs you" count; Search, Filter and Tools on the
  * right. Numbers has no Search (S7-D2): its period picker sits left. Tools' Export opens the one export window, Excel first.
  */
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MoreHorizontal, SlidersHorizontal } from 'lucide-react';
 import ViewSwitch from '@/components/coaches/kit/ViewSwitch';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
+import { useViewportFit } from '@/lib/overlay-hooks';
 import { EARLY_ACCESS_PLAN_LABELS, EARLY_ACCESS_STATUS_LABELS, EARLY_ACCESS_STATUSES, LEAD_SOURCE_LABELS, LEAD_SOURCES } from '@/lib/early-access-admin';
 import { linkTagLabel } from '@/lib/lead-form-answers';
 import type { BandCell, PipelineRow, StepTone } from '@/lib/lead-views';
@@ -192,6 +193,8 @@ function FilterButton({ kind, filters, options, go, count }: {
   kind: 'pipeline' | 'numbers'; filters: Filters; options: FilterOptions; go: (c: Record<string, string | null>) => void; count?: number;
 }) {
   const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useViewportFit(open, panelRef);
   const n = count ?? ['plan', 'source', 'tag', 'page'].filter(k => filters[k as keyof Filters]).length;
   const field = (label: string, key: keyof Filters, opts: { value: string; label: string }[]) => (
     <label className={kit.fieldGroup}>
@@ -208,7 +211,7 @@ function FilterButton({ kind, filters, options, go, count }: {
         <SlidersHorizontal size={15} aria-hidden /> Filter{n > 0 ? <span className={tb.filterOn}> · {n}</span> : null}
       </button>
       {open && (
-        <div className={`${tb.regFilterPanel} ${styles.filterPanel}`} role="group" aria-label="Filter leads">
+        <div ref={panelRef} className={`${tb.regFilterPanel} ${tb.panelEnd} ${styles.filterPanel}`} role="group" aria-label="Filter leads">
           {kind === 'pipeline' && field('Step', 'step', EARLY_ACCESS_STATUSES.map(s => ({ value: s, label: EARLY_ACCESS_STATUS_LABELS[s] })))}
           {field('Plan', 'plan', [...options.plans.map(pl => ({ value: pl, label: EARLY_ACCESS_PLAN_LABELS[pl] ?? pl })), { value: 'none', label: 'None picked' }])}
           {kind === 'numbers' && options.pages.length > 0 && field('Page', 'page', options.pages.map(pg => ({ value: pg, label: pg })))}
@@ -314,13 +317,13 @@ function NumbersBody({ model }: { model: NumbersModel }) {
             <div className={bars.barList}>
               {n.byMonth.map(m => (
                 <div key={m.month} className={bars.barRow}>
-                  <div className={bars.barMeta}><span>{monthWords(m.month)}</span><strong>{m.arrived} arrived · {m.signedUp} signed up so far</strong></div>
+                  <div className={bars.barMeta}><span>{monthWords(m.month)}</span><strong>{m.arrived} arrived · {m.signedUp} signed up so far{m.started !== null && ` · ${m.started} started a subscription`}</strong></div>
                   <div className={bars.barTrack}><span className={bars.barFill} style={{ width: `${Math.max(3, Math.round((m.arrived / maxMonth) * 100))}%` }} /></div>
                 </div>
               ))}
             </div>
           )}
-          <p className={`${kit.caption} ${styles.quietLine}`}>{model.payingFrom}</p>
+          <p className={`${kit.caption} ${styles.monthNote}`}>{model.payingFrom}</p>
         </div>
       </section>
 

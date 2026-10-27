@@ -23,7 +23,7 @@ export const GET = withObservability(async (req: NextRequest) => {
   const leads = book.value;
   const period = parsePeriod(sp.get('period') ?? undefined, leads);
   const signed = leads.filter(isSignedUp).map(l => l.orgId).filter((x): x is string => !!x);
-  const [pay, accounts] = await Promise.all([readPaying(signed), readAccounts()]);
+  const [pay, accounts] = await Promise.all([readPaying(signed, { started: true }), readAccounts()]);
   const m = numbersView(leads, period, { plan: filterToken(sp.get('plan')), source: filterToken(sp.get('source')), tag: filterToken(sp.get('tag'), 32), page: (sp.get('page') ?? '').slice(0, 60) },
     pay, accounts, new Set(leads.map(l => l.orgId).filter((x): x is string => !!x)), new Date());
   const n = m.numbers;
@@ -39,6 +39,8 @@ export const GET = withObservability(async (req: NextRequest) => {
     ...section('By source', tableRows(n.bySource, false)),
     ...section('By link tag', tableRows(n.byTag, false)),
     ...n.byMonth.map(x => ['Month by month', x.month, x.arrived, x.signedUp, '', '', '']),
+    // Its own labelled row, counted in Leads (the month's leads that started a subscription), not under Pay now.
+    ...n.byMonth.filter(x => x.started !== null).map(x => ['Month by month: started a subscription', x.month, x.started as number, '', '', '', '']),
   ].map(r => formulaSafeRow(r));
   const date = tournamentToday();
 

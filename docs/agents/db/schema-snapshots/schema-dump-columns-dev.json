@@ -3996,6 +3996,15 @@
     "ordinal_position": 37
   },
   {
+    "table_name": "early_access_leads",
+    "column_name": "do_not_contact_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 38
+  },
+  {
     "table_name": "email_batches",
     "column_name": "id",
     "data_type": "uuid",

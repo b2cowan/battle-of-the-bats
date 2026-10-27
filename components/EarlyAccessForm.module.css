@@ -56,18 +56,24 @@
   resize: vertical;
 }
 
+/* A legend is not a grid item, so the group's `gap` never reached it: the heading sat flush on its first row while the
+   rows below were 0.55rem apart, which read backwards (the heading looked like part of the row, the groups ran together).
+   The heading now owns its own space below it, the rows sit close, and the group itself is set off from the next. */
 .choiceGroup {
   border: 0;
   padding: 0;
-  margin: 0;
+  margin: 0.35rem 0 0;
   display: grid;
-  gap: 0.55rem;
+}
+
+.choiceGroup legend {
+  padding: 0 0 0.25rem;
 }
 
 .choiceGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
+  gap: 0 0.55rem;
 }
 
 .choice,
@@ -81,10 +87,20 @@
   line-height: 1.45;
 }
 
+/* A choice is one line in a 44px tap row — centred, so the row's air is split above and below the label instead of all
+   hanging underneath it. (The consent line can wrap to two lines and stays top-aligned.) */
+.choice {
+  align-items: center;
+}
+
 .choice input,
 .consent input {
   flex: none;
   margin-top: 0.15rem;
+}
+
+.choice input {
+  margin-top: 0;
 }
 
 /* The platform checkbox (app/globals.css) is drawn for the dark surfaces: a pale-lime edge, tint and tick. On this
@@ -136,19 +152,11 @@
   opacity: 0.65;
 }
 
-.error,
-.success {
+.error {
   font-size: var(--type-body);
   line-height: 1.55;
   margin: 0;
-}
-
-.error {
   color: var(--home-live);
-}
-
-.success {
-  color: var(--home-win);
 }
 
 .honeypot {

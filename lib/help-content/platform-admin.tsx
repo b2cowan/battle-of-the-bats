@@ -82,7 +82,7 @@ const platformAdminHelp: HelpPageContent = {
               <HelpSteps>
                 <li>Press <strong>/</strong> from anywhere (unless you are typing in a field), or click the box in the middle of the top strip.</li>
                 <li>With the box empty it shows <strong>Recent</strong>: the last five club or person records opened in this browser. Recent is kept in the browser only and is cleared when you sign out.</li>
-                <li>Type two characters or more: an email, part of a name, a club&rsquo;s name, web name or owner&rsquo;s email. Results come in groups, up to eight each: <strong>Clubs</strong>, and <strong>People</strong> with each person&rsquo;s clubs beneath.</li>
+                <li>Type two characters or more: an email, part of a name, a club&rsquo;s name, web name or owner&rsquo;s email. Results come in groups, up to eight each: <strong>Clubs</strong>, and <strong>People</strong> with each person&rsquo;s clubs beneath (a club already listed under Clubs is not repeated).</li>
                 <li>Use the arrow keys to move, <strong>Enter</strong> to open, <strong>Esc</strong> to close.</li>
                 <li>When a group has more than it shows, its last row (<strong>All N in Clubs &amp; portals</strong> or <strong>All N in People</strong>) opens that list with your words already in its search box. The words are handed over inside the tab and never put in the address.</li>
               </HelpSteps>

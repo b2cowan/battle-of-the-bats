@@ -167,9 +167,34 @@ export async function readList(l: ListParams): Promise<Read<BookLead[]>> {
   return { kind: 'read', value: leadsInList(book.value, offers, l.scope, l.filters, new Date()) };
 }
 
-/** A lead who asked not to be contacted: never in Copy emails, and an empty email cell in an export. */
-export function askedNotToBeContacted(l: Pick<BookLead, 'step' | 'lostReason'>): boolean {
-  return l.step === 'lost' && l.lostReason === 'asked_not_to_contact';
+/**
+ * A lead who asked not to be contacted: never in Copy emails, and an empty email cell in an export. The mark outlives
+ * the step (mig 404): moving a lead off Lost does not lift it, only "Allow contact again" does. The step-and-reason test
+ * stays beside it for the moment between a save and the mark being read.
+ */
+export function askedNotToBeContacted(l: Pick<BookLead, 'step' | 'lostReason'> & { doNotContactAt?: string | null }): boolean {
+  return !!l.doNotContactAt || (l.step === 'lost' && l.lostReason === 'asked_not_to_contact');
+}
+
+/** "Allow contact again": lifts the lasting mark, on purpose. Refused while the lead is still Lost for that reason. */
+export async function allowContactAgain(actor: string, leadId: string): Promise<WriteResult> {
+  const { data, error } = await supabaseAdmin.from('early_access_leads')
+    .select('id, internal_status, lost_reason, do_not_contact_at').eq('id', leadId).maybeSingle();
+  if (error) return fail(500, 'The lead could not be read.');
+  const lead = data as { id: string; internal_status: string; lost_reason: string | null; do_not_contact_at: string | null } | null;
+  if (!lead) return fail(404, 'Lead not found');
+  if (!lead.do_not_contact_at) return fail(409, 'This lead has not asked not to be contacted.');
+  if (lead.lost_reason === 'asked_not_to_contact') {
+    return fail(409, 'This lead is still Lost because it asked not to be contacted. Change its step first if that has changed.');
+  }
+  // Conditioned on the mark still being there, so a second press changes nothing and writes nothing.
+  const { data: changed, error: updateError } = await supabaseAdmin.from('early_access_leads')
+    .update({ do_not_contact_at: null, updated_at: new Date().toISOString() })
+    .eq('id', leadId).not('do_not_contact_at', 'is', null).or('lost_reason.is.null,lost_reason.neq.asked_not_to_contact').select('id');
+  if (updateError) return fail(500, 'That could not be saved.');
+  if (!changed || changed.length === 0) return fail(409, 'This lead changed while you were saving it. Open it again.');
+  await writePlatformAuditLog(actor, null, 'allow_early_access_contact', leadId, { doNotContact: true }, { doNotContact: false });
+  return { ok: true };
 }
 
 /** Copy emails: the leads in the list who said yes to release emails, never one who asked not to be contacted. */

@@ -139,10 +139,10 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Choose a valid target plan' }, { status: 400 });
   }
   if (actionType === 'module_addon_enablement' && !VALID_ADDON_MODULES.has(targetModule)) {
-    return NextResponse.json({ error: 'Choose a valid module add-on' }, { status: 400 });
+    return NextResponse.json({ error: 'Choose a valid extra feature' }, { status: 400 });
   }
   if (actionType === 'module_addon_enablement' && !VALID_MODULE_OPERATIONS.has(moduleOperation)) {
-    return NextResponse.json({ error: 'Choose whether to enable or remove the module add-on' }, { status: 400 });
+    return NextResponse.json({ error: 'Choose whether to turn on or remove the extra feature' }, { status: 400 });
   }
 
   const { data: orgs, error: orgError } = await supabaseAdmin

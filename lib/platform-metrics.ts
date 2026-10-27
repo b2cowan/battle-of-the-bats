@@ -12,7 +12,6 @@ type OrgMetricRow = {
   subscription_status: string | null;
   current_period_end: string | null;
   created_at: string;
-  enabled_addons: string[] | null;
   free_floor: string | null;
 };
 
@@ -39,12 +38,6 @@ type CountResult = { count: number | null; error?: unknown };
 
 export const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 export const STATUS_ORDER = ['active', 'trialing', 'past_due', 'canceled'];
-export const MODULES = [
-  { key: 'module_public_site', label: 'Public site' },
-  { key: 'module_house_league', label: 'House league' },
-  { key: 'module_accounting', label: 'Accounting' },
-  { key: 'module_rep_teams', label: 'Rep teams' },
-];
 
 /* ⚰ `CommandCenterStats = Awaited<ReturnType<typeof getCommandCenterStats>>` stood here and was
    deleted 2026-09-01 (cleanup tranche 6) with zero references. It is the cheapest kind of dead
@@ -73,11 +66,6 @@ export { planLabel } from './platform-labels';
 
 export function statusLabel(status: string) {
   return status.replace(/_/g, ' ');
-}
-
-function enabledModulesFor(org: OrgMetricRow) {
-  const planModules = PLAN_CONFIG[org.plan_id as OrgPlan]?.moduleEntitlements ?? [];
-  return new Set([...(org.enabled_addons ?? []), ...planModules]);
 }
 
 /**
@@ -160,7 +148,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .from('organizations')
       // No `slug`: the sandbox filter below keys on row id, so fetching the slug would be a column
       // pulled on every platform-admin dashboard load and read by nobody.
-      .select('id, name, plan_id, subscription_status, current_period_end, created_at, enabled_addons, free_floor')
+      .select('id, name, plan_id, subscription_status, current_period_end, created_at, free_floor')
       .order('created_at', { ascending: false })
       .limit(5000),
     ownersRead,
@@ -245,7 +233,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   const statusByPlan = Object.fromEntries(
     PLAN_ORDER.map(plan => [plan, Object.fromEntries(STATUS_ORDER.map(status => [status, 0])) as Record<string, number>])
   ) as Record<string, Record<string, number>>;
-  const moduleCounts = Object.fromEntries(MODULES.map(module => [module.key, 0])) as Record<string, number>;
 
   let estimatedMrr = 0;
   let trialEndingSoon = 0;
@@ -291,11 +278,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       if (!mostRecentOwnerSignIn || mostRecentOwnerSignIn < inactiveOwnerCutoff) {
         orgsWithInactiveOwner += 1;
       }
-    }
-
-    const enabledModules = enabledModulesFor(org);
-    for (const moduleDef of MODULES) {
-      if (enabledModules.has(moduleDef.key)) moduleCounts[moduleDef.key] += 1;
     }
   }
 
@@ -360,7 +342,6 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       repTeamsTotal,
       repProgramYearsActive,
       accountingEntriesTotal,
-      moduleCounts,
     },
     lifecycle: {
       newSubscriptions: {
