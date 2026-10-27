@@ -677,7 +677,7 @@ export default function RegistrationsScreen() {
             client-side (no server route). If a server export route is ever added for house-league it MUST guard
             isFreeFloorLeague(org) → 403. */}
         {freeFloor ? (
-          <span className="badge badge-neutral" title="Exports are part of League. Upgrade to export your registrations.">Exports · League</span>
+          <span className="badge badge-neutral" title="Exports are part of League Plus. Upgrade to export your registrations.">Exports · League Plus</span>
         ) : (
           <ExportMenu
             formats={['xlsx', 'csv', 'pdf']}

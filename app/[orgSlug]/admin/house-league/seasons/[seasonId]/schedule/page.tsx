@@ -1432,8 +1432,8 @@ export default function SchedulePage() {
               <CoachToolbarMenuSeparator />
               <CoachToolbarMenuHeading>{LEAGUE_TIME_WORDS.exportHeading}</CoachToolbarMenuHeading>
               {currentOrg && isFreeFloorLeague(currentOrg)
-                ? <CoachToolbarMenuItem disabled label="Exports · League"
-                    hint="Exports are part of League. Upgrade to export your schedule, standings, and registrations." onSelect={() => {}} />
+                ? <CoachToolbarMenuItem disabled label={LEAGUE_TIME_WORDS.exportsLocked}
+                    hint={LEAGUE_TIME_WORDS.exportsLockedHint} onSelect={() => {}} />
                 : <>
                     <CoachToolbarMenuItem label={LEAGUE_TIME_WORDS.excel} disabled={games.length === 0} onSelect={() => void handleExportXLSX()} />
                     <CoachToolbarMenuItem label={LEAGUE_TIME_WORDS.csv} disabled={games.length === 0} onSelect={() => void handleExportCSV()} />

@@ -455,6 +455,9 @@ export function timeLineWords(division: string, line: DivisionTimeLine): { lead:
   };
 }
 
+/** Teams named in a question: up to three by name, then a count, so a long list never wraps the window. */
+export const teamsWords = (teams: readonly string[]) => (teams.length > 3 ? `${teams.length} teams` : joinWithAnd([...teams]));
+
 /** The window's whole figure: every hour house league holds in a week, across the sources. */
 export const leagueTimeMinutes = (sources: readonly LeagueTimeSource[]) =>
   sources.reduce((n, s) => n + s.stretches.reduce((m, x) => m + x.minutesAWeek, 0), 0);
@@ -490,9 +493,10 @@ export const LEAGUE_TIME_WORDS = {
   nothingSaved: 'Nothing is saved yet.',
   /** [marketing] a division that is no longer the season's, still holding a piece. */
   aDivision: 'Former division',
-  /** [marketing] the read, refused or failed. */
+  /** The read, refused or failed; a whole row given, or one date's Use, that failed (/marketing 2026-10-27: "didn't save",
+   *  the house's active voice). */
   loadFailed: 'House league’s time didn’t load. Try again.',
-  giveFailed: 'That change wasn’t saved. Try again.',
+  giveFailed: 'That change didn’t save. Try again.',
   /** The door to the club's schedule, on the source line's schedule name (club view, drawn tab 5). */
   openSchedule: (schedule: string) => `Open ${schedule}`,
   /** Give it to's last item, after the pairs and a separator (ruled card 2). [marketing] */
@@ -503,20 +507,21 @@ export const LEAGUE_TIME_WORDS = {
     hint: (division: string, kind: LeagueUseKind) =>
       `Tick the time for ${possessive(division)} ${kind === 'games' ? 'games' : 'practices'}. A tick gives it to ${division} when you save. Unticked time goes back to Not given yet.`,
     open: (label: string) => `Open ${label}`,
-    /** [marketing] */
+    /** The piece's figure; an empty piece never reads "0 hours a week" (/marketing 2026-10-27). */
+    figure: (minutes: number) => (minutes > 0 ? hoursAWeek(minutes) : 'No time yet'),
     ofDates: (n: number, of: number) => `${n} of ${of} dates`,
-    /** [marketing] */
     giveAllBack: 'Give all of it back',
-    /** [marketing] the foot's count. */
+    /** The foot's count: parts and group ticks, never the dates inside them. */
     changes: (n: number) => pluralize(n, 'change'),
     cancel: 'Cancel',
     save: 'Save',
+    saveFailed: 'The changes didn’t save. Try again.',
     /** The tick on a weekday's line and a stretch's heading, for a screen reader. */
     tickAll: (what: string) => `All of ${what}`,
     /** A part another division holds: a link to that piece (ruled card 5). */
     heldBy: (label: string) => `${label} ›`,
-    /** [marketing] The registrar's read when the piece holds nothing. */
-    nothing: (label: string) => `${label} has no time yet.`,
+    /** The registrar's read when the piece holds nothing — k3's own sentence ("U12 has no game time yet."). */
+    nothing: (division: string, kind: LeagueUseKind) => `${division} has no ${kind === 'games' ? 'game' : 'practice'} time yet.`,
   },
   /** The question on Save when practices still to come sit on time being given back (ruled card 6). [marketing] */
   ask: {
@@ -526,15 +531,18 @@ export const LEAGUE_TIME_WORDS = {
     },
     body: (minutes: number) => `That time, ${hoursAWeek(minutes)}, goes back to Not given yet.`,
     note: (teams: readonly string[]) =>
-      `${joinWithAnd([...teams])} ${teams.length === 1 ? 'has' : 'have'} practices on this time. Saving removes the ones still to come. Past practices stay.`,
+      `${teamsWords(teams)} ${teams.length === 1 ? 'has' : 'have'} practices on this time. Saving removes the ones still to come. Past practices stay.`,
     confirm: (n: number) => `Save and remove ${pluralize(n, 'practice')}`,
-    /** [marketing] The club's schedule's one-date Use (tab 5): the same question, one date. */
-    titleOneDate: (date: string) => `Change ${date}?`,
+    /** The club's schedule's one-date Use (tab 5): the question names the choice; one date has no past practices. */
+    titleOneDate: (date: string, choice: string) => `Change ${date} to ${choice}?`,
+    noteOneDate: (teams: readonly string[], practices: number) =>
+      `${teamsWords(teams)} ${teams.length === 1 && practices === 1 ? 'has a practice' : teams.length === 1 ? 'has practices' : 'have practices'} on this date. Saving removes ${practices === 1 ? 'it' : 'them'}.`,
+    confirmOneDate: (n: number) => `Change and remove ${pluralize(n, 'practice')}`,
   },
   /** The league admin in the club's schedule (drawings tab 5; ruled card 11). The rep note is SCHEDULE_SCREEN_WORDS'. */
   club: {
-    /** [marketing] */
-    eyebrow: 'Schedules',
+    /** Not "Schedules": a league admin has no Schedules page of their own (/marketing 2026-10-27). */
+    eyebrow: 'The club’s schedule',
     back: 'House league’s time',
     legend: { houseLeague: 'House league', notGiven: 'Not given yet', rep: 'A rep team', open: 'Open' },
     aRepTeam: 'A rep team',
@@ -546,27 +554,26 @@ export const LEAGUE_TIME_WORDS = {
     repeats: 'Repeats',
     use: 'Use',
     openNote: 'This time is open. An owner or an admin can give it to a team or house league.',
-    /** [marketing] the door at its end is House league's time. */
+    /** The door at its end is House league's time. */
     useHint: (date: string) => `This changes ${date} only. To change every week, use `,
     weekLabel: 'The schedule, a week at a time',
     prevWeek: 'Previous week',
     nextWeek: 'Next week',
-    /** [marketing] */
     loadFailed: 'This schedule didn’t load. Try again.',
     close: 'Close',
   },
-  /** Choose parts…'s small step: whose piece to open (ruled card 2). [marketing] */
+  /** Choose parts…'s small step: which piece to open (ruled card 2). The button repeats the title, as the kit's windows do. */
   choose: {
     title: 'Choose parts',
-    hint: 'Whose time are you choosing?',
-    next: 'Choose the parts',
+    hint: 'Which time are you choosing parts for?',
+    next: 'Choose parts',
   },
   /** The time line under the Schedule page's title (ruled card 8; settled except where marked). */
   line: {
     none: (division: string) => `${division} has no time from the club yet.`,
     door: 'House league’s time →',
-    /** [marketing] a phone's one line. */
-    phone: 'Time from the club’s schedule',
+    /** A phone's one line, fitting 390 wide (the door already says "time"). */
+    phone: 'From the club’s schedule',
   },
   /** Tools on the house-league Schedule page (ruled card 7). */
   tools: 'Tools',
@@ -574,6 +581,10 @@ export const LEAGUE_TIME_WORDS = {
   excel: 'Excel',
   csv: 'CSV',
   calendar: 'Calendar file',
+  /** The free League floor's Export row: exports are League Plus's (PLAN_PRICING_FACTS.md; the shipped words named
+   *  "League", the free plan itself — /marketing 2026-10-27). */
+  exportsLocked: 'Exports · League Plus',
+  exportsLockedHint: 'Exports are part of League Plus. Upgrade to export your schedule, standings, and registrations.',
 } as const;
 
 /** A part as the piece's level says it: "6:00–7:30 p.m. · Diamond 1" under its weekday's line ("Tuesdays"). */
@@ -586,8 +597,8 @@ export const LEAGUE_TIME_REFUSALS = {
   seasonClosed: 'This season is finished, so its time can’t change.',
   changed: 'House league’s time changed while you were looking. Here it is again.',
   badRequest: 'Pick the time to give, and who it goes to.',
-  /** [marketing] The club's schedule, when it isn't a final schedule house league holds time in. */
-  scheduleNotFound: 'That schedule isn’t one house league has time in.',
-  /** [marketing] The club's schedule's one-date Use, when that date changed (drawn tab 5, b2). */
-  changedOneDate: 'That time changed while you were looking. Close this and try again.',
+  /** The club's schedule, when it isn't a final schedule house league holds time in. */
+  scheduleNotFound: 'House league has no time in that schedule.',
+  /** The club's schedule's one-date Use, when that slot changed (drawn tab 5, b2): the holder changed, not the clock. */
+  changedOneDate: 'This slot changed while you were looking. Close this and open it again.',
 } as const;

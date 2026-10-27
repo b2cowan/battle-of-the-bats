@@ -40,7 +40,7 @@ schedule already uses; numbers through `pluralize()`; possessives through `posse
 | k2 a division's games | U12 games | **U12 games** | — |
 | k2 a division's practices | U12 practice time | **U12 practice time** | Matches the Practice time window it opens. |
 | k2 what's left | Not given yet | **Not given yet** | Distinct from the club's "Open" (time no program holds). |
-| k2 row figures | 6 hours · 4 games a week | **6 hours · 4 games a week** / **12 hours · 10 practices a week** / **4.5 hours a week** | Hours first, the count second. |
+| k2 row figures | 6 hours · 4 games a week | **6 hours a week** / **12 hours a week** / **4.5 hours a week** — hours only until a length exists; then **6 hours · 4 games a week** / **12 hours · 10 practices a week** | Hours first, the count second. **Amended 2026-10-27 (Part 3 ruling 9):** a count of games needs a game length (Generate games) and a count of practices a practice length (Practice time, Part 4); the count joins the row when its length exists. |
 | k2 the action | Give it to | **Give it to** → **U12 games** · **U12 practice time** (one pair per division) | — |
 | k2 foot | Only the club changes how much time house league has. | **Only an owner or an admin changes how much time house league has.** | Names who, as k4 does. |
 
@@ -150,3 +150,34 @@ Strings the Parts 1–2 build needed that the drawings did not carry. Same house
 | Refusal: nothing to schedule, a club with house league | — | **There are no rep teams or house-league seasons running to hand time to yet.** | Beside the shipped rep-only sentence, which a club without house league keeps. |
 | Refusal: a rep schedule, opened by a member without Rep teams | This schedule hands time to rep teams, and Rep Teams isn’t open to you. … | **This schedule gives time to rep teams, and your access doesn’t include Rep teams. An owner or an admin with Rep teams can change it.** | "Give", the control's verb; says what to do; "Rep teams" in sentence case (the spelling gate). |
 | Help, the schedule's page | Click a slot to **Give it to** a team or house league, … | **Click a slot to give it to a team or house league (Give it to), Lock or Unlock it, …** | A label used as a verb read oddly; the control is named after the plain words. |
+
+## Part 3, settled 2026-10-27 (/marketing, after the build of Part 3's second half)
+
+The drawing's draft words (HOUSE_LEAGUE_STAGE11B_PART3_DRAWINGS.html) and the build's own. Same house rules: `possessive()`,
+`pluralize()`, sport-neutral, "league admin", never a promised notice.
+
+| Where | Built as | Settled | Why |
+|---|---|---|---|
+| A piece's figure, under its title | 6 hours a week | **6 hours a week** · empty: **No time yet** | The row figures' shape; an empty piece never reads "0 hours a week". |
+| A piece's foot | {n} changes | **1 change** / **2 changes** (before one: **Nothing is saved yet.**) | Counts parts and group ticks, never the dates inside them. |
+| A mixed part | 8 of 12 dates | **8 of 12 dates** | "Dates", the club schedule's word. |
+| A piece's rare door | Give all of it back | **Give all of it back** | With a pronoun, "give it back"; the question's "Give back all of…" is the same verb. |
+| Give it to's last item | Choose parts… | **Choose parts…** | The ellipsis says a step opens first. |
+| Choose parts' step | Choose parts · Whose time are you choosing? · Choose the parts | **Choose parts** · **Which time are you choosing parts for?** · button **Choose parts** | The list picks a division AND a kind; the button repeats the title. |
+| The question on Save (title) | Give back all of U12's practice time? / Give back 2 parts of … | **Give back all of U12's practice time?** / **Give back 2 parts of U12's practice time?** | Names exactly what goes. A games version, if ever needed, says "U12's game time". |
+| Its body | That time, 12 hours a week, goes back to Not given yet. | **That time, 12 hours a week, goes back to Not given yet.** | — |
+| Its note | U12 Blue and U12 Red have practices on this time. … | **{Teams} have practices on this time. Saving removes the ones still to come. Past practices stay.** — up to three teams by name, then **{n} teams** | No notice promised (Part 5); a long list never wraps. |
+| Its danger button | Save and remove 6 practices | **Save and remove 6 practices** / **1 practice** | The verb names the damage. |
+| The registrar's empty piece | U12 games has no time yet. | **U12 has no game time yet.** / **U12 has no practice time yet.** | k3's own sentence; "U12 games has" was a grammar snag. |
+| The time line, a phone | Time from the club's schedule · House league's time → | **From the club's schedule · House league's time →** | Fits 390; the link already says "time". |
+| The club's schedule, eyebrow | Schedules | **The club's schedule** | A league admin has no Schedules page of their own. |
+| One-date Use hint | This changes Tue, Jun 15 only. To change every week, use House league's time. | **as drawn** (the last three words are the link) | Scope first, then the way to the bigger change. |
+| One-date failure (foot, left of Close) | That time changed while you were looking. Close this and try again. | **This slot changed while you were looking. Close this and open it again.** | The holder changed, not the clock; "try again" would repeat a stale choice. |
+| One-date question | Change Tue, Jun 15? | **Change Tue, Jun 15 to {choice}?** · body **{Team} has a practice on this date. Saving removes it.** / **{Teams} have practices on this date. Saving removes them.** · button **Change and remove {n} practice(s)** | Names the choice; one date has no past practices; the window has no Save. |
+| The club's schedule, load failed | This schedule didn't load. Try again. | **This schedule didn't load. Try again.** | The house pattern. |
+| Refusal: not house league's schedule | That schedule isn't one house league has time in. | **House league has no time in that schedule.** | Direct; no stranded preposition. |
+| Empty state, owner or admin | The club hasn't given house league any time yet. · Give it some from one of the club's permits, then come back here. · lime Give house league time | **all three as built** | k4's sentence; "some" beside k4's "more". |
+| A division no longer the season's | Former division | **Former division games** / **Former division practice time** | Neutral about why it is gone. |
+| The window, load failed | House league's time didn't load. Try again. | **as built** | The house pattern. |
+| A Save that failed (not stale) | That change wasn't saved. Try again. | piece: **The changes didn't save. Try again.** · a row or one date: **That change didn't save. Try again.** | The house's active "didn't save". |
+| Tools' Export row, the free League floor | Exports · League · "Exports are part of League. …" | **Exports · League Plus** · **Exports are part of League Plus. Upgrade to export your schedule, standings, and registrations.** | A FIX, not a style call: exports are League Plus's (PLAN_PRICING_FACTS.md); "League" is the free plan itself. The Registrations screen's badge carried the same wrong name and was fixed with it. |

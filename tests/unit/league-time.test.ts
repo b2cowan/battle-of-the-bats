@@ -210,6 +210,11 @@ describe('A division’s piece — parts without their use, ticks that stage, on
     assert.equal(LEAGUE_TIME_WORDS.ask.note(['U12 Blue', 'U12 Red']),
       'U12 Blue and U12 Red have practices on this time. Saving removes the ones still to come. Past practices stay.');
     assert.equal(LEAGUE_TIME_WORDS.ask.confirm(6), 'Save and remove 6 practices');
+    assert.equal(LEAGUE_TIME_WORDS.ask.note(['A', 'B', 'C', 'D']).startsWith('4 teams have practices'), true);
+    assert.equal(LEAGUE_TIME_WORDS.ask.noteOneDate(['U12 Blue'], 1), 'U12 Blue has a practice on this date. Saving removes it.');
+    assert.equal(LEAGUE_TIME_WORDS.ask.titleOneDate('Tue, Jun 15', 'Not given yet'), 'Change Tue, Jun 15 to Not given yet?');
+    assert.equal(LEAGUE_TIME_WORDS.piece.nothing('U12', 'games'), 'U12 has no game time yet.');
+    assert.equal(LEAGUE_TIME_WORDS.piece.figure(0), 'No time yet');
   });
 });
 

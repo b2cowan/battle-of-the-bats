@@ -31,7 +31,7 @@ import s from './LeagueTime.module.css';
  * per part, per weekday, per stretch, tri-state — and ONE Save sends them all (mig 394: every change or none). Cancel
  * and Back leave the level and drop its ticks; × asks first while anything is staged. Saving time back that has
  * practices still to come asks first, in red, naming the teams — and never promises a notice (Part 5 tells them).
- * Choose parts… asks whose piece in one small step, then opens it with nothing new ticked.
+ * Choose parts… asks which piece in one small step, then opens it with nothing new ticked.
  *
  * ⚖ Nothing to give (k4, adapted 2026-10-27, then /ux + /design): the club gave nothing → a league admin reads who can
  * give it (no link); an owner or an admin reads the same fact with the lime Give house league time (the club's
@@ -86,14 +86,14 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
   const setStage = (stage: PieceStage) => setLevels(ls => ls.map((l, i) => (i === ls.length - 1 && l.kind === 'piece' ? { ...l, stage } : l)));
 
   /** One Save: every change or none. True when it landed. */
-  async function save(changes: LeagueTimeChange[]): Promise<boolean> {
+  async function save(changes: LeagueTimeChange[], failedWords: string = W.giveFailed): Promise<boolean> {
     setBusy(true);
     setFailed(null);
     const r = await fetch(url, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ changes }),
     }).catch(() => null);
     const data = r ? await r.json().catch(() => null) : null;
-    if (!r?.ok) setFailed((data as { error?: string } | null)?.error ?? W.giveFailed);
+    if (!r?.ok) setFailed((data as { error?: string } | null)?.error ?? failedWords);
     await load();
     setBusy(false);
     if (r?.ok) onChanged?.();
@@ -119,7 +119,7 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
     }
     setAsking(null);
     // Landed: back up a level. Refused: the ticks went stale with the time — the level reads again, nothing staged.
-    if (await save(changes)) up(); else setStage({});
+    if (await save(changes, W.piece.saveFailed)) up(); else setStage({});
   }
 
   const empty = time !== null && time.sources.length === 0;
@@ -138,10 +138,10 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
     const count = Object.keys(level.stage).length;
     const division = divisionName.get(level.use.divisionId) ?? W.aDivision;
     title = labelOfUse(level.use);
-    identity = hoursAWeek(pieceMinutes(piece, level.stage));
+    identity = W.piece.figure(pieceMinutes(piece, level.stage));
     body = (
       <PieceLevel stretches={piece} stage={level.stage} canTick={canDivide} hint={canDivide ? W.piece.hint(division, level.use.kind) : null}
-        manySources={time.sources.length > 1} label={title as string}
+        manySources={time.sources.length > 1} nothing={W.piece.nothing(division, level.use.kind)}
         labelOfUse={labelOfUse} onStage={setStage} onOpen={use => push({ kind: 'piece', use, stage: {} })} />
     );
     if (canDivide) {
@@ -282,13 +282,14 @@ function TickBox({ tick, onToggle, label }: { tick: Tick; onToggle: () => void; 
  * A DIVISION'S PIECE (drawings "A piece's window" b–g): each stretch, its weekdays, their parts. Whoever runs the season
  * ticks; the registrar reads only the parts the piece holds, with no boxes (g).
  */
-function PieceLevel({ stretches, stage, canTick, hint, manySources, label, labelOfUse, onStage, onOpen }: {
+function PieceLevel({ stretches, stage, canTick, hint, manySources, nothing, labelOfUse, onStage, onOpen }: {
   stretches: PieceStretch[];
   stage: PieceStage;
   canTick: boolean;
   hint: string | null;
   manySources: boolean;
-  label: string;
+  /** The registrar's read when the piece holds nothing. */
+  nothing: string;
   labelOfUse: (u: LeagueUse) => string;
   onStage: (stage: PieceStage) => void;
   onOpen: (use: LeagueUse) => void;
@@ -299,7 +300,7 @@ function PieceLevel({ stretches, stage, canTick, hint, manySources, label, label
     const rows = stretches
       .map(x => ({ x, parts: x.days.flatMap(d => d.parts).filter(p => p.mine.length) }))
       .filter(r => r.parts.length);
-    if (!rows.length) return <p className={ck.hint}>{W.piece.nothing(label)}</p>;
+    if (!rows.length) return <p className={ck.hint}>{nothing}</p>;
     return (
       <div className={s.piece}>
         {rows.map(({ x, parts }) => (

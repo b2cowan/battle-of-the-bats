@@ -193,7 +193,7 @@ function SlotRead({ slot, read, scheduleName, where, who, canChange, labelOfUse,
   const [pending, setPending] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [reason, setReason] = useState<string | null>(null);
-  const [asking, setAsking] = useState<{ change: LeagueTimeChange; teams: string[]; count: number } | null>(null);
+  const [asking, setAsking] = useState<{ change: LeagueTimeChange; teams: string[]; count: number; choice: string } | null>(null);
   const holder = slot.holder;
   const current = holder.kind === 'house_league' ? holder.use : null;
   const options: (LeagueUse | null)[] = [null, ...read.divisions.flatMap(d => (['games', 'practices'] as const).map(kind => ({ divisionId: d.id, kind })))];
@@ -222,7 +222,7 @@ function SlotRead({ slot, read, scheduleName, where, who, canChange, labelOfUse,
     setPending(keyOfUse(to));
     const removed = practicesRemovedBy([change], read.practices);
     if (removed.length) {
-      setAsking({ change, count: removed.length, teams: [...new Set(removed.map(p => p.team).filter(Boolean))].sort() });
+      setAsking({ change, count: removed.length, choice: to ? labelOfUse(to) : W.notGiven, teams: [...new Set(removed.map(p => p.team).filter(Boolean))].sort() });
       return;
     }
     void save(change);
@@ -246,7 +246,7 @@ function SlotRead({ slot, read, scheduleName, where, who, canChange, labelOfUse,
         {holder.kind === 'open' && <p className={ck.notice}>{W.club.openNote}</p>}
         {holder.kind === 'house_league' && slot.canUse && canChange && (
           <fieldset className={s.choices}>
-            <legend className={s.labelOfUse}>{W.club.use}</legend>
+            <legend className={s.useLabel}>{W.club.use}</legend>
             {options.map(u => (
               <label key={keyOfUse(u)} className={s.choice}>
                 <input type="radio" name={`use-${slot.id}`} checked={chosen === keyOfUse(u)} disabled={saving} onChange={() => pick(u)} />
@@ -258,13 +258,13 @@ function SlotRead({ slot, read, scheduleName, where, who, canChange, labelOfUse,
         )}
       </KitDialog>
       {asking && (
-        <KitDialog kind="question" title={W.ask.titleOneDate(dayHead(slot.day))} busy={saving}
+        <KitDialog kind="question" title={W.ask.titleOneDate(dayHead(slot.day), asking.choice)} busy={saving}
           onClose={() => { setAsking(null); setPending(null); }}
           footer={<>
             <button type="button" className="btn btn-outline" onClick={() => { setAsking(null); setPending(null); }}>{W.piece.cancel}</button>
-            <button type="button" className="btn btn-danger" onClick={() => void save(asking.change)}>{W.ask.confirm(asking.count)}</button>
+            <button type="button" className="btn btn-danger" onClick={() => void save(asking.change)}>{W.ask.confirmOneDate(asking.count)}</button>
           </>}>
-          <p className={ck.notice}>{W.ask.note(asking.teams)}</p>
+          <p className={ck.notice}>{W.ask.noteOneDate(asking.teams, asking.count)}</p>
         </KitDialog>
       )}
     </>
