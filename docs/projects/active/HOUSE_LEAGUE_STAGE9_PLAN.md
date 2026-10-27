@@ -671,3 +671,14 @@ open it, and the menu's top level is Stage 13's.
   table, owned by a season; **house league not billed** (not asked: the owner's yes in the UX summary); **League Plus becomes
   schedulable**; and **frame h5 contradicts 9d2·15** (it lets the club pair a division with a rep team): the prompt says not to
   build it, the club's sharing rules name House league as one party.
+- **2026-10-27 · 11b Parts 1–2 built and reviewed** (build prompt `CLUB_TIER_STAGE11B_BUILD_PROMPT.md`; rulings 11b·A–C in
+  §0h). Committed `076d4551d` (Part 1, mig 392: the program holder, `league_slot_uses`, `league_practice_time`,
+  `league_practices.club_schedule_slot_id`, the league admin's two SQL steps), `ac5d68c5e` (Part 2: House league as a holder in
+  New schedule and a slot's Give it to; all of it = no drafts, saved and finalized in one request; never billed; League Plus
+  schedules), `d60c30d3a` (the /review of both, mig 393: a use waits for Send the changes; rep teams stay closed to a member who
+  can't open them; house league offered only while a season runs). Migs 392 + 393 applied to DEV 2026-10-27, prod pending in
+  `MANUAL_PROD_STEPS.json`; `scripts/club-stage11b-check.sql` passes T1–T11. **Owed to Part 5 (recorded by the review):** house
+  league's half of Send the changes in the app (`p_league` — no practice can exist before Part 4, and until it lands a send
+  over a taken slot with practices to come refuses `changed`); the take-back question also on Clear this week, a drag and
+  Regenerate. **Recorded, not built:** Fair shares' measures and the .ics export read house league as a team; a give-it-all
+  whose send is refused lands on the draft without a sentence. **Next: Part 3** (House league's time, the league admin's door).
