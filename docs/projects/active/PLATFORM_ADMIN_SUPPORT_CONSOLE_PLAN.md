@@ -807,7 +807,7 @@ option of questions 12-16.
   deck-follow-up. A tag is cut to **32** characters (the database's limit; the drawing said 40, "a builder's number") and kept only from the list.
 - **Q16:** two error sentences: the house throttle sentence, and the new "We couldn't save your request just now. Please try again in a few minutes."
   (customer copy: **goes to /marketing before release**).
-- **Built (uncommitted, 2026-10-27):** mig **402** `early_access_lead_submissions` (applied to dev; prod at the release with 398); `lib/lead-form-answers.ts`
+- **Built, committed `cdc67caea` 2026-10-27 (`/review` done, privacy lens on the public route):** mig **402** `early_access_lead_submissions` (applied to dev; prod at the release with 398); `lib/lead-form-answers.ts`
   (the lists, pure), `lib/early-access-refill.ts` (the rule, pure — BOTH writers call it: `app/api/early-access/route.ts` and
   `lib/basic-coach-interest.ts`); the route is throttled with `throttlePublicForm`, answers a database error with a fixed sentence (the cause goes to
   the error log), and answers a known and an unknown address identically; `lib/ref-tag-client.ts` + `components/RefTagCapture.tsx` (root layout) keep `?ref=`
@@ -815,8 +815,13 @@ option of questions 12-16.
   `support-console-stage7-guard.test.ts`. Dictionary documents the new table.
 - **Findings, not fixed here:** the early-access form's updates box starts ticked, and the coach form sends no box but a new lead is saved as a yes; the
   form already stores the browser's user-agent text on every lead; the throttle is best-effort per instance (the captcha stays a later pass).
-- **Owed:** the walk (a tagged link, the question on both forms, a refill on a worked lead, a withdrawal), `/review` with the privacy lens on the public
-  route, `/docs`, `/marketing` for the two sentences, the owner's tag list, prod: apply 402 with 398 at the release. Two other sessions have uncommitted edits in
+- **Review fixes made before the commit:** the lead form has its OWN throttle buckets (it shared the family registration forms'); a lost first-insert race reads as a known
+  address; the refill row is written after the lead update and a missing one is logged, never shown (so a known address answers as an unknown one even before
+  402 reaches an environment); NUL and lone surrogates are cleaned; a blank box never wipes earlier words; the leads export gains "Source recorded by".
+  **Open design call for the owner:** a stranger who knows an unworked lead's address can overwrite its words (the replaced words are not kept); the rule as
+  ruled says "takes the visitor's new words". **Release gate:** the public route and the coach button now read 398 columns and 402, so BOTH migrations go to prod
+  BEFORE this code does.
+- **Owed:** the walk (a tagged link, the question on both forms, a refill on a worked lead, a withdrawal), `/docs`, `/marketing` for the two sentences, the owner's tag list, prod: apply 402 with 398 at the release. Two other sessions have uncommitted edits in
   `components/EarlyAccessForm.tsx`, its css and `EarlyAccessModalTrigger.tsx` (the confirmation swap): commit Part 8's hunks only.
 
 ## Stage 7 findings (verified against the code and dev's data 2026-10-27, before drawing)
