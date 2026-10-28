@@ -1,30 +1,67 @@
-# PM brief — Public tournament sites: a calmer phone page, sponsors, and the club link
+# PM brief — Public tournament pages: easy to read in a parking lot, and a door to the club
 
-**Status:** logged 2026-10-24, not yet drawn. Priority: after Club Tier Stage 4; not a gate on anything.
+**Status:** drawn 2026-10-27 (round 1, then round 2: every public page as a whole phone screen, before and after,
+on the hub's "Every page" tab; asks 14–17), nothing ruled or built. Priority: after Club Tier Stage 4; not a gate on
+anything. Plan: `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`. Mockups: the review hub (Claude Artifact).
 
-## What it would do
-Families who open a tournament on their phone get a page that is easy on the eyes: less wall-of-text, the three
-things they came for (games, fields, standings) up front, the rest a tap away. A tournament can show its
-sponsors. When a club hosts the tournament, the people attending find the club's own public page.
+## What changes for a family
+- **The phone home answers "where is my next game" on the first screen.** On game day it opens with your team (if you
+  follow one), the games being played now, and the next games with their field and directions. Today the next
+  scheduled game is about two phone screens down, under repeated summaries.
+- **Calmer to read.** Tournament pages move to the same light ground, type and white tab row as the club's own site.
+  The capitals in a typewriter face go. The organizer's colour stays the first thing you see, as a band across the
+  top.
+- **Nothing is taken away.** Parts with nothing in them no longer show as big empty boxes; everything that has
+  content is still there, a tap away at most.
+- **One word for each state**, matching the club's Tournaments tab: Live now, This weekend, Registration open, Finished.
+- **The pay link is a focused page** with no tournament menus beside it.
+- **Every page leads with its job** (round 2): the Schedule opens on today's live and next games; a game's page opens
+  with when, where and Directions; Standings opens with the table (the bracket moves to Playoffs); a team's page opens
+  with its next game. Tabs with nothing in them (News, Rules) hide; Register and Champions become tabs while they
+  have something to show.
+- **In a phone browser these are web pages** (no app bar, Sign in at the top, as on club pages); inside the installed
+  app the app bar is there.
+
+## What changes for a club
+- **The club gets advertised, not just linked.** A card on the tournament's home shows the club and what is open
+  there right now (a tryout, a house-league sign-up), with a "Visit the club" button. Every tournament page's footer
+  says who hosts it.
+- **Sponsors on tournaments.** The club keeps one sponsor list and picks which tournaments each sponsor appears on.
+
+- **The club decides how its tournaments look.** One new setting on the club's public site: "Club's look by default"
+  (a tournament can be given its own) or "Always the club's look". A tournament's own
+  settings show "The club's colours" as a real choice, with a preview. Switching the rule never erases a tournament's
+  own look.
+
+## What changes for a standalone organizer (not a club)
+- The same calmer pages in the organizer's colour if their plan includes branding, or a neutral dark band if it is a
+  free event. No club card. Nothing depends on a club existing.
+
+## Found along the way (fix first)
+- **A schedule the organizer has not published can still reach families**: the tournament home lists its games while
+  the schedule page says "coming soon" and team pages say no games. This is a real defect, not demo data, and it is
+  worth fixing before any redesign.
+- **A club's tournaments lose the club's colours without anyone choosing that**: the first time anyone saves a
+  tournament's settings page, even to turn a page on or off, it switches to the FieldLogicHQ default look.
+- A few small wording bugs: a game in play with no score shows a lone dash; the club home calls a tournament three
+  weeks away "Live"; the countdown says "First pitch", which is one sport's word.
 
 ## Why it matters
-- A tournament is the one moment a club has strangers' attention on its pages. Today that moment is a dense page
-  with a small name link back.
-- Sponsors are how a club pays for the tournament; the club's own site already has a place for them, the
-  tournament does not.
-- Phone is where families are on game day.
+- A tournament is the moment strangers see a club. Today that moment is a dark, dense page with a small name link.
+- Families read these pages outdoors on a phone; daylight-readable pages are the job.
+- Clubs and their tournaments should feel like one product.
 
-## Customer impact
-- **Families / visitors:** shorter, calmer pages; a visible way to the club.
-- **Club admins:** a sponsor section on a tournament; a switch for the "Tournaments" tab in the club's top row.
-- **Tournament-only organizations (no club site):** unchanged unless drawn otherwise.
+## The trade
+- The dark game-day look and the organizer's dark/light switch go away (a fallback keeps dark as an option).
+- Two older design rulings are reversed knowingly: tournament pages "stay the venue" in their own dark look, and the
+  uppercase typewriter labels. The venue idea survives as the organizer's colour band.
 
 ## Success looks like
-- On a phone, a family finds today's game without scrolling past paragraphs.
-- A tournament's sponsors show with the same limits as the club's.
-- A visitor from a tournament can reach the club's page in one tap, and the club can see that as a benefit.
+- On a 390px phone on game day, the first "Up next" game is on the first screen.
+- No empty boxes on any tournament page.
+- A visiting parent reaches the club in one tap, and sees something to sign up for.
+- A club and its tournament side by side read as the same site in two colours of the same frame.
 
-## Open decisions (the owner's, at the walk)
-- (Ruled 2026-10-24) The "Tournaments" tab in the club's top row is Club Tier Stage 4f, after the web address; it is
-  not part of this project.
-- Whether tournament pages keep their own look or wear the club's.
+## Owner decisions needed (in the hub's Asks tab)
+The ground, the type, the home's order, the club card, sponsors (and their plan gate, via `/strategy`), the pay page,
+fixing the defects now, and the state words.

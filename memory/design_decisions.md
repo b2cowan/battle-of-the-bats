@@ -7,6 +7,19 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-27 — PUBLIC TOURNAMENT PAGES: ALL SEVENTEEN ASKS RULED AS RECOMMENDED; THE LIGHT CLUB FRAME REPLACES THE DARK VENUE; ALERTS ONLY IN THE INSTALLED APP (owner, paste-back from the review hub https://claude.ai/artifact/19ueNt47f4x3kGFktd8oTU)
+
+**Decision (as ruled):** every ask 1–17 as recommended; full text in `docs/projects/active/PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §10. The ones that reverse or replace standing entries:
+- **Ask 1, the ground:** every public tournament page is light, on the club frame's ground and cards, with the organizer's colour as a 72px band; the organizer's dark/light switch goes. **Reverses** Nav Unification (2026-07-20) "do not warm-theme tournament pages" and Club Tier Stage 4 Ask 1's venue carve-out. Why: these pages are read outdoors on phones, and the band keeps the venue's reason (the organizer's colour, name and logo first).
+- **Ask 2, the type:** the club's type on public tournament pages; the uppercase typewriter labels go. **Reverses G4** for these pages.
+- **Ask 8:** one set of state words everywhere a tournament's state shows: Live now · This weekend · Registration open · Finished.
+- **Asks 3, 14, 17:** a part or a tab with nothing to show is absent (News and Rules tabs hide while empty; Register is a tab while open; Champions a tab from the first title, second after Overview); the ticker is off the Overview, the Schedule and a game's page.
+- **Ask 15:** the bracket lives on Playoffs; Standings ends with a door to it.
+- **Asks 9–13:** a club rule on its Public site, "Club's look by default" / "Always the club's look" (the event logo may stay its own), applied at read time, never writing a tournament's saved look; set by the owner and the admins who edit the club's Look.
+- **Ask 5 (owner's note):** sponsors follow the same logic as branding: the organization can put its sponsors on its tournaments or let a tournament's organizers put their own; a tournament organizer not linked to a club gets its own sponsors. Plan gate: `/strategy`.
+- **Owner directions the same day:** the app bar follows where a page is opened (none in a browser, Sign in in the band; the bar inside the installed app), changing the tournament half of Stage 4 Ask 8. **Alerts only inside the installed app:** no alerts control on a public page in a browser, phone or desk, which replaces, for browsers, the Rain Delay A2 bell "on every public tab, mobile + desktop". Cost named: an Android browser parent must install to get alerts.
+- **Owner's note on Ask 17:** when the ticker's stage comes, propose better versions of it, visually or functionally (e.g. a soft flashing scoreboard).
+
 ### 2026-10-27 — SUPPORT CONSOLE STAGE 7 (GROWTH), ELEVEN ASKS RULED, EVERY RECOMMENDED BOX TICKED PLUS Q4 C AND D (owner, paste-back from the drawings https://claude.ai/artifact/QTrwrgyGqgBZugpGfvpJHM)
 
 **Decision (as ruled):** the growth screens only; Signed up = a person-confirmed offered match or a hand link; Pays = own plan not Tournament, billing active, a real subscription; read live, no job; a lead's source from staff (B), a public "How did you hear about us?" question (C) and link tags (D); Campaigns keeps its name, the catalogue list becomes Promotions; no reason and no confirm window on a lead edit; no rulebook change; Pitch decks restyle only; seven steps with Lost and a required reason, signed notes, stuck at 30 days, Today's five growth rows; the Audit log lead fix now, on its own. Full text: the plan's "Owner rulings 2026-10-27 (Stage 7 drawings)".
