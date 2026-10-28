@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
 import { hasSupabaseSessionCookie } from '@/lib/supabase-server';
-import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
+import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams, resolveTournamentContactEmail } from '@/lib/db';
 import { hasPublicPlayoffGames } from '@/lib/public-games';
 import { hasPlayoffPlan } from '@/lib/playoff-plan';
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
@@ -35,13 +35,11 @@ import TournamentSideRail from '@/components/public/TournamentSideRail';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
 import ScoreTicker from '@/components/public/ScoreTicker';
 import TournamentBand from '@/components/public/TournamentBand';
+import TournamentFooter from '@/components/public/TournamentFooter';
 import clubFrameStyles from '@/components/public/ClubFrame.module.css';
 import frameStyles from '@/components/public/TournamentFrame.module.css';
 import { isPublicFrameOn } from '@/lib/public-frame-server';
-import { publicFrameAttr, publicFrameRoleVars, publicFrameRoles } from '@/lib/public-frame';
-import { TOURNAMENT_STATUS_WORD, tournamentHomeStatus } from '@/lib/club-site-home';
-import { formatEventDateRange } from '@/lib/timezone';
-import { clubInitials } from '@/lib/club-site';
+import { publicFrameAttr, publicFrameBand, publicFrameHost, publicFrameRoleVars } from '@/lib/public-frame';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,6 +122,11 @@ export default async function TournamentLayout({
   // queries, and if one of those throws first this promise is never awaited — an unhandled
   // rejection at the Node level rather than a React error. Failing to null just drops the door.
   const orgHomeHrefPromise = resolveOrgHomeHref(org).catch(() => null);
+  // The frame's footer shows the address the Rules and News pages already show (the organizer's public-contact switch
+  // decides it). Kicked off here and awaited with the host answer, for the same reason; failing to null drops the line.
+  const frameContactPromise = frameOn
+    ? resolveTournamentContactEmail(tournament.id, org.contactEmail ?? null, 'public').catch(() => null)
+    : Promise.resolve(null);
 
   // Acquisition banner (free events only) — hidden from members of THIS org. Resolving a
   // Supabase session is the expensive part, so it only runs when (a) the plan is free —
@@ -275,15 +278,15 @@ export default async function TournamentLayout({
   // name as inert text and the phone eyebrow does the same, exactly as for any org whose home
   // isn't a real place.
   const orgHomeHref = await orgHomeHrefPromise;
+  const frameContactEmail = await frameContactPromise;
 
-  // The frame's band (Stage 1). Its colour through the club's roles — a plan without tournament branding gets the neutral
-  // band and no mark (lib/public-frame.ts). Its state word is the club's Tournaments tab's own rule and words (Ask 8), so
-  // the club's card and the event's band never disagree; its dates are the club's spelling of them.
-  const frameRoles = frameOn ? publicFrameRoles(org, tournament) : null;
-  const frameStatus = frameOn ? tournamentHomeStatus(tournament, todayISO, registration?.state === 'open') : null;
-  const frameDates = frameOn && tournament.startDate
-    ? formatEventDateRange(tournament.startDate, tournament.endDate, !tournament.startDate.startsWith(todayISO.slice(0, 4)))
-    : null;
+  // The frame's band (Stage 1): its colour through the club's roles, its mark, dates and one of the four state words, all
+  // worked out by the one helper the admin preview also calls (lib/public-frame.ts publicFrameBand).
+  const frameBand = frameOn ? publicFrameBand(org, tournament, todayISO, registration?.state === 'open') : null;
+  // Who runs it — ONE answer for the desk band and the footer, from the same door as the rail's crumb (Part 2).
+  const frameHost = frameOn ? publicFrameHost(org.name, tournament.name, orgHomeHref) : null;
+  // The paid plan's credit (WI-10), never the demo's. Under the frame it sits in the footer; a free event keeps its badge.
+  const showBuiltOnCredit = !isFreeTournamentPlan && !isDemoOrgSlug(orgSlug);
 
   // The free plan's FieldLogicHQ badge and its acquisition banner. Under the frame they render OUTSIDE the frame's element
   // (both are fixed, so where they sit in the markup moves nothing), keeping today's look exactly (Stage 1: unchanged).
@@ -357,33 +360,45 @@ export default async function TournamentLayout({
       )}
       {/* The frame's colour roles, on <html> for the frame only: the frame's element reads them through the club's token
           block, and the app's own bar (mounted outside it) reads the ink. Outranks the org layout's :root block. */}
-      {frameRoles && (
-        <style dangerouslySetInnerHTML={{ __html: `html:has([data-public-frame="light"]) { ${publicFrameRoleVars(frameRoles)} }` }} />
+      {frameBand && (
+        <style dangerouslySetInnerHTML={{ __html: `html:has([data-public-frame="light"]) { ${publicFrameRoleVars(frameBand.roles)} }` }} />
       )}
-      {/* Desktop-only (≥1024px) persistent left nav rail — self-hides below that. */}
-      <TournamentSideRail />
+      {/* Desktop-only (≥1024px) persistent left nav rail — self-hides below that. Under the frame it is a cell of the
+          frame's desk grid instead (below). */}
+      {!frameOn && <TournamentSideRail />}
       {/* Broadcast score ticker — self-gates to game day (reserves --ticker-h). Under the frame it rides under the band
           instead (below). */}
       {!frameOn && <ScoreTicker />}
       {/* data-live-chrome scopes mobile-chrome CSS (retired page titles/hero) to the
           LIVE shell only — the admin preview has no unified event header to hand
           identity to, so it keeps the in-page titles (preview↔public parity). */}
-      <div className={railStyles.shell} data-card-style={cardStyle} data-color-mode={effectiveColorMode} data-live-chrome="">
-        {frameRoles && (
+      <div
+        className={frameOn ? `${railStyles.shell} ${frameStyles.deskShell}` : railStyles.shell}
+        data-card-style={cardStyle}
+        data-color-mode={effectiveColorMode}
+        data-live-chrome=""
+      >
+        {frameBand && (
           <TournamentBand
             orgSlug={orgSlug}
             tournamentSlug={tournament.slug}
             name={tournament.name}
-            logoUrl={frameRoles.neutral ? null : tournament.logoUrl ?? org.logoUrl ?? null}
-            initials={frameRoles.neutral ? null : clubInitials(tournament.name) || null}
-            dates={frameDates}
-            status={frameStatus ? { word: TOURNAMENT_STATUS_WORD[frameStatus], live: frameStatus === 'live' } : null}
+            logoUrl={frameBand.logoUrl}
+            initials={frameBand.initials}
+            dates={frameBand.dates}
+            status={frameBand.status}
             hiddenPages={navHiddenPages}
             hasBracket={hasPublicBracket}
+            host={frameHost}
           />
         )}
-        {frameOn && <ScoreTicker inFlow />}
-        {children}
+        {frameOn && <TournamentSideRail />}
+        {frameOn ? (
+          <div className={frameStyles.main}>
+            <ScoreTicker inFlow />
+            {children}
+          </div>
+        ) : children}
         {/* WI-10 — paid tiers only. Free events already carry the richer PoweredByBadge +
             acquisition banner; stacking a second credit would say the same thing twice, so this
             is the strict complement of `isFreeTournamentPlan`.
@@ -394,7 +409,17 @@ export default async function TournamentLayout({
         {/* …and never inside the "See it live" demo, where this quiet path back to the platform
             is a way OUT of the thing a prospect was brought here to look at. The banner's own
             "Start your own — free" is the intended door, and it is always on screen. */}
-        {!isFreeTournamentPlan && !isDemoOrgSlug(orgSlug) && <BuiltOnCredit />}
+        {!frameOn && showBuiltOnCredit && <BuiltOnCredit />}
+        {frameOn && (
+          <TournamentFooter
+            name={tournament.name}
+            contactEmail={frameContactEmail}
+            host={frameHost}
+            hiddenPages={navHiddenPages}
+            hasBracket={hasPublicBracket}
+            showCredit={showBuiltOnCredit}
+          />
+        )}
       </div>
       {/* Game-day "now playing" dock for the followed team (self-gates: followers
           on game day only; mobile-only). */}

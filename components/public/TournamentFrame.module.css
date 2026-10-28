@@ -15,8 +15,8 @@
   --nav-visual-h: var(--frame-pin-h);
   --chrome-top-h: calc(var(--frame-pin-h) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--offer-bar-h, 0px));
   --chrome-top-static-h: 0px;
-  /* At a desk the platform's strip is still fixed over the top of the page (Part 2 settles the desk); the band starts
-     under it. 0 on a phone. */
+  /* Inside the installed app on a desk the platform's strip is the app's bar, fixed over the top of the page, and the band
+     starts under it. In a browser there is no strip (below), and on a phone it is 0. */
   padding-top: var(--desktop-strip-h, 0px);
 }
 
@@ -27,6 +27,83 @@
 }
 @media (min-width: 1024px) {
   .tabs { display: none; }
+}
+
+/* Between a phone and the rail (901–1,023 px) the event's tabs keep the phone's white row under the band. The club bar
+   sets its few tabs inside the band at this width; an event has up to eight beside a name of up to two lines, and inside
+   the band they were squeezed to a scrap with Overview out of sight (Part 2's render check, 960 px). Nothing pins here,
+   as on every width above a phone. */
+@media (min-width: 901px) and (max-width: 1023px) {
+  .frame :global([data-public-frame-band]) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'identity actions'
+      'tabs     tabs';
+    padding: 0;
+    border-bottom: 0;
+  }
+  .frame :global([data-public-frame-band]) > a:first-child { padding: 0 8px 0 24px; }
+  .frame :global([data-public-frame-band]) > div { padding-right: 16px; }
+  .frame .tabs {
+    margin: 0;
+    padding: 0 16px;
+    gap: 4px;
+    align-items: stretch;
+    background: var(--club-card);
+    border-top: 3px solid var(--club-accent);
+    border-bottom: 1px solid var(--club-line);
+  }
+  .frame .tabs > a {
+    padding: 3px 8px 0;
+    border-radius: 0;
+    border-bottom: 3px solid transparent;
+    font-size: 14px;
+    color: var(--club-soft);
+  }
+  .frame .tabs > a:hover { color: var(--club-text); }
+  .frame .tabs > a[aria-current='page'] {
+    color: var(--club-text);
+    box-shadow: none;
+    border-bottom-color: var(--club-ink);
+  }
+  .frame .tabs > a:focus-visible { outline-color: var(--club-ink); }
+}
+
+/* ── The desk (Part 2; hub "The end state", "Desktop, game day · 1280px") ───────────────────────────────────────────
+   The band runs the full width; under it the white side rail (TournamentSideRail.module.css, keyed to the marker) and
+   the page; the footer runs the full width at the foot. The rail is 248 px, the platform's one rail width (the coaches
+   portal, the account pages), so everything that already clears a 248 px rail still lines up. A short page still puts
+   the footer at the foot of the window. */
+@media (min-width: 1024px) {
+  .frame .deskShell {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      'band band'
+      'rail main'
+      'foot foot';
+    min-height: calc(100dvh - var(--desktop-strip-h, 0px));
+    padding-left: 0;
+  }
+  .frame .deskShell > :global([data-public-frame-band]) { grid-area: band; }
+  .frame .deskShell > :global([data-public-frame-footer]) { grid-area: foot; }
+  .main { grid-area: main; min-width: 0; }
+
+  /* The band at a desk: its own 32 px edge over the rail and the page (not the club pages' centred column — there is a
+     rail here), 88 px tall over the accent rule, the drawing's size. */
+  .frame :global([data-public-frame-band]) {
+    --club-band-h: 88px;
+    padding: 0 32px;
+    /* The tab row's column folds to nothing (the rail navigates), and a long name gives way: two lines, then the
+       ellipsis, never pushing the doors off the band. */
+    grid-template-columns: minmax(0, 1fr) 0 auto;
+  }
+}
+
+/* The main column is only a grid slot at a desk; on a phone it is nothing, so the page flows as it did in Part 1. */
+@media (max-width: 1023px) {
+  .main { display: contents; }
 }
 
 /* The page behind the frame is the ground too — past the top or bottom on a phone's bounce, under a short page. */
@@ -83,6 +160,38 @@
   background: currentColor;
 }
 
+/* "Hosted by {club} ›" — the band's right side, at a desk only (hub "Ask B": the one place a desk has room for it in the
+   band; the footer carries it everywhere). A long name gives way before Sign in does. */
+.hostLink {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .hostLink {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    min-width: 0;
+    max-width: 360px;
+    margin-right: 8px;
+    font: 600 14px/1.2 var(--club-text-face);
+    color: var(--club-on-fill);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  a.hostLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+  a.hostLink:focus-visible {
+    outline: 2px solid var(--club-on-fill);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* The operator door's slot in the band. Inside the installed app on a desk the app's strip carries the door, so the
+   band's steps aside there (a phone's app bar carries none, so the band keeps it). */
+.bandDoor { display: contents; }
+
 /* Share: a bare 44 px icon in the band's text colour (the drawing's `.ico`). */
 .icon {
   display: grid;
@@ -109,6 +218,9 @@
 @media (display-mode: standalone) {
   .browserOnly { display: none; }
 }
+@media (display-mode: standalone) and (min-width: 901px) {
+  .bandDoor { display: none; }
+}
 
 /* In a browser there is no app bar on a tournament page (Ask 16: the browser's back is the way home), and so no room is
    kept for one at the foot of the page. Inside the installed app the bar stays (ConsumerShell.module.css draws it on
@@ -116,8 +228,59 @@
 @media not all and (display-mode: standalone) {
   :global(html):has(.frame) {
     --bottom-nav-height: 0px;
+    /* …nor the platform's strip at a desk (the drawing's desk frame; Sign in is in the band, as on a club's pages). */
+    --desktop-strip-h: 0px;
   }
   :global(html):has(.frame) :global([data-app-bar]) {
     display: none;
   }
+}
+
+/* ── The footer (Part 2; components/public/TournamentFooter.tsx — the club footer's own shape and styles, plus these) ─ */
+.footPages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footLink,
+.footHost {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+  color: inherit;
+  font: 600 14px/1.3 var(--club-text-face);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.footHostText { text-decoration: none; }
+
+/* At a desk the footer keeps the band's own 32 px edge (the club footer centres on the pages' column; here a rail sits
+   beside the page, so the band's edge is the one to line up with). */
+@media (min-width: 1024px) {
+  .frame :global([data-public-frame-footer]) > div {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+/* The free plan's acquisition banner floats over the foot of the page (unchanged, Stage 1). The footer is the last thing
+   on a framed page, so it makes room under itself while the banner shows; dismissed, the room goes with it. */
+:global(html):has(.frame):has(:global([data-growth-banner])) :global([data-public-frame-footer]) > div {
+  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px)); /* the banner's two rows on a phone */
+}
+@media (min-width: 721px) {
+  :global(html):has(.frame):has(:global([data-growth-banner])) :global([data-public-frame-footer]) > div {
+    padding-bottom: 104px; /* its one row from 721 px */
+  }
+}
+
+.footLink:focus-visible,
+a.footHost:focus-visible {
+  outline: 2px solid var(--club-on-fill);
+  outline-offset: 2px;
 }

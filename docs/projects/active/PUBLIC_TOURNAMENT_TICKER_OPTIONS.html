@@ -1,0 +1,416 @@
+<title>Game-Day Ticker Options</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a document column of tabs and notes around true-size specimens; each tab is one ticker, a phone at 390 px beside
+   its notes, then the desk at 1280 px in its own sideways scroller. The specimens are the product's light frame (fixed
+   colours, the club site's tokens); only the document around them follows the viewer's theme. */
+:root {
+  --doc-bg: #FBFAF8; --doc-fg: #1F1B16; --doc-soft: #5A5246; --doc-line: #E4E0D8; --doc-card: #FFFFFF; --doc-accent: #1E3A8A;
+  --doc-tag: #EEF2FB;
+  --f-title: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-text: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #16140F; --doc-fg: #ECE8E1; --doc-soft: #B5AC9E; --doc-line: #3A352D; --doc-card: #211E18; --doc-accent: #A9BDF5; --doc-tag: #262B3A; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #16140F; --doc-fg: #ECE8E1; --doc-soft: #B5AC9E; --doc-line: #3A352D; --doc-card: #211E18; --doc-accent: #A9BDF5; --doc-tag: #262B3A; color-scheme: dark }
+body { background: var(--doc-bg); color: var(--doc-fg); font: 400 15px/1.55 var(--f-text); }
+.wrap { max-width: 1340px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 22px; }
+h1 { font: 700 34px/1.05 var(--f-title); margin: 0; text-wrap: balance; }
+h2 { font: 700 24px/1.1 var(--f-title); margin: 0; text-wrap: balance; }
+h3 { font: 700 16px/1.3 var(--f-text); margin: 0; }
+p { margin: 0; max-width: 72ch; }
+.lede { color: var(--doc-soft); }
+.navtabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--doc-line); padding-bottom: 10px; }
+.navtabs button { font: 600 14px/1 var(--f-text); color: var(--doc-soft); background: none; border: 1px solid var(--doc-line); border-radius: 8px; min-height: 44px; padding: 0 14px; cursor: pointer; }
+.navtabs button[aria-selected="true"] { color: var(--doc-card); background: var(--doc-fg); border-color: var(--doc-fg); }
+.navtabs button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.better { border-left: 3px solid var(--doc-accent); padding: 4px 0 4px 14px; font-weight: 600; max-width: 80ch; }
+.row { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.row > div { min-width: 0; max-width: 100%; }
+.notes { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.notes ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; max-width: 70ch; }
+.cap { font: 600 12px/1.3 var(--f-text); letter-spacing: .04em; text-transform: uppercase; color: var(--doc-soft); margin-bottom: 8px; }
+.tag { display: inline-block; font: 600 12px/1 var(--f-text); padding: 4px 8px; border-radius: 6px; background: var(--doc-tag); color: var(--doc-accent); vertical-align: 2px; }
+.scrollx { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; max-width: 100%; }
+table.cmp { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
+table.cmp th, table.cmp td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--doc-line); }
+table.cmp th { font-weight: 600; color: var(--doc-soft); background: var(--doc-card); }
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ── The specimens: the product's light frame, fixed colours (the club site's own tokens) ───────────────────────── */
+.tf { --g: #F6F5F2; --card: #FFFFFF; --ink: #1F1B16; --soft: #4E473D; --dim: #6F675B; --line: #E4E0D8; --line2: #D6D0C4;
+  --ok: #2C6A2A; --okbg: #E6F0E2; --live: #B42318; --livebg: #FDECEA;
+  --fill: #1E3A8A; --on: #FFFFFF; --cink: #1E3A8A; --acc: #93B4F5;
+  background: var(--g); color: var(--ink); font-family: var(--f-text); color-scheme: light; position: relative; overflow: hidden; }
+.tf * { box-sizing: border-box; }
+.phone { width: 390px; max-width: 100%; height: 600px; border: 1px solid var(--doc-line); border-radius: 18px; flex: none; overflow-y: auto; }
+.desk { width: 1280px; height: 470px; }
+.band { background: var(--fill); color: var(--on); height: 72px; display: flex; align-items: center; gap: 12px; padding: 0 6px 0 16px; }
+.desk .band { height: 91px; padding: 0 32px; border-bottom: 3px solid var(--acc); }
+.logo { width: 44px; height: 44px; border-radius: 10px; flex: none; display: grid; place-items: center; font: 700 16px/1 var(--f-title); background: #fff; color: var(--fill); }
+.bname { min-width: 0; flex: 1; }
+.bname b { display: block; font: 700 20px/1.1 var(--f-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.desk .bname b { font-size: 24px; }
+.bname span { display: flex; align-items: center; gap: 8px; font: 500 12px/1.3 var(--f-text); margin-top: 3px; }
+.bchip { background: var(--on); color: var(--fill); font: 600 12px/1 var(--f-text); padding: 6px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; }
+.bchip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.signin { font: 600 14px/1 var(--f-text); padding: 0 10px; min-height: 44px; display: flex; align-items: center; }
+.hostlink { margin-left: auto; font: 600 14px/1.2 var(--f-text); white-space: nowrap; }
+.tabs { background: #fff; border-top: 3px solid var(--acc); border-bottom: 1px solid var(--line); display: flex; gap: 4px; padding: 0 8px; height: 48px; overflow: hidden; }
+.tabs span { flex: none; display: flex; align-items: center; padding: 3px 8px 0; font: 600 14px/1 var(--f-text); color: var(--soft); border-bottom: 3px solid transparent; }
+.tabs span.on { color: var(--ink); border-bottom-color: var(--cink); }
+.deskgrid { display: grid; grid-template-columns: 248px minmax(0, 1fr); height: calc(100% - 91px); }
+.rail { background: #fff; border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; }
+.rail span { min-height: 44px; display: flex; align-items: center; padding: 0 14px; border-radius: 6px; font: 600 16px/1 var(--f-text); color: var(--soft); }
+.rail span.on { color: var(--ink); background: var(--g); box-shadow: inset 3px 0 0 var(--cink); }
+.main { min-width: 0; overflow: hidden; }
+.body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.desk .body { padding: 24px 32px; max-width: 760px; }
+.pageh { font: 700 16px/1.25 var(--f-text); margin: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+.rows .r { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); min-height: 60px; }
+.rows .r:last-child { border-bottom: 0; }
+.tm { font: 600 14px/1.25 var(--f-text); font-variant-numeric: tabular-nums; }
+.tm small { display: block; font-weight: 400; color: var(--dim); font-size: 12px; }
+.nm { font: 500 15px/1.3 var(--f-text); min-width: 0; }
+.nm div + div { margin-top: 4px; }
+.nm .l { color: var(--soft); }
+.nm .w { font-weight: 700; }
+.sc { font: 700 20px/1.2 var(--f-title); font-variant-numeric: tabular-nums; text-align: right; }
+
+/* TODAY (behind the switch now): the marquee as it ships (ScoreTicker.module.css) — 40 px, one lap in a fixed 48 s
+   however long the day is, 12.5 px heavy lettering, 9.6 px capital chips with a pulsing dot. The frame's token block
+   already swaps its typewriter face for the text face, so it draws in Inter here. */
+.tk { height: 44px; background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: center; overflow: hidden; position: relative; }
+.tk.today { height: 40px; }
+.tk .track { display: flex; flex: none; white-space: nowrap; animation: crawl 96s linear infinite; }
+.tk.today .track { animation-duration: 48s; }
+.tk:hover .track, .tk:focus-within .track { animation-play-state: paused; }
+.tk .it { display: inline-flex; align-items: center; gap: 7px; padding: 0 16px; border-right: 1px solid var(--line); font: 600 13px/1 var(--f-text); color: var(--ink); height: 44px; }
+.tk.today .it { height: 40px; font: 700 12.5px/1 var(--f-text); }
+.tk.today .lab { display: inline-flex; align-items: center; gap: 4px; font: 900 9.6px/1 var(--f-text); letter-spacing: .08em; padding: 4px 6px; border-radius: 4px; background: #EFECE6; color: var(--soft); }
+.tk.today .lab.live { background: var(--livebg); color: var(--live); }
+.tk.today .lab.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+.tk .x { position: absolute; right: 0; top: 0; width: 44px; height: 44px; display: grid; place-items: center; background: #fff; color: var(--dim); font-size: 18px; border-left: 1px solid var(--line); }
+.tk.today .x { width: 40px; height: 40px; }
+.tk .sco { font-variant-numeric: tabular-nums; }
+@keyframes crawl { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* A · CALM MARQUEE: the same strip, slower, sentence case, faded edges, a fixed "Today" label. */
+.tk.calm { padding-left: 74px; }
+.tk.calm::before { content: "Today"; position: absolute; left: 0; top: 0; bottom: 0; width: 74px; display: flex; align-items: center; padding-left: 14px; font: 700 13px/1 var(--f-text); color: var(--ink); background: #fff; z-index: 2; border-right: 1px solid var(--line); }
+.tk.calm::after { content: ""; position: absolute; right: 44px; top: 0; bottom: 0; width: 36px; background: linear-gradient(to right, rgba(255,255,255,0), #fff); z-index: 1; }
+.tk.calm .it { font-weight: 500; color: var(--soft); }
+.tk.calm .it b { color: var(--ink); font-weight: 600; }
+.wd { font: 600 12px/1 var(--f-text); color: var(--dim); }
+.wd.live { color: var(--live); display: inline-flex; align-items: center; gap: 5px; }
+.wd.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+/* B · SOFT SCOREBOARD: fixed tiles, swipe for more, no crawl; a changed score settles in, once. */
+.sb { background: #fff; border-bottom: 1px solid var(--line); display: flex; gap: 8px; padding: 6px 8px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.sb::-webkit-scrollbar { display: none; }
+.tile { flex: none; width: 200px; scroll-snap-align: start; border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; display: flex; flex-direction: column; gap: 2px; background: #fff; transition: background-color 2.4s ease-out; }
+.desk .tile { width: 208px; }
+.tile .ln .wd { white-space: nowrap; flex: none; }
+.tile .st { font: 600 12px/1.2 var(--f-text); color: var(--dim); display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .st.live { color: var(--live); }
+.tile .st.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.tile .ln { display: flex; justify-content: space-between; gap: 8px; font: 600 13px/1.2 var(--f-text); }
+.tile .ln span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .ln.l { color: var(--soft); font-weight: 500; }
+.tile .n { font: 700 16px/1 var(--f-title); font-variant-numeric: tabular-nums; min-width: 14px; text-align: right; }
+.tile.mine { border-color: var(--cink); box-shadow: inset 3px 0 0 var(--cink); }
+/* Reduced motion: no tint, no movement; the changed number is underlined for ten seconds instead. */
+.n.changed { text-decoration: underline 2px var(--cink); text-underline-offset: 3px; }
+.tile.more { width: 104px; justify-content: center; align-items: center; font: 600 13px/1.25 var(--f-text); color: var(--cink); text-align: center; }
+.tile.moved { background: var(--okbg); transition: none; }
+.n.settle { animation: settle .6s ease-out; }
+@keyframes settle { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* C · MY TEAM LINE: one line for the followed team's game, and how many are live. */
+.mt { height: 44px; background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; padding: 0 0 0 12px; font: 500 14px/1.2 var(--f-text); }
+.mt .star { color: var(--cink); flex: none; display: grid; place-items: center; }
+.mt .star svg { width: 18px; height: 18px; }
+.mt .game { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: 6px; color: var(--soft); text-decoration: none; }
+.mt .game .who { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mt .game .go { flex: none; color: var(--dim); font-size: 18px; }
+.mt .game b { color: var(--ink); font-weight: 600; }
+.mt .n { font: 700 16px/1 var(--f-title); font-variant-numeric: tabular-nums; color: var(--ink); }
+.mt .count { flex: none; min-height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-left: 1px solid var(--line); font: 600 13px/1 var(--f-text); color: var(--live); }
+.mt .count::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tk .track { animation: none; }
+  .tk { overflow-x: auto; }
+  .tile { transition: none; }
+  .n.settle { animation: none; }
+}
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <h1>Game-day ticker: four ways to carry today's scores</h1>
+    <p class="lede">Stage 1 restyles the scores strip that runs under the tab row on game day. You asked for better versions before it is built (Ask 17), "maybe like a soft flashing scoreboard". Below is today's strip as it now draws on the new frame, then three options at true size: a phone at 390 px and a desk at 1280 px. Which pages carry the strip is Stage 2's and 3's call (the Overview drops it; Schedule and a game's page drop it), so these show it on the Teams page.</p>
+    <p class="lede">The scores in options B and C change every few seconds so you can see how a goal or a run arrives. With reduced motion on, they change with no movement at all.</p>
+  </header>
+
+  <nav class="navtabs" role="tablist" aria-label="Ticker options">
+    <button role="tab" id="t-today" aria-controls="today" data-tab="today">Today</button>
+    <button role="tab" id="t-calm" aria-controls="calm" data-tab="calm">A · Calm marquee</button>
+    <button role="tab" id="t-board" aria-controls="board" data-tab="board">B · Soft scoreboard</button>
+    <button role="tab" id="t-mine" aria-controls="mine" data-tab="mine">C · My team line</button>
+    <button role="tab" id="t-ask" aria-controls="ask" data-tab="ask">Compare and choose</button>
+  </nav>
+
+  <!-- ===== TODAY ===== -->
+  <section role="tabpanel" id="today" aria-labelledby="t-today" data-panel>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <p class="better">Today: every game of the day crawls past in one line, live games first, each one a link. Hover or a held finger pauses it; × shrinks it to a "Live scores" button.</p>
+      <div class="row">
+        <div><p class="cap">Phone · 390 px</p><div class="tf phone" data-frame="phone" data-ticker="today"></div></div>
+        <div class="notes">
+          <h3>What a family meets</h3>
+          <ul>
+            <li>The strip never stops moving, so reading one score means waiting for it to come round. One lap always takes 48 seconds, so the more games a day has, the faster they race past.</li>
+            <li>"LIVE" and "FINAL" are 9.6 px capital chips in heavy 12.5 px lettering: the old scoreboard style the frame retires (Ask 2: sentence case, 12 px minimum). The typewriter face is already gone behind the switch.</li>
+            <li>Your own team's game is wherever the order puts it.</li>
+            <li>A score that changes simply swaps its number on the next pass. Nobody sees it change.</li>
+            <li>It already respects reduced motion (it stops and scrolls sideways by finger) and pauses under a held finger. Every option keeps that.</li>
+          </ul>
+        </div>
+      </div>
+      <div><p class="cap">Desk · 1280 px (scrolls sideways)</p><div class="scrollx"><div class="tf desk" data-frame="desk" data-ticker="today"></div></div></div>
+    </div>
+  </section>
+
+  <!-- ===== A ===== -->
+  <section role="tabpanel" id="calm" aria-labelledby="t-calm" data-panel hidden>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <p class="better">A · Calm marquee: the same strip, easier to read as it passes. Half the speed, a fixed "Today" label so a family knows what it is, the state in plain words, and a soft fade at the edge.</p>
+      <div class="row">
+        <div><p class="cap">Phone · 390 px</p><div class="tf phone" data-frame="phone" data-ticker="calm"></div></div>
+        <div class="notes">
+          <h3>What changes</h3>
+          <ul>
+            <li>Half today's speed, and a steady speed: a busy day makes a longer lap, not a faster one.</li>
+            <li>"Live now" in the live red with its dot, "Final" and the start time in sentence case: the frame's state words (Ask 8).</li>
+            <li>Team names in the text face; scores in tabular figures, so they do not jiggle as they pass.</li>
+            <li>44 px (today's is 40, under the tap floor), same tap-to-open, same pause and same ×.</li>
+          </ul>
+          <h3>What it does not fix</h3>
+          <ul>
+            <li>It still moves, and a score still has to come round to be read. A changed score is still not noticed.</li>
+          </ul>
+          <p><span class="tag">Smallest change</span> restyle only, no new behaviour.</p>
+        </div>
+      </div>
+      <div><p class="cap">Desk · 1280 px (scrolls sideways)</p><div class="scrollx"><div class="tf desk" data-frame="desk" data-ticker="calm"></div></div></div>
+    </div>
+  </section>
+
+  <!-- ===== B ===== -->
+  <section role="tabpanel" id="board" aria-labelledby="t-board" data-panel hidden>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <p class="better">B · Soft scoreboard: the scores stand still. Live games first in their own tiles, your team's tile first of all; when a score moves, that tile glows soft green once and fades back over two seconds, so a parent looking up sees what changed.</p>
+      <div class="row">
+        <div><p class="cap">Phone · 390 px · Riverdale Rapids followed</p><div class="tf phone" data-frame="phone" data-ticker="board"></div></div>
+        <div class="notes">
+          <h3>How it behaves</h3>
+          <ul>
+            <li><b>Fixed tiles, no crawl.</b> One and most of a second fit on a phone, so the cut edge says "swipe". Swiping snaps tile by tile. Four and a half fit on a desk. Tiles are wide enough for a full team name (a 21-letter name fits), because a name cut short can turn "Silver Creek Storm" and "Silver Creek Sharks" into the same team.</li>
+            <li><b>Order:</b> your followed team's game today (outlined in the organizer's colour; its live game, or its next one), then live games, then the next to start, then today's finals. The last tile opens the full schedule.</li>
+            <li><b>A changed score, once.</b> The new number settles in (0.6 s) and the tile's tint fades from soft green to white over 2.4 s. One change, no blinking: well inside the three-flashes rule. With reduced motion nothing moves or fades; the new number is underlined for ten seconds instead.</li>
+            <li>Each tile opens its game. "No score yet" (Stage 0) shows on a live game before its first score.</li>
+          </ul>
+          <h3>What it costs</h3>
+          <ul>
+            <li>It is taller: 75 px against today's 40. Pinned on a phone with the tab row that is 123 px of 667 (18%), still inside the Nav Unification budget (26%).</li>
+            <li>It shows fewer games at once on a phone (one and a half, against a crawl that eventually shows all). Swiping or the last tile reaches the rest.</li>
+          </ul>
+          <p><span class="tag">Your idea, Ask 17</span> new behaviour, the existing live feed.</p>
+        </div>
+      </div>
+      <div><p class="cap">Desk · 1280 px (scrolls sideways)</p><div class="scrollx"><div class="tf desk" data-frame="desk" data-ticker="board"></div></div></div>
+    </div>
+  </section>
+
+  <!-- ===== C ===== -->
+  <section role="tabpanel" id="mine" aria-labelledby="t-mine" data-panel hidden>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <p class="better">C · My team line: one still line with the one game a parent came for, their team's score or next start, and a count of what else is live. Tap the game to open it; tap the count for the live games.</p>
+      <div class="row">
+        <div><p class="cap">Phone · 390 px · Riverdale Rapids followed</p><div class="tf phone" data-frame="phone" data-ticker="mine"></div></div>
+        <div class="notes">
+          <h3>How it behaves</h3>
+          <ul>
+            <li><b>Following a team:</b> "Live" in red and its score; between games, its next start ("Next · 6:30 p.m. · Diamond 1"). On a phone a long opponent's name is cut at the end ("Cedar Hollow Cy…"); the desk has room for the field too.</li>
+            <li><b>Following nobody:</b> "2 games live now · Follow a team to keep its score here ›", which opens the Teams list.</li>
+            <li><b>"2 live"</b> on the right opens the Schedule at its live games.</li>
+            <li>A changed score settles in (0.6 s), no tint: the line is small enough that the number is the news. With reduced motion it is underlined for ten seconds.</li>
+            <li>44 px tall, the whole game part one tap.</li>
+          </ul>
+          <h3>What it gives up</h3>
+          <ul>
+            <li>Other games' scores leave the strip; a family sees only how many are live. The Schedule and the Overview's "Live now" carry them.</li>
+            <li>The dock already shows the followed team on a phone (My Team dock). C repeats it unless the dock goes, which is Stage 2's call.</li>
+          </ul>
+          <p><span class="tag">Functional variant</span> reads the follow the page already keeps.</p>
+        </div>
+      </div>
+      <div><p class="cap">Desk · 1280 px (scrolls sideways)</p><div class="scrollx"><div class="tf desk" data-frame="desk" data-ticker="mine"></div></div></div>
+    </div>
+  </section>
+
+  <!-- ===== ASK ===== -->
+  <section role="tabpanel" id="ask" aria-labelledby="t-ask" data-panel hidden>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <h2>Side by side</h2>
+      <div class="scrollx"><table class="cmp">
+        <thead><tr><th></th><th>Today</th><th>A · Calm marquee</th><th>B · Soft scoreboard</th><th>C · My team line</th></tr></thead>
+        <tbody>
+          <tr><th>Reading one score</th><td>Wait for it to come round</td><td>Wait, but it reads cleanly</td><td>At a glance, in place</td><td>At a glance, your team only</td></tr>
+          <tr><th>A changed score</th><td>Unnoticed</td><td>Unnoticed</td><td>That tile glows once, then fades</td><td>The number settles in</td></tr>
+          <tr><th>Your team</th><td>Wherever it falls</td><td>Wherever it falls</td><td>First tile, outlined</td><td>The whole line</td></tr>
+          <tr><th>Other games</th><td>All, moving</td><td>All, moving</td><td>One and a half on a phone, four and a half on a desk; swipe; a door to the rest</td><td>A count and a door</td></tr>
+          <tr><th>Movement</th><td>Constant; faster on a busy day</td><td>Constant, half speed, steady</td><td>None until a score moves</td><td>None until a score moves</td></tr>
+          <tr><th>Height (phone, pinned with tabs)</th><td>40 px (88 px)</td><td>44 px (92 px)</td><td>75 px (123 px)</td><td>44 px (92 px)</td></tr>
+          <tr><th>Build</th><td>Built</td><td>Restyle only</td><td>New strip on today's live feed</td><td>New strip on the feed and the follow</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="ask">
+        <h2>My recommendation: B, the soft scoreboard</h2>
+        <p>The strip's job on game day is "what is the score now", and a family reads it standing at a fence with a phone. B is the only option where a score can be read without waiting and where a change is noticed without anyone watching the strip. It also keeps the other games, which C drops, and puts the parent's own team first, which is C's best idea. A is a fine restyle, but it keeps the thing that makes the strip hard to read: it moves.</p>
+        <p>The cost is about 35 px more pinned height on a phone than today (123 px against 88), still inside the budget. The trade is fewer games in view at once, with swiping and the full schedule one tap away.</p>
+        <h3>What I need from you</h3>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+          <li><b>Which one:</b> A, B or C.</li>
+          <li><b>B only:</b> is the soft green glow on a changed score right, or would you rather the number alone change (as in C)?</li>
+        </ul>
+        <p class="lede">Not in this choice: which pages carry the strip (Stages 2 and 3), and whether the phone's My Team dock stays (Stage 2).</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var STAR = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>';
+  // Today's games at Riverdale (the hub's demo world). The Cyclones–Rapids score moves in the live options.
+  var G = [
+    { k: 'live', a: 'Riverdale Rapids', as: 2, h: 'Cedar Hollow Cyclones', hs: 3, where: 'Championship · Diamond 2', mine: true },
+    { k: 'live', a: 'Silver Creek Storm', as: null, h: 'Maple Ridge Mustangs', hs: null, where: 'U13 · Diamond 4' },
+    { k: 'next', a: 'Maple Ridge Marauders', h: 'Silver Creek Sharks', time: '6:30 p.m.', where: 'U11 · Diamond 1' },
+    { k: 'final', a: 'Riverdale Rapids', as: 14, h: 'Silver Creek Sharks', hs: 6, where: 'U11 · Diamond 2' },
+    { k: 'final', a: 'Cedar Hollow Cyclones', as: 10, h: 'Maple Ridge Marauders', hs: 8, where: 'U13 · Diamond 1' },
+    { k: 'final', a: 'Silver Creek Storm', as: 7, h: 'Riverdale Rapids', hs: 9, where: 'U13 · Diamond 3' }
+  ];
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function tickerToday() {
+    var items = G.map(function (g) {
+      var lab = g.k === 'live' ? '<span class="lab live">LIVE</span>' : g.k === 'final' ? '<span class="lab">FINAL</span>' : '<span class="wd">' + g.time + '</span>';
+      var mid = g.as == null ? ' vs ' : ' <span class="sco">' + g.as + ' – ' + g.hs + '</span> ';
+      return '<span class="it">' + lab + esc(g.a) + mid + esc(g.h) + '</span>';
+    }).join('');
+    return '<div class="tk today" aria-label="Today\'s games"><div class="track">' + items + items + '</div><span class="x" aria-hidden="true">×</span></div>';
+  }
+  function tickerCalm() {
+    var items = G.map(function (g) {
+      var lab = g.k === 'live' ? '<span class="wd live">Live now</span>' : g.k === 'final' ? '<span class="wd">Final</span>' : '<span class="wd">' + g.time + '</span>';
+      var mid = g.as == null ? (g.k === 'live' ? ' <span class="wd">No score yet</span> ' : ' vs ') : ' <b class="sco">' + g.as + ' – ' + g.hs + '</b> ';
+      return '<span class="it">' + lab + '<b>' + esc(g.a) + '</b>' + mid + '<b>' + esc(g.h) + '</b></span>';
+    }).join('');
+    return '<div class="tk calm" aria-label="Today\'s games"><div class="track">' + items + items + '</div><span class="x" aria-hidden="true">×</span></div>';
+  }
+  function tileHtml(g, i) {
+    var st = g.k === 'live' ? '<div class="st live">Live · ' + esc(g.where.split(' · ').pop()) + '</div>'
+      : g.k === 'final' ? '<div class="st">Final · ' + esc(g.where.split(' · ')[0]) + '</div>'
+      : '<div class="st">' + g.time + ' · ' + esc(g.where.split(' · ').pop()) + '</div>';
+    var n = function (v) { return v == null ? '' : v; };
+    var lose = g.k === 'final' && g.as != null ? (g.as > g.hs ? ['', ' l'] : [' l', '']) : ['', ''];
+    if (g.k === 'live' && g.as == null) {
+      return '<div class="tile"><div class="st live">Live · No score yet</div><div class="ln"><span>' + esc(g.a) + '</span><span></span></div><div class="ln"><span>' + esc(g.h) + '</span><span></span></div></div>';
+    }
+    return '<div class="tile' + (g.mine ? ' mine' : '') + '" data-g="' + i + '">' + st +
+      '<div class="ln' + lose[0] + '"><span>' + esc(g.a) + '</span><span class="n" data-side="a">' + n(g.as) + '</span></div>' +
+      '<div class="ln' + lose[1] + '"><span>' + esc(g.h) + '</span><span class="n" data-side="h">' + n(g.hs) + '</span></div></div>';
+  }
+  function tickerBoard() {
+    return '<div class="sb" aria-label="Today\'s games">' + G.map(tileHtml).join('') + '<div class="tile more">Full schedule ›</div></div>';
+  }
+  function tickerMine() {
+    var g = G[0];
+    return '<div class="mt" aria-label="Your team today"><span class="star">' + STAR + '</span>' +
+      '<span class="game" data-g="0"><span class="wd live">Live</span><span class="who"><b>' + esc(g.a) + '</b> <span class="n" data-side="a">' + g.as + '</span> – <span class="n" data-side="h">' + g.hs + '</span> <b>' + esc(g.h) + '</b></span><span class="go" aria-hidden="true">›</span></span>' +
+      '<span class="count">2 live</span></div>';
+  }
+  var TICK = { today: tickerToday, calm: tickerCalm, board: tickerBoard, mine: tickerMine };
+
+  var TEAMS = '<div class="card rows">' +
+    '<div class="r"><div class="tm">1st<small>U11</small></div><div class="nm"><div class="w">Riverdale Rapids</div><div class="l">4–1 · next 6:30 p.m.</div></div><div class="sc">8</div></div>' +
+    '<div class="r"><div class="tm">2nd<small>U11</small></div><div class="nm"><div class="w">Cedar Hollow Cyclones</div><div class="l">3–2 · playing now</div></div><div class="sc">6</div></div>' +
+    '<div class="r"><div class="tm">3rd<small>U11</small></div><div class="nm"><div class="w">Silver Creek Sharks</div><div class="l">2–3 · next 6:30 p.m.</div></div><div class="sc">4</div></div>' +
+    '<div class="r"><div class="tm">4th<small>U11</small></div><div class="nm"><div class="w">Maple Ridge Marauders</div><div class="l">1–4 · no more games</div></div><div class="sc">2</div></div></div>';
+
+  function phone(kind) {
+    return '<div class="band"><div class="logo">RM</div><div class="bname"><b>Riverdale Summer Classic</b><span>Oct 26–28 <i class="bchip" style="font-style:normal">Live now</i></span></div><span class="signin">Sign in</span></div>' +
+      '<div class="tabs"><span>Overview</span><span>Schedule</span><span>Standings</span><span class="on">Teams</span><span>Playoffs</span></div>' +
+      TICK[kind]() + '<div class="body"><p class="pageh">Teams · U11</p>' + TEAMS + '</div>';
+  }
+  function desk(kind) {
+    return '<div class="band"><div class="logo">RM</div><div class="bname"><b>Riverdale Summer Classic</b><span>Oct 26–28 · Riverdale Community Park <i class="bchip" style="font-style:normal">Live now</i></span></div><span class="hostlink">Hosted by Riverdale Minor Ball Association ›</span><span class="signin">Sign in</span></div>' +
+      '<div class="deskgrid"><div class="rail"><span>Overview</span><span>News</span><span>Schedule</span><span>Standings</span><span>Playoffs</span><span class="on">Teams</span><span>Rules</span></div>' +
+      '<div class="main">' + TICK[kind]() + '<div class="body"><p class="pageh">Teams · U11</p>' + TEAMS + '</div></div></div>';
+  }
+  document.querySelectorAll('[data-frame]').forEach(function (el) {
+    var kind = el.getAttribute('data-ticker');
+    el.innerHTML = el.getAttribute('data-frame') === 'phone' ? phone(kind) : desk(kind);
+  });
+
+  // A score moves every 7 s in B and C (the Cyclones go 3 → 4, then the demo resets), so the arrival can be judged.
+  var step = 0;
+  function bump() {
+    step = (step + 1) % 3;
+    var h = step === 0 ? 3 : step === 1 ? 4 : 4, a = step === 2 ? 3 : 2;
+    document.querySelectorAll('[data-ticker="board"] .tile[data-g="0"], [data-ticker="mine"] .game[data-g="0"]').forEach(function (t) {
+      var na = t.querySelector('[data-side="a"]'), nh = t.querySelector('[data-side="h"]');
+      var changed = String(a) !== na.textContent || String(h) !== nh.textContent;
+      if (!changed) return;
+      [[na, a], [nh, h]].forEach(function (p) {
+        if (p[0].textContent === String(p[1])) return;
+        p[0].textContent = p[1];
+        if (!reduce) { p[0].classList.remove('settle'); void p[0].offsetWidth; p[0].classList.add('settle'); }
+        else { var el = p[0]; el.classList.add('changed'); setTimeout(function () { el.classList.remove('changed'); }, 10000); }
+      });
+      if (!reduce && t.classList.contains('tile')) {
+        t.classList.add('moved');
+        requestAnimationFrame(function () { requestAnimationFrame(function () { t.classList.remove('moved'); }); });
+      }
+    });
+  }
+  setInterval(bump, 7000);
+
+  // Tabs, remembered in the address (#today, #calm, #board, #mine, #ask).
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-tab]'));
+  function show(id) {
+    if (!document.getElementById(id)) id = 'today';
+    tabs.forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === id)); b.tabIndex = b.getAttribute('data-tab') === id ? 0 : -1; });
+    document.querySelectorAll('[data-panel]').forEach(function (p) { p.hidden = p.id !== id; });
+  }
+  tabs.forEach(function (b, i) {
+    b.addEventListener('click', function () { location.hash = b.getAttribute('data-tab'); show(b.getAttribute('data-tab')); });
+    b.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length]; n.focus(); n.click();
+    });
+  });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  show(location.hash.slice(1));
+})();
+</script>

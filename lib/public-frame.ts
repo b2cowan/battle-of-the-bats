@@ -17,6 +17,9 @@
  */
 import { CLUB_NEAR_BLACK, clubColourRoles, hexChannels, type ClubColourRoles } from './club-colour-roles';
 import { canUseAdvancedTournamentBranding } from './tournament-branding';
+import { TOURNAMENT_STATUS_WORD, tournamentHomeStatus } from './club-site-home';
+import { formatEventDateRange } from './timezone';
+import { clubInitials } from './club-site';
 import type { Organization, Tournament } from './types';
 
 /** The browser's own answer, set by the preview link and its twin. */
@@ -72,6 +75,63 @@ export function publicFrameRoles(org: FrameOrg, tournament?: FrameTournament | n
   const own = !!(tournament?.themePreset || tournament?.themePrimary);
   const source = own ? tournament! : org;
   return { ...clubColourRoles(source.themePreset, source.themePrimary, source.themeAccent), neutral: false };
+}
+
+/** Everything the band shows, worked out once for the live layout and the organizer's admin preview alike. */
+export interface PublicFrameBand {
+  roles: PublicFrameRoles;
+  /** The event's logo (today's rule: the tournament's, else the organizer's); null on a plan without tournament branding. */
+  logoUrl: string | null;
+  /** Initials for the tile when there is no logo; null when the plan allows no mark at all. */
+  initials: string | null;
+  dates: string | null;
+  /** One of the four state words (Ask 8), or null when none applies. */
+  status: { word: string; live: boolean } | null;
+}
+
+type BandOrg = FrameOrg & Pick<Organization, 'logoUrl'>;
+type BandTournament = FrameTournament & Pick<Tournament, 'name' | 'logoUrl' | 'status' | 'startDate' | 'endDate'>;
+
+/**
+ * The band's colour (above), mark, dates and state. The state word is the club's Tournaments tab's own rule and words
+ * (lib/club-site-home.ts), so the club's card and the event's band never disagree; the dates are the club's spelling,
+ * with the year only when it is not this one. A plan without tournament branding carries no logo and no initials.
+ */
+export function publicFrameBand(
+  org: BandOrg,
+  tournament: BandTournament,
+  todayISO: string,
+  registrationOpen: boolean,
+): PublicFrameBand {
+  const roles = publicFrameRoles(org, tournament);
+  const state = tournamentHomeStatus(tournament, todayISO, registrationOpen);
+  return {
+    roles,
+    logoUrl: roles.neutral ? null : tournament.logoUrl ?? org.logoUrl ?? null,
+    initials: roles.neutral ? null : clubInitials(tournament.name) || null,
+    dates: tournament.startDate
+      ? formatEventDateRange(tournament.startDate, tournament.endDate, !tournament.startDate.startsWith(todayISO.slice(0, 4)))
+      : null,
+    status: state ? { word: TOURNAMENT_STATUS_WORD[state], live: state === 'live' } : null,
+  };
+}
+
+/**
+ * Who runs the event, as the frame says it (hub "Ask B": the desk band's right side and the footer's host line). ONE rule
+ * for both, so they never disagree:
+ *   · the organizer's home is a real destination (`resolveOrgHomeHref` in lib/module-entitlements.ts — the layout's own
+ *     answer, never a second host test) → "Hosted by {organizer} ›", a link, in the desk band and the footer;
+ *   · it is not → "Run by {organizer}", plain text, in the footer only (the band shows nothing there);
+ *   · the organizer and the event share a name and there is no door → nothing (no "Run by X" under X).
+ */
+export type PublicFrameHost =
+  | { kind: 'hosted'; name: string; href: string }
+  | { kind: 'run'; name: string };
+
+export function publicFrameHost(orgName: string, eventName: string, orgHomeHref: string | null): PublicFrameHost | null {
+  if (orgHomeHref) return { kind: 'hosted', name: orgName, href: orgHomeHref };
+  if (!orgName || orgName === eventName) return null;
+  return { kind: 'run', name: orgName };
 }
 
 /**

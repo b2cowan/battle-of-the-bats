@@ -1663,6 +1663,14 @@
   [data-live-chrome] .preEventPanel { display: block; }
 }
 
+/* Under the public frame (Public tournament pages Stage 1 Part 2, behind the preview switch — lib/public-frame.ts) the
+   organizer's band carries the event's name at EVERY width, so the hero retires at a desk too (hub "The end state": "the
+   band replaces the 48 px centred hero, so the name appears once") and its pre-event jobs show in .preEventPanel, as on a
+   phone. The Overview's new order is Stage 2's; this is only the name appearing once. Keyed to the marker, which the
+   admin preview carries too when the switch is on. */
+[data-public-frame='light'] .hero { display: none; }
+[data-public-frame='light'] .preEventPanel { display: block; }
+
 /* Explore links (every public page reachable from the Overview — J6-006). */
 .exploreRow {
   display: flex;

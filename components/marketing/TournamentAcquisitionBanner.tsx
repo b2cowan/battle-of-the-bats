@@ -103,6 +103,9 @@ function TournamentAcquisitionBanner({
     <aside
       className={isCoach ? styles.banner : `${styles.banner} ${styles.bannerOrganizer}`}
       aria-label={isCoach ? 'Set up your team on FieldLogicHQ' : 'Run your own event on FieldLogicHQ'}
+      // The public tournament frame's footer makes room under itself while this floats over the page's foot
+      // (TournamentFrame.module.css); dismissed, the room goes with it.
+      data-growth-banner=""
     >
       <div className={isCoach ? styles.bannerIcon : `${styles.bannerIcon} ${styles.bannerIconBlue}`}>
         {isCoach ? <Trophy size={18} /> : <ClipboardList size={18} />}

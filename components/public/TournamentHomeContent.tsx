@@ -48,8 +48,9 @@ export default async function TournamentHomeContent({
 }) {
   const readOptions = { admin: true };
   // Public tournament pages Stage 1 (lib/public-frame.ts): behind the switch the page speaks the four state words only
-  // (Ask 8). The layout of this page is Stage 2's; only its words follow the switch here. The admin preview follows in Part 2.
-  const frameOn = !isPreview && await isPublicFrameOn();
+  // (Ask 8). The layout of this page is Stage 2's; only its words follow the switch here. The organizer's admin preview
+  // follows the same switch (Part 2), so it shows what the live page shows.
+  const frameOn = await isPublicFrameOn();
 
   const allAnnouncements = await getAnnouncements(tournament.id, readOptions);
   const announcements = allAnnouncements.slice(0, 3);
@@ -1143,8 +1144,10 @@ export default async function TournamentHomeContent({
 
       {/* Explore sections — guarantees every public page (especially Rules, which is
           not a mobile bottom-nav tab) is reachable from the Overview in every state
-          (J6-006 / J6-034). Gated per-link on page visibility. */}
-      {(showSchedulePage || showStandingsPage || showTeamsPage || showRulesPage || showNewsPage) && (
+          (J6-006 / J6-034). Gated per-link on page visibility.
+          Under the public frame (Stage 1 Part 2) the tab row and the footer's page list are those doors, on every page, so
+          this row steps aside. */}
+      {!frameOn && (showSchedulePage || showStandingsPage || showTeamsPage || showRulesPage || showNewsPage) && (
         <div className={styles.exploreRow}>
           {showSchedulePage && <Link href={`${primaryBase}/schedule`} className="btn btn-ghost btn-sm">Schedule</Link>}
           {showStandingsPage && <Link href={`${primaryBase}/standings`} className="btn btn-ghost btn-sm">Standings</Link>}

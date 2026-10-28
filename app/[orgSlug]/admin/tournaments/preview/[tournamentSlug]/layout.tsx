@@ -12,6 +12,19 @@ import {
 } from '@/lib/tournament-preview';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { hasRoundRobin } from '@/lib/tournament-phase';
+import { getDivisions, getTeams, resolveTournamentContactEmail } from '@/lib/db';
+import { resolveOrgHomeHref } from '@/lib/module-entitlements';
+import { getRegistrationState } from '@/lib/registration-state';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
+import { showsFreeCredit } from '@/lib/plan-config';
+import { isDemoOrgSlug } from '@/lib/demo-org';
+import { tournamentToday } from '@/lib/timezone';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
+import { publicFrameAttr, publicFrameBand, publicFrameHost, publicFrameRoleVars } from '@/lib/public-frame';
+import TournamentBand from '@/components/public/TournamentBand';
+import TournamentFooter from '@/components/public/TournamentFooter';
+import clubFrameStyles from '@/components/public/ClubFrame.module.css';
+import frameStyles from '@/components/public/TournamentFrame.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +51,60 @@ export default async function TournamentPreviewLayout({
     ? Array.from(new Set([...(tournament.publicHiddenPages ?? []), 'standings' as const]))
     : (tournament.publicHiddenPages ?? []);
   const previewBase = `/${orgSlug}/admin/tournaments/preview/${tournamentSlug}`;
+
+  // Public tournament pages Stage 1 Part 2: the organizer's preview follows the same preview switch as the live pages
+  // (lib/public-frame.ts — the one helper), so it shows the frame exactly when the live page would. Off: today's preview.
+  if (await isPublicFrameOn()) {
+    const registerHidden = hiddenPages.includes('register') || runsInviteOnlyEvents(org.planId);
+    const [divisions, regTeams, orgHomeHref, contactEmail] = await Promise.all([
+      getDivisions(tournament.id, { admin: true }),
+      registerHidden ? Promise.resolve(null) : getTeams(tournament.id, { admin: true }),
+      resolveOrgHomeHref(org).catch(() => null),
+      resolveTournamentContactEmail(tournament.id, org.contactEmail ?? null, 'public').catch(() => null),
+    ]);
+    const registration = regTeams
+      ? getRegistrationState(tournament, divisions, regTeams.filter(t => t.status !== 'rejected'))
+      : null;
+    const band = publicFrameBand(org, tournament, tournamentToday(), registration?.state === 'open');
+    const host = publicFrameHost(org.name, tournament.name, orgHomeHref);
+    return (
+      <>
+        <style dangerouslySetInnerHTML={{ __html: `:root { ${themeVars} }` }} />
+        <style dangerouslySetInnerHTML={{ __html: `html:has([data-public-frame="light"]) { ${publicFrameRoleVars(band.roles)} }` }} />
+        {/* The live frame's one outer element, its marker and token block; data-live-chrome too, since under the frame
+            the preview has the band that the in-page titles would repeat (preview ↔ live parity). */}
+        <div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} {...publicFrameAttr}>
+          <div className={`${railStyles.shell} ${frameStyles.deskShell}`} data-card-style={cardStyle} data-color-mode="light" data-live-chrome="">
+            <TournamentBand
+              orgSlug={orgSlug}
+              tournamentSlug={tournamentSlug}
+              name={tournament.name}
+              logoUrl={band.logoUrl}
+              initials={band.initials}
+              dates={band.dates}
+              status={band.status}
+              hiddenPages={hiddenPages}
+              hasBracket={false}
+              host={host}
+              basePath={previewBase}
+            />
+            <TournamentSideRail basePath={previewBase} heading={tournament.name} colorMode="light" hiddenPages={hiddenPages} />
+            <div className={frameStyles.main}>{children}</div>
+            <TournamentFooter
+              name={tournament.name}
+              contactEmail={contactEmail}
+              host={host}
+              hiddenPages={hiddenPages}
+              hasBracket={false}
+              showCredit={!showsFreeCredit(org.planId) && !isDemoOrgSlug(orgSlug)}
+              basePath={previewBase}
+            />
+          </div>
+        </div>
+        <PreviewExitPill dashboardHref={`/${orgSlug}/admin/tournaments/dashboard`} />
+      </>
+    );
+  }
 
   return (
     <>

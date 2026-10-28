@@ -411,7 +411,10 @@ export default function ConsumerNav({
             : <StartMenu />;
     return (
       <>
-        <header className={`${styles.topbar} ${styles.topbarStrip}`}>
+        {/* data-app-bar: the app's bar. Under the public tournament frame (Stage 1, lib/public-frame.ts) a browser draws
+            no app bar at any width — Sign in is in the organizer's band — and inside the installed app this strip stays
+            (TournamentFrame.module.css). Today's pages are untouched. */}
+        <header className={`${styles.topbar} ${styles.topbarStrip}`} data-app-bar="">
           <div className={styles.topLeft}>
             {wordmark}
             {!inSandbox && (

@@ -14,6 +14,12 @@
  *  - The admin tournament PREVIEW passes an explicit `basePath` (+ branding props)
  *    so the rail links stay inside `/…/preview/{tournament}/…` and active-state
  *    matches the preview pathname.
+ *
+ * UNDER THE PUBLIC FRAME (Public tournament pages Stage 1 Part 2, behind the preview switch — lib/public-frame.ts) the rail
+ * is the same links in the club site's look: white on the light ground, running the page's full height beside it, under
+ * the organizer's band (the layout places it in the frame's desk grid). The band carries the event's name, logo and host,
+ * so the rail's identity block steps aside, and the footer carries the credit, so its "Live on FieldLogicHQ" line does
+ * too. All of it is CSS keyed to the frame's marker (TournamentSideRail.module.css); with the switch off nothing changes.
  */
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -86,6 +92,9 @@ export default function TournamentSideRail({
           rule wins because whose event this is remains true whether or not there is a page to
           visit. The chevron goes with the link: a trail marker pointing nowhere is a dead
           affordance, which is the whole class of defect this pass is closing. */}
+      {/* The rail's contents ride the scroll under the frame (its column runs the page's height); `display: contents`
+          otherwise, so today's rail is unchanged. */}
+      <div className={styles.stick}>
       <div className={styles.railHeader}>
         {!basePath && ctx.orgName && ctx.orgName !== resolvedHeading && (
           ctx.orgHomeHref ? (
@@ -129,6 +138,7 @@ export default function TournamentSideRail({
       {/* Persistent followed-team card — live public rail only, not admin preview (J6-042). */}
       {!basePath && <DesktopMyTeamRailCard />}
       <div className={styles.railFooter}>Live on FieldLogicHQ</div>
+      </div>
     </aside>
   );
 }

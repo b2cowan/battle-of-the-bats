@@ -4,7 +4,9 @@ import { readCode } from './_source-code.ts';
 import {
   PUBLIC_FRAME_ATTR,
   publicFrameAttr,
+  publicFrameBand,
   publicFrameFromCookie,
+  publicFrameHost,
   publicFrameRoles,
   safePublicFrameReturn,
 } from '../../lib/public-frame.ts';
@@ -21,6 +23,12 @@ import { contrastRatio } from '../../lib/color-contrast.ts';
  *   · the band's colour goes through the club's roles, and a plan without tournament branding gets the neutral band;
  *   · the band says one of the four state words, never "Game day" / "In progress" / "Tournament Day";
  *   · the visitor's door and the app bar follow where the page is opened, decided by CSS at first paint.
+ *
+ * PART 2 (2026-10-28): the desk, the footer, the admin preview.
+ *   · at a desk the band runs the full width, "Hosted by {club} ›" on its right, over the white full-height rail;
+ *   · every page ends in the organizer-colour footer; the paid credit moves into it, a free event keeps its badge;
+ *   · in a browser there is no app bar at any width — the platform's desk strip too; inside the installed app it stays;
+ *   · the organizer's admin preview follows the same switch, its links kept inside the preview.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -65,11 +73,11 @@ describe('with the switch off, nothing a customer sees changes', () => {
     assert.match(layout, /return frameOn\s*\?\s*<>\{growthChrome\}<div className=\{`\$\{clubFrameStyles\.tokens\} \$\{frameStyles\.frame\}`\} \{\.\.\.publicFrameAttr\}>\{page\}<\/div><\/>\s*:\s*page;/);
     assert.match(layout, /\{!frameOn && growthChrome\}/, 'the free badge and banner where they always were, when off');
     assert.equal((layout.match(/publicFrameAttr/g) ?? []).length, 2, 'imported once, spread once — on the frame\'s element only');
-    assert.match(layout, /\{frameRoles && \(\s*<TournamentBand/);
-    assert.match(layout, /const frameRoles = frameOn \? publicFrameRoles\(org, tournament\) : null;/);
+    assert.match(layout, /\{frameBand && \(\s*<TournamentBand/);
+    assert.match(layout, /const frameBand = frameOn \? publicFrameBand\(org, tournament, todayISO, registration\?\.state === 'open'\) : null;/);
     assert.match(layout, /\{!frameOn && <ScoreTicker \/>\}/, 'today\'s fixed ticker, unchanged, when off');
-    assert.match(layout, /\{frameOn && <ScoreTicker inFlow \/>\}/);
-    assert.match(layout, /\{frameRoles && \(\s*<style dangerouslySetInnerHTML=\{\{ __html: `html:has\(\[data-public-frame="light"\]\)/);
+    assert.match(layout, /\{frameOn \? \(\s*<div className=\{frameStyles\.main\}>\s*<ScoreTicker inFlow \/>\s*\{children\}\s*<\/div>\s*\) : children\}/);
+    assert.match(layout, /\{frameBand && \(\s*<style dangerouslySetInnerHTML=\{\{ __html: `html:has\(\[data-public-frame="light"\]\)/);
   });
 
   it('the organizer\'s saved Dark/Light is today\'s behaviour when off', () => {
@@ -151,9 +159,12 @@ describe('the band\'s colour, for four kinds of organizer (hub "Four organizers,
 describe('the band (Asks 2, 8, 16 and the app-bar direction)', () => {
   const band = readCode(BAND);
   it('says one of the four state words, from the club\'s own rule', () => {
-    const layout = readCode(LAYOUT);
-    assert.match(layout, /tournamentHomeStatus\(tournament, todayISO, registration\?\.state === 'open'\)/);
-    assert.match(layout, /word: TOURNAMENT_STATUS_WORD\[frameStatus\]/);
+    const frame = readCode('lib/public-frame.ts');
+    assert.match(frame, /const state = tournamentHomeStatus\(tournament, todayISO, registrationOpen\);/);
+    assert.match(frame, /word: TOURNAMENT_STATUS_WORD\[state\]/);
+    const t = { name: 'Riverdale Summer Classic', status: 'active', startDate: '2026-10-25', endDate: '2026-10-27' };
+    const org = { planId: 'tournament_plus', themePreset: 'platform' };
+    assert.deepEqual(publicFrameBand(org as never, t as never, '2026-10-26', false).status, { word: 'Live now', live: true });
     for (const old of ['Game day', 'In progress', 'Tournament Day', 'Upcoming']) {
       assert.doesNotMatch(band, new RegExp(old), `"${old}" is not a state word behind the switch`);
     }
@@ -161,14 +172,17 @@ describe('the band (Asks 2, 8, 16 and the app-bar direction)', () => {
 
   it('the Overview\'s game-day panel says "Live now" behind the switch (its layout is Stage 2\'s)', () => {
     const home = readCode('components/public/TournamentHomeContent.tsx');
-    assert.match(home, /const frameOn = !isPreview && await isPublicFrameOn\(\);/);
+    assert.match(home, /const frameOn = await isPublicFrameOn\(\);/, 'the admin preview follows the same switch (Part 2)');
     assert.match(home, /\{frameOn \? TOURNAMENT_STATUS_WORD\.live : 'Tournament Day'\}/);
   });
 
   it('a plan without tournament branding gets no logo and no initials', () => {
-    const layout = readCode(LAYOUT);
-    assert.match(layout, /logoUrl=\{frameRoles\.neutral \? null :/);
-    assert.match(layout, /initials=\{frameRoles\.neutral \? null :/);
+    const t = { name: 'Northfield Fall Classic', logoUrl: 'https://x/logo.png', status: 'active', startDate: '2026-10-25', endDate: '2026-10-27' };
+    const free = publicFrameBand({ planId: 'tournament', logoUrl: 'https://x/org.png' } as never, t as never, '2026-10-26', false);
+    assert.equal(free.logoUrl, null);
+    assert.equal(free.initials, null);
+    const paid = publicFrameBand({ planId: 'tournament_plus' } as never, { ...t, logoUrl: undefined } as never, '2026-10-26', false);
+    assert.equal(paid.initials, 'NF', 'initials when the plan allows a mark and there is no logo');
   });
 
   it('is built from the club bar\'s parts, and the tab row pins by the club bar\'s own rule', () => {
@@ -188,5 +202,70 @@ describe('the band (Asks 2, 8, 16 and the app-bar direction)', () => {
 
   it('the operator door sits in the band on the club bar\'s neutral look', () => {
     assert.match(band, /<TournamentFlipPill look="band" \/>/);
+  });
+});
+
+describe('Part 2: the desk, the footer and the admin preview', () => {
+  const layout = readCode(LAYOUT);
+  const css = readCode(FRAME_CSS);
+  const band = readCode(BAND);
+
+  it('one host rule for the desk band and the footer: a door when the organizer\'s home is real, else plain words', () => {
+    assert.deepEqual(publicFrameHost('Riverdale Minor Ball Association', 'Summer Classic', '/riverdale-minor-ball'),
+      { kind: 'hosted', name: 'Riverdale Minor Ball Association', href: '/riverdale-minor-ball' });
+    assert.deepEqual(publicFrameHost('Metro Sports Events', 'Metro Cup', null), { kind: 'run', name: 'Metro Sports Events' });
+    assert.equal(publicFrameHost('Metro Cup', 'Metro Cup', null), null, 'no "Run by X" under X');
+    assert.match(layout, /const frameHost = frameOn \? publicFrameHost\(org\.name, tournament\.name, orgHomeHref\) : null;/,
+      'the layout\'s own host answer, never a second host test');
+    assert.match(band, /\{host\?\.kind === 'hosted' && \(/, 'the band shows the host only as a door');
+  });
+
+  it('the footer, the rail\'s new place and the desk grid render only under the switch; off is today\'s page', () => {
+    assert.match(layout, /\{frameOn && \(\s*<TournamentFooter/);
+    assert.match(layout, /\{!frameOn && showBuiltOnCredit && <BuiltOnCredit \/>\}/, 'the paid credit where it always was, when off');
+    assert.match(layout, /const showBuiltOnCredit = !isFreeTournamentPlan && !isDemoOrgSlug\(orgSlug\);/, 'the credit rules do not change');
+    assert.match(layout, /\{!frameOn && <TournamentSideRail \/>\}/);
+    assert.match(layout, /\{frameOn && <TournamentSideRail \/>\}/);
+    assert.match(layout, /className=\{frameOn \? `\$\{railStyles\.shell\} \$\{frameStyles\.deskShell\}` : railStyles\.shell\}/);
+    assert.match(layout, /const frameContactPromise = frameOn\s*\? resolveTournamentContactEmail\(tournament\.id, org\.contactEmail \?\? null, 'public'\)/,
+      'the footer\'s address is the one Rules and News show, and is never looked up when off');
+  });
+
+  it('a free event keeps its badge and its footer carries no second credit', () => {
+    const footer = readCode('components/public/TournamentFooter.tsx');
+    assert.match(footer, /\{showCredit && <BuiltOnCredit className=\{clubStyles\.credit\} \/>\}/);
+    assert.doesNotMatch(footer, /PoweredByBadge|Powered by/);
+    assert.match(layout, /showCredit=\{showBuiltOnCredit\}/);
+  });
+
+  it('the rail\'s and the Overview\'s frame looks are keyed to the marker', () => {
+    const rail = readCode('components/public/TournamentSideRail.module.css');
+    for (const l of rail.split('\n').filter(x => x.includes(':global('))) {
+      assert.match(l, /:global\(\[data-public-frame='light'\]\) \./, `a rail rule outside the frame: ${l.trim()}`);
+    }
+    assert.match(rail, /^\.stick \{ display: contents; \}/m, 'the wrapper is nothing when the frame is off');
+    const home = readCode('app/[orgSlug]/Home.module.css');
+    assert.match(home, /^\[data-public-frame='light'\] \.hero \{ display: none; \}/m);
+    assert.match(readCode('components/public/TournamentHomeContent.tsx'), /\{!frameOn && \(showSchedulePage \|\| /,
+      'the Explore row steps aside only under the frame');
+  });
+
+  it('in a browser no app bar at any width — the desk strip too; inside the installed app it stays', () => {
+    assert.match(readCode('components/consumer/ConsumerNav.tsx'), /<header className=\{`\$\{styles\.topbar\} \$\{styles\.topbarStrip\}`\} data-app-bar="">/);
+    assert.match(css, /@media not all and \(display-mode: standalone\) \{\s*:global\(html\):has\(\.frame\) \{[^}]*--desktop-strip-h: 0px;/);
+    assert.match(css, /@media \(display-mode: standalone\) and \(min-width: 901px\) \{\s*\.bandDoor \{ display: none; \}/,
+      'inside the app on a desk the strip carries the operator door, so the band\'s steps aside');
+  });
+
+  it('the admin preview follows the same switch, with its links kept inside the preview', () => {
+    const preview = readCode('app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/layout.tsx');
+    assert.match(preview, /if \(await isPublicFrameOn\(\)\) \{/);
+    assert.match(preview, /const band = publicFrameBand\(org, tournament, tournamentToday\(\), registration\?\.state === 'open'\);/,
+      'the live band\'s one helper');
+    assert.match(preview, /basePath=\{previewBase\}\s*\/>\s*<TournamentSideRail basePath=\{previewBase\}/);
+    assert.match(preview, /<TournamentPreviewNav/, 'today\'s preview, when off');
+    assert.match(band, /\{!preview && <SharePageButton/);
+    assert.match(band, /\{!inSandbox && !preview && \(/);
+    assert.match(band, /\{!preview && \(\s*<span className=\{styles\.bandDoor\}>/);
   });
 });

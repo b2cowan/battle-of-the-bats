@@ -139,6 +139,15 @@ The TODO file also holds another session's uncommitted line (support console S4b
 
 ## Part 2 · The desk, the footer, the admin preview, and the ticker options
 
+> **Built 2026-10-28** (commit in plan §9's Stage 1 row). Calls made and told to the owner, who said commit: the platform's
+> desk strip goes in a browser too (with it Discover and "Run a tournament"; inside the installed app it stays); a free
+> event's footer carries no credit line (its badge is the credit); the rail stays 248 px (the drawing's 232 is the
+> platform's one rail width minus 16); the footer lists every visible page; "Hosted by" in the band from 1,024 px only;
+> **901–1,023 px keeps the phone's white tab row under the band** (inside it the tabs were squeezed to a scrap); the free
+> plan's banner gets room under the footer; the Overview's desk hero retires (the name appears once). Not render-checked
+> by Claude: the admin preview (the probe sign-in was refused even with the switch off) and the installed app on a desk
+> (display-mode cannot be emulated) — both go to Part 4's walk.
+
 Read the hub's "The end state", desk frame only (`Desktop, game day · 1280px`), plus the inside-the-app frame.
 1. **Desk band:** the same band at desk width, with **"Hosted by &lt;club&gt; ›"** on its right side. Show it only when
    the org's home is a real destination: the existing rule `isOrgHomeRealDestination` and its async companion in
@@ -209,7 +218,11 @@ page** as it renders today inside the tournament layout (its focused page is Sta
 1. Same rule, for **Standings** (keep the table; **pinning Team and PTS is Stage 4**, so don't do it here),
    **Playoffs** (the bracket stays where it is today; its move is Stage 4), **Teams**, **a team's page**, **News**,
    **Rules** and **Champions**.
-2. **The ticker, as the owner ruled in Part 2:** *(ruling recorded here by Part 2)*. Restyle or rebuild it in the
+2. **The ticker, as the owner ruled in Part 2:** *options drawn 2026-10-28 (`PUBLIC_TOURNAMENT_TICKER_OPTIONS.html`,
+   Artifact https://claude.ai/artifact/8rt2PdvZEV617tdrDDG35H; /design review done, its fixes applied): Today, A calm
+   marquee, B soft scoreboard (recommended), C my team line. **Ruling OWED** — the owner is taking a second opinion
+   first. Two asks: A, B or C; and, if B, does a changed score's tile glow soft green once, or does only the number
+   change. Record the answer here before Part 4 builds.* Restyle or rebuild it in the
    shared chrome, behind the switch. Leave which pages carry it alone; that is Stages 2–3.
 3. **`/review` on all of Stage 1's diff** (offer it per CLAUDE.md; it is substantive and touches the shared layout), and
    `/simplify` first if the diff added a new shared abstraction (the helper, the band component).

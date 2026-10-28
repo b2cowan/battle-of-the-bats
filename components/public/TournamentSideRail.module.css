@@ -160,3 +160,68 @@
   letter-spacing: 0.05em;
   color: var(--white-40);
 }
+
+/* The wrapper around the rail's contents: nothing at all unless the frame is on (below). */
+.stick { display: contents; }
+
+/* ── Under the public frame (Public tournament pages Stage 1 Part 2, behind the preview switch — lib/public-frame.ts;
+   hub "The end state", desk frame) ──────────────────────────────────────────────────────────────────────────────────
+   Keyed to the frame's marker, so today's rail is untouched. The rail is a cell of the frame's desk grid
+   (TournamentFrame.module.css `.deskShell`), white with a hairline, running the page's height beside it; its links ride
+   the scroll, so they stay in reach on a long page. The club site's own sizes: 44 px rows, the text face at 16 px, the
+   chosen page in ink on the ground with the organizer's ink rule. */
+@media (min-width: 1024px) {
+  :global([data-public-frame='light']) .rail {
+    grid-area: rail;
+    position: relative;
+    top: auto;
+    left: auto;
+    bottom: auto;
+    width: auto;
+    display: block;
+    z-index: auto;
+    overflow: visible;
+    background: var(--club-card);
+    border-right: 1px solid var(--club-line);
+  }
+  :global([data-public-frame='light']) .stick {
+    position: sticky;
+    top: var(--sandbox-chrome-h, 0px);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - var(--sandbox-chrome-h, 0px));
+    overflow-y: auto;
+  }
+  :global([data-public-frame='light']) .railHeader,
+  :global([data-public-frame='light']) .railFooter {
+    display: none;
+  }
+  :global([data-public-frame='light']) .nav {
+    gap: 2px;
+    padding: 16px 10px;
+  }
+  :global([data-public-frame='light']) .item {
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 6px;
+    font: 600 16px/1.2 var(--club-text-face);
+    letter-spacing: 0;
+    color: var(--club-soft);
+  }
+  /* Words only, as the drawing and the phone's tab row. */
+  :global([data-public-frame='light']) .item svg { display: none; }
+  :global([data-public-frame='light']) .item:hover {
+    background: var(--club-ground);
+    color: var(--club-text);
+  }
+  :global([data-public-frame='light']) .active {
+    background: var(--club-ground);
+    color: var(--club-text);
+    box-shadow: inset 3px 0 0 var(--club-ink);
+  }
+  :global([data-public-frame='light']) .active::before { display: none; }
+  :global([data-public-frame='light']) .item:focus-visible {
+    outline: 2px solid var(--club-ink);
+    outline-offset: -2px;
+  }
+}

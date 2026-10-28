@@ -16,6 +16,15 @@
  * the band; inside the installed app the app's own bar carries it, so the band drops it. That is decided by CSS
  * (`display-mode: standalone`) as the page first draws — never by script after it, so nothing appears and then vanishes.
  *
+ * AT A DESK (Part 2; hub "The end state", desk frame) the same band runs the page's full width over the white side rail,
+ * and "Hosted by {club} ›" sits on its right before Sign in — only when the organizer's home is a real destination
+ * (lib/public-frame.ts publicFrameHost, the layout's one answer). From 1,024 px the rail is the navigation, so the band's
+ * tab row steps aside; the name appears once, here, and the old centred page title is gone.
+ *
+ * IN THE ORGANIZER'S ADMIN PREVIEW (`basePath`) the band is the same, with its links kept inside the preview, and none of
+ * the visitor's doors: no Share (it would share the preview), no Sign in, no operator door (the preview's own Exit pill
+ * is the way out).
+ *
  * Identity resolves in the browser after the page loads, never on the server, so the page a service worker caches for an
  * anonymous visitor carries no one's doors (the anonymous-public invariant, as ClubBar).
  */
@@ -25,6 +34,7 @@ import { useOrgHref, usePublicPathname, useSignInHref } from '@/lib/use-public-p
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import type { PublicPageKey } from '@/lib/public-pages';
+import type { PublicFrameHost } from '@/lib/public-frame';
 import AccountMenu from '@/components/shared/AccountMenu';
 import SharePageButton from './SharePageButton';
 import TournamentFlipPill from './TournamentFlipPill';
@@ -45,18 +55,24 @@ export interface TournamentBandProps {
   status: { word: string; live: boolean } | null;
   hiddenPages: PublicPageKey[];
   hasBracket: boolean;
+  /** Who runs the event (lib/public-frame.ts publicFrameHost); the band shows it only as a door, at a desk. */
+  host?: PublicFrameHost | null;
+  /** The admin preview's `/…/preview/{tournament}` base: links stay in the preview, and the visitor's doors are absent. */
+  basePath?: string;
 }
 
 export default function TournamentBand({
-  orgSlug, tournamentSlug, name, logoUrl, initials, dates, status, hiddenPages, hasBracket,
+  orgSlug, tournamentSlug, name, logoUrl, initials, dates, status, hiddenPages, hasBracket, host, basePath,
 }: TournamentBandProps) {
   const pathname = usePublicPathname() ?? '';
+  const preview = !!basePath;
   const href = useOrgHref(orgSlug);
   const signInHref = useSignInHref();
-  const homeHref = href(`/${tournamentSlug}`);
+  const homeHref = basePath ?? href(`/${tournamentSlug}`);
   // The demo is a closed world: every sign-in door is a door out of it (ConsumerNav's strip rule), so it shows none.
   const inSandbox = isDemoOrgSlug(orgSlug);
-  const signedIn = useClientSignedIn(!inSandbox);
+  // The preview shows no visitor's door, so it asks nobody who they are.
+  const signedIn = useClientSignedIn(!inSandbox && !preview);
 
   const mark = logoUrl
     ? <img src={logoUrl} alt="" className={clubStyles.logo} />
@@ -85,8 +101,13 @@ export default function TournamentBand({
       </Link>
 
       <div className={clubStyles.actions}>
-        <SharePageButton url={homeHref} title={name} text="Live on FieldLogicHQ" compact className={styles.icon} />
-        {!inSandbox && (
+        {host?.kind === 'hosted' && (
+          preview
+            ? <span className={styles.hostLink}>Hosted by {host.name}</span>
+            : <Link href={href()} className={styles.hostLink}>Hosted by {host.name} ›</Link>
+        )}
+        {!preview && <SharePageButton url={homeHref} title={name} text="Live on FieldLogicHQ" compact className={styles.icon} />}
+        {!inSandbox && !preview && (
           <span className={styles.browserOnly}>
             {signedIn ? (
               <AccountMenu className={clubStyles.word} wrapClassName={clubStyles.account} signOutTo="here">
@@ -97,13 +118,18 @@ export default function TournamentBand({
             )}
           </span>
         )}
-        <TournamentFlipPill look="band" />
+        {!preview && (
+          <span className={styles.bandDoor}>
+            <TournamentFlipPill look="band" />
+          </span>
+        )}
       </div>
 
       <TournamentTopTabs
         skin="frame"
         hiddenPages={hiddenPages}
         hasBracket={hasBracket}
+        basePath={basePath}
         className={`${clubStyles.tabsSlot} ${styles.tabs}`}
       />
     </header>
