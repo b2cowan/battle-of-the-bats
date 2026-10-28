@@ -62,7 +62,7 @@ type QueueDef = Omit<WaitingQueue, 'count' | 'why'> & { why: string | ((ctx: { s
 const QUEUES: QueueDef[] = [
   { key: 'owner_inactive', group: 'customers', label: 'Owner inactive', why: 'The owner has not signed in for 30 days', clearLabel: 'owner inactive', href: '/platform-admin/orgs?filter=owner_inactive', entry: 'organizations' },
   { key: 'retention', group: 'customers', label: 'Retention', why: 'A cancelled club whose kept data runs out within 30 days', clearLabel: 'retention', href: '/platform-admin/retention', entry: 'retention' },
-  { key: 'free_time_ending', group: 'customers', label: 'Free time ending', why: 'A club whose free time ends in the next 14 days: a plan, sections or a billing status', clearLabel: 'free time ending in 14 days', href: '/platform-admin/free-time?view=staff&ending=14', entry: 'free_time' },
+  { key: 'free_time_ending', group: 'customers', label: 'Free time ending', why: 'A club or a Coaches Portal whose free time ends in the next 14 days: a plan, sections or a billing status', clearLabel: 'free time ending in 14 days', href: '/platform-admin/free-time?view=staff&ending=14', entry: 'free_time' },
   { key: 'missing_owner', group: 'customers', label: 'Missing owner', why: 'A club with nobody as its owner', clearLabel: 'missing owner', href: '/platform-admin/orgs?filter=no_owner', entry: 'organizations' },
   {
     key: 'past_due', group: 'customers', label: 'Past due',

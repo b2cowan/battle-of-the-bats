@@ -14,6 +14,7 @@ import { freeTimeDoorFacts } from '@/lib/free-time-writes';
 import { earliestLastDay, grantablePlansAbove, isGrantRunning, lastDayOfInstant, latestLastDay } from '@/lib/free-time';
 import { isFoundingSeasonCompExpiry } from '@/lib/plan-config';
 import { stripeStillBills } from '@/lib/stripe-billing-state';
+import { readPortalRecordFreeTime } from '@/lib/portal-free-time-tab';
 import ClubRecord, { type ClubRecordProps } from './ClubRecord';
 import { readClubOnlinePayments } from '@/lib/platform-online-payments';
 
@@ -119,6 +120,12 @@ export default async function ClubRecordPage({ params, searchParams }: {
   ]);
   const org = orgRes.data;
   if (!org) notFound();
+  // A Coaches Portal's free time (Stage 4b) is its own kind: its chip, band, Access row and windows, never a club's.
+  const isPortal = org.account_kind === 'team_workspace';
+  const canGivePortal = hasPlatformPower(auth.role, 'portal_free_time');
+  const portalFreeTime = isPortal
+    ? await readPortalRecordFreeTime(id, org.name, { id: auth.user.id, email: auth.user.email ?? '', role: auth.role }, canGivePortal).catch(() => null)
+    : null;
   // Club Tier 12d-2: the Online payments tab's read — ours only (no Stripe call), for the roles that read Stripe's records,
   // started beside the record's other reads (/review).
   const onlinePayments = await onlinePaymentsRead;
@@ -148,7 +155,9 @@ export default async function ClubRecordPage({ params, searchParams }: {
 
   const status = org.subscription_status ?? 'active';
   // The Money tab names running free time on our side only (it is not Stripe's to agree with).
-  const runningGrant = overrides.find(o => o.running && o.type === 'plan_tier' && o.lastDay);
+  const runningGrant = portalFreeTime?.running
+    ? overrides.find(o => o.id === portalFreeTime.running!.id)
+    : overrides.find(o => o.running && o.type === 'plan_tier' && o.lastDay);
   const runningFounding = overrides.find(o => o.running && o.founding && o.lastDay);
   const freeRow = runningGrant ?? runningFounding;
   const freeThrough = freeRow ? { lastDay: freeRow.lastDay!, what: runningGrant ? 'free time' : 'Founding Season' } : null;
@@ -190,7 +199,8 @@ export default async function ClubRecordPage({ params, searchParams }: {
     teamMoves,
     story: { entries: story.slice(0, STORY_PAGE), total: story.length },
     planOptions: Object.entries(PLAN_CONFIG).map(([key, c]) => ({ id: key, label: c.label, tournamentLimit: c.tournamentLimit, teamLimit: c.teamLimit })),
-    freeTime: doorFacts && {
+    portalFreeTime,
+    freeTime: isPortal || !doorFacts ? null : {
       block: doorFacts.block,
       planBlock: doorFacts.planBlock,
       plansAbove: grantablePlansAbove(plan).map(p => ({ id: p, label: planLabel(p) })),
@@ -205,6 +215,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
       sections: hasPlatformPower(auth.role, 'club_sections'),
       delete: hasPlatformPower(auth.role, 'delete_records'),
       emailOwner: hasPlatformPower(auth.role, 'email_owner'),
+      portalFreeTime: canGivePortal,
     },
     onlinePayments,
     money: {

@@ -393,16 +393,20 @@ describe('10 · Put it back only on plan/limit, section and running-override ent
   const view = readCode('lib/platform-story-view.ts');
   // Free time's entries moved to their own module in Stage 4 (lib/free-time-story.ts), the Story still calls it.
   const freeTime = readCode('lib/free-time-story.ts');
-  it('the four kinds, and nothing else', () => {
+  it('the six kinds, and nothing else', () => {
     const kinds = [...view.matchAll(/\| \{ kind: '(\w+)'/g)].map(m => m[1]);
-    // Stage 4 added override_end: a free-time change undone restores the earlier last day (T10).
-    assert.deepEqual(kinds.sort(), ['override', 'override_end', 'plan', 'section'], 'PutBack is a union of exactly these four');
-    const offers = [...(story + freeTime).matchAll(/markPutBack\((?:entry|given), [^;]*?\{\s*kind: '(\w+)'/g)].map(m => m[1]);
-    assert.deepEqual([...new Set(offers)].sort(), ['override', 'override_end', 'plan', 'section']);
+    // Stage 4 added override_end: a free-time change undone restores the earlier last day (T10). Stage 4b added a
+    // Coaches Portal's two (its end moves the team's entitlement with the grant, under its own power).
+    assert.deepEqual(kinds.sort(), ['override', 'override_end', 'plan', 'portal_end', 'portal_end_now', 'section'], 'PutBack is a union of exactly these six');
+    const offers = [...story.matchAll(/markPutBack\((?:entry|given), [^;]*?\{\s*kind: '(\w+)'/g)].map(m => m[1]);
+    assert.deepEqual([...new Set(offers)].sort(), ['plan', 'section']);
+    assert.match(freeTime, /kind: isPortal \? 'portal_end_now' : 'override',/);
+    assert.match(freeTime, /\? \{ kind: 'portal_end_now', title, sentence, overrideId: o\.id \}/);
+    assert.match(freeTime, /: \{ kind: isPortal \? 'portal_end' : 'override_end', title, sentence, overrideId: o\.id, expectedExpiresAt: o\.expires_at, lastDay: earlier \}/);
     assert.match(story, /freeTimeStoryEntries\(/);
   });
   it('free time is offered only while running, on its newest entry; a plan only on the newest plan entry still in force', () => {
-    assert.match(freeTime, /markPutBack\(given, running && !newestChange && o\.expires_at \? \{\s*kind: 'override'/);
+    assert.match(freeTime, /markPutBack\(given, running && !newestChange && o\.expires_at \? \{\s*kind: isPortal \? 'portal_end_now' : 'override'/);
     assert.match(freeTime, /if \(c === newestChange && running && o\.expires_at\) \{/);
     assert.match(story, /r\.id === newestPlanId && org\.plan_id === toPlan/);
   });
@@ -421,7 +425,7 @@ describe('10 · Put it back only on plan/limit, section and running-override ent
     const route = readCode('app/api/platform-admin/orgs/[id]/put-back/route.ts');
     assert.match(route, /\(await buildClubStory\(id\)\)\.find\(e => e\.key === key\)\?\.putBack/);
     assert.match(route, /if \(!target\)/);
-    assert.match(route, /target\.kind === 'section' \? 'club_sections' : 'club_billing'/);
+    assert.match(route, /target\.kind === 'section' \? 'club_sections'\s*: target\.kind === 'portal_end_now' \|\| target\.kind === 'portal_end' \? 'portal_free_time' : 'club_billing'/);
     assert.match(route, /applyOperatorPlanChange\(/, 'a plan goes back through the one plan-change rule');
     assert.doesNotMatch(route, /from\('platform_audit_log'\)/, 'the route never works the undo out again from the audit log');
   });

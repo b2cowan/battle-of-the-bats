@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { listDemoOrgIdsQuietly } from './demo-org-server';
 import { daysLeft, isEndingSoon, isGrantRunning, lastDayOfInstant } from './free-time';
 import { planLabel, sectionLabel, subscriptionStatusLabel } from './platform-labels';
+import { freeTimePortalOrgIds } from './portal-free-time-server';
 
 /**
  * Free time given by staff, one row per club (Support console Stage 4; drawings C2 and E1). The Free time list's "Given
@@ -17,7 +18,9 @@ import { planLabel, sectionLabel, subscriptionStatusLabel } from './platform-lab
 export type StaffFreeTimeClub = {
   orgId: string;
   name: string;
-  /** What runs, in the list's words: "Club, the whole plan · Accounting". */
+  /** A club, or a Coaches Portal given free time (Stage 4b): one queue, one list, both counted (owner ruling Q7/G). */
+  kind: 'club' | 'portal';
+  /** What runs, in the list's words: "Club, the whole plan · Accounting"; "Premium Coaches Portal". */
   freeOn: string;
   /** The soonest last free day among the club's grants. */
   lastDay: string;
@@ -33,14 +36,16 @@ type Row = {
   starts_at: string | null; expires_at: string | null; revoked_at: string | null; reason: string | null; created_by: string | null;
 };
 
-function freeOnWords(r: Row): string {
+function freeOnWords(r: Row, portal: boolean): string {
+  // A Coaches Portal's free time is held open by a billing-status grant (Stage 4b): it reads as what the coach has.
+  if (portal) return 'Premium Coaches Portal';
   if (r.type === 'plan_tier') return `${planLabel(r.target?.plan ?? '')}, the whole plan`;
   if (r.type === 'module_addon') return (r.target?.addons ?? []).map(sectionLabel).join(', ') || 'Sections';
   return `Billing status: ${subscriptionStatusLabel(r.value ?? 'active')}`;
 }
 
 export async function getStaffFreeTime(now: Date = new Date()): Promise<StaffFreeTimeClub[]> {
-  const [{ data, error }, demoIds] = await Promise.all([
+  const [{ data, error }, demoIds, portalIds] = await Promise.all([
     supabaseAdmin
       .from('org_overrides')
       .select('org_id, type, value, target, starts_at, expires_at, revoked_at, reason, created_by')
@@ -49,6 +54,7 @@ export async function getStaffFreeTime(now: Date = new Date()): Promise<StaffFre
       .not('expires_at', 'is', null)
       .limit(5000),
     listDemoOrgIdsQuietly(),
+    freeTimePortalOrgIds(),
   ]);
   if (error) throw error;
   const demo = new Set(demoIds);
@@ -71,7 +77,8 @@ export async function getStaffFreeTime(now: Date = new Date()): Promise<StaffFre
     clubs.push({
       orgId,
       name: names.get(orgId)!,
-      freeOn: sorted.map(freeOnWords).join(' · '),
+      kind: portalIds.has(orgId) ? 'portal' : 'club',
+      freeOn: [...new Set(sorted.map(r => freeOnWords(r, portalIds.has(orgId))))].join(' · '),
       lastDay,
       daysLeft: daysLeft(lastDay, now),
       endingSoon: isEndingSoon(lastDay, now),

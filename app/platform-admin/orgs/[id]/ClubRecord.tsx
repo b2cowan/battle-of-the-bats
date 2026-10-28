@@ -29,6 +29,8 @@ import { PAYING_CLUB_PLAN_REFUSAL } from '@/lib/stripe-billing-state';
 import MoneyTab, { useClubMoney } from './MoneyTab';
 import RecordWindow from '../../RecordWindow';
 import { BlockLine, ChangeEndWindow, EndNowWindow, GiveWindow, freeTimeSubject, freeTimeTitle } from './FreeTimeWindows';
+import { PortalBlockLine, PortalChangeEndWindow, PortalEndNowWindow, PortalGiveWindow } from './PortalFreeTimeWindows';
+import type { PortalRecordFreeTime } from '@/lib/portal-free-time-tab';
 import { errorOf, sendJson } from '../../console-fetch';
 import { roleLabel } from '@/lib/member-access';
 import { subscriptionStatusChip } from '../../chips';
@@ -87,7 +89,9 @@ export type ClubRecordProps = {
   teamMoves: Array<{ id: string; teamName: string; at: string; state: 'moved' | 'waiting_on_coach' | 'waiting_on_club' }>;
   story: { entries: StoryEntry[]; total: number };
   planOptions: Array<{ id: string; label: string; tournamentLimit: number; teamLimit: number }>;
-  can: { support: boolean; billing: boolean; sections: boolean; delete: boolean; emailOwner: boolean };
+  can: { support: boolean; billing: boolean; sections: boolean; delete: boolean; emailOwner: boolean; portalFreeTime: boolean };
+  /** A Coaches Portal's free time (Stage 4b): its own chip, band, Access row and windows. Null for a club. */
+  portalFreeTime: PortalRecordFreeTime | null;
   /** Club Tier 12d-2: the Online payments tab's read (the roles that read Stripe's records; null = no tab — never
    *  connected, or a role without it; 'failed' = the tab shows, its read offers Read again). */
   onlinePayments: ClubOnlinePayments | 'failed' | null;
@@ -117,6 +121,9 @@ type Window =
   | { kind: 'give' }
   | { kind: 'changeEnd'; row: FreeTimeRow }
   | { kind: 'endNow'; row: FreeTimeRow }
+  | { kind: 'portalGive' }
+  | { kind: 'portalChange' }
+  | { kind: 'portalEnd' }
   | { kind: 'cancel' }
   | { kind: 'delete' }
   | null;
@@ -308,7 +315,16 @@ export default function ClubRecord(props: ClubRecordProps) {
       <span className={kit.bandNote}>{onFreePlan ? `on ${org.nowPlanLabel}, while it is free` : `on the ${org.planLabel} plan`}</span>
     </div>
   );
-  const tournamentsCell = (
+  // A Coaches Portal staff gave free time (Stage 4b): hosting is held back while it runs (Q10).
+  const portalFt = props.portalFreeTime?.freeTime ? props.portalFreeTime : null;
+  const portalRunning = portalFt?.running ?? null;
+  const tournamentsCell = portalRunning ? (
+    <div className={kit.bandCell}>
+      <span className={kit.bandLabel}>Tournaments</span>
+      <span className={kit.bandValue}>{props.tournaments.length || '—'}</span>
+      <span className={kit.bandNote}>hosting is not part of free time</span>
+    </div>
+  ) : (
     <div className={kit.bandCell}>
       <span className={kit.bandLabel}>Tournaments</span>
       <span className={kit.bandValue}>{org.nowTournamentLimit < 9999 ? `${props.slotsHeld} of ${org.nowTournamentLimit}` : props.tournaments.length}</span>
@@ -325,13 +341,20 @@ export default function ClubRecord(props: ClubRecordProps) {
       <span className={kit.bandLabel}>Free time</span>
       <span className={kit.bandValue}>{runningFree.length}</span>
       <span className={kit.bandNote}>
-        {firstEnding ? `${freeTimeSubject(firstEnding, org.planLabel)} ends first, ${formatShortDay(firstEnding.lastDay!)}`
+        {portalRunning ? `ends ${formatShortDay(portalRunning.lastDay)} · ${leftWords(daysLeft(portalRunning.lastDay))}`
+          : firstEnding ? `${freeTimeSubject(firstEnding, org.planLabel)} ends first, ${formatShortDay(firstEnding.lastDay!)}`
           : foundingRow ? 'Founding Season' : 'none running'}
       </span>
     </div>
   );
-  // When nothing renews, the last figure says what is true: free through Founding Season's last day.
-  const renewsCell = foundingRow && !org.stripeSubscriptionId && foundingRow.lastDay ? (
+  // When nothing renews, the last figure says what is true: free through Founding Season's last day, or the portal's.
+  const renewsCell = portalFt ? (
+    <div className={kit.bandCell}>
+      <span className={kit.bandLabel}>Billing</span>
+      <span className={`${kit.bandValueText} ${styles.quietValue}`}>{portalRunning ? freeThroughShort(portalRunning.lastDay) : 'Free time ended'}</span>
+      <span className={kit.bandNote}>{portalRunning ? 'Given by staff, no Stripe subscription' : 'back on the free Coaches Portal, no Stripe subscription'}</span>
+    </div>
+  ) : foundingRow && !org.stripeSubscriptionId && foundingRow.lastDay ? (
     <div className={kit.bandCell}>
       <span className={kit.bandLabel}>Billing</span>
       <span className={`${kit.bandValueText} ${styles.quietValue}`}>{freeThroughShort(foundingRow.lastDay)}</span>
@@ -371,12 +394,18 @@ export default function ClubRecord(props: ClubRecordProps) {
         title={org.name}
         titleChips={<>
           <span className={kit.chip}>{org.planLabel}</span>
-          <span className={`${kit.chip} ${subscriptionStatusChip(org.status)}`}>{org.statusLabel}</span>
-          {firstEnding && (
+          {/* A free-time portal is STORED cancelled for its whole life (held open by its grant): the chip says what is true. */}
+          {portalFt
+            ? <span className={`${kit.chip} ${subscriptionStatusChip(portalRunning ? 'active' : 'canceled')}`}>{portalRunning ? 'Active' : 'Free time ended'}</span>
+            : <span className={`${kit.chip} ${subscriptionStatusChip(org.status)}`}>{org.statusLabel}</span>}
+          {(portalRunning || firstEnding) && (
             <>
               <button type="button" className={`${kit.chip} ${kit.chipOk} ${styles.ftChip}`} onClick={() => setTab('access')}
                 title="Open the Free time list">Free time</button>
-              <span className={styles.ftBeside}>{freeTimeSubject(firstEnding, org.planLabel)} free through {formatShortDay(firstEnding.lastDay!)}</span>
+              <span className={styles.ftBeside}>
+                {portalRunning ? `Premium free through ${formatShortDay(portalRunning.lastDay)}`
+                  : `${freeTimeSubject(firstEnding!, org.planLabel)} free through ${formatShortDay(firstEnding!.lastDay!)}`}
+              </span>
             </>
           )}
         </>}
@@ -541,7 +570,8 @@ export default function ClubRecord(props: ClubRecordProps) {
               </div>
               <StoryTable
                 entries={story.entries}
-                canPutBack={kind => (kind === 'section' ? can.sections : can.billing)}
+                canPutBack={kind => (kind === 'section' ? can.sections
+                  : kind === 'portal_end_now' || kind === 'portal_end' ? can.portalFreeTime : can.billing)}
                 onPutBack={entry => setWin({ kind: 'putBack', entry })}
                 emptyText={storyWords || storyKind ? 'Nothing in the Story matches.' : 'Nothing has happened here yet.'}
               />
@@ -578,7 +608,8 @@ export default function ClubRecord(props: ClubRecordProps) {
           )}
 
           {tab === 'access' && (
-            <AccessTab {...props} onGive={() => setWin({ kind: 'give' })} onChangeEnd={row => setWin({ kind: 'changeEnd', row })}
+            <AccessTab {...props} onPortal={kind => setWin({ kind })}
+              onGive={() => setWin({ kind: 'give' })} onChangeEnd={row => setWin({ kind: 'changeEnd', row })}
               onEndNow={row => setWin({ kind: 'endNow', row })} onRelease={() => setWin({ kind: 'release' })}
               onCancel={() => setWin({ kind: 'cancel' })} onDelete={() => setWin({ kind: 'delete' })} />
           )}
@@ -620,11 +651,11 @@ export default function ClubRecord(props: ClubRecordProps) {
         <RecordWindow
           title={win.entry.putBack.title}
           sentence={win.entry.putBack.sentence}
-          whyPlaceholder={win.entry.putBack.kind === 'override' ? 'Why are you ending it early?' : 'Why are you putting this back?'}
+          whyPlaceholder={endsNow(win.entry.putBack.kind) ? 'Why are you ending it early?' : 'Why are you putting this back?'}
           footNote="Writes a new entry in the Story."
           // Ending free time from the Story is the Access list's End it now window (one window for one act).
-          cancelLabel={win.entry.putBack.kind === 'override' ? 'Keep it' : undefined}
-          confirmLabel={win.entry.putBack.kind === 'override' ? 'End it now' : 'Put it back'}
+          cancelLabel={endsNow(win.entry.putBack.kind) ? 'Keep it' : undefined}
+          confirmLabel={endsNow(win.entry.putBack.kind) ? 'End it now' : 'Put it back'}
           onConfirm={act(`/api/platform-admin/orgs/${org.id}/put-back`, 'POST', 'It could not be put back.', reason => ({ key: win.entry.key, reason }))}
           onClose={() => setWin(null)}
         />
@@ -662,6 +693,18 @@ export default function ClubRecord(props: ClubRecordProps) {
       {win?.kind === 'endNow' && (
         <EndNowWindow org={org} row={win.row} onDone={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
       )}
+      {win?.kind === 'portalGive' && props.portalFreeTime?.give && props.portalFreeTime.ownerUserId && (
+        <PortalGiveWindow coachId={props.portalFreeTime.ownerUserId} coachName={props.portalFreeTime.coachName} give={props.portalFreeTime.give}
+          onGiven={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
+      )}
+      {win?.kind === 'portalChange' && portalRunning && props.portalFreeTime?.changeBounds && (
+        <PortalChangeEndWindow orgId={org.id} orgName={org.name} coachName={props.portalFreeTime.coachName} row={portalRunning}
+          bounds={props.portalFreeTime.changeBounds} onDone={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
+      )}
+      {win?.kind === 'portalEnd' && portalRunning && props.portalFreeTime && (
+        <PortalEndNowWindow orgId={org.id} orgName={org.name} coachName={props.portalFreeTime.coachName} row={portalRunning}
+          onDone={() => { setWin(null); router.refresh(); }} onClose={() => setWin(null)} />
+      )}
       {win?.kind === 'cancel' && (
         <CancelWindow orgId={org.id} orgName={org.name} hasStripe={!!org.stripeSubscriptionId}
           onDone={message => { setWin(null); setNotice(message); router.refresh(); }} onClose={() => setWin(null)} />
@@ -677,9 +720,12 @@ export default function ClubRecord(props: ClubRecordProps) {
 // ── Access: plan and limits, sections, overrides, the own web address; the rare doors end it ─────────────────────────
 function AccessTab(props: ClubRecordProps & {
   onGive: () => void; onChangeEnd: (row: FreeTimeRow) => void; onEndNow: (row: FreeTimeRow) => void;
+  onPortal: (kind: 'portalGive' | 'portalChange' | 'portalEnd') => void;
   onRelease: () => void; onCancel: () => void; onDelete: () => void;
 }) {
   const { org, can } = props;
+  // Only a portal staff gave free time; any other portal (paying, Founding, comped) keeps Stage 4's list, door-less.
+  const pft = props.portalFreeTime?.freeTime ? props.portalFreeTime : null;
   // Running free time only: ended free time stays in the Story, not here. Founding first is not a rule; soonest end is.
   const running = props.overrides.filter(o => o.running).sort((a, b) => (a.lastDay ?? '9999').localeCompare(b.lastDay ?? '9999'));
   const giver = can.billing && props.freeTime;
@@ -719,6 +765,7 @@ function AccessTab(props: ClubRecordProps & {
         </div>
       </section>
 
+      {pft ? <PortalFreeTimeSection pft={pft} overrides={props.overrides} can={can} onPortal={props.onPortal} /> : (
       <section className={kit.section} id="free-time">
         <div className={styles.blockHead}>
           <h2 className={kit.sectionTitle}>Free time</h2>
@@ -763,6 +810,7 @@ function AccessTab(props: ClubRecordProps & {
           )}
         </div>
       </section>
+      )}
 
       <section className={kit.section}>
         <h2 className={kit.sectionTitle}>Own web address</h2>
@@ -868,6 +916,59 @@ function PeopleTab(props: ClubRecordProps & { onMakeOwner: (m: ClubRecordProps['
 }
 
 // ── Add a note ───────────────────────────────────────────────────────────────────────────────────────────────────────
+/**
+ * A Coaches Portal's free time on its Access list (Stage 4b, drawing B): the running grant with Change the end date and
+ * End it now (the portal's own windows, which move the team's entitlement with the grant), and Give free time at the
+ * head only for a later give (Super admin) or, while one runs, the line that points at its entry. A role without the
+ * power reads the row with no doors (R6).
+ */
+function PortalFreeTimeSection({ pft, overrides, can, onPortal }: {
+  pft: PortalRecordFreeTime; overrides: ClubRecordProps['overrides']; can: ClubRecordProps['can'];
+  onPortal: (kind: 'portalGive' | 'portalChange' | 'portalEnd') => void;
+}) {
+  const running = pft.running;
+  const grant = running ? overrides.find(o => o.id === running.id) : undefined;
+  const left = running ? daysLeft(running.lastDay) : null;
+  return (
+    <section className={kit.section} id="free-time">
+      <div className={styles.blockHead}>
+        <h2 className={kit.sectionTitle}>Free time</h2>
+        {can.portalFreeTime && pft.give && <button type="button" className="btn btn-secondary btn-sm" onClick={() => onPortal('portalGive')}>Give free time</button>}
+      </div>
+      {can.portalFreeTime && pft.giveLine && <PortalBlockLine block={pft.giveLine} />}
+      <div className={`${kit.card} ${kit.cardPad}`}>
+        {!running && <p className={kit.caption}>No free time running.</p>}
+        {running && (
+          <div className={styles.list}>
+            <div className={styles.listRow}>
+              <span className={styles.listMain}>
+                <strong>Premium Coaches Portal · given by staff</strong>
+                <span className={styles.listSub}>
+                  {freeThroughShort(running.lastDay)}
+                  {left != null && <> · <span className={left < 14 ? styles.soon : undefined}>{leftWords(left)}</span></>}
+ · {grant?.reason ?? 'No reason kept'} · by {grant?.createdBy ?? 'staff'}
+                </span>
+              </span>
+              {can.portalFreeTime && pft.changeBounds && (
+                <span className={styles.rowDoors}>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => onPortal('portalChange')}>Change the end date</button>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => onPortal('portalEnd')}>End it now</button>
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        {running && <p className={kit.caption}>End it now here and Put it back on the Story open the same window. Ended free time stays in the Story, not here.</p>}
+      </div>
+    </section>
+  );
+}
+
+/** A Put it back that ends free time now opens as End it now (one window for one act). */
+const endsNow = (kind: string) => kind === 'override' || kind === 'portal_end_now';
+/** "9 days left", "1 day left", "last day". */
+const leftWords = (n: number) => (n === 0 ? 'last day' : `${n} day${n === 1 ? '' : 's'} left`);
+
 function NoteWindow({ orgId, orgName, onDone, onClose }: { orgId: string; orgName: string; onDone: () => void; onClose: () => void }) {
   const [body, setBody] = useState('');
   return (

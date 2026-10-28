@@ -361,7 +361,8 @@ export function freeTimeBlockOf(club: Pick<ClubFacts, 'name' | 'planId' | 'accou
     return { tone: 'red', kind: 'own_club', lead: `You belong to ${club.name}`, rest: ", so you can't give it free time. Another staff member can." };
   }
   if (club.accountKind === 'team_workspace' || club.planId === 'team') {
-    return { tone: 'amber', kind: 'portal', lead: "A Coaches Portal can't be given free time yet.", rest: ' A portal reads its own billing, not free time. Its Founding Season stays as it is.' };
+    // Stage 4b retired "can't be given free time yet": a portal's free time is its own kind, given from the coach.
+    return { tone: 'amber', kind: 'portal', lead: "A Coaches Portal's free time is given from its coach's record.", rest: ' Open the owner on People, then the Coaches Portal tab. Its Founding Season stays as it is.' };
   }
   if (ctx.isDemo) {
     return { tone: 'amber', kind: 'demo', lead: `${club.name} is a public demo club`, rest: ", so it can't be given free time: everyone who opens the demo would see it." };

@@ -15,7 +15,13 @@ export type PutBack =
   | { kind: 'section'; title: string; sentence: string; section: string; on: boolean }
   | { kind: 'override'; title: string; sentence: string; overrideId: string }
   /** Free time's newest change, undone: back to the last free day before it (ended now if that day has passed). */
-  | { kind: 'override_end'; title: string; sentence: string; overrideId: string; expectedExpiresAt: string; lastDay: string };
+  | { kind: 'override_end'; title: string; sentence: string; overrideId: string; expectedExpiresAt: string; lastDay: string }
+  /**
+   * A Coaches Portal's free time (Stage 4b): its own two kinds, because a portal's end closes the team's entitlement too
+   * and goes through `lib/portal-free-time-give.ts` under the `portal_free_time` power, never a club's override end.
+   */
+  | { kind: 'portal_end_now'; title: string; sentence: string; overrideId: string }
+  | { kind: 'portal_end'; title: string; sentence: string; overrideId: string; expectedExpiresAt: string; lastDay: string };
 
 export type PutBackKind = PutBack['kind'];
 

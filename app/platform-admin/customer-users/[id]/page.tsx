@@ -6,6 +6,7 @@ import { buildPersonStory, type PersonMembership } from '@/lib/platform-story';
 import { recordOpened } from '@/lib/platform-record-opens';
 import { planLabel } from '@/lib/platform-labels';
 import { listSentEmails, recordingStartedAt } from '@/lib/sent-log';
+import { readCoachPortalTab } from '@/lib/portal-free-time-tab';
 import type { PersonEmails } from '../../sent-emails/SentParts';
 import PersonRecord, { type PersonRecordProps } from './PersonRecord';
 
@@ -47,9 +48,13 @@ export default async function PersonRecordPage({ params, searchParams }: {
   // Emails tab are open to every role that opens a person, so a role without the power is handed no email rows and no tab
   // (absent beats disabled; T14). The Story is given the role, not a flag, and checks the power again.
   const sentLog = hasPlatformPower(auth.role, 'sent_log');
-  const [story, emails] = await Promise.all([
+  // The Coaches Portal tab (Stage 4b): every role that opens a person reads it; only a giver is handed the door.
+  const canGive = hasPlatformPower(auth.role, 'portal_free_time');
+  const [story, emails, coachesPortal] = await Promise.all([
     buildPersonStory({ id: person.id, email: person.email, createdAt: person.createdAt }, memberships, { emailsAs: sentLog ? auth.role : null }),
     sentLog ? readPersonEmails(auth.role, person.email) : Promise.resolve(null),
+    // A failed read is said on the tab, never "no team" (and never the door: the give would decide from nothing).
+    readCoachPortalTab(person.id, { id: auth.user.id, email: auth.user.email ?? '', role: auth.role }, canGive).catch(() => 'failed' as const),
   ]);
 
   const clubs = memberships
@@ -76,6 +81,7 @@ export default async function PersonRecordPage({ params, searchParams }: {
     clubs,
     story,
     emails,
+    coachesPortal,
     can: {
       support: hasPlatformPower(auth.role, 'person_support'),
       delete: hasPlatformPower(auth.role, 'delete_records'),

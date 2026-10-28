@@ -24,6 +24,8 @@ import StoryTable from '../../StoryTable';
 import RecordWindow from '../../RecordWindow';
 import { PersonEmailsTab, type PersonEmails } from '../../sent-emails/SentParts';
 import LinkRow from '../../LinkRow';
+import type { CoachPortalTab } from '@/lib/portal-free-time-tab';
+import { PREMIUM_SECTION_BLOCKS, PortalBlockLine, PortalGiveWindow } from '../../orgs/[id]/PortalFreeTimeWindows';
 import kit from '../../console.module.css';
 import styles from '../../record.module.css';
 
@@ -36,11 +38,13 @@ export type PersonRecordProps = {
   story: StoryEntry[];
   /** The person's emails; null for a role without the sent-log power (no tab at all). */
   emails: PersonEmails | null;
+  /** The Coaches Portal tab (Stage 4b): their free teams and Premium portals; 'failed' when it could not be read. */
+  coachesPortal: CoachPortalTab | null | 'failed';
   can: { support: boolean; delete: boolean };
 };
 
-type Tab = 'story' | 'clubs' | 'account' | 'emails';
-type Window = 'save' | 'discard' | 'reset' | 'note' | 'confirm' | 'signOut' | 'ban' | 'unban' | 'delete' | null;
+type Tab = 'story' | 'clubs' | 'portal' | 'account' | 'emails';
+type Window = 'save' | 'discard' | 'reset' | 'note' | 'confirm' | 'signOut' | 'ban' | 'unban' | 'delete' | 'give' | null;
 
 /** One call; null when it went through, else the server's sentence. */
 async function post(url: string, method: string, body: unknown): Promise<string | null> {
@@ -48,12 +52,14 @@ async function post(url: string, method: string, body: unknown): Promise<string 
   return ok ? null : errorOf(data, 'That did not go through. Try again in a moment.');
 }
 
-export default function PersonRecord({ person, clubs, story, emails, can }: PersonRecordProps) {
+export default function PersonRecord({ person, clubs, story, emails, coachesPortal, can }: PersonRecordProps) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('story');
   const [editing, setEditing] = useState(false);
   const [win, setWin] = useState<Window>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  /** After a give: the new portal, and the amber line when the copy fell short (drawing F2). */
+  const [given, setGiven] = useState<{ orgId: string; copyShort: string | null } | null>(null);
   const [form, setForm] = useState({ name: person.name ?? '', email: person.email });
 
   useEffect(() => { rememberConsoleRecent({ kind: 'person', id: person.id, title: person.email }); }, [person.id, person.email]);
@@ -79,6 +85,7 @@ export default function PersonRecord({ person, clubs, story, emails, can }: Pers
   const stopEditing = () => { setEditing(false); requestAnimationFrame(() => pencilRef.current?.focus()); };
 
   const owned = clubs.find(c => c.role === 'owner');
+  const portalTab = coachesPortal && coachesPortal !== 'failed' ? coachesPortal : null;
   // The People list's own colours (one rule, `personStatusChip`), in the record's words.
   const chipWord = person.status === 'banned' ? 'Banned' : person.emailConfirmed ? 'Email confirmed' : 'Email not confirmed';
   const chip = <span className={`${kit.chip} ${personStatusChip(person.status)}`}>{chipWord}</span>;
@@ -109,6 +116,12 @@ export default function PersonRecord({ person, clubs, story, emails, can }: Pers
         {editing ? 'Editing. Nothing changes until you press the check mark and confirm. The ✕ puts everything back.' : `${person.name ?? 'No name given'} · Signs in with email and password`}
       </p>
       {notice && <div className={`${kit.notice} ${kit.noticeGood}`}>{notice}</div>}
+      {given && (
+        <div className={`${kit.callout}${given.copyShort ? ` ${kit.calloutWarn}` : ''}`}>
+          <span>{given.copyShort ?? 'Free time given. It shows on the portal’s Story.'}</span>
+          <span className={kit.calloutEnd}><Link href={`/platform-admin/orgs/${given.orgId}`} className={`${kit.door} ${kit.doorSm}`}>Open the portal</Link></span>
+        </div>
+      )}
 
       {editing ? (
         <div className={`${kit.card} ${kit.cardPad}`}>
@@ -132,6 +145,14 @@ export default function PersonRecord({ person, clubs, story, emails, can }: Pers
               <span className={kit.bandValue}>{clubs.length}</span>
               <span className={kit.bandNote}>{owned ? `owner of ${owned.name}` : clubs.length ? `${roleEmailLabel(clubs[0].role)} in ${clubs[0].name}` : 'in no club'}</span>
             </div>
+            {portalTab && (
+              // The coach's portal in the coach's own words (drawing A); it opens the Coaches Portal tab.
+              <button type="button" className={kit.bandCell} onClick={() => setTab('portal')}>
+                <span className={kit.bandLabel}>Coaches Portal</span>
+                <span className={`${kit.bandValue} ${kit.bandValueSm}`}>{portalTab.band.value}</span>
+                <span className={kit.bandNote}>{portalTab.band.sub}</span>
+              </button>
+            )}
             <div className={kit.bandCell}>
               <span className={kit.bandLabel}>Last signed in</span>
               {person.lastSignInAt
@@ -147,7 +168,9 @@ export default function PersonRecord({ person, clubs, story, emails, can }: Pers
 
           <div className={kit.tabs} role="tablist">
             {([
-              ['story', 'Story', story.length], ['clubs', 'Clubs', clubs.length], ['account', 'Account', 0],
+              ['story', 'Story', story.length], ['clubs', 'Clubs', clubs.length],
+              ['portal', 'Coaches Portal', portalTab ? portalTab.teams.length + portalTab.portals.length : 0],
+              ['account', 'Account', 0],
               ...(emails ? [['emails', 'Emails', emails.total] as const] : []),
             ] as ReadonlyArray<readonly [Tab, string, number]>).map(([key, label, n]) => (
               <button key={key} type="button" role="tab" aria-selected={tab === key} className={`${kit.tab}${tab === key ? ` ${kit.tabOn}` : ''}`} onClick={() => setTab(key)}>
@@ -188,6 +211,10 @@ export default function PersonRecord({ person, clubs, story, emails, can }: Pers
               </div>
             </div>
           )}
+
+          {tab === 'portal' && (coachesPortal === 'failed' || !coachesPortal
+            ? <div className={`${kit.notice} ${kit.noticeBad}`}>The Coaches Portal tab could not be read. Reload the page to try again.</div>
+            : <CoachesPortalTab tab={coachesPortal} onGive={() => setWin('give')} />)}
 
           {tab === 'account' && (
             <div className={kit.page}>
@@ -311,7 +338,75 @@ export default function PersonRecord({ person, clubs, story, emails, can }: Pers
           onClose={() => setWin(null)}
         />
       )}
+      {win === 'give' && portalTab?.give && (
+        <PortalGiveWindow coachId={person.id} coachName={portalTab.coachName} give={portalTab.give}
+          onGiven={result => { setWin(null); setGiven(result); router.refresh(); }} onClose={() => setWin(null)} />
+      )}
       {win === 'delete' && <PersonDelete api={api} email={person.email} onDone={() => router.push('/platform-admin/customer-users')} onClose={() => setWin(null)} />}
+    </div>
+  );
+}
+
+/**
+ * The coach's free teams and Premium Coaches Portals (Support console Stage 4b, drawing A). The door is an outlined
+ * button at the head of the free team's list, for a role that may give it; where the console already knows the answer is
+ * no, one line stands in its place under the list it is about (lines 1–9). A role without the power reads the same tab
+ * with no door and no line (R6).
+ */
+function CoachesPortalTab({ tab, onGive }: { tab: CoachPortalTab; onGive: () => void }) {
+  const block = tab.give?.block ?? null;
+  const door = !!tab.give && !block && (tab.give.mode === 'again' || tab.give.offer.length > 0);
+  const premiumLine = block && PREMIUM_SECTION_BLOCKS.has(block.kind) ? block : null;
+  const teamLine = block && !premiumLine && block.kind !== 'no_team' ? block : null;
+  return (
+    <div className={kit.page}>
+      <section className={kit.section}>
+        <div className={styles.blockHead}>
+          <h2 className={kit.sectionTitle}>Free team</h2>
+          {door && <button type="button" className="btn btn-secondary btn-sm" onClick={onGive}>Give free time</button>}
+        </div>
+        {teamLine && <PortalBlockLine block={teamLine} />}
+        <div className={`${kit.card} ${kit.cardPad}`}>
+          {tab.teams.length === 0
+            ? <p className={kit.caption}>No free team. Free time needs a team to bring across: ask the coach to add theirs first.</p>
+            : (
+              <div className={styles.list}>
+                {tab.teams.map(t => (
+                  <div key={t.id} className={styles.listRow}>
+                    <span className={styles.listMain}><strong>{t.label}</strong><span className={styles.listSub}>{t.holds}</span></span>
+                  </div>
+                ))}
+              </div>
+            )}
+        </div>
+      </section>
+
+      <section className={kit.section}>
+        <h2 className={kit.sectionTitle}>Premium Coaches Portals</h2>
+        {premiumLine && <PortalBlockLine block={premiumLine} />}
+        <div className={kit.card}>
+          {tab.portals.length === 0
+            ? <p className={`${kit.caption} ${kit.cardPad}`}>No Premium Coaches Portal.</p>
+            : (
+              <div className={kit.tableWrap}>
+                <table className={kit.comfortable}>
+                  <thead><tr><th>Portal</th><th>Now</th><th aria-label="Open" /></tr></thead>
+                  <tbody>
+                    {tab.portals.map(p => (
+                      <LinkRow key={p.orgId} href={`/platform-admin/orgs/${p.orgId}`}>
+                        <td><Link href={`/platform-admin/orgs/${p.orgId}`} className={kit.nameLink}>{p.name}</Link></td>
+                        <td>{p.state}</td>
+                        <td className={kit.rowDoor}>
+                          <Link href={`/platform-admin/orgs/${p.orgId}`} className={kit.rowDoorLink} tabIndex={-1} aria-hidden>›</Link>
+                        </td>
+                      </LinkRow>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+        </div>
+      </section>
     </div>
   );
 }

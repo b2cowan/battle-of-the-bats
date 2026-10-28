@@ -30,7 +30,7 @@ function StaffTable({ clubs, emptyText }: { clubs: StaffFreeTimeClub[]; emptyTex
     <div className={`${kit.tableWrap} table-cards`}>
       <table className={kit.comfortable}>
         <thead>
-          <tr><th>Club</th><th>Free on</th><th>Free through</th><th className={kit.num}>Left</th><th>Given by</th><th>Why</th><th aria-label="Open" /></tr>
+          <tr><th>Club or portal</th><th>Free on</th><th>Free through</th><th className={kit.num}>Left</th><th>Given by</th><th>Why</th><th aria-label="Open" /></tr>
         </thead>
         <tbody>
           {clubs.length === 0 && <tr><td colSpan={7} className={kit.empty}>{emptyText}</td></tr>}

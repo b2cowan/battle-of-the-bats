@@ -24,7 +24,7 @@ import { consoleClock, consoleDay } from './console-dates';
 import { aRole, humanize, limitWords, sectionLabel } from './platform-labels';
 import { obj, planName, putBackOf, str, whyFields, type AuditRow, type PutBack, type StoryEntry } from './platform-story-view';
 import { possessive } from './utils';
-import { freeTimeStoryEntries } from './free-time-story';
+import { freeTimeStoryEntries, type PortalCopySummary } from './free-time-story';
 import { formatCents } from './console-money';
 import { CONSOLE_REFUND_TAIL } from './console-money-story';
 import { hasPlatformPower } from './platform-areas';
@@ -77,7 +77,7 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
   // A lead's entries name a lead: a role without the growth power never reads them, filtered in the database (Stage 7).
   const auditQuery = supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, field, old_value, new_value, reason, created_at')
     .eq('org_id', orgId);
-  const [orgRes, auditRes, overridesRes, notesRes, eventsRes, orgAuditRes, membersRes, emailsRes, feedbackRes, refundsRes] = await Promise.all([
+  const [orgRes, auditRes, overridesRes, notesRes, eventsRes, orgAuditRes, membersRes, emailsRes, feedbackRes, refundsRes, portalRes] = await Promise.all([
     supabaseAdmin.from('organizations')
       .select('id, name, plan_id, enabled_addons, created_at, subscription_status, stripe_subscription_id, current_period_end')
       .eq('id', orgId).maybeSingle(),
@@ -109,6 +109,8 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
       ? supabaseAdmin.from('platform_refunds').select('id, stripe_charge_id, stripe_refund_id, amount_cents, currency, actor_email, reason, completed_at, created_at')
         .eq('org_id', orgId).eq('status', 'done').order('created_at', { ascending: false }).limit(SOURCE_CAP)
       : Promise.resolve({ data: [] as unknown[] }),
+    // A Coaches Portal staff gave free time (Stage 4b): its mark (mig 406, never cleared) and what the copy brought across.
+    supabaseAdmin.from('team_workspaces').select('free_time_given_at, migration_summary').eq('workspace_org_id', orgId).maybeSingle(),
   ]);
   const org = orgRes.data as {
     id: string; name: string; plan_id: string | null; enabled_addons: string[] | null; created_at: string;
@@ -296,6 +298,9 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
     overrides: (overridesRes.data ?? []) as Parameters<typeof freeTimeStoryEntries>[0]['overrides'],
     audit,
     putBackAt,
+    portal: portalRes.data?.free_time_given_at
+      ? { summary: (portalRes.data.migration_summary ?? null) as PortalCopySummary | null }
+      : null,
   }));
 
   // ── Notes ────────────────────────────────────────────────────────────────────────────────────────────────────────

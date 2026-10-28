@@ -7,6 +7,7 @@ import { applyClubSections, endClubOverride } from '@/lib/club-record-changes';
 import { applyOperatorPlanChange, PlanRefusedError } from '@/lib/operator-plan-change';
 import { changeFreeTimeEnd } from '@/lib/free-time-writes';
 import { earliestLastDay } from '@/lib/free-time';
+import { changePortalFreeTimeEnd, endPortalFreeTimeNow, readFreeTimePortal } from '@/lib/portal-free-time-give';
 
 /**
  * Put it back (Support console Stage 2, rule R5; kickoff Q2): undo a plan or limit, a section, or a running override from
@@ -19,7 +20,7 @@ import { earliestLastDay } from '@/lib/free-time';
  * kind is checked against its own power and goes through the one rule for that change.
  */
 export const POST = withObservability(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requireAnyPlatformPower(['club_billing', 'club_sections']);
+  const auth = await requireAnyPlatformPower(['club_billing', 'club_sections', 'portal_free_time']);
   if (auth.response) return auth.response;
   const { id } = await params;
   const body = (await req.json().catch(() => ({}))) as { key?: unknown; reason?: unknown };
@@ -31,11 +32,30 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   if (!target) {
     return NextResponse.json({ error: 'This entry can no longer be put back. Reload the Story to see what changed.' }, { status: 409 });
   }
-  if (!hasPlatformPower(auth.role, target.kind === 'section' ? 'club_sections' : 'club_billing')) {
+  const power = target.kind === 'section' ? 'club_sections'
+    : target.kind === 'portal_end_now' || target.kind === 'portal_end' ? 'portal_free_time' : 'club_billing';
+  if (!hasPlatformPower(auth.role, power)) {
     return NextResponse.json({ error: 'Insufficient platform role' }, { status: 403 });
   }
   const actor = auth.user.email!;
   const extra = { put_back_of: key };
+
+  // A Coaches Portal's free time (Stage 4b, T12): its own path, which moves the team's entitlement with the grant. On
+  // "given" Put it back is End it now; on "changed" it restores the earlier last day under the same limits.
+  if (target.kind === 'portal_end_now' || target.kind === 'portal_end') {
+    const portalActor = { id: auth.user.id, email: actor, role: auth.role };
+    const r = target.kind === 'portal_end_now'
+      ? await endPortalFreeTimeNow({ orgId: id, overrideId: target.overrideId, reason, actor: portalActor, extra })
+      : await changePortalFreeTimeEnd({
+        orgId: id, overrideId: target.overrideId, expectedExpiresAt: target.expectedExpiresAt, lastDay: target.lastDay, reason, actor: portalActor, extra,
+      });
+    return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: r.error }, { status: r.status });
+  }
+
+  // A club's override end never reaches a portal's free time: it would end the grant and leave the team's entitlement.
+  if ((target.kind === 'override' || target.kind === 'override_end') && await readFreeTimePortal(id)) {
+    return NextResponse.json({ error: "End a Coaches Portal's free time from its own Access list." }, { status: 409 });
+  }
 
   if (target.kind === 'override') {
     const r = await endClubOverride({ orgId: id, overrideId: target.overrideId, reason, actorEmail: actor, extra });

@@ -30,6 +30,8 @@ export function freeTimeStoryEntries(input: {
   audit: AuditRow[];
   /** Entries already put back, and when (an undone entry is marked, never edited). */
   putBackAt: Map<string, string>;
+  /** Set for a Coaches Portal staff gave free time (Stage 4b): its billing-status grants read as the portal's free time. */
+  portal?: { summary: PortalCopySummary | null } | null;
   now?: Date;
 }): StoryEntry[] {
   const { org, audit, putBackAt } = input;
@@ -84,24 +86,30 @@ export function freeTimeStoryEntries(input: {
     }
 
     const isPlan = o.type === 'plan_tier';
-    const subject = isPlan ? planName(o.target?.plan)
+    // A Coaches Portal given free time (Stage 4b) is held open by a billing-status grant; it reads as what the coach has.
+    const isPortal = !!input.portal && o.type === 'subscription_status';
+    const subject = isPortal ? 'Premium Coaches Portal'
+      : isPlan ? planName(o.target?.plan)
       : o.type === 'module_addon' ? ((o.target?.addons ?? []).map(sectionLabel).join(', ') || 'Sections')
       : `Billing status: ${subscriptionStatusLabel(o.value ?? 'active')}`;
-    const back = isPlan ? `Back to ${ownPlan}` : undefined;
+    const back = isPortal ? PORTAL_BACK : isPlan ? `Back to ${ownPlan}` : undefined;
     const changes = changesByGrant.get(o.id) ?? [];
     const originalEnd = (typeof changes[0]?.old_value === 'string' ? changes[0].old_value : null) ?? o.expires_at;
 
     const given: StoryEntry = {
       key: `override:${o.id}`, at: o.created_at, kind: 'staff',
       title: originalEnd ? `Free time given: ${subject} through ${short(originalEnd)}` : `Free time given: ${subject}`,
-      sub: isPlan ? `Then back to ${ownPlan} by itself` : undefined,
+      sub: isPortal ? 'Then back to the free Coaches Portal by itself' : isPlan ? `Then back to ${ownPlan} by itself` : undefined,
       who: o.created_by ?? 'Staff', why: o.reason ?? null, whyNotRecorded: !o.reason,
     };
     const newestChange = changes.at(-1) ?? null;
+    const endNowWords = (lastDayIso: string) => isPortal
+      ? `${possessive(org.name)} Premium free time ends now instead of on ${formatLongDay(lastDayOfInstant(lastDayIso))}. The coach goes back to the free Coaches Portal at once. Nothing is deleted.`
+      : `${possessive(org.name)} ${subject} free time ends now instead of on ${formatLongDay(lastDayOfInstant(lastDayIso))}.${isPlan ? ` It goes back to ${ownPlan} at once.` : ''} Nothing is deleted.`;
     markPutBack(given, running && !newestChange && o.expires_at ? {
-      kind: 'override',
+      kind: isPortal ? 'portal_end_now' : 'override',
       title: `End ${possessive(org.name)} free time now`,
-      sentence: `${possessive(org.name)} ${subject} free time ends now instead of on ${formatLongDay(lastDayOfInstant(o.expires_at))}.${isPlan ? ` It goes back to ${ownPlan} at once.` : ''} Nothing is deleted.`,
+      sentence: endNowWords(o.expires_at),
       overrideId: o.id,
     } : null);
     entries.push(given);
@@ -119,16 +127,15 @@ export function freeTimeStoryEntries(input: {
       if (c === newestChange && running && o.expires_at) {
         const earlier = lastDayOfInstant(from);
         const passed = earlier < earliestLastDay(now);
-        markPutBack(entry, {
-          kind: 'override_end',
-          title: passed ? `End ${possessive(org.name)} free time now` : `Put back the end of ${possessive(org.name)} free time`,
-          sentence: passed
-            ? `${possessive(org.name)} ${subject} free time ends now instead of on ${formatLongDay(lastDayOfInstant(o.expires_at))}: its earlier last day, ${formatLongDay(earlier)}, has passed.`
-            : `${possessive(org.name)} ${subject} free time runs through ${formatLongDay(earlier)} again instead of ${formatLongDay(lastDayOfInstant(o.expires_at))}.`,
-          overrideId: o.id,
-          expectedExpiresAt: o.expires_at,
-          lastDay: earlier,
-        });
+        const title = passed ? `End ${possessive(org.name)} free time now` : `Put back the end of ${possessive(org.name)} free time`;
+        const what = isPortal ? 'Premium' : subject;
+        const sentence = passed
+          ? `${possessive(org.name)} ${what} free time ends now instead of on ${formatLongDay(lastDayOfInstant(o.expires_at))}: its earlier last day, ${formatLongDay(earlier)}, has passed.`
+          : `${possessive(org.name)} ${what} free time runs through ${formatLongDay(earlier)} again instead of ${formatLongDay(lastDayOfInstant(o.expires_at))}.`;
+        // A portal's earlier day that has passed is an End it now, on the portal's own path.
+        markPutBack(entry, isPortal && passed
+          ? { kind: 'portal_end_now', title, sentence, overrideId: o.id }
+          : { kind: isPortal ? 'portal_end' : 'override_end', title, sentence, overrideId: o.id, expectedExpiresAt: o.expires_at, lastDay: earlier });
       } else {
         markPutBack(entry, null);
       }
@@ -146,5 +153,66 @@ export function freeTimeStoryEntries(input: {
       entries.push({ key: `override-ran-out:${o.id}`, at: o.expires_at!, kind: 'staff', title: `Free time ended by itself: ${subject}`, sub: back, who: THE_PRODUCT, why: null });
     }
   }
+
+  if (input.portal) entries.push(...portalMadeEntries(audit, input.portal.summary));
   return entries;
+}
+
+const PORTAL_BACK = 'Back to the free Coaches Portal. Everything made on Premium is kept';
+
+/** The copy's stored summary (`team_workspaces.migration_summary`), as far as the Story reads it. */
+export type PortalCopySummary = {
+  ok?: boolean; pending?: boolean; migratedAt?: string; retryCount?: number;
+  roster?: { migrated?: number; failed?: number };
+  schedule?: { migrated?: number; failed?: number };
+  fees?: { migrated?: number; failed?: number; skippedZero?: number; skippedNoPlayer?: number };
+};
+
+const counted = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * The portal's first give made it (Stage 4b, drawing B): "Coaches Portal created from the free team …" and "Free team
+ * brought across: …", read from the give's own audit entry and the summary the copy stores. Neither carries Put it
+ * back, ever (T12): undoing a copy would remove the coach's work, which this stage is built never to do.
+ */
+function portalMadeEntries(audit: AuditRow[], summary: PortalCopySummary | null): StoryEntry[] {
+  const first = audit.find(r => r.action === 'give_portal_free_time' && obj(r.new_value)?.mode === 'first');
+  if (!first) return [];
+  const team = str(obj(first.new_value)?.team) ?? 'their free team';
+  const out: StoryEntry[] = [{
+    key: `portal-made:${first.id}`, at: first.created_at, kind: 'staff',
+    title: `Coaches Portal created from the free team ${team}`, who: first.actor_email ?? 'Staff', why: null,
+  }];
+  if (!summary) return out;
+
+  const at = summary.migratedAt ?? first.created_at;
+  if (summary.pending) {
+    out.push({
+      key: `portal-copy:${first.id}`, at, kind: 'staff', title: 'Free team not brought across yet',
+      sub: `From ${team}. The copy stopped; Try again on the portal brings it across. The free team is unchanged`, who: THE_PRODUCT, why: null,
+    });
+    return out;
+  }
+  const players = summary.roster?.migrated ?? 0;
+  const events = summary.schedule?.migrated ?? 0;
+  const fees = summary.fees?.migrated ?? 0;
+  const failed = [
+    summary.roster?.failed ? counted(summary.roster.failed, 'player', 'players') : null,
+    summary.schedule?.failed ? counted(summary.schedule.failed, 'event', 'events') : null,
+    summary.fees?.failed ? counted(summary.fees.failed, 'fee', 'fees') : null,
+  ].filter(Boolean);
+  const leftFees = (summary.fees?.skippedZero ?? 0) + (summary.fees?.skippedNoPlayer ?? 0);
+  const parts = [
+    `From ${team}.`,
+    failed.length ? `${failed.join(', ')} could not be copied; Try again on the portal brings them across.` : 'All copied;',
+    leftFees ? `${counted(leftFees, 'fee', 'fees')} with no amount or no player stayed on the free team.` : null,
+    summary.retryCount ? `Try again ran ${counted(summary.retryCount, 'time', 'times')}.` : null,
+    failed.length || leftFees || summary.retryCount ? 'The free team is unchanged' : 'the free team is unchanged',
+  ].filter(Boolean);
+  out.push({
+    key: `portal-copy:${first.id}`, at, kind: 'staff',
+    title: `Free team brought across: ${counted(players, 'player', 'players')}, ${counted(events, 'event', 'events')}, ${counted(fees, 'fee', 'fees')}`,
+    sub: parts.join(' '), who: THE_PRODUCT, why: null,
+  });
+  return out;
 }

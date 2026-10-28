@@ -49,7 +49,7 @@ describe('giving free time: every refusal', () => {
   });
 
   it('a Coaches Portal (Q10), by account kind or by the portal plan', () => {
-    assert.match(refusal(decideGive(PLAN, { ...CLUB, accountKind: 'team_workspace' }, OPEN, NOW))!, /^A Coaches Portal can't be given free time yet\./);
+    assert.match(refusal(decideGive(PLAN, { ...CLUB, accountKind: 'team_workspace' }, OPEN, NOW))!, /^A Coaches Portal's free time is given from its coach's record\./);
     assert.match(refusal(decideGive(PLAN, { ...CLUB, planId: 'team' }, OPEN, NOW))!, /Coaches Portal/);
   });
 
