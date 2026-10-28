@@ -61,7 +61,32 @@
   - Still open from 9d-2a, for Part 3: GameWindow's Postpone/Cancel lines (`postponeSays`/`cancelSays` in
     `lib/league-season-calendar.ts`) still say "Families aren't emailed." — rewrite them as the state-true pairs (copy
     file f1) when `gameWindowDoors` learns `published`.
-- **▶ NEXT: Part 3, in a FRESH session** (Session 1 stopped after Part 2 — context depth). Part 3's list, in order:
+- **Part 3 — COMMITTED `b508c95e9` 2026-10-28** (all nine items below; no migration). Built on a temp index: the other
+  session's uncommitted 9d-2a walk fixes in `GameWindow`, the schedule page, `SeasonScheduleViews` and
+  `league-season-calendar` (Add Event, "Give it a new date" opens the form, list spacing/reveal) are NOT in it and stay in
+  the working tree. What landed: `gameWindowDoors(status, published)` (+ `delete`); DELETE refuses a published game;
+  PATCH `seen` + `updateLeagueGame(…, ifUpdatedAt)` (returns false → 409 `changed`); a draft's team change now saves, a
+  published one's Home/Away are facts (409 `teamsFixed`); ⚖ **the move limit is a gate key, `placeAnywhere`**
+  (`lib/house-league-access.ts`: runner AND (no club's schedule OR owner/admin)) used by `lib/league-game-place.ts`
+  `placeGame` in POST and PATCH (only when start/venue/facility/text actually changes and the game is on; sets
+  `slot_use_id`; free League plan unchanged); `heldGamesOf` / `childrenOnTeams` / `sendHeldChanges` in
+  `lib/league-game-changes-server.ts` (the server computes `p_news`, never the client); routes
+  `schedule/changes` (GET tray, GET `&gameId` = f5's family count, POST send) and `schedule/[gameId]/undo`; the schedule
+  GET returns `changes` (per game kind/played) and `publishing.held` now counts GAMES shown (net), and a reader gets
+  `asLastSent` games; f5 = PATCH `sendNow` (saved first; a failed send → `sendFailed` words, stays held);
+  `ChangesToSendWindow` + `ChangesToSend.module.css` (amber count on the header button, Undo with its own aria-label);
+  list markers via `SeasonBooking.held` + "Moved" trail chip; `SchedulePublishLine` adds the list note; team DELETE
+  refused with games on a published schedule; the free plan's old generator refuses a published division. Words in
+  `CHANGES_TO_SEND_WORDS` + `GAME_WINDOW_WORDS` (build words marked: "Postponed/Back on · not sent", `sent`,
+  `deletePublished`, `sendNowFailed`, `teamHasPublishedGames`). 862 house-league/league tests pass; working tree and the
+  committed tree type-check (the committed tree's only errors are support-console 4b's, at HEAD before this commit).
+  - **Not built, said out loud:** the form doesn't LIST the division's open times — a league admin's off-time move is
+    refused with the settled words (a picker is a later call); "See their email" (Part 4); "Reached 64 of 66" (Part 4,
+    the send writes rows and sends nothing yet); no runtime probe of the new routes yet (Part 7's e2e).
+  - ⚠ The help (`lib/help-content/house-league.tsx` ~565, ~585, ~587, ~668) still says "Families aren't emailed" and "a
+    saved game is on the public schedule at once" — `/docs` in Part 7 rewrites it.
+- **▶ NEXT: Part 4 (the emails and the history), in a FRESH session.** Then Parts 5–7.
+- Part 3's list, as it was handed over (all done in `b508c95e9`):
   (1) `gameWindowDoors(status, published)`: Delete only before, Cancel only after; DELETE route refuses a published
   division's game. (2) PATCH stale-window refusal: the body carries `seen: {status, updatedAt}`; update with
   `.eq('updated_at', seen)` (updated_at is hand-set by `updateLeagueGame`, no trigger). (3) Home/Away as facts on a
