@@ -8,6 +8,11 @@
  *   • Metro Sports Events (Tournament Plus) — a paid standalone with ITS OWN colour (#E0457B) and a logo
  *   • Northfield Sports Events (Tournament, free) — a free event: the neutral band, no mark (finished, last week)
  *   • Hamilton-Wentworth Girls Fastpitch (Club) — the LONG name, for the 360px phone (starts this weekend)
+ * Stage 2 (the Overview, PUBLIC_TOURNAMENT_STAGE2_BUILD_PROMPT.md Part 1 step 5) adds its two missing moments:
+ *   • Cedar Valley Minor Ball (Club) — BEFORE the event: three weeks out, every division open, nothing played
+ *   • Pinecrest Fastball Events (Tournament Plus) — CROWNED on its last day: every game played, the final decided and the
+ *     champion stamped, while today is still inside its dates (the band says Finished, not Live now)
+ * Game day is Lakeshore (and Metro); .probe/stage1walk/walk.mjs moves Lakeshore through live / soon / new.
  * Each event clones dev-test-org's "Live Demo — Game Day" (divisions, pools, teams, venues, games), dated around today,
  * every division published. Organizations only — no sign-ins, so nothing here resets a password or signs anyone out.
  *
@@ -60,7 +65,43 @@ const FIXTURES = [
     t: { slug: 'spring-invitational', name: 'Greater Hamilton-Wentworth Girls Fastpitch Spring Invitational', start: friday, status: 'active' },
     shows: 'the long name at 360px → two lines then "…", green band, This weekend',
   },
+  {
+    org: { slug: 'stage2-cedar-valley', name: 'Cedar Valley Minor Ball', plan_id: 'club', theme_preset: null, theme_primary: '#7A2E8C' },
+    t: { slug: 'winter-warmup', name: 'Cedar Valley Winter Warm-up', start: addDays(todayISO, 21), status: 'active' },
+    prep: 'before',
+    shows: 'Stage 2 · BEFORE: three weeks out, every division open → Registration open, the Register card (Part 3)',
+  },
+  {
+    org: { slug: 'stage2-pinecrest', name: 'Pinecrest Fastball Events', plan_id: 'tournament_plus', theme_preset: 'platform', theme_primary: null },
+    t: { slug: 'harvest-cup', name: 'Pinecrest Harvest Cup', start: addDays(todayISO, -2), status: 'active', theme_primary: '#1E6B5C' },
+    prep: 'crowned',
+    shows: 'Stage 2 · CROWNED: its last day is today, the final played and the champion stamped → Finished, champions first',
+  },
 ];
+
+/** Stage 2's moments, applied to a built event (its games are the source's, already shifted to its dates). */
+async function prep(kind, tid) {
+  if (kind === 'before') {
+    // Nothing has been played three weeks out, and every division takes teams.
+    die('reset games', (await db.from('games').update({ status: 'scheduled', home_score: null, away_score: null }).eq('tournament_id', tid)).error);
+    die('open divisions', (await db.from('divisions').update({ is_closed: false }).eq('tournament_id', tid)).error);
+    return;
+  }
+  // Crowned: every pool game played, the semifinals won by the home side, their winners in the final, the final decided,
+  // then the one-time stamp (lib/champions-notify.ts claims it the same way when a real final is scored).
+  const games = await rows('games', db.from('games').select('id, is_playoff, bracket_code, status, home_team_id, away_team_id').eq('tournament_id', tid));
+  for (const g of games.filter(x => !x.is_playoff && x.status === 'scheduled')) {
+    die('pool game', (await db.from('games').update({ status: 'completed', home_score: 4, away_score: 2 }).eq('id', g.id)).error);
+  }
+  const semis = games.filter(x => x.is_playoff && /^SF/.test(x.bracket_code ?? ''));
+  for (const g of semis) die('semifinal', (await db.from('games').update({ status: 'completed', home_score: 6, away_score: 3 }).eq('id', g.id)).error);
+  const fin = games.find(x => x.is_playoff && x.bracket_code === 'FIN');
+  if (!fin || semis.length < 2) { console.error('✗ The source bracket is not two semifinals and a final; re-seed it.'); process.exit(1); }
+  die('final', (await db.from('games').update({
+    status: 'completed', home_team_id: semis[0].home_team_id, away_team_id: semis[1].home_team_id, home_score: 7, away_score: 5,
+  }).eq('id', fin.id)).error);
+  die('crown', (await db.from('tournaments').update({ champions_crowned_at: new Date().toISOString() }).eq('id', tid)).error);
+}
 
 function die(label, error) { if (error) { console.error(`✗ ${label}:`, error.message); process.exit(1); } }
 async function rows(label, q) { const { data, error } = await q; die(label, error); return data ?? []; }
@@ -139,6 +180,7 @@ async function build(f) {
       score_submitted_by_user_id: null, score_submitted_by_email: null,
     })).error);
   }
+  if (f.prep) await prep(f.prep, tid);
   return `/${f.org.slug}/${f.t.slug}`;
 }
 

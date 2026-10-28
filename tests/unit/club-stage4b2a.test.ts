@@ -75,6 +75,11 @@ describe('a tournament says what is true (S4-03)', () => {
     assert.equal(tournamentHomeStatus(t('2026-10-17', '2026-10-19'), TUE, false), 'finished');
     assert.equal(tournamentHomeStatus(t('2026-11-07', '2026-11-08', 'completed'), TUE, false), 'finished');
   });
+  it('Finished the moment its champion is crowned, even inside its dates (ruled 2026-10-28)', () => {
+    const crowned = { ...t('2026-10-19', TUE), championsCrownedAt: '2026-10-20T21:00:00.000Z' };
+    assert.equal(tournamentHomeStatus(crowned, TUE, false), 'finished');
+    assert.equal(tournamentHomeStatus({ ...crowned, championsCrownedAt: null }, TUE, false), 'live');
+  });
   it('This weekend when it starts on the coming Friday, Saturday or Sunday', () => {
     assert.equal(tournamentHomeStatus(t('2026-10-24', '2026-10-25'), TUE, false), 'thisWeekend');
     assert.equal(tournamentHomeStatus(t('2026-10-23', '2026-10-25'), TUE, true), 'thisWeekend');
@@ -111,6 +116,14 @@ describe('the home lists running and coming tournaments, then ones that just fin
       t('never-closed', 'active', '2026-08-01', '2026-08-02'), // its organizer never marked it completed
     ], TUE);
     assert.deepEqual(list.map(x => x.name), ['now', 'june', 'just-done', 'earlier-done']);
+  });
+  it('a crowned event moves to the finished run with its word, inside its dates', () => {
+    const list = clubHomeTournaments([
+      t('june', 'active', '2027-06-13', '2027-06-15'),
+      { ...t('crowned', 'active', '2026-10-19', TUE), championsCrownedAt: '2026-10-20T21:00:00.000Z' },
+      t('just-done', 'active', '2026-10-17', '2026-10-19'),
+    ], TUE);
+    assert.deepEqual(list.map(x => x.name), ['june', 'crowned', 'just-done']);
   });
 });
 

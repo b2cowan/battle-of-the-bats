@@ -11,18 +11,18 @@ import { getTournamentsByOrg, getLeagueSeasons, getDivisions, getTeams } from '@
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFollowableOrg } from '@/lib/directory';
 import { clubTeamsAddress } from '@/lib/public-club-access';
-import { clubHomeTournaments, clubTeamBands, orderOpenNow, tournamentHomeStatus } from '@/lib/club-site-home';
-import { liveLeagueSeasons, registrationDay } from '@/lib/house-league-season';
-import { takesSignups } from '@/lib/league-registration-state';
+import { clubHomeTournaments, tournamentHomeStatus } from '@/lib/club-site-home';
+import { liveLeagueSeasons } from '@/lib/house-league-season';
 import { withEarlyBird } from '@/lib/league-early-bird';
+import { clubOpenNowRows, type ClubOpenNowRow } from '@/lib/club-open-now';
+import { isPublicClubSiteOpen } from '@/lib/public-club-access';
 import { isSectionShown } from '@/lib/club-site-sections';
 import { siteSectionCarries } from '@/lib/public-site-editor-facts';
 import { clubAboutPageShows } from '@/lib/club-about';
 import { sponsorsShowing } from '@/lib/club-sponsors';
 import { readClubTeams } from '@/lib/club-public-teams';
 import { readClubTryouts } from '@/lib/club-tryouts';
-import { homeTryoutsRowSub, isListedTryout, openNowTryouts, sharedSeasonYear, tryoutDaysLine, tryoutSeasonMeta, tryoutsPageTitle } from '@/lib/tryout-season';
-import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
+import { formatEventDateRange, tournamentToday } from '@/lib/timezone';
 import { getRegistrationState } from '@/lib/registration-state';
 import { getClubSiteContent } from '@/lib/club-page-meta';
 import { orgHref } from '@/lib/club-base';
@@ -76,9 +76,6 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
     // A failed tryout read costs the home its tryouts row, never the page.
     withTeams ? readClubTryouts(org.id, today).catch(() => ({ teams: [], groups: [] })) : Promise.resolve({ teams: [], groups: [] }),
   ]);
-  const thisYear = today.slice(0, 4);
-  const day = (value: string) => formatStoredDate(value, { withYear: !value.startsWith(thisYear) });
-
   // House league: a draft season is not public. EVERY live season is a row (Club Tier Stage 9a, Q14; before it the home
   // named only the newest, F04), labelled by what is happening; with none live, the one row is the door to the league page.
   const publicLeagueSeasons = leagueSeasons.filter(s => s.status !== 'draft');
@@ -95,45 +92,9 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
     today,
   };
 
-  // Open now's tryouts (Stage 4b-2b, Ask 14 round 2): more than one team open or not open yet → ONE row, the door to the
-  // Tryouts page; exactly one team open → its own row with its days line; otherwise none (the one rule decides).
-  const tryoutPick = openNowTryouts(clubTryouts.teams);
-  const tryoutRows = tryoutPick.kind === 'team' ? [{
-    key: `tryout-${tryoutPick.team.season.id}`,
-    href: href(`/teams/${tryoutPick.team.slug}/tryouts`),
-    title: `${tryoutPick.team.name} tryouts`,
-    sub: tryoutDaysLine(tryoutPick.team.standing.upcoming) ?? tryoutSeasonMeta(tryoutPick.team.season),
-    deadline: null,
-  }] : tryoutPick.kind === 'season' ? [{
-    key: 'tryouts',
-    href: href('/tryouts'),
-    // The year the Tryouts page's title names — from the same listed teams, so the row and the page it opens agree.
-    title: tryoutsPageTitle(sharedSeasonYear(clubTryouts.teams.filter(t => isListedTryout(t.standing, today)).map(t => ({ seasonYear: t.season.year })))),
-    sub: homeTryoutsRowSub(tryoutPick.teams.length, clubTeamBands(tryoutPick.teams, clubTryouts.groups).map(b => ({
-      name: b.name,
-      days: b.teams.flatMap(t => t.standing.heldDays),
-    }))),
-    deadline: null,
-  }] : [];
-
-  // Open now: every open house-league registration, then the tryouts (above), nearest deadline first.
-  const openNow = orderOpenNow([
-    ...publicLeagueSeasons.filter(s => takesSignups(s)).map(s => {
-      // The admin's form stores the close time as typed, with a Z on the end (house-league page), so its date part is
-      // the day the club typed. A day already behind today is not said: "Sign up by" a past date is not a deadline.
-      const closes = registrationDay(s.registrationCloseAt);
-      const deadline = closes && closes >= today ? closes : null;
-      return {
-        key: `league-${s.id}`,
-        href: href(`/league/${s.slug}`),
-        title: s.name,
-        // The deadline only — the fee is not a selling point, and it lives on the season's own page. No deadline: no line.
-        sub: deadline ? `Sign up by ${day(deadline)}` : null,
-        deadline,
-      };
-    }),
-    ...tryoutRows,
-  ]);
+  // Open now: every open house-league registration, then the tryouts, nearest deadline first — the one list the
+  // tournament Overview's host card shows too (lib/club-open-now.ts).
+  const openNow = clubOpenNowRows(publicLeagueSeasons, clubTryouts, today, href);
 
   // The club's order and show/hide from its editor (Stage 4c-1, mig 343); a section the plan does not carry never shows.
   const sectionPrefs = { order: siteContent?.homeSectionOrder, hidden: siteContent?.homeSectionsHidden };
@@ -160,4 +121,28 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
     sectionPrefs,
     carries,
   };
+}
+
+/**
+ * The tournament Overview's host card (Public tournament pages Stage 2, Ask 4 / Ask B, plan §6): the club's own Open now
+ * list, and nothing else of the home. `null` — no card: the club's public site is closed or its plan carries no public
+ * site (a tournament-only organizer gets the footer's line instead). `[]` — the card, saying the club runs teams and
+ * programs all year. Unlike the home's loader this ASKS THE ACCESS QUESTION ITSELF, so the card cannot show for a
+ * closed site whatever page calls it.
+ *
+ * Read per request, uncached, like the club home it mirrors (both are force-dynamic): one league-season read and the
+ * tryouts read, only on the Overview. A deadline turns over at midnight and a tryout opens by date, so a cache would
+ * need the club's day in its key to stay true. A failed read costs the card its list, never the page.
+ */
+export async function loadHostClubOpenNow(org: Organization, orgSlug: string, base?: { ownHost: boolean }): Promise<ClubOpenNowRow[] | null> {
+  if (!isPublicClubSiteOpen(org) || !hasModuleEntitlement(org, 'module_public_site')) return null;
+  const href = (path: string) => orgHref({ slug: orgSlug, ownHost: !!base?.ownHost }, path);
+  const today = tournamentToday();
+  const [leagueSeasons, tryouts] = await Promise.all([
+    hasModuleEntitlement(org, 'module_house_league') ? getLeagueSeasons(org.id).catch(() => []) : Promise.resolve([]),
+    clubTeamsAddress(org) === 'teams-page'
+      ? readClubTryouts(org.id, today).catch(() => ({ teams: [], groups: [] }))
+      : Promise.resolve({ teams: [], groups: [] }),
+  ]);
+  return clubOpenNowRows(leagueSeasons.filter(s => s.status !== 'draft'), tryouts, today, href);
 }

@@ -192,6 +192,9 @@ describe('the band (Asks 2, 8, 16 and the app-bar direction)', () => {
     const t = { name: 'Riverdale Summer Classic', status: 'active', startDate: '2026-10-25', endDate: '2026-10-27' };
     const org = { planId: 'tournament_plus', themePreset: 'platform' };
     assert.deepEqual(publicFrameBand(org as never, t as never, '2026-10-26', false).status, { word: 'Live now', live: true });
+    // A crowned champion is Finished the moment it is crowned, with no live dot (owner, Stage 2, 2026-10-28).
+    const crowned = { ...t, championsCrownedAt: '2026-10-26T21:00:00.000Z' };
+    assert.deepEqual(publicFrameBand(org as never, crowned as never, '2026-10-26', false).status, { word: 'Finished', live: false });
     for (const old of ['Game day', 'In progress', 'Tournament Day', 'Upcoming']) {
       assert.doesNotMatch(band, new RegExp(old), `"${old}" is not a state word behind the switch`);
     }

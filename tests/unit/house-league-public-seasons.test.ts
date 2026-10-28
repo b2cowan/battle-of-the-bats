@@ -69,7 +69,9 @@ describe('2 · the three public surfaces draw the one list', () => {
     assert.match(css, /\.links \{ position: relative; z-index: 1;/, 'the links sit above the row’s own door');
   });
   it('Open now keeps listing every season taking sign-ups (9a·7) — by its dates and status together (9b-1 Part 4)', () => {
-    assert.match(readCode('lib/club-home-data.ts'), /publicLeagueSeasons\.filter\(s => takesSignups\(s\)\)\.map/);
+    // The list is shaped in lib/club-open-now.ts (Public tournament Stage 2), fed the home's public seasons.
+    assert.match(readCode('lib/club-open-now.ts'), /leagueSeasons\.filter\(s => takesSignups\(s\)\)\.map/);
+    assert.match(readCode('lib/club-home-data.ts'), /clubOpenNowRows\(publicLeagueSeasons,/);
   });
 });
 

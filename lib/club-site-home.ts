@@ -39,20 +39,21 @@ export const TOURNAMENT_STATUS_WORD: Record<TournamentHomeStatus, string> = {
 /**
  * What a tournament's row says. `today` is the club's today (`tournamentToday()`); `registrationOpen` is the
  * tournament's own sign-up rule (`getRegistrationState`), which the page asks only for an event that has not started.
- *   · Finished — the organizer completed it, or its last day is behind today.
+ *   · Finished — the organizer completed it, its champion is crowned (every playoff game over, the moment families are
+ *     told; ruled 2026-10-28, Public tournament pages Stage 2), or its last day is behind today.
  *   · Live now — today falls inside its dates. Never otherwise.
  *   · This weekend — it starts on the coming Friday, Saturday or Sunday (a family's "this weekend", said from Monday on).
  *   · Registration open — before it starts, while its sign-up is open.
  *   · null — nothing true to add; the row shows its dates alone.
  */
 export function tournamentHomeStatus(
-  t: { status: string; startDate?: string | null; endDate?: string | null },
+  t: DatedTournament,
   today: string,
   registrationOpen: boolean,
 ): TournamentHomeStatus | null {
   const start = t.startDate ?? null;
   const end = t.endDate ?? start;
-  if (t.status === 'completed' || t.status === 'archived' || (end && today > end)) return 'finished';
+  if (t.status === 'completed' || t.status === 'archived' || t.championsCrownedAt || (end && today > end)) return 'finished';
   if (start && today >= start) return 'live';
   if (start) {
     // This week's Friday to Sunday (days are YYYY-MM-DD in the club's zone; the week starts Monday).
@@ -80,13 +81,16 @@ export function clubHomeTournaments<T extends DatedTournament>(
   return [...coming, ...finished.filter(t => lastDay(t) >= cutoff)];
 }
 
-type DatedTournament = { status: string; startDate?: string | null; endDate?: string | null };
+/** `championsCrownedAt` (mig 176) is stamped once, when the whole tournament's playoffs complete. */
+type DatedTournament = { status: string; startDate?: string | null; endDate?: string | null; championsCrownedAt?: string | null };
 
 const lastDay = (t: DatedTournament) => t.endDate ?? t.startDate ?? '';
 /** Public at all: a draft is not, and an archived tournament has no public site (its sealed record speaks for it). */
 const isListedTournament = (t: DatedTournament) => t.status === 'active' || t.status === 'completed';
-/** Completed by the organizer, or its last day is behind the club's today. */
-const isFinishedTournament = (t: DatedTournament, today: string) => t.status === 'completed' || (!!lastDay(t) && lastDay(t) < today);
+/** Completed by the organizer, its champion crowned, or its last day is behind the club's today — the status word's own
+ *  Finished, so a crowned event never sits under "Current and upcoming" wearing a Finished chip. */
+const isFinishedTournament = (t: DatedTournament, today: string) =>
+  t.status === 'completed' || !!t.championsCrownedAt || (!!lastDay(t) && lastDay(t) < today);
 /** The public tournaments in two runs: coming (running or not started), soonest first; finished, latest first. */
 function splitListed<T extends DatedTournament>(all: readonly T[], today: string): { coming: T[]; finished: T[] } {
   const coming: T[] = [];

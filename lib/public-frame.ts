@@ -91,7 +91,7 @@ export interface PublicFrameBand {
 }
 
 type BandOrg = FrameOrg & Pick<Organization, 'logoUrl'>;
-type BandTournament = FrameTournament & Pick<Tournament, 'name' | 'logoUrl' | 'status' | 'startDate' | 'endDate'>;
+type BandTournament = FrameTournament & Pick<Tournament, 'name' | 'logoUrl' | 'status' | 'startDate' | 'endDate' | 'championsCrownedAt'>;
 
 /**
  * The band's colour (above), mark, dates and state. The state word is the club's Tournaments tab's own rule and words

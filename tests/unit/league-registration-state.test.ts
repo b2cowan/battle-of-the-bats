@@ -81,7 +81,7 @@ describe('the doors and the server', () => {
     assert.match(route, /registrationState\(season\) !== 'closedByDate'/);
   });
   it('no public surface decides "open" from the status alone any more', () => {
-    for (const f of ['app/[orgSlug]/league/[seasonSlug]/page.tsx', 'app/[orgSlug]/league/[seasonSlug]/register/page.tsx', 'lib/club-home-data.ts', 'lib/club-public-teams.ts']) {
+    for (const f of ['app/[orgSlug]/league/[seasonSlug]/page.tsx', 'app/[orgSlug]/league/[seasonSlug]/register/page.tsx', 'lib/club-home-data.ts', 'lib/club-open-now.ts', 'lib/club-public-teams.ts']) {
       assert.doesNotMatch(readCode(f), /status === 'registration_open'/, f);
     }
   });

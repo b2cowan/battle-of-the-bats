@@ -1,0 +1,184 @@
+/* The public tournament pages' shared parts (Public tournament pages Stage 2; hub "The end state", game day phone and
+   desk 1280). Built on the frame's one light token set (ClubFrame.module.css `.tokens`, the tournament's colour in it —
+   lib/public-frame.ts): they render only inside the frame, never on today's pages. Sizes are the drawing's. */
+
+/* ── Section heading: "Live now 2" · "Up next   Full schedule" ───────────────────────────────── */
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.headTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: 700 1rem/1.25 var(--club-text-face);
+  color: var(--club-text);
+}
+.count {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid var(--club-line-2);
+  border-radius: 20px;
+  background: var(--club-ground);
+  color: var(--club-soft);
+  font: 600 0.75rem/1 var(--club-text-face);
+  font-variant-numeric: tabular-nums;
+}
+.headLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  white-space: nowrap;
+  font: 600 0.875rem/1 var(--club-text-face);
+  color: var(--club-ink);
+  text-decoration: none;
+}
+.headLink:hover { text-decoration: underline; }
+
+/* ── The game row: time | both teams (+ division · field) | scores ──────────────────────────── */
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--club-card);
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+}
+.row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  grid-template-areas: 'head teams end' 'head sub end';
+  column-gap: 10px;
+  align-items: center;
+  min-height: 60px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--club-line);
+  color: var(--club-text);
+  text-decoration: none;
+}
+.rows > li:last-child > .row { border-bottom: 0; }
+a.row:hover .teams { text-decoration: underline; }
+.when {
+  grid-area: head;
+  font: 600 0.875rem/1.25 var(--club-text-face);
+  font-variant-numeric: tabular-nums;
+}
+.when small {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--club-dim);
+}
+.teams {
+  grid-area: teams;
+  min-width: 0;
+  font: 500 1rem/1.3 var(--club-text-face);
+}
+.teams > span { display: block; overflow-wrap: anywhere; }
+.teams > span + span { margin-top: 4px; }
+.win { font-weight: 700; }
+.lose { color: var(--club-soft); }
+.sub {
+  grid-area: sub;
+  margin-top: 4px;
+  font: 400 0.875rem/1.4 var(--club-text-face);
+  color: var(--club-dim);
+}
+.scores {
+  grid-area: end;
+  font: 700 1.25rem/1.2 var(--club-title-face);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.scores > span { display: block; }
+
+/* The desk (the band's own 1,024 px line, Stage 1): a scheduled game on one line ("A vs B"), its division and field in a
+   right-hand column; a result keeps its two lines and drops the date under "Final". */
+@media (min-width: 1024px) {
+  .row[data-face='scheduled'] { grid-template-areas: 'head teams sub'; }
+  .row[data-face='scheduled'] .teams > span { display: inline; }
+  .row[data-face='scheduled'] .teams > span + span::before { content: ' vs '; font-weight: 400; color: var(--club-dim); }
+  .row[data-face='scheduled'] .sub { margin-top: 0; font-size: 0.75rem; text-align: right; }
+  .row[data-face='final'] .when small { display: none; }
+}
+
+/* ── The Live now card ──────────────────────────────────────────────────────────────────────── */
+.live {
+  padding: 14px 16px;
+  background: var(--club-card);
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  color: var(--club-text);
+}
+.side {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font: 600 1rem/1.3 var(--club-text-face);
+}
+.side + .side { margin-top: 6px; }
+.side > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.trailing { color: var(--club-soft); font-weight: 500; }
+.score {
+  min-width: 28px;
+  text-align: right;
+  font: 700 1.5rem/1 var(--club-title-face);
+  font-variant-numeric: tabular-nums;
+}
+.noScore {
+  flex: none;
+  font: 500 0.875rem/1.2 var(--club-text-face);
+  color: var(--club-dim);
+}
+.liveMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  margin-top: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--club-line);
+  font: 400 0.875rem/1.4 var(--club-text-face);
+  color: var(--club-dim);
+}
+.gameLink { display: block; color: inherit; text-decoration: none; }
+.gameLink:hover { text-decoration: underline; }
+
+/* ── The door row: a label, an optional sub-line, a chevron (hub "Every page" `.door`) ───────── */
+.door {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: center;
+  min-height: 56px;
+  padding: 8px 14px;
+  background: var(--club-card);
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  font: 600 1rem/1.3 var(--club-text-face);
+  color: var(--club-text);
+  text-decoration: none;
+}
+.door:hover { border-color: var(--club-line-2); }
+.door:focus-visible, .row:focus-visible, .headLink:focus-visible, .gameLink:focus-visible {
+  outline: 2px solid var(--club-edge);
+  outline-offset: 2px;
+}
+.doorSub {
+  display: block;
+  font: 400 0.875rem/1.3 var(--club-text-face);
+  color: var(--club-dim);
+}
+.chevron {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  font-size: 1.375rem;
+  line-height: 1;
+  color: var(--club-dim);
+}

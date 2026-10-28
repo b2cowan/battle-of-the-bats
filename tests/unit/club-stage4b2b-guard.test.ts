@@ -36,7 +36,9 @@ describe('1 · one rule decides a team’s tryout state; every surface reads it'
     assert.match(readCode(TRYOUTS_PAGE), /readClubTryouts\(/);
     assert.match(readCode(TRYOUTS_PAGE), /isListedTryout\(/);
     // The home's one loader, shared with the editor's preview since the Public site builder (2026-10-21).
-    assert.match(readCode('lib/club-home-data.ts'), /openNowTryouts\(/);
+    // Its Open now list moved, unchanged, into the one shaper the tournament host card shares (Public tournament Stage 2).
+    assert.match(readCode('lib/club-open-now.ts'), /openNowTryouts\(/);
+    assert.match(readCode('lib/club-home-data.ts'), /clubOpenNowRows\(publicLeagueSeasons, clubTryouts, today, href\)/);
     assert.match(readCode(TEAM_PAGE), /readTeamTryout\(/);
     // The Teams page's and the home grid's "Tryouts open" chip read the same rule (not the old reader).
     assert.match(readCode('lib/club-public-teams.ts'), /readClubTryouts\(/);
