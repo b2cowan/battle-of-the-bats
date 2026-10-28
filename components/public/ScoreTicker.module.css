@@ -187,16 +187,3 @@
   background: var(--primary-light);
   flex-shrink: 0;
 }
-
-/* Public tournament pages Stage 1 (the new frame, behind the preview switch — lib/public-frame.ts): in the page's flow
-   under the band, pinned under the frame's tab row (--frame-pin-h, 0 at a desk) rather than fixed where the old header
-   ended. Last in the file so it outranks the fixed placement and the desk's rail offset above. */
-.inFlow,
-.ticker.inFlow,
-.tickerMin.inFlow {
-  position: sticky;
-  top: calc(var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--frame-pin-h, 0px));
-  left: auto;
-  right: auto;
-  z-index: 89; /* under the pinned tab row (90) */
-}

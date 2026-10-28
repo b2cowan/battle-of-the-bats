@@ -132,3 +132,7 @@
     margin-bottom: calc(var(--bottom-nav-height, 72px) + 2rem + env(safe-area-inset-bottom));
   }
 }
+
+/* Under the public tournament pages' frame (Stage 1 Part 4, behind the preview switch — lib/public-frame.ts): the
+   disclaimer is a quiet inset card, not a wash of the organizer's colour. */
+:global([data-public-frame='light']) .disclaimerCard { background: var(--bg-inset); }

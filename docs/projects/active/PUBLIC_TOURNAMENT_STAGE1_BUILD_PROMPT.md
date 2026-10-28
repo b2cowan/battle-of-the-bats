@@ -232,14 +232,40 @@ page** as it renders today inside the tournament layout (its focused page is Sta
 
 ## Part 4 · The readable baseline, B; the ticker; review and walk
 
+> **Steps 1–2 built 2026-10-28, owner check and commit owed** (then steps 3–5). The ticker is a new line under the frame
+> (today's strip is untouched with the switch off; both read today's games through one shared hook). Readable baseline
+> B: frame-keyed rules on Standings (and its bracket summary), Playoffs, Teams, a team's page, News, Rules and Champions —
+> washes of the organizer's colour → white or inset cards with hairlines, the followed/qualified marks in the edge
+> colour, no shadows or glows (incl. the large shadow the token block does not reach: team hero, share menu), nothing
+> under 12 px. The bracket's card edge, halo and date strip and the champion banner's trophy and label moved out of
+> inline styles unchanged so the frame can reach them; the Teams monogram takes `teamInk` under the frame only. Five new
+> measured screens (`pubt-playoffs-pale`, `pubt-team-own`, `pubt-news-pale`, `pubt-rules-pale`,
+> `pubt-champions-after`): no contrast finding on any of the seven at 390 or 1280; what remains is tap floors (layout,
+> their stages) and the free plan's banner (Part 1's ruling). Left as written, per Part 3's call: words the source
+> writes in capitals (the team page's name, RECORD, NEXT GAME); the team page's team-colour hero tint (its identity,
+> Stage 5's). Not render-checked by Claude: the line's "New" arrival (needs a score entered while open) and a game
+> moving from its time to Live — both go to the walk.
+
 1. Same rule, for **Standings** (keep the table; **pinning Team and PTS is Stage 4**, so don't do it here),
    **Playoffs** (the bracket stays where it is today; its move is Stage 4), **Teams**, **a team's page**, **News**,
    **Rules** and **Champions**.
 2. **The ticker, as the owner ruled in Part 2:** *options drawn 2026-10-28 (`PUBLIC_TOURNAMENT_TICKER_OPTIONS.html`,
    Artifact https://claude.ai/artifact/8rt2PdvZEV617tdrDDG35H; /design review done, its fixes applied): Today, A calm
-   marquee, B soft scoreboard (recommended), C my team line. **Ruling OWED** — the owner is taking a second opinion
-   first. Two asks: A, B or C; and, if B, does a changed score's tile glow soft green once, or does only the number
-   change. Record the answer here before Part 4 builds.* Restyle or rebuild it in the
+   marquee, B soft scoreboard, C my team line; a second opinion (Codex) added D quiet score line and E no strip + a
+   Schedule-tab count, reviewed by Claude on the page (D repeats the My Team dock). The owner then proposed **F, today's
+   results fading in one at a time** (scores are mostly entered after games, so a live-score animation rarely fires):
+   one pass on opening, a new result shown marked New, otherwise resting on the newest; pause control; reduced motion
+   = no reel; the dock keeps the followed team. **F is the recommendation.***
+   **RULED 2026-10-28 (owner): F's behaviour in D's look.** Games fade in and out one at a time (F: 5 s hold, 0.4 s
+   fade, one pass on opening, then rest on the newest; a new result fades in and rests). The look is D's: one still
+   44 px white line, a state word then the two teams and the score. **The state word is one of three: Live, Final, or
+   the start time** for a game later today. **No "View scores" link and no pause button: an × only, so a family can
+   remove the ticker from their view.** Calls made in the build and told to the owner: the × removes the line for the
+   rest of that day on that device (it is back the next game day; no restore bar, whose height is what the × gives
+   back); the line still opens the game shown and still pauses under a finger, pointer or keyboard focus; reduced
+   motion shows the newest result, still; "newest" is the latest start among finished games (the public pages do not
+   carry when a score was typed); the reel holds the latest 8 results, every game on now and the next 3 to start; the
+   two names share the line evenly so the score never cuts; a new result keeps F's small "New" mark. Restyle or rebuild it in the
    shared chrome, behind the switch. Leave which pages carry it alone; that is Stages 2–3.
 3. **`/review` on all of Stage 1's diff** (offer it per CLAUDE.md; it is substantive and touches the shared layout), and
    `/simplify` first if the diff added a new shared abstraction (the helper, the band component).

@@ -93,4 +93,7 @@
 
 /* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): nothing
    under 12 px (Ask 2). */
-:global([data-public-frame='light']) .trigger { font-size: 0.75rem; }
+:global([data-public-frame='light']) .trigger,
+:global([data-public-frame='light']) .menuSub { font-size: 0.75rem; }
+/* Stage 1 Part 4: the menu is a white card with a hairline, without the large shadow the token block does not reach. */
+:global([data-public-frame='light']) .menu { box-shadow: none; }

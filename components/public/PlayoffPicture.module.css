@@ -506,3 +506,31 @@
   .calloutTeam { font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .calloutValue { font-size: 0.68rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
+
+/* ── Under the public tournament pages' frame (Stage 1 Part 4, behind the preview switch — lib/public-frame.ts) ──────
+   The same Playoffs page on the light ground (plan §4, Ask 2): no wash of the organizer's colour behind the hero, the
+   qualified seeds or the pending card (a pale colour turned them cream on cream), hairlines instead, the qualified seeds
+   marked by the organizer's edge colour, and nothing under 12 px. The bracket stays where it is (its move is Stage 4). */
+:global([data-public-frame='light']) .heroBg { background: none; }
+:global([data-public-frame='light']) .heroEyebrow,
+:global([data-public-frame='light']) .calloutIcon {
+  border-color: var(--border);
+  background: var(--bg-inset);
+}
+:global([data-public-frame='light']) .seedQualified {
+  background: var(--surface);
+  box-shadow: inset 3px 0 0 var(--club-edge); /* a rule, not a shadow: the edge colour drawn as the row's left border */
+}
+:global([data-public-frame='light']) .matchupPending { background: var(--surface); }
+:global([data-public-frame='light']) .heroEyebrow,
+:global([data-public-frame='light']) .pageKicker,
+:global([data-public-frame='light']) .divisionKicker,
+:global([data-public-frame='light']) .calloutLabel,
+:global([data-public-frame='light']) .seedSub,
+:global([data-public-frame='light']) .cutLine span,
+:global([data-public-frame='light']) .matchupFinal,
+:global([data-public-frame='light']) .matchupSeed,
+:global([data-public-frame='light']) .matchupMeta,
+:global([data-public-frame='light']) .calloutValue {
+  font-size: 0.75rem;
+}

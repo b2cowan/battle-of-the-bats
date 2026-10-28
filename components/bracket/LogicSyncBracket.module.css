@@ -115,3 +115,42 @@
     animation: none;
   }
 }
+/* Under the public tournament pages' frame (Stage 1 Part 4, behind the preview switch — lib/public-frame.ts): nothing
+   under 12 px on the light ground (Ask 2). */
+:global([data-public-frame='light']) .zoomReset { font-size: 0.75rem; }
+
+/* The node card and the champion banner's trophy and label, moved out of inline styles unchanged (Public tournament
+   pages Stage 1 Part 4) so the new frame can reach them. */
+.nodeCard {
+  fill: var(--bracket-card, var(--surface));
+  stroke: rgba(var(--primary-rgb), 0.85);
+  stroke-width: 1.25;
+}
+.nodeCardLive {
+  stroke: var(--primary);
+  stroke-width: 1;
+}
+.nodeCardHalo { filter: url(#glow-primary); }
+.nodeMeta { fill: rgba(var(--primary-rgb), 0.08); }
+.championTrophy {
+  color: var(--warning);
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 10px rgba(var(--warning-rgb), 0.4));
+}
+.championLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--warning);
+}
+
+/* Under the frame: the card's edge in the organizer's edge colour (3 : 1 on white, where a pale colour vanished), no
+   halo or glow, the date strip a quiet inset instead of a wash, and the label at 12 px. */
+:global([data-public-frame='light']) .nodeCard,
+:global([data-public-frame='light']) .nodeCardLive { stroke: var(--club-edge); }
+:global([data-public-frame='light']) .nodeCardHalo,
+:global([data-public-frame='light']) .championTrophy { filter: none; }
+:global([data-public-frame='light']) .nodeMeta { fill: var(--bg-inset); }
+:global([data-public-frame='light']) .championLabel { font-size: 0.75rem; }

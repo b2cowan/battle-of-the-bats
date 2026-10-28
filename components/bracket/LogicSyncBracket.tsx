@@ -215,17 +215,12 @@ function MatchNode({
   return (
     <g transform={`translate(${x},${y})`}>
       {/* card background */}
+      {/* The card: fill, edge, and the soft primary halo that lifts a live game OR the followed team's cards forward
+          (the emphasis half of the spotlight; context recedes via the group opacity above). In the module CSS so the
+          public pages' new frame can re-point it. */}
       <rect
         width={NODE_WIDTH} height={NODE_HEIGHT} rx={8}
-        style={{
-          fill:        'var(--bracket-card, var(--surface))',
-          stroke:      node.isLive ? 'var(--primary)' : 'rgba(var(--primary-rgb), 0.85)',
-          strokeWidth: node.isLive ? '1' : '1.25',
-          // Soft primary halo lifts a live game OR the followed team's cards
-          // forward — the emphasis half of the spotlight (context recedes via
-          // the group opacity above; the target lifts here).
-          filter:      node.isLive || showHighlightRing ? 'url(#glow-primary)' : undefined,
-        }}
+        className={`${styles.nodeCard}${node.isLive ? ` ${styles.nodeCardLive}` : ''}${node.isLive || showHighlightRing ? ` ${styles.nodeCardHalo}` : ''}`}
       />
       {/* hover / focus affordance — transparent until a .clickableNode ancestor is
           hovered or keyboard-focused (see module CSS); invisible when not clickable. */}
@@ -233,10 +228,8 @@ function MatchNode({
         width={NODE_WIDTH} height={NODE_HEIGHT} rx={8}
         style={{ fill: 'none', stroke: 'var(--primary)', strokeWidth: '1.5' }} />
       {/* meta strip background */}
-      <rect width={NODE_WIDTH} height={META_H} rx={8}
-        style={{ fill: 'rgba(var(--primary-rgb), 0.08)' }} />
-      <rect width={NODE_WIDTH} y={META_H / 2} height={META_H / 2}
-        style={{ fill: 'rgba(var(--primary-rgb), 0.08)' }} />
+      <rect width={NODE_WIDTH} height={META_H} rx={8} className={styles.nodeMeta} />
+      <rect width={NODE_WIDTH} y={META_H / 2} height={META_H / 2} className={styles.nodeMeta} />
 
       {/* meta: date · time */}
       {metaText && (
@@ -848,9 +841,9 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
             boxShadow: 'var(--highlight-top)',
           }}
         >
-          <Trophy size={20} style={{ color: 'var(--warning)', flexShrink: 0, filter: 'drop-shadow(0 0 10px rgba(var(--warning-rgb), 0.4))' }} />
+          <Trophy size={20} className={styles.championTrophy} />
           <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
-            <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--warning)' }}>
+            <span className={styles.championLabel}>
               Champion
             </span>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: 900, color: 'var(--white)' }}>

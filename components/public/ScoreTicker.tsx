@@ -10,45 +10,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { X, ChevronRight } from 'lucide-react';
-import { useParams } from 'next/navigation';
-import { useOrgNav } from '@/components/OrgNavContext';
-import { useOrgHref } from '@/lib/use-public-pathname';
-import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
-import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { formatTime } from '@/lib/utils';
 import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
-import { tournamentToday } from '@/lib/timezone';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
-import type { Game, PublicTeam } from '@/lib/types';
+import { useTodaysTournamentGames, teamShort, isPendingPlayoffSlot } from '@/lib/hooks/useTodaysTournamentGames';
 import styles from './ScoreTicker.module.css';
 
-function teamShort(id: string | null | undefined, placeholder: string | null | undefined, teams: PublicTeam[]): string {
-  const n = teams.find(t => t.id === id)?.name ?? placeholder ?? 'TBD';
-  return n.replace(/\s*\([^)]*\)\s*/g, '').trim() || n;
-}
-
-// Unassigned-slot sentinel — same convention as ScheduleContent/game-detail.
-const NIL_UUID = '00000000-0000-0000-0000-000000000000';
-const unresolvedSlot = (id: string | null | undefined) => !id || id === NIL_UUID;
-
-/** `inFlow` (Public tournament pages Stage 1, the new frame — lib/public-frame.ts): the ticker rides in the page's flow
- *  under the frame's band and pins under its tab row, instead of sitting fixed where the old header ended (which would
- *  cover the band). Its look is Stage 1 Part 4's; which pages carry it is Stages 2–3. */
-export default function ScoreTicker({ inFlow = false }: { inFlow?: boolean } = {}) {
-  const params = useParams();
-  const orgSlug = (params?.orgSlug as string) || '';
-  const tournamentSlug = (params?.tournamentSlug as string) || '';
-  const orgHref = useOrgHref(orgSlug);
-  const { tournamentStartDate, tournamentEndDate, tournamentStatus } = useOrgNav();
-
-  const today = tournamentToday();
-  const inWindow = !!tournamentStartDate && !!tournamentEndDate &&
-    tournamentStatus !== 'completed' && tournamentStatus !== 'cancelled' &&
-    today >= tournamentStartDate && today <= tournamentEndDate;
-  const active = inWindow && !!orgSlug && !!tournamentSlug;
-
-  const [teams, setTeams] = useState<PublicTeam[]>([]);
-  const [games, setGames] = useState<Game[]>([]);
+/** Today's frame only. Under the new frame (Public tournament pages Stage 1, lib/public-frame.ts) the layout mounts
+ *  TodaysResultsLine instead; this strip retires when Stage 8 turns the frame on for everyone. */
+export default function ScoreTicker() {
+  const { tournamentSlug, teams, todayGames: games, gameHref } = useTodaysTournamentGames();
   // Touch-hold pauses the marquee — the finger-down equivalent of the existing
   // hover/focus pause (CSS alone can't persist a hold across pointer events).
   const [touching, setTouching] = useState(false);
@@ -74,38 +45,18 @@ export default function ScoreTicker({ inFlow = false }: { inFlow?: boolean } = {
     try { localStorage.removeItem(minimizeKey); } catch { /* ignore */ }
   }
 
-  useEffect(() => {
-    if (!active) return;
-    let cancelled = false;
-    void fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule').then(d => {
-      if (cancelled || !d) return;
-      setTeams(d.teams ?? []);
-      setGames(d.games ?? []);
-    });
-    return () => { cancelled = true; };
-  }, [active, orgSlug, tournamentSlug]);
-
-  usePublicTournamentLive({
-    orgSlug,
-    tournamentSlug,
-    section: 'schedule',
-    enabled: active,
-    onData: d => { setTeams(d.teams ?? []); setGames(d.games ?? []); },
-  });
-
   const todayGames = useMemo(
-    () => games
-      .filter(g => g.date === today && g.status !== 'cancelled')
+    () => [...games]
       .sort((a, b) => {
         const aLive = isGameLive(a, a.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES) ? 0 : 1;
         const bLive = isGameLive(b, b.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES) ? 0 : 1;
         if (aLive !== bLive) return aLive - bLive;
         return (a.time ?? '').localeCompare(b.time ?? '');
       }),
-    [games, today],
+    [games],
   );
 
-  const show = active && todayGames.length > 0;
+  const show = todayGames.length > 0;
 
   // Reserve space so fixed page chrome (.hero / .page-content top padding) clears
   // the ticker only while it's actually visible — full strip (40px) when expanded,
@@ -132,7 +83,7 @@ export default function ScoreTicker({ inFlow = false }: { inFlow?: boolean } = {
   // Minimized — slim static restore bar in the same position (no motion).
   if (minimized) {
     return (
-      <div className={`${styles.tickerMin}${inFlow ? ` ${styles.inFlow}` : ''}`}>
+      <div className={styles.tickerMin}>
         <button type="button" className={styles.restoreBtn} onClick={restore} aria-label="Show live scores ticker">
           <span className={styles.restoreDot} /> Live scores
           <ChevronRight size={13} />
@@ -143,15 +94,10 @@ export default function ScoreTicker({ inFlow = false }: { inFlow?: boolean } = {
 
   const items = todayGames.map(g => {
     const scored = g.homeScore != null && g.awayScore != null;
-    // A playoff slot whose BOTH sides are still bracket refs ("Winner SF2") reads
-    // as jargon — and its time window can open before the feeders finish, so it
-    // must never dress as LIVE. Show the round + time instead until teams resolve
-    // (resolution = a real team id in the slot, the platform-wide sentinel test).
-    const pending = (g.isPlayoff || !!g.bracketCode) &&
-      unresolvedSlot(g.awayTeamId) && unresolvedSlot(g.homeTeamId);
+    const pending = isPendingPlayoffSlot(g);
     return {
       id: g.id,
-      href: orgHref(`/${tournamentSlug}/schedule/${g.id}`),
+      href: gameHref(g.id),
       away: teamShort(g.awayTeamId, g.awayPlaceholder, teams),
       home: teamShort(g.homeTeamId, g.homePlaceholder, teams),
       awayScore: g.awayScore,
@@ -169,7 +115,7 @@ export default function ScoreTicker({ inFlow = false }: { inFlow?: boolean } = {
 
   return (
     <div
-      className={`${styles.ticker}${inFlow ? ` ${styles.inFlow}` : ''}`}
+      className={styles.ticker}
       role="region"
       aria-label="Today's games"
       data-touching={touching ? 'true' : undefined}

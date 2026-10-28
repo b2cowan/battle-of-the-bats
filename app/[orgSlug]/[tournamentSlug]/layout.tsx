@@ -34,6 +34,7 @@ import AccountFollowSync from '@/components/public/AccountFollowSync';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
 import ScoreTicker from '@/components/public/ScoreTicker';
+import TodaysResultsLine from '@/components/public/TodaysResultsLine';
 import TournamentBand from '@/components/public/TournamentBand';
 import TournamentFooter from '@/components/public/TournamentFooter';
 import clubFrameStyles from '@/components/public/ClubFrame.module.css';
@@ -366,8 +367,8 @@ export default async function TournamentLayout({
       {/* Desktop-only (≥1024px) persistent left nav rail — self-hides below that. Under the frame it is a cell of the
           frame's desk grid instead (below). */}
       {!frameOn && <TournamentSideRail />}
-      {/* Broadcast score ticker — self-gates to game day (reserves --ticker-h). Under the frame it rides under the band
-          instead (below). */}
+      {/* Broadcast score ticker — self-gates to game day (reserves --ticker-h). Under the frame today's games are one
+          line under the band instead (TodaysResultsLine, below; owner ruling 2026-10-28). */}
       {!frameOn && <ScoreTicker />}
       {/* data-live-chrome scopes mobile-chrome CSS (retired page titles/hero) to the
           LIVE shell only — the admin preview has no unified event header to hand
@@ -395,7 +396,7 @@ export default async function TournamentLayout({
         {frameOn && <TournamentSideRail />}
         {frameOn ? (
           <div className={frameStyles.main}>
-            <ScoreTicker inFlow />
+            <TodaysResultsLine />
             {children}
           </div>
         ) : children}

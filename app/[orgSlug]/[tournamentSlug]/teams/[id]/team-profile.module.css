@@ -688,3 +688,32 @@
     padding: 1rem;
   }
 }
+
+/* ── Under the public tournament pages' frame (Stage 1 Part 4, behind the preview switch — lib/public-frame.ts) ──────
+   The same team page on the light ground (plan §4, Ask 2): the team's accent takes today's Light-mode recipe (deepened
+   toward black, since the frame's ground is light whatever the organizer saved), the hero card has no shadow, the Follow
+   button's hover edge is the organizer's edge colour, and nothing is under 12 px. Words the source writes in capitals (the
+   team's name, RECORD, NEXT GAME) stay as written, as in Part 3: rewording them is the team page's stage. */
+:global([data-public-frame='light']) .profile {
+  --team-accent: color-mix(in srgb, var(--team-color, var(--primary)) 80%, var(--black) 20%);
+}
+:global([data-public-frame='light']) .heroCard { box-shadow: none; } /* the large shadow the token block does not reach */
+:global([data-public-frame='light']) .followHeroBtn:hover { border-color: var(--club-edge); }
+:global([data-public-frame='light']) .heroStatusChip,
+:global([data-public-frame='light']) .heroStatLabel,
+:global([data-public-frame='light']) .formLabel,
+:global([data-public-frame='light']) .formBubble,
+:global([data-public-frame='light']) .nextGameKicker,
+:global([data-public-frame='light']) .sectionTitle,
+:global([data-public-frame='light']) .sectionCount,
+:global([data-public-frame='light']) .vsLabel,
+:global([data-public-frame='light']) .playoffTag,
+:global([data-public-frame='light']) .resW,
+:global([data-public-frame='light']) .resL,
+:global([data-public-frame='light']) .resT,
+:global([data-public-frame='light']) .upcomingBadge,
+:global([data-public-frame='light']) .gameDate strong,
+:global([data-public-frame='light']) .gameDate span,
+:global([data-public-frame='light']) .location {
+  font-size: 0.75rem;
+}

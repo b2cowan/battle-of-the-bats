@@ -16,7 +16,7 @@ import UnfollowConfirmSheet from '@/components/public/UnfollowConfirmSheet';
 import { isGameLive, gameStartMs, isGameUpcoming } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
-import { teamColor, teamInitials } from '@/lib/team-color';
+import { teamColor, teamInk, teamInitials } from '@/lib/team-color';
 import type { DivisionStandingRow } from '@/lib/tie-breakers';
 import { useOrgHref } from '@/lib/use-public-pathname';
 
@@ -64,7 +64,8 @@ function TeamAvatar({ name, size = 48 }: { name: string; size?: number }) {
   return (
     <div
       className={styles.teamAvatar}
-      style={{ background: teamColor(name), width: size, height: size, fontSize: size * 0.33 }}
+      // --team-ink is read only under the new frame (teams.module.css); today's page keeps its white monogram.
+      style={{ background: teamColor(name), '--team-ink': teamInk(name), width: size, height: size, fontSize: size * 0.33 } as CSSProperties}
       aria-hidden
     >
       {teamInitials(name)}

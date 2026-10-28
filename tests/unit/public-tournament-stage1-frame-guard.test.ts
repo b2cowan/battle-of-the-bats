@@ -76,7 +76,7 @@ describe('with the switch off, nothing a customer sees changes', () => {
     assert.match(layout, /\{frameBand && \(\s*<TournamentBand/);
     assert.match(layout, /const frameBand = frameOn \? publicFrameBand\(org, tournament, todayISO, registration\?\.state === 'open'\) : null;/);
     assert.match(layout, /\{!frameOn && <ScoreTicker \/>\}/, 'today\'s fixed ticker, unchanged, when off');
-    assert.match(layout, /\{frameOn \? \(\s*<div className=\{frameStyles\.main\}>\s*<ScoreTicker inFlow \/>\s*\{children\}\s*<\/div>\s*\) : children\}/);
+    assert.match(layout, /\{frameOn \? \(\s*<div className=\{frameStyles\.main\}>\s*<TodaysResultsLine \/>\s*\{children\}\s*<\/div>\s*\) : children\}/);
     assert.match(layout, /\{frameBand && \(\s*<style dangerouslySetInnerHTML=\{\{ __html: `html:has\(\[data-public-frame="light"\]\)/);
   });
 
@@ -107,10 +107,37 @@ describe('with the switch off, nothing a customer sees changes', () => {
     assert.match(readCode(FRAME_CSS), /:global\(html\):has\(\.frame\) :global\(\[data-tournament-nav\]\) \{\s*display: none;/);
   });
 
-  it('the ticker\'s in-flow placement is the prop\'s alone', () => {
-    const ticker = readCode('components/public/ScoreTicker.tsx');
-    assert.match(ticker, /\$\{inFlow \? ` \$\{styles\.inFlow\}` : ''\}/);
-    assert.match(ticker, /\{ inFlow = false \}/);
+  it('today\'s ticker is untouched by the frame: the new line is a separate component the frame alone mounts', () => {
+    assert.doesNotMatch(readCode('components/public/ScoreTicker.tsx'), /inFlow/);
+    assert.equal((layout.match(/<TodaysResultsLine \/>/g) ?? []).length, 1, 'mounted once, inside the frame\'s branch');
+  });
+});
+
+describe('the new frame\'s ticker, as ruled 2026-10-28 (F\'s behaviour in D\'s look)', () => {
+  const line = readCode('components/public/TodaysResultsLine.tsx');
+  const css = readCode('components/public/TodaysResultsLine.module.css');
+  it('one game at a time: a 5 s hold and a 0.4 s fade, one pass, then rest on the newest', () => {
+    assert.match(line, /const HOLD_MS = 5000;/);
+    assert.match(line, /const FADE_MS = 400;/);
+    assert.match(css, /transition: opacity 0\.4s ease;/);
+    assert.match(line, /else \{ setMode\('rest'\); if \(list\[0\]\) goTo\(list\[0\]\.id\); \}/);
+  });
+  it('three state words only: Live, Final, or the start time', () => {
+    assert.match(line, /g\.kind === 'live' \? 'Live' : g\.kind === 'final' \? 'Final' : formatTime\(g\.time \?\? ''\)/);
+    assert.doesNotMatch(line, /Unofficial|View scores|All results/);
+  });
+  it('an × is the only control: no pause button, and it hides the line for that day', () => {
+    assert.equal((line.match(/<button/g) ?? []).length, 1);
+    assert.match(line, /onClick=\{hide\} aria-label="Hide today's games"/);
+    assert.doesNotMatch(line, /[Pp]ause|[Pp]lay today/);
+    assert.match(line, /localStorage\.setItem\(hideKey, today\)/);
+  });
+  it('reduced motion: no reel, no fade', () => {
+    assert.match(line, /setMode\(!prefersReducedMotion\(\) && reel\.length > 1 \? 'cycle' : 'rest'\)/);
+    assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{\s*\.game \{ transition: none; \}/);
+  });
+  it('calm: no pulse, no glow, no shadow', () => {
+    assert.doesNotMatch(css, /animation|text-shadow|box-shadow/);
   });
 });
 
@@ -327,5 +354,44 @@ describe('Part 3: the readable baseline, A', () => {
     const schedule = readCode('app/[orgSlug]/schedule/schedule.module.css');
     assert.match(schedule, /^\.placementStandings \{[^}]*border: 1px solid rgba\(var\(--primary-rgb\), 0\.25\);/m);
     assert.match(schedule, /^\.placementStandingsRow \+ \.placementStandingsRow \{\s*border-top: 1px solid var\(--white-10\);/m);
+  });
+});
+
+describe('Part 4: the readable baseline, B', () => {
+  const KEYED = /^(:global\(\[data-public-frame='light'\]\)|\[data-public-frame='light'\]) \./;
+  const PART4_SHEETS = [
+    'app/[orgSlug]/standings/standings.module.css',
+    'components/bracket/LogicSyncBracket.module.css',
+    'components/public/PlayoffPicture.module.css',
+    'app/[orgSlug]/teams/teams.module.css',
+    'app/[orgSlug]/[tournamentSlug]/teams/[id]/team-profile.module.css',
+    'app/[orgSlug]/news/news.module.css',
+    'app/[orgSlug]/rules/rules.module.css',
+    'components/public/ChampionsRecap.module.css',
+  ];
+
+  it('every readable-baseline rule in the pages\' own stylesheets is keyed to the marker', () => {
+    for (const file of PART4_SHEETS) {
+      const lines = readCode(file).split('\n').filter(l => /data-public-frame/.test(l));
+      assert.ok(lines.length > 0, `${file} carries its frame look`);
+      for (const l of lines) assert.match(l.trim(), KEYED, `${file}: a frame rule not keyed to the marker: ${l.trim()}`);
+    }
+  });
+
+  it('the bracket card and the champion banner moved out of inline styles unchanged, so the frame can reach them', () => {
+    const bracket = readCode('components/bracket/LogicSyncBracket.tsx');
+    assert.doesNotMatch(bracket, /rgba\(var\(--primary-rgb\), 0\.(85|08)\)/, 'no inline wash or edge of the organizer\'s colour is left');
+    assert.doesNotMatch(bracket, /drop-shadow/);
+    const css = readCode('components/bracket/LogicSyncBracket.module.css');
+    assert.match(css, /^\.nodeCard \{\s*fill: var\(--bracket-card, var\(--surface\)\);\s*stroke: rgba\(var\(--primary-rgb\), 0\.85\);\s*stroke-width: 1\.25;/m);
+    assert.match(css, /^\.nodeCardHalo \{ filter: url\(#glow-primary\); \}/m);
+    assert.match(css, /^\.nodeMeta \{ fill: rgba\(var\(--primary-rgb\), 0\.08\); \}/m);
+  });
+
+  it('the Teams monogram\'s readable ink is read only under the frame', () => {
+    assert.match(readCode('components/public/TeamsContent.tsx'), /'--team-ink': teamInk\(name\)/);
+    const teams = readCode('app/[orgSlug]/teams/teams.module.css');
+    assert.match(teams, /^\.teamAvatar \{[^}]*color: var\(--on-team-color\);/m, 'today\'s monogram ink, unchanged');
+    assert.match(teams, /:global\(\[data-public-frame='light'\]\) \.teamAvatar \{ color: var\(--team-ink, var\(--on-team-color\)\); \}/);
   });
 });

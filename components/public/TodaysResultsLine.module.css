@@ -1,0 +1,110 @@
+/* Today's games, one at a time — the new frame's ticker (Public tournament pages Stage 1; owner ruling 2026-10-28: F's
+   behaviour in D's look). Drawn from the ticker options page, option D (`.ql`) and F's fade (`.reel .slot`): one still
+   44 px white line with a hairline, the state word, then the two teams and the score. It renders only under the frame, so
+   it reads the club's token block (ClubFrame.module.css `.tokens`) and the organizer's colour roles directly. */
+.line {
+  position: sticky;
+  /* In the page's flow under the band, pinned under the frame's tab row (--frame-pin-h, 0 at a desk). */
+  top: calc(var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--frame-pin-h, 0px));
+  z-index: 89; /* under the pinned tab row (90) */
+  /* 44 px of tap height for the game and the ×, plus the hairline (45 px in all: --ticker-h in the component). */
+  display: flex;
+  align-items: stretch;
+  background: var(--club-card);
+  border-bottom: 1px solid var(--club-line);
+}
+
+.game {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 12px;
+  color: var(--club-soft);
+  font: 500 13px/1.2 var(--club-text-face);
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.4s ease; /* FADE_MS in the component */
+}
+.out { opacity: 0; }
+
+@media (min-width: 901px) {
+  .game { padding-left: 16px; }
+}
+
+.game:hover .team { text-decoration: underline; text-underline-offset: 2px; }
+.game:focus-visible,
+.close:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: -2px;
+}
+
+.word {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--club-dim);
+}
+.live { color: var(--danger); }
+/* Still — no pulse, no halo (the line is calm; the red word carries "live"). */
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
+.new {
+  flex: none;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--club-ok-bg);
+  color: var(--club-ok);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sep { flex: none; color: var(--club-dim); }
+
+/* The two names share what is left: each may shorten with an ellipsis, the longer one more, and the score never cuts. */
+.team {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--club-text);
+  font-weight: 600;
+}
+/* A final's loser steps back by weight and ink; the winner keeps the full ink (no glow on light). */
+.lost { color: var(--club-soft); font-weight: 500; }
+
+.score {
+  flex: none;
+  color: var(--club-text);
+  font: var(--club-title-weight) 16px/1 var(--club-title-face);
+  font-variant-numeric: tabular-nums;
+}
+.vs { flex: none; color: var(--club-dim); }
+
+.close {
+  flex: none;
+  width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid var(--club-line);
+  background: var(--club-card);
+  color: var(--club-soft);
+  cursor: pointer;
+}
+.close:hover { color: var(--club-text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .game { transition: none; }
+}

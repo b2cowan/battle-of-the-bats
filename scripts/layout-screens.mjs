@@ -1880,6 +1880,22 @@ export const SCREENS = [
     route: 'app/[orgSlug]/[tournamentSlug]/register' },
   { id: 'pubt-overview-after',    session: 'anon', path: () => '/stage1-northfield/fall-ball',                      ready: '[data-public-frame-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/page' },
+  // Stage 1 Part 4 (the readable baseline, B): the pale organizer wherever the page has content, since a pale colour is
+  // the hardest for contrast; a team's page is reached as a family reaches it, from the Teams list.
+  { id: 'pubt-playoffs-pale',     session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/playoffs', ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/playoffs' },
+  { id: 'pubt-team-own',          session: 'anon', path: () => '/stage1-metro-sports/spring-showcase/teams',        ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/teams/[id]',
+    interact: async (page) => {
+      const team = page.locator('a[href*="/spring-showcase/teams/"]:visible').first();
+      if (await team.count()) { await Promise.all([page.waitForURL(/\/teams\/[0-9a-f-]{36}/), team.click()]); await page.waitForSelector('[data-public-frame-band]'); }
+    } },
+  { id: 'pubt-news-pale',         session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/news',     ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/news' },
+  { id: 'pubt-rules-pale',        session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/rules',    ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/rules' },
+  { id: 'pubt-champions-after',   session: 'anon', path: () => '/stage1-northfield/fall-ball/champions',            ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/champions' },
 
   /*
    * ══════════════════════════════════════════════════════════════════════════════════════════

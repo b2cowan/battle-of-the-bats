@@ -292,3 +292,13 @@
   .divisionStack { gap: 1.75rem; }
   .standingsRow { grid-template-columns: 1.75rem minmax(0, 1fr) auto auto; gap: 0.5rem; padding: 0.6rem 0.75rem; }
 }
+
+/* Under the public tournament pages' frame (Stage 1 Part 4, behind the preview switch — lib/public-frame.ts): nothing
+   under 12 px on the light ground (Ask 2). The gold washes stay: gold is the champions' fixed colour, not the
+   organizer's, and the token block already reads it on light. */
+:global([data-public-frame='light']) .heroEyebrow,
+:global([data-public-frame='light']) .divisionKicker,
+:global([data-public-frame='light']) .tierBadge,
+:global([data-public-frame='light']) .rankPool {
+  font-size: 0.75rem;
+}

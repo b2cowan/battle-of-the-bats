@@ -101,3 +101,11 @@
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
+
+/* Under the public tournament pages' frame (Stage 1 Part 4, behind the preview switch — lib/public-frame.ts): the pinned
+   post is a white card marked by the organizer's edge colour, not a wash of its colour, and the badge is 12 px. */
+:global([data-public-frame='light']) .pinnedCard {
+  border-color: var(--club-edge);
+  background: var(--surface);
+}
+:global([data-public-frame='light']) .featuredBadge { font-size: 0.75rem; }

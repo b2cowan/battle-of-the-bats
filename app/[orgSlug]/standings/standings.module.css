@@ -1566,3 +1566,56 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* ── Under the public tournament pages' frame (Stage 1 Part 4, behind the preview switch — lib/public-frame.ts) ──────
+   The same Standings and bracket summary, read on the light ground (plan §4, Ask 2): white cards with hairlines instead
+   of washes of the organizer's colour, no shadows or glows, nothing under 12 px. The followed team's row keeps its left
+   rule in the organizer's edge colour (3 : 1 on the ground, where a pale colour at half strength vanished). The table
+   is not pinned here — pinning Team and PTS is Stage 4. The avatar monograms keep their size and shadow (a white glyph
+   on a team colour, decorative). */
+:global([data-public-frame='light']) .summarySection,
+:global([data-public-frame='light']) .bracketSection {
+  box-shadow: none;
+}
+:global([data-public-frame='light']) .summaryHeader,
+:global([data-public-frame='light']) .bracketSummary,
+:global([data-public-frame='light']) .bracketSectionHeader {
+  background: var(--bg-inset);
+}
+:global([data-public-frame='light']) .stickyCol {
+  box-shadow: none;
+  border-right: 1px solid var(--border);
+}
+:global([data-public-frame='light']) .followedTeamRow td { background: var(--bg-inset); }
+:global([data-public-frame='light']) .followedTeamRow td:first-child { border-left-color: var(--club-edge); }
+:global([data-public-frame='light']) .viewToggle::before { box-shadow: none; }
+:global([data-public-frame='light']) .bracketChampionIcon { filter: none; }
+:global([data-public-frame='light']) .myTeamJump { border-color: var(--border-2); background: var(--surface); }
+:global([data-public-frame='light']) .myTeamJump:hover { border-color: var(--club-edge); background: var(--bg-inset); }
+:global([data-public-frame='light']) .rankArrow,
+:global([data-public-frame='light']) .statLegendItem dt,
+:global([data-public-frame='light']) .statLegendItem dd,
+:global([data-public-frame='light']) .pendingTeamBadge,
+:global([data-public-frame='light']) .tieBreakerNote span,
+:global([data-public-frame='light']) .tieTag,
+:global([data-public-frame='light']) .teamQualifier,
+:global([data-public-frame='light']) .resultsSummaryLine,
+:global([data-public-frame='light']) .followActions :global(.btn),
+:global([data-public-frame='light']) .tieBreakerNote,
+:global([data-public-frame='light']) .pendingNote,
+:global([data-public-frame='light']) .tieBreakerNote strong,
+:global([data-public-frame='light']) .followLabel,
+:global([data-public-frame='light']) .followRankBadge,
+:global([data-public-frame='light']) .followFinalLabel,
+:global([data-public-frame='light']) .bracketSummaryHint,
+:global([data-public-frame='light']) .bracketChampionLabel,
+:global([data-public-frame='light']) .bracketChampionBadge,
+:global([data-public-frame='light']) .bracketRoundLabel,
+:global([data-public-frame='light']) .bracketMatchupStatus,
+:global([data-public-frame='light']) .bracketMatchupDate,
+:global([data-public-frame='light']) .bracketThirdLabel,
+:global([data-public-frame='light']) .bracketListRoundLabel,
+:global([data-public-frame='light']) .viewToggleBtn,
+:global([data-public-frame='light']) .myTeamJump {
+  font-size: 0.75rem;
+}

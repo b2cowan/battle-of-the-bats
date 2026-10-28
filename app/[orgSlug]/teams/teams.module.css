@@ -486,3 +486,36 @@
   letter-spacing: 0.08em;
   color: var(--white-60);
 }
+
+/* ── Under the public tournament pages' frame (Stage 1 Part 4, behind the preview switch — lib/public-frame.ts) ──────
+   The same Teams list on the light ground (plan §4, Ask 2): a followed card is marked by the organizer's edge colour
+   with no glow or wash, the search field's focus is a solid ring, the Following button's words take the darkening
+   recipe today's Light mode uses (the frame's ground is light whatever the organizer saved), the monograms take the
+   readable ink for their team colour (TeamsContent sets --team-ink; white failed on the warm and mid hues), and nothing
+   is under 12 px. */
+:global([data-public-frame='light']) .searchInput:focus { box-shadow: 0 0 0 2px var(--club-edge); }
+:global([data-public-frame='light']) .teamCardFollowed {
+  border-color: var(--club-edge);
+  box-shadow: none;
+}
+:global([data-public-frame='light']) .teamCardFollowed:hover { background: var(--bg-inset); }
+:global([data-public-frame='light']) .followBtn:hover { border-color: var(--club-edge); }
+:global([data-public-frame='light']) .followBtnActive {
+  /* token-exempt: color-mix darkening endpoint (literal black), as the Light-mode rule above */
+  color: color-mix(in srgb, var(--team-color, var(--primary)) 80%, #000000 20%);
+}
+:global([data-public-frame='light']) .teamAvatar { color: var(--team-ink, var(--on-team-color)); }
+:global([data-public-frame='light']) .cardChevron { color: var(--club-dim); }
+:global([data-public-frame='light']) .poolHeading,
+:global([data-public-frame='light']) .poolCount,
+:global([data-public-frame='light']) .cardCoach,
+:global([data-public-frame='light']) .cardPool,
+:global([data-public-frame='light']) .cardRank,
+:global([data-public-frame='light']) .liveBadge,
+:global([data-public-frame='light']) .nextGame,
+:global([data-public-frame='light']) .poolDone,
+:global([data-public-frame='light']) .followBtn,
+:global([data-public-frame='light']) .liveOpp,
+:global([data-public-frame='light']) .playerLabel {
+  font-size: 0.75rem;
+}
