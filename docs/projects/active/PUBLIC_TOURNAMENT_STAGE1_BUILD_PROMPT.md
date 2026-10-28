@@ -316,6 +316,16 @@ those commits' changes (`git show <hash> -- <path>`). Hand broad reading to a he
    the follow picker and alerts panel opened, the desk My Team rail card; (f) switch off is today's site (the old
    scrolling strip included); (g) the demo with the switch off. Stop check as §406/§407 had. ⚠ §407's lesson: ask for a
    read-back on every step that writes, and compare the server log with what the owner ticked before recording a pass.
+   > **Written 2026-10-28: §417**, https://claude.ai/artifact/73Yqc3B8Wg5UuQWLSzTpEh (source
+   > `PUBLIC_TOURNAMENT_STAGE1_WALK.html`), 40 steps in parts A–G, with the owner's added step F2 (the bracket glow on a
+   > live game with the preview off; it sits on Standings' bracket, not the Playoffs page). Fixture moves:
+   > `.probe/stage1walk/walk.mjs live | soon | new | undo` on Lakeshore's U11 semifinals. Before writing, the dev server
+   > was restarted and the six screens re-ran: the /review run's six overflow findings did not recur; one real one
+   > remains (a game page's Away/Home labels, 12 px at 361/390, the follow star's widened touch area from July, there
+   > with the preview off too), told to the owner, covered by step B4. **The /review's open owner call is ruled
+   > (2026-10-28):** the band stops saying "Live now" once a champion is crowned, placed in **Stage 2** (plan §9's row
+   > holds what is and is not ruled). **Recording a pass:** read back C4/C5's games and
+   > G2's put-back with `walk.mjs show`, and check the server log has the pages each part names.
 5. Records and the tell: steps 5–6 below.
 
 1. Same rule, for **Standings** (keep the table; **pinning Team and PTS is Stage 4**, so don't do it here),

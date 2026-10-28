@@ -1,0 +1,268 @@
+<title>Public Frame Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column checklist, a sign-in card on top, seven parts, paste-back at the foot. Same build as §406 and §407;
+   an optional step carries two boxes (Did it · Skipped it) so a tick says which. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --ink: #1d2420; --muted: #5a6560; --line: #d9ded8;
+  --accent: #2f6b4f; --accent-soft: #e3efe8; --warn: #8a5a00; --warn-soft: #fbf0d9; --bad: #9b2c2c; --bad-soft: #f8e2e2;
+  --display: "Fraunces", Georgia, serif; --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+h1 { font: 600 1.9rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.25rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+.eyebrow { font: 600 .75rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; max-width: 65ch; }
+.intro { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.card dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .card dl { grid-template-columns: 1fr; } .card dd { padding-bottom: 6px; } }
+code, .mono { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.facts { display: grid; gap: 8px; }
+.facts h3 { font: 600 .95rem/1.3 var(--body); margin: 0; }
+.facts ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.part { display: grid; gap: 12px; }
+.part header { display: grid; gap: 4px; }
+.part header p { color: var(--muted); }
+.who { display: inline-block; font: 600 .8rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); justify-self: start; }
+.step { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.step input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .txt { display: grid; gap: 4px; min-width: 0; }
+.step .do { font-weight: 600; }
+.step .see::before { content: "You should see: "; color: var(--muted); font-weight: 600; }
+.step .rb { color: var(--warn); font-weight: 600; }
+.step.stop { border-color: var(--warn); background: var(--warn-soft); }
+.step.done { opacity: .72; }
+.opts { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 4px; }
+.opts label { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: 600 .9rem/1 var(--body); padding: 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 70px; font: inherit; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font: 600 .95rem/1 var(--body); padding: 11px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+#summary { font-family: var(--mono); font-size: .85rem; min-height: 160px; }
+a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <span class="eyebrow">Owner QA · §417 · Public tournament pages Stage 1</span>
+    <h1>Every tournament page wears the new frame</h1>
+    <p><strong>What this walk is for.</strong> Stage 1 put every public tournament page in the club site's daylight frame, behind a preview switch. The organizer's colour band replaces the dark event header, a white tab row pins under it, and an organizer-colour footer sits at the foot. Every page's current content was made readable on the light ground, and the scores ticker became one quiet line. The layouts did not change; they are Stages 2 to 7. Families and the public demo see none of this until Stage 8 turns it on.</p>
+    <p><strong>It passes when</strong> the preview on gives every page the band, the tab row and the footer, and every page reads cleanly on light at phone and desk widths. The ticker must behave as you ruled (F's fades in D's look, an × only). With the preview off, every page has to look exactly as it does today.</p>
+  </div>
+
+  <div class="card">
+    <h2>Sign in as</h2>
+    <dl>
+      <dt>Parts A–D, F, G</dt><dd>Nobody. A <strong>private window</strong>, signed out, so you see what a family sees.</dd>
+      <dt>E1 only</dt><dd>Your own account <span class="mono">b2cowan@outlook.com</span> (an admin of Dev Test Org on dev), in a normal window.</dd>
+      <dt>Where</dt><dd><span class="mono">http://localhost:3000</span>, dev server running. For your phone on the same Wi-Fi: <span class="mono">http://192.168.2.200:3000</span> plus the same path.</dd>
+      <dt>Phone width</dt><dd>Your phone, or Chrome's device toolbar (Ctrl+Shift+M) at 390, then 360.</dd>
+      <dt>The switch</dt><dd><strong>On dev the preview is on unless you turn it off.</strong> Each part links its own On or Off address. The choice sticks to that browser window (a private window forgets it when closed).</dd>
+      <dt>Fixtures</dt><dd>Four made-up organizers, plus Riverdale, seeded 2026-10-28. Their dates are set around the day they are seeded. <strong>If you walk on a later day, run the seed first:</strong> <span class="mono">node --env-file=.env.local scripts/seed-public-frame-fixtures.mjs</span>, or ask me.</dd>
+      <dt>The game script</dt><dd>Parts C, E and F move Lakeshore's two U11 semifinals with <span class="mono">node --env-file=.env.local .probe/stage1walk/walk.mjs &lt;live | soon | new | undo&gt;</span> (dev only). Run it in a terminal at the project folder, or ask me in the chat and I run it.</dd>
+    </dl>
+  </div>
+
+  <div class="card facts">
+    <h3>The five organizers</h3>
+    <ul>
+      <li><strong>Lakeshore Lightning Fall Classic</strong>: a club's tournament in a pale yellow, today is game day (Live now).</li>
+      <li><strong>Metro Spring Showcase</strong>: a paid organizer with its own pink and a logo, Live now.</li>
+      <li><strong>Northfield Fall Ball</strong>: a free event, ended last week (Finished).</li>
+      <li><strong>Greater Hamilton-Wentworth Girls Fastpitch Spring Invitational</strong>: the long name, starts this weekend.</li>
+      <li><strong>Riverdale Summer Classic</strong>: the demo, a dark colour, ended yesterday (Finished).</li>
+    </ul>
+    <h3>What “reads on light” means in this walk</h3>
+    <ul>
+      <li>Dark text on white or very light grey, with thin hairline edges. No dark panel left over from the old look.</li>
+      <li>Nothing faint or greyed so far it is hard to read. No text smaller than the page's other small print.</li>
+      <li>No glows and no big shadows. Marks that used to glow are in the organizer's colour instead.</li>
+      <li>The same layout as today. A cramped table or a small tap target is a later stage's work, not a fail here.</li>
+    </ul>
+  </div>
+
+  <div class="card facts">
+    <h3>Not in this walk</h3>
+    <ul>
+      <li>A crowned champion's banner. No fixture has a champion crowned, so the Champions page is checked in its empty state only. The banner's trophy and label moved into the stylesheet unchanged.</li>
+      <li>Reduced motion (the line shows the newest result, still, with no fades). The review checked it in the code.</li>
+      <li>Which pages carry the ticker. That is Stages 2 and 3; today it rides on every page.</li>
+      <li>Small tap targets and the free plan's banner. Both are already known and parked.</li>
+      <li>“Live now” after a champion is crowned on the last day. You ruled it changes; that is Stage 2's work, so today's behaviour is not a fail here.</li>
+    </ul>
+  </div>
+
+  <div class="progress"><strong id="count">0 of 0 checked</strong><div class="bar" aria-hidden="true"><span id="fill"></span></div><button class="btn ghost" id="reset" type="button">Clear my ticks</button></div>
+
+  <div id="parts"></div>
+
+  <div class="card">
+    <h2>Send me the results</h2>
+    <p>Build the summary, then paste it back into the chat. Put what you saw on the read-back steps (marked “Tell me”) in that part's notes.</p>
+    <div class="actions"><button class="btn" id="build" type="button">Build summary</button><button class="btn ghost" id="copy" type="button">Copy</button></div>
+    <textarea id="summary" readonly aria-label="Walk summary"></textarea>
+  </div>
+</div>
+
+<script>
+var HOST = "http://localhost:3000";
+var LK = "/stage1-lakeshore-lightning/fall-classic";
+var MT = "/stage1-metro-sports/spring-showcase";
+var NF = "/stage1-northfield/fall-ball";
+var HW = "/stage1-hamilton-wentworth/spring-invitational";
+var RV = "/riverdale-minor-ball/summer-classic";
+var BEARS_SEMI = "2251647e-c0a6-4383-a646-36b2670821ea";
+function a(path, label) { return '<a href="' + HOST + path + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function on(path, label) { return '<a href="' + HOST + '/api/public-frame?frame=on&to=' + encodeURIComponent(path) + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function off(path, label) { return '<a href="' + HOST + '/api/public-frame?frame=off&to=' + encodeURIComponent(path) + '" target="_blank" rel="noopener">' + label + '</a>'; }
+function cmd(mode) { return '<span class="mono">node --env-file=.env.local .probe/stage1walk/walk.mjs ' + mode + '</span>'; }
+function tell(s) { return ' <span class="rb">Tell me: ' + s + '</span>'; }
+
+var PARTS = [
+  { id: "A", title: "Part A · The five organizers' bands, on a phone", who: "Private window, signed out · phone width", steps: [
+    { stop: true, do: "Stop check. Open " + on(LK, "Lakeshore Lightning Fall Classic with the preview on") + ".", see: "A pale yellow band across the top with near-black text, the initials “LL” in a square, the event's name in tall condensed letters, one line of dates and a “Live now” chip. If you see the old dark header instead, stop and tell me." },
+    { do: "On Lakeshore, look under the band, then scroll down slowly.", see: "A white tab row with a thin coloured rule under the current tab. As you scroll, the band scrolls away and the tab row stays pinned at the top. Share and Sign in sit in the band. There is no app bar at the foot of the page." },
+    { do: "Open " + a(MT, "Metro Spring Showcase") + ".", see: "A pink band, a shade deeper than bright pink so the white text reads on it, with Metro's logo where the initials would be, and “Live now”." },
+    { do: "Open " + a(NF, "Northfield Fall Ball") + ".", see: "A neutral near-black band with no logo or initials, “Finished”, and the free plan's banner (known, parked)." },
+    { do: "At 360 wide, open " + a(HW, "the Hamilton-Wentworth Spring Invitational") + ".", see: "A green band. The long name runs to two lines, then ends in “…”. “This weekend” shows, and Share and Sign in still fit." },
+    { do: "Open " + a(RV, "Riverdale Summer Classic") + ".", see: "The platform blue band and “Finished” (it ended yesterday). Across all five: never “Game day”, “In progress” or “Tournament Day”." },
+    { do: "Scroll to the foot of Lakeshore's and Northfield's homes.", see: "A footer in the organizer's colour. Lakeshore's says “Hosted by Lakeshore Lightning Softball” and “Built on FieldLogicHQ”. Northfield's (free, no home of its own) says “Run by Northfield Sports Events”." }
+  ]},
+  { id: "B", title: "Part B · Every page reads on light, phone then desk", who: "Private window, signed out", note: "Judge each page by the “reads on light” card at the top. Layouts are today's.", steps: [
+    { do: "Phone width. Open the three Overviews: " + a(HW, "Hamilton-Wentworth") + " (before), " + a(LK, "Lakeshore") + " (game day), " + a(NF, "Northfield") + " (after).", see: "Each reads on light: cards, today's games and results, the countdown or the finished state." },
+    { do: "Open " + a(LK + "/schedule", "Lakeshore's Schedule") + ".", see: "Game rows, dates and venue lines read on light; finished scores are dark and clear. The pool / playoffs switch reads." },
+    { do: "Tap a finished game to open its page.", see: "The two teams, the score, and the facts list (field, time) on light. Away and Home labels are readable at 12 px or larger." },
+    { do: "On that game page, tap the ☆ beside “Away”. Then tap it again.", see: "The first tap follows that team and the star fills; the second unfollows it. Nothing near the Away label is clipped or overlapping. (The layout check flags 12 px of spill here; it is the star's widened touch area, there since July.)" },
+    { do: "Open " + a(MT + "/standings", "Metro's Standings") + ".", see: "The table on white, Metro's pink only as an edge or mark, never a wash behind the text. The followed and qualified marks are in the edge colour." },
+    { do: "Open " + a(LK + "/playoffs", "Lakeshore's Playoffs") + " (the Playoff Picture).", see: "Reads on light, in today's layout: the qualified marks in the organizer's colour as an edge or mark, no glows." },
+    { do: "Open " + a(NF + "/teams", "Northfield's Teams") + ", then " + a(MT + "/teams", "Metro's Teams") + " and tap the first team.", see: "The team list reads on light. On the team's page, its own team colour still tints the top (its identity, Stage 5's). Words written in capitals stay that way (the name, RECORD, NEXT GAME). No large shadow under the share menu." },
+    { do: "Open " + a(LK + "/news", "Lakeshore's News") + " and " + a(LK + "/rules", "Rules") + ".", see: "Both read on light." },
+    { do: "Open " + a(NF + "/champions", "Northfield's Champions") + ".", see: "“No champions crowned yet” on light (no fixture has a champion; see Not in this walk)." },
+    { do: "Open " + a(HW + "/register", "Hamilton-Wentworth's Register") + ".", see: "The registration page reads on light: fields, labels, buttons." },
+    { do: "Desk width (1280 or wider). Open " + a(LK, "Lakeshore") + ".", see: "The band runs across, with “Hosted by Lakeshore Lightning Softball” on its right. The side rail is white and runs the full height. The footer is at the foot." },
+    { do: "At desk width, go through the same pages again: Schedule, a game, Standings, Playoffs, Teams, a team, News, Rules, Champions, Register.", see: "Each reads on light as it did on the phone. Nothing left on a dark panel." }
+  ]},
+  { id: "C", title: "Part C · The ticker", who: "Private window, signed out · Lakeshore", note: "The fixture shows the 4:00 p.m. game as already finished (copied test data). That is the newest result the line rests on.", steps: [
+    { stop: true, do: "Stop check. Open " + a(LK, "Lakeshore") + " fresh and watch the white line under the tab row for 30 seconds.", see: "One game at a time fades in and out, about 5 seconds each. Each shows a word, then the two teams and the score: Final Halton Hawks U11 Jr 7–3 Bears U11, then Bears U13 3–6 Hawks U13, Milton Bats U11 Purple 4–5 Lions U11, Lions U13 3–6 Eagles U13. Then it stops and rests on Halton Hawks U11 Jr 7–3 Bears U11. If the line is missing, stop: the fixtures need seeding for today." },
+    { do: "Look at the line's controls. Hold a finger or the pointer on it, then tap it.", see: "Only an ×. No “View scores”, no pause button. Under the finger it holds still. A tap opens the game it shows." },
+    { do: "Run " + cmd("live") + " (or ask me). Reload Lakeshore and watch the pass.", see: "The pass now includes “Live” Bears U11 vs Halton Hawks U11 Jr, with no score. After the pass it rests on the newest Final again." },
+    { do: "Run " + cmd("soon") + " (or ask me). The terminal prints the start time, three minutes from now. Reload and watch the pass. Wait until that time, then reload again.", see: "Before: Milton Bats U11 Purple vs Lions U11 under its start time (for example “1:52 p.m.”). After: the same game says “Live”." + tell("the time it showed.") },
+    { do: "Leave Lakeshore open and resting. Do not reload. Run " + cmd("new") + " (or ask me) and watch the line.", see: "Within about 30 seconds the line fades to Final Bears U11 5–3 Halton Hawks U11 Jr with a small green “New” mark, and rests there." + tell("what it showed, and roughly how long it took.") },
+    { do: "Press the ×. Reload. Then open " + a(MT, "Metro") + ".", see: "The line is gone and its space closes up. It stays gone after the reload. Metro's line still shows (the × is per tournament)." },
+    { do: "Open Lakeshore in a new private window.", see: "The line is back. The × lasts for the rest of today on that device only; it returns the next game day." }
+  ]},
+  { id: "D", title: "Part D · The app bar follows where the page is opened", who: "Your phone, and Chrome on this PC", note: "Whether the page sits in a browser or in the installed app cannot be faked in the device toolbar. Your own devices are the only check.", steps: [
+    { do: "On your phone's browser (same Wi-Fi), open http://192.168.2.200:3000" + LK + ".", see: "No app bar at the foot. Sign in in the band. No empty strip kept at the bottom. If the install prompt shows, it is where it was and says what it said before." },
+    { do: "In Chrome on this PC, open " + a(LK, "Lakeshore") + " and install it (the install icon at the right of the address bar, or ⋮ → Cast, save and share → Install page as app). Open the installed window wide.", see: "The app's own bar is there, drawn light. No Sign in in the band. At this width, no “Public site” pill in the band either." },
+    { opt: true, do: "On your phone, the installed app. Installing needs a secure address, which the dev server over Wi-Fi is not, so this usually waits for staging.", see: "If you managed it: the app's bar at the foot, drawn light, and no Sign in in the band." }
+  ]},
+  { id: "E", title: "Part E · What I could not render", who: "Normal window for E1, then private window", steps: [
+    { do: "Signed in as b2cowan@outlook.com, open " + a("/dev-test-org/admin/tournaments/preview/live-demo", "Live Demo — Game Day's admin preview") + " (or Public site → “See your public site”).", see: "The same band, rail and footer as a family sees, with “Hosted by Dev Test Org” as plain text, no Share and no Sign in, and the Exit pill to get back." },
+    { do: "Run " + cmd("undo") + " then " + cmd("live") + " (or ask me; this leaves only the Bears semifinal live). In the private window open " + a(LK + "/schedule", "Lakeshore's Schedule") + ".", see: "The large live card for Bears U11 at Halton Hawks U11 Jr: both teams' initials, “No score yet”, all reading on light." },
+    { do: "Open " + a(LK, "Lakeshore's home") + " with nothing followed and use “pick your team”. Choose Bears U11.", see: "The team list opens and reads on light. At phone width a My Team bar pins at the foot. At desk width the My Team card sits in the white rail, reading on light." },
+    { do: "Open " + a(MT, "Metro") + ", follow a team, and open its score alerts control.", see: "Signed out it says “Sign in for score alerts”. The control and anything it opens read on light." },
+    { opt: true, do: "The pay page. It needs a team's private payment link; if you have one for a dev tournament, open it.", see: "The pay page in the frame, reading on light." }
+  ]},
+  { id: "F", title: "Part F · With the preview off, nothing changed", who: "Private window, signed out", steps: [
+    { do: "Run " + cmd("undo") + " then " + cmd("live") + " (or ask me; only the Bears semifinal is live after it). Open " + off(LK, "Lakeshore with the preview off") + ".", see: "Today's site: the old event header, no colour band, no white tab row, no new footer, and the old scrolling strip across the top with LIVE Bears U11 vs Halton Hawks U11 Jr." },
+    { do: "The bracket glow (the review moved it). Still with the preview off, open " + a(LK + "/standings", "Lakeshore's Standings") + " and scroll to the bracket.", see: "The Bears U11 / Halton Hawks U11 Jr semifinal card says LIVE and has a soft coloured glow around it. The other semifinal and the final have no glow." },
+    { do: "Open " + on(LK + "/standings", "the same Standings with the preview on") + ", then " + off(LK, "turn it off again") + ".", see: "With the preview on, the same card still says LIVE but has a crisp edge in the organizer's colour and no glow. Off again, the old look is back." },
+    { do: "With the preview off, walk Lakeshore's Schedule, a game, Teams, News and Rules.", see: "Each looks as it did before Stage 1. Nothing new appears." }
+  ]},
+  { id: "G", title: "Part G · The demo with the preview off, and putting things back", who: "Private window, preview still off", steps: [
+    { do: "Open " + a("/demos", "the demos page") + " and go into the tournament demo.", see: "Riverdale as it looks on the live site today: no colour band, no white tab row. (Leaving the demo's pages ends its session.)" },
+    { do: "Close the private window. Run " + cmd("undo") + " (or ask me).", see: "“Put back.” in the terminal. Both semifinals are back on tomorrow at 9:00 a.m. with no score." + tell("that you ran it; I read both games back.") }
+  ]}
+];
+
+var KEY = "qa-417-stage1-frame-walk-v1";
+var state = { ticks: {}, verdict: {}, notes: {} };
+try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) state = saved; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+var root = document.getElementById("parts");
+var total = 0;
+PARTS.forEach(function (p) {
+  var sec = document.createElement("section"); sec.className = "part";
+  var html = '<header><h2>' + p.title + '</h2><span class="who">' + p.who + '</span>' + (p.note ? '<p>' + p.note + '</p>' : '') + '</header>';
+  p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1); total++;
+    if (s.opt) {
+      html += '<div class="step" id="row-' + id + '"><span></span><span class="txt"><span class="do">' + id + ' · Optional. ' + s.do + '</span><span class="see">' + s.see + '</span>' +
+        '<span class="opts"><label><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"> Did it</label><label><input type="checkbox" id="cb-' + id + 's" data-id="' + id + 's"> Skipped it</label></span></span></div>';
+    } else {
+      html += '<label class="step' + (s.stop ? ' stop' : '') + '" id="row-' + id + '"><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"><span class="txt"><span class="do">' + id + ' · ' + s.do + '</span><span class="see">' + s.see + '</span></span></label>';
+    }
+  });
+  html += '<div class="verdict" role="group" aria-label="' + p.title + ' verdict">' +
+    '<button type="button" data-p="' + p.id + '" data-v="pass" aria-pressed="false">Pass</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="issue" aria-pressed="false">Issue</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="call" aria-pressed="false">Needs a call</button></div>' +
+    '<textarea id="notes-' + p.id + '" data-p="' + p.id + '" placeholder="Notes for ' + p.title + ' (what you saw, anything odd)"></textarea>';
+  sec.innerHTML = html; root.appendChild(sec);
+});
+
+function stepDone(id) { return !!(state.ticks[id] || state.ticks[id + "s"]); }
+function render() {
+  var n = 0;
+  document.querySelectorAll("input[type=checkbox][data-id]").forEach(function (cb) { cb.checked = !!state.ticks[cb.dataset.id]; });
+  PARTS.forEach(function (p) { p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1), d = stepDone(id); if (d) n++;
+    document.getElementById("row-" + id).classList.toggle("done", d);
+  }); });
+  document.querySelectorAll(".verdict button").forEach(function (b) { b.setAttribute("aria-pressed", String(state.verdict[b.dataset.p] === b.dataset.v)); });
+  document.querySelectorAll("textarea[data-p]").forEach(function (t) { t.value = state.notes[t.dataset.p] || ""; });
+  document.getElementById("count").textContent = n + " of " + total + " checked";
+  document.getElementById("fill").style.width = (total ? (100 * n / total) : 0) + "%";
+}
+root.addEventListener("change", function (e) {
+  var id = e.target.dataset && e.target.dataset.id; if (!id) return;
+  state.ticks[id] = e.target.checked;
+  if (e.target.checked) { var other = /s$/.test(id) ? id.slice(0, -1) : id + "s"; if (document.getElementById("cb-" + other)) state.ticks[other] = false; }
+  save(); render();
+});
+root.addEventListener("click", function (e) { var b = e.target.closest(".verdict button"); if (!b) return; state.verdict[b.dataset.p] = state.verdict[b.dataset.p] === b.dataset.v ? null : b.dataset.v; save(); render(); });
+root.addEventListener("input", function (e) { if (e.target.dataset.p && e.target.tagName === "TEXTAREA") { state.notes[e.target.dataset.p] = e.target.value; save(); } });
+document.getElementById("reset").addEventListener("click", function () { state = { ticks: {}, verdict: {}, notes: {} }; save(); render(); });
+var WORD = { pass: "PASS", issue: "ISSUE", call: "NEEDS A CALL" };
+document.getElementById("build").addEventListener("click", function () {
+  var lines = ["§417 · Stage 1 · Every tournament page wears the new frame"], all = 0;
+  PARTS.forEach(function (p) {
+    var ids = p.steps.map(function (s, i) { return p.id + (i + 1); });
+    var done = ids.filter(stepDone).length; all += done;
+    var missing = ids.filter(function (id) { return !stepDone(id); });
+    var skipped = ids.filter(function (id) { return state.ticks[id + "s"]; });
+    lines.push(p.title + " [" + (WORD[state.verdict[p.id]] || "no verdict") + "] " + done + "/" + ids.length +
+      (missing.length ? " · unticked: " + missing.join(", ") : "") + (skipped.length ? " · skipped: " + skipped.join(", ") : ""));
+    if (state.notes[p.id]) lines.push("  Notes: " + state.notes[p.id].replace(/\n+/g, " / "));
+  });
+  lines.splice(1, 0, "Checked " + all + " of " + total);
+  document.getElementById("summary").value = lines.join("\n");
+});
+document.getElementById("copy").addEventListener("click", function () {
+  var t = document.getElementById("summary");
+  if (!t.value) document.getElementById("build").click();
+  try { navigator.clipboard.writeText(t.value).catch(function () { t.select(); }); } catch (e) { t.select(); }
+});
+render();
+</script>
