@@ -376,7 +376,7 @@ const clock24 = (iso: string) => formatInOrgZone(iso, { hour: '2-digit', minute:
  * and the next, or above today's first row on a day with events. The timeline's now line, never a band: a band would
  * head the rows under it, and those aren't today's. The list opens with it at the top of its frame (C3).
  */
-function NowLine({ today }: { today: string }) {
+export function NowLine({ today }: { today: string }) {
   return (
     <li className={styles.rowListNow} data-now-line role="presentation">
       <span>{dayHeading(today, today)}</span>

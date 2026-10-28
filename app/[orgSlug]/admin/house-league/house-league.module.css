@@ -370,13 +370,6 @@
 }
 .divSelect option { background: var(--hud-surface); }
 
-.toolbarSep {
-  width: 1px;
-  height: 20px;
-  background: rgba(255,255,255,0.08);
-  flex-shrink: 0;
-}
-
 .teamsLayout {
   display: flex;
   gap: 1.25rem;
@@ -705,32 +698,6 @@
   font-weight: 700;
 }
 
-/* ── Practice cards ────────────────────────────────────────────────────────── */
-.practiceCard {
-  padding: 0.9rem 1rem;
-  border-radius: 2px;
-  background: rgba(167,139,250,0.05);
-  border: 1px solid rgba(167,139,250,0.15);
-  transition: border-color 0.15s, background 0.15s;
-}
-.practiceCard:hover {
-  border-color: rgba(167,139,250,0.3);
-  background: rgba(167,139,250,0.08);
-}
-
-.practiceCardHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.4rem;
-}
-
-/* intentional purple, no semantic token (matches .statusCompleted) */
-.practiceBadge {
-  background: rgba(167,139,250,0.12);
-  color: #a78bfa; /* token-exempt: purple accent, matches .statusCompleted */
-  border: 1px solid rgba(167,139,250,0.25);
-}
 
 
 /* ═══ ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════════════════════
@@ -789,14 +756,6 @@
   background: rgba(var(--info-rgb), 0.08);
   border-color: rgba(var(--info-rgb), 0.3);
 }
-/* "Completed" was a hand-set purple with no token: a finished season is not a verdict, so on the
-   kit it is the quiet chip. Practices were the same purple; on the kit they wear the portal's own
-   practice colour (`--evt-practice`: purple in dark, plum in warm — the coach schedule's). */
-:global([data-admin-kit]) .practiceBadge {
-  color: var(--text-secondary);
-  background: color-mix(in srgb, var(--evt-practice) 12%, transparent);
-  border-color: color-mix(in srgb, var(--evt-practice) 45%, transparent);
-}
 
 /* ── Capacity bar ── */
 
@@ -809,7 +768,6 @@
   border: 1px solid var(--home-line);
   border-radius: 8px;
 }
-:global([data-admin-kit]) .toolbarSep { background: var(--home-line); }
 
 /* ── Fields → the portal's field ── */
 :global([data-admin-kit]) .input,
@@ -931,11 +889,3 @@
 }
 :global([data-admin-kit]) .scheduleTable tr:hover td { background: var(--home-olive-soft); }
 
-/* Practices → a card with the portal's practice colour at its edge. */
-:global([data-admin-kit]) .practiceCard {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  border-left: 3px solid var(--evt-practice);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .practiceCard:hover { border-color: var(--home-line-strong); border-left-color: var(--evt-practice); background: var(--card-bg); }

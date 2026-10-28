@@ -782,6 +782,7 @@ export default function SchedulePage() {
 
   // The season as the calendar's bookings (step 1's `seasonCalendar`): every view draws these. The clashes are the whole
   // season's (`seasonClashes`), so another division's booking on the same facility still marks this one.
+  const clashes = useMemo(() => seasonClashes({ games, practices, teamName }), [games, practices, teamName]);
   const calendar = useMemo(() => {
     const venueById = new Map(venues.map(v => [v.id, v]));
     const c = seasonCalendar({
@@ -792,12 +793,12 @@ export default function SchedulePage() {
         if (!v) return null;
         return { venue: v.name, facility: (facilityId && v.facilities?.find(f => f.id === facilityId)?.name) || null, address: v.address ?? null };
       },
-      clashes: seasonClashes({ games, practices, teamName }),
+      clashes,
       permits: new Map(Object.entries(gamePermits)),
     });
     const paint = (b: SeasonBooking): SeasonBooking => ({ ...b, colour: b.kind === 'practice' ? KIND_COLOUR.practice : KIND_COLOUR.game });
     return { bookings: c.bookings.map(paint), needsDate: c.needsDate.map(paint) };
-  }, [season, divGames, divPractices, games, practices, teamName, divisions, venues, gameSlots, gamePermits]);
+  }, [season, divGames, divPractices, clashes, teamName, divisions, venues, gameSlots, gamePermits]);
 
   // Show (9d2·12): empty = both kinds; a choice ON stays listed with 0 so it can always be taken off.
   const shown = calendar.bookings.filter(b => !show.size || show.has(b.kind));

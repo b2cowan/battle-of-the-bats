@@ -78,7 +78,7 @@ export default function LeagueHealthWindow({ health, eyebrow, team, label, place
           <div className={ts.healthKpiGrid}>
             <Metric label={H.games} value={H.gamesValue(t.games.onPlan, t.games.teams)} detail={H.gamesDetail}
               tone={t.games.onPlan < t.games.teams ? 'warning' : 'good'} />
-            <Metric label={H.homeAway} value={H.homeAwayValue(t.homeAway.off)} detail={H.homeAwayDetail(t.homeAway.tolerance)}
+            <Metric label={H.homeAway} value={H.homeAwayValue(t.homeAway.off)} detail={H.homeAwayDetail(health.rules.homeAwayTolerance)}
               tone={t.homeAway.off ? 'warning' : 'good'} />
             <Metric label={H.byes} value={t.byes.backToBack ? String(t.byes.backToBack) : H.byesSpread}
               detail={t.byes.backToBack ? H.byesDetail : H.byesNone} tone={t.byes.backToBack ? 'warning' : 'good'} />

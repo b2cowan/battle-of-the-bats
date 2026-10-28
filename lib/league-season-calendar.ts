@@ -90,10 +90,20 @@ export function resultWords(g: Pick<LeagueGame, 'status' | 'homeScore' | 'awaySc
 
 /** A game on one of its division's game-time slots: the same division, start and facility. Otherwise nothing. */
 export function gameSlotOf(g: Pick<LeagueGame, 'divisionId' | 'scheduledAt' | 'orgVenueId' | 'orgVenueFacilityId'>, slots: readonly SeasonGameSlot[]): SeasonGameSlot | null {
-  if (!g.scheduledAt || !g.orgVenueId) return null;
-  const at = Date.parse(g.scheduledAt);
-  return slots.find(s => s.divisionId === g.divisionId && Date.parse(s.startsAt) === at
-    && s.venueId === g.orgVenueId && (s.facilityId ?? null) === (g.orgVenueFacilityId ?? null)) ?? null;
+  return gameSlotLookup(slots)(g);
+}
+
+/** `gameSlotOf` for many games: the slots are keyed once, so each game is a lookup, not a scan that parses every slot's start. */
+export function gameSlotLookup(slots: readonly SeasonGameSlot[]) {
+  const slotKey = (divisionId: string, startMs: number, venueId: string, facilityId: string | null | undefined) =>
+    `${divisionId}|${startMs}|${venueId}|${facilityId ?? ''}`;
+  const byKey = new Map<string, SeasonGameSlot>();
+  for (const s of slots) {
+    const k = slotKey(s.divisionId, Date.parse(s.startsAt), s.venueId, s.facilityId);
+    if (!byKey.has(k)) byKey.set(k, s);
+  }
+  return (g: Pick<LeagueGame, 'divisionId' | 'scheduledAt' | 'orgVenueId' | 'orgVenueFacilityId'>): SeasonGameSlot | null =>
+    !g.scheduledAt || !g.orgVenueId ? null : byKey.get(slotKey(g.divisionId, Date.parse(g.scheduledAt), g.orgVenueId, g.orgVenueFacilityId)) ?? null;
 }
 
 export function seasonCalendar(input: SeasonCalendarInput): SeasonCalendar {
@@ -118,9 +128,10 @@ export function seasonCalendar(input: SeasonCalendarInput): SeasonCalendar {
 
   const bookings: SeasonBooking[] = [];
   const needsDate: SeasonBooking[] = [];
+  const slotOf = gameSlotLookup(input.gameSlots ?? []);
   for (const g of input.games) {
     const key = `league_game:${g.id}`;
-    const slot = gameSlotOf(g, input.gameSlots ?? []);
+    const slot = slotOf(g);
     const b: SeasonBooking = {
       ...common(key), key, kind: 'game',
       day: g.scheduledAt ? orgDayKey(g.scheduledAt) : '',

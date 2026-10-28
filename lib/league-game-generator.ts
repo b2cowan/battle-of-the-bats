@@ -27,8 +27,7 @@
  */
 import { formatStoredDate, mondayOfDay } from './timezone.ts';
 import { pluralize, possessive } from './utils.ts';
-import { WEEKDAY_HEADS } from './calendar-recipe.ts';
-import { weekdayOf } from './permit-time.ts';
+import { dayWords } from './calendar-recipe.ts';
 import { weekdayOne } from './permit-words.ts';
 
 /** One slot of a division's game time, its club day and clock already worked out in the club's zone. */
@@ -54,7 +53,6 @@ export interface GameTeam { id: string; name: string }
 
 /** Once or twice through (frame c2's dropdown). */
 export type Through = 1 | 2;
-export const THROUGH_CHOICES: readonly Through[] = [1, 2];
 
 /** One game the plan places: its slot, its teams, its round (1-based, across both times through). */
 export interface PlannedGame {
@@ -287,26 +285,8 @@ export function planGames(p: { slots: readonly GameTimeSlot[]; teams: readonly G
   const teamIds = teams.map(t => t.id);
   warnings.push(...twiceInADay(teamIds, dated), ...byesBackToBack(teamIds, dated));
 
-  // The rarest time the games use, counted as it is SAID — a weekday and its part of the day ("Saturday mornings"), so two
-  // Sunday-morning clocks are one time, and games that are all Sunday mornings share nothing out (step 5's probe).
-  const said = (s: SlotTime) => `${s.weekday}|${partOfDay(s.start)}`;
-  const usedTimes = new Map<string, SlotTime & { games: number }>();
-  const perTeam = new Map<string, number>(); // `${teamId}|${said}` → games at that time
-  for (const g of games) {
-    const s = slotOf.get(g.slotId)!;
-    const k = said(s);
-    const was = usedTimes.get(k) ?? { weekday: s.weekday, start: s.start, games: 0 };
-    was.games += 1;
-    if (minutesOf(s.start) < minutesOf(was.start)) was.start = s.start;
-    usedTimes.set(k, was);
-    for (const t of [g.homeTeamId, g.awayTeamId]) perTeam.set(`${t}|${k}`, (perTeam.get(`${t}|${k}`) ?? 0) + 1);
-  }
-  let share: GamePlan['share'] = null;
-  if (usedTimes.size > 1) {
-    const rarest = [...usedTimes.values()].sort((a, b) => a.games - b.games || a.weekday - b.weekday || minutesOf(a.start) - minutesOf(b.start))[0];
-    const per = teams.map(t => perTeam.get(`${t.id}|${said(rarest)}`) ?? 0);
-    share = { weekday: rarest.weekday, start: rarest.start, min: Math.min(...per), max: Math.max(...per) };
-  }
+  const r = rarestTimeShare(games.map(g => ({ homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId, ...slotOf.get(g.slotId)! })), teamIds);
+  const share: GamePlan['share'] = r && { weekday: r.time.weekday, start: r.time.start, min: Math.min(...r.counts), max: Math.max(...r.counts) };
 
   return {
     games, block: null, warnings, needed, slotCount: slots.length, gamesEach,
@@ -315,13 +295,34 @@ export function planGames(p: { slots: readonly GameTimeSlot[]; teams: readonly G
   };
 }
 
+/**
+ * The rarest time a set of games uses, counted as it is SAID — a weekday and its part of the day ("Saturday mornings"), so two
+ * Sunday-morning clocks are one time and games that are all Sunday mornings share nothing out (step 5's probe) — and how many of
+ * those games each of `teamIds` plays, in that order. null when the games use fewer than two times: there is nothing to share.
+ */
+export function rarestTimeShare(
+  games: { homeTeamId: string; awayTeamId: string; weekday: number; start: string }[], teamIds: string[],
+): { time: SlotTime; counts: number[] } | null {
+  const said = (s: SlotTime) => `${s.weekday}|${partOfDay(s.start)}`;
+  const used = new Map<string, SlotTime & { games: number }>();
+  const perTeam = new Map<string, number>(); // `${teamId}|${said}` → games at that time
+  for (const g of games) {
+    const k = said(g);
+    const was = used.get(k) ?? { weekday: g.weekday, start: g.start, games: 0 };
+    was.games += 1;
+    if (minutesOf(g.start) < minutesOf(was.start)) was.start = g.start;
+    used.set(k, was);
+    for (const t of [g.homeTeamId, g.awayTeamId]) perTeam.set(`${t}|${k}`, (perTeam.get(`${t}|${k}`) ?? 0) + 1);
+  }
+  if (used.size < 2) return null;
+  const rarest = [...used.values()].sort((a, b) => a.games - b.games || a.weekday - b.weekday || minutesOf(a.start) - minutesOf(b.start))[0];
+  return { time: { weekday: rarest.weekday, start: rarest.start }, counts: teamIds.map(t => perTeam.get(`${t}|${said(rarest)}`) ?? 0) };
+}
+
 // ── THE WINDOW AND THE ROUTE (9d-2a step 5, frames c1–c4, k3, k4) ────────────────────────────────────────────────────
 
-/** A day as the check says it: "Thu, Jun 17". */
-export const shortDayWords = (day: string) => `${WEEKDAY_HEADS[weekdayOf(day) - 1] ?? ''}, ${formatStoredDate(day, { withYear: false })}`;
-
 /** The part of a day a clock starts in. */
-const partOfDay = (clock: string) => (minutesOf(clock) < 12 * 60 ? 'morning' : minutesOf(clock) < 17 * 60 ? 'afternoon' : 'evening');
+export const partOfDay = (clock: string) => (minutesOf(clock) < 12 * 60 ? 'morning' : minutesOf(clock) < 17 * 60 ? 'afternoon' : 'evening');
 
 /** The rarest time, said: "Saturday mornings" (one: "Saturday morning"). */
 export const primeTimeWords = (t: SlotTime, n = 2) =>
@@ -380,7 +381,7 @@ export function matchupHints(teams: number, plan: PlanSummary): string[] {
 /** A warning, said. `team` names a team by id. */
 export function warningWords(w: GenerateWarning, division: string, team: (id: string) => string): string {
   switch (w.kind) {
-    case 'twice_in_a_day': return GENERATE_WORDS.warnTwice(team(w.teamId), shortDayWords(w.day));
+    case 'twice_in_a_day': return GENERATE_WORDS.warnTwice(team(w.teamId), dayWords(w.day));
     case 'byes_back_to_back':
       return GENERATE_WORDS.warnByes(team(w.teamId), formatStoredDate(w.weeks[0], { withYear: false }), formatStoredDate(w.weeks[1], { withYear: false }));
     case 'permit': return GENERATE_WORDS.warnPermit(division, w.venue);

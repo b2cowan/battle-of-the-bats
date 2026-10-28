@@ -2,17 +2,18 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll } from './supabase-paging';
 import { readClubPlaces } from './permit-lookup';
-import { weekdayOf } from './permit-time';
+import { clubDayOf, weekdayOf } from './permit-time';
 import { utcToZonedInputs } from './timezone';
 import { formatVenueLocation } from './venue-label';
 import { checkLeagueBookings } from './league-venue';
 import { clashReportForLeagueRows } from './venue-clash-lookup';
 import { clashOtherName, clashTimeRange } from './venue-clash-words';
 import { formatTimeRange } from './utils';
+import { dayWords } from './calendar-recipe';
 import { houseLeagueSlotRows, usesOf } from './league-time-server';
 import { buildLeagueScheduleHealth, leagueHealthPracticeFromRow } from './league-schedule-health';
 import {
-  shortDayWords, summaryOf,
+  summaryOf,
   type CheckedGame, type GamePlan, type GameTeam, type GameTimeSlot, type GenerateCheckReply, type GenerateSaveReply, type GenerateWarning,
 } from './league-game-generator';
 import type { LeagueSeason } from './types';
@@ -124,15 +125,15 @@ export async function checkGeneratedGames(p: {
   rows.forEach((r, i) => {
     const place = slotOf.get(plan.games[i].slotId)!.place;
     for (const f of club.findings[r.id] ?? []) {
-      booking(place, `${clashOtherName(f.other)}, ${shortDayWords(utcToZonedInputs(new Date(f.other.startMs).toISOString()).date)}, ${clashTimeRange(f.other.startMs, f.other.endMs)}`);
+      booking(place, `${clashOtherName(f.other)}, ${dayWords(clubDayOf(f.other.startMs))}, ${clashTimeRange(f.other.startMs, f.other.endMs)}`);
     }
   });
   for (const c of [...own.blocking, ...own.warnings]) {
     // A generated game against another generated game cannot happen (one game per slot); this is the club's pool.
     if (!c.partnerStartsAt) continue;
     const s = utcToZonedInputs(c.partnerStartsAt);
-    const time = c.partnerEndsAt ? formatTimeRange(s.time, utcToZonedInputs(c.partnerEndsAt).time) : formatTimeRange(s.time, null);
-    booking(c.fieldLabel, `${c.partnerLabel}, ${shortDayWords(s.date)}, ${time}`);
+    const time = formatTimeRange(s.time, c.partnerEndsAt ? utcToZonedInputs(c.partnerEndsAt).time : null);
+    booking(c.fieldLabel, `${c.partnerLabel}, ${dayWords(s.date)}, ${time}`);
   }
   warnings.push(...plan.warnings);
 

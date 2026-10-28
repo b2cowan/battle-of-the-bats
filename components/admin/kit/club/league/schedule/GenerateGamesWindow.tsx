@@ -39,6 +39,11 @@ function rowsOf(time: LeagueTime, pick: (row: LeagueTimeRow) => boolean) {
     .filter(pick)
     .map(row => ({ key: `${source.scheduleId}|${stretch.key}|${row.key}`, row, dates: source.dates }))));
 }
+/** A POST's answer, read once: whether it was ok, and its body (the reply, or the server's `error` and `code`) when it had one. */
+async function readReply<T>(r: Response | null) {
+  const data = (r ? await r.json().catch(() => null) : null) as (T & { error?: string; code?: string }) | null;
+  return { ok: !!r?.ok, data };
+}
 const slotCount = (row: LeagueTimeRow) => row.parts.reduce((n, p) => n + p.slotIds.length, 0);
 
 export default function GenerateGamesWindow({
@@ -91,12 +96,10 @@ export default function GenerateGamesWindow({
 
   const loadPlan = useCallback(async () => {
     setPlanFailed(false);
-    const r = await post({ step: 'plan' });
-    const data = r?.ok ? (await r.json().catch(() => null)) as GeneratePlanReply | null : null;
-    if (data) setPlan(data);
+    const { ok, data } = await readReply<GeneratePlanReply>(await post({ step: 'plan' }));
+    if (ok && data) setPlan(data);
     else {
-      const refusal = r ? (await r.json().catch(() => null)) as { error?: string } | null : null;
-      if (refusal?.error) setError(refusal.error);
+      if (data?.error) setError(data.error);
       setPlanFailed(true);
     }
   }, [post]);
@@ -129,13 +132,12 @@ export default function GenerateGamesWindow({
     const changes = openRows.filter(r => picked.has(r.key)).flatMap(r => rowChanges(r.row, { divisionId: division.id, kind: 'games' }));
     setBusy(true);
     setError(null);
-    const r = await fetch(`${api}/time${orgQuery}`, {
+    const { ok, data } = await readReply<unknown>(await fetch(`${api}/time${orgQuery}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ changes }),
-    }).catch(() => null);
-    const data = (r ? await r.json().catch(() => null) : null) as { error?: string } | null;
+    }).catch(() => null));
     await onTimeChanged();
     setBusy(false);
-    if (!r?.ok) { setError(data?.error ?? LEAGUE_TIME_WORDS.giveFailed); return; }
+    if (!ok) { setError(data?.error ?? LEAGUE_TIME_WORDS.giveFailed); return; }
     setPicked(new Set());
     toMatchups(true);
   }
@@ -144,12 +146,10 @@ export default function GenerateGamesWindow({
     setChecking(true);
     setCheckFailed(false);
     setError(null);
-    const r = await post({ step: 'check', through });
-    const data = r?.ok ? (await r.json().catch(() => null)) as GenerateCheckReply | null : null;
+    const { ok, data } = await readReply<GenerateCheckReply>(await post({ step: 'check', through }));
     setChecking(false);
-    if (!data) {
-      const refusal = r ? (await r.json().catch(() => null)) as { error?: string } | null : null;
-      if (refusal?.error) setError(refusal.error);
+    if (!ok || !data) {
+      if (data?.error) setError(data.error);
       setCheckFailed(true);
       return;
     }
@@ -162,10 +162,9 @@ export default function GenerateGamesWindow({
     if (!check) return;
     setBusy(true);
     setError(null);
-    const r = await post({ step: 'save', through, slotIds: check.slotIds });
-    const data = (r ? await r.json().catch(() => null) : null) as (GenerateSaveReply & { error?: string; code?: string }) | null;
+    const { ok, data } = await readReply<GenerateSaveReply>(await post({ step: 'save', through, slotIds: check.slotIds }));
     setBusy(false);
-    if (r?.ok && data) {
+    if (ok && data) {
       onSaved(W.saved(data.saved), permitAfterSave(data.permitLines, 'game'));
       return;
     }

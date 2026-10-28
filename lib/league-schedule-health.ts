@@ -34,7 +34,7 @@
  * its save arrive with 9d-2b's migrations. Games per team is each division's own plan (above), said per division.
  */
 import {
-  byesBackToBack, GENERATE_WORDS, primeTimeWords, shortDayWords, twiceInADay, type DatedGame, type SlotTime,
+  byesBackToBack, GENERATE_WORDS, primeTimeWords, rarestTimeShare, twiceInADay, type DatedGame, type SlotTime,
 } from './league-game-generator.ts';
 import {
   bookingKey, findLeagueBookingConflicts, isBlockingConflict, type LeagueBooking,
@@ -42,6 +42,7 @@ import {
 import { formatStoredDate, mondayOfDay, orgDayKey, utcToZonedInputs } from './timezone.ts';
 import { formatTime, pluralize } from './utils.ts';
 import { weekdayOf } from './permit-time.ts';
+import { dayWords } from './calendar-recipe.ts';
 import type { ScheduleHealthTone } from './schedule-metrics.ts';
 import type { LeagueGame, LeaguePractice } from './types.ts';
 
@@ -72,17 +73,6 @@ export interface LeagueHealthPractice {
   clubSlotId: string | null;
 }
 export interface LeagueHealthTeam { id: string; name: string; divisionId: string }
-
-export function leagueHealthGameFromRow(row: {
-  id: string; division_id: string; home_team_id: string; away_team_id: string; scheduled_at: string | null;
-  ends_at: string | null; status: string; org_venue_id: string | null; org_venue_facility_id: string | null; location: string | null;
-}): Required<LeagueHealthGame> {
-  return {
-    id: row.id, divisionId: row.division_id, homeTeamId: row.home_team_id, awayTeamId: row.away_team_id,
-    scheduledAt: row.scheduled_at, endsAt: row.ends_at, status: row.status,
-    venueId: row.org_venue_id, facilityId: row.org_venue_facility_id, location: row.location,
-  };
-}
 
 export function leagueHealthPracticeFromRow(row: {
   id: string; division_id: string | null; team_id: string; scheduled_at: string | null; ends_at: string | null; status: string;
@@ -154,7 +144,7 @@ export interface LeagueScheduleHealth {
   tone: ScheduleHealthTone;
   tiles: {
     games: { onPlan: number; teams: number };
-    homeAway: { off: number; tolerance: number };
+    homeAway: { off: number };
     byes: { backToBack: number };
     clashes: { pairs: number; notChecked: number };
   };
@@ -309,21 +299,12 @@ export function buildLeagueScheduleHealth(input: {
   const primeOf = new Map<string, LeagueTeamHealth['primeTime']>();
   for (const d of divisionIds) {
     const mine = teams.filter(x => x.divisionId === d);
-    const times = new Map<string, SlotTime & { games: number }>();
-    const per = new Map<string, number>();
-    for (const g of onGames.filter(x => x.divisionId === d)) {
+    const r = rarestTimeShare(onGames.filter(x => x.divisionId === d).map(g => {
       const { date, time } = utcToZonedInputs(g.scheduledAt);
-      const k = `${weekdayOf(date)}|${partOfDay(time)}`;
-      const was = times.get(k) ?? { weekday: weekdayOf(date), start: time, games: 0 };
-      was.games += 1;
-      if (time < was.start) was.start = time;
-      times.set(k, was);
-      for (const id of [g.homeTeamId, g.awayTeamId]) per.set(`${id}|${k}`, (per.get(`${id}|${k}`) ?? 0) + 1);
-    }
-    const rarest = [...times.values()].sort((a, b) => a.games - b.games || a.weekday - b.weekday || a.start.localeCompare(b.start))[0];
-    const counts = mine.map(x => per.get(`${x.id}|${rarest ? `${rarest.weekday}|${partOfDay(rarest.start)}` : ''}`) ?? 0);
-    const even = times.size < 2 || Math.max(...counts) - Math.min(...counts) <= 1;
-    mine.forEach((x, i) => primeOf.set(x.id, even ? 'even' : { games: counts[i], time: { weekday: rarest.weekday, start: rarest.start } }));
+      return { homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId, weekday: weekdayOf(date), start: time };
+    }), mine.map(x => x.id));
+    const even = !r || Math.max(...r.counts) - Math.min(...r.counts) <= 1;
+    mine.forEach((x, i) => primeOf.set(x.id, even ? 'even' : { games: r.counts[i], time: r.time }));
   }
   const teamRows: LeagueTeamHealth[] = teamsWithGames.map(t => ({
     teamId: t.id, name: t.name, divisionId: t.divisionId, have: have.get(t.id)!, plan: plan.get(t.id) ?? 0,
@@ -335,7 +316,7 @@ export function buildLeagueScheduleHealth(input: {
     timedGames, divisions: divisionIds.length, score, tone,
     tiles: {
       games: { onPlan, teams: teamsWithGames.length },
-      homeAway: { off: offTeams.length, tolerance: rules.homeAwayTolerance },
+      homeAway: { off: offTeams.length },
       byes: { backToBack: byes.length },
       clashes: { pairs: clashes.length, notChecked },
     },
@@ -343,12 +324,6 @@ export function buildLeagueScheduleHealth(input: {
     plans: divisionIds.map(d => ({ divisionId: d, games: plan.get(teams.find(t => t.divisionId === d)?.id ?? '') ?? 0 })),
   };
 }
-
-/** The part of a day a clock starts in (the generator's "Saturday mornings"). */
-const partOfDay = (clock: string) => {
-  const h = Number(clock.split(':')[0]);
-  return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
-};
 
 /** The window's order: what a family would notice first. */
 const ORDER: Record<LeagueHealthIssue['kind'], number> = { short: 0, postponed: 1, clash: 2, twice_in_a_day: 3, byes_back_to_back: 4, home_away: 5, unchecked: 6 };
@@ -422,11 +397,11 @@ export function leagueIssueWords(issue: LeagueHealthIssue, ctx: {
     case 'clash': {
       const clock = formatTime(utcToZonedInputs(new Date(issue.startMs).toISOString()).time);
       return {
-        text: `${ctx.place(issue.venueId, issue.facilityId)} is booked twice on ${shortDayWords(issue.day)} at ${clock}: ${ctx.label(issue.keys[0])} and ${ctx.label(issue.keys[1])}.`,
+        text: `${ctx.place(issue.venueId, issue.facilityId)} is booked twice on ${dayWords(issue.day)} at ${clock}: ${ctx.label(issue.keys[0])} and ${ctx.label(issue.keys[1])}.`,
         door: 'show', tone: 'error',
       };
     }
-    case 'twice_in_a_day': return { text: GENERATE_WORDS.warnTwice(ctx.team(issue.teamId), shortDayWords(issue.day)), door: 'showIt', tone: 'warning' };
+    case 'twice_in_a_day': return { text: GENERATE_WORDS.warnTwice(ctx.team(issue.teamId), dayWords(issue.day)), door: 'showIt', tone: 'warning' };
     case 'byes_back_to_back':
       return { text: GENERATE_WORDS.warnByes(ctx.team(issue.teamId), day(issue.weeks[0]), day(issue.weeks[1])), door: 'showIt', tone: 'warning' };
     case 'home_away':

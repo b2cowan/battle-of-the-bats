@@ -29,11 +29,11 @@ import { Fragment, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { ClubRow, ClubRowBand, ClubRowList, RepChip } from '../../RepKit';
 import { ClashLine, StateChip } from '../../ClubCalendarViews';
-import { CellChip } from '@/components/coaches/ScheduleCalendarViews';
+import { CellChip, NowLine } from '@/components/coaches/ScheduleCalendarViews';
 import cal from '../../ClubCalendar.module.css';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import sv from './SeasonSchedule.module.css';
-import { WEEKDAY_HEADS, dayHeading, dayOfMonth, dayWords, monthCells, monthWords, weekRangeWords } from '@/lib/calendar-recipe';
+import { WEEKDAY_HEADS, dayOfMonth, dayWords, monthCells, monthWords, weekRangeWords } from '@/lib/calendar-recipe';
 import { mondayOfDay } from '@/lib/timezone';
 import { clockOf, dayLong, timeWords, whereWords } from '@/lib/club-calendar-view';
 import { facilityWords } from '@/lib/venue-clash-words';
@@ -86,11 +86,6 @@ function BookingRow({ b, lead, onOpen }: { b: SeasonBooking; lead: string; onOpe
     />
   );
 }
-
-/** The now line (C7): a line, never a band — the rows under it aren't all today's. The coach's season list draws the same. */
-const NowLine = ({ today }: { today: string }) => (
-  <li className={coach.rowListNow} data-now-line role="presentation"><span>{dayHeading(today, today)}</span></li>
-);
 
 export function SeasonListView({ bookings, today, sport, teamName, onOpen }: {
   bookings: readonly SeasonBooking[];

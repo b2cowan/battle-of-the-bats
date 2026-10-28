@@ -2,8 +2,6 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   findLeagueBookingConflicts,
-  scanLeagueBookingConflicts,
-  countUncheckedBookings,
   isBlockingConflict,
   bookingWindow,
   bookingKey,
@@ -170,21 +168,6 @@ describe('findLeagueBookingConflicts — exclusions', () => {
   });
 });
 
-describe('scanLeagueBookingConflicts', () => {
-  it('flags BOTH sides of a clash, across the game/practice boundary', () => {
-    const bookings = [
-      game({ id: 'g1', orgVenueId: 'v1', orgVenueFacilityId: 'f1' }),
-      practice({ id: 'p1', orgVenueId: 'v1', orgVenueFacilityId: 'f1' }),
-      game({ id: 'g2', orgVenueId: 'v1', orgVenueFacilityId: 'f2' }), // different surface — clean
-    ];
-    const map = scanLeagueBookingConflicts(bookings);
-    assert.equal(map.size, 2);
-    assert.ok(map.has('game:g1'));
-    assert.ok(map.has('practice:p1'));
-    assert.equal(map.get('game:g1')!.partner.id, 'p1');
-  });
-});
-
 describe('resolveEndInstant', () => {
   it('resolves an ordinary end on the same day', () => {
     // 18:00 → 20:00 Toronto wall-clock: exactly 2h apart in absolute time.
@@ -203,19 +186,5 @@ describe('resolveEndInstant', () => {
   it('returns null when date or end time is missing', () => {
     assert.equal(resolveEndInstant('2026-06-10T22:00:00.000Z', '2026-06-10', null), null);
     assert.equal(resolveEndInstant('2026-06-10T22:00:00.000Z', null, '20:00'), null);
-  });
-});
-
-describe('countUncheckedBookings', () => {
-  it('counts scheduled bookings with no usable placement — and only those', () => {
-    const n = countUncheckedBookings([
-      game({ id: 'g1' }),                                  // no location at all → unchecked
-      game({ id: 'g2', location: 'TBD' }),                 // placeholder → unchecked (R2)
-      game({ id: 'g3', location: 'Riverside Park' }),      // typed text IS checked
-      game({ id: 'g4', orgVenueId: 'v1' }),                // picked venue → checked
-      game({ id: 'g5', startsAt: null }),                  // unscheduled → not counted
-      game({ id: 'g6', status: 'cancelled' }),             // cancelled → not counted
-    ]);
-    assert.equal(n, 2);
   });
 });

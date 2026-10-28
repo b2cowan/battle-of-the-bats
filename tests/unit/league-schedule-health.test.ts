@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import {
-  buildLeagueScheduleHealth, leagueHealthGameFromRow, leagueHealthGameOf, leagueHealthPracticeOf, leagueIssueWords, primeTimeCell,
+  buildLeagueScheduleHealth, leagueHealthGameOf, leagueHealthPracticeOf, leagueIssueWords, primeTimeCell,
   type LeagueHealthGame, type LeagueHealthIssue, type LeagueHealthPractice, type LeagueHealthTeam,
 } from '../../lib/league-schedule-health.ts';
 import { buildEventScheduleHealth } from '../../lib/schedule-metrics.ts';
@@ -218,18 +218,5 @@ describe('the season\'s schedule wears it (step 6, d1)', () => {
     assert.match(WINDOW, /<Metric\b/);
     assert.match(WINDOW, /<IssueRow\b/);
     assert.doesNotMatch(WINDOW, /rulesToggle|onSaveRules|SlidersHorizontal/, 'no rules door, no save');
-  });
-});
-
-describe('leagueHealthGameFromRow', () => {
-  it('reads every field a game row carries', () => {
-    const row = {
-      id: 'g', division_id: 'd', home_team_id: 'h', away_team_id: 'a', scheduled_at: at('2026-06-01'), ends_at: null,
-      status: 'scheduled', org_venue_id: 'v', org_venue_facility_id: 'f', location: 'Lions Park — Diamond 1',
-    };
-    assert.deepEqual(leagueHealthGameFromRow(row), {
-      id: 'g', divisionId: 'd', homeTeamId: 'h', awayTeamId: 'a', scheduledAt: at('2026-06-01'), endsAt: null,
-      status: 'scheduled', venueId: 'v', facilityId: 'f', location: 'Lions Park — Diamond 1',
-    });
   });
 });
