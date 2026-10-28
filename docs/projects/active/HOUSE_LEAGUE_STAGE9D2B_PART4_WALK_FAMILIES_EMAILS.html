@@ -1,0 +1,386 @@
+<title>9d-2b Part 4 · The families’ game emails and the history</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the 12c walks' frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.opt { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); cursor: pointer; }
+.opt input { margin-top: 0; }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · House League · Stage 9d-2b · Part 4 · §418</span>
+    <h1>The families’ game emails, and the history that keeps them</h1>
+    <p class="sub">Written 2026-10-28 for Stage 9d-2b, Part 4. One purpose; sign it off on its own.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>When a league admin publishes a division’s schedule, or sends the changes waiting on it, each family gets ONE email about its own children’s teams, and the season’s Email families history lists what was sent and who it missed. This walk reads, on dev, the words those emails will say (dev has no email key, so nothing is mailed) and the history that follows each press.</p></section>
+  <section class="card"><h2>It passes when</h2><ul><li>Publish schedule’s “See the email” shows the real email for the household with the most children: one email, one part per child, only that child’s team’s games, and a named back to the question.</li><li>Changes to send’s “See their email” shows a moved game as Now / Was, Was naming only what changed, and a household with two children on two changed teams gets ONE email with both.</li><li>The season’s Email families history gets one Automatic row per press (Schedule published, Schedule changes), each counting its families.</li><li>A send that stopped partway reads Stopped, offers “Send to the 2 it missed”, and finishes from there; the division’s line says the same and links to it.</li><li>An urgent cancel can be sent on its own while another change keeps waiting.</li></ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul><li>Real mail arriving. Dev has no email key: every household is recorded as skipped, so “reached 0” is right on dev. The first production send and the coaches’ copy are read there.</li><li>The coaches’ copy of a change and the coach’s own games page (Part 5). Walk U11’s teams have no coaches on dev.</li><li>The public schedule (walk §412), and editing a published game’s window (Part 3’s walk).</li><li>The help articles: they are rewritten once for all of 9d-2b in Part 7.</li></ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts"><dt>Needs</dt><dd>Walks §410 (Walk U11 and its six games) done. Then, in the project folder: <code>node --env-file=.env.local .probe/9d2b-p4/fixture.mjs</code> gives Walk U11’s four teams eight children in seven households (the <strong>Okafor</strong> household has Ava on the Hawks and Ben on the Owls). Made 2026-10-28. <strong>Publishing can’t be undone in the product</strong>, so to walk it a second time run <code>node --env-file=.env.local .probe/9d2b-p4/fixture.mjs --reset</code> first (Walk U11 back to a draft, its games as generated, its emails gone).</dd><dt>Dev server</dt><dd>Restart it first: Part 4 added files and migration 410. If a screen looks like the old one, restart it.</dd><dt>Walked once</dt><dd>Parts A, B and E publish and send for real on dev. Part D’s two commands are the only way to see “Stopped” without a failing mail provider.</dd></dl></section>
+  <section class="card"><h2>Sign in as</h2><p>One browser window per person (a private window for the second). Dev only, keep this page private.</p><dl class="facts"><dt>League admin</dt><dd><code>uat-club-league-admin@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Jordan Pike) — Part A</dd><dt>Owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> — Parts B to E (a private window)</dd></dl><p class="sub">Sign in at <code>http://localhost:3000/login</code>.</p></section>
+  <section class="card"><h2>Where and on what</h2><dl class="facts"><dt>Club</dt><dd><code>uat-rep-club</code> (UAT Rep Club, the Club plan). House league: <strong>2026 Fall House League</strong>, division <strong>Walk U11</strong> (Hawks, Owls, Foxes, Bears; six games on Sundays Nov 8, 15 and 22 at Kinsmen Park · Diamond A).</dd><dt>Season schedule</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code></dd><dt>Email families</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/notifications</code></dd></dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul><li>Publish’s question turns into a form (with a named back) only while “See the email” shows, because only a form has the back. Part A step 6 is where you will feel it. Say if it should stay.</li><li>A moved game is ONE item in the email with Now and Was on their own lines (Part B step 6).</li><li>An f5 cancel that reaches only some families says “Reached 19 of 21 families · 2 didn’t send.” and then the others-waiting sentence. A real partial can’t be made on dev; Part D shows the History’s side of it.</li></ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "hl9d2b-p4-families-emails-v1";
+  var TITLE = "9d-2b Part 4 walk §418 · The families’ game emails and the history (2026-10-28)";
+  var PARTS = [
+ {
+  "id": "A",
+  "title": "Publish schedule · “See the email”",
+  "steps": [
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Open the season’s Schedule (<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/schedule</code>) and pick <strong>Walk U11</strong>.",
+    "see": "<strong>Stop check:</strong> the division reads <strong>Draft</strong> with a <strong>Publish schedule</strong> button. If it already says Published, run the <code>--reset</code> above, reload, and start again."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Press <strong>Publish schedule</strong>.",
+    "see": "A question: <strong>Publish Walk U11’s schedule?</strong> — “6 games go on the public schedule. Each family gets one email with its children’s games, and the 4 teams’ coaches see them on their team page. After this, changes wait for you to send them.” The foot: “Reaches 7 families. An automatic notice: it doesn’t count toward today’s …”. A link <strong>See the email</strong>."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Press <strong>See the email</strong>.",
+    "see": "The question is replaced by a mail view with a named back (<strong>← Publish Walk U11’s schedule?</strong>). To: <strong>The Okafor family</strong> (the household with the most children). Subject: <strong>The schedule is up for Hawks and Owls</strong>. “Hi Chidi,”."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Read the body.",
+    "see": "Two parts, Ava’s first: “UAT Rep Club published the 2026 Fall House League schedule. Here are <strong>Ava’s games with Hawks</strong>:” — <em>Sun, Nov 8 · 9:30 a.m. · Owls vs Hawks · Kinsmen Park · Diamond A</em>, <em>Sun, Nov 15 · 8:00 a.m. · Hawks vs Bears · …</em>, <em>Sun, Nov 22 · 9:30 a.m. · Foxes vs Hawks · …</em>. Then <strong>Ben’s games with Owls</strong> (Nov 8 9:30 Owls vs Hawks, Nov 15 9:30 Foxes vs Owls, Nov 22 8:00 Owls vs Bears). Then “See the full schedule →”, “Questions? Ask the Hawks or Owls coach.” and “Times in Eastern time.”"
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Look for a game that is not one of their teams’.",
+    "see": "None: <em>Bears vs Foxes</em> (Nov 8, 8:00 a.m.) is in neither part. Each part lists only that child’s team’s three games."
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Press the named back.",
+    "see": "The question again, with the same counts. Nothing was sent. (Escape closes the whole window; on a phone the Back button goes up one level first.)",
+    "opts": [
+     "Did it",
+     "Skipped it"
+    ]
+   },
+   {
+    "who": "League admin · uat-club-league-admin@uat-rep-club.local",
+    "do": "Press <strong>Publish</strong>.",
+    "see": "The button reads “Publishing…”, the window closes, and the division’s line reads <strong>Published {today} · 7 families told</strong>. The Publish schedule button is gone (there is no unpublish).",
+    "call": "Dev only: the confirmation says “7 families emailed” even though no mail can go without a key. Production says it only when the provider took them."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "Changes to send · “See their email”",
+  "steps": [
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Sign in as the owner (a private window) and open the season’s Schedule, <strong>Walk U11</strong>.",
+    "see": "<strong>Stop check:</strong> the header has no <strong>Changes to send</strong> count. If it has one, run the <code>--reset</code> and redo Part A."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Open <strong>Hawks vs Bears</strong> (Sun, Nov 15, 8:00 a.m.), press <strong>Edit this game</strong>, set the Time to <strong>9:00 a.m.</strong> and the End time to <strong>10:30 a.m.</strong>, and press ✓.",
+    "see": "The form says “Families hear about this when you send changes.” After ✓ the game reads <strong>Moved · not sent</strong> and the header shows <strong>Changes to send</strong> with an amber <strong>1</strong>. (The owner may place a game anywhere; a league admin may only use the division’s own game times.)"
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Open <strong>Foxes vs Owls</strong> (Sun, Nov 15, 9:30 a.m.) and set the Time to <strong>10:30 a.m.</strong> and the End time to <strong>12:00 p.m.</strong>. ✓.",
+    "see": "The count reads <strong>2</strong>."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Press <strong>Changes to send</strong>.",
+    "see": "Two rows with Undo: <em>Hawks vs Bears · Sun, Nov 15: 8:00 a.m. → 9:00 a.m.</em> (“Hawks and Bears families · 4 families”) and <em>Foxes vs Owls · Sun, Nov 15: 9:30 a.m. → 10:30 a.m.</em> (“Foxes and Owls families · 4 families”). Under them: “The Okafors have Ava on the Hawks and Ben on the Owls. They get one email with both changes.” The foot: “Reaches 7 families, one email each. The 4 teams’ coaches get a copy. Doesn’t count toward today’s …”."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Press <strong>See their email</strong>.",
+    "see": "A mail view with the named back <strong>← Changes to send</strong>. To: <strong>The Okafor family</strong>. Subject: <strong>Games changed for Hawks and Owls</strong>."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Read the body.",
+    "see": "Ava’s part: “UAT Rep Club changed <strong>Ava’s games with Hawks</strong>:” — one item, three lines: <em>Hawks vs Bears</em> / <em>Now: Sun, Nov 15, 9:00 a.m. · Kinsmen Park · Diamond A</em> / <em>Was: 8:00 a.m.</em>. Ben’s part: <em>Foxes vs Owls</em> / <em>Now: Sun, Nov 15, 10:30 a.m. · Kinsmen Park · Diamond A</em> / <em>Was: 9:30 a.m.</em>. “Was” names only what changed (the clock), not the day or the place."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Press the named back, then <strong>Undo</strong> on <em>Foxes vs Owls</em>.",
+    "see": "A passing line: “Undone. Foxes vs Owls is back as families last heard.” The tray lists one game. The Okafors’ note and the <strong>See their email</strong> link are gone, because no household now has children on two changed teams."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Close the tray, open Foxes vs Owls again, and set the Time to <strong>10:30 a.m.</strong>, End <strong>12:00 p.m.</strong> once more. ✓. Open <strong>Changes to send</strong>.",
+    "see": "Two games again, and the Okafors’ note is back."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Press <strong>Send 2 changes</strong>.",
+    "see": "The button reads “Sending…” and can’t be pressed twice. The window closes with <strong>Sent to 7 families.</strong> and the header’s Changes to send count clears. Both games now read as their new times, no “not sent”."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "The history: one row per press",
+  "steps": [
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Open the season’s <strong>Email families</strong> tab (<code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/notifications</code>).",
+    "see": "The sent history lists two rows tagged <strong>Automatic</strong>: <strong>Schedule changes: Walk U11</strong> (newest) and <strong>Schedule published: Walk U11</strong>. Each reads “Walk U11 · 7 families · reached 0”. <strong>Reached 0 is right on dev</strong> (no key: every household is recorded as skipped). Neither is marked Stopped."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Open <strong>Schedule published: Walk U11</strong>.",
+    "see": "A read-only record: “FieldLogicHQ sent this when Walk U11’s schedule was published: one email per family, about their own children’s teams. Automatic emails don’t count toward the season’s …”. No resend button (it isn’t stopped)."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Open <strong>Schedule changes: Walk U11</strong>.",
+    "see": "“… when Walk U11’s schedule changes were sent: one email per family …”. No resend button."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "A send that stopped partway",
+  "steps": [
+   {
+    "who": "You · the project folder",
+    "do": "Run <code>node --env-file=.env.local .probe/9d2b-p4/fixture.mjs --stop</code>",
+    "see": "It prints: “Stopped: the latest games_changed notice (7 families) now has 2 families still to reach.” (It marks one household failed and one pending, as a send that died halfway would leave them.)"
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Reload the <strong>Email families</strong> tab.",
+    "see": "<strong>Schedule changes: Walk U11</strong> now carries a <strong>Stopped</strong> chip."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Open it.",
+    "see": "“This email stopped partway. 2 families it hadn’t reached didn’t get it.” and a button <strong>Send to the 2 it missed</strong>, with “Sending to the families it missed doesn’t count toward the season’s …” beside it."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Press <strong>Send to the 2 it missed</strong>.",
+    "see": "The button reads “Sending…”, the record closes with “Sent to the 2 it missed. Reached …”. Reload: the row has no Stopped chip.",
+    "call": "Dev only: it reads “Reached 0 of 7 families” because dev can’t mail; the two rows are recorded skipped, not missed."
+   },
+   {
+    "who": "You · the project folder",
+    "do": "Run <code>node --env-file=.env.local .probe/9d2b-p4/fixture.mjs --stop=published</code>, then open the season’s Schedule on <strong>Walk U11</strong> as the owner.",
+    "see": "The division’s line reads <strong>Published {the day you published} · reached 5 of 7 families · 2 didn’t send.</strong> with a link <strong>See them</strong>."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Press <strong>See them</strong>.",
+    "see": "The season’s Email families history opens, where <strong>Schedule published: Walk U11</strong> is Stopped. Finish it the same way (Send to the 2 it missed); the division’s line goes back to “Published … · 7 families told”."
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "An urgent cancel, sent on its own",
+  "steps": [
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "On the Schedule (Walk U11) edit <strong>Owls vs Bears</strong> (Sun, Nov 22, 8:00 a.m.): Time <strong>8:30 a.m.</strong>, End <strong>10:00 a.m.</strong>. ✓. Do not send.",
+    "see": "The header shows Changes to send <strong>1</strong>."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Open <strong>Foxes vs Hawks</strong> (Sun, Nov 22, 9:30 a.m.) and press <strong>Cancel this game</strong>.",
+    "see": "One question that offers both: the game’s day, time and place, then “The Foxes and Hawks families (4) can be emailed now, or with your other changes.” with <strong>Cancel, send later</strong> and <strong>Cancel and tell families now</strong>."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Press <strong>Cancel and tell families now</strong>.",
+    "see": "“Sent to 4 families. Your 1 other change keeps waiting.” The cancelled game is struck through on the schedule, and the header still shows Changes to send <strong>1</strong> (the Owls vs Bears move)."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Open <strong>Changes to send</strong>.",
+    "see": "Only <em>Owls vs Bears</em> is listed. The cancel is not (it went on its own)."
+   },
+   {
+    "who": "Owner · uat-club-owner@uat-rep-club.local",
+    "do": "Open the <strong>Email families</strong> tab.",
+    "see": "A new <strong>Schedule changes: Walk U11</strong> row, “4 families”, above the others. The Owls vs Bears move has made no row yet."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      function mk(key, label) {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + key.replace(/[^A-Za-z0-9]/g, '-'); cb.checked = !!state.ticks[key];
+        cb.addEventListener('change', function () { state.ticks[key] = cb.checked; save(); refresh(); });
+        boxes.push({ part: p.id, step: id, key: key, label: label, cb: cb });
+        return cb;
+      }
+      if (!s.opts) {
+        var row = el('label', 'step');
+        row.appendChild(mk(id, null)); row.appendChild(t); body.appendChild(row);
+      } else {
+        var row2 = el('div', 'step'); var col = el('div', 'txt'); col.appendChild(t);
+        var opts = el('div', 'opts');
+        s.opts.forEach(function (label) {
+          var ol = el('label', 'opt'); ol.appendChild(mk(id + ':' + label, label)); ol.appendChild(document.createTextNode(label)); opts.appendChild(ol);
+        });
+        col.appendChild(opts); row2.appendChild(col); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  /* A step counts as done when any of its boxes is ticked (one box, "Did it" or "Held"). */
+  function doneSteps(partId) {
+    var seen = {};
+    boxes.forEach(function (b) { if ((!partId || b.part === partId) && b.cb.checked) seen[b.step] = true; });
+    return Object.keys(seen);
+  }
+  var totalSteps = PARTS.reduce(function (n, p) { return n + p.steps.length; }, 0);
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = [];
+      boxes.filter(function (b) { return b.part === p.id && b.cb.checked; }).forEach(function (b) {
+        var plain = b.label === null || b.label === 'Did it';
+        ticked.push(plain ? b.step : b.step + ' (' + b.label + ')');
+      });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + doneSteps(p.id).length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
