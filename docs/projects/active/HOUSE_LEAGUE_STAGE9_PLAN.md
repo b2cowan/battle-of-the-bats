@@ -1072,3 +1072,21 @@ open it, and the menu's top level is Stage 13's.
   `CancelPracticeModal` (Add › A practice and a hand-booked practice's cancel, 11b's, not this build's to redraw);
   `.admin-type-baseline.json` has no entry for either page. **9d-2a's build steps are complete; next is the prompt's
   "Checks and done": `/review` (high), `/simplify`, `/docs`, the PM brief, TODO, and the walk (one purpose per part).**
+- **2026-10-28 — 9d-2a Review calls: owner decided ("go with your recommendations").** The `/review` (high) left seven calls to
+  the owner; each is now settled. **Fixed (commit `fix(house-league 9d-2a): review calls 2, 5 and 7a`):** (2) a division with
+  teams and no games, in a season that has games elsewhere, is a Schedule-health issue in the settled pair ("U12 has no games
+  yet. Generate the whole season, or add games one at a time.", warning, no door) and its teams count as not on plan, so the Games
+  tile reads "2 of 4" and the score drops (it used to read U10 clean + U12 empty = 100); a season with no games at all still
+  reads "Nothing to score yet". (5) Generate games' check now WARNS when it could not look: "We couldn’t check the club’s permit
+  just now, so this game time may be outside it." / "We couldn’t check the club’s schedule just now, so this game time may
+  overlap another booking." (**[marketing] drafts** — the words are the build's, not yet seen by `/marketing`); the shared reads
+  only flag a failure, and every save reply keeps its shipped quiet policy ("a permit line is never an error"). (7a) the game
+  PATCH refuses a status outside scheduled / completed / cancelled / postponed and a score that is not both-or-neither whole
+  numbers with a plain 400 (was a 500); an unreadable body is a 400. **Kept as is:** (1) health's plan on a tie goes to the larger
+  count (the smaller-on-tie rule has its own failure, a deleted game going unflagged); (6) "the permit ended" also fires for a
+  booking in the gap between two seasons' permits (wanted). **Carried to 9d-2b:** (3) the pencil's Home/Away dropdowns on an
+  existing game are ignored by the save (9d-2b rewrites the game window — support a team change there, or show the teams as
+  facts); (7b) a stale window can postpone a finished game (needs the change record). **Backlog:** (4) the first-fit generator
+  can say "crowded" when a valid layout exists (16 of 57 small fuzz cases) — wants a matching step, no owner-visible urgency.
+  Walks: none quote a changed line; §411 (health) assumes Walk U11 already has its games from §410, so the new issue does not
+  appear there (a re-walk before §410 would show it, correctly).

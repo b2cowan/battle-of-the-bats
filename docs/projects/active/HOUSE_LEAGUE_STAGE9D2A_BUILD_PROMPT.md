@@ -79,6 +79,11 @@
   can 500 on a bad value or let a stale window postpone a finished game. **Remaining: `/docs` (Part 6 help rewrite, 9d2a·H
   and k4 said in so many words), the PM brief, TODO line, memory file, then `check:layout --changed` and a dev-server
   restart (ask first).**
+- **2026-10-28: the seven review calls are DECIDED (owner: "go with your recommendations"); plan §9 has the entry.** Fixed:
+  (2) a division with teams and no games is a health issue and not on plan; (5) Generate's check warns "We couldn’t check …"
+  when a read fails (the words are [marketing] drafts); (7a) the game PATCH validates status and score with a 400. Kept: (1) the
+  tie rule, (6) "permit ended" in the gap between permits. Carried to 9d-2b: (3) the pencil's Home/Away ignored on save, (7b) a
+  stale window postponing a finished game. Backlog: (4) first-fit "crowded". No walk step quotes a changed line.
 - **Facts found that the steps below must respect:** the club's cross-program clash rule never compares two house-league
   bookings (`comparable`: same owner) — house league's own clashes are `lib/league-schedule-conflict.ts`; a postponed game
   keeps its `scheduled_at`; `league_games.status` is scheduled|completed|cancelled|postponed only; `houseLeagueSlotRows`
