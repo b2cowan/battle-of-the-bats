@@ -181,3 +181,114 @@ The drawing's draft words (HOUSE_LEAGUE_STAGE11B_PART3_DRAWINGS.html) and the bu
 | The window, load failed | House league's time didn't load. Try again. | **as built** | The house pattern. |
 | A Save that failed (not stale) | That change wasn't saved. Try again. | piece: **The changes didn't save. Try again.** · a row or one date: **That change didn't save. Try again.** | The house's active "didn't save". |
 | Tools' Export row, the free League floor | Exports · League · "Exports are part of League. …" | **Exports · League Plus** · **Exports are part of League Plus. Upgrade to export your schedule, standings, and registrations.** | A FIX, not a style call: exports are League Plus's (PLAN_PRICING_FACTS.md); "League" is the free plan itself. The Registrations screen's badge carried the same wrong name and was fixed with it. |
+
+## Stage 9d-2a: the season's schedule (settled by /marketing 2026-10-27)
+
+Frames b1–b4, c1–c4, d1–d4, g1/g2 (this-week frame), i, k of the drawings (TdXm5jmTEJ9qPvR3T5H9qU v4). Where a drawing and this section differ, **this section wins**. Shipped words were matched, not reinvented: the calendar recipe's week, today and state words, the club calendar's "Nothing here matches the filters." / "Change view · {view}" / drawer "View", `permitLine`, the tournament health bands, the zone sentence.
+
+**Owner rulings, 2026-10-27 (build start):**
+- **A Save is live.** 9d-2a has no publish state: a saved game is on the public schedule at once, as on production today, and 9d-2a releases normally. Every drawn "Published …", "draft", "Saved as a draft…", "Drafts only…", "Replace 45 draft games?" and "Nothing is published, so nobody is told" line is **dropped**; the true lines below replace them.
+- **No "Moved" in 9d-2a.** A game keeps one date and no history, so once a postponed game is given its new date it reads as an ordinary game in its new week. "Moved" and "Was {old date}" on a re-dated game arrive with 9d-2b's change record. A postponed game still shows **Was {its date}** until it gets a new one (it keeps that date).
+- **"Put it back on"** for a cancelled game: yes (today's Status dropdown could un-cancel; the read-first window keeps that).
+- **"Families aren't emailed."** is said on Postpone, Cancel and Generate's Save: true until 9d-2b, which rewrites those lines.
+- **The free League plan's branch in Generate is untouched** (9d2·14, parked). **"See the permit" is in this build.**
+
+**One word each, everywhere:** the door is **Give it a new date** (window, health, the postponed row). The generator is **Generate games** everywhere, the edge state k included ("Generate the schedule" goes). The postponed group is **Needs a new date** on every surface (list, phone, public), its waiting count the amber pill, never "· 1 to review". "Postponed" lives on the row. A month chip's clock is the whole clock, **6:00 p.m.** (the clock ruling has no dense-cell carve-out): a chip that runs out of room shortens the names, never the clock.
+
+### b1 · b2 · b3: the desk, the month, the phone
+
+| id | Settled | Note |
+|---|---|---|
+| Time line | **{Division}'s time comes from the club's schedule, {schedule}: games {days} {time}; practices {days} {time}.** · door **House league's time →** | The 11b-settled door, not the drawn "Open it". |
+| Toolbar | **{Division}** scope · **List** **Week** **Month** · **Show** · **Export** · **Add** | Week and Month only on a phone. |
+| Add's choice | **Add to the schedule** · **A game** · **A practice** | The drawn "asks a game or a practice". |
+| Postponed fold | **Needs a new date** + the amber count pill | Not "Postponed · needs a new date". |
+| Columns | **When** · **What** · **Place** | |
+| Earlier weeks | **Show {n} earlier week/weeks** | Counted. |
+| Week, today | **Jun 14 – 20, 2027** · **this week** · **Today · Thu, Jun 17** | The recipe's. |
+| Folded practices | **Practices · {n} team/teams** + the names | |
+| Place | **{Venue} · {Facility}**; a typed place as typed | |
+| States | **Final** **7–4** · **Cancelled** · nothing on a game that's on | No Moved (ruling above). |
+| Sub-line | none | Dropped by ruling. |
+| Month | **Previous month** · **Next month** · **+{n} more** · **{day} · Today** | |
+| Month chips | **6:00 p.m. Cardinals vs Rays** · **6:00 p.m. Practices · 5** · **10:00 a.m. Mariners vs Rays · Postponed** | The whole clock. |
+| Month holiday | **Jul 1 · Canada Day** only if a date off is in the data the page reads; otherwise nothing | No holiday list is invented. |
+| Phone | **Change view · Week** · **Schedule health {score}** · **Tools** · **Add** · **Previous day** · **Next day** · **Thu, Jun 17 · Today** · drawer **View** | Tools holds **Show**, **Export**, **Generate games** (absent, never disabled, when no division can be generated). |
+| Empty, List | **{Division} has no games or practices yet.** · **Add one, or generate the season's games.** | With practices but no games, k shows instead. |
+| Empty, Week | **Nothing is scheduled this week.** | |
+| Empty, Month | **Nothing is scheduled in {June 2027}.** | |
+| Empty, filtered | **Nothing here matches the filters.** | The shipped sentence. |
+
+### b4: the game window
+
+| id | Settled | Note |
+|---|---|---|
+| Eyebrow, title | **{Division} · a game** · **{Home} vs {Away}** | |
+| Facts | **When** · **Where** · **Home** · **Away** · **Notes** (**None**, a reader only) | |
+| Time from | **Time from** · **{schedule}, the club's schedule** | Editor only; only when the game sits on one of the division's game-time slots. Otherwise nothing. |
+| Pencil | **Edit this game** | |
+| Permit line | `permitLine`'s shipped words + **See the permit** | Absent for someone who can't open the permit. |
+| Doors | **Postpone this game** · **Cancel this game** | At the end of the body. |
+| Postpone, confirm | **Postpone {Home} vs {Away}?** · **It moves to Needs a new date and stops holding its time and place. The public schedule says Postponed until you give it a new date. Families aren't emailed.** · **Postpone this game** / **Keep it** | |
+| Cancel, confirm | **Cancel {Home} vs {Away}?** · **It stays on the schedule, struck through, and the public schedule shows it Cancelled. Families aren't emailed.** · **Cancel this game** / **Keep it** | "Keep it", never "Cancel", which would read as the opposite. |
+| Postponed | **When** reads **Was {Thu, Jun 17, 2027 · 6:00–7:30 p.m.}** · state **Needs a new date** · door **Give it a new date** | |
+| Cancelled | state **Cancelled** · door **Put it back on** · toast **Put back on the schedule.** | Ruling above. |
+| Delete | **Delete {Home} vs {Away}?** · **It leaves the schedule and the public page for good.** + (scored) **Its score comes out of the standings.** + **To call a game off but keep it listed, cancel it instead.** · **Delete** / **Keep it** | The shipped last sentence named a Status field that is gone. |
+
+### c: Generate games
+
+| id | Settled | Note |
+|---|---|---|
+| Step 1 | as settled above ("Generate games, step 1"); the phone's step-1 foot takes the same **Each game is 90 minutes, the length of a slot.** | Not reopened. |
+| Step 2 | **{season} · step 2 of 2** · **Generate games: match-ups** · **{Division} · every team plays every other team** · **Once** / **Twice** · **{n} game/games each · {m} game/games** | |
+| Step 2 hint | even: **{n} teams: no byes.** · odd: **{n} teams: one team has a bye each week, never two weeks running.** · then **Home and away are balanced for you: {a} or {b} home games each.** (**{a} home games each** when equal) · then **{prime time} are shared out evenly.** | Each sentence only when it applies; the prime-time phrase comes from the slots. |
+| Step 2 foot | **{n} games in {m} slots, {start} – {end}. Nothing is saved yet.** · **Back** · **Check the games** | The drawn "until you check" was false: Save saves. |
+| Passing | **Ready to save: {n} games** · **{start} – {end} · {w} weeks** · **Every team plays {g} games, {a} or {b} at home.** · **Every team gets {k} {prime time}.** · **Schedule health {score}.** · **See the {n} games** | |
+| Passing foot | **Saving puts these {n} games on the public schedule at once. Families aren't emailed.** · **Back** · **Save {n} games** | Replaces the draft foot. |
+| After save | **Saved {n} games. They're on the public schedule now.** | The shipped `permitAfterSave` follows unchanged when games fall outside a permit. |
+| Warning | **{n} games, with {k} thing/things to look at** · **Everything else passes** · foot **You can save now and sort it out later.** | |
+| Warning: permit | **{Division}'s game time is outside the club's permit for {venue}.** + the permit line + **See the permit** | |
+| Warning: a booking there | **{Division}'s game time overlaps a booking at {place}: {other}.** | |
+| Warning: twice in a day | **{Team} plays twice on {Thu, Jun 17}.** | |
+| Warning: byes | **{Team} has a bye two weeks running, {Jun 7} and {Jun 14}.** | |
+| Blocking | **This doesn't fit {Division}'s time** · **{n} games need {n} slots. {Division}'s game time has {m} by {Aug 31}.** · **Give {Division} more time, or play every team once.** · **Nothing is saved.** · **Give {Division} more time** | "or play every team once" only when Twice was chosen. |
+| Checking, failed | **Checking…** · **The check didn't finish. Your choices are kept.** · **Try again** | |
+| Phone | **{n} games, {k} thing/things to look at** · **{Division}'s game time is outside the club's permit.** · **It ended {Sep 30, 2026}.** | |
+| Division list | A division with games is **not listed**. None left: **Every division already has games. Add more one at a time, with Add.** | No "Replace…" state in 9d-2a. |
+
+### d: Schedule health
+
+| id | Settled | Note |
+|---|---|---|
+| Button | **—** when no game has a time, else the score | |
+| Window | **Schedule health** · **{score}** **/100** · **{band} · {n} issue/issues · {scope}** | Bands as the tournament's: **85+ Healthy, 70+ Review, below Needs work**. |
+| Nothing to score | **Nothing to score yet. Schedule health appears once games have a time.** | |
+| Tiles | **Games** · **{a} of {b}** · **teams on plan** / **Home/away** · **{n} off** · **off by more than {tolerance}** / **Byes** · **Spread** · **none back to back** / **Clashes** · **{n}** · **{k} not checked** | "by 2 or more" would go stale when the rule moves. |
+| Issue: short of games | **{A} and {B} have {a} of {b} games. Their {Jun 14} game was cancelled and not replayed.** · **Show them ›** | |
+| Issue: postponed | **{Home} vs {Away} was postponed from {Jun 14} and still needs a new date.** · **Give it a new date ›** | |
+| Issue: home/away | **{A} has both games at home; {B} has both away.** · **Show them ›** | No "the" before a team's name. |
+| Issue: typed place | **{n} practice/practices is/are at a typed place, so it/they can't be checked for clashes.** · **Show them ›** | |
+| Issue: twice in a day | **{Team} plays twice on {Thu, Jun 17}.** · **Show it ›** | The generator's sentence. |
+| Issue: byes | **{Team} has a bye two weeks running, {Jun 7} and {Jun 14}.** · **Show it ›** | The generator's sentence. |
+| Issue: clash | **{Place} is booked twice on {Thu, Jun 17} at {6:00 p.m.}: {A} and {B}.** · **Show them ›** | A game against a game or a practice. |
+| Team detail | **Games** · **Home–away** · **Byes** · **Prime time** · **Places** · cells **1 of 2 · 1 postponed**, **2–0**, **even** | "Prime time" is the club schedule's word; "Slot share" was jargon. |
+| Rules | **The score uses this season's rules.** · **Adjust the rules** · **Games per team** · **A team can play twice in a day** (**No** / **Yes**) · **Home and away can differ by** (**{n} game/games**) | |
+
+### g: the public schedule
+
+| id | Settled | Note |
+|---|---|---|
+| Header | **← {season}** · **Schedule** · **Times in Eastern time.** (once) | |
+| Weeks | **Show {n} earlier week/weeks** · **Jun 14 – 20, 2027 · this week** · **Today · Thu, Jun 17** | Replaces the shipped "Week of Oct 5 – Oct 11". |
+| States | **Final 7–4** · **Cancelled** (struck) | No Moved (ruling above). |
+| Needs a new date | **Needs a new date** · **Was Sat, Jun 12 · 10:00 a.m.** · **Postponed · new date to come** | |
+| Place | **{Venue} · {Facility}** on every game | |
+| Empty | **No games scheduled yet.** | The shipped sentence. "The schedule is coming" is 9d-2b's. |
+
+### i · k: the permit line, the edge state
+
+| id | Settled | Note |
+|---|---|---|
+| Permit line | `permitLine` as shipped for the covers case and the date-off case, plus **one new case** when the permit ended before the game: **Outside the club's permit for {facility}: the permit ended {Sep 30, 2026}.** | The shipped line would otherwise say "until Sep 30, 2026" of a booking after it. |
+| Typed place | **A typed place isn't checked for clashes** | |
+| Edge k | **{Division} has no games yet** · **Generate the whole season, or add games one at a time.** · **Generate games** | |

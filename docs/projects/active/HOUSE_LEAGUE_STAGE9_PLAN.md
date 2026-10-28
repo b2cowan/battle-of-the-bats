@@ -262,6 +262,19 @@ team) was not ruled: it is ask **9d2·15**, open.
     league; "teams at once" inside house league's time is Practice time's. The drawn h5 is not built.
   - **11b·C** 11b puts the team's **practices** on the house-league coach's team page (upcoming, club ones reading "From
     {schedule}", hand-booked ones too). 9d-2b adds the games beside them (9d2·7's games half).
+- **9d-2a build-start rulings, 2026-10-27 (all six as recommended; words in `HOUSE_LEAGUE_STAGE9D2_11B_COPY.md` "Stage 9d-2a"):**
+  - **9d2a·A A Save is live, and 9d-2a releases normally.** Until 9d-2b's publish state, a saved game is on the public
+    schedule at once, as on production today; the drawn "Published…" / "draft" lines are dropped and the screen says what is
+    true. Not taken: holding every promote of `dev` until 9d-2b (one shared branch: it would hold Stage 12, the support
+    console and bookkeeping too, and protect nothing — production's generator already publishes unannounced); hiding Generate
+    behind a switch.
+  - **9d2a·B The free League plan's branch in Generate stays exactly as it is** (9d2·14 parked; decided again if unparked).
+  - **9d2a·C "See the permit" is in 9d-2a** (the permit id carried through to the page; `PermitWindow` opened from b4, c3, i).
+  - **9d2a·D No "Moved" in 9d-2a.** A game holds one date and no history (`league_games` has no earlier date and no moved
+    status), so a postponed game given its new date reads as an ordinary game in its new week. "Moved" and "Was {old date}"
+    on a re-dated game come with 9d-2b's change record. A postponed game still reads "Was {its date}" (Postpone keeps it).
+  - **9d2a·E "Put it back on"** for a cancelled game (today's Status dropdown could un-cancel; the read-first window keeps it).
+  - **9d2a·F "Families aren't emailed."** on Postpone, Cancel and Generate's Save — true until 9d-2b rewrites those lines.
 
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 
@@ -831,3 +844,22 @@ open it, and the menu's top level is Stage 13's.
   platform default zone, not the club's own; the h4 game rows ("games move") are not built (9d-2b). **Found, not changed:**
   `lib/club-schedule-gate.ts`'s header still says a door that starts a schedule needs rep teams (Part 2 made a house league
   season enough). **Hand-off:** 11b is complete pending its walks (§399–§403) and prod migs 392–394, 397, 400.
+- **2026-10-27 — 9d-2a STEP 1 BUILT (the three pure parts, tested; no screen yet).** Rulings 9d2a·A–F (§0h, above); words
+  settled by /marketing into the copy file's "Stage 9d-2a" section. **The generator** (`lib/league-game-generator.ts`):
+  match-ups only over the division's game slots, one game per slot in date order, the circle method once or twice through
+  (the second with ends swapped), home and away by a ring rule that keeps every team within one (the old greedy left 9 teams
+  at 3–5), each round's rarest time shared out first (10 teams: every team 1 or 2 Saturday mornings), never twice in a day
+  unless the slots leave no other way (then warned), never two slots at once; blocks `teams` / `short` ("90 games need 90
+  slots") / `crowded`. The drawing's U12 case gives 45 games on the earliest 45 of 65 slots, Jun 1 – Aug 3 (the drawing's
+  "Aug 7" was a placeholder). The permit and club-booking warnings are the route's (step 5). **The bookings**
+  (`lib/league-season-calendar.ts`): the season's games and practices as the club calendar's `CalendarBooking` (argued in
+  its header: no fourth calendar), postponed out of its week into `needsDate`, cancelled struck in place, "Final 7–4",
+  "Time from {schedule}" only on an EXACT slot match (same division, start and facility; otherwise nothing — there is no
+  link to guess from), a night of one division's practices folded for List. **Health** (`lib/league-schedule-health.ts`): a
+  league rule set — games on plan 30, clashes 30 (games AND practices, house league's own rule; a typed place is "not
+  checked"; two teams on one club slot are not a clash), twice in a day 15, home and away 15, byes 10 (weights argued in its
+  header); the plan is the division's own (the games most of its teams were given — nowhere to store a target without a
+  migration); a postponed game is not had, a cancelled one is not had and is named "not replayed". On Dev House League 2026
+  it finds the drawing's four issues and scores **65, Needs work** where the tournament engine says 97 (`.probe/9d2a/
+  health-dev.mts`). **Open for step 6 (owner ask): "Adjust the rules" has nowhere to save** — no settings column on a season
+  or a division; recommended: show the rules as words in 9d-2a and add the door with 9d-2b's migrations. 33 unit tests.
