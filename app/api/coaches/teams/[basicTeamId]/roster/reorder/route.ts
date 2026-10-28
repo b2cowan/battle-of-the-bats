@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireBasicCoachTeamOwner } from '@/lib/coach-team-guard';
+import { requireBasicCoachTeamWriter } from '@/lib/coach-team-guard';
 import { reorderBasicCoachTeamPlayers } from '@/lib/basic-coach-roster';
 import { withObservability } from '@/lib/observability';
 
@@ -19,8 +19,8 @@ type RouteCtx = { params: Promise<{ basicTeamId: string }> };
 export const POST = withObservability(async (req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId } = await params;
-    const guard = await requireBasicCoachTeamOwner(basicTeamId);
-    if (!guard.ok) return authError(guard.status);
+    const guard = await requireBasicCoachTeamWriter(basicTeamId);
+    if (!guard.ok) return guard.status === 409 ? json({ error: guard.error }, 409) : authError(guard.status);
 
     const body = (await req.json().catch(() => ({}))) as { orderedIds?: unknown };
     if (!Array.isArray(body.orderedIds)) {

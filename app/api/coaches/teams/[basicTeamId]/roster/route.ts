@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireBasicCoachTeamOwner } from '@/lib/coach-team-guard';
+import { requireBasicCoachTeamOwner, requireBasicCoachTeamWriter } from '@/lib/coach-team-guard';
 import {
   getBasicCoachTeamPlayers,
   createBasicCoachTeamPlayer,
@@ -38,8 +38,8 @@ export const GET = withObservability(async (_req: NextRequest, { params }: Route
 export const POST = withObservability(async (req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId } = await params;
-    const guard = await requireBasicCoachTeamOwner(basicTeamId);
-    if (!guard.ok) return authError(guard.status);
+    const guard = await requireBasicCoachTeamWriter(basicTeamId);
+    if (!guard.ok) return guard.status === 409 ? json({ error: guard.error }, 409) : authError(guard.status);
 
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const { input, error } = normalizeBasicCoachTeamPlayerBody(body);

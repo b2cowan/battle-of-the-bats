@@ -72,6 +72,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'app/api/platform-admin/orgs/[id]/record/route.ts': ['writer', 'console record edits (stored vs proposed)'],
   'lib/free-time-writes.ts': ['writer', 'gives, changes and ends free time; reads the stored plan, status and Stripe subscription to refuse'],
   'lib/free-time-list.ts': ['other', "'subscription_status' here is a grant KIND (org_overrides.type), not the org's column"],
+  'lib/portal-free-time.ts': ['other', "Stage 4b: 'subscription_status' names the grant KIND that holds a free-time portal open (org_overrides.type), not the org's column"],
   'app/platform-admin/orgs/[id]/FreeTimeWindows.tsx': ['other', "'subscription_status' here is a grant KIND (the Give window's choice), not the org's column"],
   'lib/free-time-story.ts': ['stored', "the Story names the plan the club goes back to (its own); 'subscription_status' is a grant kind"],
   'app/api/admin/org/free-time/route.ts': ['through', "the customer's free time: the rows go to the door's rules; the own tournament limit for the over-limit warning"],

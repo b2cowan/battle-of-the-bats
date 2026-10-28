@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { userOwnsBasicCoachTeam, findLinkedBasicTeamForRegistration } from '@/lib/basic-coach-teams';
 import { findRepTeamAccessForRegistration } from '@/lib/coach-registration-access';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getActivePremiumPortal } from '@/lib/coach-team-page';
 
 /**
  * The two-layer auth gate for org-less Basic-coach-team APIs (the master-roster routes and any
@@ -28,6 +30,37 @@ export async function requireBasicCoachTeamOwner(basicCoachTeamId: string): Prom
   if (await isPlatformAdminEmail(user.email)) return { ok: false, status: 401 };
   if (!(await userOwnsBasicCoachTeam(user.id, basicCoachTeamId))) return { ok: false, status: 403 };
   return { ok: true, user: { id: user.id, email: user.email } };
+}
+
+/**
+ * The gate for every WRITE on an org-less Basic team (Support console Stage 4b, Q11-1, T19): the owner gate, then a
+ * refusal while the team's Premium portal is in force. The pages already send the coach to the portal; the routes did
+ * not, so a stale tab could still change the free team underneath its live Premium copy, and the announcement route
+ * could email last season's contacts. Reads the same "is Premium live?" test as the pages' redirect
+ * (`getActivePremiumPortal`), so the two can never disagree. Reads stay on `requireBasicCoachTeamOwner`.
+ * `tests/unit/support-console-stage4b-guard.test.ts` fails the build when a write handler here uses the owner gate.
+ */
+export type CoachTeamWriteGuardResult = CoachTeamGuardResult | { ok: false; status: 409; error: string };
+
+export async function requireBasicCoachTeamWriter(basicCoachTeamId: string): Promise<CoachTeamWriteGuardResult> {
+  const guard = await requireBasicCoachTeamOwner(basicCoachTeamId);
+  if (!guard.ok) return guard;
+  const { data: team, error } = await supabaseAdmin
+    .from('basic_coach_teams')
+    .select('name, team_workspace_id')
+    .eq('id', basicCoachTeamId)
+    .maybeSingle<{ name: string | null; team_workspace_id: string | null }>();
+  if (error) throw error;
+  if (team?.team_workspace_id && (await getActivePremiumPortal(team.team_workspace_id))) {
+    return { ok: false, status: 409, error: premiumInForceRefusal(team.name) };
+  }
+  return guard;
+}
+
+/** The free team's save, refused while Premium is on. */
+export function premiumInForceRefusal(teamName: string | null): string {
+  const name = teamName?.trim() || 'This team';
+  return `${name} is on Premium right now, so make changes in your Premium Coaches Portal.`;
 }
 
 /**

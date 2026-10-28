@@ -11,7 +11,7 @@ import { writePlatformAuditLog } from './platform-audit';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
 import { findBasicCoachTeamIdForTournamentRegistration, resolveBasicCoachTeamIdForWorkspace } from './basic-coach-teams';
-import { migrateBasicTeamIntoWorkspace } from './coach-upgrade-migration';
+import { migrateBasicTeamIntoWorkspace, pendingMigrationSummary } from './coach-upgrade-migration';
 import { clearStartDoor } from './start-door-server';
 import { DEFAULT_SPORT } from './sports';
 import { normalizeCreditApplicationMode } from './dues-credits';
@@ -375,6 +375,15 @@ export async function provisionStandaloneTeamWorkspace(
         .select('id');
       if (claimError) throw claimError;
       migrationClaimed = (claimed?.length ?? 0) > 0;
+      // The winner records "not finished" before it copies anything (Stage 4b, Q11-3): a copy that stops halfway is then
+      // always found by the portal's Try again. The copy's own summary replaces it below.
+      if (migrationClaimed) {
+        const { error: pendingError } = await supabaseAdmin
+          .from('team_workspaces')
+          .update({ migration_summary: pendingMigrationSummary(programYear.id) })
+          .eq('id', workspace.id);
+        if (pendingError) throw pendingError;
+      }
     }
 
     // Every paid portal carries a free-team SHADOW (2026-09-13, Part C of "your team in your own

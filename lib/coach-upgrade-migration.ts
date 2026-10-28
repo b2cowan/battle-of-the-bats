@@ -88,7 +88,24 @@ export type CoachUpgradeMigrationSummary = {
   announcementsMigrated: false;
   notes: string[];
   error?: string;
+  /** Written at the claim, before the copy runs (Support console Stage 4b, Q11-3/T22); the copy's own summary replaces it. */
+  pending?: true;
 };
+
+/**
+ * The summary the provisioner stores the moment it wins the claim, before copying anything. A copy that stops before it
+ * saves its own summary (a crash, a timeout) leaves this one: `ok: false`, so the portal's "check these" notice and Try
+ * again can always find the work. Without it a stopped copy left nothing, and the claimed free team could never be
+ * brought across.
+ */
+export function pendingMigrationSummary(programYearId: string): CoachUpgradeMigrationSummary {
+  return {
+    ...emptySummary(programYearId),
+    ok: false,
+    pending: true,
+    notes: ['Bringing your free team across did not finish. Try again to bring the rest across.'],
+  };
+}
 
 function emptySummary(programYearId: string): CoachUpgradeMigrationSummary {
   return {

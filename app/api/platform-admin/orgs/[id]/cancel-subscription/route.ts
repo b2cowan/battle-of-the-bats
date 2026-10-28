@@ -18,6 +18,8 @@ import { PLAN_CONFIG, getEffectiveTeamLimit } from '@/lib/plan-config';
 import type { OrgPlan, Organization } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { closePagesIfPaymentsEnded, endingSection } from '@/lib/online-payment-endings';
+import { runningPortalFreeTime } from '@/lib/portal-free-time-server';
+import { staffCancelRefusal } from '@/lib/portal-free-time';
 
 type OrgRow = {
   id: string;
@@ -69,6 +71,11 @@ export const GET = withObservability(async (_req: NextRequest,
     return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
   }
 
+  if (orgRow.account_kind === 'team_workspace') {
+    const freeTime = await runningPortalFreeTime(orgRow.id);
+    if (freeTime) return NextResponse.json({ error: staffCancelRefusal(orgRow.name, freeTime.lastDay) }, { status: 409 });
+  }
+
   if (orgRow.subscription_status === 'canceled') {
     return NextResponse.json({ error: 'Subscription is already cancelled' }, { status: 400 });
   }
@@ -114,6 +121,13 @@ export const POST = withObservability(async (req: NextRequest,
 
   if (orgError || !orgRow) {
     return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+  }
+
+  // A portal on staff-given free time is stored cancelled and held open by its grant: "already cancelled" would be
+  // wrong, and a cancel would start the retention clock on it. End it now is the way (Stage 4b, Q11-4/T15).
+  if (orgRow.account_kind === 'team_workspace') {
+    const freeTime = await runningPortalFreeTime(orgRow.id);
+    if (freeTime) return NextResponse.json({ error: staffCancelRefusal(orgRow.name, freeTime.lastDay) }, { status: 409 });
   }
 
   if (orgRow.subscription_status === 'canceled') {

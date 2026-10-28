@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireBasicCoachTeamOwner } from '@/lib/coach-team-guard';
+import { requireBasicCoachTeamWriter } from '@/lib/coach-team-guard';
 import {
   updateBasicCoachTeamEvent,
   deleteBasicCoachTeamEvent,
@@ -23,8 +23,8 @@ type RouteCtx = { params: Promise<{ basicTeamId: string; eventId: string }> };
 export const PATCH = withObservability(async (req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId, eventId } = await params;
-    const guard = await requireBasicCoachTeamOwner(basicTeamId);
-    if (!guard.ok) return authError(guard.status);
+    const guard = await requireBasicCoachTeamWriter(basicTeamId);
+    if (!guard.ok) return guard.status === 409 ? json({ error: guard.error }, 409) : authError(guard.status);
 
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const { input, error } = normalizeBasicCoachTeamEventBody(body);
@@ -45,8 +45,8 @@ export const PATCH = withObservability(async (req: NextRequest, { params }: Rout
 export const DELETE = withObservability(async (_req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId, eventId } = await params;
-    const guard = await requireBasicCoachTeamOwner(basicTeamId);
-    if (!guard.ok) return authError(guard.status);
+    const guard = await requireBasicCoachTeamWriter(basicTeamId);
+    if (!guard.ok) return guard.status === 409 ? json({ error: guard.error }, 409) : authError(guard.status);
 
     const removed = await deleteBasicCoachTeamEvent({ eventId, basicCoachTeamId: basicTeamId });
     if (!removed) return json({ error: 'Event not found.' }, 404);

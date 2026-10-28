@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireBasicCoachTeamOwner } from '@/lib/coach-team-guard';
+import { requireBasicCoachTeamWriter } from '@/lib/coach-team-guard';
 import {
   BASIC_COACH_FEE_PLAYER_SCOPE_ERROR,
   deleteBasicCoachTeamFee,
@@ -38,8 +38,8 @@ export const PATCH = withObservability(async (req: NextRequest, { params }: Rout
   try {
     const { basicTeamId, feeId } = await params;
     if (!UUID_RE.test(basicTeamId) || !UUID_RE.test(feeId)) return json({ error: 'Fee not found.' }, 400);
-    const guard = await requireBasicCoachTeamOwner(basicTeamId);
-    if (!guard.ok) return authError(guard.status);
+    const guard = await requireBasicCoachTeamWriter(basicTeamId);
+    if (!guard.ok) return guard.status === 409 ? json({ error: guard.error }, 409) : authError(guard.status);
 
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const { input, error } = normalizeBasicCoachTeamFeeBody(body);
@@ -61,8 +61,8 @@ export const DELETE = withObservability(async (_req: NextRequest, { params }: Ro
   try {
     const { basicTeamId, feeId } = await params;
     if (!UUID_RE.test(basicTeamId) || !UUID_RE.test(feeId)) return json({ error: 'Fee not found.' }, 400);
-    const guard = await requireBasicCoachTeamOwner(basicTeamId);
-    if (!guard.ok) return authError(guard.status);
+    const guard = await requireBasicCoachTeamWriter(basicTeamId);
+    if (!guard.ok) return guard.status === 409 ? json({ error: guard.error }, 409) : authError(guard.status);
 
     const removed = await deleteBasicCoachTeamFee({ feeId, basicCoachTeamId: basicTeamId });
     if (!removed) return json({ error: 'Fee not found.' }, 404);

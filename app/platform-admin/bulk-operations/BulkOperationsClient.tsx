@@ -200,7 +200,7 @@ export default function BulkOperationsClient({
       setOperations(prev => [json.operation, ...prev].slice(0, 8));
       const applied: ApplyResult[] = json.results ?? [];
       const skipped = applied.filter(r => r.skipped).length;
-      setSaved(`${json.operation.success_count} succeeded / ${json.operation.failure_count - skipped} failed${skipped ? ` / ${skipped} skipped` : ''}`);
+      setSaved(`${json.operation.success_count} succeeded / ${json.operation.failure_count - skipped} failed${skipped ? ` / ${skipped} skipped` : ''}${json.portalSkipLine ? `. ${json.portalSkipLine}` : ''}`);
       resetAfterApply();
     } catch (err) {
       setError((err as Error).message);

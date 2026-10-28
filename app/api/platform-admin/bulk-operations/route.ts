@@ -11,6 +11,7 @@ import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { bulkPortalSkipLine } from '@/lib/portal-free-time';
 
 type BulkActionType = 'subscription_status_override' | 'plan_change' | 'module_addon_enablement';
 type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
@@ -27,6 +28,7 @@ type OrgRow = {
   subscription_period: string | null;
   current_period_end: string | null;
   enabled_addons: string[] | null;
+  account_kind: string | null;
 };
 
 type BulkResult = {
@@ -36,6 +38,8 @@ type BulkResult = {
   ok: boolean;
   /** Nothing was done to this club, on purpose (its own line says why); counted with the failures. */
   skipped?: boolean;
+  /** Skipped because it is a Coaches Portal (Stage 4b, Q9): counted into the summary line. */
+  portal?: boolean;
   message: string;
 };
 
@@ -147,7 +151,7 @@ export const POST = withObservability(async (req: Request) => {
 
   const { data: orgs, error: orgError } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, slug, plan_id, tournament_limit, subscription_status, stripe_subscription_id, subscription_period, current_period_end, enabled_addons')
+    .select('id, name, slug, plan_id, tournament_limit, subscription_status, stripe_subscription_id, subscription_period, current_period_end, enabled_addons, account_kind')
     .in('id', orgIds);
 
   if (orgError) {
@@ -198,6 +202,13 @@ export const POST = withObservability(async (req: Request) => {
     : new Set<string>();
 
   for (const org of (orgs as OrgRow[])) {
+    // Every bulk action skips a Coaches Portal (Stage 4b, owner ruling Q9, T8/T33): a portal's plan, billing status and
+    // free time change only on its own record, where its free time and its Stripe standing are read first.
+    if (org.account_kind === 'team_workspace') {
+      results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: false, skipped: true, portal: true,
+        message: "Skipped: a Coaches Portal's plan and free time can only be changed on its own record." });
+      continue;
+    }
     try {
       if (actionType === 'subscription_status_override') {
         if (ownClubs.has(org.id)) {
@@ -322,7 +333,8 @@ export const POST = withObservability(async (req: Request) => {
   const failureCount = results.length - successCount;
   const status = operationStatus(successCount, failureCount);
   const completedAt = new Date().toISOString();
-  const resultSummary = { results };
+  const portalSkipLine = bulkPortalSkipLine(results.filter(result => result.portal).length);
+  const resultSummary = { results, portalSkipLine };
 
   const { data: updatedOperation, error: updateError } = await supabaseAdmin
     .from('platform_bulk_operations')
@@ -350,5 +362,5 @@ export const POST = withObservability(async (req: Request) => {
     parameters,
   }, { reason });
 
-  return NextResponse.json({ ok: failureCount === 0, operation: updatedOperation, results });
+  return NextResponse.json({ ok: failureCount === 0, operation: updatedOperation, results, portalSkipLine });
 }, { route: '/api/platform-admin/bulk-operations' });

@@ -18,6 +18,8 @@ import type { OrgPlan } from '@/lib/types';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { closePagesIfPaymentsEnded } from '@/lib/online-payment-endings';
+import { runningPortalFreeTime } from '@/lib/portal-free-time-server';
+import { coachCancelRefusal } from '@/lib/portal-free-time';
 
 export const POST = withObservability(async (req: Request) => {
   // Scope to the org the caller is acting on (multi-org owners), NOT their home org — fail closed
@@ -27,6 +29,13 @@ export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
+
+  // A portal on staff-given free time has nothing to cancel: it goes back to the free Coaches Portal by itself, and a
+  // cancel here would archive its tournaments and start the retention clock on it (Stage 4b, Q11-4/T15).
+  if (isTeamWorkspaceOrg(ctx.org)) {
+    const freeTime = await runningPortalFreeTime(ctx.org.id);
+    if (freeTime) return Response.json({ error: coachCancelRefusal(freeTime.lastDay) }, { status: 409 });
+  }
 
   const reason = typeof body.reason === 'string' && body.reason.trim()
     ? body.reason.trim()
