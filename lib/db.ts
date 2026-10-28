@@ -2325,6 +2325,8 @@ function mapLeagueSeason(row: any): LeagueSeason {
     howToPay:                  row.how_to_pay ?? null,
     askEmailConsent:           row.ask_email_consent ?? true,
     owingAmberDays:            row.owing_amber_days ?? 14,
+    twiceInADayAllowed:        row.twice_in_a_day_allowed ?? false,
+    homeAwayTolerance:         row.home_away_tolerance ?? 1,
     createdAt:                 row.created_at,
     updatedAt:                 row.updated_at,
   };
@@ -2344,6 +2346,7 @@ function mapLeagueDivision(row: any): LeagueDivision {
     note:         row.note ?? null,
     teamsPublishedAt:    row.teams_published_at ?? null,
     schedulePublishedAt: row.schedule_published_at ?? null,
+    gamesPerTeam:        row.games_per_team ?? null,
     createdAt: row.created_at,
   };
 }

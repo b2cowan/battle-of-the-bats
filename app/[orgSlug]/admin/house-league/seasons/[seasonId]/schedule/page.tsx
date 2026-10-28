@@ -45,7 +45,8 @@ import HealthButton from '@/components/admin/tournament/HealthButton';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import { SCHEDULE_DAY_WORDS } from '@/lib/schedule-words';
 import {
-  buildLeagueScheduleHealth, leagueHealthGameOf, leagueHealthPracticeOf, type LeagueHealthIssue,
+  buildLeagueScheduleHealth, LEAGUE_HEALTH_WORDS, leagueHealthGameOf, leagueHealthPracticeOf, leagueHealthRulesOf,
+  type LeagueHealthIssue, type LeagueHealthRules,
 } from '@/lib/league-schedule-health';
 import { clubSchedulerOn } from '@/lib/club-schedule-gate';
 import type { Through } from '@/lib/league-game-generator';
@@ -84,7 +85,11 @@ const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-interface SeasonInfo { id: string; name: string; sport: string | null; status: string; }
+interface SeasonInfo {
+  id: string; name: string; sport: string | null; status: string;
+  /** Schedule health's two season rules (mig 412); games per team is each division's. */
+  twiceInADayAllowed: boolean; homeAwayTolerance: number;
+}
 
 interface PreviewGame {
   round: number;
@@ -733,7 +738,10 @@ export default function SchedulePage() {
     const res = await fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`);
     if (!res.ok) return;
     const { season: s, divisions: divs } = await res.json();
-    setSeason({ id: s.id, name: s.name, sport: s.sport ?? null, status: s.status });
+    setSeason({
+      id: s.id, name: s.name, sport: s.sport ?? null, status: s.status,
+      twiceInADayAllowed: !!s.twiceInADayAllowed, homeAwayTolerance: s.homeAwayTolerance ?? 1,
+    });
     setDivisions(divs ?? []);
     if (divs?.length && !selectedDivId) setSelectedDivId(divs[0].id);
   }, [seasonId, selectedDivId, orgQuery]);
@@ -844,12 +852,30 @@ export default function SchedulePage() {
   }, [shownView, cursor, jumpTick]);
 
   // ── Schedule health (step 6, d1–d4) ── the whole season's, worked out from the read the page already holds (games and
-  // practices, every division: the clash pool is the season's), so it follows every write with no read of its own.
-  const health = useMemo(() => buildLeagueScheduleHealth({
+  // practices, every division: the clash pool is the season's), so it follows every write with no read of its own. Scored
+  // by the season's rules (9d-2b Part 6), and by the window's draft while the rules are being adjusted (`rescoreHealth`).
+  const healthRules = useMemo(() => leagueHealthRulesOf(season, divisions), [season, divisions]);
+  const rescoreHealth = useCallback((rules: LeagueHealthRules) => buildLeagueScheduleHealth({
     games: games.map(leagueHealthGameOf),
     practices: practices.map(leagueHealthPracticeOf),
     teams: teams.map(t => ({ id: t.id, name: t.name, divisionId: t.divisionId })),
+    rules,
   }), [games, practices, teams]);
+  const health = useMemo(() => rescoreHealth(healthRules), [rescoreHealth, healthRules]);
+  /** Adjust the rules' Save (d3): null when saved (the season reads again, so the score follows), else what to say. */
+  const saveHealthRules = async (rules: LeagueHealthRules): Promise<string | null> => {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/rules${orgQuery}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        twiceInADayAllowed: rules.twiceInADayAllowed, homeAwayTolerance: rules.homeAwayTolerance,
+        // Every division the window showed: an emptied field goes back to the schedule's own number.
+        gamesPerTeam: Object.fromEntries(divisions.map(d => [d.id, rules.gamesPerTeam[d.id] ?? null])),
+      }),
+    }).catch(() => null);
+    if (!res?.ok) return (await res?.json().catch(() => null))?.error ?? LEAGUE_HEALTH_WORDS.rulesFailed;
+    await loadSeasonAndDivisions();
+    return null;
+  };
   const healthScore = health.timedGames > 0 ? health.score : null;
   /** A booking by its page key ("league_game:{id}"): the row, its division and its day. */
   const bookingOf = (key: string) => {
@@ -1519,6 +1545,9 @@ export default function SchedulePage() {
       {healthOpen && (
         <LeagueHealthWindow
           health={health}
+          rescore={rescoreHealth}
+          divisionIds={divisions.map(d => d.id)}
+          onSaveRules={canManage ? saveHealthRules : undefined}
           eyebrow={season?.name ?? ''}
           team={id => teamName.get(id) ?? 'Team'}
           label={key => bookingOf(key)?.label ?? ''}

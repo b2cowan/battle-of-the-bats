@@ -14,6 +14,7 @@ import { GENERATE_WORDS as W, planFingerprint, planGames, summaryOf, type Genera
 import {
   checkGeneratedGames, divisionGameTime, divisionHasGames, insertGeneratedGames, slotMinutesOf,
 } from '@/lib/league-generate-server';
+import { leagueHealthRulesOf } from '@/lib/league-schedule-health';
 import type { LeagueSeason } from '@/lib/types';
 
 /**
@@ -36,7 +37,7 @@ async function fromClubTime(orgId: string, season: LeagueSeason, body: Record<st
   }
   const through = body?.through === 2 ? 2 : 1;
   const { data: division } = await supabaseAdmin
-    .from('league_divisions').select('id, name').eq('id', divisionId).eq('season_id', season.id).single();
+    .from('league_divisions').select('id, name, games_per_team').eq('id', divisionId).eq('season_id', season.id).single();
   if (!division) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
   if (await divisionHasGames(divisionId)) {
     return NextResponse.json({ code: 'has_games', error: W.hasGames(division.name) }, { status: 409 });
@@ -53,7 +54,11 @@ async function fromClubTime(orgId: string, season: LeagueSeason, body: Record<st
     return NextResponse.json(reply);
   }
   const plan = planGames({ slots, teams, through });
-  if (step === 'check') return NextResponse.json(await checkGeneratedGames({ orgId, season, divisionId, teams, slots, plan }));
+  if (step === 'check') {
+    // The season's rules (9d-2b Part 6): the check's score and its warnings follow them as the health window's do.
+    const rules = leagueHealthRulesOf(season, [{ id: divisionId, gamesPerTeam: division.games_per_team ?? null }]);
+    return NextResponse.json(await checkGeneratedGames({ orgId, season, divisionId, teams, slots, plan, rules }));
+  }
 
   if (plan.block) return NextResponse.json({ code: 'blocked', error: W.changed(division.name) }, { status: 409 });
   // The plan Save re-works must be the one the check showed: same slots, same pairings, same times.

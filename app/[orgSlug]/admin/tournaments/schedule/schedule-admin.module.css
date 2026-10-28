@@ -268,7 +268,8 @@
   text-transform: uppercase;
 }
 
-.healthRule input {
+.healthRule input,
+.healthRule select {
   width: 100%;
   min-width: 0;
   height: 32px;
@@ -281,7 +282,8 @@
   font-size: 0.85rem;
 }
 
-.healthRule input:focus {
+.healthRule input:focus,
+.healthRule select:focus {
   outline: none;
   border-color: rgba(var(--logic-lime-rgb), 0.6);
 }
@@ -1584,13 +1586,15 @@
   font-weight: 650;
   color: var(--text-tertiary);
 }
-:global([data-admin-kit]) .healthRule input {
+:global([data-admin-kit]) .healthRule input,
+:global([data-admin-kit]) .healthRule select {
   font-family: var(--font-sans, system-ui, sans-serif);
   background: var(--home-card);
   border-color: var(--home-line-strong);
   color: var(--text-primary);
 }
-:global([data-admin-kit]) .healthRule input:focus { border-color: var(--home-olive); }
+:global([data-admin-kit]) .healthRule input:focus,
+:global([data-admin-kit]) .healthRule select:focus { border-color: var(--home-olive); }
 :global([data-admin-kit]) .healthRulesReset,
 :global([data-admin-kit]) .healthRulesDiscard,
 :global([data-admin-kit]) .healthRulesSave {

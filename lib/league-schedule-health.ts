@@ -6,9 +6,9 @@
  * tournament's questions — rest between games on one day, venue moves, early and late starts — and scored Dev House League
  * 2026 97, Healthy, with a cancelled game never replayed and a postponed game with no date (`.probe/hl/h9d2.mts`): it counts
  * a cancelled game as nothing at all and a postponed one as played. A league's questions are a season's:
- *   GAMES ON PLAN (30) — every team gets the games the schedule promised. The plan is a division's own: the number of games
- *     most of its teams were given, counting every game the schedule holds whatever became of it (there is nowhere to store
- *     "games per team" without a migration, and the schedule already says it). A team HAS its games that are on or played;
+ *   GAMES ON PLAN (30) — every team gets the games the schedule promised. The plan is a division's own: its games per team
+ *     when the convenor set one (Adjust the rules, mig 412), else the number of games most of its teams were given, counting
+ *     every game the schedule holds whatever became of it (the schedule already says it). A team HAS its games that are on or played;
  *     a postponed game is not had until it has a date (it is said as "1 postponed"), and a cancelled one is not had and is
  *     never replayed by itself — "Their Jun 14 game was cancelled and not replayed".
  *   CLASHES (30) — two bookings on one facility at once, games AND practices together (the clash pool the convenor books
@@ -29,9 +29,10 @@
  * as a fact, and so does "Prime time" (each team's share of its division's rarest time, as the generator shares it out);
  * neither costs a point.
  *
- * ⚖ THE RULES ARE SAID, NOT ADJUSTED, IN 9d-2a (owner 2026-10-27, step 6). No column holds a season's rules, and 9d-2a adds
- * no migration, so the window's foot says the three rules the score uses and has no "Adjust the rules" door; the door and
- * its save arrive with 9d-2b's migrations. Games per team is each division's own plan (above), said per division.
+ * ⚖ THE RULES ARE THE SEASON'S, KEPT (9d-2b Part 6, frame d3; mig 412). 9d-2a said the rules it assumed and had no door
+ * (owner 2026-10-27); "Adjust the rules" now keeps them: twice in a day and the home-and-away tolerance on the season,
+ * games per team on each DIVISION (a round robin gives 8 teams 7 games and 5 teams 4 — one season number would mark a whole
+ * division short). The defaults are what 9d-2a assumed, so a season nobody adjusted scores as it did.
  */
 import {
   byesBackToBack, GENERATE_WORDS, primeTimeWords, rarestTimeShare, twiceInADay, type DatedGame, type SlotTime,
@@ -100,9 +101,36 @@ export function leagueHealthPracticeOf(p: LeaguePractice): Required<LeagueHealth
   };
 }
 
-/** The season's rules (frame d3). No column holds them yet, so these are the rules 9d2·4 drew. */
-export interface LeagueHealthRules { twiceInADayAllowed: boolean; homeAwayTolerance: number }
-export const DEFAULT_LEAGUE_HEALTH_RULES: LeagueHealthRules = { twiceInADayAllowed: false, homeAwayTolerance: 1 };
+/** The season's rules (frame d3, mig 412). */
+export interface LeagueHealthRules {
+  twiceInADayAllowed: boolean;
+  homeAwayTolerance: number;
+  /** Each division's games per team where the convenor set one; a division absent plays to the schedule's own plan. */
+  gamesPerTeam: Readonly<Record<string, number>>;
+}
+/** The rules 9d2·4 drew, and a season's until someone adjusts them (the columns' defaults). */
+export const DEFAULT_LEAGUE_HEALTH_RULES: LeagueHealthRules = { twiceInADayAllowed: false, homeAwayTolerance: 1, gamesPerTeam: {} };
+/** The home-and-away tolerances the window offers, and games per team's range (the columns' CHECKs are wider). */
+export const HOME_AWAY_TOLERANCES = [0, 1, 2, 3, 4, 5] as const;
+export const GAMES_PER_TEAM_MAX = 99;
+
+/** The rules as the season and its divisions keep them. */
+export function leagueHealthRulesOf(
+  season: { twiceInADayAllowed: boolean; homeAwayTolerance: number } | null,
+  divisions: readonly { id: string; gamesPerTeam: number | null }[],
+): LeagueHealthRules {
+  if (!season) return DEFAULT_LEAGUE_HEALTH_RULES;
+  const gamesPerTeam: Record<string, number> = {};
+  for (const d of divisions) if (d.gamesPerTeam != null) gamesPerTeam[d.id] = d.gamesPerTeam;
+  return { twiceInADayAllowed: season.twiceInADayAllowed, homeAwayTolerance: season.homeAwayTolerance, gamesPerTeam };
+}
+
+/** Two rule sets say the same thing (the window's "unsaved" test). */
+export function sameLeagueHealthRules(a: LeagueHealthRules, b: LeagueHealthRules): boolean {
+  const keys = new Set([...Object.keys(a.gamesPerTeam), ...Object.keys(b.gamesPerTeam)]);
+  return a.twiceInADayAllowed === b.twiceInADayAllowed && a.homeAwayTolerance === b.homeAwayTolerance
+    && [...keys].every(k => a.gamesPerTeam[k] === b.gamesPerTeam[k]);
+}
 
 export const LEAGUE_HEALTH_WEIGHTS = { games: 30, clashes: 30, twice: 15, homeAway: 15, byes: 10 } as const;
 /** One clash costs this share of the clash weight. */
@@ -155,8 +183,9 @@ export interface LeagueScheduleHealth {
   issues: LeagueHealthIssue[];
   teams: LeagueTeamHealth[];
   rules: LeagueHealthRules;
-  /** Each division's games per team, the plan the score measures against (the foot says it). */
-  plans: { divisionId: string; games: number }[];
+  /** Each division's games per team, the plan the score measures against (the foot says it): `set` when the convenor set
+   *  it, and `schedule`, the number most of its teams were given (what an empty games per team means). */
+  plans: { divisionId: string; games: number; schedule: number; set: boolean }[];
 }
 
 const isOn = (status: string) => status === 'scheduled' || status === 'completed';
@@ -192,9 +221,11 @@ export function buildLeagueScheduleHealth(input: {
   const have = count(g => isOn(g.status) && !!g.scheduledAt);
   const postponedOf = count(g => g.status === 'postponed' || (g.status === 'scheduled' && !g.scheduledAt));
   const plan = new Map<string, number>();
+  const scheduled = new Map<string, number>();
   for (const d of divisionIds) {
     const mine = teams.filter(t => t.divisionId === d);
-    const p = modeOf(mine.map(t => planned.get(t.id)!));
+    scheduled.set(d, modeOf(mine.map(t => planned.get(t.id)!)));
+    const p = rules.gamesPerTeam[d] ?? scheduled.get(d)!;
     for (const t of mine) plan.set(t.id, p);
   }
   const short = (id: string) => have.get(id)! < (plan.get(id) ?? 0);
@@ -222,10 +253,18 @@ export function buildLeagueScheduleHealth(input: {
       issues.push({ kind: 'short', teamIds, have: haveN, plan: plan.get(teamIds[0])!, cancelled: { gameId: g.id, day: g.scheduledAt ? orgDayKey(g.scheduledAt) : '' } });
     }
   }
+  // The rest, one issue per division and count: a target the whole division falls short of reads as one line, not a line
+  // per team ("Tigers, Braves and Cubs have 7 of 10 games.").
+  const shortBy = new Map<string, Extract<LeagueHealthIssue, { kind: 'short' }>>();
   for (const t of teams) {
     if (!short(t.id) || explained.has(t.id)) continue;
     if (have.get(t.id)! + postponedOf.get(t.id)! >= plan.get(t.id)!) continue;
-    issues.push({ kind: 'short', teamIds: [t.id], have: have.get(t.id)!, plan: plan.get(t.id)!, cancelled: null });
+    const key = `${t.divisionId}|${have.get(t.id)}`;
+    const issue = shortBy.get(key);
+    if (issue) { issue.teamIds.push(t.id); continue; }
+    const fresh = { kind: 'short' as const, teamIds: [t.id], have: have.get(t.id)!, plan: plan.get(t.id)!, cancelled: null };
+    shortBy.set(key, fresh);
+    issues.push(fresh);
   }
 
   // ── Clashes: games and practices together, by house league's own rule (lib/league-schedule-conflict.ts — the club's
@@ -336,7 +375,9 @@ export function buildLeagueScheduleHealth(input: {
       clashes: { pairs: clashes.length, notChecked },
     },
     breakdown, issues: orderIssues(issues), teams: teamRows, rules,
-    plans: divisionIds.map(d => ({ divisionId: d, games: plan.get(teams.find(t => t.divisionId === d)?.id ?? '') ?? 0 })),
+    plans: divisionIds.map(d => ({
+      divisionId: d, games: rules.gamesPerTeam[d] ?? scheduled.get(d) ?? 0, schedule: scheduled.get(d) ?? 0, set: d in rules.gamesPerTeam,
+    })),
   };
 }
 
@@ -381,8 +422,19 @@ export const LEAGUE_HEALTH_WORDS = {
   yes: 'Yes', no: 'No',
   homeAwayRule: 'Home and away can differ by',
   homeAwayRuleValue: (n: number) => pluralize(n, 'game'),
-  /** [build] where games per team comes from: there is no target to set until 9d-2b. */
+  /** [build] where games per team comes from when nobody set it. */
   gamesPerTeamHint: 'Games per team is the number most of a division’s teams were given.',
+  /** The door; its editor's buttons are the tournament's own (`HealthRulesEditor`: Restore defaults · Discard · Save rules). */
+  adjust: 'Adjust the rules',
+  /** [build] a season with several divisions: one games-per-team field each. */
+  gamesPerTeamOf: (division: string) => `Games per team · ${division}`,
+  /** [build] an empty games per team, in the editor. */
+  gamesPerTeamEmpty: 'Leave games per team empty to use the number most of the division’s teams were given.',
+  /** [build] the editor's foot: the window's score is above it. */
+  rulesLive: 'The score above follows as you change them.',
+  /** [build] the save's refusals. */
+  rulesFinished: 'This season is finished, so its rules can’t change.',
+  rulesFailed: 'The rules didn’t save. Try again.',
 } as const;
 
 /** What an issue's one door does: show its bookings in the schedule, open the postponed game, or open team detail. */

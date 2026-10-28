@@ -6716,6 +6716,15 @@
         "column_default": null
       },
       {
+        "table_name": "league_divisions",
+        "pos": 16,
+        "column_name": "games_per_team",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_email_log",
         "pos": 1,
         "column_name": "id",
@@ -8469,6 +8478,24 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 27,
+        "column_name": "twice_in_a_day_allowed",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 28,
+        "column_name": "home_away_tolerance",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "1"
       },
       {
         "table_name": "league_slot_uses",
@@ -39563,6 +39590,12 @@
       {
         "kind": "CHECK",
         "table_name": "league_divisions",
+        "detail": "league_divisions_games_per_team_check",
+        "check_clause": "((games_per_team IS NULL) OR ((games_per_team >= 1) AND (games_per_team <= 99)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_divisions",
         "detail": "league_divisions_price_check",
         "check_clause": "(((price IS NULL) OR (price >= (0)::numeric)) AND ((early_price IS NULL) OR (early_price >= (0)::numeric)) AND ((note IS NULL) OR (char_length(note) <= 120)))"
       },
@@ -39811,6 +39844,12 @@
         "table_name": "league_season_notices",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_seasons",
+        "detail": "league_seasons_home_away_tolerance_check",
+        "check_clause": "((home_away_tolerance >= 0) AND (home_away_tolerance <= 9))"
       },
       {
         "kind": "CHECK",

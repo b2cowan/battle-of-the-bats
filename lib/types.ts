@@ -972,6 +972,9 @@ export interface LeagueSeason {
   askEmailConsent: boolean;
   /** "Owing" turns amber on Registrations after this many days from acceptance (mig 368, 9b·8; starts at 14). */
   owingAmberDays: number;
+  /** Schedule health's rules (mig 412, frame d3): a team may play twice in a day; home and away may differ by this many. */
+  twiceInADayAllowed: boolean;
+  homeAwayTolerance: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -994,6 +997,8 @@ export interface LeagueDivision {
   teamsPublishedAt: string | null;
   /** Schedule published (mig 409, 9d2·1): null = a draft nobody sees. Never cleared. */
   schedulePublishedAt: string | null;
+  /** Games per team, Schedule health's third rule (mig 412): null = the number most of its teams were given. */
+  gamesPerTeam: number | null;
   createdAt: string;
 }
 

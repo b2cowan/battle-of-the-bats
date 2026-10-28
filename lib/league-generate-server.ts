@@ -11,7 +11,7 @@ import { clashOtherName, clashTimeRange } from './venue-clash-words';
 import { formatTimeRange } from './utils';
 import { dayWords } from './calendar-recipe';
 import { houseLeagueSlotRows, usesOf } from './league-time-server';
-import { buildLeagueScheduleHealth, leagueHealthPracticeFromRow } from './league-schedule-health';
+import { buildLeagueScheduleHealth, leagueHealthPracticeFromRow, type LeagueHealthRules } from './league-schedule-health';
 import {
   planFingerprint, summaryOf,
   type CheckedGame, type GamePlan, type GameTeam, type GameTimeSlot, type GenerateCheckReply, type GenerateSaveReply, type GenerateWarning,
@@ -80,6 +80,8 @@ function proposedRows(plan: GamePlan, slotOf: Map<string, GameTimeSlot>) {
 /** THE CHECK (c3): the plan's games, what the club's records say about them, and their Schedule health. */
 export async function checkGeneratedGames(p: {
   orgId: string; season: LeagueSeason; divisionId: string; teams: readonly GameTeam[]; slots: readonly GameTimeSlot[]; plan: GamePlan;
+  /** The season's rules (9d-2b Part 6): the score's, and a team twice in a day is no warning where the season allows it. */
+  rules: LeagueHealthRules;
 }): Promise<GenerateCheckReply> {
   const { plan } = p;
   const summary = summaryOf(plan);
@@ -139,7 +141,7 @@ export async function checkGeneratedGames(p: {
   // (the save replies keep their quiet policy; this check is the one place a person decides on what it shows).
   if (club.unread?.includes('permit')) warnings.push({ kind: 'unread', what: 'permit' });
   if (club.unread?.includes('clashes') || own.unread) warnings.push({ kind: 'unread', what: 'schedule' });
-  warnings.push(...plan.warnings);
+  warnings.push(...plan.warnings.filter(w => !(w.kind === 'twice_in_a_day' && p.rules.twiceInADayAllowed)));
 
   const games: CheckedGame[] = plan.games.map(g => ({
     homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId, scheduledAt: g.scheduledAt, endsAt: g.endsAt, place: slotOf.get(g.slotId)!.place,
@@ -152,6 +154,7 @@ export async function checkGeneratedGames(p: {
     })),
     practices: practices.map(leagueHealthPracticeFromRow),
     teams: p.teams.map(t => ({ id: t.id, name: t.name, divisionId: p.divisionId })),
+    rules: p.rules,
   });
   return { plan: summary, games, warnings, health: health.score, fingerprint: planFingerprint(plan.games) };
 }

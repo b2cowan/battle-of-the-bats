@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronDown, Info, ShieldAlert, SlidersHorizontal } from 'lucide-react';
 import type { ScheduleIssue, ScheduleMetrics } from '@/lib/schedule-metrics';
 import { formatRestMinutes } from '@/lib/schedule-metrics';
@@ -211,9 +211,7 @@ export function ScheduleHealthBody({
       {showRulesEditor && rulesToggle && (
         <div className={styles.healthRulesFoot}>
           <span>{SCHEDULE_DAY_WORDS.healthRulesNote}</span>
-          <button type="button" className={styles.healthRulesDoor} aria-pressed={editing} onClick={rulesToggle.onToggle}>
-            <SlidersHorizontal size={14} aria-hidden /> {rulesToggle.label}
-          </button>
+          <HealthRulesDoor label={rulesToggle.label} open={editing} onToggle={rulesToggle.onToggle} />
         </div>
       )}
       {rulesAtEnd && editor}
@@ -233,52 +231,78 @@ function RulesEditor({ rules, rulesDirty, savingRules, onRuleChange, onSaveRules
   /** The figures sit below the editor (the panel's gear) rather than above it (the window's door at the end). */
   below: boolean;
 }) {
-  // Opened from the door at the window's end, the editor lands under a long team table: bring it into view (/review).
+  return (
+    <HealthRulesEditor
+      dirty={rulesDirty} saving={savingRules} onSave={onSaveRules} onDiscard={onResetRules} onRestore={onRestoreDefaultRules}
+      scrollIntoView={!below}
+      hint={below ? 'The score and warnings below update live as you adjust. Saved per tournament.' : 'The score and warnings above update live as you adjust. Saved per tournament.'}
+    >
+      <label className={styles.healthRule}>
+        <span>Max games / day</span>
+        <input
+          type="number" min={1} max={10} value={rules.maxGamesPerDay}
+          onChange={event => onRuleChange?.({ maxGamesPerDay: clampInt(event.target.value, 1, 10, rules.maxGamesPerDay) })}
+        />
+      </label>
+      <label className={styles.healthRule}>
+        <span>Min rest between games (min)</span>
+        <input
+          type="number" min={0} max={600} step={5} value={rules.minRestMinutes}
+          onChange={event => onRuleChange?.({ minRestMinutes: clampInt(event.target.value, 0, 600, rules.minRestMinutes) })}
+        />
+      </label>
+      <label className={styles.healthRule}>
+        <span>Target games / team</span>
+        <input
+          type="number" min={1} max={99} placeholder="No target"
+          value={rules.targetGamesPerTeam ?? ''}
+          onChange={event => onRuleChange?.({ targetGamesPerTeam: event.target.value === '' ? null : clampInt(event.target.value, 1, 99, rules.targetGamesPerTeam ?? 1) })}
+        />
+      </label>
+    </HealthRulesEditor>
+  );
+}
+
+/** The door to the rules at a window's end (A3): a quiet worded button, pressed while the rules are open. Shared with a
+ *  house-league season's window (9d-2b Part 6), as its frame is. */
+export function HealthRulesDoor({ label, open, onToggle }: { label: string; open: boolean; onToggle: () => void }) {
+  return (
+    <button type="button" className={styles.healthRulesDoor} aria-pressed={open} onClick={onToggle}>
+      <SlidersHorizontal size={14} aria-hidden /> {label}
+    </button>
+  );
+}
+
+/** The rules editor's frame — its fields (`children`, each a `.healthRule` label), Restore defaults · Discard · Save rules,
+ *  and the hint — the tournament's and a house-league season's (9d-2b Part 6), so the two cannot drift. */
+export function HealthRulesEditor({ children, dirty, saving, onSave, onDiscard, onRestore, hint, scrollIntoView }: {
+  children: ReactNode;
+  dirty: boolean;
+  saving: boolean;
+  onSave?: () => void;
+  onDiscard?: () => void;
+  onRestore?: () => void;
+  hint: string;
+  /** Opened from a door at the window's end, the editor lands under a long team table: bring it into view (/review). */
+  scrollIntoView: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => { if (!below) ref.current?.scrollIntoView({ block: 'nearest' }); }, [below]);
+  useEffect(() => { if (scrollIntoView) ref.current?.scrollIntoView({ block: 'nearest' }); }, [scrollIntoView]);
   return (
     <div ref={ref} className={styles.healthRules}>
-      <div className={styles.healthRulesGrid}>
-        <label className={styles.healthRule}>
-          <span>Max games / day</span>
-          <input
-            type="number" min={1} max={10} value={rules.maxGamesPerDay}
-            onChange={event => onRuleChange?.({ maxGamesPerDay: clampInt(event.target.value, 1, 10, rules.maxGamesPerDay) })}
-          />
-        </label>
-        <label className={styles.healthRule}>
-          <span>Min rest between games (min)</span>
-          <input
-            type="number" min={0} max={600} step={5} value={rules.minRestMinutes}
-            onChange={event => onRuleChange?.({ minRestMinutes: clampInt(event.target.value, 0, 600, rules.minRestMinutes) })}
-          />
-        </label>
-        <label className={styles.healthRule}>
-          <span>Target games / team</span>
-          <input
-            type="number" min={1} max={99} placeholder="No target"
-            value={rules.targetGamesPerTeam ?? ''}
-            onChange={event => onRuleChange?.({ targetGamesPerTeam: event.target.value === '' ? null : clampInt(event.target.value, 1, 99, rules.targetGamesPerTeam ?? 1) })}
-          />
-        </label>
-      </div>
+      <div className={styles.healthRulesGrid}>{children}</div>
       <div className={styles.healthRulesFooter}>
-        <button type="button" className={styles.healthRulesReset} onClick={onRestoreDefaultRules}>Restore defaults</button>
+        <button type="button" className={styles.healthRulesReset} onClick={onRestore}>Restore defaults</button>
         <div className={styles.healthRulesActions}>
-          {rulesDirty && (
-            <button type="button" className={styles.healthRulesDiscard} onClick={onResetRules}>Discard</button>
+          {dirty && (
+            <button type="button" className={styles.healthRulesDiscard} onClick={onDiscard}>Discard</button>
           )}
-          <button
-            type="button"
-            className={styles.healthRulesSave}
-            disabled={!rulesDirty || savingRules}
-            onClick={onSaveRules}
-          >
-            {savingRules ? 'Saving…' : 'Save rules'}
+          <button type="button" className={styles.healthRulesSave} disabled={!dirty || saving} onClick={onSave}>
+            {saving ? 'Saving…' : 'Save rules'}
           </button>
         </div>
       </div>
-      <p className={styles.healthRulesHint}>{below ? 'The score and warnings below update live as you adjust. Saved per tournament.' : 'The score and warnings above update live as you adjust. Saved per tournament.'}</p>
+      <p className={styles.healthRulesHint}>{hint}</p>
     </div>
   );
 }

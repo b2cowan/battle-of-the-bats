@@ -2,15 +2,15 @@
 
 **Generated:** 2026-10-28 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 64 divergence(s)** across dev/prod.
+**⚠️ 69 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 2 | 0 | — |
-| Columns | 29 | 0 | 0 |
+| Columns | 32 | 0 | 0 |
 | Indexes | 13 | 0 | 0 |
 | Constraints | 13 | 0 | — |
-| RLS / CHECK | 6 | 0 | 0 (RLS state) |
+| RLS / CHECK | 8 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (2)
@@ -21,7 +21,8 @@
 _none_
 
 ## Columns
-### Only in DEV (29)
+### Only in DEV (32)
+- `league_divisions.games_per_team`
 - `league_divisions.schedule_published_at`
 - `league_divisions.schedule_published_by`
 - `league_game_changes.after`
@@ -48,6 +49,8 @@ _none_
 - `league_schedule_emails.season_id`
 - `league_schedule_emails.status`
 - `league_schedule_emails.updated_at`
+- `league_seasons.home_away_tolerance`
+- `league_seasons.twice_in_a_day_allowed`
 - `team_workspaces.free_time_given_at`
 - `team_workspaces.free_time_reminded_14_for`
 - `team_workspaces.free_time_reminded_3_for`
@@ -103,13 +106,15 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (6)
+### CHECK only in DEV (8)
+- `league_divisions.league_divisions_games_per_team_check`
 - `league_game_changes.league_game_changes_check`
 - `league_game_changes.league_game_changes_kind_check`
 - `league_game_changes.league_game_changes_source_check`
 - `league_schedule_emails.league_schedule_emails_guardian_email_check`
 - `league_schedule_emails.league_schedule_emails_registration_ids_check`
 - `league_schedule_emails.league_schedule_emails_status_check`
+- `league_seasons.league_seasons_home_away_tolerance_check`
 
 ### CHECK only in PROD (0)
 _none_

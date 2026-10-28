@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import {
-  buildLeagueScheduleHealth, leagueHealthGameOf, leagueHealthPracticeOf, leagueIssueWords, primeTimeCell,
+  buildLeagueScheduleHealth, DEFAULT_LEAGUE_HEALTH_RULES, leagueHealthGameOf, leagueHealthPracticeOf, leagueHealthRulesOf, leagueIssueWords,
+  primeTimeCell, sameLeagueHealthRules,
   type LeagueHealthGame, type LeagueHealthIssue, type LeagueHealthPractice, type LeagueHealthTeam,
 } from '../../lib/league-schedule-health.ts';
 import { buildEventScheduleHealth } from '../../lib/schedule-metrics.ts';
@@ -69,7 +70,7 @@ describe('Dev House League 2026', () => {
   it('every team\'s games all fall on one time, so prime time is even; the plan is said per division', () => {
     assert.ok(r.teams.every(t => t.primeTime === 'even'));
     assert.equal(primeTimeCell(r.teams[0].primeTime), 'even');
-    assert.deepEqual(r.plans, [{ divisionId: 'B', games: 2 }, { divisionId: 'A', games: 2 }]);
+    assert.deepEqual(r.plans, [{ divisionId: 'B', games: 2, schedule: 2, set: false }, { divisionId: 'A', games: 2, schedule: 2, set: false }]);
   });
 
   it('a postponed game is not played and a cancelled one is not had: 2 of 6 teams on plan', () => {
@@ -126,20 +127,64 @@ describe('the league rule set', () => {
     const games = [...division(), g('A', 'cards', 'twins', '2026-06-01')];
     const no = buildLeagueScheduleHealth({ games, practices: [], teams: teams.filter(t => t.divisionId === 'A') });
     assert.deepEqual(no.issues.filter(i => i.kind === 'twice_in_a_day').map(i => i.kind === 'twice_in_a_day' && i.teamId), ['cards']);
-    const yes = buildLeagueScheduleHealth({ games, practices: [], teams: teams.filter(t => t.divisionId === 'A'), rules: { twiceInADayAllowed: true, homeAwayTolerance: 1 } });
+    const yes = buildLeagueScheduleHealth({ games, practices: [], teams: teams.filter(t => t.divisionId === 'A'), rules: { ...DEFAULT_LEAGUE_HEALTH_RULES, twiceInADayAllowed: true } });
     assert.equal(yes.issues.some(i => i.kind === 'twice_in_a_day'), false);
   });
 
-  it('a short team that no cancelled game explains is said on its own', () => {
+  it('short teams that no cancelled game explains are said once per division and count (9d-2b Part 6)', () => {
     // Cardinals and Jays have two games, Twins and Orioles one: the plan is 2 and nothing was cancelled.
     const four = [...teams.filter(t => t.divisionId === 'A'), { id: 'jays', name: 'Jays', divisionId: 'A' }];
     const games = [g('A', 'cards', 'twins', '2026-06-01'), g('A', 'jays', 'orioles', '2026-06-01'), g('A', 'cards', 'jays', '2026-06-08')];
     const r = buildLeagueScheduleHealth({ games, practices: [], teams: four });
     const short = r.issues.filter(i => i.kind === 'short');
     assert.deepEqual(short, [
-      { kind: 'short', teamIds: ['orioles'], have: 1, plan: 2, cancelled: null },
-      { kind: 'short', teamIds: ['twins'], have: 1, plan: 2, cancelled: null },
+      { kind: 'short', teamIds: ['orioles', 'twins'], have: 1, plan: 2, cancelled: null },
     ]);
+  });
+});
+
+describe('the season\'s rules, kept (9d-2b Part 6, d3)', () => {
+  const division = (): LeagueHealthGame[] => [
+    g('A', 'cards', 'orioles', '2026-06-01'), g('A', 'twins', 'cards', '2026-06-08'), g('A', 'orioles', 'twins', '2026-06-15'),
+  ];
+  const three = teams.filter(t => t.divisionId === 'A');
+
+  it('read off the season and its divisions; a division with no games per team plays to the schedule', () => {
+    const rules = leagueHealthRulesOf({ twiceInADayAllowed: true, homeAwayTolerance: 2 }, [{ id: 'A', gamesPerTeam: 4 }, { id: 'B', gamesPerTeam: null }]);
+    assert.deepEqual(rules, { twiceInADayAllowed: true, homeAwayTolerance: 2, gamesPerTeam: { A: 4 } });
+    assert.deepEqual(leagueHealthRulesOf(null, []), DEFAULT_LEAGUE_HEALTH_RULES);
+  });
+
+  it('two rule sets are the same when they say the same thing', () => {
+    assert.ok(sameLeagueHealthRules(DEFAULT_LEAGUE_HEALTH_RULES, { twiceInADayAllowed: false, homeAwayTolerance: 1, gamesPerTeam: {} }));
+    assert.ok(!sameLeagueHealthRules(DEFAULT_LEAGUE_HEALTH_RULES, { ...DEFAULT_LEAGUE_HEALTH_RULES, gamesPerTeam: { A: 2 } }));
+    assert.ok(!sameLeagueHealthRules({ ...DEFAULT_LEAGUE_HEALTH_RULES, gamesPerTeam: { A: 2 } }, { ...DEFAULT_LEAGUE_HEALTH_RULES, gamesPerTeam: { A: 3 } }));
+  });
+
+  it('a games-per-team target the whole division falls short of is one line, and the plan says it was set', () => {
+    const r = buildLeagueScheduleHealth({ games: division(), practices: [], teams: three, rules: { ...DEFAULT_LEAGUE_HEALTH_RULES, gamesPerTeam: { A: 4 } } });
+    assert.deepEqual(r.issues.filter(i => i.kind === 'short'), [{ kind: 'short', teamIds: ['cards', 'orioles', 'twins'], have: 2, plan: 4, cancelled: null }]);
+    assert.deepEqual(r.plans, [{ divisionId: 'A', games: 4, schedule: 2, set: true }]);
+    assert.deepEqual(r.tiles.games, { onPlan: 0, teams: 3 });
+    assert.equal(r.breakdown.games, 0);
+    const name = new Map(teams.map(t => [t.id, t.name]));
+    assert.equal(leagueIssueWords(r.issues[0], { team: id => name.get(id)!, label: k => k, place: () => '', division: d => d }).text,
+      'Cardinals, Orioles and Twins have 2 of 4 games.');
+  });
+
+  it('a target at or under what every team has is on plan', () => {
+    const r = buildLeagueScheduleHealth({ games: division(), practices: [], teams: three, rules: { ...DEFAULT_LEAGUE_HEALTH_RULES, gamesPerTeam: { A: 2 } } });
+    assert.equal(r.score, 100);
+    assert.deepEqual(r.issues, []);
+  });
+
+  it('a wider home-and-away tolerance takes Dev House League 2026\'s home/away issue away', () => {
+    const tight = buildLeagueScheduleHealth({ games: devGames(), practices: [], teams });
+    const loose = buildLeagueScheduleHealth({ games: devGames(), practices: [], teams, rules: { ...DEFAULT_LEAGUE_HEALTH_RULES, homeAwayTolerance: 2 } });
+    assert.equal(tight.tiles.homeAway.off, 2);
+    assert.equal(loose.tiles.homeAway.off, 0);
+    assert.equal(loose.issues.some(i => i.kind === 'home_away'), false);
+    assert.equal(loose.score - tight.score, 5);
   });
 });
 
@@ -244,10 +289,22 @@ describe('the season\'s schedule wears it (step 6, d1)', () => {
     assert.doesNotMatch(PAGE, /with another at the same time|not being checked for double-bookings/, 'the old warning strip is gone');
   });
 
-  it('the window is the tournament\'s frame, tiles and rows, and says the rules with no door to adjust them (owner 2026-10-27)', () => {
+  it('the window is the tournament\'s frame, tiles, rows and rules editor', () => {
     assert.match(WINDOW, /<HealthWindowFrame\b/);
     assert.match(WINDOW, /<Metric\b/);
     assert.match(WINDOW, /<IssueRow\b/);
-    assert.doesNotMatch(WINDOW, /rulesToggle|onSaveRules|SlidersHorizontal/, 'no rules door, no save');
+    assert.match(WINDOW, /<HealthRulesDoor\b/);
+    assert.match(WINDOW, /<HealthRulesEditor\b/);
+  });
+
+  it('Adjust the rules is offered only to whoever runs the season, and the page scores by the season\'s rules (9d-2b Part 6, d3)', () => {
+    assert.match(WINDOW, /\{onSaveRules && <HealthRulesDoor\b/, 'no save, no door');
+    assert.match(PAGE, /onSaveRules=\{canManage \? saveHealthRules : undefined\}/);
+    assert.match(PAGE, /leagueHealthRulesOf\(season, divisions\)/);
+    assert.match(PAGE, /schedule\/rules\$\{orgQuery\}/);
+  });
+
+  it('a door that leaves the window waits while the rules are unsaved; Team detail stays', () => {
+    assert.match(WINDOW, /if \(dirty && x\.door !== 'teams'\) return null;/);
   });
 });

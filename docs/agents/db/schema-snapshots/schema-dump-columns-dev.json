@@ -6714,6 +6714,15 @@
     "ordinal_position": 15
   },
   {
+    "table_name": "league_divisions",
+    "column_name": "games_per_team",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
     "table_name": "league_email_log",
     "column_name": "id",
     "data_type": "uuid",
@@ -8467,6 +8476,24 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 26
+  },
+  {
+    "table_name": "league_seasons",
+    "column_name": "twice_in_a_day_allowed",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 27
+  },
+  {
+    "table_name": "league_seasons",
+    "column_name": "home_away_tolerance",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "1",
+    "ordinal_position": 28
   },
   {
     "table_name": "league_slot_uses",
