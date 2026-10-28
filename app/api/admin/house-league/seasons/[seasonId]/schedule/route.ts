@@ -6,7 +6,10 @@ import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } f
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
-import { clashReportForLeagueRows } from '@/lib/venue-clash-lookup';
+import { bookingOfLeagueRow, clashReportForLeagueRows } from '@/lib/venue-clash-lookup';
+import { checkClubPermitsQuietly } from '@/lib/permit-lookup';
+import type { ClubBooking } from '@/lib/venue-clash';
+import type { PermitOutside } from '@/lib/permit-words';
 import { seasonGameSlots } from '@/lib/league-time-server';
 
 function mapGame(row: any) {
@@ -61,9 +64,18 @@ export const GET = withObservability(async (req: Request,
 
   const [{ data, error }, gameSlots] = await Promise.all([q, seasonGameSlots(ctx!.org.id, seasonId)]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const games = (data ?? []).map(mapGame);
+
+  // The permit's quiet line on each game (9d-2a step 7, frame i), by booking key — only for someone who runs the season:
+  // "A reader doesn't see the line", and only they get "See the permit". A failed read says nothing, as every check does.
+  let permits: Record<string, PermitOutside> = {};
+  if (!houseLeagueRefusal(ctx, 'run', season)) {
+    const placed = games.map(g => bookingOfLeagueRow(g, 'game', season.name)).filter((b): b is ClubBooking => !!b);
+    permits = Object.fromEntries(await checkClubPermitsQuietly(ctx!.org.id, placed));
+  }
 
   // The season's game time (9d-2a step 4): the game window's "Time from {schedule}" matches a game to it.
-  return NextResponse.json({ games: (data ?? []).map(mapGame), gameSlots });
+  return NextResponse.json({ games, gameSlots, permits });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule' });
 
 export const POST = withObservability(async (req: Request,

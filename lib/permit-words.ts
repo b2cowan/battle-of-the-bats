@@ -35,6 +35,11 @@ export interface PermitOutside {
   /** The permit's last day. */
   until: string;
   dateOff: DateOff | null;
+  /** Every permit the club held at the venue had ended by that day (9d2a·H); `until` is when, `covers` is empty. */
+  ended: boolean;
+  /** The one permit the line is about, for "See the permit" (an id opens nothing for a coach: the permits route refuses
+   *  them); null when the line is about several. */
+  permitId: string | null;
 }
 
 /** A day's short name, 1 = Monday — the calendar recipe's own heads (C2: Monday first). */
@@ -105,8 +110,10 @@ function coverWords(c: PermitOutside['covers'][number], sport: string | null | u
   return `${where} on ${when}`;
 }
 
-/** "It covers Tue and Thu, 5:30–9:00 p.m., until Oct 29." — what the permit DOES hold, so the booking can move inside it. */
+/** "It covers Tue and Thu, 5:30–9:00 p.m., until Oct 29." — what the permit DOES hold, so the booking can move inside it.
+ *  "It ended Sep 30, 2026." when it holds nothing there any more (9d2a·H; /marketing's phone sentence, 2026-10-27). */
 function coversSentence(o: PermitOutside, sport: string | null | undefined): string {
+  if (o.ended) return `It ended ${dayWords(o.until, o.day)}.`;
   const parts = o.covers.map(c => coverWords(c, sport, !o.onFacility));
   const list = parts.length <= 1 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
   return list ? `It covers ${list}, until ${dayWords(o.until, o.day)}.` : '';
@@ -118,12 +125,18 @@ function aboutWords(o: PermitOutside, sport: string | null | undefined): string 
   return fac ? `the club’s permit for ${fac}` : `the club’s permit at ${o.venueName}`;
 }
 
+/** "Outside the club’s permit for Diamond 1: the permit ended Sep 30, 2026." — already short, so the calendar says it whole. */
+const endedLine = (o: PermitOutside, sport: string | null | undefined) =>
+  `Outside ${aboutWords(o, sport)}: the permit ended ${dayWords(o.until, o.day)}.`;
+
 /**
  * THE QUIET LINE under Venue (Ask 3, specimen 3) — WhereLine's `quiet` ink, never amber, never a refusal.
  *   "Outside the club’s permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Oct 29."
  *   on a facility the permit doesn't hold, or none set:
  *   "Outside the club’s permit at Lions Park. It covers Diamond 2 on Tue and Thu, 5:30–9:00 p.m., until Oct 29."
  *   on a date off: "Outside the club’s permit for Diamond 2: Oct 12 is a date off (Thanksgiving)."
+ *   after the last permit there ended (9d2a·H, /marketing 2026-10-27): "Outside the club’s permit for Diamond 1: the
+ *   permit ended Sep 30, 2026." — the year said when it isn't the booking's.
  * ⚖ /marketing 2026-10-11: "Outside", the one word every permit surface uses (the series line, a date's mark, the
  * generator's count) — the drawing's "Not inside" was the one exception, and odd English. (The Use band's "Outside it"
  * was removed the same day, owner — a permit never lists those bookings; lib/permit-time.ts §3.)
@@ -135,6 +148,7 @@ export function permitLine(o: PermitOutside | null | undefined, sport: string | 
     const note = o.dateOff.note ? ` (${o.dateOff.note})` : '';
     return `Outside ${about}: ${dayWords(o.dateOff.day)} is a date off${note}.`;
   }
+  if (o.ended) return endedLine(o, sport);
   const covers = coversSentence(o, sport);
   return `Outside ${about}.${covers ? ` ${covers}` : ''}`;
 }
@@ -146,6 +160,7 @@ export function permitLine(o: PermitOutside | null | undefined, sport: string | 
 export function permitCalendarLine(o: PermitOutside | null | undefined, sport: string | null | undefined): string {
   if (!o) return '';
   if (o.dateOff) return `Outside ${aboutWords(o, sport)}: ${dayWords(o.dateOff.day)} is a date off.`;
+  if (o.ended) return endedLine(o, sport);
   return `Outside ${aboutWords(o, sport)}.`;
 }
 
@@ -314,6 +329,8 @@ export function fieldHourSentence(cost: number, fullFieldHours: number, fullHour
 // ── The screens' words ─────────────────────────────────────────────────────────────────────────────
 
 export const PERMIT_WORDS = {
+  /** [marketing] House League 9d-2a (frames b4, c3, i): the quiet line's door to the permit it is about. */
+  seeThePermit: 'See the permit',
   /** [marketing] Club Tier 11a part B: the door into New schedule, started from this permit (specimen 2). */
   handOut: 'Hand out this time in a schedule',
   /** [marketing] While a schedule hands the permit's time out, Delete is absent and this says why. */

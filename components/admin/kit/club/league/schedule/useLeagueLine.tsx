@@ -3,9 +3,19 @@ import { WhereLine } from '@/components/venue/WhereField';
 import { useClashCheck } from '@/components/venue/useClashCheck';
 import { pickedVenueKinds, type WhereValue } from '@/lib/where-field';
 import { clashLine, leagueRefusalLine, leagueSeriesLine } from '@/lib/venue-clash-words';
-import { permitLine, permitSeriesLine, type PermitOutside } from '@/lib/permit-words';
+import { PERMIT_WORDS, permitLine, permitSeriesLine, type PermitOutside } from '@/lib/permit-words';
 import type { ClashFinding } from '@/lib/venue-clash';
 import type { ClubVenueOption } from '@/lib/types';
+import ck from '../../ClubKit.module.css';
+
+/**
+ * "See the permit" (9d-2a step 7; frames b4, c3, i): the quiet line's door to the one permit it is about. Absent when the
+ * line is about several permits (`permitId` null — never a guess) or the host cannot open a permit (no `onOpen`).
+ */
+export function SeePermitDoor({ permitId, onOpen }: { permitId: string | null | undefined; onOpen?: (permitId: string) => void }) {
+  if (!permitId || !onOpen) return null;
+  return <button type="button" className={ck.link} onClick={() => onOpen(permitId)}>{PERMIT_WORDS.seeThePermit}</button>;
+}
 
 /** One live-check answer per date (`/venue-check`). */
 interface LeagueCheckResult {
@@ -48,8 +58,10 @@ export function useLeagueLine(opts: {
   /** The practices an edit moves: never a clash with themselves. */
   excludePracticeIds?: string[] | null;
   teamId?: string | null;
+  /** Opens the permit the quiet line is about (the game window's "See the permit"); absent = no door. */
+  onSeePermit?: (permitId: string) => void;
 }) {
-  const { checkPath, sport, where, venues, kind, occurrence, series, occurrences, excludeGameId, excludePracticeIds, teamId } = opts;
+  const { checkPath, sport, where, venues, kind, occurrence, series, occurrences, excludeGameId, excludePracticeIds, teamId, onSeePermit } = opts;
   const ready = where.source === 'club' && !!where.orgVenueId && (
     series ? !!(series.startDate && series.endDate && series.startTime && series.endTime)
       : occurrences ? occurrences.length > 0 && occurrences.every(o => o.date && o.startTime)
@@ -97,7 +109,8 @@ export function useLeagueLine(opts: {
       <>
         {refusal && <WhereLine tone="refuse" lead={refusal.lead} rest={refusal.rest} />}
         {cross && <WhereLine tone={cross.tone} lead={cross.lead} rest={cross.rest} />}
-        {outside && <WhereLine tone="quiet" mark="clock" rest={outside} />}
+        {outside && <WhereLine tone="quiet" mark="clock" rest={outside}
+          door={<SeePermitDoor permitId={permits.find(Boolean)?.permitId} onOpen={onSeePermit} />} />}
       </>
     ) : null,
     checking,

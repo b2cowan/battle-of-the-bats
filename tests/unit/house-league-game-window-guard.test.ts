@@ -99,3 +99,24 @@ describe('4. the save sends only what changed, and a score is both or neither', 
     assert.equal(asksScores({ status: 'postponed', scheduledAt: '2027-06-17T21:00:00Z' }, now), false);
   });
 });
+
+describe('5. the permit line and "See the permit" (9d-2a step 7, frames b4, c3, i)', () => {
+  const SCHEDULE_ROUTE = 'app/api/admin/house-league/seasons/[seasonId]/schedule/route.ts';
+  it('the season read carries a permit answer only for someone who runs the season ("A reader doesn\'t see the line")', () => {
+    const get = readCode(SCHEDULE_ROUTE);
+    const body = get.slice(get.indexOf('export const GET'), get.indexOf('export const POST'));
+    assert.match(body, /if \(!houseLeagueRefusal\(ctx, 'run', season\)\) \{[\s\S]*checkClubPermitsQuietly\(/);
+  });
+  it('the record says the line from the season read, for whoever runs it, with the door', () => {
+    const w = readCode(WINDOW);
+    assert.match(w, /const permit = canRun \? booking\?\.permit \?\? null : null;/);
+    assert.match(w, /\{permit && <WhereLine tone="quiet" mark="clock" rest=\{permitLine\(permit, sport\)\} door=\{<SeePermitDoor permitId=\{permit\.permitId\} onOpen=\{onSeePermit\} \/>\} \/>\}/);
+    // the form's live line gets the same door
+    assert.match(w, /useLeagueLine\(\{[\s\S]*?onSeePermit,\s*\}\);/);
+  });
+  it('the page opens Stage 10\'s permit window RAISED over the window that asked, which waits underneath', () => {
+    const page = readCode(PAGE);
+    assert.match(page, /<PermitWindow raised key=\{permitOpen\}/);
+    assert.equal((page.match(/onSeePermit=\{setPermitOpen\}/g) ?? []).length, 2, 'the game window and Generate games both open it');
+  });
+});

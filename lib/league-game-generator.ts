@@ -347,7 +347,8 @@ export interface GeneratePlanReply {
 /** One thing to look at (c3's warning state): the plan's own two, and the two the club's records answer. */
 export type GenerateWarning =
   | PlanWarning
-  | { kind: 'permit'; venue: string; line: string }
+  /** `permitId`: the permit the line is about, for "See the permit" (step 7); null when it is about several. */
+  | { kind: 'permit'; venue: string; line: string; permitId: string | null }
   | { kind: 'booking'; place: string; other: string };
 
 /** A game as "See the games" lists it. */

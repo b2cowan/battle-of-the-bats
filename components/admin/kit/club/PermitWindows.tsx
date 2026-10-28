@@ -517,7 +517,7 @@ const blockWhere = (b: PermitView['blocks'][number]) =>
 
 export function PermitWindow({
   q, orgSlug, orgName, permitId, venues: givenVenues, steps, startEditing = false, said, onSaidDone, fromLine = false,
-  onOpenLine, onChanged, onRenewed, onDeleted, onClose,
+  raised = false, onOpenLine, onChanged, onRenewed, onDeleted, onClose,
 }: {
   q: string;
   orgSlug: string;
@@ -534,6 +534,9 @@ export function PermitWindow({
   onSaidDone?: () => void;
   /** Opened from a budget line's "Pays for": the line is behind it, so the band names it without a door. */
   fromLine?: boolean;
+  /** Opened from INSIDE another window (house league's "See the permit", 9d-2a step 7): it stands one layer above it, and
+   *  closing it goes back to that window as it was (KitDialog's `raised`). */
+  raised?: boolean;
   /** "Open the line ›" (the 3d door rule): the host turns this window into the line's. */
   onOpenLine?: (lineId: string, yearKey: string) => void;
   /** A save or a document landed: the host re-reads what it lists. */
@@ -694,14 +697,14 @@ export function PermitWindow({
 
   if (failed) {
     return (
-      <KitDialog kind="form" size="medium" eyebrow="Permit" title="Permit" onClose={onClose}>
+      <KitDialog kind="form" size="medium" eyebrow="Permit" title="Permit" raised={raised} onClose={onClose}>
         <LoadFailed title="We couldn’t load this permit." onRetry={() => void load()} />
       </KitDialog>
     );
   }
   if (!view) {
     return (
-      <KitDialog kind="form" size="medium" eyebrow="Permit" title="Permit" onClose={onClose}>
+      <KitDialog kind="form" size="medium" eyebrow="Permit" title="Permit" raised={raised} onClose={onClose}>
         <LoadingState inline label="Loading the permit…" />
       </KitDialog>
     );
@@ -730,6 +733,7 @@ export function PermitWindow({
         size="medium"
         eyebrow={`Permit · ${view.year.name}`}
         title={view.name}
+        raised={raised}
         onClose={() => void leave(onClose)}
         edit={canSave ? { editing, onToggle: () => void toggleEdit(), label: `Edit ${view.name}` } : undefined}
         status={said && !(saving || dirty || saveError || blocked)

@@ -241,7 +241,7 @@ describe('the window says the plan (step 5, the copy file "Stage 9d-2a" c)', () 
     assert.equal(warningWords({ kind: 'twice_in_a_day', teamId: 't01', day: '2027-06-17' }, 'U12', team), 'Cardinals plays twice on Thu, Jun 17.');
     assert.equal(warningWords({ kind: 'byes_back_to_back', teamId: 't02', weeks: ['2027-06-07', '2027-06-14'] }, 'U12', team),
       'Rays has a bye two weeks running, Jun 7 and Jun 14.');
-    assert.equal(warningWords({ kind: 'permit', venue: 'Maple Grove Park', line: '' }, 'U12', team),
+    assert.equal(warningWords({ kind: 'permit', venue: 'Maple Grove Park', line: '', permitId: null }, 'U12', team),
       'U12’s game time is outside the club’s permit for Maple Grove Park.');
     assert.equal(warningWords({ kind: 'booking', place: 'Diamond 1', other: 'a Spring Classic game, Sat, Jun 12, 10:00–11:30 a.m.' }, 'U12', team),
       'U12’s game time overlaps a booking at Diamond 1: a Spring Classic game, Sat, Jun 12, 10:00–11:30 a.m.');

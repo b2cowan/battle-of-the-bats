@@ -16,6 +16,7 @@ import {
 import type { LeagueTeam } from '@/lib/types';
 import s from '../time/LeagueTime.module.css';
 import g from './GenerateGames.module.css';
+import { SeePermitDoor } from './useLeagueLine';
 
 /**
  * GENERATE GAMES (House League Stage 9d-2a step 5; frames c1–c4, k3, k4; ruling 9d2·3 + the owner's amendment, plan
@@ -41,7 +42,7 @@ function rowsOf(time: LeagueTime, pick: (row: LeagueTimeRow) => boolean) {
 const slotCount = (row: LeagueTimeRow) => row.parts.reduce((n, p) => n + p.slotIds.length, 0);
 
 export default function GenerateGamesWindow({
-  seasonName, divisions, divisionId: first, through: firstThrough, time, api, orgQuery, schedulesHref, onTimeChanged, onOpenTime, onSaved, onClose,
+  seasonName, divisions, divisionId: first, through: firstThrough, time, api, orgQuery, schedulesHref, onTimeChanged, onOpenTime, onSeePermit, onSaved, onClose,
 }: {
   seasonName: string;
   /** The divisions Generate can take: two teams or more, no games yet. */
@@ -59,6 +60,8 @@ export default function GenerateGamesWindow({
   onTimeChanged: () => Promise<unknown>;
   /** A door to House league's time on this division's game time; the page opens Generate again when it closes. */
   onOpenTime: (divisionId: string, through: Through) => void;
+  /** The permit warning's "See the permit" (step 7, c3): the page opens it raised over this window, the check kept. */
+  onSeePermit: (permitId: string) => void;
   onSaved: (said: string, permit: { title: string; sentence: string } | null) => void;
   onClose: () => void;
 }) {
@@ -353,7 +356,9 @@ export default function GenerateGamesWindow({
           {check.warnings.map((w, i) => (
             <li key={i}>
               <span>{warningWords(w, name, teamName)}</span>
-              {w.kind === 'permit' && w.line && <span className={s.detail}>{w.line}</span>}
+              {w.kind === 'permit' && w.line && (
+                <span className={s.detail}>{w.line} <SeePermitDoor permitId={w.permitId} onOpen={onSeePermit} /></span>
+              )}
             </li>
           ))}
         </ul>

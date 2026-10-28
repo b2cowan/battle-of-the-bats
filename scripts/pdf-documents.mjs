@@ -1539,6 +1539,10 @@ export const NO_PDF_SCREENS = [
     file: 'components/admin/kit/club/PermitWindows.tsx',
     reason: 'A permit\'s use workbook is xlsx only (Club Tier 10a); it reaches the renderers only through clubWorkbookBrand, the club workbook\'s letterhead, which lives beside the schedule\'s exporter (11a part B).',
   },
+  {
+    file: 'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx',
+    reason: 'The season\'s schedule exports as a spreadsheet only; it reaches the renderers only through the permit window it opens from "See the permit" (House League 9d-2a step 7), whose own entry is above.',
+  },
   /* ⚰ The shared-payee report page (Club Tier 3b) retired in Stage 3c with its Export: the report is the payee
      window's body now, and is read there (Ask 7). */
 ];

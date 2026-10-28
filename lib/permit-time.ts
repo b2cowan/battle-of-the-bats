@@ -141,10 +141,16 @@ export interface PermitOutsideIds {
   /** True when `covers` is about the booking's own facility (the permit holds it); false = every block at the venue. */
   onFacility: boolean;
   covers: PermitCover[];
-  /** The last day of the permits that hold the venue that day. */
+  /** The last day of the permits that hold the venue that day — or, when `ended`, of the club's last permit there. */
   until: string;
   /** The date is a date off of a permit that holds the venue. */
   dateOff: DateOff | null;
+  /** The club's permits at the venue had all ended by the booking's day (9d2a·H): `until` is the last one's last day and
+   *  `covers` is empty — there is no time held there to move inside. */
+  ended: boolean;
+  /** The one permit the line is about ("See the permit" opens it); null when it is about several — no door, never a
+   *  guess. */
+  permitId: string | null;
 }
 
 export type PermitAnswer = { kind: 'none' } | { kind: 'inside' } | PermitOutsideIds;
@@ -158,16 +164,34 @@ const sameCover = (a: PermitCover, b: PermitCover) =>
  * facility (every facility counts; with no facility set, any block at the venue counts), on that weekday, inside the
  * block's dates, the day not a date off — whose window holds the booking's WHOLE time. Inside any one permit is inside.
  * OUTSIDE when the club holds a permit at that venue covering that day and none of that holds (a date off is outside,
- * and says so). NONE when the club holds no permit at that venue that day — the line says nothing, and so does a booking
- * on a place that isn't one of the club's venues.
+ * and says so). ENDED (owner 2026-10-27, 9d2a·H — every surface, one rule) when every permit the club held at that venue
+ * had ended by that day: outside, and the line says when the last one ended. NONE when the club holds no permit at that
+ * venue that day and none ended before it (only later ones, or none at all) — the line says nothing, and so does a
+ * booking on a place that isn't one of the club's venues.
  */
 export function permitAnswer(b: BookingPlace, permits: readonly PermitTime[], venueFacilities: VenueFacilities): PermitAnswer {
   if (!b.venueId || !Number.isFinite(b.startMs) || !Number.isFinite(b.endMs)) return { kind: 'none' };
   // Most bookings stand where the club holds no permit at all: answered before any date work.
   if (!permits.some(p => p.blocks.some(x => x.venueId === b.venueId))) return { kind: 'none' };
   const day = clubDayOf(b.startMs);
-  const holding = permits.filter(p => p.startsOn <= day && day <= p.endsOn && p.blocks.some(x => x.venueId === b.venueId));
-  if (!holding.length) return { kind: 'none' };
+  const atThisVenue = permits.filter(p => p.blocks.some(x => x.venueId === b.venueId));
+  const holding = atThisVenue.filter(p => p.startsOn <= day && day <= p.endsOn);
+  if (!holding.length) {
+    const ended = atThisVenue.filter(p => p.endsOn < day);
+    if (!ended.length) return { kind: 'none' };
+    const lastDay = ended.reduce((u, p) => (p.endsOn > u ? p.endsOn : u), ended[0].endsOn);
+    const last = ended.filter(p => p.endsOn === lastDay);
+    return {
+      kind: 'outside',
+      day,
+      onFacility: !!b.facilityId && last.some(p => p.blocks.some(x => x.venueId === b.venueId && blockHoldsFacility(x, b.facilityId!, venueFacilities))),
+      covers: [],
+      until: lastDay,
+      dateOff: null,
+      ended: true,
+      permitId: last.length === 1 ? last[0].id : null,
+    };
+  }
 
   for (const p of holding) {
     if (p.datesOff.some(d => d.day === day)) continue;
@@ -181,12 +205,12 @@ export function permitAnswer(b: BookingPlace, permits: readonly PermitTime[], ve
     }
   }
 
-  const atVenue = holding.flatMap(p => p.blocks.filter(x => x.venueId === b.venueId));
-  const onFacilityBlocks = b.facilityId ? atVenue.filter(x => blockHoldsFacility(x, b.facilityId!, venueFacilities)) : [];
+  const atVenue = holding.flatMap(p => p.blocks.filter(x => x.venueId === b.venueId).map(x => ({ p, x })));
+  const onFacilityBlocks = b.facilityId ? atVenue.filter(({ x }) => blockHoldsFacility(x, b.facilityId!, venueFacilities)) : [];
   const onFacility = onFacilityBlocks.length > 0;
   const described = onFacility ? onFacilityBlocks : atVenue;
   const covers: PermitCover[] = [];
-  for (const x of described) {
+  for (const { x } of described) {
     const c: PermitCover = {
       facilityIds: onFacility ? [b.facilityId!] : x.facilityIds.length ? [...x.facilityIds] : null,
       weekdays: [...x.weekdays].sort((m, n) => m - n),
@@ -197,6 +221,8 @@ export function permitAnswer(b: BookingPlace, permits: readonly PermitTime[], ve
   }
   covers.sort((a, z) => (a.weekdays[0] ?? 8) - (z.weekdays[0] ?? 8) || a.startTime.localeCompare(z.startTime));
   const offPermit = holding.find(p => p.datesOff.some(d => d.day === day));
+  // A date off is about the permit that has it; otherwise the line is about the permits whose blocks it describes.
+  const about = offPermit ? [offPermit.id] : [...new Set(described.map(({ p }) => p.id))];
   return {
     kind: 'outside',
     day,
@@ -204,6 +230,8 @@ export function permitAnswer(b: BookingPlace, permits: readonly PermitTime[], ve
     covers,
     until: holding.reduce((u, p) => (p.endsOn > u ? p.endsOn : u), holding[0].endsOn),
     dateOff: offPermit ? offPermit.datesOff.find(d => d.day === day) ?? null : null,
+    ended: false,
+    permitId: about.length === 1 ? about[0] : null,
   };
 }
 

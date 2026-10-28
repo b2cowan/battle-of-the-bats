@@ -96,8 +96,39 @@ describe('the permit\'s answer (Ask 3) — case by case', () => {
   it('a venue the club holds no permit at says nothing', () => {
     assert.deepEqual(permitAnswer(booking(WESTFIELD, null, '2026-10-20', '18:00', '19:30'), [fall], venues), { kind: 'none' });
   });
-  it('a date outside the permit\'s dates says nothing (the club holds no permit there THAT day)', () => {
-    assert.deepEqual(permitAnswer(booking(LIONS, D2, '2026-11-03', '18:00', '19:30'), [fall], venues), { kind: 'none' });
+  it('a date before the club\'s first permit there says nothing (no permit there had started)', () => {
+    assert.deepEqual(permitAnswer(booking(LIONS, D2, '2026-09-01', '18:00', '19:30'), [fall], venues), { kind: 'none' });
+  });
+  it('a date after every permit there ended is outside, ENDED, naming the last one (9d2a·H)', () => {
+    const a = permitAnswer(booking(LIONS, D2, '2027-06-17', '18:00', '19:30'), [fall], venues);
+    assert.deepEqual(a, { kind: 'outside', day: '2027-06-17', onFacility: true, covers: [], until: '2026-10-29', dateOff: null, ended: true, permitId: 'p-fall' });
+    // a facility the ended permit never held: about the venue
+    const v = permitAnswer(booking(LIONS, D1, '2027-06-17', '18:00', '19:30'), [fall], venues);
+    assert.equal(v.kind === 'outside' && v.onFacility, false);
+    // the LAST one to end is named; a later permit not yet started doesn't hold the day either
+    const spring: PermitTime = { ...fall, id: 'p-spring', startsOn: '2027-04-01', endsOn: '2027-05-31', datesOff: [] };
+    const next: PermitTime = { ...fall, id: 'p-next', startsOn: '2027-09-01', endsOn: '2027-10-31', datesOff: [] };
+    const b = permitAnswer(booking(LIONS, D2, '2027-06-17', '18:00', '19:30'), [fall, spring, next], venues);
+    assert.equal(b.kind === 'outside' && b.until, '2027-05-31');
+    assert.equal(b.kind === 'outside' && b.permitId, 'p-spring');
+    // two that ended the same day: the line is about both, so no door
+    const twin: PermitTime = { ...spring, id: 'p-twin' };
+    const c = permitAnswer(booking(LIONS, D2, '2027-06-17', '18:00', '19:30'), [spring, twin], venues);
+    assert.equal(c.kind === 'outside' && c.permitId, null);
+  });
+  it('the permit the line is about: the one permit, the date off\'s own, or none when it is about two', () => {
+    const one = permitAnswer(booking(LIONS, D2, '2026-10-21', '18:00', '19:30'), [fall], venues);
+    assert.equal(one.kind === 'outside' && one.permitId, 'p-fall');
+    assert.equal(one.kind === 'outside' && one.ended, false);
+    const wednesdays: PermitTime = {
+      id: 'p-wed', startsOn: '2026-10-01', endsOn: '2026-10-31',
+      blocks: [{ id: 'b-w', venueId: LIONS, facilityIds: [D2], weekdays: [3], startTime: '17:00', endTime: '18:00', fromDate: null, untilDate: null }],
+      datesOff: [],
+    };
+    const two = permitAnswer(booking(LIONS, D2, '2026-10-21', '18:00', '19:30'), [fall, wednesdays], venues);
+    assert.equal(two.kind === 'outside' && two.permitId, null);
+    const off = permitAnswer(booking(LIONS, D2, '2026-10-13', '18:00', '19:30'), [fall, wednesdays], venues);
+    assert.equal(off.kind === 'outside' && off.permitId, 'p-fall');
   });
   it('a club with no permits says nothing', () => {
     assert.deepEqual(permitAnswer(booking(LIONS, D2, '2026-10-21', '18:00', '19:30'), [], venues), { kind: 'none' });
@@ -122,7 +153,7 @@ describe('the permit\'s answer (Ask 3) — case by case', () => {
 const named = (o: Partial<PermitOutside>): PermitOutside => ({
   kind: 'outside', day: '2026-10-21', venueName: 'Lions Park', facilityName: 'Diamond 2', onFacility: true,
   covers: [{ facilities: ['Diamond 2'], weekdays: [2, 4], startTime: '17:30', endTime: '21:00' }],
-  until: '2026-10-29', dateOff: null, ...o,
+  until: '2026-10-29', dateOff: null, ended: false, permitId: 'p-fall', ...o,
 });
 
 describe('the quiet line\'s words (specimen 3)', () => {
@@ -149,6 +180,16 @@ describe('the quiet line\'s words (specimen 3)', () => {
     assert.equal(
       permitSeriesLine([named({}), null, named({ day: '2026-10-28' })], ['2026-10-21', '2026-10-24', '2026-10-28'], 'baseball'),
       '2 of 3 dates are outside the club’s permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Oct 29.',
+    );
+  });
+  it('says when the permit ended (9d2a·H): the year when it isn\'t the booking\'s, "It ended" in a series', () => {
+    const ended = named({ day: '2027-06-17', covers: [], until: '2026-09-30', ended: true });
+    assert.equal(permitLine(ended, 'baseball'), 'Outside the club’s permit for Diamond 2: the permit ended Sep 30, 2026.');
+    assert.equal(permitCalendarLine(ended, 'baseball'), 'Outside the club’s permit for Diamond 2: the permit ended Sep 30, 2026.');
+    assert.equal(permitLine(named({ day: '2026-11-03', covers: [], until: '2026-10-29', ended: true }), 'baseball'), 'Outside the club’s permit for Diamond 2: the permit ended Oct 29.');
+    assert.equal(
+      permitSeriesLine([ended, ended], ['2027-06-17', '2027-06-24'], 'baseball'),
+      'Both dates are outside the club’s permit for Diamond 2. It ended Sep 30, 2026.',
     );
   });
   it('a run of numbered fields reads as a range', () => {

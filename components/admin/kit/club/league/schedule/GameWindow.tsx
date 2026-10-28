@@ -5,19 +5,20 @@ import { Ban, CalendarPlus, CalendarX2, RotateCcw } from 'lucide-react';
 import KitDialog from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { NoticePill, RecordAction, RecordDelete, repKit } from '../../RepKit';
-import WhereField from '@/components/venue/WhereField';
+import WhereField, { WhereLine } from '@/components/venue/WhereField';
 import DateInput from '@/components/shared/DateInput';
 import TimeInput from '@/components/shared/TimeInput';
 import { formatInOrgZone, utcToZonedInputs } from '@/lib/timezone';
 import { formatTimeRange } from '@/lib/utils';
 import { fieldNounFor } from '@/lib/sports';
 import { whereWords } from '@/lib/club-calendar-view';
+import { permitLine } from '@/lib/permit-words';
 import { EMPTY_WHERE, whereLibraryBody, whereOfLibraryRow, type WhereValue } from '@/lib/where-field';
 import {
   GAME_WINDOW_WORDS as W, SEASON_PUBLIC_WORDS, asksScores, gameStateWords, gameWindowDoors, scoresToSave, type SeasonBooking,
 } from '@/lib/league-season-calendar';
 import type { ClubVenueOption, LeagueGame, LeagueTeam } from '@/lib/types';
-import { useLeagueLine } from './useLeagueLine';
+import { SeePermitDoor, useLeagueLine } from './useLeagueLine';
 import s from '../time/LeagueTime.module.css';
 import g from './GameWindow.module.css';
 
@@ -39,6 +40,9 @@ import g from './GameWindow.module.css';
  * ⚖ DELETE STAYS ON EVERY STATE until 9d-2b: 9d2·9 is "Delete before publishing, Cancel after", and nothing is published
  * yet. Moving a game is to any date and time, as before: the drawing's "time the division holds" needs 9d-2b's slot link
  * (an owner ask, plan §9).
+ * ⚖ THE PERMIT LINE (step 7, frame i) reads in the record and lives under Where in the form, each with "See the permit",
+ * which the page opens raised over this window (the window waits underneath). A reader sees neither: the season's read
+ * carries no permit answer for them.
  */
 type Mode = 'read' | 'edit' | 'redate' | 'postpone' | 'cancel' | 'delete';
 
@@ -78,7 +82,7 @@ function whenWords(game: LeagueGame): string | null {
   return `${formatInOrgZone(game.scheduledAt, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} · ${formatTimeRange(start.time, game.endsAt ? utcToZonedInputs(game.endsAt).time : null)}`;
 }
 
-export default function GameWindow({ game, booking, divisionId, divisionName, teams, venues, sport, api, orgQuery, checkPath, orgSlug, canRun, onChanged, onCreated, onDeleted, onClose }: {
+export default function GameWindow({ game, booking, divisionId, divisionName, teams, venues, sport, api, orgQuery, checkPath, orgSlug, canRun, onSeePermit, onChanged, onCreated, onDeleted, onClose }: {
   /** The game, or null for Add › A game. */
   game: LeagueGame | null;
   /** The game as the views draw it: its place's words and "Time from" (`gameSlotOf`). */
@@ -97,6 +101,8 @@ export default function GameWindow({ game, booking, divisionId, divisionName, te
   orgSlug: string;
   /** Runs the season (owner, admin, league admin on a live season). */
   canRun: boolean;
+  /** "See the permit": the page opens the permit's window over this one. */
+  onSeePermit: (permitId: string) => void;
   /** A write landed: the page reads the season again (awaited, so the window reads what was saved). */
   onChanged: () => Promise<unknown>;
   /** Add's Create: the window closes; the league's warning, if any, is the page's to say. */
@@ -131,6 +137,7 @@ export default function GameWindow({ game, booking, divisionId, divisionName, te
     checkPath, sport, where: draft.where, venues, kind: 'game',
     occurrence: editing ? { date: draft.date, startTime: draft.time, endTime: draft.endTime } : null,
     excludeGameId: game?.id ?? null,
+    onSeePermit,
   });
   /** The ✓ waits while the line is refused or still being checked, or while a started game is missing a score. */
   const blocked = refused || checking || !!held;
@@ -330,6 +337,7 @@ export default function GameWindow({ game, booking, divisionId, divisionName, te
   const where = booking ? whereWords(booking) : game.location ?? '';
   const timeFrom = canRun ? booking?.clubSchedule?.scheduleName ?? null : null;
   const state = gameStateWords(game);
+  const permit = canRun ? booking?.permit ?? null : null;
   return (
     <KitDialog kind="form" size="medium" record eyebrow={W.eyebrow(divisionName)} title={name} identity={state} onClose={onClose} busy={saving}
       levelKey="read" status={said ? <NoticePill inline message={said} onDone={() => setSaid(null)} /> : undefined}
@@ -343,6 +351,7 @@ export default function GameWindow({ game, booking, divisionId, divisionName, te
         {timeFrom && fact(W.timeFrom, W.timeFromValue(timeFrom))}
         {game.notes ? fact(W.notes, game.notes) : !canRun && fact(W.notes, W.none)}
       </dl>
+      {permit && <WhereLine tone="quiet" mark="clock" rest={permitLine(permit, sport)} door={<SeePermitDoor permitId={permit.permitId} onOpen={onSeePermit} />} />}
       {warning && <p className={ck.hint} role="status">{W.possibleClash(warning)}</p>}
       {canRun && doors && (
         <div className={g.doors}>

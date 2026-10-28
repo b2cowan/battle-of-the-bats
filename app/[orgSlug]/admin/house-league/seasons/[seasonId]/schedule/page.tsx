@@ -33,6 +33,8 @@ import { NeedsDateFold, SeasonListView, SeasonMonthView } from '@/components/adm
 import GameWindow from '@/components/admin/kit/club/league/schedule/GameWindow';
 import GenerateGamesWindow from '@/components/admin/kit/club/league/schedule/GenerateGamesWindow';
 import LeagueHealthWindow from '@/components/admin/kit/club/league/schedule/LeagueHealthWindow';
+import { PermitWindow } from '@/components/admin/kit/club/PermitWindows';
+import type { PermitOutside } from '@/lib/permit-words';
 import HealthButton from '@/components/admin/tournament/HealthButton';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import { SCHEDULE_DAY_WORDS } from '@/lib/schedule-words';
@@ -640,6 +642,10 @@ export default function SchedulePage() {
   const [practices, setPractices] = useState<LeaguePractice[]>([]);
   /** The season's game time, slot by slot (step 4): "Time from {schedule}" on a game that sits on one. */
   const [gameSlots, setGameSlots] = useState<SeasonGameSlot[]>([]);
+  /** Each game's permit answer, by booking key (step 7) — the server sends it only to someone who runs the season. */
+  const [gamePermits, setGamePermits] = useState<Record<string, PermitOutside>>({});
+  /** "See the permit" (step 7): the permit's window, raised over the game window or Generate's check that opened it. */
+  const [permitOpen, setPermitOpen] = useState<string | null>(null);
   const [scheduleRead, setScheduleRead] = useState<'loading' | 'ok' | 'failed'>('loading');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -743,6 +749,7 @@ export default function SchedulePage() {
     setTeams(t.teams ?? []);
     setGames(g.games ?? []);
     setGameSlots(g.gameSlots ?? []);
+    setGamePermits(g.permits ?? {});
     setPractices(p.practices ?? []);
     setScheduleRead('ok');
   }, [seasonId, orgQuery, beginRead]);
@@ -786,10 +793,11 @@ export default function SchedulePage() {
         return { venue: v.name, facility: (facilityId && v.facilities?.find(f => f.id === facilityId)?.name) || null, address: v.address ?? null };
       },
       clashes: seasonClashes({ games, practices, teamName }),
+      permits: new Map(Object.entries(gamePermits)),
     });
     const paint = (b: SeasonBooking): SeasonBooking => ({ ...b, colour: b.kind === 'practice' ? KIND_COLOUR.practice : KIND_COLOUR.game });
     return { bookings: c.bookings.map(paint), needsDate: c.needsDate.map(paint) };
-  }, [season, divGames, divPractices, games, practices, teamName, divisions, venues, gameSlots]);
+  }, [season, divGames, divPractices, games, practices, teamName, divisions, venues, gameSlots, gamePermits]);
 
   // Show (9d2·12): empty = both kinds; a choice ON stays listed with 0 so it can always be taken off.
   const shown = calendar.bookings.filter(b => !show.size || show.has(b.kind));
@@ -1330,6 +1338,7 @@ export default function SchedulePage() {
             setTimeOn({ divisionId, kind: 'games' });
             setTimeOpen(true);
           }}
+          onSeePermit={setPermitOpen}
           onSaved={(said, permit) => {
             setGenerate(null);
             setFeedback({ isOpen: true, title: said, message: permit ? `${permit.title}. ${permit.sentence}` : '', type: permit ? 'info' : 'success' });
@@ -1356,6 +1365,7 @@ export default function SchedulePage() {
           checkPath={checkPath}
           orgSlug={orgSlug}
           canRun={canManage}
+          onSeePermit={setPermitOpen}
           onChanged={reload}
           onCreated={warning => {
             setGameWindow(null);
@@ -1365,6 +1375,14 @@ export default function SchedulePage() {
           onDeleted={() => { setGameWindow(null); void reload(); }}
           onClose={() => setGameWindow(null)}
         />
+      )}
+
+      {/* "See the permit" (step 7, frames b4, c3, i): Stage 10's permit window as it is, raised over the window that opened
+          it, which waits underneath. Only someone who runs the season gets the door, and every one of them (owner, admin,
+          league admin) opens the Venue library, so the permit reads for them; a change to it reads the season again. */}
+      {permitOpen && (
+        <PermitWindow raised key={permitOpen} q={orgQuery.slice(1)} orgSlug={orgSlug} orgName={currentOrg?.name ?? ''}
+          permitId={permitOpen} onChanged={reload} onClose={() => setPermitOpen(null)} />
       )}
 
       {/* Add › A practice: the form asks its team (the division's). */}

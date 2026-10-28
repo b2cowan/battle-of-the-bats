@@ -193,6 +193,8 @@ export function namePermitOutside(o: PermitOutsideIds, b: { venueId: string | nu
     covers: o.covers.map(c => ({ facilities: c.facilityIds ? c.facilityIds.map(fac).filter(Boolean) : null, weekdays: c.weekdays, startTime: c.startTime, endTime: c.endTime })),
     until: o.until,
     dateOff: o.dateOff,
+    ended: o.ended,
+    permitId: o.permitId,
   };
 }
 
@@ -208,7 +210,8 @@ function daySpan(bookings: readonly { startMs: number; endMs: number }[]): { fro
 
 /**
  * THE PERMIT'S ANSWER for proposed (or just-saved) bookings, per key: only the ones OUTSIDE a permit the club holds,
- * named. A booking not on a club venue, inside a permit, or at a venue the club holds no permit at that day is absent.
+ * named. A booking not on a club venue, inside a permit, or at a venue where no permit of the club's had started by that
+ * day is absent (one whose permits there had all ended is outside: 9d2a·H).
  * Throws on a failed read — the caller decides (a live check says nothing; a writer's report logs and says nothing).
  */
 export async function checkClubPermits(
@@ -222,9 +225,11 @@ export async function checkClubPermits(
   // ⚖ Permits ride the Venue library's plans (Ask 4): a club that held permits and moved to a plan without the library
   // keeps its records but reads no line from them. Checked HERE, so no caller can miss it (/strategy drift check
   // 2026-10-11 — the save replies and house league's check had no plan check of their own).
+  // Every permit at those venues that started by the last day, ended ones too: the rule says when the last one ended
+  // (9d2a·H). A club keeps a handful of permits a year, so the history costs little.
   const [plan, times] = await Promise.all([
     effectiveOrgFactsForId(orgId),
-    readPermitTimes(orgId, { venueIds, ...daySpan(placed) }),
+    readPermitTimes(orgId, { venueIds, toDay: daySpan(placed).toDay }),
   ]);
   if (!hasOrgVenueLibrary(plan?.planId ?? null)) return out;
   if (!times.permits.length) return out;

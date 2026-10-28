@@ -313,14 +313,16 @@ export default function WhereField({
  * `quiet` ("Not one of the club’s venues, so it isn’t checked for clashes."). One shape, four inks. `lead` is bold.
  * `mark="clock"` is the permit's quiet line (Club Tier Stage 10a, Ask 3 — "Outside the club’s permit for Diamond 2.
  * …", specimen 3): the quiet ink with a clock, because it is about the TIME the club holds, not the place. It sits under
- * an amber line when both show, never merged into it.
+ * an amber line when both show, never merged into it. `door` follows the sentence (house league's "See the permit").
  */
-export function WhereLine({ tone, lead, rest, mark }: { tone: 'warn' | 'busy' | 'refuse' | 'quiet'; lead?: string; rest?: string; mark?: 'clock' }) {
+export function WhereLine({ tone, lead, rest, mark, door }: {
+  tone: 'warn' | 'busy' | 'refuse' | 'quiet'; lead?: string; rest?: string; mark?: 'clock'; door?: ReactNode;
+}) {
   const Icon = mark === 'clock' ? Clock : tone === 'refuse' ? Ban : tone === 'quiet' ? MapPin : AlertTriangle;
   return (
     <p className={`${styles.line} ${styles[`line_${tone}`]}`} role={tone === 'refuse' ? 'alert' : 'status'}>
       <Icon size={15} aria-hidden className={styles.lineIcon} />
-      <span>{lead ? <b>{lead}</b> : null}{rest}</span>
+      <span>{lead ? <b>{lead}</b> : null}{rest}{door ? <> {door}</> : null}</span>
     </p>
   );
 }

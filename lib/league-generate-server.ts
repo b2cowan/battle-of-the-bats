@@ -112,7 +112,7 @@ export async function checkGeneratedGames(p: {
     const o = club.permits[r.id];
     if (!o || permitVenues.has(o.venueName)) return;
     permitVenues.add(o.venueName);
-    warnings.push({ kind: 'permit', venue: o.venueName || slotOf.get(plan.games[i].slotId)!.place, line: club.permitLines[r.id] ?? '' });
+    warnings.push({ kind: 'permit', venue: o.venueName || slotOf.get(plan.games[i].slotId)!.place, line: club.permitLines[r.id] ?? '', permitId: o.permitId });
   });
   // A booking there: once per place and booking.
   const seen = new Set<string>();
