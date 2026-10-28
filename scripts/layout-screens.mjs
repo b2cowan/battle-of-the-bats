@@ -1849,6 +1849,27 @@ export const SCREENS = [
 
   /*
    * ══════════════════════════════════════════════════════════════════════════════════════════
+   * A TOURNAMENT'S PUBLIC PAGES IN THE NEW FRAME (Public tournament pages Stage 1 — the organizer's colour band, the
+   * club site's light ground, the pinned tab row). Until Stage 1 no public tournament page had a rendered gate (only the
+   * admin's preview of them did). Behind the preview switch, which is ON on dev, so the sweep measures the new frame;
+   * `ready` waits for the band, so a run where the switch is off fails loudly instead of measuring today's pages.
+   * The four organizers are scripts/seed-public-frame-fixtures.mjs's (Riverdale is the demo seed's), named literally as
+   * the club's are. The layout file under `[tournamentSlug]` wears the frame, so the Overview's `route` is the folder.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  { id: 'pubt-overview',          session: 'anon', path: () => '/riverdale-minor-ball/summer-classic',             ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]' },
+  { id: 'pubt-schedule-pale',     session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/schedule', ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/schedule' },
+  { id: 'pubt-standings-own',     session: 'anon', path: () => '/stage1-metro-sports/spring-showcase/standings',    ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/standings' },
+  { id: 'pubt-teams-free',        session: 'anon', path: () => '/stage1-northfield/fall-ball/teams',                ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/teams' },
+  { id: 'pubt-overview-long',     session: 'anon', path: () => '/stage1-hamilton-wentworth/spring-invitational',    ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/page' },
+
+  /*
+   * ══════════════════════════════════════════════════════════════════════════════════════════
    * SIGN-IN AND THE WAY BACK INTO IT (The first look, Stage 2b). `session: 'anon'`: a signed-in visitor is forwarded
    * before the form renders. The notices are reached by the URL the product itself sends (`reason=`), and the wrong
    * password by a sign-in whose password grant the runner answers itself with Supabase's `invalid_credentials` (the

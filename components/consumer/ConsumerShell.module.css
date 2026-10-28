@@ -527,3 +527,20 @@
   --home-card:        var(--bg-card);
   --home-shadow:      0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.45);
 }
+
+/* ── The app's bar under the public tournament pages' new frame (Public tournament pages Stage 1, behind the preview
+   switch — lib/public-frame.ts; plan §10a) ──
+   In a browser the frame hides this bar (TournamentFrame.module.css). Inside the installed app it is today's bar, drawn
+   on light: the club site's white card, hairline and soft ink, the selected tab in the organizer's ink (written on <html>
+   by the tournament layout), no tint behind it and no glow. Keyed to the frame's marker, so today's bar is untouched. */
+:global(html):has([data-public-frame='light']) .bottomNavTournament {
+  --nav-mobile-bg: #FFFFFF; /* token-exempt: the club site's fixed card (ClubFrame.module.css --club-card) */
+  --border:        #E4E0D8; /* token-exempt: the club site's fixed hairline (--club-line) */
+  --white-45:      #4E473D; /* token-exempt: the club site's fixed soft ink (--club-soft) */
+  --primary-light: var(--club-ink);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  font-family: var(--font-sans);
+}
+:global(html):has([data-public-frame='light']) .bottomNavTournament .tab.active .iconWrap { background: none; }
+:global(html):has([data-public-frame='light']) .bottomNavTournament .activeDot { box-shadow: none; }

@@ -17,6 +17,9 @@ export interface TournamentNavState {
   fanAlertsEnabled?: boolean;
   /** True when the organizer configured a bracket AND Standings is public — adds the Playoffs tab. */
   hasBracket?: boolean;
+  /** Public tournament pages Stage 1: the new frame is on for this page (lib/public-frame.ts). The page draws its own
+   *  band and tab row, so the platform's event header steps aside. */
+  publicFrame?: boolean;
 }
 
 interface OrgNavValue {
@@ -38,6 +41,9 @@ interface OrgNavValue {
    *  Structural (the organizer configured a bracket), so the tab never appears and disappears
    *  as pool play finishes. Resolved server-side in the tournament layout. */
   tournamentHasBracket: boolean;
+  /** The page wears the new frame (Stage 1): the Navbar's event header steps aside. Server-decided; this copy only
+   *  unmounts the header after hydration (CSS already hid it from the first paint). */
+  tournamentPublicFrame: boolean;
   tournamentRegisterCta: RegisterCta;
   tournamentStartDate: string | null;
   tournamentEndDate: string | null;
@@ -71,6 +77,7 @@ const OrgNavContext = createContext<OrgNavValue>({
   tournamentColorMode: null,
   tournamentHiddenPages: [],
   tournamentHasBracket: false,
+  tournamentPublicFrame: false,
   tournamentRegisterCta: null,
   tournamentStartDate: null,
   tournamentEndDate: null,
@@ -92,6 +99,7 @@ export function OrgNavProvider({ children }: { children: React.ReactNode }) {
   const [tournamentColorMode, setTournamentColorMode] = useState<'dark' | 'light' | null>(null);
   const [tournamentHiddenPages, setTournamentHiddenPages] = useState<PublicPageKey[]>([]);
   const [tournamentHasBracket, setTournamentHasBracket] = useState(false);
+  const [tournamentPublicFrame, setTournamentPublicFrame] = useState(false);
   const [tournamentRegisterCta, setTournamentRegisterCta] = useState<RegisterCta>(null);
   const [tournamentStartDate, setTournamentStartDate] = useState<string | null>(null);
   const [tournamentEndDate, setTournamentEndDate] = useState<string | null>(null);
@@ -114,6 +122,7 @@ export function OrgNavProvider({ children }: { children: React.ReactNode }) {
     setTournamentId(nav?.tournamentId ?? null);
     setFanAlertsEnabled(nav?.fanAlertsEnabled ?? false);
     setTournamentHasBracket(nav?.hasBracket ?? false);
+    setTournamentPublicFrame(nav?.publicFrame ?? false);
   }, []);
 
   const setTournamentStatus = useCallback((startDate: string | null, endDate: string | null, status: string | null, finished = false) => {
@@ -124,7 +133,7 @@ export function OrgNavProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <OrgNavContext.Provider value={{ logoUrl, orgName, orgHomeHref, tournamentSlug, tournamentName, tournamentId, fanAlertsEnabled, tournamentColorMode, tournamentHiddenPages, tournamentHasBracket, tournamentRegisterCta, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentFinished, setOrgNav, setTournamentNav, setTournamentStatus }}>
+    <OrgNavContext.Provider value={{ logoUrl, orgName, orgHomeHref, tournamentSlug, tournamentName, tournamentId, fanAlertsEnabled, tournamentColorMode, tournamentHiddenPages, tournamentHasBracket, tournamentPublicFrame, tournamentRegisterCta, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentFinished, setOrgNav, setTournamentNav, setTournamentStatus }}>
       {children}
     </OrgNavContext.Provider>
   );

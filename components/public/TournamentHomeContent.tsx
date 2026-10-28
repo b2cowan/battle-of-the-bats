@@ -29,6 +29,8 @@ import Countdown from '@/components/public/Countdown';
 import FollowTournamentStrip from '@/components/public/FollowTournamentStrip';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { orgLinks } from '@/lib/org-links';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
+import { TOURNAMENT_STATUS_WORD } from '@/lib/club-site-home';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
 export default async function TournamentHomeContent({
@@ -45,6 +47,9 @@ export default async function TournamentHomeContent({
   isPreview?: boolean;
 }) {
   const readOptions = { admin: true };
+  // Public tournament pages Stage 1 (lib/public-frame.ts): behind the switch the page speaks the four state words only
+  // (Ask 8). The layout of this page is Stage 2's; only its words follow the switch here. The admin preview follows in Part 2.
+  const frameOn = !isPreview && await isPublicFrameOn();
 
   const allAnnouncements = await getAnnouncements(tournament.id, readOptions);
   const announcements = allAnnouncements.slice(0, 3);
@@ -549,7 +554,7 @@ export default async function TournamentHomeContent({
       <div className="container">
         <div className={styles.dayPanelHeader}>
           <div>
-            <span className="eyebrow"><Clock size={12} /> Tournament Day</span>
+            <span className="eyebrow"><Clock size={12} /> {frameOn ? TOURNAMENT_STATUS_WORD.live : 'Tournament Day'}</span>
             <h2 className="display-md">What To Check Now</h2>
           </div>
           <Link href={scheduleHref} className="btn btn-outline btn-sm">

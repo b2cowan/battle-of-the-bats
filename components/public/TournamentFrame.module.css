@@ -1,0 +1,123 @@
+/* The public tournament pages' new frame (Public tournament pages Stage 1, behind the preview switch — lib/public-frame.ts).
+   Values are the hub's "Stage 1 · The frame" drawings (`.tf` specimens), which are the club site's own (Stage 4).
+
+   EVERY rule here is keyed to the frame: `.frame` is the class on the tournament layout's outer element, which also
+   carries the `data-public-frame="light"` marker the `:has()` rules read, and the club's token block
+   (ClubFrame.module.css `.tokens`) — the ONE light set, so club → tournament is one place. With the switch off nothing
+   carries the marker, so nothing here applies and today's pages render unchanged. */
+
+/* ── The geometry: the band is in the page's flow and scrolls away; on a phone only the tab row (48 px) pins ─────── */
+.frame {
+  --frame-pin-h: 48px;
+  /* The platform's event header is gone, so nothing publishes its height: every sticky top rides the pinned row (and
+     the ticker under it on game day), and no page pads itself for a fixed header that is not there. */
+  --nav-event-h: 0px;
+  --nav-visual-h: var(--frame-pin-h);
+  --chrome-top-h: calc(var(--frame-pin-h) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--offer-bar-h, 0px));
+  --chrome-top-static-h: 0px;
+  /* At a desk the platform's strip is still fixed over the top of the page (Part 2 settles the desk); the band starts
+     under it. 0 on a phone. */
+  padding-top: var(--desktop-strip-h, 0px);
+}
+
+/* A desk (above 900 px) keeps the club bar's one band, scrolling away whole; nothing pins. Above 1,023 px the side rail
+   is the tournament's navigation (Nav Unification), so the tab row is not drawn twice. */
+@media (min-width: 901px) {
+  .frame { --frame-pin-h: 0px; }
+}
+@media (min-width: 1024px) {
+  .tabs { display: none; }
+}
+
+/* The page behind the frame is the ground too — past the top or bottom on a phone's bounce, under a short page. */
+:global(body):has(.frame) {
+  background: #F6F5F2; /* token-exempt: a copy of --club-ground — <body> is outside the element that declares it */
+}
+
+/* The platform's event header and its tab row step aside from the first paint (the Navbar also unmounts its tournament
+   branch once the page is live, so the operator door mounts once). */
+:global(html):has(.frame) :global([data-tournament-nav]) {
+  display: none;
+}
+
+/* ── The band (the club bar, with the event's lines) ─────────────────────────────────────────────────────────────────
+   Its pinning is the club bar's own rule (ClubFrame.module.css `.bar:has(.tabsSlot)`, a phone only, where the platform
+   strip is 0 px), and its identity link is the club bar's own `.identity`, so the band adds only its own lines. */
+
+/* One line under the name: the dates and the state chip, never wrapping. */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+  font: 500 12px/1.3 var(--club-text-face);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.dates {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The state chip: the band's two colours swapped (the drawing's `.band .chip`), so it reads on any organizer colour
+   with no tint of its own. Live now carries a dot in the same colour. */
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: var(--club-on-fill);
+  color: var(--club-fill);
+  font: 600 12px/1 var(--club-text-face);
+}
+.chip[data-live]::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Share: a bare 44 px icon in the band's text colour (the drawing's `.ico`). */
+.icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--club-on-fill);
+  cursor: pointer;
+}
+.icon :global(svg) { width: 22px; height: 22px; }
+.icon:focus-visible {
+  outline: 2px solid var(--club-on-fill);
+  outline-offset: -2px;
+}
+
+/* ── Where the page is opened (plan §10a): the visitor's door is in the band in a browser, in the app's bar inside the
+   installed app. Decided by the display mode as the page first draws, so it never appears and then vanishes. ─────── */
+.browserOnly { display: contents; }
+
+@media (display-mode: standalone) {
+  .browserOnly { display: none; }
+}
+
+/* In a browser there is no app bar on a tournament page (Ask 16: the browser's back is the way home), and so no room is
+   kept for one at the foot of the page. Inside the installed app the bar stays (ConsumerShell.module.css draws it on
+   light under the frame). */
+@media not all and (display-mode: standalone) {
+  :global(html):has(.frame) {
+    --bottom-nav-height: 0px;
+  }
+  :global(html):has(.frame) :global([data-app-bar]) {
+    display: none;
+  }
+}

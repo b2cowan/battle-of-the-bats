@@ -34,6 +34,14 @@ import AccountFollowSync from '@/components/public/AccountFollowSync';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
 import ScoreTicker from '@/components/public/ScoreTicker';
+import TournamentBand from '@/components/public/TournamentBand';
+import clubFrameStyles from '@/components/public/ClubFrame.module.css';
+import frameStyles from '@/components/public/TournamentFrame.module.css';
+import { isPublicFrameOn } from '@/lib/public-frame-server';
+import { publicFrameAttr, publicFrameRoleVars, publicFrameRoles } from '@/lib/public-frame';
+import { TOURNAMENT_STATUS_WORD, tournamentHomeStatus } from '@/lib/club-site-home';
+import { formatEventDateRange } from '@/lib/timezone';
+import { clubInitials } from '@/lib/club-site';
 
 export const dynamic = 'force-dynamic';
 
@@ -95,6 +103,11 @@ export default async function TournamentLayout({
   if (!tournament) notFound();
 
   const canUseAdvancedBranding = canUseAdvancedTournamentBranding(org);
+  // Public tournament pages Stage 1: the new frame (the organizer's colour band on the club site's light ground), behind
+  // the preview switch (lib/public-frame.ts). Decided here, on the server, so the first paint is already the right one.
+  // Off — every customer and the public demo unless they used the preview link — and everything below renders exactly as
+  // it did.
+  const frameOn = await isPublicFrameOn();
   // The free presentation (the badge and the banner): the free plan's and a Premium coach's event's (R6).
   const isFreeTournamentPlan = showsFreeCredit(org.planId);
 
@@ -131,7 +144,9 @@ export default async function TournamentLayout({
   // offline-caches this page's HTML as anonymous content, so the pill fetches its identity
   // client-side via /api/public/tournament-viewer instead (see TournamentFlipPill /
   // lib/use-public-flip). Do not thread per-user data into this layout.
-  const effectiveColorMode = canUseAdvancedBranding ? tournament.colorMode ?? 'dark' : 'dark';
+  // Under the frame the ground is light whatever the organizer saved (Ask 1); its Dark/Light option leaves the Branding
+  // page in Stage 1a.
+  const effectiveColorMode = frameOn ? 'light' : canUseAdvancedBranding ? tournament.colorMode ?? 'dark' : 'dark';
   // Free public tournament pages always use the FieldLogicHQ default theme, even if old branding
   // values exist. Nothing is emitted when the tournament has no theme of its own — the org
   // layout's vars then stand. (The rule itself lives in lib/public-tournament-theme.ts, shared
@@ -201,13 +216,14 @@ export default async function TournamentLayout({
     bracketVisible ? hasPublicPlayoffGames(tournament.id) : Promise.resolve(false),
   ]);
 
-  const registerCta: 'register' | 'waitlist' | null = regTeams
+  const registration = regTeams
     ? getRegistrationState(
         tournament,
         divisions,
         regTeams.filter(t => t.status !== 'rejected'),
-      ).cta
+      )
     : null;
+  const registerCta: 'register' | 'waitlist' | null = registration?.cta ?? null;
 
   /**
    * Does this tournament have a bracket a fan should be able to navigate to?
@@ -250,7 +266,9 @@ export default async function TournamentLayout({
   // Light mode: override :root tokens so body background and all descendants flip.
   // Shared with the admin preview layout via lib/public-tournament-theme so the
   // two render light themes identically.
-  const lightModeVars = effectiveColorMode === 'light' ? buildPublicLightModeCssVars() : null;
+  // Never under the frame: its light set is the club's, on the frame's own element. :root stays as it is today, so what is
+  // drawn outside the frame for a dark page (the demo's dock, the free plan's badge and banner) stays exactly as it was.
+  const lightModeVars = !frameOn && effectiveColorMode === 'light' ? buildPublicLightModeCssVars() : null;
 
   // Stage B.2 (resolution): the resolver kicked off near the top has had the whole render to
   // complete in parallel. Null here = "no door": the rail's crumb line falls back to the org's
@@ -258,7 +276,37 @@ export default async function TournamentLayout({
   // isn't a real place.
   const orgHomeHref = await orgHomeHrefPromise;
 
-  return (
+  // The frame's band (Stage 1). Its colour through the club's roles — a plan without tournament branding gets the neutral
+  // band and no mark (lib/public-frame.ts). Its state word is the club's Tournaments tab's own rule and words (Ask 8), so
+  // the club's card and the event's band never disagree; its dates are the club's spelling of them.
+  const frameRoles = frameOn ? publicFrameRoles(org, tournament) : null;
+  const frameStatus = frameOn ? tournamentHomeStatus(tournament, todayISO, registration?.state === 'open') : null;
+  const frameDates = frameOn && tournament.startDate
+    ? formatEventDateRange(tournament.startDate, tournament.endDate, !tournament.startDate.startsWith(todayISO.slice(0, 4)))
+    : null;
+
+  // The free plan's FieldLogicHQ badge and its acquisition banner. Under the frame they render OUTSIDE the frame's element
+  // (both are fixed, so where they sit in the markup moves nothing), keeping today's look exactly (Stage 1: unchanged).
+  const growthChrome = (
+    <>
+      {isFreeTournamentPlan && (
+        <PoweredByBadge
+          orgSlug={orgSlug}
+          tournamentSlug={tournament.slug}
+          offsetForBanner={showAcquisitionBanner}
+        />
+      )}
+      {showAcquisitionBanner && (
+        <TournamentAcquisitionBanner
+          orgSlug={orgSlug}
+          tournamentSlug={tournament.slug}
+          tournamentName={tournament.name}
+        />
+      )}
+    </>
+  );
+
+  const page = (
     <>
       <OrgNavSync
         logoUrl={canUseAdvancedBranding ? tournament.logoUrl ?? org.logoUrl ?? null : null}
@@ -283,21 +331,9 @@ export default async function TournamentLayout({
         tournamentId={tournament.id}
         fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
         hasPublicBracket={hasPublicBracket}
+        publicFrame={frameOn}
       />
-      {isFreeTournamentPlan && (
-        <PoweredByBadge
-          orgSlug={orgSlug}
-          tournamentSlug={tournament.slug}
-          offsetForBanner={showAcquisitionBanner}
-        />
-      )}
-      {showAcquisitionBanner && (
-        <TournamentAcquisitionBanner
-          orgSlug={orgSlug}
-          tournamentSlug={tournament.slug}
-          tournamentName={tournament.name}
-        />
-      )}
+      {!frameOn && growthChrome}
       {tournamentCssVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${tournamentCssVars} }` }} />
       )}
@@ -319,14 +355,34 @@ export default async function TournamentLayout({
       {lightModeVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${lightModeVars} }` }} />
       )}
+      {/* The frame's colour roles, on <html> for the frame only: the frame's element reads them through the club's token
+          block, and the app's own bar (mounted outside it) reads the ink. Outranks the org layout's :root block. */}
+      {frameRoles && (
+        <style dangerouslySetInnerHTML={{ __html: `html:has([data-public-frame="light"]) { ${publicFrameRoleVars(frameRoles)} }` }} />
+      )}
       {/* Desktop-only (≥1024px) persistent left nav rail — self-hides below that. */}
       <TournamentSideRail />
-      {/* Broadcast score ticker — self-gates to game day (reserves --ticker-h). */}
-      <ScoreTicker />
+      {/* Broadcast score ticker — self-gates to game day (reserves --ticker-h). Under the frame it rides under the band
+          instead (below). */}
+      {!frameOn && <ScoreTicker />}
       {/* data-live-chrome scopes mobile-chrome CSS (retired page titles/hero) to the
           LIVE shell only — the admin preview has no unified event header to hand
           identity to, so it keeps the in-page titles (preview↔public parity). */}
       <div className={railStyles.shell} data-card-style={cardStyle} data-color-mode={effectiveColorMode} data-live-chrome="">
+        {frameRoles && (
+          <TournamentBand
+            orgSlug={orgSlug}
+            tournamentSlug={tournament.slug}
+            name={tournament.name}
+            logoUrl={frameRoles.neutral ? null : tournament.logoUrl ?? org.logoUrl ?? null}
+            initials={frameRoles.neutral ? null : clubInitials(tournament.name) || null}
+            dates={frameDates}
+            status={frameStatus ? { word: TOURNAMENT_STATUS_WORD[frameStatus], live: frameStatus === 'live' } : null}
+            hiddenPages={navHiddenPages}
+            hasBracket={hasPublicBracket}
+          />
+        )}
+        {frameOn && <ScoreTicker inFlow />}
         {children}
         {/* WI-10 — paid tiers only. Free events already carry the richer PoweredByBadge +
             acquisition banner; stacking a second credit would say the same thing twice, so this
@@ -384,4 +440,10 @@ export default async function TournamentLayout({
       <AccountFollowSync orgSlug={orgSlug} tournamentSlug={tournament.slug} />
     </>
   );
+
+  // The frame's one outer element: the marker every frame style is keyed to, and the club site's token block (the ONE
+  // light set). Fixed parts inside it (the rail, the dock, the prompts) inherit its tokens like everything else.
+  return frameOn
+    ? <>{growthChrome}<div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} {...publicFrameAttr}>{page}</div></>
+    : page;
 }

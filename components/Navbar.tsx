@@ -55,7 +55,7 @@ export default function Navbar() {
   const orgSlug           = (params?.orgSlug as string) || '';
   const urlTournamentSlug = params?.tournamentSlug as string | undefined;
   const orgHref           = useOrgHref(orgSlug);
-  const { logoUrl, orgName, orgHomeHref, tournamentSlug, tournamentName, tournamentFinished, tournamentColorMode, tournamentHiddenPages, tournamentHasBracket, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentRegisterCta } = useOrgNav();
+  const { logoUrl, orgName, orgHomeHref, tournamentSlug, tournamentName, tournamentFinished, tournamentColorMode, tournamentHiddenPages, tournamentHasBracket, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentRegisterCta, tournamentPublicFrame } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
   const navRef = useRef<HTMLElement | null>(null);
 
@@ -94,7 +94,7 @@ export default function Navbar() {
   // (current height; the ticker + sticky day labels ride the collapse). Desktop
   // and non-tournament routes clear both vars so every consumer falls back to
   // the plain --nav-height.
-  const hasEventHead = !!urlTournamentSlug && !!(tournamentName || orgName);
+  const hasEventHead = !!urlTournamentSlug && !!(tournamentName || orgName) && !tournamentPublicFrame;
   useEffect(() => {
     const rootStyle = document.documentElement.style;
     const clear = () => {
@@ -252,6 +252,13 @@ export default function Navbar() {
      which Next.js matches before [tournamentSlug], so it never carries that param. */
   if (!urlTournamentSlug) return null;
 
+  /* ── A tournament page wearing the new frame (Public tournament pages Stage 1, lib/public-frame.ts) ──
+     The page draws the organizer's colour band and its own tab row (components/public/TournamentBand.tsx), so this bar
+     steps aside at every width. CSS keyed to the frame's marker hides it from the first paint
+     (components/public/TournamentFrame.module.css); this return unmounts it once the context lands, so the operator
+     door mounts once. */
+  if (tournamentPublicFrame) return null;
+
   /* ── Tournament nav (/[orgSlug]/[tournamentSlug]/*) ── */
   /* The event's slug, taken from the URL when the nav CONTEXT hasn't landed yet.
      This branch only runs when the URL carries a tournament slug, so the two always name the same
@@ -281,7 +288,7 @@ export default function Navbar() {
   const showEyebrow = !!orgName && !!tournamentName && orgName !== tournamentName;
 
   return (
-    <nav ref={navRef} className={`${navClass} ${styles.hasEventHead}`} data-color-mode={tournamentColorMode ?? 'dark'}>
+    <nav ref={navRef} className={`${navClass} ${styles.hasEventHead}`} data-color-mode={tournamentColorMode ?? 'dark'} data-tournament-nav="">
       {/* Tablet/desktop bar — unchanged; hidden ≤900px where the event head takes over. */}
       <div className={`container ${styles.inner}`}>
         <Link href={homeHref} className={styles.logo}>

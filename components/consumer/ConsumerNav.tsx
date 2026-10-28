@@ -456,7 +456,7 @@ export default function ConsumerNav({
             own tab row carries navigation on a phone, and `--bottom-nav-height` drops to 0 so the
             page reclaims the space instead of ending in a blank strip. */}
         {!inSandbox && (
-          <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary">
+          <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary" data-app-bar="">
             {bottomTabs}
           </nav>
         )}

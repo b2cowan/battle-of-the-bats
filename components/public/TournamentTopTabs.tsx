@@ -18,6 +18,11 @@
  * `basePath` + `hiddenPages` + `fixed` (the `.tabsFixed` skin pins it below the preview's
  * top bar), so a preview mirrors the live tab row — identity chrome stays out of preview.
  *
+ * THE FRAME SKIN (Public tournament pages Stage 1, behind the preview switch — lib/public-frame.ts): the organizer's
+ * band mounts this row with `skin="frame"` and wears the club site's own tab row (OrgSectionTabs.module.css): white,
+ * 44 px, words only, the selected tab ink-underlined. Same tabs, same order, same active rule; the server passes the
+ * hidden pages and the bracket so the first paint already has the right set.
+ *
  * Landing tab = "Overview" (not "Home") so it never collides with the global bar's
  * Home tab. Register is CTA-only, never a tab. The venue-following skin comes for
  * free from the tournament's :root override (dark event → dark; light event → light;
@@ -32,6 +37,7 @@ import { useOrgNav } from '@/components/OrgNavContext';
 import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
 import type { PublicPageKey } from '@/lib/public-pages';
 import styles from './TournamentTopTabs.module.css';
+import frameTabs from './OrgSectionTabs.module.css';
 
 type TournamentTopTabsProps = {
   /** Link prefix override. Omit on the live public site (derived from route params); the
@@ -41,9 +47,15 @@ type TournamentTopTabsProps = {
   /** The preview mounts this row STANDALONE (not inside the measured live event-header nav),
    *  so it fixes itself below the top bar instead of riding the nav's flow. Live omits it. */
   fixed?: boolean;
+  /** Server-resolved bracket answer (the frame's band passes it); omitted, the nav context's answer stands. */
+  hasBracket?: boolean;
+  /** `frame`: the club site's white tab row, words only (Stage 1's band). Omitted: today's row. */
+  skin?: 'frame';
+  /** Placement from the band (its grid slot). */
+  className?: string;
 };
 
-export default function TournamentTopTabs({ basePath, hiddenPages, fixed }: TournamentTopTabsProps = {}) {
+export default function TournamentTopTabs({ basePath, hiddenPages, fixed, hasBracket: hasBracketProp, skin, className }: TournamentTopTabsProps = {}) {
   const pathname = usePublicPathname();
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
@@ -54,8 +66,8 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed }: Tour
   const { tournamentHiddenPages, tournamentHasBracket } = useOrgNav();
   const resolvedHidden = hiddenPages ?? tournamentHiddenPages;
   // Preview links stay inside `/preview/…`, which has no bracket route — so no Playoffs tab there.
-  const hasBracket = !basePath && tournamentHasBracket;
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const hasBracket = !basePath && (hasBracketProp ?? tournamentHasBracket);
+  const scrollerRef = useRef<HTMLElement | null>(null);
   const activeRef = useRef<HTMLAnchorElement | null>(null);
   // Stable key for the visible-tab SET — changes only when its contents change (a raw
   // array dep would re-fire on every context update; join is content-stable).
@@ -81,9 +93,32 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed }: Tour
   const overviewActive = pathname === homeHref;
   const tabs = visibleTournamentTabs(resolvedHidden, hasBracket);
 
+  if (skin === 'frame') {
+    const frameTab = (href: string, label: string, active: boolean) => (
+      <Link
+        key={href}
+        href={spell(href)}
+        ref={active ? activeRef : undefined}
+        className={`${frameTabs.tab} ${active ? frameTabs.active : ''}`}
+        aria-current={active ? 'page' : undefined}
+      >
+        {label}
+      </Link>
+    );
+    return (
+      <nav ref={scrollerRef} className={`${frameTabs.tabs}${className ? ` ${className}` : ''}`} aria-label="Tournament pages">
+        {frameTab(homeHref, 'Overview', overviewActive)}
+        {tabs.map(({ key, label }) => {
+          const href = `${homeHref}/${key}`;
+          return frameTab(href, label, pathname === href || pathname.startsWith(`${href}/`));
+        })}
+      </nav>
+    );
+  }
+
   return (
     <nav className={`${styles.tabs}${fixed ? ` ${styles.tabsFixed}` : ''}`} aria-label="Tournament pages">
-      <div className={styles.scroller} ref={scrollerRef}>
+      <div className={styles.scroller} ref={el => { scrollerRef.current = el; }}>
         <div className={styles.track}>
           <Link
             href={spell(homeHref)}

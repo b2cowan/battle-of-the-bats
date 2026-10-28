@@ -31,7 +31,10 @@ function teamShort(id: string | null | undefined, placeholder: string | null | u
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 const unresolvedSlot = (id: string | null | undefined) => !id || id === NIL_UUID;
 
-export default function ScoreTicker() {
+/** `inFlow` (Public tournament pages Stage 1, the new frame — lib/public-frame.ts): the ticker rides in the page's flow
+ *  under the frame's band and pins under its tab row, instead of sitting fixed where the old header ended (which would
+ *  cover the band). Its look is Stage 1 Part 4's; which pages carry it is Stages 2–3. */
+export default function ScoreTicker({ inFlow = false }: { inFlow?: boolean } = {}) {
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
@@ -129,7 +132,7 @@ export default function ScoreTicker() {
   // Minimized — slim static restore bar in the same position (no motion).
   if (minimized) {
     return (
-      <div className={styles.tickerMin}>
+      <div className={`${styles.tickerMin}${inFlow ? ` ${styles.inFlow}` : ''}`}>
         <button type="button" className={styles.restoreBtn} onClick={restore} aria-label="Show live scores ticker">
           <span className={styles.restoreDot} /> Live scores
           <ChevronRight size={13} />
@@ -166,7 +169,7 @@ export default function ScoreTicker() {
 
   return (
     <div
-      className={styles.ticker}
+      className={`${styles.ticker}${inFlow ? ` ${styles.inFlow}` : ''}`}
       role="region"
       aria-label="Today's games"
       data-touching={touching ? 'true' : undefined}
