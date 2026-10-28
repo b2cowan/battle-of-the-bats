@@ -28,7 +28,10 @@ export function safeNextPath(next: unknown, fallback: string | null = '/home'): 
     // or backslash-smuggled ("/\evil" -> "//evil") inputs all change the origin -> reject.
     if (url.origin !== base) return fallback;
     const path = `${url.pathname}${url.search}${url.hash}`;
-    return path.startsWith('/') ? path : fallback;
+    // The origin check alone is not enough: dot segments collapse AFTER it passes, so "/.//evil.com",
+    // "/a/..//evil.com" and "/%2e//evil.com" keep our origin yet leave a pathname of "//evil.com" — which the
+    // caller then resolves as protocol-relative, off-site. A path that begins "//" is never ours.
+    return path.startsWith('/') && !path.startsWith('//') ? path : fallback;
   } catch {
     return fallback;
   }

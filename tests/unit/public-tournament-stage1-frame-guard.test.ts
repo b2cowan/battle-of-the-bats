@@ -50,7 +50,7 @@ describe('the preview switch', () => {
 
   it('the link only ever returns to a path on this site', () => {
     assert.equal(safePublicFrameReturn('/riverdale-minor-ball/summer-classic'), '/riverdale-minor-ball/summer-classic');
-    for (const bad of ['//evil.example', '/\\evil.example', '/\t//evil.example', '/\n/evil.example', 'https://evil.example/x', 'evil', '', null, undefined]) {
+    for (const bad of ['//evil.example', '/\\evil.example', '/\t//evil.example', '/\n/evil.example', '/.//evil.example', '/a/..//evil.example', '/%2e//evil.example', 'https://evil.example/x', 'evil', '', null, undefined]) {
       assert.equal(safePublicFrameReturn(bad), '/', `refuses ${String(bad)}`);
     }
   });
