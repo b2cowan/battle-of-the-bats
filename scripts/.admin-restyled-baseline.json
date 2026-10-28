@@ -69,7 +69,7 @@
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
     "#1a1f2e": 1,
-    "rgba(255,255,255,0.12)": 2,
+    "rgba(255,255,255,0.12)": 1,
     "#f87171": 1
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {

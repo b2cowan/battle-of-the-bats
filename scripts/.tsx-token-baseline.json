@@ -36,7 +36,7 @@
     "rgba": 0
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
-    "hex": 3,
+    "hex": 2,
     "rgba": 0
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
@@ -177,10 +177,6 @@
   },
   "app/[orgSlug]/league/[seasonSlug]/register/page.tsx": {
     "hex": 1,
-    "rgba": 0
-  },
-  "app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx": {
-    "hex": 0,
     "rgba": 0
   },
   "app/[orgSlug]/league/[seasonSlug]/standings/page.tsx": {
