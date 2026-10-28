@@ -263,7 +263,24 @@ those commits' changes (`git show <hash> -- <path>`). Hand broad reading to a he
    finding to report, not to apply. Apply the rest; run the guard test, `verify:changed` (⚠ on 2026-10-28 two failures
    in it were other sessions' work: the Keep Premium audit-reason test and the demo check's missing module — re-check,
    don't assume) and `typecheck`.
-2. **`/review`** (`.claude/commands/review.md`) on the same four commits plus `/simplify`'s changes. Points to press:
+   > **Done 2026-10-28, committed `03edd08d0`** (owner yes). Applied: the preview link's `to` goes through
+   > `lib/safe-redirect.ts` (a tab-smuggled `/<TAB>//evil` passed the hand-rolled check: an open redirect, now in the
+   > guard test); the footer's contact is looked up once a request (`publicTournamentContactEmail`, React `cache`);
+   > `publicFrameRoleCss` for both layouts; `--shadow-lg` zeroed with the frame's names (three per-page rules gone);
+   > the today's-games hook's one feed state; the line's clock is a real `now` and stops while put away; a dead bracket
+   > selector. Guard 38/38, typecheck, tokens and contrast pass; `verify:changed`'s other failures were other sessions'
+   > (the Keep Premium audit test, admin type, schema parity, index coverage, org-slug callers, demos, CSS selectors,
+   > export catalog, root files). **Reported, not applied** (each moves frame-on pixels or the club site): the shell's
+   > old Light marker under the frame (gate globals' light rules with `:where(:not([data-public-frame] *))` instead of
+   > ~22 re-points — needs a render sweep; the admin preview hard-codes it too); a wash token for the ~90
+   > organizer-colour tints (owner call on which stay coloured); a `--popover-shadow` token; a 12 px floor mechanism
+   > (140 selector lines); the club role-var and footer-contact copies shared with the club site; a shared poller for
+   > the schedule payload; the root nav still SSR-renders hidden under the frame.
+2. **`/review`** (`.claude/commands/review.md`) on the same four commits plus `/simplify`'s, **`03edd08d0`** — five
+   commits; list each with `git show --stat`, never a range. Kick-off for a fresh chat: the owner pastes *"execute
+   PUBLIC_TOURNAMENT_STAGE1_BUILD_PROMPT.md — Part 4, the /review (kick-off step 2)"*; read the top section, this block
+   and the Built notes, then run `/review` on those five commits. Press `03edd08d0`'s redirect and cached contact
+   too. Points to press:
    the switch is decided on the server before first paint and nothing new renders without it; the redirect route
    cannot be pointed off-site; the ticker's timers (fade, hold, minute clock) clear on unmount and never stack when the
    live feed refreshes; the × key is per tournament per day; reduced motion never starts the reel; the moved bracket
