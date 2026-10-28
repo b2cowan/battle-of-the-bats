@@ -26946,4 +26946,6 @@ republished; tick positions unchanged).
 **Not built on dev in a browser by the builder:** every dev page returned 500 at build time, from another session's commit (support console 4b pulled a server-only module into the browser bundle; that session was told). The walk is the first rendered check.
 
 **Not in this walk:** the Following page's "First game · …" line (it needs an account following an upcoming event with a published schedule; the guard holds it); the Theme card still showing the platform swatch as chosen when nothing is (Stage 1a, ruled, not built).
+
+**✅ CLOSED 2026-10-27 on the owner’s word** (*"mark it closed"*). The walk summary pasted back read 20 of 20 PASS. The dev server’s request log shows Parts A and B, C1–C3 and the D1 stop check were walked there (the live game, Bears U11’s team page, both club lists, the Invitational countdown, tomorrow’s semifinal, the demos page, the Invitational’s public page). It holds no trace of C4 (the setup wizard) or D2–D6 (no Branding page load, no save), and the Invitational’s stored theme was empty afterwards although D6 picks one. So the Branding page’s save (D7) has had no rendered check; a defect found there later is a new item, not a reopen. The Invitational’s theme read back empty 2026-10-27 (nothing to put back); the live-game fixture is back where the seed left it.
 <!-- /§407 -->
