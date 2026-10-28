@@ -10,6 +10,7 @@ import type { OrgPlan } from '@/lib/types';
 import { withObservability, captureError } from '@/lib/observability';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { announcePlayoffsSetIfReady } from '@/lib/playoffs-set';
+import { announceChampionsForTournament } from '@/lib/champions-notify';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { notifyTeamCoaches } from '@/lib/team-coach-notices';
 import { TEAM_COACH_WORDS, teamCoachRecordLink } from '@/lib/team-coach-notice-plan';
@@ -84,6 +85,8 @@ export const POST = withObservability(async (req: Request) => {
     // event's seeds are set by hand, so publishing is its moment). Once per division, never on a later publish.
     // Only the divisions this write published (this tournament's own), never an id the request merely named.
     await Promise.all((publishedRows ?? []).map(row => announcePlayoffsSetIfReady(row.id as string, ctx.user.id)));
+    // "Champions crowned" waits while any division is held back (Stage 0 · D1), so a publish asks again.
+    if ((publishedRows ?? []).length > 0) await announceChampionsForTournament(tournamentId, ctx.user.id);
 
     // A free coach's bell (Free coach header parity, 2026-10-13): every accepted team in a division going live
     // hears it, whether or not the organizer ticked the email — that box and the event's email switches govern

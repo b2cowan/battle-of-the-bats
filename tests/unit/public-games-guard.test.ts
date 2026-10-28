@@ -108,7 +108,9 @@ describe('a score alert', () => {
     assert.ok(wait < champs.indexOf('champions_crowned_at: new Date().toISOString()'), 'before the one-time claim');
     assert.equal(count(champs, /notifyFansForChampions\(/g), 1, 'no other fan send');
     const route = readCode('app/api/admin/divisions/route.ts');
-    assert.equal(count(route, /if \(vis === 'published'(?: && ag)?\) await announceChampionsForTournament\(/g), 2, 'both publish paths');
+    assert.equal(count(route, /if \(vis === 'published'(?: && ag)?\) await announceChampionsForTournament\(/g), 2, 'both set-visibility paths');
+    assert.match(readCode('app/api/admin/schedule-publish/route.ts'),
+      /if \(\(publishedRows \?\? \[\]\)\.length > 0\) await announceChampionsForTournament\(tournamentId, ctx\.user\.id\);/, 'the Publish window');
   });
   it('a club team\'s mirrored tournament games (its public page and calendar) go by each game\'s own division', () => {
     const coach = readCode('lib/basic-coach-teams.ts');
