@@ -60,6 +60,25 @@
   alongside the review, not after it (owner: the walk tests what people see, which review fixes should not change). **If
   /review or /simplify changes anything a walk step quotes, update that step and republish** (grep every walk). The one
   fixture: `.probe/9d2a-walk/fixture.mjs` (Walk U11 + ten Sunday slots not given yet), made 2026-10-28.
+- **2026-10-28, session 8: `/simplify` and `/review` (high) DONE, both committed** (`f81420262` simplify, behaviour unchanged;
+  `cd48ee863` review fixes). The six owner walks §408–§413 were already written and committed (`93eed0ab1`) and still hold.
+  **Fixed by the review:** Save refuses a plan that is not the one the check showed (a fingerprint of slot, teams and time,
+  not only the slot set); a score or note on a game that already shares its place is no longer held by the old clash; a
+  re-date waits for a date and a time; two teams short by different amounts after a cancelled game are two health issues; a
+  clash across midnight names its own day; the schedule read sends the game time only to someone who runs the season and a
+  failed read of it no longer fails the schedule; "See the permit" opens only when every date names the same permit.
+  **Left to the owner (judgment, not defects):** (1) health's plan on a TIE goes to the larger count, so a replayed
+  cancelled game in a small division can read every team short (4 teams, A–B cancelled and replayed as B–A: score 58 on a
+  complete schedule) — the smaller-on-tie rule has its own failure (a deleted game goes unflagged); (2) a division with
+  teams and no games drops out of the score (U10 clean + U12 empty = 100) — needs an issue and words from `/marketing`;
+  (3) the pencil's Home/Away dropdowns on an existing game are ignored by the save (old gap, now in the new form) — support
+  team changes or show the teams as facts; (4) the first-fit generator can say "crowded" when a valid layout exists (16 of
+  57 small fuzz cases) — wants a matching step; (5) the check swallows a failed permit/booking read and can read clean;
+  (6) the "permit ended" line also fires for a booking in the gap between two seasons' permits (the code's meaning, now
+  said in its comment) — confirm that is wanted; (7) the PATCH route (untouched by 9d-2a) takes any status and score and
+  can 500 on a bad value or let a stale window postpone a finished game. **Remaining: `/docs` (Part 6 help rewrite, 9d2a·H
+  and k4 said in so many words), the PM brief, TODO line, memory file, then `check:layout --changed` and a dev-server
+  restart (ask first).**
 - **Facts found that the steps below must respect:** the club's cross-program clash rule never compares two house-league
   bookings (`comparable`: same owner) — house league's own clashes are `lib/league-schedule-conflict.ts`; a postponed game
   keeps its `scheduled_at`; `league_games.status` is scheduled|completed|cancelled|postponed only; `houseLeagueSlotRows`
