@@ -157,12 +157,16 @@ export async function checkGeneratedGames(p: {
 }
 
 /**
- * SAVE: the plan's games, each on its slot's venue and facility, the place said the way a picked venue says it; then the
- * one cross-program check on what was written (Club Tier Stage 6a), whose permit lines are the shipped after-save.
+ * SAVE: the plan's games, each on its slot's venue and facility, the place said the way a picked venue says it, each
+ * linked to the division game time it sits on (`slot_use_id`, 9d2b·B — a use's key is its slot, so the slot id is the
+ * link); then the one cross-program check on what was written (Club Tier Stage 6a), whose permit lines are the shipped
+ * after-save. ⚖ ONE LOCKED WRITE (mig 409 `league_games_generate_save`): two Saves on one division queue on its lock and
+ * the second sees the first's games (`has_games`); a division whose schedule is published is refused (`published`,
+ * 9d2·11 — a published division adds games one at a time). A refusal comes back, never a throw.
  */
 export async function insertGeneratedGames(p: {
   orgId: string; season: LeagueSeason; divisionId: string; slots: readonly GameTimeSlot[]; plan: GamePlan;
-}): Promise<GenerateSaveReply> {
+}): Promise<GenerateSaveReply | { refusal: 'published' | 'has_games' }> {
   const slotOf = new Map(p.slots.map(s => [s.id, s]));
   const places = await readClubPlaces(p.orgId);
   const location = (s: GameTimeSlot) => {
@@ -170,19 +174,25 @@ export async function insertGeneratedGames(p: {
     const facility = s.facilityId ? places.facilityName.get(s.facilityId) ?? null : null;
     return facility ? formatVenueLocation(venue, facility) : venue || null;
   };
-  const { data, error } = await supabaseAdmin.from('league_games').insert(p.plan.games.map(g => {
+  const games = p.plan.games.map(g => {
     const s = slotOf.get(g.slotId)!;
     return {
-      org_id: p.orgId, season_id: p.season.id, division_id: p.divisionId,
-      home_team_id: g.homeTeamId, away_team_id: g.awayTeamId,
-      scheduled_at: g.scheduledAt, ends_at: g.endsAt,
-      org_venue_id: s.venueId, org_venue_facility_id: s.facilityId, location: location(s),
+      homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId, scheduledAt: g.scheduledAt, endsAt: g.endsAt,
+      venueId: s.venueId, facilityId: s.facilityId, location: location(s), slotUseId: s.id,
     };
-  })).select('id, scheduled_at, ends_at, status, org_venue_id, org_venue_facility_id');
+  });
+  const { data, error } = await supabaseAdmin.rpc('league_games_generate_save', {
+    p_org: p.orgId, p_season: p.season.id, p_division: p.divisionId, p_games: games,
+  });
   if (error) throw error;
-  const saved = (data ?? []).map(r => ({
-    id: r.id as string, scheduledAt: r.scheduled_at as string | null, endsAt: r.ends_at as string | null, status: r.status as string,
-    orgVenueId: r.org_venue_id as string | null, orgVenueFacilityId: r.org_venue_facility_id as string | null,
+  const row = (data as { refusal: string | null; ids: string[] }[] | null)?.[0];
+  if (row?.refusal === 'published' || row?.refusal === 'has_games') return { refusal: row.refusal };
+  const ids = row?.ids ?? [];
+  // The ids only key the report: its permit lines are worked from the times and places passed here, so the set of lines
+  // is the same whichever id each row came back with.
+  const saved = games.slice(0, ids.length).map((g, i) => ({
+    id: ids[i], scheduledAt: g.scheduledAt, endsAt: g.endsAt, status: 'scheduled',
+    orgVenueId: g.venueId, orgVenueFacilityId: g.facilityId,
   }));
   const report = await clashReportForLeagueRows(p.orgId, p.season, 'game', saved);
   return { saved: saved.length, permitLines: Object.values(report.permitLines).filter(Boolean) };

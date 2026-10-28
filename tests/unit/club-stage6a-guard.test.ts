@@ -38,7 +38,7 @@ const sourceFiles = () => [...walk(path.join(ROOT, 'app')), ...walk(path.join(RO
 // ── 1. The writers ──────────────────────────────────────────────────────────────────────────────
 
 /** Writes a booking's time or place: one of the db writers, or a raw insert/update that names a time/place column. */
-const WRITER_CALL = /\b(createRepTeamEvents?|updateRepTeamEvent|updateRepTeamEventSeries|createRepTryoutSession|updateRepTryoutSession|createLeagueGame|updateLeagueGame|createPractices|updateUpcomingEventsForPlace)\(|rpc\(['"](bulk_reschedule_games|club_schedule_finalize|club_schedule_apply_changes|club_schedule_hand_back|club_practices_carry)['"]/;
+const WRITER_CALL = /\b(createRepTeamEvents?|updateRepTeamEvent|updateRepTeamEventSeries|createRepTryoutSession|updateRepTryoutSession|createLeagueGame|updateLeagueGame|createPractices|updateUpcomingEventsForPlace)\(|rpc\(['"](bulk_reschedule_games|club_schedule_finalize|club_schedule_apply_changes|club_schedule_hand_back|club_practices_carry|league_games_generate_save)['"]/;
 const RAW_WRITE = /from\(['"](games|league_games|league_practices|rep_team_events|rep_tryout_sessions)['"]\)\s*\.(insert|update|upsert)\(/g;
 const PLACE_OR_TIME = /\b(starts_at|ends_at|scheduled_at|game_date|game_time|location|diamond_id|venue_facility_id|org_venue_id|place_id|field_number|duration_minutes)\b/;
 

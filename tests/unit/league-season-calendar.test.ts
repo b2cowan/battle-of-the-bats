@@ -15,7 +15,7 @@ function game(id: string, over: Partial<LeagueGame> = {}): LeagueGame {
     id, seasonId: 's1', divisionId: 'd1', homeTeamId: 'red', awayTeamId: 'blue',
     scheduledAt: at('2027-06-15', '18:00'), endsAt: at('2027-06-15', '19:30'),
     orgVenueId: 'v1', orgVenueFacilityId: 'f1', location: 'Maple Grove Park — Diamond 1',
-    homeScore: null, awayScore: null, status: 'scheduled', notes: null, createdAt: '', updatedAt: '', ...over,
+    homeScore: null, awayScore: null, status: 'scheduled', notes: null, slotUseId: null, movedFrom: null, createdAt: '', updatedAt: '', ...over,
   };
 }
 function practice(id: string, teamId: string, clock: string, over: Partial<LeaguePractice> = {}): LeaguePractice {
@@ -172,7 +172,10 @@ describe('the public schedule (g1) reads every game and never a practice', () =>
   const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
   it('reads every status (a cancelled game used to vanish — C6-04) and passes no practices', () => {
     const page = read('app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx');
-    assert.match(page, /getSeasonGamesEveryStatus\(season\.id\)/);
+    // 9d-2b: through the published-only, last-sent read, which reads every status itself.
+    assert.match(page, /publicSeasonGames\(season\.id, divisions\)/);
+    assert.doesNotMatch(page, /getSeasonGamesEveryStatus/);
+    assert.match(read('lib/league-game-changes-server.ts'), /getSeasonGamesEveryStatus\(seasonId\)/);
     assert.match(page, /practices: \[\],/);
     assert.equal(page.match(/timesInZoneSentence\(\)/g)?.length, 1, 'the zone is said once');
     const db = read('lib/db.ts');

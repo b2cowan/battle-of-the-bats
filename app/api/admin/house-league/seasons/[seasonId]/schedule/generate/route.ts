@@ -23,9 +23,10 @@ import type { LeagueSeason } from '@/lib/types';
  *   `plan`  — both choices' counts, for step 2 (Once / Twice);
  *   `check` — the chosen plan, its warnings and its Schedule health (c3);
  *   `save`  — the plan again; refused `changed` when its slots are not the ones the check showed, `has_games` when the
- *             division got games meanwhile, `blocked` when it no longer fits. A Save is live (9d2a·A): the games are on
- *             the public schedule at once, and families aren't emailed (9d2a·F).
- * ⚖ Only a division with no games is generated (9d2·11, "has any games" until 9d-2b publishes).
+ *             division got games meanwhile (or another Save won the division's lock), `blocked` when it no longer fits.
+ *             The games go into the division's DRAFT (9d-2b): nobody sees them until Publish schedule.
+ * ⚖ Only a division with no games is generated (9d2·11: "the generator lists only divisions with no published games; a
+ * published division adds games one at a time" — and a draft division with games is not generated again either).
  */
 async function fromClubTime(orgId: string, season: LeagueSeason, body: Record<string, unknown> | null) {
   const divisionId = typeof body?.divisionId === 'string' ? body.divisionId : '';
@@ -60,8 +61,11 @@ async function fromClubTime(orgId: string, season: LeagueSeason, body: Record<st
     return NextResponse.json({ code: 'changed', error: W.changed(division.name) }, { status: 409 });
   }
   // The writer runs the cross-program check on what it wrote; its permit lines are the shipped after-save (Stage 10a).
-  const reply: GenerateSaveReply = await insertGeneratedGames({ orgId, season, divisionId, slots, plan });
-  return NextResponse.json(reply);
+  // Its one locked write is the real "has any games" check (two Saves at once); a published division always has games,
+  // so both refusals read the same.
+  const reply = await insertGeneratedGames({ orgId, season, divisionId, slots, plan });
+  if ('refusal' in reply) return NextResponse.json({ code: 'has_games', error: W.hasGames(division.name) }, { status: 409 });
+  return NextResponse.json(reply satisfies GenerateSaveReply);
 }
 
 interface PreviewGame {

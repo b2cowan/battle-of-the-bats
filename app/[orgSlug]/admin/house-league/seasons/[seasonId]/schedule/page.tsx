@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { Calendar, CalendarClock, CalendarDays, CalendarRange, Clock, List, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
-import { ORG_TIME_ZONE, mondayOfDay, orgDayKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
+import { ORG_TIME_ZONE, formatStoredDate, mondayOfDay, orgDayKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { fieldNounFor } from '@/lib/sports';
@@ -32,6 +32,9 @@ import { CalendarViewSwitch, ScheduleDateNav } from '@/components/coaches/Schedu
 import { NeedsDateFold, SeasonListView, SeasonMonthView } from '@/components/admin/kit/club/league/schedule/SeasonScheduleViews';
 import GameWindow from '@/components/admin/kit/club/league/schedule/GameWindow';
 import GenerateGamesWindow from '@/components/admin/kit/club/league/schedule/GenerateGamesWindow';
+import PublishScheduleWindow from '@/components/admin/kit/club/league/schedule/PublishScheduleWindow';
+import SchedulePublishLine, { showPublishButton, type SchedulePublishing } from '@/components/admin/kit/club/league/schedule/SchedulePublishLine';
+import { SCHEDULE_PUBLISH_WORDS } from '@/lib/league-schedule-words';
 import LeagueHealthWindow from '@/components/admin/kit/club/league/schedule/LeagueHealthWindow';
 import { PermitWindow } from '@/components/admin/kit/club/PermitWindows';
 import type { PermitOutside } from '@/lib/permit-words';
@@ -647,6 +650,10 @@ export default function SchedulePage() {
   /** "See the permit" (step 7): the permit's window, raised over the game window or Generate's check that opened it. */
   const [permitOpen, setPermitOpen] = useState<string | null>(null);
   const [scheduleRead, setScheduleRead] = useState<'loading' | 'ok' | 'failed'>('loading');
+  /** Each published division's line (9d-2b, e1); a division absent from it is a draft. */
+  const [publishing, setPublishing] = useState<Record<string, SchedulePublishing>>({});
+  /** Publish schedule's window (e2), on the picked division. */
+  const [publishOpen, setPublishOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -750,6 +757,7 @@ export default function SchedulePage() {
     setGames(g.games ?? []);
     setGameSlots(g.gameSlots ?? []);
     setGamePermits(g.permits ?? {});
+    setPublishing(g.publishing ?? {});
     setPractices(p.practices ?? []);
     setScheduleRead('ok');
   }, [seasonId, orgQuery, beginRead]);
@@ -1149,6 +1157,13 @@ export default function SchedulePage() {
     if (on) setGenerate({ divisionId: on.id, through: 1 });
   };
 
+  // ⚖ PUBLISH SCHEDULE (9d-2b, e1): the division's games are a draft until it is pressed; only once its teams are
+  // published (9d2·8). The line says the state; the header holds the button.
+  const divLiveGames = divGames.filter(g => g.status !== 'cancelled').length;
+  const divPublishing = selectedDivId ? publishing[selectedDivId] : undefined;
+  const divTeamsPublished = !!selectedDiv?.teamsPublishedAt;
+  const canPublish = showPublishButton({ canRun: canManage, published: !!divPublishing, teamsPublished: divTeamsPublished, games: divLiveGames });
+
   const ViewGlyph = VIEW_GLYPH[shownView];
   const dateNav = shownView === 'list' ? null : <ScheduleDateNav view={shownView} cursor={cursor} onStep={step} />;
 
@@ -1268,12 +1283,21 @@ export default function SchedulePage() {
               onOpen={() => setHealthOpen(true)}
             />
           )}
+          {canPublish && scheduleRead === 'ok' && (
+            <button type="button" className="btn btn-lime" onClick={() => setPublishOpen(true)}>
+              {phone ? SCHEDULE_PUBLISH_WORDS.buttonPhone : SCHEDULE_PUBLISH_WORDS.button}
+            </button>
+          )}
         </>}
       />
 
       {/* The time line (Stage 11b Part 3): where this division's time comes from, and the door to House league's time. */}
       {leagueTime && selectedDivId && showTimeLine(leagueTime, buildsSchedules) && (
         <HouseLeagueTimeLine time={leagueTime} divisionId={selectedDivId} divisionName={divName} onOpen={openLeagueTime} />
+      )}
+      {selectedDiv && scheduleRead === 'ok' && divGames.length > 0 && (
+        <SchedulePublishLine divisionName={divName} games={divLiveGames} teamsPublished={divTeamsPublished}
+          publishing={divPublishing} canRun={canManage} />
       )}
 
       {/* ⚖ ONE LINE (C4): the division leads (the scope), then the switch and — wider than 900 px — the dates; Show right of
@@ -1346,6 +1370,22 @@ export default function SchedulePage() {
             void reload();
           }}
           onClose={() => setGenerate(null)}
+        />
+      )}
+
+      {/* Publish schedule (9d-2b, e2): asked once, on the picked division. */}
+      {publishOpen && selectedDiv && (
+        <PublishScheduleWindow
+          division={{ id: selectedDiv.id, name: selectedDiv.name }}
+          /* org-slug-ok: the window adds `orgQuery` (below) to every call it makes */
+          api={`/api/admin/house-league/seasons/${seasonId}/schedule`}
+          orgQuery={orgQuery}
+          onDone={r => {
+            setPublishOpen(false);
+            setFeedback({ isOpen: true, title: SCHEDULE_PUBLISH_WORDS.done(formatStoredDate(r.publishedAt, { withYear: false }), r.families), message: '', type: 'success' });
+            void reload();
+          }}
+          onClose={() => setPublishOpen(false)}
         />
       )}
 

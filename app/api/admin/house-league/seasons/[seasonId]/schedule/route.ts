@@ -28,6 +28,8 @@ function mapGame(row: any) {
     awayScore:   row.away_score ?? null,
     status:      row.status,
     notes:       row.notes ?? null,
+    slotUseId:   row.slot_use_id ?? null,
+    movedFrom:   row.moved_from ?? null,
     createdAt:   row.created_at,
     updatedAt:   row.updated_at,
   };
@@ -66,8 +68,8 @@ export const GET = withObservability(async (req: Request,
   // "See the permit" to them alone), so a reader is sent neither. The game time is decoration on the read: a failed read of
   // it leaves the schedule loading, as a failed permit read does.
   const runs = !houseLeagueRefusal(ctx, 'run', season);
-  const [{ data, error }, gameSlots] = await Promise.all([
-    q, runs ? seasonGameSlots(ctx!.org.id, seasonId).catch(() => []) : Promise.resolve([]),
+  const [{ data, error }, gameSlots, publishing] = await Promise.all([
+    q, runs ? seasonGameSlots(ctx!.org.id, seasonId).catch(() => []) : Promise.resolve([]), schedulePublishing(seasonId),
   ]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const games = (data ?? []).map(mapGame);
@@ -81,8 +83,35 @@ export const GET = withObservability(async (req: Request,
   }
 
   // The season's game time (9d-2a step 4): the game window's "Time from {schedule}" matches a game to it.
-  return NextResponse.json({ games, gameSlots, permits });
+  return NextResponse.json({ games, gameSlots, permits, publishing });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule' });
+
+/**
+ * Each published division's line (9d-2b, e1): when, how many families its Publish emailed and how it went (the season's
+ * `schedule_published` notice), and how many changes are waiting to be sent. A division absent from the map is a draft.
+ * ⚠ A failed read THROWS: a published division read as a draft would offer Publish again (the SQL refuses it, but the
+ * screen would say the wrong thing).
+ */
+async function schedulePublishing(seasonId: string) {
+  const [divs, notices, held] = await Promise.all([
+    supabaseAdmin.from('league_divisions').select('id, schedule_published_at').eq('season_id', seasonId).not('schedule_published_at', 'is', null),
+    supabaseAdmin.from('league_season_notices').select('division_id, family_count, reached_count, failed_count, created_at')
+      .eq('season_id', seasonId).eq('kind', 'schedule_published').order('created_at', { ascending: false }),
+    supabaseAdmin.from('league_game_changes').select('division_id').eq('season_id', seasonId).is('sent_at', null),
+  ]);
+  for (const r of [divs, notices, held]) if (r.error) throw r.error;
+  const out: Record<string, { publishedAt: string; families: number | null; reached: number; failed: number; held: number }> = {};
+  for (const d of divs.data ?? []) {
+    const n = (notices.data ?? []).find(x => x.division_id === d.id);
+    out[d.id as string] = {
+      publishedAt: d.schedule_published_at as string,
+      // A silent backfill (9d2b·A) and a Publish that reached nobody have no notice: no count to say.
+      families: n ? n.family_count as number : null, reached: (n?.reached_count as number) ?? 0, failed: (n?.failed_count as number) ?? 0,
+      held: (held.data ?? []).filter(h => h.division_id === d.id).length,
+    };
+  }
+  return out;
+}
 
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {

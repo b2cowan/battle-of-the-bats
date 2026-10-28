@@ -990,6 +990,10 @@ export interface LeagueDivision {
   earlyPrice: number | null;
   /** A short line a family reads when two divisions share an age group (mig 361, 9b·13). */
   note: string | null;
+  /** Teams published (mig 377, 9c·6): each family told its child's team. Publish schedule waits for it (9d2·8). */
+  teamsPublishedAt: string | null;
+  /** Schedule published (mig 409, 9d2·1): null = a draft nobody sees. Never cleared. */
+  schedulePublishedAt: string | null;
   createdAt: string;
 }
 
@@ -1069,6 +1073,10 @@ export interface LeagueGame {
   awayScore: number | null;
   status: LeagueGameStatus;
   notes: string | null;
+  /** The division game time it sits on: league_slot_uses' key, its slot (mig 409, 9d2b·B). */
+  slotUseId: string | null;
+  /** Re-dated since families last heard: the date they heard ("Moved · Was …", mig 409, 9d2b·D). Kept by the database. */
+  movedFrom: string | null;
   createdAt: string;
   updatedAt: string;
 }

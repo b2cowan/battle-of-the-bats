@@ -2339,6 +2339,8 @@ function mapLeagueDivision(row: any): LeagueDivision {
     price:        row.price != null ? Number(row.price) : null,
     earlyPrice:   row.early_price != null ? Number(row.early_price) : null,
     note:         row.note ?? null,
+    teamsPublishedAt:    row.teams_published_at ?? null,
+    schedulePublishedAt: row.schedule_published_at ?? null,
     createdAt: row.created_at,
   };
 }
@@ -2412,6 +2414,8 @@ function mapLeagueGame(row: any): LeagueGame {
     awayScore:   row.away_score ?? null,
     status:      row.status,
     notes:       row.notes ?? null,
+    slotUseId:   row.slot_use_id ?? null,
+    movedFrom:   row.moved_from ?? null,
     createdAt:   row.created_at,
     updatedAt:   row.updated_at,
   };

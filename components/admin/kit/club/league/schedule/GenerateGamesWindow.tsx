@@ -25,8 +25,8 @@ import { SeePermitDoor } from './useLeagueLine';
  *       none is given some of house league's time not given yet, a whole row at a time (k3; part of a row is House league's
  *       time's job, behind the door); with nothing to give, who can give it is named (k4).
  *   2 · MATCH-UPS: once or twice through (c2); the counts and the hints are the server's plan for each choice.
- *   · THE CHECK (c3): passing, warning (save anyway) or blocking (nothing is saved). A Save is live (9d2a·A): the games are on
- *     the public schedule at once, and families aren't emailed (9d2a·F).
+ *   · THE CHECK (c3): passing, warning (save anyway) or blocking (nothing is saved). A Save goes into the division's draft
+ *     (9d-2b): nobody sees the games until Publish schedule.
  * Only divisions with no games are offered (9d2·11). The free League plan never opens this window (9d2a·B).
  */
 type Level = 'time' | 'matchups' | 'check';
@@ -365,7 +365,7 @@ export default function GenerateGamesWindow({
         <div className={g.facts}>{facts.map(f => <p key={f} className={ck.hint}>{f}</p>)}</div>
         {gamesList}
       </>;
-      footerStart = <span>{W.warnFoot} {W.passFoot(n)}</span>;
+      footerStart = <span>{W.warnFoot} {W.passFoot(n, name)}</span>;
       footer = <>{back}{saveButton}</>;
     } else {
       title = W.ready(n);
@@ -374,7 +374,7 @@ export default function GenerateGamesWindow({
         <div className={g.facts}>{facts.map(f => <p key={f} className={ck.hint}>{f}</p>)}</div>
         {gamesList}
       </>;
-      footerStart = <span>{W.passFoot(n)}</span>;
+      footerStart = <span>{W.passFoot(n, name)}</span>;
       footer = <>{back}{saveButton}</>;
     }
   }

@@ -473,10 +473,12 @@ export const GENERATE_WORDS = {
     `Every team gets ${min === max ? min : `${min} or ${max}`} ${primeTimeWords(t, max)}.`,
   health: (score: number) => `Schedule health ${score}.`,
   seeGames: (n: number) => `See the ${pluralize(n, 'game')}`,
-  passFoot: (n: number) => `Saving puts ${n === 1 ? 'this game' : `these ${n} games`} on the public schedule at once. Families aren’t emailed.`,
+  /** 9d-2b: only a draft division generates (9d2·11), so a Save goes into the draft. */
+  passFoot: (n: number, division: string) =>
+    `Saving puts ${n === 1 ? 'this game' : `these ${n} games`} in ${possessive(division)} draft. Nobody sees them until you publish.`,
   save: (n: number) => `Save ${pluralize(n, 'game')}`,
   saving: 'Saving…',
-  saved: (n: number) => `Saved ${pluralize(n, 'game')}. ${n === 1 ? 'It’s' : 'They’re'} on the public schedule now.`,
+  saved: (n: number) => `Saved ${pluralize(n, 'game')} as a draft. Publish when you’re ready.`,
   // The check, warning
   warnTitle: (n: number, k: number) => `${pluralize(n, 'game')}, with ${pluralize(k, 'thing')} to look at`,
   warnPermit: (division: string, venue: string) => `${possessive(division)} game time is outside the club’s permit for ${venue}.`,

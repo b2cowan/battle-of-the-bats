@@ -215,9 +215,9 @@ describe('the window says the plan (step 5, the copy file "Stage 9d-2a" c)', () 
     assert.equal(W.everyTeamPlays(p.gamesEach, p.home.min, p.home.max), 'Every team plays 9 games, 4 or 5 at home.');
     assert.equal(W.everyTeamGets(p.share!.min, p.share!.max, p.share!), `Every team gets ${p.share!.min === p.share!.max ? p.share!.min : `${p.share!.min} or ${p.share!.max}`} Saturday mornings.`);
     assert.equal(W.ready(45), 'Ready to save: 45 games');
-    assert.equal(W.passFoot(45), 'Saving puts these 45 games on the public schedule at once. Families aren’t emailed.');
-    assert.equal(W.saved(45), 'Saved 45 games. They’re on the public schedule now.');
-    assert.equal(W.saved(1), 'Saved 1 game. It’s on the public schedule now.');
+    assert.equal(W.passFoot(45, 'U12 Division'), 'Saving puts these 45 games in U12 Division’s draft. Nobody sees them until you publish.');
+    assert.equal(W.saved(45), 'Saved 45 games as a draft. Publish when you’re ready.');
+    assert.equal(W.saved(1), 'Saved 1 game as a draft. Publish when you’re ready.');
   });
 
   it('two Sunday-morning clocks are one time: nothing to share out (the step 5 probe on dev)', () => {

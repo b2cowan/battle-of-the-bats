@@ -5,9 +5,10 @@ import type { Metadata } from 'next';
 import {
   getDivisionsForSeason,
   getTeamsForSeason,
-  getSeasonGamesEveryStatus,
   getOrgPlaceNames,
 } from '@/lib/db';
+import { publicSeasonGames } from '@/lib/league-game-changes-server';
+import { SCHEDULE_PUBLIC_WORDS as P } from '@/lib/league-schedule-words';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
@@ -42,6 +43,9 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
  *   - the place is on every game; "Times in Eastern time." is said once (C10).
  * ⚠ THE WEEK AND THE DAY ARE THE CLUB'S (S6-12): this is a server page, so every day is `orgDayKey`'s, never the host's
  * clock — `seasonWeeks` files a booking by the Monday of its org-zone day.
+ * ⚖ ONLY A PUBLISHED SCHEDULE IS PUBLIC (House League 9d-2b, 9d2·1, frame g2): a division still a draft says its schedule
+ * is coming, and its tab says so. A published game reads as families last heard it until the league admin sends a change
+ * (9d2·16, `publicSeasonGames`); a game re-dated and sent reads "Moved" with the date it was.
  */
 export default async function PublicSchedulePage({
   params,
@@ -62,15 +66,17 @@ export default async function PublicSchedulePage({
   if (!season) notFound();
   if (season.status === 'draft') notFound();
 
-  const [divisions, teams, games, places] = await Promise.all([
+  const [divisions, teams, places] = await Promise.all([
     getDivisionsForSeason(season.id),
     getTeamsForSeason(season.id),
-    getSeasonGamesEveryStatus(season.id),
     getOrgPlaceNames(org.id),
   ]);
+  const { games, published } = await publicSeasonGames(season.id, divisions);
 
   const activeDivision: LeagueDivision | null =
     divisions.find(d => d.id === divisionIdParam) ?? divisions[0] ?? null;
+  // A draft division has no public games; one division only and still a draft reads the same.
+  const coming = !!activeDivision && !published.has(activeDivision.id);
 
   const { bookings, needsDate } = seasonCalendar({
     seasonName: season.name,
@@ -109,14 +115,16 @@ export default async function PublicSchedulePage({
                   href={href(`/league/${seasonSlug}/schedule`) + `?d=${d.id}`}
                   className={`${column.tab}${isActive ? ` ${column.tabActive}` : ''}`}
                 >
-                  {d.name}
+                  {published.has(d.id) ? d.name : P.comingTab(d.name)}
                 </Link>
               );
             })}
           </div>
         )}
 
-        {!hasGames ? (
+        {coming ? (
+          <div className={kit.empty}>{P.coming(activeDivision!.name)}. {P.comingHint}</div>
+        ) : !hasGames ? (
           <div className={kit.empty}>{SEASON_PUBLIC_WORDS.noGames}</div>
         ) : (
           <>
@@ -166,6 +174,8 @@ function GameRow({ booking: b }: { booking: SeasonBooking }) {
   const postponed = b.state === 'postponed';
   const cancelled = b.state === 'cancelled';
   const place = whereWords(b);
+  // Moved (9d2·10): a game re-dated since families first heard, once the change was sent — the date they heard.
+  const movedFrom = game?.movedFrom && !postponed && !cancelled && !b.result ? game.movedFrom : null;
   return (
     <div className={`${column.game}${cancelled ? ` ${column.struck}` : ''}`}>
       {game?.scheduledAt ? (
@@ -182,11 +192,14 @@ function GameRow({ booking: b }: { booking: SeasonBooking }) {
           {cancelled && <span className={`${kit.chip} ${kit.chipNeutral}`}>{STATE_WORDS.cancelled}</span>}
         </span>
         {place && <span className={column.place}>{place}</span>}
+        {movedFrom && <span className={column.place}>{P.movedWas(dayWords(orgDayKey(movedFrom)), clockOf(Date.parse(movedFrom)))}</span>}
       </div>
       {postponed ? (
         <span className={`${column.state} ${column.postponed}`}>{SEASON_PUBLIC_WORDS.postponed}</span>
       ) : b.result ? (
         <span className={column.state}>{b.result}</span>
+      ) : movedFrom ? (
+        <span className={column.state}><span className={`${kit.chip} ${kit.chipWarn}`}>{P.moved}</span></span>
       ) : null}
     </div>
   );
