@@ -9,17 +9,23 @@ import { SCHEDULE_PUBLISH_WORDS as W } from '@/lib/league-schedule-words';
 import { formatTime } from '@/lib/utils';
 import { utcToZonedInputs } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
+import { publishSample, sendScheduleNotice } from '@/lib/league-schedule-mail';
+
+// The families' emails go inside the request, a hundred to a provider request (the season emails' rule).
+export const maxDuration = 120;
 
 /**
  * PUBLISH SCHEDULE (House League 9d-2b Part 2; rulings 9d2·1, 9d2·8; frames e1, e2; mig 409). A fact first, an email
  * second, as Publish teams:
  *   GET  ?divisionId — what the window says before the press: the games, the teams, and how many families one email
  *        each reaches (the SQL's own grouping, `league_schedule_family_count`, so the count and the rows never differ).
+ *        `&preview=1` — e2's "See the email": the family with the most children, as Publish would email them now.
  *   POST { divisionId, games } — `league_division_schedule_publish` writes, in one transaction locked on the division,
  *        the mark, the season's Automatic notice and one pending email row per family; it refuses a division whose
  *        teams aren't published (`teams_first`), a second press (`already`, with who and when), a window whose game
  *        count is stale (`changed`) and a finished season. There is no unpublish.
- * The family emails go from the rows (Part 4); a stopped send finishes from the rows still pending.
+ * Then the family emails go from the rows (`sendScheduleNotice`, Part 4), and the answer says how many it reached; a
+ * stopped send finishes from the season's Email families history ("Send to the N it missed").
  */
 async function divisionFacts(seasonId: string, divisionId: string) {
   const [{ data: teams }, { count: games }] = await Promise.all([
@@ -45,6 +51,9 @@ export const GET = withObservability(async (req: Request,
   if (refused) return refused;
   const divisionId = new URL(req.url).searchParams.get('divisionId');
   if (!(await divisionInSeason(seasonId, divisionId))) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  if (new URL(req.url).searchParams.get('preview') === '1') {
+    return NextResponse.json({ sample: await publishSample(ctx!.org, season, divisionId!) });
+  }
   const f = await divisionFacts(seasonId, divisionId!);
   return NextResponse.json({ games: f.games, teams: f.teams, families: f.families });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/publish' });
@@ -85,5 +94,10 @@ export const POST = withObservability(async (req: Request,
     case 'teams_first': return NextResponse.json({ error: W.teamsFirst(division), code: 'teams_first' }, { status: 409 });
     case 'no_games': return NextResponse.json({ error: W.noGames(division), code: 'no_games' }, { status: 409 });
   }
-  return NextResponse.json({ ok: true, publishedAt: result.published_at, families: result.families, notice: result.notice });
+  const sent = result.notice
+    ? await sendScheduleNotice({ org: ctx!.org, season, noticeId: result.notice })
+    : { families: 0, reached: 0, failed: 0 };
+  return NextResponse.json({
+    ok: true, publishedAt: result.published_at, families: result.families, reached: sent.reached, failed: sent.failed, notice: result.notice,
+  });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/publish' });

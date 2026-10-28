@@ -5,15 +5,22 @@
  * reaches — the server's own count, read when the window opens, so the number pressed is the number written. One press
  * publishes; the button reads "Publishing…" and can't be pressed twice, and a second press anywhere is refused with who
  * published and when. There is no unpublish, so "Keep as a draft" is the way out, never "Cancel".
+ * "See the email" (Part 4) takes the window's place behind a named back (the send windows' level, owner 2026-10-26) —
+ * the one moment the question is drawn as a form, since only a form has the back.
  */
 import { useEffect, useState } from 'react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { repKit } from '../../RepKit';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { SCHEDULE_PUBLISH_WORDS as W } from '@/lib/league-schedule-words';
+import { SCHEDULE_PUBLISH_WORDS as W, reachedLine } from '@/lib/league-schedule-words';
+import { formatStoredDate } from '@/lib/timezone';
+import type { EmailWords } from '@/lib/club-schedule-words';
+import LoadingState from '@/components/shared/LoadingState';
+import { EmailWordsSample, MailView, SendDoor, useSendLevel } from '../../SendParts';
 
-export interface SchedulePublished { publishedAt: string; families: number }
+/** `said`: "Published May 25 · 101 families emailed." — or how many it reached when some didn't send. */
+export interface SchedulePublished { publishedAt: string; families: number; said: string }
 
 interface Facts { games: number; teams: number; families: number }
 
@@ -52,14 +59,33 @@ export default function PublishScheduleWindow({ division, api, orgQuery, onDone,
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ divisionId: division.id, games: facts.games }),
     }).catch(() => null);
-    const data = (r ? await r.json().catch(() => null) : null) as (SchedulePublished & { error?: string }) | null;
+    const data = (r ? await r.json().catch(() => null) : null) as { publishedAt: string; families: number; reached?: number; failed?: number; error?: string } | null;
     if (!r?.ok || !data) { setError(data?.error ?? W.failed); setBusy(false); return; }
-    onDone({ publishedAt: data.publishedAt, families: data.families });
+    const day = formatStoredDate(data.publishedAt, { withYear: false });
+    const failed = data.failed ?? 0;
+    onDone({
+      publishedAt: data.publishedAt, families: data.families,
+      // The families it missed are offered again on the season's Email families history.
+      said: failed > 0 ? `${W.publishedOn(day)} · ${reachedLine(data.reached ?? 0, data.families, failed)}` : W.done(day, data.families),
+    });
   }
+
+  const lv = useSendLevel(W.title(division.name));
+  const [sample, setSample] = useState<{ to: string; words: EmailWords } | null>(null);
+  const [sampleFailed, setSampleFailed] = useState(false);
+  async function openEmail() {
+    lv.open('email');
+    if (sample) return;
+    setSampleFailed(false);
+    const r = await fetch(`${url}${sep}divisionId=${encodeURIComponent(division.id)}&preview=1`, { cache: 'no-store' }).catch(() => null);
+    const data = (r?.ok ? await r.json().catch(() => null) : null) as { sample?: { to: string; words: EmailWords } | null } | null;
+    if (data?.sample) setSample(data.sample); else setSampleFailed(true);
+  }
+  const mail = lv.level === 'email';
 
   const foot = facts ? (isPhone ? W.footPhone(facts.families, facts.teams) : W.foot(facts.families)) : '';
   return (
-    <KitDialog kind="question" title={W.title(division.name)} onClose={onClose} busy={busy}
+    <KitDialog kind={mail ? 'form' : 'question'} {...(mail ? { ...lv.dialog, size: 'medium' as const } : {})} title={W.title(division.name)} onClose={onClose} busy={busy}
       footerStart={<span>{busy ? W.publishing : foot}</span>}
       footer={(
         <>
@@ -69,7 +95,15 @@ export default function PublishScheduleWindow({ division, api, orgQuery, onDone,
           </button>
         </>
       )}>
-      {facts && !isPhone && <p className={ck.hint}>{W.body(facts.games, facts.teams)}</p>}
+      {mail ? (
+        sample ? <MailView to={sample.to} subject={sample.words.subject}><EmailWordsSample w={sample.words} /></MailView>
+          : sampleFailed ? <p className={repKit.formError}>{W.sampleFailed}</p> : <LoadingState inline label="Loading the email…" />
+      ) : (
+        <>
+          {facts && !isPhone && <p className={ck.hint}>{W.body(facts.games, facts.teams)}</p>}
+          {facts && facts.families > 0 && <SendDoor onOpen={() => void openEmail()}>{W.seeEmail}</SendDoor>}
+        </>
+      )}
       {error && <p className={repKit.formError} role="alert">{error}</p>}
     </KitDialog>
   );

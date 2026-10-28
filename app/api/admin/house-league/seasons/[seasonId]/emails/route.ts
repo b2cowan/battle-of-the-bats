@@ -6,7 +6,9 @@ import { divisionInSeason, registrationsInSeason, teamsInSeason } from '@/lib/le
 import { isSeasonDoorScope, parseScope, type FamilyAudienceScope } from '@/lib/families-audience';
 import { resendSeasonEmail, seasonEmailPreview, sendSeasonEmail } from '@/lib/house-league-email';
 import { writeOrgAudit } from '@/lib/org-audit';
+import { sendScheduleNotice } from '@/lib/league-schedule-mail';
 import { withObservability } from '@/lib/observability';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 // A season's families go inside the request, a hundred to a provider request (the club's rule, Put to the owner 3).
@@ -20,7 +22,10 @@ export const maxDuration = 120;
  *   GET  ?orgSlug&kind=season|season_divisions|season_teams|season_statuses|season_families&divisionIds|teamIds|statuses|
  *        registrationIds — the window's read: the Who list, the allowance, Last sent, and this choice's reach.
  *   POST { action: 'send', kind, …ids, subject, body, expected, copyCoaches } — the press (one household goes through the
- *        household door and never counts); { action: 'resend', sendId } — "Send to the N it missed" on a stopped email.
+ *        household door and never counts); { action: 'resend', sendId } — "Send to the N it missed" on a stopped email;
+ *        { action: 'resendNotice', noticeId } — the same on a stopped Schedule published / Schedule changes notice
+ *        (House League 9d-2b): its families not yet reached, claimed so a racing send never emails one twice. Whoever may
+ *        email the season's families may finish a send to them; it never counts (an automatic notice, Q12c).
  */
 
 /** Who, from a query or a body, always inside the URL's season. */
@@ -82,6 +87,18 @@ export const POST = withObservability(async (req: Request,
     if (!r.ok) return NextResponse.json(r.body, { status: r.status });
     await writeOrgAudit(ctx!.org.id, ctx!.user.id, null, 'families_emailed', { seasonId, resend: true, reached: r.reached, families: r.families });
     return NextResponse.json(r);
+  }
+
+  if (action === 'resendNotice') {
+    if (typeof body.noticeId !== 'string') return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    const { data: notice } = await supabaseAdmin.from('league_season_notices').select('id, kind')
+      .eq('id', body.noticeId).eq('org_id', ctx!.org.id).eq('season_id', seasonId).maybeSingle();
+    if (!notice || (notice.kind !== 'schedule_published' && notice.kind !== 'games_changed')) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+    const r = await sendScheduleNotice({ org: ctx!.org, season, noticeId: notice.id as string });
+    await writeOrgAudit(ctx!.org.id, ctx!.user.id, null, 'families_emailed', { seasonId, resend: true, notice: notice.id, reached: r.reached, families: r.families });
+    return NextResponse.json({ ok: true, reached: r.reached, families: r.families });
   }
 
   if (action === 'send') {

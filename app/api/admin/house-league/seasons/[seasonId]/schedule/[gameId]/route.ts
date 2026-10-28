@@ -10,9 +10,13 @@ import { clashReportForLeagueRows, emptyReport } from '@/lib/venue-clash-lookup'
 import { invalidGamePatch } from '@/lib/league-game-patch';
 import { houseLeagueAccess } from '@/lib/house-league-access';
 import { placeGame } from '@/lib/league-game-place';
-import { heldChangesOf, heldGamesOf, isShownHeld, sendHeldChanges } from '@/lib/league-game-changes-server';
+import { heldChangesOf, heldGamesOf, isShownHeld } from '@/lib/league-game-changes-server';
+import { sendChangesAndTell } from '@/lib/league-schedule-mail';
 import { CHANGES_TO_SEND_WORDS as CW } from '@/lib/league-schedule-words';
 import { GAME_WINDOW_WORDS } from '@/lib/league-season-calendar';
+
+// f5's "tell families now" emails the game's two teams' families inside the request (the season emails' rule).
+export const maxDuration = 120;
 
 async function verifyGame(gameId: string, seasonId: string) {
   const { data } = await supabaseAdmin
@@ -200,17 +204,17 @@ export const PATCH = withObservability(async (req: Request,
 
   // ⚖ f5, THE URGENT CANCEL OR POSTPONE: "tell families now" sends this one game's change on its own; anything else waiting
   // keeps waiting. The change is saved first; a send refused or failed leaves it waiting with the rest, and says so.
-  let sent: { families: number; others: number } | null = null;
+  let sent: { families: number; reached: number; failed: number; others: number } | null = null;
   let sendFailed = false;
   if (body.sendNow === true && division.published && (patch.status === 'cancelled' || patch.status === 'postponed')) {
     try {
       const mine = (await heldChangesOf(seasonId, game.division_id)).filter(c => c.gameId === gameId).map(c => c.id);
-      const r = await sendHeldChanges({
-        orgId: ctx!.org.id, seasonId, divisionId: game.division_id, actorId: ctx!.user.id, changeIds: mine,
+      const r = await sendChangesAndTell({
+        org: ctx!.org, season, divisionId: game.division_id, actorId: ctx!.user.id, changeIds: mine,
       });
       if (r.refusal === null) {
         const others = (await heldGamesOf(seasonId, game.division_id)).filter(isShownHeld).length;
-        sent = { families: r.families, others };
+        sent = { families: r.families, reached: r.reached, failed: r.failed, others };
       } else sendFailed = true;
     } catch {
       sendFailed = true;

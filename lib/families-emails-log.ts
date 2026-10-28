@@ -4,6 +4,7 @@ import { getLeagueEmailLog, resolvePersonNamer } from './db';
 import { personDisplayName } from './families-read';
 import { CLUB_EMAIL_STOPPED_AFTER_MS, SEASON_EMAIL_WORDS as SW, familiesNamed } from './families-words';
 import { PRACTICES_CHANGED_NOTICE } from './club-schedule-league-words';
+import { SCHEDULE_NOTICE_WORDS } from './league-schedule-words';
 import { pluralize } from './utils';
 
 /**
@@ -46,9 +47,31 @@ export interface EmailLogRow {
   counts: { families: number; reached: number; optedOut: number; failed: number; coaches: number } | null;
   /** An old row's "11 sent · 2 didn't go" (counted per child). */
   oldReached?: string;
-  /** A notice's own kind: Publish teams (9c), or a practice change the club's Send the changes made (Stage 11b Part 5). */
-  noticeKind?: 'teams_published' | 'practices_changed';
+  /** A notice's own kind: Publish teams (9c), a practice change the club's Send the changes made (Stage 11b Part 5),
+   *  Publish schedule or a division's schedule changes (House League 9d-2b, f4). */
+  noticeKind?: NoticeKind;
+  /** A notice's division, for its body's words ("when U12 Division's schedule was published"). */
+  division?: string | null;
   state: 'sending' | 'stopped' | 'done';
+}
+
+export type NoticeKind = 'teams_published' | 'practices_changed' | 'schedule_published' | 'games_changed';
+
+/** A notice's subject and To (f4: "Schedule published: U12 Division" · "U12 Division · 66 families · reached 66"). */
+function noticeFace(kind: NoticeKind, division: string | null, families: number, reached: number): { subject: string; to: string } {
+  switch (kind) {
+    // A practice change reaches the families of the teams it touched, never the whole season.
+    case 'practices_changed': return { subject: PRACTICES_CHANGED_NOTICE.subject(division), to: division ?? pluralize(families, 'family', 'families') };
+    case 'schedule_published': return { subject: SCHEDULE_NOTICE_WORDS.publishedSubject(division), to: SCHEDULE_NOTICE_WORDS.to(division, families, reached) };
+    case 'games_changed': return { subject: SCHEDULE_NOTICE_WORDS.changesSubject(division), to: SCHEDULE_NOTICE_WORDS.to(division, families, reached) };
+    default: return { subject: SW.teamsPublished(division), to: division ?? SW.everyone };
+  }
+}
+
+/** A schedule notice is a send that can stop partway (9d-2b): its `failed_count` is every family still to reach (failed,
+ *  or never tried), recounted after each send — so "stopped" is exactly when "Send to the N it missed" has someone to send. */
+function noticeState(kind: NoticeKind, n: { failed_count: number }): EmailLogRow['state'] {
+  return (kind === 'schedule_published' || kind === 'games_changed') && n.failed_count > 0 ? 'stopped' : 'done';
 }
 
 export interface EmailLogPage {
@@ -232,13 +255,11 @@ export async function readSeasonHistory(orgId: string, seasonId: string): Promis
     })),
     ...(notices.data ?? []).map((n): EmailLogRow => {
       const division = n.division_id ? divisionOf.get(n.division_id) ?? null : null;
-      const practices = n.kind === 'practices_changed';
+      const kind = n.kind as NoticeKind;
       return {
         key: `notice:${n.id}`, kind: 'notice', id: n.id, sentAt: n.created_at, seasonId,
-        subject: practices ? PRACTICES_CHANGED_NOTICE.subject(division) : SW.teamsPublished(division),
-        noticeKind: practices ? 'practices_changed' : 'teams_published',
-        // A practice change reaches the families of the teams it touched, never the whole season.
-        to: division ?? (practices ? pluralize(n.family_count, 'family', 'families') : SW.everyone), by: nameOf(n.created_by), state: 'done',
+        ...noticeFace(kind, division, n.family_count, n.reached_count),
+        noticeKind: kind, division, by: nameOf(n.created_by), state: noticeState(kind, n),
         counts: { families: n.family_count, reached: n.reached_count, optedOut: 0, failed: n.failed_count, coaches: 0 },
       };
     }),

@@ -5,25 +5,32 @@ import { getLeagueSeasonById } from '@/lib/db';
 import { divisionInSeason } from '@/lib/league-season-scope';
 import { memberDisplayName } from '@/lib/member-names';
 import { CHANGES_TO_SEND_WORDS as W, SCHEDULE_PUBLISH_WORDS } from '@/lib/league-schedule-words';
-import { childrenOnTeams, heldGamesOf, isShownHeld, sendHeldChanges } from '@/lib/league-game-changes-server';
+import { childrenOnTeams, heldGamesOf, isShownHeld } from '@/lib/league-game-changes-server';
+import { changesSample, sendChangesAndTell } from '@/lib/league-schedule-mail';
 import { familiesFor, teamsHearing } from '@/lib/league-game-changes';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { formatTime } from '@/lib/utils';
 import { utcToZonedInputs } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
 
+// The families' emails go inside the request, a hundred to a provider request (the season emails' rule).
+export const maxDuration = 120;
+
 /**
  * CHANGES TO SEND (House League 9d-2b Part 3; rulings 9d2·16, 9d2b; frame f2; mig 409). A division's held changes, and
  * the one press that sends them.
  *   GET  ?divisionId&gameId — one game's two teams' families (f5's question).
+ *   GET  ?divisionId&preview=1 — f2's "See their email": the family with children on two of the changed teams (else the
+ *        fullest one), as the send would email them (Part 4).
  *   GET  ?divisionId — every game with a change waiting: what families will hear (the net effect, `heldGamesOf`), whether
  *        it was played since (listed, never emailed), how many families each reaches, the total the send reaches (one
  *        email per family, `familiesFor` — the SQL's grouping), and one family with children on two of the teams, for
  *        f2's "one email with both changes". `changeIds` is every held row the window saw, the games that tell families
  *        nothing (moved and moved back) included: the send claims them all, so they leave with it.
  *   POST { divisionId, changeIds } — `sendHeldChanges`: claimed once, refused `changed` when a change landed or was
- *        undone while the window was open, `already` (who and when) on a second press. The family emails go from the
- *        rows it writes (Part 4).
+ *        undone while the window was open, `already` (who and when) on a second press. Then the families' emails go
+ *        from the rows it wrote, and the changed teams' coaches get a copy (`sendChangesAndTell`, Part 4): the answer
+ *        says how many it reached.
  */
 /** "Kims", "Joneses": a family's name for "The {Kims} have …". */
 const familyName = (last: string) => (/(s|x|z|ch|sh)$/i.test(last) ? `${last}es` : `${last}s`);
@@ -53,6 +60,9 @@ export const GET = withObservability(async (req: Request,
   }
 
   const held = await heldGamesOf(g.seasonId, divisionId!);
+  if (new URL(req.url).searchParams.get('preview') === '1') {
+    return NextResponse.json({ sample: await changesSample(g.ctx.org, season, divisionId!, held) });
+  }
   const shown = held.filter(isShownHeld);
   const news = shown.filter(h => h.news);
   const children = await childrenOnTeams(g.seasonId, [...teamsHearing(shown)]);
@@ -99,7 +109,7 @@ export const POST = withObservability(async (req: Request,
   if (!(await divisionInSeason(g.seasonId, divisionId))) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
   const changeIds = Array.isArray(body?.changeIds) ? body.changeIds.filter((x: unknown): x is string => typeof x === 'string') : [];
 
-  const r = await sendHeldChanges({ orgId: g.ctx.org.id, seasonId: g.seasonId, divisionId, actorId: g.ctx.user.id, changeIds });
+  const r = await sendChangesAndTell({ org: g.ctx.org, season, divisionId, actorId: g.ctx.user.id, changeIds });
   switch (r.refusal) {
     case 'nothing': return NextResponse.json({ error: W.empty, code: 'nothing' }, { status: 409 });
     case 'finished': return NextResponse.json({ error: SCHEDULE_PUBLISH_WORDS.finished, finished: true }, { status: 423 });
@@ -113,5 +123,5 @@ export const POST = withObservability(async (req: Request,
       return NextResponse.json({ error: W.already(by, at), code: 'already' }, { status: 409 });
     }
   }
-  return NextResponse.json({ ok: true, families: r.families, news: r.news, sentAt: r.sentAt });
+  return NextResponse.json({ ok: true, families: r.families, reached: r.reached, failed: r.failed, news: r.news, sentAt: r.sentAt });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/changes' });

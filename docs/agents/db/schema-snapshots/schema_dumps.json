@@ -39768,7 +39768,7 @@
         "kind": "CHECK",
         "table_name": "league_schedule_emails",
         "detail": "league_schedule_emails_status_check",
-        "check_clause": "(status = ANY (ARRAY['pending'::text, 'sent'::text, 'failed'::text]))"
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'sending'::text, 'sent'::text, 'failed'::text, 'skipped'::text]))"
       },
       {
         "kind": "RLS",

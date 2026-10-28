@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { Calendar, CalendarClock, CalendarDays, CalendarRange, Clock, List, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
-import { ORG_TIME_ZONE, formatStoredDate, mondayOfDay, orgDayKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
+import { ORG_TIME_ZONE, mondayOfDay, orgDayKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { fieldNounFor } from '@/lib/sports';
@@ -1323,7 +1323,7 @@ export default function SchedulePage() {
       )}
       {selectedDiv && scheduleRead === 'ok' && divGames.length > 0 && (
         <SchedulePublishLine divisionName={divName} games={divLiveGames} teamsPublished={divTeamsPublished}
-          publishing={divPublishing} canRun={canManage} />
+          publishing={divPublishing} canRun={canManage} missedHref={`/${orgSlug}/admin/house-league/seasons/${seasonId}/notifications`} />
       )}
 
       {/* ⚖ ONE LINE (C4): the division leads (the scope), then the switch and — wider than 900 px — the dates; Show right of
@@ -1408,7 +1408,7 @@ export default function SchedulePage() {
           orgQuery={orgQuery}
           onDone={r => {
             setPublishOpen(false);
-            setFeedback({ isOpen: true, title: SCHEDULE_PUBLISH_WORDS.done(formatStoredDate(r.publishedAt, { withYear: false }), r.families), message: '', type: 'success' });
+            setFeedback({ isOpen: true, title: r.said, message: '', type: 'success' });
             void reload();
           }}
           onClose={() => setPublishOpen(false)}

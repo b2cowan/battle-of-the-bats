@@ -14,9 +14,12 @@ import { NoticePill, repKit } from '../../RepKit';
 import { RotateCcw } from 'lucide-react';
 import { formatInOrgZone, utcToZonedInputs } from '@/lib/timezone';
 import { formatTime } from '@/lib/utils';
-import { CHANGES_TO_SEND_WORDS as W } from '@/lib/league-schedule-words';
+import { CHANGES_TO_SEND_WORDS as W, reachedLine } from '@/lib/league-schedule-words';
+import type { EmailWords } from '@/lib/club-schedule-words';
+import { EmailWordsSample, MailView, SendDoor, useSendLevel } from '../../SendParts';
 import type { GameSnapshot, NetChange } from '@/lib/league-game-changes';
 import t from './ChangesToSend.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface HeldRow { gameId: string; news: NetChange | null; played: boolean; homeTeamId: string; awayTeamId: string; families: number }
 interface Tray {
@@ -83,6 +86,19 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
   }, [fetchTray]);
   const read = async () => show(await fetchTray());
 
+  // "See their email" (f2, Part 4): the family the note names, as the send would email them — read when first opened.
+  const lv = useSendLevel(W.title);
+  const [sample, setSample] = useState<{ to: string; words: EmailWords } | null>(null);
+  const [sampleFailed, setSampleFailed] = useState(false);
+  async function openEmail() {
+    lv.open('email');
+    if (sample) return;
+    setSampleFailed(false);
+    const r = await fetch(`${url}${sep}divisionId=${encodeURIComponent(division.id)}&preview=1`, { cache: 'no-store' }).catch(() => null);
+    const data = (r?.ok ? await r.json().catch(() => null) : null) as { sample?: { to: string; words: EmailWords } | null } | null;
+    if (data?.sample) setSample(data.sample); else setSampleFailed(true);
+  }
+
   async function send() {
     if (!tray) return;
     setBusy(true); setError(null);
@@ -90,10 +106,12 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ divisionId: division.id, changeIds: tray.changeIds }),
     }).catch(() => null);
-    const data = (r ? await r.json().catch(() => null) : null) as { families?: number; news?: number; error?: string } | null;
+    const data = (r ? await r.json().catch(() => null) : null) as { families?: number; reached?: number; failed?: number; news?: number; error?: string } | null;
     setBusy(false);
     if (!r?.ok || !data) { setError(data?.error ?? W.failed); return; }
-    onSent(data.news ? W.sent(data.families ?? 0) : W.netNothing);
+    const n = data.families ?? 0, failed = data.failed ?? 0;
+    // "Reached 64 of 66 families · 2 didn't send." — the season's Email families history offers the rest again.
+    onSent(!data.news ? W.netNothing : failed > 0 ? reachedLine(data.reached ?? 0, n, failed) : W.sent(n));
   }
 
   async function undo(gameId: string) {
@@ -110,7 +128,7 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
   const rows = tray?.games ?? [];
   const household = tray?.household;
   return (
-    <KitDialog kind="form" size="medium" eyebrow={division.name} title={W.title} onClose={onClose} busy={busy}
+    <KitDialog kind="form" size="medium" {...lv.dialog} eyebrow={division.name} title={W.title} onClose={onClose} busy={busy}
       status={said ? <NoticePill inline message={said} onDone={() => setSaid(null)} /> : undefined}
       footerStart={rows.length > 0 && tray ? <span>{busy ? W.sending : W.foot(tray.families, tray.teams)}</span> : undefined}
       footer={(
@@ -124,6 +142,11 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
         </>
       )}>
       {error && <p className={repKit.formError} role="alert">{error}</p>}
+      {lv.level === 'email' ? (
+        sample ? (
+          <MailView to={sample.to} subject={sample.words.subject}><EmailWordsSample w={sample.words} /></MailView>
+        ) : sampleFailed ? <p className={repKit.formError}>{W.sampleFailed}</p> : <LoadingState inline label="Loading the email…" />
+      ) : (<>
       {tray && rows.length === 0 && <p className={ck.hint}>{W.empty}</p>}
       {rows.length > 0 && (
         <ul className={t.rows}>
@@ -149,8 +172,12 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
         </ul>
       )}
       {household && (
-        <p className={ck.hint}>{W.oneHousehold(household.family, household.parts.map(p => ({ child: p.child, team: teamName(p.teamId) })))}</p>
+        <>
+          <p className={ck.hint}>{W.oneHousehold(household.family, household.parts.map(p => ({ child: p.child, team: teamName(p.teamId) })))}</p>
+          <SendDoor onOpen={() => void openEmail()}>{W.seeTheirEmail}</SendDoor>
+        </>
       )}
+      </>)}
     </KitDialog>
   );
 }

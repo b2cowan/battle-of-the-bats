@@ -104,7 +104,8 @@ export async function childrenOnTeams(seasonId: string, teamIds: readonly string
 }
 
 export type SendHeldResult =
-  | { refusal: null; families: number; sentAt: string; news: number }
+  /** `notice`: the games_changed notice whose family rows the send wrote (null when it told nobody). */
+  | { refusal: null; families: number; sentAt: string; news: number; notice: string | null }
   | { refusal: 'nothing' | 'changed' | 'finished' }
   | { refusal: 'already'; by: string | null; at: string | null };
 
@@ -125,11 +126,11 @@ export async function sendHeldChanges(p: {
   });
   if (error) throw new Error(`Changes to send didn't save: ${error.message}`);
   const r = (Array.isArray(data) ? data[0] : data) as {
-    refusal: string | null; sent_at: string | null; sent_by: string | null; families: number;
+    refusal: string | null; sent_at: string | null; sent_by: string | null; families: number; notice: string | null;
   };
   if (r.refusal === 'already') return { refusal: 'already', by: r.sent_by, at: r.sent_at };
   if (r.refusal === 'nothing' || r.refusal === 'changed' || r.refusal === 'finished') return { refusal: r.refusal };
-  return { refusal: null, families: r.families, sentAt: r.sent_at!, news: games.filter(g => g.news).length };
+  return { refusal: null, families: r.families, sentAt: r.sent_at!, news: games.filter(g => g.news).length, notice: r.notice };
 }
 
 /**

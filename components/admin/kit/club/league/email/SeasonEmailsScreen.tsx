@@ -107,7 +107,8 @@ export default function SeasonEmailsScreen() {
       {open && (
         <EmailRecord row={open} eyebrow={season.name}
           detailUrl={`/api/admin/house-league/seasons/${seasonId}/emails/history?${q}&send=${encodeURIComponent(open.id)}`}
-          resend={{ url: `/api/admin/house-league/seasons/${seasonId}/emails?${q}`, body: { action: 'resend', sendId: open.id }, owner: 'season' }}
+          // A schedule notice (9d-2b) finishes from its own rows; a typed email from its send.
+          resend={{ url: `/api/admin/house-league/seasons/${seasonId}/emails?${q}`, body: open.kind === 'notice' ? { action: 'resendNotice', noticeId: open.id } : { action: 'resend', sendId: open.id }, owner: 'season' }}
           teamsHref={`${seasonHref}/teams`}
           onClose={() => setOpen(null)}
           onResent={text => { setOpen(null); setSaid({ text, sendId: null }); void load(); }} />

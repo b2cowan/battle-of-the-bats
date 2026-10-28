@@ -111,7 +111,7 @@ export function EmailWordsSample({ w }: { w: EmailWords }) {
       {w.lists.map((l, i) => (
         <div key={i}>
           {l.title && <p><b>{l.title}</b></p>}
-          <ul>{l.items.map(it => <li key={it}>{it}</li>)}</ul>
+          <ul>{l.items.map(it => <li key={it} className={s.sampleItem}>{it}</li>)}</ul>
         </div>
       ))}
       {w.link && <p><u>{w.link.label}</u></p>}

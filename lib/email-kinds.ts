@@ -95,6 +95,9 @@ export const EMAIL_KINDS = {
   family_club_email:                    { klass: 'family', label: 'Club email to families' },
   house_league_placement:               { klass: 'family', label: 'House league placement' },
   house_league_practice_change:         { klass: 'family', label: 'House league practice change' },
+  // House League 9d-2b Part 4: Publish schedule's email and a division's Changes to send (service notices, as above).
+  house_league_schedule_published:      { klass: 'family', label: 'House league schedule published' },
+  house_league_games_changed:           { klass: 'family', label: 'House league games changed' },
   basic_coach_announcement:             { klass: 'family', label: 'Coach announcement' },
   dues_reminder:                        { klass: 'family', label: 'Dues reminder' },
   league_payment_receipt:               { klass: 'family', label: 'League payment receipt' },

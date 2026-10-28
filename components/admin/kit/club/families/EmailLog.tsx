@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { CLUB_EMAIL_CAP, FAMILY_EMAILS_TAB_WORDS as W, SEASON_EMAIL_WORDS as SW } from '@/lib/families-words';
 import { PRACTICES_CHANGED_NOTICE } from '@/lib/club-schedule-league-words';
+import { SCHEDULE_NOTICE_WORDS } from '@/lib/league-schedule-words';
 import type { ClubEmailRecord, EmailLogRow } from '@/lib/families-emails-log';
 import LoadingState from '@/components/shared/LoadingState';
 import KitDialog, { DialogCancel } from '../KitDialog';
@@ -163,14 +164,16 @@ export function EmailRecord({ row, eyebrow, detailUrl, resend, teamsHref, onClos
   const r: EmailLogRow = detail ?? row;
   const body = detail?.body ?? null;
   const c = r.counts;
-  const canResend = !!resend && r.state === 'stopped' && (detail?.missed ?? 0) > 0;
+  // A typed email's families still to reach come with its detail; a schedule notice's are its failed count (9d-2b).
+  const missed = r.kind === 'notice' ? c?.failed ?? 0 : detail?.missed ?? 0;
+  const canResend = !!resend && r.state === 'stopped' && missed > 0;
 
   async function sendMissed() {
     if (!resend || busy) return;
     setBusy(true); setError('');
     try {
       const res = await moneyFetch<{ reached?: number; families?: number; code?: string; error?: string }>(resend.url, jsonInit('POST', resend.body));
-      if (res.ok) { onResent(SW.resent(detail?.missed ?? 0, res.data.reached ?? 0, res.data.families ?? c?.families ?? 0)); return; }
+      if (res.ok) { onResent(SW.resent(missed, res.data.reached ?? 0, res.data.families ?? c?.families ?? 0)); return; }
       setError(refusalText(res.data, SW.unknown));
     } catch {
       setError(SW.unknown);
@@ -186,7 +189,7 @@ export function EmailRecord({ row, eyebrow, detailUrl, resend, teamsHref, onClos
         <>
           <DialogCancel>{W.close}</DialogCancel>
           <button type="button" className="btn btn-lime" onClick={() => void sendMissed()} disabled={busy}>
-            {busy ? W.sending : SW.resend(detail!.missed)}
+            {busy ? W.sending : SW.resend(missed)}
           </button>
         </>
       ) : undefined}>
@@ -215,6 +218,14 @@ export function EmailRecord({ row, eyebrow, detailUrl, resend, teamsHref, onClos
             : body == null ? <LoadingState inline label="Loading the email…" />
             : <p className={fam.emailBody}>{body}</p>}
           <p className={ck.hint}>{r.state === 'stopped' && detail ? SW.stoppedNote(detail.missed) : W.reachedNote}</p>
+        </>
+      ) : r.kind === 'notice' && (r.noticeKind === 'schedule_published' || r.noticeKind === 'games_changed') ? (
+        // Publish schedule and a division's schedule changes (House League 9d-2b, f4): no Teams door.
+        <>
+          <p className={`${ck.hint} ${fam.readAfter}`}>
+            {r.noticeKind === 'schedule_published' ? SCHEDULE_NOTICE_WORDS.publishedBody(r.division ?? null) : SCHEDULE_NOTICE_WORDS.changesBody(r.division ?? null)}
+          </p>
+          {r.state === 'stopped' && <p className={ck.hint}>{SW.stoppedNote(missed)}</p>}
         </>
       ) : r.kind === 'notice' && r.noticeKind === 'practices_changed' ? (
         // The club's Send the changes (Stage 11b Part 5): no Teams door — the teams didn't change, their practices did.

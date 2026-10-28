@@ -1,4 +1,4 @@
-import { pluralize, possessive } from './utils';
+import { joinWithAnd, pluralize, possessive } from './utils';
 import { CLUB_EMAIL_CAP } from './families-words';
 
 /**
@@ -22,6 +22,9 @@ export const SCHEDULE_PUBLISH_WORDS = {
   notSent: (n: number) => ` · ${pluralize(n, 'change')} not sent`,
   partial: (reached: number, n: number, missed: number) => `reached ${reached} of ${families(n)} · ${missed} didn’t send.`,
   seeThem: 'See them',
+  seeEmail: 'See the email',
+  /** A build word: the sample didn't read. */
+  sampleFailed: 'The email didn’t load. Go back and try again.',
   title: (division: string) => `Publish ${possessive(division)} schedule?`,
   body: (games: number, teams: number) =>
     `${pluralize(games, 'game')} go on the public schedule. Each family gets one email with its children’s games, and the ${possessive(pluralize(teams, 'team'))} coaches see them on their team page. After this, changes wait for you to send them.`,
@@ -61,6 +64,9 @@ export const CHANGES_TO_SEND_WORDS = {
     const joined = list.length > 1 ? `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}` : list[0];
     return `The ${family} have ${joined}. They get one email with ${parts.length === 2 ? 'both' : 'all their'} changes.`;
   },
+  seeTheirEmail: 'See their email',
+  /** A build word: the sample didn't read. */
+  sampleFailed: 'The email didn’t load. Go back and try again.',
   undo: 'Undo',
   undoAria: (game: string) => `Undo the change to ${game}`,
   undone: (game: string) => `Undone. ${game} is back as families last heard.`,
@@ -69,8 +75,11 @@ export const CHANGES_TO_SEND_WORDS = {
   notYet: 'Not yet',
   send: (n: number) => `Send ${pluralize(n, 'change')}`,
   sending: 'Sending…',
-  /** A build word until Part 4 sends: what was written for families ("Reached 64 of 66 …" comes with the send). */
+  /** Every family reached (f5's done line, and f2's when nothing failed). A partial send says `reachedLine`. */
   sent: (n: number) => `Sent to ${families(n)}.`,
+  /** f5 when some didn't go: "Reached 19 of 21 families · 2 didn't send. Your 3 other changes keep waiting." */
+  sentNowPartly: (reached: number, n: number, missed: number, others: number) =>
+    `${reachedLine(reached, n, missed)}${others > 0 ? ` Your ${pluralize(others, 'other change')} keep${others === 1 ? 's' : ''} waiting.` : ''}`,
   played: 'This game has already been played, so it isn’t emailed.',
   empty: 'Nothing is waiting to send.',
   already: (by: string | null, at: string | null) =>
@@ -113,3 +122,55 @@ export const SCHEDULE_PUBLIC_WORDS = {
   coachUnpublished: (division: string) => `${possessive(division)} schedule isn’t published yet. Your games show here when it is.`,
   coachNoneAhead: 'No games from today on.',
 } as const;
+
+/** "Blue Jays’ schedule is up" · "The schedule is up for Blue Jays and Rays" — one team named once. */
+const teamsSubject = (teams: readonly string[], one: (t: string) => string, several: (list: string) => string) => {
+  const once = [...new Set(teams)];
+  return once.length === 1 ? one(once[0]) : several(joinWithAnd(once));
+};
+
+/**
+ * f3: THE FAMILIES' EMAILS — one per family per Publish or send, one part per child (Part 4). A game's line in a part is
+ * ONE item: a moved game's Now and Was are its second and third lines ("\n"), so two moved games never read as four.
+ */
+export const SCHEDULE_EMAIL_WORDS = {
+  publishedSubject: (teams: readonly string[]) =>
+    teamsSubject(teams, t => `${possessive(t)} schedule is up`, list => `The schedule is up for ${list}`),
+  publishedPart: (club: string, season: string, child: string, team: string) =>
+    `${club} published the ${season} schedule. Here are ${possessive(child)} games with ${team}:`,
+  /** "Tue, Jun 1 · 6:00 p.m. · Cardinals vs Rays · Maple Grove Park · Diamond 1" */
+  gameLine: (day: string, clock: string, game: string, place: string) => [day, clock, game, place].filter(Boolean).join(' · '),
+  changedSubject: (teams: readonly string[]) =>
+    teamsSubject(teams, t => `${possessive(t)} games changed`, list => `Games changed for ${list}`),
+  changedPart: (club: string, child: string, team: string) => `${club} changed ${possessive(child)} games with ${team}:`,
+  /** "Orioles vs Twins / Now: Thu, Jun 24, 7:30 p.m. · Diamond 1 / Was: 6:00 p.m." — Was names only what changed. */
+  moved: (game: string, now: string, was: string) => `${game}\nNow: ${now}\nWas: ${was}`,
+  cancelled: (game: string, when: string) => `${endSentence(`Cancelled: ${game}, ${when}`)} The club will tell you if it is replayed.`,
+  postponed: (game: string, day: string) => `${endSentence(`Postponed: ${game}${day ? `, ${day}` : ''}`)} A new date is to come.`,
+  added: (game: string, when: string) => endSentence(`Added: ${game}, ${when}`),
+  backOn: (game: string, when: string) => endSentence(`Back on: ${game}, ${when}`),
+  seeSchedule: 'See the full schedule →',
+} as const;
+
+/** "Thu, Jun 24, 6:00 p.m. · Diamond 1": a game's when and where in one clause. A clock ends in its own period, so a
+ *  sentence that closes on it does not add another (`endSentence`). */
+export const whenAndPlace = (day: string, clock: string, place: string) =>
+  `${[day, clock].filter(Boolean).join(', ')}${place ? ` · ${place}` : ''}`;
+export const endSentence = (s: string) => (s.endsWith('.') ? s : `${s}.`);
+
+/** f4: the season's Email families history — the two Automatic rows (the "Teams published: {division}" pattern). */
+export const SCHEDULE_NOTICE_WORDS = {
+  publishedSubject: (division: string | null) => (division ? `Schedule published: ${division}` : 'Schedule published'),
+  changesSubject: (division: string | null) => (division ? `Schedule changes: ${division}` : 'Schedule changes'),
+  publishedBody: (division: string | null) =>
+    `FieldLogicHQ sent this when ${division ? `${possessive(division)} schedule was` : 'the schedule was'} published: one email per family, about their own children’s teams. Automatic emails don’t count toward the season’s ${CLUB_EMAIL_CAP}.`,
+  changesBody: (division: string | null) =>
+    `FieldLogicHQ sent this when ${division ? `${possessive(division)} schedule changes were` : 'the schedule changes were'} sent: one email per family, about their own children’s teams. Automatic emails don’t count toward the season’s ${CLUB_EMAIL_CAP}.`,
+  /** "U12 Division · 66 families · reached 66" */
+  to: (division: string | null, families: number, reached: number) =>
+    `${division ? `${division} · ` : ''}${pluralize(families, 'family', 'families')} · reached ${reached}`,
+} as const;
+
+/** A send's outcome, said once (f2 "Sending · done"; e2 "Done"): every family reached, or how many weren't. */
+export const reachedLine = (reached: number, n: number, missed: number) =>
+  `Reached ${reached} of ${pluralize(n, 'family', 'families')} · ${missed} didn’t send.`;

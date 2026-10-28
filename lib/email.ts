@@ -1334,6 +1334,38 @@ export function leaguePracticesChangedHtml(input: {
 }
 
 /**
+ * THE FAMILIES' GAME EMAILS (House League 9d-2b Part 4, frame f3): Schedule published and Games changed, one per family
+ * per send, one part per child. A SERVICE notice, as the practice-change email (`sendFamilyServiceBatch`). The words are
+ * the house mail's `EmailWords`, built in lib/league-schedule-email.ts (the "See the email" previews draw the same ones);
+ * an item's "\n" is a line of its own (a moved game's Now and Was). `reason` is the season sentence.
+ */
+export function leagueScheduleNoticeHtml(input: {
+  greeting: string;
+  lists: readonly { title: string | null; items: readonly string[] }[];
+  link: { label: string; path: string } | null;
+  outro: string | null;
+  foot?: string | null;
+  reason: string;
+  face?: FamilyMailFace | null;
+}) {
+  const p = escapeEmailFields(input);
+  // The lists and the link are not top-level strings, so each is escaped where it is drawn.
+  const lines = (t: string) => t.split('\n').map(escapeEmailHtml).join('<br>');
+  const parts = input.lists.map(part => `${part.title ? `<p style="margin:0 0 0.35rem;">${escapeEmailHtml(part.title)}</p>` : ''}
+    <ul style="margin:0 0 1rem;padding-left:1.2rem;color:${WARM_EMAIL.ink};">${part.items.map(i => `<li style="margin:0 0 0.35rem;">${lines(i)}</li>`).join('')}</ul>`).join('');
+  const link = input.link
+    ? `<p style="margin:1rem 0;"><a href="${escapeEmailHtml(`${SITE_URL}${input.link.path}`)}" style="color:${WARM_EMAIL.olive};font-weight:700;">${escapeEmailHtml(input.link.label)}</a></p>`
+    : '';
+  return familyNotice(`
+    <p>${p.greeting}</p>
+    ${parts}
+    ${link}
+    ${p.outro ? `<p>${p.outro}</p>` : ''}
+    ${p.foot ? `<p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">${p.foot}</p>` : ''}
+  `, input.face, input.reason);
+}
+
+/**
  * The house-league coach invite (Club Tier 9c, copy §9.3): the club's rep coach invite's pattern (`clubCoachInviteHtml`) —
  * the button, the 7-day foot, "you can safely ignore this email" — for a team page, never the Coaches Portal.
  */

@@ -6876,7 +6876,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_schedule_emails.status -->
 <!-- dict:col:league_schedule_emails.created_at -->
 <!-- dict:col:league_schedule_emails.updated_at -->
-**`status`** (text NOT NULL default `pending`, CHECK `pending` · `sent` · `failed`) / **`created_at`** / **`updated_at`** — how it went.
+**`status`** (text NOT NULL default `pending`, CHECK `pending` · `sending` · `sent` · `failed` · `skipped`; **mig 410** added `sending` and `skipped`) / **`created_at`** / **`updated_at`** — how it went. `pending` is written by the publish / send transaction; the send (`lib/league-schedule-mail.ts`) **claims** a row first (`league_schedule_emails_claim`, mig 410 — the 9c pattern of mig 378: `sending`, and only a `pending` / `failed` row or one left `sending` for ten minutes), so a send and "Send to the N it missed" racing each other never email a family twice; then `sent`, `failed` (counted, and offered again from the season's Email families history) or `skipped` (nothing left to say: the children left the teams, or every game in it was played before a late resend). The notice's `reached_count` / `failed_count` are recounted from these rows after every send.
 
 ---
 

@@ -17,7 +17,7 @@ import { EMPTY_WHERE, whereLibraryBody, whereOfLibraryRow, type WhereValue } fro
 import {
   GAME_WINDOW_WORDS as W, SEASON_PUBLIC_WORDS, asksScores, gameStateWords, gameWindowDoors, scoresToSave, type SeasonBooking,
 } from '@/lib/league-season-calendar';
-import { SCHEDULE_PUBLIC_WORDS } from '@/lib/league-schedule-words';
+import { CHANGES_TO_SEND_WORDS, SCHEDULE_PUBLIC_WORDS } from '@/lib/league-schedule-words';
 import type { ClubVenueOption, LeagueGame, LeagueTeam } from '@/lib/types';
 import { SeePermitDoor, useLeagueLine } from './useLeagueLine';
 import s from '../time/LeagueTime.module.css';
@@ -188,7 +188,7 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
         setError(data.error ?? 'Couldn’t save. Try again.');
         return null;
       }
-      return data as { warnings?: string[]; sent?: { families: number; others: number } | null; sendFailed?: string };
+      return data as { warnings?: string[]; sent?: { families: number; reached: number; failed: number; others: number } | null; sendFailed?: string };
     } catch {
       setError('The connection dropped. Check it and try again.');
       return null;
@@ -240,7 +240,10 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
     await onChanged();
     setMode('read');
     if (status === 'scheduled') setSaid(W.putBackSaid);
-    else if (data.sent) setSaid(W.sentNow(data.sent.families, data.sent.others));
+    else if (data.sent) {
+      const { families, reached, failed, others } = data.sent;
+      setSaid(failed > 0 ? CHANGES_TO_SEND_WORDS.sentNowPartly(reached, families, failed, others) : W.sentNow(families, others));
+    }
     // Saved, and its send didn't go: said where it stays (an error persists; it waits in Changes to send).
     else if (data.sendFailed) setError(data.sendFailed);
   }
