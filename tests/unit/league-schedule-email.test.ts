@@ -54,6 +54,13 @@ describe('a changed game\'s line in the families\' email', () => {
       'Added: Orioles vs Twins, Thu, Jun 17, 6:00 p.m.');
   });
 
+  it('a game with no date to name (postponed, then cancelled) never ends in a dangling comma (/review 2026-10-28)', () => {
+    const undated = snap({ scheduledAt: null, endsAt: null, venueId: null, facilityId: null, status: 'postponed' });
+    const off = snap({ scheduledAt: null, endsAt: null, venueId: null, facilityId: null, status: 'cancelled' });
+    assert.equal(emailChangeLine(netChangeOf([row({ kind: 'cancelled', before: undated, after: off })], off)!, 'Orioles vs Twins', () => ''),
+      'Cancelled: Orioles vs Twins. The club will tell you if it is replayed.');
+  });
+
   it('a postponed game families were told of, given a new date, reads Back on at its new date', () => {
     const off = snap({ status: 'postponed' }), back = snap({ scheduledAt: '2027-07-01T22:00:00+00:00' });
     assert.equal(lineOf([row({ kind: 'given_date', before: off, after: back })], back),

@@ -610,6 +610,8 @@ export const SEASON_EMAIL_WORDS = {
   resendNote: (owner: 'season' | 'club') => `Sending to the families it missed doesn’t count toward the ${owner === 'season' ? 'season’s' : 'club’s'} ${CLUB_EMAIL_CAP}.`,
   resent: (n: number, reached: number, of: number) => `Sent to the ${n} it missed. Reached ${reached} of ${pluralize(of, 'family', 'families')}.`,
   notStopped: 'This email isn’t stopped, so there’s nothing to send again.',
+  /** A build word (9d-2b review): the press took no one — another send still holds them. */
+  stillSending: 'Those families are still being sent to. Try again in a few minutes.',
   /** The season's sent history (frame e). The allowance is the page's first line (the admin header has no subtitle, F3). */
   historyEyebrow: (season: string) => season,
   historyTitle: 'Email families',

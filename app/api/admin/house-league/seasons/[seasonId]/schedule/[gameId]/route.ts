@@ -213,7 +213,9 @@ export const PATCH = withObservability(async (req: Request,
         org: ctx!.org, season, divisionId: game.division_id, actorId: ctx!.user.id, changeIds: mine,
       });
       if (r.refusal === null) {
-        const others = (await heldGamesOf(seasonId, game.division_id)).filter(isShownHeld).length;
+        // The count is a nicety: the emails have gone, so a read that fails says 0, never "it didn't send".
+        let others = 0;
+        try { others = (await heldGamesOf(seasonId, game.division_id)).filter(isShownHeld).length; } catch { /* keep 0 */ }
         sent = { families: r.families, reached: r.reached, failed: r.failed, others };
       } else sendFailed = true;
     } catch {

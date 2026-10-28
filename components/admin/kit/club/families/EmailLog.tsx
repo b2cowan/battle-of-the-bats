@@ -172,7 +172,9 @@ export function EmailRecord({ row, eyebrow, detailUrl, resend, teamsHref, onClos
     if (!resend || busy) return;
     setBusy(true); setError('');
     try {
-      const res = await moneyFetch<{ reached?: number; families?: number; code?: string; error?: string }>(resend.url, jsonInit('POST', resend.body));
+      const res = await moneyFetch<{ reached?: number; families?: number; claimed?: number; code?: string; error?: string }>(resend.url, jsonInit('POST', resend.body));
+      // A schedule notice's press that took no one (another send holds them) says so, never "Sent to the 5 it missed".
+      if (res.ok && res.data.claimed === 0) { setError(SW.stillSending); return; }
       if (res.ok) { onResent(SW.resent(missed, res.data.reached ?? 0, res.data.families ?? c?.families ?? 0)); return; }
       setError(refusalText(res.data, SW.unknown));
     } catch {

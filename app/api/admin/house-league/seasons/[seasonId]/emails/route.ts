@@ -98,7 +98,7 @@ export const POST = withObservability(async (req: Request,
     }
     const r = await sendScheduleNotice({ org: ctx!.org, season, noticeId: notice.id as string });
     await writeOrgAudit(ctx!.org.id, ctx!.user.id, null, 'families_emailed', { seasonId, resend: true, notice: notice.id, reached: r.reached, families: r.families });
-    return NextResponse.json({ ok: true, reached: r.reached, families: r.families });
+    return NextResponse.json({ ok: true, reached: r.reached, families: r.families, claimed: r.claimed ?? 0 });
   }
 
   if (action === 'send') {

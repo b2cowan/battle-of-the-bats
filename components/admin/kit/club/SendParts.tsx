@@ -112,7 +112,7 @@ export function EmailWordsSample({ w }: { w: EmailWords }) {
       {w.lists.map((l, i) => (
         <div key={i}>
           {l.title && <p><b>{l.title}</b></p>}
-          <ul>{l.items.map(it => <li key={it} className={s.sampleItem}>{it}</li>)}</ul>
+          <ul>{l.items.map((it, n) => <li key={n} className={s.sampleItem}>{it}</li>)}</ul>
         </div>
       ))}
       {w.link && <p><u>{w.link.label}</u></p>}
@@ -193,7 +193,7 @@ export function useEmailSample(previewUrl: string) {
 /** The email level's body: the sample as a mail app shows it, while it loads, or the sentence that says it didn't. */
 export function SampleMail({ state, failedText }: { state: { sample: EmailSample | null; failed: boolean }; failedText: string }) {
   if (state.sample) return <MailView to={state.sample.to} subject={state.sample.words.subject}><EmailWordsSample w={state.sample.words} /></MailView>;
-  return state.failed ? <p className={repKit.formError}>{failedText}</p> : <LoadingState inline label="Loading the email…" />;
+  return state.failed ? <p className={repKit.formError} role="alert">{failedText}</p> : <LoadingState inline label="Loading the email…" />;
 }
 
 /** Who gets it, however many: a count, a search once the list is long, then a row each. Each row's `title` is what the search reads. */

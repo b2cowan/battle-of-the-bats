@@ -50,7 +50,7 @@ export default function SchedulePublishLine({ divisionName, games, teamsPublishe
     <>
       <p className={s.line}>
         <Megaphone size={15} aria-hidden className={s.lineIcon} />
-        <span>{words}{canRun && missed > 0 && <>{' '}<Link className={repKit.inlineLink} href={missedHref}>{W.seeThem}</Link></>}</span>
+        <span>{words}{canRun && missed > 0 && <>{' '}<Link className={repKit.inlineLink} href={missedHref} aria-label={W.seeThemAria}>{W.seeThem}</Link></>}</span>
       </p>
       {/* Under the waiting count (f1): what families see meanwhile. */}
       {canRun && publishing && publishing.held > 0 && <p className={ck.hint}>{CW.listNote}</p>}

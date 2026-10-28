@@ -70,8 +70,25 @@ function noticeFace(kind: NoticeKind, division: string | null, families: number,
 
 /** A schedule notice is a send that can stop partway (9d-2b): its `failed_count` is every family still to reach (failed,
  *  or never tried), recounted after each send — so "stopped" is exactly when "Send to the N it missed" has someone to send. */
-function noticeState(kind: NoticeKind, n: { failed_count: number }): EmailLogRow['state'] {
-  return (kind === 'schedule_published' || kind === 'games_changed') && n.failed_count > 0 ? 'stopped' : 'done';
+function noticeState(kind: NoticeKind, n: { id: string; failed_count: number }, inFlight: ReadonlySet<string>): EmailLogRow['state'] {
+  if (kind !== 'schedule_published' && kind !== 'games_changed') return 'done';
+  return n.failed_count === 0 ? 'done' : inFlight.has(n.id) ? 'sending' : 'stopped';
+}
+
+/** A schedule notice whose send holds a row right now (`sending`, under the claim's own ten minutes): it reads "sending",
+ *  not "stopped", while its emails are going. A failed read says none — the page still loads. */
+const SENDING_FRESH_MS = 10 * 60 * 1000;
+async function noticesSending(ids: readonly string[]): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  try {
+    const { data, error } = await supabaseAdmin.from('league_schedule_emails').select('notice_id')
+      .in('notice_id', [...ids]).eq('status', 'sending').gt('updated_at', new Date(Date.now() - SENDING_FRESH_MS).toISOString()).limit(1000);
+    if (error) throw error;
+    return new Set((data ?? []).map(r => r.notice_id as string));
+  } catch (err) {
+    console.error('[families-emails-log] which schedule sends are in flight was not read:', err instanceof Error ? err.message : String(err));
+    return new Set();
+  }
 }
 
 export interface EmailLogPage {
@@ -245,6 +262,7 @@ export async function readSeasonHistory(orgId: string, seasonId: string): Promis
   if (divisions.error) throw divisions.error;
   const familyOf = new Map((people.data ?? []).map((p: any) => [p.id as string, p.last_name ? SW.oneFamilyTo(p.last_name) : personDisplayName(p)]));
   const divisionOf = new Map((divisions.data ?? []).map((d: any) => [d.id as string, d.name as string]));
+  const inFlight = await noticesSending((notices.data ?? []).filter(n => n.failed_count > 0).map(n => n.id as string));
 
   const now = Date.now();
   const rows: EmailLogRow[] = [
@@ -259,7 +277,7 @@ export async function readSeasonHistory(orgId: string, seasonId: string): Promis
       return {
         key: `notice:${n.id}`, kind: 'notice', id: n.id, sentAt: n.created_at, seasonId,
         ...noticeFace(kind, division, n.family_count, n.reached_count),
-        noticeKind: kind, division, by: nameOf(n.created_by), state: noticeState(kind, n),
+        noticeKind: kind, division, by: nameOf(n.created_by), state: noticeState(kind, n, inFlight),
         counts: { families: n.family_count, reached: n.reached_count, optedOut: 0, failed: n.failed_count, coaches: 0 },
       };
     }),

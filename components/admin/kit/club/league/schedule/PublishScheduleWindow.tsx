@@ -58,7 +58,8 @@ export default function PublishScheduleWindow({ division, api, orgQuery, onDone,
       body: JSON.stringify({ divisionId: division.id, games: facts.games }),
     }).catch(() => null);
     const data = (r ? await r.json().catch(() => null) : null) as { publishedAt: string; families: number; reached?: number; failed?: number; error?: string } | null;
-    if (!r?.ok || !data) { setError(data?.error ?? W.failed); setBusy(false); return; }
+    // No answer, or a platform error with no words, means it may have gone: say so rather than "try again".
+    if (!r?.ok || !data) { setError(!r || (r.status >= 500 && !data) ? W.unsure : data?.error ?? W.failed); setBusy(false); return; }
     const day = formatStoredDate(data.publishedAt, { withYear: false });
     const failed = data.failed ?? 0;
     onDone({
@@ -89,7 +90,7 @@ export default function PublishScheduleWindow({ division, api, orgQuery, onDone,
       ) : (
         <>
           {facts && !isPhone && <p className={ck.hint}>{W.body(facts.games, facts.teams)}</p>}
-          {facts && facts.families > 0 && <SendDoor onOpen={() => { lv.open('email'); void email.load(); }}>{W.seeEmail}</SendDoor>}
+          {facts && facts.families > 0 && !busy && <SendDoor onOpen={() => { lv.open('email'); void email.load(); }}>{W.seeEmail}</SendDoor>}
         </>
       )}
       {error && <p className={repKit.formError} role="alert">{error}</p>}

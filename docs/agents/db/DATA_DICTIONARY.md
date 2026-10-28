@@ -6860,7 +6860,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 ## `league_schedule_emails`
 <!-- dict:table:league_schedule_emails -->
 
-**Purpose:** one row per **family** a `schedule_published` or `games_changed` notice was going to (House League 9d-2b, frame f3, **mig 409**) — the 9c placement-email grouping (`lower(btrim(guardian_email))`) with the children it is about. Written `pending` in the publish / send transaction (`league_schedule_emails_write`); the app marks each `sent` or `failed` as it goes, so a stopped send finishes from its pending rows. A **service** notice about the family's own children (`sendFamilyServiceBatch`): it reaches a family who left club news. **Service-role only** (RLS enabled, no policies). Holds an address, as `league_placement_emails` does.
+**Purpose:** one row per **family** a `schedule_published` or `games_changed` notice was going to (House League 9d-2b, frame f3, **mig 409**) — the 9c placement-email grouping (`lower(btrim(guardian_email))`) with the children it is about. Written `pending` in the publish / send transaction (`league_schedule_emails_write`); the app claims the rows (`sending`, mig 410) and marks each `sent`, `failed` or `skipped` as it goes (`skipped` = nothing left to say, or an address no mail can reach, and in dev the transport had no key), so a stopped send finishes from its pending rows. A **service** notice about the family's own children (`sendFamilyServiceBatch`): it reaches a family who left club news. **Service-role only** (RLS enabled, no policies). Holds an address, as `league_placement_emails` does.
 
 <!-- dict:col:league_schedule_emails.id -->
 <!-- dict:col:league_schedule_emails.org_id -->
@@ -7028,7 +7028,7 @@ outcomes. `division_id` is set only when the changed teams are all of one divisi
 <!-- dict:col:league_season_notices.reached_count -->
 <!-- dict:col:league_season_notices.failed_count -->
 **`family_count`** (families it was going to, set at the act) / **`reached_count`** / **`failed_count`** (integer NOT NULL
-≥ 0) — updated by the app from its emails' outcomes as they go (`sent` / `failed`; `skipped` is neither).
+≥ 0) — updated by the app from its emails' outcomes. **For `schedule_published` / `games_changed` (9d-2b), `failed_count` is every family still to reach** — rows `failed`, `pending` or `sending` — set to the whole count before the first email and recounted after each send, so it is exactly what "Send to the N it missed" can send (`skipped` is neither reached nor missed). For `teams_published` it counts `failed` rows only; for `practices_changed`, every row not `sent`.
 
 <!-- dict:col:league_season_notices.created_by -->
 <!-- dict:col:league_season_notices.created_at -->

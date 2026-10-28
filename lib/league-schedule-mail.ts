@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { chunked, fetchAll, fetchAllIn } from './supabase-paging';
 import { getOrgPlaceNames, getSeasonGamesEveryStatus } from './db';
 import { sendFamilyServiceBatch, type FamilyServiceMessage } from './family-email';
+import { isSendableGuardianEmail, normalizeGuardianEmail } from './guardian-email';
 import { leagueScheduleNoticeHtml } from './email';
 import { systemMailFace, type ClubEmailOrg } from './club-email-context';
 import { seasonEmailReason, SEASON_EMAIL_WORDS as SW } from './families-words';
@@ -41,8 +42,15 @@ import type { EmailWords } from './club-schedule-words';
 export interface ScheduleMailOrg extends ClubEmailOrg { slug: string }
 export interface ScheduleMailSeason { id: string; name: string; slug: string }
 
-/** A notice's families after a send: how many it was going to, how many it reached, how many didn't send. */
-export interface ScheduleSendOutcome { families: number; reached: number; failed: number }
+/**
+ * A notice's families after a send: how many it was going to, how many it reached, how many didn't send. `claimed` is how
+ * many rows THIS call took (0 when another send holds them); `silent` is true when this call found nobody with anything
+ * to hear (a change that nets to nothing in words) — the window says so instead of "Sent to N families".
+ */
+export interface ScheduleSendOutcome { families: number; reached: number; failed: number; claimed?: number; silent?: boolean }
+
+/** Dev (and any build with no email key) answers "skipped"; in production that answer is a failure, not a quiet outcome. */
+const quietTransport = () => process.env.NODE_ENV !== 'production';
 
 type NoticeKind = 'schedule_published' | 'games_changed';
 interface NoticeRow { id: string; kind: NoticeKind; division_id: string | null; season_id: string; family_count: number }
@@ -135,7 +143,7 @@ function partsOf(regIds: readonly string[], regs: ReadonlyMap<string, RegRow>, n
     if (!r || r.status !== 'active' || !r.team_id) continue;
     const lines = linesByTeam.get(r.team_id);
     if (!lines?.length) continue;
-    parts.push({ child: r.player_first_name.trim() || `${r.player_first_name} ${r.player_last_name}`.trim(), team: names.get(r.team_id) ?? '', lines });
+    parts.push({ child: r.player_first_name.trim() || `${r.player_first_name} ${r.player_last_name}`.trim(), team: names.get(r.team_id) ?? '', teamId: r.team_id, lines });
   }
   return parts;
 }
@@ -161,16 +169,19 @@ async function recordOutcome(ids: readonly string[], status: 'sent' | 'failed' |
  * failed, or never tried (a send that stopped before it) — so it is exactly what "Send to the N it missed" can send; a
  * family with nothing left to say (`skipped`) is neither. Never throws: the emails have gone.
  */
-async function refreshCounts(notice: Pick<NoticeRow, 'id' | 'family_count'>): Promise<ScheduleSendOutcome> {
+async function refreshCounts(notice: Pick<NoticeRow, 'id' | 'family_count'>, write = true): Promise<ScheduleSendOutcome> {
   const fallback = { families: notice.family_count, reached: 0, failed: 0 };
   try {
     const rows = await fetchAll<{ id: string; status: string }>((a, b) => supabaseAdmin.from('league_schedule_emails')
       .select('id, status').eq('notice_id', notice.id).order('id').range(a, b));
     const reached = rows.filter(r => r.status === 'sent').length;
     const failed = rows.filter(r => r.status === 'failed' || r.status === 'pending' || r.status === 'sending').length;
-    const { error } = await supabaseAdmin.from('league_season_notices')
-      .update({ reached_count: reached, failed_count: failed }).eq('id', notice.id);
-    if (error) throw error;
+    // A call that took no rows only READS: another send holds them, and a stale write here could land after its last one.
+    if (write) {
+      const { error } = await supabaseAdmin.from('league_season_notices')
+        .update({ reached_count: reached, failed_count: failed }).eq('id', notice.id);
+      if (error) throw error;
+    }
     return { families: notice.family_count, reached, failed };
   } catch (err) {
     console.error('[league-schedule-mail] a notice\'s counts were not updated (the emails went):', err instanceof Error ? err.message : String(err));
@@ -210,10 +221,16 @@ export async function sendScheduleNotice(p: {
   } catch (err) {
     console.error('[league-schedule-mail] a notice\'s emails didn\'t start (its families wait to be sent):', err instanceof Error ? err.message : String(err));
     // Recounted, so the families never tried read as "didn't send" and the history offers them again.
-    const { data } = await supabaseAdmin.from('league_season_notices').select('family_count').eq('id', p.noticeId).maybeSingle();
-    return refreshCounts({ id: p.noticeId, family_count: (data?.family_count as number | undefined) ?? 0 });
+    let familyCount = 0;
+    try {
+      const { data } = await supabaseAdmin.from('league_season_notices').select('family_count').eq('id', p.noticeId).maybeSingle();
+      familyCount = (data?.family_count as number | undefined) ?? 0;
+    } catch { /* the recount below still runs, with the figure it has */ }
+    return refreshCounts({ id: p.noticeId, family_count: familyCount });
   }
 }
+
+const UNSENT = ['pending', 'failed', 'sending'];
 
 async function sendNotice(p: {
   org: ScheduleMailOrg; season: ScheduleMailSeason; noticeId: string; copyCoachesFor?: string;
@@ -224,26 +241,40 @@ async function sendNotice(p: {
   if (!n || (n.kind !== 'schedule_published' && n.kind !== 'games_changed')) throw new Error('Not a schedule notice');
   const notice = n as NoticeRow;
 
-  const { data: unsent, error: uErr } = await supabaseAdmin.from('league_schedule_emails').select('id')
-    .eq('notice_id', notice.id).in('status', ['pending', 'failed', 'sending']);
-  if (uErr) throw new Error(`Couldn't read the emails: ${uErr.message}`);
+  const unsent = await fetchAll<{ id: string; status: string }>((a, b) => supabaseAdmin.from('league_schedule_emails')
+    .select('id, status').eq('notice_id', notice.id).in('status', UNSENT).order('id').range(a, b));
+  if (!notice.division_id) {
+    // The division was deleted since: there are no teams to write about, and resending can never help.
+    if (unsent.length) {
+      const { error } = await supabaseAdmin.from('league_schedule_emails').update({ status: 'skipped', updated_at: new Date().toISOString() })
+        .eq('notice_id', notice.id).in('status', UNSENT);
+      if (error) throw new Error(`Couldn't close the emails: ${error.message}`);
+    }
+    return refreshCounts(notice);
+  }
+  // ⚖ Counted BEFORE the first email, so a send that dies partway (a timeout, a restart) still reads "stopped" with its
+  // "Send to the N it missed", never "done" with 0 of 0 (/review 2026-10-28). Only when something is free to send: a call
+  // that finds every row held by another send writes nothing.
+  if (unsent.some(r => r.status !== 'sending')) await refreshCounts(notice);
+
   const { data: claimed, error: claimError } = await supabaseAdmin.rpc('league_schedule_emails_claim', {
-    p_org: p.org.id, p_ids: (unsent ?? []).map(r => r.id as string),
+    p_org: p.org.id, p_ids: unsent.map(r => r.id),
   });
   if (claimError) throw new Error(`Couldn't claim the emails: ${claimError.message}`);
   const ids = ((claimed ?? []) as unknown[]).map(v => (typeof v === 'string' ? v : (v as Record<string, string>).league_schedule_emails_claim));
-  if (ids.length === 0) return refreshCounts(notice);
+  if (ids.length === 0) return { ...(await refreshCounts(notice, false)), claimed: 0 };
 
+  let silent = false;
   try {
-    await sendClaimed(p, notice, ids);
+    silent = (await sendClaimed(p, notice, ids)).silent;
   } catch (err) {
     console.error('[league-schedule-mail] a send failed after its claim (its rows are marked failed):', err instanceof Error ? err.message : String(err));
     await recordOutcome(ids, 'failed');
   }
-  return refreshCounts(notice);
+  return { ...(await refreshCounts(notice)), claimed: ids.length, silent };
 }
 
-async function sendClaimed(p: { org: ScheduleMailOrg; season: ScheduleMailSeason; copyCoachesFor?: string }, notice: NoticeRow, ids: readonly string[]) {
+async function sendClaimed(p: { org: ScheduleMailOrg; season: ScheduleMailSeason; copyCoachesFor?: string }, notice: NoticeRow, ids: readonly string[]): Promise<{ silent: boolean }> {
   const rows = await fetchAllIn<EmailRow>([...ids], (c, a, b) => supabaseAdmin.from('league_schedule_emails')
     .select('id, guardian_email, registration_ids').in('id', c).order('id').range(a, b));
   const [regs, facts, face] = await Promise.all([
@@ -253,52 +284,66 @@ async function sendClaimed(p: { org: ScheduleMailOrg; season: ScheduleMailSeason
   ]);
 
   const messages: FamilyServiceMessage[] = [];
-  const messageRows: { id: string; teams: string[] }[] = [];
+  const messageRows: { id: string; email: string; teams: string[] }[] = [];
   const nothingToSay: string[] = [];
   for (const row of rows) {
     const parts = partsOf(row.registration_ids, regs, facts.names, facts.linesByTeam);
-    if (!parts.length) { nothingToSay.push(row.id); continue; }
+    // Nothing left to say (the children left the teams), or an address no mail can reach: resending can't change either.
+    if (!parts.length || !isSendableGuardianEmail(normalizeGuardianEmail(row.guardian_email))) { nothingToSay.push(row.id); continue; }
     const first = regs.get(row.registration_ids[0])?.guardian_first_name ?? null;
     const w = wordsFor(p.org, p.season, notice.kind, first, parts);
     messages.push({
       to: row.guardian_email, subject: w.subject,
       html: leagueScheduleNoticeHtml({ greeting: w.greeting, lists: w.lists, link: w.link, outro: w.outro, foot: w.foot ?? null, reason: seasonEmailReason(p.season.name), face }),
     });
-    messageRows.push({ id: row.id, teams: [...new Set(row.registration_ids.map(id => regs.get(id)?.team_id).filter((t): t is string => !!t))] });
+    // The teams this family's email carries lines for (the parts', not wherever its children are now).
+    messageRows.push({ id: row.id, email: normalizeGuardianEmail(row.guardian_email) ?? row.guardian_email, teams: [...new Set(parts.map(x => x.teamId).filter((t): t is string => !!t))] });
   }
+  if (nothingToSay.length) await recordOutcome(nothingToSay, 'skipped');
 
-  const results = messages.length === 0 ? [] : await sendFamilyServiceBatch({
-    kind: notice.kind === 'schedule_published' ? 'house_league_schedule_published' : 'house_league_games_changed',
-    messages, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
-  });
-  const byStatus = new Map<'sent' | 'failed' | 'skipped', string[]>([['sent', []], ['failed', []], ['skipped', [...nothingToSay]]]);
+  // Each batch's rows are written as it comes back, so a request that dies mid-send keeps what already went (a row left
+  // `sending` is taken over after ten minutes, and a delivered one must not be mailed again).
   const reachedByTeam = new Map<string, number>();
-  results.forEach((r, i) => {
-    const status = r.status === 'sent' ? 'sent' : r.status === 'skipped' ? 'skipped' : 'failed';
-    byStatus.get(status)!.push(messageRows[i].id);
-    if (status === 'sent') for (const t of messageRows[i].teams) reachedByTeam.set(t, (reachedByTeam.get(t) ?? 0) + 1);
-  });
-  for (const [status, list] of byStatus) if (list.length) await recordOutcome(list, status);
+  const reachedEmails = new Map<string, Set<string>>();
+  if (messages.length) {
+    await sendFamilyServiceBatch({
+      kind: notice.kind === 'schedule_published' ? 'house_league_schedule_published' : 'house_league_games_changed',
+      messages, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
+      onBatch: async (indexes, result) => {
+        const status = result.status === 'sent' ? 'sent' : result.status === 'skipped' && quietTransport() ? 'skipped' : 'failed';
+        await recordOutcome(indexes.map(i => messageRows[i].id), status);
+        if (status !== 'sent') return;
+        for (const i of indexes) for (const t of messageRows[i].teams) {
+          reachedByTeam.set(t, (reachedByTeam.get(t) ?? 0) + 1);
+          (reachedEmails.get(t) ?? reachedEmails.set(t, new Set()).get(t)!).add(messageRows[i].email);
+        }
+      },
+    });
+    // Anything the batches never answered for is a failure, once (recordOutcome only touches rows still `sending`).
+    await recordOutcome(messageRows.map(m => m.id), 'failed');
+  }
 
   if (notice.kind === 'games_changed' && p.copyCoachesFor) {
-    await copyCoaches(p.org, p.season, p.copyCoachesFor, facts, new Set(rows.map(r => r.guardian_email)), reachedByTeam, face?.sendOpts.replyTo ?? null);
+    await copyCoaches(p.org, p.season, p.copyCoachesFor, facts, reachedEmails, reachedByTeam, face?.sendOpts.replyTo ?? null);
   }
+  return { silent: rows.length > 0 && messages.length === 0 };
 }
 
 /**
  * The coaches' copy (9d2·2: "copy their coaches"): each changed team's coaches get that team's changes, once per team,
- * never the sender, never a coach who is also a parent this send reached (they had the family email). Colleague mail
+ * never the sender, never a coach who is also a parent THIS send reached with that team's lines (they had the family
+ * email — a coach-parent on another team, or whose family email didn't go, still gets the copy). Colleague mail
  * (lib/families-email-coaches.ts), the 9d-1 coach copy's words. Never throws: the families' emails have gone.
  */
 async function copyCoaches(org: ScheduleMailOrg, season: ScheduleMailSeason, actorId: string,
   facts: { names: ReadonlyMap<string, string>; linesByTeam: ReadonlyMap<string, string[]> },
-  familyAddresses: ReadonlySet<string>, reachedByTeam: ReadonlyMap<string, number>, replyTo: string | null) {
+  reachedEmails: ReadonlyMap<string, ReadonlySet<string>>, reachedByTeam: ReadonlyMap<string, number>, replyTo: string | null) {
   try {
     const sender = (await memberDisplayName(org.id, actorId)) ?? org.name;
     for (const [teamId, lines] of facts.linesByTeam) {
       const team = facts.names.get(teamId);
       if (!team || !lines.length) continue;
-      const coaches = await leagueCoachesToCopy(org.id, season.id, [teamId], actorId, familyAddresses);
+      const coaches = await leagueCoachesToCopy(org.id, season.id, [teamId], actorId, reachedEmails.get(teamId) ?? new Set());
       if (!coaches.length) continue;
       await sendCoachCopies(coaches, c => coachCopyWords({
         orgName: org.name, audience: team, families: reachedByTeam.get(teamId) ?? 0,
@@ -323,14 +368,6 @@ export async function sendChangesAndTell(p: {
   if (!r.notice) return { ...r, reached: 0, failed: 0 };
   const sent = await sendScheduleNotice({ org: p.org, season: p.season, noticeId: r.notice, copyCoachesFor: p.actorId });
   return { ...r, ...sent };
-}
-
-/** How many of a notice's families are still to reach (the history's "Send to the N it missed"). */
-export async function noticeMissed(noticeId: string): Promise<number> {
-  const { count, error } = await supabaseAdmin.from('league_schedule_emails').select('id', { count: 'exact', head: true })
-    .eq('notice_id', noticeId).in('status', ['pending', 'failed', 'sending']);
-  if (error) throw error;
-  return count ?? 0;
 }
 
 // ── "See the email" (e2) and "See their email" (f2) ─────────────────────────────────────────────────────────────

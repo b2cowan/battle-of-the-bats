@@ -43,8 +43,9 @@ import { eyebrowRepeatsBand, familySenderName, type ClubEmailFacts } from './ema
  *    no org to key against. Closing it needs its own per-team opt-out record — an owner
  *    decision, not a re-route. Until then a paid coach's announcement honours an unsubscribe
  *    and the free-tier one does not, which is the inconsistency to weigh.
- *  - **House-league service notices (Club Tier 9c, owner 2026-10-25, ruling 9c·4): the placement email and the
- *    moved-team email.** Deliberate, and INSIDE this module rather than beside it: they go through
+ *  - **House-league service notices (Club Tier 9c, owner 2026-10-25, ruling 9c·4): the placement email, the
+ *    moved-team email, the practice-change email (11b, `lib/club-schedule-league-mail.ts`) and, since House League 9d-2b
+ *    Part 4, the two schedule emails — Schedule published and Games changed (`lib/league-schedule-mail.ts`).** Deliberate, and INSIDE this module rather than beside it: they go through
  *    `sendFamilyServiceBatch` below — the batched sender's service mode. On the dues-reminder ground: news about the
  *    family's own child, so an unsubscribe from club news does not mute it. Same batching, no suppression list, no
  *    unsubscribe link; the club's footnote says why it arrived. Never counted toward a cap (Q12c).
@@ -273,6 +274,9 @@ export async function sendFamilyServiceBatch(params: {
   messages: readonly FamilyServiceMessage[];
   fromName: string | null;
   replyTo?: string | null;
+  /** Called as each batch comes back, with the messages' indexes and the batch's answer — so a caller records its rows'
+   *  outcomes as they land, not only after the last batch (a request that dies mid-send keeps what already went). */
+  onBatch?: (indexes: number[], result: SendEmailResult) => Promise<void>;
 }): Promise<SendEmailResult[]> {
   const results: SendEmailResult[] = params.messages.map(() => ({ status: 'provider_error' }));
   const going: { index: number; to: string; subject: string; html: string }[] = [];
@@ -291,6 +295,10 @@ export async function sendFamilyServiceBatch(params: {
       result = { status: 'provider_error' };
     }
     for (const m of chunk) results[m.index] = result;
+    if (params.onBatch) {
+      try { await params.onBatch(chunk.map(m => m.index), result); }
+      catch (err) { console.error('[family-email] a batch\'s outcome was not recorded:', err instanceof Error ? err.message : String(err)); }
+    }
   }
   return results;
 }

@@ -64,7 +64,7 @@ export function emailChangeLine(net: NetChange, title: string, placeOf: PlaceTex
 }
 
 /** One child's part: "{Club} changed Ava’s games with Twins:" and its games' lines. */
-export interface SchedulePart { child: string; team: string; lines: string[] }
+export interface SchedulePart { child: string; team: string; teamId?: string; lines: string[] }
 
 /** A family's email words (the house mail's `EmailWords`, which the preview draws too). */
 export function scheduleEmailWords(p: {

@@ -3,6 +3,7 @@ import { LIVE_SEASON_STATUSES, liveSeasonOf, publicTryoutSeasonOf } from './seas
 import { countsOnRoster, rosterCountOf, seasonRecordOf } from './team-season-figures';
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
+import { fetchAll } from './supabase-paging';
 import { copySetupRows, takeBackSetupRows, PopulateFailed, type SetupAreas, type SetupCopied, type SetupLedger } from './tournament-setup-copy';
 import type { MeasurableTypeCreateFields } from './development-input';
 import { accountedCellKeys, scopeCompleteness } from './development-session-view';
@@ -2710,13 +2711,15 @@ export async function getGamesForDivision(divisionId: string): Promise<LeagueGam
  * ⚠ A failed read THROWS: an empty list would tell families the season has no games.
  */
 export async function getSeasonGamesEveryStatus(seasonId: string): Promise<LeagueGame[]> {
-  const { data, error } = await supabaseAdmin
+  // Paged: one read stops at the service's 1,000-row cap without an error, and a long season's LAST games would vanish.
+  const rows = await fetchAll<Record<string, unknown>>((from, to) => supabaseAdmin
     .from('league_games')
     .select('*')
     .eq('season_id', seasonId)
-    .order('scheduled_at', { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map(mapLeagueGame);
+    .order('scheduled_at', { ascending: true })
+    .order('id', { ascending: true })
+    .range(from, to));
+  return rows.map(mapLeagueGame);
 }
 
 /**

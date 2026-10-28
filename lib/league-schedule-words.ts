@@ -22,6 +22,8 @@ export const SCHEDULE_PUBLISH_WORDS = {
   notSent: (n: number) => ` · ${pluralize(n, 'change')} not sent`,
   partial: (reached: number, n: number, missed: number) => `reached ${reached} of ${families(n)} · ${missed} didn’t send.`,
   seeThem: 'See them',
+  /** A build word: the link's name for a screen reader. */
+  seeThemAria: 'See the families it missed',
   seeEmail: 'See the email',
   /** A build word: the sample didn't read. */
   sampleFailed: 'The email didn’t load. Go back and try again.',
@@ -42,6 +44,8 @@ export const SCHEDULE_PUBLISH_WORDS = {
   noGames: (division: string) => `${division} has no games to publish yet.`,
   finished: 'This season is finished. Reopen it to change it.',
   failed: 'That didn’t publish. Try again.',
+  /** A build word (9d-2b review): the answer never came (a timeout, a dropped connection) — it may have gone. */
+  unsure: 'We couldn’t confirm that it published. Reload this page to check before you try again.',
 } as const;
 
 /** f1 · f2 · f5: a published game's edit, and Changes to send. */
@@ -103,6 +107,8 @@ export const CHANGES_TO_SEND_WORDS = {
   teamHasPublishedGames: (team: string) =>
     `${team} has games on the published schedule, so it can’t be deleted. Families have been told about them.`,
   failed: 'That didn’t send. Try again.',
+  /** A build word (9d-2b review): the answer never came (a timeout, a dropped connection) — it may have gone. */
+  unsure: 'We couldn’t confirm that it sent. Reload this page to check before you try again.',
 } as const;
 
 /** The list's word for a held kind ("Postponed" and "Back on" are build words in the settled pattern). */
@@ -145,10 +151,10 @@ export const SCHEDULE_EMAIL_WORDS = {
   changedPart: (club: string, child: string, team: string) => `${club} changed ${possessive(child)} games with ${team}:`,
   /** "Orioles vs Twins / Now: Thu, Jun 24, 7:30 p.m. · Diamond 1 / Was: 6:00 p.m." — Was names only what changed. */
   moved: (game: string, now: string, was: string) => `${game}\nNow: ${now}\nWas: ${was}`,
-  cancelled: (game: string, when: string) => `${endSentence(`Cancelled: ${game}, ${when}`)} The club will tell you if it is replayed.`,
+  cancelled: (game: string, when: string) => `${endSentence(`Cancelled: ${game}${when ? `, ${when}` : ''}`)} The club will tell you if it is replayed.`,
   postponed: (game: string, day: string) => `${endSentence(`Postponed: ${game}${day ? `, ${day}` : ''}`)} A new date is to come.`,
-  added: (game: string, when: string) => endSentence(`Added: ${game}, ${when}`),
-  backOn: (game: string, when: string) => endSentence(`Back on: ${game}, ${when}`),
+  added: (game: string, when: string) => endSentence(`Added: ${game}${when ? `, ${when}` : ''}`),
+  backOn: (game: string, when: string) => endSentence(`Back on: ${game}${when ? `, ${when}` : ''}`),
   seeSchedule: 'See the full schedule →',
 } as const;
 

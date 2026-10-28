@@ -123,5 +123,5 @@ export const POST = withObservability(async (req: Request,
       return NextResponse.json({ error: W.already(by, at), code: 'already' }, { status: 409 });
     }
   }
-  return NextResponse.json({ ok: true, families: r.families, reached: r.reached, failed: r.failed, news: r.news, sentAt: r.sentAt });
+  return NextResponse.json({ ok: true, families: r.families, reached: r.reached, failed: r.failed, silent: r.silent === true, news: r.news, sentAt: r.sentAt });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/changes' });

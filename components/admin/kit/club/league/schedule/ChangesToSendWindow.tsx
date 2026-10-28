@@ -96,12 +96,12 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ divisionId: division.id, changeIds: tray.changeIds }),
     }).catch(() => null);
-    const data = (r ? await r.json().catch(() => null) : null) as { families?: number; reached?: number; failed?: number; news?: number; error?: string } | null;
+    const data = (r ? await r.json().catch(() => null) : null) as { families?: number; reached?: number; failed?: number; silent?: boolean; news?: number; error?: string } | null;
     setBusy(false);
-    if (!r?.ok || !data) { setError(data?.error ?? W.failed); return; }
+    if (!r?.ok || !data) { setError(!r || (r.status >= 500 && !data) ? W.unsure : data?.error ?? W.failed); return; }
     const n = data.families ?? 0, failed = data.failed ?? 0;
     // "Reached 64 of 66 families · 2 didn't send." — the season's Email families history offers the rest again.
-    onSent(!data.news ? W.netNothing : failed > 0 ? reachedLine(data.reached ?? 0, n, failed) : W.sent(n));
+    onSent(!data.news || data.silent ? W.netNothing : failed > 0 ? reachedLine(data.reached ?? 0, n, failed) : W.sent(n));
   }
 
   async function undo(gameId: string) {
@@ -159,7 +159,7 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
           })}
         </ul>
       )}
-      {household && (
+      {household && !busy && (
         <>
           <p className={ck.hint}>{W.oneHousehold(household.family, household.parts.map(p => ({ child: p.child, team: teamName(p.teamId) })))}</p>
           <SendDoor onOpen={() => { lv.open('email'); void email.load(); }}>{W.seeTheirEmail}</SendDoor>
