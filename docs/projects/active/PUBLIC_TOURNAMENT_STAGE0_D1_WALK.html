@@ -1,0 +1,193 @@
+<title>Unpublished Schedule Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column checklist, a sign-in card on top, two parts (family, organizer), paste-back at the foot. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --ink: #1d2420; --muted: #5a6560; --line: #d9ded8;
+  --accent: #2f6b4f; --accent-soft: #e3efe8; --warn: #8a5a00; --warn-soft: #fbf0d9; --bad: #9b2c2c; --bad-soft: #f8e2e2;
+  --display: "Fraunces", Georgia, serif; --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151a17; --surface: #1e2521; --ink: #e6ebe7; --muted: #9aa69f; --line: #34403a;
+  --accent: #7cc3a0; --accent-soft: #233a2f; --warn: #e8b45a; --warn-soft: #3a2f1a; --bad: #f08a8a; --bad-soft: #3d2222; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+h1 { font: 600 1.9rem/1.15 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.25rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+.eyebrow { font: 600 .75rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; max-width: 65ch; }
+.intro { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.card dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.facts { display: grid; gap: 8px; }
+.facts h3 { font: 600 .95rem/1.3 var(--body); margin: 0; }
+.facts ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.part { display: grid; gap: 12px; }
+.part header { display: grid; gap: 4px; }
+.who { display: inline-block; font: 600 .8rem/1 var(--body); padding: 5px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); justify-self: start; }
+.step { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.step input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .txt { display: grid; gap: 4px; min-width: 0; }
+.step .do { font-weight: 600; }
+.step .see { color: var(--ink); }
+.step .see::before { content: "You should see: "; color: var(--muted); font-weight: 600; }
+.step.stop { border-color: var(--warn); background: var(--warn-soft); }
+.step.done { opacity: .72; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: 600 .9rem/1 var(--body); padding: 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 70px; font: inherit; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font: 600 .95rem/1 var(--body); padding: 11px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+#summary { font-family: var(--mono); font-size: .85rem; min-height: 160px; }
+a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <span class="eyebrow">Owner QA · §406 · Public tournament pages Stage 0 · D1</span>
+    <h1>An unpublished schedule stays private everywhere</h1>
+    <p><strong>What this walk is for.</strong> An organizer publishes a schedule one division at a time. Until now a division they had not published still reached families: the tournament home listed its games and results, the live-scores strip showed them, and standings counted them, while the Schedule tab said "coming soon". This walk checks that a division you have not published shows no games on any public page, and that publishing it brings them all back at once.</p>
+    <p><strong>It passes when</strong> every family-facing page shows the U11 games and none of the U13 games, U13 teams sit at 0-0 although their games were played, and publishing U13 makes its games and records appear (Eagles U13 3-0) everywhere you looked.</p>
+  </div>
+
+  <div class="card">
+    <h2>Sign in as</h2>
+    <dl>
+      <dt>Part A</dt><dd>Nobody. Use a <strong>private window</strong>, signed out, so you see what a family sees.</dd>
+      <dt>Part B</dt><dd>Your own account <span class="mono">b2cowan@outlook.com</span> (an admin of Dev Test Org on dev), in a normal window. Keep the private window open beside it.</dd>
+      <dt>Where</dt><dd><span class="mono">http://localhost:3000</span>, dev server running. Tournament: <strong>Live Demo — Game Day</strong> (club Dev Test Org), re-seeded 2026-10-27: U11 is published, U13 is not, and every round-robin game in both is scored.</dd>
+      <dt>Family home</dt><dd><a href="http://localhost:3000/dev-test-org/live-demo" target="_blank" rel="noopener">localhost:3000/dev-test-org/live-demo</a></dd>
+    </dl>
+  </div>
+
+  <div class="card facts">
+    <h3>The teams to look for</h3>
+    <ul>
+      <li><strong>U11 (published):</strong> Halton Hawks U11 Jr (Johnstone), Lions U11, Milton Bats U11 Purple (Jackson), Bears U11. Standings: Halton Hawks 3-0, Lions U11 2-1, Milton Bats 1-2, Bears U11 0-3.</li>
+      <li><strong>U13 (not published):</strong> Eagles U13, Hawks U13, Lions U13, Bears U13 (plus denver bobcats and toronto blue jays5, who have no games). Played results you must <em>not</em> see in Part A: Eagles U13 7, Bears U13 3 · Eagles U13 6, Lions U13 3 · Hawks U13 6, Bears U13 3.</li>
+      <li>Team names are public on purpose (the Teams page lists every accepted team). The walk is about <strong>games, scores and records</strong>.</li>
+    </ul>
+  </div>
+
+  <div class="card facts">
+    <h3>Not in this walk</h3>
+    <ul>
+      <li>The riverdale demo. Its seed now publishes its divisions, and production re-seeds it on the next master build. On dev it still has both divisions unpublished until someone re-seeds it, so its public pages show no games today. That is expected.</li>
+      <li>Phone alerts (score updates, "Champions crowned") held back for an unpublished division. They are covered by the build's guard test; there is no phone on a dev walk.</li>
+      <li>The database still lets a technical caller read every game directly. You ruled that a separate follow-up (2026-10-27).</li>
+      <li>"No score yet", the club chip, "Starts in" and the Branding page (Stage 0 Part 2, a separate walk).</li>
+    </ul>
+  </div>
+
+  <div class="progress"><strong id="count">0 of 0 checked</strong><div class="bar" aria-hidden="true"><span id="fill"></span></div><button class="btn ghost" id="reset" type="button">Clear my ticks</button></div>
+
+  <div id="parts"></div>
+
+  <div class="card">
+    <h2>Send me the results</h2>
+    <p>Build the summary, then paste it back into the chat.</p>
+    <div class="actions"><button class="btn" id="build" type="button">Build summary</button><button class="btn ghost" id="copy" type="button">Copy</button></div>
+    <textarea id="summary" readonly aria-label="Walk summary"></textarea>
+  </div>
+</div>
+
+<script>
+var BASE = "http://localhost:3000/dev-test-org/live-demo";
+var U13_GAME = "52d9ae31-9d74-455b-9a22-44769daa9832";
+var U11_GAME = "54b69f9b-ab17-4fe1-b42b-8802198696a3";
+var EAGLES = "f51eba51-b3fc-446a-91e7-dcfdf4e14e30";
+var DATA = "http://localhost:3000/api/public/tournament-data?orgSlug=dev-test-org&tournamentSlug=live-demo&section=schedule";
+function a(href, label) { return '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>'; }
+
+var PARTS = [
+  { id: "A", title: "Part A · What a family sees", who: "Private window, signed out", steps: [
+    { stop: true, do: "Stop check. Open " + a(BASE + "/schedule", "the Schedule tab") + " and choose U13.", see: "U13 reads \"Division schedule coming soon\" and lists no games. If U13 shows games, stop: the fixture is not in the state this walk needs; tell me." },
+    { do: "Open " + a(BASE, "the tournament home") + ". Read every game and result on it (live now, today, latest results, standings recap).", see: "Only U11 games and U11 teams. No result with an Eagles, Hawks, Lions or Bears U13 team in it." },
+    { do: "Look at the live-scores strip across the top of the page, on the home and on the Schedule tab.", see: "Any game it shows is a U11 game. If it shows nothing, that is fine; tick it and note it." },
+    { do: "Open " + a(BASE + "/standings", "Standings") + ".", see: "U11: Halton Hawks 3-0, Lions U11 2-1, Milton Bats 1-2, Bears U11 0-3. U13: every team at 0-0 (no games played), although their games were played." },
+    { do: "Open " + a(BASE + "/teams", "Teams") + ".", see: "Every U13 team card reads 0-0-0 with no next game. U11 cards show their records (Halton Hawks U11 Jr (Johnstone) 3-0-0)." },
+    { do: "Open " + a(BASE + "/playoffs", "Playoffs") + ".", see: "The U11 bracket: Halton Hawks U11 Jr (Johnstone) against Bears U11, and Lions U11 against Milton Bats U11 Purple (Jackson). No U13 game." },
+    { do: "Open " + a(BASE + "/schedule/" + U13_GAME, "this U13 game's own link") + " (Bears U13 at Eagles U13).", see: "A not-found page. No teams, no score." },
+    { do: "Open " + a(BASE + "/teams/" + EAGLES, "Eagles U13's team page") + ".", see: "No games and a 0-0 record." },
+    { do: "Open " + a(BASE + "/teams/" + EAGLES + "/opengraph-image", "Eagles U13's share image") + " (the picture a shared link shows).", see: "The team and the event, with no record on it." },
+    { do: "Open " + a(DATA, "the schedule data the page loads") + " and use Find (Ctrl+F) for <span class=\"mono\">52d9ae31</span>, then for <span class=\"mono\">54b69f9b</span>.", see: "52d9ae31 (a U13 game) is not found. 54b69f9b (a U11 game) is found. This is the proof the U13 games never reach the browser at all." }
+  ]},
+  { id: "B", title: "Part B · The organizer publishes, then puts it back", who: "Signed in as b2cowan@outlook.com", steps: [
+    { do: "In the admin, choose Live Demo — Game Day and open its public-site preview (" + a("http://localhost:3000/dev-test-org/admin/tournaments/preview/live-demo", "preview home") + ", then its Standings).", see: "The same as Part A: no U13 games, U13 teams at 0-0. The preview shows what families see." },
+    { do: "Open the tournament's Schedule screen. Tools → Publish… In the window choose U13 only, leave \"Email the teams\" unticked, and press Publish U13.", see: "A notice: Published U13." },
+    { do: "In the private window, reload the home, Standings and the U13 game link from Part A.", see: "U13 results now appear on the home, Standings shows Eagles U13 3-0, Hawks U13 2-1, Lions U13 1-2, Bears U13 0-3, and the U13 game link opens the game." },
+    { do: "Put it back: on the Schedule screen, Tools → Unpublish a division… and choose U13.", see: "U13 is unpublished again. Reload the private window's Standings: U13 is back at 0-0. (I will read this back on dev; the next walk needs U13 unpublished.)" }
+  ]}
+];
+
+var KEY = "qa-406-d1-walk-v1";
+var state = { ticks: {}, verdict: {}, notes: {} };
+try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) state = saved; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+var root = document.getElementById("parts");
+var total = 0;
+PARTS.forEach(function (p) {
+  var sec = document.createElement("section"); sec.className = "part";
+  var html = '<header><h2>' + p.title + '</h2><span class="who">' + p.who + '</span></header>';
+  p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1); total++;
+    html += '<label class="step' + (s.stop ? ' stop' : '') + '" id="row-' + id + '"><input type="checkbox" id="cb-' + id + '" data-id="' + id + '"><span class="txt"><span class="do">' + id + ' · ' + s.do + '</span><span class="see">' + s.see + '</span></span></label>';
+  });
+  html += '<div class="verdict" role="group" aria-label="' + p.title + ' verdict">' +
+    '<button type="button" data-p="' + p.id + '" data-v="pass" aria-pressed="false">Pass</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="issue" aria-pressed="false">Issue</button>' +
+    '<button type="button" data-p="' + p.id + '" data-v="call" aria-pressed="false">Needs a call</button></div>' +
+    '<textarea id="notes-' + p.id + '" data-p="' + p.id + '" placeholder="Notes for ' + p.title + ' (what you saw, anything odd)"></textarea>';
+  sec.innerHTML = html; root.appendChild(sec);
+});
+
+function render() {
+  var n = 0;
+  document.querySelectorAll("input[type=checkbox][data-id]").forEach(function (cb) {
+    cb.checked = !!state.ticks[cb.dataset.id]; if (cb.checked) n++;
+    document.getElementById("row-" + cb.dataset.id).classList.toggle("done", cb.checked);
+  });
+  document.querySelectorAll(".verdict button").forEach(function (b) { b.setAttribute("aria-pressed", String(state.verdict[b.dataset.p] === b.dataset.v)); });
+  document.querySelectorAll("textarea[data-p]").forEach(function (t) { t.value = state.notes[t.dataset.p] || ""; });
+  document.getElementById("count").textContent = n + " of " + total + " checked";
+  document.getElementById("fill").style.width = (total ? (100 * n / total) : 0) + "%";
+}
+root.addEventListener("change", function (e) { if (e.target.dataset.id) { state.ticks[e.target.dataset.id] = e.target.checked; save(); render(); } });
+root.addEventListener("click", function (e) { var b = e.target.closest(".verdict button"); if (!b) return; state.verdict[b.dataset.p] = state.verdict[b.dataset.p] === b.dataset.v ? null : b.dataset.v; save(); render(); });
+root.addEventListener("input", function (e) { if (e.target.dataset.p && e.target.tagName === "TEXTAREA") { state.notes[e.target.dataset.p] = e.target.value; save(); } });
+document.getElementById("reset").addEventListener("click", function () { state = { ticks: {}, verdict: {}, notes: {} }; save(); render(); });
+var WORD = { pass: "PASS", issue: "ISSUE", call: "NEEDS A CALL" };
+document.getElementById("build").addEventListener("click", function () {
+  var lines = ["§406 · Stage 0 D1 · An unpublished schedule stays private everywhere"], all = 0;
+  PARTS.forEach(function (p) {
+    var done = p.steps.filter(function (s, i) { return state.ticks[p.id + (i + 1)]; }).length; all += done;
+    var missing = p.steps.map(function (s, i) { return p.id + (i + 1); }).filter(function (id) { return !state.ticks[id]; });
+    lines.push(p.title + " [" + (WORD[state.verdict[p.id]] || "no verdict") + "] " + done + "/" + p.steps.length + (missing.length ? " · unticked: " + missing.join(", ") : ""));
+    if (state.notes[p.id]) lines.push("  Notes: " + state.notes[p.id].replace(/\n+/g, " / "));
+  });
+  lines.splice(1, 0, "Checked " + all + " of " + total);
+  document.getElementById("summary").value = lines.join("\n");
+});
+document.getElementById("copy").addEventListener("click", function () {
+  var t = document.getElementById("summary");
+  if (!t.value) document.getElementById("build").click();
+  try { navigator.clipboard.writeText(t.value).catch(function () { t.select(); }); } catch (e) { t.select(); }
+});
+render();
+</script>

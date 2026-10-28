@@ -26919,3 +26919,16 @@ republished; tick positions unchanged).
 
 **Proven by the builder:** `tests/unit/online-payments-leaving.test.ts` (every ending against an open page, a clearing debit, an open dispute and a pending refund), `online-payments-console.test.ts` (console access by role, read only). Not run: `check:layout` (every UAT screen lands on "Page not found" because of the 404 page's eyebrow; not re-seeded).
 <!-- /§405 -->
+
+## §406 · Public tournament pages · Stage 0 · D1, the publish gate — **a division the organizer has not published shows no games, scores or records on any public page: the tournament home, the live-scores strip, Schedule, Standings (its teams sit at 0-0), Teams (0-0-0, no next game), Playoffs, a game's own link (not found), a team's page and its share image, and the data the pages load; publishing it brings every one back at once, and the admin preview shows what families see**
+<!-- §406 -->
+**Built and committed 2026-10-27:** `7e5a6eff0` (the rule in `lib/public-games.ts`, applied on the server in every public read; the guard test `tests/unit/public-games-guard.test.ts`; the demo seed publishes its two events with games) · `bf95ebacd` (the Publish window asks for the champions moment too). /review run on the diff (three lenses); its seven confirmed gaps are fixed in the same two commits. Plan: [PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md](PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md) §9, Stage 0.
+
+**The walk (checkable):** https://claude.ai/artifact/9QZ2uVkP4ByX2hYsaB5JMU (source [PUBLIC_TOURNAMENT_STAGE0_D1_WALK.html](PUBLIC_TOURNAMENT_STAGE0_D1_WALK.html)). One purpose, 14 steps in two parts: A what a family sees, signed out (10, a stop check first); B the organizer publishes U13 and puts it back (4). Fixture: dev-test-org / Live Demo — Game Day, re-seeded 2026-10-27 by `scripts/seed-live-tournament.mjs` (U11 published, U13 not, every round-robin game scored). Step B4 writes: read U13's `schedule_visibility` back on dev before recording a pass.
+
+**Rule chosen (for the record):** an unpublished division's games count as ABSENT for standings and records (its teams rank 0-0-0, as the team page always showed). An event still holding a division back is not "finished", crowned, or "Completed" on a follow card on the strength of the divisions it shows; "Champions crowned" waits, unclaimed, until every game is public, and a publish asks again. A score push for an unpublished division reaches no one, with no catch-up on publish.
+
+**Proven by the builder:** the guard test (124 checks); a probe of every public page and the data feeds on live-demo (the 6 U13 games absent from every page source and feed, all 9 U11 games present on the home; a U13 game's link is a 404; U13 standings 0-0 with its games scored on dev). Production impact read-only 2026-10-27: 3 active tournaments, only the riverdale demo had unpublished games; no customer event.
+
+**Not in this walk:** the riverdale demo on dev (unpublished until re-seeded; production re-seeds at the next master build); phone alerts; the database permission that still lets the public key read every game (owner 2026-10-27: a separate follow-up); Stage 0 Part 2 (D2–D7).
+<!-- /§406 -->
