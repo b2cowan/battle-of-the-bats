@@ -371,3 +371,26 @@
     display: none;
   }
 }
+
+/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): a white
+   card with a hairline instead of a wash of the organizer's colour (plan §4); nothing under 12 px (Ask 2). */
+:global([data-public-frame='light']) .strip,
+:global([data-public-frame='light']) .railCard {
+  border-color: var(--border);
+  background: var(--surface);
+}
+:global([data-public-frame='light']) .railHeader { border-bottom-color: var(--border); }
+:global([data-public-frame='light']) .stripAvatar,
+:global([data-public-frame='light']) .meta,
+:global([data-public-frame='light']) .opp,
+:global([data-public-frame='light']) .live,
+:global([data-public-frame='light']) .nextUp,
+:global([data-public-frame='light']) .nextDate,
+:global([data-public-frame='light']) .railAvatar,
+:global([data-public-frame='light']) .railMeta,
+:global([data-public-frame='light']) .railLive,
+:global([data-public-frame='light']) .railNextUp,
+:global([data-public-frame='light']) .railNextDate,
+:global([data-public-frame='light']) .railOpp {
+  font-size: 0.75rem;
+}

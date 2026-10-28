@@ -1671,6 +1671,48 @@
 [data-public-frame='light'] .hero { display: none; }
 [data-public-frame='light'] .preEventPanel { display: block; }
 
+/* The readable baseline (Stage 1 Part 3): the same cards in the same order, on the club's light ground — white cards
+   with a hairline, no washes of the organizer's colour, no shadows or glows (plan §4), nothing under 12 px (Ask 2).
+   Later in the file than today's Light-mode lines, so these win under the frame and nowhere else. */
+[data-public-frame='light'] .dayPanelSection,
+[data-public-frame='light'] .recordSection,
+[data-public-frame='light'] .championSection,
+[data-public-frame='light'] .preLogoCard {
+  background: none;
+}
+[data-public-frame='light'] .myTeamCard,
+[data-public-frame='light'] .championTierTop,
+[data-public-frame='light'] .annFeatured,
+[data-public-frame='light'] .draftPublicNotice,
+[data-public-frame='light'] .registrationStatus,
+[data-public-frame='light'] .previewBanner,
+[data-public-frame='light'] .stats {
+  border-color: var(--border);
+  background: var(--surface);
+  box-shadow: none;
+}
+[data-public-frame='light'] .myTeamGame { background: var(--bg-inset); }
+[data-public-frame='light'] .myTeamCountdown,
+[data-public-frame='light'] .scorePill {
+  border-color: var(--border);
+  background: var(--bg-inset);
+}
+[data-public-frame='light'] .dayCardIcon,
+[data-public-frame='light'] .orgLogo { border-color: var(--border); }
+[data-public-frame='light'] .finalRow:hover { border-color: var(--primary-light); }
+[data-public-frame='light'] .vs { color: var(--primary-light); }
+[data-public-frame='light'] .vs,
+[data-public-frame='light'] .teamName { font-weight: var(--club-title-weight); }
+[data-public-frame='light'] .dayCardKicker,
+[data-public-frame='light'] .preCountdownLabel,
+[data-public-frame='light'] .preCountdownDate,
+[data-public-frame='light'] .preCtaDetail,
+[data-public-frame='light'] .finalMeta,
+[data-public-frame='light'] .myTeamCountdown,
+[data-public-frame='light'] .myTeamRecord span {
+  font-size: 0.75rem;
+}
+
 /* Explore links (every public page reachable from the Overview — J6-006). */
 .exploreRow {
   display: flex;

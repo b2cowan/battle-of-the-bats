@@ -36,3 +36,9 @@
 .label {
   white-space: nowrap;
 }
+
+/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): no shadows
+   on the light ground (plan §4). */
+:global([data-public-frame='light']) .pill {
+  box-shadow: none;
+}

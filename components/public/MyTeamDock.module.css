@@ -303,3 +303,24 @@
   color: var(--fl-text);
   border-color: var(--white-25);
 }
+
+/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts) the dock is
+   a white card (the frame re-points its bar ground) with the club's strong hairline, no wash of the organizer's colour
+   (plan §4), and nothing under 12 px (Ask 2). The initials keep their shadow: a white glyph on the team's colour. */
+:global([data-public-frame='light']) .dockBar,
+:global([data-public-frame='light']) .dockPill,
+:global([data-public-frame='light']) .expandPanel {
+  border-color: var(--club-line-2);
+}
+:global([data-public-frame='light']) .expandLink {
+  border-color: var(--border);
+  background: var(--bg-inset);
+}
+:global([data-public-frame='light']) .dockSub,
+:global([data-public-frame='light']) .dockLive,
+:global([data-public-frame='light']) .dockNextLabel,
+:global([data-public-frame='light']) .expandLabel,
+:global([data-public-frame='light']) .expandLink,
+:global([data-public-frame='light']) .expandUnfollow {
+  font-size: 0.75rem;
+}

@@ -162,3 +162,10 @@
   cursor: pointer;
 }
 .close:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
+/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): no shadows
+   on the light ground (plan §4); a floating panel keeps its edge with the club's strong hairline. */
+:global([data-public-frame='light']) .panel {
+  box-shadow: none;
+  border-color: var(--club-line-2);
+}

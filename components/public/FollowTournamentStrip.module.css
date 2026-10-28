@@ -154,3 +154,21 @@
 
 [data-color-mode="light"] .nudgeText { color: var(--fl-text); }
 [data-color-mode="light"] .share { color: var(--fl-text); }
+
+/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): white
+   controls with a hairline instead of washes of the organizer's colour (plan §4); nothing under 12 px (Ask 2). */
+:global([data-public-frame='light']) .pill,
+:global([data-public-frame='light']) .share {
+  border-color: var(--border-2);
+  background: var(--surface);
+  font-size: 0.75rem;
+}
+:global([data-public-frame='light']) .pill:hover,
+:global([data-public-frame='light']) .share:hover {
+  border-color: var(--primary-light);
+  background: var(--bg-inset);
+}
+:global([data-public-frame='light']) .nudge {
+  border-color: var(--border);
+  background: var(--surface);
+}

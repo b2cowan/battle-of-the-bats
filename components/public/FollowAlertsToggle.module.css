@@ -55,3 +55,15 @@
     min-height: var(--tap-min, 44px);
   }
 }
+
+/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): the pill
+   matches its row's My Games link — white with a hairline, no wash of the organizer's colour (plan §4), 12 px (Ask 2). */
+:global([data-public-frame='light']) .pill {
+  border-color: var(--border-2);
+  background: var(--surface);
+  font-size: 0.75rem;
+}
+:global([data-public-frame='light']) .pill:hover {
+  border-color: var(--primary-light);
+  background: var(--bg-inset);
+}

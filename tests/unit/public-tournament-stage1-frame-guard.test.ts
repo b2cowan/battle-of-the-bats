@@ -269,3 +269,63 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
     assert.match(band, /\{!preview && \(\s*<span className=\{styles\.bandDoor\}>/);
   });
 });
+
+/**
+ * PART 3 (2026-10-28): the readable baseline, A — the Overview, Schedule, a game's page, the My Team surfaces, Register
+ * and the pay page keep today's layout and read on the light ground. Every look is keyed to the marker, so with the
+ * switch off each page is today's.
+ */
+describe('Part 3: the readable baseline, A', () => {
+  const css = readCode(FRAME_CSS);
+  const KEYED = /^(:global\(\[data-public-frame='light'\]\)|\[data-public-frame='light'\]) \./;
+  const PART3_SHEETS = [
+    'app/[orgSlug]/Home.module.css',
+    'app/[orgSlug]/schedule/schedule.module.css',
+    'app/[orgSlug]/register/register.module.css',
+    'components/public/PublicTournamentState.module.css',
+    'components/public/FollowTournamentStrip.module.css',
+    'components/public/FollowAlertsToggle.module.css',
+    'components/public/MyTeamCard.module.css',
+    'components/public/MyTeamDock.module.css',
+    'components/public/DesktopMyTeamRailCard.module.css',
+    'components/public/ShareScoreButton.module.css',
+    'components/public/AlertsNudge.module.css',
+    'components/public/FollowDeepLinkPrompt.module.css',
+    'components/public/FollowTeamPicker.module.css',
+    'components/public/PreviewExitPill.module.css',
+    'components/public/TeamSubscribeButton.module.css',
+    'components/shared/FlipPill.module.css',
+  ];
+
+  it('today\'s Light mode cannot hand the organizer\'s raw colour back to text inside the frame', () => {
+    // globals.css re-declares these on the shell, which sits INSIDE the frame; the frame re-points them one step more
+    // specific. The shell carries `deskShell` only in the frame's branch of both layouts.
+    assert.match(readCode('app/globals.css'), /\[data-card-style\]\[data-color-mode="light"\] \{\s*--primary-light: var\(--primary\);/);
+    assert.match(css, /\.frame \.deskShell\[data-color-mode\] \{[^}]*--primary-light: +var\(--club-ink\);[^}]*--success-strong: +var\(--club-ok\);/);
+    assert.match(readCode(LAYOUT), /className=\{frameOn \? `\$\{railStyles\.shell\} \$\{frameStyles\.deskShell\}` : railStyles\.shell\}/);
+    assert.match(css, /\.frame \.deskShell\[data-color-mode\] :global\(\.btn-outline\) \{[^}]*color: var\(--club-ink\);/);
+  });
+
+  it('the type: sentence case, even-width figures and the title face\'s own weight, under the frame only', () => {
+    assert.match(css, /\.frame \.main \{\s*font-variant-numeric: tabular-nums;/);
+    assert.match(css, /\.frame \.main \* \{\s*text-transform: none;/);
+    assert.match(css, /\.frame \.main :is\(h1, h2, h3, h4\) \{\s*font-weight: var\(--club-title-weight\);/);
+  });
+
+  it('every readable-baseline rule in the pages\' and components\' own stylesheets is keyed to the marker', () => {
+    for (const file of PART3_SHEETS) {
+      const lines = readCode(file).split('\n').filter(l => /data-public-frame/.test(l));
+      assert.ok(lines.length > 0, `${file} carries its frame look`);
+      for (const l of lines) assert.match(l.trim(), KEYED, `${file}: a frame rule not keyed to the marker: ${l.trim()}`);
+    }
+  });
+
+  it('the playoffs\' format badge and final standings moved out of inline styles unchanged, so the frame can reach them', () => {
+    const content = readCode('components/public/ScheduleContent.tsx');
+    assert.doesNotMatch(content, /rgba\(var\(--primary-rgb\)/, 'no inline wash of the organizer\'s colour is left');
+    assert.match(content, /className=\{styles\.placementStandings\}/);
+    const schedule = readCode('app/[orgSlug]/schedule/schedule.module.css');
+    assert.match(schedule, /^\.placementStandings \{[^}]*border: 1px solid rgba\(var\(--primary-rgb\), 0\.25\);/m);
+    assert.match(schedule, /^\.placementStandingsRow \+ \.placementStandingsRow \{\s*border-top: 1px solid var\(--white-10\);/m);
+  });
+});

@@ -750,3 +750,31 @@
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): the same
+   form, read on the light ground (plan §4, Ask 2). The boxes that were a faint white wash on the dark ground (invisible
+   on a white card) take the ground; washes of the organizer's colour and the old lime become hairlines; the progress
+   bar fills in the organizer's ink; nothing under 12 px. The pay page shares these. */
+:global([data-public-frame='light']) .paymentNotice,
+:global([data-public-frame='light']) .reviewAnswers > div,
+:global([data-public-frame='light']) .spotsCard,
+:global([data-public-frame='light']) .whoRow,
+:global([data-public-frame='light']) .teamOptionLocked {
+  background: var(--bg-inset);
+}
+:global([data-public-frame='light']) .reviewStatusWaitlist,
+:global([data-public-frame='light']) .formNotice {
+  border-color: var(--border);
+  background: var(--bg-inset);
+}
+:global([data-public-frame='light']) .progressFill { background: var(--primary-light); }
+:global([data-public-frame='light']) .reviewStatusLabel,
+:global([data-public-frame='light']) .motionBanner,
+:global([data-public-frame='light']) .fieldHint,
+:global([data-public-frame='light']) .portalChip,
+:global([data-public-frame='light']) .stepText {
+  font-size: 0.75rem;
+}
+/* A step's number sits on a fill (the organizer's colour, or green once done): it takes the text made for that fill. */
+:global([data-public-frame='light']) .stepActive .stepNum { color: var(--on-primary); box-shadow: none; }
+:global([data-public-frame='light']) .stepDone .stepNum { color: var(--club-card); }

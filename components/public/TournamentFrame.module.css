@@ -284,3 +284,97 @@ a.footHost:focus-visible {
   outline: 2px solid var(--club-on-fill);
   outline-offset: 2px;
 }
+
+/* ── The readable baseline (Part 3): today's pages, unchanged in layout, read on the light ground ──────────────────────
+   The shell inside the frame also carries today's Light-mode marker, and globals.css re-declares a few names ON that
+   element (light primary, the status and label strengths, the inset ground, the card highlight). It sits inside the
+   frame, so those few would beat the club's token block and hand the organizer's raw colour back to text: a pale
+   organizer's headings and links printed in pale yellow on cream. Re-pointed here, one step more specific; the rest of
+   today's Light-mode fixes still apply. */
+.frame .deskShell[data-color-mode] {
+  --primary-light:   var(--club-ink);
+  --blueprint-light: var(--club-ink);
+  --success-strong:  var(--club-ok);
+  --warning-strong:  var(--warning);
+  --danger-strong:   var(--danger);
+  --gold-strong:     var(--gold);
+  --bg-inset:        var(--club-ground);
+  --highlight-top:   none;
+}
+
+/* The type (Ask 2): sentence case, and scores and times in even-width figures, on every page under the frame. Words
+   written in capitals in the source stay as written; nothing is set in capitals by style. */
+.frame .main {
+  font-variant-numeric: tabular-nums;
+}
+.frame .main * {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* The shared buttons and the neutral badge (globals.css): today's Light mode gives the primary button a coloured drop
+   shadow and the ghost button a dark wash. Under the frame they wear the club's: no shadow, and a white card with a
+   hairline. */
+.frame .deskShell[data-color-mode] :global(.btn-primary),
+.frame .deskShell[data-color-mode] :global(.btn-primary):hover {
+  box-shadow: none;
+}
+.frame .deskShell[data-color-mode] :global(.btn-ghost) {
+  background: var(--club-card);
+  border-color: var(--club-line-2);
+  color: var(--club-text);
+}
+.frame .deskShell[data-color-mode] :global(.btn-ghost):hover:where(:not(:disabled)) {
+  background: var(--club-ground);
+}
+.frame .deskShell[data-color-mode] :global(.badge-neutral) {
+  background: var(--club-ground);
+  border-color: var(--club-line);
+  color: var(--club-soft);
+}
+
+/* The phone's floating bars (the My Team dock and its panel) read the platform's near-black bar ground; under the frame
+   they are a white card like everything else. The app's own bottom bar is mounted outside the frame (its rule is in
+   ConsumerShell.module.css). */
+.frame {
+  --nav-mobile-bg: var(--club-card);
+}
+
+/* Today's Light mode prints the outline button, the primary badge, `.text-primary` and a section's eyebrow in the
+   organizer's RAW colour, which reads only when that colour is dark (a pale organizer's printed pale on white). Under the
+   frame they take the organizer's ink, the colour role made to read on the ground, and the club's edge. */
+.frame .deskShell[data-color-mode] :global(.btn-outline) {
+  background: var(--club-card);
+  color: var(--club-ink);
+  border-color: var(--club-edge);
+}
+.frame .deskShell[data-color-mode] :global(.btn-outline):hover:where(:not(:disabled)) {
+  background: var(--club-ground);
+}
+.frame .deskShell[data-color-mode] :global(.badge-primary),
+.frame .deskShell[data-color-mode] :global(.badge-purple) {
+  background: var(--club-ground);
+  border-color: var(--club-line);
+  color: var(--club-ink);
+}
+.frame .deskShell[data-color-mode] :global(.text-primary),
+.frame .deskShell[data-color-mode] :global(.text-purple),
+.frame .deskShell[data-color-mode] :global(.section-header) :global(.eyebrow),
+.frame .deskShell[data-color-mode] :global(.section-header) :global(.eyebrow) svg {
+  color: var(--club-ink);
+}
+
+/* Titles in the title face at the club's own weight (Ask 2: Barlow Condensed 700). Today's headings ask for 800–950,
+   which on the light ground reads as a smear. */
+.frame .main :is(h1, h2, h3, h4) {
+  font-weight: var(--club-title-weight);
+}
+
+/* The shared page header a desk shows over Schedule, a game and the other inner pages (globals.css): no wash, and its
+   eyebrow at 12 px (Ask 2). Its place on the page is the later stages'. */
+.frame .main :global(.public-page-header) {
+  background: none;
+}
+.frame .main :global(.public-page-header) :global(.eyebrow) {
+  font-size: 0.75rem;
+}

@@ -70,3 +70,9 @@
   background: var(--white-10);
   color: var(--white-85);
 }
+
+/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): no shadows
+   on the light ground (plan §4). */
+:global([data-public-frame='light']) .nudge {
+  box-shadow: none;
+}

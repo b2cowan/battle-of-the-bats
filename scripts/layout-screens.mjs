@@ -1867,6 +1867,19 @@ export const SCREENS = [
     route: 'app/[orgSlug]/[tournamentSlug]/teams' },
   { id: 'pubt-overview-long',     session: 'anon', path: () => '/stage1-hamilton-wentworth/spring-invitational',    ready: '[data-public-frame-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/page' },
+  // Stage 1 Part 3 (the readable baseline): a game's page, Register while it is open, and the finished free event's
+  // Overview. The game is reached the way a family reaches it — the first game on the schedule — because the fixture
+  // script re-creates its games, so no game's id is stable.
+  { id: 'pubt-game-pale',         session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/schedule', ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/schedule/[gameId]',
+    interact: async (page) => {
+      const game = page.locator('a[href*="/fall-classic/schedule/"]:visible').first();
+      if (await game.count()) { await Promise.all([page.waitForURL(/\/schedule\/[0-9a-f-]{36}/), game.click()]); await page.waitForSelector('[data-public-frame-band]'); }
+    } },
+  { id: 'pubt-register-open',     session: 'anon', path: () => '/stage1-hamilton-wentworth/spring-invitational/register', ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/register' },
+  { id: 'pubt-overview-after',    session: 'anon', path: () => '/stage1-northfield/fall-ball',                      ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/page' },
 
   /*
    * ══════════════════════════════════════════════════════════════════════════════════════════

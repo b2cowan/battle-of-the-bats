@@ -176,6 +176,23 @@ Read the hub's "The end state", desk frame only (`Desktop, game day · 1280px`),
 
 ## Part 3 · The readable baseline, A
 
+> **Built 2026-10-28** (commit in plan §9's Stage 1 row). **The one lever the census missed:** the page shell inside the
+> frame also carries today's Light-mode marker, and `globals.css` re-declares light primary, the status and label
+> strengths, the inset ground and the card highlight ON that element, so they beat the club's token block and handed a
+> pale organizer's raw colour back to text (yellow headings, links, chips on cream). The frame re-points those names on
+> the shell, one step more specific; today's other Light-mode fixes still apply. Same for the shared outline button,
+> primary badge, `.text-primary` and section eyebrow (raw colour as text → the organizer's ink). Calls made: sentence
+> case and even-width figures are one frame rule (words written in capitals or Title Case in the source stay as
+> written — "What To Check Now" is Stage 2's to reword); titles take the title face's own weight (700; today's 800–950
+> smeared on light); the live leader reads by ink and weight (700 vs 600), and the Live chip loses its halo, not its
+> blinking dot; the demo's own dock (typewriter face, dark) is left for Stage 8, which switches the demo on; the free
+> plan's dark growth banner and "Powered by" stay as today (Part 1's ruling), including its overlap of "Run your own
+> tournament". Three new measured screens (`pubt-game-pale`, `pubt-register-open`, `pubt-overview-after`): no contrast
+> finding left on any `pubt-*` screen measured; tap floors and the game page's star spill (its deliberate −12 px tap box)
+> are layout, left for their stages. **Not render-checked by Claude**, so Part 4's walk carries them: the pay page (no
+> payment-link fixture), the live broadcast card (no fixture game is live), the follow picker and alerts panel opened,
+> the desk's My Team rail card, and the admin preview.
+
 **Rule for Parts 3–4: no layout change.** Same parts, same order, same controls; only colour, ground, type, borders and
 icon tints change so that everything reads on light. When a page looks wrong on light because of its layout (a card
 inside a card, say), leave it. That is its stage's job, and fixing it here is rework later. **Worklist:** Part 1's
@@ -186,12 +203,12 @@ census, pasted below this line once Part 1 has run.
 token block (`ClubFrame.module.css` `.tokens`), which **already reaches** every `var(--…)`: the typewriter face
 (`--font-data`/`--font-mono` → the text face, ~170 uses), `--glow`/`--glow-sm`/`--shadow` (→ none), lime as text
 (`--logic-lime`/`--lime-strong` → the organizer's ink), and the `--white-NN` scale. What it cannot reach:
-- [ ] `app/[orgSlug]/Home.module.css` :246 `.heroBadge` `rgba(0,0,0,.45)` fill (phone) → ground/card token · :663 `.myTeamGame` `rgba(0,0,0,.16)` → `--bg-inset` · :1263, :1296, :1302 `rgba(255,255,255,…)` in the old light overrides → `--surface` · :1298 a literal shadow → drop · :205 `.heroTitle` glow (light override :1281, check under the frame)
-- [ ] `app/[orgSlug]/schedule/schedule.module.css` :606, :1629 the leading score's text-shadow glow → drop; the "leading team lit" needs a light answer (weight, not glow) · :1481 `livePulseGlow` `rgba(danger,.45)` → drop or tone · :1104, :1731, :2083 segmented-control shadows → drop (no shadows) · :30–32 `highlightFlash` ring (its glow is gone via the token; check the ring) · :562, :1603 avatar text-shadow → keep (white glyph on a team colour)
-- [ ] `app/[orgSlug]/register/register.module.css` :72, :256, :394, :581, :681 `rgba(255,255,255,.02–.03)` fills → `--white-03`/`--white-5` · :554 the lime tint → check
-- [ ] `components/public/ScheduleContent.tsx` :1478–1497 an inline-styled block (`--highlight-top`, `--font-data`) → move to CSS
-- [ ] Overlays (Part 3, they show on every page): `AlertsNudge.module.css`:21, `FollowDeepLinkPrompt.module.css`:21, `FollowTeamPicker.module.css`:55, `PreviewExitPill.module.css`:19, `TeamSubscribeButton.module.css`:89, :113, `components/shared/FlipPill.module.css`:185 — dark popover shadows `rgba(0,0,0,.35–.6)` → hairline, no shadow. A popover **portalled to `<body>`** sits outside the frame's element and reads the old light block on `:root`: check each one renders on the club's tokens
-- [ ] Lime as a FILL (the follow pills and stars: `TeamFollowStar`, `FollowTeamPicker`) becomes the organizer's ink under the token block → check the text on it
+- [x] `app/[orgSlug]/Home.module.css` :246 `.heroBadge` `rgba(0,0,0,.45)` fill (phone) → ground/card token · :663 `.myTeamGame` `rgba(0,0,0,.16)` → `--bg-inset` · :1263, :1296, :1302 `rgba(255,255,255,…)` in the old light overrides → `--surface` · :1298 a literal shadow → drop · :205 `.heroTitle` glow (light override :1281, check under the frame)
+- [x] `app/[orgSlug]/schedule/schedule.module.css` :606, :1629 the leading score's text-shadow glow → drop; the "leading team lit" needs a light answer (weight, not glow) · :1481 `livePulseGlow` `rgba(danger,.45)` → drop or tone · :1104, :1731, :2083 segmented-control shadows → drop (no shadows) · :30–32 `highlightFlash` ring (its glow is gone via the token; check the ring) · :562, :1603 avatar text-shadow → keep (white glyph on a team colour)
+- [x] `app/[orgSlug]/register/register.module.css` :72, :256, :394, :581, :681 `rgba(255,255,255,.02–.03)` fills → `--white-03`/`--white-5` · :554 the lime tint → check
+- [x] `components/public/ScheduleContent.tsx` :1478–1497 an inline-styled block (`--highlight-top`, `--font-data`) → move to CSS
+- [x] Overlays (Part 3, they show on every page): `AlertsNudge.module.css`:21, `FollowDeepLinkPrompt.module.css`:21, `FollowTeamPicker.module.css`:55, `PreviewExitPill.module.css`:19, `TeamSubscribeButton.module.css`:89, :113, `components/shared/FlipPill.module.css`:185 — dark popover shadows `rgba(0,0,0,.35–.6)` → hairline, no shadow. A popover **portalled to `<body>`** sits outside the frame's element and reads the old light block on `:root`: check each one renders on the club's tokens
+- [x] Lime as a FILL (the follow pills and stars: `TeamFollowStar`, `FollowTeamPicker`) becomes the organizer's ink under the token block → check the text on it
 - [ ] Part 4: `standings.module.css` :49, :1087 section shadows, :733 the sticky column's shadow (→ hairline), :967 view toggle shadow, :1181 the champion icon's glow · `teams.module.css` :410 `.followBtnActive` `#fff` mix (light override :413) · `PublicTournamentState.module.css` :38 icon glow
 - ⚠ `check:tokens` deliberately skips `rgba(255,255,255,…)` and `rgba(0,0,0,…)`, so grep for those by hand.
 - **The rendered measure (Part 1 added it):** five public tournament screens in `scripts/layout-screens.mjs` (`pubt-*`,

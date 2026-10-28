@@ -99,3 +99,16 @@
     min-height: var(--tap-min, 44px);
   }
 }
+
+/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): a white
+   card with a hairline, no wash of the organizer's colour and no glow (plan §4); nothing under 12 px (Ask 2). */
+:global([data-public-frame='light']) .state {
+  background: var(--surface);
+  box-shadow: none;
+}
+:global([data-public-frame='light']) .icon {
+  background: var(--bg-inset);
+  border-color: var(--border);
+  box-shadow: none;
+}
+:global([data-public-frame='light']) .eyebrow { font-size: 0.75rem; }

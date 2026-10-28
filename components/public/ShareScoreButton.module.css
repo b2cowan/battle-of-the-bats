@@ -90,3 +90,7 @@
   color: var(--white-50);
   letter-spacing: 0.01em;
 }
+
+/* Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts): nothing
+   under 12 px (Ask 2). */
+:global([data-public-frame='light']) .trigger { font-size: 0.75rem; }

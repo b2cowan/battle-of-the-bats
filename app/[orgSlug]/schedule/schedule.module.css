@@ -2245,3 +2245,169 @@ a.broadcastCard { cursor: pointer; }
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Playoffs stage: the bracket's format badge and a placement division's final standings (ScheduleContent; were
+   inline styles, moved here unchanged so the frame below can restyle them) ── */
+.playoffFormatBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(var(--primary-rgb), 0.12);
+  border: 1px solid rgba(var(--primary-rgb), 0.3);
+  color: var(--primary-light);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.placementStandings {
+  margin-bottom: 1.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--primary-rgb), 0.25);
+  background: var(--surface);
+  box-shadow: var(--highlight-top);
+  overflow: hidden;
+}
+
+.placementStandingsHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  background: rgba(var(--primary-rgb), 0.08);
+  border-bottom: 1px solid rgba(var(--primary-rgb), 0.18);
+  font-family: var(--font-data);
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary-light);
+}
+
+.placementStandingsList {
+  margin: 0;
+  padding: 0.4rem 0;
+  list-style: none;
+}
+
+.placementStandingsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 1rem;
+}
+
+/* Rows run 1..N, so every row after the first is place > 1. */
+.placementStandingsRow + .placementStandingsRow {
+  border-top: 1px solid var(--white-10);
+}
+
+.placementStandingsPlace {
+  min-width: 2.2rem;
+  font-family: var(--font-data);
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--white-50);
+}
+
+.placementStandingsPodium {
+  color: var(--primary-light);
+}
+
+/* ── Under the public tournament pages' frame (Stage 1 Part 3, behind the preview switch — lib/public-frame.ts) ──────
+   The same schedule and game page, read on the light ground (plan §4, Ask 2): white cards with hairlines instead of
+   washes of the organizer's colour, no glows or shadows, nothing under 12 px, big scores in the title face. The live
+   leader reads by ink and weight instead of a glow; Live keeps its red chip and its blinking dot, without the halo. */
+:global([data-public-frame='light']) .placementStandings,
+:global([data-public-frame='light']) .scorebugBar,
+:global([data-public-frame='light']) .myTeamBanner,
+:global([data-public-frame='light']) .detailStakes,
+:global([data-public-frame='light']) .broadcastCard,
+:global([data-public-frame='light']) .followedBroadcast {
+  border-color: var(--border);
+  background: var(--surface);
+}
+:global([data-public-frame='light']) .myGamesLink,
+:global([data-public-frame='light']) .railCalendarBtn,
+:global([data-public-frame='light']) .myTeamBannerClear {
+  border-color: var(--border-2);
+  background: var(--surface);
+}
+:global([data-public-frame='light']) .myGamesLink:hover,
+:global([data-public-frame='light']) .railCalendarBtn:hover {
+  border-color: var(--primary-light);
+  background: var(--bg-inset);
+  box-shadow: none;
+}
+:global([data-public-frame='light']) .todayBadge,
+:global([data-public-frame='light']) .myTeamCount,
+:global([data-public-frame='light']) .playoffFormatBadge {
+  border-color: var(--border);
+  background: var(--bg-inset);
+}
+:global([data-public-frame='light']) .placementStandingsHead {
+  border-bottom-color: var(--border);
+  background: var(--bg-inset);
+}
+:global([data-public-frame='light']) .todayGroup,
+:global([data-public-frame='light']) .followedBroadcast { border-color: var(--club-edge); }
+:global([data-public-frame='light']) .dayJumpDayActive { background: var(--bg-inset); }
+:global([data-public-frame='light']) .dayJumpPanel {
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+:global([data-public-frame='light']) .segmentedControl::before,
+:global([data-public-frame='light']) .mobileStageControl::before,
+:global([data-public-frame='light']) .dayChipActive,
+:global([data-public-frame='light']) .dayChipActive:hover,
+:global([data-public-frame='light']) .liveBadge {
+  box-shadow: none;
+}
+:global([data-public-frame='light']) .liveBadge { animation: none; }
+:global([data-public-frame='light']) .detailScoreLead,
+:global([data-public-frame='light']) .bcLead .bcScore { text-shadow: none; }
+:global([data-public-frame='light']) .detailScoreNum,
+:global([data-public-frame='light']) .bcLead .bcScore { font-weight: 700; }
+:global([data-public-frame='light']) .detailScoreNum.detailScoreTrail,
+:global([data-public-frame='light']) .bcScore { font-weight: 600; }
+:global([data-public-frame='light']) .detailScoreNum,
+:global([data-public-frame='light']) .bcScore { font-family: var(--font-display); }
+:global([data-public-frame='light']) .dateLabel,
+:global([data-public-frame='light']) .dateProgress,
+:global([data-public-frame='light']) .todayBadge,
+:global([data-public-frame='light']) .gameTimeText,
+:global([data-public-frame='light']) .gameVenueLine,
+:global([data-public-frame='light']) .gameDateText,
+:global([data-public-frame='light']) .statusCell :global(.badge),
+:global([data-public-frame='light']) .detailTeamSide,
+:global([data-public-frame='light']) .detailScoreCol span[data-outcome],
+:global([data-public-frame='light']) .detailScorePending,
+:global([data-public-frame='light']) .detailFacts dt,
+:global([data-public-frame='light']) .sheetSegmented .segmentButton,
+:global([data-public-frame='light']) .myGamesLink,
+:global([data-public-frame='light']) .myTeamCount,
+:global([data-public-frame='light']) .myTeamBanner,
+:global([data-public-frame='light']) .liveBadge,
+:global([data-public-frame='light']) .bcTime,
+:global([data-public-frame='light']) .bcAvatar,
+:global([data-public-frame='light']) .railCalendarBtn,
+:global([data-public-frame='light']) .mobileStageBtn,
+:global([data-public-frame='light']) .stopFollowingBtn,
+:global([data-public-frame='light']) .mobileTimePrimary,
+:global([data-public-frame='light']) .mobileVenueLine,
+:global([data-public-frame='light']) .mobileRowStatus :global(.badge),
+:global([data-public-frame='light']) .dayRailMonth,
+:global([data-public-frame='light']) .dayChipWk,
+:global([data-public-frame='light']) .dayChipDate,
+:global([data-public-frame='light']) .dayChipAll,
+:global([data-public-frame='light']) .dayJumpWeekLabel,
+:global([data-public-frame='light']) .detailVs,
+:global([data-public-frame='light']) .playoffFormatBadge,
+:global([data-public-frame='light']) .placementStandingsHead {
+  font-size: 0.75rem;
+}
+/* The dash between the scores reads as a mark, not a hairline. */
+:global([data-public-frame='light']) .detailScoreDash { color: var(--white-40); }

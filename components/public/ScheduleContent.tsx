@@ -1450,14 +1450,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
             if (!label) return null;
             return (
               <div style={{ marginBottom: '0.85rem' }}>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                  padding: '0.32rem 0.7rem', borderRadius: '999px',
-                  background: 'rgba(var(--primary-rgb), 0.12)',
-                  border: '1px solid rgba(var(--primary-rgb), 0.3)',
-                  color: 'var(--primary-light)', fontSize: '0.72rem', fontWeight: 700,
-                  letterSpacing: '0.03em', textTransform: 'uppercase',
-                }}>
+                <span className={styles.playoffFormatBadge}>
                   <Trophy size={12} /> {label}
                 </span>
               </div>
@@ -1472,31 +1465,16 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
             );
             if (!standings.some(r => r.teamName)) return null;
             return (
-              <div style={{
-                marginBottom: '1.25rem', borderRadius: 'var(--radius-md)',
-                border: '1px solid rgba(var(--primary-rgb), 0.25)', background: 'var(--surface)',
-                boxShadow: 'var(--highlight-top)', overflow: 'hidden',
-              }}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  padding: '0.65rem 1rem', background: 'rgba(var(--primary-rgb), 0.08)',
-                  borderBottom: '1px solid rgba(var(--primary-rgb), 0.18)',
-                  fontFamily: 'var(--font-data)', fontWeight: 800, fontSize: '0.72rem',
-                  letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--primary-light)',
-                }}>
+              <div className={styles.placementStandings}>
+                <div className={styles.placementStandingsHead}>
                   <Trophy size={14} /> Final Standings
                 </div>
-                <ol style={{ margin: 0, padding: '0.4rem 0', listStyle: 'none' }}>
+                <ol className={styles.placementStandingsList}>
                   {standings.map(r => (
-                    <li key={r.place} style={{
-                      display: 'flex', alignItems: 'center', gap: '0.75rem',
-                      padding: '0.4rem 1rem',
-                      borderTop: r.place > 1 ? '1px solid var(--white-10)' : undefined,
-                    }}>
-                      <span style={{
-                        minWidth: '2.2rem', fontFamily: 'var(--font-data)', fontWeight: 800,
-                        fontSize: '0.85rem', color: r.place <= 3 ? 'var(--primary-light)' : 'var(--white-50)',
-                      }}>{ordinal(r.place)}</span>
+                    <li key={r.place} className={styles.placementStandingsRow}>
+                      <span className={r.place <= 3 ? `${styles.placementStandingsPlace} ${styles.placementStandingsPodium}` : styles.placementStandingsPlace}>
+                        {ordinal(r.place)}
+                      </span>
                       <span style={{ fontWeight: r.place === 1 ? 800 : 600, color: r.teamName ? 'var(--white)' : 'var(--white-40)' }}>
                         {r.teamName ?? 'TBD'}
                       </span>
