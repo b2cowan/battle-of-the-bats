@@ -218,17 +218,18 @@ async function readTeamGames(orgId: string, seasonId: string, divisionId: string
   if (error) throw new Error(`Couldn't read the team's division: ${error.message}`);
   if (!division?.schedule_published_at) return { published: false, games: [] };
 
-  const [gameRes, held, teamRes, places] = await Promise.all([
+  const [gameRes, teamRes, places] = await Promise.all([
     supabaseAdmin.from('league_games')
       .select('id, home_team_id, away_team_id, scheduled_at, ends_at, location, org_venue_id, org_venue_facility_id, status, moved_from, home_score, away_score')
       // The team id was checked as a UUID before any read (readCoachTeamPage), so the filter string is safe.
       .eq('org_id', orgId).eq('division_id', divisionId).or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
       .order('scheduled_at', { nullsFirst: false }).order('id').limit(500),
-    heldChangesOf(seasonId, divisionId),
     supabaseAdmin.from('league_teams').select('id, name').eq('division_id', divisionId),
     getOrgPlaceNames(orgId),
   ]);
   if (gameRes.error) throw new Error(`Couldn't read the team's games: ${gameRes.error.message}`);
+  // ⚠ The held rows AFTER the games (see publicSeasonGames): a change landing between the reads has its row by now.
+  const held = await heldChangesOf(seasonId, divisionId);
   if (teamRes.error) throw new Error(`Couldn't read the division's teams: ${teamRes.error.message}`);
   type Row = { id: string; home_team_id: string; away_team_id: string; status: LeagueGame['status']; home_score: number | null; away_score: number | null }
     & { [K in 'scheduled_at' | 'ends_at' | 'location' | 'org_venue_id' | 'org_venue_facility_id' | 'moved_from']: string | null };

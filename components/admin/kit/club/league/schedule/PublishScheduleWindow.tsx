@@ -8,7 +8,7 @@
  * "See the email" (Part 4) takes the window's place behind a named back (the send windows' level, owner 2026-10-26) —
  * the one moment the question is drawn as a form, since only a form has the back.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { repKit } from '../../RepKit';
@@ -37,18 +37,21 @@ export default function PublishScheduleWindow({ division, api, orgQuery, onDone,
   const url = `${api}/publish${orgQuery}`;
   const sep = orgQuery ? '&' : '?';
 
+  /** The question's numbers, read from the server — on open, and again after a refusal that says they moved. */
+  const readFacts = useCallback(async (isLive: () => boolean = () => true, keepError = false) => {
+    try {
+      const r = await fetch(`${url}${sep}divisionId=${encodeURIComponent(division.id)}`);
+      const data = await r.json().catch(() => null);
+      if (!isLive()) return;
+      if (r.ok && data) setFacts(data as Facts);
+      else if (!keepError) setError((data as { error?: string } | null)?.error ?? W.failed);
+    } catch { if (isLive() && !keepError) setError(W.failed); }
+  }, [url, sep, division.id]);
   useEffect(() => {
     let live = true;
-    fetch(`${url}${sep}divisionId=${encodeURIComponent(division.id)}`)
-      .then(async r => {
-        const data = await r.json().catch(() => null);
-        if (!live) return;
-        if (r.ok && data) setFacts(data as Facts);
-        else setError((data as { error?: string } | null)?.error ?? W.failed);
-      })
-      .catch(() => { if (live) setError(W.failed); });
+    void readFacts(() => live);
     return () => { live = false; };
-  }, [url, sep, division.id]);
+  }, [readFacts]);
 
   async function publish() {
     if (!facts) return;
@@ -59,7 +62,13 @@ export default function PublishScheduleWindow({ division, api, orgQuery, onDone,
     }).catch(() => null);
     const data = (r ? await r.json().catch(() => null) : null) as { publishedAt: string; families: number; reached?: number; failed?: number; error?: string } | null;
     // No answer, or a platform error with no words, means it may have gone: say so rather than "try again".
-    if (!r?.ok || !data) { setError(!r || (r.status >= 500 && !data) ? W.unsure : data?.error ?? W.failed); setBusy(false); return; }
+    if (!r?.ok || !data) {
+      setError(!r || (r.status >= 500 && !data) ? W.unsure : data?.error ?? W.failed);
+      // The count moved (a game added or taken away while this was open) or someone published first: the next press must carry
+      // the numbers as they are now, not the ones it just failed with.
+      if (r?.status === 409) await readFacts(undefined, true);
+      setBusy(false); return;
+    }
     const day = formatStoredDate(data.publishedAt, { withYear: false });
     const failed = data.failed ?? 0;
     onDone({

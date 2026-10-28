@@ -59,12 +59,14 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
   placeOf: (s: GameSnapshot) => string;
   /** The send landed: the page reads the season again and says how far it went. */
   onSent: (said: string) => void;
-  /** An Undo landed: the page reads again (the tray reads again too, and says it in its own status). */
+  /** An Undo landed, or the tray moved on under it (a refused press): the page reads again; the tray reads again too. */
   onUndone: () => void;
   onClose: () => void;
 }) {
   const [tray, setTray] = useState<Tray | null>(null);
   const [busy, setBusy] = useState(false);
+  /** The Send itself is working (not an Undo): the footer and the button say "Sending…" only then. */
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** "Undone. Orioles vs Twins is back as families last heard." — the window's own passing status. */
   const [said, setSaid] = useState<string | null>(null);
@@ -91,14 +93,21 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
 
   async function send() {
     if (!tray) return;
-    setBusy(true); setError(null);
+    setBusy(true); setSending(true); setError(null);
     const r = await fetch(url, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ divisionId: division.id, changeIds: tray.changeIds }),
     }).catch(() => null);
     const data = (r ? await r.json().catch(() => null) : null) as { families?: number; reached?: number; failed?: number; silent?: boolean; news?: number; error?: string } | null;
-    setBusy(false);
-    if (!r?.ok || !data) { setError(!r || (r.status >= 500 && !data) ? W.unsure : data?.error ?? W.failed); return; }
+    if (!r?.ok || !data) {
+      setError(!r || (r.status >= 500 && !data) ? W.unsure : data?.error ?? W.failed);
+      // Refused because the tray moved on (someone else sent or undid): read it again, and the page's count with it, so the
+      // next press carries what is really waiting.
+      if (r?.status === 409) { onUndone(); await read(); }
+      setBusy(false); setSending(false);
+      return;
+    }
+    setBusy(false); setSending(false);
     const n = data.families ?? 0, failed = data.failed ?? 0;
     // "Reached 64 of 66 families · 2 didn't send." — the season's Email families history offers the rest again.
     onSent(!data.news || data.silent ? W.netNothing : failed > 0 ? reachedLine(data.reached ?? 0, n, failed) : W.sent(n));
@@ -108,11 +117,17 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
     setBusy(true); setError(null);
     const r = await fetch(`${api}/${gameId}/undo${orgQuery}`, { method: 'POST' }).catch(() => null);
     const data = (r ? await r.json().catch(() => null) : null) as { error?: string } | null;
-    setBusy(false);
-    if (!r?.ok) { setError(data?.error ?? W.failed); return; }
+    if (!r?.ok) {
+      setError(data?.error ?? W.failed);
+      if (r?.status === 409) { onUndone(); await read(); }
+      setBusy(false);
+      return;
+    }
     setSaid(W.undone(titleOf(gameId)));
     onUndone();
+    // Busy until the tray is read again, so Send and Undo are never live against rows already undone.
     await read();
+    setBusy(false);
   }
 
   const rows = tray?.games ?? [];
@@ -120,13 +135,13 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
   return (
     <KitDialog kind="form" size="medium" {...lv.dialog} eyebrow={division.name} title={W.title} onClose={onClose} busy={busy}
       status={said ? <NoticePill inline message={said} onDone={() => setSaid(null)} /> : undefined}
-      footerStart={rows.length > 0 && tray ? <span>{busy ? W.sending : W.foot(tray.families, tray.teams)}</span> : undefined}
+      footerStart={rows.length > 0 && tray ? <span>{sending ? W.sending : W.foot(tray.families, tray.teams)}</span> : undefined}
       footer={(
         <>
           <DialogCancel>{W.notYet}</DialogCancel>
           {rows.length > 0 && (
             <button type="button" className="btn btn-lime" disabled={busy || !tray} onClick={() => void send()}>
-              {busy ? W.sending : W.send(rows.length)}
+              {sending ? W.sending : W.send(rows.length)}
             </button>
           )}
         </>

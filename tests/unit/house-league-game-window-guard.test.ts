@@ -162,3 +162,19 @@ describe('5. the permit line and "See the permit" (9d-2a step 7, frames b4, c3, 
     assert.equal((page.match(/onSeePermit=\{setPermitOpen\}/g) ?? []).length, 2, 'the game window and Generate games both open it');
   });
 });
+
+describe('5. a published game is never let through by a failed read, and a revived game is placed again (9d-2b Part 7 review)', () => {
+  it('the division read throws rather than reading a published division as a draft', () => {
+    const code = readCode(ROUTE);
+    assert.match(code, /if \(error \|\| !data\) throw error \?\? new Error\('Division not found'\);/);
+  });
+  it('a game coming back on is placed like a move, so postponing it somewhere else and reviving it checks the division\'s time', () => {
+    const code = readCode(ROUTE);
+    assert.match(code, /const moved = slotRevived \|\|/);
+  });
+  it('a 409 "changed" re-reads the season, and a press stays busy until that read lands', () => {
+    const w = readCode(WINDOW);
+    assert.match(w, /res\.status === 409 && data\.code === 'changed'\) \{ await onChanged\(\); setMode\('read'\); \}/);
+    assert.equal((w.match(/try \{ await onChanged\(\); \} finally \{ setSaving\(false\); \}/g) ?? []).length, 2, 'save and act');
+  });
+});

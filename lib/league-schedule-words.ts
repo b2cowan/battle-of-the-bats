@@ -158,6 +158,9 @@ export const SCHEDULE_EMAIL_WORDS = {
   postponed: (game: string, day: string) => `${endSentence(`Postponed: ${game}${day ? `, ${day}` : ''}`)} A new date is to come.`,
   added: (game: string, when: string) => endSentence(`Added: ${game}${when ? `, ${when}` : ''}`),
   backOn: (game: string, when: string) => endSentence(`Back on: ${game}${when ? `, ${when}` : ''}`),
+  /** [marketing] words to settle: a game that had no date has one, and the reverse (9d-2b Part 7 review). */
+  dated: (game: string, when: string) => endSentence(`Date set: ${game}${when ? `, ${when}` : ''}`),
+  undated: (game: string) => `Date to come: ${game}. The club will tell you the new one.`,
   seeSchedule: 'See the full schedule →',
 } as const;
 

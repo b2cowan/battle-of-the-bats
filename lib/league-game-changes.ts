@@ -81,10 +81,11 @@ export function netChangeOf(rows: readonly HeldChange[], now: GameSnapshot): Net
     gameId: held[0].gameId, before, now, byClub: held.some(r => r.source === 'club'), changeIds: held.map(r => r.id),
   };
   if (!before) {
-    // Added since the last send: news only if it is on with a date (a game added and then called off was never news).
+    // Added since the last send: news only if it is on (a game added and then called off was never news).
     return publicState(now.status) === 'on' ? { ...base, kind: 'added', whenChanged: true, placeChanged: true } : null;
   }
-  const whenChanged = whenDiffers(before, now), placeChanged = placeDiffers(before, now);
+  // What a family reads of when is the day and the start clock, so an end-time-only edit is not news (nothing to tell them).
+  const whenChanged = !sameMs(before.scheduledAt, now.scheduledAt), placeChanged = placeDiffers(before, now);
   const was = publicState(before.status), is = publicState(now.status);
   if (was !== is) {
     const kind: ChangeKind = is === 'cancelled' ? 'cancelled' : is === 'postponed' ? 'postponed' : was === 'postponed' && whenChanged ? 'given_date' : 'back_on';

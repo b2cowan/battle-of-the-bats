@@ -186,6 +186,9 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
       // A game someone else already deleted is what Delete asked for.
       if (!res.ok && !(method === 'DELETE' && res.status === 404)) {
         setError(data.error ?? 'Couldn’t save. Try again.');
+        // The game changed under the window (someone else saved first): read the season again so the record behind this
+        // error is the new one and the next press carries what is true now — it was the same stale press every time.
+        if (res.status === 409 && data.code === 'changed') { await onChanged(); setMode('read'); }
         return null;
       }
       return data as { warnings?: string[]; sent?: { families: number; reached: number; failed: number; others: number } | null; sendFailed?: string };
@@ -224,20 +227,24 @@ export default function GameWindow({ game, booking, divisionId, divisionName, pu
     if (!data) return;
     const first = Array.isArray(data.warnings) && data.warnings.length ? data.warnings[0] : null;
     if (creating) { onCreated(first); return; }
-    await onChanged();
+    // Busy until the season is read again: a second press in that gap would carry the old `seen` and be refused.
+    setSaving(true);
+    try { await onChanged(); } finally { setSaving(false); }
     setWarning(first);
     setMode('read');
   }
 
   /** Postpone, Cancel, Put it back on — with what the window saw; `sendNow` is f5's "tell families now". */
   async function act(status: 'postponed' | 'cancelled' | 'scheduled', sendNow = false) {
+    if (saving) return;
     const data = game ? await write('PATCH', { status, seen: { status: game.status, updatedAt: game.updatedAt }, ...(sendNow ? { sendNow } : {}) }) : null;
     if (!data) {
       // A question that failed goes back to the record, where its error is said.
       setMode('read');
       return;
     }
-    await onChanged();
+    setSaving(true);
+    try { await onChanged(); } finally { setSaving(false); }
     setMode('read');
     if (status === 'scheduled') setSaid(W.putBackSaid);
     else if (data.sent) {

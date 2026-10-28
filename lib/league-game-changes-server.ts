@@ -143,6 +143,9 @@ export async function sendHeldChanges(p: {
 export async function publicSeasonGames(seasonId: string, divisions: readonly LeagueDivision[]) {
   const published = new Set(divisions.filter(d => d.schedulePublishedAt).map(d => d.id));
   if (!published.size) return { games: [] as LeagueGame[], published };
-  const [games, held] = await Promise.all([getSeasonGamesEveryStatus(seasonId), heldChangesOf(seasonId)]);
+  // ⚠ The games first, THEN the held rows: a change landing between the two reads has its row by the time the rows are read
+  // (the trigger writes both in one statement), so it reads as held. The other order shows an unsent date to the public.
+  const games = await getSeasonGamesEveryStatus(seasonId);
+  const held = await heldChangesOf(seasonId);
   return { games: asLastSent(games.filter(g => published.has(g.divisionId)), held), published };
 }

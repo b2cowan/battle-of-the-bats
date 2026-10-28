@@ -510,6 +510,10 @@
     "412_a_seasons_schedule_rules_are_kept.sql": {
       "prod": "pending",
       "note": "House League Stage 9d-2b Part 6 (frame d3, 9d2b·C): a season's schedule rules are kept. Visible: league_seasons.twice_in_a_day_allowed (bool NOT NULL default false) + home_away_tolerance (smallint NOT NULL default 1, CHECK 0-9); league_divisions.games_per_team (smallint null, CHECK 1-99). INVISIBLE to check:migrations: function league_season_rules_save(uuid, uuid, boolean, integer, jsonb). Additive, defaults = what 9d-2a assumed (no season scores differently), re-runnable. Apply BEFORE the promote that ships 9d-2b Part 6 (the schedule GET and the health window read the columns; the rules route calls the function). Verify on prod: SELECT count(*) FROM information_schema.columns WHERE (table_name='league_seasons' AND column_name IN ('twice_in_a_day_allowed','home_away_tolerance')) OR (table_name='league_divisions' AND column_name='games_per_team') -> 3; SELECT count(*) FROM pg_proc WHERE proname='league_season_rules_save' -> 1; routine_privileges EXECUTE = postgres + service_role only. Applied to DEV 2026-10-28; scripts/house-league-9d2b-part6-check.sql passed (T1-T6)."
+    },
+    "413_undo_puts_a_game_back_on_its_time_and_rules_save_lets_publish_through.sql": {
+      "prod": "pending",
+      "note": "House League Stage 9d-2b Part 7 (the /review of Parts 1-6). Needs 409, 411 and 412 first. Function-only, INVISIBLE to check:migrations: league_game_snapshot REPLACED (+ slotUseId), league_game_undo REPLACED (mig 411's text + the link restored from the snapshot and the game read again under the division lock), league_season_rules_save REPLACED (FOR NO KEY UPDATE, was FOR UPDATE: it deadlocked with Publish). Additive, re-runnable, no row change. Applied to dev 2026-10-28; proof scripts/house-league-9d2b-part7-check.sql T1-T5."
     }
   }
 }

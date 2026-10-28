@@ -57,6 +57,10 @@ export function emailChangeLine(net: NetChange, title: string, placeOf: PlaceTex
     case 'moved':
     case 'place': {
       if (!net.before) return null;
+      // A game that had no date and has one (or the reverse) has no "Was": it says what it is now.
+      const had = dayAndClock(net.before.scheduledAt).day;
+      if (!had && now.day) return W.dated(title, nowFull);
+      if (had && !now.day) return W.undated(title);
       const was = wasClause(net.before, net.now, placeOf);
       return was ? W.moved(title, nowFull, was) : null;
     }

@@ -152,7 +152,7 @@ export const POST = withObservability(async (req: Request,
   // messages started naming teams — would have echoed another org's team name back.
   const [{ data: division }, { data: teamRows }] = await Promise.all([
     supabaseAdmin.from('league_divisions').select('id, name').eq('id', divisionId).eq('season_id', seasonId).single(),
-    supabaseAdmin.from('league_teams').select('id, name').in('id', [homeTeamId, awayTeamId]).eq('season_id', seasonId),
+    supabaseAdmin.from('league_teams').select('id, name').in('id', [homeTeamId, awayTeamId]).eq('season_id', seasonId).eq('division_id', divisionId),
   ]);
   if (!division) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
   if ((teamRows ?? []).length !== 2) return NextResponse.json({ error: 'Team not found' }, { status: 404 });

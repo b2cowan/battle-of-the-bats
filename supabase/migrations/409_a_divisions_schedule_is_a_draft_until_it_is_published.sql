@@ -50,6 +50,11 @@
 
 BEGIN;
 
+-- The backfill (§7) is for the run that ADDS the publish mark. Remembered before the column is added, so a re-run of this
+-- file never publishes a division that is a draft by now (it would go public with no email).
+SELECT set_config('league.mig409_first_run', (NOT EXISTS (SELECT 1 FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'league_divisions' AND column_name = 'schedule_published_at'))::text, true);
+
 -- ─── 1 · The schedule's publish mark ─────────────────────────────────────────────────────────────────────────────────
 
 ALTER TABLE public.league_divisions ADD COLUMN IF NOT EXISTS schedule_published_at timestamptz;
@@ -475,7 +480,8 @@ GRANT EXECUTE ON FUNCTION public.league_games_generate_save(uuid, uuid, uuid, js
 -- ─── 7 · Backfill (9d2b·A) ───────────────────────────────────────────────────────────────────────────────────────────
 
 UPDATE public.league_divisions d SET schedule_published_at = now()
- WHERE d.schedule_published_at IS NULL
+ WHERE current_setting('league.mig409_first_run', true) = 'true'
+   AND d.schedule_published_at IS NULL
    AND d.teams_published_at IS NOT NULL
    AND EXISTS (SELECT 1 FROM public.league_games g WHERE g.division_id = d.id);
 

@@ -30,6 +30,14 @@ describe('a changed game\'s line in the families\' email', () => {
       'Orioles vs Twins\nNow: Thu, Jun 24, 6:00 p.m. · Maple Grove Park · Diamond 1\nWas: Thu, Jun 17');
   });
 
+  it('a game that had no date and has one says so; the reverse says the date is to come (Part 7 review)', () => {
+    const undated = snap({ scheduledAt: null, endsAt: null });
+    assert.equal(lineOf([row({ kind: 'moved', before: undated, after: snap() })], snap()),
+      'Date set: Orioles vs Twins, Thu, Jun 17, 6:00 p.m. · Maple Grove Park · Diamond 1.');
+    assert.equal(lineOf([row({ kind: 'moved', before: snap(), after: undated })], undated),
+      'Date to come: Orioles vs Twins. The club will tell you the new one.');
+  });
+
   it('a new place only: Was names the place', () => {
     const d2 = snap({ facilityId: 'f2' });
     assert.equal(lineOf([row({ kind: 'place', before: snap(), after: d2 })], d2),

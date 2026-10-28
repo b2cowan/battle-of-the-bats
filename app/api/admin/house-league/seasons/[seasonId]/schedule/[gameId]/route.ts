@@ -30,8 +30,10 @@ async function verifyGame(gameId: string, seasonId: string) {
 
 /** The game's division: its name (the move refusal's words) and whether its schedule is published (9d-2b). */
 async function divisionOf(divisionId: string) {
-  const { data } = await supabaseAdmin.from('league_divisions').select('name, schedule_published_at').eq('id', divisionId).single();
-  return { name: (data?.name as string | undefined) ?? '', published: !!data?.schedule_published_at };
+  const { data, error } = await supabaseAdmin.from('league_divisions').select('name, schedule_published_at').eq('id', divisionId).single();
+  // ⚠ A failed read THROWS: a published division read as a draft would let a delete, a team swap or an urgent send through.
+  if (error || !data) throw error ?? new Error('Division not found');
+  return { name: data.name as string, published: !!data.schedule_published_at };
 }
 
 const sameInstant = (a: unknown, b: string | null) =>
@@ -183,7 +185,8 @@ export const PATCH = withObservability(async (req: Request,
   const effStart = (patch.scheduledAt !== undefined ? patch.scheduledAt : game.scheduled_at) as string | null;
   const effVenue = patch.orgVenueId !== undefined ? patch.orgVenueId : game.org_venue_id;
   const effFacility = patch.orgVenueFacilityId !== undefined ? patch.orgVenueFacilityId : game.org_venue_facility_id;
-  const moved = !(effStart == null ? game.scheduled_at == null : sameInstant(effStart, game.scheduled_at))
+  // A game coming back on (from postponed or cancelled) is placed again: moving it while it was off checked nothing.
+  const moved = slotRevived || !(effStart == null ? game.scheduled_at == null : sameInstant(effStart, game.scheduled_at))
     || (effVenue ?? null) !== (game.org_venue_id ?? null) || (effFacility ?? null) !== (game.org_venue_facility_id ?? null)
     || (patch.location !== undefined && (patch.location ?? null) !== (game.location ?? null));
   if (moved && effectiveStatus !== 'cancelled' && effectiveStatus !== 'postponed') {

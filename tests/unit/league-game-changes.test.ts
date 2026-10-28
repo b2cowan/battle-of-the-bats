@@ -38,6 +38,11 @@ describe('the net effect of a game\'s held changes', () => {
     assert.equal(netChangeOf([added], sent)!.kind, 'added');
   });
 
+  it('an end-time-only edit is nothing families can be told (Part 7 review)', () => {
+    const shorter = snap({ endsAt: '2027-06-17T23:00:00+00:00' });
+    assert.equal(netChangeOf([row({ kind: 'moved', before: sent, after: shorter })], shorter), null);
+  });
+
   it('a place change alone is place; a cancelled game\'s place is nobody\'s news', () => {
     const there = snap({ location: 'Park B', facilityId: 'f2' });
     assert.equal(netChangeOf([row({ kind: 'place', before: sent, after: there })], there)!.kind, 'place');
