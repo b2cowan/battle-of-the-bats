@@ -268,9 +268,9 @@ describe('the review\'s fixes hold (Stage 6a /review, 2026-10-08)', () => {
     // The game's window (9d-2a step 4) marks itself saving in `write`, after it asks the check: Create and ✓ disable on
     // `checking` meanwhile, and `save` returns while a write is out.
     const gw = readCode('components/admin/kit/club/league/schedule/GameWindow.tsx');
-    assert.match(functionBody(gw, 'save'), /if \(held \|\| refused \|\| saving\) return;[\s\S]*if \(!\(await lineIsCurrent\(\)\)\) return;/);
-    assert.match(gw, /disabled=\{saving \|\| refused \|\| checking\}/);
-    assert.match(gw, /disabled: saving \|\| refused \|\| checking \|\| !!held/);
+    assert.match(functionBody(gw, 'save'), /if \(blocked \|\| saving\) return;[\s\S]*if \(!\(await lineIsCurrent\(\)\)\) return;/);
+    assert.match(gw, /disabled=\{saving \|\| blocked\}/);
+    assert.match(gw, /disabled: saving \|\| blocked/);
     assert.match(readCode('components/rep-teams/TryoutDayCard.tsx'), /onClick=\{saveSession\} disabled=\{saving \|\| checking\}/);
     // The coach's form marks itself saving BEFORE it asks — both of its saves.
     const form = readCode('components/coaches/ScheduleEventForm.tsx');

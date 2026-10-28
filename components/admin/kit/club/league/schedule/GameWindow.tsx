@@ -132,6 +132,8 @@ export default function GameWindow({ game, booking, divisionId, divisionName, te
     occurrence: editing ? { date: draft.date, startTime: draft.time, endTime: draft.endTime } : null,
     excludeGameId: game?.id ?? null,
   });
+  /** The ✓ waits while the line is refused or still being checked, or while a started game is missing a score. */
+  const blocked = refused || checking || !!held;
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => { setDraft(d => ({ ...d, [k]: v })); setError(null); };
   const openForm = (next: 'edit' | 'redate') => {
@@ -180,7 +182,7 @@ export default function GameWindow({ game, booking, divisionId, divisionName, te
   }
 
   async function save() {
-    if (held || refused || saving) return;
+    if (blocked || saving) return;
     // ✓ on an unchanged form is Done — except a re-date, whose ✓ puts the game back on even on its old date.
     if (!creating && !dirty && mode !== 'redate') { setMode('read'); return; }
     if (!(await lineIsCurrent())) return;
@@ -306,7 +308,7 @@ export default function GameWindow({ game, booking, divisionId, divisionName, te
         <KitDialog kind="form" size="medium" eyebrow={W.eyebrow(divisionName)} title={W.addTitle} onClose={onClose} busy={saving} dirty={dirty}
           footer={<>
             <button type="button" className="btn btn-outline" onClick={onClose} disabled={saving}>Cancel</button>
-            <button type="button" className="btn btn-lime" onClick={() => void save()} disabled={saving || refused || checking}>
+            <button type="button" className="btn btn-lime" onClick={() => void save()} disabled={saving || blocked}>
               {saving ? W.saving : W.create}
             </button>
           </>}>
@@ -316,30 +318,30 @@ export default function GameWindow({ game, booking, divisionId, divisionName, te
     }
     return (
       <KitDialog kind="form" size="medium" record eyebrow={W.eyebrow(divisionName)} title={name} onClose={onClose} busy={saving} dirty={dirty}
-        levelKey={mode} edit={{ editing: true, label: W.edit, onToggle: () => void save(), disabled: saving || refused || checking || !!held }}>
+        levelKey={mode} edit={{ editing: true, label: W.edit, onToggle: () => void save(), disabled: saving || blocked }}>
         {form}
       </KitDialog>
     );
   }
 
   // ── The record, read ────────────────────────────────────────────────────────────────────────────────────────
-  const g0 = game!;
-  const when = whenWords(g0);
-  const where = booking ? whereWords(booking) : g0.location ?? '';
+  if (!game) return null; // unreachable: creating forces the form above
+  const when = whenWords(game);
+  const where = booking ? whereWords(booking) : game.location ?? '';
   const timeFrom = canRun ? booking?.clubSchedule?.scheduleName ?? null : null;
-  const state = gameStateWords(g0);
+  const state = gameStateWords(game);
   return (
     <KitDialog kind="form" size="medium" record eyebrow={W.eyebrow(divisionName)} title={name} identity={state} onClose={onClose} busy={saving}
       levelKey="read" status={said ? <NoticePill inline message={said} onDone={() => setSaid(null)} /> : undefined}
       edit={canRun && doors?.pencil ? { editing: false, label: W.edit, onToggle: () => openForm('edit') } : undefined}>
       {errorLine}
       <dl className={s.facts}>
-        {fact(W.when, when ? (g0.status === 'postponed' ? SEASON_PUBLIC_WORDS.was(when) : when) : SEASON_PUBLIC_WORDS.dateToCome)}
+        {fact(W.when, when ? (game.status === 'postponed' ? SEASON_PUBLIC_WORDS.was(when) : when) : SEASON_PUBLIC_WORDS.dateToCome)}
         {where && fact(W.where, where)}
-        {fact(W.home, team(g0.homeTeamId))}
-        {fact(W.away, team(g0.awayTeamId))}
+        {fact(W.home, team(game.homeTeamId))}
+        {fact(W.away, team(game.awayTeamId))}
         {timeFrom && fact(W.timeFrom, W.timeFromValue(timeFrom))}
-        {g0.notes ? fact(W.notes, g0.notes) : !canRun && fact(W.notes, W.none)}
+        {game.notes ? fact(W.notes, game.notes) : !canRun && fact(W.notes, W.none)}
       </dl>
       {warning && <p className={ck.hint} role="status">{W.possibleClash(warning)}</p>}
       {canRun && doors && (

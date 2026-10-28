@@ -54,7 +54,7 @@ describe('2. a record reads first and edits whole', () => {
   it('the pencil is the runner\'s, ✓ in its spot saves, and the form holds while the check is out or refuses', () => {
     const w = readCode(WINDOW);
     assert.match(w, /edit=\{canRun && doors\?\.pencil \? \{ editing: false, label: W\.edit, onToggle: \(\) => openForm\('edit'\) \} : undefined\}/);
-    assert.match(w, /edit=\{\{ editing: true, label: W\.edit, onToggle: \(\) => void save\(\), disabled: saving \|\| refused \|\| checking \|\| !!held \}\}/);
+    assert.match(w, /edit=\{\{ editing: true, label: W\.edit, onToggle: \(\) => void save\(\), disabled: saving \|\| blocked \}\}/);
     assert.match(functionBody(w, 'save'), /if \(!\(await lineIsCurrent\(\)\)\) return;/, 'the save must ask the live check once more first');
   });
 });
