@@ -15,11 +15,9 @@ import { RotateCcw } from 'lucide-react';
 import { formatInOrgZone, utcToZonedInputs } from '@/lib/timezone';
 import { formatTime } from '@/lib/utils';
 import { CHANGES_TO_SEND_WORDS as W, reachedLine } from '@/lib/league-schedule-words';
-import type { EmailWords } from '@/lib/club-schedule-words';
-import { EmailWordsSample, MailView, SendDoor, useSendLevel } from '../../SendParts';
+import { SampleMail, SendDoor, useEmailSample, useSendLevel } from '../../SendParts';
 import type { GameSnapshot, NetChange } from '@/lib/league-game-changes';
 import t from './ChangesToSend.module.css';
-import LoadingState from '@/components/shared/LoadingState';
 
 interface HeldRow { gameId: string; news: NetChange | null; played: boolean; homeTeamId: string; awayTeamId: string; families: number }
 interface Tray {
@@ -34,8 +32,9 @@ const dayOf = (iso: string) => formatInOrgZone(iso, { weekday: 'short', month: '
 const clockOf = (iso: string) => formatTime(utcToZonedInputs(iso).time);
 const dateOf = (iso: string) => utcToZonedInputs(iso).date;
 
-/** One row's line (f2): "Orioles vs Twins · Thu, Jun 24: 6:00 p.m. → 7:30 p.m." and its kin. */
-export function changeLine(title: string, n: NetChange, placeOf: (s: GameSnapshot) => string): string {
+/** One row's line (f2): "Orioles vs Twins · Thu, Jun 24: 6:00 p.m. → 7:30 p.m." and its kin. The family's email says it
+ *  as Now / Was (`emailChangeLine`, lib/league-schedule-email.ts) — different words on purpose. */
+export function trayChangeLine(title: string, n: NetChange, placeOf: (s: GameSnapshot) => string): string {
   const was = n.before ?? n.now;
   const day = was.scheduledAt ? dayOf(was.scheduledAt) : '';
   const head = (tail: string) => (day ? `${title} · ${day}: ${tail}` : `${title}: ${tail}`);
@@ -88,16 +87,7 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
 
   // "See their email" (f2, Part 4): the family the note names, as the send would email them — read when first opened.
   const lv = useSendLevel(W.title);
-  const [sample, setSample] = useState<{ to: string; words: EmailWords } | null>(null);
-  const [sampleFailed, setSampleFailed] = useState(false);
-  async function openEmail() {
-    lv.open('email');
-    if (sample) return;
-    setSampleFailed(false);
-    const r = await fetch(`${url}${sep}divisionId=${encodeURIComponent(division.id)}&preview=1`, { cache: 'no-store' }).catch(() => null);
-    const data = (r?.ok ? await r.json().catch(() => null) : null) as { sample?: { to: string; words: EmailWords } | null } | null;
-    if (data?.sample) setSample(data.sample); else setSampleFailed(true);
-  }
+  const email = useEmailSample(`${url}${sep}divisionId=${encodeURIComponent(division.id)}&preview=1`);
 
   async function send() {
     if (!tray) return;
@@ -143,9 +133,7 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
       )}>
       {error && <p className={repKit.formError} role="alert">{error}</p>}
       {lv.level === 'email' ? (
-        sample ? (
-          <MailView to={sample.to} subject={sample.words.subject}><EmailWordsSample w={sample.words} /></MailView>
-        ) : sampleFailed ? <p className={repKit.formError}>{W.sampleFailed}</p> : <LoadingState inline label="Loading the email…" />
+        <SampleMail state={email} failedText={W.sampleFailed} />
       ) : (<>
       {tray && rows.length === 0 && <p className={ck.hint}>{W.empty}</p>}
       {rows.length > 0 && (
@@ -155,7 +143,7 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
             return (
               <li key={row.gameId} className={t.row}>
                 <div className={t.text}>
-                  <b>{row.news ? changeLine(title, row.news, placeOf) : title}</b>
+                  <b>{row.news ? trayChangeLine(title, row.news, placeOf) : title}</b>
                   {row.played
                     ? <span className={t.sub}>{W.played}</span>
                     : <span className={t.sub}>{W.who(teamName(row.homeTeamId), teamName(row.awayTeamId), row.families)}</span>}
@@ -174,7 +162,7 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
       {household && (
         <>
           <p className={ck.hint}>{W.oneHousehold(household.family, household.parts.map(p => ({ child: p.child, team: teamName(p.teamId) })))}</p>
-          <SendDoor onOpen={() => void openEmail()}>{W.seeTheirEmail}</SendDoor>
+          <SendDoor onOpen={() => { lv.open('email'); void email.load(); }}>{W.seeTheirEmail}</SendDoor>
         </>
       )}
       </>)}

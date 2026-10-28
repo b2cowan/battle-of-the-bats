@@ -15,9 +15,7 @@ import { repKit } from '../../RepKit';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { SCHEDULE_PUBLISH_WORDS as W, reachedLine } from '@/lib/league-schedule-words';
 import { formatStoredDate } from '@/lib/timezone';
-import type { EmailWords } from '@/lib/club-schedule-words';
-import LoadingState from '@/components/shared/LoadingState';
-import { EmailWordsSample, MailView, SendDoor, useSendLevel } from '../../SendParts';
+import { SampleMail, SendDoor, useEmailSample, useSendLevel } from '../../SendParts';
 
 /** `said`: "Published May 25 · 101 families emailed." — or how many it reached when some didn't send. */
 export interface SchedulePublished { publishedAt: string; families: number; said: string }
@@ -71,16 +69,7 @@ export default function PublishScheduleWindow({ division, api, orgQuery, onDone,
   }
 
   const lv = useSendLevel(W.title(division.name));
-  const [sample, setSample] = useState<{ to: string; words: EmailWords } | null>(null);
-  const [sampleFailed, setSampleFailed] = useState(false);
-  async function openEmail() {
-    lv.open('email');
-    if (sample) return;
-    setSampleFailed(false);
-    const r = await fetch(`${url}${sep}divisionId=${encodeURIComponent(division.id)}&preview=1`, { cache: 'no-store' }).catch(() => null);
-    const data = (r?.ok ? await r.json().catch(() => null) : null) as { sample?: { to: string; words: EmailWords } | null } | null;
-    if (data?.sample) setSample(data.sample); else setSampleFailed(true);
-  }
+  const email = useEmailSample(`${url}${sep}divisionId=${encodeURIComponent(division.id)}&preview=1`);
   const mail = lv.level === 'email';
 
   const foot = facts ? (isPhone ? W.footPhone(facts.families, facts.teams) : W.foot(facts.families)) : '';
@@ -96,12 +85,11 @@ export default function PublishScheduleWindow({ division, api, orgQuery, onDone,
         </>
       )}>
       {mail ? (
-        sample ? <MailView to={sample.to} subject={sample.words.subject}><EmailWordsSample w={sample.words} /></MailView>
-          : sampleFailed ? <p className={repKit.formError}>{W.sampleFailed}</p> : <LoadingState inline label="Loading the email…" />
+        <SampleMail state={email} failedText={W.sampleFailed} />
       ) : (
         <>
           {facts && !isPhone && <p className={ck.hint}>{W.body(facts.games, facts.teams)}</p>}
-          {facts && facts.families > 0 && <SendDoor onOpen={() => void openEmail()}>{W.seeEmail}</SendDoor>}
+          {facts && facts.families > 0 && <SendDoor onOpen={() => { lv.open('email'); void email.load(); }}>{W.seeEmail}</SendDoor>}
         </>
       )}
       {error && <p className={repKit.formError} role="alert">{error}</p>}

@@ -10,8 +10,8 @@ import { timesInZoneSentence } from './timezone';
 import { memberDisplayName } from './member-names';
 import { coachCopyWords, leagueCoachesToCopy, sendCoachCopies } from './families-email-coaches';
 import { asLastSent, heldChangesOf, sendHeldChanges, snapshotOf, type HeldGameOf, type SendHeldResult } from './league-game-changes-server';
-import { netChangeOf, publicState, type GameSnapshot, type HeldChange, type NetChange } from './league-game-changes';
-import { changeLine, publishedLine, scheduleEmailWords, type PlaceText, type SchedulePart } from './league-schedule-email';
+import { familiesFor, netChangeOf, publicState, type GameSnapshot, type HeldChange, type NetChange } from './league-game-changes';
+import { emailChangeLine, publishedLine, scheduleEmailWords, type PlaceText, type SchedulePart } from './league-schedule-email';
 import { SCHEDULE_EMAIL_WORDS } from './league-schedule-words';
 import type { EmailWords } from './club-schedule-words';
 
@@ -97,7 +97,7 @@ export function changedLinesByTeam(nets: readonly TeamsNet[], names: ReadonlyMap
   const at = (n: TeamsNet) => n.net.now.scheduledAt ?? n.net.before?.scheduledAt ?? '';
   const out = new Map<string, string[]>();
   for (const n of [...nets].sort((a, b) => at(a).localeCompare(at(b)))) {
-    const line = changeLine(n.net, gameTitle(names, n.homeTeamId, n.awayTeamId), placeOf);
+    const line = emailChangeLine(n.net, gameTitle(names, n.homeTeamId, n.awayTeamId), placeOf);
     if (!line) continue;
     for (const t of new Set([n.homeTeamId, n.awayTeamId])) (out.get(t) ?? out.set(t, []).get(t)!).push(line);
   }
@@ -343,12 +343,8 @@ async function sampleFor(org: ScheduleMailOrg, season: ScheduleMailSeason, kind:
   const regs = await fetchAllIn<RegRow & { guardian_email: string | null }>([...teamIds], (c, a, b) => supabaseAdmin.from('league_registrations')
     .select('id, player_first_name, player_last_name, guardian_first_name, team_id, status, guardian_email')
     .eq('season_id', season.id).eq('status', 'active').in('team_id', c).order('id').range(a, b));
-  const families = new Map<string, RegRow[]>();
-  for (const r of regs) {
-    const email = (r.guardian_email ?? '').trim().toLowerCase();
-    if (email) (families.get(email) ?? families.set(email, []).get(email)!).push(r);
-  }
-  const list = [...families.values()].map(f => f.sort((a, b) => `${a.player_first_name} ${a.player_last_name}`.localeCompare(`${b.player_first_name} ${b.player_last_name}`)));
+  const children = regs.map(r => ({ ...r, registrationId: r.id, email: r.guardian_email ?? '', childName: `${r.player_first_name} ${r.player_last_name}`, teamId: r.team_id ?? '' }));
+  const list = [...familiesFor(children, teamIds).values()].map(f => f.sort((a, b) => a.childName.localeCompare(b.childName)));
   // The family with the most children (the email's fullest shape), then by name — or the caller's own pick.
   const family = pick?.(list) ?? [...list].sort((a, b) => b.length - a.length || a[0].player_first_name.localeCompare(b[0].player_first_name))[0];
   if (!family) return null;

@@ -39,8 +39,9 @@ function wasClause(before: GameSnapshot, now: GameSnapshot, placeOf: PlaceText):
   return [when, place].filter(Boolean).join(' · ');
 }
 
-/** One game's item in a "Games changed" part, or null when there is nothing to say. */
-export function changeLine(net: NetChange, title: string, placeOf: PlaceText): string | null {
+/** One game's item in a "Games changed" part (Now / Was), or null when there is nothing to say. The admin tray's row has
+ *  its own words on purpose (`trayChangeLine`, "6:00 p.m. → 7:30 p.m."). */
+export function emailChangeLine(net: NetChange, title: string, placeOf: PlaceText): string | null {
   const now = dayAndClock(net.now.scheduledAt);
   const nowFull = whenAndPlace(now.day, now.clock, placeOf(net.now));
   switch (net.kind) {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { changeLine, publishedLine, scheduleEmailWords } from '../../lib/league-schedule-email.ts';
+import { emailChangeLine, publishedLine, scheduleEmailWords } from '../../lib/league-schedule-email.ts';
 import { netChangeOf, type GameSnapshot, type HeldChange } from '../../lib/league-game-changes.ts';
 import { SCHEDULE_NOTICE_WORDS, reachedLine } from '../../lib/league-schedule-words.ts';
 
@@ -15,7 +15,7 @@ let n = 0;
 const row = (o: Pick<HeldChange, 'kind' | 'before' | 'after'>): HeldChange => ({
   id: `c${++n}`, gameId: 'g1', source: 'league', createdAt: `2027-06-01T00:00:${String(n).padStart(2, '0')}Z`, ...o,
 });
-const lineOf = (rows: HeldChange[], now: GameSnapshot) => changeLine(netChangeOf(rows, now)!, 'Orioles vs Twins', placeOf);
+const lineOf = (rows: HeldChange[], now: GameSnapshot) => emailChangeLine(netChangeOf(rows, now)!, 'Orioles vs Twins', placeOf);
 
 describe('a changed game\'s line in the families\' email', () => {
   it('a later time the same day: Now in full, Was names only the clock', () => {
@@ -50,7 +50,7 @@ describe('a changed game\'s line in the families\' email', () => {
 
   it('an added game reads Added; a game with no place keeps one period after its clock', () => {
     const bare = snap({ venueId: null, facilityId: null });
-    assert.equal(changeLine(netChangeOf([row({ kind: 'added', before: null, after: bare })], bare)!, 'Orioles vs Twins', () => ''),
+    assert.equal(emailChangeLine(netChangeOf([row({ kind: 'added', before: null, after: bare })], bare)!, 'Orioles vs Twins', () => ''),
       'Added: Orioles vs Twins, Thu, Jun 17, 6:00 p.m.');
   });
 

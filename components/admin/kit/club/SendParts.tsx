@@ -15,6 +15,7 @@ import type { EmailWords } from '@/lib/club-schedule-words';
 import { clubBand, platformLineWords, type ClubEmailFacts } from '@/lib/email-club-identity';
 import { BRAND_NAME, BRAND_NAME_HQ } from '@/lib/brand-mark';
 import { SEND_VIEW_WORDS } from '@/lib/families-words';
+import LoadingState from '@/components/shared/LoadingState';
 import { repKit } from './RepKit';
 import ck from './ClubKit.module.css';
 import s from './SendParts.module.css';
@@ -172,6 +173,27 @@ export function MailView({ from, to, onTo, subject, children }: {
       </div>
     </>
   );
+}
+
+/** A sample family's email, read from the server the first time "See the email" opens (Publish schedule, Changes to send). */
+export type EmailSample = { to: string; words: EmailWords };
+export function useEmailSample(previewUrl: string) {
+  const [sample, setSample] = useState<EmailSample | null>(null);
+  const [failed, setFailed] = useState(false);
+  async function load() {
+    if (sample) return;
+    setFailed(false);
+    const r = await fetch(previewUrl, { cache: 'no-store' }).catch(() => null);
+    const data = (r?.ok ? await r.json().catch(() => null) : null) as { sample?: EmailSample | null } | null;
+    if (data?.sample) setSample(data.sample); else setFailed(true);
+  }
+  return { sample, failed, load };
+}
+
+/** The email level's body: the sample as a mail app shows it, while it loads, or the sentence that says it didn't. */
+export function SampleMail({ state, failedText }: { state: { sample: EmailSample | null; failed: boolean }; failedText: string }) {
+  if (state.sample) return <MailView to={state.sample.to} subject={state.sample.words.subject}><EmailWordsSample w={state.sample.words} /></MailView>;
+  return state.failed ? <p className={repKit.formError}>{failedText}</p> : <LoadingState inline label="Loading the email…" />;
 }
 
 /** Who gets it, however many: a count, a search once the list is long, then a row each. Each row's `title` is what the search reads. */
