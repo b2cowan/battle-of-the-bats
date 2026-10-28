@@ -74,6 +74,7 @@ function computeTournamentStatus(
   pageEnabled: boolean,
   today: string,
   now: Date,
+  gamesWithheld = false,
 ): TournamentFollowStatus {
   const startDate = tournament.startDate ?? null;
   const endDate = tournament.endDate ?? null;
@@ -90,10 +91,10 @@ function computeTournamentStatus(
   const playoffsComplete = pageEnabled && isTournamentPlayoffsComplete(games, divisions);
   const eventEnded = !endDate || today >= endDate;
   const roundRobinComplete = !hasPlayoffGames && allGamesTerminal && eventEnded;
+  // Not finished on the divisions it shows while another division's schedule is held back (D1) — as the home.
   const isFinished =
     tournament.status === 'completed' ||
-    (playoffsComplete && noUnplayed) ||
-    roundRobinComplete;
+    (!gamesWithheld && ((playoffsComplete && noUnplayed) || roundRobinComplete));
 
   const completedLabel = endDate ? relativeDayLabel(endDate, today) : null;
 
@@ -216,6 +217,7 @@ export async function resolveTournamentStatuses(
       data.pageEnabled,
       today,
       now,
+      data.gamesWithheld === true,
     );
     out.set(key, { orgSlug, tournamentSlug, tournamentName: data.tournament.name, status });
   }

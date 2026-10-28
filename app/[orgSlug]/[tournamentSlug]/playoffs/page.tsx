@@ -9,9 +9,9 @@ import {
   getTeams,
   getDivisions,
   getVenues,
-  getStandings,
 } from '@/lib/db';
 import { toPublicTeam } from '@/lib/public-tournament-data';
+import { getPublicStandingsByDivision, onlyPublishedGames } from '@/lib/public-games';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { buildPlayoffPicture, type PlayoffStatCallout } from '@/lib/playoff-picture';
 import type { DivisionStandingRow } from '@/lib/tie-breakers';
@@ -77,23 +77,20 @@ export default async function PlayoffsPage({
   }
 
   const readOptions = { admin: true } as const;
-  const [allGames, allTeams, divisions, venues] = await Promise.all([
+  const [rawGames, allTeams, divisions, venues] = await Promise.all([
     getGames(tournament.id, readOptions),
     getTeams(tournament.id, readOptions),
     getDivisions(tournament.id, readOptions),
     getVenues(tournament.id, { ...readOptions, includeFacilities: true }),
   ]);
+  // Only published divisions' games — an unpublished schedule never reaches the public bracket (D1).
+  const allGames = onlyPublishedGames(rawGames, divisions);
   const teams = allTeams
     .filter(t => t.status === 'accepted')
     .map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true));
 
-  const standingsEntries = await Promise.all(
-    divisions.map(async d => [
-      d.id,
-      await getStandings(tournament.id, d.id, d.playoffConfig, readOptions, tournament.settings),
-    ] as const),
-  );
-  const standingsByDivision = Object.fromEntries(standingsEntries) as Record<string, DivisionStandingRow[]>;
+  const standingsByDivision: Record<string, DivisionStandingRow[]> =
+    await getPublicStandingsByDivision(tournament, divisions, { games: allGames, teams: allTeams });
 
   const getTeamName = (id?: string | null) => (id ? teams.find(t => t.id === id)?.name ?? 'TBD' : 'TBD');
   const picture = buildPlayoffPicture(

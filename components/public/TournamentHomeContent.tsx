@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye, Clock, CheckCircle, Crown } from 'lucide-react';
-import { getAnnouncements, getGames, getTeams, getDivisions, getVenues, getStandings, resolveTournamentContactEmail } from '@/lib/db';
+import { getAnnouncements, getTeams, getDivisions, getVenues, getStandings, resolveTournamentContactEmail } from '@/lib/db';
+import { readPublicGames, getPublicStandingsByDivision } from '@/lib/public-games';
 import type { Game, Organization, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { isPublicPageEnabled } from '@/lib/public-pages';
@@ -48,7 +49,9 @@ export default async function TournamentHomeContent({
   const allAnnouncements = await getAnnouncements(tournament.id, readOptions);
   const announcements = allAnnouncements.slice(0, 3);
 
-  const allGames = await getGames(tournament.id, readOptions);
+  // Only published divisions' games — an unpublished schedule never reaches this page or its client cards (D1).
+  const divisions = await getDivisions(tournament.id, readOptions);
+  const { games: allGames, withheld: scheduleWithheld } = await readPublicGames(tournament.id, divisions);
   const now = tournamentToday();
   const sortedGames = [...allGames].sort((a, b) => {
     if (a.date !== b.date) return (a.date || '').localeCompare(b.date || '');
@@ -62,7 +65,6 @@ export default async function TournamentHomeContent({
   // Sanitize before any of these rows reach a client component (MyTournamentCard) —
   // see J6-001 / toPublicTeam. allTeams stays raw for server-only registration math.
   const teams     = allTeams.filter(team => team.status === 'accepted').map(team => toPublicTeam(team, tournament.coachNamesShowOnPublic === true));
-  const divisions = await getDivisions(tournament.id, readOptions);
   const venues  = await getVenues(tournament.id, { ...readOptions, includeFacilities: true });
   const activeRegistrations = allTeams.filter(team => team.status !== 'rejected');
 
@@ -89,12 +91,7 @@ export default async function TournamentHomeContent({
   // fallback skipped both (J1-045). Returns null when the organizer hid it.
   const contactEmail = await resolveTournamentContactEmail(tournament.id, org.contactEmail ?? null, 'public');
   const standingsEntries = showStandingsPage
-    ? await Promise.all(
-        divisions.map(async division => [
-          division.id,
-          await getStandings(tournament.id, division.id, division.playoffConfig, readOptions, tournament.settings),
-        ] as const)
-      )
+    ? Object.entries(await getPublicStandingsByDivision(tournament, divisions, { games: allGames, teams: allTeams }))
     : [];
   const standingsByDivision = new Map(standingsEntries);
   const previewLabel = tournament.status === 'draft'
@@ -147,10 +144,10 @@ export default async function TournamentHomeContent({
   // show the finished experience that day, not only the day after.
   const eventEnded = !endDate || now >= endDate;
   const roundRobinComplete = !hasPlayoffGames && allGamesTerminal && eventEnded;
+  // An event still holding a division's schedule back is not finished on the strength of the divisions it shows (D1).
   const isFinished =
     isCompletedTournament ||
-    (playoffsComplete && noUnplayedGames) ||
-    roundRobinComplete;
+    (!scheduleWithheld && ((playoffsComplete && noUnplayedGames) || roundRobinComplete));
 
   const playoffsSet =
     hasPlayoffGames &&

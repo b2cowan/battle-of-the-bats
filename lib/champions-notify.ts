@@ -16,6 +16,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { notify } from './notify';
 import { notifyFansForChampions } from './fan-notify';
 import { deriveChampions, isTournamentPlayoffsComplete } from './champions';
+import { onlyPublishedGames } from './public-games';
 import type { Game, Division, GameStatus } from './types';
 
 /** Map the minimal snake_case columns the champions helpers read into the Game shape. */
@@ -49,19 +50,32 @@ export async function announceChampionsIfComplete(gameId: string): Promise<void>
       .maybeSingle();
     if (!g || g.is_playoff !== true) return;
     if (g.status !== 'completed' && g.status !== 'forfeit') return;
-    const tournamentId = g.tournament_id as string;
+    await announceChampionsForTournament(g.tournament_id as string, g.score_submitted_by_user_id ?? null);
+  } catch (err) {
+    console.error('[champions-notify] announceChampionsIfComplete error:', err);
+  }
+}
 
+/**
+ * The tournament-level half: announce when the whole playoffs are complete AND every game is one families can see
+ * (Stage 0 · D1). While a division's schedule is held back nothing is claimed — the crowned stamp makes the public
+ * site read finished, and the headline could name a champion families cannot see — so publishing that division asks
+ * again (the divisions route's set-visibility). `excludeUserId` is the scorer, who needs no bell for their own score.
+ */
+export async function announceChampionsForTournament(tournamentId: string, excludeUserId: string | null = null): Promise<void> {
+  try {
     // 2. Full playoff picture for the tournament (games + divisions + team names).
     const [gameRes, divRes, teamRes] = await Promise.all([
       supabaseAdmin
         .from('games')
         .select('is_playoff, division_id, bracket_code, bracket_id, bracket_label, home_team_id, away_team_id, home_score, away_score, status')
         .eq('tournament_id', tournamentId),
-      supabaseAdmin.from('divisions').select('id, name').eq('tournament_id', tournamentId),
+      supabaseAdmin.from('divisions').select('id, name, schedule_visibility').eq('tournament_id', tournamentId),
       supabaseAdmin.from('teams').select('id, name').eq('tournament_id', tournamentId),
     ]);
     const games = (gameRes.data ?? []).map(mapGameRow);
-    const divisions = (divRes.data ?? []).map(d => ({ id: d.id, name: d.name } as Division));
+    const divisions = (divRes.data ?? []).map(d => ({ id: d.id, name: d.name, scheduleVisibility: d.schedule_visibility } as Division));
+    if (onlyPublishedGames(games, divisions).length !== games.length) return;
     if (!isTournamentPlayoffsComplete(games, divisions)) return;
 
     // 3. Fire once — atomic NULL → now() claim. Only the winning write announces.
@@ -97,11 +111,11 @@ export async function announceChampionsIfComplete(gameId: string): Promise<void>
       title: '🏆 Champions crowned',
       body: headline ? `${headline} — see the final results` : 'The playoffs are complete — see the final results.',
       link,
-      excludeUserIds: g.score_submitted_by_user_id ? [g.score_submitted_by_user_id] : [],
+      excludeUserIds: excludeUserId ? [excludeUserId] : [],
     }).catch(console.error);
     // Anonymous fans following any team in the tournament (Tournament Plus+, gated inside).
     notifyFansForChampions(tournamentId, headline).catch(console.error);
   } catch (err) {
-    console.error('[champions-notify] announceChampionsIfComplete error:', err);
+    console.error('[champions-notify] announceChampionsForTournament error:', err);
   }
 }

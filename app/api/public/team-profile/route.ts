@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getOrganizationBySlug, getPublicTournamentBySlug, getTeams, getDivisions, getGames, getVenues } from '@/lib/db';
 import { isPublicPageEnabled } from '@/lib/public-pages';
+import { onlyPublishedGames } from '@/lib/public-games';
 import { computeTournamentStandings } from '@/lib/tie-breakers';
 import type { Game } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -37,12 +38,14 @@ export const GET = withObservability(async (req: Request) => {
   const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
   if (!tournament) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const [teams, divisions, games, venues] = await Promise.all([
+  const [teams, divisions, rawGames, venues] = await Promise.all([
     getTeams(tournament.id, { admin: true }),
     getDivisions(tournament.id, { admin: true }),
     getGames(tournament.id, { admin: true }),
     getVenues(tournament.id, { admin: true, includeFacilities: true }),
   ]);
+  // Each game by its OWN division's publish state too (D1): a crossover game in an unpublished division stays out.
+  const games = onlyPublishedGames(rawGames, divisions);
 
   const team = teams.find(t => t.id === teamId);
   if (!team || team.status !== 'accepted') {

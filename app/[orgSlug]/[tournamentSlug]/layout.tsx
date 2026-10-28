@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
 import { hasSupabaseSessionCookie } from '@/lib/supabase-server';
-import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams, hasPlayoffGames } from '@/lib/db';
+import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
+import { hasPublicPlayoffGames } from '@/lib/public-games';
 import { hasPlayoffPlan } from '@/lib/playoff-plan';
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { getRegistrationState } from '@/lib/registration-state';
@@ -193,10 +194,11 @@ export default async function TournamentLayout({
   // round-trip into two on the layout that wraps every public tournament page. The only added cost
   // is one query on the tournaments that hide their register page, which previously fetched neither.
   const bracketVisible = isPublicBracketVisible(tournament);
+  // A playoff game counts only in a published division (D1): an unpublished bracket's games never surface the tab.
   const [divisions, regTeams, playoffGamesExist] = await Promise.all([
     getDivisions(tournament.id, { admin: true }),
     registerHidden ? Promise.resolve(null) : getTeams(tournament.id, { admin: true }),
-    bracketVisible ? hasPlayoffGames(tournament.id) : Promise.resolve(false),
+    bracketVisible ? hasPublicPlayoffGames(tournament.id) : Promise.resolve(false),
   ]);
 
   const registerCta: 'register' | 'waitlist' | null = regTeams

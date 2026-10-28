@@ -13,6 +13,7 @@ import {
   resolveTournamentContactEmail,
 } from './db';
 import { hasPlanFeature } from './plan-features';
+import { getPublicStandingsByDivision, onlyPublishedGames } from './public-games';
 import { isPublicPageEnabled, withInviteOnlyPages, type PublicPageKey } from './public-pages';
 import { runsInviteOnlyEvents } from './invite-only-event';
 import type { Announcement, Division, Venue, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
@@ -64,6 +65,9 @@ export type PublicTournamentPageData = {
    *  consumers treat undefined as an empty list. */
   announcements?: Announcement[];
   standingsByDivision: Record<string, Awaited<ReturnType<typeof getStandings>>>;
+  /** True while the organizer holds some division's games back (Stage 0 · D1). Only the yes/no leaves the server —
+   *  it keeps a reader from calling the event finished on the divisions it can show. Set by the game sections. */
+  gamesWithheld?: boolean;
   /** Whether the org's plan includes fan push score alerts (Tournament Plus+).
    *  Optional so manual payload constructors (e.g. admin preview) don't have to
    *  set it; the resolver always populates it and consumers treat undefined as false. */
@@ -85,22 +89,6 @@ function publicOrganization(org: Organization, tournament?: Tournament | null): 
     contactEmail: org.contactEmail,
     requireScoreFinalization: tournament?.requireScoreFinalization ?? org.requireScoreFinalization,
   };
-}
-
-/** Canonical per-division standings (full tie-break chain). Shared by the standings
- *  AND teams sections so the Teams page ranks/orders cards from the same engine as
- *  the standings table — no divergent local re-compute (J6-032). */
-async function computeStandingsByDivision(
-  divisions: Division[],
-  tournament: Tournament,
-): Promise<Record<string, Awaited<ReturnType<typeof getStandings>>>> {
-  const entries = await Promise.all(
-    divisions.map(async group => [
-      group.id,
-      await getStandings(tournament.id, group.id, group.playoffConfig, { admin: true }, tournament.settings),
-    ] as const),
-  );
-  return Object.fromEntries(entries);
 }
 
 async function getPublicContext(orgSlug: string, tournamentSlug: string | null) {
@@ -171,11 +159,13 @@ export async function getPublicTournamentPageData(
   // read downstream, so skip the schedule section's venues / divisions / announcements fetches
   // — this path is polled, so those extra round-trips would repeat every tick.
   if (section === 'scores') {
-    const [games, teams] = await Promise.all([
+    const [games, teams, divisions] = await Promise.all([
       getGames(tournament.id, { admin: true }),
       getTeams(tournament.id, { admin: true }),
+      getDivisions(tournament.id, { admin: true }),
     ]);
-    return { ...base, games, teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)) };
+    const shown = onlyPublishedGames(games, divisions);
+    return { ...base, games: shown, gamesWithheld: shown.length !== games.length, teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)) };
   }
 
   if (section === 'schedule') {
@@ -186,7 +176,7 @@ export async function getPublicTournamentPageData(
       getDivisions(tournament.id, { admin: true }),
       getAnnouncements(tournament.id, { admin: true }),
     ]);
-    return { ...base, games, teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)), venues, divisions, announcements };
+    return { ...base, games: onlyPublishedGames(games, divisions), teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)), venues, divisions, announcements };
   }
 
   if (section === 'teams') {
@@ -199,8 +189,8 @@ export async function getPublicTournamentPageData(
       ...base,
       teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
       divisions,
-      games,
-      standingsByDivision: await computeStandingsByDivision(divisions, tournament),
+      games: onlyPublishedGames(games, divisions),
+      standingsByDivision: await getPublicStandingsByDivision(tournament, divisions, { games, teams }),
     };
   }
 
@@ -214,10 +204,10 @@ export async function getPublicTournamentPageData(
     return {
       ...base,
       divisions,
-      games,
+      games: onlyPublishedGames(games, divisions),
       teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
       venues,
-      standingsByDivision: await computeStandingsByDivision(divisions, tournament),
+      standingsByDivision: await getPublicStandingsByDivision(tournament, divisions, { games, teams }),
     };
   }
 

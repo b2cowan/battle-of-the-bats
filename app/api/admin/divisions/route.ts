@@ -3,6 +3,7 @@ import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { coinTossKey } from '@/lib/tie-breakers';
 import { announcePlayoffsSetIfReady, fillPlayoffTeamsThenAnnounce } from '@/lib/playoffs-set';
+import { announceChampionsForTournament } from '@/lib/champions-notify';
 import { withObservability } from '@/lib/observability';
 import { ORG_REFERENCE_REFUSALS, memberInOrg } from '@/lib/org-references';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
@@ -430,6 +431,8 @@ export const POST = withObservability(async (req: Request) => {
         if (error) throw error;
         // Publishing a division whose playoff teams are known is the moment "Playoffs are set" is true (P4).
         if (vis === 'published') await announcePlayoffsSetIfReady(agId, ctx.user.id);
+        // The champions moment waits while any division is held back (Stage 0 · D1), so publishing asks again.
+        if (vis === 'published' && ag) await announceChampionsForTournament(ag.tournament_id, ctx.user.id);
       } else if (tId) {
         const denied = scopeGuard(ctx, tId);
         if (denied) return denied;
@@ -439,6 +442,7 @@ export const POST = withObservability(async (req: Request) => {
         const { data: published, error } = await supabaseAdmin.from('divisions').update({ schedule_visibility: vis }).eq('tournament_id', tId).select('id');
         if (error) throw error;
         if (vis === 'published') await Promise.all((published ?? []).map(d => announcePlayoffsSetIfReady(d.id as string, ctx.user.id)));
+        if (vis === 'published') await announceChampionsForTournament(tId, ctx.user.id);
       } else {
         throw new Error('id or tournamentId required');
       }

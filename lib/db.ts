@@ -897,13 +897,7 @@ export async function getTournamentRegistrationFieldAnswersForRegistrations(
 }
 
 // --- Games ---
-/** Does this tournament have a playoff game? One row, for the public site's Playoffs tab (Stage 3 addendum, A63: a
- *  bracket built by hand saves no playoff plan, and it is still a bracket a fan should reach). */
-export async function hasPlayoffGames(tournamentId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin.from('games').select('id').eq('tournament_id', tournamentId).eq('is_playoff', true).limit(1);
-  return (data?.length ?? 0) > 0;
-}
-
+// A PUBLIC read of a tournament's games goes through lib/public-games.ts (the publish gate, D1), never straight here.
 export async function getGames(tournamentId?: string, options: ReadOptions = {}): Promise<Game[]> {
   const client = options.admin ? supabaseAdmin : supabase;
   let query = client.from('games').select('*').order('game_date', { ascending: true }).order('game_time', { ascending: true });

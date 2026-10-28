@@ -6,7 +6,6 @@ import {
   getGames,
   getResources,
   getRules,
-  getStandings,
   getTeams,
   getTournamentRegistrationFields,
   resolveTournamentContactEmail,
@@ -15,6 +14,7 @@ import { getTournamentPreviewContext } from '@/lib/tournament-preview';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from '@/lib/public-pages';
 import { toPublicTeam, type PublicTournamentPageData } from '@/lib/public-tournament-data';
+import { getPublicStandingsByDivision, onlyPublishedGames } from '@/lib/public-games';
 import ScheduleContent from '@/components/public/ScheduleContent';
 import StandingsContent from '@/components/public/StandingsContent';
 import TeamsContent from '@/components/public/TeamsContent';
@@ -44,7 +44,8 @@ export default async function TournamentPreviewSectionPage({
 
   // ── Schedule ──────────────────────────────────────────────────────────────
   if (section === 'schedule') {
-    const [games, teams, divisions, venues] = await Promise.all([
+    // The preview is what families see: only published divisions' games (D1).
+    const [rawGames, teams, divisions, venues] = await Promise.all([
       getGames(tournament.id, readOptions),
       getTeams(tournament.id, readOptions),
       getDivisions(tournament.id, readOptions),
@@ -62,7 +63,7 @@ export default async function TournamentPreviewSectionPage({
       pageEnabled: true,
       divisions,
       venues,
-      games,
+      games: onlyPublishedGames(rawGames, divisions),
       resources: [],
       rules: [],
       teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
@@ -82,12 +83,7 @@ export default async function TournamentPreviewSectionPage({
   // ── Standings ─────────────────────────────────────────────────────────────
   if (section === 'standings') {
     const divisions = await getDivisions(tournament.id, readOptions);
-    const standingsEntries = await Promise.all(
-      divisions.map(async group => [
-        group.id,
-        await getStandings(tournament.id, group.id, group.playoffConfig, readOptions, tournament.settings),
-      ] as const),
-    );
+    const standingsByDivision = await getPublicStandingsByDivision(tournament, divisions);
     const initialData: PublicTournamentPageData = {
       organization: {
         id: org.id, name: org.name, slug: org.slug,
@@ -105,7 +101,7 @@ export default async function TournamentPreviewSectionPage({
       rules: [],
       teams: [],
       registrationFields: [],
-      standingsByDivision: Object.fromEntries(standingsEntries),
+      standingsByDivision,
     };
     return (
       <StandingsContent

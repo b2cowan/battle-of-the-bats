@@ -1163,10 +1163,12 @@ async function loadAcceptedTournamentGameRows(
     { data: games, error: gamesError },
     { data: acceptedTeams, error: teamsError },
   ] = await Promise.all([
-    supabaseAdmin.from('divisions').select('id, schedule_visibility').in('id', divisionIds),
+    // Every division of these tournaments: a game is shown by its OWN division's publish state, not only the team's
+    // (a moved team's old games and a crossover game keep their division — Stage 0 · D1).
+    supabaseAdmin.from('divisions').select('id, schedule_visibility').in('tournament_id', tournamentIds),
     supabaseAdmin
       .from('games')
-      .select('id, game_date, game_time, location, home_team_id, away_team_id, home_score, away_score, status, tournament_id, home_placeholder, away_placeholder, duration_minutes')
+      .select('id, game_date, game_time, location, home_team_id, away_team_id, home_score, away_score, status, tournament_id, division_id, home_placeholder, away_placeholder, duration_minutes')
       .in('tournament_id', tournamentIds)
       .or(`home_team_id.in.(${registrationIdList}),away_team_id.in.(${registrationIdList})`)
       .order('game_date', { ascending: true })
@@ -1189,9 +1191,11 @@ async function loadAcceptedTournamentGameRows(
   if (entries.length === 0) return null;
   const registrationIdSet = new Set(entries.map(e => e.registration.id));
 
-  const rows = ((games ?? []) as AcceptedGameRow[]).filter(g =>
-    (g.home_team_id !== null && registrationIdSet.has(g.home_team_id)) ||
-    (g.away_team_id !== null && registrationIdSet.has(g.away_team_id)),
+  const rows = ((games ?? []) as Array<AcceptedGameRow & { division_id: string | null }>).filter(g =>
+    g.division_id !== null && publishedDivisions.has(g.division_id) && (
+      (g.home_team_id !== null && registrationIdSet.has(g.home_team_id)) ||
+      (g.away_team_id !== null && registrationIdSet.has(g.away_team_id))
+    ),
   );
   const teamNameById = new Map(
     ((acceptedTeams ?? []) as Array<{ id: string; name: string }>).map(t => [t.id, t.name] as const),

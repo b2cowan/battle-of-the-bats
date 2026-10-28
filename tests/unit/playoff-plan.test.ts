@@ -113,6 +113,7 @@ describe('the public Playoffs tab: a saved plan or a playoff game (A63 — no lo
     const s = src('app/[orgSlug]/[tournamentSlug]/layout.tsx');
     assert.match(s, /\(divisions\.some\(d => hasPlayoffPlan\(d\.playoffConfig\)\) \|\| playoffGamesExist\)/);
     assert.doesNotMatch(s, /d\.playoffConfig != null/);
-    assert.match(s, /bracketVisible \? hasPlayoffGames\(tournament\.id\) : Promise\.resolve\(false\)/, 'raced with the other reads');
+    // A playoff game counts only in a published division (Stage 0 · D1) — still one row, still raced.
+    assert.match(s, /bracketVisible \? hasPublicPlayoffGames\(tournament\.id\) : Promise\.resolve\(false\)/, 'raced with the other reads');
   });
 });

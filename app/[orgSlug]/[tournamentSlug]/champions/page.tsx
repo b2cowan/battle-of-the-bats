@@ -8,9 +8,9 @@ import {
   getGames,
   getTeams,
   getDivisions,
-  getStandings,
 } from '@/lib/db';
 import { toPublicTeam } from '@/lib/public-tournament-data';
+import { getPublicStandingsByDivision, onlyPublishedGames } from '@/lib/public-games';
 import { deriveTierChampions, isTournamentPlayoffsComplete, tierBadgeLabel } from '@/lib/champions';
 import type { DivisionStandingRow } from '@/lib/tie-breakers';
 import { isPublicPageEnabled } from '@/lib/public-pages';
@@ -59,11 +59,13 @@ export default async function ChampionsPage({
   }
 
   const readOptions = { admin: true } as const;
-  const [allGames, allTeams, divisions] = await Promise.all([
+  const [rawGames, allTeams, divisions] = await Promise.all([
     getGames(tournament.id, readOptions),
     getTeams(tournament.id, readOptions),
     getDivisions(tournament.id, readOptions),
   ]);
+  // Only published divisions' games — no champion is crowned from an unpublished schedule (D1).
+  const allGames = onlyPublishedGames(rawGames, divisions);
   const teams = allTeams
     .filter(t => t.status === 'accepted')
     .map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true));
@@ -75,7 +77,8 @@ export default async function ChampionsPage({
   // Only crown once the WHOLE tournament's playoffs are complete — same gate as the
   // home hero and the one-time announcement. This stops the recap from surfacing a
   // winner from a final that's been score-entered but not yet finalized ('submitted').
-  const playoffsComplete = isTournamentPlayoffsComplete(allGames, sortedDivisions);
+  // And never while a division's schedule is still held back (D1): its final is not one families can see.
+  const playoffsComplete = allGames.length === rawGames.length && isTournamentPlayoffsComplete(allGames, sortedDivisions);
 
   if (!playoffsComplete || tierChampions.length === 0) {
     return (
@@ -99,13 +102,8 @@ export default async function ChampionsPage({
   }
 
   // Final standings per division.
-  const standingsEntries = await Promise.all(
-    sortedDivisions.map(async d => [
-      d.id,
-      await getStandings(tournament.id, d.id, d.playoffConfig, readOptions, tournament.settings),
-    ] as const),
-  );
-  const standingsByDivision = Object.fromEntries(standingsEntries) as Record<string, DivisionStandingRow[]>;
+  const standingsByDivision: Record<string, DivisionStandingRow[]> =
+    await getPublicStandingsByDivision(tournament, sortedDivisions, { games: allGames, teams: allTeams });
 
   const multiDivision = sortedDivisions.length > 1;
   const topChampions = tierChampions.filter(c => c.isTopTier);

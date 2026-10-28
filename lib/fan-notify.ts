@@ -18,6 +18,7 @@
  * covers the scorekeeper, official, and admin score paths in one place.
  */
 import { supabaseAdmin } from './supabase-admin';
+import { isDivisionPublishedById } from './public-games';
 import { effectiveOrgFactsForId } from './entitlement-grants';
 import { sendWebPush } from './web-push';
 import { hasPlanFeature } from './plan-features';
@@ -275,7 +276,7 @@ export async function notifyFansForGame(gameId: string, status: GameStatus): Pro
     // 1. The game (teams + scores + stage).
     const { data: game } = await supabaseAdmin
       .from('games')
-      .select('home_team_id, away_team_id, home_score, away_score, is_playoff, bracket_code, tournament_id, score_submission_source')
+      .select('home_team_id, away_team_id, home_score, away_score, is_playoff, bracket_code, tournament_id, division_id, score_submission_source')
       .eq('id', gameId)
       .maybeSingle();
     if (!game || game.home_score == null || game.away_score == null) return;
@@ -284,6 +285,8 @@ export async function notifyFansForGame(gameId: string, status: GameStatus): Pro
     // game (J6-049 review). The terminal forfeit transition is already suppressed
     // upstream (notifyFansForGame is only called with 'submitted'/'completed').
     if (game.score_submission_source === 'forfeit') return;
+    // A score from a schedule the organizer has not published reaches no one (Stage 0 · D1, lib/public-games.ts).
+    if (!(await isDivisionPublishedById(game.division_id))) return;
 
     // 2. Tournament + org + plan gate.
     const ctx = await fanPushContext(game.tournament_id);

@@ -190,6 +190,8 @@ for (let d = 0; d < DEMO_DIVISIONS.length; d++) {
   die('insert division', (await db.from('divisions').insert({
     id: divisionId, tournament_id: tournamentId, name: division.name,
     display_order: d, settings: {},
+    // Published: the public pages show a division's games only once its schedule is published.
+    schedule_visibility: 'published',
     playoff_config: division.hasBracket ? DEMO_PLAYOFF_CONFIG : null,
   })).error);
 
@@ -396,6 +398,7 @@ for (let d = 0; d < OPENER_DIVISIONS.length; d++) {
   die('insert opener division', (await db.from('divisions').insert({
     id: divisionId, tournament_id: openerId, name: division.name,
     display_order: d, settings: {},
+    schedule_visibility: 'published',
     playoff_config: division.hasBracket ? OPENER_PLAYOFF_CONFIG : null,
   })).error);
   for (const team of division.teams) {
