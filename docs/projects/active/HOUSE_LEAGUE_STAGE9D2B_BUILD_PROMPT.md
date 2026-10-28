@@ -128,8 +128,20 @@
     sub-lines, the league admins' bell, `undoClub`, `changesHintLeagueGames`, `changesStatement`'s divisions clause.
   - Known, not mine: `verify:changed`'s ESLint step still crashes on the shared config (react-hooks plugin); the other red
     gates (admin type, index coverage, org-slug callers, css selectors, root files, schema parity 409/410) are other files.
-- **▶ NEXT: Part 6 ("Adjust the rules", cuttable — 9d2b·C) then Part 7 (checks, guards, /review, /simplify, /docs, walks),
-  in a FRESH session.** The dev server needs a restart before any browser check (new files + migs 410, 411).
+- **Part 7 — COMMITTED `cf963f3e6` (review fixes + mig 413) and `5783c7f98` (help + PM brief) 2026-10-28** (plan §9 has the full
+  entry). Gate green (tests, typecheck, spelling, dictionary, snapshot). `/review` high, four lenses over Parts 1, 2, 3, 5, 6:
+  no Critical; nine things fixed (Undo restores the division-time link and reads under the lock — **mig 413**, dev only,
+  MANUAL_PROD_STEPS pending; the rules save no longer deadlocks with Publish; a revived game is placed again; a failed division
+  read no longer reads as a draft; a team from another division refused; a refused press re-reads; end-time-only and first-date
+  emails; games read before held rows; mig 409's backfill runs once). Proof `scripts/house-league-9d2b-part7-check.sql` T1–T5.
+  Help rewritten. Walks **§420** (editing + Changes to send), **§421** (the coach's Schedule + the club's time), **§422** (the
+  Rules door) written and published, with §418, owed.
+  - **Not done:** the HTTP lifecycle probe (`.probe/9d2b-p7/routes.mjs` written, UNRUN — needs a dev login the probe may use);
+    `/simplify` over Parts 1–3, 5, 6; `check:layout --changed`; the dev server restart (new files, migs 410–413).
+  - **[marketing] words to settle:** "Date set: …" / "Date to come: …" (`SCHEDULE_EMAIL_WORDS.dated/undated`); a club Send of only
+    games reads "Who is told · 0 people" / "Send to 0 people"; the Part 5 tagged words.
+- **▶ NEXT: the owner walks §418, §420, §421, §422; then `/marketing`'s one pass on the tagged words; then 9d-3 / 9e.** The dev
+  server needs a restart before any browser check.
 - Part 3's list, as it was handed over (all done in `b508c95e9`):
   (1) `gameWindowDoors(status, published)`: Delete only before, Cancel only after; DELETE route refuses a published
   division's game. (2) PATCH stale-window refusal: the body carries `seen: {status, updatedAt}`; update with

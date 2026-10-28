@@ -1130,3 +1130,39 @@ open it, and the menu's top level is Stage 13's.
   preview with games (needs an owner session — Part 7's e2e). **[marketing] words to settle:** the draft k5 line, the games row's
   taken-back line and sub-lines other than the settled move, the bell, `undoClub`, `changesHintLeagueGames`, `changesStatement`'s
   divisions clause.
+- 2026-10-28 — **9d-2b Part 7 (checks, review, docs, walks), committed `cf963f3e6` (fixes) and `5783c7f98` (help + PM brief).**
+  **Gate:** the full unit suite (11,5xx at last count), typecheck, spelling, dictionary and snapshot green; the other red gates (css selectors, org-slug
+  callers, index coverage, schema parity 409–413 dev-only) are other sessions' files or the known dev-only baseline.
+  **`/review` (high; four lenses over Parts 1, 2, 3, 5, 6 — Part 4 had its own):** no Critical; routes and tenancy held on every
+  route. **Fixed:** (1) Undo restored date and place but not the game's link to the division's time — **mig 413** (dev only,
+  MANUAL_PROD_STEPS pending, after 409/411/412): the snapshot carries `slotUseId`, Undo restores it (an older row without the key
+  leaves the link), and Undo reads the game again under the division lock so a score saved meanwhile is not undone; (2)
+  `league_season_rules_save` locked the season `FOR UPDATE` and could deadlock with Publish (and stalled every game insert) —
+  `FOR NO KEY UPDATE`; (3) a league admin on the club's schedule could postpone a game to any time then put it back on, off the
+  division's time — a revive is placed like a move; (4) the game route's division read failed open (a published division read as a
+  draft) — it throws; (5) a game could pair a team from another division — refused; (6) a 409 "changed" on the game window,
+  Changes to send and Publish never refreshed what the next press carried — they re-read, the game window stays busy until the
+  season is read again, and Undo no longer reads "Sending…"; (7) an end-time-only edit counted as news with no line to email, and a
+  game gaining or losing its date had no line — end-only is not news; **new words "Date set: …" / "Date to come: …" for /marketing**;
+  (8) the public page and the coach read games BEFORE held rows (a change landing between could show an unsent date);
+  (9) mig 409's backfill is guarded to the run that adds the column (a re-run could have published a draft). Proof:
+  `scripts/house-league-9d2b-part7-check.sql` T1–T5 (dev, rolled back) + guard and reducer tests.
+  **Left, recorded (Low / Advisory):** a Publish racing a single-game add can leave that game with no change row (single-game
+  writers take no division lock); a game deleted by a team cascade is invisible to Changes to send (the app refuses a team delete
+  with games, check-then-delete); a past, still-"scheduled" game can be moved/postponed by a club send whose plan was made before
+  it passed; undo/club-apply lock order differs (a cascade re-key vs Undo) — a deadlock Postgres aborts, not a hang;
+  `league_games_generate_save` does not validate the slot or venue ids it is handed; `p_news` is trusted from the caller (only
+  membership in the held set is checked); an `already` Send for rows undone meanwhile reads "already" not "changed"; a "sending" row
+  older than 10 minutes can be claimed again on a very slow send; GET/POST bodies on the schedule routes have thin type checks
+  (500s not leaks); a registrar's schedule GET returns draft divisions' games (reads what the season shows its coach list, not
+  what families see — decide whether a reader should be limited to published divisions); Publish's 409 "already" does not close the
+  window or tell the page (the header stays until reload); the Rules door resets typed rules when collapsed; the saved rules send
+  every division's games-per-team (a concurrent admin's change to another division is overwritten).
+  **Not done, said out loud:** the HTTP lifecycle probe (`.probe/9d2b-p7/routes.mjs`, written, UNRUN — no dev login for the club
+  signs in with the shared dev password, and reading the owner's stored password was refused; give the owner login the dev
+  password or run it with the owner's own env); `/simplify` over Parts 1–3, 5, 6 (Part 4 had its own); `check:layout --changed`;
+  the dev server restart (new files, migs 410–413). **Help** rewritten (`lib/help-content/house-league.tsx`). **Walks** written and
+  published: §420 editing a published game and Changes to send, §421 the coach's Schedule and the club's time, §422 the Rules
+  door (with §418 the families' emails, these are the four walks of 9d-2b; Publish itself is walked inside §418 and §420).
+  **Found by the §421 author:** a club Send with only game rows reads "Who is told · 0 people" and "Send to 0 people" (the send
+  still goes) — a [marketing] words call. PM brief: `HOUSE_LEAGUE_STAGE9D2B_PM_BRIEF.md`.
