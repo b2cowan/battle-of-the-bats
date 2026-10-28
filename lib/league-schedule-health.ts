@@ -25,14 +25,25 @@
  * carry the rest, byes least because a bye two weeks running is a team waiting, not a night gone wrong. A season with one
  * of the first two badly wrong falls below Healthy on that alone. Bands are the tournament's: 85 Healthy, 70 Review, below
  * Needs work.
- * Movement is dropped (9d2·4): a house-league team does not travel between games in a day.
+ * Movement is dropped (9d2·4): a house-league team does not travel between games in a day. "Places" stays in team detail
+ * as a fact, and so does "Prime time" (each team's share of its division's rarest time, as the generator shares it out);
+ * neither costs a point.
+ *
+ * ⚖ THE RULES ARE SAID, NOT ADJUSTED, IN 9d-2a (owner 2026-10-27, step 6). No column holds a season's rules, and 9d-2a adds
+ * no migration, so the window's foot says the three rules the score uses and has no "Adjust the rules" door; the door and
+ * its save arrive with 9d-2b's migrations. Games per team is each division's own plan (above), said per division.
  */
-import { byesBackToBack, twiceInADay, type DatedGame } from './league-game-generator.ts';
+import {
+  byesBackToBack, GENERATE_WORDS, primeTimeWords, shortDayWords, twiceInADay, type DatedGame, type SlotTime,
+} from './league-game-generator.ts';
 import {
   bookingKey, findLeagueBookingConflicts, isBlockingConflict, type LeagueBooking,
 } from './league-schedule-conflict.ts';
-import { mondayOfDay, orgDayKey } from './timezone.ts';
+import { formatStoredDate, mondayOfDay, orgDayKey, utcToZonedInputs } from './timezone.ts';
+import { formatTime, pluralize } from './utils.ts';
+import { weekdayOf } from './permit-time.ts';
 import type { ScheduleHealthTone } from './schedule-metrics.ts';
+import type { LeagueGame, LeaguePractice } from './types.ts';
 
 /** A `league_games` row as health reads a game. Typed `Required` on purpose (as `scheduleMetricGameFromRow`): a field health
  *  learns to read fails the build here until the server passes it too. */
@@ -84,6 +95,20 @@ export function leagueHealthPracticeFromRow(row: {
   };
 }
 
+/** The page's season as health reads it (the page holds every division's games and practices already; no second read). */
+export function leagueHealthGameOf(g: LeagueGame): Required<LeagueHealthGame> {
+  return {
+    id: g.id, divisionId: g.divisionId, homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId, scheduledAt: g.scheduledAt,
+    endsAt: g.endsAt, status: g.status, venueId: g.orgVenueId, facilityId: g.orgVenueFacilityId, location: g.location,
+  };
+}
+export function leagueHealthPracticeOf(p: LeaguePractice): Required<LeagueHealthPractice> {
+  return {
+    id: p.id, divisionId: p.divisionId, teamId: p.teamId, scheduledAt: p.scheduledAt, endsAt: p.endsAt, status: p.status,
+    venueId: p.orgVenueId, facilityId: p.orgVenueFacilityId, location: p.location, clubSlotId: p.clubScheduleSlotId,
+  };
+}
+
 /** The season's rules (frame d3). No column holds them yet, so these are the rules 9d2·4 drew. */
 export interface LeagueHealthRules { twiceInADayAllowed: boolean; homeAwayTolerance: number }
 export const DEFAULT_LEAGUE_HEALTH_RULES: LeagueHealthRules = { twiceInADayAllowed: false, homeAwayTolerance: 1 };
@@ -102,7 +127,8 @@ export type LeagueHealthIssue =
   | { kind: 'byes_back_to_back'; teamId: string; weeks: [string, string] }
   /** A division's teams off by more than the tolerance. */
   | { kind: 'home_away'; divisionId: string; teams: { teamId: string; home: number; away: number }[] }
-  | { kind: 'unchecked'; games: number; practices: number };
+  /** Bookings at a typed place; `keys` are the page's booking keys, in date order (the door shows the first). */
+  | { kind: 'unchecked'; games: number; practices: number; keys: string[] };
 
 export interface LeagueTeamHealth {
   teamId: string;
@@ -115,6 +141,8 @@ export interface LeagueTeamHealth {
   away: number;
   byes: number;
   places: number;
+  /** Its share of its division's rarest time: 'even' when every team's is within one (or the division has one time). */
+  primeTime: 'even' | { games: number; time: SlotTime };
 }
 
 export interface LeagueScheduleHealth {
@@ -134,6 +162,8 @@ export interface LeagueScheduleHealth {
   issues: LeagueHealthIssue[];
   teams: LeagueTeamHealth[];
   rules: LeagueHealthRules;
+  /** Each division's games per team, the plan the score measures against (the foot says it). */
+  plans: { divisionId: string; games: number }[];
 }
 
 const isOn = (status: string) => status === 'scheduled' || status === 'completed';
@@ -221,10 +251,11 @@ export function buildLeagueScheduleHealth(input: {
   issues.push(...clashes);
   // Not checked = not on one of the club's venues: the place field's own words ("A typed place isn't checked for clashes").
   // The league rule's text match (two identical typed names) only warns, so it is not a check this score can claim.
-  const uncheckedGames = onGames.filter(x => !x.venueId).length;
-  const uncheckedPractices = onPractices.filter(x => !x.venueId).length;
+  const unchecked = pool.filter(x => !x.orgVenueId).sort((a, b) => Date.parse(a.startsAt!) - Date.parse(b.startsAt!));
+  const uncheckedGames = unchecked.filter(x => x.kind === 'game').length;
+  const uncheckedPractices = unchecked.length - uncheckedGames;
   const bookings = pool.length;
-  const notChecked = uncheckedGames + uncheckedPractices;
+  const notChecked = unchecked.length;
 
   // ── Twice in a day, byes: the generator's own checks, per division ──
   const datedOf = (d: string): DatedGame[] => onGames.filter(g => g.divisionId === d).map(g => ({ homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId, day: orgDayKey(g.scheduledAt!) }));
@@ -244,7 +275,7 @@ export function buildLeagueScheduleHealth(input: {
     const mine = offTeams.filter(t => t.divisionId === d);
     if (mine.length) issues.push({ kind: 'home_away', divisionId: d, teams: mine.map(t => ({ teamId: t.id, home: home.get(t.id)!, away: away.get(t.id)! })) });
   }
-  if (notChecked) issues.push({ kind: 'unchecked', games: uncheckedGames, practices: uncheckedPractices });
+  if (notChecked) issues.push({ kind: 'unchecked', games: uncheckedGames, practices: uncheckedPractices, keys: unchecked.map(pageKey) });
 
   // ── The score ──
   const teamsWithGames = teams.filter(t => divisionIds.includes(t.divisionId));
@@ -274,10 +305,30 @@ export function buildLeagueScheduleHealth(input: {
       byeWeeks.set(t.id, [...weeks].filter(w => !plays.has(w)).length);
     }
   }
+  // Prime time, as the generator shares it out: the division's rarest time as it is SAID (a weekday and its part of the day).
+  const primeOf = new Map<string, LeagueTeamHealth['primeTime']>();
+  for (const d of divisionIds) {
+    const mine = teams.filter(x => x.divisionId === d);
+    const times = new Map<string, SlotTime & { games: number }>();
+    const per = new Map<string, number>();
+    for (const g of onGames.filter(x => x.divisionId === d)) {
+      const { date, time } = utcToZonedInputs(g.scheduledAt);
+      const k = `${weekdayOf(date)}|${partOfDay(time)}`;
+      const was = times.get(k) ?? { weekday: weekdayOf(date), start: time, games: 0 };
+      was.games += 1;
+      if (time < was.start) was.start = time;
+      times.set(k, was);
+      for (const id of [g.homeTeamId, g.awayTeamId]) per.set(`${id}|${k}`, (per.get(`${id}|${k}`) ?? 0) + 1);
+    }
+    const rarest = [...times.values()].sort((a, b) => a.games - b.games || a.weekday - b.weekday || a.start.localeCompare(b.start))[0];
+    const counts = mine.map(x => per.get(`${x.id}|${rarest ? `${rarest.weekday}|${partOfDay(rarest.start)}` : ''}`) ?? 0);
+    const even = times.size < 2 || Math.max(...counts) - Math.min(...counts) <= 1;
+    mine.forEach((x, i) => primeOf.set(x.id, even ? 'even' : { games: counts[i], time: { weekday: rarest.weekday, start: rarest.start } }));
+  }
   const teamRows: LeagueTeamHealth[] = teamsWithGames.map(t => ({
     teamId: t.id, name: t.name, divisionId: t.divisionId, have: have.get(t.id)!, plan: plan.get(t.id) ?? 0,
     postponed: postponedOf.get(t.id)!, home: home.get(t.id)!, away: away.get(t.id)!, byes: byeWeeks.get(t.id) ?? 0,
-    places: placesOf.get(t.id)!.size,
+    places: placesOf.get(t.id)!.size, primeTime: primeOf.get(t.id) ?? 'even',
   }));
 
   return {
@@ -289,9 +340,105 @@ export function buildLeagueScheduleHealth(input: {
       clashes: { pairs: clashes.length, notChecked },
     },
     breakdown, issues: orderIssues(issues), teams: teamRows, rules,
+    plans: divisionIds.map(d => ({ divisionId: d, games: plan.get(teams.find(t => t.divisionId === d)?.id ?? '') ?? 0 })),
   };
 }
+
+/** The part of a day a clock starts in (the generator's "Saturday mornings"). */
+const partOfDay = (clock: string) => {
+  const h = Number(clock.split(':')[0]);
+  return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
+};
 
 /** The window's order: what a family would notice first. */
 const ORDER: Record<LeagueHealthIssue['kind'], number> = { short: 0, postponed: 1, clash: 2, twice_in_a_day: 3, byes_back_to_back: 4, home_away: 5, unchecked: 6 };
 const orderIssues = (list: LeagueHealthIssue[]) => list.map((x, i) => ({ x, i })).sort((a, b) => ORDER[a.x.kind] - ORDER[b.x.kind] || a.i - b.i).map(e => e.x);
+
+// ── THE WINDOW'S WORDS (copy file "Stage 9d-2a" d; [build] = chosen by the build, not settled by /marketing) ──────────
+
+/** One team's home and away, said: "both games at home", "all 3 games at home", "3 games at home and 1 away". */
+function homeAwayWords(home: number, away: number): string {
+  if (away === 0) return home === 2 ? 'both games at home' : `all ${pluralize(home, 'game')} at home`;
+  if (home === 0) return away === 2 ? 'both away' : `all ${away} away`;
+  return `${pluralize(home, 'game')} at home and ${away} away`;
+}
+
+const andJoin = (names: readonly string[]) =>
+  names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+
+export const LEAGUE_HEALTH_WORDS = {
+  nothingToScore: 'Nothing to score yet. Schedule health appears once games have a time.',
+  games: 'Games', gamesValue: (a: number, b: number) => `${a} of ${b}`, gamesDetail: 'teams on plan',
+  homeAway: 'Home/away', homeAwayValue: (n: number) => `${n} off`, homeAwayDetail: (tolerance: number) => `off by more than ${tolerance}`,
+  byes: 'Byes', byesSpread: 'Spread', byesNone: 'none back to back',
+  /** [build] byes back to back: the tile's count, and what it counts. */
+  byesDetail: 'back to back',
+  clashes: 'Clashes', notChecked: (k: number) => `${k} not checked`,
+  /** [build] every booking is at one of the club's venues. */
+  allChecked: 'all checked',
+  show: 'Show them', showIt: 'Show it', giveDate: 'Give it a new date',
+  /** [build] the phone's fold under its first two issues (d4). */
+  more: (n: number) => `${n} more.`, showAll: 'Show all',
+  /** [build] nothing to look at (the tournament's line says it for a tournament). */
+  noIssues: 'Nothing to look at. Every team has its games, and nothing clashes.',
+  teamDetail: 'Team detail',
+  columns: { team: 'Team', games: 'Games', homeAway: 'Home–away', byes: 'Byes', primeTime: 'Prime time', places: 'Places' },
+  gamesCell: (have: number, plan: number, postponed: number) => `${have} of ${plan}${postponed ? ` · ${postponed} postponed` : ''}`,
+  even: 'even',
+  rulesNote: 'The score uses this season’s rules.',
+  gamesPerTeam: 'Games per team',
+  twice: 'A team can play twice in a day',
+  yes: 'Yes', no: 'No',
+  homeAwayRule: 'Home and away can differ by',
+  homeAwayRuleValue: (n: number) => pluralize(n, 'game'),
+  /** [build] where games per team comes from: there is no target to set until 9d-2b. */
+  gamesPerTeamHint: 'Games per team is the number most of a division’s teams were given.',
+} as const;
+
+/** What an issue's one door does: show its bookings in the schedule, open the postponed game, or open team detail. */
+export type LeagueIssueDoor = 'show' | 'showIt' | 'date' | 'teams';
+
+/** An issue, said, with its door and tone. `team` names a team by id, `label` a booking by the page's key ("Tigers vs
+ *  Braves", "Tigers practice"), `place` a venue and facility ("Kinsmen Park · Diamond 2"). */
+export function leagueIssueWords(issue: LeagueHealthIssue, ctx: {
+  team: (id: string) => string;
+  label: (key: string) => string;
+  place: (venueId: string, facilityId: string | null) => string;
+}): { text: string; door: LeagueIssueDoor; tone: 'error' | 'warning' | 'info' } {
+  const day = (d: string) => formatStoredDate(d, { withYear: false });
+  switch (issue.kind) {
+    case 'short': {
+      const names = issue.teamIds.map(ctx.team);
+      const head = `${andJoin(names)} ${names.length === 1 ? 'has' : 'have'} ${issue.have} of ${pluralize(issue.plan, 'game')}.`;
+      if (!issue.cancelled) return { text: head, door: 'teams', tone: 'warning' };
+      const whose = names.length === 1 ? 'Its' : 'Their';
+      return { text: `${head} ${whose} ${issue.cancelled.day ? `${day(issue.cancelled.day)} ` : ''}game was cancelled and not replayed.`, door: 'show', tone: 'warning' };
+    }
+    case 'postponed': {
+      const match = `${ctx.team(issue.homeTeamId)} vs ${ctx.team(issue.awayTeamId)}`;
+      // [build] a game saved with no date at all is not postponed (the public page's "Date to come"): it needs a date.
+      return { text: issue.day ? `${match} was postponed from ${day(issue.day)} and still needs a new date.` : `${match} still needs a date.`, door: 'date', tone: 'warning' };
+    }
+    case 'clash': {
+      const clock = formatTime(utcToZonedInputs(new Date(issue.startMs).toISOString()).time);
+      return {
+        text: `${ctx.place(issue.venueId, issue.facilityId)} is booked twice on ${shortDayWords(issue.day)} at ${clock}: ${ctx.label(issue.keys[0])} and ${ctx.label(issue.keys[1])}.`,
+        door: 'show', tone: 'error',
+      };
+    }
+    case 'twice_in_a_day': return { text: GENERATE_WORDS.warnTwice(ctx.team(issue.teamId), shortDayWords(issue.day)), door: 'showIt', tone: 'warning' };
+    case 'byes_back_to_back':
+      return { text: GENERATE_WORDS.warnByes(ctx.team(issue.teamId), day(issue.weeks[0]), day(issue.weeks[1])), door: 'showIt', tone: 'warning' };
+    case 'home_away':
+      return { text: `${issue.teams.map(t => `${ctx.team(t.teamId)} has ${homeAwayWords(t.home, t.away)}`).join('; ')}.`, door: 'teams', tone: 'warning' };
+    case 'unchecked': {
+      const n = issue.games + issue.practices;
+      const what = [issue.games ? pluralize(issue.games, 'game') : '', issue.practices ? pluralize(issue.practices, 'practice') : ''].filter(Boolean).join(' and ');
+      return { text: `${what} ${n === 1 ? 'is' : 'are'} at a typed place, so ${n === 1 ? 'it' : 'they'} can’t be checked for clashes.`, door: 'show', tone: 'info' };
+    }
+  }
+}
+
+/** The Prime time cell: "even", or the team's share of its division's rarest time ("1 Saturday morning"). */
+export const primeTimeCell = (p: LeagueTeamHealth['primeTime']) =>
+  p === 'even' ? LEAGUE_HEALTH_WORDS.even : `${p.games} ${primeTimeWords(p.time, p.games)}`;

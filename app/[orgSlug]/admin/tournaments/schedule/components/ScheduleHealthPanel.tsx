@@ -9,7 +9,7 @@ import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { SCHEDULE_DAY_WORDS } from '@/lib/schedule-words';
 import styles from '../schedule-admin.module.css';
 
-type MetricTone = 'good' | 'warning' | 'danger' | 'neutral';
+export type MetricTone = 'good' | 'warning' | 'danger' | 'neutral';
 
 /** Organizer-defined "healthy schedule" thresholds edited inline from the panel. */
 export interface ScheduleHealthRulesDraft {
@@ -411,7 +411,8 @@ export function ScheduleHealthContent({
   );
 }
 
-function Metric({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: MetricTone }) {
+/** One tile. The league's Schedule health wears the same four (House League 9d-2a step 6). */
+export function Metric({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: MetricTone }) {
   return (
     <div className={styles.healthKpi} data-tone={tone}>
       <span>{label}</span>
@@ -424,7 +425,8 @@ function Metric({ label, value, detail, tone }: { label: string; value: string; 
 /** An issue's one door: what it says and what it does, or null for none. */
 export type IssueAction = (issue: ScheduleIssue) => { label: string; onClick: () => void } | null;
 
-function IssueRow({ issue, action }: { issue: ScheduleIssue; action: ReturnType<IssueAction> }) {
+/** One issue and its door. The league's Schedule health says its issues in this row too (9d-2a step 6), with no title. */
+export function IssueRow({ issue, action }: { issue: Pick<ScheduleIssue, 'severity' | 'title' | 'detail'>; action: ReturnType<IssueAction> }) {
   const className = issue.severity === 'error'
     ? styles.healthIssueError
     : issue.severity === 'warning'
@@ -439,7 +441,7 @@ function IssueRow({ issue, action }: { issue: ScheduleIssue; action: ReturnType<
   return (
     <div className={`${styles.healthIssue} ${className}`}>
       <Icon size={14} />
-      <span><strong>{issue.title}</strong> {issue.detail}</span>
+      <span>{issue.title && <><strong>{issue.title}</strong> </>}{issue.detail}</span>
       {action && <button type="button" className={styles.healthIssueDoor} onClick={action.onClick}>{action.label}<span aria-hidden> ›</span></button>}
     </div>
   );

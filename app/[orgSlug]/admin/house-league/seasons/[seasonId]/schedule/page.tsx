@@ -1,10 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { AlertTriangle, Calendar, CalendarClock, CalendarDays, CalendarRange, Clock, List, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
+import { Calendar, CalendarClock, CalendarDays, CalendarRange, Clock, List, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
-import { ORG_TIME_ZONE, mondayOfDay, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
+import { ORG_TIME_ZONE, mondayOfDay, orgDayKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { fieldNounFor } from '@/lib/sports';
@@ -32,6 +32,13 @@ import { CalendarViewSwitch, ScheduleDateNav } from '@/components/coaches/Schedu
 import { NeedsDateFold, SeasonListView, SeasonMonthView } from '@/components/admin/kit/club/league/schedule/SeasonScheduleViews';
 import GameWindow from '@/components/admin/kit/club/league/schedule/GameWindow';
 import GenerateGamesWindow from '@/components/admin/kit/club/league/schedule/GenerateGamesWindow';
+import LeagueHealthWindow from '@/components/admin/kit/club/league/schedule/LeagueHealthWindow';
+import HealthButton from '@/components/admin/tournament/HealthButton';
+import { GAME_DAY_WORDS } from '@/lib/game-day-words';
+import { SCHEDULE_DAY_WORDS } from '@/lib/schedule-words';
+import {
+  buildLeagueScheduleHealth, leagueHealthGameOf, leagueHealthPracticeOf, type LeagueHealthIssue,
+} from '@/lib/league-schedule-health';
 import { clubSchedulerOn } from '@/lib/club-schedule-gate';
 import type { Through } from '@/lib/league-game-generator';
 import { useLeagueLine } from '@/components/admin/kit/club/league/schedule/useLeagueLine';
@@ -98,23 +105,6 @@ interface PracticeForm {
   endTime: string;
   where: WhereValue;
   notes: string;
-}
-
-interface HealthConflict {
-  kind: 'game' | 'practice';
-  id: string;
-  label: string | null;
-  startsAt: string | null;
-  fieldLabel: string | null;
-  partnerKind: 'game' | 'practice';
-  partnerLabel: string | null;
-  partnerStartsAt: string | null;
-  matchedOn: 'facility' | 'venue' | 'text';
-}
-
-interface ScheduleHealth {
-  conflicts: HealthConflict[];
-  uncheckedCount: number;
 }
 
 interface FeedbackState {
@@ -633,15 +623,15 @@ const KIND_COLOUR = { game: EVENT_COLORS.league_game, practice: EVENT_COLORS.pra
 export default function SchedulePage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
   const { currentOrg } = useOrg();
-  // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
+  // Admin Design Continuity slice 2: the kit's patch over each hand-set button while the switch is on.
   const B = useKitButtons(LEGACY_BUTTONS);
   // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const [season, setSeason] = useState<SeasonInfo | null>(null);
   const [venues, setVenues] = useState<OrgVenue[]>([]);
-  const [health, setHealth] = useState<ScheduleHealth | null>(null);
+  /** Schedule health's window (step 6): the header button opens it; it never arrives open. */
+  const [healthOpen, setHealthOpen] = useState(false);
   const [divisions, setDivisions] = useState<LeagueDivision[]>([]);
   const [selectedDivId, setSelectedDivId] = useState('');
   // The whole season's (step 3): the division is a scope over them, never a second read.
@@ -740,12 +730,6 @@ export default function SchedulePage() {
     } catch { setVenues([]); }
   }, [orgQuery]);
 
-  // Season-wide clash + unchecked counts — games AND practices, every division.
-  const loadHealth = useCallback(async () => {
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/health${orgQuery}`);
-    if (res.ok) setHealth(await res.json());
-  }, [seasonId, orgQuery]);
-
   /** The whole season's teams, games and practices — one read, every division (step 3). A failed read says so; it never
    *  draws an empty season. */
   const beginRead = useLatestRead();
@@ -763,8 +747,8 @@ export default function SchedulePage() {
     setScheduleRead('ok');
   }, [seasonId, orgQuery, beginRead]);
   useDeferredLoad(!!orgQuery, loadSchedule);
-  /** After a write: the schedule and the season's health strip read again. */
-  const reload = () => Promise.all([loadSchedule(), loadHealth()]);
+  /** After a write: the season reads again (Schedule health is worked out from it, so it follows). */
+  const reload = () => loadSchedule();
 
   useEffect(() => {
     setLoading(true);
@@ -772,7 +756,6 @@ export default function SchedulePage() {
   }, [loadSeasonAndDivisions]);
 
   useEffect(() => { void loadVenues(); }, [loadVenues]);
-  useEffect(() => { void loadHealth(); }, [loadHealth]);
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
@@ -820,6 +803,8 @@ export default function SchedulePage() {
   const range = rangeFor(shownView === 'list' ? 'week' : shownView, cursor);
   const inRange = (b: SeasonBooking) => b.day >= range.from && b.day <= range.to;
 
+  /** A health door's jump: counted, so a second door to the same day and view still scrolls. */
+  const [jumpTick, setJumpTick] = useState(0);
   useEffect(() => {
     const day = jumpTo.current;
     if (!day || shownView === 'month') return;
@@ -827,7 +812,46 @@ export default function SchedulePage() {
     const el = [document.getElementById(`season-week-${mondayOfDay(day)}`), document.getElementById(`cal-day-${day}`)]
       .find(x => x && x.offsetParent !== null);
     el?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-  }, [shownView, cursor]);
+  }, [shownView, cursor, jumpTick]);
+
+  // ── Schedule health (step 6, d1–d4) ── the whole season's, worked out from the read the page already holds (games and
+  // practices, every division: the clash pool is the season's), so it follows every write with no read of its own.
+  const health = useMemo(() => buildLeagueScheduleHealth({
+    games: games.map(leagueHealthGameOf),
+    practices: practices.map(leagueHealthPracticeOf),
+    teams: teams.map(t => ({ id: t.id, name: t.name, divisionId: t.divisionId })),
+  }), [games, practices, teams]);
+  const healthScore = health.timedGames > 0 ? health.score : null;
+  /** A booking by its page key ("league_game:{id}"): the row, its division and its day. */
+  const bookingOf = (key: string) => {
+    const [kind, id] = key.split(':');
+    if (kind === 'league_game') {
+      const g = games.find(x => x.id === id);
+      return g ? { label: `${teamName.get(g.homeTeamId) ?? 'Home'} vs ${teamName.get(g.awayTeamId) ?? 'Away'}`, divisionId: g.divisionId, at: g.scheduledAt } : null;
+    }
+    const p = practices.find(x => x.id === id);
+    return p ? { label: `${teamName.get(p.teamId) ?? 'Team'} practice`, divisionId: p.divisionId ?? teamMap.get(p.teamId)?.divisionId ?? '', at: p.scheduledAt } : null;
+  };
+  /** "Show them" / "Show it": the window closes on the issue's division and day, in List (Week on a phone), every kind shown. */
+  const showIssue = (issue: LeagueHealthIssue) => {
+    const divOf = (teamId: string) => teamMap.get(teamId)?.divisionId ?? '';
+    const at = (key: string) => { const b = bookingOf(key); return b?.at ? { divisionId: b.divisionId, day: orgDayKey(b.at) } : null; };
+    const target =
+      issue.kind === 'short' && issue.cancelled ? at(`league_game:${issue.cancelled.gameId}`)
+      : issue.kind === 'clash' ? { divisionId: bookingOf(issue.keys[0])?.divisionId ?? '', day: issue.day }
+      : issue.kind === 'twice_in_a_day' ? { divisionId: divOf(issue.teamId), day: issue.day }
+      : issue.kind === 'byes_back_to_back' ? { divisionId: divOf(issue.teamId), day: issue.weeks[0] }
+      : issue.kind === 'unchecked' ? at(issue.keys[0])
+      : null;
+    setHealthOpen(false);
+    if (!target) return;
+    if (target.divisionId) setSelectedDivId(target.divisionId);
+    setShow(new Set());
+    jumpTo.current = target.day;
+    setCursorPick(target.day);
+    setView(phone ? 'week' : 'list');
+    setJumpTick(n => n + 1);
+  };
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -1215,7 +1239,7 @@ export default function SchedulePage() {
         title="Schedule"
         backTo={{ href: backHref, label: season?.name ?? 'Season' }}
         inlineActions
-        actions={
+        actions={<>
           <span className={cal.viewPhone}>
             <CoachToolbarMenu label={`Change view · ${VIEW_WORD[shownView]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph" drawerOnPhone drawerTitle="View">
               {PHONE_VIEWS.map(v => {
@@ -1224,7 +1248,18 @@ export default function SchedulePage() {
               })}
             </CoachToolbarMenu>
           </span>
-        }
+          {/* Schedule health (d1): the tournament's button — "—" until a game has a time — once the season has read. */}
+          {scheduleRead === 'ok' && (
+            <HealthButton
+              score={healthScore}
+              tone={health.tone}
+              issues={health.issues.length}
+              title={GAME_DAY_WORDS.healthTitle}
+              label={SCHEDULE_DAY_WORDS.healthButtonLabel(healthScore, health.issues.length)}
+              onOpen={() => setHealthOpen(true)}
+            />
+          )}
+        </>}
       />
 
       {/* The time line (Stage 11b Part 3): where this division's time comes from, and the door to House league's time. */}
@@ -1254,42 +1289,6 @@ export default function SchedulePage() {
       </CoachListToolbar>
       {/* The dates on their own row at 900 px and narrower. */}
       {dateNav && <div className={cal.dateRow}>{dateNav}</div>}
-
-      {/* Schedule health — clashes + what could not be checked (games AND practices) */}
-      {health && health.conflicts.length > 0 && (
-        <div style={kx({
-          border: '1px solid rgba(var(--warning-rgb),0.35)', background: 'rgba(var(--warning-rgb),0.07)',
-          borderRadius: '2px', padding: '0.7rem 0.9rem', marginBottom: '0.9rem',
-        }, { borderRadius: '8px' })}>
-          <div style={kx({ display: 'flex', alignItems: 'center', gap: '0.45rem', color: 'var(--warning)', fontWeight: 700, fontSize: '0.82rem' }, { color: 'var(--badge-warning-ink)' })}>
-            <AlertTriangle size={15} />
-            {health.conflicts.length === 1
-              ? `1 booking shares a ${noun.toLowerCase()} with another at the same time`
-              : `${health.conflicts.length} bookings share a ${noun.toLowerCase()} with another at the same time`}
-          </div>
-          <ul style={{ margin: '0.45rem 0 0', paddingLeft: '1.4rem', fontSize: '0.8rem', color: 'var(--white-60)' }}>
-            {health.conflicts.slice(0, 4).map((c, i) => {
-              const dt = c.startsAt ? formatDateTime(c.startsAt) : null;
-              return (
-                <li key={i} style={{ marginBottom: '0.15rem' }}>
-                  {c.label ?? c.kind}{dt ? ` · ${dt.date} ${dt.time}` : ''} overlaps {c.partnerLabel ?? c.partnerKind}
-                  {c.fieldLabel ? ` on ${c.fieldLabel}` : ''}
-                  {c.matchedOn === 'text' ? ' (both use the same typed location — may be different places)' : ''}
-                </li>
-              );
-            })}
-            {health.conflicts.length > 4 && (
-              <li style={{ opacity: 0.6 }}>…and {health.conflicts.length - 4} more</li>
-            )}
-          </ul>
-        </div>
-      )}
-      {health && health.uncheckedCount > 0 && (
-        <p style={kx({ fontSize: '0.78rem', color: 'var(--white-45)', margin: '0 0 0.9rem' }, KIT_INK.tertiary)}>
-          {health.uncheckedCount} scheduled {health.uncheckedCount === 1 ? 'booking has' : 'bookings have'} no {noun.toLowerCase()} set
-          — {health.uncheckedCount === 1 ? 'it is' : 'they are'} not being checked for double-bookings.
-        </p>
-      )}
 
       {/* Postponed games wait above every view until they have a date (9d2·10). */}
       {scheduleRead === 'ok' && <NeedsDateFold bookings={calendar.needsDate} onOpen={openBooking} />}
@@ -1403,6 +1402,32 @@ export default function SchedulePage() {
           }}
           onCancel={() => { setActivePractice(openPractice); setOpenPractice(null); setShowCancelModal(true); }}
           onChangePracticeTime={() => { setOpenPractice(null); setPracticeTimeOpen(true); }} />
+      )}
+
+      {/* Schedule health's window (d2–d4): the whole season; its doors close it on the schedule or open the game. */}
+      {healthOpen && (
+        <LeagueHealthWindow
+          health={health}
+          eyebrow={season?.name ?? ''}
+          team={id => teamName.get(id) ?? 'Team'}
+          label={key => bookingOf(key)?.label ?? ''}
+          place={(venueId, facilityId) => {
+            const v = venues.find(x => x.id === venueId);
+            const f = facilityId ? v?.facilities?.find(x => x.id === facilityId)?.name : null;
+            return [v?.name ?? noun, f].filter(Boolean).join(' · ');
+          }}
+          divisionName={id => divisions.find(d => d.id === id)?.name ?? ''}
+          phone={phone}
+          canRun={canManage}
+          onShow={showIssue}
+          onOpenGame={id => {
+            setHealthOpen(false);
+            const g = games.find(x => x.id === id);
+            if (g) setSelectedDivId(g.divisionId);
+            setGameWindow({ id });
+          }}
+          onClose={() => setHealthOpen(false)}
+        />
       )}
 
       {/* A hand-booked practice's form, opened to edit */}

@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { readFileSync } from 'node:fs';
 import {
-  buildLeagueScheduleHealth, leagueHealthGameFromRow, type LeagueHealthGame, type LeagueHealthPractice, type LeagueHealthTeam,
+  buildLeagueScheduleHealth, leagueHealthGameFromRow, leagueHealthGameOf, leagueHealthPracticeOf, leagueIssueWords, primeTimeCell,
+  type LeagueHealthGame, type LeagueHealthIssue, type LeagueHealthPractice, type LeagueHealthTeam,
 } from '../../lib/league-schedule-health.ts';
 import { buildEventScheduleHealth } from '../../lib/schedule-metrics.ts';
 
@@ -50,7 +52,24 @@ describe('Dev House League 2026', () => {
     const ha = r.issues[2];
     assert.ok(ha.kind === 'home_away');
     assert.deepEqual(ha.teams, [{ teamId: 'cards', home: 2, away: 0 }, { teamId: 'orioles', home: 0, away: 2 }]);
-    assert.deepEqual(r.issues[3], { kind: 'unchecked', games: 0, practices: 2 });
+    assert.deepEqual(r.issues[3], { kind: 'unchecked', games: 0, practices: 2, keys: ['league_practice:p1', 'league_practice:p2'] });
+  });
+
+  it('says the four issues in the copy file\'s words, each with its door (step 6, d2)', () => {
+    const name = new Map(teams.map(t => [t.id, t.name]));
+    const said = r.issues.map(i => leagueIssueWords(i, { team: id => name.get(id)!, label: k => k, place: () => 'Kinsmen Park · Diamond 2' }));
+    assert.deepEqual(said.map(x => [x.text, x.door]), [
+      ['Tigers and Braves have 1 of 2 games. Their Jun 14 game was cancelled and not replayed.', 'show'],
+      ['Cardinals vs Orioles was postponed from Jun 14 and still needs a new date.', 'date'],
+      ['Cardinals has both games at home; Orioles has both away.', 'teams'],
+      ['2 practices are at a typed place, so they can’t be checked for clashes.', 'show'],
+    ]);
+  });
+
+  it('every team\'s games all fall on one time, so prime time is even; the plan is said per division', () => {
+    assert.ok(r.teams.every(t => t.primeTime === 'even'));
+    assert.equal(primeTimeCell(r.teams[0].primeTime), 'even');
+    assert.deepEqual(r.plans, [{ divisionId: 'B', games: 2 }, { divisionId: 'A', games: 2 }]);
   });
 
   it('a postponed game is not played and a cancelled one is not had: 2 of 6 teams on plan', () => {
@@ -121,6 +140,84 @@ describe('the league rule set', () => {
       { kind: 'short', teamIds: ['orioles'], have: 1, plan: 2, cancelled: null },
       { kind: 'short', teamIds: ['twins'], have: 1, plan: 2, cancelled: null },
     ]);
+  });
+});
+
+describe('the window\'s other sentences', () => {
+  const ctx = { team: (id: string) => id[0].toUpperCase() + id.slice(1), label: (k: string) => (k.endsWith('p1') ? 'Twins practice' : 'Cards vs Orioles'), place: () => 'Kinsmen Park · Diamond 2' };
+
+  it('a clash names the place, the day, the clock and both bookings', () => {
+    const issue: LeagueHealthIssue = { kind: 'clash', keys: ['league_game:g1', 'league_practice:p1'], venueId: 'v1', facilityId: 'f1', day: '2027-06-17', startMs: Date.parse('2027-06-17T22:00:00Z') };
+    assert.equal(leagueIssueWords(issue, ctx).text, 'Kinsmen Park · Diamond 2 is booked twice on Thu, Jun 17 at 6:00 p.m.: Cards vs Orioles and Twins practice.');
+    assert.equal(leagueIssueWords(issue, ctx).tone, 'error');
+  });
+
+  it('twice in a day and byes are the generator\'s sentences', () => {
+    assert.equal(leagueIssueWords({ kind: 'twice_in_a_day', teamId: 'tigers', day: '2027-06-17' }, ctx).text, 'Tigers plays twice on Thu, Jun 17.');
+    assert.equal(leagueIssueWords({ kind: 'byes_back_to_back', teamId: 'rays', weeks: ['2027-06-07', '2027-06-14'] }, ctx).text, 'Rays has a bye two weeks running, Jun 7 and Jun 14.');
+  });
+
+  it('home and away past two games, a lone short team, an undated game, a typed game and practice', () => {
+    assert.equal(leagueIssueWords({ kind: 'home_away', divisionId: 'A', teams: [{ teamId: 'cards', home: 3, away: 0 }, { teamId: 'jays', home: 1, away: 4 }] }, ctx).text,
+      'Cards has all 3 games at home; Jays has 1 game at home and 4 away.');
+    assert.equal(leagueIssueWords({ kind: 'short', teamIds: ['twins'], have: 1, plan: 2, cancelled: null }, ctx).text, 'Twins has 1 of 2 games.');
+    assert.equal(leagueIssueWords({ kind: 'postponed', gameId: 'g', homeTeamId: 'cards', awayTeamId: 'twins', day: null }, ctx).text, 'Cards vs Twins still needs a date.');
+    assert.equal(leagueIssueWords({ kind: 'unchecked', games: 1, practices: 1, keys: [] }, ctx).text, '1 game and 1 practice are at a typed place, so they can’t be checked for clashes.');
+    assert.equal(leagueIssueWords({ kind: 'unchecked', games: 0, practices: 1, keys: [] }, ctx).text, '1 practice is at a typed place, so it can’t be checked for clashes.');
+  });
+});
+
+describe('prime time', () => {
+  // Three teams, Tuesday evenings and one Saturday morning: the Saturday is the rarest time.
+  const sat = (home: string, away: string, day: string) => ({ ...g('A', home, away, day), scheduledAt: `${day}T14:00:00+00:00` });
+  const tue = (home: string, away: string, day: string) => ({ ...g('A', home, away, day), scheduledAt: `${day}T22:00:00+00:00` });
+  const three = teams.filter(t => t.divisionId === 'A');
+
+  it('one team with the only Saturday morning games, the others none: the cell says each share', () => {
+    const games = [sat('cards', 'orioles', '2026-06-06'), tue('twins', 'cards', '2026-06-09'), tue('orioles', 'twins', '2026-06-16'), tue('cards', 'twins', '2026-06-23'), tue('orioles', 'cards', '2026-06-30'), sat('cards', 'orioles', '2026-07-04')];
+    const r = buildLeagueScheduleHealth({ games, practices: [], teams: three });
+    const of = (id: string) => primeTimeCell(r.teams.find(t => t.teamId === id)!.primeTime);
+    assert.equal(of('cards'), '2 Saturday mornings');
+    assert.equal(of('twins'), '0 Saturday mornings');
+  });
+
+  it('shares within one of each other are even', () => {
+    const games = [sat('cards', 'orioles', '2026-06-06'), tue('twins', 'cards', '2026-06-09'), tue('orioles', 'twins', '2026-06-16'), tue('cards', 'twins', '2026-06-23')];
+    const r = buildLeagueScheduleHealth({ games, practices: [], teams: three });
+    assert.ok(r.teams.every(t => t.primeTime === 'even'));
+  });
+});
+
+describe('the page\'s rows', () => {
+  it('a game and a practice as the page holds them read the same as their rows', () => {
+    const game = { id: 'g', seasonId: 's', divisionId: 'd', homeTeamId: 'h', awayTeamId: 'a', scheduledAt: at('2026-06-01'), endsAt: null, orgVenueId: 'v', orgVenueFacilityId: 'f', location: null, homeScore: null, awayScore: null, status: 'scheduled' as const, notes: null, createdAt: '', updatedAt: '' };
+    assert.deepEqual(leagueHealthGameOf(game), { id: 'g', divisionId: 'd', homeTeamId: 'h', awayTeamId: 'a', scheduledAt: at('2026-06-01'), endsAt: null, status: 'scheduled', venueId: 'v', facilityId: 'f', location: null });
+    const practice = { id: 'p', seasonId: 's', divisionId: null, teamId: 't', scheduledAt: null, endsAt: null, orgVenueId: null, orgVenueFacilityId: null, location: 'Eastview', notes: null, status: 'scheduled' as const, recurrenceGroupId: null, clubScheduleSlotId: 'slot', createdAt: '', updatedAt: '' };
+    assert.deepEqual(leagueHealthPracticeOf(practice), { id: 'p', divisionId: null, teamId: 't', scheduledAt: null, endsAt: null, status: 'scheduled', venueId: null, facilityId: null, location: 'Eastview', clubSlotId: 'slot' });
+  });
+});
+
+describe('the season\'s schedule wears it (step 6, d1)', () => {
+  const PAGE = readFileSync('app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx', 'utf8');
+  const WINDOW = readFileSync('components/admin/kit/club/league/schedule/LeagueHealthWindow.tsx', 'utf8');
+
+  it('the tournament\'s header button opens the league\'s window, which never arrives open', () => {
+    assert.match(PAGE, /<HealthButton\b/);
+    assert.match(PAGE, /<LeagueHealthWindow\b/);
+    assert.match(PAGE, /const \[healthOpen, setHealthOpen\] = useState\(false\);/);
+  });
+
+  it('health is worked out from the season the page holds: no read of its own, no strip above the views', () => {
+    assert.match(PAGE, /buildLeagueScheduleHealth\(\{/);
+    assert.doesNotMatch(PAGE, /schedule\/health/, 'the old health route is retired');
+    assert.doesNotMatch(PAGE, /with another at the same time|not being checked for double-bookings/, 'the old warning strip is gone');
+  });
+
+  it('the window is the tournament\'s frame, tiles and rows, and says the rules with no door to adjust them (owner 2026-10-27)', () => {
+    assert.match(WINDOW, /<HealthWindowFrame\b/);
+    assert.match(WINDOW, /<Metric\b/);
+    assert.match(WINDOW, /<IssueRow\b/);
+    assert.doesNotMatch(WINDOW, /rulesToggle|onSaveRules|SlidersHorizontal/, 'no rules door, no save');
   });
 });
 

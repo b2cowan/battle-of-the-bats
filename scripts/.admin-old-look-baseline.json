@@ -6,8 +6,8 @@
     "kitScope": 75
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
-    "kx": 7,
-    "helpers": 7
+    "kx": 4,
+    "helpers": 6
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
     "kx": 7,
