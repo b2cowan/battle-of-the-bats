@@ -1,0 +1,28 @@
+/* Generate games (9d-2a step 5, frames c1–c4, k3, k4). Rows are the kit's list rows and House league's time's own
+   (`LeagueTime`); these place the window's few lines of its own. */
+
+/* The division and its team count, one line (c1's "U12 Division · 10 teams"). */
+.division { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem; }
+.division > label { flex: 1 1 auto; margin-bottom: 0; }
+
+/* A figure on the right that stays on a phone (the time window's own hide under 640 px). */
+.figure { flex: none; font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; }
+
+/* Step 2's choice and its counts. */
+.through { display: flex; align-items: center; gap: 0.75rem; margin: 0.5rem 0 0.75rem; }
+.through > label { flex: 0 0 10rem; margin-bottom: 0; }
+.hints { display: grid; gap: 0.25rem; }
+.hints p { margin: 0; }
+
+/* The check's facts, its warnings, and the games behind "See the games". */
+.facts { display: grid; gap: 0.25rem; margin-bottom: 0.75rem; }
+.facts p { margin: 0; }
+.warnings { margin: 0 0 1rem; padding-left: 1.1rem; display: grid; gap: 0.5rem; }
+.warnings li { display: grid; gap: 0.15rem; }
+.games { margin: 0.5rem 0 0; padding: 0; list-style: none; display: grid; gap: 0.4rem; }
+.games li { display: grid; grid-template-columns: 11rem minmax(0, 1fr) auto; gap: 0.75rem; align-items: baseline; font-size: var(--type-support); }
+
+@media (max-width: 640px) {
+  .through > label { flex: 1 1 auto; }
+  .games li { grid-template-columns: 1fr; gap: 0; }
+}

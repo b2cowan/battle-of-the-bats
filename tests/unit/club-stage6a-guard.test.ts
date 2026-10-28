@@ -66,6 +66,9 @@ const WRITERS: Record<string, { check: RegExp; atLeast: number }> = {
   'app/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]/route.ts': { check: /clashReportForLeagueRows\(/g, atLeast: 1 },
   'app/api/admin/house-league/seasons/[seasonId]/practices/route.ts': { check: /clashReportForLeagueRows\(/g, atLeast: 1 },
   'app/api/admin/house-league/seasons/[seasonId]/schedule/generate/route.ts': { check: /clashReportForLeagueRows\(/g, atLeast: 1 },
+  // Generate games into the club's time (9d-2a step 5): the route's club path writes through this file, which checks
+  // the proposed games before the save (the window's check) and what it wrote after.
+  'lib/league-generate-server.ts': { check: /clashReportForLeagueRows\(/g, atLeast: 2 },
   // Tournaments — add/edit a game, a drop on the timeline, the generator's commit, playoffs (POST bulk-save,
   // create, save-bracket); the rain-delay shift (after the database function); update + un-cancel.
   'app/api/admin/games/route.ts': { check: /clashReportForTournamentGames\(/g, atLeast: 3 },

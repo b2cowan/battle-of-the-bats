@@ -31,6 +31,9 @@ import { WeekView } from '@/components/admin/kit/club/ClubCalendarViews';
 import { CalendarViewSwitch, ScheduleDateNav } from '@/components/coaches/ScheduleCalendarViews';
 import { NeedsDateFold, SeasonListView, SeasonMonthView } from '@/components/admin/kit/club/league/schedule/SeasonScheduleViews';
 import GameWindow from '@/components/admin/kit/club/league/schedule/GameWindow';
+import GenerateGamesWindow from '@/components/admin/kit/club/league/schedule/GenerateGamesWindow';
+import { clubSchedulerOn } from '@/lib/club-schedule-gate';
+import type { Through } from '@/lib/league-game-generator';
 import { useLeagueLine } from '@/components/admin/kit/club/league/schedule/useLeagueLine';
 import cal from '@/components/admin/kit/club/ClubCalendar.module.css';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -662,7 +665,12 @@ export default function SchedulePage() {
   /** Month's day, opened in List (Week on a phone) — scrolled to once that view is drawn. */
   const jumpTo = useRef<string | null>(null);
 
+  /** The free League plan's generator (when and where asked once, 9d2a·B). */
   const [showGenerate, setShowGenerate] = useState(false);
+  /** Generate games into the club's time (step 5, c1–c4): the division and choice it opens on. A door to House league's
+   *  time closes it, and it opens again on the same choice when that window closes (`backToGenerate`). */
+  const [generate, setGenerate] = useState<{ divisionId: string; through: Through } | null>(null);
+  const [backToGenerate, setBackToGenerate] = useState<{ divisionId: string; through: Through } | null>(null);
   // A game's window (step 4, b4): the game it reads, by id — after a write the page reads again and the window reads the
   // fresh row — or Add › A game.
   const [gameWindow, setGameWindow] = useState<{ id: string } | 'create' | null>(null);
@@ -693,7 +701,7 @@ export default function SchedulePage() {
   const [timeOn, setTimeOn] = useState<LeagueUse | null>(null);
   const [backToPractice, setBackToPractice] = useState(false);
   /** Tools and the time line open House league's time as itself: never on a piece, never back to Practice time (/review). */
-  const openLeagueTime = () => { setTimeOn(null); setBackToPractice(false); setTimeOpen(true); };
+  const openLeagueTime = () => { setTimeOn(null); setBackToPractice(false); setBackToGenerate(null); setTimeOpen(true); };
   const loadLeagueTime = useCallback(async () => {
     const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/time${orgQuery}`, { cache: 'no-store' }).catch(() => null);
     // A failed re-read keeps the last good line rather than hiding it (/review).
@@ -1053,6 +1061,7 @@ export default function SchedulePage() {
         setTimeOpen(false);
         setTimeOn(null);
         if (backToPractice) { setBackToPractice(false); setPracticeTimeOpen(true); }
+        if (backToGenerate) { setGenerate(backToGenerate); setBackToGenerate(null); }
       }}
       onChanged={() => void loadLeagueTime()} />
   ) : null;
@@ -1088,9 +1097,24 @@ export default function SchedulePage() {
 
   const backHref = `/${orgSlug}/admin/house-league/seasons/${seasonId}`;
   const divName = selectedDiv?.name ?? '';
-  /** Generate games: the old generator, on a division with two teams or more (step 5 rebuilds it). */
-  const canGenerate = canManage && divTeams.length >= 2;
   const freeFloor = !!currentOrg && isFreeFloorLeague(currentOrg);
+  // ⚖ GENERATE GAMES (step 5): a club with the club's schedule generates into the time it gave house league; the free
+  // League plan keeps its own generator exactly as it was (9d2a·B). The route draws the same line.
+  const clubTime = !!currentOrg && clubSchedulerOn(currentOrg.planId);
+  /** Generate's divisions (9d2·11, "has any games" until 9d-2b publishes): two teams or more and no games yet. */
+  const generable = clubTime && canManage && scheduleRead === 'ok'
+    ? divisions
+      .map(d => ({ id: d.id, name: d.name, teams: teams.filter(t => t.divisionId === d.id) }))
+      .filter(d => d.teams.length >= 2 && !games.some(x => x.divisionId === d.id))
+    : [];
+  /** Absent, never disabled, when no division can be generated (b3). */
+  const canGenerate = clubTime ? generable.length > 0 : canManage && divTeams.length >= 2;
+  const canGenerateHere = clubTime ? generable.some(d => d.id === selectedDivId) : canGenerate;
+  const openGenerate = () => {
+    if (!clubTime) { setShowGenerate(true); return; }
+    const on = generable.find(d => d.id === selectedDivId) ?? generable[0];
+    if (on) setGenerate({ divisionId: on.id, through: 1 });
+  };
 
   const ViewGlyph = VIEW_GLYPH[shownView];
   const dateNav = shownView === 'list' ? null : <ScheduleDateNav view={shownView} cursor={cursor} onStep={step} />;
@@ -1121,7 +1145,7 @@ export default function SchedulePage() {
       {canManage && selectedDiv && (
         <CoachToolbarMenuItem icon={<CalendarClock size={15} aria-hidden />} label={PRACTICE_TIME_WORDS.title} onSelect={() => setPracticeTimeOpen(true)} />
       )}
-      {canGenerate && <CoachToolbarMenuItem icon={<Wand2 size={15} aria-hidden />} label={W.generate} onSelect={() => setShowGenerate(true)} />}
+      {canGenerate && <CoachToolbarMenuItem icon={<Wand2 size={15} aria-hidden />} label={W.generate} onSelect={openGenerate} />}
       {freeFloor && <>
         <CoachToolbarMenuSeparator />
         <CoachToolbarMenuHeading>{LEAGUE_TIME_WORDS.exportHeading}</CoachToolbarMenuHeading>
@@ -1151,7 +1175,7 @@ export default function SchedulePage() {
         <div className={styles.emptyState}>
           <p><strong>{W.noGamesYet(divName)}</strong></p>
           <p>{W.noGamesHint}</p>
-          {canGenerate && <button style={B.primary} onClick={() => setShowGenerate(true)}>{W.generate}</button>}
+          {canGenerateHere && <button style={B.primary} onClick={openGenerate}>{W.generate}</button>}
         </div>
         {shown.length > 0 && <SeasonListView bookings={shown} today={today} sport={season?.sport ?? null} teamName={teamName} onOpen={openBooking} />}
       </>
@@ -1287,6 +1311,35 @@ export default function SchedulePage() {
         />
       )}
 
+      {/* Generate games into the club's time (step 5, c1–c4). */}
+      {generate && season && (
+        <GenerateGamesWindow
+          seasonName={season.name}
+          divisions={generable}
+          divisionId={generate.divisionId}
+          through={generate.through}
+          time={leagueTime}
+          /* org-slug-ok: the window adds `orgQuery` (below) to every call it makes */
+          api={`/api/admin/house-league/seasons/${seasonId}`}
+          orgQuery={orgQuery}
+          schedulesHref={buildsSchedules ? `/${orgSlug}/admin/schedules` : null}
+          onTimeChanged={loadLeagueTime}
+          onOpenTime={(divisionId, through) => {
+            setGenerate(null);
+            setBackToPractice(false);
+            setBackToGenerate({ divisionId, through });
+            setTimeOn({ divisionId, kind: 'games' });
+            setTimeOpen(true);
+          }}
+          onSaved={(said, permit) => {
+            setGenerate(null);
+            setFeedback({ isOpen: true, title: said, message: permit ? `${permit.title}. ${permit.sentence}` : '', type: permit ? 'info' : 'success' });
+            void reload();
+          }}
+          onClose={() => setGenerate(null)}
+        />
+      )}
+
       {/* A game's window, read first (step 4, b4) — or Add › A game. A game edits among its own division's teams. */}
       {gameWindow && (gameWindow === 'create' || openedGame) && (
         <GameWindow
@@ -1298,6 +1351,7 @@ export default function SchedulePage() {
           teams={openedGame ? teams.filter(t => t.divisionId === openedGame.divisionId) : divTeams}
           venues={clubVenues}
           sport={season?.sport}
+          /* org-slug-ok: the window adds `orgQuery` (below) to every call it makes */
           api={`/api/admin/house-league/seasons/${seasonId}/schedule`}
           orgQuery={orgQuery}
           checkPath={checkPath}

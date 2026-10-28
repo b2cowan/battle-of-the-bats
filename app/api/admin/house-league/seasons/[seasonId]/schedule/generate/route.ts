@@ -9,6 +9,61 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
 import { clashReportForLeagueRows } from '@/lib/venue-clash-lookup';
+import { clubSchedulerOn } from '@/lib/club-schedule-gate';
+import { GENERATE_WORDS as W, planGames, summaryOf, type GeneratePlanReply, type GenerateSaveReply } from '@/lib/league-game-generator';
+import {
+  checkGeneratedGames, divisionGameTime, divisionHasGames, insertGeneratedGames, slotMinutesOf,
+} from '@/lib/league-generate-server';
+import type { LeagueSeason } from '@/lib/types';
+
+/**
+ * GENERATE GAMES (House League Stage 9d-2a step 5; ruling 9d2·3 + the owner's amendment, plan §0h; frames c1–c4). Match-ups
+ * only, into the division's game time from the club's schedule — never a day, a time or a place the club did not give.
+ * One route, three steps, each planning again from its own read (the client's games are never trusted):
+ *   `plan`  — both choices' counts, for step 2 (Once / Twice);
+ *   `check` — the chosen plan, its warnings and its Schedule health (c3);
+ *   `save`  — the plan again; refused `changed` when its slots are not the ones the check showed, `has_games` when the
+ *             division got games meanwhile, `blocked` when it no longer fits. A Save is live (9d2a·A): the games are on
+ *             the public schedule at once, and families aren't emailed (9d2a·F).
+ * ⚖ Only a division with no games is generated (9d2·11, "has any games" until 9d-2b publishes).
+ */
+async function fromClubTime(orgId: string, season: LeagueSeason, body: Record<string, unknown> | null) {
+  const divisionId = typeof body?.divisionId === 'string' ? body.divisionId : '';
+  const step = body?.step;
+  if (!divisionId || (step !== 'plan' && step !== 'check' && step !== 'save')) {
+    return NextResponse.json({ error: 'Pick a division.' }, { status: 400 });
+  }
+  const through = body?.through === 2 ? 2 : 1;
+  const { data: division } = await supabaseAdmin
+    .from('league_divisions').select('id, name').eq('id', divisionId).eq('season_id', season.id).single();
+  if (!division) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  if (await divisionHasGames(divisionId)) {
+    return NextResponse.json({ code: 'has_games', error: W.hasGames(division.name) }, { status: 409 });
+  }
+  const [rows, slots] = await Promise.all([getTeamsForDivision(divisionId), divisionGameTime(orgId, season, divisionId)]);
+  const teams = rows.map(t => ({ id: t.id, name: t.name }));
+
+  if (step === 'plan') {
+    const reply: GeneratePlanReply = {
+      once: summaryOf(planGames({ slots, teams, through: 1 })),
+      twice: summaryOf(planGames({ slots, teams, through: 2 })),
+      slotMinutes: slotMinutesOf(slots),
+    };
+    return NextResponse.json(reply);
+  }
+  const plan = planGames({ slots, teams, through });
+  if (step === 'check') return NextResponse.json(await checkGeneratedGames({ orgId, season, divisionId, teams, slots, plan }));
+
+  if (plan.block) return NextResponse.json({ code: 'blocked', error: W.changed(division.name) }, { status: 409 });
+  const shown = Array.isArray(body?.slotIds) ? new Set((body.slotIds as unknown[]).filter((x): x is string => typeof x === 'string')) : null;
+  const now = plan.games.map(g => g.slotId);
+  if (!shown || shown.size !== now.length || now.some(id => !shown.has(id))) {
+    return NextResponse.json({ code: 'changed', error: W.changed(division.name) }, { status: 409 });
+  }
+  // The writer runs the cross-program check on what it wrote; its permit lines are the shipped after-save (Stage 10a).
+  const reply: GenerateSaveReply = await insertGeneratedGames({ orgId, season, divisionId, slots, plan });
+  return NextResponse.json(reply);
+}
 
 interface PreviewGame {
   round: number;
@@ -67,6 +122,10 @@ export const POST = withObservability(async (req: Request,
   if (refused) return refused;
 
   const body = await req.json();
+  // ⚖ A club with the club's schedule generates into its own time (9d-2a step 5, below). What follows is the free League
+  // plan's generator (no club's schedule: when and where asked once), kept exactly as it was — 9d2·14 is parked (9d2a·B).
+  if (clubSchedulerOn(ctx!.org.planId)) return fromClubTime(ctx!.org.id, season, body);
+
   const { divisionId, startDate, gamesPerWeek = 1, gameTime = '18:00', save = false } = body;
 
   if (!divisionId || !startDate) {

@@ -25,7 +25,11 @@
  * Warns here: a team twice in a day, a team with byes two weeks running. The route adds the two the club's records answer:
  * outside the club's permit, and a booking at the place that the club's schedule does not hold.
  */
-import { mondayOfDay } from './timezone.ts';
+import { formatStoredDate, mondayOfDay } from './timezone.ts';
+import { pluralize, possessive } from './utils.ts';
+import { WEEKDAY_HEADS } from './calendar-recipe.ts';
+import { weekdayOf } from './permit-time.ts';
+import { weekdayOne } from './permit-words.ts';
 
 /** One slot of a division's game time, its club day and clock already worked out in the club's zone. */
 export interface GameTimeSlot {
@@ -95,8 +99,8 @@ export interface GamePlan {
   lastDay: string | null;
   weeks: number;
   /**
-   * The rarest time the games use (the thing worth sharing out — "Saturday mornings"): its weekday and clock and the fewest
-   * and most of it any team gets. Null when the games use one time only.
+   * The rarest time the games use (the thing worth sharing out — "Saturday mornings"): its weekday and earliest clock and the
+   * fewest and most of it any team gets, a time being a weekday and its part of the day. Null when the games use one only.
    */
   share: (SlotTime & { min: number; max: number }) | null;
 }
@@ -283,19 +287,24 @@ export function planGames(p: { slots: readonly GameTimeSlot[]; teams: readonly G
   const teamIds = teams.map(t => t.id);
   warnings.push(...twiceInADay(teamIds, dated), ...byesBackToBack(teamIds, dated));
 
-  // The rarest time the games use, when some teams get it and some don't.
+  // The rarest time the games use, counted as it is SAID — a weekday and its part of the day ("Saturday mornings"), so two
+  // Sunday-morning clocks are one time, and games that are all Sunday mornings share nothing out (step 5's probe).
+  const said = (s: SlotTime) => `${s.weekday}|${partOfDay(s.start)}`;
   const usedTimes = new Map<string, SlotTime & { games: number }>();
+  const perTeam = new Map<string, number>(); // `${teamId}|${said}` → games at that time
   for (const g of games) {
     const s = slotOf.get(g.slotId)!;
-    const k = timeKey(s);
+    const k = said(s);
     const was = usedTimes.get(k) ?? { weekday: s.weekday, start: s.start, games: 0 };
     was.games += 1;
+    if (minutesOf(s.start) < minutesOf(was.start)) was.start = s.start;
     usedTimes.set(k, was);
+    for (const t of [g.homeTeamId, g.awayTeamId]) perTeam.set(`${t}|${k}`, (perTeam.get(`${t}|${k}`) ?? 0) + 1);
   }
   let share: GamePlan['share'] = null;
   if (usedTimes.size > 1) {
     const rarest = [...usedTimes.values()].sort((a, b) => a.games - b.games || a.weekday - b.weekday || minutesOf(a.start) - minutesOf(b.start))[0];
-    const per = teams.map(t => timeCount.get(`${t.id}|${rarest.weekday}|${rarest.start}`) ?? 0);
+    const per = teams.map(t => perTeam.get(`${t.id}|${said(rarest)}`) ?? 0);
     share = { weekday: rarest.weekday, start: rarest.start, min: Math.min(...per), max: Math.max(...per) };
   }
 
@@ -305,3 +314,176 @@ export function planGames(p: { slots: readonly GameTimeSlot[]; teams: readonly G
     byes: teams.length % 2 === 1, firstDay, lastDay, weeks, share,
   };
 }
+
+// ── THE WINDOW AND THE ROUTE (9d-2a step 5, frames c1–c4, k3, k4) ────────────────────────────────────────────────────
+
+/** A day as the check says it: "Thu, Jun 17". */
+export const shortDayWords = (day: string) => `${WEEKDAY_HEADS[weekdayOf(day) - 1] ?? ''}, ${formatStoredDate(day, { withYear: false })}`;
+
+/** The part of a day a clock starts in. */
+const partOfDay = (clock: string) => (minutesOf(clock) < 12 * 60 ? 'morning' : minutesOf(clock) < 17 * 60 ? 'afternoon' : 'evening');
+
+/** The rarest time, said: "Saturday mornings" (one: "Saturday morning"). */
+export const primeTimeWords = (t: SlotTime, n = 2) =>
+  `${weekdayOne(t.weekday)} ${partOfDay(t.start)}${n === 1 ? '' : 's'}`;
+
+/** A plan as the window reads it (its games stay on the server until the check). */
+export type PlanSummary = Omit<GamePlan, 'games' | 'warnings'> & { placed: number };
+export function summaryOf(p: GamePlan): PlanSummary {
+  return {
+    block: p.block, needed: p.needed, slotCount: p.slotCount, gamesEach: p.gamesEach, home: p.home, byes: p.byes,
+    firstDay: p.firstDay, lastDay: p.lastDay, weeks: p.weeks, share: p.share, placed: p.games.length,
+  };
+}
+
+/** Step 2's read (`step: 'plan'`): both choices, so the dropdown's counts and the hints are exact as it changes. */
+export interface GeneratePlanReply {
+  once: PlanSummary;
+  twice: PlanSummary;
+  /** Every game slot's length in minutes, or null when they differ (the foot then says "the length of its slot"). */
+  slotMinutes: number | null;
+}
+
+/** One thing to look at (c3's warning state): the plan's own two, and the two the club's records answer. */
+export type GenerateWarning =
+  | PlanWarning
+  | { kind: 'permit'; venue: string; line: string }
+  | { kind: 'booking'; place: string; other: string };
+
+/** A game as "See the games" lists it. */
+export interface CheckedGame { homeTeamId: string; awayTeamId: string; scheduledAt: string; endsAt: string; place: string }
+
+/** The check's answer (`step: 'check'`). Blocked: no games, no warnings. */
+export interface GenerateCheckReply {
+  plan: PlanSummary;
+  games: CheckedGame[];
+  warnings: GenerateWarning[];
+  /** The planned games' Schedule health (lib/league-schedule-health.ts), or null when blocked. */
+  health: number | null;
+  /** The slots the games sit on: Save sends them back, and refuses when the game time changed under the check. */
+  slotIds: string[];
+}
+
+/** Save's answer (`step: 'save'`): the count, and the permit's lines for the games outside it (the shipped after-save). */
+export interface GenerateSaveReply { saved: number; permitLines: string[] }
+
+/** The step-2 hint's sentences, each only when it applies (the copy file's "Step 2 hint"). */
+export function matchupHints(teams: number, plan: PlanSummary): string[] {
+  const out = [teams % 2 === 0 ? GENERATE_WORDS.noByes(teams) : GENERATE_WORDS.byes(teams)];
+  if (plan.block) return out;
+  out.push(GENERATE_WORDS.homeBalanced(plan.home.min, plan.home.max));
+  if (plan.share && plan.share.max - plan.share.min <= 1) out.push(GENERATE_WORDS.shared(primeTimeWords(plan.share)));
+  return out;
+}
+
+/** A warning, said. `team` names a team by id. */
+export function warningWords(w: GenerateWarning, division: string, team: (id: string) => string): string {
+  switch (w.kind) {
+    case 'twice_in_a_day': return GENERATE_WORDS.warnTwice(team(w.teamId), shortDayWords(w.day));
+    case 'byes_back_to_back':
+      return GENERATE_WORDS.warnByes(team(w.teamId), formatStoredDate(w.weeks[0], { withYear: false }), formatStoredDate(w.weeks[1], { withYear: false }));
+    case 'permit': return GENERATE_WORDS.warnPermit(division, w.venue);
+    case 'booking': return GENERATE_WORDS.warnBooking(division, w.place, w.other);
+  }
+}
+
+/** "Jun 1 – Aug 7" (the year once, at the end, when `withYear`). */
+export function spanWords(first: string, last: string, withYear = false): string {
+  const b = formatStoredDate(last, { withYear });
+  return first === last ? b : `${formatStoredDate(first, { withYear: false })} – ${b}`;
+}
+
+/**
+ * Words. Settled: HOUSE_LEAGUE_STAGE9D2_11B_COPY.md "Generate games, step 1", "When there is nothing to give (k4)" and
+ * "Stage 9d-2a" c. [build] marks a word the build chose where nothing was settled.
+ */
+export const GENERATE_WORDS = {
+  eyebrow: (season: string, step: 1 | 2) => `${season} · step ${step} of 2`,
+  checkedEyebrow: (season: string) => `${season} · checked`,
+  titleTime: 'Generate games: when and where',
+  titleMatchups: 'Generate games: match-ups',
+  division: 'Division',
+  teams: (n: number) => pluralize(n, 'team'),
+  // Step 1 (c1)
+  gameTime: (division: string) => `${possessive(division)} game time · from house league’s time`,
+  gamesAWeek: (n: number) => `${pluralize(n, 'game')} a week`,
+  /** [build] the drawn "65 game slots in all", after the source's dates. */
+  slotsInAll: (dates: string, n: number) => `${dates} · ${pluralize(n, 'game slot')} in all.`,
+  changeIt: 'Change it in House league’s time',
+  eachGame: (minutes: number) => `Each game is ${minutes} minutes, the length of a slot.`,
+  /** [build] slots of different lengths. */
+  eachGameMixed: 'Each game is the length of its slot.',
+  next: 'Next: match-ups',
+  cancel: 'Cancel',
+  back: 'Back',
+  close: 'Close',
+  // Step 1 with no game time (k3)
+  noTime: (division: string) => `${division} has no game time yet. Give it some of house league’s time.`,
+  notGiven: 'Not given yet',
+  slots: (n: number) => pluralize(n, 'slot'),
+  notOffered: 'Time already given to a division isn’t offered. Need only part of it, such as one facility? ',
+  divideFirst: 'Divide it in House league’s time first',
+  givenFoot: (division: string) => `Given to ${division} as its game time. The rest stays not given.`,
+  giving: 'Giving…',
+  // Nothing to give (k4); the club's own sentences are LEAGUE_TIME_WORDS'.
+  noneLeftLeagueAdmin: 'House league has no time left to give. An owner or an admin gives house league its time, in Schedules.',
+  takeBack: 'Take time back from another division',
+  noneLeftClubHint: 'Give it more from one of the club’s permits, then come back here.',
+  nothingSaved: 'Nothing is saved.',
+  // Step 2 (c2)
+  everyTeam: (division: string) => `${division} · every team plays every other team`,
+  once: 'Once',
+  twice: 'Twice',
+  counts: (each: number, total: number) => `${pluralize(each, 'game')} each · ${pluralize(total, 'game')}`,
+  noByes: (teams: number) => `${teams} teams: no byes.`,
+  byes: (teams: number) => `${teams} teams: one team has a bye each week, never two weeks running.`,
+  homeBalanced: (a: number, b: number) =>
+    `Home and away are balanced for you: ${a === b ? pluralize(a, 'home game') : `${a} or ${pluralize(b, 'home game')}`} each.`,
+  shared: (prime: string) => `${prime} are shared out evenly.`,
+  stepFoot: (n: number, slots: number, span: string) => `${pluralize(n, 'game')} in ${pluralize(slots, 'slot')}, ${span}. Nothing is saved yet.`,
+  /** [build] a choice that doesn't fit: no span (the check says why). */
+  stepFootBlocked: 'Nothing is saved yet.',
+  check: 'Check the games',
+  checking: 'Checking…',
+  checkFailed: 'The check didn’t finish. Your choices are kept.',
+  tryAgain: 'Try again',
+  // The check, passing (c3)
+  ready: (n: number) => `Ready to save: ${pluralize(n, 'game')}`,
+  span: (span: string, weeks: number) => `${span} · ${pluralize(weeks, 'week')}`,
+  everyTeamPlays: (games: number, a: number, b: number) => `Every team plays ${pluralize(games, 'game')}, ${a === b ? a : `${a} or ${b}`} at home.`,
+  everyTeamGets: (min: number, max: number, t: SlotTime) =>
+    `Every team gets ${min === max ? min : `${min} or ${max}`} ${primeTimeWords(t, max)}.`,
+  health: (score: number) => `Schedule health ${score}.`,
+  seeGames: (n: number) => `See the ${pluralize(n, 'game')}`,
+  passFoot: (n: number) => `Saving puts ${n === 1 ? 'this game' : `these ${n} games`} on the public schedule at once. Families aren’t emailed.`,
+  save: (n: number) => `Save ${pluralize(n, 'game')}`,
+  saving: 'Saving…',
+  saved: (n: number) => `Saved ${pluralize(n, 'game')}. ${n === 1 ? 'It’s' : 'They’re'} on the public schedule now.`,
+  // The check, warning
+  warnTitle: (n: number, k: number) => `${pluralize(n, 'game')}, with ${pluralize(k, 'thing')} to look at`,
+  warnPermit: (division: string, venue: string) => `${possessive(division)} game time is outside the club’s permit for ${venue}.`,
+  /** Ends once: the booking's clock already ends in "a.m." or "p.m.". */
+  warnBooking: (division: string, place: string, other: string) =>
+    `${possessive(division)} game time overlaps a booking at ${place}: ${other}${other.endsWith('.') ? '' : '.'}`,
+  warnTwice: (team: string, day: string) => `${team} plays twice on ${day}.`,
+  warnByes: (team: string, a: string, b: string) => `${team} has a bye two weeks running, ${a} and ${b}.`,
+  elsePasses: 'Everything else passes',
+  warnFoot: 'You can save now and sort it out later.',
+  // The check, blocking
+  blockTitle: (division: string) => `This doesn’t fit ${possessive(division)} time`,
+  blockShort: (n: number, division: string, have: number, last: string | null) =>
+    `${pluralize(n, 'game')} ${n === 1 ? 'needs' : 'need'} ${pluralize(n, 'slot')}. ${possessive(division)} game time has ${have}${last ? ` by ${last}` : ''}.`,
+  /** [build] enough slots, but a team would be in two places at once. */
+  blockCrowded: (placed: number, n: number) => `Only ${placed} of the ${n} games fit without a team playing two games at once.`,
+  /** [build] fewer than two teams (a division like that isn't listed; this is a race). */
+  blockTeams: (division: string) => `${division} needs at least 2 teams.`,
+  blockHint: (division: string, twice: boolean) => `Give ${division} more time${twice ? ', or play every team once' : ''}.`,
+  giveMoreTime: (division: string) => `Give ${division} more time`,
+  // Refusals and the division list
+  /** [build] Save found the game time changed since the check. */
+  changed: (division: string) => `${possessive(division)} game time changed while you were looking. Check the games again.`,
+  /** [build] the division got games since the window opened (another tab, another admin). */
+  hasGames: (division: string) => `${division} has games now. Add more one at a time, with Add.`,
+  noneLeft: 'Every division already has games. Add more one at a time, with Add.',
+  failed: 'That didn’t save. Try again.',
+} as const;
