@@ -18,6 +18,10 @@
   /* Inside the installed app on a desk the platform's strip is the app's bar, fixed over the top of the page, and the band
      starts under it. In a browser there is no strip (below), and on a phone it is 0. */
   padding-top: var(--desktop-strip-h, 0px);
+  /* The phone's floating bars (the My Team dock and its panel) read the platform's near-black bar ground; under the
+     frame they are a white card like everything else. The app's own bottom bar is mounted outside the frame (its rule
+     is in ConsumerShell.module.css). */
+  --nav-mobile-bg: var(--club-card);
 }
 
 /* A desk (above 900 px) keeps the club bar's one band, scrolling away whole; nothing pins. Above 1,023 px the side rail
@@ -300,6 +304,9 @@ a.footHost:focus-visible {
   --gold-strong:     var(--gold);
   --bg-inset:        var(--club-ground);
   --highlight-top:   none;
+  /* The one shadow the club's token block does not name (it zeroes --glow, --glow-sm, --shadow-sm and --shadow): the
+     team hero, the share menu and the schedule's day jump wore it. */
+  --shadow-lg:       none;
 }
 
 /* The type (Ask 2): sentence case, and scores and times in even-width figures, on every page under the frame. Words
@@ -331,13 +338,6 @@ a.footHost:focus-visible {
   background: var(--club-ground);
   border-color: var(--club-line);
   color: var(--club-soft);
-}
-
-/* The phone's floating bars (the My Team dock and its panel) read the platform's near-black bar ground; under the frame
-   they are a white card like everything else. The app's own bottom bar is mounted outside the frame (its rule is in
-   ConsumerShell.module.css). */
-.frame {
-  --nav-mobile-bg: var(--club-card);
 }
 
 /* Today's Light mode prints the outline button, the primary badge, `.text-primary` and a section's eyebrow in the

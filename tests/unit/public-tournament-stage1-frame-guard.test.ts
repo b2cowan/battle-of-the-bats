@@ -50,7 +50,7 @@ describe('the preview switch', () => {
 
   it('the link only ever returns to a path on this site', () => {
     assert.equal(safePublicFrameReturn('/riverdale-minor-ball/summer-classic'), '/riverdale-minor-ball/summer-classic');
-    for (const bad of ['//evil.example', '/\\evil.example', 'https://evil.example/x', 'evil', '', null, undefined]) {
+    for (const bad of ['//evil.example', '/\\evil.example', '/\t//evil.example', '/\n/evil.example', 'https://evil.example/x', 'evil', '', null, undefined]) {
       assert.equal(safePublicFrameReturn(bad), '/', `refuses ${String(bad)}`);
     }
   });
@@ -77,7 +77,7 @@ describe('with the switch off, nothing a customer sees changes', () => {
     assert.match(layout, /const frameBand = frameOn \? publicFrameBand\(org, tournament, todayISO, registration\?\.state === 'open'\) : null;/);
     assert.match(layout, /\{!frameOn && <ScoreTicker \/>\}/, 'today\'s fixed ticker, unchanged, when off');
     assert.match(layout, /\{frameOn \? \(\s*<div className=\{frameStyles\.main\}>\s*<TodaysResultsLine \/>\s*\{children\}\s*<\/div>\s*\) : children\}/);
-    assert.match(layout, /\{frameBand && \(\s*<style dangerouslySetInnerHTML=\{\{ __html: `html:has\(\[data-public-frame="light"\]\)/);
+    assert.match(layout, /\{frameBand && \(\s*<style dangerouslySetInnerHTML=\{\{ __html: publicFrameRoleCss\(frameBand\.roles\) \}\}/);
   });
 
   it('the organizer\'s saved Dark/Light is today\'s behaviour when off', () => {
@@ -254,7 +254,7 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
     assert.match(layout, /\{!frameOn && <TournamentSideRail \/>\}/);
     assert.match(layout, /\{frameOn && <TournamentSideRail \/>\}/);
     assert.match(layout, /className=\{frameOn \? `\$\{railStyles\.shell\} \$\{frameStyles\.deskShell\}` : railStyles\.shell\}/);
-    assert.match(layout, /const frameContactPromise = frameOn\s*\? resolveTournamentContactEmail\(tournament\.id, org\.contactEmail \?\? null, 'public'\)/,
+    assert.match(layout, /const frameContactPromise = frameOn\s*\? publicTournamentContactEmail\(tournament\.id, org\.contactEmail \?\? null\)/,
       'the footer\'s address is the one Rules and News show, and is never looked up when off');
   });
 

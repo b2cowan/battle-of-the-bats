@@ -148,8 +148,7 @@
 
 /* Under the frame: the card's edge in the organizer's edge colour (3 : 1 on white, where a pale colour vanished), no
    halo or glow, the date strip a quiet inset instead of a wash, and the label at 12 px. */
-:global([data-public-frame='light']) .nodeCard,
-:global([data-public-frame='light']) .nodeCardLive { stroke: var(--club-edge); }
+:global([data-public-frame='light']) .nodeCard { stroke: var(--club-edge); }
 :global([data-public-frame='light']) .nodeCardHalo,
 :global([data-public-frame='light']) .championTrophy { filter: none; }
 :global([data-public-frame='light']) .nodeMeta { fill: var(--bg-inset); }

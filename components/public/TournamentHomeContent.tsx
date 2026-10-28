@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye, Clock, CheckCircle, Crown } from 'lucide-react';
-import { getAnnouncements, getTeams, getDivisions, getVenues, getStandings, resolveTournamentContactEmail } from '@/lib/db';
+import { getAnnouncements, getTeams, getDivisions, getVenues, getStandings } from '@/lib/db';
 import { readPublicGames, getPublicStandingsByDivision } from '@/lib/public-games';
 import type { Game, Organization, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
@@ -29,7 +29,7 @@ import Countdown from '@/components/public/Countdown';
 import FollowTournamentStrip from '@/components/public/FollowTournamentStrip';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { orgLinks } from '@/lib/org-links';
-import { isPublicFrameOn } from '@/lib/public-frame-server';
+import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { TOURNAMENT_STATUS_WORD } from '@/lib/club-site-home';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
@@ -95,7 +95,7 @@ export default async function TournamentHomeContent({
   // Honor the tournament's "show contact email publicly" privacy toggle and resolve
   // the designated contact (member email) — the raw `tournament.contactEmail ?? org`
   // fallback skipped both (J1-045). Returns null when the organizer hid it.
-  const contactEmail = await resolveTournamentContactEmail(tournament.id, org.contactEmail ?? null, 'public');
+  const contactEmail = await publicTournamentContactEmail(tournament.id, org.contactEmail ?? null);
   const standingsEntries = showStandingsPage
     ? Object.entries(await getPublicStandingsByDivision(tournament, divisions, { games: allGames, teams: allTeams }))
     : [];

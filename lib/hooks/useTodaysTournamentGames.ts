@@ -13,6 +13,7 @@ import { useOrgHref } from '@/lib/use-public-pathname';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { tournamentToday } from '@/lib/timezone';
+import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import type { Game, PublicTeam } from '@/lib/types';
 
 /** A team's name for a one-line strip: the parenthetical (a division or town note) dropped. */
@@ -23,12 +24,25 @@ export function teamShort(id: string | null | undefined, placeholder: string | n
 
 // Unassigned-slot sentinel — same convention as ScheduleContent/game-detail.
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
-export const unresolvedSlot = (id: string | null | undefined) => !id || id === NIL_UUID;
+const unresolvedSlot = (id: string | null | undefined) => !id || id === NIL_UUID;
 
 /** A playoff slot whose BOTH sides are still bracket refs ("Winner SF2") reads as jargon, and its time window can open
  *  before the feeders finish, so it must never dress as live: show the round and the time until the teams resolve. */
 export function isPendingPlayoffSlot(g: Game): boolean {
   return (g.isPlayoff || !!g.bracketCode) && unresolvedSlot(g.awayTeamId) && unresolvedSlot(g.homeTeamId);
+}
+
+type TodayFeed = { teams: PublicTeam[]; games: Game[]; requireFinalization: boolean };
+const EMPTY_FEED: TodayFeed = { teams: [], games: [], requireFinalization: true };
+
+/** The slice of the schedule payload the strip reads, from the first fetch and from every live refresh alike. The
+ *  organizer's "a score needs confirming" setting rides along, so a submitted score reads as the schedule reads it. */
+function readFeed(d: PublicTournamentPageData): TodayFeed {
+  return {
+    teams: d.teams ?? [],
+    games: d.games ?? [],
+    requireFinalization: d.organization?.requireScoreFinalization ?? d.tournament?.requireScoreFinalization ?? true,
+  };
 }
 
 export function useTodaysTournamentGames() {
@@ -44,19 +58,13 @@ export function useTodaysTournamentGames() {
     today >= tournamentStartDate && today <= tournamentEndDate;
   const active = inWindow && !!orgSlug && !!tournamentSlug;
 
-  const [teams, setTeams] = useState<PublicTeam[]>([]);
-  const [games, setGames] = useState<Game[]>([]);
-  // The organizer's "a score needs confirming" setting, so a submitted score reads as the schedule reads it.
-  const [requireFinalization, setRequireFinalization] = useState(true);
+  const [{ teams, games, requireFinalization }, setFeed] = useState<TodayFeed>(EMPTY_FEED);
 
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
     void fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule').then(d => {
-      if (cancelled || !d) return;
-      setTeams(d.teams ?? []);
-      setGames(d.games ?? []);
-      setRequireFinalization(d.organization?.requireScoreFinalization ?? d.tournament?.requireScoreFinalization ?? true);
+      if (!cancelled && d) setFeed(readFeed(d));
     });
     return () => { cancelled = true; };
   }, [active, orgSlug, tournamentSlug]);
@@ -66,11 +74,7 @@ export function useTodaysTournamentGames() {
     tournamentSlug,
     section: 'schedule',
     enabled: active,
-    onData: d => {
-      setTeams(d.teams ?? []);
-      setGames(d.games ?? []);
-      setRequireFinalization(d.organization?.requireScoreFinalization ?? d.tournament?.requireScoreFinalization ?? true);
-    },
+    onData: d => setFeed(readFeed(d)),
   });
 
   const todayGames = useMemo(

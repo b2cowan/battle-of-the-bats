@@ -697,7 +697,6 @@
 :global([data-public-frame='light']) .profile {
   --team-accent: color-mix(in srgb, var(--team-color, var(--primary)) 80%, var(--black) 20%);
 }
-:global([data-public-frame='light']) .heroCard { box-shadow: none; } /* the large shadow the token block does not reach */
 :global([data-public-frame='light']) .followHeroBtn:hover { border-color: var(--club-edge); }
 :global([data-public-frame='light']) .heroStatusChip,
 :global([data-public-frame='light']) .heroStatLabel,

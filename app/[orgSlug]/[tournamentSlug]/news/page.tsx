@@ -1,6 +1,7 @@
 import { forwardToOwnAddress } from '@/lib/club-forward';
 import { cookies } from 'next/headers';
-import { getAnnouncements, getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, resolveTournamentContactEmail } from '@/lib/db';
+import { getAnnouncements, getOrganizationBySlug, getPublicTournamentBySlug, getDivisions } from '@/lib/db';
+import { publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { notFound } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import NewsContent from '@/components/public/NewsContent';
@@ -27,7 +28,7 @@ export default async function NewsPage({
 
   // Honor the "show contact email publicly" toggle + resolve the designated
   // contact, instead of the raw fallback that bypassed both (J1-045).
-  const contactEmail = await resolveTournamentContactEmail(tournament.id, org?.contactEmail ?? null, 'public');
+  const contactEmail = await publicTournamentContactEmail(tournament.id, org?.contactEmail ?? null);
   const pageEnabled = isPublicPageEnabled(tournament, 'news');
 
   const [announcements, divisions] = pageEnabled

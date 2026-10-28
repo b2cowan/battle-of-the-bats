@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
 import { hasSupabaseSessionCookie } from '@/lib/supabase-server';
-import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams, resolveTournamentContactEmail } from '@/lib/db';
+import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
 import { hasPublicPlayoffGames } from '@/lib/public-games';
 import { hasPlayoffPlan } from '@/lib/playoff-plan';
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
@@ -39,8 +39,8 @@ import TournamentBand from '@/components/public/TournamentBand';
 import TournamentFooter from '@/components/public/TournamentFooter';
 import clubFrameStyles from '@/components/public/ClubFrame.module.css';
 import frameStyles from '@/components/public/TournamentFrame.module.css';
-import { isPublicFrameOn } from '@/lib/public-frame-server';
-import { publicFrameAttr, publicFrameBand, publicFrameHost, publicFrameRoleVars } from '@/lib/public-frame';
+import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
+import { publicFrameAttr, publicFrameBand, publicFrameHost, publicFrameRoleCss } from '@/lib/public-frame';
 
 export const dynamic = 'force-dynamic';
 
@@ -126,7 +126,7 @@ export default async function TournamentLayout({
   // The frame's footer shows the address the Rules and News pages already show (the organizer's public-contact switch
   // decides it). Kicked off here and awaited with the host answer, for the same reason; failing to null drops the line.
   const frameContactPromise = frameOn
-    ? resolveTournamentContactEmail(tournament.id, org.contactEmail ?? null, 'public').catch(() => null)
+    ? publicTournamentContactEmail(tournament.id, org.contactEmail ?? null).catch(() => null)
     : Promise.resolve(null);
 
   // Acquisition banner (free events only) — hidden from members of THIS org. Resolving a
@@ -362,7 +362,7 @@ export default async function TournamentLayout({
       {/* The frame's colour roles, on <html> for the frame only: the frame's element reads them through the club's token
           block, and the app's own bar (mounted outside it) reads the ink. Outranks the org layout's :root block. */}
       {frameBand && (
-        <style dangerouslySetInnerHTML={{ __html: `html:has([data-public-frame="light"]) { ${publicFrameRoleVars(frameBand.roles)} }` }} />
+        <style dangerouslySetInnerHTML={{ __html: publicFrameRoleCss(frameBand.roles) }} />
       )}
       {/* Desktop-only (≥1024px) persistent left nav rail — self-hides below that. Under the frame it is a cell of the
           frame's desk grid instead (below). */}

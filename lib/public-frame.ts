@@ -20,6 +20,7 @@ import { canUseAdvancedTournamentBranding } from './tournament-branding';
 import { TOURNAMENT_STATUS_WORD, tournamentHomeStatus } from './club-site-home';
 import { formatEventDateRange } from './timezone';
 import { clubInitials } from './club-site';
+import { safeNextPath } from './safe-redirect';
 import type { Organization, Tournament } from './types';
 
 /** The browser's own answer, set by the preview link and its twin. */
@@ -37,12 +38,12 @@ export function publicFrameFromCookie(value: string | null | undefined, isDevelo
 }
 
 /**
- * Where the preview link may send the visitor afterwards: a path on this site, never another site (`//evil`, `/\evil`
- * and a full URL are refused — an open redirect would let anyone's link wear our address).
+ * Where the preview link may send the visitor afterwards: a path on this site, never another site (`//evil`, `/\evil`,
+ * a tab-smuggled `/<TAB>//evil` and a full URL are refused — an open redirect would let anyone's link wear our
+ * address). The repo's one same-origin check, lib/safe-redirect.ts; never a hand-rolled prefix test.
  */
 export function safePublicFrameReturn(to: string | null | undefined): string {
-  if (!to || !to.startsWith('/') || to.startsWith('//') || to.startsWith('/\\')) return '/';
-  return to;
+  return to?.startsWith('/') ? safeNextPath(to, '/') : '/';
 }
 
 type FrameOrg = Pick<Organization, 'planId' | 'themePreset' | 'themePrimary' | 'themeAccent'>;
@@ -140,7 +141,7 @@ export function publicFrameHost(orgName: string, eventName: string, orgHomeHref:
  * which outranks the org layout's `:root` block: the app's own phone bar is mounted outside the tournament's markup and
  * reads them too.
  */
-export function publicFrameRoleVars(roles: PublicFrameRoles): string {
+function publicFrameRoleVars(roles: PublicFrameRoles): string {
   return [
     `--club-fill: ${roles.fill}`,
     `--club-fill-rgb: ${hexChannels(roles.fill)}`,
@@ -153,4 +154,9 @@ export function publicFrameRoleVars(roles: PublicFrameRoles): string {
     `--club-tile: ${roles.tile}`,
     `--club-tile-ink: ${roles.tileInk}`,
   ].join('; ');
+}
+
+/** The rule both the live layout and the admin preview write: the roles, on <html>, only while the frame is on it. */
+export function publicFrameRoleCss(roles: PublicFrameRoles): string {
+  return `html:has([${PUBLIC_FRAME_ATTR}="light"]) { ${publicFrameRoleVars(roles)} }`;
 }

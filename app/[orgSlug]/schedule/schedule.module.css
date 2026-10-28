@@ -2357,7 +2357,6 @@ a.broadcastCard { cursor: pointer; }
 :global([data-public-frame='light']) .dayJumpDayActive { background: var(--bg-inset); }
 :global([data-public-frame='light']) .dayJumpPanel {
   border: 1px solid var(--border);
-  box-shadow: none;
 }
 :global([data-public-frame='light']) .segmentedControl::before,
 :global([data-public-frame='light']) .mobileStageControl::before,

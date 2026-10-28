@@ -63,25 +63,42 @@ function prefersReducedMotion(): boolean {
 export default function TodaysResultsLine() {
   const { tournamentSlug, today, teams, todayGames, requireFinalization, gameHref } = useTodaysTournamentGames();
 
-  // Re-sort once a minute so a game that starts moves from its time to Live without waiting for a score.
-  const [clock, setClock] = useState(0);
+  // The × — hidden for the rest of the tournament's day on this device. `undefined` until storage is read, so the line
+  // never draws and then vanishes.
+  const hideKey = tournamentSlug ? `flhq-results-line-hidden-${tournamentSlug}` : '';
+  const [hiddenOn, setHiddenOn] = useState<string | null | undefined>(undefined);
   useEffect(() => {
-    if (todayGames.length === 0) return;
-    const t = setInterval(() => setClock(c => c + 1), 60_000);
+    if (!hideKey) return;
+    let stored: string | null = null;
+    try { stored = localStorage.getItem(hideKey); } catch { /* storage unavailable: show the line */ }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHiddenOn(stored);
+  }, [hideKey]);
+  function hide() {
+    setHiddenOn(today);
+    try { localStorage.setItem(hideKey, today); } catch { /* ignore */ }
+  }
+  const hiddenToday = hiddenOn === today;
+
+  // Re-sort once a minute so a game that starts moves from its time to Live without waiting for a score (not while the
+  // family has put the line away for the day).
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (todayGames.length === 0 || hiddenToday) return;
+    const t = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(t);
-  }, [todayGames.length]);
+  }, [todayGames.length, hiddenToday]);
 
   // Today's results, newest first; then every game on now; then the next to start. A score waiting for the organizer's
   // confirmation is not in the reel (the state words are three); it joins as Final once confirmed.
   const reel = useMemo<LineGame[]>(() => {
-    void clock;
-    const now = new Date();
+    const at = new Date(now);
     const results: LineGame[] = [];
     const live: LineGame[] = [];
     const later: LineGame[] = [];
     for (const g of todayGames) {
       const pending = isPendingPlayoffSlot(g);
-      const state = publicGameStatus(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, requireFinalization, now);
+      const state = publicGameStatus(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, requireFinalization, at);
       const scored = g.homeScore != null && g.awayScore != null;
       const base = {
         id: g.id,
@@ -98,7 +115,7 @@ export default function TodaysResultsLine() {
         results.push({ ...base, kind: 'final', winner });
       } else if (state === 'live' && !pending) {
         live.push({ ...base, kind: 'live', winner: null });
-      } else if (state === 'upcoming' && isGameUpcoming(g, now)) {
+      } else if (state === 'upcoming' && isGameUpcoming(g, at)) {
         later.push({ ...base, kind: 'later', awayScore: null, homeScore: null, winner: null });
       }
     }
@@ -110,25 +127,9 @@ export default function TodaysResultsLine() {
     ];
     // gameHref is rebuilt each render from stable inputs; the games and teams are what change the reel.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayGames, teams, requireFinalization, clock]);
+  }, [todayGames, teams, requireFinalization, now]);
 
-  // The × — hidden for the rest of the tournament's day on this device. `undefined` until storage is read, so the line
-  // never draws and then vanishes.
-  const hideKey = tournamentSlug ? `flhq-results-line-hidden-${tournamentSlug}` : '';
-  const [hiddenOn, setHiddenOn] = useState<string | null | undefined>(undefined);
-  useEffect(() => {
-    if (!hideKey) return;
-    let stored: string | null = null;
-    try { stored = localStorage.getItem(hideKey); } catch { /* storage unavailable: show the line */ }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHiddenOn(stored);
-  }, [hideKey]);
-  function hide() {
-    setHiddenOn(today);
-    try { localStorage.setItem(hideKey, today); } catch { /* ignore */ }
-  }
-
-  const show = reel.length > 0 && hiddenOn !== undefined && hiddenOn !== today;
+  const show = reel.length > 0 && hiddenOn !== undefined && !hiddenToday;
 
   // ── The reel ────────────────────────────────────────────────────────────────────────────────────────────────────
   const [currentId, setCurrentId] = useState<string | null>(null);

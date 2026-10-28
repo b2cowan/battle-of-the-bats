@@ -12,15 +12,15 @@ import {
 } from '@/lib/tournament-preview';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { hasRoundRobin } from '@/lib/tournament-phase';
-import { getDivisions, getTeams, resolveTournamentContactEmail } from '@/lib/db';
+import { getDivisions, getTeams } from '@/lib/db';
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { getRegistrationState } from '@/lib/registration-state';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { showsFreeCredit } from '@/lib/plan-config';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import { tournamentToday } from '@/lib/timezone';
-import { isPublicFrameOn } from '@/lib/public-frame-server';
-import { publicFrameAttr, publicFrameBand, publicFrameHost, publicFrameRoleVars } from '@/lib/public-frame';
+import { isPublicFrameOn, publicTournamentContactEmail } from '@/lib/public-frame-server';
+import { publicFrameAttr, publicFrameBand, publicFrameHost, publicFrameRoleCss } from '@/lib/public-frame';
 import TournamentBand from '@/components/public/TournamentBand';
 import TournamentFooter from '@/components/public/TournamentFooter';
 import clubFrameStyles from '@/components/public/ClubFrame.module.css';
@@ -60,7 +60,7 @@ export default async function TournamentPreviewLayout({
       getDivisions(tournament.id, { admin: true }),
       registerHidden ? Promise.resolve(null) : getTeams(tournament.id, { admin: true }),
       resolveOrgHomeHref(org).catch(() => null),
-      resolveTournamentContactEmail(tournament.id, org.contactEmail ?? null, 'public').catch(() => null),
+      publicTournamentContactEmail(tournament.id, org.contactEmail ?? null).catch(() => null),
     ]);
     const registration = regTeams
       ? getRegistrationState(tournament, divisions, regTeams.filter(t => t.status !== 'rejected'))
@@ -70,7 +70,7 @@ export default async function TournamentPreviewLayout({
     return (
       <>
         <style dangerouslySetInnerHTML={{ __html: `:root { ${themeVars} }` }} />
-        <style dangerouslySetInnerHTML={{ __html: `html:has([data-public-frame="light"]) { ${publicFrameRoleVars(band.roles)} }` }} />
+        <style dangerouslySetInnerHTML={{ __html: publicFrameRoleCss(band.roles) }} />
         {/* The live frame's one outer element, its marker and token block; data-live-chrome too, since under the frame
             the preview has the band that the in-page titles would repeat (preview ↔ live parity). */}
         <div className={`${clubFrameStyles.tokens} ${frameStyles.frame}`} {...publicFrameAttr}>
