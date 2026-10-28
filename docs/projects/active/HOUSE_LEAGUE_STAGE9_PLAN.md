@@ -1109,3 +1109,24 @@ open it, and the menu's top level is Stage 13's.
   Walks: none quote a changed line; §411 (health) assumes Walk U11 already has its games from §410, so the new issue does not
   appear there (a re-walk before §410 would show it, correctly).
 - 2026-10-28 — **9d-2b Part 4 cleaned and reviewed** (the families' game emails, `670b00682`): `/simplify` `c5db241f1`, `/review` (high, five lenses) `8228c9f23`. One High fixed (a send that died partway read "done, reached 0" with no resend — now counted before the first email); the Mediums are a stale count write from a call that claims nothing, a fresh send reading "Stopped" instead of "Sending", delivered batches recorded as they land, production treating a missing email key as a failure, a change that nets to nothing no longer saying "Sent to N families", the coach copy's exclusion list, and the season's games paged. Detail and what was left (Low/Advisory) in `HOUSE_LEAGUE_STAGE9D2B_BUILD_PROMPT.md`'s Progress block. Walk §418 (https://claude.ai/artifact/RJt2Q9V6BQmdHkwAHi9tez, 30 steps) owed. Mig 410 still dev only. Help waits for Part 7.
+- 2026-10-28 — **9d-2b Part 5 built, committed `4b2a4b45e`** (the coach's page g3 + the owner moving time, 9d2·7 / 9d2·13 / 9d2·16; build prompt
+  `HOUSE_LEAGUE_STAGE9D2B_BUILD_PROMPT.md`). **Mig 411** (function-only, dev only, MANUAL_PROD_STEPS pending, after 409):
+  `club_schedule_apply_changes` = mig 393's text + a games block (`p_league.games` = move / postpone / remove, advisory-locked
+  per division, `league.change_source = 'club'` around it and cleared after), and `league_game_undo` returns `'club'` for a held
+  club change. **The plan** (`lib/club-schedule-league-plan.ts`): a carried games use moves its games by the slot's shift at the
+  new slot's place; one that won't fit, or on time taken back, goes to Needs a new date (published) or off the draft (draft);
+  played / started / cancelled / postponed games stay; a slot saved again at the same time and place writes nothing. Games are in
+  the fingerprint. **Who hears:** nobody from the club's send but the league admins' bell (title "… changed house league's game
+  time", body counts + "N games wait in Changes to send"); families hear once from the convenor's send. **Screens:** Send the
+  changes lists a "U12 games · Sun, Nov 15: Field 2 → Field 4" row per division and slot (no tick); the "Changed since sent"
+  callout lists it; k5 names the slot's games ("House league uses this time: 2 published U12 games. When you send the changes,
+  these games move to Needs a new date …"); the tray hides Undo on a club change. **The coach's page:** one Schedule list from
+  today on, games (published only, as last SENT) and practices together in g3's row (Today / Jun 17 · Twins vs Royals · 6:00
+  p.m.), "Needs a new date" after it, the settled unpublished / none-ahead lines, "See the season's schedule" under it.
+  ⚖ **Built default, said out loud:** a club-moved change has no Undo (it would put the game back on time the club gave away —
+  9d2·3); the league admin gives it a new date. Proof: `scripts/house-league-9d2b-part5-check.sql` (R1–R3, T1–T7) passed on dev;
+  11b's check, the publish check and `.probe/11b5/e2e.ts` re-passed; 34 planner tests; 11,507 unit tests; typecheck clean;
+  `.probe/9d2b-p5/coach.ts` read the coach page draft and published on dev. **Not probed at runtime:** Send the changes'
+  preview with games (needs an owner session — Part 7's e2e). **[marketing] words to settle:** the draft k5 line, the games row's
+  taken-back line and sub-lines other than the settled move, the bell, `undoClub`, `changesHintLeagueGames`, `changesStatement`'s
+  divisions clause.

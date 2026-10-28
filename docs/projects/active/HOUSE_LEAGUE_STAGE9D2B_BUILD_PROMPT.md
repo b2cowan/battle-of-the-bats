@@ -113,8 +113,23 @@
   - **Review fixed** (five lenses, tier high; the gate: `typecheck` ✓, 11,496 unit tests ✓, spelling / dictionary / snapshot ✓; `verify:changed`'s ESLint step crashed on another session's config, my files linted clean; migration drift = 409/410 dev-only as known): **High** — a send that died partway read "done, reached 0" forever (the notice is born `failed_count = 0`, only the end of a send raised it): counted before the first email now. **Medium** — a call that claims nothing no longer rewrites counts (a stale write could land after the winner's); a fresh `sending` row reads the notice as "Sending" on the history (not "Stopped"); each batch's rows are recorded as it returns (`sendFamilyServiceBatch` gained `onBatch`), so a request killed mid-send keeps what went; the transport answering "skipped" is a failure in production (dev keeps the quiet skip); a change that nets to nothing in words no longer reads "Sent to N families" (`silent`); the coach-copy exclusion is the parents reached WITH that team's lines (was every claimed address); `getSeasonGamesEveryStatus` is paged; the data dictionary's `failed_count` meaning; `family-email.ts`'s header list names the practice-change and the two schedule emails. **Low** — the rows read is paged; a division deleted since closes its rows; an unsendable address is skipped, not failed forever; "Cancelled: A vs B, ." dangling comma; Publish / Send say "we couldn't confirm" on no answer / a bare 5xx; the email door hides while Publish / Send is working; "Send to the N it missed" that took no one says so; the f5 `others` read can't turn a sent email into "it didn't send"; `role="alert"`, a named "See them" link, no duplicate list keys; the unused `noticeMissed` removed.
   - **Left, recorded (Low/Advisory):** a late original send can still write onto a taken-over `sending` row (the guard is the status, not a token); `byCreated` compares timestamps as strings (a refuter found the order holds for PostgREST's output); a "Schedule published" resend weeks later lists games since played; the coach copy never happens if the first send dies before it; two copies for a coach of two changed teams; "0 families emailed" for an empty division; a null preview reads as a load failure; `maxDuration = 120` unconfirmed against the host. Neither mig 409 nor 410 changed (still dev-only).
   - **New fixture / probes (dev, not committed):** `.probe/9d2b-p4/fixture.mjs` (`--reset`, `--stop`, `--stop=published`, `--remove`), `show.ts`, `e2e.ts` (now also proves the Sending state).
-- **▶ NEXT: Part 5 (the coach's page g3 + the owner moving time, 9d2·13 / 9d2·16), in a FRESH session.** Then 6–7.
-  The dev server needs a restart before any browser check (new files + mig 410).
+- **Part 5 — COMMITTED `4b2a4b45e` 2026-10-28** (plan §9 has the full entry). **Mig 411** (function-only,
+  dev only, MANUAL_PROD_STEPS pending, after 409): the club's step lands `p_league.games` (move / postpone / remove) and
+  `league_game_undo` refuses a club change (`'club'`). The plan moves a carried games use's games by the slot's shift; one
+  that won't fit or sits on time taken back → Needs a new date (published) / off the draft (draft); played, started,
+  cancelled and postponed stay. Send the changes: a "U12 games · …" row per division and slot (no tick), the callout lists it,
+  the bell names game time and "N games wait in Changes to send". k5 names the slot's games. The tray hides Undo on a club
+  change (⚖ built default: undoing it would put the game on time the club gave away, 9d2·3). The coach's page: one Schedule
+  list (g3) — published games as last SENT + practices, from today on, "Needs a new date" after it (`CoachSchedule.tsx`
+  replaces `CoachPractices.tsx`). Proof: `scripts/house-league-9d2b-part5-check.sql` passed; 11b's and the publish check,
+  `.probe/11b5/e2e.ts` re-passed; 11,507 unit tests; typecheck clean; `.probe/9d2b-p5/coach.ts` read the coach page on dev.
+  - **Not probed at runtime:** Send the changes' preview with games rows (needs an owner session — Part 7's e2e).
+  - **[marketing] words to settle** (tagged in code): k5's draft line, the games row's "taken back" line and its non-settled
+    sub-lines, the league admins' bell, `undoClub`, `changesHintLeagueGames`, `changesStatement`'s divisions clause.
+  - Known, not mine: `verify:changed`'s ESLint step still crashes on the shared config (react-hooks plugin); the other red
+    gates (admin type, index coverage, org-slug callers, css selectors, root files, schema parity 409/410) are other files.
+- **▶ NEXT: Part 6 ("Adjust the rules", cuttable — 9d2b·C) then Part 7 (checks, guards, /review, /simplify, /docs, walks),
+  in a FRESH session.** The dev server needs a restart before any browser check (new files + migs 410, 411).
 - Part 3's list, as it was handed over (all done in `b508c95e9`):
   (1) `gameWindowDoors(status, published)`: Delete only before, Cancel only after; DELETE route refuses a published
   division's game. (2) PATCH stale-window refusal: the body carries `seen: {status, updatedAt}`; update with
