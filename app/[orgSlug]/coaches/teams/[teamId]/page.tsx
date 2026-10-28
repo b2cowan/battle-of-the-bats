@@ -12,6 +12,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
 import CoachHelperHome from '@/components/coaches/CoachHelperHome';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
+import PortalFreeTimeEndingBand from '@/components/coaches/PortalFreeTimeEndingBand';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import CloseSeasonModal from '@/components/coaches/CloseSeasonModal';
 // Loaded on demand, mirroring HelpDrawerProvider's treatment of the help drawer: the tour is a
@@ -1975,6 +1976,12 @@ export default function TeamOverviewPage({
   return (
     <div className={styles.page}>
       <UpgradeSummaryBanner orgSlug={orgSlug} teamId={teamId} />
+
+      {/* The last 14 days of free time staff gave (owner 2026-10-28): a coach must not find out afterwards. Only a
+          Coaches Portal can hold staff-given free time, so no other Overview makes the read. */}
+      {currentOrg?.accountKind === 'team_workspace' && !isClosedTeam && (
+        <PortalFreeTimeEndingBand orgSlug={orgSlug} orgName={currentOrg.name} canKeep={isHeadCoachHere} />
+      )}
 
       {/* A club's request to bring this team in — only when a club actually asked */}
       {orgInvite && (

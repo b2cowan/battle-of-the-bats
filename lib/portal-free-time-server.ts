@@ -1,7 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { isGrantRunning, lastDayOfInstant } from './free-time';
-import { PORTAL_FREE_TIME_GRANT_TYPE, endedLastDay } from './portal-free-time';
+import { PORTAL_FREE_TIME_GRANT_TYPE, endedLastDay, portalCustomerFreeTime, type PortalCustomerFreeTime } from './portal-free-time';
 
 /**
  * Free time on a Coaches Portal (Support console Stage 4b): the server's reads. The rules and words are in
@@ -58,6 +58,59 @@ export async function endedPortalFreeTime(orgId: string): Promise<EndedPortalFre
   return lastDay ? { lastDay, basicTeamId: ws.basic_coach_team_id } : null;
 }
 
+/** The newest free-time grant on a portal staff gave free time and nobody pays for yet; null for any other portal. */
+async function latestFreeTimeGrant(orgId: string): Promise<GrantFacts | null> {
+  const [{ data: ws, error: wsError }, { data: grants, error }] = await Promise.all([
+    supabaseAdmin
+      .from('team_workspaces')
+      .select('billing_mode, free_time_given_at')
+      .eq('workspace_org_id', orgId)
+      .maybeSingle<{ billing_mode: string | null; free_time_given_at: string | null }>(),
+    supabaseAdmin
+      .from('org_overrides')
+      .select('starts_at, expires_at, revoked_at')
+      .eq('org_id', orgId)
+      .eq('type', PORTAL_FREE_TIME_GRANT_TYPE)
+      .order('created_at', { ascending: false })
+      .limit(1),
+  ]);
+  if (wsError) throw wsError;
+  if (error) throw error;
+  if (ws?.billing_mode !== 'platform_override' || !ws.free_time_given_at) return null;
+  return grants?.[0] ?? null;
+}
+
+type GrantFacts = { starts_at: string | null; expires_at: string | null; revoked_at: string | null };
+
+/**
+ * The coach's free time on this portal, for their Plan & billing page (Part 5): running, the last 14 days, or ended
+ * for 30 days. Only a portal staff gave free time and nobody pays for: after Keep Premium it is an ordinary paid portal.
+ */
+export async function customerPortalFreeTime(orgId: string, now: Date = new Date()): Promise<PortalCustomerFreeTime | null> {
+  return portalCustomerFreeTime(await latestFreeTimeGrant(orgId), now);
+}
+
+/**
+ * The free team's saved Premium portal from free time, for its Overview (Part 5): present while the portal staff gave
+ * is still billed by nobody (the coach's Premium work is kept there, Q1), with its free time's state (the day-after band
+ * shows only while that reads ended).
+ */
+export async function savedFreeTimePortalOfTeam(
+  basicTeamId: string,
+  now: Date = new Date(),
+): Promise<{ freeTime: PortalCustomerFreeTime | null } | null> {
+  const { data, error } = await supabaseAdmin
+    .from('team_workspaces')
+    .select('workspace_org_id')
+    .eq('basic_coach_team_id', basicTeamId)
+    .not('free_time_given_at', 'is', null)
+    .eq('billing_mode', 'platform_override')
+    .maybeSingle<{ workspace_org_id: string }>();
+  if (error) throw error;
+  if (!data) return null;
+  return { freeTime: await customerPortalFreeTime(data.workspace_org_id, now) };
+}
+
 /**
  * Every Coaches Portal staff gave free time and nobody pays for: the give's own mark (`free_time_given_at`, mig 406)
  * on a workspace still billed `platform_override`. Not a customer (T35): Business numbers, the lead book's New accounts
@@ -74,4 +127,21 @@ export async function freeTimePortalOrgIds(): Promise<Set<string>> {
     .limit(5000);
   if (error) throw error;
   return new Set((ws ?? []).map(w => w.workspace_org_id as string));
+}
+
+/**
+ * Of the portals `freeTimePortalOrgIds` names, the ones whose free time is running right now. The give's mark stays on
+ * after the free time ends (it is cleared only by Keep Premium), so the Clubs list reads this to tell "Free time" from
+ * "Free time ended".
+ */
+export async function runningFreeTimePortalOrgIds(): Promise<Set<string>> {
+  const { data, error } = await supabaseAdmin
+    .from('org_overrides')
+    .select('org_id, starts_at, expires_at, revoked_at')
+    .eq('type', PORTAL_FREE_TIME_GRANT_TYPE)
+    .is('revoked_at', null)
+    .not('expires_at', 'is', null)
+    .limit(5000);
+  if (error) throw error;
+  return new Set((data ?? []).filter(r => isGrantRunning(r)).map(r => r.org_id as string));
 }

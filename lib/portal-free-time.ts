@@ -1,6 +1,9 @@
-import { earliestLastDay, endInstantForLastDay, formatLongDay, formatShortDay, lastDayOfInstant, todayEastern } from './free-time';
+import {
+  FREE_TIME_ENDED_SHOWN_DAYS, FREE_TIME_ENDING_DAYS, dayAfterWords, daysLeft, earliestLastDay, endInstantForLastDay, formatLongDay,
+  formatShortDay, isGrantRunning, lastDayOfInstant, todayEastern,
+} from './free-time';
 import { addCalendarDays, addCalendarMonths, isCalendarDate } from './timezone';
-import { possessive } from './utils';
+import { pluralize, possessive } from './utils';
 
 /**
  * Free time on a Coaches Portal (Support console Stage 4b): the rules and words, with no database in them. The reads
@@ -102,6 +105,141 @@ export function freeTimeEndedWallWords(lastDay: string): { title: string; text: 
   };
 }
 
+// ── What the coach is told (Part 5; Q7 said the product only, no email: owner 2026-10-28 added two reminders) ──────
+
+/**
+ * The coach's free time as their own screens read it: running, the last 14 days, or ended (for 30 days after). The last
+ * free day only: never the reason, who gave it, or the grant (T24). From the portal's newest billing-status grant.
+ */
+export type PortalCustomerFreeTime =
+  | { state: 'running' | 'ending'; lastDay: string; daysLeft: number }
+  | { state: 'ended'; lastDay: string };
+
+export function portalCustomerFreeTime(
+  grant: { starts_at: string | null; expires_at: string | null; revoked_at: string | null } | null,
+  now: Date = new Date(),
+): PortalCustomerFreeTime | null {
+  if (!grant?.expires_at) return null;
+  if (isGrantRunning(grant, now)) {
+    const lastDay = lastDayOfInstant(grant.expires_at);
+    const left = daysLeft(lastDay, now);
+    return { state: left < FREE_TIME_ENDING_DAYS ? 'ending' : 'running', lastDay, daysLeft: left };
+  }
+  const lastDay = endedLastDay(grant, now);
+  if (!lastDay) return null;
+  const endedAt = grant.revoked_at ?? grant.expires_at;
+  if (now.getTime() - new Date(endedAt).getTime() > FREE_TIME_ENDED_SHOWN_DAYS * 86_400_000) return null;
+  return { state: 'ended', lastDay };
+}
+
+export type PortalFreeTimeCopy = {
+  /** The plan card's price line and the small line under it; null once ended. */
+  card: { price: string; from: string } | null;
+  band: { tone: 'olive' | 'amber' | 'plain'; eyebrow: string; title: string; text: string; phoneText?: string };
+  /** The Billing card's one sentence; null once ended. */
+  billingCard: string | null;
+};
+
+/** Where the plan card's hosting clause was (Q10: free time does not include hosting; words through /billing, D-4). */
+export const PORTAL_FREE_TIME_HOSTING_LINE = "Hosting a tournament isn't part of free time.";
+
+/** Under Keep Premium (D-2/D-5). Never implies unused free days carry over. */
+export const KEEP_PREMIUM_LINE = 'Next you choose how to pay. Your team and everything you made stay as they are.';
+
+/** The free Overview's Upgrade card, while the coach's Premium work is saved (no month). */
+export const PREMIUM_WORK_SAVED_LINE = 'Everything you made on Premium is saved and comes back with Premium.';
+
+const PREMIUM_WORK_COMES_BACK = 'Everything you made on Premium is saved, and it comes back if you choose Premium again.';
+
+/** The ending band's one sentence about the day after; the Plan & billing band adds its "choose it below" to it, the Overview band does not. */
+const goBackLine = (after: string) => `On ${after} you go back to the free Coaches Portal automatically, and everything you made on Premium is saved.`;
+
+/**
+ * The coach's words for their free time (the gate's copy table, /billing and /marketing 2026-10-27). The day shown is
+ * the LAST free day: "runs through" / "ran through", never "ends on". One wording for desk and phone, except the
+ * running band's phone text, which drops its first sentence. Never a price or what Premium includes.
+ */
+export function portalFreeTimeCopy(ft: PortalCustomerFreeTime): PortalFreeTimeCopy {
+  const through = formatLongDay(ft.lastDay);
+  if (ft.state === 'ended') {
+    return {
+      card: null,
+      band: {
+        tone: 'plain',
+        eyebrow: 'Free time ended',
+        title: `Your Premium free time ran through ${through}.`,
+        text: `You're back on the free Coaches Portal, with your team as it was when your free time started. ${PREMIUM_WORK_COMES_BACK}`,
+      },
+      billingCard: null,
+    };
+  }
+  const card = { price: `Free through ${through}`, from: 'from FieldLogicHQ · then the free Coaches Portal, automatically' };
+  const after = dayAfterWords(ft.lastDay);
+  if (ft.state === 'running') {
+    const rest = `On ${after} you go back to the free Coaches Portal automatically. Nothing is charged, and nothing you made is deleted. ${PREMIUM_WORK_COMES_BACK}`;
+    return {
+      card,
+      band: {
+        tone: 'olive',
+        eyebrow: 'Free time',
+        title: `Premium Coaches Portal is free through ${through}.`,
+        text: `FieldLogicHQ gave you Premium for a while. ${rest}`,
+        phoneText: rest,
+      },
+      billingCard: `No billing action needed: your free time runs through ${through}.`,
+    };
+  }
+  const left = ft.daysLeft;
+  return {
+    card,
+    band: {
+      tone: 'amber',
+      eyebrow: left === 0 ? 'Free time · last day' : `Free time · ${left} day${left === 1 ? '' : 's'} left`,
+      title: left === 0 ? 'Your free time ends today.' : `Your free time runs through ${through}.`,
+      text: `${goBackLine(after)} To keep Premium, choose it below.`,
+    },
+    billingCard: `Your free time runs through ${through}. To keep Premium, choose it below. Otherwise there is nothing to do.`,
+  };
+}
+
+/**
+ * The band the Premium Overview wears in the last 14 days (owner 2026-10-28: a coach who loses track of the date must
+ * not find out afterwards). The Plan & billing band's words with its "choose it below" sentence left out: here the
+ * button is the door. Null unless the free time is in its last 14 days. Never a price, never "lose".
+ */
+export function portalEndingOverviewBand(ft: PortalCustomerFreeTime | null): PortalFreeTimeCopy['band'] | null {
+  if (ft?.state !== 'ending') return null;
+  const band = portalFreeTimeCopy(ft).band;
+  return { ...band, text: goBackLine(dayAfterWords(ft.lastDay)) };
+}
+
+/**
+ * Which of the two reminders (14 and 3 days before the end; owner 2026-10-28, reversing Q7's "no email") a portal is due, from the days it has left and what it has already been told: the 3-day one inside
+ * 3 days, the 14-day one inside 14, never both (a job that missed days sends the later one only). `told` holds the last
+ * free days each reminder was already sent for, so an end moved by staff re-arms both.
+ */
+export function portalEndingReminderDue(
+  daysLeftNow: number,
+  lastDay: string,
+  told: { at14: string | null; at3: string | null },
+): 14 | 3 | null {
+  if (daysLeftNow <= 3) return told.at3 === lastDay ? null : 3;
+  if (daysLeftNow <= FREE_TIME_ENDING_DAYS) return told.at14 === lastDay || told.at3 === lastDay ? null : 14;
+  return null;
+}
+
+/** The reminder email: the last free day, what happens after, that nothing is deleted, and the one door. */
+export function portalEndingEmailWords(lastDay: string, daysLeftNow: number): { subject: string; lead: string; body: string; button: string } {
+  const through = formatLongDay(lastDay);
+  const left = daysLeftNow <= 0 ? 'ends today' : `has ${pluralize(daysLeftNow, 'day')} left`;
+  return {
+    subject: `Your Premium free time ${left}`,
+    lead: `Your Premium free time ${left}. It runs through ${through}.`,
+    body: `On ${dayAfterWords(lastDay)} your team goes back to the free Coaches Portal automatically. Nothing is charged, and nothing you made is deleted. ${PREMIUM_WORK_COMES_BACK} If you want to keep Premium, you can choose it now.`,
+    button: 'Keep Premium',
+  };
+}
+
 /** A bulk action's summary line for the portals it skipped (Q9, T8/T33). */
 export function bulkPortalSkipLine(count: number): string | null {
   if (count <= 0) return null;
@@ -144,7 +282,29 @@ export type CoachPortalFacts = {
   runningGrant: { overrideId: string; lastDay: string; expiresAt: string } | null;
   /** The last free day of its newest free time once ended, or null. */
   endedLastDay: string | null;
+  /** The retention clock a cancellation started (`billing_retention_intents`, status applied), Eastern days, or null. */
+  retention: { cancelledDay: string | null; deleteDay: string } | null;
 };
+
+/** How close to the delete day the banner turns red: the same 30 days the coach's own warning email leads by. */
+export const PORTAL_RETENTION_RED_DAYS = 30;
+
+/** The cancelled banner's words: the dates when the clock is on record, the plain sentence when it is not. */
+export function cancelledPortalLine(retention: CoachPortalFacts['retention'], now: Date = new Date()): { line: string; tone: 'red' | 'quiet' } {
+  if (!retention) {
+    return { line: 'Their Premium portal was cancelled and its kept data is on a retention clock. Reopening it is not free time.', tone: 'quiet' };
+  }
+  const left = daysLeft(retention.deleteDay, now);
+  const del = formatShortDay(retention.deleteDay);
+  if (left < 0) {
+    return { line: `Their Premium portal's kept data was due to be deleted ${del}, and may already be gone. Reopening it is not free time.`, tone: 'red' };
+  }
+  if (left <= PORTAL_RETENTION_RED_DAYS) {
+    return { line: `Their Premium portal's kept data is deleted ${del}, ${pluralize(left, 'day')} from now. Reopening it is not free time.`, tone: 'red' };
+  }
+  const cancelled = retention.cancelledDay ? `was cancelled ${formatShortDay(retention.cancelledDay)}. Its` : 'was cancelled. Its';
+  return { line: `Their Premium portal ${cancelled} kept data is deleted ${del}. Reopening it is not free time.`, tone: 'quiet' };
+}
 
 export type PortalGiveFacts = {
   switchOn: boolean;
@@ -209,7 +369,7 @@ function portalBlockOf(p: CoachPortalFacts, role: string): PortalGiveBlock | nul
     return { ...at, kind: 'founding', line: `Their Premium portal is already free through ${formatShortDay(p.foundingLastDay)} under Founding Season. Its end stays as it is.` };
   }
   if (!p.inForce) {
-    return { ...at, kind: 'cancelled', line: 'Their Premium portal was cancelled and its kept data is on a retention clock. Reopening it is not free time.' };
+    return { ...at, kind: 'cancelled', ...cancelledPortalLine(p.retention) };
   }
   if (p.billingMode === 'platform_override') {
     return { ...at, kind: 'comped', line: 'Their Premium Coaches Portal is already free from FieldLogicHQ. Its end stays as it is.' };

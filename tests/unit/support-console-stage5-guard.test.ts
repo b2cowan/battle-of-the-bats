@@ -159,7 +159,7 @@ describe('2 · the sender: a kind on every send (Q8, T13, T24)', () => {
     for (const [kind, e] of Object.entries(EMAIL_KINDS)) {
       assert.equal(isLoggedKind(kind as EmailKind), e.klass === 'account' || e.klass === 'registration', kind);
     }
-    assert.equal(LOGGED_EMAIL_KINDS.length, 37, 'the 37 kinds the owner approved (G1)');
+    assert.equal(LOGGED_EMAIL_KINDS.length, 38, 'the 37 kinds the owner approved (G1) plus Free time ending (owner 2026-10-28)');
     assert.equal(isLoggedKind('league_signup'), false, "a league sign-up names a child: it is the club's email, never ours");
     assert.equal(isLoggedKind('ops_alert'), false);
     assert.deepEqual([...STORY_EMAIL_KINDS].sort(), [

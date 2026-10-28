@@ -22,6 +22,8 @@ const NO_REASON = new Set([
   'invite_platform_user', 'update_platform_user', 'remove_platform_user',
   // 12d-1 Part 4: the Stripe-fees job, and a retry of a fee that couldn't be billed (the fee's own error is its reason).
   'stripe_fees_sweep', 'retry_stripe_fee',
+  // Stage 4b: the Coaches Portal free-time daily job (the ending reminders).
+  'portal_free_time_sweep',
 ]);
 
 /**

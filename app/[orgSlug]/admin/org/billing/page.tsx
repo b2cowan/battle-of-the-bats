@@ -29,6 +29,7 @@ import { holdsSlot } from '@/lib/tournament-slot';
 import FreeTimeBand, { useCustomerFreeTime } from '@/components/admin/FreeTimeBand';
 import { freeTimeCopy } from '@/lib/free-time-copy';
 import { ownPlanOf } from '@/lib/free-time';
+import { KEEP_PREMIUM_LINE, PORTAL_FREE_TIME_HOSTING_LINE, portalFreeTimeCopy } from '@/lib/portal-free-time';
 // The billing status's words are the product's one set (Support console Stage 3, owner Q10: "Trial", "Cancelled").
 import { subscriptionStatusLabel } from '@/lib/platform-labels';
 import styles from './billing.module.css';
@@ -90,6 +91,11 @@ const PLAN_TAGLINE: Record<OrgPlan, string> = {
   // club_large copy is interim — final customer wording owned by Phase 4 (/marketing).
   club_large:      'The complete operating system, sized for a larger club or association — every team and coach included.',
 };
+
+// A Coaches Portal on free time from staff (Support console Stage 4b, Q10): free time does not include hosting, so the
+// card drops the hosting clause and says so in one line where it was (D-4).
+const TEAM_TAGLINE_FREE_TIME = 'Built for rep team coaches who also run local tournaments — roster, schedule, dues, and documents for your team.';
+const TEAM_META_FREE_TIME = `You're on Premium Coaches Portal. Your team tools are active. ${PORTAL_FREE_TIME_HOSTING_LINE}`;
 
 const PLAN_FEATURES: Record<OrgPlan, string[]> = {
   tournament: [
@@ -545,6 +551,15 @@ function BillingPagePlans() {
     givenOnSale: !isGated(freeTime.plan),
     overLimitAfter: freeTimeState?.overLimitAfter ?? false,
   }) : null;
+  // A Coaches Portal staff gave free time (Support console Stage 4b, Part 5; drawing D). While it runs the price, the
+  // Stripe door, Cancel and the tournament slots are not rendered (there is no subscription to change, and hosting is
+  // not part of free time: Q10, Q11-7), and Keep Premium is the page's one lime (D-2). The page is told the state and
+  // the last free day only, never why or by whom (T24).
+  const portalFreeTime = isTeamWorkspaceBilling ? freeTimeState?.portal ?? null : null;
+  const portalCopy = portalFreeTime ? portalFreeTimeCopy(portalFreeTime) : null;
+  const onPortalFreeTime = !!portalFreeTime && portalFreeTime.state !== 'ended';
+  const freeCard = portalCopy?.card ?? freeCopy?.card ?? null;
+  const freeBand = portalCopy?.band ?? freeCopy?.band ?? null;
   // ⚠ THE BANNER SPEAKS FOR WHICHEVER PRODUCT THE ACCOUNT IS ON (2026-09-07, Phase 2).
   // It used to be suppressed entirely for coach workspaces because its copy was
   // Tournament-Plus-specific — which left a comped Coaches Portal with NO Founding Season message at
@@ -641,7 +656,47 @@ function BillingPagePlans() {
     return showsFoundingZero(planKey, foundingOfferHeld) ? 'Applying…' : 'Redirecting…';
   }
 
+  // Keep Premium (Stage 4b, Part 6): the checkout that attaches to THIS portal, before or after free time ends. The
+  // owner only, as every other billing action here. 44px and full width on a phone (D-5).
+  const keepPremiumCard = portalFreeTime && canManageBilling ? (
+    <div className={styles.keepPremiumCard}>
+      <div className={styles.billingNudgeBody}>
+        <h2 className={styles.sectionTitle}>Keep Premium</h2>
+        <p className={styles.manageHint}>{KEEP_PREMIUM_LINE}</p>
+      </div>
+      <Link
+        className={`btn btn-lime btn-data ${styles.keepPremiumButton}`}
+        href={`${teamWorkspaceReactivatePath(currentOrg)}&keep=1`}
+        id="billing-keep-premium"
+      >
+        Keep Premium
+        <ArrowRight size={14} />
+      </Link>
+    </div>
+  ) : null;
+
   // ── Cancelled-state view: stripped page with reactivate CTA ──────────────
+  if (status === 'canceled' && portalFreeTime) {
+    // A portal whose free time from staff has ended (Stage 4b): stored cancelled, but nothing was cancelled, nothing is
+    // in retention, and "Reactivate" would make a blank second portal. The ended band and Keep Premium instead.
+    return (
+      <div className={styles.page}>
+        {pageHeader}
+        <div className={styles.currentCard}>
+          <div className={styles.currentLeft}>
+            <div>
+              <div className={styles.planName}>{currentPlan.label} Plan</div>
+              <div className={styles.planTagline}>{TEAM_TAGLINE_FREE_TIME}</div>
+            </div>
+          </div>
+          <span className="badge badge-neutral">Free time ended</span>
+        </div>
+        {portalCopy?.band && portalFreeTime.state === 'ended' && <FreeTimeBand band={portalCopy.band} />}
+        {keepPremiumCard}
+      </div>
+    );
+  }
+
   if (status === 'canceled') {
     // Reactivating buys what the club paid for, never a plan it is only holding as free time.
     const currentPlanKey = ownPlanKey;
@@ -796,10 +851,10 @@ function BillingPagePlans() {
         <div className={styles.currentLeft}>
           <div>
             <div className={styles.planName}>{currentPlan.label} Plan</div>
-            <div className={styles.planTagline}>{PLAN_TAGLINE[currentPlanKey]}</div>
+            <div className={styles.planTagline}>{onPortalFreeTime ? TEAM_TAGLINE_FREE_TIME : PLAN_TAGLINE[currentPlanKey]}</div>
             <div className={styles.planPrice}>
-              {freeCopy?.card
-                ? freeCopy.card.price
+              {freeCard
+                ? freeCard.price
                 : currentPlanComped
                 ? `Free through ${FOUNDING_SEASON_END_LABEL}`
                 : currentPlan.monthlyPrice === 0
@@ -808,28 +863,28 @@ function BillingPagePlans() {
                     ? `${formatPriceAmount(currentPlan.annualPrice)} CAD / year`
                     : `${formatPriceAmount(currentPlan.monthlyPrice)} CAD / month`}
             </div>
-            {freeCopy?.card && <div className={styles.planBillingCycle}><strong>{freeCopy.card.from}</strong></div>}
-            {currentPlanComped && !freeCopy?.card && (
+            {freeCard && <div className={styles.planBillingCycle}><strong>{freeCard.from}</strong></div>}
+            {currentPlanComped && !freeCard && (
               <div className={styles.planBillingCycle}>normally {formatPriceAmount(currentPlan.monthlyPrice)}/month · in {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for {FOUNDING_SEASON_NEXT_YEAR_LABEL}</div>
             )}
-            {currentOrg.subscriptionPeriod && currentPlan.monthlyPrice > 0 && !currentPlanComped && !freeCopy?.card && (
+            {currentOrg.subscriptionPeriod && currentPlan.monthlyPrice > 0 && !currentPlanComped && !freeCard && (
               <div className={styles.planBillingCycle}>
                 Billed {currentOrg.subscriptionPeriod === 'annual' ? 'annually' : 'monthly'}
               </div>
             )}
-            {currentOrg.currentPeriodEnd && !freeCopy?.card && (
+            {currentOrg.currentPeriodEnd && !freeCard && (
               <div className={styles.planRenewalDate}>
                 {status === 'trialing' ? 'Trial ends ' : 'Renews '}
                 {new Date(currentOrg.currentPeriodEnd).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
               </div>
             )}
-            <div className={styles.planMetaCopy}>{PLAN_META_COPY[currentPlanKey]}</div>
+            <div className={styles.planMetaCopy}>{onPortalFreeTime ? TEAM_META_FREE_TIME : PLAN_META_COPY[currentPlanKey]}</div>
           </div>
         </div>
         <span className={`badge ${STATUS_BADGE[status]}`}>{subscriptionStatusLabel(status)}</span>
       </div>
 
-      {freeCopy && <FreeTimeBand band={freeCopy.band} />}
+      {freeBand && <FreeTimeBand band={freeBand} />}
 
       {/* 12d-1 Part 4: the Stripe fees the club's online payments caused, on every plan; absent until there is one. */}
       {!isTeamWorkspaceBilling && canManageBilling && <StripeFeesList slug={currentOrg.slug} />}
@@ -980,7 +1035,8 @@ function BillingPagePlans() {
               If your club runs on FieldLogicHQ, it can bring your team in. Everything the team built comes with it, and you won’t be charged for your own Coaches Portal again.
             </p>
           </div>
-          <Link className="btn btn-lime btn-data" href={`/${currentOrg.slug}/coaches/link-org`}>
+          {/* On free time Keep Premium is the page's one lime and this door is outlined (D-2). */}
+          <Link className={`btn ${onPortalFreeTime ? 'btn-outline' : 'btn-lime'} btn-data`} href={`/${currentOrg.slug}/coaches/link-org`}>
             Join a club
             <ArrowRight size={14} />
           </Link>
@@ -993,8 +1049,8 @@ function BillingPagePlans() {
         </p>
       )}
 
-      {/* Usage meters */}
-      <div className={styles.usageCard}>
+      {/* Usage meters. Tournament slots are not shown on a portal's free time: hosting is held back (Q10). */}
+      {!onPortalFreeTime && <div className={styles.usageCard}>
         <div className={styles.usageHeader}>
           <span className={styles.usageLabel}>Tournament slots in use</span>
           <span className={styles.usageCount}>
@@ -1009,7 +1065,7 @@ function BillingPagePlans() {
             />
           </div>
         )}
-      </div>
+      </div>}
 
       {seatUsage && (
         <div className={styles.usageCard}>
@@ -1231,8 +1287,8 @@ function BillingPagePlans() {
         </>
       )}
 
-      {/* Billing portal (paid plans, non-founding-season) */}
-      {hasPaidPlan && !isFoundingSeason && (
+      {/* Billing portal (paid plans, non-founding-season; never a portal on free time, which has nothing in Stripe) */}
+      {hasPaidPlan && !isFoundingSeason && !onPortalFreeTime && (
         <div className={styles.billingTools}>
           <div>
             <h2 className={styles.sectionTitle}>Billing tools</h2>
@@ -1297,7 +1353,19 @@ function BillingPagePlans() {
         </div>
       )}
 
-      {hasPaidPlan && canManageBilling && !isFoundingSeason && (
+      {/* A portal on free time: nothing to bill, and Keep Premium. */}
+      {onPortalFreeTime && portalCopy?.billingCard && (
+        <div className={styles.billingTools}>
+          <div>
+            <h2 className={styles.sectionTitle}>Billing</h2>
+            <p className={styles.manageHint}>{portalCopy.billingCard}</p>
+          </div>
+        </div>
+      )}
+      {onPortalFreeTime && keepPremiumCard}
+
+      {/* Never on free time: the server refuses that cancel too (Q11-4). */}
+      {hasPaidPlan && canManageBilling && !isFoundingSeason && !onPortalFreeTime && (
         <div className={styles.retentionCard}>
           <h2 className={styles.sectionTitle}>{isTeamWorkspaceBilling ? 'Cancel Premium access' : 'Reduce or cancel plan'}</h2>
           <p className={styles.retentionCopy}>

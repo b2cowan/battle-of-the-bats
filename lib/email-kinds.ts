@@ -45,6 +45,7 @@ export const EMAIL_KINDS = {
   cancellation_confirmation:            { klass: 'account', label: 'Subscription cancelled' },
   welcome_back:                         { klass: 'account', label: 'Welcome back' },
   trial_ending:                         { klass: 'account', label: 'Trial ending' },
+  portal_free_time_ending:              { klass: 'account', label: 'Free time ending' },
   plan_downgraded:                      { klass: 'account', label: 'Plan downgraded' },
   billing_retention_warning:            { klass: 'account', label: 'Records retention notice' },
   org_closed:                           { klass: 'account', label: 'Account closed' },

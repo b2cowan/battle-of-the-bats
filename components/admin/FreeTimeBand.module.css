@@ -62,8 +62,13 @@
 .plain .icon { color: var(--text-secondary); border-color: var(--home-line-strong); background: transparent; }
 .plain .eyebrow { color: var(--text-tertiary); }
 
+/* The Premium Overview's one door (a button beside the words; under them on a phone, 44px). */
+.action { align-self: center; flex-shrink: 0; white-space: nowrap; }
+
 .phone { display: none; }
 @media (max-width: 640px) {
   .desk { display: none; }
   .phone { display: inline; }
+  .withAction { flex-wrap: wrap; }
+  .withAction .action { flex-basis: 100%; min-height: 44px; justify-content: center; }
 }

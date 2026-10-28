@@ -26,6 +26,7 @@ import {
   type AccountValues,
 } from '@/components/auth/AccountForm';
 import ChoicePair from '@/components/shared/ChoicePair';
+import { KEEP_PREMIUM_LINE } from '@/lib/portal-free-time';
 
 type BillingCycle = 'monthly' | 'annual';
 type AuthMode = 'signup' | 'signin';
@@ -125,6 +126,9 @@ export default function TeamSignupClient({
   const reactivationOrgSlug = searchParams.get('reactivateOrgSlug')?.trim() || null;
   const reactivationTeamName = searchParams.get('teamName')?.trim() || '';
   const isReactivation = Boolean(reactivationOrgSlug);
+  // Keep Premium (Support console Stage 4b): a coach on free time from staff buys Premium for the same portal. It rides
+  // the reactivation (the server attaches it to that portal), under its own words.
+  const isKeepPremium = isReactivation && searchParams.get('keep') === '1';
   // Warm upgrade: the coach arrived from a free team's "Upgrade to Premium" CTA (team prefilled).
   // Not a tournament claim, not a reactivation.
   const isWarmUpgrade = !claim && !isReactivation && Boolean(prefillBasicTeamId);
@@ -159,7 +163,7 @@ export default function TeamSignupClient({
   const claimEmailMismatch = !!claim && isAuthenticated && !!email && email.trim().toLowerCase() !== claim.contactEmail.toLowerCase();
   const claimPath = claim ? `${COACHES_CLAIM_PATH}/${encodeURIComponent(claim.token)}` : COACHES_START_PATH;
   const returnPath = isReactivation
-    ? `${COACHES_START_PATH}?${new URLSearchParams({ reactivateOrgSlug: reactivationOrgSlug ?? '', ...(reactivationTeamName ? { teamName: reactivationTeamName } : {}) })}`
+    ? `${COACHES_START_PATH}?${new URLSearchParams({ reactivateOrgSlug: reactivationOrgSlug ?? '', ...(reactivationTeamName ? { teamName: reactivationTeamName } : {}), ...(isKeepPremium ? { keep: '1' } : {}) })}`
     : `${claimPath}?billing=${billingCycle}`;
   // Where the verification link returns: step 2 of this card — the claim, the reactivation, or Coach Premium's own step
   // (the account remembers the door, so a resend from sign-in lands there too).
@@ -177,12 +181,16 @@ export default function TeamSignupClient({
     : `Premium Coaches Portal. ${MONTHLY} or ${ANNUAL}.`;
   const title = claim
     ? 'Activate from tournament'
-    : isReactivation
+    : isKeepPremium
+      ? 'Keep Premium'
+      : isReactivation
       ? 'Reactivate Premium'
       : isWarmUpgrade ? `Upgrade ${prefillTeamName?.trim() || 'your team'} to Premium` : 'Coach a team';
   const sub = claim
     ? `${claim.tournamentName} already has your team details.`
-    : isReactivation
+    : isKeepPremium
+      ? KEEP_PREMIUM_LINE
+      : isReactivation
       ? 'Restore your team workspace instead of starting a new one.'
       : offer;
   // Step 2 names what it makes (rule 3, D-F6): "Create team" while the Founding Season covers it, "Continue to checkout"

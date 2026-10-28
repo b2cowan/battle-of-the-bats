@@ -36,6 +36,23 @@
   margin-bottom: 1rem;
 }
 
+/* Keep Premium (Support console Stage 4b, D-2/D-5): the nudge card's row, the page's one lime. */
+.keepPremiumCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  margin-bottom: 1.5rem;
+}
+
+.keepPremiumButton {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
 /* The kit's accent chip (same recipe as .foundingSeasonIcon). */
 .billingNudgeIcon {
   width: 36px;
@@ -771,6 +788,16 @@
 }
 
 @media (max-width: 640px) {
+  .keepPremiumCard {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .keepPremiumButton {
+    width: 100%;
+    justify-content: center;
+  }
+
   .currentCard,
   .billingNudgeCard,
   .usageHeader,

@@ -86,6 +86,7 @@ const WORKSPACE_STATUS_READERS: Record<string, string> = {
 const ENTITLEMENT_READERS: Record<string, string> = {
   'lib/team-workspace-entitlements.ts': 'the per-team gate: the same running rule as the one question',
   'lib/portal-in-force-server.ts': 'the one question',
+  'lib/portal-keep-premium.ts': "a writer's repair check (Stage 4b, Part 6): an end still on a converted portal's entitlement means Keep Premium stopped halfway, not whether the portal is in force",
 };
 
 const CODE_FILES = ['app', 'lib', 'components']

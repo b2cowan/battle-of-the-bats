@@ -7,6 +7,7 @@ import { foundingCompAppliesToPlan } from '@/lib/founding-season';
 import { formatLongDay, isGrantRunning, lastDayOfInstant } from '@/lib/free-time';
 import { SLOT_STATUSES } from '@/lib/tournament-slot';
 import { withObservability } from '@/lib/observability';
+import { customerPortalFreeTime } from '@/lib/portal-free-time-server';
 
 /**
  * The customer's free time, for their Plan & billing page (Support console Stage 4, owner ruling Q8): running, ending (the
@@ -18,6 +19,13 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true });
   if (!ctx) return unauthorized();
+
+  // A Coaches Portal staff gave free time (Stage 4b, Part 5): its state and last free day only (T24), never a whole-plan
+  // grant (a portal holds none). A failed read says nothing rather than failing the page.
+  if (ctx.org.accountKind === 'team_workspace') {
+    const portal = await customerPortalFreeTime(ctx.org.id).catch(() => null);
+    return NextResponse.json({ freeTime: null, overLimitAfter: false, foundingThrough: null, portal });
+  }
 
   const { data: row, error } = await supabaseAdmin
     .from('organizations')

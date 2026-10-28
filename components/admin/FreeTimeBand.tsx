@@ -7,12 +7,20 @@
  * to (`/api/admin/org/free-time`), never the reason or who gave it.
  */
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Check, Flag, Gift } from 'lucide-react';
 import type { CustomerFreeTime } from '@/lib/free-time';
 import type { FreeTimeCopy } from '@/lib/free-time-copy';
+import type { PortalCustomerFreeTime } from '@/lib/portal-free-time';
 import styles from './FreeTimeBand.module.css';
 
-export type CustomerFreeTimeState = { freeTime: CustomerFreeTime | null; overLimitAfter: boolean; foundingThrough: string | null } | null;
+export type CustomerFreeTimeState = {
+  freeTime: CustomerFreeTime | null;
+  overLimitAfter: boolean;
+  foundingThrough: string | null;
+  /** A Coaches Portal's free time from staff (Stage 4b): its state and last free day only. */
+  portal: PortalCustomerFreeTime | null;
+} | null;
 
 /** The customer's free time for this club, or null (none, or not read yet). */
 export function useCustomerFreeTime(orgSlug: string | null | undefined): CustomerFreeTimeState {
@@ -28,6 +36,7 @@ export function useCustomerFreeTime(orgSlug: string | null | undefined): Custome
             freeTime: (data.freeTime ?? null) as CustomerFreeTime | null,
             overLimitAfter: data.overLimitAfter === true,
             foundingThrough: typeof data.foundingThrough === 'string' ? data.foundingThrough : null,
+            portal: (data.portal ?? null) as PortalCustomerFreeTime | null,
           });
         }
       })
@@ -37,11 +46,15 @@ export function useCustomerFreeTime(orgSlug: string | null | undefined): Custome
   return state;
 }
 
-export default function FreeTimeBand({ band }: { band: FreeTimeCopy['band'] }) {
+/**
+ * `action` is the Premium Overview's one door (owner 2026-10-28): outlined, never lime, because that page already has its
+ * one lime action. Left off, the band is the plain notice the billing pages show.
+ */
+export default function FreeTimeBand({ band, action }: { band: FreeTimeCopy['band']; action?: { label: string; href: string } }) {
   const Icon = band.tone === 'amber' ? Flag : band.tone === 'plain' ? Check : Gift;
   const tone = band.tone === 'amber' ? styles.amber : band.tone === 'plain' ? styles.plain : '';
   return (
-    <div className={`${styles.band} ${tone}`}>
+    <div className={`${styles.band} ${tone} ${action ? styles.withAction : ''}`}>
       <div className={styles.icon}><Icon size={16} aria-hidden /></div>
       <div className={styles.body}>
         <p className={styles.eyebrow}>{band.eyebrow}</p>
@@ -50,6 +63,7 @@ export default function FreeTimeBand({ band }: { band: FreeTimeCopy['band'] }) {
           {band.phoneText ? <><span className={styles.desk}>{band.text}</span><span className={styles.phone}>{band.phoneText}</span></> : band.text}
         </p>
       </div>
+      {action && <Link href={action.href} className={`btn btn-outline btn-sm ${styles.action}`}>{action.label}</Link>}
     </div>
   );
 }

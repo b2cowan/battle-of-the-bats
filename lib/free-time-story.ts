@@ -142,7 +142,15 @@ export function freeTimeStoryEntries(input: {
       entries.push(entry);
     }
 
-    if (o.revoked_at) {
+    if (o.revoked_at && isPortal && obj(revokeRows.get(o.id)?.new_value)?.subscribed === true) {
+      // Keep Premium (Stage 4b, Part 6): the coach bought Premium for this portal, which ended the free time. Never Put
+      // it back (it reached Stripe).
+      entries.push({
+        key: `override-ended:${o.id}`, at: o.revoked_at, kind: 'billing',
+        title: 'Free time ended: the coach chose Premium', sub: 'Paid by the coach from here on',
+        who: o.revoked_by ?? 'The coach', why: null,
+      });
+    } else if (o.revoked_at) {
       const revoke = revokeRows.get(o.id);
       entries.push({
         key: `override-ended:${o.id}`, at: o.revoked_at, kind: 'staff',

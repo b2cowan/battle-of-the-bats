@@ -13,6 +13,7 @@ import {
 } from '@/lib/team-checkout';
 import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
 import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-owned';
+import { findKeepPremiumPortal } from '@/lib/portal-keep-premium';
 import {
   TeamWorkspaceClaimError,
   verifyTeamWorkspaceClaimForCheckout,
@@ -107,8 +108,16 @@ export const POST = withObservability(async (req: Request) => {
   // reactivation too: reactivating a canceled portal when you have NO live one still works (the
   // check returns null for a canceled portal), but you can't reactivate a second portal while
   // another is already live.
+  // Keep Premium (Support console Stage 4b, Part 6): the coach's portal from free time, named by this checkout, is the
+  // one the purchase attaches to, so it is not "another" portal. Any OTHER live portal still refuses.
+  const keepPortal = await findKeepPremiumPortal({
+    ownerUserId: user.id,
+    reactivateOrgSlug: checkoutRequest.reactivateOrgSlug,
+    basicCoachTeamId: checkoutRequest.basicCoachTeamId,
+    claimToken: checkoutRequest.claimToken,
+  });
   const existingPortal = await getActiveOwnedTeamWorkspace(user.id);
-  if (existingPortal) {
+  if (existingPortal && existingPortal.workspaceOrgId !== keepPortal?.orgId) {
     return new Response(JSON.stringify({
       error: 'Your account already has a Coaches Portal. Each account can have one — use a different email to start another.',
       code: 'portal_exists',
@@ -125,7 +134,8 @@ export const POST = withObservability(async (req: Request) => {
   // sign-up came for this portal keeps it (edge (b), 2026-10-19; the one rule, lib/founding-season.ts); everyone else
   // gets the list-price checkout. A comp portal coming back after a cancel keeps its comp too (the early close,
   // 2026-10-26: existing comps run as sold) — the paid path cannot restore a comp workspace.
-  if (foundingSeasonOfferFor(user, 'premium') || await reactivationHoldsFoundingComp(checkoutRequest.reactivateOrgSlug)) {
+  // Keep Premium is a purchase: it never takes this path, and 4b touches no Founding row (Q6).
+  if (!keepPortal && (foundingSeasonOfferFor(user, 'premium') || await reactivationHoldsFoundingComp(checkoutRequest.reactivateOrgSlug))) {
     try {
       const metadata = buildTeamCheckoutMetadata({
         ownerUserId: user.id,
@@ -325,7 +335,8 @@ export const POST = withObservability(async (req: Request) => {
     customer: customer.id,
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      ...(mergedConfig.trialDays > 0 ? { trial_period_days: mergedConfig.trialDays } : {}),
+      // Keep Premium is a coach who already had Premium free: a trial on top would only push the first charge out.
+      ...(!keepPortal && mergedConfig.trialDays > 0 ? { trial_period_days: mergedConfig.trialDays } : {}),
       metadata,
     },
     metadata,
