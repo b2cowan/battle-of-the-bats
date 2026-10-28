@@ -103,7 +103,7 @@ describe('S7 — the coin toss is said and recorded where the seeds wait', () =>
   it('one side for search (owner 2026-10-17): Teams and Check-in put Search and Filter on the right, the shared field', () => {
     // Teams: the spacer follows the division picker, so Search and Filter sit beside Tools.
     const teams = readCode('app/[orgSlug]/admin/tournaments/registrations/page.tsx');
-    assert.match(teams, /<DivisionPicker [^>]*\/>\s*(?:\{[^}]*\}\s*)?<span className=\{tb\.toolbarSpacer\} aria-hidden \/>\s*\{showViewTools && \(\s*<div className=\{tb\.deskFilters\}>/);
+    assert.match(teams, /<DivisionPicker [^>]*\/>\s*(?:\{[^}]*\}\s*)?<span className=\{tb\.toolbarSpacer\} aria-hidden \/>\s*\{showViewTools && \(\s*<div className=\{(?:tb\.deskFilters|`\$\{tb\.deskFilters\}[^`]*`)\}>/);
     // Check-in (organizer and gate): the shared line, field and Filter — no board-owned dropdown or search box.
     const board = readCode('components/admin/CheckInBoard.tsx');
     assert.match(board, /className=\{`\$\{tb\.toolbar\} \$\{styles\.toolbar\}`\}/);

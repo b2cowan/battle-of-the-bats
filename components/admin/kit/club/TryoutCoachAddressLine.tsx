@@ -80,7 +80,7 @@ export default function TryoutCoachAddressLine({ api, teamName, canWrite, onDone
       });
       if (res.ok) {
         setReadNo(n => n + 1);
-        onDone('good', `${who}’s address is back on this tryout page.`);
+        onDone('good', `${possessive(who)} address is back on this tryout page.`);
         return;
       }
       const j = await res.json().catch(() => ({}));

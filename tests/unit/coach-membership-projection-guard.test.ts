@@ -51,6 +51,9 @@ const MEMBERSHIP_TABLE_ACCESSORS = [
   // file is in the BROWSER bundle (via db.ts) and coach-membership reaches next/headers; importing it
   // (even dynamically) 500'd every dev page on 2026-09-29. Never writes.
   join('lib', 'team-workspace-entitlements.ts'),
+  // Read-only ACTIVE-membership check for the "your own club" staff test (any active staff row for this user across
+  // these orgs, any kind) — no accessor in coach-membership.ts answers that. Never writes.
+  join('lib', 'staff-own-club.ts'),
 ];
 
 function walk(dir: string, out: string[] = []): string[] {

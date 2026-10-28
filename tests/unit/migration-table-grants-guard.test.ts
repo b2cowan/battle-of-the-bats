@@ -206,11 +206,21 @@ function ungrantedTables(sql: string): string[] {
 const migrationNumber = (file: string) => Number(/^(\d+)_/.exec(file)?.[1] ?? NaN);
 const migrationFiles = () => readdirSync(MIGRATIONS).filter(f => f.endsWith('.sql')).sort();
 
+/** Tables a later migration drops: a table that no longer exists needs no grant (354 → 356, the AWS storage decision). */
+function droppedTables(): Set<string> {
+  return new Set(
+    migrationFiles().flatMap(f =>
+      [...codeOnly(readMigration(f)).matchAll(/drop\s+table\s+(?:if\s+exists\s+)?(?:public\.)?"?([a-z_][a-z0-9_]*)"?/gi)].map(m => m[1].toLowerCase()),
+    ),
+  );
+}
+
 describe('a new table grants the server its own access (Supabase stops auto-granting 2026-10-30)', () => {
   it('every migration above the watermark grants service_role on each public table it creates', () => {
+    const dropped = droppedTables();
     const failures = migrationFiles()
       .filter(f => migrationNumber(f) > WATERMARK)
-      .flatMap(f => ungrantedTables(readMigration(f)).map(t => `${f}: public.${t}`));
+      .flatMap(f => ungrantedTables(readMigration(f)).filter(t => !dropped.has(t)).map(t => `${f}: public.${t}`));
     assert.deepEqual(
       failures,
       [],
@@ -228,6 +238,10 @@ describe('a new table grants the server its own access (Supabase stops auto-gran
 
   it('the matcher is not blind: it finds every live table a migration created', () => {
     const seen = new Set(migrationFiles().flatMap(f => createdTables(codeOnly(readMigration(f)))));
+    // A rename gives a created table its live name (387 platform_debit_fees → 390 platform_stripe_fees); privileges follow the table.
+    for (const f of migrationFiles()) {
+      for (const m of codeOnly(readMigration(f)).matchAll(/alter\s+table\s+(?:if\s+exists\s+)?\S+\s+rename\s+to\s+"?([a-z_][a-z0-9_]*)"?/gi)) seen.add(m[1].toLowerCase());
+    }
     const snapshot = JSON.parse(
       readFileSync(join(REPO, 'docs', 'agents', 'db', 'schema-snapshots', 'schema-dump-columns-dev.json'), 'utf8'),
     );
