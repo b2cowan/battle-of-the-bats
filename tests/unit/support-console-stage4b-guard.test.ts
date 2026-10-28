@@ -100,7 +100,7 @@ describe('Part 0 · 3 — a cancel never runs on free time (Q11-4, T15)', () => 
   });
 
   it('no free-time code can reach a cancel, a retention clock, Stripe or an email (T15, T27)', () => {
-    const freeTimeFiles = ['lib/portal-free-time.ts', 'lib/portal-free-time-server.ts'];
+    const freeTimeFiles = ['lib/portal-free-time.ts', 'lib/portal-free-time-server.ts', 'lib/portal-free-time-give.ts'];
     for (const file of freeTimeFiles) {
       const imports = [...readCode(file).matchAll(/from '([^']+)'/g)].map(m => m[1]);
       for (const spec of imports) {

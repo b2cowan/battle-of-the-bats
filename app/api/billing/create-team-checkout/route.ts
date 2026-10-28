@@ -12,7 +12,7 @@ import {
   provisionCompTeamWorkspaceFromCheckout,
 } from '@/lib/team-checkout';
 import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
-import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-entitlements';
+import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-owned';
 import {
   TeamWorkspaceClaimError,
   verifyTeamWorkspaceClaimForCheckout,

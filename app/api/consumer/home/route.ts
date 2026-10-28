@@ -24,7 +24,7 @@ import { listPendingClubCoachInvitesForEmail } from '@/lib/assistant-invites';
 import { readStartDoor } from '@/lib/start-door';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
-import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-entitlements';
+import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-owned';
 
 const EMPTY: ConsumerHomePayload = {
   signedIn: false,

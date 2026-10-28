@@ -134,7 +134,7 @@ describe("3 · nothing reads a portal's liveness around the one question (the ce
       ['lib/coach-team-page.ts', 'workspacesInForce'],
       ['lib/basic-coach-teams.ts', 'workspacesInForce'],
       ['lib/registrable-teams-server.ts', 'portalsInForce'],
-      ['lib/team-workspace-entitlements.ts', 'portalsInForce'],
+      ['lib/team-workspace-owned.ts', 'portalsInForce'],
       ['app/platform-admin/customer-users/people-rows.ts', 'portalsInForce'],
     ];
     for (const [file, fn] of moved) assert.match(readCode(file), new RegExp(`\\b${fn}\\(`), `${file} calls ${fn}`);
@@ -189,10 +189,11 @@ describe('5 · a free-time portal is not a customer, so it is never churn (T35, 
     assert.match(readCode('app/platform-admin/orgs/OrgsClient.tsx'), /statusFilter === 'canceled' && !isCancelledCustomer\(o\)/);
   });
 
-  it("the mark is the free-time grant, never the workspace's source (Founding and comped portals are platform_admin too)", () => {
+  it("the mark is the give's own (free_time_given_at, mig 406), never the workspace's source (Founding and comped portals are platform_admin too)", () => {
     const server = readCode('lib/portal-free-time-server.ts');
     const fn = server.slice(server.indexOf('export async function freeTimePortalOrgIds'));
-    assert.match(fn, /PORTAL_FREE_TIME_GRANT_TYPE/);
+    assert.match(fn, /\.not\('free_time_given_at', 'is', null\)/);
+    assert.match(fn, /\.eq\('billing_mode', 'platform_override'\)/);
     assert.doesNotMatch(fn, /\.eq\('source'/);
   });
 });

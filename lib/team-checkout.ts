@@ -15,7 +15,7 @@ import {
 } from './team-workspace-claims';
 import type { SubscriptionStatus } from './types';
 import type { TeamEntitlementStatus, TeamWorkspaceSource } from './team-workspace-entitlements';
-import { getActiveOwnedTeamWorkspace } from './team-workspace-entitlements';
+import { getActiveOwnedTeamWorkspace } from './team-workspace-owned';
 import { clearStartDoor } from './start-door-server';
 
 export type TeamCheckoutRequest = {

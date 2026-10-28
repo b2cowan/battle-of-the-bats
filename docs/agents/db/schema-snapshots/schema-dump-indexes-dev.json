@@ -5171,6 +5171,16 @@
   },
   {
     "tablename": "team_workspaces",
+    "indexname": "team_workspaces_one_free_time_portal_per_coach",
+    "indexdef": "CREATE UNIQUE INDEX team_workspaces_one_free_time_portal_per_coach ON public.team_workspaces USING btree (primary_owner_user_id) WHERE ((free_time_given_at IS NOT NULL) AND (primary_owner_user_id IS NOT NULL))"
+  },
+  {
+    "tablename": "team_workspaces",
+    "indexname": "team_workspaces_one_free_time_portal_per_free_team",
+    "indexdef": "CREATE UNIQUE INDEX team_workspaces_one_free_time_portal_per_free_team ON public.team_workspaces USING btree (basic_coach_team_id) WHERE ((free_time_given_at IS NOT NULL) AND (basic_coach_team_id IS NOT NULL))"
+  },
+  {
+    "tablename": "team_workspaces",
     "indexname": "team_workspaces_pkey",
     "indexdef": "CREATE UNIQUE INDEX team_workspaces_pkey ON public.team_workspaces USING btree (id)"
   },

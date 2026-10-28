@@ -25319,6 +25319,15 @@
         "column_default": null
       },
       {
+        "table_name": "team_workspaces",
+        "pos": 21,
+        "column_name": "free_time_given_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "teams",
         "pos": 1,
         "column_name": "id",
@@ -37722,6 +37731,16 @@
         "tablename": "team_workspaces",
         "indexname": "team_workspaces_billing_owner_org_id_idx",
         "indexdef": "CREATE INDEX team_workspaces_billing_owner_org_id_idx ON public.team_workspaces USING btree (billing_owner_org_id)"
+      },
+      {
+        "tablename": "team_workspaces",
+        "indexname": "team_workspaces_one_free_time_portal_per_coach",
+        "indexdef": "CREATE UNIQUE INDEX team_workspaces_one_free_time_portal_per_coach ON public.team_workspaces USING btree (primary_owner_user_id) WHERE ((free_time_given_at IS NOT NULL) AND (primary_owner_user_id IS NOT NULL))"
+      },
+      {
+        "tablename": "team_workspaces",
+        "indexname": "team_workspaces_one_free_time_portal_per_free_team",
+        "indexdef": "CREATE UNIQUE INDEX team_workspaces_one_free_time_portal_per_free_team ON public.team_workspaces USING btree (basic_coach_team_id) WHERE ((free_time_given_at IS NOT NULL) AND (basic_coach_team_id IS NOT NULL))"
       },
       {
         "tablename": "team_workspaces",

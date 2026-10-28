@@ -209,7 +209,7 @@ export async function changeFreeTimeEnd(input: ChangeInput): Promise<Refusal | {
 }
 
 /** "{who} changed this free time while you had it open. It now runs through {day}. Look again before you change it." */
-async function staleSentence(orgId: string, overrideId: string, createdBy: string, expiresAt: string | null): Promise<string> {
+export async function staleSentence(orgId: string, overrideId: string, createdBy: string, expiresAt: string | null): Promise<string> {
   const { data } = await supabaseAdmin
     .from('platform_audit_log')
     .select('actor_email, new_value')

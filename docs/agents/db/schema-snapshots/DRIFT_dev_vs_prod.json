@@ -1,12 +1,25 @@
 {
   "generated": "2026-10-28",
-  "total": 0,
+  "total": 3,
   "counts": {
     "tables": 0,
-    "columns": 0,
-    "indexes": 0,
+    "columns": 1,
+    "indexes": 2,
     "constraints": 0,
     "rls": 0
   },
-  "items": []
+  "items": [
+    {
+      "key": "column:only-dev:team_workspaces.free_time_given_at",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:team_workspaces_one_free_time_portal_per_coach",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:team_workspaces_one_free_time_portal_per_free_team",
+      "sig": ""
+    }
+  ]
 }

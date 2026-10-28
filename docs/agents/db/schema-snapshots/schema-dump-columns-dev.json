@@ -25317,6 +25317,15 @@
     "ordinal_position": 20
   },
   {
+    "table_name": "team_workspaces",
+    "column_name": "free_time_given_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
     "table_name": "teams",
     "column_name": "id",
     "data_type": "uuid",

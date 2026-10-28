@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { withObservability } from '@/lib/observability';
 import { changeFreeTimeEnd, endFreeTimeNow } from '@/lib/free-time-writes';
+import { readFreeTimePortal } from '@/lib/portal-free-time-give';
 
 /**
  * One running free-time grant (Support console Stage 4). PATCH changes its end date (compare-and-set on the end the window
@@ -33,6 +34,10 @@ export const DELETE = withObservability(async (req: NextRequest,
   if (auth.response) return auth.response;
 
   const { id, oid } = await params;
+  // A Coaches Portal's free time ends on its own path, which closes the team's entitlement too (Stage 4b).
+  if (await readFreeTimePortal(id)) {
+    return NextResponse.json({ error: "End a Coaches Portal's free time from its own Access list." }, { status: 409 });
+  }
   const body = (await req.json().catch(() => ({}))) as { reason?: unknown };
   const result = await endFreeTimeNow({
     orgId: id,

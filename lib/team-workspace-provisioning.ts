@@ -63,6 +63,18 @@ export type ProvisionStandaloneTeamWorkspaceInput = {
   sourceEventId?: string | null;
   actorUserId?: string | null;
   actorEmail?: string | null;
+  /**
+   * Free time on a Coaches Portal (Support console Stage 4b, `lib/portal-free-time-give.ts`): the give provisions through
+   * this same function so Premium is really on, and passes these. Never set by a paid path.
+   */
+  freeTime?: {
+    /** Runs right after the organization is made, before anything else: the grant that holds the portal open (T31). */
+    onOrgCreated: (orgId: string) => Promise<void>;
+    /** The entitlement's end, written in its own insert (the grant's end, the first moment after the last free day). */
+    entitlementEndsAt: string;
+    /** The portal's mark and the day the limits are measured from (`team_workspaces.free_time_given_at`, mig 406). */
+    givenAt: string;
+  };
 };
 
 export type ProvisionStandaloneTeamWorkspaceResult = {
@@ -228,6 +240,7 @@ async function createActiveProgramYear(fields: {
   teamId: string;
   name: string;
   year: number;
+  autoRemindersEnabled?: boolean;
 }): Promise<RepProgramYear> {
   const { data, error } = await supabaseAdmin
     .from('rep_program_years')
@@ -238,6 +251,7 @@ async function createActiveProgramYear(fields: {
       year: fields.year,
       status: 'active',
       tryout_open: false,
+      ...(fields.autoRemindersEnabled === false ? { auto_reminders_enabled: false } : {}),
     })
     .select('*')
     .single();
@@ -280,6 +294,8 @@ export async function provisionStandaloneTeamWorkspace(
   try {
     const org = await createWorkspaceOrgWithUniqueSlug(workspaceName, input.workspaceSlug ?? workspaceName);
     createdOrgId = org.id;
+    // Free time: the grant before anything else, so no stop below can leave a portal open past its last free day (T31).
+    if (input.freeTime) await input.freeTime.onOrgCreated(org.id);
 
     const orgPatch: Record<string, string | null> = {
       subscription_status: subscriptionStatus,
@@ -318,6 +334,8 @@ export async function provisionStandaloneTeamWorkspace(
       teamId: team.id,
       name: seasonName,
       year: seasonYear,
+      // Free time: the copy turns fees into dues schedules, so automatic reminders to families start off (Q10, T30).
+      autoRemindersEnabled: input.freeTime ? false : undefined,
     });
 
     /**
@@ -357,6 +375,7 @@ export async function provisionStandaloneTeamWorkspace(
         stripe_subscription_id: input.stripeSubscriptionId ?? null,
         subscription_status: subscriptionStatus,
         current_period_end: input.currentPeriodEnd ?? null,
+        ...(input.freeTime ? { free_time_given_at: input.freeTime.givenAt } : {}),
       })
       .select('id')
       .single();
@@ -375,6 +394,10 @@ export async function provisionStandaloneTeamWorkspace(
         .select('id');
       if (claimError) throw claimError;
       migrationClaimed = (claimed?.length ?? 0) > 0;
+      // Free time never makes an empty portal beside one that already holds the team (T20): losing the claim undoes it.
+      if (!migrationClaimed && input.freeTime) {
+        throw new TeamWorkspaceProvisioningError('free_team_claimed', 'That team already has a Premium Coaches Portal.');
+      }
       // The winner records "not finished" before it copies anything (Stage 4b, Q11-3): a copy that stops halfway is then
       // always found by the portal's Try again. The copy's own summary replaces it below.
       if (migrationClaimed) {
@@ -414,6 +437,7 @@ export async function provisionStandaloneTeamWorkspace(
         source: entitlementSource,
         status: entitlementStatus,
         stripe_subscription_item_id: input.stripeSubscriptionItemId ?? null,
+        ...(input.freeTime ? { ends_at: input.freeTime.entitlementEndsAt } : {}),
       })
       .select('id')
       .single();
@@ -460,8 +484,9 @@ export async function provisionStandaloneTeamWorkspace(
 
     // Account-first: the owner now has a team of their own, so a waiting team (free or Premium) has done its job; a
     // waiting league has not. Here, not in a caller, because every Premium path makes its team through this one
-    // function (the checkout's comp and mock paths, both Stripe webhook events). Never throws.
-    await clearStartDoor(ownerUserId, ['team', 'premium']);
+    // function (the checkout's comp and mock paths, both Stripe webhook events). Never throws. Not for free time (T35):
+    // the coach did not buy anything, and a saved wish to buy Premium is still theirs when the free time ends.
+    if (!input.freeTime) await clearStartDoor(ownerUserId, ['team', 'premium']);
 
     // Free→Premium data migration (Phase 4) — runs ONLY for the provisioner that won the atomic
     // claim above (so exactly once per upgraded team), and only AFTER provisioning is committed +

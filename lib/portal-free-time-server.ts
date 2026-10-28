@@ -59,26 +59,19 @@ export async function endedPortalFreeTime(orgId: string): Promise<EndedPortalFre
 }
 
 /**
- * Every Coaches Portal staff gave free time and nobody pays for (a portal billing-status grant, running or not, on a
- * workspace still billed `platform_override`). Not a customer (T35): Business numbers, the lead book's New accounts
+ * Every Coaches Portal staff gave free time and nobody pays for: the give's own mark (`free_time_given_at`, mig 406)
+ * on a workspace still billed `platform_override`. Not a customer (T35): Business numbers, the lead book's New accounts
  * and the Clubs list's Cancelled count leave them out, because the portal is stored cancelled for its whole life. ⚠ Not
  * the workspace's `source`: a Founding or comped portal is `platform_admin` too, and those ARE customers. Keep Premium
  * makes the portal `team_direct`, and from then on it counts like any paid portal.
  */
 export async function freeTimePortalOrgIds(): Promise<Set<string>> {
-  const { data: grants, error } = await supabaseAdmin
-    .from('org_overrides')
-    .select('org_id')
-    .eq('type', PORTAL_FREE_TIME_GRANT_TYPE)
-    .limit(5000);
-  if (error) throw error;
-  const orgIds = [...new Set((grants ?? []).map(g => g.org_id as string))];
-  if (orgIds.length === 0) return new Set();
-  const { data: ws, error: wsError } = await supabaseAdmin
+  const { data: ws, error } = await supabaseAdmin
     .from('team_workspaces')
     .select('workspace_org_id')
-    .in('workspace_org_id', orgIds)
-    .eq('billing_mode', 'platform_override');
-  if (wsError) throw wsError;
+    .not('free_time_given_at', 'is', null)
+    .eq('billing_mode', 'platform_override')
+    .limit(5000);
+  if (error) throw error;
   return new Set((ws ?? []).map(w => w.workspace_org_id as string));
 }
